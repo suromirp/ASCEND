@@ -175,6 +175,16 @@ Gaat voor "Modellen per taak" hieronder, tot en met 15 november of tot de eigena
 - Wat de eigenaar in de coördinator-chat zelf zegt, gaat voor een doorgestuurd bericht van een andere chat.
 
 
+## Limiet van vijf uur (eigenaar 12 november: "mag niet nog een keer gebeuren")
+
+In de nacht van 12 november raakte het account om ongeveer 03:00 UTC het limiet van vijf uur; het ging om 03:20 weer open, maar niets maakte de coördinator of de bouwers wakker tot 06:33. Ruim drie uur stilstand. Het limiet zelf is soms niet te vermijden; de stilstand wel.
+
+- De Wachter: een terugkerende taak elk uur in de sessie van de coördinator (trig_01RfcpL1mKyjAquMVbctRoGN, minuut 40). Hij kijkt naar de coördinator en elke lopende bouwer en port een stilgevallen bouwer met create_trigger (persistent_session_id die bouwer). Een terugkerende taak, geen eenmalige: valt één beurt in het limiet, dan komt het uur erna vanzelf.
+- Bij de wissel zet de nieuwe coördinator de Wachter op zijn eigen sessie (update_trigger kan geen sessie wisselen: de oude wissen met delete_trigger en een nieuwe maken met dezelfde prompt).
+- Vooraf remmen: get_session geeft `rate_limit_info`. Staat die op `allowed_warning` bij de coördinator of een bouwer, start dan geen nieuwe helper of bouwer, maak af wat loopt, en plan met send_later een beurt op `resetsAt` plus vijf minuten.
+- Raakt een helper het limiet: kijk eerst wat hij al maakte (afdrukken, commits) voor je hem opnieuw start.
+- Hoogstens drie bouwers op Opus of Fable tegelijk, plus de helpers van de coördinator; met een waarschuwing hoogstens twee.
+
 ## Lessen uit het onderzoek naar autonome agents (11 november, `docs/onderzoek/Werkwijze autonome agents.md`)
 
 - Zelfreview vóór Warden: elke bouwer laat voor hij zich meldt een frisse helper `reviewer` op sonnet zijn eigen diff naast de eisen van de opdracht leggen, en herstelt wat die vindt. Kost ongeveer $1, een herstelronde $3 tot $5. Zet dit in elke opdracht onder Opleveren.

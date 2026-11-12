@@ -283,16 +283,32 @@ export interface StartChoices {
 const HERE_CHIP: StartChip = { kind: 'here', label: 'Waar je nu bent' };
 const OTHER_CHIP: StartChip = { kind: 'other', label: 'Andere plek' };
 
+// Hoogstens zoveel chips onder Start bij (Pathfinder, eis 1).
+export const START_CHIPS_MAX = 4;
+
 // De chips onder Start bij: Waar je nu bent, Thuis (als die er is), de voorgestelde plek (als die er
-// is) en Andere plek. Gekozen volgt Startpunt van je lus (`exact` is Thuis; zonder Thuis Waar je nu
-// bent; Ongeveer valt onder Waar je nu bent), tenzij je voor deze training zelf een chip tikte
-// (`picked`, het placeId of de soort). Een voorstel wordt nooit vanzelf gekozen.
-export function startChoices(setting: RouteStartMode, places: readonly Place[], suggestion?: Pick<PlaceSuggestion, 'place'>, picked?: string): StartChoices {
+// is), je bewaarde plekken (de recentste eerst) en Andere plek, samen hoogstens vier. Een plek die je
+// voor deze training tikte blijft erbij, ook als hij niet bij de recentste hoort. Gekozen volgt
+// Startpunt van je lus (`exact` is Thuis; zonder Thuis Waar je nu bent; Ongeveer valt onder Waar je nu
+// bent), tenzij je voor deze training zelf een chip tikte (`picked`, het placeId of de soort). Een
+// voorstel wordt nooit vanzelf gekozen. `otherLabel`: de naam van een gezochte plek op Andere plek.
+export function startChoices(setting: RouteStartMode, places: readonly Place[], suggestion?: Pick<PlaceSuggestion, 'place'>, picked?: string, otherLabel?: string): StartChoices {
   const home = homeOf(places);
   const chips: StartChip[] = [HERE_CHIP];
   if (home) chips.push({ kind: 'home', label: home.name, placeId: home.id });
   if (suggestion && suggestion.place.id !== home?.id) chips.push({ kind: 'place', label: suggestion.place.name, placeId: suggestion.place.id });
-  chips.push(OTHER_CHIP);
+  const room = START_CHIPS_MAX - chips.length - 1;
+  const shown = new Set(chips.map((c) => c.placeId));
+  const recent = places
+    .map((p, i) => ({ p, i }))
+    .filter(({ p }) => !p.home && !shown.has(p.id))
+    .sort((a, b) => (a.p.createdAt === b.p.createdAt ? b.i - a.i : a.p.createdAt < b.p.createdAt ? 1 : -1))
+    .map(({ p }) => p);
+  const keep = recent.slice(0, Math.max(0, room));
+  const tappedPlace = recent.find((p) => p.id === picked);
+  if (tappedPlace && room > 0 && !keep.includes(tappedPlace)) keep[keep.length - 1] = tappedPlace;
+  for (const p of keep) chips.push({ kind: 'place', label: p.name, placeId: p.id });
+  chips.push(otherLabel ? { ...OTHER_CHIP, label: otherLabel } : OTHER_CHIP);
   const tapped = picked === undefined ? undefined : chips.find((c) => c.placeId === picked || (c.kind === picked && c.kind !== 'place'));
   const byMode = setting === 'exact' ? chips.find((c) => c.kind === 'home') : undefined;
   return { chips, chosen: tapped ?? byMode ?? HERE_CHIP };

@@ -40,6 +40,7 @@ import { useOpenRequest, useSessionHousekeeping, useSessionPill } from './compon
 // they still work offline.
 const SettingsOverview = lazy(() => import('./pages/settings/SettingsOverview').then((m) => ({ default: m.SettingsOverview })));
 const SettingsGroupPage = lazy(() => import('./pages/settings/SettingsGroupPage').then((m) => ({ default: m.SettingsGroupPage })));
+const PlacesPage = lazy(() => import('./pages/settings/PlacesPage').then((m) => ({ default: m.PlacesPage })));
 const SportsPage = lazy(() => import('./pages/settings/SportsPage').then((m) => ({ default: m.SportsPage })));
 const KindAmountPage = lazy(() => import('./pages/settings/KindAmountPage').then((m) => ({ default: m.KindAmountPage })));
 const KnowledgePage = lazy(() => import('./pages/Knowledge').then((m) => ({ default: m.KnowledgePage })));
@@ -347,6 +348,7 @@ function AppShell() {
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/more" element={<SettingsOverview />} />
             <Route path="/more/planning/sporten" element={<SportsPage />} />
+            <Route path="/more/vandaag/plekken" element={<PlacesPage />} />
             <Route path="/more/planning/hoeveel" element={<KindAmountPage />} />
             <Route path="/more/:groep/geavanceerd" element={<SettingsGroupPage advanced />} />
             <Route path="/more/:groep" element={<SettingsGroupPage />} />
