@@ -25,7 +25,7 @@ import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, Stream
 import type { MetricSource } from '../models/training';
 import { isNum } from '../utils/guards';
 import { round } from '../utils/round';
-import { ELEVATION_THRESHOLD_M, turningPoints, watchLine } from './elevation';
+import { ELEVATION_COUNTER, ELEVATION_THRESHOLD_M, turningPoints, watchLine } from './elevation';
 
 export { turningPoints };
 
@@ -265,6 +265,7 @@ export function buildActivityDetail(streams: StreamSet, opts: BuildOptions): Act
 
   return {
     version: 1,
+    counter: ELEVATION_COUNTER,
     source: opts.source,
     sliceCount: SLICE_COUNT,
     slices,

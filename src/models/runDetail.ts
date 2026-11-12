@@ -85,6 +85,9 @@ export interface RunLine {
 
 export interface RunDetail {
   version: 1;
+  // Met welke teller de stijging per km is geteld: 2 is engine/elevation.ts (hysterese). Ontbreekt
+  // bij een log van voor die teller; dat is geteld met de oude dode band en telt lager.
+  counter?: 2;
   // The totals of the log it was read for (its fingerprint).
   wholeKm: number;
   wholeMinutes: number;

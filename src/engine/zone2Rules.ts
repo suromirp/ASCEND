@@ -22,6 +22,9 @@ export const ZONE2_RULES = {
   paceBand: 0.07,
   // H2: minder op en minder neer dan dit per km telt als vlak, dan geldt het echte tempo.
   flatMetresPerKm: 5,
+  // Dezelfde grens voor kilometers die met de teller van engine/elevation.ts zijn geteld
+  // (`runDetail.counter` 2): die telt van dal tot top en komt op vlak terrein hoger uit.
+  flatMetresPerKmCounted: 10,
   // H2: een stuk met een gemiddelde helling boven dit deel valt weg.
   maxNetGrade: 0.02,
   // H2: een stukje van zoveel meter steiler dan STEEP_GRADE knipt het stuk.

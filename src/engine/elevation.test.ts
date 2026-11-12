@@ -140,6 +140,20 @@ describe('gladmaken van een horlogereeks', () => {
     expect(smoothOverTime([10, 20, 30], [0, 1, 2], 0)).toEqual([10, 20, 30]);
   });
 
+  it('wat het gladmaken kost op iets korts en steils: een bult van 6 m in 10 s verdwijnt', () => {
+    // Een driehoek: `half` seconden omhoog naar `h` meter en even lang omlaag, op vlak terrein.
+    const bump = (h: number, half: number) => {
+      const t = Array.from({ length: 240 }, (_, i) => i);
+      const alt = t.map((i) => 100 + (i >= 100 && i <= 100 + 2 * half ? h * (1 - Math.abs(i - 100 - half) / half) : 0));
+      return { raw: climbAndDescent(alt, 2).ascentM, counted: ups(watchLine(alt, t)) };
+    };
+    // Trap of brug: ruw 6 m, na gladmaken over 30 s niets.
+    expect(bump(6, 10)).toEqual({ raw: 6, counted: 0 });
+    // 6 m in 20 s: 3,7 m. 10 m in 20 s: 6,1 m.
+    expect(bump(6, 20).counted).toBeCloseTo(3.7, 1);
+    expect(bump(10, 20).counted).toBeCloseTo(6.1, 1);
+  });
+
   it('maakt van sprongen van een seconde geen hoogtemeters', () => {
     // Elke seconde 1,5 m op en neer: ruw gaat dat ver over de drempel van 2 m heen.
     const t = Array.from({ length: 600 }, (_, i) => i);
@@ -222,7 +236,7 @@ describe('het plan telt met dezelfde teller', () => {
 
 describe('zes nagemaakte lopen, voor en na', () => {
   // Per loop: wat de oude teller op het log gaf (dode band 5 m) en wat de nieuwe geeft
-  // (gladmaken over 15 s, hysterese 2 m). Getallen in hele meters.
+  // (gladmaken over 30 s, hysterese 2 m). Getallen in hele meters.
   const rows = SIX_RUNS.map(({ name, spec }) => {
     const { altitudeM, timeSec } = makeAltitude(spec);
     return {
@@ -236,12 +250,12 @@ describe('zes nagemaakte lopen, voor en na', () => {
 
   it('geeft per loop deze getallen', () => {
     expect(rows.map((r) => [r.name, r.before, r.after])).toEqual([
-      ['vlak 1', 0, 16],
-      ['vlak 2', 1, 20],
+      ['vlak 1', 0, 15],
+      ['vlak 2', 1, 19],
       ['vlak 3', 2, 25],
-      ['vlak 4', 7, 32],
+      ['vlak 4', 7, 29],
       ['vlak 5', 3, 26],
-      ['heuvellus', 85, 138],
+      ['heuvellus', 85, 135],
     ]);
   });
 
@@ -249,7 +263,7 @@ describe('zes nagemaakte lopen, voor en na', () => {
     const hill = rows[5];
     expect(hill.after).toBeGreaterThan(hill.before + 40);
     // Het gladmaken kost hoogstens een paar meter tegenover tellen op de ruwe reeks.
-    for (const r of rows) expect(r.rawThreshold2 - r.after).toBeLessThanOrEqual(3);
+    for (const r of rows) expect(r.rawThreshold2 - r.after).toBeLessThanOrEqual(6);
   });
 
   it('houdt de vlakke lopen onder vrijwel vlak', () => {
@@ -304,10 +318,20 @@ describe('meting: de eigen stijging per kilometer tegen de grenzen van andere re
       ['vlak 1', [5, 0, 0], [5, 2, 0]],
       ['vlak 2', [6, 0, 0], [6, 3, 0]],
       ['vlak 3', [7, 0, 0], [7, 3, 0]],
-      ['vlak 4', [8, 0, 0], [8, 6, 0]],
+      ['vlak 4', [8, 0, 0], [8, 5, 0]],
       ['vlak 5', [9, 0, 0], [9, 4, 0]],
       ['heuvellus', [8, 8, 4], [8, 8, 6]],
     ]);
+  });
+
+  it('houdt met de grens van 10 m voor de nieuwe teller elke vlakke kilometer vlak', () => {
+    for (const { spec } of SIX_RUNS.slice(0, 5)) {
+      const { altitudeM, timeSec } = makeAltitude(spec);
+      for (const k of perKm(watchLine(altitudeM, timeSec))) {
+        expect(k.gain).toBeLessThan(10);
+        expect(k.loss).toBeLessThan(10);
+      }
+    }
   });
 });
 

@@ -18,7 +18,7 @@ import type { StreamSet } from '../models/activityDetail';
 import type { StoredLap } from '../models/activityStreams';
 import type { RunDetail, RunKm, RunLap, RunLine } from '../models/runDetail';
 import { fillGaps } from './activityDetail';
-import { watchLine } from './elevation';
+import { ELEVATION_COUNTER, watchLine } from './elevation';
 import { MAX_GAP_SEC, effortFingerprint, fastestWindow } from './bestEffort';
 import { isNum } from '../utils/guards';
 
@@ -512,6 +512,7 @@ export function buildRunDetail(set: StreamSet, opts: BuildRunDetailOptions): Run
   const pauseSec = tr.p[tr.p.length - 1].t - tr.p[0].t - tr.moving[tr.moving.length - 1];
   const out: RunDetail = {
     version: 1,
+    counter: ELEVATION_COUNTER,
     wholeKm: opts.logKm,
     wholeMinutes: opts.logMinutes,
     builtAt: opts.builtAt,

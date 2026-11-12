@@ -24,6 +24,12 @@ export const NEARLY_FLAT_M = 40;
 // telt hij als bergen (eigen aanname; heuvels zijn in het onderzoek 20 tot 100 m per klim).
 export const MOUNTAIN_RELIEF_M = 300;
 
+// Het merk van deze teller op een log (`detail.counter`, `runDetail.counter`). Een log zonder merk
+// is geteld met de oude dode band van 5 m, die tien meter per klim en afdaling verloor. Een regel
+// met een grens op de eigen stijging leest het merk en kiest de grens die bij de telling hoort.
+// Besluit: docs/beslissingen/2026-11-12-hoogtemeters-teller-op-log.md.
+export const ELEVATION_COUNTER = 2;
+
 type Reading = number | null | undefined;
 
 export const isNearlyFlat = (ascentM: number): boolean => !(ascentM >= NEARLY_FLAT_M);
@@ -136,7 +142,7 @@ export function hysteresisLine(values: readonly Reading[], thresholdM: number): 
 // Een horloge schrijft elke seconde een hoogte op. Een losse meting kan een meter of meer
 // springen zonder dat je stijgt; over dit venster (in seconden, gecentreerd) wordt de reeks eerst
 // gemiddeld, zodat een sprong van één seconde nooit op zichzelf de drempel haalt.
-export const WATCH_SMOOTH_SEC = 15;
+export const WATCH_SMOOTH_SEC = 30;
 
 // Lopend gemiddelde over een venster in de tijd, gecentreerd. Een gat blijft een gat en telt niet
 // mee in het gemiddelde van zijn buren; metingen aan de andere kant van een pauze vallen buiten
@@ -173,7 +179,7 @@ export function smoothOverTime(values: readonly Reading[], timesSec: readonly nu
   return out;
 }
 
-// De hoogtelijn van een horloge zoals de teller hem ziet: eerst gladgemaakt over 15 seconden,
+// De hoogtelijn van een horloge zoals de teller hem ziet: eerst gladgemaakt over 30 seconden,
 // dan geteld met de drempel van het horloge. Voor het profiel, de kilometers en het inkorten.
 export function watchLine(values: readonly Reading[], timesSec: readonly number[]): number[] {
   return hysteresisLine(smoothOverTime(values, timesSec, WATCH_SMOOTH_SEC), ELEVATION_THRESHOLD_M.watch);
