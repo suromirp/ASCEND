@@ -21,7 +21,7 @@ import { resolveEffectiveFullDuration } from './substitutions';
 import { progressionTarget } from './programLayout';
 import { logSport, SPORT_LABEL, type Sport } from './sports';
 import { weekChanges } from './changeLog';
-import { weekPositionLabel } from './weekLabel';
+import { weekNameAt, weekPositionLabel } from './weekLabel';
 import { durationLabel } from './sessionBrief';
 import type { PlannedById } from './logDay';
 import { countsAsTraining as countsAsTrainingShared, leftOutOfCount, weekDoneMinutes, weekLogsOf } from './weekLogs';
@@ -59,7 +59,11 @@ export interface WeekReview {
   keyMissedName?: string; // de sleuteltraining die nog open blijft liggen
   checkAdvice?: string; // de zin uit je wekelijkse lijfvraag
   changes: string[]; // what ASCEND adjusted in this week
-  next?: { title: string; note?: string; minutes: number; key?: string };
+  // `label`: de naam van de week ("Opbouw, week 4 van 18", "Rustweek", de golf), uit engine/weekLabel.ts#weekNameAt;
+  // `rest`: volgens het programma een rustweek die je niet doortraint.
+  next?: { title: string; note?: string; minutes: number; key?: string; label?: string; rest?: boolean };
+  label?: string; // de naam van deze week, zoals bij next
+  extraLogged?: number; // logs van deze week die niet bij een geplande training van deze week horen
   advice: string[];
   weeklyCheck?: WeeklyHealthCheck;
 }
@@ -124,6 +128,10 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // logs and the same minutes as the top of Week (engine/weekLogs.ts).
   const weekLogs = weekLogsOf(logs, byId, weekStart, inputs.plannedById);
   const done = trainings.filter((s) => loggedIds.has(s.id)).length;
+  // Wat je deze week deed buiten een geplande training om (een losse training, iets op een rustdag): telt mee in de
+  // minuten, niet in "gedaan". Het blad zegt het dan apart, zodat "0 gedaan · 56 min" geen tegenspraak is.
+  const trainingIds = new Set(trainings.map((s) => s.id));
+  const extraLogged = weekLogs.filter((l) => !l.plannedSessionId || !trainingIds.has(l.plannedSessionId)).length;
   const missedSessions = trainings.filter((s) => !loggedIds.has(s.id) && (s.scheduledDate < asOf || s.status === 'skipped')).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
   const minutes = weekDoneMinutes(logs, byId, weekStart, inputs.plannedById);
 
@@ -177,6 +185,8 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     const note = nextSessions.map((s) => byId.get(s.templateId)).map((t) => (t && progressionTarget(t, program, nextStart)?.step.note?.split(/, | \(/)[0])).find(Boolean);
     next = {
       title: weekTitle(program, nextStart),
+      label: weekNameAt(program, nextStart),
+      rest: weekNameAt(program, nextStart) === 'Rustweek',
       note,
       minutes: nextMinutes,
       key: keyT && key
@@ -242,13 +252,16 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   } else if (lighter >= 2 && advice.length < 3) {
     advice.push('Een paar trainingen voelden lichter dan gepland. Dat kan een teken zijn dat je sterker wordt. ASCEND bouwt rustig verder.');
   }
-  if (next?.note && /rust/i.test(next.note) && advice.length < 3) {
+  // De rustweek uit het programma (isRestWeekAt via weekNameAt), niet uit een woord in een notitie.
+  if (next?.rest && advice.length < 3) {
     advice.push('Volgende week is een rustweek. Korter en rustiger is precies goed: dan komt de opbouw binnen.');
   }
 
   return {
     weekStart,
     title: weekTitle(program, weekStart),
+    label: weekNameAt(program, weekStart),
+    extraLogged,
     done,
     planned: trainings.length,
     minutes,

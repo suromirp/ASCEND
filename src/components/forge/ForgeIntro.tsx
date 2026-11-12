@@ -5,14 +5,12 @@
 import type { ReactNode } from 'react';
 import { previewDayLine } from '../../engine/sessionActions';
 import type { Program } from '../../models/program';
-import { addDays, mondayOfWeek } from '../../utils/dates';
 import { MountainMuscleNotice } from '../MountainMuscleNotice';
 import { CalibrationNotice } from './CalibrationNotice';
 import { StepProposalNotice } from './StepProposalNotice';
 
-export function ForgeIntro({ templateId, today, date, program, preview, readOnly, mountainNotice, stepNotice, calibration, capLine, legLine, legPanel }: {
+export function ForgeIntro({ templateId, date, program, preview, readOnly, mountainNotice, stepNotice, calibration, capLine, legLine, legPanel }: {
   templateId: string;
-  today: string;
   date: string;
   program?: Program | null;
   preview: boolean;
@@ -27,7 +25,7 @@ export function ForgeIntro({ templateId, today, date, program, preview, readOnly
   if (!(legLine || readOnly || capLine || mountainNotice || stepNotice || calibration)) return null;
   return (
     <div className="flex flex-col gap-1 px-4 pt-3">
-      {mountainNotice && <MountainMuscleNotice weekStart={addDays(mondayOfWeek(today), -7)} onlyFor={templateId} className="mb-2" />}
+      {mountainNotice && <MountainMuscleNotice onlyFor={templateId} className="mb-2" />}
       {stepNotice && <StepProposalNotice templateId={templateId} date={date} />}
       {calibration && <CalibrationNotice {...calibration} />}
       {capLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }} data-testid="forge-ingekort">{capLine}</p>}

@@ -30,3 +30,7 @@ Niets; het voorstel en zijn Akkoord blijven gelijk.
 ## Terugdraaien
 
 Alleen weergave; per spoor terug te zetten zonder gegevens te raken.
+
+## Bekende grens
+
+Toegevoegd bij de bouw, 12 november. De kop van Week (`weekHeading` in `src/engine/weekLabel.ts`) houdt zijn grote getal ("Week 3", met de regel "van 18, basis") en zet de fase nog niet voorop. Die kop hoort bij Week minimaal en wordt daar besloten. Elders in de app noemt de week zich "Opbouw, week 3 van 18" via `weekPositionLabel`. De telling in een golf ("Week 2 van 4 van je golf") en die van het hele programma blijven hun eigen tekst.
