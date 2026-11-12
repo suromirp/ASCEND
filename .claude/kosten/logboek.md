@@ -427,3 +427,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Warden herreview Trainingsscherm (reviewer, sonnet) 36k, akkoord; Lookout herstel Trainingsscherm (tester, sonnet) 47k, 6 min, groen
 - 2026-11-12, Warden herreview Weekplan (reviewer, fable) 78k, 10 min, akkoord onder 3 moet; geheugen van vier weken op advies weggelaten. Les: de datum van een fout naast de datum van eerdere herstellingen leggen voor je een bouwer start (de lus was al op 11 november hersteld)
 - 2026-11-12, Sherpa Weekplan in een lus, bouwer-sessie, fable, ca. 1,5 uur, 1 herstelronde (geheugen eruit); op main 53ca8c0. De lus was al op 11 november hersteld; de branch voegt vangnetten toe
+- 2026-11-12, Pathfinder Stand opschonen (sonnet) 44k; Lookout Stand opschonen (tester, sonnet) 62k, 14 min, groen; Pathfinder Hoe ging het? (sonnet) 45k, akkoord met 1 moet (concept bij tik naast het blad)
