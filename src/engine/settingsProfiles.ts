@@ -10,27 +10,27 @@ import { resolveOverviews, type OverviewSettings } from './overviewSettings';
 export type TodayProfile = 'alles' | 'belangrijkst' | 'training' | 'aangepast';
 export type TodayProfileChoice = Exclude<TodayProfile, 'aangepast'>;
 
-// De acht keuzes die een profiel vastlegt. De missiekaart zelf is geen schakelaar: die
+// De zeven keuzes die een profiel vastlegt. De missiekaart zelf is geen schakelaar: die
 // staat altijd op Vandaag. Wat onder de ochtendcheck of het weer hangt (korte nacht, beste
-// moment, kleding) blijft zoals je het zette.
+// moment, kleding) blijft zoals je het zette. De vraag van de week hoort er niet bij: die staat
+// standaard uit en een profiel zet hem niet aan of uit (docs/beslissingen/2026-11-12-je-dag.md).
 export interface TodayCardValues {
   morningCheckIn: boolean;
   morningCard: boolean;
   weatherLine: boolean;
   weekReview: boolean;
-  weeklyQuestion: boolean;
   completionMoment: boolean;
   introSoundEnabled: boolean;
   // "Hoe voelt je lijf?": reden (het advies) of uit.
   bodyCheck: BodyCheckMode;
 }
 
-const KEYS: (keyof TodayCardValues)[] = ['morningCheckIn', 'morningCard', 'weatherLine', 'weekReview', 'weeklyQuestion', 'completionMoment', 'introSoundEnabled', 'bodyCheck'];
+const KEYS: (keyof TodayCardValues)[] = ['morningCheckIn', 'morningCard', 'weatherLine', 'weekReview', 'completionMoment', 'introSoundEnabled', 'bodyCheck'];
 
 const PROFILES: Record<TodayProfileChoice, TodayCardValues> = {
-  alles: { morningCheckIn: true, morningCard: true, weatherLine: true, weekReview: true, weeklyQuestion: true, completionMoment: true, introSoundEnabled: true, bodyCheck: 'reden' },
-  belangrijkst: { morningCheckIn: true, morningCard: false, weatherLine: true, weekReview: false, weeklyQuestion: false, completionMoment: false, introSoundEnabled: false, bodyCheck: 'reden' },
-  training: { morningCheckIn: false, morningCard: false, weatherLine: false, weekReview: false, weeklyQuestion: false, completionMoment: false, introSoundEnabled: false, bodyCheck: 'uit' },
+  alles: { morningCheckIn: true, morningCard: true, weatherLine: true, weekReview: true, completionMoment: true, introSoundEnabled: true, bodyCheck: 'reden' },
+  belangrijkst: { morningCheckIn: true, morningCard: false, weatherLine: true, weekReview: false, completionMoment: false, introSoundEnabled: false, bodyCheck: 'reden' },
+  training: { morningCheckIn: false, morningCard: false, weatherLine: false, weekReview: false, completionMoment: false, introSoundEnabled: false, bodyCheck: 'uit' },
 };
 
 export const TODAY_PROFILE_ORDER: TodayProfileChoice[] = ['alles', 'belangrijkst', 'training'];
@@ -53,7 +53,6 @@ function todayCardValues(settings: Partial<ProfileInput>): TodayCardValues {
     morningCard: o.morningCard,
     weatherLine: o.weatherLine,
     weekReview: o.weekReview,
-    weeklyQuestion: o.weeklyQuestion,
     completionMoment: o.completionMoment,
     introSoundEnabled: settings.introSoundEnabled !== false,
     bodyCheck: resolveBodyCheck(settings),
@@ -71,7 +70,7 @@ export function todayProfileValues(profile: TodayProfileChoice): TodayCardValues
   return { ...PROFILES[profile] };
 }
 
-// De wijziging voor updateSettings: alleen de acht sleutels, de rest van de overzichten
+// De wijziging voor updateSettings: alleen de zeven sleutels, de rest van de overzichten
 // (dag van de terugblik, ochtend begint om, beste moment, kleding) blijft staan.
 export function todayProfilePatch(profile: TodayProfileChoice, settings: Partial<Pick<AppSettings, 'overviews'>>): ProfileInput {
   const v = todayProfileValues(profile);
@@ -81,7 +80,6 @@ export function todayProfilePatch(profile: TodayProfileChoice, settings: Partial
     morningCard: v.morningCard,
     weatherLine: v.weatherLine,
     weekReview: v.weekReview,
-    weeklyQuestion: v.weeklyQuestion,
     completionMoment: v.completionMoment,
   };
   return { overviews, introSoundEnabled: v.introSoundEnabled, bodyCheck: v.bodyCheck };

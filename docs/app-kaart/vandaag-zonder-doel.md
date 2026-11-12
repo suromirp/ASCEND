@@ -39,10 +39,11 @@ Je dag
 --- kaart 6 ---
 [knop: Rekken, 6 oefeningenOchtend]
 [knop: Rekken afvinken]
-[knop: Een zin is genoegVraag]
-[knop: Trendgewicht bijwerkenGewicht]
-[knop: Lange duurloopMorgen · 50 min]
-[knop: Benen fris · 0 van 3 gedaan · deze week is even zwaar als de 4 weken ervoor] (aria: Je stand openen)
+[knop: Gewicht bijwerkenGewicht]
+
+--- kaart 7 ---
+[knop: BenenFris] (aria: Benen: Fris)
+[knop: MorgenLange duurloop, 50 min] (aria: Morgen: Lange duurloop, 50 min)
 [knop: Losse training]
 [knop: Niet fit?]
 [knop: “If you want to improve, be content to be thought foolish and stupid with regard to external things.”] (aria: Nederlandse vertaling tonen)

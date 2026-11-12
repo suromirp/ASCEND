@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { resolveOverviews } from './overviewSettings';
 import { matchTodayProfile, todayProfilePatch, todayProfileValues, TODAY_PROFILE_ORDER, type TodayCardValues } from './settingsProfiles';
 
-const FLAGS = ['morningCheckIn', 'morningCard', 'weatherLine', 'weekReview', 'weeklyQuestion', 'completionMoment'] as const;
+// De vraag van de week hoort sinds 12 november niet meer bij een profiel (docs/beslissingen/2026-11-12-je-dag.md).
+const FLAGS = ['morningCheckIn', 'morningCard', 'weatherLine', 'weekReview', 'completionMoment'] as const;
 
 describe('profiel Kaarten op Vandaag', () => {
   it('geen instellingen betekent het advies: alles', () => {
@@ -43,7 +45,7 @@ describe('profiel Kaarten op Vandaag', () => {
       }
      }
     }
-    expect(aangepast).toBe(2 * 3 * 64 - 3);
+    expect(aangepast).toBe(2 * 3 * 32 - 3);
   });
 
   it('een ontbrekende geluidswaarde telt als aan, een enkele afwijking als aangepast', () => {
@@ -60,5 +62,27 @@ describe('profiel Kaarten op Vandaag', () => {
     expect(matchTodayProfile({ bodyCheck: 'uit' })).toBe('aangepast');
     expect(matchTodayProfile({ bodyCheck: 'elke-week' })).toBe('aangepast');
     expect(matchTodayProfile({ bodyCheck: 'rommel' as never })).toBe('alles');
+  });
+
+  it('de vraag van de week staat los van de profielen en standaard uit', () => {
+    // Een verse installatie: weekvraag uit, en het profiel heet nog steeds Alles.
+    expect(matchTodayProfile({})).toBe('alles');
+    // Aan of uit verandert het profiel niet.
+    expect(matchTodayProfile({ overviews: { weeklyQuestion: true } })).toBe('alles');
+    expect(matchTodayProfile({ overviews: { weeklyQuestion: false } })).toBe('alles');
+    // Een profiel kiezen laat je eigen keuze voor de weekvraag staan.
+    expect(todayProfilePatch('training', { overviews: { weeklyQuestion: true } }).overviews?.weeklyQuestion).toBe(true);
+    expect(todayProfilePatch('alles', { overviews: { weeklyQuestion: false } }).overviews?.weeklyQuestion).toBe(false);
+    expect(todayProfilePatch('alles', {}).overviews?.weeklyQuestion).toBeUndefined();
+  });
+
+  it('een bestaande gebruiker met een gekozen profiel houdt zijn waarde', () => {
+    // Opgeslagen door het oude profiel Alles (weekvraag aan) of Het belangrijkste (uit).
+    const oudAlles = { morningCheckIn: true, morningCard: true, weatherLine: true, weekReview: true, weeklyQuestion: true, completionMoment: true };
+    const oudBelangrijkst = { morningCheckIn: true, morningCard: false, weatherLine: true, weekReview: false, weeklyQuestion: false, completionMoment: false };
+    expect(matchTodayProfile({ overviews: oudAlles })).toBe('alles');
+    expect(matchTodayProfile({ overviews: oudBelangrijkst, introSoundEnabled: false })).toBe('belangrijkst');
+    expect(resolveOverviews(oudAlles).weeklyQuestion).toBe(true);
+    expect(resolveOverviews({}).weeklyQuestion).toBe(false);
   });
 });

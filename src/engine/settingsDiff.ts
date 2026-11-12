@@ -312,6 +312,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('forge-uitleg-open', 'Uitleg standaard uitgeklapt', 'forge', 'guideOpen', { fallback: false }),
   choice('lijfvraag', 'Hoe voelt je lijf?', 'vandaag', 'bodyCheck', 'reden', 'lijfvraag'),
   choice('korter-vandaag', 'Minder tijd vandaag', 'vandaag', 'shorterToday', 'kern', 'korterVandaag'),
+  choice('reistaak-vandaag', 'Reistaak op Vandaag', 'vandaag', 'journeyOnToday', 'last-week', 'reistaakVandaag'),
   flag('zones-na-test', 'Zones bijwerken na een test', 'planning', 'zonesAfterTest'),
   choice('lichterbenen', 'Lichter bij vermoeide benen', 'vandaag', 'legEase', 'voorstel', 'lichterbenen'),
   choice('lichterbenen-hoe', 'Hoe licht', 'vandaag', 'legEaseHow', 'standaard', 'lichterbenenHoe'),

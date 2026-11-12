@@ -10,8 +10,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
-import { addWeightEntry, freshLinkedWeight, latestWeight, weightDue, weightsInUse, WEIGHT_REMINDER_DAYS } from '../engine/bodyWeight';
-import { activeIllness } from '../engine/illness';
+import { addWeightEntry, latestWeight, weightsInUse } from '../engine/bodyWeight';
+import { useWeightRow } from './vandaag/yourDayRows';
 import { formatDateNL, todayISO } from '../utils/dates';
 import { NumberField } from './NumberField';
 import { PrimaryButton, SecondaryButton } from './ui';
@@ -34,13 +34,13 @@ export function WeightReminder() {
   const [kg, setKg] = useState<number | undefined>(latestWeight(entries)?.kg);
   const [open, setOpen] = useState(false);
   const today = todayISO();
-  if (activeIllness(settings.illnessEpisodes) || !weightDue(entries, settings.weightReminderSnoozedAt, today, settings.weightReminderDays ?? WEIGHT_REMINDER_DAYS)) return null;
-  // The weight comes from MacroFactor or Health Connect and is recent: nothing to ask.
-  if (freshLinkedWeight(settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, today)) return null;
+  const { shown } = useWeightRow();
+  if (!shown) return null;
   const last = latestWeight(entries);
   return (
     <>
-      <DayRow label="Gewicht" onClick={() => setOpen(true)}>Trendgewicht bijwerken</DayRow>
+      {/* Met de datum van je laatste weging zie je waarom de regel er staat. */}
+      <DayRow label="Gewicht" trailing={last ? `laatst op ${formatDateNL(last.date)}` : undefined} onClick={() => setOpen(true)} sheetFrom>Gewicht bijwerken</DayRow>
       {open && (
         <TodaySheet eyebrow="Gewicht bijwerken" onClose={() => setOpen(false)}>
           {(close) => (

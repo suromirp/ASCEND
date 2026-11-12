@@ -1,26 +1,27 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useJourney } from './reis/useJourney';
+import { useJourneyRow } from './vandaag/yourDayRows';
 import { PrimaryButton, SecondaryButton } from './ui';
 import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
 import { TextButton } from './TextButton';
 
-// Vandaag: the one task of the week on the way to the GR5 that is not
-// training, as one line in "Je dag". The line opens the task in a sheet: tick
-// it off or push it to next week. Same idea as the lesson of the week: one a
-// week, kept for the week, never red.
+// Vandaag: de taak op weg naar je tocht die geen training is, als één regel in "Je dag", maar
+// alleen als de instelling het zegt (standaard in de laatste week dat hij nog kan). De regel opent
+// de taak in een blad: afvinken, of naar volgende week. In de laatste week heet dat Niet nu en
+// blijft de taak open op Ascend. Nooit rood, nooit "te laat".
 export function JourneyWeekCard() {
   const navigate = useNavigate();
-  const { pick, derived, tick, untick, postpone } = useJourney();
+  const { shown, when, lastWeek, journey } = useJourneyRow();
+  const { pick, derived, tick, untick, postpone } = journey;
   const [open, setOpen] = useState(false);
-  if (!pick || pick.state === 'postponed') return null;
+  if (!shown || !pick || pick.state === 'postponed') return null;
   const { task } = pick;
   const done = pick.state === 'done';
 
   return (
     <>
-      <DayRow label="Reis" state={done ? 'done' : 'todo'} onClick={() => setOpen(true)}>
+      <DayRow label="Reis" trailing={done ? undefined : when} state={done ? 'done' : 'todo'} onClick={() => setOpen(true)} sheetFrom>
         {task.title}
       </DayRow>
       {open && (
@@ -39,7 +40,7 @@ export function JourneyWeekCard() {
                 </>
               ) : (
                 <div className="flex gap-3">
-                  <SecondaryButton onClick={() => { postpone(task.id); close(); }}>Volgende week</SecondaryButton>
+                  <SecondaryButton onClick={() => { postpone(task.id); close(); }}>{lastWeek ? 'Niet nu' : 'Volgende week'}</SecondaryButton>
                   <PrimaryButton onClick={() => { tick(task.id, { keepForWeek: true }); close(); }} fullWidth={false}>Gedaan</PrimaryButton>
                 </div>
               )}

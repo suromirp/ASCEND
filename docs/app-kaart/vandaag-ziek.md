@@ -45,8 +45,9 @@ Je dag
 --- kaart 7 ---
 [knop: Rekken, 6 oefeningenOchtend]
 [knop: Rekken afvinken]
-[knop: Een zin is genoegVraag]
-[knop: Benen fris · 0 van 2 gedaan · deze week is lichter dan de 4 weken ervoor] (aria: Je stand openen)
+
+--- kaart 8 ---
+[knop: BenenFris] (aria: Benen: Fris)
 [knop: Losse training]
 [knop: “If you want to improve, be content to be thought foolish and stupid with regard to external things.”] (aria: Nederlandse vertaling tonen)
 [knop: Epictetus · Enchiridion 13]

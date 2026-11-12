@@ -4,48 +4,43 @@ import { useAppData } from '../state/AppDataContext';
 import { useLegFatigueInputs } from './LegFatigueCard';
 import { fatigueWord, legFatigueOn } from '../engine/legFatigue';
 import { LOAD_JUMP, loadVersusBefore, weeklyLoad } from '../engine/standing';
-import { deriveSessionStatus } from '../engine/sessionStatus';
-import { mondayOfWeek } from '../utils/dates';
+import { standLines, type TomorrowEntry } from '../engine/yourDay';
 import { ChevronGlyph } from './vandaag/glyphs';
 
-// Vandaag → one quiet line to Je stand (pages/Standing.tsx): your legs,
-// the week and the load, the rest one tap away.
-
-export function StandSummaryCard() {
+// Vandaag → het blok Stand en morgen onder Je dag (docs/visie/Ontwerp Je dag.md, 4): korte regels
+// zonder kop en zonder schijven. Links het vaste woord gedempt, rechts de waarde in gewone inkt,
+// nooit een gekleurd woord in een zin. Let op is alleen een amber stip voor het vaste woord.
+// `tomorrow` ontbreekt als de grote kaart al zegt dat er morgen niets staat.
+export function StandSummaryCard({ tomorrow }: { tomorrow?: TomorrowEntry }) {
   const navigate = useNavigate();
-  const { sessionLogs, plannedSessions, templates, templateById, sessionsForWeek } = useAppData();
+  const { sessionLogs, plannedSessions, templates } = useAppData();
   const inputs = useLegFatigueInputs();
   const today = inputs.today;
   const legs = useMemo(() => legFatigueOn(today, inputs), [today, inputs]);
-  const jump = useMemo(() => loadVersusBefore(weeklyLoad({ logs: sessionLogs, plannedSessions, templates, today, minutesOf: inputs.minutesOf }, 4, 0)), [sessionLogs, plannedSessions, templates, today, inputs.minutesOf]);
-  const week = sessionsForWeek(mondayOfWeek(today)).filter((s) => templateById.get(s.templateId)?.type !== 'recovery');
-  const done = week.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
+  const load = useMemo(() => loadVersusBefore(weeklyLoad({ logs: sessionLogs, plannedSessions, templates, today, minutesOf: inputs.minutesOf }, 4, 0)), [sessionLogs, plannedSessions, templates, today, inputs.minutesOf]);
   const { word, level } = fatigueWord(legs.index);
-  // A jump that is only planned so far is information, not yet a warning.
-  const heavy = !!jump && jump.doneRatio > LOAD_JUMP;
-  const weekWord = !jump
-    ? undefined
-    : jump.ratio > LOAD_JUMP
-      ? `${Math.round((jump.ratio - 1) * 100)}% zwaarder dan de 4 weken ervoor`
-      : jump.ratio < 0.7
-        ? 'lichter dan de 4 weken ervoor'
-        : 'even zwaar als de 4 weken ervoor';
+  const lines = standLines({ legsWord: word, legsLevel: level, load, loadJump: LOAD_JUMP, tomorrow });
 
-  // Colour only on the verdict: a warning for tired legs or a heavy week.
   return (
-    <button
-      onClick={() => navigate('/stand')}
-      aria-label="Je stand openen"
-      className="flex min-h-[56px] w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left"
-      style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
-    >
-      <span className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Benen <span style={{ color: level >= 2 ? 'var(--color-warning)' : 'var(--color-ink)' }}>{word.toLowerCase()}</span>
-        {' · '}
-        <span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{done} van {week.length}</span> gedaan
-        {weekWord && <>{' · '}deze week is <span style={{ color: heavy ? 'var(--color-warning)' : 'var(--color-ink)' }}>{weekWord}</span></>}
-      </span>
-      <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><ChevronGlyph /></span>
-    </button>
+    <ul aria-label="Stand en morgen" className="overflow-hidden rounded-2xl border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
+      {lines.map((line) => (
+        <li key={line.key} className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
+          <button
+            type="button"
+            onClick={() => navigate(line.to)}
+            aria-label={`${line.label}: ${line.value}${line.warn ? ', let op' : ''}`}
+            data-stand-line={line.key}
+            className="flex min-h-[44px] w-full items-center gap-3 px-4 py-2.5 text-left"
+          >
+            <span className="flex w-[76px] shrink-0 items-center gap-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+              {line.warn && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-warning)' }} />}
+              {line.label}
+            </span>
+            <span className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{line.value}</span>
+            <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><ChevronGlyph /></span>
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }

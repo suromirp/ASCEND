@@ -54,10 +54,11 @@ const everything: AppSettings = {
   influenceNames: false,
   intensityCounting: 'plan',
   overviews: {
-    morningCheckIn: false, morningCard: false, legsAfterEffort: false, morningCardFrom: '7', weekReview: false, weekReviewDay: 'sunday', weeklyQuestion: false,
+    morningCheckIn: false, morningCard: false, legsAfterEffort: false, morningCardFrom: '7', weekReview: false, weekReviewDay: 'sunday', weeklyQuestion: true,
     weatherLine: false, weatherSwap: false, bestMoment: false, rainSoon: false, hillsNearby: false, moonLine: false, clothingAdvice: false, completionMoment: false,
   },
   askShortNight: false,
+  journeyOnToday: 'never',
   askDoubtTest: false,
   newTestOnStops: false,
   restDayBack: false,
