@@ -17,6 +17,7 @@ Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde ui
 
 Leeg: alles van 11 november staat in de Bouwrij hieronder, die de coördinator deze week zelf bouwt.
 - Kleding en wind (eigenaar 12 november, "houdt geen rekening met wind, het was heel koud"): wind telt al mee via de gevoelstemperatuur van Open-Meteo en de regel windjack vanaf 25 km/u of stoten 40 (eigen afleiding), maar de zin toont alleen "11 graden" en de gevoelstemperatuur pas bij 4 graden verschil. De eigenaar heeft `clothingAdjust.running` op -1: twee keer Te koud, elk een halve graad (`clothingFeedback.ts`, FEEDBACK_STEP_C 0,5), wat bijna nooit een kledingstuk verschuift. Ook doen: de eerste tik een hele graad, daarna een halve, en na de tik zeggen wat er de volgende keer anders wordt; de warmtebonus van de lange duurloop (5, eigen afleiding) meenemen in de bronnencheck. Doen: wind in de zin als hij ertoe doet ("voelt als 8, wind 20 km/u"), en de windgrens toetsen aan bronnen (20 km/u?) met een korte Scout; `engine/clothing.ts`, `engine/weather.ts#weatherLine`.
+- Efficiëntie-blad op Stand (Sherpa Zone 2, 12 november): tekent de weekgemiddelden aan elkaar terwijl het cijfer "Nu, op de lijn" de regressie is, en "Je eerdere lopen met de datum" klopt niet bij weken. Dezelfde weekgrafiek als de kaart Tempo bij zone 2.
 
 ## Bouwrij deze week (coördinator, tot en met 15 november)
 
