@@ -198,9 +198,12 @@ export function weekChanges(
 
 export const ADJUST_WINDOW_DAYS = 14;
 
-// Voorstellen die het systeem zelf toepast; binnen zoveel seconden vastgelegd is "vanzelf".
+// Voorstellen die het systeem zelf kan toepassen. Ze kunnen ook een voorstel zijn waar jij Akkoord op gaf (de
+// weekcontrole uit Let op, engine/weekFixProposal.ts), en een snelle tik is niet te onderscheiden van vanzelf.
+// "Vanzelf" alleen als de app hem zelf vastlegde: hetzelfde moment van uitrekenen en vastleggen, of zonder
+// wijzigingen (state/AppDataProvider.tsx, de weekcontrole). Meer dan 10 seconden ertussen is jouw Akkoord.
 const AUTO_TRIGGERS = new Set<EngineEvent>(['weekly_prescription_computed', 'strength_program_changed', 'plan_check']);
-const AUTO_SECONDS = 10;
+const ASK_SECONDS = 10;
 const REPLAN_BY = 'engine/replanWeek.ts';
 
 export interface WeekAdjustment {
@@ -223,8 +226,9 @@ function howDecided(p: PlanChangeProposal): WeekAdjustment['how'] {
   if (!p.resolvedAt) return undefined;
   const gap = Math.abs(Date.parse(p.resolvedAt) - Date.parse(p.createdAt)) / 1000;
   if (!Number.isFinite(gap)) return undefined;
-  if (gap > AUTO_SECONDS) return 'akkoord';
-  return AUTO_TRIGGERS.has(p.trigger) ? 'vanzelf' : undefined;
+  if (gap > ASK_SECONDS) return 'akkoord';
+  const storedByApp = p.resolvedAt === p.createdAt || p.changes.length === 0;
+  return AUTO_TRIGGERS.has(p.trigger) && storedByApp ? 'vanzelf' : undefined;
 }
 
 // "Dinsdag 10 november, na jouw Akkoord" of "Dinsdag 10 november, vanzelf met een melding".

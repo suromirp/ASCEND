@@ -148,7 +148,7 @@ function metVoorstel(state) {
 }
 
 // Aangepast door ASCEND (docs/beslissingen/2026-11-12-week-minimaal.md): twee nagemaakte, aangenomen voorstellen in
-// deze week. De weekcontrole zette de Lange duurloop vanzelf van zaterdag naar zondag; een voorstel na een gemiste
+// deze week. Een voorstel van de weekcontrole zette de Lange duurloop van zaterdag naar zondag (na een snel Akkoord, dus het blad zegt alleen de datum); een voorstel na een gemiste
 // training maakte Benen A lichter, na jouw Akkoord. De rijen dragen het slot van hun voorstel, zoals na Akkoord.
 function metAanpassingen(state) {
   const rijen = winkel(state, 'plannedSessions').records;

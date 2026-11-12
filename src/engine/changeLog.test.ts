@@ -141,11 +141,19 @@ describe('Aangepast door ASCEND, de woorden', () => {
     expect(decidedLine({ at: '2026-11-10T09:00:00.000Z', how: 'akkoord' })).toBe('Dinsdag 10 november, na jouw Akkoord');
     expect(decidedLine({ at: '2026-11-10T09:00:00.000Z', how: 'vanzelf' })).toBe('Dinsdag 10 november, vanzelf met een melding');
     expect(decidedLine({ at: '2026-11-10T09:00:00.000Z' })).toBe('Dinsdag 10 november');
-    const quick = proposal([{ plannedSessionId: 'h', action: 'reduce' }], { trigger: 'plan_check', createdAt: '2026-11-10T08:00:00.000Z', resolvedAt: '2026-11-10T08:00:02.000Z' });
+    const quick = proposal([{ plannedSessionId: 'h', action: 'reduce' }], { trigger: 'plan_check', createdAt: '2026-11-10T08:00:00.000Z', resolvedAt: '2026-11-10T08:00:00.000Z' });
     const asked = proposal([{ plannedSessionId: 'i', action: 'reduce' }], { trigger: 'session_skipped', createdAt: '2026-11-10T08:00:00.000Z', resolvedAt: '2026-11-10T08:01:00.000Z' });
     const unsure = proposal([{ plannedSessionId: 'j', action: 'reduce' }], { trigger: 'session_skipped', createdAt: '2026-11-10T08:00:00.000Z', resolvedAt: '2026-11-10T08:00:03.000Z' });
     const out = weekAdjustments([quick, asked, unsure], [ps('h', 'hills', '2026-11-13'), ps('i', 'tempo', '2026-11-13'), ps('j', 'long', '2026-11-13')], templates, WEEK, TODAY);
     expect(Object.fromEntries(out.map((a) => [a.sessionId, a.how]))).toEqual({ h: 'vanzelf', i: 'akkoord', j: undefined });
+  });
+
+  it('een weekcontrole waar je binnen 3 seconden Akkoord op gaf heet niet "vanzelf": alleen de datum', () => {
+    const tapped = proposal([{ plannedSessionId: 'h', action: 'move', fromDate: '2026-11-13', toDate: '2026-11-14' }], { trigger: 'plan_check', createdAt: '2026-11-10T08:00:00.000Z', resolvedAt: '2026-11-10T08:00:03.000Z' });
+    const strength = proposal([{ plannedSessionId: 'a', action: 'reduce' }], { trigger: 'strength_program_changed', createdAt: '2026-11-10T08:00:00.000Z', resolvedAt: '2026-11-10T08:00:03.000Z' });
+    const out = weekAdjustments([tapped, strength], [ps('h', 'hills', '2026-11-14', { status: 'moved', lock: lockOf(tapped) }), ps('a', 'tempo', '2026-11-12', { lock: lockOf(strength) })], templates, WEEK, TODAY);
+    expect(out.map((a) => [a.sessionId, a.how])).toEqual([['a', undefined], ['h', undefined]]);
+    expect(decidedLine(out[1])).toBe('Dinsdag 10 november');
   });
 
   it('de tweede regel van de rij telt trainingen', () => {
