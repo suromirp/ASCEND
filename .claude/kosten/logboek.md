@@ -439,3 +439,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Warden Hoogtemeters (reviewer, fable) 98k, 13 min, akkoord met 4 moet (runComparison, grenzen onder Open, test composeSimple, valkuil)
 - 2026-11-12, Sherpa Route-blok (opus, ca. $10,7, 1 herstelronde) op main 7fa66cc
 - 2026-11-12, Warden Briefing (reviewer, fable) 109k, 6 min, akkoord met 3 moet (volgorde inkorting, getallen in besluit, horloge-zin); Pathfinder Briefing (sonnet) 47k, geen moet
+- 2026-11-12, Lookout Week 2-4 (tester, sonnet) 50k, 10 min, groen maar standen zonder Let op/voorstel; Warden Week 2-4 (sonnet) 70k, akkoord; Pathfinder Week 2-4 (sonnet) 37k, 2 moet
