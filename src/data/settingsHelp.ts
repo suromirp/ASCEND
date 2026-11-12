@@ -1106,8 +1106,8 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Vragen als je week te vol wordt',
     lead: 'Viel er in je week een dag weg en is de rest te vol, dan vraagt ASCEND welke training mag vervallen.',
     points: [
-      { head: 'Wanneer', text: 'na een gemiste of naar later gezette training, bij twee dagen met twee trainingen, vier loopdagen op rij of drie zware dagen achter elkaar.' },
-      { head: 'Het advies', text: 'eerst wat ASCEND er zelf als extra bij zette, dan wat het minst telt voor je doel. Nooit een test, een wedstrijd, je sleuteltraining of wat je zelf neerzette.' },
+      { head: 'Wanneer', text: 'na een gemiste of naar later gezette training, bij twee dagen met twee trainingen, twee trainingen meer dan dagen, vier loopdagen op rij, drie zware dagen achter elkaar, of meer trainingen dan dagen terwijl de weekcontrole iets vindt.' },
+      { head: 'Het advies', text: 'eerst de extra training die je via een voorstel kreeg, dan wat het minst telt voor je doel. Nooit een test, een wedstrijd, je sleuteltraining of wat je zelf neerzette.' },
       { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet blijft je week staan en zegt Week dat hij vol is. Uit: geen vraag, alleen die regel in Week.' },
     ],
   },

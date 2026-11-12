@@ -560,6 +560,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const weekBusy = restChanges.some((c) => [c.fromDate, c.toDate, c.newSessionDraft?.scheduledDate].some((d) => !!d && mondayOfWeek(d) === thisWeek) || (!!c.plannedSessionId && weekSessionIds.has(c.plannedSessionId)));
   const fullWeekNow = inputs.noRetry || weekBusy ? [] : fullWeekAdvice({
     today: inputs.asOf, sessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, leave: inputs.leave, keyFocus: inputs.keyFocus,
+    illnessEpisodes: inputs.illnessEpisodes, removedByPlanIds: inputs.removedByPlanIds,
     check: { restDay: inputs.restDay ?? inputs.extraSession?.restDay, program: inputs.program, dailyTimeBudget: inputs.dailyTimeBudget, sameDayPairingPreference: inputs.sameDayPairingPreference },
     respondedIds: inputs.respondedIds, ask: resolveFullWeekAsk(inputs.fullWeekAsk),
   });

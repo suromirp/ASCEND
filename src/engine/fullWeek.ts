@@ -24,6 +24,9 @@ import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { addDays, formatWeekdayDateNL, mondayOfWeek, weekDates } from '../utils/dates';
 import { makeId } from '../utils/id';
+import { isDone } from './adviceShared';
+import type { IllnessEpisode } from '../models/illness';
+import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
 import { isKeyFor, type KeyFocus } from './keySession';
 import { leaveDays } from './leave';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
@@ -40,7 +43,6 @@ export const RUN_STREAK_LIMIT = 4;
 export const HEAVY_STREAK_LIMIT = 3;
 // Wat de weekcontrole al kent en wat over drukte gaat. Met meer trainingen dan dagen telt elk van deze mee.
 const CROWD_RULES: readonly CheckRule[] = ['TWO-HARD-RUNS', 'DAY-FULL', 'LEG-SPACING', 'HARD-DAYS'];
-const STAIRS_ID = 'tpl_stairs_down';
 
 // Per week, zodat Liever niet voor die week blijft gelden.
 export const fullWeekId = (anyDay: string) => `week-full:${mondayOfWeek(anyDay)}`;
@@ -55,6 +57,10 @@ export interface FullWeekInput {
   templates: readonly SessionTemplate[];
   leave?: LeavePeriod[];
   keyFocus?: KeyFocus;
+  // Ziektedagen zijn geen verlies; ziek of net beter zwijgt de regel (engine/illness.ts).
+  illnessEpisodes?: IllnessEpisode[];
+  // Rijen die een geaccepteerd voorstel van ASCEND liet vervallen: geen verlies van jou.
+  removedByPlanIds?: ReadonlySet<string>;
   // Wat de weekcontrole verder nodig heeft (rustdag, tijd per dag, twee trainingen op een dag).
   check?: Partial<Omit<CheckInput, 'sessions' | 'logs' | 'templates' | 'today'>>;
 }
@@ -77,25 +83,34 @@ function contextOf(input: FullWeekInput) {
   // Een wandeldag van je tocht is de tocht zelf, geen training van de week.
   const trekWalk = (s: PlannedSession) => days.get(s.scheduledDate)?.kind === 'trek' && tpl(s)?.type === 'hiking';
   const trains = (s: PlannedSession) => { const t = tpl(s); return !!t && t.type !== 'recovery' && !trekWalk(s); };
-  return { byId, logged, monday, sunday, days, tpl, trains };
+  // Gedaan zoals overal in de adviezen: een eigen log, of dezelfde training los gelogd binnen twee dagen.
+  const logs = [...input.logs];
+  const done = (s: PlannedSession) => isDone(s, logs, logged);
+  return { byId, logged, monday, sunday, days, tpl, trains, done };
 }
 
-// Wat de week van vandaag al verloor: een training van een dag die voorbij is zonder log (gemist of
-// overgeslagen), of een training die jij of een voorstel van een dag van deze week naar later zette.
-// Een herstelwandeling telt niet, een training die ASCEND voor Minder wegliet ook niet.
+// Wat de week van vandaag al verloor:
+// - gemist: een training op een dag die voorbij is en niet gedaan (ook een die je zelf oversloeg);
+// - naar later: een training die jij of een voorstel van een voorbije dag van deze week naar later zette,
+//   als die dag daarna leeg bleef (een ruil van twee dagen is geen verlies).
+// Geen verlies: een herstelwandeling, wat ASCEND zelf wegliet of verving (Minder, zonder sportschool, een
+// geaccepteerd voorstel), en een vakantie-, tocht- of ziektedag.
 export function weekLoss(input: FullWeekInput): WeekLoss[] {
   const ctx = contextOf(input);
   const { monday, sunday } = ctx;
+  const { today } = input;
   const out: WeekLoss[] = [];
   const nameOf = (s: PlannedSession) => ctx.tpl(s)?.name ?? 'Training';
+  const away = (d: string) => { const kind = ctx.days.get(d)?.kind; return kind === 'off' || kind === 'trek' || isIllnessDay(d, input.illnessEpisodes, today); };
+  const inWeek = (d: string) => d >= monday && d <= sunday;
+  const usedDay = (d: string, except: string) => input.sessions.some((o) => o.id !== except && o.status !== 'skipped' && o.scheduledDate === d && ctx.trains(o))
+    || input.logs.some((l) => l.completedDate === d && l.type !== 'recovery');
   for (const s of input.sessions) {
-    if (!ctx.trains(s) || s.amount?.change === 'left_out') continue;
-    const inWeek = s.scheduledDate >= monday && s.scheduledDate <= sunday;
-    // Een losse log van dezelfde training op die dag staat in voor de geplande rij.
-    const done = ctx.logged.has(s.id) || input.logs.some((l) => l.completedDate === s.scheduledDate && l.templateId === s.templateId);
-    if (inWeek && s.scheduledDate < input.today && !done) out.push({ date: s.scheduledDate, name: nameOf(s), how: 'missed' });
     const from = s.movedFromDate;
-    if (from && s.lock && s.status !== 'skipped' && from >= monday && from <= sunday && s.scheduledDate > from) out.push({ date: from, name: nameOf(s), how: 'moved' });
+    if (!inWeek(s.scheduledDate) && !(from && inWeek(from))) continue;
+    if (!ctx.trains(s) || s.amount?.change === 'left_out' || s.leave?.role === 'dropped' || input.removedByPlanIds?.has(s.id)) continue;
+    if (inWeek(s.scheduledDate) && s.scheduledDate < today && !away(s.scheduledDate) && !ctx.done(s)) out.push({ date: s.scheduledDate, name: nameOf(s), how: 'missed' });
+    if (from && s.lock && s.status !== 'skipped' && inWeek(from) && from < today && s.scheduledDate > from && !away(from) && !usedDay(from, s.id)) out.push({ date: from, name: nameOf(s), how: 'moved' });
   }
   return out.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
 }
@@ -134,7 +149,7 @@ export function weekShape(input: FullWeekInput, sessions: readonly PlannedSessio
   const ctx = contextOf({ ...input, sessions });
   const { monday, sunday, byId } = ctx;
   const { today } = input;
-  const open = sessions.filter((s) => s.status !== 'skipped' && !ctx.logged.has(s.id) && s.scheduledDate >= today && s.scheduledDate <= sunday && ctx.trains(s));
+  const open = sessions.filter((s) => s.status !== 'skipped' && !ctx.done(s) && s.scheduledDate >= today && s.scheduledDate <= sunday && ctx.trains(s));
   const logsOn = (day: string) => input.logs.filter((l) => l.completedDate === day && l.type !== 'recovery');
   const week = weekDates(monday);
   const left = week.filter((d) => d >= today);
@@ -220,11 +235,13 @@ const REASON: Record<Tier, string> = {
   0: 'Die kwam er als extra bij. Je vaste trainingen blijven staan.',
   1: 'Een rustige loop kost je doel het minst.',
   2: 'Die telt deze week het minst voor je doel.',
-  3: 'De lichtere trainingen zette je zelf neer. Dit is de zwaarste dag die niet je sleuteltraining is.',
+  3: 'Dat is een zware training, maar niet je sleuteltraining.',
 };
 
 function tierOf(s: PlannedSession, t: SessionTemplate): Tier {
-  if (hasRole(t, 'extra') || t.id === STAIRS_ID || s.amount?.change === 'extra') return 0;
+  // Erbij gekomen leid je af uit het voorstel dat hem neerzette, niet uit de rol alleen: de rol `extra` staat ook
+  // op de zaterdagloop van het raceblok en op de herstelloop van een golfweek.
+  if ((hasRole(t, 'extra') && s.lock?.by === 'proposal' && !s.blockQuiet && !s.raceBlock) || s.amount?.change === 'extra') return 0;
   if (isHardRun(t) || isLegHeavyTemplate(t) || hasRole(t, 'long')) return 3;
   return templateSport(t) === 'running' ? 1 : 2;
 }
@@ -235,10 +252,10 @@ const isYours = (s: PlannedSession) => s.lock?.by === 'user' || (s.status === 'm
 function candidates(input: FullWeekInput, ctx: Ctx, pick: (s: PlannedSession) => boolean, taken: ReadonlySet<string>): Candidate[] {
   const before = weight(weekShape(input));
   return input.sessions
-    .filter((s) => s.status !== 'skipped' && !ctx.logged.has(s.id) && s.scheduledDate >= input.today && s.scheduledDate <= ctx.sunday && ctx.trains(s) && !taken.has(s.id) && pick(s))
+    .filter((s) => s.status !== 'skipped' && !ctx.done(s) && s.scheduledDate >= input.today && s.scheduledDate <= ctx.sunday && ctx.trains(s) && !taken.has(s.id) && pick(s))
     .map((s) => ({ session: s, template: ctx.tpl(s)! }))
-    // Nooit een test, een wedstrijd of je sleuteltraining.
-    .filter(({ template }) => !isTestOrRace(template) && !isKeyFor(template, input.keyFocus))
+    // Nooit een test, een wedstrijd of je sleuteltraining, en niets wat het raceblok voor je wedstrijd neerzette.
+    .filter(({ session, template }) => !isTestOrRace(template) && !isKeyFor(template, input.keyFocus) && !session.blockQuiet && !session.raceBlock)
     .map(({ session, template }): Candidate => ({ session, template, tier: tierOf(session, template), after: weekShape(input, input.sessions.filter((o) => o.id !== session.id)) }))
     // Alleen wat de week ook rustiger maakt.
     .filter((c) => weight(c.after) < before)
@@ -249,11 +266,15 @@ function candidates(input: FullWeekInput, ctx: Ctx, pick: (s: PlannedSession) =>
 const lower = (text: string) => `${text.charAt(0).toLowerCase()}${text.slice(1)}`;
 
 function lostText(lost: WeekLoss[]): string {
-  const days = new Set(lost.map((l) => l.date)).size;
-  return days === 1 ? 'Er viel deze week al een dag weg.' : `Er vielen deze week al ${days} dagen weg.`;
+  const missed = new Set(lost.filter((l) => l.how === 'missed').map((l) => l.date)).size;
+  const moved = lost.filter((l) => l.how === 'moved').length;
+  const parts: string[] = [];
+  if (missed > 0) parts.push(missed === 1 ? 'Er viel deze week al een dag weg.' : `Er vielen deze week al ${missed} dagen weg.`);
+  if (moved > 0) parts.push(moved === 1 ? 'Je zette deze week al een training naar later.' : `Je zette deze week al ${moved} trainingen naar later.`);
+  return parts.join(' ');
 }
 
-const WHY = 'ASCEND kijkt hiernaar zodra er in je week een training wegviel of naar later ging. Vol is: twee dagen met twee trainingen, vier loopdagen op rij, drie zware dagen achter elkaar, of meer trainingen dan dagen terwijl de weekcontrole ook iets vindt. Het advies kiest eerst wat ASCEND er zelf als extra bij zette, dan wat het minst telt voor je doel. Een test, een wedstrijd, je sleuteltraining en wat je zelf neerzette staan nooit in het advies. Eerst een voorstel, pas na Akkoord verandert er iets.';
+const WHY = 'ASCEND kijkt hiernaar zodra er in je week een training wegviel of naar later ging. Vol is: twee dagen met twee trainingen, twee trainingen meer dan er dagen over zijn, vier loopdagen op rij, drie zware dagen achter elkaar, of meer trainingen dan dagen terwijl de weekcontrole ook iets vindt. Het advies kiest eerst de extra training die je via een voorstel kreeg, dan wat het minst telt voor je doel. Een test, een wedstrijd, je sleuteltraining en wat je zelf neerzette staan nooit in het advies. Eerst een voorstel, pas na Akkoord verandert er iets.';
 
 function dropProposal(c: Candidate, title: string, consequences: string): PlanChangeProposal {
   const item: PlanChangeItem = {
@@ -277,6 +298,8 @@ export function fullWeekAdvice(input: FullWeekAdviceInput): Advice[] {
   if (!input.ask) return [];
   const id = fullWeekId(input.today);
   if (input.respondedIds.has(id)) return [];
+  // Ziek of net beter: eerst herstellen, dan pas de vraag over de week.
+  if (activeIllness(input.illnessEpisodes) || recoveryRamp(input.illnessEpisodes, input.today)) return [];
   const state = fullWeek(input);
   if (!state) return [];
   const ctx = contextOf(input);
@@ -290,18 +313,23 @@ export function fullWeekAdvice(input: FullWeekAdviceInput): Advice[] {
   const list = candidates(input, ctx, (s) => !isYours(s), taken);
   if (list.length === 0) {
     const own = candidates(input, ctx, isYours, taken).filter((c) => !c.session.fixed)[0];
-    const tip = own ? ` Wil je lucht, dan kost ${lower(own.template.name)} op ${formatWeekdayDateNL(own.session.scheduledDate)} je doel het minst. Overslaan doe je zelf in Week.` : ' Wil je lucht, dan sla je zelf een training over in Week.';
+    const tip = own ? ` Wil je lucht, dan ${own.tier === 3 ? `komt ${lower(own.template.name)} op ${formatWeekdayDateNL(own.session.scheduledDate)} als eerste in aanmerking` : `kost ${lower(own.template.name)} op ${formatWeekdayDateNL(own.session.scheduledDate)} je doel het minst`}. Overslaan doe je zelf in Week.` : ' Wil je lucht, dan sla je zelf een training over in Week.';
     return [{ ...base, effect: `${lead} ASCEND raadt niets aan om te laten vallen: wat er nog staat zette je zelf neer, is je sleuteltraining of een test, of maakt je week niet rustiger als het vervalt.${tip}` }];
   }
+  const QUIET = 'Met Liever niet blijft je week zoals hij is en vraagt ASCEND het deze week niet meer.';
+  const afterOf = (c: Candidate) => (c.after.full ? `Ook daarna is je week vol: ${shapeText(c.after)}.` : `Dan staan er nog ${shapeText(c.after)}.`);
   const build = (c: Candidate, index: number): AdviceOption => {
     const when = formatWeekdayDateNL(c.session.scheduledDate);
-    const after = c.after.full ? `Ook daarna is je week vol: ${shapeText(c.after)}.` : `Dan staan er nog ${shapeText(c.after)}.`;
+    const after = afterOf(c);
     const consequences = `${c.template.name} van ${when} vervalt. ${after}`;
-    const effect = `${lead} ${index === 0 ? 'Advies' : 'Het alternatief'}: laat ${lower(c.template.name)} van ${when} vallen. ${REASON[c.tier]} ${after} Met Liever niet blijft je week zoals hij is en vraagt ASCEND het deze week niet meer.`;
+    const effect = `${lead} ${index === 0 ? 'Advies' : 'Het alternatief'}: laat ${lower(c.template.name)} van ${when} vallen. ${REASON[c.tier]} ${after} ${QUIET}`;
     return { label: `${c.template.name} van ${when} vervalt`, effect, proposal: dropProposal(c, title, consequences) };
   };
   const built = list.slice(0, 2).map(build);
-  return [{ ...base, effect: built[0].effect, proposal: built[0].proposal, options: built.length > 1 ? built : undefined, firstOptionNote: 'het advies' }];
+  // Het blad toont met een voorstel de feitregel, de wijzigingen en de tip: daar staan het advies en de reden.
+  const best = list[0];
+  const tip = `Advies: ${lower(best.template.name)} van ${formatWeekdayDateNL(best.session.scheduledDate)}. ${REASON[best.tier]} ${afterOf(best)} ${QUIET}`;
+  return [{ ...base, tip, effect: built[0].effect, proposal: built[0].proposal, options: built.length > 1 ? built : undefined, firstOptionNote: 'het advies' }];
 }
 
 // De gewone regel op Week: de week is vol. Staat het voorstel nog open op Vandaag ('open'), dan verwijst hij

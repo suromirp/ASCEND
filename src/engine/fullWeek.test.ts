@@ -89,14 +89,17 @@ describe('WEEK-FULL: de nagemaakte week', () => {
     expect(advice.ruleId).toBe(FULL_WEEK_RULE);
     expect(advice.proposal!.changes).toEqual([expect.objectContaining({ plannedSessionId: 'tpl_strides_run@4', action: 'remove' })]);
     expect(advice.effect).toBe(
-      'Er viel deze week al een dag weg. Tot en met zondag staan er nog 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij. '
+      'Je zette deze week al een training naar later. Tot en met zondag staan er nog 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij. '
       + 'Advies: laat duurloop met versnellingen van vr 6 november vallen. Die kwam er als extra bij. Je vaste trainingen blijven staan. '
       + 'Dan staan er nog 5 trainingen in 4 dagen en 1 dag met twee trainingen. '
       + 'Met Liever niet blijft je week zoals hij is en vraagt ASCEND het deze week niet meer.',
     );
+    // Het blad toont de feitregel, de wijziging en de tip: het advies en de reden staan in de tip.
+    expect(advice.lead).toBe('Je zette deze week al een training naar later. Tot en met zondag staan er nog 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij.');
+    expect(advice.tip).toBe('Advies: duurloop met versnellingen van vr 6 november. Die kwam er als extra bij. Je vaste trainingen blijven staan. Dan staan er nog 5 trainingen in 4 dagen en 1 dag met twee trainingen. Met Liever niet blijft je week zoals hij is en vraagt ASCEND het deze week niet meer.');
     // Het alternatief: de rustige loop, het minst belangrijke na de extra.
     expect(advice.options!.map((o) => o.proposal.changes[0].plannedSessionId)).toEqual(['tpl_strides_run@4', 'tpl_easy_run@3']);
-    expect(advice.effect).not.toMatch(/[–—]/);
+    expect(advice.effect).not.toMatch(/[\u2013\u2014]/);
   });
 
   it('Akkoord laat de rij staan als overgeslagen; niets verdwijnt en de logs blijven', () => {
@@ -174,6 +177,56 @@ describe('WEEK-FULL: wat nooit in het advies staat', () => {
   });
 });
 
+describe('WEEK-FULL: wat verlies is en wat erbij kwam (review van 12 november)', () => {
+  it('de rol extra alleen is niet genoeg: de zaterdagloop van het raceblok is geen extra', () => {
+    const { sessions, logs } = crammed();
+    // Dezelfde loop met versnellingen, maar door het raceblok neergezet in plaats van via een voorstel.
+    const block = sessions.map((s) => (s.id === 'tpl_strides_run@4' ? { ...s, lock: undefined, blockQuiet: true as const } : s));
+    const [advice] = fullWeekAdvice(input(THU, block, logs));
+    expect(advice.tip).not.toContain('kwam er als extra bij');
+    expect(advice.proposal!.changes[0].plannedSessionId).toBe('tpl_easy_run@3');
+  });
+
+  it('een losse log binnen twee dagen telt als gedaan: geen verlies, en de gelopen loop staat niet in het advies', () => {
+    const upper = row('tpl_upper_a', 1);
+    const loose: SessionLog = { ...logOf(upper), plannedSessionId: undefined, completedDate: day(2) };
+    expect(weekLoss(input(THU, standard(), [loose, logOf(row('tpl_lower_a', 2))]))).toEqual([]);
+    // Vandaag los gelogd: de rij van vandaag is gedaan en telt niet dubbel.
+    const { sessions, logs } = crammed();
+    const ran: SessionLog = { ...logOf(row('tpl_easy_run', 3)), plannedSessionId: undefined };
+    const inp = input(THU, sessions, [...logs, ran]);
+    expect(weekShape(inp).doubles).toEqual([day(4), day(6)]);
+    const touched = fullWeekAdvice(inp).flatMap((a) => [a.proposal, ...(a.options ?? []).map((o) => o.proposal)]).flatMap((p) => p?.changes.map((c) => c.plannedSessionId) ?? []);
+    expect(touched).not.toContain('tpl_easy_run@3');
+  });
+
+  it('een ruil binnen de week is geen verlies: de dag van herkomst is weer bezet', () => {
+    const base = standard().map((s) => (s.scheduledDate < day(4) && s.templateId !== 'tpl_herstel' ? s : s));
+    const swapped = base.map((s) => (s.id === 'tpl_upper_a@1' ? { ...s, scheduledDate: day(4), status: 'moved' as const, movedFromDate: day(1), ...byProposal }
+      : s.id === 'tpl_upper_b@4' ? { ...s, scheduledDate: day(1), status: 'moved' as const, movedFromDate: day(4), ...byProposal } : s));
+    const logs = swapped.filter((s) => s.scheduledDate < THU && s.templateId !== 'tpl_herstel').map(logOf);
+    expect(weekLoss(input(THU, swapped, logs))).toEqual([]);
+  });
+
+  it('wat ASCEND zelf wegliet of verving, en een vakantie- of ziektedag, is geen verlies', () => {
+    const logs = [logOf(row('tpl_lower_a', 2))];
+    const dropped = standard().map((s) => (s.id === 'tpl_upper_a@1' ? { ...s, status: 'skipped' as const, leave: { periodId: 'lv', role: 'dropped' } as PlannedSession['leave'] } : s));
+    expect(weekLoss(input(THU, dropped, logs))).toEqual([]);
+    expect(weekLoss(input(THU, standard(), logs, { removedByPlanIds: new Set(['tpl_upper_a@1']) }))).toEqual([]);
+    const off: LeavePeriod[] = [{ id: 'off', kind: 'no_training', startDate: day(1), endDate: day(1) } as LeavePeriod];
+    expect(weekLoss(input(THU, standard(), logs, { leave: off }))).toEqual([]);
+    expect(weekLoss(input(THU, standard(), logs, { illnessEpisodes: [{ id: 'i', startDate: day(0), endDate: day(1) }] as FullWeekAdviceInput['illnessEpisodes'] }))).toEqual([]);
+    // Zonder die redenen is dezelfde dinsdag wel verlies.
+    expect(weekLoss(input(THU, standard(), logs)).map((l) => l.how)).toEqual(['missed']);
+  });
+
+  it('ziek gemeld: de regel zwijgt', () => {
+    const { sessions, logs } = crammed();
+    const ill = [{ id: 'i', startDate: day(3) }] as FullWeekAdviceInput['illnessEpisodes'];
+    expect(fullWeekAdvice(input(THU, sessions, logs, { illnessEpisodes: ill }))).toEqual([]);
+  });
+});
+
 describe('WEEK-FULL: randen van de week', () => {
   it('een vrije periode die overlapt: een vakantiedag telt niet als dag die over is', () => {
     const { sessions, logs } = crammed();
@@ -209,8 +262,8 @@ describe('WEEK-FULL: randen van de week', () => {
     const inp = input(nextMon, all);
     expect(weekLoss(inp)).toEqual([]);
     expect(fullWeekAdvice(inp)).toEqual([]);
-    // Op zondag zelf telt die verplaatsing wel als verlies van de oude week.
-    expect(weekLoss(input(day(6), all)).some((l) => l.how === 'moved' && l.date === day(6))).toBe(true);
+    // Op zondag zelf is die dag nog niet voorbij: ook dan geen verlies door de verplaatsing.
+    expect(weekLoss(input(day(6), all)).some((l) => l.how === 'moved')).toBe(false);
   });
 });
 

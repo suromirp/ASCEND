@@ -274,7 +274,7 @@ export function proposeExtraSession(inputs: ExtraAdviceInputs): ExtraProposal | 
     if (!date) continue;
     // Een week die al een training verloor en waar de rest vol is of er vol van wordt: geen extra erbij
     // (engine/fullWeek.ts, docs/beslissingen/2026-11-12-week-na-gemiste-dagen.md).
-    if (fullWithExtra({ today, sessions: plannedSessions, logs: inputs.logs, templates, leave: inputs.leave, keyFocus: inputs.keyFocus, check: { restDay, program } }, { templateId: template.id, date })) continue;
+    if (fullWithExtra({ today, sessions: plannedSessions, logs: inputs.logs, templates, leave: inputs.leave, keyFocus: inputs.keyFocus, illnessEpisodes: inputs.illnessEpisodes, check: { restDay, program } }, { templateId: template.id, date })) continue;
     return { id, weekStart, date, choice, earnedReason: verdict.reason };
   }
   return undefined;

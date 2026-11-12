@@ -205,12 +205,13 @@ export function useAdviceAndWeek(deps: {
     const id = fullWeekId(today);
     const status = adviceResponses[id]?.response === 'declined' ? 'declined' as const : advice.some((a) => a.id === id && !!a.proposal) ? 'open' as const : undefined;
     const line = fullWeekLine({
-      today, sessions: plannedSessions, logs: sessionLogs, templates, leave: settings.leavePeriods,
+      today, sessions: plannedSessions, logs: sessionLogs, templates, leave: settings.leavePeriods, illnessEpisodes: settings.illnessEpisodes,
+      removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
       keyFocus: keyFocusOf(trainingGoals, goalMilestones, today, { direction: settings.direction }),
       check: { restDay: settings.restDay ?? 1, program, dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference },
     }, weekStart, status);
     return line ? { ...n, plain: [line] } : n;
-  }, [adviceResponses, advice, plannedSessions, sessionLogs, templates, settings.leavePeriods, settings.direction, settings.restDay, trainingGoals, goalMilestones, program, goalEngineConfig]);
+  }, [adviceResponses, advice, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, settings.direction, settings.restDay, trainingGoals, goalMilestones, program, goalEngineConfig]);
   const weekNoticeState = useCallback((): NonNullable<typeof weekNoticeCache.current> => {
     const key = [weekCheckInput, advice, keptNotice, withFullWeek];
     if (!weekNoticeCache.current || weekNoticeCache.current.key.some((v, i) => v !== key[i])) weekNoticeCache.current = { key, quick: new Map(), full: new Map() };
