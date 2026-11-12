@@ -26,9 +26,23 @@ export function describeStorageError(err: unknown): string {
   return 'ASCEND kan op deze telefoon geen gegevens opslaan. Gebruik je een privévenster of is opslag voor deze site geblokkeerd? Open de app dan in een normaal venster.';
 }
 
+// Een log is geschreven, maar een stap erna faalde (mijlpalen, opnieuw lezen, het moment na Gedaan).
+// De melding zegt dan nooit dat er niets bewaard is (besluit 2026-11-12-dubbel-log.md).
+export const LOG_STORED_FOLLOW_UP_FAILED = 'Je training is opgeslagen. Het bijwerken daarna lukte niet; open ASCEND opnieuw als je hem niet ziet staan.';
+
+export class LogStoredFollowUpFailed extends Error {
+  readonly cause: unknown;
+  constructor(cause: unknown) {
+    super('Het log is geschreven; een stap erna faalde.');
+    this.name = 'LogStoredFollowUpFailed';
+    this.cause = cause;
+  }
+}
+
 // Tijdens het gebruik: een opslaan dat niet lukte (de melding bovenin).
 export function describeWriteError(err: unknown): string {
   const name = errorName(err);
+  if (name === 'LogStoredFollowUpFailed') return LOG_STORED_FOLLOW_UP_FAILED;
   if (name === 'QuotaExceededError') return 'Opslaan lukt niet: de opslag op deze telefoon is vol. Maak een back-up en ruim ruimte op.';
   if (name === 'AbortError') return ABORTED_WHILE_SAVING;
   return 'Opslaan is niet gelukt. Probeer het opnieuw; lukt het niet, maak dan een back-up via Instellingen, Gegevens en back-up.';
