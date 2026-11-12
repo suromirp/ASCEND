@@ -7,10 +7,10 @@ import { validWeekStart } from '../utils/pageMemory';
 import { useBackToClose } from '../utils/useBackToClose';
 import { scrollMainToTop } from '../utils/scrollMain';
 import { buildWeekReview } from '../engine/weekReview';
-import { weekPageHeading } from '../engine/weekLabel';
+import { weekHeading } from '../engine/weekLabel';
 import { dayLoads, weekProgress } from '../engine/weekProfile';
 import { plannedByIdOf } from '../engine/logDay';
-import { leftOutOfCount, looseLogsOfWeek, weekLogsOf, weekTime } from '../engine/weekLogs';
+import { leftOutOfCount, looseLogsOfWeek, weekTime } from '../engine/weekLogs';
 import { WeekRidge } from '../components/WeekRidge';
 import { WeekReviewSheet } from '../components/WeekReview';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
@@ -21,11 +21,15 @@ import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, Subje
 import { WeekPlanner } from '../components/WeekPlanner';
 import { useWeekDrag } from '../components/useWeekDrag';
 import { WeekNotice } from '../components/WeekNotice';
-import { WeekReplanButton } from '../components/WeekReplanButton';
+import { WeekReplanRow } from '../components/WeekReplanRow';
+import { WeekProposalRow } from '../components/WeekProposalRow';
+import { SheetRow, SheetRows } from '../components/SheetRows';
+import { TextButton } from '../components/TextButton';
+import { SEASON_ROW, weekBox, weekSkyLine, weekSoFarRow } from '../engine/weekList';
 import { rowNotes } from '../engine/weekConcerns';
 import { allowedPairs } from '../engine/allowedPair';
 import { WeekAdjustmentsRow } from '../components/WeekAdjustments';
-import { LeavePeriodsCard } from '../components/LeavePeriods';
+import { LeavePeriodsRow } from '../components/LeavePeriods';
 import { adjustedIdsOf, weekAdjustments } from '../engine/changeLog';
 import { placeReason } from '../engine/placeReason';
 import { patternDays } from '../engine/planPass';
@@ -34,11 +38,10 @@ import { useSeasonHeader } from '../components/useSeasonHeader';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
-import { Card, Eyebrow, Num, Ring, SecondaryButton, Stat } from '../components/ui';
+import { Card, Eyebrow, Num } from '../components/ui';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
 import { LogDetailSheet } from '../components/LogDetailSheet';
-import { formatNumberNL } from '../utils/number';
-import { WeekLoadCards } from '../components/WeekLoadCards';
+import { WeekLoadRow } from '../components/WeekLoadCards';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { catchUpEligibility, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { dragHandlesShown } from '../components/weekDragShown';
@@ -50,7 +53,6 @@ import { REST_BACK_RULE } from '../engine/restDayBack';
 import { descentRowNotes } from '../engine/descentClock';
 import { SkyBand } from '../components/SkyBand';
 import { Icon } from '../components/icons';
-import { hoursMinutes } from '../utils/hoursMinutes';
 
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 // Wat de melding zegt als een ruil of verplaatsing niet weggeschreven kon worden.
@@ -112,7 +114,7 @@ export function WeekPage() {
   // training included) of that plus what is still open at its planned length. A
   // skipped training and a rest day count not at all (engine/weekLogs.ts#weekTime).
   const plannedById = useMemo(() => plannedByIdOf(plannedSessions), [plannedSessions]);
-  const { doneMinutes, totalMinutes: totalWeekMinutes } = weekTime(sessions, sessionLogs, templateById, weekStart, (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program), plannedById);
+  const { doneMinutes } = weekTime(sessions, sessionLogs, templateById, weekStart, (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program), plannedById);
   // Done without a plan: a row on their day (WeekPlanner), not in the count of planned trainings.
   const looseLogs = useMemo(() => looseLogsOfWeek(sessionLogs, plannedSessions, weekStart), [sessionLogs, plannedSessions, weekStart]);
 
@@ -126,12 +128,13 @@ export function WeekPage() {
     };
   }, [weekStart, plannedSessions, sessionLogs, templates, today, program]);
   const progress = weekProgress(sessions, sessionLogs, templateById, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate));
-  // Wat er deze week al gedaan is: kilometers en stijgen uit dezelfde logs als de tijd.
-  const weekLogs = weekLogsOf(sessionLogs, templateById, weekStart, plannedById);
-  const weekKm = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.distanceKm ?? 0), 0);
-  const weekGain = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.elevationGainM ?? 0), 0);
   const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings), keyFocus }) : null;
-  const heading = weekPageHeading(position);
+  const heading = weekHeading(position);
+  // Een week zonder trainingen zegt dat in de lucht; de rijen over je week zijn er dan niet.
+  const trainings = sessions.filter((s) => templateById.get(s.templateId)?.type !== 'recovery').length;
+  const current = weekStart === mondayOfWeek(today);
+  // Het ene vak boven de dagen en wat als rij Voorstel wacht (engine/weekList.ts#weekBox).
+  const { box, waiting } = weekBox({ notice: notice.concerns.length > 0, rest: restCard, extra: extraAdvice });
   // Aangepast door ASCEND: één uitkomst voor de rij, het blad en het woord op de dagrij (engine/changeLog.ts).
   const adjustments = useMemo(() => weekAdjustments(planChangeLog, plannedSessions, templates, weekStart, today), [planChangeLog, plannedSessions, templates, weekStart, today]);
   const adjustedIds = useMemo(() => adjustedIdsOf(adjustments), [adjustments]);
@@ -226,6 +229,20 @@ export function WeekPage() {
     },
   });
 
+  // Een kaart met een of meer adviezen voor het vak (Rustdag of Extra training), zonder contourlijnen.
+  const adviceCard = (eyebrow: string, list: typeof restCard) => (
+    <Card className="flex flex-col gap-3">
+      <Eyebrow>{eyebrow}</Eyebrow>
+      {list.map((a) => (
+        <div key={a.id}>
+          <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{a.title}</p>
+          <AdviceItem advice={a} compact />
+        </div>
+      ))}
+    </Card>
+  );
+  const skyLine = weekSkyLine(heading.line, trainings);
+
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-6">
       {/* Vorige en volgende week staan rechtsboven direct links van het tandwiel: dezelfde
@@ -246,11 +263,15 @@ export function WeekPage() {
                 </div>
               </div>
             ) : (
-              <h1 className="font-display text-[32px] leading-tight" style={{ color: 'var(--color-ink)' }}>
-                {heading.title}{heading.number !== undefined && <> <Num>{heading.number}</Num></>}
-                {/* De kleine regel met de fase voorop staat onder het grote getal, zodat hij nooit midden in breekt. */}
-                {heading.line && <>{' '}<span className="block font-sans text-sm" style={{ color: 'var(--color-ink-dim)' }}>{heading.line}</span></>}
-              </h1>
+              <>
+                <h1 className="font-display text-[32px] leading-tight" style={{ color: 'var(--color-ink)' }}>
+                  {heading.title}{heading.number !== undefined && <> <Num>{heading.number}</Num></>}
+                  {/* De kleine regel met de fase voorop staat onder het grote getal, zodat hij nooit midden in breekt. */}
+                  {skyLine && <>{' '}<span className="block font-sans text-sm" style={{ color: 'var(--color-ink-dim)' }}>{skyLine}</span></>}
+                </h1>
+                {/* Een andere week dan deze: terug met een gedempte tekstknop in de lucht, geen omlijnde knop. */}
+                {!current && <TextButton tone="dim" className="-mb-2" onClick={() => setWeekStart(mondayOfWeek(today))}>Naar deze week</TextButton>}
+              </>
             )}
           </div>
           {!monthView && (
@@ -276,62 +297,10 @@ export function WeekPage() {
         </header>
       </SkyBand>
 
-      {!monthView && <WeekNotice notice={notice} weekStart={weekStart} />}
-      {/* Valt je training op een weekdag duidelijk vaker weg: één rustige zin, geen wijziging. */}
-      {!monthView && <WeekdayPatternLine />}
-
-      {!monthView && (
-        <Card className="flex flex-col gap-4">
-          <div className="flex items-center gap-4">
-            <Ring value={progress.total > 0 ? progress.done / progress.total : 0} label={`${progress.done} van ${progress.total} gedaan`} size={76}>
-              <span className="font-sans text-lg font-semibold leading-none tabular-nums" style={{ color: 'var(--color-ink)' }}>
-                {progress.done}<span className="text-sm font-medium" style={{ color: 'var(--color-ink-dim)' }}>/{progress.total}</span>
-              </span>
-              <span className="mt-0.5 text-xs leading-4" style={{ color: 'var(--color-ink-dim)' }}>gedaan</span>
-            </Ring>
-            <div className="min-w-0 flex-1">
-              {totalWeekMinutes > 0 ? (
-                <Stat label="Tijd" value={hoursMinutes(doneMinutes)} unit={`van ${hoursMinutes(totalWeekMinutes)} uur`} size="m" />
-              ) : (
-                <Stat label="Tijd" value="Niets gepland" size="s" />
-              )}
-              {(weekKm > 0 || weekGain > 0) && (
-                <p className="mt-2 flex flex-wrap gap-x-4 font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>
-                  {weekKm > 0 && <span><span className="font-semibold">{formatNumberNL(Math.round(weekKm * 10) / 10)}</span> <span style={{ color: 'var(--color-ink-dim)' }}>km</span></span>}
-                  {weekGain > 0 && <span><span className="font-semibold">{Math.round(weekGain)}</span> <span style={{ color: 'var(--color-ink-dim)' }}>m stijgen</span></span>}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-            <WeekRidge days={profile.days} previous={profile.previous} today={today} bare />
-          </div>
-        </Card>
-      )}
-
-      {!monthView && restCard.length > 0 && (
-        <Card className="flex flex-col gap-3" texture>
-          <Eyebrow>Rustdag</Eyebrow>
-          {restCard.map((a) => (
-            <div key={a.id}>
-              <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{a.title}</p>
-              <AdviceItem advice={a} compact />
-            </div>
-          ))}
-        </Card>
-      )}
-
-      {!monthView && extraAdvice.length > 0 && (
-        <Card className="flex flex-col gap-3" texture>
-          <Eyebrow>Extra training</Eyebrow>
-          {extraAdvice.map((a) => (
-            <div key={a.id}>
-              <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{a.title}</p>
-              <AdviceItem advice={a} compact />
-            </div>
-          ))}
-        </Card>
-      )}
+      {/* Het ene vak boven de dagen: Let op, anders een voorstel voor je rustdag, anders een extra training. */}
+      {!monthView && box?.kind === 'notice' && <WeekNotice notice={notice} weekStart={weekStart} />}
+      {!monthView && box?.kind === 'rest' && adviceCard('Rustdag', box.advice)}
+      {!monthView && box?.kind === 'extra' && adviceCard('Extra training', box.advice)}
 
       {monthView ? (
         <SeasonOverview
@@ -361,33 +330,25 @@ export function WeekPage() {
             dragEnabled={dragHandles}
             onOpenPeriod={setOpenPeriodId}
           />
-          <WeekAdjustmentsRow adjustments={adjustments} weekStart={weekStart} current={weekStart === mondayOfWeek(today)} />
+          {/* Valt je training op een weekdag duidelijk vaker weg: één rustige zin onder de dagen, geen wijziging. */}
+          <WeekdayPatternLine />
+          {/* De belasting per dag blijft tot Stand hem toont (Stand heeft per week en de beendagen, niet per dag). */}
+          {trainings > 0 && <WeekRidge days={profile.days} previous={profile.previous} today={today} />}
+          {/* De lijst onder de dagen: één rijvorm, geen mint, elke rij opent iets. */}
+          <SheetRows label="Meer over deze week">
+            {waiting.map((a) => <WeekProposalRow key={a.id} advice={a} />)}
+            <WeekLoadRow weekStart={weekStart} />
+            {review && review.planned > 0 && trainings > 0 && (
+              <SheetRow {...weekSoFarRow({ current, done: progress.done, total: progress.total, doneMinutes })} onClick={() => setReviewOpen(true)} sheetFrom />
+            )}
+            <WeekAdjustmentsRow adjustments={adjustments} weekStart={weekStart} current={current} />
+            {/* Week opnieuw plannen: alleen voor de getoonde week, vandaag en later (engine/replanWeek.ts). */}
+            {program && trainings > 0 && addDays(weekStart, 6) >= today && <WeekReplanRow key={weekStart} weekStart={weekStart} />}
+            <LeavePeriodsRow openId={openPeriodId} onOpenHandled={() => setOpenPeriodId(null)} />
+            <SheetRow {...SEASON_ROW} onClick={() => { setMonthView(true); scrollMainToTop(); }} />
+          </SheetRows>
         </>
       )}
-
-      {!monthView && (
-        <div className="flex gap-2">
-          <SecondaryButton
-            onClick={() => {
-              setMonthView(true);
-              scrollMainToTop();
-            }}
-          >
-            Jaaroverzicht
-          </SecondaryButton>
-          {review && review.planned > 0 && (
-            <SecondaryButton onClick={() => setReviewOpen(true)}>Weekterugblik</SecondaryButton>
-          )}
-          {weekStart !== mondayOfWeek(today) && (
-            <SecondaryButton onClick={() => setWeekStart(mondayOfWeek(today))}>Naar deze week</SecondaryButton>
-          )}
-        </div>
-      )}
-
-      {/* Week opnieuw plannen: alleen voor de getoonde week, vandaag en later (engine/replanWeek.ts). */}
-      {!monthView && program && addDays(weekStart, 6) >= today && <WeekReplanButton key={weekStart} weekStart={weekStart} />}
-
-      {!monthView && <WeekLoadCards weekStart={weekStart} />}
 
       {adHocOpen && (
         <AdHocLogSheet templates={templates} onPick={(t) => { setAdHocOpen(false); setAdHocTemplate(t); }} onClose={() => setAdHocOpen(false)} />
@@ -399,8 +360,6 @@ export function WeekPage() {
       {openLog && (
         <LogDetailSheet log={openLog} templateName={templateById.get(openLog.templateId)?.name ?? openLog.templateId} onClose={() => setOpenLog(null)} />
       )}
-
-      {!monthView && <LeavePeriodsCard openId={openPeriodId} onOpenHandled={() => setOpenPeriodId(null)} />}
 
       {selected && templateById.get(selected.templateId) && (
         <SessionActionSheet

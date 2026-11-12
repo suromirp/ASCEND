@@ -1,5 +1,6 @@
-// ASCEND: "Vrije dagen en vakanties" on the Week screen. A list of the
-// periods you are free or away (engine/leave.ts) and one button to add one.
+// ASCEND: "Vrije dagen en vakanties" on the Week screen: a row in the list under the days
+// (engine/weekList.ts#leaveRowSub) that opens a sheet with the periods you are free or
+// away (engine/leave.ts) and one button to add one.
 // A tap on a period opens the same sheet to change its days, kind or note, or
 // to remove it. Adding, other days or another kind, and removing show the
 // proposal first ("Zo ziet je planning eruit", the same sheet as an advice)
@@ -21,25 +22,24 @@ import { mainGoalIsMountain } from '../engine/mountainMuscles';
 import { addDays, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { useSheetClose } from '../utils/useSheetClose';
-import { Icon } from './icons';
 import { Portal } from './Portal';
 import { ProposalSheet } from './ProposalSheet';
 import { SettingsLinkRow } from './settings/SettingsLink';
+import { Sheet } from './settings/Sheet';
+import { SheetRow, SheetRows } from './SheetRows';
+import { leaveRowSub } from '../engine/weekList';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, Segmented, SheetGrip, Toggle } from './ui';
 import { TextButton } from './TextButton';
 
 const STALE_TEXT = 'Je planning is intussen veranderd. Bekijk het voorstel opnieuw.';
+const LIST_TITLE = 'Vrije dagen en vakanties';
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
-const KIND_COLOR: Record<LeaveKind, string> = {
-  no_training: 'var(--color-success-text)',
-  trek: 'var(--color-status)',
-  no_gym: 'var(--color-ink)',
-  free_days: 'var(--color-ink-dim)',
-};
 
-// `openId`: de band van een periode in de weeklijst vroeg om het blad; `onOpenHandled` meldt dat het blad weer dicht is.
-export function LeavePeriodsCard({ openId, onOpenHandled }: { openId?: string | null; onOpenHandled?: () => void } = {}) {
+// De rij in de lijst onder de dagen en het blad met de periodes erachter. `openId`: de band van een periode in de
+// weeklijst vroeg om het blad om hem bij te werken; `onOpenHandled` meldt dat het blad weer dicht is.
+export function LeavePeriodsRow({ openId, onOpenHandled }: { openId?: string | null; onOpenHandled?: () => void } = {}) {
   const { leavePeriods, planLeave, applyLeave, planPreviewPass, saveLeaveNote } = useAppData();
+  const [listOpen, setListOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [ownEditing, setEditing] = useState<LeavePeriod | null>(null);
   const editing = ownEditing ?? (openId ? leavePeriods.find((p) => p.id === openId) ?? null : null);
@@ -69,46 +69,31 @@ export function LeavePeriodsCard({ openId, onOpenHandled }: { openId?: string | 
 
   return (
     <>
-      <Card className="flex flex-col gap-3" texture>
-        <div>
-          <Eyebrow>Vrije dagen en vakanties</Eyebrow>
-          <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-            {shown.length === 0
-              ? 'Vrije dagen, vakantie of tocht op komst? Zet ze hier. Eerst een voorstel, pas na Akkoord verandert er iets.'
-              : 'Tik op een periode om hem bij te werken. Eerst een voorstel, pas na Akkoord verandert er iets.'}
-          </p>
-        </div>
+      <SheetRow title={LIST_TITLE} sub={stale ? STALE_TEXT : leaveRowSub(leavePeriods, today)} onClick={() => setListOpen(true)} sheetFrom />
 
-        {shown.length > 0 && (
-          <ul className="flex flex-col gap-2">
-            {shown.map((p) => (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  data-sheet-from
-                  onClick={() => setEditing(p)}
-                  className="flex min-h-[56px] w-full items-center gap-2 rounded-xl border py-2 pl-3 pr-2 text-left active:opacity-75"
-                  style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-surface)' }}
-                  aria-label={`${p.trek?.name ?? LEAVE_KIND_LABEL[p.kind]}, ${describePeriodDates(p)}, bijwerken`}
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="flex min-w-0 items-center gap-2 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
-                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: KIND_COLOR[p.kind] }} aria-hidden />
-                      <span className="break-words">{p.trek?.name ?? LEAVE_KIND_LABEL[p.kind]}</span>
-                    </span>
-                    <span className="mt-0.5 block pl-4 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{describePeriodDates(p, true)} · {describeDayCount(p)}</span>
-                    {p.note && <span className="mt-0.5 block break-words pl-4 text-xs" style={{ color: 'var(--color-ink)' }}>{p.note}</span>}
-                  </span>
-                  <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {stale && <p className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }} role="status">{STALE_TEXT}</p>}
-        <SecondaryButton onClick={() => setAdding(true)} className="min-h-[46px] flex-none">Periode toevoegen</SecondaryButton>
-      </Card>
+      {listOpen && (
+        <Sheet eyebrow="Week" title={LIST_TITLE} onClose={() => setListOpen(false)}>
+          {(close) => (
+            <div className="flex flex-col gap-3 pb-2">
+              {shown.length > 0 && (
+                <SheetRows label={LIST_TITLE}>
+                  {shown.map((p) => (
+                    <SheetRow
+                      key={p.id}
+                      title={p.trek?.name ?? LEAVE_KIND_LABEL[p.kind]}
+                      sub={`${describePeriodDates(p, true)} · ${describeDayCount(p)}${p.note ? ` · ${p.note}` : ''}`}
+                      onClick={() => { close(); setEditing(p); }}
+                    />
+                  ))}
+                </SheetRows>
+              )}
+              {shown.length === 0 && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Vrije dagen, vakantie of tocht op komst? Zet ze hier.</p>}
+              <SecondaryButton onClick={() => { close(); setAdding(true); }} className="min-h-[46px] flex-none">Periode toevoegen</SecondaryButton>
+              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Eerst een voorstel, pas na Akkoord verandert er iets.</p>
+            </div>
+          )}
+        </Sheet>
+      )}
 
       {adding && (
         <LeavePeriodSheet

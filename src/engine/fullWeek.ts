@@ -33,8 +33,9 @@ import { isHardRun, isLegHeavyTemplate } from './scheduler';
 import { logSport, templateSport } from './sports';
 import { hasRole, isTestOrRace } from './templateRoles';
 import { validateWeeks, type CheckInput, type CheckRule } from './weekValidator';
+import type { PlainConcern } from './weekConcerns';
 
-export const FULL_WEEK_RULE = 'WEEK-FULL';
+export const FULL_WEEK_RULE = 'WEEK-FULL' as const;
 // Twee dagen met twee trainingen, of twee trainingen meer dan er dagen zijn.
 export const DOUBLE_DAY_LIMIT = 2;
 export const OVER_LIMIT = 2;
@@ -345,15 +346,32 @@ export function fullWeekFollowed(log: readonly PlanChangeProposal[], sessions: r
     && p.changes.some((c) => c.action === 'remove' && !!c.plannedSessionId && inWeek.has(c.plannedSessionId) && !!c.generatedBy?.includes(FULL_WEEK_RULE)));
 }
 
-// De gewone regel op Week: de week is vol. Staat het voorstel nog open op Vandaag ('open'), dan verwijst hij
-// daarheen; na Liever niet ('declined') zegt hij dat jij alles liet staan. Na Akkoord ('accepted') geen regel:
-// je volgde het advies. Alleen voor de week van vandaag.
+// De gewone regel: de week is vol. Staat het voorstel nog open op Vandaag ('open'), dan verwijst hij daarheen; na
+// Liever niet ('declined') zegt hij dat jij alles liet staan. Na Akkoord ('accepted') geen regel: je volgde het
+// advies. Alleen voor de week van vandaag.
 export function fullWeekLine(input: FullWeekInput, weekStart: string, status?: 'open' | 'declined' | 'accepted'): string | undefined {
+  const concern = fullWeekConcern(input, weekStart, status);
+  return concern && `Je week is vol: ${concern.fact.charAt(0).toLowerCase()}${concern.fact.slice(1)}`;
+}
+
+// Hetzelfde als punt in Let op (engine/weekConcerns.ts), in dezelfde vorm als elk ander punt: de zin, het droge
+// feit erachter, en een amber stip op de rijen van de dagen met twee trainingen ("volle dag"). Geen voorstel in
+// Week: dat staat op Vandaag. Besluit: docs/beslissingen/2026-11-12-week-minimaal.md (aanvulling, spoor 3).
+export function fullWeekConcern(input: FullWeekInput, weekStart: string, status?: 'open' | 'declined' | 'accepted'): PlainConcern | undefined {
   if (status === 'accepted' || mondayOfWeek(weekStart) !== mondayOfWeek(input.today)) return undefined;
   const state = fullWeek(input);
   if (!state) return undefined;
-  const fact = `Je week is vol: ${shapeText(state.shape)}.`;
-  if (status === 'declined') return `${fact} Je liet alles staan.`;
-  if (status === 'open') return `${fact} Op Vandaag staat een voorstel.`;
-  return fact;
+  const text = shapeText(state.shape);
+  const tail = status === 'declined' ? ' Je liet alles staan.' : status === 'open' ? ' Op Vandaag staat een voorstel.' : '';
+  const ctx = contextOf(input);
+  const doubles = new Set(state.shape.doubles);
+  const onFullDay = input.sessions.filter((s) => doubles.has(s.scheduledDate) && s.status !== 'skipped' && !ctx.done(s) && ctx.trains(s));
+  return {
+    key: `${FULL_WEEK_RULE}:${mondayOfWeek(input.today)}`,
+    rule: FULL_WEEK_RULE,
+    plain: true,
+    headline: 'Je week is vol.',
+    fact: `${text.charAt(0).toUpperCase()}${text.slice(1)}.${tail}`,
+    notes: Object.fromEntries(onFullDay.map((s) => [s.id, 'volle dag'])),
+  };
 }

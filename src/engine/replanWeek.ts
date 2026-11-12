@@ -191,7 +191,7 @@ export function betterTestDay(current: string, candidates: string[], score: (dat
   return best;
 }
 
-// De woorden van het voorstel (components/WeekReplanButton.tsx).
+// De woorden van het voorstel (components/WeekReplanRow.tsx).
 export const REPLAN_TITLE = 'Week opnieuw plannen';
 export const REPLAN_NO_CHANGE = 'Je week staat al zoals het plan hem maakt.';
 const REPLAN_YOURS = 'Ook wat je zelf verplaatste gaat terug naar het plan.';

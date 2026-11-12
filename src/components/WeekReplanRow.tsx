@@ -6,21 +6,24 @@ import type { WeekReplanPlan } from '../storage/weekReplan';
 import { REPLAN_NO_CHANGE, REPLAN_TITLE, replanPreview, replanSummary } from '../engine/replanWeek';
 import { formatShortDayNL } from '../utils/dates';
 import { ProposalSheet } from './ProposalSheet';
-import { TextButton } from './TextButton';
+import { SheetRow } from './SheetRows';
+import { REPLAN_BUSY, REPLAN_FAILED, REPLAN_SUB } from '../engine/weekList';
 
-// "Week opnieuw plannen" onder de week (engine/replanWeek.ts): rekent het voorstel uit als je erom vraagt en
+// "Week opnieuw plannen" als rij in de lijst onder de week (engine/replanWeek.ts): rekent het voorstel uit als je erom vraagt en
 // opent het in "Zo ziet je week eruit", met Liever niet en Akkoord. Er verandert niets zonder Akkoord. Zonder
-// verschil zegt het blad dat, met alleen Begrepen. Lukt het rekenen niet binnen de tijd, dan staat dat er.
+// verschil zegt het blad dat, met alleen Begrepen. Tijdens het rekenen zegt de regel onder de rij "Even rekenen…";
+// lukt het niet, dan zegt die regel dat.
 // Week.tsx geeft hem de week als key: een andere week begint opnieuw.
 type State = { step: 'idle' } | { step: 'busy' } | { step: 'failed' } | { step: 'open'; plan: WeekReplanPlan };
 
-export function WeekReplanButton({ weekStart }: { weekStart: string }) {
+export function WeekReplanRow({ weekStart }: { weekStart: string }) {
   const { planWeekReplan, applyWeekReplan, templates } = useAppData();
   const [state, setState] = useState<State>({ step: 'idle' });
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
   const ask = async () => {
+    if (state.step === 'busy') return;
     setState({ step: 'busy' });
     try {
       const plan = await planWeekReplan(weekStart);
@@ -42,13 +45,8 @@ export function WeekReplanButton({ weekStart }: { weekStart: string }) {
   };
 
   return (
-    <div className="flex flex-col items-start">
-      <TextButton tone="dim" icon="verder" data-sheet-from onClick={() => void ask()} disabled={state.step === 'busy'}>
-        {state.step === 'busy' ? 'Even rekenen…' : REPLAN_TITLE}
-      </TextButton>
-      {state.step === 'failed' && (
-        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Dat lukte nu niet. Je week staat nog zoals hij was; probeer het straks nog eens.</p>
-      )}
+    <>
+      <SheetRow title={REPLAN_TITLE} sub={state.step === 'busy' ? REPLAN_BUSY : state.step === 'failed' ? REPLAN_FAILED : REPLAN_SUB} onClick={() => void ask()} sheetFrom />
       {plan && advice && (
         <ProposalSheet
           advice={advice}
@@ -64,6 +62,6 @@ export function WeekReplanButton({ weekStart }: { weekStart: string }) {
           onClose={() => setState({ step: 'idle' })}
         />
       )}
-    </div>
+    </>
   );
 }

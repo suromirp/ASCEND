@@ -21,27 +21,42 @@ import { anySportDefinition } from '../data/sports';
 
 export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH', 'TEST-REST'];
 
-export interface WeekConcern {
+interface ConcernText {
   // Dezelfde sleutel als de bevinding; verandert er iets in de week, dan verandert hij mee.
   key: string;
-  rule: CheckRule;
   // De ene zin die het probleem zegt (kaart) en het droge feit eronder.
   headline: string;
   fact: string;
+  // De korte tekst per training in de rij.
+  notes: Record<string, string>;
+}
+
+// Een punt van de weekcontrole: met een bevinding, en in Week een voorstel met Akkoord.
+export interface CheckConcern extends ConcernText {
+  rule: CheckRule;
   // De naam van een voorstel en de reden erbij, voor de Advice.
   title: string;
   why: string;
-  // De korte tekst per training in de rij.
-  notes: Record<string, string>;
   finding: Finding;
   // Je koos op Vandaag dat deze training blijft staan (engine/weekKept.ts). Afgeleid, nooit opgeslagen.
   kept?: boolean;
+  plain?: undefined;
 }
+
+// Een punt zonder voorstel in Week: de volle week na weggevallen dagen (engine/fullWeek.ts#fullWeekConcern).
+// Het voorstel staat op Vandaag; hier staat het als punt in Let op, in dezelfde vorm als elk ander punt.
+export interface PlainConcern extends ConcernText {
+  rule: 'WEEK-FULL';
+  plain: true;
+  kept?: undefined;
+}
+
+export type WeekConcern = CheckConcern | PlainConcern;
 
 export const dayName = (iso: string) => `${weekdayLongNL(iso)} ${Number(iso.slice(8, 10))}`;
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[] {
+export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern[] {
   const monday = mondayOfWeek(weekStart);
   const names = new Map(input.templates.map((t) => [t.id, t.name]));
   const byId = new Map(input.sessions.map((s) => [s.id, s]));
@@ -51,7 +66,7 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
   // Een dag zonder training (of met alleen Herstel) is een vrije dag; dezelfde opvatting als de controle.
   const freeDays = freeDaysOfWeek(monday, input.sessions, input.logs, new Map(input.templates.map((t) => [t.id, t])));
 
-  return findings.map((f): WeekConcern => {
+  return findings.map((f): CheckConcern => {
     const base = { key: `${f.rule}:${[...f.sessionIds].sort().join(',')}`, rule: f.rule, finding: f };
     const [a, b] = f.sessionIds;
     switch (f.rule) {
