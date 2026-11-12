@@ -395,3 +395,6 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Lookout Route-start, tester, sonnet, 90k, 22 min, groen met 2 kanttekeningen
 - 2026-11-12, Pathfinder Route-start, pathfinder, sonnet, 45k, 1 min, 1 moet (mint)
 - 2026-11-11, Warden Route-start, reviewer, sonnet, 66k, 2 min, 1 moet (StrictMode-signaal) en 5 klein, hersteld
+- 2026-11-12, Route-start en laadbalk, Sherpa, opus (sessie), 325k context, $9,59, 1 herstelronde (1 blokkerend), live ff186251
+- 2026-11-12, Warden herreview Route-start, reviewer, fable, 59k, 3 min, akkoord
+- 2026-11-12, Lookout Route-start nacontrole, tester, sonnet, 39k, 4 min, groen
