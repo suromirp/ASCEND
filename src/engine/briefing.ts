@@ -34,6 +34,7 @@ import { sourceSilence, type SourceWatchInput } from './sourceWatch';
 import { routeTarget } from './routeTarget';
 import { placeChoices, placeHasRoute, resolvePlace, type PlaceChoice } from './trainingPlace';
 import { weatherForTraining } from './weather';
+import { PLACE_WEATHER_FROM_HOME, placeWeatherFailed, placeWeatherLine } from './placeWeather';
 import { clothingForTraining } from './clothing';
 import { drinkAmount } from './eveningBefore';
 import { litersText } from './stageWater';
@@ -221,6 +222,9 @@ export interface BriefingInput {
   watchStatus?: WatchStatus;
   // Het weer; afwezig zonder netwerk of plaats.
   forecast?: WeatherForecast;
+  // De gekozen plek ligt ver van huis (engine/placeWeather.ts): 'shown' als `forecast` het weer van die
+  // plek is, 'failed' als hij niet geladen kon worden en `forecast` het weer van huis bleef.
+  weatherPlace?: { name: string; state: 'shown' | 'failed' };
   weatherOn: boolean;
   clothingOn: boolean;
   clothingAdjust?: number;
@@ -526,9 +530,11 @@ function watchState(input: BriefingInput, status: WatchStatus | undefined, garmi
 
 function weatherRow(input: BriefingInput, minutes: number): BriefingRow | undefined {
   if (!input.weatherOn && !input.clothingOn) return undefined;
+  const at = input.weatherPlace;
   const base = { forecast: input.forecast, template: input.template, logs: input.logs, date: input.date, durationMinutes: minutes, now: input.now };
   const w = weatherForTraining(base);
-  if (!w) return { id: 'weather', label: BRIEFING_TEXT.weather, line: BRIEFING_TEXT.noWeather, opens: true };
+  // Geen weer voor die dag: bij een plek die niet laadde zegt de regel dat, anders het vaste woord.
+  if (!w) return { id: 'weather', label: BRIEFING_TEXT.weather, line: at?.state === 'failed' ? placeWeatherFailed(at.name) : BRIEFING_TEXT.noWeather, opens: true };
   const parts: string[] = [];
   if (input.weatherOn) parts.push(`${Math.round(w.tempC)} ${Math.abs(Math.round(w.tempC)) === 1 ? 'graad' : 'graden'}`);
   if (input.clothingOn) {
@@ -538,7 +544,10 @@ function weatherRow(input: BriefingInput, minutes: number): BriefingRow | undefi
   }
   if (parts.length === 0) return undefined;
   const tone = input.weatherOn && w.verdict !== 'prima' ? ('warn' as const) : undefined;
-  return { id: 'weather', label: BRIEFING_TEXT.weather, line: upperFirst(parts.join(', ')), opens: true, ...(tone ? { tone } : {}) };
+  const plain = upperFirst(parts.join(', '));
+  // De plek erbij: het weer daar, of het weer van huis met de eerlijke regel dat de plek niet laadde.
+  const line = at?.state === 'shown' ? placeWeatherLine(at.name, plain) : at?.state === 'failed' ? `${placeWeatherFailed(at.name)} ${PLACE_WEATHER_FROM_HOME} ${lowerFirst(plain)}.` : plain;
+  return { id: 'weather', label: BRIEFING_TEXT.weather, line, opens: true, ...(tone ? { tone } : {}) };
 }
 
 function fuelRow(input: BriefingInput, minutes: number, outdoor: boolean): BriefingRow | undefined {

@@ -485,6 +485,8 @@ describe('rowSummary: vandaag en meldingen', () => {
 
   it('beste moment: een schakelaar die standaard aan staat, ook als de sleutel ontbreekt', () => {
     expect(rowSummary('beste-moment', facts())).toEqual({ checked: true });
+    expect(rowSummary('weer-plek', facts())).toMatchObject({ checked: true });
+    expect(rowSummary('weer-plek', facts({ settings: { ...facts().settings, overviews: { placeWeather: false } } })).checked).toBe(false);
     expect(rowSummary('beste-moment', facts({ settings: { ...facts().settings, overviews: { weatherLine: false } } })).checked).toBe(true);
     expect(rowSummary('beste-moment', facts({ settings: { ...facts().settings, overviews: { bestMoment: false } } })).checked).toBe(false);
     const off = { ...facts().settings, overviews: { bestMoment: false } };
@@ -844,7 +846,7 @@ describe('rowSummary: route voorstellen', () => {
 
   it('uit: de rij zegt Uit en de keuze is weg', () => {
     expect(rowSummary('route-voorstel', withSettings({ routeProposal: false })).checked).toBe(false);
-    expect(rowSummary('bundel-weer', withSettings({ routeProposal: false })).value).toBe('9 van 10 aan');
+    expect(rowSummary('bundel-weer', withSettings({ routeProposal: false })).value).toBe('10 van 11 aan');
     expect(rowSummary('route-soort', withSettings({ routeProposal: false })).hidden).toBe(true);
   });
 });
@@ -1007,10 +1009,10 @@ describe('rowSummary: rijen met een blad', () => {
   });
 
   it('Weer en kleding, Inzicht na een training en Gebruik van je horloge', () => {
-    expect(rowSummary('bundel-weer', facts()).value).toBe('10 van 10 aan');
-    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('8 van 10 aan');
+    expect(rowSummary('bundel-weer', facts()).value).toBe('11 van 11 aan');
+    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('9 van 11 aan');
     // Weerwaarschuwingen en lawinegevaar tellen mee (docs/beslissingen/2026-11-09-gr5-waarschuwingen.md).
-    expect(rowSummary('bundel-weer', withSettings({ weatherWarnings: false, avalancheBulletin: false })).value).toBe('8 van 10 aan');
+    expect(rowSummary('bundel-weer', withSettings({ weatherWarnings: false, avalancheBulletin: false })).value).toBe('9 van 11 aan');
     expect(rowSummary('weeralarm', facts()).checked).toBe(true);
     expect(rowSummary('weeralarm', withSettings({ weatherWarnings: false })).checked).toBe(false);
     expect(rowSummary('lawinegevaar', withSettings({ avalancheBulletin: false })).checked).toBe(false);

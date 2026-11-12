@@ -93,6 +93,9 @@ export function migrateActivityDetail(raw: unknown): ActivityDetail | undefined 
   const conditions = raw.conditions === undefined ? undefined : readConditions(raw.conditions);
   return {
     version: 1,
+    // Het merk van de teller (models/activityDetail.ts): alleen de bekende waarde blijft; zonder
+    // merk, of met iets anders, is het een log van de oude telling.
+    ...(raw.counter === 2 ? { counter: 2 as const } : {}),
     source: raw.source as MetricSource,
     sliceCount: raw.sliceCount,
     slices: slices as DetailSlice[],

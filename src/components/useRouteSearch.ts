@@ -53,6 +53,10 @@ export interface RouteSearchModel {
   startChip: string;
   // De bewaarde plekken voor het blad Andere plek: Thuis bovenaan, dan de rest (engine/places.ts#savedStartChips).
   savedStarts: StartChip[];
+  // De plek die nu bij Start bij gekozen is (een bewaarde of gezochte plek, geen getikt punt), en Thuis
+  // als die gelezen is: voor het weer van de gekozen plek in de Briefing (engine/placeWeather.ts).
+  placeStart: { name: string; point: RoutePoint } | undefined;
+  homePoint: RoutePoint | undefined;
   pickStart: (chip: StartChip) => void;
   // Andere plek: een treffer uit het blad Nieuwe plek geldt voor deze training, zoals Start hier.
   choosePlace?: (found: FoundPlace) => void;
@@ -347,6 +351,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     startChips: chips,
     startChip: chipKey,
     savedStarts: savedStartChips(allPlaces),
+    placeStart: startPlace && !mapStart ? { name: startPlace.name, point: startPlace.point } : undefined,
+    homePoint: saved ?? undefined,
     pickStart,
     choosePlace,
     keepName: startPlace?.found && !mapStart ? startPlace.name : undefined,

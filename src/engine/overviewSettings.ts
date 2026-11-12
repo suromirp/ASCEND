@@ -42,6 +42,9 @@ export interface OverviewSettings {
   // Het beste moment van de dag voor een buitentraining, één rustige regel
   // onder het weer (engine/bestMoment.ts). Ontbreekt de sleutel, dan staat hij aan.
   bestMoment?: boolean;
+  // Het weer van de gekozen plek in de Briefing: kies je bij Start bij een plek verder dan 10 km van
+  // huis, dan volgt het weer-vak die plek (engine/placeWeather.ts). Ontbreekt de sleutel, dan staat hij aan.
+  placeWeather?: boolean;
   // Regen in het komende uur, vlak voor een training buiten (engine/rainSoon.ts): "Over 20 minuten
   // regen; nu gaan of om 18:30." Alleen tekst, op de dag zelf. Ontbreekt de sleutel, dan staat hij aan.
   rainSoon?: boolean;
@@ -77,6 +80,7 @@ export const DEFAULT_OVERVIEWS: ResolvedOverviews = {
   weatherLine: true,
   weatherSwap: true,
   bestMoment: true,
+  placeWeather: true,
   rainSoon: true,
   hillsNearby: true,
   moonLine: true,
@@ -104,6 +108,7 @@ export function resolveOverviews(raw: OverviewSettings | undefined | null): Reso
     weatherLine: flag('weatherLine'),
     weatherSwap: flag('weatherSwap'),
     bestMoment: flag('bestMoment'),
+    placeWeather: flag('placeWeather'),
     rainSoon: flag('rainSoon'),
     hillsNearby: flag('hillsNearby'),
     moonLine: flag('moonLine'),
@@ -165,6 +170,7 @@ export const showWeatherLine = (raw: OverviewSettings | undefined) => resolveOve
 export const showClothingAdvice = (raw: OverviewSettings | undefined) => resolveOverviews(raw).clothingAdvice;
 export const followsLocation = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weatherFollowsLocation;
 export const showWeatherSwap = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weatherSwap;
+export const showPlaceWeather = (raw: OverviewSettings | undefined) => resolveOverviews(raw).placeWeather;
 export const showBestMoment = (raw: OverviewSettings | undefined) => resolveOverviews(raw).bestMoment;
 export const showRainSoon = (raw: OverviewSettings | undefined) => resolveOverviews(raw).rainSoon;
 export const showHillsNearby = (raw: OverviewSettings | undefined) => resolveOverviews(raw).hillsNearby;

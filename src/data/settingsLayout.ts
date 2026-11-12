@@ -160,7 +160,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-wat', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-namen', 'wat-vastgelegd'),
   // Vandaag en meldingen
   ...inSheet('kaarten', 'boven-missie', 'avond-ervoor', 'avond-ervoor-tijd', 'ochtendcheck', 'benen-na-test', 'weekterugblik', 'lijfvraag', 'weekvraag', 'reistaak-vandaag', 'citaten', 'dagcitaat', 'geluid'),
-  ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weeralarm', 'lawinegevaar', 'regen-uur', 'heuvels-buurt', 'route-voorstel', 'route-soort', 'route-start', 'je-plekken', 'route-zoeken', 'route-kaart', 'maanstand', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
+  ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weer-plek', 'weeralarm', 'lawinegevaar', 'regen-uur', 'heuvels-buurt', 'route-voorstel', 'route-soort', 'route-start', 'je-plekken', 'route-zoeken', 'route-kaart', 'maanstand', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
   ...inSheet('bundel-run-detail', 'run-detail', 'run-detail-patronen', 'run-detail-advies', 'loopvorm-cadans', 'loopvorm-grondcontact', 'loopvorm-staplengte', 'loopvorm-oscillatie', 'loopvorm-balans'),
   ...inSheet('bundel-inzicht', 'loopinzicht', 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'),
   ...inSheet('lucht', 'lucht-vanaf'),
@@ -331,7 +331,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.hc], 'health-connect-gewicht'),
   ...rule([B.strava], 'strava-tekst-inhoud'),
   ...rule([B.watchFields], 'datavelden-model'),
-  ...rule([B.route], 'route-soort', 'route-zoeken', 'route-kaart'),
+  ...rule([B.route], 'route-soort', 'route-zoeken', 'route-kaart', 'weer-plek'),
   // Gegevens en back-up
   ...rule([B.folder], 'backupmap'),
   ...rule([B.liveUpdate], 'auto-bijwerken'),
