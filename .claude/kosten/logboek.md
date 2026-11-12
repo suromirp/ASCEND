@@ -425,3 +425,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Lookout Je week tot nu (tester, sonnet) 64k, 12 min, groen
 - 2026-11-12, Sherpa Trainingsscherm 1-4, bouwer-sessie, opus, ca. $12, ca. 1,5 uur, 1 herstelronde (Lookout rood: geen Briefing op Vandaag zonder koppeling; twee mint); op main 86be2a9
 - 2026-11-12, Warden herreview Trainingsscherm (reviewer, sonnet) 36k, akkoord; Lookout herstel Trainingsscherm (tester, sonnet) 47k, 6 min, groen
+- 2026-11-12, Warden herreview Weekplan (reviewer, fable) 78k, 10 min, akkoord onder 3 moet; geheugen van vier weken op advies weggelaten. Les: de datum van een fout naast de datum van eerdere herstellingen leggen voor je een bouwer start (de lus was al op 11 november hersteld)
