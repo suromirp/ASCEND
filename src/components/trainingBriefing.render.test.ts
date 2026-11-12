@@ -17,7 +17,7 @@ const loop = (over: Partial<RouteProposal> = {}): RouteProposal => ({ style: 'ad
 function model(over: Partial<RouteSearchModel> = {}): RouteSearchModel {
   return {
     stage: 'searching', lat: 52, lon: 5, target, startLine: '', choose: async () => undefined,
-    startChips: [{ kind: 'here', label: 'Waar je nu bent' }], startChip: 'here', pickStart: () => undefined, mePoint: undefined, hasHome: false, makeHome: async () => false, tapPoint: undefined,
+    startChips: [{ kind: 'here', label: 'Waar je nu bent' }], startChip: 'here', savedStarts: [], pickStart: () => undefined, mePoint: undefined, hasHome: false, makeHome: async () => false, tapPoint: undefined,
     order: ['adventure', 'simple'], plans: undefined, okStyles: [], picked: undefined, pickedOutcome: undefined,
     setChosen: () => undefined, mapRoutes: [], mapStartPoint: undefined, base: 'none', photo: 'map', setPhoto: () => undefined, hereMode: false, noMap: false, markNoMap: () => undefined,
     startOnMap: async () => ({ ok: false, line: '' }), steps: ['terrain', 'routes'], currentStep: 'terrain', limitLine: 'Hoogstens een halve minuut.', limitMs: 30_000, searchKey: 'k',

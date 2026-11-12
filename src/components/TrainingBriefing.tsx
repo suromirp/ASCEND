@@ -13,7 +13,7 @@
 // Zoeken gebeurt bij het openen (vandaag en morgen, instelling Lus zoeken) of na een tik, en stopt
 // zodra je van Buiten weggaat of het scherm sluit. Plant niets.
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
@@ -27,7 +27,7 @@ import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { modalitySport } from '../data/modalities';
 import { failureLine, MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle } from '../engine/routePlanner';
-import { BRIEFING_MAP_HEIGHT, loopLines, routeOutcomeLine } from '../engine/routeSheet';
+import { BRIEFING_MAP_HEIGHT, briefingRoutes, footerRoom, loopLines, routeOutcomeLine } from '../engine/routeSheet';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import type { RouteSendOutcome } from '../engine/routeSend';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
@@ -119,6 +119,7 @@ export function TrainingBriefing({
 
   const [sheet, setSheet] = useState<'info' | 'watch' | 'steps' | 'fuel' | 'stretch' | 'route' | undefined>();
   const send = useSendRoute(model, date);
+  const [footerRef, footerHeight] = useHeight<HTMLDivElement>();
 
   if (!view) return null;
 
@@ -160,7 +161,8 @@ export function TrainingBriefing({
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 overflow-y-auto ${closing ? 'animate-fade-out' : 'animate-fade-in'}`} style={{ background: 'var(--color-bg)' }}>
-        <div className={`mx-auto max-w-md px-4 ${footer ? 'pb-32' : 'pb-12'}`}>
+        {/* Met de vaste knop onderaan scrolt de pagina zo ver dat de laatste regel er volledig boven staat. */}
+        <div className={`mx-auto max-w-md px-4 ${footer ? '' : 'pb-12'}`} style={footer ? { paddingBottom: footerRoom(footerHeight) } : undefined}>
           <SkyBand variant="low" gear={false}>
             <div className="flex items-start gap-2">
               <button type="button" onClick={requestClose} aria-label="Terug" className="-ml-3 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
@@ -240,7 +242,7 @@ export function TrainingBriefing({
         </div>
 
         {footer && (
-          <div className="fixed inset-x-0 bottom-0 z-10 border-t" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>
+          <div className="fixed inset-x-0 bottom-0 z-10 border-t" ref={footerRef} style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>
             <div className="mx-auto max-w-md px-4 pt-3" style={{ paddingBottom: 'max(var(--rand-onder), 12px)' }}>
               {footerKind === 'route' && send.line && (
                 <p role="status" className="mb-2 text-xs leading-snug" style={{ color: send.line.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{send.line.text}</p>
@@ -471,23 +473,19 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
   return (
     <div className="flex flex-col gap-2">
       {model.mapStartPoint && (
+        // De stille kaart: alleen de gekozen lus met de ring bij de start, geen knoppen; een tik opent Groter,
+        // waar de andere lus, je plek, Kaart of Luchtfoto en Start hier staan (besluit 2026-11-12-route-blok.md).
         <RouteMap
-          routes={model.mapRoutes}
+          routes={briefingRoutes(model.mapRoutes, picked)}
           chosen={picked}
           start={model.mapStartPoint}
           base={model.base}
           onChoose={model.setChosen}
           onStart={model.startOnMap}
           onNoMap={model.markNoMap}
-          me={model.mePoint}
-          tapped={model.tapPoint}
-          hasHome={model.hasHome}
-          onMakeHome={model.makeHome}
-          keepName={model.keepName}
-          onKeep={model.keepPlace}
           height={BRIEFING_MAP_HEIGHT}
           photo={model.photo}
-          onPhoto={model.setPhoto}
+          onOpen={onBigger}
         />
       )}
       {/* De gekozen lus in twee regels, met Groter ernaast: zo staan de vier vakken op 390 px nog boven de vouw. */}
@@ -572,4 +570,23 @@ function useSendRoute(model: RouteSearchModel, date: string) {
     line: routeOutcomeLine(!!model.sender, done === 'busy' ? undefined : done),
     go,
   };
+}
+
+// De hoogte van een element, ook als hij verandert (een uitkomstregel boven de knop).
+function useHeight<T extends HTMLElement>(): [(el: T | null) => void, number | undefined] {
+  const [height, setHeight] = useState<number | undefined>();
+  const observer = useRef<ResizeObserver | undefined>(undefined);
+  // Eén functie voor het hele leven van de pagina: React roept hem alleen bij erbij komen en weggaan.
+  const ref = useCallback((el: T | null) => {
+    observer.current?.disconnect();
+    observer.current = undefined;
+    if (!el) return;
+    const measure = () => setHeight((h) => (h === el.offsetHeight ? h : el.offsetHeight));
+    measure();
+    if (typeof ResizeObserver !== 'undefined') {
+      observer.current = new ResizeObserver(measure);
+      observer.current.observe(el);
+    }
+  }, []);
+  return [ref, height];
 }

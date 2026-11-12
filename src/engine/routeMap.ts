@@ -78,6 +78,10 @@ export function attributionFor(stage: MapStage | undefined, aerial?: AerialSourc
   return '';
 }
 
+// De naamsvermelding op de stille kaart van de Briefing: kort, in de hoek. "© OpenStreetMap" is de vorm die
+// OpenStreetMap op een kleine kaart toestaat; de volle vorm staat op de grote kaart (Groter).
+export const quietAttribution = (full: string): string => full.replace(/ contributors$/, '');
+
 // De kleuren van de kaart, uit de tokens. `on-light` voor een lichte ondergrond.
 export const MAP_TOKENS = {
   bg: '--color-bg',

@@ -5,7 +5,7 @@
 // Docs: docs/visie/Ontwerp Route en trainingsscherm.md (hoofdstuk 6 en 7, spoor 2), besluit
 // docs/beslissingen/2026-11-11-briefing.md.
 
-import type { RouteProposal, RouteTarget } from '../models/route';
+import type { RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { formatNumberNL } from '../utils/number';
 import { tooShort } from './routePlanner';
 import { routeActionLine, type RouteFileLine, type RouteSendOutcome, type SendLine } from './routeSend';
@@ -108,3 +108,15 @@ export function routeOutcomeLine(hasSender: boolean, done?: { send: RouteSendOut
   }
   return routeActionLine(hasSender, done);
 }
+
+// De Briefing toont op de kaart alleen de gekozen lus: één duidelijke lijn. De andere lus staat als regel
+// met Kies onder de kaart, en gestreept op de grote kaart (besluit 2026-11-12-route-blok.md).
+export function briefingRoutes<T extends { style: RouteStyle }>(routes: T[], picked: RouteStyle | undefined): T[] {
+  if (!picked) return routes;
+  const chosen = routes.filter((r) => r.style === picked);
+  return chosen.length > 0 ? chosen : routes;
+}
+
+// De ruimte onder de pagina met een vaste knop: zijn hoogte en een marge, zodat de laatste regel (de lus
+// en Groter) volledig boven de knop komt. Voor de eerste meting de oude 128 px.
+export const footerRoom = (height: number | undefined): string => (height ? `${Math.ceil(height) + 16}px` : '128px');
