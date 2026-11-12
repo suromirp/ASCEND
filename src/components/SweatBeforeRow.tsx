@@ -51,7 +51,7 @@ export function SweatBeforeRow({ template, className = '' }: { template: Session
             <TextButton tone="dim" onClick={() => { setValue(stored.weightKg); setOpen(true); }}>Wijzig</TextButton>
           </>
         ) : (
-          <TextButton onClick={() => setOpen(true)} icon="omlaag">Weeg je even voor je begint</TextButton>
+          <TextButton tone="dim" onClick={() => setOpen(true)} icon="omlaag">Weeg je even voor je begint</TextButton>
         )}
       </div>
     );
@@ -63,7 +63,7 @@ export function SweatBeforeRow({ template, className = '' }: { template: Session
       <NumberField tall label="Gewicht voor (kg)" value={value} onChange={setValue} unit="kg" decimals={1} helper="Na het plassen, zonder schoenen. Je loopkleding mag aan, als je erna in dezelfde kleding weegt. Na afloop vraagt ASCEND naar je gewicht erna." />
       {suggestion && value === undefined && (
         <div>
-          <TextButton onClick={() => setValue(suggestion.kg)}>Gebruik {kgLabel(suggestion.kg)} {when}</TextButton>
+          <TextButton tone="dim" onClick={() => setValue(suggestion.kg)}>Gebruik {kgLabel(suggestion.kg)} {when}</TextButton>
         </div>
       )}
       <div className="flex items-center gap-2">
