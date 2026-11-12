@@ -16,7 +16,7 @@ import { REPLAN_BUSY, REPLAN_FAILED, REPLAN_SUB } from '../engine/weekList';
 // Week.tsx geeft hem de week als key: een andere week begint opnieuw.
 type State = { step: 'idle' } | { step: 'busy' } | { step: 'failed' } | { step: 'open'; plan: WeekReplanPlan };
 
-export function WeekReplanRow({ weekStart }: { weekStart: string }) {
+export function WeekReplanRow({ weekStart, sub = REPLAN_SUB }: { weekStart: string; sub?: string }) {
   const { planWeekReplan, applyWeekReplan, templates } = useAppData();
   const [state, setState] = useState<State>({ step: 'idle' });
   const mounted = useRef(true);
@@ -46,7 +46,7 @@ export function WeekReplanRow({ weekStart }: { weekStart: string }) {
 
   return (
     <>
-      <SheetRow title={REPLAN_TITLE} sub={state.step === 'busy' ? REPLAN_BUSY : state.step === 'failed' ? REPLAN_FAILED : REPLAN_SUB} onClick={() => void ask()} sheetFrom />
+      <SheetRow title={REPLAN_TITLE} sub={state.step === 'busy' ? REPLAN_BUSY : state.step === 'failed' ? REPLAN_FAILED : sub} onClick={() => void ask()} sheetFrom />
       {plan && advice && (
         <ProposalSheet
           advice={advice}

@@ -1,4 +1,4 @@
-# Weekterugblik (blad in Week)
+# Je week tot nu (blad in Week)
 
 Adres: `#/week`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 

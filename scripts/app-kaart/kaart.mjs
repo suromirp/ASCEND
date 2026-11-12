@@ -132,7 +132,7 @@ const SCHERMEN = {
   ascend: { titel: 'Ascend', pad: '#/ascend' },
   logboek: { titel: 'Logboek', pad: '#/history' },
   instellingen: { titel: 'Instellingen (overzicht)', pad: '#/more' },
-  weekterugblik: { titel: 'Weekterugblik (blad in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Je week tot nu")') },
+  weekterugblik: { titel: 'Je week tot nu (blad in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Je week tot nu")') },
   jaaroverzicht: { titel: 'Jaaroverzicht (in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Jaaroverzicht")') },
   // Een dag later (zondag 1 november), zodat er een looptraining op Vandaag staat: de missiekaart met Gedaan en de
   // routerij (zonder koppeling met je horloge; met koppeling staat er Briefing, engine/briefing.ts#missionButton).
@@ -166,11 +166,17 @@ const SCHERMEN = {
   'ascend-vaardigheid': { titel: 'Ascend met een vaardigheid (Pull-Up)', pad: '#/ascend', stand: 'vaardigheid' },
   'ascend-algemeen': { titel: 'Ascend met Algemeen sterk met eigen gewicht', pad: '#/ascend', stand: 'algemeen' },
   // Het voorstel voor spieren voor de berg als eigen weergave in de weekterugblik (besluit 2026-11-12-je-week-tot-nu).
-  'weekterugblik-voorstel': { titel: 'Weekterugblik, de weergave Voorstel (stand met een bergdoel)', pad: '#/week', stand: 'voorstel', actie: async (p) => { await tik(p, 'button:has-text("Je week tot nu")'); await tik(p, 'button:has-text("Voorstel")'); } },
+  'weekterugblik-voorstel': { titel: 'Je week tot nu, de weergave Voorstel (stand met een bergdoel)', pad: '#/week', stand: 'voorstel', actie: async (p) => { await tik(p, 'button:has-text("Je week tot nu")'); await tik(p, 'button:has-text("Voorstel")'); } },
   // Aangepast door ASCEND (besluit 2026-11-12-week-minimaal): de rij onder de dagen en het blad erachter, met twee
   // nagemaakte aanpassingen in deze week. De invariant leest het getal, de regels en de dagrijen met "aangepast".
   'week-aangepast': { titel: 'Week met twee aanpassingen door ASCEND', pad: '#/week', stand: 'aangepast' },
   'week-aangepast-blad': { titel: 'Blad Aangepast door ASCEND (Week)', pad: '#/week', stand: 'aangepast', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Aangepast door ASCEND")') },
+  // Week minimaal, spoor 2 en 3: Let op met de volle week (een punt zonder knop, "volle dag" op de dubbele dagen), een
+  // voorstel dat wacht als rij direct onder de dagen terwijl Let op het vak heeft, en een rustweek als rij met blad.
+  'week-volle-week': { titel: 'Week met Let op: de volle week', pad: '#/week', stand: 'volle-week' },
+  'week-voorstel-wacht': { titel: 'Week met Let op en een voorstel dat wacht', pad: '#/week', stand: 'voorstel-wacht' },
+  'week-rustweek': { titel: 'Week in een rustweek', pad: '#/week', stand: 'rustweek' },
+  'week-rustweek-blad': { titel: 'Blad Rustweek (Week)', pad: '#/week', stand: 'rustweek', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Rustweek")') },
 };
 
 // Van een regel van de kaart naar wat je op het scherm zoekt: de tekst van een knop, een kop, een kaart of gewone tekst.

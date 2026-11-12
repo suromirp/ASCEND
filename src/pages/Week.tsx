@@ -10,7 +10,7 @@ import { buildWeekReview } from '../engine/weekReview';
 import { weekHeading } from '../engine/weekLabel';
 import { dayLoads, weekProgress } from '../engine/weekProfile';
 import { plannedByIdOf } from '../engine/logDay';
-import { leftOutOfCount, looseLogsOfWeek, weekTime } from '../engine/weekLogs';
+import { leftOutOfCount, looseLogsOfWeek, weekDoneMinutes } from '../engine/weekLogs';
 import { WeekRidge } from '../components/WeekRidge';
 import { WeekReviewSheet } from '../components/WeekReview';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
@@ -25,7 +25,8 @@ import { WeekReplanRow } from '../components/WeekReplanRow';
 import { WeekProposalRow } from '../components/WeekProposalRow';
 import { SheetRow, SheetRows } from '../components/SheetRows';
 import { TextButton } from '../components/TextButton';
-import { SEASON_ROW, weekBox, weekSkyLine, weekSoFarRow } from '../engine/weekList';
+import { replanSub, SEASON_ROW, weekBox, weekSkyLine, weekSoFarRow } from '../engine/weekList';
+import { deriveSessionStatus } from '../engine/sessionStatus';
 import { rowNotes } from '../engine/weekConcerns';
 import { allowedPairs } from '../engine/allowedPair';
 import { WeekAdjustmentsRow } from '../components/WeekAdjustments';
@@ -110,11 +111,9 @@ export function WeekPage() {
     [selected, planChangeLog, slotDays, leavePeriods],
   );
 
-  // The time this week: what was done (the same sum as the weekly review, a loose
-  // training included) of that plus what is still open at its planned length. A
-  // skipped training and a rest day count not at all (engine/weekLogs.ts#weekTime).
+  // De gedane tijd deze week, dezelfde som als de weekterugblik (een losse training telt mee, een rustdag niet).
   const plannedById = useMemo(() => plannedByIdOf(plannedSessions), [plannedSessions]);
-  const { doneMinutes } = weekTime(sessions, sessionLogs, templateById, weekStart, (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program), plannedById);
+  const doneMinutes = weekDoneMinutes(sessionLogs, templateById, weekStart, plannedById);
   // Done without a plan: a row on their day (WeekPlanner), not in the count of planned trainings.
   const looseLogs = useMemo(() => looseLogsOfWeek(sessionLogs, plannedSessions, weekStart), [sessionLogs, plannedSessions, weekStart]);
 
@@ -135,6 +134,14 @@ export function WeekPage() {
   const current = weekStart === mondayOfWeek(today);
   // Het ene vak boven de dagen en wat als rij Voorstel wacht (engine/weekList.ts#weekBox).
   const { box, waiting } = weekBox({ notice: notice.concerns.length > 0, rest: restCard, extra: extraAdvice });
+  // Gemist in de lopende week (afgeleid uit de logs, engine/sessionStatus.ts): dan staat Week opnieuw plannen direct
+  // onder de dagen, met hoeveel er gemist is. De oude rij van een inhaal telt niet: die is overgeslagen.
+  const missed = current ? sessions.filter((s) => {
+    const t = templateById.get(s.templateId);
+    return !!t && t.type !== 'recovery' && deriveSessionStatus(s, sessionLogs, false).status === 'missed';
+  }).length : 0;
+  const replanOn = !!program && trainings > 0 && addDays(weekStart, 6) >= today;
+  const replanRow = replanOn && <WeekReplanRow key={weekStart} weekStart={weekStart} sub={replanSub(missed)} />;
   // Aangepast door ASCEND: één uitkomst voor de rij, het blad en het woord op de dagrij (engine/changeLog.ts).
   const adjustments = useMemo(() => weekAdjustments(planChangeLog, plannedSessions, templates, weekStart, today), [planChangeLog, plannedSessions, templates, weekStart, today]);
   const adjustedIds = useMemo(() => adjustedIdsOf(adjustments), [adjustments]);
@@ -330,20 +337,27 @@ export function WeekPage() {
             dragEnabled={dragHandles}
             onOpenPeriod={setOpenPeriodId}
           />
+          {/* Direct onder de dagen wat nu iets van je vraagt: een voorstel dat wacht, en na een gemiste training
+              Week opnieuw plannen. Zo zakt het niet onder de bergkam buiten beeld. */}
+          {(waiting.length > 0 || (missed > 0 && replanRow)) && (
+            <SheetRows label="Wat nu wacht">
+              {waiting.map((a) => <WeekProposalRow key={a.id} advice={a} />)}
+              {missed > 0 && replanRow}
+            </SheetRows>
+          )}
           {/* Valt je training op een weekdag duidelijk vaker weg: één rustige zin onder de dagen, geen wijziging. */}
           <WeekdayPatternLine />
           {/* De belasting per dag blijft tot Stand hem toont (Stand heeft per week en de beendagen, niet per dag). */}
           {trainings > 0 && <WeekRidge days={profile.days} previous={profile.previous} today={today} />}
           {/* De lijst onder de dagen: één rijvorm, geen mint, elke rij opent iets. */}
           <SheetRows label="Meer over deze week">
-            {waiting.map((a) => <WeekProposalRow key={a.id} advice={a} />)}
             <WeekLoadRow weekStart={weekStart} />
             {review && review.planned > 0 && trainings > 0 && (
               <SheetRow {...weekSoFarRow({ current, done: progress.done, total: progress.total, doneMinutes })} onClick={() => setReviewOpen(true)} sheetFrom />
             )}
             <WeekAdjustmentsRow adjustments={adjustments} weekStart={weekStart} current={current} />
             {/* Week opnieuw plannen: alleen voor de getoonde week, vandaag en later (engine/replanWeek.ts). */}
-            {program && trainings > 0 && addDays(weekStart, 6) >= today && <WeekReplanRow key={weekStart} weekStart={weekStart} />}
+            {missed === 0 && replanRow}
             <LeavePeriodsRow openId={openPeriodId} onOpenHandled={() => setOpenPeriodId(null)} />
             <SheetRow {...SEASON_ROW} onClick={() => { setMonthView(true); scrollMainToTop(); }} />
           </SheetRows>

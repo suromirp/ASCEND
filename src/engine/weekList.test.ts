@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Advice } from './adviceShared';
 import type { LeavePeriod } from '../models/leave';
-import { leaveRowSub, proposalRow, REPLAN_SUB, SEASON_ROW, weekBox, weekLoadRow, weekSkyLine, weekSoFarRow } from './weekList';
+import { leaveRowSub, proposalRow, replanSub, REPLAN_SUB, SEASON_ROW, weekBox, weekLoadRow, weekSkyLine, weekSoFarRow } from './weekList';
 
 // Week minimaal (docs/visie/Ontwerp Week minimaal.md, hoofdstuk 2 en 4): het ene vak boven de dagen en de lijst
 // eronder. Nagemaakte adviezen, geen echte data.
@@ -29,7 +29,7 @@ describe('het ene vak boven de dagen', () => {
 
 describe('de lijst onder de dagen', () => {
   it('een rustweek, overgeslagen, herhaald en een stap achter; een gewone week geen rij', () => {
-    expect(weekLoadRow({ rest: true, restSkipped: false, repeated: false, shifted: false })).toEqual({ title: 'Rustweek', sub: 'Minder uren deze week' });
+    expect(weekLoadRow({ rest: true, restSkipped: false, repeated: false, shifted: false })).toEqual({ title: 'Rustweek', sub: 'Minder uren, zo is je plan opgebouwd' });
     expect(weekLoadRow({ rest: true, restSkipped: true, repeated: false, shifted: false })?.title).toBe('Rustweek overgeslagen');
     expect(weekLoadRow({ rest: false, restSkipped: false, repeated: true, shifted: true })?.title).toBe('Deze week nog een keer');
     expect(weekLoadRow({ rest: false, restSkipped: false, repeated: false, shifted: true })?.title).toBe('Een stap achter');
@@ -52,6 +52,12 @@ describe('de lijst onder de dagen', () => {
     expect(leaveRowSub([], '2026-11-12')).toBe('Niets gepland');
     expect(leaveRowSub([p('oud', '2026-11-01', '2026-11-03')], '2026-11-12')).toBe('Niets gepland');
     expect(leaveRowSub([p('later', '2026-12-20', '2026-12-27'), p('nu', '2026-11-10', '2026-11-14')], '2026-11-12')).toMatch(/^Vakantie zonder training · 10/);
+  });
+
+  it('Week opnieuw plannen zegt na een gemiste training waarom', () => {
+    expect(replanSub(0)).toBe(REPLAN_SUB);
+    expect(replanSub(1)).toBe('Je hebt 1 training gemist. Zet de rest terug naar het plan.');
+    expect(replanSub(2)).toBe('Je hebt 2 trainingen gemist. Zet de rest terug naar het plan.');
   });
 
   it('vaste woorden in zinsletters', () => {

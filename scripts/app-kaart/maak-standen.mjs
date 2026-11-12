@@ -1,7 +1,7 @@
 // Maakt de nagemaakte standen voor de tekstkaart (docs/app-kaart/README.md) en laat elk één planningsronde
 // draaien op de vaste klok van de kaart, zodat een start daarna niets meer bijwerkt.
 //   node scripts/app-kaart/maak-standen.mjs            maakt alle standen opnieuw
-//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, vaardigheid, algemeen, voorstel, aangepast)
+//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek)
 // Alles is nagemaakt: de basis is state-kracht.json, de rest zijn kleine wijzigingen met verzonnen getallen.
 //
 // Waarom "settle": bij de eerste start na het laden van een stand vindt de planningsronde nog iets te
@@ -164,6 +164,31 @@ function metAanpassingen(state) {
   Object.assign(rij('planned_mvsb9yotvrxtjp6'), { lock: { by: 'proposal', proposalId: licht.id, at: licht.resolvedAt } });
 }
 
+// Week minimaal (docs/beslissingen/2026-11-12-week-minimaal.md): drie standen voor Week op de vaste klok (zaterdag 31
+// oktober). Alles nagemaakt; de rijen die erbij komen dragen jouw slot, zoals na zelf neerzetten.
+const eigen = (id, templateId, date, order) => ({ value: { id, templateId, scheduledDate: date, weekStartDate: '2026-10-26', status: 'planned', order, lock: { by: 'user', at: '2026-10-30T18:00:00.000Z' } } });
+
+// Let op met de volle week: de testloop van donderdag viel weg en zaterdag en zondag staan er elk twee trainingen.
+function metVolleWeek(state) {
+  winkel(state, 'plannedSessions').records.push(
+    eigen('planned_kaart_vol_1', 'tpl_easy_run', VANDAAG, 7), eigen('planned_kaart_vol_2', 'tpl_upper_a', VANDAAG, 8),
+    eigen('planned_kaart_vol_3', 'tpl_easy_run', '2026-11-01', 9),
+  );
+}
+
+// Een voorstel dat wacht naast Let op: zondag staat een herstelwandeling die jij erbij zette en vandaag niets meer
+// (REST-PULL, de rustdag naar vandaag), en zondag ook een testloop naast de lange duurloop (TEST-DAY in Let op).
+function metWachtendVoorstel(state) {
+  winkel(state, 'plannedSessions').records.push(
+    eigen('planned_kaart_wacht_1', 'tpl_herstel', '2026-11-01', 7), eigen('planned_kaart_wacht_2', 'tpl_test_run', '2026-11-01', 8),
+  );
+}
+
+// Een rustweek: het programma begon drie weken eerder, zodat deze week de vierde van de basisfase is.
+function metRustweek(state) {
+  for (const r of winkel(state, 'programs').records) if (r.value) r.value.startDate = '2026-10-05';
+}
+
 export const STANDEN = {
   kracht: () => {},
   horloge: metHorloge,
@@ -174,6 +199,9 @@ export const STANDEN = {
   algemeen: metAlgemeen,
   voorstel: metVoorstel,
   aangepast: metAanpassingen,
+  'volle-week': metVolleWeek,
+  'voorstel-wacht': metWachtendVoorstel,
+  rustweek: metRustweek,
 };
 
 // --- één planningsronde op de vaste klok -------------------------------------------------------------

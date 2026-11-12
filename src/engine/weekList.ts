@@ -33,7 +33,7 @@ export function proposalRow(advice: Pick<Advice, 'title'>): ListRow {
 
 // Een rustweek of een herhaalde week: de rij opent het blad met de uitleg en de keuze (components/WeekLoadCards.tsx).
 export function weekLoadRow(state: { rest: boolean; restSkipped: boolean; repeated: boolean; shifted: boolean }): ListRow | undefined {
-  if (state.rest) return state.restSkipped ? { title: 'Rustweek overgeslagen', sub: 'Je traint deze week door' } : { title: 'Rustweek', sub: 'Minder uren deze week' };
+  if (state.rest) return state.restSkipped ? { title: 'Rustweek overgeslagen', sub: 'Je traint deze week door' } : { title: 'Rustweek', sub: 'Minder uren, zo is je plan opgebouwd' };
   if (state.repeated) return { title: 'Deze week nog een keer', sub: 'Op het niveau van vorige week' };
   if (state.shifted) return { title: 'Een stap achter', sub: 'Deze week bouwt een stap achter' };
   return undefined;
@@ -47,6 +47,10 @@ export function weekSoFarRow(input: { current: boolean; done: number; total: num
 }
 
 export const REPLAN_SUB = 'Zet de rest van je week terug naar het plan';
+// Gemist in de lopende week: de rij komt direct onder de dagen en zegt waarom je hem nodig kunt hebben.
+export function replanSub(missed: number): string {
+  return missed > 0 ? `Je hebt ${missed} ${missed === 1 ? 'training' : 'trainingen'} gemist. Zet de rest terug naar het plan.` : REPLAN_SUB;
+}
 export const REPLAN_BUSY = 'Even rekenen…';
 export const REPLAN_FAILED = 'Dat lukte nu niet. Je week staat nog zoals hij was.';
 

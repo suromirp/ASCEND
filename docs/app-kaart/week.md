@@ -24,15 +24,18 @@ Za 31 · niets gepland
 [knop: Verplaats of ruil Lange duurloop, nu op zondag, zware benen. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
 
 --- kaart 2 ---
+[label: Wat nu wacht]
+[knop: Week opnieuw plannenJe hebt 2 trainingen gemist. Zet de rest terug naar het plan.]
+
+--- kaart 3 ---
 Belasting per dag
 zware beendag
 vorige week
 Maandag was je zwaarste dag. Eén zware beendag: Lange duurloop. Je benen hebben ruimte.
 Hoogte: minuten maal zwaarte.
 
---- kaart 3 ---
+--- kaart 4 ---
 [label: Meer over deze week]
 [knop: Je week tot nu0 van 3 gedaan · 0:56 uur]
-[knop: Week opnieuw plannenZet de rest van je week terug naar het plan]
 [knop: Vrije dagen en vakantiesNiets gepland]
 [knop: JaaroverzichtAlle weken tot je doel]
