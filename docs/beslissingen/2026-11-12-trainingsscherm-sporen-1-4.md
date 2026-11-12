@@ -10,8 +10,8 @@ Keuzes van de coördinator (12 november, de eigenaar liet de UI-keuzes aan hem):
 Sporen 1 tot 4 van `docs/visie/Ontwerp trainingsscherm minimaal.md` zijn gebouwd zoals het ontwerp zegt (besluit `2026-11-12-trainingsscherm-en-ontwerpregels.md`). Waar het ontwerp iets open liet of botste met wat niet mocht bewegen, koos de bouwer dit:
 
 1. De oorzaak van het oude scherm bij de Lange duurloop: de ingang zelf was goed (`briefingEntry` gaf ja), maar Vandaag al doen in het blad van Week opende het oude scherm bovenaan, met de uitleg en het formulier eronder. Ook Hoe je het doet op een dag die voorbij was, en elke wandeling, gingen daarheen. Nu opent Vandaag al doen voor een training te voet meteen het invullen (zoals Gedaan), en wordt elke rij Hoe je het doet voor lopen en wandelen de Briefing (`engine/briefing.ts#entryAction`). De keuzes in het blad en hun volgorde (`engine/sessionActions.ts`) veranderen niet.
-2. De knop op Vandaag (`missionButton`) beweegt niet mee: een wandeling houdt daar Gedaan, ook met een horloge dat afvinkt. De Briefing van een wandeling open je via Week. Of een wandeling op Vandaag ook de knop Briefing krijgt is een vraag voor de eigenaar.
-3. De gekozen chip bij Waar train je? blijft mint. Het ontwerp wil een stille chip, maar `src/components/routeStart.scan.test.ts` legt bij Start bij vast dat Waar train je? de mint houdt; dat verandert pas met een eigen spoor.
+2. De knop op Vandaag (`missionButton`) beweegt niet mee: een wandeling houdt daar Gedaan, ook met een horloge dat afvinkt. De Briefing van een wandeling open je via Week. Of een wandeling op Vandaag ook de knop Briefing krijgt is een vraag voor de eigenaar. (Vervangen, zie boven.)
+3. De gekozen chip bij Waar train je? blijft mint. Het ontwerp wil een stille chip, maar `src/components/routeStart.scan.test.ts` legt bij Start bij vast dat Waar train je? de mint houdt; dat verandert pas met een eigen spoor. (Vervangen, zie boven.)
 4. De vaste woorden van de lijst zijn Horloge, Weer, Mee en Voor en na. "Opwarmen en rekken" past niet in de kolom van het vaste woord op 360 px; Voor en na zegt hetzelfde en het blad erachter heeft beide lijsten met hun eigen kopje.
 5. De knop onderaan zonder lus en zonder horloge dat afvinkt heet Gedaan (zoals op Vandaag) en opent het bestaande formulier. Zonder knop is er geen onderbalk; de terugknop sluit.
 6. Een andere keuze dan de standaard krijgt één regel onder de chips: het oordeel ("Ook goed."), wat je anders doet (de tekst `how` van die plek) en, als het een andere sport is, "Dit telt als wandelen, niet als hardlopen." De kaart met wat je op de loopband instelt is daarmee weg.
@@ -23,7 +23,7 @@ De eigenaar vond het trainingsscherm onoverzichtelijk: zone en praattest stonden
 
 ## Alternatieven
 
-`sessionActions.ts` zelf aanpassen voor de dag die voorbij is: mocht niet bewegen, en `entryAction` doet hetzelfde aan de kant van de Briefing. De chip stil maken en de scantest aanpassen: een bestaande test laten meebewegen mag niet stil.
+`sessionActions.ts` zelf aanpassen voor de dag die voorbij is: mocht niet bewegen, en `entryAction` doet hetzelfde aan de kant van de Briefing. De chip stil maken en de scantest aanpassen: een bestaande test laten meebewegen mag niet stil. (De chip is na review toch stil gemaakt; vervangen, zie boven.)
 
 ## Bron
 
