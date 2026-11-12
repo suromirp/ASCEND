@@ -8,12 +8,13 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 
 ## Inbox
 
-- Weer op de gekozen plek (Sherpa Route-blok, 12 november): kies je in de Briefing een plek ver van huis, dan volgt het weer-vak die plek nog niet; `engine/places.ts#weatherAtPlace` bestaat maar wordt nergens gebruikt. Vraagt een tweede voorspelling. Na Route-blok en de Briefing-ronde (zelfde bestanden).
+- Weer van de plek, vervolg (Pathfinder 12 november, moet): de rij Weer in de Briefing opent de pagina Weer, die het weer van thuis toont; geef de pagina de gekozen plek mee of zeg daar in één regel dat de Briefing de plek toont. Mag: De avond ervoor kent de plek niet (de keuze wordt niet bewaard; eigen besluit nodig); een cache per plek in plaats van één sleutel.
+- Nee van logSession bij andere schermen (Warden 12 november): `ExerciseLogger.tsx:120` en `WatchActivityCard.tsx:108` en `:184` lezen nee nog zonder `settleLogOutcome`; nagaan of die bij nee iets weggooien. Mag: de bewaarstap van de sportvraag naar één functie in `state/` met een echte time-outtest.
+
 
 - Briefing volgt de gekozen manier niet (eigenaar 12 november, afdruk heuvelintervallen met StairMaster gekozen: "Hoezo staat dit hier en klopt dat wel?"). Gemeten in de code: (1) "Telt als wandelen, niet als hardlopen" staat dubbel (`data/modalities.ts:286` en de sportwissel in `engine/sessionBrief.ts:68`); (2) de feiten "hard bergop" en "RPE 8-9 op de heuvel" (`sessionBrief.ts:91-92`) en de stopregel "na 2 minuten terug naar beneden" volgen de manier niet; (3) bovenaan 35 minuten totaal, de tijdlijn eindigt op 38 min (10 + 6 x 3 + 10); (4) de rij Waar train je? valt links af ("el"); (5) nakijken of het horloge bij StairMaster nog de heuveltraining heeft (Stair Stepper). Neem mee: het tempobereik en de testloop-zin (`engine/missionFacts.ts`) staan nog niet in de Briefing en daarom tijdelijk op de missiekaart; zet ze in de Briefing en haal ze dan van de kaart (Pathfinder Missiekaart). Na Sherpa Route-blok (zelfde Briefing), Opus; invariant op de tekstkaart: totaal = einde tijdlijn; geen zin dubbel in één blok.
 
 - Andere plek vindt geen heuvel of natuurgebied (eigenaar 12 november, afdruk): een heuvel met adres en postcode gaf "Geen plaats gevonden". Gemeten: Open-Meteo kent alleen plaatsen (dorpen, steden), geen toppen, natuurgebieden of adressen; Photon (OpenStreetMap, photon.komoot.io) vindt dezelfde heuvel direct als top. Advies: eerst Open-Meteo, bij niets Photon als tweede bron (zelfde 8 s, melding als beide niets vinden); bij een adres alleen het deel voor de komma sturen; de zin onder het veld eerlijk maken (ook OpenStreetMap krijgt je zoekwoord). Nominatim niet: verbiedt zoeken tijdens het typen. Klein spoor, Opus; `src/integrations/placeSearchSession.ts`, `src/engine/placeSearch.ts`, `NewPlaceSheet.tsx`. Geen echte plaatsnaam in tests.
-- Opslaan dat mislukt (Sherpa Dubbel log, 12 november): Forge gooit het concept weg (`p.dropDraft()`) ook als het schrijven van het log echt mislukte, en SportAskLine slaat de sportkeuze op ook als het log niet geschreven is (de uitkomst wordt niet gelezen). Klein, opslag-nabij: Sonnet met een test per geval.
 
 - Twee dagen niet kunnen, dan propt de week (eigenaar 11 november, afdruk van Week): maandag en dinsdag gaf hij op als niet kunnen; de week zette daarna donderdag tot en met zondag zes trainingen, vier loopdagen op rij en op vrijdag twee trainingen (kracht en een duurloop met versnellingen), met zaterdag heuvels en zondag de lange duurloop (bewust paar). Geen regel zegt hier iets van. Vraag voor de planner (Fable, eerst naspelen met de back-up): als dagen wegvallen, eerst de minst belangrijke training laten vallen (een rustige of extra loop) in plaats van alles in de overige dagen te duwen; een grens aan loopdagen op rij en aan twee trainingen op een dag na weggevallen dagen; altijd als voorstel met Akkoord en één zin waarom. Golden scenario mag alleen met besluit bewegen. Eigenaar 11 november: "alleen laten vallen na vragen, met advies": de app vraagt eerst welke valt, met een advies welke en waarom, en laat nooit zelf iets vallen. Kiest hij Liever niet, dan blijft de volle week staan en zegt Week dat in een gewone regel (bijvoorbeeld vier loopdagen op rij), zodat hij bewust kiest (eigenaar akkoord, 11 november).
 
@@ -74,6 +75,8 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 5. Forge: herhalingen schatten bij een ander gewicht en de volgende set bijstellen.
 
 ## Pas live
+
+Live op 12 november avond: Opslaan dat mislukt (Forge-concept en sportkeuze blijven tot het log er staat, `settleLogOutcome`) en Weer op de gekozen plek (de Briefing toont het weer van een gekozen plek verder dan 10 km, instelling Weer van de gekozen plek).
 
 Beantwoord op 11 november (eigenaar): APK 158, Precies, vanaf je deur en de datavelden werken; Eccentric Squat blijft de lichte vorm; de vier tekstpunten zonder screenshot vervallen.
 

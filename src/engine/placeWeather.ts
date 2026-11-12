@@ -59,4 +59,4 @@ export function briefingWeather(target: WeatherPlace | undefined, state: PlaceWe
 const nameOf = (name: string) => (name ? name : 'je plek');
 export const placeWeatherLine = (name: string, line: string): string => `In ${nameOf(name)}: ${line.charAt(0).toLowerCase()}${line.slice(1)}`;
 export const placeWeatherFailed = (name: string): string => `Weer in ${nameOf(name)} laadde niet.`;
-export const PLACE_WEATHER_FROM_HOME = 'Dit is thuis.';
+export const PLACE_WEATHER_FROM_HOME = 'Thuis:';

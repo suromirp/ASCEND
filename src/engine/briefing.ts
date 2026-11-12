@@ -546,7 +546,7 @@ function weatherRow(input: BriefingInput, minutes: number): BriefingRow | undefi
   const tone = input.weatherOn && w.verdict !== 'prima' ? ('warn' as const) : undefined;
   const plain = upperFirst(parts.join(', '));
   // De plek erbij: het weer daar, of het weer van huis met de eerlijke regel dat de plek niet laadde.
-  const line = at?.state === 'shown' ? placeWeatherLine(at.name, plain) : at?.state === 'failed' ? `${plain}. ${placeWeatherFailed(at.name)} ${PLACE_WEATHER_FROM_HOME}` : plain;
+  const line = at?.state === 'shown' ? placeWeatherLine(at.name, plain) : at?.state === 'failed' ? `${placeWeatherFailed(at.name)} ${PLACE_WEATHER_FROM_HOME} ${lowerFirst(plain)}.` : plain;
   return { id: 'weather', label: BRIEFING_TEXT.weather, line, opens: true, ...(tone ? { tone } : {}) };
 }
 

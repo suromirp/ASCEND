@@ -331,7 +331,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.hc], 'health-connect-gewicht'),
   ...rule([B.strava], 'strava-tekst-inhoud'),
   ...rule([B.watchFields], 'datavelden-model'),
-  ...rule([B.route], 'route-soort', 'route-zoeken', 'route-kaart'),
+  ...rule([B.route], 'route-soort', 'route-zoeken', 'route-kaart', 'weer-plek'),
   // Gegevens en back-up
   ...rule([B.folder], 'backupmap'),
   ...rule([B.liveUpdate], 'auto-bijwerken'),

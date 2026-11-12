@@ -485,7 +485,7 @@ describe('rowSummary: vandaag en meldingen', () => {
 
   it('beste moment: een schakelaar die standaard aan staat, ook als de sleutel ontbreekt', () => {
     expect(rowSummary('beste-moment', facts())).toEqual({ checked: true });
-    expect(rowSummary('weer-plek', facts())).toEqual({ checked: true });
+    expect(rowSummary('weer-plek', facts())).toMatchObject({ checked: true });
     expect(rowSummary('weer-plek', facts({ settings: { ...facts().settings, overviews: { placeWeather: false } } })).checked).toBe(false);
     expect(rowSummary('beste-moment', facts({ settings: { ...facts().settings, overviews: { weatherLine: false } } })).checked).toBe(true);
     expect(rowSummary('beste-moment', facts({ settings: { ...facts().settings, overviews: { bestMoment: false } } })).checked).toBe(false);

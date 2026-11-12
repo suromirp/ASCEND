@@ -23,6 +23,16 @@ De eigenaar besloot op 11 november dat de Briefing het weer bij de plek toont al
 - De rij opent nog steeds de pagina Weer, en die toont thuis. Dat is zo gevraagd, maar het is een naad: je tikt op het weer van de plek en ziet het weer van huis.
 - Een verouderde voorspelling van de plek (ouder dan een uur, en verversen mislukt) wordt niet getoond: dan liever thuis met de eerlijke regel dan een oud getal dat als nieuw oogt.
 
+## Aanvulling van de coördinator (12 november, na Warden, Lookout en Pathfinder)
+
+- Bij een mislukte plek staat het feit voorop: "Weer in X laadde niet. Thuis: 11 graden, ..." (was: het weer van huis eerst en "Dit is thuis." erachter, wat las alsof de 11 graden bij de plek hoorden).
+- Een plek zonder naam heet "je plek". De tekst bij een gelukte plek is "In X: " met de eerste letter van de regel klein.
+- De regel over drinken en het blad Eten en drinken lezen dezelfde voorspelling van de plek.
+- Het weer van de plek wordt alleen gezocht als er een route op de kaart staat en je niet Liever niet koos; zonder route blijft het weer thuis. De instelling verdwijnt daarom uit beeld als Route voorstellen uit staat (`settingsLayout.ts`, regel van de route).
+- Eén cache-sleutel voor één plek: wisselen tussen twee verre plekken haalt elke keer opnieuw op, ook binnen het uur. Bewust klein gehouden.
+- `fetchForecast` vraagt `timezone=auto`: de dagen van een plek in een andere tijdzone lopen op de klok van die plek. In Nederland en de buurlanden valt dat samen met Amsterdam.
+- Bekende naad, in de backlog: de pagina Weer achter de rij toont thuis, en De avond ervoor kent de plek niet (de keuze wordt niet bewaard).
+
 ## Alternatieven
 
 - De keuze van de plek bewaren zodat De avond ervoor hem ook leest. Niet gedaan: dat verandert het besluit dat een tik op een chip alleen voor deze training geldt, en vraagt een opgeslagen vorm.
