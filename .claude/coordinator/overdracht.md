@@ -57,4 +57,4 @@ Bijgewerkt: 12 november 2026, rond 16:10 UTC, door de coördinator session_01LnD
 ## Live 12 november avond (c03dde9)
 
 - Hoogtemeters stap 1, Opslaan dat mislukt en Weer op de gekozen plek in één squash naar main, na Warden (alle drie), Lookout en Pathfinder (Weer), eigen afdrukken en naspelen (Hoogtemeters). Vervolgpunten staan bovenaan de Inbox. Bouwersessies gearchiveerd.
-- Lopend: Sherpa Andere plek via Photon (session_01LnDpSnx15iX4EME83pMo5r), branch claude/andere-plek-photon 162a479. Warden akkoord (CORS met curl gezien: *), Pathfinder 2 moet (Photon ook bij weinig treffers van Open-Meteo; foutzinnen plek en geen verbinding), Lookout loopt. Herstel naar dezelfde bouwer.
+- Lopend: Sherpa Andere plek via Photon (session_01LnDpSnx15iX4EME83pMo5r), branch claude/andere-plek-photon 162a479. Warden akkoord (CORS met curl gezien: *), Pathfinder 2 moet (Photon ook bij weinig treffers van Open-Meteo; foutzinnen plek en geen verbinding), Lookout groen (CORS in de browser niet te toetsen). Herstelronde gestuurd 18:05 UTC (trig_01ANug9P7pd69r36jNMsskMc); daarna een korte Warden op de herstelronde, dan main.
