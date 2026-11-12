@@ -17,9 +17,8 @@
 
 import type { TrainingPrescription } from '../models/prescription';
 import type { WeeklyPrescription } from '../models/weeklyPrescription';
-import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
+import type { PlanChangeItem } from '../models/planChange';
 import type { PlannedSession } from '../models/training';
-import { addDays, localDateOf } from '../utils/dates';
 
 // JSON met gesorteerde sleutels: twee objecten met dezelfde inhoud geven
 // dezelfde tekst, ongeacht de volgorde waarin hun velden zijn aangemaakt of
@@ -147,45 +146,9 @@ export async function settleWithRound(
     if (kept.length === current.length) return current;
     current = kept;
   }
+  // Niet bevestigd: er komt geen rij bij, er gaat er geen weg en er schuift er geen. Wat overblijft raakt geen rij en
+  // wordt gewoon gemeld zoals altijd; er valt dus niets stil.
   return current.filter((c) => !touchesRow(c));
-}
-
-// Wat het voorschrift kort geleden al eens neerzette en wat er nu toch niet staat, zet het niet opnieuw neer. Het
-// logboek (aangenomen voorstellen van het weekvoorschrift) is het geheugen: dezelfde training op dezelfde dag,
-// dezelfde rij naar dezelfde dag, of dezelfde rij eruit terwijl ze er weer staat. Wie het terugdraaide (de
-// planningsronde, een periode, jij met Ongedaan maken) maakt niet uit: het voorstel landde niet of mocht niet
-// blijven, dus komt het niet bij elke opening terug. Het geheugen is vier weken lang (`REPEAT_MEMORY_DAYS`, geteld
-// vanaf het moment van het voorstel): wat de rij weghaalde kan tijdelijk zijn, dus daarna mag het voorschrift het
-// één keer opnieuw proberen, met de gewone melding. Een samengevat voorstel (engine/proposalTidy.ts) telt niet.
-export const REPEAT_MEMORY_DAYS = 28;
-export function withoutRepeatedAttempts(changes: PlanChangeItem[], log: PlanChangeProposal[], planned: PlannedSession[], asOf: string): PlanChangeItem[] {
-  const since = addDays(asOf, -REPEAT_MEMORY_DAYS);
-  const tried = log
-    .filter((p) => p.trigger === 'weekly_prescription_computed' && p.resolution === 'accepted' && !p.summarizedAt && localDateOf(p.createdAt) >= since)
-    .flatMap((p) => p.changes ?? []);
-  const adds = new Set(tried.filter((c) => c.action === 'add' && !c.plannedSessionId && c.newSessionDraft).map((c) => `${c.newSessionDraft!.templateId}|${c.newSessionDraft!.scheduledDate}`));
-  const moves = new Set(tried.filter((c) => (c.action === 'move' || c.action === 'swap') && c.plannedSessionId && c.toDate).map((c) => `${c.plannedSessionId}|${c.toDate}`));
-  const removes = new Set(tried.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId));
-  const byId = new Map(planned.map((s) => [s.id, s]));
-  const stands = new Set(planned.filter((s) => s.status !== 'skipped').map((s) => `${s.templateId}|${s.scheduledDate}`));
-  const kept = changes.filter((c) => {
-    if (c.action === 'add' && !c.plannedSessionId && c.newSessionDraft) {
-      const key = `${c.newSessionDraft.templateId}|${c.newSessionDraft.scheduledDate}`;
-      // Staat dezelfde training er die dag al, dan is een tweede rij nooit de bedoeling (ook zonder geheugen).
-      return !stands.has(key) && !adds.has(key);
-    }
-    if ((c.action === 'move' || c.action === 'swap') && c.plannedSessionId && c.toDate) {
-      return !(moves.has(`${c.plannedSessionId}|${c.toDate}`) && byId.get(c.plannedSessionId)?.scheduledDate !== c.toDate);
-    }
-    if (c.action === 'remove' && c.plannedSessionId) {
-      const now = byId.get(c.plannedSessionId);
-      return !(removes.has(c.plannedSessionId) && !!now && now.status !== 'skipped');
-    }
-    return true;
-  });
-  if (kept.length === changes.length) return changes;
-  const pairs = kept.filter((c) => c.action !== 'swap' || kept.some((o) => o.action === 'swap' && o.plannedSessionId === c.pairedWithSessionId));
-  return withoutOrphanedRemovals(withoutOrphanedAdds(pairs, changes), changes);
 }
 
 // De andere kant van hetzelfde paar: valt de weghaling weg (de rij staat er weer of blijft staan), dan valt de

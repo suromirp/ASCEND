@@ -36,7 +36,7 @@ import { computeCapacity } from '../engine/capacity';
 import { targetPackWeightKg } from '../engine/demand';
 import { computeActiveGoalOverviews } from '../engine/goalOverview';
 import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngine';
-import { changesOnAllowedDays, changesTheRoundKeeps, diffWeeklyPrescriptionPlan, realPlanChanges, samePlannedSession as sameSession, settleWithRound, withoutRepeatedAttempts } from '../engine/weeklyPrescriptionDiff';
+import { changesOnAllowedDays, changesTheRoundKeeps, diffWeeklyPrescriptionPlan, realPlanChanges, samePlannedSession as sameSession, settleWithRound } from '../engine/weeklyPrescriptionDiff';
 import { previewProgramHorizon, readHorizonStore, type HorizonStore } from './databaseHorizon';
 import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
@@ -141,10 +141,7 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
   );
   // Alleen wat de planningsronde daarna laat staan: wat de fase-regel omzet of
   // de weekcontrole weghaalt, komt er niet in (melding van 9 november).
-  // En niet wat al eens is aangenomen en er nu toch niet staat: dat komt niet bij
-  // elke opening terug (engine/weeklyPrescriptionDiff.ts#withoutRepeatedAttempts).
-  const untried = withoutRepeatedAttempts(delta.changes, await PlanChangeProposalsRepo.getAll(), planned, asOf);
-  proposal.changes = await keptByPlanningRound(untried, planned, proposal);
+  proposal.changes = await keptByPlanningRound(delta.changes, planned, proposal);
 
   // Eerst uitrekenen wat de wijzigingen met de planning doen (puur, zonder
   // opslag), zodat de telling hieronder de uitkomst kan vergelijken.

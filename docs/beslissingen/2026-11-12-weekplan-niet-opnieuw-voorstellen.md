@@ -50,3 +50,9 @@ Niets. Bouwt voort op de valkuil van 9 november in `docs/werkbriefjes/planning.m
 ## Terugdraaien
 
 Haal de aanroep van `withoutRepeatedAttempts` uit `src/storage/weeklyPrescriptionStep.ts`; het natellen en de zin staan los daarvan. Een andere lengte van het geheugen is één getal (`REPEAT_MEMORY_DAYS`).
+
+## Aanvulling na review, 12 november
+
+De oorzaak was de planningsronde die de toevoeging weghaalde (de fase van die week wil geen wandeldag); het voorschrift zette hem bij elke opening terug. Dat is hersteld op 11 november (d687a1f, `keptByPlanningRound`). De twaalf voorstellen in de back-up zijn van 9 november, dus van voor dat herstel; nagespeeld op main geeft de back-up geen nieuw voorstel meer.
+
+Het geheugen van vier weken (`withoutRepeatedAttempts`, `REPEAT_MEMORY_DAYS`) is daarom na review weggelaten: de oorzaak is bekend en hersteld, en het geheugen zou een terechte training tot 28 dagen stil tegenhouden. Wat hierboven over het geheugen staat geldt niet meer. Wat blijft: natellen tot de ronde niets meer weghaalt (`settleWithRound`), het voorstel in het logboek van de proefronde, paren die samen wegvallen (`withoutOrphanedAdds`) en de gevolgzin. Haalt de ronde na acht keer nog iets weg, dan komt er geen rij bij, gaat er geen weg en schuift er geen; wat geen rij raakt wordt gewoon gemeld.
