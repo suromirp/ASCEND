@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import sheet from './WeekReview.tsx?raw';
 import glance from '../engine/weekGlance.ts?raw';
 import hook from './useMountainMuscleProposal.ts?raw';
+import forgeIntro from './forge/ForgeIntro.tsx?raw';
+import notice from './MountainMuscleNotice.tsx?raw';
 
 describe('Je week tot nu, de bron', () => {
   it('geen eigen beweging: alleen het blad en de achtergrond in en uit', () => {
@@ -48,5 +50,12 @@ describe('Je week tot nu, de bron', () => {
 
   it('geen gedachtestreepjes', () => {
     expect(sheet + glance).not.toMatch(/[–—]/);
+  });
+
+  it('Forge en het blad: dezelfde hook en dezelfde week, zonder eigen weekStart', () => {
+    expect(hook).toContain('const weekStart = muscleProposalWeek(todayISO());');
+    expect(forgeIntro).not.toMatch(/weekStart/);
+    expect(notice).toContain('useMountainMuscleProposal({ onlyFor })');
+    expect(sheet).toContain('useMountainMuscleProposal({ active: reviewShowsMuscleProposal(review.weekStart, today) })');
   });
 });

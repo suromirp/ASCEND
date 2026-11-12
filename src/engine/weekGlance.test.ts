@@ -41,6 +41,35 @@ describe('de regel onder de dagen', () => {
   });
 });
 
+describe('een losse training naast gedaan', () => {
+  const W = '2026-10-05';
+
+  it('alleen een losse training: dat staat er met zijn woord, met de tijd', () => {
+    const loose: SessionLog = { ...log('x', 'tpl_easy_run', '2026-10-05', 56), plannedSessionId: undefined };
+    const r = review(W, weekOf(W, 'a'), [loose], '2026-10-07');
+    expect(r.done).toBe(0);
+    expect(r.extraLogged).toBe(1);
+    expect(weekCountLine(r)).toBe('0 gedaan · 1 losse training · 56 min');
+  });
+
+  it('herstel op een rustdag telt nergens: geen losse training en geen tijd (zoals bovenaan Week)', () => {
+    const rest = ps('arest', 'tpl_herstel', '2026-10-05', W);
+    const r = review(W, [rest, ...weekOf(W, 'a')], [log('arest', 'tpl_herstel', '2026-10-05', 30)], '2026-10-07');
+    expect(r.minutes).toBe(0);
+    expect(weekCountLine(r)).toBe('0 gedaan');
+  });
+
+  it('gepland gedaan en twee losse: beide tellen, de tijd is van alles', () => {
+    const extra = (id: string): SessionLog => ({ ...log(id, 'tpl_easy_run', '2026-10-06', 30), plannedSessionId: undefined });
+    const r = review(W, weekOf(W, 'a'), [log('aua', 'tpl_upper_a', '2026-10-06'), extra('x1'), extra('x2')], '2026-10-07');
+    expect(weekCountLine(r)).toBe('1 gedaan · 2 losse trainingen · 2:04 uur');
+  });
+
+  it('niets gedaan en niets los: geen tijd', () => {
+    expect(weekCountLine({ ...review(W, weekOf(W, 'a'), [], '2026-10-06'), minutes: 0 })).toBe('0 gedaan');
+  });
+});
+
 describe('de dag zelf telt nog niet als voorbij', () => {
   it('een training van vandaag die nog open staat bleef niet liggen', () => {
     const W = '2026-10-05';

@@ -6,8 +6,8 @@ import { useMountainMuscleProposal } from './useMountainMuscleProposal';
 import { Eyebrow, SecondaryButton } from './ui';
 
 // In Forge (`onlyFor`) alleen in de training waar de oefening bij zou komen.
-export function MountainMuscleNotice({ weekStart, onlyFor, className = 'mt-5' }: { weekStart: string; onlyFor?: string; className?: string }) {
-  const { proposal, text, state, accept, decline } = useMountainMuscleProposal(weekStart, onlyFor);
+export function MountainMuscleNotice({ onlyFor, className = 'mt-5' }: { onlyFor?: string; className?: string }) {
+  const { proposal, text, state, accept, decline } = useMountainMuscleProposal({ onlyFor });
   if (!proposal || !text) return null;
 
   return (

@@ -668,7 +668,7 @@ function ForgeWorkoutInner({
       },
       onLater: () => setCalLater(true),
     } : undefined;
-  const intro = <ForgeIntro templateId={template.id} today={today} date={date} program={program} preview={preview} readOnly={readOnly} mountainNotice={mountainNotice} stepNotice={stepNotice} calibration={calibration} capLine={capLine} legLine={legLine} legPanel={legPanel} />;
+  const intro = <ForgeIntro templateId={template.id} date={date} program={program} preview={preview} readOnly={readOnly} mountainNotice={mountainNotice} stepNotice={stepNotice} calibration={calibration} capLine={capLine} legLine={legLine} legPanel={legPanel} />;
   const exerciseBlock = (ex: WorkoutExercise, i: number) => {
     const capRemoved = capRemovedFor(capped, ex, effSlots);
     const lines = stepsOn && ex.known ? ladderLines(exerciseOf(ex)) : undefined;

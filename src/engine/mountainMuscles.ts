@@ -248,6 +248,17 @@ export function mountainMuscleProposal(input: MuscleProposalInput): MusclePropos
   return { ...short, templateId: target.id, templateName: target.name, exerciseId: pick.id, exerciseName: pick.name, ...addedPrescription(pick) };
 }
 
+// De week waarmee het voorstel rekent: de laatste hele week voor vandaag. Forge en de weekterugblik gebruiken
+// dezelfde, zodat ze nooit een ander voorstel tonen (ook rond middernacht op de maandag).
+export function muscleProposalWeek(today: string): string {
+  return addDays(mondayOfWeek(today), -7);
+}
+
+// Het blad van een week toont het voorstel alleen voor deze of de vorige week; een oudere terugblik gaat over toen.
+export function reviewShowsMuscleProposal(reviewWeekStart: string, today: string): boolean {
+  return reviewWeekStart >= muscleProposalWeek(today);
+}
+
 const setsWord = (n: number) => (n === 1 ? 'harde set' : 'harde sets');
 
 // De woorden van de melding: eerst het feit, dan de zorg ("kan helpen"), eerlijk over wat niet telde, en het voorstel.

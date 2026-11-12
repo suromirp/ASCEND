@@ -38,3 +38,24 @@ describe('de weekgrens rond 00:00 Europe/Amsterdam', () => {
     expect(weekCountLine(r)).toBe('Geen trainingen deze week. Volgende week volgt het plan.');
   });
 });
+
+describe('Forge en de weekterugblik rekenen het voorstel met dezelfde week', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('zondag 23:59 en maandag 00:00: één week voor allebei, en de terugblik van deze en vorige week toont hem', async () => {
+    const { muscleProposalWeek, reviewShowsMuscleProposal } = await import('./mountainMuscles');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-11T21:59:00Z')); // zondag 23:59 in Amsterdam
+    let today = todayISO();
+    expect(muscleProposalWeek(today)).toBe('2026-09-28');
+    expect(reviewShowsMuscleProposal(mondayOfWeek(today), today)).toBe(true);
+    expect(reviewShowsMuscleProposal('2026-09-28', today)).toBe(true);
+    expect(reviewShowsMuscleProposal('2026-09-21', today)).toBe(false);
+    vi.setSystemTime(new Date('2026-10-11T22:00:00Z')); // maandag 00:00 in Amsterdam
+    today = todayISO();
+    expect(muscleProposalWeek(today)).toBe('2026-10-05');
+    expect(reviewShowsMuscleProposal('2026-10-12', today)).toBe(true);
+    expect(reviewShowsMuscleProposal('2026-10-05', today)).toBe(true);
+    expect(reviewShowsMuscleProposal('2026-09-28', today)).toBe(false);
+  });
+});

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { canAddExercise, withAddedExercise } from '../engine/addedExercises';
 import { forgeSlotsFor } from '../engine/forgeSlots';
-import { mountainMuscleProposal, muscleNoticeText, type MuscleProposal } from '../engine/mountainMuscles';
+import { mountainMuscleProposal, muscleNoticeText, muscleProposalWeek, type MuscleProposal } from '../engine/mountainMuscles';
 import { resolveStrengthSettings } from '../engine/strengthSettings';
 import { useAppData } from '../state/AppDataContext';
 import { mondayOfWeek, todayISO } from '../utils/dates';
@@ -18,7 +18,9 @@ export type MuscleNoticeState = 'open' | 'busy' | 'done' | 'declined' | 'failed'
 // De berekening en het Akkoord van het voorstel, los van de weergave: Forge toont het als melding in de kop van
 // de training (`onlyFor`), de weekterugblik als rij met een eigen weergave. Beide gebruiken dezelfde engine-functie
 // en dezelfde Akkoord.
-export function useMountainMuscleProposal(weekStart: string, onlyFor?: string) {
+// `active` false: de hook rekent niets (een oude weekterugblik). De week komt altijd uit muscleProposalWeek.
+export function useMountainMuscleProposal({ onlyFor, active = true }: { onlyFor?: string; active?: boolean } = {}) {
+  const weekStart = muscleProposalWeek(todayISO());
   const { sessionLogs, templates, program, trainingGoals, goalMilestones, settings, updateSettings, injuryNotes, leavePeriods } = useAppData();
   const [declines] = useState(readMuscleDeclines);
   const [state, setState] = useState<MuscleNoticeState>('open');
@@ -35,6 +37,7 @@ export function useMountainMuscleProposal(weekStart: string, onlyFor?: string) {
     };
   }, []);
   const live = useMemo(() => {
+    if (!active) return null;
     const strength = resolveStrengthSettings(settings.strengthModel);
     const today = todayISO();
     const templateIds = templates.map((t) => t.id);
@@ -56,7 +59,7 @@ export function useMountainMuscleProposal(weekStart: string, onlyFor?: string) {
       injuries: injuryNotes,
     });
     return found && onlyFor !== undefined && found.templateId !== onlyFor ? null : found;
-  }, [weekStart, onlyFor, sessionLogs, templates, program, trainingGoals, goalMilestones, settings.strengthModel, declines, leavePeriods, injuryNotes]);
+  }, [active, weekStart, onlyFor, sessionLogs, templates, program, trainingGoals, goalMilestones, settings.strengthModel, declines, leavePeriods, injuryNotes]);
   const shownProposal = accepted ?? live;
   const proposal = shownProposal && state !== 'declined' ? shownProposal : null;
   const text = proposal ? muscleNoticeText(proposal) : null;

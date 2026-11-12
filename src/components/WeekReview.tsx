@@ -18,6 +18,7 @@ import { Card, Eyebrow, InfoButton, PrimaryButton, SecondaryButton, SheetGrip } 
 import { TextButton } from './TextButton';
 import { SheetRow, SheetRows } from './SheetRows';
 import { useMountainMuscleProposal } from './useMountainMuscleProposal';
+import { reviewShowsMuscleProposal } from '../engine/mountainMuscles';
 import { useBackToClose } from '../utils/useBackToClose';
 import { WeekStrip } from './vandaag/WeekStrip';
 import { LogDetailSheet } from './LogDetailSheet';
@@ -108,8 +109,9 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
   useBackToClose(view !== 'main', () => setView('main'));
   const [picked, setPicked] = useState<SessionLog | null>(null);
   const [proposalInfo, setProposalInfo] = useState(false);
-  const muscle = useMountainMuscleProposal(review.weekStart);
   const today = todayISO();
+  // Dezelfde week en dezelfde functie als Forge (engine/mountainMuscles.ts#muscleProposalWeek).
+  const muscle = useMountainMuscleProposal({ active: reviewShowsMuscleProposal(review.weekStart, today) });
   const intention = intentionForWeek(settings.weeklyIntentions, review.weekStart);
   const attention = attentionLines(review);
   const next = review.next ? nextWeekLine(review.next) : null;

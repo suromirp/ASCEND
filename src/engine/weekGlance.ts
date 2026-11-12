@@ -16,12 +16,16 @@ const capital = (s: string) => (s ? `${s.charAt(0).toUpperCase()}${s.slice(1)}` 
 const lower = (s: string) => (/^[A-Z][a-z]/.test(s) ? `${s.charAt(0).toLowerCase()}${s.slice(1)}` : s);
 
 // De ene regel onder de dagen: "1 gedaan · 1:04 uur", een afgelopen week "4 van 5 gedaan · 5:10 uur". Wat vandaag
-// nog staat laat de strip zien; de verdeling per sport staat in Je trainingen.
+// nog staat laat de strip zien; de verdeling per sport staat in Je trainingen. Een losse training (iets buiten de
+// planning om) telt in de tijd, niet in gedaan, en staat er dan met zijn eigen woord bij: "0 gedaan · 1 losse
+// training · 56 min". Is er niets gedaan, dan staat er geen tijd.
 export function weekCountLine(r: WeekReview): string {
   if (!r.running && r.done === 0 && r.minutes === 0) return 'Geen trainingen deze week. Volgende week volgt het plan.';
   const count = r.running ? `${r.done} gedaan` : `${r.done} van ${r.planned} gedaan`;
-  if (r.minutes <= 0) return count;
-  return `${count} · ${time(r.minutes)}`;
+  const extra = r.extraLogged ?? 0;
+  const loose = extra > 0 ? `${extra} ${extra === 1 ? 'losse training' : 'losse trainingen'}` : undefined;
+  if (r.minutes <= 0 || (r.done === 0 && !loose)) return [count, loose].filter(Boolean).join(' · ');
+  return [count, loose, time(r.minutes)].filter(Boolean).join(' · ');
 }
 
 // De verdeling per sport, voor de weergave Je trainingen: "hardlopen 18,4 km · 320 m omhoog".
