@@ -347,11 +347,12 @@ describe('WEEK-FULL: een punt in Let op', () => {
     expect(weekFixId(c, sessions)).toBe(`weekfix:${c.key}`);
   });
 
-  it('samen met een ander punt telt hij mee in de kop, en de rij krijgt beide teksten als één punt', () => {
+  it('samen met een ander punt telt hij mee in de kop; op de rij gaat het punt van de weekcontrole voor', () => {
     const c = fullWeekConcern(inp, MON)!;
     const other: WeekConcern = { ...c, key: 'LEG-SPACING:x', rule: 'LEG-SPACING', plain: undefined, title: 't', why: 'w', finding: {} as never, headline: 'Twee zware beendagen.', fact: 'f', notes: { 'tpl_long_run@6': '1 dag na Benen A' } } as WeekConcern;
     expect(noticeHeadline([c, other])).toBe('Deze week heeft 2 punten die niet kloppen.');
-    expect(rowNotes([c, other]).get('tpl_long_run@6')).toBe('volle dag · 1 dag na Benen A');
+    expect(rowNotes([c, other]).get('tpl_long_run@6')).toBe('1 dag na Benen A');
+    expect(rowNotes([c, other]).get('tpl_bodyweight@6')).toBe('volle dag');
   });
 
   it('dezelfde woorden als de gewone regel; na Akkoord of in een andere week niets', () => {

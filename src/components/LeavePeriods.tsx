@@ -75,6 +75,7 @@ export function LeavePeriodsRow({ openId, onOpenHandled }: { openId?: string | n
         <Sheet eyebrow="Week" title={LIST_TITLE} onClose={() => setListOpen(false)}>
           {(close) => (
             <div className="flex flex-col gap-3 pb-2">
+              {stale && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }} role="status">{STALE_TEXT}</p>}
               {shown.length > 0 && (
                 <SheetRows label={LIST_TITLE}>
                   {shown.map((p) => (

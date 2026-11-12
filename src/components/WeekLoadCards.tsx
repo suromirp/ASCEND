@@ -24,7 +24,9 @@ const DIM = { color: 'var(--color-ink-dim)' };
 // uitleg en de bestaande keuze. Alleen voor deze week en later, zoals de kaarten zelf.
 export function WeekLoadRow({ weekStart }: { weekStart: string }) {
   const { program, sessionLogs } = useAppData();
-  const [open, setOpen] = useState(false);
+  // Het blad onthoudt zijn titel: verandert de week na een Akkoord (de rustweek weg), dan blijft het open tot je
+  // het zelf sluit, in plaats van met de rij te verdwijnen.
+  const [open, setOpen] = useState<string | null>(null);
   const today = todayISO();
   const row = useMemo(() => {
     if (!program || weekStart < mondayOfWeek(today)) return undefined;
@@ -32,12 +34,12 @@ export function WeekLoadRow({ weekStart }: { weekStart: string }) {
     const repeat = repeatState(program, weekStart);
     return weekLoadRow({ rest: rest.isRestWeek, restSkipped: !!rest.skipped, repeated: repeat.repeated, shifted: !!repeat.shifted });
   }, [program, weekStart, sessionLogs, today]);
-  if (!row) return null;
+  if (!row && !open) return null;
   return (
     <>
-      <SheetRow title={row.title} sub={row.sub} onClick={() => setOpen(true)} sheetFrom />
+      {row && <SheetRow title={row.title} sub={row.sub} onClick={() => setOpen(row.title)} sheetFrom />}
       {open && (
-        <Sheet eyebrow="Week" title={row.title} onClose={() => setOpen(false)}>
+        <Sheet eyebrow="Week" title={open} onClose={() => setOpen(null)}>
           <div className="flex flex-col gap-3 pb-2"><WeekLoadCards weekStart={weekStart} /></div>
         </Sheet>
       )}

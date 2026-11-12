@@ -243,9 +243,13 @@ export function noticeHeadline(concerns: WeekConcern[]): string {
   return concerns.length === 1 ? concerns[0].headline : `Deze week heeft ${concerns.length} punten die niet kloppen.`;
 }
 
-// De tekst per training voor de rij, uit alle meldingen samen.
+// De tekst per training voor de rij: één punt, ook als er meer over dezelfde training gaan (de dagrij heeft
+// ruimte voor één ding, docs/visie/Ontwerp Week minimaal.md hoofdstuk 5). Een punt van de weekcontrole gaat voor
+// de volle week, die het minst over die ene training zegt; de rest staat in Let op.
 export function rowNotes(concerns: WeekConcern[]): Map<string, string> {
-  const out = new Map<string, string[]>();
-  for (const c of concerns) for (const [id, text] of Object.entries(c.notes)) out.set(id, [...(out.get(id) ?? []), text]);
-  return new Map([...out].map(([id, list]) => [id, list.join(' · ')]));
+  const out = new Map<string, string>();
+  for (const c of [...concerns.filter((x) => !x.plain), ...concerns.filter((x) => x.plain)]) {
+    for (const [id, text] of Object.entries(c.notes)) if (!out.has(id)) out.set(id, text);
+  }
+  return out;
 }

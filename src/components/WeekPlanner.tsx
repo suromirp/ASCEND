@@ -91,10 +91,11 @@ function SessionRow({
   const legs = !isRest && isLegHeavyTemplate(template);
   // Na de dag en de duur hoogstens één ding (engine/weekRow.ts#rowExtra). "aangepast" staat op precies de rijen
   // met een regel in Aangepast door ASCEND, ook als hij gedaan is (engine/changeLog.ts#weekAdjustments).
-  const extra = isRest ? undefined : rowExtra({
+  // Een rustdag houdt "bewust herstel"; alleen een punt uit Let op en "aangepast" komen erbij.
+  const extra = isRest ? rowExtra({ concern, adjusted }) : rowExtra({
     concern, missed: status === 'missed' && !!handle, catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
   });
-  const note = extra?.text;
+  const note = extra && [extra.text, extra.also].filter(Boolean).join(', ');
   // Het streepje met de kleur van de zone alleen bij een training te voet of op de fiets, niet bij kracht.
   const zone = isRest || template.type === 'strength' ? undefined : zoneOfTemplate(template, session.scheduledDate, program, templates);
   const doneNow = status === 'completed';
@@ -138,11 +139,19 @@ function SessionRow({
           )}
           {extra && (
             <span className="inline-flex min-w-0 items-center gap-1">
-              <span aria-hidden="true">·</span>
-              {/* Alleen een punt uit Let op is een waarschuwing: een amber stip vooraan, de tekst gedempt. */}
-              {extra.warn && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-warning)' }} />}
-              {/* Een waarschuwing mag breken; een stille tekst blijft op één regel en wordt zo nodig afgekapt. */}
-              <span className={extra.warn ? undefined : 'truncate'}>{extra.text}</span>
+              {/* Alleen een punt uit Let op is een waarschuwing: een amber stip na de punt, de tekst gedempt. Een
+                  stille tekst blijft op één regel en wordt zo nodig afgekapt; een waarschuwing mag breken. De punt
+                  en de tekst staan in één span, zodat de tekst van de rij "· aangepast" leest. */}
+              {extra.warn ? (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-warning)' }} />
+                  <span>{' '}{extra.text}</span>
+                </>
+              ) : (
+                <span className="truncate">· {extra.text}</span>
+              )}
+              {extra.also && <span>· {extra.also}</span>}
             </span>
           )}
         </span>
