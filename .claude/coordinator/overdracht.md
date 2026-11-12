@@ -51,3 +51,8 @@ Bijgewerkt: 12 november 2026, rond 16:10 UTC, door de coördinator session_01LnD
 - Vorige coördinatoren: session_01LnDpSm59PuKBYsAhFgUjTr (12 november, 10:27 tot ongeveer 16:10 UTC), session_01LnDpSkUxMFtEBmNMxMAKcN (12 november, tot 10:40 UTC), session_01LnDpSnA7KzoLikwifh3nyR (11 op 12 november), session_01LnDpSkFKoLuAUnLCXKbA1G, session_01LnDpSj5xhvz93hRnJrHyF8.
 - Bouwmoment ma, wo, vr 19:43 (trig_01JDroCyzgfatU8c7MiK26Ei). Vrijdag 13 november: de Inbox.
 - Volgende wissel: plan je zelf met send_later op 04:47 [Europe/Amsterdam] morgen.
+
+## Live 12 november avond (c03dde9)
+
+- Hoogtemeters stap 1, Opslaan dat mislukt en Weer op de gekozen plek in één squash naar main, na Warden (alle drie), Lookout en Pathfinder (Weer), eigen afdrukken en naspelen (Hoogtemeters). Vervolgpunten staan bovenaan de Inbox. Bouwersessies gearchiveerd.
+- Lopend: Sherpa Andere plek via Photon (session_01LnDpSnx15iX4EME83pMo5r).
