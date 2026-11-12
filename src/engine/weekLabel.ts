@@ -35,3 +35,15 @@ export function weekHeading(position: ResolvedProgramPosition | null | undefined
   }
   return { title: 'Week', number: position.weekInPhase, line: `van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}` };
 }
+
+// De kop van de pagina Week: het grote getal ("Week 1") blijft, de kleine regel noemt de fase en haar lengte
+// ("Basisfase van 4 weken"). Week wijkt hier bewust af van Vandaag en Stand (weekPositionLabel): het weeknummer
+// staat al groot, dus "week 1" nog eens in de kleine regel is dubbel. In een golf of een vaste week blijft de
+// regel van weekHeading. Besluit: docs/beslissingen/2026-11-12-week-minimaal.md (aanvulling).
+export function weekPageHeading(position: ResolvedProgramPosition | null | undefined): { title: string; number?: number; line: string } {
+  const heading = weekHeading(position);
+  if (!position || waveHeader(position)) return heading;
+  const name = position.phase.name.toLowerCase();
+  const weeks = position.phase.weekCount;
+  return { ...heading, line: `${name.charAt(0).toUpperCase()}${name.slice(1)} van ${weeks} ${weeks === 1 ? 'week' : 'weken'}` };
+}

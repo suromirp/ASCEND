@@ -12,6 +12,7 @@ Schermen op een eigen stand, met de stand in de naam:
 - zonder-doel (geen doel, de richting Fit blijven): `vandaag-zonder-doel`, `week-zonder-doel`, `ascend-zonder-doel`, `stand-zonder-doel` en `stand-ritme-zonder-doel`.
 - ziek (verkouden boven de nek, sinds vandaag): `vandaag-ziek`, `week-ziek` en `stand-ziek`.
 - vaardigheid (één vaardigheid, Pull-Up, met twee stappen gehaald): `ascend-vaardigheid`.
+- aangepast (twee nagemaakte, aangenomen voorstellen in deze week: de Lange duurloop van zaterdag naar zondag en Benen A lichter): `week-aangepast` (de rij Aangepast door ASCEND onder de dagen) en `week-aangepast-blad` (het blad erachter), met een invariant: het getal op de rij is het aantal regels in het blad en het aantal dagrijen met "aangepast".
 - voorstel (naast de wedstrijd een verzonnen huttentocht, het programma gestart op 28 september): `weekterugblik-voorstel`, de weergave Voorstel in de weekterugblik met het voorstel dat de engine zelf maakt.
 
 ## De standen
