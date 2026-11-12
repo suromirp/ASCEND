@@ -26,8 +26,10 @@ function model(over: Partial<RouteSearchModel> = {}): RouteSearchModel {
 }
 
 const routeView = (search: 'open' | 'tap' = 'open'): BriefingView => ({
-  stand: { kind: 'watch', line: 'Je horloge vinkt deze training af.', manualLabel: 'Zelf invullen' },
-  places: [], place: 'run_outdoor', map: { kind: 'route', target, line: '7 km, 40 m stijgen', search }, tiles: [], footer: { kind: 'route', label: 'Route naar Garmin Connect' },
+  head: { eyebrow: 'HARDLOPEN', purpose: 'Rustig.', dayLine: 'Zo 15 november' },
+  heart: { facts: [{ value: '40 min', label: 'totaal' }], zone: 2, steps: false },
+  stand: { kind: 'watch', line: 'Vinkt zelf af', manualLabel: 'Zelf invullen' },
+  places: [], place: 'run_outdoor', map: { kind: 'route', target, line: '7 km, 40 m stijgen', search }, rows: [], stopSignals: [], footer: { kind: 'route', label: 'Route naar Garmin Connect', fallback: { kind: 'none' } },
 });
 
 const render = (view: BriefingView, m: RouteSearchModel, { searchOn = true, declined = false } = {}) =>
@@ -78,13 +80,12 @@ describe('de plek van de kaart in de Briefing', () => {
     expect(html).toContain('>Kies<');
     expect(html).toContain('Groter');
   });
-  it('Loopband of binnen: geen kaart en geen zoektocht, wel wat je op de band instelt', () => {
-    const view: BriefingView = { ...routeView(), place: 'run_treadmill', map: { kind: 'place', title: 'Hardlopen, loopband', how: 'Zet de band op 1 procent helling.' } };
+  // Spoor 4 van docs/visie/Ontwerp trainingsscherm minimaal.md: wat je op de band instelt staat in de
+  // regel onder de chips (engine/briefing.ts#placeLine), niet meer in een eigen kaart.
+  it('Loopband of binnen: niets op de plek van de kaart, geen zoektocht', () => {
+    const view: BriefingView = { ...routeView(), place: 'run_treadmill', map: { kind: 'place' } };
     const html = render(view, model());
-    expect(html).toContain('Hardlopen, loopband');
-    expect(html).toContain('1 procent helling');
-    expect(html).not.toContain('Lussen zoeken');
-    expect(html).not.toContain('Zoek een lus');
+    expect(html).toBe('');
   });
   it('Route voorstellen uit: niets op de plek van de kaart', () => {
     expect(render({ ...routeView(), map: { kind: 'none' } }, model())).toBe('');
