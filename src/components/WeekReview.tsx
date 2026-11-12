@@ -165,7 +165,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
                 {hasRows && (
                   <div className="mt-5">
                     <SheetRows>
-                      {muscle.proposal && muscle.text && <SheetRow title="Voorstel" sub={muscle.text.what} onClick={() => setView('proposal')} sheetFrom />}
+                      {muscle.proposal && muscle.text && <SheetRow title={muscle.state === 'done' ? 'Toegevoegd' : 'Voorstel'} sub={muscle.text.what} onClick={() => setView('proposal')} sheetFrom />}
                       {weekLogs.length > 0 && <SheetRow title="Je trainingen" sub={`${weekLogs.length} ${weekLogs.length === 1 ? 'training' : 'trainingen'}`} onClick={() => setView('trainings')} sheetFrom />}
                       {review.changes.length > 0 && <SheetRow title="Wat ASCEND aanpaste" sub={changesSub(review.changes.length)} onClick={() => setView('changes')} sheetFrom />}
                       {intention?.answer && <SheetRow title="Je antwoord deze week" onClick={() => setView('answer')} sheetFrom />}

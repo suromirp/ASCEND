@@ -38,8 +38,8 @@ describe('Je week tot nu, de bron', () => {
   });
 
   it('geen voorstel, geen rij: de rij Voorstel staat er alleen met een voorstel, als eerste rij', () => {
-    expect(sheet).toContain('{muscle.proposal && muscle.text && <SheetRow title="Voorstel"');
-    expect(sheet.indexOf('title="Voorstel"')).toBeLessThan(sheet.indexOf('title="Je trainingen"'));
+    expect(sheet).toContain("{muscle.proposal && muscle.text && <SheetRow title={muscle.state === 'done' ? 'Toegevoegd' : 'Voorstel'}");
+    expect(sheet.indexOf("'Voorstel'}")).toBeLessThan(sheet.indexOf('title="Je trainingen"'));
   });
 
   it('geen "een paar minuten": de app kent de duur van de oefening niet', () => {
