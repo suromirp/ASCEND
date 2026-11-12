@@ -254,7 +254,8 @@ export function weekAdjustments(
   const origin = new Map<string, { date: string; skipped: boolean }>();
 
   const accepted = proposals
-    .filter((p) => p.resolution === 'accepted' && !p.revertsProposalId && !reverted.has(p.id) && localDateOf(p.createdAt) >= since)
+    // Venster en volgorde lezen hetzelfde moment: wanneer het besloten is.
+    .filter((p) => p.resolution === 'accepted' && !p.revertsProposalId && !reverted.has(p.id) && localDateOf(p.resolvedAt ?? p.createdAt) >= since)
     .sort((a, b) => (a.resolvedAt ?? a.createdAt).localeCompare(b.resolvedAt ?? b.createdAt));
 
   for (const p of accepted) {

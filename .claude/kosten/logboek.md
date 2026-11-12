@@ -430,3 +430,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Pathfinder Stand opschonen (sonnet) 44k; Lookout Stand opschonen (tester, sonnet) 62k, 14 min, groen; Pathfinder Hoe ging het? (sonnet) 45k, akkoord met 1 moet (concept bij tik naast het blad)
 - 2026-11-12, Sherpa Stand opschonen (opus, ca. $11,8, 1 herstelronde) op main 39baf86; Sherpa Hoe ging het? (opus, ca. $17, 1 herstelronde) op main c92df03; Lookout Hoe ging het? (tester, sonnet) 87k, 15 min, groen
 - 2026-11-12, coördinator 12 november: ca. $23 tot de vroege wissel om 10:40 UTC (500k context)
+- 2026-11-12, Sherpa Week aanpassingen (opus); Warden Week aanpassingen (reviewer, sonnet) 37k, 3 min, akkoord zonder blokkerende punten, 2 beter overgenomen

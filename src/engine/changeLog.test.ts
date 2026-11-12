@@ -164,6 +164,28 @@ describe('Aangepast door ASCEND, de woorden', () => {
     expect(lines(weekAdjustments([p], sessions, templates, WEEK, TODAY))).toEqual(['Heuvelintervallen: van vr 13 naar za 14']);
   });
 
+  it('een ruil: beide trainingen krijgen een regel', () => {
+    const p = proposal([
+      { plannedSessionId: 'h', action: 'swap', fromDate: '2026-11-13', toDate: '2026-11-14', pairedWithSessionId: 't' },
+      { plannedSessionId: 't', action: 'swap', fromDate: '2026-11-14', toDate: '2026-11-13', pairedWithSessionId: 'h' },
+    ]);
+    const sessions = [ps('h', 'hills', '2026-11-14', { status: 'moved', lock: lockOf(p) }), ps('t', 'tempo', '2026-11-13', { status: 'moved', lock: lockOf(p) })];
+    expect(lines(weekAdjustments([p], sessions, templates, WEEK, TODAY))).toEqual(['Tempoloop: van za 14 naar vr 13', 'Heuvelintervallen: van vr 13 naar za 14']);
+  });
+
+  it('een toevoeging met twee gelijke trainingen op die dag: het slot wijst hem aan, anders bij twijfel geen regel', () => {
+    const p = proposal([{ action: 'add', newSessionDraft: { templateId: 'bw', scheduledDate: '2026-11-15', weekStartDate: WEEK } }]);
+    const locked = [ps('x', 'bw', '2026-11-15'), ps('y', 'bw', '2026-11-15', { lock: lockOf(p) })];
+    expect(weekAdjustments([p], locked, templates, WEEK, TODAY).map((a) => a.sessionId)).toEqual(['y']);
+    const unsure = [ps('x', 'bw', '2026-11-15'), ps('y', 'bw', '2026-11-15', { lock: { by: 'proposal', proposalId: 'ander', at: 'x' } })];
+    expect(weekAdjustments([p], unsure, templates, WEEK, TODAY)).toEqual([]);
+  });
+
+  it('het venster telt vanaf het besluit, niet vanaf het uitrekenen', () => {
+    const p = proposal([{ plannedSessionId: 'a', action: 'reduce' }], { createdAt: '2026-10-27T08:00:00.000Z', resolvedAt: '2026-10-30T08:00:00.000Z' });
+    expect(weekAdjustments([p], [ps('a', 'tempo', '2026-11-13')], templates, WEEK, TODAY)).toHaveLength(1);
+  });
+
   it('de eerste opbouw van je plan bij een nieuw doel is geen aanpassing', () => {
     const p = proposal([{ action: 'add', restore: true, newSessionDraft: { templateId: 'long', scheduledDate: '2026-11-15', weekStartDate: WEEK } }], { trigger: 'goal_created', issue: 'Zo ziet je eerste week eruit' });
     expect(weekAdjustments([p], [ps('x', 'long', '2026-11-15')], templates, WEEK, TODAY)).toEqual([]);
