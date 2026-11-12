@@ -434,3 +434,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Sherpa Dubbel log (fable, ca. $3,2, 0 herstelrondes van de bouwer; twee kleine punten door de coördinator) op main ec1f56e; Warden Dubbel log (reviewer, fable) 59k, 4 min, akkoord; Warden Week (sonnet) 53k, akkoord met 1 moet; Lookout Week (tester, sonnet) 67k, 8 min, groen; Warden Missiekaart (sonnet) 62k, niet akkoord (regen en lucht weg bij prima weer)
 - 2026-11-12, Sherpa Week Wat ASCEND aanpaste (opus, ca. $8,3, 2 herstelrondes: Warden moet + Pathfinder kop) op main 2eaa81d; Pathfinder Week (sonnet) 44k
 - 2026-11-12, Lookout Missiekaart (tester, sonnet) 36k, 4 min, groen; Pathfinder Missiekaart (sonnet) 48k, 2 moet (tempo nergens anders, Weekplanning bijgewerkt te diep)
+- 2026-11-12, Lookout Route-blok (tester, sonnet) 76k, 8 min, groen; Warden Route-blok (sonnet) 48k, akkoord met 2 moet; Pathfinder Route-blok (sonnet) 35k, 4 mag
