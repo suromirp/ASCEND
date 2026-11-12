@@ -292,7 +292,9 @@ export function computeWeeklyPrescriptionPlan(
   // it can never by itself make a week noFreeDay, so this is the only
   // genuine hard-capacity-exhaustion reason left to report.
   const unplaceableNote = noFreeDayWeekCount > 0
-    ? ` In ${noFreeDayWeekCount} ${noFreeDayWeekCount === 1 ? 'week' : 'weken'} is elke dag al bezet, dus niet alles past.`
+    // "Elke dag is al bezet" klopte niet altijd: een week telt hier ook mee als er wel een dag vrij is, maar de
+    // training daar niet mag (een dag waarop je niet traint, te weinig tijd, te dicht op een zware dag).
+    ? ` In ${noFreeDayWeekCount} ${noFreeDayWeekCount === 1 ? 'week' : 'weken'} past niet alles: er is geen dag waar het bij kan.`
     : '';
 
   const proposal: PlanChangeProposal = {

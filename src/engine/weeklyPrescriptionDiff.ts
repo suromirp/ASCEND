@@ -17,7 +17,7 @@
 
 import type { TrainingPrescription } from '../models/prescription';
 import type { WeeklyPrescription } from '../models/weeklyPrescription';
-import type { PlanChangeItem } from '../models/planChange';
+import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession } from '../models/training';
 
 // JSON met gesorteerde sleutels: twee objecten met dezelfde inhoud geven
@@ -115,11 +115,69 @@ export function changesTheRoundKeeps(changes: PlanChangeItem[], before: PlannedS
       const now = afterById.get(c.plannedSessionId);
       return live(now) && now.scheduledDate === c.toDate && (!was || now.templateId === was.templateId);
     }
+    // Een weghaling die de ronde terugdraait (een test die terugkomt) is geen weghaling: de rij staat er weer.
+    if (c.action === 'remove' && c.plannedSessionId) return !live(afterById.get(c.plannedSessionId));
     return true;
   });
   // Een ruil is altijd een paar: valt de ene helft weg, dan de andere ook.
   const pairs = kept.filter((c) => c.action !== 'swap' || kept.some((o) => o.action === 'swap' && o.plannedSessionId === c.pairedWithSessionId));
   // Een weghaling hoort bij de toevoeging die haar plaats inneemt: valt die weg, dan blijft de rij staan.
+  return withoutOrphanedRemovals(pairs, changes);
+}
+
+// Raakt deze wijziging een rij van de planning (en kan de ronde haar dus terugdraaien)?
+const touchesRow = (c: PlanChangeItem) => c.action === 'add' || c.action === 'move' || c.action === 'swap' || c.action === 'remove';
+
+// Natellen tot de ronde niets meer weghaalt (melding van 12 november: twaalf keer op een dag hetzelfde aangenomen
+// voorstel voor een Wandeldag die er daarna niet stond). `round` rekent de planningsronde over de planning met deze
+// wijzigingen erin en geeft terug wat ze laat staan. Valt er iets weg, dan telt de rest opnieuw: een training kan
+// alleen blijven staan dankzij een andere die net wegviel. Alleen een uitkomst die de ronde zelf bevestigde komt
+// terug; lukt dat niet binnen `checks` keer, dan blijft alleen over wat geen rij raakt (een nieuw voorschrift voor
+// een training die er al staat). Eerder kwam na de derde keer een rest terug die niemand had nageteld.
+export async function settleWithRound(
+  changes: PlanChangeItem[],
+  round: (current: PlanChangeItem[]) => Promise<PlanChangeItem[]>,
+  checks: number,
+): Promise<PlanChangeItem[]> {
+  let current = changes;
+  for (let i = 0; i < checks; i++) {
+    if (!current.some(touchesRow)) return current;
+    const kept = await round(current);
+    if (kept.length === current.length) return current;
+    current = kept;
+  }
+  return current.filter((c) => !touchesRow(c));
+}
+
+// Wat het voorschrift al eens neerzette en wat er nu toch niet staat, zet het niet opnieuw neer. Het logboek
+// (aangenomen voorstellen van het weekvoorschrift) is het geheugen: dezelfde training op dezelfde dag, dezelfde rij
+// naar dezelfde dag, of dezelfde rij eruit terwijl ze er weer staat. Wie het terugdraaide (de planningsronde, een
+// periode, jij met Ongedaan maken) maakt niet uit: het voorstel landde niet of mocht niet blijven, dus komt het niet
+// bij elke opening terug. Een samengevat voorstel (engine/proposalTidy.ts) heeft geen wijzigingen meer en telt niet.
+export function withoutRepeatedAttempts(changes: PlanChangeItem[], log: PlanChangeProposal[], planned: PlannedSession[]): PlanChangeItem[] {
+  const tried = log.filter((p) => p.trigger === 'weekly_prescription_computed' && p.resolution === 'accepted').flatMap((p) => p.changes);
+  if (tried.length === 0) return changes;
+  const adds = new Set(tried.filter((c) => c.action === 'add' && !c.plannedSessionId && c.newSessionDraft).map((c) => `${c.newSessionDraft!.templateId}|${c.newSessionDraft!.scheduledDate}`));
+  const moves = new Set(tried.filter((c) => (c.action === 'move' || c.action === 'swap') && c.plannedSessionId && c.toDate).map((c) => `${c.plannedSessionId}|${c.toDate}`));
+  const removes = new Set(tried.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId));
+  const byId = new Map(planned.map((s) => [s.id, s]));
+  const stands = new Set(planned.filter((s) => s.status !== 'skipped').map((s) => `${s.templateId}|${s.scheduledDate}`));
+  const kept = changes.filter((c) => {
+    if (c.action === 'add' && !c.plannedSessionId && c.newSessionDraft) {
+      const key = `${c.newSessionDraft.templateId}|${c.newSessionDraft.scheduledDate}`;
+      return !(adds.has(key) && !stands.has(key));
+    }
+    if ((c.action === 'move' || c.action === 'swap') && c.plannedSessionId && c.toDate) {
+      return !(moves.has(`${c.plannedSessionId}|${c.toDate}`) && byId.get(c.plannedSessionId)?.scheduledDate !== c.toDate);
+    }
+    if (c.action === 'remove' && c.plannedSessionId) {
+      const now = byId.get(c.plannedSessionId);
+      return !(removes.has(c.plannedSessionId) && !!now && now.status !== 'skipped');
+    }
+    return true;
+  });
+  if (kept.length === changes.length) return changes;
+  const pairs = kept.filter((c) => c.action !== 'swap' || kept.some((o) => o.action === 'swap' && o.plannedSessionId === c.pairedWithSessionId));
   return withoutOrphanedRemovals(pairs, changes);
 }
 

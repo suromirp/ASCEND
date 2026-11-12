@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { diffWeeklyPrescriptionPlan, realPlanChanges, changesTheRoundKeeps, changesOnAllowedDays } from './weeklyPrescriptionDiff';
+import { diffWeeklyPrescriptionPlan, realPlanChanges, changesTheRoundKeeps, changesOnAllowedDays, settleWithRound, withoutRepeatedAttempts } from './weeklyPrescriptionDiff';
 import type { PlannedSession } from '../models/training';
 import type { WeeklyPrescription } from '../models/weeklyPrescription';
 import type { TrainingPrescription } from '../models/prescription';
-import type { PlanChangeItem } from '../models/planChange';
+import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 
 function week(id: string, over: Partial<WeeklyPrescription> = {}): WeeklyPrescription {
   return {
@@ -239,5 +239,90 @@ describe('changesOnAllowedDays', () => {
     const changes = [remove('za', '2027-05-08'), addFor('tpl_tempo_run', '2027-05-08', 'za')];
     expect(changesOnAllowedDays(changes, (d) => d === '2027-05-08')).toEqual([]);
     expect(changesOnAllowedDays(changes, (d) => d >= '2027-05-09')).toEqual(changes);
+  });
+});
+
+// Melding van 12 november: twaalf keer op een dag hetzelfde aangenomen voorstel voor een Wandeldag op een zaterdag
+// zestien weken vooruit, die er daarna niet stond. Alleen nagemaakte gegevens.
+describe('settleWithRound: alleen wat de ronde zelf bevestigde', () => {
+  const addOn = (date: string): PlanChangeItem => ({ action: 'add', newSessionDraft: { templateId: 'tpl_hike_day_one', scheduledDate: date, weekStartDate: '2027-03-01' }, reason: 'nagemaakt' });
+  const content: PlanChangeItem = { action: 'replace', plannedSessionId: 's1', newPrescriptionId: 'p1', reason: 'nagemaakt' };
+  // Een ronde die per keer de eerste toevoeging weghaalt: elke training blijft alleen dankzij de vorige.
+  const peel = async (current: PlanChangeItem[]) => { const first = current.find((c) => c.action === 'add'); return current.filter((c) => c !== first); };
+
+  it('telt door tot de ronde niets meer weghaalt, ook na meer dan drie keer', async () => {
+    const adds = ['2027-03-02', '2027-03-03', '2027-03-04', '2027-03-05', '2027-03-06'].map(addOn);
+    let rounds = 0;
+    const out = await settleWithRound([...adds, content], async (c) => { rounds++; return peel(c); }, 8);
+    expect(out).toEqual([content]);
+    expect(rounds).toBe(5);
+  });
+
+  it('wat binnen het aantal keren niet bevestigd is, komt niet terug: alleen wat geen rij raakt blijft', async () => {
+    const adds = ['2027-03-02', '2027-03-03', '2027-03-04', '2027-03-05', '2027-03-06'].map(addOn);
+    // Na drie keer staat de Wandeldag van zaterdag er nog in, maar niemand telde hem na.
+    expect(await settleWithRound([...adds, content], peel, 3)).toEqual([content]);
+  });
+
+  it('een uitkomst die de ronde laat staan komt ongewijzigd terug, en zonder rij om na te tellen rekent de ronde niet', async () => {
+    const add = addOn('2027-03-06');
+    expect(await settleWithRound([add, content], async (c) => c, 8)).toEqual([add, content]);
+    let rounds = 0;
+    expect(await settleWithRound([content], async (c) => { rounds++; return c; }, 8)).toEqual([content]);
+    expect(rounds).toBe(0);
+  });
+});
+
+describe('changesTheRoundKeeps: een weghaling die de ronde terugdraait', () => {
+  const row = (id: string, status: PlannedSession['status']): PlannedSession => ({ id, templateId: 'tpl_test_run', scheduledDate: '2027-03-06', weekStartDate: '2027-03-01', status, order: 1 });
+  const remove: PlanChangeItem = { action: 'remove', plannedSessionId: 't1', fromDate: '2027-03-06', toDate: '2027-03-06', reason: 'nagemaakt' };
+  it('valt weg als de rij na de ronde weer gepland staat, en blijft als ze overgeslagen blijft', () => {
+    expect(changesTheRoundKeeps([remove], [row('t1', 'planned')], [row('t1', 'planned')])).toEqual([]);
+    expect(changesTheRoundKeeps([remove], [row('t1', 'planned')], [row('t1', 'skipped')])).toEqual([remove]);
+  });
+});
+
+describe('withoutRepeatedAttempts: wat al eens is aangenomen en er niet staat, komt niet terug', () => {
+  const SAT = '2027-03-06';
+  const add = (templateId = 'tpl_hike_day_one', date = SAT, extra: Partial<PlanChangeItem> = {}): PlanChangeItem => ({ action: 'add', newSessionDraft: { templateId, scheduledDate: date, weekStartDate: '2027-03-01' }, reason: 'nagemaakt', ...extra });
+  const logged = (changes: PlanChangeItem[], over: Partial<PlanChangeProposal> = {}): PlanChangeProposal => ({
+    id: 'p1', trigger: 'weekly_prescription_computed', issue: 'Weekplan bijgewerkt', changes, alternatives: [], consequences: '', explanation: '', createdAt: '2026-11-12T07:00:00.000Z', resolvedAt: '2026-11-12T07:00:00.000Z', resolution: 'accepted', ...over,
+  });
+  const row = (id: string, templateId: string, date: string, status: PlannedSession['status'] = 'planned'): PlannedSession => ({ id, templateId, scheduledDate: date, weekStartDate: '2027-03-01', status, order: 1 });
+
+  it('dezelfde Wandeldag op dezelfde zaterdag komt geen tweede keer', () => {
+    expect(withoutRepeatedAttempts([add()], [logged([add()])], [])).toEqual([]);
+  });
+
+  it('een andere dag of een andere training is een nieuw voorstel', () => {
+    const friday = add('tpl_hike_day_one', '2027-03-05');
+    const run = add('tpl_recovery_run');
+    expect(withoutRepeatedAttempts([friday, run], [logged([add()])], [])).toEqual([friday, run]);
+  });
+
+  it('zonder logboek, met een afgewezen voorstel of met een ander soort voorstel blijft alles staan', () => {
+    expect(withoutRepeatedAttempts([add()], [], [])).toEqual([add()]);
+    expect(withoutRepeatedAttempts([add()], [logged([add()], { resolution: 'rejected' })], [])).toEqual([add()]);
+    expect(withoutRepeatedAttempts([add()], [logged([add()], { trigger: 'session_moved' })], [])).toEqual([add()]);
+  });
+
+  it('een samengevat voorstel uit een oude back-up (zonder wijzigingen) houdt niets tegen', () => {
+    expect(withoutRepeatedAttempts([add()], [logged([], { summarizedAt: '2026-11-01T00:00:00.000Z', changeCount: 3 })], [])).toEqual([add()]);
+  });
+
+  it('volle week: valt de toevoeging weg, dan blijft de training die ze zou vervangen', () => {
+    const remove: PlanChangeItem = { action: 'remove', plannedSessionId: 'x', fromDate: SAT, toDate: SAT, reason: 'nagemaakt' };
+    const swapIn = add('tpl_hike_day_one', SAT, { replacesSessionId: 'x' });
+    expect(withoutRepeatedAttempts([remove, swapIn], [logged([remove, swapIn])], [row('x', 'tpl_hill_intervals', SAT)])).toEqual([]);
+  });
+
+  it('een verplaatsing die niet bleef en een weghaling van een rij die er weer staat komen niet terug; wat wel bleef telt niet', () => {
+    const move: PlanChangeItem = { action: 'move', plannedSessionId: 'm', fromDate: '2027-03-03', toDate: '2027-03-05', reason: 'nagemaakt' };
+    const remove: PlanChangeItem = { action: 'remove', plannedSessionId: 'r', fromDate: '2027-03-04', toDate: '2027-03-04', reason: 'nagemaakt' };
+    const log = [logged([move, remove])];
+    expect(withoutRepeatedAttempts([move, remove], log, [row('m', 'tpl_easy_run', '2027-03-03'), row('r', 'tpl_easy_run', '2027-03-04')])).toEqual([]);
+    // De rij staat al op de nieuwe dag (dan stelt het voorschrift het niet voor) of is nog overgeslagen: geen reden om iets te laten vallen.
+    const later: PlanChangeItem = { ...move, toDate: '2027-03-02' };
+    expect(withoutRepeatedAttempts([later], log, [row('m', 'tpl_easy_run', '2027-03-05')])).toEqual([later]);
   });
 });

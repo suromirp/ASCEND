@@ -36,7 +36,7 @@ import { computeCapacity } from '../engine/capacity';
 import { targetPackWeightKg } from '../engine/demand';
 import { computeActiveGoalOverviews } from '../engine/goalOverview';
 import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngine';
-import { changesOnAllowedDays, changesTheRoundKeeps, diffWeeklyPrescriptionPlan, realPlanChanges, samePlannedSession as sameSession } from '../engine/weeklyPrescriptionDiff';
+import { changesOnAllowedDays, changesTheRoundKeeps, diffWeeklyPrescriptionPlan, realPlanChanges, samePlannedSession as sameSession, settleWithRound, withoutRepeatedAttempts } from '../engine/weeklyPrescriptionDiff';
 import { previewProgramHorizon, readHorizonStore, type HorizonStore } from './databaseHorizon';
 import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
@@ -61,22 +61,22 @@ export type WeeklyPrescriptionStepOutcome =
 // (engine/weeklyPrescriptionDiff.ts#changesTheRoundKeeps). Zonder dit zette het
 // voorschrift bij elke opening een Wandeldag die de ronde meteen weer omzette en
 // weghaalde, met elke keer twee meldingen. Valt er iets weg, dan rekent de
-// ronde nog eens met de rest, tot hoogstens drie keer. De opslag wordt één keer
-// gelezen, met `planned` als de planning; elke ronde rekent daarmee.
-const ROUND_CHECKS = 3;
-export async function keptByPlanningRound(changes: PlanChangeItem[], planned: PlannedSession[]): Promise<PlanChangeItem[]> {
-  let current = changes;
+// ronde nog eens met de rest, tot zij niets meer weghaalt: alleen een uitkomst
+// die de ronde zelf bevestigde komt terug (engine/weeklyPrescriptionDiff.ts
+// #settleWithRound). De opslag wordt één keer gelezen, met `planned` als de
+// planning; elke ronde rekent daarmee. `proposal`: het voorstel zoals het in het
+// logboek komt; de ronde leest het logboek (een test die het voorschrift
+// weghaalde komt terug), dus zij rekent met dit voorstel er al in.
+const ROUND_CHECKS = 8;
+export async function keptByPlanningRound(changes: PlanChangeItem[], planned: PlannedSession[], proposal?: PlanChangeProposal): Promise<PlanChangeItem[]> {
   let store: HorizonStore | undefined;
-  for (let i = 0; i < ROUND_CHECKS; i++) {
-    if (!current.some((c) => c.action === 'add' || c.action === 'move' || c.action === 'swap')) return current;
+  return settleWithRound(changes, async (current) => {
     const { sessions } = applyPlanChangeItems(current, planned);
     store ??= await readHorizonStore(planned);
-    const round = await previewProgramHorizon({ sessions, releaseAnchors: false, store });
-    const kept = changesTheRoundKeeps(current, planned, round.after);
-    if (kept.length === current.length) return current;
-    current = kept;
-  }
-  return current;
+    const proposals = proposal ? [...store.proposals, { ...proposal, changes: current, resolution: 'accepted' as const }] : store.proposals;
+    const round = await previewProgramHorizon({ sessions, releaseAnchors: false, store: { ...store, proposals } });
+    return changesTheRoundKeeps(current, planned, round.after);
+  }, ROUND_CHECKS);
 }
 
 export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Promise<WeeklyPrescriptionStepOutcome> {
@@ -141,7 +141,10 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
   );
   // Alleen wat de planningsronde daarna laat staan: wat de fase-regel omzet of
   // de weekcontrole weghaalt, komt er niet in (melding van 9 november).
-  proposal.changes = await keptByPlanningRound(delta.changes, planned);
+  // En niet wat al eens is aangenomen en er nu toch niet staat: dat komt niet bij
+  // elke opening terug (engine/weeklyPrescriptionDiff.ts#withoutRepeatedAttempts).
+  const untried = withoutRepeatedAttempts(delta.changes, await PlanChangeProposalsRepo.getAll(), planned);
+  proposal.changes = await keptByPlanningRound(untried, planned, proposal);
 
   // Eerst uitrekenen wat de wijzigingen met de planning doen (puur, zonder
   // opslag), zodat de telling hieronder de uitkomst kan vergelijken.
