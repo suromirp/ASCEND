@@ -414,3 +414,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Lookout Je dag, tester, sonnet, onbekend, ca. 25 min, groen op 360, 390 en 412 px; zes rijen en reisrij niet te maken in de standen
 - 2026-11-12, Warden Week na gemiste dagen (zelfreview), reviewer, fable, 129k, 7 min, 1 blokkerend (rol extra) en 7 moet, hersteld in 1 ronde
 - 2026-11-12, Warden Week na gemiste dagen (herreview), reviewer, fable, 74k, 3 min, 4 moet (Begrepen telde als Akkoord), hersteld
+- 2026-11-12 Lookout Je dag (tester, sonnet): 116k tokens, 16 minuten; Pathfinder Je dag (sonnet): 38k. Je dag, Week na gemiste dagen en zone 2 op main.
