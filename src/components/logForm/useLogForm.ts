@@ -132,6 +132,13 @@ export function useLogForm({ template, plannedSessionId, scheduledDate, program,
     machineVerticalM, terrain, inclinePercent,
   };
 
+  // Is er iets ingevuld? Een teruggelezen concept, een plek die je zelf tikte, of een waarde die afwijkt
+  // van de beginwaarde. De plek die de app zelf uit de opslag leest telt niet mee.
+  const { modalityKey: _place, ...rest } = values;
+  const restJson = JSON.stringify(rest);
+  const [initialJson] = useState(restJson);
+  const filled = () => !!restored || placeTouched.current || restJson !== initialJson;
+
   // Het concept bij elke verandering wegschrijven.
   useEffect(() => {
     if (preview) return;
@@ -165,7 +172,7 @@ export function useLogForm({ template, plannedSessionId, scheduledDate, program,
 
   return {
     storageKey, today, plannedInPast, plan, conditioningSteps, peak, planRpe: peak ? rpeRange(INTENSITY[peak].rpe) : undefined, plannedStep, exercises,
-    supportsGuidanceMode, shape, compatibility, elevation, values, reachedForm, setReachedForm,
+    supportsGuidanceMode, shape, compatibility, elevation, values, reachedForm, setReachedForm, filled,
     setDuration, setRpe, setNotes, setSubjectiveFeel, setLegsAtStart, setPainReports, setDoneOn, setWorkout, setGuidanceMode, choosePlace,
     setGarminSuggestedType, setDistanceKm, setElevationGainM, setElevationLossM, setAvgHeartRate, setBackpackWeightKg, setPoles, setCadence,
     setPower, setSteps, setMachineVerticalM, setTerrain, setInclinePercent, selectVariant, updateSet,

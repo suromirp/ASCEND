@@ -25,8 +25,8 @@ import { PrimaryButton, SecondaryButton } from './ui';
 import { useLogForm, type LogForm } from './logForm/useLogForm';
 import type { EnabledSports } from '../engine/sports';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, PlaceChoice, RpeField, VariantField } from './logForm/LogFormParts';
-import { placeLabel, SheetMode, showsPlace } from './logForm/formRules';
-import { alreadyLogged, footState, HOW_TEXT, submitLog, type FootState } from './logForm/howDidItGo';
+import { chosenPlaceLabel, placeLabel, SheetMode, showsPlace } from './logForm/formRules';
+import { alreadyLogged, clearsDraft, footState, HOW_TEXT, submitLog, type CloseWay, type FootState } from './logForm/howDidItGo';
 
 export function HowDidItGoSheet({
   template,
@@ -53,10 +53,16 @@ export function HowDidItGoSheet({
   const slowRef = useRef(false);
   const closedRef = useRef(false);
   const finish = () => { if (!closedRef.current) { closedRef.current = true; onClose(); } };
-  // Elke weg dicht zonder opslaan gooit het concept weg; terwijl het opslaat blijft het blad open, tot de grens.
+  // Alleen Annuleren wist een ingevuld concept (logForm/howDidItGo.ts#clearsDraft); een tik naast het blad,
+  // wegslepen, het kruis en de terugknop laten het staan. Terwijl het opslaat blijft het blad open, tot de grens.
+  const wayRef = useRef<CloseWay>('backdrop');
   const canClose = () => !savingRef.current || slowRef.current;
-  const { closing, requestClose, sheetRef } = useSheetClose(() => { if (!savingRef.current) form.clearDraft(); finish(); }, 200, canClose);
-  const close = () => { if (canClose()) requestClose(); };
+  const { closing, requestClose, sheetRef } = useSheetClose(() => {
+    if (!savingRef.current && clearsDraft(wayRef.current, form.filled())) form.clearDraft();
+    finish();
+  }, 200, canClose);
+  const closeAs = (way: CloseWay) => () => { if (!canClose()) return; wayRef.current = way; requestClose(); };
+  const close = closeAs('cross');
   const [step, setStep] = useState<1 | 2>(1);
   // De terugknop in stap 2: eerst terug naar stap 1.
   useBackToClose(step === 2, () => setStep(1));
@@ -94,14 +100,18 @@ export function HowDidItGoSheet({
     setSlow(false);
   }
 
-  const dayLine = values.doneOn === form.today ? 'Vandaag' : `${weekdayShortNL(values.doneOn)} ${formatDateNL(values.doneOn)}`;
-  const footer = <SheetFoot state={foot} saving={saving} slow={slow} failed={failed} loose={!plannedSessionId} rest={shape.isRest} minutes={entryMinutes(values.duration)} onClose={close} onAdjust={() => { setConfirmLong(false); setStep(1); }} onSave={(confirmed) => void save(confirmed)} />;
+  // De dag en, als er meer plekken zijn, de gekozen plek als stille waarde: je ziet waar het blad je
+  // training opslaat zonder stap 2 te openen.
+  const day = values.doneOn === form.today ? 'Vandaag' : `${weekdayShortNL(values.doneOn)} ${formatDateNL(values.doneOn)}`;
+  const place = showsPlace(form, template) ? chosenPlaceLabel(template, values.modalityKey, settings.enabledSports) : undefined;
+  const dayLine = [day, place].filter(Boolean).join(' · ');
+  const footer = <SheetFoot state={foot} saving={saving} slow={slow} failed={failed} loose={!plannedSessionId} rest={shape.isRest} minutes={entryMinutes(values.duration)} onClose={closeAs(foot === 'already' ? 'already' : 'cancel')} onAdjust={() => { setConfirmLong(false); setStep(1); }} onSave={(confirmed) => void save(confirmed)} />;
 
   if (step === 2) {
     return (
       <SheetFrame closing={closing} sheetRef={sheetRef} onClose={close} label={`${template.name}, ${HOW_TEXT.more.toLowerCase()}`} scrollKey="more" foot={footer}
         head={<SheetHeader eyebrow={HOW_TEXT.title} title={template.name} facts={HOW_TEXT.more} onBack={() => setStep(1)} onClose={close} />}>
-        <StepTwo form={form} template={template} scheduledDate={scheduledDate} enabledSports={settings.enabledSports} otherOpen={otherOpen} onToggleOther={() => setOtherOpen((o) => !o)} />
+        {foot !== 'already' && <StepTwo form={form} template={template} scheduledDate={scheduledDate} enabledSports={settings.enabledSports} otherOpen={otherOpen} onToggleOther={() => setOtherOpen((o) => !o)} />}
       </SheetFrame>
     );
   }
@@ -109,7 +119,7 @@ export function HowDidItGoSheet({
   return (
     <SheetFrame closing={closing} sheetRef={sheetRef} onClose={close} label={`${template.name}, ${HOW_TEXT.title.toLowerCase()}`} scrollKey="main" foot={footer}
       head={<SheetHeader eyebrow={HOW_TEXT.title} title={template.name} facts={dayLine} onClose={close} />}>
-      <StepOne form={form} template={template} plannedSessionId={plannedSessionId} scheduledDate={scheduledDate} onDuration={() => setConfirmLong(false)} onMore={() => setStep(2)} />
+      {foot !== 'already' && <StepOne form={form} template={template} plannedSessionId={plannedSessionId} scheduledDate={scheduledDate} onDuration={() => setConfirmLong(false)} onMore={() => setStep(2)} />}
     </SheetFrame>
   );
 }

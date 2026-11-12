@@ -7,7 +7,7 @@ import type { SessionLog } from '../models/training';
 import { draftKey, saveDraft } from '../utils/loggerDraft';
 import { briefingEntry } from '../engine/briefing';
 import { durationNeedsCheck } from '../engine/inputLimits';
-import { alreadyLogged, footState, HOW_TEXT, SAVE_LIMIT_MS, saveWithLimit, submitLog } from './logForm/howDidItGo';
+import { alreadyLogged, clearsDraft, footState, HOW_TEXT, SAVE_LIMIT_MS, saveWithLimit, submitLog } from './logForm/howDidItGo';
 import { asksPain } from './logForm/formRules';
 import { useLogForm } from './logForm/useLogForm';
 import sheetSrc from './HowDidItGoSheet.tsx?raw';
@@ -64,7 +64,7 @@ describe('stap 1 van Hoe ging het?', () => {
     const html = sheet('tpl_long_run');
     expect(html).toContain(HOW_TEXT.title);
     expect(html).toContain('Vandaag');
-    for (const text of ['Duur', 'Normaal', 'Slechter', 'Pijn op een plek?', 'Zwaarte (RPE)', HOW_TEXT.more, '>Opslaan<', '>Annuleren<']) expect(html).toContain(text);
+    for (const text of ['Duur', 'Normaal', 'Slechter', 'Pijn op een plek?', 'Zwaarte, 1 tot 10', HOW_TEXT.more, '>Opslaan<', '>Annuleren<']) expect(html).toContain(text);
     expect(html.match(/mx-primary/g)).toHaveLength(1);
     // Zonder de uitleg erboven, en de velden van stap 2 nog niet.
     for (const text of ['Zo doe je het', 'Stop of schakel terug', 'Eten onderweg', 'Gedaan op', 'Notities']) expect(html).not.toContain(text);
@@ -82,6 +82,22 @@ describe('stap 1 van Hoe ging het?', () => {
     expect(two).toContain('>vandaag<');
     expect(two).toMatch(/aria-pressed="true"[^>]*>di 10 nov/i);
     expect(two).toMatch(/aria-pressed="false"[^>]*>vandaag</);
+  });
+
+  it('de gekozen plek staat stil in de kop van stap 1, zonder extra tik', () => {
+    expect(sheet('tpl_easy_run')).toContain('Vandaag · Buiten');
+    // Eén plek (wedstrijd): geen plek in de kop.
+    expect(sheet('tpl_race')).not.toContain('Vandaag ·');
+  });
+
+  it('korte vragen in het blad, de uitleg van de zwaarte achter de i, en nergens (optioneel)', () => {
+    const one = sheet('tpl_easy_run');
+    expect(one).toContain('Ten opzichte van normaal');
+    expect(one).toContain('aria-label="Wat is zwaarte?"');
+    expect(one).not.toContain('hoe zwaar voelde de hele training?');
+    const two = stepTwo('tpl_intervals');
+    expect(two).toContain('Benen bij het inlopen');
+    for (const html of [one, two]) expect(html).not.toContain('optioneel');
   });
 
   it('de dag zelf: geen Gedaan op bij een geplande training', () => {
@@ -133,9 +149,10 @@ describe('stap 1 van Hoe ging het?', () => {
     expect(stepTwo('tpl_easy_run')).toContain('Halverwege ingevuld');
   });
 
-  it('een al gedane training: geen Opslaan, de regel dat er geen tweede log komt, en Sluiten', () => {
+  it('een al gedane training: geen formulier en geen Opslaan, alleen de regel en Sluiten', () => {
     app.logs = [{ id: 'l1', plannedSessionId: 'ps1' } as SessionLog];
     const html = sheet('tpl_easy_run');
+    for (const text of ['Duur', 'Pijn op een plek?', 'Zwaarte', HOW_TEXT.more]) expect(html).not.toContain(text);
     expect(html).toContain(HOW_TEXT.already);
     expect(html).toContain('>Sluiten<');
     expect(html).not.toContain('>Opslaan<');
@@ -214,12 +231,28 @@ describe('opslaan in het blad', () => {
     // Na de grens mag je weg: Annuleren staat aan, het concept blijft staan.
     expect(html).not.toMatch(/disabled=""[^>]*>Annuleren</);
     expect(sheetSrc).toContain('const canClose = () => !savingRef.current || slowRef.current;');
-    expect(sheetSrc).toContain('if (!savingRef.current) form.clearDraft();');
+    expect(sheetSrc).toContain('if (!savingRef.current && clearsDraft(wayRef.current, form.filled())) form.clearDraft();');
   });
 
-  it('sluiten zonder opslaan gooit het concept weg, terwijl het opslaat blijft het blad open', () => {
-    expect(sheetSrc).toContain('useSheetClose(() => { if (!savingRef.current) form.clearDraft(); finish(); }, 200, canClose)');
-    expect(sheetSrc).toContain('const close = () => { if (canClose()) requestClose(); };');
+  it('sluiten: alleen Annuleren wist een ingevuld concept, elke andere weg laat het staan; leeg mag altijd weg', () => {
+    for (const way of ['backdrop', 'drag', 'back', 'cross'] as const) {
+      expect(clearsDraft(way, true), way).toBe(false);
+      expect(clearsDraft(way, false), way).toBe(true);
+    }
+    expect(clearsDraft('cancel', true)).toBe(true);
+    expect(clearsDraft('already', true)).toBe(true);
+    // Elke weg loopt via useSheetClose en kiest met clearsDraft; Annuleren en Sluiten zeggen wie ze zijn.
+    expect(sheetSrc).toContain('if (!savingRef.current && clearsDraft(wayRef.current, form.filled())) form.clearDraft();');
+    expect(sheetSrc).toContain("const wayRef = useRef<CloseWay>('backdrop');");
+    expect(sheetSrc).toContain("const close = closeAs('cross');");
+    expect(sheetSrc).toContain("onClose={closeAs(foot === 'already' ? 'already' : 'cancel')}");
+  });
+
+  it('ingevuld: een teruggelezen concept of een andere waarde dan het begin; de plek uit de opslag telt niet', () => {
+    const Filled = ({ id }: { id: string }) => createElement('i', null, String(useLogForm({ template: tpl(id), plannedSessionId: 'ps1', scheduledDate: TODAY, program }).filled()));
+    expect(renderToStaticMarkup(createElement(Filled, { id: 'tpl_easy_run' }))).toBe('<i>false</i>');
+    saveDraft(draftKey('tpl_easy_run', 'ps1', TODAY), { notes: 'iets' });
+    expect(renderToStaticMarkup(createElement(Filled, { id: 'tpl_easy_run' }))).toBe('<i>true</i>');
   });
 
   it('terug sluit laag voor laag: in stap 2 eerst terug naar stap 1', () => {

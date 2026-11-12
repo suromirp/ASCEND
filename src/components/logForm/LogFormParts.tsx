@@ -4,12 +4,9 @@
 
 import type { SessionTemplate } from '../../models/training';
 import { NumberField } from '../NumberField';
-import { Chip, Segmented, Toggle } from '../ui';
+import { Chip, InfoButton, Segmented, Toggle } from '../ui';
 import { PainReportFields } from '../PainReportFields';
 import { WorkoutDetailsFields } from '../WorkoutDetailsFields';
-import { getModalities, modalitySport } from '../../data/modalities';
-import { isSportEnabled, type EnabledSports } from '../../engine/sports';
-import { shortPlaceLabels } from '../../engine/trainingPlace';
 import { addDays, formatDateNL, weekdayShortNL } from '../../utils/dates';
 import { formatNumberNL } from '../../utils/number';
 import { entryMinutes } from '../../engine/inputLimits';
@@ -18,9 +15,10 @@ import { asksLegs, type LegsAtStart } from '../../engine/learning';
 import { availableVariants } from '../../engine/substitutions';
 import { INTENSITY } from '../../data/workoutStructure';
 import { GARMIN_SUGGESTED_TYPES, GARMIN_TYPE_LABEL, COMPATIBILITY_LABEL } from '../../data/garminSuggested';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import type { LogForm } from './useLogForm';
-import { asksPain, placeLabel, SheetMode, VARIANT_LABEL } from './formRules';
+import type { EnabledSports } from '../../engine/sports';
+import { asksPain, placeLabel, SheetMode, SHORT_TEXT, VARIANT_LABEL, visiblePlaces } from './formRules';
 
 const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'Beter', normal: 'Normaal', worse: 'Slechter' };
 const LEGS_OPTIONS: [LegsAtStart, string][] = [['fris', 'Fris'], ['normaal', 'Normaal'], ['zwaar', 'Zwaar']];
@@ -54,12 +52,11 @@ export function VariantField({ form, template }: Part) {
 // is; de uitleg per plek staat in de Briefing. Dezelfde keuzes en dezelfde opslag als ModalityChoice.
 export function PlaceChoice({ form, template, enabledSports }: Part & { enabledSports?: Partial<EnabledSports> }) {
   const selected = form.values.modalityKey;
-  const places = (getModalities(template.id) ?? []).filter((m) => m.key === selected || (!m.locked && isSportEnabled(modalitySport(m.key), enabledSports)));
-  const labels = shortPlaceLabels(places.map((m) => m.label));
+  const places = visiblePlaces(template, selected, enabledSports);
   return (
     <div className="flex flex-wrap gap-2" role="group" aria-label={placeLabel(template)}>
-      {places.map((m, i) => (
-        <Chip key={m.key} tone="quiet" selected={m.key === selected} label={m.label} onClick={() => form.choosePlace(m.key)}>{labels[i]}</Chip>
+      {places.map((m) => (
+        <Chip key={m.key} tone="quiet" selected={m.key === selected} label={m.label} onClick={() => form.choosePlace(m.key)}>{m.short}</Chip>
       ))}
     </div>
   );
@@ -115,9 +112,19 @@ export function RpeField({ form }: { form: LogForm }) {
   const { planRpe, peak, conditioningSteps } = form;
   const rpe = form.values.rpe;
   const quiet = useContext(SheetMode);
+  const [rpeInfo, setRpeInfo] = useState(false);
   return (
     <div>
-      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE): hoe zwaar voelde de hele training?</p>
+      {quiet ? (
+        // In het blad kort, zoals regel 7 van het ontwerp; de uitleg achter de i.
+        <div className="flex items-center gap-2">
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{SHORT_TEXT.rpe}</p>
+          <InfoButton label="Wat is zwaarte?" onClick={() => setRpeInfo((v) => !v)} />
+        </div>
+      ) : (
+        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE): hoe zwaar voelde de hele training?</p>
+      )}
+      {quiet && rpeInfo && <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{SHORT_TEXT.rpeInfo}</p>}
       <div className="mt-2 grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
           const inPlan = planRpe && n >= planRpe[0] && n <= planRpe[1];
@@ -152,11 +159,12 @@ export function PainField({ form, template }: Part) {
 }
 
 export function LegsField({ form, template }: Part) {
+  const quiet = useContext(SheetMode);
   if (!asksLegs(template)) return null;
   const legsAtStart = form.values.legsAtStart;
   return (
     <div>
-      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelden je benen bij het inlopen? (optioneel; zo leert ASCEND hoe goed de beenindex bij jou klopt)</p>
+      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{quiet ? SHORT_TEXT.legs : 'Hoe voelden je benen bij het inlopen? (optioneel; zo leert ASCEND hoe goed de beenindex bij jou klopt)'}</p>
       <div className="mt-2">
         <Segmented
           tall
@@ -171,11 +179,12 @@ export function LegsField({ form, template }: Part) {
 }
 
 export function FeelField({ form, template }: Part) {
+  const quiet = useContext(SheetMode);
   if (template.type === 'recovery') return null;
   const subjectiveFeel = form.values.subjectiveFeel;
   return (
     <div>
-      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelde het ten opzichte van normaal? (optioneel)</p>
+      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{quiet ? SHORT_TEXT.feel : 'Hoe voelde het ten opzichte van normaal? (optioneel)'}</p>
       <div className="mt-2">
         <Segmented
           tall

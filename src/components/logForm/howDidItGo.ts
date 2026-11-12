@@ -73,3 +73,13 @@ export async function submitLog(deps: { busy: { current: boolean }; save: () => 
   else deps.onFailed();
   return ok ? 'saved' : 'failed';
 }
+
+// Hoe het blad dichtgaat. Alleen Annuleren wist een ingevuld concept; een tik naast het blad, wegslepen,
+// het kruis of de terugknop van de telefoon laten het staan, zoals het oude scherm (een tik ernaast is snel
+// gebeurd). Een leeg concept mag altijd weg; na Opslaan is het al weg. Bij een training die al gedaan is
+// valt er niets te bewaren.
+export type CloseWay = 'cancel' | 'backdrop' | 'drag' | 'back' | 'cross' | 'already';
+
+export function clearsDraft(way: CloseWay, filled: boolean): boolean {
+  return way === 'cancel' || way === 'already' || !filled;
+}

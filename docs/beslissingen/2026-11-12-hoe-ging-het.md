@@ -42,3 +42,5 @@ Niets. Spoor 6 (`WatchAskCard` en `SportFeltBlock` in dezelfde vorm) volgt apart
 ## Terugdraaien
 
 In `src/components/ExerciseLogger.tsx` de regel met `HowDidItGoSheet` weghalen en in `TodayMissionCard.tsx` en `SessionActionSheet.tsx` `onManual` weer het oude scherm laten openen. Logs, concept en planning veranderen niet, dus terugdraaien raakt geen gegevens.
+
+Herstel na Pathfinder (12 november, coördinator): punt 5 is vervangen. Alleen Annuleren wist een ingevuld concept. Een tik naast het blad, wegslepen, het kruis en de terugknop van de telefoon laten het staan, zoals het oude scherm; een leeg concept gaat altijd weg (`logForm/howDidItGo.ts#clearsDraft`, "ingevuld" is `useLogForm.ts#filled`). Verder: de gekozen plek staat stil in de kop van stap 1 ("Vandaag · Buiten") als er meer plekken zijn; de vragen in het blad zijn kort (Ten opzichte van normaal, Zwaarte, 1 tot 10 met de uitleg achter de i, Benen bij het inlopen) en geen vraag zegt "(optioneel)", ook de hoogste hartslag van een intervaltraining niet; bij een training die al gedaan is staat er geen formulier meer, alleen de regel en Sluiten.
