@@ -8,7 +8,7 @@ HARDLOPEN · LANG
 ## Lange duurloop
 [knop: Waarom deze training]
 De langste loop van de week, rustig en op vermoeide benen, voor uithouding en hoogtemeters.
-Zo 1 november · Week 1 van 4, basisfase · wennen
+Zo 1 november · Basisfase, week 1 van 4 · wennen
 
 --- kaart 1 ---
 [label: Wat je loopt]
