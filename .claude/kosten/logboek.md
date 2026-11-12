@@ -444,3 +444,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Sherpa Briefing per manier (opus, ca. $14,6, 1 herstelronde) op main 540d0de; Lookout Briefing (tester, sonnet) 76k, groen; Sherpa Week 2-4 (opus, ca. $13,4, 1 herstelronde) op main 2eda701
 - 2026-11-12, coördinator 12 november (2): ca. $32 tot de wissel rond 16:10 UTC (ongeveer 560k context)
 - 2026-11-12, Sherpa Opslaan dat mislukt (sonnet, ca. $0,7, 10 min); Warden Opslaan (reviewer, fable) 76k, 5 min, akkoord, 5 mag (onderweg-pad valkuil, time-outtest toetst geen echte code)
+- 2026-11-12, Sherpa Weer op de plek (fable, ca. $5,9, 24 min); Warden Weer (reviewer, sonnet) 53k, 10 min, akkoord, 3 mag (één sleutel per plek, timezone=auto en vier keuzes in het besluit)
