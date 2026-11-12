@@ -421,3 +421,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Sherpa Stand minimaal, bouwer-sessie, opus, $8,70, ca. 4,5 uur (incl. stilstand door het limiet), 0 herstelrondes; op main 26c0816
 - 2026-11-12, Pathfinder Stand (sonnet) 52k; Lookout Stand (tester, sonnet) 58k, 10 min; groen, opschoonpunten in backlog
 - 2026-11-12, Pathfinder Je week tot nu (sonnet) 38k; Pathfinder Trainingsscherm (sonnet) 47k; Warden Trainingsscherm (reviewer, sonnet) 44k, 7 min; Lookout Trainingsscherm (tester, sonnet) 94k, 15 min, 1 rood
+- 2026-11-12, Sherpa Je week tot nu, bouwer-sessie, opus, ca. $12, ca. 5 uur (incl. stilstand), 1 herstelronde (Pathfinder: week van het voorstel, losse training); op main ab5294d
+- 2026-11-12, Lookout Je week tot nu (tester, sonnet) 64k, 12 min, groen
