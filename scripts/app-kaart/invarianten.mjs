@@ -43,11 +43,12 @@ export const INVARIANTEN = [
   },
   {
     // Ritme op Stand telt zoals de coach op Ascend (engine/onCourse.ts#recentAdherence): dezelfde laatste weken,
-    // hetzelfde "x van y". Alleen te controleren als beide schermen de telling tonen.
+    // hetzelfde "x van y". Alleen te controleren als beide schermen de telling tonen. De kaart Ritme staat sinds
+    // Stand minimaal (2026-11-12) op het scherm Ritme onder /stand.
     naam: 'Ritme op Stand telt hetzelfde als de coach op Ascend',
     controleer: (k) => {
       const uit = [];
-      for (const [stand, ascend] of [['stand', 'ascend'], ['stand-zonder-doel', 'ascend-zonder-doel']]) {
+      for (const [stand, ascend] of [['stand-ritme', 'ascend'], ['stand-ritme-zonder-doel', 'ascend-zonder-doel']]) {
         const r = k(stand).match(/Laatste (\d+) weken?: (\d+) van (\d+) gedaan/);
         const c = k(ascend).match(/Laatste (\d+) weken?: (\d+) van (\d+) trainingen/);
         if (r && c && r.slice(1).join(' ') !== c.slice(1).join(' ')) uit.push(`${stand} zegt "${r[0]}", ${ascend} zegt "${c[0]}"`);
@@ -58,7 +59,7 @@ export const INVARIANTEN = [
   {
     // Het ene voortgangsgetal "Klaar voor je doel" staat alleen op Ascend, nooit ook op Stand.
     naam: 'Klaar voor je doel alleen op Ascend, niet op Stand',
-    controleer: (k) => ['stand', 'stand-zonder-doel'].flatMap((s) => alle(k(s), /^.*Klaar voor (?:je doel|de GR5).*$/gm).map((m) => `${s}: "${m[0].trim()}"`)),
+    controleer: (k) => ['stand', 'stand-zonder-doel', 'stand-benen', 'stand-belasting', 'stand-ritme', 'stand-lopen', 'stand-invloed', 'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek'].flatMap((s) => alle(k(s), /^.*Klaar voor (?:je doel|de GR5).*$/gm).map((m) => `${s}: "${m[0].trim()}"`)),
   },
   {
     // Het Logboek is wat je deed: geen noemer met wat gepland stond en geen "Gemist".
@@ -202,7 +203,8 @@ const SCHERMEN = [
   'vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad',
   'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
   'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek',
-  'ascend-algemeen', 'ascend-vaardigheid',
+  'ascend-algemeen', 'ascend-vaardigheid', 'stand-benen', 'stand-belasting', 'stand-ritme', 'stand-lopen', 'stand-invloed',
+  'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek',
 ];
 
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {

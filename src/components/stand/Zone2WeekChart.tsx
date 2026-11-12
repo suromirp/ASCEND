@@ -10,6 +10,8 @@ import { formatDayMonthNL } from '../../utils/dates';
 
 const W = 300;
 const H = 120;
+// De hoogte van de grafiek, ook voor de lege regel van de kaart: zonder loopje staat die op dezelfde hoogte.
+export const ZONE2_CHART_H = H;
 const TOP = 12;
 const BOTTOM = 12;
 const LEFT = 8;

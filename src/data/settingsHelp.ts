@@ -1149,9 +1149,9 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   volgordeStand: {
     title: 'Volgorde van Je stand',
-    lead: 'Kies de volgorde van de blokken op Je stand. Je planning en je cijfers veranderen er niet door.',
+    lead: 'Kies de volgorde van de regels en de rijen op Je stand. Je planning en je cijfers veranderen er niet door.',
     points: [
-      { head: 'Blokken', text: 'je sleept hele blokken, zoals Benen, Belasting en Kracht. Binnen een blok blijft de volgorde vast. De lucht met de drie woorden blijft bovenaan.' },
+      { head: 'Regels en rijen', text: 'Benen, Belasting en Ritme zijn de drie regels bovenaan; Kracht, Lopen en Wat speelde er de rijen in de lijst. Hun volgorde onderling bepaalt wat eerst staat.' },
       { head: 'Zonder slepen', text: 'kies per blok Hoger of Lager.' },
       { head: 'Terug naar standaard', text: 'zet alles terug. Een blok dat in de instellingen uit staat, houdt zijn plek.' },
     ],

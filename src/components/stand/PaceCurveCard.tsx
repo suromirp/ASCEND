@@ -1,26 +1,17 @@
-// ASCEND: Je stand, sectie Lopen: de test waar je tempo's uit komen, met daaronder je snelste
+// ASCEND: Je stand, scherm Lopen: de test waar je tempo's uit komen, met daaronder je snelste
 // stuk in gewone loopjes sinds die test als controle (engine/paceCurve.ts). De test blijft de bron;
 // deze kaart verandert geen tempo. Zonder test is er niets te vergelijken en staat hier niets.
 
-import { useMemo } from 'react';
-import { useAppData } from '../../state/AppDataContext';
-import { paceCurve, paceCurveLine, paceCurveWaitLine } from '../../engine/paceCurve';
-import { pacesFromLogs, judgmentOptions } from '../../engine/testJudgment';
+import { paceCurveLine, paceCurveWaitLine } from '../../engine/paceCurve';
+import { usePaceCurve } from './usePaceCurve';
 import { formatRaceTime } from '../../engine/racePrediction';
-import { signalOn } from '../../engine/signalSettings';
 import { formatDayMonthNL, todayISO } from '../../utils/dates';
 import { formatNumberNL } from '../../utils/number';
 import { Card, Eyebrow } from '../ui';
 
 export function PaceCurveCard() {
-  const { sessionLogs, settings, templates } = useAppData();
-  const on = signalOn(settings, 'paceCurve');
+  const curve = usePaceCurve();
   const today = todayISO();
-  const curve = useMemo(() => {
-    if (!on) return undefined;
-    const { paces } = pacesFromLogs(sessionLogs, judgmentOptions(settings));
-    return paceCurve(sessionLogs, paces?.test, today, templates);
-  }, [on, sessionLogs, settings, today, templates]);
   if (!curve) return null;
   const { test } = curve;
   return (

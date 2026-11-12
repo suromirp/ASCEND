@@ -4,11 +4,11 @@ import { aerobicTrend, formatPace, tempoPiecesOn, trendHeadline, trendVerdict, z
 import { useExcludedLogIds } from './influence/useExcludedLogIds';
 import { todayISO } from '../utils/dates';
 import { Card, Eyebrow, InfoButton } from './ui';
-import { Zone2WeekChart } from './stand/Zone2WeekChart';
+import { ZONE2_CHART_H, Zone2WeekChart } from './stand/Zone2WeekChart';
 import { zone2CardCaption, zone2WeekChart } from '../engine/zone2Chart';
 import { Zone2InfoSheet } from './Zone2InfoSheet';
 
-// Je stand, sectie Lopen (moved here from Ascend): progress on easy runs, as pace at one zone 2 heart rate
+// Je stand, het ene beeld op de pagina (moved here from Ascend): progress on easy runs, as pace at one zone 2 heart rate
 // (engine/aerobicTrend.ts). Een stip per week, sneller boven; een lijn alleen bij een uitspraak
 // (engine/zone2Chart.ts#zone2WeekChart, besluit docs/beslissingen/2026-11-12-zone2-kaart.md).
 export function AerobicTrendCard() {
@@ -50,7 +50,10 @@ export function AerobicTrendCard() {
           {caption && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{caption}</p>}
         </div>
       ) : (
-        <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Nog geen loopjes. Elke week met een loop wordt hier een stip.</p>
+        // Op dezelfde hoogte als de grafiek, zodat er niets verspringt als de eerste stip er is.
+        <div className="flex items-center" style={{ minHeight: ZONE2_CHART_H }} data-zone2-empty>
+          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Nog geen loopjes. Elke week met een loop wordt hier een stip.</p>
+        </div>
       )}
       {verdict && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{verdict}</p>}
       {/* Wat meetelt staat achter de i, niet op de kaart (Pathfinder 12 november: drie regels onder de grafiek was te veel). */}

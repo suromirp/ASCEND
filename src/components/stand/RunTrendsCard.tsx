@@ -1,39 +1,27 @@
-// ASCEND: Je stand, sectie Lopen: vier rijen met een lijntje van de laatste 12
+// ASCEND: Je stand, scherm Lopen: de rijen met een lijntje van de laatste 12
 // weken en één woord (Beter, Normaal, Slechter of Te weinig gegevens). Een tik op
 // een rij opent hetzelfde blad Waarom als na de training, met de trend in plaats
-// van één loop. De efficiëntierij leest dezelfde aerobicTrend als de kaart Tempo
-// bij zone 2 (engine/runTrends.ts): geen tweede voortgangsgetal. Geen eigen goud
-// en geen contourlijnen: dat is voor de missiekaart.
+// van één loop. De rij Efficiëntie staat hier niet: hij leest dezelfde aerobicTrend
+// als de kaart Tempo bij zone 2 op Je stand (engine/runTrends.ts), dus hetzelfde feit
+// (docs/visie/Ontwerp Stand minimaal.md). De instelling blijft gelden voor het blad na een loop.
 
-import { useMemo, useState } from 'react';
-import { useAppData } from '../../state/AppDataContext';
-import { runTrends, type TrendRow } from '../../engine/runTrends';
-import { tempoPiecesOn } from '../../engine/aerobicTrend';
-import { useExcludedLogIds } from '../influence/useExcludedLogIds';
-import { todayISO } from '../../utils/dates';
+import { useState } from 'react';
+import type { TrendRow } from '../../engine/runTrends';
+import { useRunTrendRows } from './useRunTrendRows';
 import { Card, Eyebrow } from '../ui';
 import { RunInsightSheet } from '../RunInsightSheet';
-import { useDetailsOn } from '../useRunInsight';
 import { Sparkline } from './Sparkline';
 
 export function RunTrendsCard() {
-  const { sessionLogs, templates, program, settings } = useAppData();
-  const detailsOn = useDetailsOn();
-  const excluded = useExcludedLogIds();
+  const rows = useRunTrendRows();
   const [open, setOpen] = useState<TrendRow | null>(null);
-  const tempoPieces = tempoPiecesOn(settings);
-  const trends = useMemo(
-    () => runTrends({ logs: sessionLogs, templates, program, hr: settings.heartRate, settings: settings.runInsight, detailsOn, today: todayISO(), excludedLogIds: excluded, tempoPieces }),
-    [sessionLogs, templates, program, settings.heartRate, settings.runInsight, excluded, detailsOn, tempoPieces],
-  );
-  if (trends.rows.length === 0) return null;
-  // Zonder één rij met gegevens is er niets te laten zien. De kaart Tempo bij zone 2 eronder
-  // zegt dan al dat er nog geen loopjes zijn, dus hier geen tweede regel met hetzelfde.
-  if (trends.rows.every((r) => r.word === 'Te weinig gegevens')) return null;
+  if (rows.length === 0) return null;
+  // Zonder één rij met gegevens is er niets te laten zien.
+  if (rows.every((r) => r.word === 'Te weinig gegevens')) return null;
   return (
     <>
       <Card className="flex flex-col !py-2">
-        {trends.rows.map((r, i) => (
+        {rows.map((r, i) => (
           <button
             key={r.key}
             type="button"
