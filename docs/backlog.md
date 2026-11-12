@@ -106,6 +106,8 @@ Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, al
 
 ## Samenhang (Pathfinder)
 
+- Je week tot nu (Pathfinder, mag): de kop van Week zegt "Week 1 van 4, basisfase", de rest van de app "Basisfase, week 1 van 4"; bij Week minimaal de fase voorop in de kleine regel, het grote getal blijft.
+- Je week tot nu (Pathfinder, mag): de rij Wat ASCEND aanpaste staat nog in het blad; verhuist naar Week minimaal en gaat dan hier weg.
 - Andere plek (Pathfinder, mag): de terugknop van Je plekken gaat naar Vandaag en meldingen, niet terug naar het blad Weer en kleding; het blad weer openen of de rij een gewone ingang maken.
 - Andere plek (Pathfinder, mag): Thuis wissen kan bij Wis startpunt en op Je plekken; later Wis startpunt naar Je plekken laten verwijzen.
 - Andere plek (coördinator, mag): de schuifrij Start bij knipt de laatste chip hard af ("Thu" op 360 px, een randje op 412 px); een zachte rand of een vaste breedte oogt rustiger. Op Je plekken staat bij Thuis twee keer Thuis (naam en soort).
