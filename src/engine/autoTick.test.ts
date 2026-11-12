@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
-import { durationIsClose, type ExternalActivity } from './activityImport';
+import { activityToDraft, candidatePlanned, chosenWayOf, durationIsClose, pendingProposals, proposeImport, type ExternalActivity } from './activityImport';
 import {
   QUESTION_HOURS,
   applyFeedback,
@@ -218,5 +218,73 @@ describe('applyFeedback', () => {
   it('an empty pain list changes nothing', () => {
     const base = log('l1', { painReports: [{ area: 'Knie', score: 3 }] });
     expect(applyFeedback(base, { painReports: [] }).painReports).toEqual([{ area: 'Knie', score: 3 }]);
+  });
+});
+
+// Besluit docs/beslissingen/2026-11-12-stairmaster-horloge.md: een looptraining met de StairMaster gekozen doe je
+// als wandelworkout, dus het horloge brengt een wandeling binnen. Die hoort bij de geplande training.
+describe('een wandeling van het horloge bij heuvelintervallen op de StairMaster', () => {
+  const hills = planned('h1', 'tpl_hill_intervals');
+  const STAIR = { h1: 'stairmaster_intervals' };
+  const walk = (extra: Partial<ExternalActivity> = {}): ExternalActivity => ({ externalId: 'test:walk-1', source: 'garmin', start: `${DAY}T07:30:00`, kind: 'hike', durationSec: 39 * 60, distanceM: 2100, avgHeartRate: 139, treadmill: false, ...extra });
+  const stepper = () => walk({ kind: 'other', otherType: 'StairStepper', distanceM: undefined });
+
+  it('met de keuze: de geplande training wordt vanzelf afgevinkt, met een log dat naar haar wijst', () => {
+    const match = autoTickMatch(walk(), [hills], templates, [], TODAY, STAIR);
+    expect(match?.session.id).toBe('h1');
+    const draft = activityToDraft(walk(), match!.template, match!.session, chosenWayOf(walk(), match, STAIR));
+    expect(draft.plannedSessionId).toBe('h1');
+    expect(draft.templateId).toBe('tpl_hill_intervals');
+    expect(draft.sport).toBe('hiking');
+    expect(draft.cardioData?.modality).toBe('stairmaster_intervals');
+    // Binnen: geen Omgeving Buiten op het log (Warden ronde 3).
+    expect(draft.cardioData?.environment).toBeUndefined();
+    expect(draft.externalId).toBe('test:walk-1');
+    expect(planAutoTicks([walk()], [], [], [hills], templates, [], TODAY, STAIR).map((t) => t.match.session.id)).toEqual(['h1']);
+  });
+
+  it('ook als je Stair Stepper zonder workout startte', () => {
+    expect(autoTickMatch(stepper(), [hills], templates, [], TODAY, STAIR)?.session.id).toBe('h1');
+    expect(proposeImport(stepper(), [hills], templates, [], undefined, STAIR)?.match?.session.id).toBe('h1');
+    // Zonder de keuze is een Stair Stepper een sport die niet meetelt: geen voorstel.
+    expect(proposeImport(stepper(), [hills], templates, [])).toBeUndefined();
+  });
+
+  it('zonder keuze, met een andere keuze of zonder gelezen keuzes: precies zoals het was', () => {
+    const cases: (Record<string, string> | undefined)[] = [undefined, {}, { h1: 'incline_treadmill_intervals' }, { h1: 'hill_repeats_outdoor' }, { ander: 'stairmaster_intervals' }];
+    for (const places of cases) {
+      expect(autoTickMatch(walk(), [hills], templates, [], TODAY, places)).toBeUndefined();
+      const proposal = proposeImport(walk(), [hills], templates, [], undefined, places);
+      expect(proposal?.match).toBeUndefined();
+      expect(proposal?.template?.id).toBe(proposeImport(walk(), [hills], templates, [])?.template?.id);
+    }
+  });
+
+  it('een losse wandeling op een andere dag hoort er niet bij', () => {
+    const dayAfter = walk({ start: '2026-10-13T07:30:00' });
+    expect(autoTickMatch(dayAfter, [hills], templates, [], TODAY, STAIR)).toBeUndefined();
+    expect(proposeImport(dayAfter, [hills], templates, [], undefined, STAIR)?.match).toBeUndefined();
+    expect(candidatePlanned(dayAfter, [hills], templates, [], { places: STAIR })).toEqual([]);
+    expect(chosenWayOf(dayAfter, { session: hills, template: templates.find((t) => t.id === 'tpl_hill_intervals')! }, STAIR)).toBeUndefined();
+  });
+
+  it('geen dubbel log: staat de activiteit al in een log, of heeft de training al een log, dan gebeurt er niets', () => {
+    const done = log('l1', { templateId: 'tpl_hill_intervals', plannedSessionId: 'h1', externalId: 'test:walk-1' });
+    expect(autoTickMatch(walk(), [hills], templates, [done], TODAY, STAIR)).toBeUndefined();
+    expect(pendingProposals([walk()], [], [hills], templates, [done], STAIR)).toEqual([]);
+    const other = log('l2', { templateId: 'tpl_hill_intervals', plannedSessionId: 'h1', externalId: 'test:iets-anders' });
+    expect(autoTickMatch(walk(), [hills], templates, [other], TODAY, STAIR)).toBeUndefined();
+  });
+
+  it('een gewone loop past nog steeds op de training, en een wandeling niet op een andere looptraining van die dag', () => {
+    expect(autoTickMatch(run({ durationSec: 39 * 60 }), [hills], templates, [], TODAY, STAIR)?.session.id).toBe('h1');
+    const easy = planned('e1', 'tpl_easy_run');
+    expect(autoTickMatch(walk(), [easy], templates, [], TODAY, { e1: 'stairmaster_intervals' })).toBeUndefined();
+  });
+
+  it('een wandeling die veel langer duurde wordt niet vanzelf afgevinkt, maar wel voorgesteld bij die training', () => {
+    const long = walk({ durationSec: 150 * 60 });
+    expect(autoTickMatch(long, [hills], templates, [], TODAY, STAIR)).toBeUndefined();
+    expect(proposeImport(long, [hills], templates, [], undefined, STAIR)?.match?.session.id).toBe('h1');
   });
 });

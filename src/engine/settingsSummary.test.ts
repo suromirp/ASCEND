@@ -710,6 +710,8 @@ describe('rowSummary: wat er na het samenvoegen bij kwam', () => {
     expect(rowSummary('horloge-voorvoegsel', withSettings({ watchNamePrefix: 'none' })).value).toBe('Geen');
     expect(rowSummary('horloge-gedaan-weghalen', facts()).checked).toBe(true);
     expect(rowSummary('horloge-gedaan-weghalen', withSettings({ watchRemoveDone: false })).checked).toBe(false);
+    expect(rowSummary('horloge-eigen-workout', facts()).checked).toBe(true);
+    expect(rowSummary('horloge-eigen-workout', withSettings({ watchPlaceWorkout: false })).checked).toBe(false);
     expect(rowSummary('horloge-status', withSettings({ showWatchStatus: false })).checked).toBe(false);
     expect(rowSummary('horloge-status-week', facts()).checked).toBe(true);
     expect(rowSummary('horloge-status', withSettings({ showWatchStatusOnWeek: false }))).toMatchObject({ checked: false, sub: 'Niet op Week' });

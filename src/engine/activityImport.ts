@@ -16,6 +16,7 @@
 //   with that log (engine/watchAlign.ts) is a separate, explicit step
 //   (docs/beslissingen/2026-10-22-garmin-is-leidend.md).
 
+import { watchPlaceOf } from './watchWorkout';
 import type { MetricSource, PlannedSession, SessionLog, SessionTemplate, SourceNumbers, SubjectiveFeel } from '../models/training';
 import { logSport, templateSport, type Sport } from './sports';
 import { anySportDefinition, type CountedSportId } from '../data/sports';
@@ -23,6 +24,7 @@ import { countedSportOfTemplate } from './sportTemplate';
 import { formatNumberNL } from '../utils/number';
 import type { RunDynamics, StreamKind } from '../models/activityDetail';
 import { round } from '../utils/round';
+import { findModalityByKey } from '../data/modalities';
 import { formatHoursMinutesNL } from '../utils/dates';
 
 export type ExternalActivityKind = 'run' | 'hike' | 'ride' | 'strength' | 'other';
@@ -131,6 +133,23 @@ function fitsTemplate(kind: ExternalActivityKind, template: SessionTemplate, cou
   }
 }
 
+// A run planned with the StairMaster chosen (engine/watchWorkout.ts#watchPlaceOf) is done as a walking workout,
+// so the watch brings it in as a walk, or as a stair stepper when you started that. Such an activity fits that
+// planned training, on its own day only; without the choice nothing changes
+// (docs/beslissingen/2026-11-12-stairmaster-horloge.md). `places` is the stored choice per planned training.
+export const STAIR_STEPPER_TYPE = 'StairStepper';
+export function fitsChosenWay(activity: Pick<ExternalActivity, 'kind' | 'countedSport' | 'otherType'>, session: PlannedSession, template: SessionTemplate, places: Readonly<Record<string, string>> | undefined): boolean {
+  if (!places || activity.countedSport) return false;
+  if (activity.kind !== 'hike' && activity.otherType !== STAIR_STEPPER_TYPE) return false;
+  return !!watchPlaceOf(template, places[session.id]);
+}
+
+// The chosen way, when this match came through it: what the new log says about how it was done.
+export function chosenWayOf(activity: ExternalActivity, match: PlannedMatch | undefined, places: Readonly<Record<string, string>> | undefined): string | undefined {
+  if (!match || match.session.scheduledDate !== activityDate(activity) || !fitsChosenWay(activity, match.session, match.template, places)) return undefined;
+  return places?.[match.session.id];
+}
+
 export function templatesForKind(kind: ExternalActivityKind, templates: SessionTemplate[], countedSport?: CountedSportId, otherType?: string): SessionTemplate[] {
   return templates.filter((t) => fitsTemplate(kind, t, countedSport, otherType));
 }
@@ -156,7 +175,7 @@ export function candidatePlanned(
   planned: PlannedSession[],
   templates: SessionTemplate[],
   logs: SessionLog[],
-  options: { sameDayOnly?: boolean; anyKind?: boolean; notAfter?: string } = {},
+  options: { sameDayOnly?: boolean; anyKind?: boolean; notAfter?: string; places?: Readonly<Record<string, string>> } = {},
 ): PlannedMatch[] {
   const templateById = new Map(templates.map((t) => [t.id, t]));
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
@@ -164,19 +183,22 @@ export function candidatePlanned(
   const dayMs = Date.parse(`${day}T00:00:00Z`);
   const minutes = activity.durationSec / 60;
 
+  // The kind of the training, or the way chosen for this one planned training on the day itself.
+  const fitsSession = (session: PlannedSession, template: SessionTemplate, distance: number) =>
+    fitsTemplate(activity.kind, template, activity.countedSport, activity.otherType) || (distance === 0 && fitsChosenWay(activity, session, template, options.places));
   const matches: (PlannedMatch & { distance: number })[] = [];
   for (const session of planned) {
     if (logged.has(session.id) || session.status === 'skipped') continue;
     if (options.notAfter && session.scheduledDate > options.notAfter) continue;
     const template = templateById.get(session.templateId);
     if (!template) continue;
-    if (!options.anyKind && !fitsTemplate(activity.kind, template, activity.countedSport, activity.otherType)) continue;
     const distance = Math.abs(Date.parse(`${session.scheduledDate}T00:00:00Z`) - dayMs) / 86_400_000;
+    if (!options.anyKind && !fitsSession(session, template, distance)) continue;
     if (options.sameDayOnly ? distance !== 0 : distance > 6) continue;
     matches.push({ session, template, distance });
   }
 
-  const fits = (m: PlannedMatch) => fitsTemplate(activity.kind, m.template, activity.countedSport, activity.otherType);
+  const fits = (m: PlannedMatch & { distance: number }) => fitsSession(m.session, m.template, m.distance);
   return matches
     .sort((a, b) => {
       // The right kind before anything else, a real session before a rest-day
@@ -198,8 +220,9 @@ export function proposeMatch(
   planned: PlannedSession[],
   templates: SessionTemplate[],
   logs: SessionLog[],
+  places?: Readonly<Record<string, string>>,
 ): PlannedMatch | undefined {
-  return candidatePlanned(activity, planned, templates, logs, { sameDayOnly: true })[0];
+  return candidatePlanned(activity, planned, templates, logs, { sameDayOnly: true, places })[0];
 }
 
 // When nothing is planned for it: the template an unplanned activity is
@@ -249,11 +272,17 @@ function clean<T extends object>(obj: T): T {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
 }
 
-export function activityToDraft(activity: ExternalActivity, template: SessionTemplate, planned?: PlannedSession): SessionLogDraft {
+// `way`: the way of training chosen for this planned training, when the activity was matched through it
+// (fitsChosenWay): the new log says how it was done, like a log made by hand does.
+export function activityToDraft(activity: ExternalActivity, template: SessionTemplate, planned?: PlannedSession, way?: string): SessionLogDraft {
   const durationMinutes = Math.max(1, Math.round(activity.durationSec / 60));
   const startMs = new Date(activity.start).getTime();
   const completedAt = new Date(startMs + activity.durationSec * 1000).toISOString();
   const gain = activity.elevationGainM !== undefined ? round(activity.elevationGainM) : undefined;
+  // A way chosen for this training (StairMaster) says where it was done; an indoor way gets no environment,
+  // as a log made by hand (logForm/manualLog.ts). A log is never rewritten, so a wrong field stays.
+  const wayEnv = way ? findModalityByKey(way)?.environment : undefined;
+  const indoorWay = !!way && wayEnv !== 'outdoor' && wayEnv !== 'treadmill';
 
   const metric = clean({
     durationMinutes,
@@ -263,9 +292,9 @@ export function activityToDraft(activity: ExternalActivity, template: SessionTem
     // A treadmill doesn't change altitude: its "climb" is flagged, like the
     // incline-treadmill estimate (models/training.ts#OutdoorMetric).
     estimatedElevation: activity.treadmill && gain !== undefined ? true : undefined,
-    environment: activity.kind === 'strength' ? undefined : activity.treadmill ? ('treadmill' as const) : ('outdoor' as const),
+    environment: activity.kind === 'strength' || indoorWay ? undefined : activity.treadmill ? ('treadmill' as const) : ('outdoor' as const),
     // The rest-day walk is logged the way the app logs it by hand.
-    modality: template.type === 'recovery' && activity.kind === 'hike' ? 'recovery_walk' : undefined,
+    modality: template.type === 'recovery' && activity.kind === 'hike' ? 'recovery_walk' : way,
     avgHeartRate: activity.avgHeartRate,
     maxHeartRate: activity.maxHeartRate,
     cadence: activity.avgCadence !== undefined ? Math.round(activity.avgCadence) : undefined,
@@ -408,12 +437,13 @@ export function proposeImport(
   templates: SessionTemplate[],
   logs: SessionLog[],
   matchedIds?: Set<string>,
+  places?: Readonly<Record<string, string>>,
 ): ImportProposal | undefined {
   if (!isImportable(activity)) return undefined;
   if (logs.some((l) => l.externalId === activity.externalId)) return undefined;
   const matched = matchedIds ?? new Set(pairWithManualLogs([activity], logs).map((p) => p.activity.externalId));
   if (matched.has(activity.externalId)) return undefined;
-  const match = proposeMatch(activity, planned, templates, logs);
+  const match = proposeMatch(activity, planned, templates, logs, places);
   const template = match?.template ?? fallbackTemplate(activity, templates);
   // A sport that does not count (yet): nothing to save it under, so no proposal.
   if ((activity.countedSport || activity.otherType) && !template) return undefined;
@@ -433,13 +463,14 @@ export function pendingProposals(
   planned: PlannedSession[],
   templates: SessionTemplate[],
   logs: SessionLog[],
+  places?: Readonly<Record<string, string>>,
 ): ImportProposal[] {
   const dismissed = new Set(dismissedIds);
   const matchedIds = new Set(pairWithManualLogs(activities, logs).map((p) => p.activity.externalId));
   return [...activities]
     .filter((a) => !dismissed.has(a.externalId))
     .sort((a, b) => b.start.localeCompare(a.start))
-    .map((a) => proposeImport(a, planned, templates, logs, matchedIds))
+    .map((a) => proposeImport(a, planned, templates, logs, matchedIds, places))
     .filter((p): p is ImportProposal => !!p);
 }
 

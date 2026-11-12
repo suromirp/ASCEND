@@ -27,7 +27,7 @@ export function WatchSheet({
   view: WatchSheetView;
   template: SessionTemplate;
   session?: PlannedSession;
-  garmin?: { sport: string; lines: string[] };
+  garmin?: { sport: string; lines: string[]; note?: string };
   dayLabel: string;
   onClose: () => void;
   // Sluit alle lagen onder dit blad (het trainingsscherm) voordat een rij naar een pagina gaat.
@@ -110,6 +110,7 @@ export function WatchSheet({
           <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             Maak in Garmin Connect een nieuwe workout van het type {garmin.sport}, met deze stappen. Stuur hem naar je horloge en start hem als je begint.
           </p>
+          {garmin.note && <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-ink)' }}>{garmin.note}</p>}
           <div className="mt-2.5 flex flex-col gap-1">
             {garmin.lines.map((line, i) => (
               <p key={i} className="whitespace-pre text-xs tabular-nums" style={{ color: line.startsWith('Herhaal') ? 'var(--color-action)' : 'var(--color-ink)' }}>{line}</p>

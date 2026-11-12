@@ -13,6 +13,7 @@ import { watchHrPlanFromSettings } from '../engine/watchHeartRate';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { todayISO } from '../utils/dates';
 import type { PlannedSession, SessionTemplate } from '../models/training';
+import { useTrainingPlaces } from './useTrainingPlaces';
 
 interface Snapshot {
   state: WatchWorkoutState;
@@ -32,6 +33,8 @@ async function readSnapshot(): Promise<Snapshot | null> {
 export function useWatchStatuses(): { statusOf: (session: PlannedSession, template: SessionTemplate) => WatchStatus; ready: boolean; reload: () => Promise<void> } {
   const { sessionLogs, program, settings } = useAppData();
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+  // De keuze Waar train je? per training: dezelfde die het versturen leest, anders klopt de stand niet.
+  const places = useTrainingPlaces();
 
   const reload = useCallback(() => readSnapshot().then(setSnapshot), []);
 
@@ -70,10 +73,12 @@ export function useWatchStatuses(): { statusOf: (session: PlannedSession, templa
         paces,
         namePrefix: settings.watchNamePrefix,
         hr: watchHrPlanFromSettings(settings, state.hrBasis),
+        places,
+        placeWorkout: settings.watchPlaceWorkout,
         logged,
       });
     },
-    [snapshot, program, paces, logged, settings],
+    [snapshot, program, paces, logged, settings, places],
   );
 
   return { statusOf, ready: snapshot !== null, reload };

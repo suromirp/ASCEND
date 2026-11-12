@@ -93,6 +93,16 @@ describe('workout events: the request', () => {
     expect(calls.map((c) => `${c.method} ${c.url}`)).toEqual(['PUT https://intervals.icu/api/v1/athlete/i12345/events/4242']);
   });
 
+  it('the answer names another kind than the one sent: not taken, for an update and for a create', async () => {
+    const other = WORKOUT.type === 'Run' ? 'Walk' : 'Run';
+    const put = recordingFetch(() => json({ id: 4242, type: other }));
+    await expect(updateWorkoutEvent(CONNECTION, WORKOUT, 4242, { fetchImpl: put.fn })).rejects.toMatchObject({ kind: 'rejected' });
+    const post = recordingFetch(() => json([{ id: 7, external_id: WORKOUT.externalId, type: other }]));
+    await expect(createWorkoutEvents(CONNECTION, [WORKOUT], { fetchImpl: post.fn })).rejects.toMatchObject({ kind: 'rejected' });
+    // The same kind, or no kind in the answer: taken.
+    expect(await updateWorkoutEvent(CONNECTION, WORKOUT, 4242, { fetchImpl: recordingFetch(() => json({ id: 4242, type: WORKOUT.type })).fn })).toBe(4242);
+  });
+
   it('creates it again when the event was deleted in intervals.icu (404), instead of failing or doubling', async () => {
     const { fn, calls } = recordingFetch((c) => (c.method === 'PUT' ? new Response('', { status: 404 }) : json([{ id: 7, external_id: 'ascend:ps1' }])));
     expect(await updateWorkoutEvent(CONNECTION, WORKOUT, 4242, { fetchImpl: fn })).toBe(7);

@@ -344,3 +344,33 @@ describe('back-up: SessionLog.linkedLater', () => {
     expect(migrateLogLinkedLater(broken)).toEqual(log);
   });
 });
+
+// Besluit docs/beslissingen/2026-11-12-stairmaster-horloge.md.
+describe('koppelen achteraf: een wandellog bij heuvelintervallen op de StairMaster', () => {
+  const hills = planned('hills', 'tpl_hill_intervals', '2026-10-26');
+  const walkLog = (id: string, completedDate: string): SessionLog => ({
+    id, templateId: 'tpl_herstel', type: 'recovery', sport: 'hiking', completedDate, completedAt: `${completedDate}T08:00:00Z`, variant: 'custom', durationMinutes: 39,
+    externalId: `intervals.icu:i-${id}`, source: 'garmin', cardioData: { durationMinutes: 39, source: 'garmin' },
+  } as SessionLog);
+  const links = (logs: SessionLog[], places?: Record<string, string>) => [...linkCandidates({ plannedSessions: [hills], logs, templates, today: TODAY, places })].map(([id, l]) => [id, l.id]);
+
+  it('met de keuze en op dezelfde dag: het koppelvoorstel', () => {
+    expect(links([walkLog('w1', '2026-10-26')], { hills: 'stairmaster_intervals' })).toEqual([['hills', 'w1']]);
+    const plan = planMissed(input({ plannedSessions: [hills], logs: [walkLog('w1', '2026-10-26')], places: { hills: 'stairmaster_intervals' } }));
+    expect(plan.item).toMatchObject({ kind: 'link', session: { id: 'hills' }, log: { id: 'w1' } });
+  });
+  it('zonder keuze of met een andere keuze: geen koppeling, zoals het was', () => {
+    expect(links([walkLog('w1', '2026-10-26')])).toEqual([]);
+    expect(links([walkLog('w1', '2026-10-26')], { hills: 'incline_treadmill_intervals' })).toEqual([]);
+  });
+  it('een wandeling op een andere dag: geen koppeling', () => {
+    expect(links([walkLog('w1', '2026-10-27')], { hills: 'stairmaster_intervals' })).toEqual([]);
+    expect(links([walkLog('w1', '2026-10-25')], { hills: 'stairmaster_intervals' })).toEqual([]);
+  });
+  it('koppelen vult alleen de lege verwijzing: het log zelf blijft wat het was', () => {
+    const log = walkLog('w1', '2026-10-26');
+    const linked = linkLog(log, 'hills', '2026-10-28T09:00:00.000Z')!;
+    expect({ ...linked, plannedSessionId: undefined, linkedLater: undefined }).toEqual({ ...log, plannedSessionId: undefined, linkedLater: undefined });
+    expect(unlinkLog(linked)).toEqual(log);
+  });
+});

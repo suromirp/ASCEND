@@ -104,6 +104,7 @@ const everything: AppSettings = {
   tabBack: 'previous',
   resumeMinutes: 0,
   watchRemoveDone: false,
+  watchPlaceWorkout: false,
   showWatchStatus: false,
   showWatchStatusOnWeek: false,
   watchNamePrefix: 'none',

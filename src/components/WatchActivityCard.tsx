@@ -8,6 +8,7 @@
 // In the Android app the trainings of Health Connect come in the same way
 // (storage/healthConnect.ts), after those of intervals.icu, which goes first.
 
+import { useTrainingPlaces } from './useTrainingPlaces';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import {
@@ -28,6 +29,7 @@ import { attachActivityDetail } from '../storage/activityDetail';
 import {
   activityToDraft,
   candidatePlanned,
+  chosenWayOf,
   describeActivity,
   describeActivityDetails,
   pendingProposals,
@@ -53,6 +55,8 @@ const AUTO_TICK_DELAY_MS = 1200;
 // scherm; besluit 2026-11-12-missiekaart.md).
 export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
   const { plannedSessions, templates, sessionLogs, logSession, undoLog, setLogFeedback, refresh } = useAppData();
+  // De keuze Waar train je? per geplande training; undefined zolang hij nog niet gelezen is.
+  const places = useTrainingPlaces();
   const [state, setState] = useState<WatchActivityState | null>(null);
   // De trainingen uit Health Connect (Android-app, als dat aan staat). intervals.icu gaat voor: wat
   // daar al is of al een log werd, komt hier niet nog eens (engine/sourcePrecedence.ts).
@@ -96,7 +100,9 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
   // Vanzelf afvinken: only what nothing is left to choose about.
   useEffect(() => {
     if (!state || !state.autoTick || !state.use.activities || ticking.current) return;
-    const ticks = planAutoTicks(activities, state.dismissed, state.autoLogged, plannedSessions, templates, sessionLogs)
+    // Eerst de keuzes Waar train je?: een wandeling op de StairMaster hoort bij de geplande looptraining.
+    if (places === undefined) return;
+    const ticks = planAutoTicks(activities, state.dismissed, state.autoLogged, plannedSessions, templates, sessionLogs, undefined, places)
       .filter((t) => !attempted.current.has(t.activity.externalId));
     if (ticks.length === 0) return;
     const timer = setTimeout(() => {
@@ -105,7 +111,7 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
         try {
           for (const { activity, match } of ticks) {
             attempted.current.add(activity.externalId);
-            const stored = await logSession({ ...activityToDraft(activity, match.template, match.session), quiet: true });
+            const stored = await logSession({ ...activityToDraft(activity, match.template, match.session, chosenWayOf(activity, match, places)), quiet: true });
             if (stored) {
               await recordAutoTicked(activity.externalId);
               addDetail(activity);
@@ -117,7 +123,7 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
       })();
     }, AUTO_TICK_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [state, activities, plannedSessions, templates, sessionLogs, logSession, addDetail]);
+  }, [state, activities, plannedSessions, templates, sessionLogs, logSession, addDetail, places]);
 
   // Trainings switched off ("Wat ASCEND van je horloge gebruikt"): nothing of
   // the watch is offered or asked here.
@@ -126,8 +132,8 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
     [state, sessionLogs, later],
   );
   const proposals = useMemo(
-    () => (state?.use.activities ? pendingProposals(activities, state.dismissed, plannedSessions, templates, sessionLogs) : []),
-    [state, activities, plannedSessions, templates, sessionLogs],
+    () => (state?.use.activities ? pendingProposals(activities, state.dismissed, plannedSessions, templates, sessionLogs, places) : []),
+    [state, activities, plannedSessions, templates, sessionLogs, places],
   );
   const question = questions[0];
   const proposal = proposals[0];
@@ -181,7 +187,7 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
     if (saving) return;
     setSaving(true);
     try {
-      if (await logSession(activityToDraft(activity, template, match?.session))) addDetail(activity);
+      if (await logSession(activityToDraft(activity, template, match?.session, chosenWayOf(activity, match, places)))) addDetail(activity);
     } finally {
       setSaving(false);
       setChoosing(false);
@@ -284,8 +290,9 @@ function ChooseSheet({
   onClose: () => void;
 }) {
   const { plannedSessions, templates, sessionLogs } = useAppData();
+  const places = useTrainingPlaces();
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
-  const planned = candidatePlanned(activity, plannedSessions, templates, sessionLogs, { anyKind: true, notAfter: todayISO() }).slice(0, 8);
+  const planned = candidatePlanned(activity, plannedSessions, templates, sessionLogs, { anyKind: true, notAfter: todayISO(), places }).slice(0, 8);
   const loose = templatesForKind(activity.kind, templates);
   return (
     <Portal>

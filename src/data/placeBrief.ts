@@ -4,7 +4,8 @@
 // geschreven voor de standaard: de heuvel buiten. Kies je de loopband op helling of de StairMaster, dan klopt
 // "hard bergop", "op de heuvel" en "terug naar beneden" niet meer. Per manier staat hier alleen wat anders is;
 // wat er niet staat, blijft de tekst van de training. De opbouw zelf (minuten, herhalingen, zwaarte) verandert
-// niet, en ook niet wat er naar je horloge gaat.
+// niet. Wat er naar je horloge gaat leest de namen van de stappen hier ook (engine/watchWorkout.ts): de
+// StairMaster krijgt een eigen wandelworkout (besluit docs/beslissingen/2026-11-12-stairmaster-horloge.md).
 //
 // Gesleuteld op de sleutel van de manier (data/modalities.ts), en dan op de training: dezelfde manier staat bij
 // de heuvelintervallen en bij heuvelsprints en afdalen, met een eigen derde feit.

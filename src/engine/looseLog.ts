@@ -7,6 +7,7 @@
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { logSport, templateSport } from './sports';
 import { isHandLog } from './activityImport';
+import { watchPlaceOf } from './watchWorkout';
 import { isTestOrRace } from './templateRoles';
 
 // De soort van een training: kracht, of de sport (data/sports.ts). Een rustdag heeft geen soort.
@@ -33,6 +34,13 @@ export function sameLinkKind(log: SessionLog, logTemplate: SessionTemplate | und
   const kind = logKind(log);
   if (!kind || templateKind(template) !== kind) return false;
   return (!!logTemplate && isTestOrRace(logTemplate)) === isTestOrRace(template);
+}
+
+// Een looptraining met de StairMaster gekozen (engine/watchWorkout.ts#watchPlaceOf) doe je als wandelworkout: een
+// losse wandellog van een bron op dezelfde dag hoort dan bij die training. Alleen die dag en die keuze.
+export function fitsChosenWayLog(log: SessionLog, session: PlannedSession, template: SessionTemplate, places: Readonly<Record<string, string>> | undefined): boolean {
+  if (!places || log.completedDate !== session.scheduledDate || logSport(log) !== 'hiking' || log.countedSport || log.customSport) return false;
+  return !!watchPlaceOf(template, places[session.id]);
 }
 
 // De open trainingen (niet overgeslagen, geen eigen log) waar een losse log van een bron op dezelfde dag voor
