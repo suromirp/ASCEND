@@ -110,7 +110,8 @@ async function writeLog(input: LogSessionInput, opts: { batch?: SavedMoment[] } 
       await refresh();
     } catch (err) {
       // Het scherm kon niet opnieuw lezen: geen moment na Gedaan over een log dat je nog niet ziet.
-      followUpFailed(err);
+      // Hooguit één melding per log.
+      if (!failed) followUpFailed(err);
       return true;
     }
     try {

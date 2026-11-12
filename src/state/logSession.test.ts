@@ -40,7 +40,7 @@ describe('logSession: het log staat er, ook als een stap erna faalt', () => {
     expect(announced[0][0].logId).toBe(logs[0].id);
   });
 
-  it('refresh faalt na het schrijven: toch ja, en een tweede tik op dezelfde losse training geeft geen tweede log', async () => {
+  it('refresh faalt na het schrijven: toch ja, fout apart gemeld', async () => {
     const { deps, errors } = makeDeps({ refresh: () => Promise.reject(new Error('kapot')) });
     expect(await runLogSession(loose(), undefined, deps)).toBe(true);
     expect(await SessionLogsRepo.getAll()).toHaveLength(1);

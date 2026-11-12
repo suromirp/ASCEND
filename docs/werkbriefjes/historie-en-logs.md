@@ -25,6 +25,7 @@ De regel dat historie nooit herschreven wordt, de vijf uitzonderingen op verzoek
 - Load, beenindex of planning de getoonde dag van `logDay` laten lezen; die blijven `completedDate` gebruiken.
 
 ## Valkuilen
+- Nee van `logSession` is niet hetzelfde als "staat er al": het kan ook een mislukt schrijven zijn. Gooi bij nee nooit een concept weg zonder te kijken of het log er staat (Warden Dubbel log).
 - `logSession` (`src/state/logSession.ts#runLogSession`) zegt ja zodra het log geschreven is, ook als een stap erna faalt; die fout gaat apart naar de melding bovenin. Nee betekent dat er niets geschreven is. Zet nooit een stap die kan falen tussen het schrijven en dat ja, anders laat een scherm opnieuw opslaan en krijgt een losse training een tweede log (besluit `2026-11-12-dubbel-log.md`).
 - Afgeleide velden (`detail`, `bestEffort`, `runDetail`, `zone2Pieces`, `forgeLog`) worden één keer toegevoegd en horen bij de totalen waarvoor ze gelezen zijn; ze veranderen nooit een gemeten getal. Een beschadigd veld laat je vallen zonder het log te verliezen.
 - Elke uitzondering heeft haar eigen terugzetfunctie; een nieuwe schrijfroute zonder die terugweg breekt de afspraak.
