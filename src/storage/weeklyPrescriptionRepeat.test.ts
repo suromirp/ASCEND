@@ -143,6 +143,23 @@ describe('een aangenomen voorstel van het weekvoorschrift komt niet bij elke ope
     expect(await weeklyLog()).toHaveLength(2);
   });
 
+  // Wat de back-up van de eigenaar liet zien (nagemaakt, datums verschoven): een Wandeldag naast een al geplande
+  // Duurloop met versnellingen op zaterdag, in een week waar elke dag een training staat. De ronde laat hem niet
+  // staan (de fase van die week wil geen wandeldag), dus het voorschrift stelt hem niet voor: geen melding, geen regel.
+  it('een Wandeldag naast de Duurloop met versnellingen op zaterdag: drie openingen, geen voorstel en geen regel', async () => {
+    const saturday = live(await PlannedSessionsRepo.getAll(), SATURDAY)[0];
+    await PlannedSessionsRepo.put({ ...saturday, templateId: 'tpl_strides_run' });
+    await open('stand-3');
+    const now = live(await PlannedSessionsRepo.getAll(), SATURDAY);
+    wanted.changes = [{
+      action: 'add', newSessionDraft: { templateId: 'tpl_hike_day_one', scheduledDate: SATURDAY, weekStartDate: mondayOfWeek(SATURDAY) },
+      reason: 'Weekprescriptie: Wandeldag 1 van 2 toegevoegd volgens de berekende weekprescriptie.', generatedBy: ['engine/weeklyPrescriptionEngine.ts#computeWeeklyPrescriptionPlan'], coPlacedWithSessionIds: now.map((s) => s.id),
+    }];
+    for (const build of ['opening-1', 'opening-2', 'opening-3']) expect((await open(build)).weekly.kind).toBe('unchanged');
+    expect(live(await PlannedSessionsRepo.getAll(), SATURDAY).some((s) => s.templateId === 'tpl_hike_day_one')).toBe(false);
+    expect(await weeklyLog()).toHaveLength(0);
+  });
+
   it('een vakantie of tocht op die dag: het voorstel komt niet, ook niet één keer', async () => {
     const day = SATURDAY;
     for (const kind of ['no_training', 'trek'] as const) {
