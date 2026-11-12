@@ -13,7 +13,7 @@
 
 import type { AllowedPair } from '../engine/allowedPair';
 import type { PlaceReason } from '../engine/placeReason';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TextButton } from './TextButton';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
@@ -23,6 +23,7 @@ import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { ExerciseLogger } from './ExerciseLogger';
 import { TrainingBriefing } from './TrainingBriefing';
+import { HowDidItGoSheet } from './HowDidItGoSheet';
 import { briefingEntry, briefingRowLine, doTodayOpens, entryAction, missionButton } from '../engine/briefing';
 import { useBriefingView } from './useBriefingView';
 import { useWatchLink } from './useWatchLink';
@@ -32,8 +33,7 @@ import { useWatchSheet } from './useWatchSheet';
 import { WATCH_SHEET_TEXT } from '../engine/watchSheet';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { useSheetClose } from '../utils/useSheetClose';
-import { Portal } from './Portal';
-import { PrimaryButton, SecondaryButton, InfoButton, SheetGrip } from './ui';
+import { PrimaryButton, SecondaryButton, InfoButton } from './ui';
 import { Icon } from './icons';
 import { SheetHeader } from './SheetHeader';
 import { useAppData } from '../state/AppDataContext';
@@ -41,6 +41,7 @@ import { isSportEnabled, sessionKindLabel, templateSport } from '../engine/sport
 import { getModalities, isCyclingModality } from '../data/modalities';
 import { addDays, weekdayLongNL, weekdayShortNL, formatDateNL, todayISO } from '../utils/dates';
 import { MoveSuggestions } from './MoveSuggestions';
+import { SheetFrame } from './SheetFrame';
 import { StrengthDoneElsewhere, type StrengthDoneExtra } from './StrengthDoneElsewhere';
 import { WarmupRow } from './WarmupRow';
 import { WatchStatusRow } from './WatchStatusRow';
@@ -63,36 +64,6 @@ function dayLabel(iso: string, today: string): string {
   if (iso === addDays(today, 1)) return `Morgen, ${weekdayLongNL(iso)}`;
   if (iso === addDays(today, -1)) return `Gisteren, ${weekdayLongNL(iso)}`;
   return `${weekdayShortNL(iso)} ${formatDateNL(iso)}`;
-}
-
-// The head (day, title, cross) stays in view; only what is under it scrolls.
-// The height limit itself is shared by every sheet (.animate-sheet-in in index.css).
-function SheetFrame({ closing, sheetRef, onClose, label, scrollKey, head, children }: { closing: boolean; sheetRef: (node: HTMLElement | null) => void; onClose: () => void; label: string; scrollKey?: string; head: ReactNode; children: ReactNode }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  // A new step starts at its top.
-  useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }); }, [scrollKey]);
-  return (
-    <Portal>
-      <div
-        className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
-        onClick={onClose}
-      >
-        <div
-          ref={sheetRef}
-          role="dialog"
-          aria-modal="true"
-          aria-label={label}
-          className={`relative flex w-full max-w-md flex-col rounded-t-[20px] border border-b-0 ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
-          style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <SheetGrip />
-          <div className="shrink-0 px-4 pb-1 pt-3">{head}</div>
-          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">{children}</div>
-        </div>
-      </div>
-    </Portal>
-  );
 }
 
 export function SessionActionSheet({
@@ -164,6 +135,8 @@ export function SessionActionSheet({
   const [showPreview, setShowPreview] = useState(false);
   // De Briefing (spoor 5): voor een training buiten te voet op de plek van "Hoe je het doet".
   const [showBriefing, setShowBriefing] = useState(false);
+  // Zelf invullen vanuit de Briefing: het blad Hoe ging het? erover.
+  const [showManual, setShowManual] = useState(false);
   const [step, setStep] = useState<'main' | 'done' | 'move' | 'swap'>(startStep ?? 'main');
   const [whyOpen, setWhyOpen] = useState(false);
   // The "Gedaan" step for a training of a later day, done today.
@@ -406,10 +379,13 @@ export function SessionActionSheet({
           date={session.scheduledDate}
           program={program}
           onClose={() => setShowBriefing(false)}
-          // Zelf invullen: het bestaande scherm met het formulier, zoals Gedaan.
-          onManual={() => (onLog ?? onStart)('full')}
+          // Zelf invullen: het blad Hoe ging het? over de Briefing; na Opslaan gaat alles dicht.
+          onManual={() => setShowManual(true)}
           onLeave={requestClose}
         />
+      )}
+      {showBriefing && showManual && (
+        <HowDidItGoSheet template={template} plannedSessionId={session.id} scheduledDate={session.scheduledDate} program={program} onClose={() => setShowManual(false)} onSaved={() => { setShowBriefing(false); requestClose(); }} />
       )}
       {showPreview && (
         <ExerciseLogger

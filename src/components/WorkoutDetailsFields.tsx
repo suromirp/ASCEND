@@ -2,6 +2,8 @@ import type { WorkoutDetails } from '../models/training';
 import { detailForm, formatRep, stepRepSeconds } from '../engine/workoutDetails';
 import { NumberField } from './NumberField';
 import { Icon } from './icons';
+import { useContext } from 'react';
+import { SheetMode } from './logForm/formRules';
 
 // The hard part of an interval, hill or tempo session in a few taps
 // (engine/workoutDetails.ts). Starts at what the plan asked for; only
@@ -61,11 +63,13 @@ function Stepper({ label, text, onMinus, onPlus }: { label: string; text: string
 }
 
 function HeartRate({ label, value, onChange }: { label: string; value?: number; onChange: (v: number | undefined) => void }) {
+  // In het blad Hoe ging het? zonder "(optioneel)" en 44 px hoog, zoals de andere velden daar.
+  const sheet = useContext(SheetMode);
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{label} (optioneel)</span>
+      <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{sheet ? label : `${label} (optioneel)`}</span>
       <div className="w-32">
-        <NumberField value={value} onChange={onChange} unit="bpm" compact />
+        <NumberField value={value} onChange={onChange} unit="bpm" compact={!sheet} tall={sheet} />
       </div>
     </div>
   );
