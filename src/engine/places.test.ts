@@ -330,3 +330,26 @@ describe('simplifyTrack en trackFacts', () => {
     expect(trackFacts([{ lat: 50, lon: 5 }, { lat: 50.01, lon: 5 }]).loop).toBe(false);
   });
 });
+
+describe('startChoices met bewaarde plekken (Andere plek)', () => {
+  const home = place(HOME_PLACE_ID, 'Thuis', START, true);
+  const at = (id: string, day: string): Place => ({ ...place(id, `Plek ${id}`, north(5)), createdAt: day });
+  const a = at('a', '2026-11-01');
+  const b = at('b', '2026-11-05');
+  const c = at('c', '2026-11-09');
+  it('hoogstens vier chips: de recentste plekken tussen Thuis en Andere plek', () => {
+    const ch = startChoices('here', [home, a, b, c]);
+    expect(ch.chips.map((x) => x.placeId ?? x.kind)).toEqual(['here', HOME_PLACE_ID, 'c', 'other']);
+    expect(startChoices('here', [a, b, c]).chips.map((x) => x.placeId ?? x.kind)).toEqual(['here', 'c', 'b', 'other']);
+  });
+  it('een getikte oudere plek blijft erbij en staat gekozen', () => {
+    const ch = startChoices('here', [home, a, b, c], undefined, 'a');
+    expect(ch.chips.map((x) => x.placeId ?? x.kind)).toEqual(['here', HOME_PLACE_ID, 'a', 'other']);
+    expect(ch.chosen.placeId).toBe('a');
+  });
+  it('een gezochte plek staat met zijn naam op Andere plek', () => {
+    const ch = startChoices('here', [home], undefined, 'other', 'Heuvelrug');
+    expect(ch.chips.map((x) => x.label)).toEqual(['Waar je nu bent', 'Thuis', 'Heuvelrug']);
+    expect(ch.chosen.kind).toBe('other');
+  });
+});

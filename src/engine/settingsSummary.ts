@@ -948,6 +948,9 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('lichterbenenHoe', resolveLegEaseHow(s)) };
     case 'weekvraag':
       return { checked: o.weeklyQuestion };
+    // De pagina Je plekken leest de opslag zelf; de rij noemt wat je er doet (een bron erbij zou elke opening van Instellingen vertragen).
+    case 'je-plekken':
+      return { value: 'Bekijken' };
     case 'weerplaats':
       if (follows) return { value: 'Volgt je locatie', auto: true };
       return place ? { value: place.name } : { value: 'Niet gekozen', dim: true };

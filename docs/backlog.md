@@ -106,6 +106,10 @@ Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, al
 
 ## Samenhang (Pathfinder)
 
+- Andere plek (Pathfinder, mag): de terugknop van Je plekken gaat naar Vandaag en meldingen, niet terug naar het blad Weer en kleding; het blad weer openen of de rij een gewone ingang maken.
+- Andere plek (Pathfinder, mag): Thuis wissen kan bij Wis startpunt en op Je plekken; later Wis startpunt naar Je plekken laten verwijzen.
+- Andere plek (coördinator, mag): de schuifrij Start bij knipt de laatste chip hard af ("Thu" op 360 px, een randje op 412 px); een zachte rand of een vaste breedte oogt rustiger. Op Je plekken staat bij Thuis twee keer Thuis (naam en soort).
+- Andere plek (Pathfinder, mag): de rij Je plekken zegt alleen Bekijken, niet hoeveel plekken er zijn (afgewezen voor de laadproef van Instellingen; opnieuw bekijken).
 - Briefing 5 en 6 (Pathfinder, mag): de knop op Vandaag staat onder de vouw doordat de ochtendkaart erboven staat; Vandaag zegt de missie niet in twee seconden als de ochtendvraag open is.
 - Briefing 5 en 6 (Pathfinder, mag): na de log staan twee getallen voor één loop op Vandaag (52 min in Zit erop, 50 min in Je dag).
 - Briefing 5 en 6 (Pathfinder, mag): de plekkeuzes heten per training anders (Hardlopen, buiten of Buiten); op 360 px is de tweede keuze afgesneden zonder schuifhint.

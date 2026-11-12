@@ -1,0 +1,114 @@
+// ASCEND: Andere plek, het pure deel (docs/beslissingen/2026-11-12-andere-plek.md; ontwerp Plekken en
+// routes, "Nieuwe plek, ook vooraf"). Wat er bij een zoekwoord gebeurt, welke regel er staat, hoe een
+// treffer heet en wanneer een treffer al een bewaarde plek is. Zonder React, opslag of netwerk; de
+// aanroep zelf staat in integrations/placeSearchSession.ts. Niets hier verandert de planning.
+
+import { metersBetween } from './routeGeometry';
+import { roundExact } from './routeStart';
+import { PLACE_NAME_MAX, type Place } from '../models/place';
+import type { RoutePoint } from '../models/route';
+
+// Zoeken na een korte pauze in het typen, nooit per letter.
+export const PLACE_SEARCH_PAUSE_MS = 400;
+// De grens in tijd van één zoekvraag (ontwerp: 8 seconden).
+export const PLACE_SEARCH_LIMIT_MS = 8000;
+// Hoogstens zoveel treffers als rijen.
+export const PLACE_SEARCH_MAX = 8;
+// Binnen deze afstand is een treffer dezelfde plek als een bewaarde.
+export const SAME_PLACE_M = 100;
+
+// Een treffer van de zoekdienst: naam, plek, en waar hij ligt.
+export interface FoundPlace {
+  name: string;
+  lat: number;
+  lon: number;
+  region?: string;
+  country?: string;
+}
+
+export type PlaceQuery = 'empty' | 'short' | 'ok';
+
+// Leeg of één letter: geen aanroep. De zoekdienst wil minstens twee letters.
+export function placeQuery(raw: string): PlaceQuery {
+  const q = raw.trim();
+  if (q.length === 0) return 'empty';
+  return q.length < 2 ? 'short' : 'ok';
+}
+
+export type PlaceSearchView =
+  | { kind: 'idle' }
+  | { kind: 'short' }
+  | { kind: 'busy'; query: string }
+  | { kind: 'results'; query: string; results: FoundPlace[] }
+  | { kind: 'none'; query: string }
+  | { kind: 'offline' }
+  | { kind: 'timeout' }
+  | { kind: 'error'; message: string };
+
+export const PLACE_SHORT_LINE = 'Typ minstens twee letters van de plaats.';
+export const PLACE_NONE_LINE = 'Geen plaats gevonden met die naam. Probeer een grotere plaats in de buurt.';
+export const PLACE_OFFLINE_LINE = 'Geen verbinding met Open-Meteo. Controleer je internet en probeer het later opnieuw.';
+export const PLACE_TIMEOUT_LINE = 'Zoeken duurde te lang. Probeer het zo nog eens.';
+// De privacyzin, naar de zin bij het weer: alleen een plaatsnaam gaat naar Open-Meteo.
+export const PLACE_PRIVACY_LINE = 'Open-Meteo krijgt alleen de plaatsnaam die je typt.';
+
+// De regel onder het zoekveld; leeg bij niets getypt en bij treffers.
+export function placeSearchLine(view: PlaceSearchView): string {
+  switch (view.kind) {
+    case 'idle':
+    case 'results':
+      return '';
+    case 'short':
+      return PLACE_SHORT_LINE;
+    case 'busy':
+      return `Zoeken naar ${view.query}`;
+    case 'none':
+      return PLACE_NONE_LINE;
+    case 'offline':
+      return PLACE_OFFLINE_LINE;
+    case 'timeout':
+      return PLACE_TIMEOUT_LINE;
+    case 'error':
+      return view.message;
+  }
+}
+
+// De tweede regel van een treffer: regio en land, wat er is.
+export const placeWhere = (p: Pick<FoundPlace, 'region' | 'country'>): string => [p.region, p.country].filter((x): x is string => !!x).join(', ');
+
+const sameName = (a: string, b: string) => a.trim().toLocaleLowerCase('nl') === b.trim().toLocaleLowerCase('nl');
+const clip = (name: string) => name.trim().slice(0, PLACE_NAME_MAX).trim();
+
+// De bewaarde plek op dezelfde plek als een treffer (binnen 100 m), Thuis meegeteld; anders geen.
+export function savedAt(point: RoutePoint, places: readonly Place[]): Place | undefined {
+  let best: { place: Place; d: number } | undefined;
+  for (const p of places) {
+    const d = metersBetween(point, p);
+    if (d <= SAME_PLACE_M && (!best || d < best.d)) best = { place: p, d };
+  }
+  return best?.place;
+}
+
+// De naam van een treffer op een chip en bij bewaren. Heet een andere bewaarde plek al zo, dan komt de
+// regio erbij ("Heuvelrug, Gelderland"), en anders een nummer: twee chips met dezelfde naam zeggen niets.
+export function placeLabel(found: FoundPlace, places: readonly Pick<Place, 'name'>[]): string {
+  const taken = (name: string) => places.some((p) => sameName(p.name, name));
+  const plain = clip(found.name);
+  if (!taken(plain)) return plain;
+  const where = found.region ?? found.country;
+  const withWhere = where ? clip(`${found.name}, ${where}`) : plain;
+  if (!taken(withWhere)) return withWhere;
+  for (let n = 2; ; n++) {
+    const numbered = `${clip(withWhere).slice(0, PLACE_NAME_MAX - String(n).length - 1).trim()} ${n}`;
+    if (!taken(numbered)) return numbered;
+  }
+}
+
+// Wat Bewaar als plek doet met een treffer: ligt er al een plek, dan is dat hem (niets dubbel);
+// anders een nieuwe plek met de naam van de chip. `id` komt van buiten, zodat dit puur blijft.
+export function placeToSave(found: FoundPlace, places: readonly Place[], today: string, id: string): { kind: 'same'; place: Place } | { kind: 'new'; place: Place } {
+  const existing = savedAt(found, places);
+  if (existing) return { kind: 'same', place: existing };
+  const { lat, lon } = roundExact(found);
+  return { kind: 'new', place: { id, name: placeLabel(found, places), lat, lon, source: 'search', createdAt: today } };
+}

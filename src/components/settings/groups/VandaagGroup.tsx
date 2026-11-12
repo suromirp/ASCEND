@@ -1,6 +1,8 @@
 import { resolveShorterToday } from '../../../engine/shorterToday';
 import { resolveJourneyOnToday } from '../../../engine/yourDay';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PLACES_ROUTE } from '../../../pages/settings/placesRoute';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveOverviews, type OverviewSettings } from '../../../engine/overviewSettings';
@@ -37,6 +39,7 @@ import type { GroupProps } from './types';
 // Vandaag en meldingen: wat ASCEND je op Vandaag laat zien en vraagt, het weer, en wat er na een
 // training komt. Alles mag uit (docs/beslissingen/2026-10-22-alles-instelbaar.md).
 export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
+  const navigate = useNavigate();
   const { settings, updateSettings } = useAppData();
   const o = resolveOverviews(settings.overviews);
   // Alleen de gewijzigde sleutel erbij; wat je niet aanraakte blijft ontbreken en betekent dus de standaard.
@@ -181,6 +184,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="route-voorstel" title="Route voorstellen" facts={facts} info="routeVoorstel" onChange={(on) => void updateSettings({ routeProposal: on })} />
           <SummaryRow id="route-soort" title="Welke lus eerst" facts={facts} onClick={() => setInner('route-soort')} />
           <SummaryRow id="route-start" title="Startpunt van je lus" facts={facts} onClick={() => setInner('route-start')} />
+          <SummaryRow id="je-plekken" title="Je plekken" facts={facts} onClick={() => { close(); navigate(PLACES_ROUTE); }} />
           <SummaryRow id="route-zoeken" title="Lus zoeken" facts={facts} info="routeZoeken" onClick={() => setInner('route-zoeken')} />
           <SummaryRow id="route-kaart" title="Ondergrond van de kaart" facts={facts} info="routeKaart" onClick={() => setInner('route-kaart')} />
           <SummaryRow id="maanstand" title="Maanstand bij een avondtocht" facts={facts} onChange={(on) => set({ moonLine: on })} />
