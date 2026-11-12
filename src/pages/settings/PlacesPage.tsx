@@ -89,7 +89,7 @@ export function PlacesPage() {
         </button>
         <h1 className="st-title">Je plekken</h1>
       </SkyBand>
-      <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }}>Waar je lussen beginnen. Een plek bewaar je bij Route voorstellen: kies Andere plek en dan Bewaar als plek. Je plekken staan op dit toestel en gaan mee in je back-up.</p>
+      <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }}>Waar je lussen beginnen. Een plek bewaar je op de kaart van Route voorstellen met Bewaar als plek, na Andere plek of na een tik op de kaart. Je plekken staan op dit toestel en gaan mee in je back-up.</p>
       <p className="st-hint" role="status" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }}>{note}</p>
       <div className="mt-2 flex flex-col gap-3">
         {read.kind === 'loading' && <p className="text-sm" style={dim}>Je plekken worden gelezen.</p>}
