@@ -104,6 +104,13 @@ async function stabiel(page) {
   return vorige;
 }
 
+// De Briefing van een training in Week, met een andere manier gekozen (de chip heet voor een schermlezer de volle naam).
+async function briefingMet(page, training, manier) {
+  await tik(page, `button[data-sheet-from]:has-text("${training}")`);
+  await tik(page, '[role=dialog] button:has-text("Briefing")');
+  if (manier) await tik(page, `[aria-label="Waar train je?"] button[aria-label="${manier}"]`);
+}
+
 async function tik(page, sel) {
   const l = page.locator(sel).first();
   if (!(await l.count())) throw new Error('niet gevonden: ' + sel);
@@ -144,6 +151,12 @@ const SCHERMEN = {
   // De Briefing van de Lange duurloop (morgen) uit het blad in Week: het enige scherm vooraf voor een training te voet
   // (docs/visie/Ontwerp trainingsscherm minimaal.md, sporen 1 tot 4). Zone, praattest, duur en horloge staan er één keer.
   briefing: { titel: 'Briefing van de Lange duurloop (blad in Week)', pad: '#/week', actie: async (p) => { await tik(p, 'button[data-sheet-from]:has-text("Lange duurloop")'); await tik(p, '[role=dialog] button:has-text("Briefing")'); } },
+  // De Briefing per manier (docs/beslissingen/2026-11-12-briefing-per-manier.md): heuvelintervallen op de heuvel, op de
+  // loopband op helling en op de StairMaster (stand heuvel), en de Lange duurloop op de loopband.
+  'briefing-heuvel': { titel: 'Briefing van de Heuvelintervallen, op de heuvel', pad: '#/week', stand: 'heuvel', actie: (p) => briefingMet(p, 'Heuvelintervallen') },
+  'briefing-loopband-helling': { titel: 'Briefing van de Heuvelintervallen, loopband op helling', pad: '#/week', stand: 'heuvel', actie: (p) => briefingMet(p, 'Heuvelintervallen', 'Hardlopen, loopband op helling') },
+  'briefing-stairmaster': { titel: 'Briefing van de Heuvelintervallen, StairMaster', pad: '#/week', stand: 'heuvel', actie: (p) => briefingMet(p, 'Heuvelintervallen', 'Traplopen, StairMaster') },
+  'briefing-loopband': { titel: 'Briefing van de Lange duurloop, op de loopband', pad: '#/week', actie: (p) => briefingMet(p, 'Lange duurloop', 'Hardlopen, loopband') },
   // De opslagrijen komen asynchroon uit de browser (storage.estimate); wacht tot ze er zijn.
   gegevens: { titel: 'Instellingen: Gegevens en back-up', pad: '#/more/gegevens', actie: (p) => p.waitForFunction(() => /die ASCEND mag gebruiken/.test(document.body.innerText) && /Ruimte van reeksen, /.test(document.body.innerText), null, { timeout: 15000 }).catch(() => {}) },
   'datavelden': { titel: 'Datavelden voor je horloge (Zone 2, advies)', pad: '#/horloge/datavelden' },

@@ -16,6 +16,9 @@ Zo 1 november · Basisfase, week 1 van 4 · wennen
 minuten totaal
 ±300 m
 omhoog als het kan
+6:45 tot 7:40
+per km
+Tempo uit je testloop van 10 oktober. Dat is ongeveer 7 km.
 [label: Zone 2]
 Zone 2. Je moet nog hele zinnen kunnen praten.
 [label: Waar train je?]

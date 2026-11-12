@@ -17,8 +17,6 @@ Wennen, rustig tempo
 [knop: Lange duurloop] (aria: Briefing: Lange duurloop)
 50
 minuten
-6:45 tot 7:40 per km
-Tempo uit je testloop van 10 oktober. Dat is ongeveer 7 km.
 [knop: Weeg je even voor je begint]
 [knop: Gedaan]
 [knop: Verplaatsen]

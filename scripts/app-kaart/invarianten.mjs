@@ -243,10 +243,36 @@ export const INVARIANTEN = [
       return uit;
     },
   },
+  {
+    // Besluit 2026-11-12-briefing-per-manier.md: het totaal bovenaan de Briefing is het einde van de tijdlijn eronder
+    // (de eigenaar zag 35 minuten totaal boven een tijdlijn tot 38 min).
+    naam: 'Briefing: het totaal is het einde van de tijdlijn',
+    controleer: (k, schermen) => schermen.filter((s) => s.startsWith('briefing')).flatMap((s) => {
+      const t = k(s);
+      const totaal = t.match(/^(\d+)\nminuten totaal$/m);
+      // De tijdlijn staat in de kaart als één knop: "[knop: Opwarmen5×Uitlopen035 minZ1...]" (de as van 0 tot het eind).
+      const eind = t.match(/^\[knop: [^\]]*?\D0(\d+) min(?:Z\d|\])/m);
+      if (totaal && !eind && /aria: De stappen van deze training/.test(t)) return [`${s}: de tijdlijn is gevonden, maar zijn eind niet`];
+      if (!totaal || !eind) return [];
+      return totaal[1] === eind[1] ? [] : [`${s}: bovenaan ${totaal[1]} minuten totaal, de tijdlijn eindigt op ${eind[1]} min`];
+    }),
+  },
+  {
+    // Besluit 2026-11-12-briefing-per-manier.md: geen zin twee keer in één blok ("Telt als wandelen, niet als
+    // hardlopen." stond twee keer in de regel onder de keuzes). Een blok is een regel tekst; de zinnen worden zonder
+    // "Dit " vergeleken.
+    naam: 'Briefing: geen zin twee keer in één blok',
+    controleer: (k, schermen) => schermen.filter((s) => s.startsWith('briefing')).flatMap((s) => k(s).split('\n').flatMap((regel) => {
+      if (regel.startsWith('[')) return [];
+      const zinnen = regel.split(/(?<=\.)\s+/).map((z) => z.trim().toLowerCase().replace(/^dit /, '')).filter((z) => z.length > 12);
+      const dubbel = zinnen.filter((z, i) => zinnen.indexOf(z) !== i);
+      return dubbel.map((z) => `${s}: "${z}" staat twee keer in één regel`);
+    })),
+  },
 ];
 
 const SCHERMEN = [
-  'vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad', 'briefing',
+  'vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad', 'briefing', 'briefing-heuvel', 'briefing-loopband-helling', 'briefing-stairmaster', 'briefing-loopband',
   'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
   'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek',
   'ascend-algemeen', 'ascend-vaardigheid', 'weekterugblik-voorstel', 'stand-benen', 'stand-belasting', 'stand-ritme', 'stand-lopen', 'stand-invloed',
