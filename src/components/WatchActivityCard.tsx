@@ -49,7 +49,9 @@ function dayLabel(iso: string): string {
 // Waits for the plan to settle at boot before it ticks anything off.
 const AUTO_TICK_DELAY_MS = 1200;
 
-export function WatchActivityCard() {
+// `quiet`: Opslaan omlijnd in plaats van gevuld, op Vandaag naast de hoofdknop van de missie (regel 5: één mint per
+// scherm; besluit 2026-11-12-missiekaart.md).
+export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
   const { plannedSessions, templates, sessionLogs, logSession, undoLog, setLogFeedback, refresh } = useAppData();
   const [state, setState] = useState<WatchActivityState | null>(null);
   // De trainingen uit Health Connect (Android-app, als dat aan staat). intervals.icu gaat voor: wat
@@ -189,6 +191,7 @@ export function WatchActivityCard() {
   return (
     <>
       <ProposalCard
+        quiet={quiet}
         proposal={proposal}
         more={proposals.length - 1}
         saving={saving}
@@ -208,6 +211,7 @@ export function WatchActivityCard() {
 }
 
 function ProposalCard({
+  quiet,
   proposal,
   more,
   saving,
@@ -215,6 +219,7 @@ function ProposalCard({
   onChoose,
   onDismiss,
 }: {
+  quiet?: boolean;
   proposal: ImportProposal;
   more: number;
   saving: boolean;
@@ -252,7 +257,9 @@ function ProposalCard({
           Je legde die dag al een training vast van {similarLog.durationMinutes} min. Sla dit alleen op als het een andere training was.
         </p>
       )}
-      <PrimaryButton onClick={onSave} disabled={saving || !template}>{saving ? 'Opslaan…' : 'Opslaan'}</PrimaryButton>
+      {quiet
+        ? <SecondaryButton onClick={onSave} disabled={saving || !template}>{saving ? 'Opslaan…' : 'Opslaan'}</SecondaryButton>
+        : <PrimaryButton onClick={onSave} disabled={saving || !template}>{saving ? 'Opslaan…' : 'Opslaan'}</PrimaryButton>}
       <div className="flex gap-3">
         <SecondaryButton onClick={onChoose} disabled={saving}>Andere training</SecondaryButton>
         <SecondaryButton onClick={onDismiss} disabled={saving}>Niet opslaan</SecondaryButton>

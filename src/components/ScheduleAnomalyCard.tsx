@@ -12,7 +12,9 @@ import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 // schedule simply stops producing a proposal and the card disappears on
 // its own; dismissing just hides today's instance without pretending
 // ASCEND remembers that choice forever.
-export function ScheduleAnomalyCard() {
+// `quiet`: Akkoord omlijnd in plaats van gevuld, op Vandaag naast de hoofdknop van de missie (regel 5: één mint per
+// scherm; besluit 2026-11-12-missiekaart.md).
+export function ScheduleAnomalyCard({ quiet = false }: { quiet?: boolean }) {
   const { plannedSessions, templateById, sessionLogs, goalEngineConfig, applyScheduleAnomalyFix } = useAppData();
   const [dismissed, setDismissed] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -46,9 +48,15 @@ export function ScheduleAnomalyCard() {
       </div>
       <div className="mt-1 flex gap-3">
         <SecondaryButton onClick={() => setDismissed(true)} disabled={applying}>Liever niet</SecondaryButton>
-        <PrimaryButton onClick={() => void handleApply()} disabled={applying}>
-          {applying ? 'Bezig…' : 'Akkoord'}
-        </PrimaryButton>
+        {quiet ? (
+          <SecondaryButton onClick={() => void handleApply()} disabled={applying}>
+            {applying ? 'Bezig…' : 'Akkoord'}
+          </SecondaryButton>
+        ) : (
+          <PrimaryButton onClick={() => void handleApply()} disabled={applying}>
+            {applying ? 'Bezig…' : 'Akkoord'}
+          </PrimaryButton>
+        )}
       </div>
     </Card>
   );

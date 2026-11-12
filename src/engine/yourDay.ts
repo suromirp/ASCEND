@@ -95,6 +95,12 @@ export function moreRowText(more: YourDayItem[]): { title: string; line: string 
 // De trainingen van vandaag als rij: niet de training die al op de grote kaart staat
 // (`primaryId`, zolang hij niet gedaan of overgeslagen is). Een tweede, een gedane of een
 // overgeslagen training blijft: die rij is de weg naar zijn actieblad.
+// De regel Morgen in Stand en morgen. Alleen naast de kaart van een training: de rustdag, een stille dag en Vandaag
+// zit erop noemen morgen al zelf, of zeggen dat er niets staat (besluit 2026-11-12-missiekaart.md).
+export function standTomorrow<T>(tomorrow: T, trainingMission: boolean): T | undefined {
+  return trainingMission ? tomorrow : undefined;
+}
+
 export function trainingRowsForYourDay<T extends { id: string }>(sessions: T[], primaryId: string | undefined, statusOf: (s: T) => string): T[] {
   return sessions.filter((s) => {
     if (s.id !== primaryId) return true;

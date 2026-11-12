@@ -39,7 +39,7 @@ export function ClothingAdvice({ template, date, minutes, className = '', compac
     return (
       <div className={`flex flex-col text-[13px] leading-snug ${className}`} style={{ color: 'var(--color-ink-dim)' }} aria-label="Kledingadvies">
         <p>{lines[0]}</p>
-        <TextButton onClick={() => setOpen(true)} className="self-start text-left" icon="verder">
+        <TextButton tone="dim" onClick={() => setOpen(true)} className="self-start text-left" icon="verder">
           Meer over je kleding
         </TextButton>
         {open && <ClothingSheet lines={lines} onClose={() => setOpen(false)} />}

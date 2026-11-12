@@ -81,7 +81,7 @@ import { isRowPending, isRowUnknown, type SettingsSource } from './settingsPendi
 import { kindAmountSummary, parseKindAmounts } from './kindAmount';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
-import { resolveAboveMission } from './todayCards';
+import { capAboveMission, resolveAboveMission } from './todayCards';
 import { resolveDropOnTraining } from './dropOnTraining';
 import { resolveWeekAfterChoice } from './weekKept';
 import { calisthenicsTrainings } from './trainingStyle';
@@ -895,7 +895,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.askShortNight !== false };
     // Kaarten boven de missie (engine/todayCards.ts): "Eén".
     case 'boven-missie':
-      return { value: choiceShort('bovenMissie', resolveAboveMission(s.cardsAboveMission)) };
+      return { value: choiceShort('bovenMissie', capAboveMission(resolveAboveMission(s.cardsAboveMission))) };
     case 'ochtend-vanaf':
       return { value: choiceShort('ochtendVanaf', o.morningCardFrom) };
     case 'ochtendmelding': {
