@@ -521,3 +521,18 @@ describe('export en import', () => {
     expect(await loadPlaces()).toEqual([hill]);
   });
 });
+
+describe('Je plekken: Thuis wissen via removePlace', () => {
+  it('wist ook de oude sleutel van Vast punt, zodat het punt niet terugkomt', async () => {
+    const home: Place = { id: HOME_PLACE_ID, name: 'Thuis', lat: 52.1, lon: 5.1, home: true, source: 'map', createdAt: DAY };
+    const { meta, data } = fakeMeta({ [PLACES_KEY]: [home, hill], [OLD_START_POINT_KEY]: OLD_POINT });
+    expect(await removePlace(HOME_PLACE_ID, meta)).toBe(true);
+    expect(data.has(OLD_START_POINT_KEY)).toBe(false);
+    expect((await loadPlaces(meta)).map((p) => p.id)).toEqual(['place_hill']);
+  });
+  it('een gewone plek wissen laat de oude sleutel staan', async () => {
+    const { meta, data } = fakeMeta({ [PLACES_KEY]: [hill], [OLD_START_POINT_KEY]: OLD_POINT });
+    expect(await removePlace('place_hill', meta)).toBe(true);
+    expect(data.has(OLD_START_POINT_KEY)).toBe(true);
+  });
+});

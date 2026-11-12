@@ -67,7 +67,7 @@ function PhotoSwitch({ value, onPick }: { value: MapPhoto; onPick: (v: MapPhoto)
 export const MAKE_HOME_MOVE = 'Thuis verhuist naar dit punt. Je routes bij Thuis blijven.';
 export const MAKE_HOME_NEW = 'Dit punt wordt Thuis. Wissen kan bij Startpunt van je lus.';
 
-export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome }: {
+export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep }: {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
   // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is).
@@ -83,6 +83,9 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   hasHome?: boolean;
   // Maak dit Thuis; zonder deze functie geen Bewaar als plek.
   onMakeHome?: (point: RoutePoint) => Promise<boolean>;
+  // Een gezochte plek (Andere plek) die nog niet bewaard is: Bewaar als plek bewaart hem met zijn naam.
+  keepName?: string;
+  onKeep?: () => Promise<boolean>;
   // De kaart kan niet tekenen of laden: dan staan de lussen alleen als tekst en zeggen de rijen niet hoe ze op de kaart staan.
   onNoMap?: () => void;
   // De lagere stand in de Briefing (engine/routeSheet.ts#BRIEFING_MAP_HEIGHT); anders die van het blad.
@@ -99,7 +102,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   // Naar mijn plek (een tik) mag een grove plek zijn; anders de plek die de zoektocht vond.
   const [asked, setAsked] = useState<RoutePoint | undefined>();
   const me = asked ?? found;
-  const [busy, setBusy] = useState<'me' | 'tap' | 'home' | undefined>();
+  const [busy, setBusy] = useState<'me' | 'tap' | 'home' | 'keep' | undefined>();
   // Bewaar als plek is open: de zin en Maak dit Thuis.
   const [saving, setSaving] = useState(false);
   const [line, setLine] = useState('');
@@ -209,6 +212,24 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
     setLine(ok ? 'Thuis staat nu op dit punt.' : 'Thuis kon niet bewaard worden. Probeer het nog eens.');
   }
 
+  // Bewaar als plek bij een gezochte plek: in één tik, met zijn naam; daarna is hij een chip bij Start bij.
+  const keepFound = !pick && !tapped && keepName !== undefined && onKeep !== undefined;
+  // Een andere gezochte plek: de regel van de vorige bewaring hoort daar niet meer bij.
+  const [keptFor, setKeptFor] = useState(keepName);
+  if (keptFor !== keepName && keepName !== undefined) {
+    setKeptFor(keepName);
+    setLine('');
+  }
+  async function keepPlace() {
+    if (!onKeep || keepName === undefined) return;
+    const name = keepName;
+    setBusy('keep');
+    const ok = await onKeep();
+    if (!alive.current) return;
+    setBusy(undefined);
+    setLine(ok ? `${name} staat nu bij je plekken.` : 'De plek kon niet bewaard worden. Probeer het nog eens.');
+  }
+
   const noMap = state.kind === 'unsupported' || state.kind === 'failed';
   const onNoMapRef = useRef(onNoMap);
   useEffect(() => {
@@ -225,7 +246,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
 
   const photoFailed = state.kind === 'ready' && state.photoFailed === true;
   const online = typeof navigator === 'undefined' || navigator.onLine !== false;
-  const status = busy === 'me' ? 'Je locatie wordt bepaald.' : saving ? (hasHome ? MAKE_HOME_MOVE : MAKE_HOME_NEW) : line || photoFallbackLine(photoFailed, online);
+  const status = busy === 'me' ? 'Je locatie wordt bepaald.' : busy === 'keep' ? 'De plek wordt bewaard.' : saving ? (hasHome ? MAKE_HOME_MOVE : MAKE_HOME_NEW) : line || photoFallbackLine(photoFailed, online);
   // Wat je ziet: viel de luchtfoto weg, dan staat de schakelaar op Kaart; de instelling blijft Luchtfoto,
   // en een tik op Luchtfoto probeert het opnieuw.
   const switchValue: MapPhoto = showPhoto && !photoFailed ? 'photo' : 'map';
@@ -273,6 +294,11 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
         ))}
       </div>
       {/* De uitleg over de ring en Start hier staat achter de i van het blad (MAP_HINT). Je plek als start is de chip Waar je nu bent. */}
+      {keepFound && (
+        <div className="flex flex-wrap gap-x-5">
+          <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void keepPlace()}>Bewaar als plek</TextButton>
+        </div>
+      )}
       {(pick || (keepable && onMakeHome)) && (
         <div className="flex flex-wrap gap-x-5">
           {pick && !saving && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt({ tap: pick })}>Start hier</TextButton>}

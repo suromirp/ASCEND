@@ -114,8 +114,10 @@ export function savePlace(place: Place, meta: PlacesMeta = metaRepo): Promise<bo
 // aantal routes hoort bij het scherm dat dit aanroept.
 export function removePlace(id: string, meta: PlacesMeta = metaRepo): Promise<boolean> {
   return update(meta, ({ places, routes }) => {
-    if (!places.some((p) => p.id === id)) return 'same';
-    return { puts: { [PLACES_KEY]: places.filter((p) => p.id !== id), [SAVED_ROUTES_KEY]: routes.filter((r) => r.placeId !== id) } };
+    const gone = places.find((p) => p.id === id);
+    if (!gone) return 'same';
+    // Thuis wissen wist ook de oude sleutel van Vast punt, anders komt het punt bij de volgende start terug.
+    return { puts: { [PLACES_KEY]: places.filter((p) => p.id !== id), [SAVED_ROUTES_KEY]: routes.filter((r) => r.placeId !== id) }, ...(gone.home ? { deletes: [OLD_START_POINT_KEY] } : {}) };
   });
 }
 
