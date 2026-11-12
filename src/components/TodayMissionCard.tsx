@@ -33,7 +33,7 @@ import { BootReminderLine } from './reis/BootReminderLine';
 import { SweatBeforeRow } from './SweatBeforeRow';
 import { shorterChoices, TEST_NOT_SHORTER } from '../engine/shorterToday';
 import { isTestOrRace } from '../engine/templateRoles';
-import { BRIEFING_TEXT, missionButton } from '../engine/briefing';
+import { BRIEFING_TEXT, briefingEntry, missionButton } from '../engine/briefing';
 import { useWatchLink } from './useWatchLink';
 import { TrainingBriefing } from './TrainingBriefing';
 
@@ -122,6 +122,9 @@ export function TodayMissionCard({
   // in het menu, en de routerij gaat van de kaart: de Briefing is de ingang naar de route.
   const { watchLink, watchSource } = useWatchLink();
   const briefingButton = !quickComplete && missionButton({ template, session, logs: sessionLogs, watchLink, watchSource }) === 'briefing';
+  // De Briefing is voor elke training te voet bereikbaar, ook zonder koppeling: een tik op de naam en
+  // een rij in Meer keuzes (besluit 2026-11-12-trainingsscherm-sporen-1-4.md). De knop blijft dan Gedaan.
+  const briefingReach = !quickComplete && briefingEntry(template);
   const [showBriefing, setShowBriefing] = useState(false);
   const garmin = buildWorkoutPlan(template, todayISO(), program)?.garmin;
   const watchView = useWatchSheet({ template, garmin, session, hasZonesNote: !!guide?.garminNote });
@@ -136,7 +139,7 @@ export function TodayMissionCard({
   const testDay = isTestOrRace(template);
   const shorterTimes = shorterChoices(fullDuration);
   const showShorterRow = !!onShorter && (testDay || shorterTimes.length > 0);
-  const hasMenu = !!guide || watchView.hasWatchSheet || showShort || showPlan || showShorterRow || briefingButton;
+  const hasMenu = !!guide || watchView.hasWatchSheet || showShort || showPlan || showShorterRow || briefingButton || briefingReach;
 
   // De minuten staan groot; wat de duurchip méér zegt dan alleen de minuten ("4 × 4 min") blijft als tekst.
   const plainMinutes = new RegExp(`^${fullDuration} min$`);
@@ -174,7 +177,13 @@ export function TodayMissionCard({
       </div>
 
       <div>
-        <h2 className="font-display text-[28px] leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h2>
+        {briefingReach ? (
+          <button type="button" onClick={() => setShowBriefing(true)} aria-label={`${BRIEFING_TEXT.title}: ${template.name}`} className="-my-1 block min-h-[44px] w-full py-1 text-left">
+            <h2 className="font-display text-[28px] leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h2>
+          </button>
+        ) : (
+          <h2 className="font-display text-[28px] leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h2>
+        )}
 
         <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3" aria-label="Kerngetallen">
           <div className="flex flex-col gap-1">
@@ -302,6 +311,12 @@ export function TodayMissionCard({
                 {watchView.hasWatchSheet && (
                   <button type="button" className={row} style={{ borderColor: 'var(--color-card-border)' }} onClick={pick(() => setShowWatch(true))}>
                     <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>{WATCH_SHEET_TEXT.row}</span>
+                    <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
+                  </button>
+                )}
+                {briefingReach && !briefingButton && (
+                  <button type="button" className={row} style={{ borderColor: 'var(--color-card-border)' }} onClick={pick(() => setShowBriefing(true))}>
+                    <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>{BRIEFING_TEXT.title}</span>
                     <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
                   </button>
                 )}

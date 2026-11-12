@@ -23,7 +23,7 @@ import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { ExerciseLogger } from './ExerciseLogger';
 import { TrainingBriefing } from './TrainingBriefing';
-import { briefingEntry, briefingRowLine, entryAction, missionButton } from '../engine/briefing';
+import { briefingEntry, briefingRowLine, doTodayOpens, entryAction, missionButton } from '../engine/briefing';
 import { useBriefingView } from './useBriefingView';
 import { useWatchLink } from './useWatchLink';
 import { useTrainingPlaces } from './useTrainingPlaces';
@@ -348,9 +348,8 @@ export function SessionActionSheet({
       case 'backOnPlan': return onBackOnPlan?.();
       case 'doToday':
         if (kind === 'quick') { setDoneToday(true); setStep('done'); }
-        // Een training te voet: meteen het invullen, zoals Gedaan, niet het oude scherm met de uitleg
-        // bovenaan (spoor 1; de uitleg vooraf staat in de Briefing).
-        else if (briefingEntry(template)) (onLog ?? onStart)('full');
+        // Een training te voet: meteen het invullen (engine/briefing.ts#doTodayOpens), niet het oude scherm.
+        else if (doTodayOpens(template) === 'log') (onLog ?? onStart)('full');
         else onStart('full');
         return;
       case 'saveWorkout':

@@ -58,9 +58,10 @@ export function sessionSheetActions({ date, today, skipped, canComeBack, kind, w
   workoutWaiting?: boolean;
   // Week has another training of this week to trade days with: "Ruilen" right after moving.
   canSwap?: boolean;
-  // Een training buiten te voet (engine/briefing.ts#briefingEntry): de rij heet Briefing en vervangt
-  // "Hoe je het doet", op de dag zelf en vooraf. Al het andere houdt het oude scherm, ook een training
-  // op een dag die voorbij is (er valt niets meer voor te bereiden).
+  // Een training te voet (engine/briefing.ts#briefingEntry): de rij heet Briefing en vervangt
+  // "Hoe je het doet", op de dag zelf en vooraf. Op een dag die voorbij is laat deze functie de keuzes
+  // zoals ze zijn; het blad haalt ze daarna door engine/briefing.ts#entryAction, zodat Hoe je het doet
+  // ook dan de Briefing opent. Kracht, rust en fietsen houden hun eigen scherm.
   briefing?: boolean;
   // Je horloge vinkt deze training af (engine/briefing.ts#missionButton): dan is Briefing op de dag
   // zelf de hoofdknop, zoals op Vandaag, en Gedaan wordt een rij (Zelf invullen).

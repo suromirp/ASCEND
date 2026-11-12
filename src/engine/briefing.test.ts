@@ -7,7 +7,7 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { makeForecast } from './fixtures/weatherFixture';
 import { resolveWatchModel } from './watchFields';
-import { BRIEFING_TEXT, ZONE_FACT, briefing, briefingEntry, briefingRowLine, entryAction, footerNow, hasBriefing, missionButton, placeTransition, resolveRouteSearch, type BriefingInput } from './briefing';
+import { BRIEFING_TEXT, ZONE_FACT, briefing, briefingEntry, briefingRowLine, doTodayOpens, entryAction, footerNow, kmText, hasBriefing, missionButton, placeTransition, resolveRouteSearch, type BriefingInput } from './briefing';
 import { drinkLine } from './eveningBefore';
 import { fuelForTraining, fuelShortText } from './fuelOnTheGo';
 import { routeTarget, targetText } from './routeTarget';
@@ -69,7 +69,9 @@ describe('een loop met gekoppeld horloge', () => {
   it('Buiten is gekozen en op de plek van de kaart staat de route, die vandaag bij het openen zoekt', () => {
     expect(view?.place).toBe('run_outdoor');
     const target = routeTarget({ template: EASY, date: TODAY });
-    expect(view?.map).toEqual({ kind: 'route', target, line: targetText(target), search: 'open' });
+    // Alleen de kilometers: de hoogtemeters staan in de hartkaart.
+    expect(view?.map).toEqual({ kind: 'route', target, line: kmText(target), search: 'open' });
+    expect(targetText(target).startsWith(kmText(target))).toBe(true);
   });
   it('één lijst: horloge, weer en voor en na, behalve eten bij een korte loop, elk met één korte regel', () => {
     expect(view?.rows.map((t) => t.id)).toEqual(['watch', 'weather', 'stretch']);
@@ -289,9 +291,12 @@ describe('de ingang en de knop op Vandaag (spoor 6)', () => {
     expect(missionButton({ template: TEST, session: plan('tpl_test_run'), logs: [], watchLink: linked })).toBe('done');
     expect(missionButton({ template: RACE, session: plan(RACE.id), logs: [], watchLink: linked })).toBe('done');
   });
-  it('kracht en wandelen: Gedaan', () => {
+  // Besluit 2026-11-12-trainingsscherm-sporen-1-4.md: een wandeling volgt nu dezelfde regel als een loop.
+  it('kracht: Gedaan; een wandeling met een horloge dat afvinkt: Briefing, zonder koppeling Gedaan', () => {
     expect(missionButton({ template: byId('tpl_upper_a'), session: plan('tpl_upper_a'), logs: [], watchLink: linked })).toBe('done');
-    expect(missionButton({ template: RUCK, session: plan('tpl_ruck_walk'), logs: [], watchLink: linked })).toBe('done');
+    expect(missionButton({ template: RUCK, session: plan('tpl_ruck_walk'), logs: [], watchLink: linked })).toBe('briefing');
+    expect(missionButton({ template: RUCK, session: plan('tpl_ruck_walk'), logs: [], watchLink: { ...linked, linked: false } })).toBe('done');
+    expect(missionButton({ template: RUCK, session: plan('tpl_ruck_walk'), logs: [] })).toBe('done');
   });
 });
 
@@ -313,6 +318,10 @@ describe('het vak weer en kleding is kort', () => {
 });
 
 describe('de regel onder de rij Briefing in Week', () => {
+  it('zonder route, horloge, weer en eten: Wat je loopt', () => {
+    const bare = briefing(input({ routeOn: false, weatherOn: false, clothingOn: false, watch: { ...input().watch, showStatus: false, fieldsShown: false }, watchLink: { linked: false, autoTick: false, activities: false } }))!;
+    expect(briefingRowLine({ ...bare, rows: bare.rows.filter((r) => r.id === 'stretch') })).toBe(BRIEFING_TEXT.run);
+  });
   it('wat er echt in staat: geen eten bij een korte loop', () => {
     expect(briefingRowLine(briefing(input())!)).toBe('Route, horloge en weer');
   });
@@ -346,10 +355,26 @@ describe('spoor 1: de ingang', () => {
     expect(entryAction('preview', byId('tpl_bike'))).toBe('preview');
     expect(entryAction('start', byId('tpl_herstel'))).toBe('start');
   });
-  it('de knop op Vandaag beweegt niet: een wandeling met een horloge dat afvinkt blijft Gedaan', () => {
+  it('de knop op Vandaag volgt de stand voor elke training te voet, ook een wandeling en een training op de loopband', () => {
     const linked = { linked: true, autoTick: true, activities: true };
-    expect(missionButton({ template: RUCK, session: plan('tpl_ruck_walk'), logs: [], watchLink: linked })).toBe('done');
-    expect(missionButton({ template: LONG, session: plan('tpl_long_run'), logs: [], watchLink: linked })).toBe('briefing');
+    for (const t of templates.filter((x) => hasBriefing(x))) {
+      const want = briefing(input({ template: t, session: plan(t.id) }))!.stand.kind === 'watch' ? 'briefing' : 'done';
+      expect(missionButton({ template: t, session: plan(t.id), logs: [], watchLink: linked })).toBe(want);
+    }
+    expect(missionButton({ template: byId('tpl_bergconditie'), session: plan('tpl_bergconditie'), logs: [], watchLink: linked })).toBe('briefing');
+  });
+  it('testloop en wedstrijd: altijd zelf invullen, ook via Vandaag al doen', () => {
+    const linked = { linked: true, autoTick: true, activities: true };
+    for (const t of [TEST, RACE]) {
+      expect(missionButton({ template: t, session: plan(t.id), logs: [], watchLink: linked })).toBe('done');
+      expect(doTodayOpens(t)).toBe('log');
+    }
+  });
+  it('Vandaag al doen: te voet het invullen, kracht zijn eigen scherm', () => {
+    expect(doTodayOpens(LONG)).toBe('log');
+    expect(doTodayOpens(RUCK)).toBe('log');
+    expect(doTodayOpens(byId('tpl_upper_a'))).toBe('start');
+    expect(doTodayOpens(byId('tpl_bike'))).toBe('start');
   });
 });
 
@@ -412,6 +437,10 @@ describe('spoor 3: één lijst, het horloge één keer, één knop', () => {
   it('verstuurd op een andere dag: sinds die dag', () => {
     const v = views({ watchStatus: { kind: 'sent', sentAt: new Date(2026, 10, 9, 20, 0).toISOString() } });
     expect(tile(v, 'watch')?.line).toBe('Staat erop sinds 9 november. Vinkt zelf af.');
+  });
+  it('de regel Je training noemt alleen de kilometers, ook met hoogtemeters', () => {
+    const v = views({ template: LONG, session: plan('tpl_long_run') });
+    expect(v.map.kind === 'route' && v.map.line).toMatch(/^[\d,]+ km$/);
   });
   it('opwarmen en rekken in één rij, die het blad opent', () => {
     expect(tile(views({ template: LONG, session: plan('tpl_long_run') }), 'stretch')).toMatchObject({ label: 'Voor en na', opens: true });

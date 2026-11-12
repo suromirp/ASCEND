@@ -29,8 +29,8 @@ import { formatClockTime } from './watchStatus';
 import { watchSheet, type WatchSheetInput } from './watchSheet';
 import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
-import { routeTarget, targetText } from './routeTarget';
-import { placeChoices, placeHasRoute, resolvePlace, routeShownFor, type PlaceChoice } from './trainingPlace';
+import { routeTarget } from './routeTarget';
+import { placeChoices, placeHasRoute, resolvePlace, type PlaceChoice } from './trainingPlace';
 import { weatherForTraining } from './weather';
 import { clothingForTraining } from './clothing';
 import { drinkAmount } from './eveningBefore';
@@ -49,6 +49,9 @@ import { addDays, formatDateNL, toISODate, weekdayShortNL } from '../utils/dates
 
 export const BRIEFING_TEXT = {
   title: 'Briefing',
+  // Wat je loopt: de regel onder de rij Briefing in Week als er verder niets in staat, en de naam van de
+  // hartkaart voor een schermlezer.
+  run: 'Wat je loopt',
   // De vaste woorden van de lijst (spoor 3 van docs/visie/Ontwerp trainingsscherm minimaal.md).
   watch: 'Horloge',
   weather: 'Weer',
@@ -57,8 +60,8 @@ export const BRIEFING_TEXT = {
   // Het blad achter de rij Mee.
   fuelSheet: 'Eten en drinken',
   // Het blad achter de rij Voor en na.
-  warmup: 'Eerst opwarmen',
-  cooldown: 'Daarna rekken',
+  warmup: 'Opwarmen',
+  cooldown: 'Rekken',
   // De horlogestand, kort.
   watchSent: 'Staat erop',
   watchStale: 'Wijziging nog niet erop',
@@ -230,17 +233,22 @@ export function entryAction<A extends string>(action: A, template: SessionTempla
   return briefingEntry(template) && (action === 'start' || action === 'preview') ? 'briefing' : action;
 }
 
+// Vandaag al doen (niet kracht in MacroFactor, die heeft een eigen korte stap): een training te voet
+// gaat meteen naar het invullen, zoals Gedaan, want de uitleg vooraf staat in de Briefing; al het andere
+// opent zijn eigen scherm (kracht: Forge). Ook een testloop of wedstrijd: altijd zelf invullen.
+export function doTodayOpens(template: SessionTemplate | undefined): 'log' | 'start' {
+  return briefingEntry(template) ? 'log' : 'start';
+}
+
 export type MissionButton = 'briefing' | 'done';
 
 // De mint knop op Vandaag (spoor 6): Briefing als je horloge deze training afvinkt, anders Gedaan.
 // Eén regel met de stand van de Briefing; zolang de koppeling gelezen wordt (geen `watchLink`) of bij
 // twijfel: Gedaan, de veilige kant. Een training die al gedaan is: ook Gedaan (de kaart is dan weg).
-//
-// Deze regel beweegt niet mee met de ingang van spoor 1 (die nu ook wandelen opent): de knop op Vandaag
-// blijft Briefing alleen voor een training met een route op zijn standaardplek, zoals voorheen. Een
-// wandeling houdt op Vandaag dus Gedaan; de Briefing opent daar via Week.
+// Dit geldt voor elke training te voet, met of zonder route, ook een wandeling (besluit
+// 2026-11-12-trainingsscherm-sporen-1-4.md). Een testloop of wedstrijd vul je altijd zelf in: Gedaan.
 export function missionButton(input: Pick<BriefingInput, 'template' | 'session' | 'logs' | 'watchLink' | 'watchSource'>): MissionButton {
-  if (!briefingEntry(input.template) || !routeShownFor(input.template, undefined)) return 'done';
+  if (!briefingEntry(input.template)) return 'done';
   if (input.session && deriveSessionStatus(input.session, input.logs).status === 'completed') return 'done';
   return standOf(input).kind === 'watch' ? 'briefing' : 'done';
 }
@@ -335,7 +343,7 @@ export function briefingRowLine(view: BriefingView): string {
   if (view.map.kind === 'place') parts.push('loopband');
   const word: Partial<Record<BriefingRowId, string>> = { watch: 'horloge', weather: 'weer', fuel: 'eten' };
   for (const r of view.rows) if (word[r.id]) parts.push(word[r.id]!);
-  if (parts.length === 0) return 'Wat je loopt';
+  if (parts.length === 0) return BRIEFING_TEXT.run;
   const text = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} en ${parts[parts.length - 1]}`;
   return upperFirst(text);
 }
@@ -373,7 +381,8 @@ function mapOf(
     const target = routeTarget({ template: input.template, date: input.date, program: input.program, logs: input.logs, testPace: input.easyPace });
     const soon = input.date === today || input.date === addDays(today, 1);
     const onOpen = soon && resolveRouteSearch(input.routeSearch) === 'open';
-    return { kind: 'route', target, line: targetText(target), search: onOpen ? 'open' : 'tap' };
+    // Alleen de kilometers: de hoogtemeters staan al in de hartkaart.
+    return { kind: 'route', target, line: kmText(target), search: onOpen ? 'open' : 'tap' };
   }
   // Wandelen of rugzak buiten: nog geen lus van de planner, wel plekken in de buurt. Fietsen: niets.
   const sport = (place ? modalitySport(place) : undefined) ?? templateSport(input.template);
@@ -458,6 +467,11 @@ function stretchRow(template: SessionTemplate): BriefingRow | undefined {
   const count = (n: number) => `${n} ${n === 1 ? 'oefening' : 'oefeningen'}`;
   const line = warm > 0 && cool > 0 ? `${warm} opwarmen, ${cool} rekken` : warm > 0 ? `${count(warm)} opwarmen` : `${count(cool)} rekken`;
   return { id: 'stretch', label: BRIEFING_TEXT.stretch, line, opens: true };
+}
+
+// "12 km": de afstand van de lus die je zoekt, zoals engine/routeTarget.ts#targetText, zonder hoogtemeters.
+export function kmText(target: RouteTarget): string {
+  return `${String(target.distanceKm).replace('.', ',')} km`;
 }
 
 // Eén zin, met de punt: de kop heeft geen Meer erachter (spoor 2).

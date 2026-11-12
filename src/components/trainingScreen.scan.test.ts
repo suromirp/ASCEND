@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import briefingScreen from './TrainingBriefing.tsx?raw';
 import actionSheet from './SessionActionSheet.tsx?raw';
+import missionCard from './TodayMissionCard.tsx?raw';
 
 // Sporen 1 tot 4 van docs/visie/Ontwerp trainingsscherm minimaal.md: wat de engine niet kan toetsen omdat het in
 // het scherm zit. Wat erop staat zegt engine/briefing.ts (briefing.test.ts).
@@ -8,7 +9,13 @@ describe('het ene scherm vooraf', () => {
   it('spoor 1: het blad in Week opent de Briefing in plaats van Hoe je het doet, ook op een dag die voorbij is', () => {
     expect(actionSheet).toContain('main: entryAction(planned.main, template), rows: planned.rows.map((a) => entryAction(a, template))');
     // Vandaag al doen voor een training te voet gaat meteen naar het invullen, niet naar het oude scherm met uitleg.
-    expect(actionSheet).toContain("else if (briefingEntry(template)) (onLog ?? onStart)('full');");
+    expect(actionSheet).toContain("else if (doTodayOpens(template) === 'log') (onLog ?? onStart)('full');");
+  });
+  it('Vandaag: de Briefing is voor elke training te voet bereikbaar, ook zonder koppeling (de naam en Meer keuzes)', () => {
+    expect(missionCard).toContain('const briefingReach = !quickComplete && briefingEntry(template);');
+    expect(missionCard).toContain('{briefingReach ? (');
+    expect(missionCard).toMatch(/briefingReach && !briefingButton && \([\s\S]*?pick\(\(\) => setShowBriefing\(true\)\)[\s\S]*?BRIEFING_TEXT\.title/);
+    expect(missionCard).toContain('|| briefingButton || briefingReach;');
   });
   it('spoor 2: de hartkaart met de kerngetallen en de zonebalk of het profiel; geen vak Wat je loopt', () => {
     expect(briefingScreen).toContain('<KeyNumbers facts={heart.facts} />');

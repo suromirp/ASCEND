@@ -180,7 +180,7 @@ export function TrainingBriefing({
 
           <div className="flex flex-col gap-3">
             {/* De hartkaart: de kerngetallen en de zonebalk of het profiel. Zone en praattest staan alleen hier. */}
-            <Card className="mt-1 flex flex-col gap-5">
+            <Card className="mt-1 flex flex-col gap-5" role="group" aria-label={BRIEFING_TEXT.run}>
               <KeyNumbers facts={heart.facts} />
               {heart.steps && plan ? (
                 <button type="button" data-sheet-from="" onClick={() => setSheet('steps')} aria-label="De stappen van deze training" className="-m-2 rounded-xl p-2 text-left">
@@ -199,13 +199,13 @@ export function TrainingBriefing({
 
             {places.length > 1 && (
               // Eén rij keuzes met korte namen; past hij niet, dan schuift hij zijwaarts met een zachte
-              // vervaging aan de rand. Nooit twee regels hoog. De gekozen chip houdt (nog) de mint, zoals
-              // besloten bij Start bij (src/components/routeStart.scan.test.ts); de stille chip is een later spoor.
+              // vervaging aan de rand. Nooit twee regels hoog. De gekozen chip is stil, zoals Start bij: de knop
+              // onderaan is het enige mint.
               <div className="flex flex-col gap-2">
                 <PlaceRow count={places.length}>
                   {places.map((p, i) => (
                     <span key={p.key} className="shrink-0 whitespace-nowrap">
-                      <Chip selected={p.key === view.place} label={p.label} onClick={() => choosePlace(p.key)}>{shortLabels[i]}</Chip>
+                      <Chip tone="quiet" selected={p.key === view.place} label={p.label} onClick={() => choosePlace(p.key)}>{shortLabels[i]}</Chip>
                     </span>
                   ))}
                 </PlaceRow>
@@ -268,7 +268,7 @@ export function TrainingBriefing({
         </TodaySheet>
       )}
       {sheet === 'stretch' && (
-        <TodaySheet eyebrow={BRIEFING_TEXT.stretch} title={template.name} onClose={() => setSheet(undefined)}>
+        <TodaySheet eyebrow={template.name} title={BRIEFING_TEXT.stretch} onClose={() => setSheet(undefined)}>
           <StretchDetail template={template} />
         </TodaySheet>
       )}

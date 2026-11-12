@@ -1,7 +1,9 @@
 # Trainingsscherm minimaal, sporen 1 tot 4: eigen keuzes van de bouwer
 
 Datum: 2026-11-12
-Status: voorgesteld
+Status: aangenomen
+
+Keuzes van de coördinator (12 november, de eigenaar liet de UI-keuzes aan hem): punt 2 en 3 hieronder zijn vervangen. Vandaag en Week volgen voor elke training te voet de stand (`missionButton` zonder de eis van een route, ook een wandeling); de Briefing is vanaf Vandaag altijd bereikbaar via de naam op de missiekaart en een rij in Meer keuzes; testloop en wedstrijd blijven Gedaan. De chip Waar train je? is stil, zodat er één mint per scherm is. Tests die daarvoor bewust meebewegen: `src/engine/briefing.test.ts` en `src/components/routeStart.scan.test.ts`.
 
 ## Besluit
 
