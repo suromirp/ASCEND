@@ -244,7 +244,9 @@ export function cutAt(points: RoutePoint[], meters: number): RoutePoint[] {
 }
 
 function proposal(style: RouteProposal['style'], line: RoutedLine, points: RoutePoint[], extra: Partial<RouteProposal> = {}): RouteProposal {
-  return { style, source: line.source, points, distanceM: lineLength(points), ascentM: ascentOf(points), repeatedShare: repeatedShare(points), ...extra };
+  // Eén drempel per lijn van de routeplanner, ook als de lus er een stuk van is.
+  const ascentM = ascentOf(points, modelThresholdM(line.points.map((p) => p.ele)));
+  return { style, source: line.source, points, distanceM: lineLength(points), ascentM, repeatedShare: repeatedShare(points), ...extra };
 }
 
 // Van een lijn naar een heuvel een lus met herhalingen: heen naar de voet, zo vaak op en af als de

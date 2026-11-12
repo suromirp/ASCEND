@@ -3,11 +3,17 @@ import {
   ELEVATION_THRESHOLD_M, NEARLY_FLAT_M, climbAndDescent, hysteresisLine, isNearlyFlat, modelThresholdM, smoothOverTime, watchLine,
 } from './elevation';
 import { ascentOf } from './routeGeometry';
-import { proposalFacts, proposeRoutes } from './routePlanner';
+import { composeSimple, proposalFacts, proposeRoutes } from './routePlanner';
+import { similarRuns } from './runComparison';
+import { buildRunDetail } from './runDetail';
+import { context, runLog } from './fixtures/runLogs';
+import { segmentRun } from './fixtures/testRun';
 import { buildActivityDetail, deadBand } from './activityDetail';
 import { SIX_RUNS, makeAltitude } from './fixtures/elevationSeries';
 import { makeStreams } from './fixtures/runStreams';
 import type { RouteFn, RoutePoint, RouteProposal } from '../models/route';
+import type { RunDetail } from '../models/runDetail';
+import type { SessionLog } from '../models/training';
 
 // Alleen nagemaakte reeksen (src/engine/fixtures/elevationSeries.ts en runStreams.ts).
 
@@ -126,6 +132,12 @@ describe('gladmaken van een horlogereeks', () => {
     expect(out[2]).toBeNull();
     expect(out[4]).toBe(10);
     expect(out[5]).toBe(50);
+  });
+
+  it('maakt niet glad als een tijdstip geen getal is: de reeks gaat ongewijzigd door', () => {
+    expect(smoothOverTime([10, null, 30], [0, Number.NaN, 2], 15)).toEqual([10, null, 30]);
+    expect(smoothOverTime([10, 20, 30], [0, 1], 15)).toEqual([10, 20, 30]);
+    expect(smoothOverTime([10, 20, 30], [0, 1, 2], 0)).toEqual([10, 20, 30]);
   });
 
   it('maakt van sprongen van een seconde geen hoogtemeters', () => {
@@ -296,5 +308,66 @@ describe('meting: de eigen stijging per kilometer tegen de grenzen van andere re
       ['vlak 5', [9, 0, 0], [9, 4, 0]],
       ['heuvellus', [8, 8, 4], [8, 8, 6]],
     ]);
+  });
+});
+
+describe('een helling met herhalingen in de bergen: de som van de delen is het geheel', () => {
+  // Een lijn naar het noorden, een punt per 50 m: 1 km vlak op 800 m, dan 2 km omhoog naar 1150 m,
+  // met op de helling om het andere punt een terugval van ruim 6 m (ruis van het model).
+  const points: RoutePoint[] = [];
+  for (let i = 0; i <= 60; i++) {
+    const climb = i <= 20 ? 0 : ((i - 20) / 40) * 350;
+    const dip = i > 22 && i < 60 && i % 2 === 1 ? -15 : 0;
+    points.push({ lat: 46 + (i * 50) / 111_195, lon: 7, ele: 800 + climb + dip });
+  }
+  const p = composeSimple({ source: 'brouter', points }, { distanceKm: 14, ascentM: 700 })!;
+
+  it('telt de stukken met de drempel van de hele lijn', () => {
+    expect(modelThresholdM(points.map((q) => q.ele))).toBe(10);
+    expect(p.repeats).toBe(2);
+    // Met 10 m telt de terugval van ruim 6 m niet: twee keer 350 m. Met 5 m per stuk zou het meer zijn.
+    expect(p.ascentM).toBe(700);
+    expect(p.ascentM).toBe(ascentOf(p.points, 10));
+    expect(p.ascentM).toBe(ascentOf(p.points));
+    expect(ascentOf(p.points, 5)).toBeGreaterThan(p.ascentM);
+  });
+});
+
+describe('vergelijkbare lopen: een oud en een nieuw log van dezelfde route', () => {
+  const date = (d: number) => `2026-10-${String(d).padStart(2, '0')}`;
+  const spec = { minutes: 40, pace: 330, hr: 145, seed: 1 } as unknown as Parameters<typeof runLog>[0]['spec'];
+  const base = buildRunDetail(segmentRun(Array.from({ length: 6 }, () => ({ m: 1000, pace: 330, hr: 150 }))), { logKm: 6, logMinutes: 33, builtAt: '2026-10-27T10:00:00.000Z' }) as RunDetail;
+  // Dezelfde kilometers, met de eigen stijging per km erbij: 1 m (de oude teller) of 8 m (de nieuwe).
+  const counted = (gainM: number): RunDetail => ({ ...base, kms: base.kms.map((k) => ({ ...k, gainM, lossM: gainM })) });
+  const mk = (id: string, d: number, ownGainPerKm: number, watchGainM?: number): SessionLog => {
+    const log = runLog({ id, date: date(d), spec, strap: true });
+    return {
+      ...log,
+      templateId: 'tpl_easy_run',
+      runDetail: counted(ownGainPerKm),
+      cardioData: log.cardioData ? { ...log.cardioData, ...(watchGainM !== undefined ? { elevationGainM: watchGainM } : {}) } : log.cardioData,
+    };
+  };
+
+  it('houdt de oude logs erbij als het horloge op beide hetzelfde meldt', () => {
+    const subject = mk('s', 18, 8, 50);
+    const history = [mk('a', 15, 1, 50), mk('b', 12, 1, 48), mk('c', 9, 1, 52)];
+    const c = similarRuns(subject, context([...history, subject]));
+    expect(c.logs.map((l) => l.id)).toEqual(['a', 'b', 'c']);
+    expect(c.enough).toBe(true);
+  });
+
+  it('laat een route met echt andere stijging volgens het horloge weg', () => {
+    const subject = mk('s', 18, 8, 50);
+    const history = [mk('a', 15, 8, 50), mk('b', 12, 8, 50), mk('c', 9, 8, 50), mk('hill', 6, 8, 200)];
+    const c = similarRuns(subject, context([...history, subject]));
+    expect(c.logs.map((l) => l.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('valt zonder getal van het horloge terug op de eigen telling van beide', () => {
+    const subject = mk('s', 18, 8);
+    const history = [mk('a', 15, 8), mk('b', 12, 7), mk('c', 9, 9), mk('old', 6, 1)];
+    const c = similarRuns(subject, context([...history, subject]));
+    expect(c.logs.map((l) => l.id)).toEqual(['a', 'b', 'c']);
   });
 });

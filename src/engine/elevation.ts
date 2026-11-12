@@ -140,10 +140,12 @@ export const WATCH_SMOOTH_SEC = 15;
 
 // Lopend gemiddelde over een venster in de tijd, gecentreerd. Een gat blijft een gat en telt niet
 // mee in het gemiddelde van zijn buren; metingen aan de andere kant van een pauze vallen buiten
-// het venster.
+// het venster. De tijden lopen op en zijn getallen (de aanroepers bewaken dat); is er toch één geen
+// getal, dan wordt er niet gladgemaakt en gaat de reeks ongewijzigd door, met een gat waar geen meting is.
 export function smoothOverTime(values: readonly Reading[], timesSec: readonly number[], windowSec: number): (number | null)[] {
   const n = values.length;
   const out: (number | null)[] = new Array(n).fill(null);
+  if (timesSec.length < n || !timesSec.every(isNum) || !(windowSec > 0)) return values.map((v) => (isNum(v) ? v : null));
   const half = windowSec / 2;
   let lo = 0;
   let hi = 0;

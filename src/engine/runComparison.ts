@@ -346,12 +346,30 @@ export function comparableLogs(subject: SessionLog, topic: InsightTopic, ctx: Co
 const SIMILAR_DISTANCE_PCT = 15;
 const SIMILAR_CLIMB_M_PER_KM = 5;
 
-const climbPerKm = (log: SessionLog) => {
+// Stijging per km van een log, op twee manieren. `watch` is het getal van het horloge op het log:
+// dat verandert niet met de teller. `own` is de eigen optelling van de bewaarde kilometers; die is
+// bij logs van voor 12 november 2026 lager dan bij latere (besluit 2026-11-12-hoogtemeters-stap-1.md).
+const climbPerKm = (log: SessionLog): { watch?: number; own?: number } => {
   const rd = log.runDetail;
-  if (!rd || rd.totalM <= 0) return undefined;
-  if (!rd.kms.some((k) => k.gainM !== undefined)) return undefined;
-  return rd.kms.reduce((n, k) => n + (k.gainM ?? 0), 0) / (rd.totalM / 1000);
+  if (!rd || rd.totalM <= 0) return {};
+  const km = rd.totalM / 1000;
+  const reported = (log.cardioData ?? log.outdoorData)?.elevationGainM;
+  return {
+    ...(reported !== undefined && Number.isFinite(reported) ? { watch: reported / km } : {}),
+    ...(rd.kms.some((k) => k.gainM !== undefined) ? { own: rd.kms.reduce((n, k) => n + (k.gainM ?? 0), 0) / km } : {}),
+  };
 };
+
+// Het verschil in stijging per km tussen twee logs. Op het getal van het horloge als beide het
+// hebben, zodat een oud en een nieuw log van dezelfde route gelijk tellen; anders op de eigen
+// optelling van beide; anders valt er niets te vergelijken.
+function climbDifference(a: SessionLog, b: SessionLog): number | undefined {
+  const x = climbPerKm(a);
+  const y = climbPerKm(b);
+  if (x.watch !== undefined && y.watch !== undefined) return Math.abs(x.watch - y.watch);
+  if (x.own !== undefined && y.own !== undefined) return Math.abs(x.own - y.own);
+  return undefined;
+}
 
 // The earlier runs "Run in detail" compares with: the same template (so a test with tests,
 // a long run with long runs), not the leg or heart rate gate of an easy run, but the same
@@ -371,7 +389,6 @@ export function similarRuns(subject: SessionLog, ctx: ComparisonContext): Compar
     return r.index <= FATIGUE_THRESHOLDS.test.fresh && !r.painRecent;
   };
   const from = addDays(subject.completedDate, -WINDOW_DAYS * 2);
-  const ownClimb = climbPerKm(subject);
   const ownFeels = feelsLike(subject.detail?.conditions);
   const dropped = new Map<ReasonCode, { n: number; diffs: number[] }>();
   const drop = (code: ReasonCode, diff?: number) => {
@@ -396,8 +413,8 @@ export function similarRuns(subject: SessionLog, ctx: ComparisonContext): Compar
       drop('otherDistance');
       continue;
     }
-    const theirClimb = climbPerKm(log);
-    if (!indoor && ownClimb !== undefined && theirClimb !== undefined && Math.abs(theirClimb - ownClimb) > SIMILAR_CLIMB_M_PER_KM) {
+    const climbDiff = indoor ? undefined : climbDifference(subject, log);
+    if (climbDiff !== undefined && climbDiff > SIMILAR_CLIMB_M_PER_KM) {
       drop('otherDistance');
       continue;
     }
