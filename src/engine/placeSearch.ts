@@ -77,7 +77,16 @@ export function placeSearchLine(view: PlaceSearchView): string {
 export const placeWhere = (p: Pick<FoundPlace, 'region' | 'country'>): string => [p.region, p.country].filter((x): x is string => !!x).join(', ');
 
 const sameName = (a: string, b: string) => a.trim().toLocaleLowerCase('nl') === b.trim().toLocaleLowerCase('nl');
-const clip = (name: string) => name.trim().slice(0, PLACE_NAME_MAX).trim();
+// Een te lange naam: afgekapt op een woordgrens met een beletselteken, zodat je ziet dat er meer was
+// (besluit 2026-11-12-route-blok.md). Nooit langer dan `max`.
+export function clipName(name: string, max: number = PLACE_NAME_MAX): string {
+  const plain = name.trim().replace(/\s+/g, ' ');
+  if (plain.length <= max) return plain;
+  const room = plain.slice(0, max - 1);
+  const atWord = room.lastIndexOf(' ');
+  return `${(atWord >= max / 2 ? room.slice(0, atWord) : room).replace(/[\s,.;:]+$/, '')}…`;
+}
+const clip = (name: string) => clipName(name);
 
 // De bewaarde plek op dezelfde plek als een treffer (binnen 100 m), Thuis meegeteld; anders geen.
 export function savedAt(point: RoutePoint, places: readonly Place[]): Place | undefined {
@@ -99,7 +108,7 @@ export function placeLabel(found: FoundPlace, places: readonly Pick<Place, 'name
   const withWhere = where ? clip(`${found.name}, ${where}`) : plain;
   if (!taken(withWhere)) return withWhere;
   for (let n = 2; ; n++) {
-    const numbered = `${clip(withWhere).slice(0, PLACE_NAME_MAX - String(n).length - 1).trim()} ${n}`;
+    const numbered = `${clipName(withWhere, PLACE_NAME_MAX - String(n).length - 1)} ${n}`;
     if (!taken(numbered)) return numbered;
   }
 }

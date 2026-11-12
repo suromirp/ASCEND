@@ -59,6 +59,8 @@ export interface MapViewDeps {
   motion: () => 'full' | 'calm' | 'off';
   setTimer?: (fn: () => void, ms: number) => unknown;
   clearTimer?: (id: unknown) => void;
+  // De rand rond de lussen bij Alles in beeld; standaard FIT_PADDING (ruimte voor de knoppen rechtsboven).
+  padding?: { top: number; bottom: number; left: number; right: number };
   // Het stijlbestand van OpenFreeMap; standaard fetch. Gooit bij een fout of een stop.
   fetchStyle?: (url: string, signal: AbortSignal) => Promise<unknown>;
 }
@@ -87,6 +89,9 @@ export interface RouteMapView {
 // Rechts ligt de kolom met de twee ronde knoppen (44 px en een rand): daar valt geen lus onder.
 // Rechtsboven ligt ook de schakelaar Kaart of Luchtfoto: bovenaan iets meer ruimte.
 export const FIT_PADDING = { top: 60, bottom: 36, left: 36, right: 60 };
+// De stille kaart in de Briefing (geen knoppen): rondom gelijk, onderaan de strook van de bronvermelding
+// vrij, zodat die nooit over de lus ligt (besluit 2026-11-12-route-blok.md).
+export const QUIET_FIT_PADDING = { top: 24, bottom: 40, left: 24, right: 24 };
 const FIT_MAX_ZOOM = 16;
 const POINT_ZOOM = 15;
 
@@ -184,7 +189,7 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
     const duration = animate ? cameraDuration(deps.motion()) : 0;
     try {
       if (b[0][0] === b[1][0] && b[0][1] === b[1][1]) map.easeTo({ center: b[0], zoom: POINT_ZOOM, duration });
-      else map.fitBounds(b, { padding: FIT_PADDING, maxZoom: FIT_MAX_ZOOM, duration });
+      else map.fitBounds(b, { padding: deps.padding ?? FIT_PADDING, maxZoom: FIT_MAX_ZOOM, duration });
     } catch {
       // Een kaart zonder maat (nog niet in beeld): de volgende tik op Alles in beeld probeert het.
     }

@@ -21,7 +21,7 @@ import { searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
 import { locateAnswerCounts, planStart, resolveRouteStart, roundExact, roundHere, startFailureReason, type RouteStartMode, type StartPick } from '../engine/routeStart';
 import { getRouteStartPoint, locateStartHere, saveRouteStartPoint, START_LOCATE_LIMIT_MS, startFromMap, type StartLocation } from '../storage/routeStart';
-import { homeFromStartPoint, startChoices, type StartChip } from '../engine/places';
+import { homeFromStartPoint, savedStartChips, startChoices, type StartChip } from '../engine/places';
 import { placeLabel, placeToSave, savedAt, type FoundPlace } from '../engine/placeSearch';
 import { readPlaceStore, savePlace } from '../storage/places';
 import type { Place } from '../models/place';
@@ -51,6 +51,8 @@ export interface RouteSearchModel {
   startChips: StartChip[];
   // De gekozen chip: `here`, `home`, `other` of het id van een bewaarde plek (zie chipKey).
   startChip: string;
+  // De bewaarde plekken voor het blad Andere plek: Thuis bovenaan, dan de rest (engine/places.ts#savedStartChips).
+  savedStarts: StartChip[];
   pickStart: (chip: StartChip) => void;
   // Andere plek: een treffer uit het blad Nieuwe plek geldt voor deze training, zoals Start hier.
   choosePlace?: (found: FoundPlace) => void;
@@ -344,6 +346,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     startLine,
     startChips: chips,
     startChip: chipKey,
+    savedStarts: savedStartChips(allPlaces),
     pickStart,
     choosePlace,
     keepName: startPlace?.found && !mapStart ? startPlace.name : undefined,
