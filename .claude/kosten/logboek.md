@@ -418,3 +418,15 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Sherpa Andere plek, bouwer-sessie, opus, $11,12 (347k context), ca. 1,5 uur, 2 herstelrondes na review; op main 1af978e
 - 2026-11-12, Pathfinder Andere plek (moment 2), pathfinder, sonnet, 38k, 0,5 min, akkoord, 4 punten beter (3 in backlog, 1 tekst door coördinator)
 - 2026-11-12, Lookout Andere plek, tester, sonnet, onbekend, afgebroken door de limiet van vijf uur; afdrukken waren al gemaakt en door de coördinator zelf bekeken
+- 2026-11-12, Sherpa Stand minimaal, bouwer-sessie, opus, $8,70, ca. 4,5 uur (incl. stilstand door het limiet), 0 herstelrondes; op main 26c0816
+- 2026-11-12, Pathfinder Stand (sonnet) 52k; Lookout Stand (tester, sonnet) 58k, 10 min; groen, opschoonpunten in backlog
+- 2026-11-12, Pathfinder Je week tot nu (sonnet) 38k; Pathfinder Trainingsscherm (sonnet) 47k; Warden Trainingsscherm (reviewer, sonnet) 44k, 7 min; Lookout Trainingsscherm (tester, sonnet) 94k, 15 min, 1 rood
+- 2026-11-12, Sherpa Je week tot nu, bouwer-sessie, opus, ca. $12, ca. 5 uur (incl. stilstand), 1 herstelronde (Pathfinder: week van het voorstel, losse training); op main ab5294d
+- 2026-11-12, Lookout Je week tot nu (tester, sonnet) 64k, 12 min, groen
+- 2026-11-12, Sherpa Trainingsscherm 1-4, bouwer-sessie, opus, ca. $12, ca. 1,5 uur, 1 herstelronde (Lookout rood: geen Briefing op Vandaag zonder koppeling; twee mint); op main 86be2a9
+- 2026-11-12, Warden herreview Trainingsscherm (reviewer, sonnet) 36k, akkoord; Lookout herstel Trainingsscherm (tester, sonnet) 47k, 6 min, groen
+- 2026-11-12, Warden herreview Weekplan (reviewer, fable) 78k, 10 min, akkoord onder 3 moet; geheugen van vier weken op advies weggelaten. Les: de datum van een fout naast de datum van eerdere herstellingen leggen voor je een bouwer start (de lus was al op 11 november hersteld)
+- 2026-11-12, Sherpa Weekplan in een lus, bouwer-sessie, fable, ca. 1,5 uur, 1 herstelronde (geheugen eruit); op main 53ca8c0. De lus was al op 11 november hersteld; de branch voegt vangnetten toe
+- 2026-11-12, Pathfinder Stand opschonen (sonnet) 44k; Lookout Stand opschonen (tester, sonnet) 62k, 14 min, groen; Pathfinder Hoe ging het? (sonnet) 45k, akkoord met 1 moet (concept bij tik naast het blad)
+- 2026-11-12, Sherpa Stand opschonen (opus, ca. $11,8, 1 herstelronde) op main 39baf86; Sherpa Hoe ging het? (opus, ca. $17, 1 herstelronde) op main c92df03; Lookout Hoe ging het? (tester, sonnet) 87k, 15 min, groen
+- 2026-11-12, coördinator 12 november: ca. $23 tot de vroege wissel om 10:40 UTC (500k context)
