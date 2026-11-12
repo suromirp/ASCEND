@@ -7,8 +7,8 @@
 // zelf komen uit logForm/useLogForm.ts en logForm/manualLog.ts, dezelfde als het oude scherm: wat het
 // blad opslaat is veld voor veld gelijk.
 //
-// Sluiten zonder opslaan (Annuleren, het kruis, de achtergrond, wegslepen, de terugknop) gooit het
-// concept weg; herladen niet. De terugknop gaat in stap 2 eerst terug naar stap 1 (laag voor laag).
+// Alleen Annuleren gooit een ingevuld concept weg; het kruis, de achtergrond, wegslepen, de terugknop
+// en herladen laten het staan (een leeg concept gaat altijd weg). De terugknop gaat in stap 2 eerst terug naar stap 1 (laag voor laag).
 
 import { useRef, useState } from 'react';
 import type { Program } from '../models/program';
