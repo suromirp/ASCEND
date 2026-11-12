@@ -294,6 +294,10 @@ export interface AppSettings {
   // dan stelt ASCEND voor hem terug te zetten, met Akkoord (engine/restDayBack.ts). Absent = on.
   // Optional and additive.
   restDayBack?: boolean;
+  // "Vragen als je week te vol wordt": viel er in je week een dag weg en is de rest te vol, dan vraagt ASCEND
+  // welke training mag vervallen, met een advies (engine/fullWeek.ts, regel WEEK-FULL). Uit: geen vraag, Week
+  // zegt het in een gewone regel. Absent = on. Optional and additive.
+  fullWeekAsk?: boolean;
   // "Training die niet doorging" (engine/missedTraining.ts, docs/beslissingen/2026-11-01-niet-doorgegaan.md):
   // wat ASCEND doet met een training die voorbij is zonder log. 'ask' (absent) vraagt het één keer op
   // Vandaag, 'auto' zet hem zelf op overgeslagen met een melding en Ongedaan maken, 'off' doet niets.
@@ -367,6 +371,10 @@ export interface AppSettings {
   // absent = kern) houdt de kernsets of de kern van de loop, 'volume' doet alles met minder, 'off'
   // laat de regel weg. Optional and additive.
   shorterToday?: 'kern' | 'volume' | 'off';
+  // "Reistaak op Vandaag" (engine/yourDay.ts#journeyRowOnToday): 'last-week' (advice, absent =
+  // last-week) zet de reistaak alleen in de laatste week dat hij nog kan in Je dag, 'every-week'
+  // elke week, 'never' nooit. De reis zelf blijft op Ascend. Optional and additive.
+  journeyOnToday?: 'last-week' | 'every-week' | 'never';
   // "Zones bijwerken na een test" (engine/zoneUpdate.ts): na een test die meetelt een voorstel met
   // Akkoord voor je drempelhartslag. Absent = on. Optional and additive.
   zonesAfterTest?: boolean;

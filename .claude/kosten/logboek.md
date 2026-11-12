@@ -410,3 +410,7 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12 Cartographer Stand (ontwerper, fable): ontwerp, twee vragen.
 - 2026-11-12 Pathfinder Verborgen schermen (sonnet): 95k tokens.
 - 2026-11-12 Sherpa Week na gemiste dagen (bouwer, fable, eigen sessie): klaar, Warden fable 1 blokkerend en 7 moet hersteld; Lookout Volle week (sonnet) 77k; Pathfinder Volle week (sonnet) 33k; naspelen door coördinator.
+- 2026-11-12, Warden Je dag, reviewer, sonnet, 86k, 4 min, 1 belangrijk (besluit en ontwerp ontbraken op de branch) en 4 klein, hersteld op 1 na (blad boven blad, open)
+- 2026-11-12, Lookout Je dag, tester, sonnet, onbekend, ca. 25 min, groen op 360, 390 en 412 px; zes rijen en reisrij niet te maken in de standen
+- 2026-11-12, Warden Week na gemiste dagen (zelfreview), reviewer, fable, 129k, 7 min, 1 blokkerend (rol extra) en 7 moet, hersteld in 1 ronde
+- 2026-11-12, Warden Week na gemiste dagen (herreview), reviewer, fable, 74k, 3 min, 4 moet (Begrepen telde als Akkoord), hersteld

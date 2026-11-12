@@ -333,6 +333,8 @@ export interface WeekNotice {
   fixes: Record<string, Advice>;
   // Meldingen waar op Vandaag al een voorstel voor staat: hier geen tweede.
   covered: string[];
+  // Gewone regels zonder voorstel in Week: een volle week na weggevallen dagen (engine/fullWeek.ts).
+  plain?: string[];
 }
 
 // De sessies waar een open voorstel van Vandaag al over gaat: alle wijzigingen en opties, en de

@@ -18,8 +18,8 @@ import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
 import { mainGoal } from '../engine/mainGoal';
 
-// The question of the week on Today (engine/weeklyQuestion.ts), as one line in
-// "Je dag": one "Als ..., wat doe je dan?" with a short Stoic source, and one
+// The question of the week on Today (engine/weeklyQuestion.ts), as its own line
+// under "Je dag" (off by default, docs/beslissingen/2026-11-12-je-dag.md): one "Als ..., wat doe je dan?" with a short Stoic source, and one
 // line for your plan. The line opens the question in a sheet.
 // Visible from Monday until you answered; "Later" hides it for the rest of
 // the day. Never red, never "overdue": when the week is over it simply goes.
