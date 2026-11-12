@@ -56,7 +56,7 @@ export function RouteStartFooter({ mode }: { mode: RouteStartMode }) {
     const gone = await withTimeout(clearRouteStartPoint(), 4000).catch(() => false);
     setBusy(false);
     setSaved(!gone);
-    setNote(gone ? 'Je startpunt is gewist.' : 'Wissen lukte niet. Probeer het nog eens.');
+    setNote(gone ? 'Je startpunt is gewist.' : 'Wissen lukte niet of duurt langer dan verwacht. Kijk zo nog eens.');
   }
 
   return (

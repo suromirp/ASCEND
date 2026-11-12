@@ -52,7 +52,17 @@ export function PlacesPage() {
     const name = cleanPlaceName(raw);
     if (!name) return setNote('Een plek heeft een naam nodig.');
     setBusy(true);
-    const ok = await withTimeout(savePlace({ ...place, name }), LIMIT_MS).catch(() => false);
+    // Lees de plek opnieuw: een plek die intussen gewist is, komt door een nieuwe naam niet terug.
+    const now = await withTimeout(readPlaceStore(), LIMIT_MS).catch(() => undefined);
+    const current = now?.ok ? now.places.find((p) => p.id === place.id) : undefined;
+    if (now?.ok && !current) {
+      if (!alive.current) return;
+      setBusy(false);
+      setOpen(undefined);
+      setNote(`${place.name} staat er niet meer.`);
+      return load();
+    }
+    const ok = await withTimeout(savePlace({ ...(current ?? place), name }), LIMIT_MS).catch(() => false);
     if (!alive.current) return;
     setBusy(false);
     setOpen(undefined);
@@ -66,7 +76,7 @@ export function PlacesPage() {
     if (!alive.current) return;
     setBusy(false);
     setOpen(undefined);
-    setNote(ok ? `${place.name} is gewist.` : 'Wissen lukte niet. Probeer het nog eens.');
+    setNote(ok ? `${place.name} is gewist.` : 'Wissen lukte niet of duurt langer dan verwacht. Hieronder staat wat er nu bewaard is.');
     load();
   }
 
