@@ -497,7 +497,9 @@ export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<R
   const noted = (o: PlanOutcome): PlanOutcome => {
     if (!o.ok) return o;
     const notice = ascentNotice(o.proposal, input.target, found);
-    return notice ? { ok: true, proposal: { ...o.proposal, notice } } : o;
+    // Vraagt de training hoogtemeters, dan weet de lus dat: zijn getal staat er dan altijd bij.
+    const asks = input.target.ascentM >= MIN_ASCENT_TARGET_M ? { targetAscentM: input.target.ascentM } : {};
+    return notice || asks.targetAscentM !== undefined ? { ok: true, proposal: { ...o.proposal, ...asks, ...(notice ? { notice } : {}) } } : o;
   };
   const adventure = await safe(proposeAdventure(input, route));
   // Geen pad bij het startpunt: Simpel vraagt hetzelfde punt en krijgt hetzelfde antwoord.
@@ -522,8 +524,10 @@ export function proposalTitle(p: RouteProposal): string {
 }
 
 export function proposalFacts(p: RouteProposal): string {
-  // Onder ongeveer 40 m weet niemand het op 20 m na: dan geen getal met schijnprecisie.
-  return `${km(p.distanceM)} · ${isNearlyFlat(p.ascentM) ? 'vrijwel vlak' : `${formatNumberNL(round10(p.ascentM), 0)} hoogtemeters`}`;
+  // Onder ongeveer 40 m weet niemand het op 20 m na: dan geen getal met schijnprecisie. Vraagt de
+  // training hoogtemeters, dan staat het getal er altijd: een lus heet nooit vrijwel vlak naast een doel.
+  const flat = p.targetAscentM === undefined && isNearlyFlat(p.ascentM);
+  return `${km(p.distanceM)} · ${flat ? 'vrijwel vlak' : `${formatNumberNL(round10(p.ascentM), 0)} hoogtemeters`}`;
 }
 
 // Wat je over deze lus moet weten naast de getallen: het droge feit, in korte zinnen.

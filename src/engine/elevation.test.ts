@@ -3,11 +3,11 @@ import {
   ELEVATION_THRESHOLD_M, NEARLY_FLAT_M, climbAndDescent, hysteresisLine, isNearlyFlat, modelThresholdM, smoothOverTime, watchLine,
 } from './elevation';
 import { ascentOf } from './routeGeometry';
-import { proposalFacts } from './routePlanner';
+import { proposalFacts, proposeRoutes } from './routePlanner';
 import { buildActivityDetail, deadBand } from './activityDetail';
 import { SIX_RUNS, makeAltitude } from './fixtures/elevationSeries';
 import { makeStreams } from './fixtures/runStreams';
-import type { RoutePoint, RouteProposal } from '../models/route';
+import type { RouteFn, RoutePoint, RouteProposal } from '../models/route';
 
 // Alleen nagemaakte reeksen (src/engine/fixtures/elevationSeries.ts en runStreams.ts).
 
@@ -162,6 +162,33 @@ describe('de drempel per bron en vrijwel vlak', () => {
     expect(proposalFacts(p(40))).toBe('7 km · 40 hoogtemeters');
     expect(proposalFacts(p(238))).toBe('7 km · 240 hoogtemeters');
   });
+
+  it('noemt een lus nooit vrijwel vlak als de training hoogtemeters vraagt', () => {
+    const p = (ascentM: number): RouteProposal => ({ style: 'adventure', source: 'brouter', points: [], distanceM: 7000, ascentM, repeatedShare: 0, targetAscentM: 30 });
+    expect(proposalFacts(p(36))).toBe('7 km · 40 hoogtemeters');
+    expect(proposalFacts(p(12))).toBe('7 km · 10 hoogtemeters');
+    expect(proposalFacts(p(0))).toBe('7 km · 0 hoogtemeters');
+  });
+
+  it('geeft het doel in hoogtemeters mee aan elke lus, en niet bij een vlakke training', async () => {
+    // Een rechte lijn heen en terug over vlak terrein, zoals een routeplanner hem teruggeeft.
+    const route: RouteFn = async (waypoints) => ({ ok: true, line: { source: 'brouter', points: waypoints.map((w) => ({ ...w, ele: 10 })) } });
+    const start = { lat: 52, lon: 5 };
+    const asked = await proposeRoutes({ start, target: { distanceKm: 6, ascentM: 30 } }, route);
+    for (const o of [asked.simple, asked.adventure]) {
+      if (!o.ok) continue;
+      expect(o.proposal.targetAscentM).toBe(30);
+      expect(proposalFacts(o.proposal)).not.toContain('vrijwel vlak');
+    }
+    expect(asked.simple.ok || asked.adventure.ok).toBe(true);
+    const flat = await proposeRoutes({ start, target: { distanceKm: 6, ascentM: 0 } }, route);
+    for (const o of [flat.simple, flat.adventure]) {
+      if (!o.ok) continue;
+      expect(o.proposal.targetAscentM).toBeUndefined();
+      expect(proposalFacts(o.proposal)).toContain('vrijwel vlak');
+    }
+    expect(flat.simple.ok || flat.adventure.ok).toBe(true);
+  });
 });
 
 describe('het plan telt met dezelfde teller', () => {
@@ -237,5 +264,37 @@ describe('het profiel van een log telt met dezelfde teller', () => {
     expect(detail.quality.gainAgreementPct).toBeLessThanOrEqual(103);
     // De dode band verloor hier tien meter per klim.
     expect(oldLogGain(streams.altitudeM as number[])).toBeLessThan(real - 50);
+  });
+});
+
+describe('meting: de eigen stijging per kilometer tegen de grenzen van andere regels', () => {
+  // Geen eis maar een vastgelegde meting bij het besluit (punt Open): wat de nieuwe telling per
+  // kilometer doet met de grens voor vlak bij zone 2 (5 m per km, zone2Rules.flatMetresPerKm) en
+  // met de grens voor een klim in een kilometer (10 m, PACING.climbM). Een kilometer is hier
+  // zes minuten van de reeks.
+  const perKm = (line: number[]) => {
+    const kms: { gain: number; loss: number }[] = [];
+    for (let a = 0; a + 360 < line.length; a += 360) kms.push({ gain: ups(line.slice(a, a + 361)), loss: downs(line.slice(a, a + 361)) });
+    return kms;
+  };
+  const count = (line: number[]) => {
+    const kms = perKm(line);
+    return [kms.length, kms.filter((k) => k.gain >= 5 || k.loss >= 5).length, kms.filter((k) => k.gain >= 10).length];
+  };
+  const rows = SIX_RUNS.map(({ name, spec }) => {
+    const { altitudeM, timeSec } = makeAltitude(spec);
+    return { name, before: count(deadBand(altitudeM, 5)), after: count(watchLine(altitudeM, timeSec)) };
+  });
+
+  it('kantelt op de vlakke lopen de grens voor vlak, en niet de grens voor een klim', () => {
+    // [kilometers, niet vlak voor zone 2, met een klim van 10 m of meer]
+    expect(rows.map((r) => [r.name, r.before, r.after])).toEqual([
+      ['vlak 1', [5, 0, 0], [5, 2, 0]],
+      ['vlak 2', [6, 0, 0], [6, 3, 0]],
+      ['vlak 3', [7, 0, 0], [7, 3, 0]],
+      ['vlak 4', [8, 0, 0], [8, 6, 0]],
+      ['vlak 5', [9, 0, 0], [9, 4, 0]],
+      ['heuvellus', [8, 8, 4], [8, 8, 6]],
+    ]);
   });
 });
