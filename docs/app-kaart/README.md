@@ -4,13 +4,13 @@ Dit is een tekstuele kaart van wat ASCEND op elk scherm laat zien: kopjes, kaart
 
 De data is nagemaakt: de kaart komt uit het kracht-demoprogramma in `.claude/skills/lookout/kit/state-kracht.json` en uit vier varianten daarvan, nooit uit een back-up van een echte gebruiker. De klok staat vast op 31 oktober 2026, 08:00 (Europe/Amsterdam), de breedte is 390 px.
 
-Schermen op de gewone stand (kracht): vandaag, week, stand, ascend, logboek, instellingen (het overzicht op `/more`), weekterugblik, jaaroverzicht, training-blad (het blad van een geplande training in Week), briefing (de Briefing van de Lange duurloop uit dat blad; zone, praattest, duur en horloge elk één keer, met een invariant), gegevens (instellingen, groep Gegevens en back-up), lichaam (de pagina) en lichaam-plek (de rechterknie). Forge: `forge`, Benen A uit Week na Training starten (elke oefening met zijn rol, besluit `2026-11-11-forge-kern-zichtbaar.md`). Met een eigen klok (`klok` in `SCHERMEN`): vandaag-loop, Vandaag op zondag 1 november met de Lange duurloop als missie (zonder koppeling met je horloge: Gedaan en de routerij).
+Schermen op de gewone stand (kracht): vandaag, week, stand, de schermen achter Je stand (stand-benen, stand-belasting, stand-ritme, stand-lopen, stand-invloed), ascend, logboek, instellingen (het overzicht op `/more`), weekterugblik, jaaroverzicht, training-blad (het blad van een geplande training in Week), briefing (de Briefing van de Lange duurloop uit dat blad; zone, praattest, duur en horloge elk één keer, met een invariant), gegevens (instellingen, groep Gegevens en back-up), lichaam (de pagina) en lichaam-plek (de rechterknie). Forge: `forge`, Benen A uit Week na Training starten (elke oefening met zijn rol, besluit `2026-11-11-forge-kern-zichtbaar.md`). Met een eigen klok (`klok` in `SCHERMEN`): vandaag-loop, Vandaag op zondag 1 november met de Lange duurloop als missie (zonder koppeling met je horloge: Gedaan en de routerij; de naam opent de Briefing).
 
 Schermen op een eigen stand, met de stand in de naam:
 - horloge: `vandaag-horloge` (de ochtendkaart met slaap, rusthartslag en HRV van het horloge) en `run-in-detail` (het scherm Run in detail van een rustige duurloop van 6 km in 39 minuten).
-- vakantie (9 tot en met 13 november, zonder training): `vandaag-vakantie` en `week-vakantie`.
-- zonder-doel (geen doel, de richting Fit blijven): `vandaag-zonder-doel`, `week-zonder-doel`, `ascend-zonder-doel` en `stand-zonder-doel`.
-- ziek (verkouden boven de nek, sinds vandaag): `vandaag-ziek` en `week-ziek`.
+- vakantie (9 tot en met 13 november, zonder training): `vandaag-vakantie`, `week-vakantie` en `stand-vakantie`.
+- zonder-doel (geen doel, de richting Fit blijven): `vandaag-zonder-doel`, `week-zonder-doel`, `ascend-zonder-doel`, `stand-zonder-doel` en `stand-ritme-zonder-doel`.
+- ziek (verkouden boven de nek, sinds vandaag): `vandaag-ziek`, `week-ziek` en `stand-ziek`.
 - vaardigheid (één vaardigheid, Pull-Up, met twee stappen gehaald): `ascend-vaardigheid`.
 
 ## De standen
