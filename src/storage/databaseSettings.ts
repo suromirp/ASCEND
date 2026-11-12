@@ -154,6 +154,9 @@ export interface AppSettings {
   // Take a done or past training out of the intervals.icu agenda at the next
   // round. Absent = on. Optional and additive.
   watchRemoveDone?: boolean;
+  // "Eigen workout bij een andere manier": a run with the StairMaster chosen goes to the
+  // watch as a walking workout of its own. Absent = on. Optional and additive, so no migration step.
+  watchPlaceWorkout?: boolean;
   // The text for Strava on a done training (engine/
   // activityText.ts). Absent = on. Optional and additive, so no migration step.
   stravaText?: boolean;

@@ -172,7 +172,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   // Koppelingen
   ...inSheet('bundel-horloge-gebruik', 'horloge-gebruik', 'garmin-trainingen', 'horloge-details', 'slaap', 'rusthartslag', 'hrv'),
   ...inSheet('bundel-strava', 'strava-tekst', 'strava-tekst-inhoud'),
-  ...inSheet('bundel-horloge-sturen', 'naar-horloge', 'horloge-voorvoegsel', 'horloge-hartslag', 'horloge-rustige-loop', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week'),
+  ...inSheet('bundel-horloge-sturen', 'naar-horloge', 'horloge-voorvoegsel', 'horloge-hartslag', 'horloge-rustige-loop', 'horloge-eigen-workout', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week'),
 };
 
 // Waar een instelling uit de index staat, of undefined als het id niet bestaat.
@@ -325,7 +325,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.garmin], 'horloge-stil', 'bundel-horloge-sturen', 'naar-horloge'),
   ...rule([B.watchData], 'bundel-horloge-gebruik', 'garmin-trainingen', 'slaap', 'rusthartslag', 'hrv'),
   ...rule([B.garmin, B.activities], 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-details'),
-  ...rule([B.garmin, B.send], 'horloge-voorvoegsel', 'horloge-hartslag', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week'),
+  ...rule([B.garmin, B.send], 'horloge-voorvoegsel', 'horloge-hartslag', 'horloge-eigen-workout', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week'),
   ...rule([B.garmin, B.send, B.ascendHr], 'horloge-rustige-loop'),
   ...rule([B.mf], 'macrofactor-leidend', 'macrofactor-gewicht'),
   ...rule([B.hc], 'health-connect-gewicht'),

@@ -1,6 +1,7 @@
 // Advies, het weer, de widget, de weekmelding, slepen en ruilen, en het voorstel na wat er speelde.
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getTrainingPlaces, onTrainingPlaceChange, peekTrainingPlaces } from '../storage/trainingPlace';
 import { resolveGrowthChoice } from '../data/goalGrowth';
 import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
@@ -116,6 +117,19 @@ export function useAdviceAndWeek(deps: {
     )),
     [settings.direction, settings.directionStart, settings.noGoalWaves, settings.afterMainGoal, trainingGoals, goalMilestones, program],
   );
+  // De keuze Waar train je? per training (storage/trainingPlace.ts): eerst koppelen, dan inhalen leest hem ook.
+  const [places, setPlaces] = useState(peekTrainingPlaces);
+  useEffect(() => {
+    let live = true;
+    void getTrainingPlaces().then((found) => {
+      if (live) setPlaces(peekTrainingPlaces() ?? found);
+    });
+    const off = onTrainingPlaceChange(() => setPlaces(peekTrainingPlaces()));
+    return () => {
+      live = false;
+      off();
+    };
+  }, []);
   const answeredAdviceIds = useMemo(() => new Set(Object.keys(adviceResponses)), [adviceResponses]);
   const advice = useMemo(
     // Proposals you kept turning down come last (engine/learning.ts).
@@ -148,7 +162,7 @@ export function useAdviceAndWeek(deps: {
         descentClock: descentClockContext(settings.descentClock, trainingGoals, goalMilestones, settings.leavePeriods, todayISO()),
         answeredOn: answeredDays(adviceResponses),
         // Eerst koppelen, dan inhalen (engine/missedTraining.ts#linkCandidates).
-        missedLink: { on: settings.missedLink !== false, declined: missedMemory?.declined ?? [], declinedOn: missedMemory?.declinedOn },
+        missedLink: { on: settings.missedLink !== false, declined: missedMemory?.declined ?? [], declinedOn: missedMemory?.declinedOn, places },
         leave: settings.leavePeriods,
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
         // De herkansingen die TEST-RETRY neerzette: ging er een niet door, dan vraagt hij het nog één keer.
@@ -161,7 +175,7 @@ export function useAdviceAndWeek(deps: {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction],
+    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, places, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction],
   );
 
   // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).

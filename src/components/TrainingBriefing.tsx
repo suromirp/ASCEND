@@ -31,7 +31,9 @@ import { BRIEFING_MAP_HEIGHT, briefingRoutes, footerRoom, loopLines, otherLoopLi
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import type { RouteSendOutcome } from '../engine/routeSend';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
-import { getTrainingPlace, peekTrainingPlaces, saveTrainingPlace } from '../storage/trainingPlace';
+import { getTrainingPlace, peekTrainingPlaces } from '../storage/trainingPlace';
+import { chooseTrainingPlace } from '../storage/watchWorkouts';
+import { watchManualFor } from '../engine/watchWorkout';
 import { saveRouteGpx, type RouteFileResult } from '../storage/routeFile';
 import { sendRouteGpx } from '../storage/routeSend';
 import { todayISO } from '../utils/dates';
@@ -112,7 +114,9 @@ export function TrainingBriefing({
   const guide = getTrainingGuide(template.id);
   // Het plan zoals het naar je horloge gaat; de stappen op het scherm volgen de gekozen manier (`plan` hieronder).
   const workout = buildWorkoutPlan(template, date, program);
-  const watchView = useWatchSheet({ template, garmin: workout?.garmin, session, hasZonesNote: !!guide?.garminNote });
+  // Het blad Je horloge: met de StairMaster gekozen de wandelworkout, met de stapnamen van de manier.
+  const watchManual = watchManualFor(template, workout, stored, settings.watchPlaceWorkout);
+  const watchView = useWatchSheet({ template, garmin: watchManual, session, hasZonesNote: !!guide?.garminNote });
   const input = useBriefingInput({ template, session, date, program, storedPlace: stored });
   // Met het weer van huis; de plek van Start bij is pas bekend na de regie van de route hieronder.
   const homeView = briefing(input);
@@ -137,7 +141,8 @@ export function TrainingBriefing({
 
   function choosePlace(key: string) {
     setStored(key);
-    if (session) void saveTrainingPlace(session.id, date, key);
+    // Eerst bewaren, dan het horloge: een andere soort workout (wandelen op de StairMaster) vervangt de oude.
+    if (session) void chooseTrainingPlace(session.id, date, key);
   }
 
   // Naar een pagina: eerst alle lagen dicht, dan de pagina.
@@ -284,7 +289,7 @@ export function TrainingBriefing({
         <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={date} dayLabel={guideDayLabel(template, date)} onClose={() => setSheet(undefined)} />
       )}
       {sheet === 'watch' && watchView.hasWatchSheet && (
-        <WatchSheet view={watchView} template={template} session={session} garmin={workout?.garmin} dayLabel={guideDayLabel(template, date)} onClose={() => setSheet(undefined)} onLeave={() => { onLeave?.(); requestClose(); }} />
+        <WatchSheet view={watchView} template={template} session={session} garmin={watchManual} dayLabel={guideDayLabel(template, date)} onClose={() => setSheet(undefined)} onLeave={() => { onLeave?.(); requestClose(); }} />
       )}
       {sheet === 'steps' && plan && (
         <TodaySheet eyebrow={template.name} title="Zo doe je het" onClose={() => setSheet(undefined)}>

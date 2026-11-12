@@ -43,9 +43,12 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import type { Program } from '../models/program';
 import { WORKOUTS, type StepKind } from '../data/workoutStructure';
 import { addDays, formatWeekdayDayMonthNL } from '../utils/dates';
-import { buildWorkoutPlan, type PlanStep, type WorkoutPlan } from './workoutPlan';
+import { buildWorkoutPlan, formatClock, type PlanStep, type WorkoutPlan } from './workoutPlan';
 import { formatPace, type PaceRange, type RacePaces } from './racePaces';
 import { hrPercentTarget, type WatchHrPlan } from './watchHeartRate';
+import { resolvePlace } from './trainingPlace';
+import { getModality } from '../data/modalities';
+import { placeBrief } from '../data/placeBrief';
 
 export const WATCH_EXTERNAL_PREFIX = 'ascend:';
 // intervals.icu sends about the next 7 days to the watch, so that is as far
@@ -69,6 +72,12 @@ export interface WatchBuildOptions {
   // name. Absent = the zone name. Only runs use it: the zones of ASCEND are
   // running zones.
   hr?: WatchHrPlan;
+  // The stored choice Waar train je? per planned training (storage/trainingPlace.ts, unread). A run whose
+  // chosen way is the StairMaster goes to the watch as a walking workout of its own. Absent = the
+  // workout of the training, as before.
+  places?: Record<string, string>;
+  // "Eigen workout bij een andere manier" (AppSettings.watchPlaceWorkout). Absent = on; off = `places` is ignored.
+  placeWorkout?: boolean;
 }
 
 export type WatchSport = 'Run' | 'Walk' | 'Hike' | 'Ride';
@@ -188,6 +197,61 @@ export function watchSportOf(template: SessionTemplate): WatchSport | undefined 
   return sportOf(template);
 }
 
+// The ways of training that get a workout of their own: a fixed list, the StairMaster only. A new way joins
+// only after a decision of its own (docs/beslissingen/2026-11-12-stairmaster-horloge.md): each way needs its own
+// names for the steps, its own zones and a sentence in the Briefing that is true for it.
+const OWN_WORKOUT_PLACES = new Set(['stairmaster_intervals', 'stairmaster']);
+
+// The way of training that gets a workout of its own, or undefined when the workout of the training stands.
+// Only a running workout with the StairMaster chosen. intervals.icu and Garmin have no stair stepper as a kind
+// of planned workout; Walk is the kind ASCEND already sends for walking trainings.
+export function watchPlaceOf(template: SessionTemplate, stored: unknown, placeWorkout?: boolean): string | undefined {
+  if (placeWorkout === false || typeof stored !== 'string' || !OWN_WORKOUT_PLACES.has(stored) || sportOf(template) !== 'Run') return undefined;
+  const place = resolvePlace(template, stored);
+  return place === stored && getModality(template.id, place) ? place : undefined;
+}
+
+// The sport of the workout for this training with this choice of place.
+export function watchSportFor(template: SessionTemplate, stored: unknown, placeWorkout?: boolean): WatchSport | undefined {
+  return watchPlaceOf(template, stored, placeWorkout) ? 'Walk' : sportOf(template);
+}
+
+// The plan as the walking way names its steps ("Stevig traplopen" for "Hard bergop"); minutes and repeats stay.
+function walkingPlan(plan: WorkoutPlan, templateId: string, place: string): WorkoutPlan {
+  const steps = placeBrief(templateId, place)?.steps;
+  if (!steps) return plan;
+  const relabel = (s: PlanStep): PlanStep => (steps[s.label] ? { ...s, label: steps[s.label].label } : s);
+  return { ...plan, items: plan.items.map((it) => ('step' in it ? { step: relabel(it.step) } : { repeat: it.repeat, steps: it.steps.map(relabel) })) };
+}
+
+// The line above the steps of a walking workout: which way, and how hard the hard blocks are. A hard block
+// shorter than two minutes has no heart rate target (the heart rate lags), so the effort is said in words.
+function walkingNote(plan: WorkoutPlan, templateId: string, place: string): string {
+  const label = getModality(templateId, place)?.label ?? 'Wandelen';
+  const hard = plan.timeline.some((s) => s.intensity === 4 && s.kind !== 'warmup' && s.kind !== 'cooldown');
+  return hard ? `${label}. Op gevoel en hartslag, geen tempo. De stevige blokken: RPE 8-9.` : `${label}. Op gevoel en hartslag, geen tempo.`;
+}
+
+// What the sheet Je horloge shows to rebuild the workout by hand: the workout of the training, or with the
+// StairMaster chosen the walking workout, with the names of the way and the same line above the steps as the
+// workout that goes to the watch. `garmin` is what the plan of the training says (WorkoutPlan.garmin).
+export interface WatchManual {
+  sport: string;
+  lines: string[];
+  // Above the steps: how hard, in words.
+  note?: string;
+}
+export function watchManualFor(template: SessionTemplate, plan: WorkoutPlan | undefined, stored: unknown, placeWorkout?: boolean): WatchManual | undefined {
+  const place = watchPlaceOf(template, stored, placeWorkout);
+  if (!plan || !place) return plan?.garmin;
+  const named = walkingPlan(plan, template.id, place);
+  const line = (s: PlanStep, indent = '') => `${indent}${s.label} · ${formatClock(s.seconds)}`;
+  const lines = named.items.flatMap((it) => ('step' in it ? [line(it.step)] : [`Herhaal ${it.repeat}×`, ...it.steps.map((s) => line(s, '   '))]));
+  const note = walkingNote(named, template.id, place);
+  // Zonder de naam van de manier vooraan: die staat al in de Briefing.
+  return { sport: 'Wandelen', lines, note: note.slice(note.indexOf('. ') + 2) };
+}
+
 function sportOf(template: SessionTemplate): WatchSport | undefined {
   const spec = WORKOUTS[template.id]?.garminSport;
   if (!spec) return undefined;
@@ -215,18 +279,23 @@ export function buildWatchWorkout(
   options: WatchBuildOptions = {},
 ): WatchWorkout | undefined {
   if (NOT_SENT.has(template.id)) return undefined;
-  const type = sportOf(template);
-  if (!type) return undefined;
-  const plan = buildWorkoutPlan(template, session.scheduledDate, program);
-  if (!plan) return undefined;
-  const built = intervalsWorkoutText(plan, template, paces, type === 'Run' ? options.hr : undefined);
+  const base = sportOf(template);
+  if (!base) return undefined;
+  const raw = buildWorkoutPlan(template, session.scheduledDate, program);
+  if (!raw) return undefined;
+  // A walking way for a run: the same steps in time, named by the way, as a walking workout without pace.
+  const place = watchPlaceOf(template, options.places?.[session.id], options.placeWorkout);
+  const type: WatchSport = place ? 'Walk' : base;
+  const plan = place ? walkingPlan(raw, template.id, place) : raw;
+  const built = intervalsWorkoutText(plan, template, place ? undefined : paces, type === 'Run' ? options.hr : undefined);
   const target = built.target;
   const prefix = WATCH_NAME_PREFIXES[options.namePrefix ?? DEFAULT_WATCH_NAME_PREFIX];
   const marked = options.namePrefix !== 'none';
-  const text = marked ? `Gepland door ASCEND voor ${formatWeekdayDayMonthNL(session.scheduledDate)}\n\n${built.text}` : built.text;
+  const steps = place ? `${walkingNote(plan, template.id, place)}\n\n${built.text}` : built.text;
+  const text = marked ? `Gepland door ASCEND voor ${formatWeekdayDayMonthNL(session.scheduledDate)}\n\n${steps}` : steps;
   const movingTimeSec = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
-  const base = { plannedId: session.id, externalId: externalIdFor(session.id), date: session.scheduledDate, name: `${prefix}${template.name}`, type, description: text, movingTimeSec, target };
-  return { ...base, fingerprint: fingerprintOf(JSON.stringify([base.date, base.name, base.type, base.description, base.movingTimeSec, base.target])) };
+  const base0 = { plannedId: session.id, externalId: externalIdFor(session.id), date: session.scheduledDate, name: `${prefix}${template.name}`, type, description: text, movingTimeSec, target };
+  return { ...base0, fingerprint: fingerprintOf(JSON.stringify([base0.date, base0.name, base0.type, base0.description, base0.movingTimeSec, base0.target])) };
 }
 
 export interface SelectInput {
@@ -270,6 +339,9 @@ export interface TrackedWorkout {
   // When ASCEND last wrote this event to the agenda (ISO timestamp); older
   // records have none (engine/watchStatus.ts falls back to the last round).
   sentAt?: string;
+  // The kind of workout that was written (a run, or a walking workout for the StairMaster); older records
+  // have none and were always the workout of the training.
+  type?: WatchSport;
 }
 
 export interface SyncPlan {

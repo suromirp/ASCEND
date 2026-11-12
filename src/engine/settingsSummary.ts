@@ -1072,6 +1072,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('hartslagHorloge', resolveWatchHrMode({ mode: s.watchHeartRate })), sub: watchHrSub(f) };
     case 'horloge-rustige-loop':
       return { checked: resolveCalmRun({ calmRun: s.watchCalmRun }) };
+    case 'horloge-eigen-workout':
+      return { checked: s.watchPlaceWorkout !== false };
     case 'horloge-gedaan-weghalen':
       return { checked: s.watchRemoveDone !== false };
     case 'horloge-status':

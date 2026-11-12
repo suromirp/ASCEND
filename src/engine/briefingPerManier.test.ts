@@ -227,7 +227,7 @@ describe('het horloge bij een andere manier', () => {
   it('nog niet verstuurd (pending, later): er komt een workout op je horloge', () => {
     for (const kind of ['pending', 'later'] as const) {
       const row = view(HILLS, 'stairmaster_intervals', { watchStatus: kind === 'later' ? { kind, goesOn: '2026-11-12' } : { kind } }).rows.find((r) => r.id === 'watch')!;
-      expect(row.line).toBe('Er komt een hardloopworkout op je horloge. Start Stair Stepper zonder workout. Vinkt zelf af.');
+      expect(row.line).toBe(`Er komt ${kind === 'later' ? 'morgen ' : ''}een hardloopworkout op je horloge. Start Stair Stepper zonder workout. Vinkt zelf af.`);
       expect(row.tone).toBe('warn');
     }
   });
@@ -253,6 +253,63 @@ describe('het horloge bij een andere manier', () => {
     const line = v.rows.find((r) => r.id === 'watch')?.line ?? '';
     expect(line).toBe('Start Stair Stepper zonder workout.');
     expect(watchPlaceLine(HILLS, 'stairmaster_intervals', undefined)).toBe('Start Stair Stepper zonder workout.');
+  });
+});
+
+describe('de eigen wandelworkout op de StairMaster (besluit 2026-11-12-stairmaster-horloge.md)', () => {
+  const row = (watchStatus: BriefingInput['watchStatus'], over: Partial<BriefingInput> = {}) => view(HILLS, 'stairmaster_intervals', { watchStatus, watchLink: { linked: true, autoTick: false, activities: true }, ...over }).rows.find((r) => r.id === 'watch')!;
+  it('verstuurd: de wandelworkout staat erop, zonder amber en zonder Start zonder workout', () => {
+    const r = row({ kind: 'sent', wants: 'Walk', wrote: 'Walk' });
+    expect(r.line).toBe('Er staat een wandelworkout op. Start hem bij Wandelen.');
+    expect(r.tone).toBeUndefined();
+  });
+  it('gekozen na het versturen: de hardloopworkout staat er nog', () => {
+    const r = row({ kind: 'stale', wants: 'Walk', wrote: 'Run' });
+    expect(r.line).toBe('Er staat nog een hardloopworkout op. De wandelworkout komt eraan.');
+    expect(r.tone).toBe('warn');
+  });
+  it('gekozen voor het versturen, de dag zelf of de avond ervoor: hij komt eraan', () => {
+    expect(row({ kind: 'pending', wants: 'Walk' }).line).toBe('Er komt een wandelworkout op je horloge.');
+    // Verder weg dan 7 dagen: de dag erbij waarop hij gaat (vandaag is 11 november).
+    expect(row({ kind: 'later', goesOn: '2026-11-12', wants: 'Walk' }).line).toBe('Er komt morgen een wandelworkout op je horloge.');
+    expect(row({ kind: 'later', goesOn: '2026-11-14', wants: 'Walk' }).line).toBe('Er komt op zaterdag 14 november een wandelworkout op je horloge.');
+    expect(row({ kind: 'pending', wants: 'Walk' }).tone).toBeUndefined();
+  });
+  it('versturen mislukt of de koppeling verlopen: de oude blijft en de regel zegt dat', () => {
+    const r = row({ kind: 'failed', reason: 'sleutel niet herkend', wants: 'Walk', wrote: 'Run' });
+    expect(r.line).toBe('Versturen lukte niet: er staat nog een hardloopworkout op. Start Stair Stepper zonder workout.');
+    expect(r.tone).toBe('warn');
+    expect(row({ kind: 'failed', reason: 'geen verbinding', wants: 'Walk' }).line).toBe('Versturen lukte niet. Start Stair Stepper zonder workout.');
+  });
+  it('horloge sturen staat uit: er komt niets, alleen wat je start', () => {
+    expect(row({ kind: 'unlinked' }).line).toBe('Start Stair Stepper zonder workout.');
+  });
+  it('de instelling uit nadat de wandelworkout erop stond: de regel zegt wat er echt staat', () => {
+    expect(row({ kind: 'stale', wants: 'Run', wrote: 'Walk' }).line).toBe('Er staat een wandelworkout op. Start Stair Stepper zonder workout.');
+  });
+  it('terug naar buiten: de regel zegt dat de wandelworkout er nog staat, ook als het versturen mislukt', () => {
+    const outside = (watchStatus: BriefingInput['watchStatus']) => view(HILLS, 'hill_repeats_outdoor', { watchStatus, watchLink: { linked: true, autoTick: false, activities: true } }).rows.find((x) => x.id === 'watch')!;
+    expect(outside({ kind: 'stale', wants: 'Run', wrote: 'Walk' }).line).toBe('Er staat nog een wandelworkout op. De hardloopworkout komt eraan.');
+    const failed = outside({ kind: 'failed', reason: 'geen verbinding', wants: 'Run', wrote: 'Walk' });
+    expect(failed.line).toBe('Versturen lukte niet: er staat nog een wandelworkout op.');
+    expect(failed.tone).toBe('warn');
+    // Weer verstuurd: de gewone regel.
+    expect(outside({ kind: 'sent', sentAt: new Date(2026, 10, 11, 7, 18).toISOString() }).line).toContain('Staat erop');
+  });
+  it('mislukt met een oudere wandelworkout erop: de regel spreekt zichzelf niet tegen', () => {
+    const r = row({ kind: 'failed', reason: 'geen verbinding', wants: 'Walk', wrote: 'Walk' });
+    expect(r.line).toBe('Er staat een wandelworkout op. Een wijziging versturen lukte niet. Start hem bij Wandelen.');
+    expect(r.line).not.toContain('zonder workout');
+    expect(r.tone).toBe('warn');
+  });
+  it('de lange duurloop als wandeling buiten: geen eigen workout, de eerlijke regel van voorheen', () => {
+    const r = view(LONG, 'long_hike_outdoor').rows.find((x) => x.id === 'watch')!;
+    expect(r.line).toContain('Er staat een hardloopworkout op.');
+  });
+  it('past op 360 px: geen regel langer dan drie regels van 40 tekens', () => {
+    for (const st of [{ kind: 'sent', wants: 'Walk', wrote: 'Walk' }, { kind: 'stale', wants: 'Walk', wrote: 'Run' }, { kind: 'failed', wants: 'Walk', wrote: 'Run' }, { kind: 'failed', wants: 'Walk', wrote: 'Walk' }] as const) {
+      expect(view(HILLS, 'stairmaster_intervals', { watchStatus: st }).rows.find((r) => r.id === 'watch')!.line.length).toBeLessThanOrEqual(120);
+    }
   });
 });
 

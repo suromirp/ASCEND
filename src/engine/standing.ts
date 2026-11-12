@@ -20,6 +20,7 @@ import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { fatigueEvents, legFatigueOn, sessionImpulse, PLANNED_RPE, PLANNED_STRENGTH_RPE, type LegFatigueInputs } from './legFatigue';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { logSport, templateSport } from './sports';
+import { findModalityByKey } from '../data/modalities';
 import { zoneBpm, type HeartRateSettings } from './heartRateZones';
 import { minutesByZone } from './intensityMinutes';
 import type { IntensityCounting } from './intensitySettings';
@@ -337,7 +338,7 @@ export function descentOf(l: SessionLog): number {
   const o = l.outdoorData;
   if (o?.elevationLossM !== undefined) return o.elevationLossM;
   const d = o ?? l.cardioData;
-  if (!d || d.estimatedElevation || d.environment === 'treadmill') return 0;
+  if (!d || d.estimatedElevation || d.environment === 'treadmill' || findModalityByKey(d.modality)?.environment === 'indoor') return 0;
   return d.elevationGainM ?? 0;
 }
 

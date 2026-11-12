@@ -31,7 +31,7 @@ De regel dat historie nooit herschreven wordt, de vijf uitzonderingen op verzoek
 - Een MacroFactor-log kan na middernacht eindigen: de dag in Week en Logboek is die van de geplande training, het log zelf blijft staan.
 - Een vorm die je bewaart verandert alleen met een migratiestap in `src/storage/migrations.ts`; oude back-ups blijven importeerbaar.
 - Een gewiste activiteit bij de bron verandert niets aan het log.
-- Testdata is nagemaakt; een back-up van de eigenaar komt nooit in de repo.
+- Testdata is nagemaakt; een back-up van de eigenaar komt nooit in de repo. Een log dat de app zelf maakt met een `modality` schrijft de omgeving van die manier, niet die van de activiteit: een binnen-manier krijgt geen `environment` (Warden, 12 november).
 
 ## Testen
 - Tijdens het werk: `npx vitest run src/engine/watchAlign src/engine/trimLog src/engine/sourceCorrection src/engine/missedTraining src/state/logSession src/storage/trim src/storage/sourceCorrection src/storage/missedTraining src/storage/backup`

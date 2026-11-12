@@ -91,7 +91,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
   }
 
   // De slagen op het horloge veranderen bij de volgende ronde; staat het sturen aan, dan draait die meteen.
-  async function changeHr(patch: { watchHeartRate?: 'ascend' | 'intervals'; watchCalmRun?: boolean }) {
+  async function changeHr(patch: { watchHeartRate?: 'ascend' | 'intervals'; watchCalmRun?: boolean; watchPlaceWorkout?: boolean }) {
     setNote(null);
     try {
       await updateSettings(patch);
@@ -104,6 +104,8 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
     }
   }
   const changeCalm = (on: boolean) => changeHr({ watchCalmRun: on });
+  // De soort workout bij een andere manier verandert net zo: bij de volgende ronde, of meteen als het sturen aan staat.
+  const changePlaceWorkout = (on: boolean) => changeHr({ watchPlaceWorkout: on });
 
   // Met Health Connect aan komt niet alles van het horloge (engine/settingsSummary.ts, bundel-horloge-gebruik).
   const usageTitle = facts.healthConnect?.enabled ? 'Gebruik van je gegevens' : 'Gebruik van je horloge';
@@ -202,6 +204,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
           <SummaryRow id="horloge-voorvoegsel" title="Voorvoegsel voor de naam" facts={facts} info="horlogeVoorvoegsel" onClick={() => setInner('horloge-voorvoegsel')} />
           <SummaryRow id="horloge-hartslag" title="Hartslag op je horloge" facts={facts} info="hartslagHorloge" onClick={() => setInner('horloge-hartslag')} />
           <SummaryRow id="horloge-rustige-loop" title="Rustige loop: ruime grens" facts={facts} info="horlogeRustigeLoop" onChange={(on) => void changeCalm(on)} />
+          <SummaryRow id="horloge-eigen-workout" title="Eigen workout bij een andere manier" facts={facts} info="horlogeEigenWorkout" onChange={(on) => void changePlaceWorkout(on)} />
           <SummaryRow id="horloge-gedaan-weghalen" title="Gedane trainingen weghalen" facts={facts} info="horlogeGedaanWeghalen" onChange={(on) => void updateSettings({ watchRemoveDone: on })} />
           <SummaryRow id="horloge-status" title="Laten zien of het gelukt is" facts={facts} info="horlogeStatus" onChange={(on) => void updateSettings({ showWatchStatus: on, showWatchStatusOnWeek: on })} />
         </BundleSheet>

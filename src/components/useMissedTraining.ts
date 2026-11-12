@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { planMissed, resolveMissedSettings } from '../engine/missedTraining';
 import { todayISO } from '../utils/dates';
+import { useTrainingPlaces } from './useTrainingPlaces';
 
 // Wacht even tot de planning na het openen staat, zoals het vanzelf afvinken.
 const AUTO_DELAY_MS = 1500;
@@ -16,6 +17,7 @@ export function useMissedTraining() {
   const today = todayISO();
   const autoRunning = useRef(false);
 
+  const places = useTrainingPlaces();
   const missedSettings = resolveMissedSettings(settings);
   // Wat al in een advies op Vandaag staat (een gemiste training inhalen of laten vervallen), krijgt geen tweede kaart.
   const busyIds = useMemo(
@@ -23,10 +25,10 @@ export function useMissedTraining() {
     [advice],
   );
   const plan = useMemo(
-    () => (memory ? planMissed({ plannedSessions, logs: sessionLogs, templates, today, settings: missedSettings, memory, busy: busyIds, illnessEpisodes: settings.illnessEpisodes }) : undefined),
+    () => (memory ? planMissed({ plannedSessions, logs: sessionLogs, templates, today, settings: missedSettings, memory, busy: busyIds, illnessEpisodes: settings.illnessEpisodes, places }) : undefined),
     // missedSettings komt uit settings.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [memory, plannedSessions, sessionLogs, templates, today, settings, busyIds],
+    [memory, plannedSessions, sessionLogs, templates, today, settings, busyIds, places],
   );
 
   // Zelf overslaan: eerst overslaan, met de melding; pas als dat lukte onthouden dat ASCEND het deed (dan komt

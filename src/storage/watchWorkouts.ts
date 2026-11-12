@@ -32,6 +32,7 @@ import { planWatchSync, selectWatchWorkouts, type TrackedWorkout, type WatchWork
 import { hasAscendHeartRate, resolveWatchHrMode, watchHrPlanFromSettings, type IntervalsHrBasis } from '../engine/watchHeartRate';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { addDays, todayISO } from '../utils/dates';
+import { getTrainingPlaces, saveTrainingPlace } from './trainingPlace';
 
 const STATE_KEY = 'watchWorkoutsSync';
 
@@ -119,20 +120,35 @@ async function loadDesired(
   connection?: IntervalsConnection | null,
   options: FetchOptions = {},
   now: Date = new Date(),
+  refresh = true,
 ): Promise<{ desired: WatchWorkout[]; logged: Set<string>; removeDone: boolean }> {
-  const [programs, templates, sessions, logs, settings, state] = await Promise.all([
+  const [programs, templates, sessions, logs, settings, state, places] = await Promise.all([
     ProgramsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
     PlannedSessionsRepo.getAll(),
     SessionLogsRepo.getAll(),
     SettingsRepo.get(),
     getWatchWorkoutState(),
+    // The choice Waar train je? per training: a walking way gets a walking workout. Never throws.
+    getTrainingPlaces(),
   ]);
-  const basis = await refreshHrBasis(state, settings, connection, options, now);
+  const basis = refresh ? await refreshHrBasis(state, settings, connection, options, now) : state.hrBasis;
   const hr = watchHrPlanFromSettings(settings, basis);
-  const desired = selectWatchWorkouts({ sessions, logs, templates, program: programs[0], paces: pacesFromLogs(logs, judgmentOptions(settings)).paces, today, options: { namePrefix: settings.watchNamePrefix, hr } });
+  const build = { namePrefix: settings.watchNamePrefix, hr, places, placeWorkout: settings.watchPlaceWorkout };
+  const desired = selectWatchWorkouts({ sessions, logs, templates, program: programs[0], paces: pacesFromLogs(logs, judgmentOptions(settings)).paces, today, options: build });
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
   return { desired, logged, removeDone: settings.watchRemoveDone !== false };
+}
+
+// One at a time: everything that writes to the agenda and to the books goes through this row. A round at start
+// or on coming back, a setting, a button and a tap in the Briefing never run next to each other, so none
+// writes back books the other just changed and nothing is sent twice. A function inside the row never calls
+// another function of the row (it would wait for itself): it calls the ...Now variant.
+let row: Promise<unknown> = Promise.resolve();
+function inRow<T>(work: () => Promise<T>): Promise<T> {
+  const run = row.then(work, work);
+  row = run.catch(() => undefined);
+  return run;
 }
 
 export type WorkoutSyncResult =
@@ -146,7 +162,11 @@ export type WorkoutSyncResult =
 // ASCEND moved or changed, removes what fell away. Never throws: a failure
 // becomes a message, and what did get through is remembered, so the next run
 // carries on from there.
-export async function syncWatchWorkouts(options: WorkoutOptions & { force?: boolean } = {}): Promise<WorkoutSyncResult> {
+export function syncWatchWorkouts(options: WorkoutOptions & { force?: boolean } = {}): Promise<WorkoutSyncResult> {
+  return inRow(() => runSync(options));
+}
+
+async function runSync(options: WorkoutOptions & { force?: boolean }): Promise<WorkoutSyncResult> {
   const now = options.now ?? new Date();
   const today = options.today ?? todayISO();
   let state: WatchWorkoutState;
@@ -164,12 +184,15 @@ export async function syncWatchWorkouts(options: WorkoutOptions & { force?: bool
   const items = { ...state.items };
   const counts = { created: 0, updated: 0, removed: 0 };
   try {
+    // A new attempt is on its way: what the last one said no longer holds. The status reads "komt eraan" until
+    // this round ends, and a failure writes its own reason again.
+    if (state.lastError) await putState({ ...state, lastError: undefined });
     const { desired, logged, removeDone } = await loadDesired(today, connection, options, now);
     // The read of the heart rate may have stored something new; keep it when the books are written.
     state = await getWatchWorkoutState();
     const plan = planWatchSync(desired, items, today, logged, { removeDone });
     const remember = (w: WatchWorkout, eventId: number | undefined, previous?: TrackedWorkout) => {
-      items[w.plannedId] = { externalId: w.externalId, date: w.date, fingerprint: w.fingerprint, eventId: eventId ?? previous?.eventId, sentAt: now.toISOString() };
+      items[w.plannedId] = { externalId: w.externalId, date: w.date, fingerprint: w.fingerprint, eventId: eventId ?? previous?.eventId, sentAt: now.toISOString(), type: w.type };
     };
 
     try {
@@ -214,6 +237,35 @@ export function syncWatchWorkoutsAfterPlanChange(options: WorkoutOptions = {}): 
   return syncWatchWorkouts({ ...options, force: true });
 }
 
+// After a new choice Waar train je? for one planned training: when that changes what belongs on the watch (a
+// walking workout for the StairMaster, or the run again), the event in the agenda is replaced right away, the
+// same event and never a second one. A choice that changes nothing for the watch (heuvel or loopband) asks
+// nothing of the network. In the same row as every other round, so two quick taps never send twice. Never
+// throws; a failure leaves the old workout where it is and the status says so.
+export function syncWatchAfterPlaceChange(plannedSessionId: string, options: WorkoutOptions = {}): Promise<WorkoutSyncResult> {
+  return inRow(async (): Promise<WorkoutSyncResult> => {
+    try {
+      const state = await getWatchWorkoutState();
+      if (!state.enabled) return { status: 'off' };
+      const today = options.today ?? todayISO();
+      const { desired } = await loadDesired(today, null, options, options.now ?? new Date(), false);
+      const want = desired.find((w) => w.plannedId === plannedSessionId);
+      const tracked = state.items[plannedSessionId];
+      // Not on its way to the watch (too far ahead, done, strength), or already what the agenda holds.
+      if (!want || (tracked && tracked.fingerprint === want.fingerprint && tracked.date === want.date)) return { status: 'ok', created: 0, updated: 0, removed: 0 };
+    } catch {
+      // Unreadable: the round itself gives the message.
+    }
+    return runSync({ ...options, force: true });
+  });
+}
+
+// The tap in the Briefing: first the choice is kept, then the watch follows. One function, so the screen and
+// the tests walk the same order.
+export function chooseTrainingPlace(plannedSessionId: string, date: string, key: string, options: WorkoutOptions = {}): Promise<WorkoutSyncResult> {
+  return saveTrainingPlace(plannedSessionId, date, key, options.today).then(() => syncWatchAfterPlaceChange(plannedSessionId, options));
+}
+
 export type TestSendResult =
   | { status: 'ok'; name: string; date: string }
   | { status: 'nothing' }
@@ -223,7 +275,11 @@ export type TestSendResult =
 // "Eén training testen": sends only the next training that would go to the
 // watch, whatever the switch says, and remembers it like any other (so the
 // switch later updates it instead of adding a second one).
-export async function sendNextWatchWorkout(options: WorkoutOptions = {}): Promise<TestSendResult> {
+export function sendNextWatchWorkout(options: WorkoutOptions = {}): Promise<TestSendResult> {
+  return inRow(() => sendNextWatchWorkoutNow(options));
+}
+
+async function sendNextWatchWorkoutNow(options: WorkoutOptions): Promise<TestSendResult> {
   const today = options.today ?? todayISO();
   let connection: IntervalsConnection | null;
   try {
@@ -243,7 +299,7 @@ export async function sendNextWatchWorkout(options: WorkoutOptions = {}): Promis
       : (await createWorkoutEvents(connection, [next], options)).get(next.externalId);
     await putState({
       ...state,
-      items: { ...state.items, [next.plannedId]: { externalId: next.externalId, date: next.date, fingerprint: next.fingerprint, eventId: eventId ?? tracked?.eventId, sentAt: (options.now ?? new Date()).toISOString() } },
+      items: { ...state.items, [next.plannedId]: { externalId: next.externalId, date: next.date, fingerprint: next.fingerprint, eventId: eventId ?? tracked?.eventId, sentAt: (options.now ?? new Date()).toISOString(), type: next.type } },
     });
     return { status: 'ok', name: next.name, date: next.date };
   } catch (err) {
@@ -255,7 +311,11 @@ export async function sendNextWatchWorkout(options: WorkoutOptions = {}): Promis
 // What is done or past goes in the regular round when "Gedane trainingen
 // weghalen" is on (watchRemoveDone). Only what ASCEND has written down is
 // removed.
-export async function removeWatchWorkouts(options: WorkoutOptions = {}): Promise<{ status: 'ok'; removed: number } | { status: 'not-connected' } | { status: 'error'; message: string }> {
+export function removeWatchWorkouts(options: WorkoutOptions = {}): Promise<{ status: 'ok'; removed: number } | { status: 'not-connected' } | { status: 'error'; message: string }> {
+  return inRow(() => removeWatchWorkoutsNow(options));
+}
+
+async function removeWatchWorkoutsNow(options: WorkoutOptions): Promise<{ status: 'ok'; removed: number } | { status: 'not-connected' } | { status: 'error'; message: string }> {
   const today = options.today ?? todayISO();
   try {
     const connection = options.connection ?? (await getConnection());
@@ -280,14 +340,18 @@ export async function removeWatchWorkouts(options: WorkoutOptions = {}): Promise
 // agenda (best effort: when that fails, the switch is off anyway and the
 // message says what is left). Turning it on does not send by itself; the
 // caller runs a sync.
-export async function setWatchWorkoutsEnabled(enabled: boolean, options: WorkoutOptions = {}): Promise<{ status: 'ok'; removed: number } | { status: 'error'; message: string }> {
+export function setWatchWorkoutsEnabled(enabled: boolean, options: WorkoutOptions = {}): Promise<{ status: 'ok'; removed: number } | { status: 'error'; message: string }> {
+  return inRow(() => setEnabledNow(enabled, options));
+}
+
+async function setEnabledNow(enabled: boolean, options: WorkoutOptions): Promise<{ status: 'ok'; removed: number } | { status: 'error'; message: string }> {
   try {
     if (enabled) {
       await putState({ ...(await getWatchWorkoutState()), enabled: true, lastError: undefined });
       return { status: 'ok', removed: 0 };
     }
     await putState({ ...(await getWatchWorkoutState()), enabled: false });
-    const removal = await removeWatchWorkouts(options);
+    const removal = await removeWatchWorkoutsNow(options);
     if (removal.status === 'ok') return { status: 'ok', removed: removal.removed };
     if (removal.status === 'not-connected') return { status: 'ok', removed: 0 };
     return { status: 'error', message: `${removal.message} De schakelaar staat uit, maar de al verstuurde trainingen staan nog in intervals.icu.` };
@@ -299,8 +363,10 @@ export async function setWatchWorkoutsEnabled(enabled: boolean, options: Workout
 // Unlinking: the key goes, so nothing can be sent or removed any more. The
 // switch goes off; the list of what was sent stays, so linking again does not
 // double anything (the same external ids are recognised).
-export async function pauseWatchWorkouts(): Promise<void> {
-  await putState({ ...(await getWatchWorkoutState()), enabled: false });
+export function pauseWatchWorkouts(): Promise<void> {
+  return inRow(async () => {
+    await putState({ ...(await getWatchWorkoutState()), enabled: false });
+  });
 }
 
 // "Alles verwijderen": the coming trainings leave the intervals.icu agenda
@@ -331,7 +397,11 @@ export type CleanUpResult =
 // button or an earlier install that the books lost). Nothing else is ever
 // asked for by id, so an event of your own stays. The agenda is read first:
 // when that fails, nothing is deleted.
-export async function cleanUpWatchWorkouts(options: WorkoutOptions = {}): Promise<CleanUpResult> {
+export function cleanUpWatchWorkouts(options: WorkoutOptions = {}): Promise<CleanUpResult> {
+  return inRow(() => cleanUpWatchWorkoutsNow(options));
+}
+
+async function cleanUpWatchWorkoutsNow(options: WorkoutOptions): Promise<CleanUpResult> {
   const today = options.today ?? todayISO();
   let connection: IntervalsConnection | null;
   let state: WatchWorkoutState;
