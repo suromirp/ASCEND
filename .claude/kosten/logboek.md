@@ -448,3 +448,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Sherpa Opslaan dat mislukt (sonnet, ca. $0,7, 10 min); Warden Opslaan (reviewer, fable) 76k, 5 min, akkoord, 5 mag (onderweg-pad valkuil, time-outtest toetst geen echte code)
 - 2026-11-12, Sherpa Weer op de plek (fable, ca. $5,9, 24 min); Warden Weer (reviewer, sonnet) 53k, 10 min, akkoord, 3 mag (één sleutel per plek, timezone=auto en vier keuzes in het besluit)
 - 2026-11-12, Lookout Weer (tester, sonnet) 100k, 15 min, groen; Pathfinder Weer (sonnet) 26k, 1 moet (pagina Weer toont thuis, naar backlog); Warden Hoogtemeters ronde 2-4 (reviewer, fable) 99k, 8 min, akkoord, 1 moet (zin in besluit); Sherpa Hoogtemeters ronde 4 (fable); samen op main c03dde9
+- 2026-11-12, Sherpa Andere plek via Photon (fable, ca. $3,4, 16 min); Warden Photon (reviewer, sonnet) 32k, 4 min, akkoord; Pathfinder Photon (sonnet) 23k, 2 moet

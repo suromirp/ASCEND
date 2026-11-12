@@ -46,6 +46,8 @@ Bijgewerkt: 12 november 2026, rond 16:10 UTC, door de coördinator session_01LnD
 - Afdrukken van een bouwer staan in zijn eigen scratchpad en zijn voor de coördinator niet leesbaar; maak ze zelf met de kit (een preview op een eigen poort in een worktree van de bouwerbranch).
 - Een bouwer die een vraag in zijn eigen chat stelt staat stil; de Wachter ziet dat als status need_input. Por hem met create_trigger: zelf het advies kiezen en melden.
 
+- Na de laatste eigen wijziging voor een squash altijd nog de volle vitest; de commit-hook ving het niet (c03dde9 deploy rood: werkbriefje 46 regels, scan-grens 45; hersteld in dbc93fb, live 17:46 UTC).
+
 ## Sessies en tijden
 
 - Vorige coördinatoren: session_01LnDpSm59PuKBYsAhFgUjTr (12 november, 10:27 tot ongeveer 16:10 UTC), session_01LnDpSkUxMFtEBmNMxMAKcN (12 november, tot 10:40 UTC), session_01LnDpSnA7KzoLikwifh3nyR (11 op 12 november), session_01LnDpSkFKoLuAUnLCXKbA1G, session_01LnDpSj5xhvz93hRnJrHyF8.
@@ -55,4 +57,4 @@ Bijgewerkt: 12 november 2026, rond 16:10 UTC, door de coördinator session_01LnD
 ## Live 12 november avond (c03dde9)
 
 - Hoogtemeters stap 1, Opslaan dat mislukt en Weer op de gekozen plek in één squash naar main, na Warden (alle drie), Lookout en Pathfinder (Weer), eigen afdrukken en naspelen (Hoogtemeters). Vervolgpunten staan bovenaan de Inbox. Bouwersessies gearchiveerd.
-- Lopend: Sherpa Andere plek via Photon (session_01LnDpSnx15iX4EME83pMo5r).
+- Lopend: Sherpa Andere plek via Photon (session_01LnDpSnx15iX4EME83pMo5r), branch claude/andere-plek-photon 162a479. Warden akkoord (CORS met curl gezien: *), Pathfinder 2 moet (Photon ook bij weinig treffers van Open-Meteo; foutzinnen plek en geen verbinding), Lookout loopt. Herstel naar dezelfde bouwer.
