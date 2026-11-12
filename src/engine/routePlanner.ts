@@ -9,7 +9,7 @@
 
 import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { RouteAnswer, RouteFailure, RouteFn, RoutePoint, RouteProposal, RouteTarget, RoutedLine } from '../models/route';
-import { isNearlyFlat } from './elevation';
+import { isNearlyFlat, modelThresholdM } from './elevation';
 import { ASCENT_DEAD_BAND_M, ascentOf, bearing, cumulative, lineLength, metersBetween, offsetPoint, repeatedShare } from './routeGeometry';
 import { formatNumberNL } from '../utils/number';
 
@@ -255,8 +255,10 @@ export function composeSimple(line: RoutedLine, target: RouteTarget): RoutePropo
   const approach = line.points.slice(0, climb.foot + 1);
   const up = line.points.slice(climb.foot, climb.top + 1);
   const down = reversed(up);
-  const base = ascentOf(approach) + ascentOf(reversed(approach));
-  const perRepeat = Math.max(climb.heightM, ascentOf(up) + ascentOf(down));
+  // De drempel van de hele lijn, ook voor de stukken: anders telt de som van de delen anders dan het geheel.
+  const threshold = modelThresholdM(line.points.map((p) => p.ele));
+  const base = ascentOf(approach, threshold) + ascentOf(reversed(approach), threshold);
+  const perRepeat = Math.max(climb.heightM, ascentOf(up, threshold) + ascentOf(down, threshold));
   const byAscent = Math.round((target.ascentM - base) / perRepeat);
   const room = 1.5 * target.distanceKm * 1000 - 2 * lineLength(approach);
   const byDistance = Math.floor(room / (2 * climb.lengthM));

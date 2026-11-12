@@ -84,6 +84,10 @@ describe('de teller: stijging en daling met hysterese', () => {
     expect(climbAndDescent([1, 2, 1, 3], 0)).toEqual({ ascentM: 3, descentM: 1 });
     expect(climbAndDescent([1, 2, 1, 3], Number.NaN)).toEqual({ ascentM: 3, descentM: 1 });
     expect(climbAndDescent([1, 2, 1, 3], -4)).toEqual({ ascentM: 3, descentM: 1 });
+    // Ook als de reeks met dalen begint.
+    expect(climbAndDescent([5, 3, 4], 0)).toEqual({ ascentM: 1, descentM: 2 });
+    expect(climbAndDescent([5, 4, 3], 0)).toEqual({ ascentM: 0, descentM: 2 });
+    expect(climbAndDescent([5, 5, 4, 4, 6], 0)).toEqual({ ascentM: 2, descentM: 1 });
   });
 });
 

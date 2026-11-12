@@ -42,11 +42,12 @@ export function turningPoints(y: number[], threshold: number): number[] {
     if (dir === 0) {
       if (y[k] < y[minI]) minI = k;
       if (y[k] > y[maxI]) maxI = k;
-      if (y[k] - y[minI] >= threshold) {
+      // Strikt hoger of lager: bij een drempel van nul is een gelijke of juist lagere meting geen klim.
+      if (y[k] > y[minI] && y[k] - y[minI] >= threshold) {
         dir = 1;
         turning.push(minI);
         ext = k;
-      } else if (y[maxI] - y[k] >= threshold) {
+      } else if (y[k] < y[maxI] && y[maxI] - y[k] >= threshold) {
         dir = -1;
         turning.push(maxI);
         ext = k;
