@@ -17,7 +17,7 @@ Bijgewerkt: 12 november 2026, rond 10:40 UTC, door de coördinator van 12 novemb
   - Sherpa Hoogtemeters stap 1 (Fable), session_01LnDpSmaTkuQYwMVjdeQMHr, branch claude/hoogtemeters-stap-1. Na zijn melding: naspelen met de back-up van de eigenaar (zes lopen, Garmin 132 m) als die er is, anders vragen.
   - Sherpa Route-blok (Opus), session_01LnDpSiduYPqLcJUoFTtued, branch claude/route-blok: afdruk van de eigenaar 12 november ("niet mooi"; Thuis-chip weg, thuisplek blijft bewaard en staat bovenaan in Andere plek).
   - Dubbel log staat op main (ec1f56e), sessie gearchiveerd.
-  - Sherpa Missiekaart (Opus), session_01LnDpSmWfoTTVaYr1A2wnvY, branch claude/missiekaart: eigen besluit, ook de kaarten boven Je dag.
+  - Missiekaart staat op main (5f5b528), sessie gearchiveerd.
   - Na Sherpa Route-blok: Briefing volgt de gekozen manier (Inbox, afdruk StairMaster, Opus).
   - Daarna: Week minimaal sporen 2 tot 4 en 6 met de dode code (weekChanges, adjustedSessionReasons, changesSub, review.changes) en weekHeading samenvoegen.
 - Wachter: trig_01SkSM9teBGkQ14rUvfN3Esy op session_01LnDpSm59PuKBYsAhFgUjTr. De oude trig_01RfcpL1mKyjAquMVbctRoGN staat uit (wissen werd geweigerd door de rechtencontrole). Bij de wissel: deze uitzetten of wissen en een nieuwe op je eigen sessie.

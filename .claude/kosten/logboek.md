@@ -435,3 +435,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Sherpa Week Wat ASCEND aanpaste (opus, ca. $8,3, 2 herstelrondes: Warden moet + Pathfinder kop) op main 2eaa81d; Pathfinder Week (sonnet) 44k
 - 2026-11-12, Lookout Missiekaart (tester, sonnet) 36k, 4 min, groen; Pathfinder Missiekaart (sonnet) 48k, 2 moet (tempo nergens anders, Weekplanning bijgewerkt te diep)
 - 2026-11-12, Lookout Route-blok (tester, sonnet) 76k, 8 min, groen; Warden Route-blok (sonnet) 48k, akkoord met 2 moet; Pathfinder Route-blok (sonnet) 35k, 4 mag
+- 2026-11-12, Sherpa Missiekaart (opus, ca. $13,7, 2 herstelrondes: Warden blokkerend regen/lucht, Pathfinder tempo en melding) op main 5f5b528
