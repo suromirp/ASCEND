@@ -155,3 +155,30 @@ async function writeLog(input: LogSessionInput, opts: { batch?: SavedMoment[] } 
     if (plannedId) loggingInFlight.current.delete(plannedId);
   }
 }
+
+// Nee van logSession is niet altijd "niet opgeslagen": een geplande training of horloge-activiteit die al een log
+// had geeft ook nee. Wie bij nee iets weggooit of vastlegt (een concept, een sportkeuze) vraagt dit eerst.
+export class LogNotSaved extends Error {
+  constructor() {
+    super('Opslaan lukte niet.');
+    this.name = 'LogNotSaved';
+  }
+}
+
+export async function logStoredFor(input: Pick<LogSessionInput, 'plannedSessionId' | 'externalId'>): Promise<boolean> {
+  if (!input.plannedSessionId && !input.externalId) return false;
+  try {
+    const logs = await SessionLogsRepo.getAll();
+    return logs.some((l) => (input.plannedSessionId && l.plannedSessionId === input.plannedSessionId) || (input.externalId && l.externalId === input.externalId));
+  } catch {
+    return false;
+  }
+}
+
+// Ja: opgeslagen. Nee: het log stond er al (er is niets dubbel geschreven). Gooit LogNotSaved als er geen log is:
+// dan blijft alles zoals het was en kan de aanroeper opnieuw proberen.
+export async function settleLogOutcome(saved: boolean, input: Pick<LogSessionInput, 'plannedSessionId' | 'externalId'>): Promise<boolean> {
+  if (saved) return true;
+  if (await logStoredFor(input)) return false;
+  throw new LogNotSaved();
+}

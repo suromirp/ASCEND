@@ -23,6 +23,7 @@ import { MachineWeightsForgeSheet } from './MachineWeights';
 import { NoteSheet } from './ExerciseSheets';
 import { FinishSheet } from './FinishSheet';
 import { AwaySheet, DiscardSheet, ExerciseMenuSheet, RirSheet, RowMenuSheet, SpotterSheet, SwapSheet, WorkoutMenuSheet } from './ForgeMenus';
+import { settleLogOutcome } from '../../state/logSession';
 import { forgeLogInput } from './forgeFinishLog';
 import { clock, type Rest } from './forgeWorkoutHelpers';
 import type { ForgeSheetState } from './useForgeSheets';
@@ -222,8 +223,10 @@ export function ForgeSheets(p: ForgeSheetsProps) {
           onSave={async (extra) => {
             // Een geplande sessie die niet meer bestaat (planning vervangen): dan is het een losse training.
             const plannedStill = !!plannedSessionId && plannedSessions.some((s) => s.id === plannedSessionId);
-            const saved = await logSession(forgeLogInput({ template, variant: initialVariant, extra, workout, readOnly, plannedSessionId, plannedStill, gymProfileId: strength.profile.id, forgeLog: p.forgeLog }));
-            // Niet opgeslagen betekent: deze training staat al in je logboek. Het concept is dan klaar.
+            const input = forgeLogInput({ template, variant: initialVariant, extra, workout, readOnly, plannedSessionId, plannedStill, gymProfileId: strength.profile.id, forgeLog: p.forgeLog });
+            // Een echte schrijffout gooit (het concept en het blad blijven, FinishSheet toont de fout); nee is
+            // alleen "staat al in je logboek", en dan is het concept klaar.
+            const saved = await settleLogOutcome(await logSession(input), input);
             p.dropDraft();
             if (saved) onClose();
             return saved;
