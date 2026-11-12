@@ -14,7 +14,7 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - `src/storage/databaseHorizon.ts#syncProgramHorizon` schrijft het plan weg, draait bij elke verandering
 - `src/storage/horizonPlan.ts#computeHorizonPlan` rekent een voorstel uit, `applyHorizonPlanNow` schrijft het
 - `src/storage/databaseSeed.ts#seedIfEmpty` een nieuwe installatie plant niets
-- `src/engine/descentClock.ts#descentAdvice` de afdaalklok: 21 dagen zonder afdaling, of een tocht over 7 tot 14 dagen, geeft een voorstel voor Trap af (`findDescentDay`: een vrije dag, anders na een herstelwandeling of rustige loop); rekent als laatste in `computeAdvice` (`docs/beslissingen/2026-11-11-afdaalklok.md`)
+- `src/engine/extraRun.ts#proposeExtraSession` de extra training; komt er niet bij in een week die al iets verloor en er vol van wordt (`src/engine/fullWeek.ts#fullWithExtra`, één toets voor vol: `weekShape`); `src/engine/descentClock.ts#descentAdvice` de afdaalklok: 21 dagen zonder afdaling, of een tocht over 7 tot 14 dagen, geeft een voorstel voor Trap af (`findDescentDay`: een vrije dag, anders na een herstelwandeling of rustige loop); rekent als laatste in `computeAdvice` (`docs/beslissingen/2026-11-11-afdaalklok.md`)
 
 ## Nooit
 - Een verandering van de planning zonder voorstel met Akkoord; ook doelen, labels, richting, golven, ziek, vakantie, tocht.

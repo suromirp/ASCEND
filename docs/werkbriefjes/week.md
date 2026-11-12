@@ -6,7 +6,7 @@ De Week-tab en wat eraan hangt: waarschuwingen, slepen, ruilen, verplaatsen van 
 - `src/pages/Week.tsx#moveTo` elke verplaatsing (slepen en blad) loopt hierdoor
 - `src/engine/weekDrag.ts#decideMove` schoon meteen toepassen, anders Akkoord via `RescheduleDialog`
 - `src/engine/weekConcerns.ts#weekConcerns` de waarschuwingen ("Let op") en de rijtekst per regel; `weekKept.ts#markKept`: na Benen fris op Vandaag zegt de beenmelding dat jij koos, het voorstel wordt een tekstknop (afgeleid, alleen vandaag, instelling `weekAfterChoice`)
-- `src/engine/weekFixProposal.ts#planWeekFix` een oplossing is een voorstel met Akkoord
+- `src/engine/weekFixProposal.ts#planWeekFix` een oplossing is een voorstel met Akkoord; `src/engine/fullWeek.ts#fullWeekAdvice` een volle week na een weggevallen dag (WEEK-FULL): één voorstel welke training vervalt, eerst de extra van ASCEND, nooit test, wedstrijd, sleuteltraining of iets van jou; per week één id (`fullWeekId`), na Liever niet de gewone regel `fullWeekLine` in `WeekNotice` (`plain`); wijkt voor elk ander voorstel uit `computeAdvice` in die week; `extra` als rol zegt niet wie hem neerzette (ook raceblok en golfweek), gedaan vraag je aan `adviceShared.ts#isDone`; Begrepen slaat ook `accepted` op, dus gevolgd lees je uit `planChangeLog` (`fullWeekFollowed`) (`docs/beslissingen/2026-11-12-week-na-gemiste-dagen.md`)
 - `src/engine/weekSwap.ts#checkSwap` ruilen van twee trainingen, `src/storage/weekSwap.ts#writeSwap` schrijft
 - `src/engine/catchUp.ts#catchUpRows` gemiste training naar later: nieuwe rij plus overgeslagen oude
 - `src/storage/catchUpApply.ts#writeCatchUp` schrijft die twee rijen

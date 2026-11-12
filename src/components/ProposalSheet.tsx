@@ -180,7 +180,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>{o.label}</span>
-                          {i === 0 && <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>de kleinste verandering</span>}
+                          {i === 0 && <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>{advice.firstOptionNote ?? 'de kleinste verandering'}</span>}
                         </span>
                         {optionFreshness[i] && (
                           <span className="shrink-0 text-right text-xs leading-tight tabular-nums" style={{ color: optionFreshness[i]!.status === 'fris' ? 'var(--color-sage)' : 'var(--color-warning)' }}>

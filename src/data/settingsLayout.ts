@@ -137,7 +137,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('meerdere', 'zware-dingen'),
   ...inSheet('ambitie', 'lange-loop'),
   ...inSheet('bundel-slepen', 'slepen-week', 'loslaten-training'),
-  ...inSheet('bundel-weekmelding', 'weekvoorstel', 'week-na-keuze'),
+  ...inSheet('bundel-weekmelding', 'weekvoorstel', 'week-na-keuze', 'week-vol'),
   ...inSheet('bundel-testloop', 'twijfeltest', 'test-stilstaan', 'nieuwe-test', 'test-rust'),
   ...inSheet('bundel-niet-doorgegaan', 'niet-doorgegaan', 'niet-doorgegaan-dagen', 'log-koppelen'),
   ...inSheet('bundel-sporten-tellen', 'sport-vragen', 'sport-zwaarte', 'sport-rust'),

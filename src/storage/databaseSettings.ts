@@ -294,6 +294,10 @@ export interface AppSettings {
   // dan stelt ASCEND voor hem terug te zetten, met Akkoord (engine/restDayBack.ts). Absent = on.
   // Optional and additive.
   restDayBack?: boolean;
+  // "Vragen als je week te vol wordt": viel er in je week een dag weg en is de rest te vol, dan vraagt ASCEND
+  // welke training mag vervallen, met een advies (engine/fullWeek.ts, regel WEEK-FULL). Uit: geen vraag, Week
+  // zegt het in een gewone regel. Absent = on. Optional and additive.
+  fullWeekAsk?: boolean;
   // "Training die niet doorging" (engine/missedTraining.ts, docs/beslissingen/2026-11-01-niet-doorgegaan.md):
   // wat ASCEND doet met een training die voorbij is zonder log. 'ask' (absent) vraagt het één keer op
   // Vandaag, 'auto' zet hem zelf op overgeslagen met een melding en Ongedaan maken, 'off' doet niets.

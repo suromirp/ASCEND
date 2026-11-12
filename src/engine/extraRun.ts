@@ -46,6 +46,7 @@ import { templateSport } from './sports';
 import { isLeaveBlockedDay } from './leave';
 import type { LeavePeriod } from '../models/leave';
 import { idHasRole } from './templateRoles';
+import { fullWithExtra } from './fullWeek';
 
 const LOOKBACK_WEEKS = 4;
 const MIN_WEEKS = 2;
@@ -271,6 +272,9 @@ export function proposeExtraSession(inputs: ExtraAdviceInputs): ExtraProposal | 
     if (!template) continue;
     const date = extraRunDay(weekStart, week, byId, { today, anchor, restDay, template, leave: inputs.leave });
     if (!date) continue;
+    // Een week die al een training verloor en waar de rest vol is of er vol van wordt: geen extra erbij
+    // (engine/fullWeek.ts, docs/beslissingen/2026-11-12-week-na-gemiste-dagen.md).
+    if (fullWithExtra({ today, sessions: plannedSessions, logs: inputs.logs, templates, leave: inputs.leave, keyFocus: inputs.keyFocus, illnessEpisodes: inputs.illnessEpisodes, check: { restDay, program } }, { templateId: template.id, date })) continue;
     return { id, weekStart, date, choice, earnedReason: verdict.reason };
   }
   return undefined;

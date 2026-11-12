@@ -61,6 +61,7 @@ const everything: AppSettings = {
   askDoubtTest: false,
   newTestOnStops: false,
   restDayBack: false,
+  fullWeekAsk: false,
   missedTraining: 'off',
   missedTrainingDays: 3,
   cardsAboveMission: 'all',

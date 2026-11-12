@@ -847,6 +847,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('sportRust', resolveSportCounting(s.sportCounting).rest) };
     case 'rustdag-terug':
       return { checked: s.restDayBack !== false };
+    case 'week-vol':
+      return { checked: s.fullWeekAsk !== false };
     case 'trillen':
       return { checked: s.haptics !== false };
     case 'locatie':
