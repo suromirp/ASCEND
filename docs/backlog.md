@@ -76,6 +76,8 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 
 ## Pas live
 
+Live op 12 november avond, laat: StairMaster op het horloge (eigenaar ja): kies je StairMaster bij een looptraining, dan krijgt je horloge een wandelworkout (soort Walk) en vinkt de wandeling de training af. Nog na te gaan door de eigenaar: staat de workout bij Wandelen op het horloge, en welke hartslagzones heeft Wandelen in intervals.icu. Vervolg (mag): een ronde overslaan als er al een nieuwere wacht; bulk-POST met één afwijkende soort; een gewone wandeling van gelijke duur op die dag vinkt ook af; pendingProposals laten wachten op de keuzes.
+
 Live op 12 november avond, later: Andere plek vindt een top of natuurgebied (Photon als tweede bron, ook bij minder dan drie treffers van Open-Meteo; een echte zoekvraag in de browser naar Photon is nog niet gezien, alleen curl).
 
 Live op 12 november avond: Hoogtemeters stap 1 (één teller voor plan en log, gladmaken 30 s, merk op het log, vlak 10 m per km voor nieuwe logs), Opslaan dat mislukt (Forge-concept en sportkeuze blijven tot het log er staat, `settleLogOutcome`) en Weer op de gekozen plek (de Briefing toont het weer van een gekozen plek verder dan 10 km, instelling Weer van de gekozen plek).
