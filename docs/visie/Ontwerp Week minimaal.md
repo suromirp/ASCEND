@@ -165,7 +165,86 @@ Testen:
 - Vast: `npx vitest run src/engine/week src/engine/leaveWeek src/engine/catchUp src/engine/replanWeek src/storage/week src/storage/catchUp src/engine/changeLog src/components/sheetDrag`, daarna `npm run kaart:vergelijk` met elk verschil verklaard.
 - Lookout op 360 en 390 px met vertraagde processor: zonder kaart alle zeven dagen boven de vouw, hoogstens één gevulde mint knop, elke amber plek een waarschuwing, hoogstens drie kopjes in beeld, geen tikdoel onder 44 px, en slepen, ruilen en inhalen werken zoals ervoor.
 
+## 7. Het blad van een training in Week
+
+Toegevoegd op verzoek van de coördinator, na een tweede afdruk van de eigenaar (Rustige duurloop, donderdag): een lang blad met zeven koppen in hoofdletters, drie vakjes, weer, route, kleding, uitleg en onderaan alleen Sluiten. De eigenaar: "Hier kun je echt helemaal niks mee."
+
+### Wat ik vond
+
+Extra gelezen: `src/components/SessionActionSheet.tsx`, `src/engine/sessionActions.ts`, `src/engine/guideMenu.ts` en het midden van `src/components/TrainingGuideSheet.tsx`. Niet gelezen: `TrainingBriefing.tsx`, `SessionHeader`, `MoveSuggestions`, `engine/briefing.ts`.
+
+- Het blad op de afdruk is `TrainingGuideSheet`, het uitlegblad "Waarom deze training". De koppen Waarom, Zo voelt elk tempo en Wat het vraagt van je lichaam, de groepen uit `guideMenu` en de tekstknop Sluiten staan alleen daar.
+- In de code die ik las opent een tik op een training in Week iets anders: `SessionActionSheet`, met één hoofdknop en de rijen Ruilen, Briefing, Vandaag al doen en Overslaan. Het uitlegblad opent daar pas achter de i in de kop. Hoe de eigenaar met één tik op het uitlegblad kwam kan ik uit de code niet opmaken; mogelijk tikte hij de i, of zijn versie loopt anders. De bouwer speelt dit eerst na.
+- Het uitlegblad opent op vijf plekken met dezelfde inhoud: de missiekaart, de Briefing, dit blad in Week, het oude trainingsscherm en Forge.
+- "Week 3 van 18" komt uit de kop van de training (de fase). "Week 3 van 4" is de regel onder de rij "Deze fase, week voor week" en telt de weken in `plan.weeks`. Twee tellingen onder één blad. Wat `plan.weeks` precies telt heb ik niet nagelopen.
+- De twee balkjes bij Wat het vraagt van je lichaam zijn mint (`--color-action`), terwijl het geen actie en geen voortgang is.
+
+### Wat de bladen zijn
+
+Er zijn straks precies drie dingen voor één training, elk met één taak, volgens regel 8:
+
+- Het blad in Week: deze training in je week. Vooruitkijken en schuiven. Hier beslis je wanneer.
+- De Briefing: het ene scherm vooraf. Wat je doet, waar, en wat je regelt. Hier bereid je voor.
+- Waarom deze training: het blad achter de i van de Briefing. Alleen de reden en de achtergrond. Hier lees je.
+
+Het blad in Week legt de training niet uit en de Briefing verplaatst niets.
+
+### Het blad in Week, van boven naar onder
+
+Voor de Rustige duurloop van donderdag, bekeken op dinsdag:
+
+- De kop (`SheetHeader`): het kopje "Do 12 november", de naam Rustige duurloop, en één regel met feiten: "Hardlopen, rustig · 50 min". Geen i meer bij een training te voet; de uitleg bereik je via de Briefing. Zo is er één weg naar de uitleg in plaats van twee.
+- Eén gedempte regel, alleen als er iets te zeggen valt: waarom hij op deze dag staat, in één zin (`placeReason`). De uitklapknop "Waarom staat dit hier?" vervalt; is de zin te lang voor één regel, dan wordt het een rij "Waarom op donderdag" die een weergave in hetzelfde blad opent. De zin over een toegestaan paar en "Kan ook op de fiets" verhuizen naar de Briefing of het uitlegblad; ze gaan niet over schuiven.
+- De hoofdknop, de enige gevulde mint knop: wat `sessionSheetActions` voor deze dag kiest. Voor een dag die nog komt is dat Verplaatsen. Op de dag zelf is het Briefing (als je horloge afvinkt) of Gedaan. Voor een overgeslagen training Toch doen.
+- De lijst Andere keuzes (`SheetRows`), in de volgorde van de engine: Ruilen, Briefing met eronder de regel uit `briefingRowLine`, Vandaag al doen, Overslaan. Elke rij opent zijn eigen stap of scherm, zoals nu.
+
+Alles daaronder (opwarmen, de versie-keuze, de horlogeregel) blijft zoals het is en alleen op de dag zelf. Dit blad is al kort; het wordt vooral strenger: geen i, geen uitklapper, geen zinnen die uitleg zijn.
+
+Standen:
+
+- Gedaan: de kop met "Gedaan · 48 min", de rij Training bekijken en Ongedaan maken, zoals nu.
+- Voorbij en niet gedaan: de hoofdknop Gedaan opent het blad Hoe ging het?; Verplaatsen is de inhaal, zoals nu.
+- Rustdag: de bestaande korte vorm.
+- De oude rij van een inhaal: alleen het feit waar hij nu staat, geen acties, zoals nu.
+- Niets laadt. Een verplaatsing of ruil die mislukt geeft de bestaande melding.
+
+### Wat de Briefing opent
+
+- In Week: de rij Briefing in dit blad voor een dag die nog komt, en de hoofdknop op de dag zelf als je horloge afvinkt. Dat is wat `sessionSheetActions` nu al doet voor een training buiten te voet.
+- Op Vandaag: de knop op de missiekaart.
+- Voor wat nog geen Briefing heeft (kracht, fietsen, binnen) blijft de rij "Hoe je het doet" naar het oude scherm, tot die trainingen hun eigen ontwerp krijgen. Dat valt buiten dit voorstel, net als in het ontwerp van het trainingsscherm.
+
+### Waarom deze training, het blad achter de i
+
+Dit blad houdt alleen wat nergens anders staat. Van boven naar onder:
+
+- De kop: het kopje met de soort ("Hardlopen, rustig"), de naam, en het kruis. Dit is het enige kopje in hoofdletters.
+- De reden, één alinea in gewone inkt, zonder kop erboven: de titel van het blad zegt al dat dit het waarom is.
+- Eén regel "Vraagt van je lichaam" in de rijvorm: links het vaste woord gedempt, rechts "Benen licht · conditie gemiddeld". Geen balkjes.
+- Eén lijst zonder kopjes: Te zwaar? Zo pas je het aan; De stappen (alleen bij een training met stappen); Deze fase, week voor week; Achtergrond en bronnen. De rij over de fase krijgt geen eigen weektelling eronder; het blad erachter markeert de huidige week.
+
+Wat eruit gaat, en waar het blijft:
+
+- De drie vakjes (50 min, Zone 2, Praten kan), de zin onder de titel en "Week 3 van 18": staan in de hartkaart en de kop van de Briefing.
+- Zo voelt elk tempo: wordt het blad Zones achter de zonebalk in de Briefing.
+- De weerregel, Route voorstellen en de drie regels kleding: staan in de Briefing (de rij Weer en de kaart met je lus).
+- Waar en waarmee: de keuze Waar train je staat in de Briefing; de pagina met plekken open je daar.
+- De koppen Waarom, Wat je doet, Waar en waarmee en Achtergrond, en de tekstknop Sluiten. Het kruis en de terugknop sluiten.
+
+Geteld tegen de afdruk: zeven koppen in hoofdletters naar één, zone 2 en praten van drie keer naar nul (ze wonen in de Briefing), twee weektellingen naar geen, en het blad past op één scherm.
+
+Wat ik bewust niet doe: geen knoppen om te verplaatsen in het uitlegblad, geen uitleg in het blad van Week, geen derde scherm, en geen wijziging aan wat `sessionSheetActions` kiest.
+
+### Voor de bouwer
+
+- Spoor 7: het blad in Week strenger (`SessionActionSheet.tsx`, alleen weergave). De i vervalt alleen waar een Briefing is; anders blijft hij.
+- Spoor 8: het uitlegblad korter (`TrainingGuideSheet.tsx` en `engine/guideMenu.ts`). Dit blad opent op vijf plekken; de wijziging is dus zichtbaar op Vandaag, in de Briefing, in Week, in het oude scherm en in Forge. Voor kracht en Forge, waar nog geen Briefing is, mogen de delen die daar nergens anders staan pas weg als ze een ander thuis hebben. Doe dit spoor na of samen met de sporen van de Briefing uit `docs/visie/Ontwerp trainingsscherm minimaal.md`, anders verdwijnt iets voordat het zijn nieuwe plek heeft.
+- Niet bewegen: `engine/sessionActions.ts` (welke knop en welke rijen), de stappen Verplaatsen, Ruilen en Gedaan, `askAlways` bij Verplaatsen, het inhalen, en alles wat een log schrijft.
+- Testen: het blad voor een dag die komt, vandaag met en zonder horloge dat afvinkt, voorbij, overgeslagen, gedaan, rustdag, de oude rij van een inhaal, kracht in MacroFactor en kracht in ASCEND. Het uitlegblad vanaf alle vijf de plekken. `npx vitest run src/engine/sessionActions src/engine/guideMenu src/components/sheetDrag` (welke daarvan bestaan heb ik niet nagekeken) en de tekstkaart.
+
 ## Samenvatting
+
+Het blad van een training in Week blijft het korte blad om te schuiven, zonder i en zonder uitleg; de Briefing opent via de rij of de hoofdknop; het lange uitlegblad van de afdruk wordt een kort blad Waarom deze training achter de i van de Briefing.
 
 Week wordt de lucht, hoogstens één kaart als er iets moet, de zeven dagen, en één lijst met rijen. De ring, de tijd en de bergkam gaan naar Je week tot nu en Stand. De twee mint knoppen, de tekstknop, de kaart met aanpassingen en de kaart met vrije dagen worden rijen in dezelfde vorm. Mint is alleen nog "Bekijk voorstel" en het vinkje. In de dagrij verdwijnen de gekleurde woorden en staat rechts één ding. Wat ASCEND aanpaste krijgt één thuis in Week, één venster en regels die alleen zeggen wat de app echt veranderde. Het verschil tussen 3 en 4 komt uit twee vensters (14 en 7 dagen) op dezelfde functie, maar verklaart de afdruk niet volledig; dat moet eerst nagespeeld worden. Geen nieuwe kleur, token of instelling, en slepen, inhalen, voorstellen, logs en de planning bewegen niet.
 

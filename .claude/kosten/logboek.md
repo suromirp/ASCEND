@@ -406,3 +406,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12 Cartographer Trainingsscherm (ontwerper, fable): 156k tokens, 6 minuten; ontwerp plus acht regels voor de hele app.
 - 2026-11-12 Cartographer Weekterugblik (ontwerper, fable): ontwerp en twee vragen.
 - 2026-11-12 Lookout Andere plek (tester, sonnet): 98k tokens, 10 minuten; Lookout Zone 2 (sonnet): 56k; Pathfinder Zone 2 (sonnet): 29k.
+- 2026-11-12 Cartographer Week (ontwerper, fable): 135k tokens plus aanvulling trainingsblad.
