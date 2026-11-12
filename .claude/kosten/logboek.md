@@ -432,4 +432,14 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, coördinator 12 november: ca. $23 tot de vroege wissel om 10:40 UTC (500k context)
 - 2026-11-12, Sherpa Week aanpassingen (opus); Warden Week aanpassingen (reviewer, sonnet) 37k, 3 min, akkoord zonder blokkerende punten, 2 beter overgenomen
 - 2026-11-12, Sherpa Dubbel log (fable, ca. $3,2, 0 herstelrondes van de bouwer; twee kleine punten door de coördinator) op main ec1f56e; Warden Dubbel log (reviewer, fable) 59k, 4 min, akkoord; Warden Week (sonnet) 53k, akkoord met 1 moet; Lookout Week (tester, sonnet) 67k, 8 min, groen; Warden Missiekaart (sonnet) 62k, niet akkoord (regen en lucht weg bij prima weer)
+- 2026-11-12, Sherpa Week Wat ASCEND aanpaste (opus, ca. $8,3, 2 herstelrondes: Warden moet + Pathfinder kop) op main 2eaa81d; Pathfinder Week (sonnet) 44k
+- 2026-11-12, Lookout Missiekaart (tester, sonnet) 36k, 4 min, groen; Pathfinder Missiekaart (sonnet) 48k, 2 moet (tempo nergens anders, Weekplanning bijgewerkt te diep)
+- 2026-11-12, Lookout Route-blok (tester, sonnet) 76k, 8 min, groen; Warden Route-blok (sonnet) 48k, akkoord met 2 moet; Pathfinder Route-blok (sonnet) 35k, 4 mag
+- 2026-11-12, Sherpa Missiekaart (opus, ca. $13,7, 2 herstelrondes: Warden blokkerend regen/lucht, Pathfinder tempo en melding) op main 5f5b528
+- 2026-11-12, Warden Hoogtemeters (reviewer, fable) 98k, 13 min, akkoord met 4 moet (runComparison, grenzen onder Open, test composeSimple, valkuil)
+- 2026-11-12, Sherpa Route-blok (opus, ca. $10,7, 1 herstelronde) op main 7fa66cc
+- 2026-11-12, Warden Briefing (reviewer, fable) 109k, 6 min, akkoord met 3 moet (volgorde inkorting, getallen in besluit, horloge-zin); Pathfinder Briefing (sonnet) 47k, geen moet
+- 2026-11-12, Lookout Week 2-4 (tester, sonnet) 50k, 10 min, groen maar standen zonder Let op/voorstel; Warden Week 2-4 (sonnet) 70k, akkoord; Pathfinder Week 2-4 (sonnet) 37k, 2 moet
 - 2026-11-12, Sherpa Briefing per manier (opus); Warden Briefing (reviewer, sonnet) 65k, 9 min, niet akkoord (invariant tijdlijn leeg, al hersteld), 3 belangrijk overgenomen (kop TRAP, horloge bij status uit, Geen afdaling blijft naast tempo)
+- 2026-11-12, Sherpa Briefing per manier (opus, ca. $14,6, 1 herstelronde) op main 540d0de; Lookout Briefing (tester, sonnet) 76k, groen; Sherpa Week 2-4 (opus, ca. $13,4, 1 herstelronde) op main 2eda701
+- 2026-11-12, coördinator 12 november (2): ca. $32 tot de wissel rond 16:10 UTC (ongeveer 560k context)
