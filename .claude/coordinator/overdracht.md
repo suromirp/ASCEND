@@ -11,7 +11,7 @@ Bijgewerkt: 12 november 2026, rond 03:40, door de coördinator van 11 op 12 nove
 
 - Live vannacht: Tempo bij zone 2 (edfa8a9), Week na gemiste dagen (0e73e48, nagespeeld met de back-up), Je dag (4120e72). Pushmelding alleen voor zone 2 gestuurd; de deploys van 0e73e48 en 4120e72 nog nakijken en dan één melding: "Je dag en de vraag bij een volle week zijn live."
 - Live: Andere plek (1af978e, door coördinator 12 november gemerged na Pathfinder akkoord en eigen blik op de afdrukken van Lookout; Lookout zelf brak af door de limiet van vijf uur van Sonnet). Sessie gearchiveerd.
-- Lopend (melden zich bij session_01LnDpSkUxMFtEBmNMxMAKcN): Sherpa Je week tot nu (session_01LnDpSmKGD4U7U1iny68EUg, branch claude/je-week-tot-nu) en Sherpa Stand minimaal (session_01LnDpSiZoywJ93B4LymKzmy, branch claude/stand-minimaal). Na hun melding: Lookout (afdrukken in eigen scratchpad), Pathfinder, eigen blik, squash naar main.
+- Lopend (melden zich bij session_01LnDpSkUxMFtEBmNMxMAKcN): Sherpa Je week tot nu (session_01LnDpSmKGD4U7U1iny68EUg, branch claude/je-week-tot-nu) , Sherpa Stand minimaal (session_01LnDpSiZoywJ93B4LymKzmy, branch claude/stand-minimaal) en Sherpa Trainingsscherm 1-4 (session_01LnDpSikvyNKh8gCEPQwkUT, branch claude/trainingsscherm-1-4). Na hun melding: Lookout (afdrukken in eigen scratchpad), Pathfinder, eigen blik, squash naar main.
 - Limiet: om 03:00 UTC liep Sonnet tegen de limiet van vijf uur aan; bij een afgebroken Lookout eerst kijken of zijn afdrukken er al staan.
 - Back-up van de eigenaar van 12 november 02:11: scratchpad van de vorige coördinator, niet bereikbaar voor jou. Vraag een nieuwe als je moet naspelen.
 
