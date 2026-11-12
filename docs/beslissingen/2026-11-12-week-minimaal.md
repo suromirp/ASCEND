@@ -29,3 +29,13 @@ De rij Wat ASCEND aanpaste in `2026-11-12-je-week-tot-nu.md`.
 ## Terugdraaien
 
 Alleen weergave en de telling van de lijst; voorstellen, Akkoord, slepen en historie blijven gelijk.
+
+## Aanvulling: keuzes van de bouwer bij spoor 1 en 5 (12 november)
+
+- Eén functie, één venster: `engine/changeLog.ts#weekAdjustments` met `ADJUST_WINDOW_DAYS` (14 dagen, gerekend op de lokale dag in Europe/Amsterdam). De rij, het blad en het woord "aangepast" op de dagrij lezen dezelfde uitkomst (`adjustedIdsOf`). Het venster telt vanaf het moment van besluiten tot vandaag; in een week van langer geleden staat dus geen rij meer, wat daar ooit veranderde is dan ook niet meer te bewijzen. De oude `weekChanges` en `adjustedSessionReasons` worden door het scherm niet meer gelezen.
+- Zelf weg en weer terug naar de dag waar ASCEND hem zette: geen regel. Jouw slot staat op de rij, dus het log bewijst niet meer dat ASCEND hem daar neerzette. Hetzelfde voor elke rij met jouw slot (ook lichter of andere invulling) en voor een rij met het slot van een ander voorstel.
+- Geen regel voor: Week opnieuw plannen (jij vroeg erom), de eerste opbouw van je plan bij een nieuw doel (`goal_created`, er stond nog niets), en de inhoud die de weekplanning elke week invult (`replace` en `reduce` van `weekly_prescription_computed`; anders stond "aangepast" op elke komende week). Verplaatsen, erbij en vervallen door de weekplanning tellen wel.
+- Per saldo niets is geen regel: door ASCEND heen en terug naar dezelfde dag, eraf en weer terug, erbij en weer weg, binnen het venster.
+- Een rij die Week niet toont krijgt geen regel (de oude rij van een inhaal, een overgeslagen rustdag, wat een vakantie liet vallen), zodat het getal gelijk is aan de dagrijen met het woord. Een gedane training met een regel toont het woord ook.
+- In het blad: "na jouw Akkoord" alleen als het voorstel meer dan 10 seconden na het uitrekenen werd vastgelegd, "vanzelf met een melding" alleen voor de weekcontrole, de weekplanning en een krachtblok die de app zelf vastlegde (hetzelfde moment van uitrekenen en vastleggen, of zonder wijzigingen); een weekcontrole uit Let op kan ook jouw snelle Akkoord zijn. Anders alleen de datum.
+- De kop van Week: het grote getal ("Week 1") blijft, de kleine regel eronder zegt "Basisfase van 4 weken" (`weekPageHeading`). Week wijkt hier bewust af van Vandaag en Stand ("Basisfase, week 1 van 4"): het weeknummer staat al groot, dus nog eens "week 1" was dubbel (Pathfinder). In een golf of een vaste week blijft de oude regel. De regel staat onder het getal in plaats van ernaast, zodat hij op 360 tot 412 px niet midden in breekt.

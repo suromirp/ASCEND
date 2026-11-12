@@ -1,7 +1,7 @@
 // Maakt de nagemaakte standen voor de tekstkaart (docs/app-kaart/README.md) en laat elk één planningsronde
 // draaien op de vaste klok van de kaart, zodat een start daarna niets meer bijwerkt.
 //   node scripts/app-kaart/maak-standen.mjs            maakt alle standen opnieuw
-//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, vaardigheid, algemeen, voorstel)
+//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, vaardigheid, algemeen, voorstel, aangepast)
 // Alles is nagemaakt: de basis is state-kracht.json, de rest zijn kleine wijzigingen met verzonnen getallen.
 //
 // Waarom "settle": bij de eerste start na het laden van een stand vindt de planningsronde nog iets te
@@ -147,6 +147,23 @@ function metVoorstel(state) {
   for (const r of winkel(state, 'programs').records) if (r.value) r.value.startDate = '2026-09-28';
 }
 
+// Aangepast door ASCEND (docs/beslissingen/2026-11-12-week-minimaal.md): twee nagemaakte, aangenomen voorstellen in
+// deze week. Een voorstel van de weekcontrole zette de Lange duurloop van zaterdag naar zondag (na een snel Akkoord, dus het blad zegt alleen de datum); een voorstel na een gemiste
+// training maakte Benen A lichter, na jouw Akkoord. De rijen dragen het slot van hun voorstel, zoals na Akkoord.
+function metAanpassingen(state) {
+  const rijen = winkel(state, 'plannedSessions').records;
+  const rij = (id) => rijen.find((r) => r.value?.id === id).value;
+  const weg = { id: 'planchange_kaart_weg', trigger: 'plan_check', issue: 'Twee zware dagen achter elkaar', alternatives: [], consequences: '', explanation: '',
+    createdAt: '2026-10-29T19:00:00.000Z', resolvedAt: '2026-10-29T19:00:02.000Z', resolution: 'accepted',
+    changes: [{ plannedSessionId: 'planned_mvsb9yots96v8v5', action: 'move', fromDate: '2026-10-31', toDate: '2026-11-01', reason: 'Zo zit er een dag tussen je testloop en je lange duurloop.' }] };
+  const licht = { id: 'planchange_kaart_licht', trigger: 'session_skipped', issue: 'Benen A lichter', alternatives: [], consequences: '', explanation: '',
+    createdAt: '2026-10-29T07:00:00.000Z', resolvedAt: '2026-10-29T07:02:00.000Z', resolution: 'accepted',
+    changes: [{ plannedSessionId: 'planned_mvsb9yotvrxtjp6', action: 'reduce', reason: 'Je sliep twee nachten kort; een lichtere krachttraining past beter.' }] };
+  winkel(state, 'planChangeProposals').records.push({ value: weg }, { value: licht });
+  Object.assign(rij('planned_mvsb9yots96v8v5'), { status: 'moved', movedFromDate: '2026-10-31', lock: { by: 'proposal', proposalId: weg.id, at: weg.resolvedAt } });
+  Object.assign(rij('planned_mvsb9yotvrxtjp6'), { lock: { by: 'proposal', proposalId: licht.id, at: licht.resolvedAt } });
+}
+
 export const STANDEN = {
   kracht: () => {},
   horloge: metHorloge,
@@ -156,6 +173,7 @@ export const STANDEN = {
   vaardigheid: metVaardigheid,
   algemeen: metAlgemeen,
   voorstel: metVoorstel,
+  aangepast: metAanpassingen,
 };
 
 // --- één planningsronde op de vaste klok -------------------------------------------------------------

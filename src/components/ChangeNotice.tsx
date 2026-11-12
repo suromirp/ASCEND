@@ -47,7 +47,7 @@ export function ChangeNotice() {
 
   if (!recentChange || view === 'gone') return null;
 
-  const summary = recentChange.summary ?? (recentChange.lines.length === 1 ? recentChange.lines[0] : `${recentChange.lines.length} sessies aangepast`);
+  const summary = recentChange.summary ?? (recentChange.lines.length === 1 ? recentChange.lines[0] : `${recentChange.lines.length} trainingen aangepast`);
 
   async function handleUndo() {
     setUndoing(true);

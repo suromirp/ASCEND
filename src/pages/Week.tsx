@@ -7,7 +7,7 @@ import { validWeekStart } from '../utils/pageMemory';
 import { useBackToClose } from '../utils/useBackToClose';
 import { scrollMainToTop } from '../utils/scrollMain';
 import { buildWeekReview } from '../engine/weekReview';
-import { weekHeading } from '../engine/weekLabel';
+import { weekPageHeading } from '../engine/weekLabel';
 import { dayLoads, weekProgress } from '../engine/weekProfile';
 import { plannedByIdOf } from '../engine/logDay';
 import { leftOutOfCount, looseLogsOfWeek, weekLogsOf, weekTime } from '../engine/weekLogs';
@@ -24,9 +24,9 @@ import { WeekNotice } from '../components/WeekNotice';
 import { WeekReplanButton } from '../components/WeekReplanButton';
 import { rowNotes } from '../engine/weekConcerns';
 import { allowedPairs } from '../engine/allowedPair';
-import { ChangeLogCard } from '../components/ChangeLogCard';
+import { WeekAdjustmentsRow } from '../components/WeekAdjustments';
 import { LeavePeriodsCard } from '../components/LeavePeriods';
-import { adjustedSessionReasons } from '../engine/changeLog';
+import { adjustedIdsOf, weekAdjustments } from '../engine/changeLog';
 import { placeReason } from '../engine/placeReason';
 import { patternDays } from '../engine/planPass';
 import { SeasonOverview } from '../components/SeasonOverview';
@@ -60,7 +60,6 @@ const MOVE_FAILED = 'Kijk in je week wat er nu staat.';
 export function WeekPage() {
   const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt, proposeSwap, swapOptionsFor, showFailure } = useAppData();
   const keyFocus = useKeyFocus();
-  const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   // The chosen week and the year overview belong to this step in the history:
   // to a training and back, the page is as you left it.
   const [weekStart, setWeekStart] = usePageState('weekStart', mondayOfWeek(todayISO()), (v) => validWeekStart(v, todayISO()));
@@ -132,7 +131,10 @@ export function WeekPage() {
   const weekKm = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.distanceKm ?? 0), 0);
   const weekGain = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.elevationGainM ?? 0), 0);
   const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings), keyFocus }) : null;
-  const heading = weekHeading(position);
+  const heading = weekPageHeading(position);
+  // Aangepast door ASCEND: één uitkomst voor de rij, het blad en het woord op de dagrij (engine/changeLog.ts).
+  const adjustments = useMemo(() => weekAdjustments(planChangeLog, plannedSessions, templates, weekStart, today), [planChangeLog, plannedSessions, templates, weekStart, today]);
+  const adjustedIds = useMemo(() => adjustedIdsOf(adjustments), [adjustments]);
 
   // A completed session is still selectable — SessionActionSheet shows an
   // "ongedaan maken" (undo) view for it instead of the start/move/skip one.
@@ -246,7 +248,8 @@ export function WeekPage() {
             ) : (
               <h1 className="font-display text-[32px] leading-tight" style={{ color: 'var(--color-ink)' }}>
                 {heading.title}{heading.number !== undefined && <> <Num>{heading.number}</Num></>}
-                {heading.line && <>{' '}<span className="ml-2 font-sans text-sm" style={{ color: 'var(--color-ink-dim)' }}>{heading.line}</span></>}
+                {/* De kleine regel met de fase voorop staat onder het grote getal, zodat hij nooit midden in breekt. */}
+                {heading.line && <>{' '}<span className="block font-sans text-sm" style={{ color: 'var(--color-ink-dim)' }}>{heading.line}</span></>}
               </h1>
             )}
           </div>
@@ -358,6 +361,7 @@ export function WeekPage() {
             dragEnabled={dragHandles}
             onOpenPeriod={setOpenPeriodId}
           />
+          <WeekAdjustmentsRow adjustments={adjustments} weekStart={weekStart} current={weekStart === mondayOfWeek(today)} />
         </>
       )}
 
@@ -396,7 +400,6 @@ export function WeekPage() {
         <LogDetailSheet log={openLog} templateName={templateById.get(openLog.templateId)?.name ?? openLog.templateId} onClose={() => setOpenLog(null)} />
       )}
 
-      {!monthView && <ChangeLogCard weekStart={weekStart} />}
       {!monthView && <LeavePeriodsCard openId={openPeriodId} onOpenHandled={() => setOpenPeriodId(null)} />}
 
       {selected && templateById.get(selected.templateId) && (
