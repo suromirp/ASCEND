@@ -1,6 +1,6 @@
 // Andere plek: de pure regels (besluit 2026-11-12-andere-plek.md). Alle namen en punten zijn nagemaakt.
 import { describe, expect, it } from 'vitest';
-import { PLACE_NONE_LINE, PLACE_OFFLINE_LINE, PLACE_SHORT_LINE, PLACE_TIMEOUT_LINE, SAME_PLACE_M, clipName, placeLabel, placeQuery, placeSearchLine, placeToSave, placeWhere, savedAt, type FoundPlace } from './placeSearch';
+import { PLACE_NONE_LINE, PLACE_OFFLINE_LINE, PLACE_SHORT_LINE, PLACE_TIMEOUT_LINE, SAME_PLACE_M, clipName, mergeFound, placeLabel, placeQuery, placeSearchLine, placeToSave, placeWhere, savedAt, searchTerm, PLACE_PRIVACY_LINE, SAME_FOUND_M, type FoundPlace } from './placeSearch';
 import { savePlace, readPlaceStore, type PlacesMeta } from '../storage/places';
 import { metersBetween } from './routeGeometry';
 import type { Place } from '../models/place';
@@ -80,5 +80,42 @@ describe('bewaren zonder dubbel', () => {
     }
     const read = await readPlaceStore(meta);
     expect(read.places.map((p) => p.id)).toEqual(['place_a']);
+  });
+});
+
+describe('tweede bron: adres met komma, soort en dubbelen', () => {
+  const top: FoundPlace = { name: 'Verzonnen Kop', lat: 47.1, lon: 9.5, kind: 'peak', region: 'Fantasieland-Noord', country: 'Fantasia' };
+  it('van een adres gaat alleen het deel voor de eerste komma mee', () => {
+    expect(searchTerm('Verzonnen Kop, Bergweg 1, 1234 AB Fopdorp')).toBe('Verzonnen Kop');
+    expect(searchTerm('  Fopdorp  ')).toBe('Fopdorp');
+    expect(searchTerm(', Bergweg 1')).toBe('');
+    expect(placeQuery(', Bergweg 1')).toBe('empty');
+    expect(placeQuery('V, Bergweg 1')).toBe('short');
+    expect(placeQuery('Ve, Bergweg 1')).toBe('ok');
+  });
+  it('de regel onder een treffer: soort, regio, land, wat er is', () => {
+    expect(placeWhere(top)).toBe('Top, Fantasieland-Noord, Fantasia');
+    expect(placeWhere({ kind: 'nature', country: 'Fantasia' })).toBe('Natuurgebied, Fantasia');
+    expect(placeWhere({ kind: 'place' })).toBe('Plaats');
+    expect(placeWhere({ region: 'Gelderland', country: 'Nederland' })).toBe('Gelderland, Nederland');
+  });
+  it('dezelfde plek uit beide bronnen staat er één keer, de eerste bron wint', () => {
+    const first: FoundPlace = { name: 'Verzonnen Kop', lat: 47.1, lon: 9.5, country: 'Fantasia' };
+    const near: FoundPlace = { ...top, lat: 47.1015 };
+    expect(metersBetween(first, near)).toBeLessThan(SAME_FOUND_M);
+    const far: FoundPlace = { ...top, name: 'Andere Kop', lat: 47.11 };
+    expect(metersBetween(first, far)).toBeGreaterThan(SAME_FOUND_M);
+    expect(mergeFound([first], [near, far])).toEqual([first, far]);
+  });
+  it('een dubbele binnen de tweede bron valt weg; de eerste bron blijft ongemoeid', () => {
+    expect(mergeFound([], [top, { ...top, name: 'Verzonnen Kop (punt)' }])).toEqual([top]);
+    const a: FoundPlace = { name: 'Fopdorp', lat: 52, lon: 5 };
+    const b: FoundPlace = { name: 'Fopdorp-Zuid', lat: 52, lon: 5 };
+    expect(mergeFound([a, b], [])).toEqual([a, b]);
+  });
+  it('de privacyzin noemt beide diensten en het deel voor de komma; de foutzinnen noemen geen dienst', () => {
+    expect(PLACE_PRIVACY_LINE).toBe('Je zoekwoord gaat naar Open-Meteo, en zo nodig naar Photon (OpenStreetMap). Van een adres gaat alleen het deel voor de komma mee.');
+    expect(PLACE_NONE_LINE).toBe('Geen plek gevonden met die naam. Probeer een grotere plaats in de buurt.');
+    expect(PLACE_OFFLINE_LINE).toBe('Geen verbinding. Controleer je internet en probeer het later opnieuw.');
   });
 });
