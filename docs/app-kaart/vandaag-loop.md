@@ -6,7 +6,7 @@ Adres: `#/`. Klok: 1 november 2026, 08:00. Breedte: 390 px.
 [knop: Lichaam: rekken en klachten]
 [link: Meer: instellingen, gegevens, koppelingen en gidsen]
 ZO 1 november
-Week 1 van 4, basisfase
+Basisfase, week 1 van 4
 
 --- kaart 1 ---
 
@@ -23,7 +23,7 @@ Hoe voelen je benen?
 Vandaag · hardlopen
 Wennen, rustig tempo
 [knop: Meer keuzes]
-### Lange duurloop
+[knop: Lange duurloop] (aria: Briefing: Lange duurloop)
 50
 minuten
 ±300m omhoog als het kan

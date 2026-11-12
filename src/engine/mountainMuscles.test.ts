@@ -188,7 +188,12 @@ describe('enkel en evenwicht', () => {
     const text = muscleNoticeText(p!);
     expect(text.fact).toBe('Je enkels en je evenwicht kregen de laatste vier weken geen werk op één been.');
     expect(text.care).toBe('Voor ongelijke paden en afdalingen kan werk op één been helpen.');
-    expect(text.proposal).toBe('Voorstel: Single Leg Stance erbij in Onderlichaam A, 3 sets per been, zo lang je stil kunt staan.');
+    // De melding noemt de Nederlandse naam (besluit 2026-11-12-je-week-tot-nu); de oefening zelf blijft Single Leg Stance.
+    expect(text.proposal).toBe('Voorstel: Op één been staan erbij in Onderlichaam A, 3 sets per been, zo lang je stil kunt staan.');
+    expect(text.what).toBe('Op één been staan erbij in Onderlichaam A');
+    expect(text.cost).toBe('3 sets per been, zo lang je stil kunt staan.');
+    expect(p!.exerciseName).toBe('Single Leg Stance');
+    expect(`${text.what} ${text.cost}`).not.toMatch(/minuten/);
     expect(text.unknown).toBeUndefined();
     expect(`${text.fact} ${text.care} ${text.proposal}`).not.toMatch(/voorkomt|voorkomen|[–—]/);
   });

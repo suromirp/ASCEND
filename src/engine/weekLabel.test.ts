@@ -5,9 +5,10 @@ import { addDays, resolveProgramWeek } from '../utils/dates';
 import type { Program } from '../models/program';
 
 describe('weekPositionLabel', () => {
-  it('telt de week binnen de fase, niet in het programma', () => {
-    const position = { weekInPhase: 2, phase: { name: 'Opbouw', weekCount: 18 } } as never;
-    expect(weekPositionLabel(position)).toBe('Week 2 van 18, opbouw');
+  it('telt de week binnen de fase, met de fase voorop', () => {
+    const position = { weekInPhase: 2, phase: { name: 'OPBOUW', weekCount: 18 } } as never;
+    expect(weekPositionLabel(position)).toBe('Opbouw, week 2 van 18');
+    expect(weekPositionLabel({ weekInPhase: 1, phase: { name: 'NAAR DE START', weekCount: 2 } } as never)).toBe('Naar de start, week 1 van 2');
   });
 });
 
@@ -29,10 +30,12 @@ describe('weekHeading', () => {
     expect(weekHeading(phased(18))).toEqual({ title: 'Week', number: 18, line: 'van 18, basis' });
   });
 
-  it('kop en regel samen lezen als de tekst van Vandaag', () => {
+  it('kop en regel noemen dezelfde week en fase als de tekst van Vandaag', () => {
+    // De kop van Week houdt zijn grote getal ("Week 3", "van 18, basis"); Vandaag zet de fase voorop
+    // ("Basis, week 3 van 18"). Dezelfde getallen en dezelfde fase.
     const p = phased(3);
     const h = weekHeading(p);
-    expect(`${h.title} ${h.number} ${h.line}`).toBe(weekPositionLabel(p));
+    expect(weekPositionLabel(p)).toBe(`Basis, week ${h.number} ${h.line.replace(', basis', '')}`);
   });
 
   it('in een golf staat de tekst van de golf in de regel', () => {
