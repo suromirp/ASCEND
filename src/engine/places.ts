@@ -437,7 +437,7 @@ export interface TrackFacts {
   loop: boolean;
 }
 
-// Afstand en hoogtemeters (met de dode band van routeGeometry.ts#ascentOf) en of het een lus is.
+// Afstand en hoogtemeters (met de teller van engine/elevation.ts via routeGeometry.ts#ascentOf) en of het een lus is.
 // Een punt zonder geldige breedte of lengte telt niet mee; een hoogte die geen getal is telt als geen hoogte.
 export function trackFacts(points: readonly RoutePoint[]): TrackFacts {
   const list = points

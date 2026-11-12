@@ -17,7 +17,8 @@
 import type { StreamSet } from '../models/activityDetail';
 import type { StoredLap } from '../models/activityStreams';
 import type { RunDetail, RunKm, RunLap, RunLine } from '../models/runDetail';
-import { deadBand, fillGaps, ALTITUDE_DEAD_BAND_M } from './activityDetail';
+import { fillGaps } from './activityDetail';
+import { watchLine } from './elevation';
 import { MAX_GAP_SEC, effortFingerprint, fastestWindow } from './bestEffort';
 import { isNum } from '../utils/guards';
 
@@ -117,7 +118,7 @@ interface Track {
   pause: number[];
   // Moving seconds up to each point.
   moving: number[];
-  // The altitude after the dead band, per point; undefined without altitude.
+  // The altitude as the shared counter sees it (engine/elevation.ts), per point; undefined without altitude.
   alt?: number[];
   set: StreamSet;
   total: number;
@@ -136,7 +137,7 @@ function trackOf(set: StreamSet): Track | undefined {
     const times = p.map((q) => q.t);
     const raw = p.map((q) => set.altitudeM![q.i]);
     const filled = fillGaps(raw, times, 30);
-    if (filled && filled.some(isNum)) alt = deadBand(filled, ALTITUDE_DEAD_BAND_M);
+    if (filled && filled.some(isNum)) alt = watchLine(filled, times);
   }
   return { p, pause, moving, alt, set, total };
 }

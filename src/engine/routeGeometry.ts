@@ -1,13 +1,14 @@
-// ASCEND: meetkunde voor een voorgestelde lus: lengte, opgetelde hoogtemeters met een dode band en
+// ASCEND: meetkunde voor een voorgestelde lus: lengte, opgetelde hoogtemeters (engine/elevation.ts) en
 // welk deel van een lus je twee keer loopt. Pure: geen React, geen IndexedDB, geen netwerk.
 // Zie docs/beslissingen/2026-11-09-routeplanner.md en docs/onderzoek/Routeplanner voor een training.md.
 
 import type { RoutePoint } from '../models/route';
+import { ELEVATION_THRESHOLD_M, climbAndDescent, modelThresholdM } from './elevation';
 
-// Onder deze stap telt een stijging niet mee: de hoogte uit een hoogtemodel zit er in bos een paar
-// meter naast, en die ruis telt anders op tot hoogtemeters die er niet zijn. Vijf meter volgt het
-// verslag (docs/onderzoek/Routeplanner voor een training.md).
-export const ASCENT_DEAD_BAND_M = 5;
+// Onder deze stap telt een stijging niet mee: de hoogte uit een hoogtemodel van 30 m zit er in bos
+// een paar meter naast, en die ruis telt anders op tot hoogtemeters die er niet zijn. De drempels
+// per bron staan in engine/elevation.ts.
+export const ASCENT_DEAD_BAND_M = ELEVATION_THRESHOLD_M.model30;
 
 const RAD = Math.PI / 180;
 const EARTH_M = 6_371_000;
@@ -33,23 +34,12 @@ export function cumulative(points: RoutePoint[]): number[] {
   return out;
 }
 
-// Opgetelde stijging in meters. Een stijging telt pas als hij boven de dode band uitkomt, gemeten
-// vanaf het laatste dal; punten zonder hoogte doen niet mee.
-export function ascentOf(points: RoutePoint[], deadBandM = ASCENT_DEAD_BAND_M): number {
-  let total = 0;
-  let anchor: number | undefined;
-  for (const p of points) {
-    if (p.ele === undefined) continue;
-    if (anchor === undefined) {
-      anchor = p.ele;
-    } else if (p.ele >= anchor + deadBandM) {
-      total += p.ele - anchor;
-      anchor = p.ele;
-    } else if (p.ele <= anchor - deadBandM) {
-      anchor = p.ele;
-    }
-  }
-  return total;
+// Opgetelde stijging in meters, met de teller van engine/elevation.ts: een klim telt zodra hij de
+// drempel haalt, en dan van het echte dal tot de echte top. Zonder eigen drempel geldt die van een
+// model van 30 m (5 m, in de bergen 10 m). Punten zonder hoogte doen niet mee.
+export function ascentOf(points: readonly RoutePoint[], thresholdM?: number): number {
+  const ele = points.map((p) => p.ele);
+  return climbAndDescent(ele, thresholdM ?? modelThresholdM(ele)).ascentM;
 }
 
 // In de richting van `bearingDeg` (0 is noord, 90 is oost) op `meters` afstand.

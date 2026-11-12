@@ -9,6 +9,7 @@
 
 import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { RouteAnswer, RouteFailure, RouteFn, RoutePoint, RouteProposal, RouteTarget, RoutedLine } from '../models/route';
+import { isNearlyFlat } from './elevation';
 import { ASCENT_DEAD_BAND_M, ascentOf, bearing, cumulative, lineLength, metersBetween, offsetPoint, repeatedShare } from './routeGeometry';
 import { formatNumberNL } from '../utils/number';
 
@@ -519,8 +520,8 @@ export function proposalTitle(p: RouteProposal): string {
 }
 
 export function proposalFacts(p: RouteProposal): string {
-  const climb = round10(p.ascentM);
-  return `${km(p.distanceM)} · ${climb >= MIN_ASCENT_TARGET_M ? `${formatNumberNL(climb, 0)} hoogtemeters` : 'vrijwel vlak'}`;
+  // Onder ongeveer 40 m weet niemand het op 20 m na: dan geen getal met schijnprecisie.
+  return `${km(p.distanceM)} · ${isNearlyFlat(p.ascentM) ? 'vrijwel vlak' : `${formatNumberNL(round10(p.ascentM), 0)} hoogtemeters`}`;
 }
 
 // Wat je over deze lus moet weten naast de getallen: het droge feit, in korte zinnen.

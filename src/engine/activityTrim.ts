@@ -9,8 +9,8 @@
 // Two rules keep the numbers honest:
 // - The pieces use the same definitions as the profile of a run
 //   (engine/activityDetail.ts): a jump in time over 10 seconds or standing still
-//   is no moving time, and the altitude goes through the same dead band of 5
-//   metres, so the barometer's noise does not become climbing.
+//   is no moving time, and the altitude goes through the same counter
+//   (engine/elevation.ts), so the barometer's noise does not become climbing.
 // - The numbers of a log come from the watch, and the series never add up to
 //   them exactly. So a log is not recalculated from the series: what is cut away
 //   is measured in the series and taken off the numbers the log already has
@@ -19,7 +19,8 @@
 
 import type { StreamSet } from '../models/activityDetail';
 import type { TrimField } from '../models/training';
-import { ALTITUDE_DEAD_BAND_M, HEART_RATE_GAP_SEC, PAUSE_JUMP_SEC, STILL_SPEED_MS, deadBand, fillGaps } from './activityDetail';
+import { HEART_RATE_GAP_SEC, PAUSE_JUMP_SEC, STILL_SPEED_MS, fillGaps } from './activityDetail';
+import { watchLine } from './elevation';
 import type { Sport } from './sports';
 import { isNum } from '../utils/guards';
 import { round } from '../utils/round';
@@ -60,7 +61,7 @@ interface Prepared {
   moving: boolean[];
   // Cumulative distance per sample, metres.
   cum?: number[];
-  // The altitude after the dead band.
+  // The altitude as the shared counter sees it (engine/elevation.ts).
   alt?: number[];
   heart?: (number | null)[];
 }
@@ -100,7 +101,7 @@ function prepare(streams: StreamSet): Prepared | undefined {
   }
 
   const filled = fillGaps(streams.altitudeM, t, 30);
-  const alt = filled && filled.some(isNum) ? deadBand(filled, ALTITUDE_DEAD_BAND_M) : undefined;
+  const alt = filled && filled.some(isNum) ? watchLine(filled, t) : undefined;
   const heart = fillGaps(streams.heartRate?.map((x) => (isNum(x) && x >= 30 && x <= 230 ? x : null)), t, HEART_RATE_GAP_SEC);
   return { t, n, dt, mid, v, moving, cum, alt, heart };
 }
@@ -169,7 +170,7 @@ export interface TrimNumbers {
 
 // What the series alone say of the stretch from `startSec` to `endSec` on the
 // clock of the activity: the moving time in minutes, the distance, the climb and
-// the descent after the dead band, the mean heart rate over the moving time
+// the descent as the shared counter counts them, the mean heart rate over the moving time
 // (only when at least half of it has a reading) and the highest. A number the
 // series cannot give is absent. Undefined for a stretch with no moving time, or
 // a series that is empty, too short or has no clock.
