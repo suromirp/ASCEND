@@ -39,6 +39,21 @@ De eigenaar vroeg erom op 12 november ("Ja, StairMaster een eigen wandelworkout"
 
 Een training zonder wandelkeuze geeft precies dezelfde workout en vingerafdruk als voorheen: getoetst over alle trainingen, vier weken, met en zonder testloop, voor elke manier die geen eigen workout krijgt. Er wordt dus niets stil opnieuw verstuurd. Alleen de drie combinaties hierboven veranderen, en alleen als de keuze is gemaakt.
 
+## Aanvulling na de review (12 november, dezelfde dag, voor main)
+
+Warden keurde één eigen keuze af; dit stuk gaat voor waar het de tekst hierboven tegenspreekt.
+
+- Alleen de StairMaster. Welke manier een eigen workout krijgt staat in een vaste lijst (`OWN_WORKOUT_PLACES` in `engine/watchWorkout.ts`), niet meer afgeleid uit de sport van de manier. De lange duurloop als wandeling buiten krijgt hem dus niet: Hike tegen Wandelen sprak elkaar tegen, de stap heette nog Lange duurloop, de hartslag ging naar wandelzones, en het stond aan zonder dat erom gevraagd was. Een nieuwe manier komt er pas bij na een eigen besluit.
+- Het boekje gelooft het antwoord. Noemt het antwoord van intervals.icu een andere soort dan gevraagd, dan telt de verzending als mislukt: het boekje houdt de oude workout en de rij zegt "Versturen lukte niet". Een antwoord zonder soort wordt aangenomen zoals voorheen.
+- Eén rij. Alles wat naar de agenda schrijft (de ronde bij start en terugkomen, een instelling, de knoppen, de tik in de Briefing) loopt een voor een door dezelfde rij in `storage/watchWorkouts.ts`. Een gewone ronde kan dus niet naast een tik lopen en het boekje terugschrijven.
+- Een nieuwe poging wist eerst de oude fout, zodat de rij "komt eraan" zegt terwijl hij loopt; mislukt hij, dan schrijft hij zijn eigen reden.
+- Regels erbij in de rij Horloge:
+  - mislukt terwijl er al een oudere wandelworkout staat: "Er staat een wandelworkout op. Een wijziging versturen lukte niet. Start hem bij Wandelen."
+  - terug naar buiten, nog niet vervangen: "Er staat nog een wandelworkout op. De hardloopworkout komt eraan."
+  - terug naar buiten en mislukt: "Versturen lukte niet: er staat nog een wandelworkout op."
+- De uitleg bij de instelling zegt eerlijk dat je horloge de training als wandeling vastlegt, zonder traptelling.
+- Niet nu, naar de backlog: een ronde overslaan als er al een nieuwere wacht; het blad Je horloge noemt nog "Hard bergop".
+
 ## Alternatieven
 
 - `Hike`: ook wandelen, maar nergens bevestigd dat het op Garmin aankomt.

@@ -47,7 +47,7 @@ import { buildWorkoutPlan, type PlanStep, type WorkoutPlan } from './workoutPlan
 import { formatPace, type PaceRange, type RacePaces } from './racePaces';
 import { hrPercentTarget, type WatchHrPlan } from './watchHeartRate';
 import { resolvePlace } from './trainingPlace';
-import { getModality, modalitySport } from '../data/modalities';
+import { getModality } from '../data/modalities';
 import { placeBrief } from '../data/placeBrief';
 
 export const WATCH_EXTERNAL_PREFIX = 'ascend:';
@@ -73,7 +73,7 @@ export interface WatchBuildOptions {
   // running zones.
   hr?: WatchHrPlan;
   // The stored choice Waar train je? per planned training (storage/trainingPlace.ts, unread). A run whose
-  // chosen way is walking (the StairMaster) goes to the watch as a walking workout of its own. Absent = the
+  // chosen way is the StairMaster goes to the watch as a walking workout of its own. Absent = the
   // workout of the training, as before.
   places?: Record<string, string>;
   // "Eigen workout bij een andere manier" (AppSettings.watchPlaceWorkout). Absent = on; off = `places` is ignored.
@@ -197,16 +197,18 @@ export function watchSportOf(template: SessionTemplate): WatchSport | undefined 
   return sportOf(template);
 }
 
+// The ways of training that get a workout of their own: a fixed list, the StairMaster only. A new way joins
+// only after a decision of its own (docs/beslissingen/2026-11-12-stairmaster-horloge.md): each way needs its own
+// names for the steps, its own zones and a sentence in the Briefing that is true for it.
+const OWN_WORKOUT_PLACES = new Set(['stairmaster_intervals', 'stairmaster']);
+
 // The way of training that gets a workout of its own, or undefined when the workout of the training stands.
-// Only a running workout with a way that counts as walking (data/modalities.ts#modalitySport): the StairMaster
-// with the hill intervals, a hike in place of the long run. intervals.icu and Garmin have no stair stepper as a
-// kind of planned workout; Walk is the kind ASCEND already sends for walking trainings
-// (docs/beslissingen/2026-11-12-stairmaster-horloge.md). Cycling in place of a run stays as it was.
+// Only a running workout with the StairMaster chosen. intervals.icu and Garmin have no stair stepper as a kind
+// of planned workout; Walk is the kind ASCEND already sends for walking trainings.
 export function watchPlaceOf(template: SessionTemplate, stored: unknown, placeWorkout?: boolean): string | undefined {
-  if (placeWorkout === false || typeof stored !== 'string' || sportOf(template) !== 'Run') return undefined;
+  if (placeWorkout === false || typeof stored !== 'string' || !OWN_WORKOUT_PLACES.has(stored) || sportOf(template) !== 'Run') return undefined;
   const place = resolvePlace(template, stored);
-  if (!place || place !== stored || !getModality(template.id, place)) return undefined;
-  return modalitySport(place) === 'hiking' ? place : undefined;
+  return place === stored && getModality(template.id, place) ? place : undefined;
 }
 
 // The sport of the workout for this training with this choice of place.

@@ -31,8 +31,8 @@ import { BRIEFING_MAP_HEIGHT, briefingRoutes, footerRoom, loopLines, otherLoopLi
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import type { RouteSendOutcome } from '../engine/routeSend';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
-import { getTrainingPlace, peekTrainingPlaces, saveTrainingPlace } from '../storage/trainingPlace';
-import { syncWatchAfterPlaceChange } from '../storage/watchWorkouts';
+import { getTrainingPlace, peekTrainingPlaces } from '../storage/trainingPlace';
+import { chooseTrainingPlace } from '../storage/watchWorkouts';
 import { saveRouteGpx, type RouteFileResult } from '../storage/routeFile';
 import { sendRouteGpx } from '../storage/routeSend';
 import { todayISO } from '../utils/dates';
@@ -139,7 +139,7 @@ export function TrainingBriefing({
   function choosePlace(key: string) {
     setStored(key);
     // Eerst bewaren, dan het horloge: een andere soort workout (wandelen op de StairMaster) vervangt de oude.
-    if (session) void saveTrainingPlace(session.id, date, key).then(() => syncWatchAfterPlaceChange(session.id));
+    if (session) void chooseTrainingPlace(session.id, date, key);
   }
 
   // Naar een pagina: eerst alle lagen dicht, dan de pagina.

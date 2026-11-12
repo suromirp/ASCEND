@@ -394,7 +394,7 @@ export function GarminLinkPage() {
         {connected && (
           <UseRow
             title="Eigen workout bij een andere manier"
-            text="Kies je bij een looptraining de StairMaster of wandelen, dan krijgt je horloge een wandelworkout met dezelfde blokken, zonder tempo."
+            text="Kies je bij een looptraining de StairMaster, dan krijgt je horloge een wandelworkout met dezelfde blokken, zonder tempo."
             checked={settings.watchPlaceWorkout !== false}
             onChange={(on) => void updateSettings({ watchPlaceWorkout: on }).then(() => syncWatchWorkouts({ force: true }))}
           />

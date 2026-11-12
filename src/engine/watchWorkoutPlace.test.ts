@@ -50,12 +50,21 @@ describe('een training zonder wandelkeuze blijft precies als nu', () => {
 });
 
 describe('welke manieren een eigen wandelworkout krijgen', () => {
-  it('alleen een looptraining met een manier die wandelen is', () => {
+  it('alleen de StairMaster bij een looptraining: een vaste lijst', () => {
     const own = templates.flatMap((t) => (getModalities(t.id) ?? []).filter((m) => watchPlaceOf(t, m.key)).map((m) => `${t.id} ${m.key}`));
-    expect(own).toContain('tpl_hill_intervals stairmaster_intervals');
-    expect(own).toContain('tpl_hills_descent stairmaster_intervals');
-    for (const line of own) expect(watchSportOf(tpl(line.split(' ')[0]))).toBe('Run');
-    expect(own.sort()).toEqual(['tpl_hill_intervals stairmaster_intervals', 'tpl_hills_descent stairmaster_intervals', 'tpl_long_run long_hike_outdoor']);
+    expect(own.sort()).toEqual(['tpl_hill_intervals stairmaster_intervals', 'tpl_hills_descent stairmaster_intervals']);
+  });
+  it('de lange duurloop als wandeling buiten blijft de hardloopworkout: geen eigen workout zonder besluit', () => {
+    const long = tpl('tpl_long_run');
+    const s = session('tpl_long_run');
+    expect(watchPlaceOf(long, 'long_hike_outdoor')).toBeUndefined();
+    expect(buildWatchWorkout(s, long, program, PACES, { places: { [s.id]: 'long_hike_outdoor' } })).toEqual(buildWatchWorkout(s, long, program, PACES));
+  });
+  it('elke andere manier die wandelen of fietsen is bij een looptraining: de workout van de training', () => {
+    for (const t of templates) {
+      if (watchSportOf(t) !== 'Run') continue;
+      for (const m of getModalities(t.id) ?? []) if (m.garminProfile !== 'Stair Stepper') expect(watchPlaceOf(t, m.key), `${t.id} ${m.key}`).toBeUndefined();
+    }
   });
 });
 

@@ -14,6 +14,7 @@ import {
   syncWatchWorkouts,
   syncWatchWorkoutsAfterPlanChange,
   syncWatchAfterPlaceChange,
+  chooseTrainingPlace,
 } from './watchWorkouts';
 import { resetTrainingPlaceCache, saveTrainingPlace } from './trainingPlace';
 import { selectWatchWorkouts } from '../engine/watchWorkout';
@@ -710,19 +711,86 @@ describe('een eigen workout bij een andere manier', () => {
     expect(typeOf(agenda, hills.id)).toBe('Run');
   });
 
-  it('twee snelle tikken: na elkaar, en aan het eind staat de laatste keuze er één keer', async () => {
+  it('twee snelle tikken, in de volgorde van het scherm (bewaren, dan versturen): aan het eind staat de laatste keuze er één keer', async () => {
     const { today } = await setup();
     const hills = await hillSession(today, 0);
     const agenda = fakeAgenda();
     await setWatchWorkoutsEnabled(true);
     await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
     const size = agenda.events.size;
-    void saveTrainingPlace(hills.id, hills.scheduledDate, 'stairmaster_intervals', today);
-    const a = syncWatchAfterPlaceChange(hills.id, { fetchImpl: agenda.fn, today });
-    void saveTrainingPlace(hills.id, hills.scheduledDate, 'hill_repeats_outdoor', today);
-    const b = syncWatchAfterPlaceChange(hills.id, { fetchImpl: agenda.fn, today });
+    const idBefore = agenda.events.get(`ascend:${hills.id}`)!.id;
+    const a = chooseTrainingPlace(hills.id, hills.scheduledDate, 'stairmaster_intervals', { fetchImpl: agenda.fn, today });
+    const b = chooseTrainingPlace(hills.id, hills.scheduledDate, 'hill_repeats_outdoor', { fetchImpl: agenda.fn, today });
     await Promise.all([a, b]);
     expect(typeOf(agenda, hills.id)).toBe('Run');
     expect(agenda.events.size).toBe(size);
+    expect(agenda.events.get(`ascend:${hills.id}`)!.id).toBe(idBefore);
+    expect((await getWatchWorkoutState()).items[hills.id].type).toBe('Run');
+
+    // En één tik: bewaard en vervangen.
+    expect(await chooseTrainingPlace(hills.id, hills.scheduledDate, 'stairmaster_intervals', { fetchImpl: agenda.fn, today })).toEqual({ status: 'ok', created: 0, updated: 1, removed: 0 });
+    expect(typeOf(agenda, hills.id)).toBe('Walk');
+  });
+
+  it('een gewone ronde naast een tik: een voor een, het boekje klopt met de agenda', async () => {
+    const { today } = await setup();
+    const hills = await hillSession(today, 0);
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    const size = agenda.events.size;
+    // Tegelijk gestart: de ronde bij terugkomen, de tik, en nog een ronde uit de instellingen.
+    const results = await Promise.all([
+      syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true }),
+      chooseTrainingPlace(hills.id, hills.scheduledDate, 'stairmaster_intervals', { fetchImpl: agenda.fn, today }),
+      syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true }),
+    ]);
+    expect(results.every((r) => r.status === 'ok')).toBe(true);
+    expect(agenda.events.size).toBe(size);
+    expect(typeOf(agenda, hills.id)).toBe('Walk');
+    const state = await getWatchWorkoutState();
+    expect(state.items[hills.id].type).toBe('Walk');
+    // Niets dubbel: de workout is precies één keer gewijzigd.
+    expect(agenda.calls.filter((c) => c.method === 'PUT' && /\/events\/\d+$/.test(c.url)).length).toBe(1);
+    // Een ronde erna heeft niets meer te doen: het boekje is niet teruggeschreven.
+    expect(await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true })).toEqual({ status: 'ok', created: 0, updated: 0, removed: 0 });
+  });
+
+  it('intervals.icu antwoordt met een andere soort dan gevraagd: geldt als mislukt, het boekje houdt de oude', async () => {
+    const { today } = await setup();
+    const hills = await hillSession(today, 0);
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    const before = (await getWatchWorkoutState()).items[hills.id];
+    // De agenda neemt de wijziging aan maar houdt de soort op Run.
+    const stubborn = (async (url: string, init: RequestInit) => {
+      if (init.method === 'PUT' && /\/events\/\d+$/.test(url)) return new Response(JSON.stringify({ id: before.eventId, type: 'Run' }), { status: 200 });
+      return (agenda.fn as unknown as (u: string, i: RequestInit) => Promise<Response>)(url, init);
+    }) as unknown as typeof fetch;
+    const result = await chooseTrainingPlace(hills.id, hills.scheduledDate, 'stairmaster_intervals', { fetchImpl: stubborn, today });
+    expect(result.status).toBe('error');
+    const state = await getWatchWorkoutState();
+    expect(state.items[hills.id]).toEqual(before);
+    expect(state.lastError).toContain('nam de training niet aan');
+  });
+
+  it('een nieuwe poging wist de oude fout voordat hij begint, en schrijft bij mislukken zijn eigen reden', async () => {
+    const { today } = await setup();
+    const hills = await hillSession(today, 0);
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: fakeAgenda({ failWith: 500 }).fn, today, force: true });
+    expect((await getWatchWorkoutState()).lastError).toContain('storing');
+    // Tijdens de nieuwe poging staat er geen oude fout meer.
+    let during: string | undefined = 'niet gelezen';
+    const agenda = fakeAgenda();
+    const watching = (async (url: string, init: RequestInit) => {
+      if (init.method === 'POST') during = (await getWatchWorkoutState()).lastError;
+      return (agenda.fn as unknown as (u: string, i: RequestInit) => Promise<Response>)(url, init);
+    }) as unknown as typeof fetch;
+    await chooseTrainingPlace(hills.id, hills.scheduledDate, 'stairmaster_intervals', { fetchImpl: watching, today });
+    expect(during).toBeUndefined();
+    expect((await getWatchWorkoutState()).lastError).toBeUndefined();
+    expect(typeOf(agenda, hills.id)).toBe('Walk');
   });
 });

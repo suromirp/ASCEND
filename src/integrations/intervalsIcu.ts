@@ -796,6 +796,15 @@ const eventIdOf = (e: unknown): number | undefined => {
   return typeof id === 'number' && Number.isFinite(id) ? id : undefined;
 };
 
+// The answer names the kind of the event it now holds. When that is another kind than the one sent (a run
+// that should have become a walking workout), the write did not do what was asked: it counts as not taken,
+// so the books keep what was there and the status says the sending failed. An answer without a kind is
+// taken at its word, as before.
+function checkAnsweredType(answer: unknown, workout: WatchWorkout): void {
+  const type = (answer as { type?: unknown } | null)?.type;
+  if (typeof type === 'string' && type !== workout.type) throw new IntervalsError('rejected', MESSAGES.rejected);
+}
+
 // Creates the workouts, or updates the ones that already have the same
 // external_id (upsert), in one request. Returns the event id of each.
 export async function createWorkoutEvents(
@@ -813,6 +822,7 @@ export async function createWorkoutEvents(
     const ext = (e as { external_id?: unknown } | null)?.external_id;
     if (typeof ext === 'string') byExternal.set(ext, eventIdOf(e));
   }
+  for (const w of workouts) checkAnsweredType(body.find((e) => (e as { external_id?: unknown } | null)?.external_id === w.externalId), w);
   for (const w of workouts) ids.set(w.externalId, byExternal.get(w.externalId));
   return ids;
 }
@@ -827,7 +837,10 @@ export async function updateWorkoutEvent(
 ): Promise<number | undefined> {
   if (eventId !== undefined) {
     const { status, body } = await writeRequest(connection, eventUrl(normalizeConnection(connection).athleteId, eventId), 'PUT', workoutEventBody(workout), options, true);
-    if (status !== 404) return eventIdOf(body) ?? eventId;
+    if (status !== 404) {
+      checkAnsweredType(body, workout);
+      return eventIdOf(body) ?? eventId;
+    }
   }
   return (await createWorkoutEvents(connection, [workout], options)).get(workout.externalId);
 }

@@ -490,7 +490,7 @@ const WATCH_ACTIVITY: Record<Sport, string> = { running: 'Hardlopen', hiking: 'W
 
 // De workout op je horloge volgt de training. Is de gekozen manier een andere sport, dan zegt dit wat er op je
 // horloge staat en wat je start. Twee gevallen (besluit 2026-11-12-stairmaster-horloge.md):
-// - De manier krijgt een eigen workout (hardlopen met een manier die wandelen is, zoals de StairMaster, en de
+// - De manier krijgt een eigen workout (hardlopen met de StairMaster gekozen, en de
 //   instelling Eigen workout bij een andere manier aan): "Er staat een wandelworkout op. Start hem bij Wandelen."
 //   Staat de oude er nog: "Er staat nog een hardloopworkout op. De wandelworkout komt eraan.", en lukte het
 //   versturen niet, dan zegt de regel dat en wat je dan start.
@@ -505,7 +505,15 @@ export function watchPlaceState(
 ): { line: string; warn?: boolean } | undefined {
   const workout = watchSportOf(template);
   const chosen = place ? modalitySport(place) : undefined;
-  if (!workout || !chosen || WATCH_SPORT[workout] === chosen) return undefined;
+  if (!workout || !chosen) return undefined;
+  if (WATCH_SPORT[workout] === chosen) {
+    // Terug naar de sport van de training terwijl de eigen workout van net er nog staat: zeg wat er echt op staat.
+    const left = status?.wrote ? WATCH_SPORT[status.wrote] : chosen;
+    if (left === chosen) return undefined;
+    if (status?.kind === 'stale') return { line: `Er staat nog een ${WORKOUT_NAME[left]} op. De ${WORKOUT_NAME[chosen]} komt eraan.`, warn: true };
+    if (status?.kind === 'failed') return { line: `Versturen lukte niet: er staat nog een ${WORKOUT_NAME[left]} op.`, warn: true };
+    return undefined;
+  }
   const profile = getModality(template.id, place!)?.garminProfile;
   const start = profile && !profile.includes('/') ? `Start ${profile} zonder workout.` : 'Start zonder workout.';
   const onWatch = WATCH_WHEN[status?.kind ?? ''];
@@ -525,6 +533,8 @@ export function watchPlaceState(
       // Een andere wijziging aan dezelfde workout: de gewone regel (Wijziging nog niet erop).
       return wrote === wants ? undefined : { line: `Er staat nog een ${WORKOUT_NAME[wrote]} op. De ${own} komt eraan.`, warn: true };
     case 'failed':
+      // Een oudere eigen workout staat er nog: die start je gewoon, alleen de wijziging kwam niet aan.
+      if (status.wrote && wrote === wants) return { line: `Er staat een ${own} op. Een wijziging versturen lukte niet. Start hem bij ${WATCH_ACTIVITY[wants]}.`, warn: true };
       return status.wrote
         ? { line: `Versturen lukte niet: er staat nog een ${WORKOUT_NAME[wrote]} op. ${start}`, warn: true }
         : { line: `Versturen lukte niet. ${start}`, warn: true };

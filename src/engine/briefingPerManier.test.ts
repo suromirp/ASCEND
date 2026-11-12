@@ -285,12 +285,27 @@ describe('de eigen wandelworkout op de StairMaster (besluit 2026-11-12-stairmast
   it('de instelling uit nadat de wandelworkout erop stond: de regel zegt wat er echt staat', () => {
     expect(row({ kind: 'stale', wants: 'Run', wrote: 'Walk' }).line).toBe('Er staat een wandelworkout op. Start Stair Stepper zonder workout.');
   });
-  it('terug naar buiten: de gewone regel van het horloge', () => {
-    const r = view(HILLS, 'hill_repeats_outdoor', { watchStatus: { kind: 'stale', wants: 'Run', wrote: 'Walk' } }).rows.find((x) => x.id === 'watch')!;
-    expect(r.line).toContain('Wijziging nog niet erop');
+  it('terug naar buiten: de regel zegt dat de wandelworkout er nog staat, ook als het versturen mislukt', () => {
+    const outside = (watchStatus: BriefingInput['watchStatus']) => view(HILLS, 'hill_repeats_outdoor', { watchStatus, watchLink: { linked: true, autoTick: false, activities: true } }).rows.find((x) => x.id === 'watch')!;
+    expect(outside({ kind: 'stale', wants: 'Run', wrote: 'Walk' }).line).toBe('Er staat nog een wandelworkout op. De hardloopworkout komt eraan.');
+    const failed = outside({ kind: 'failed', reason: 'geen verbinding', wants: 'Run', wrote: 'Walk' });
+    expect(failed.line).toBe('Versturen lukte niet: er staat nog een wandelworkout op.');
+    expect(failed.tone).toBe('warn');
+    // Weer verstuurd: de gewone regel.
+    expect(outside({ kind: 'sent', sentAt: new Date(2026, 10, 11, 7, 18).toISOString() }).line).toContain('Staat erop');
+  });
+  it('mislukt met een oudere wandelworkout erop: de regel spreekt zichzelf niet tegen', () => {
+    const r = row({ kind: 'failed', reason: 'geen verbinding', wants: 'Walk', wrote: 'Walk' });
+    expect(r.line).toBe('Er staat een wandelworkout op. Een wijziging versturen lukte niet. Start hem bij Wandelen.');
+    expect(r.line).not.toContain('zonder workout');
+    expect(r.tone).toBe('warn');
+  });
+  it('de lange duurloop als wandeling buiten: geen eigen workout, de eerlijke regel van voorheen', () => {
+    const r = view(LONG, 'long_hike_outdoor').rows.find((x) => x.id === 'watch')!;
+    expect(r.line).toContain('Er staat een hardloopworkout op.');
   });
   it('past op 360 px: geen regel langer dan drie regels van 40 tekens', () => {
-    for (const st of [{ kind: 'sent', wants: 'Walk', wrote: 'Walk' }, { kind: 'stale', wants: 'Walk', wrote: 'Run' }, { kind: 'failed', wants: 'Walk', wrote: 'Run' }] as const) {
+    for (const st of [{ kind: 'sent', wants: 'Walk', wrote: 'Walk' }, { kind: 'stale', wants: 'Walk', wrote: 'Run' }, { kind: 'failed', wants: 'Walk', wrote: 'Run' }, { kind: 'failed', wants: 'Walk', wrote: 'Walk' }] as const) {
       expect(view(HILLS, 'stairmaster_intervals', { watchStatus: st }).rows.find((r) => r.id === 'watch')!.line.length).toBeLessThanOrEqual(120);
     }
   });
