@@ -115,12 +115,50 @@ export function changesTheRoundKeeps(changes: PlanChangeItem[], before: PlannedS
       const now = afterById.get(c.plannedSessionId);
       return live(now) && now.scheduledDate === c.toDate && (!was || now.templateId === was.templateId);
     }
+    // Een weghaling die de ronde terugdraait (een test die terugkomt) is geen weghaling: de rij staat er weer.
+    if (c.action === 'remove' && c.plannedSessionId) return !live(afterById.get(c.plannedSessionId));
     return true;
   });
   // Een ruil is altijd een paar: valt de ene helft weg, dan de andere ook.
   const pairs = kept.filter((c) => c.action !== 'swap' || kept.some((o) => o.action === 'swap' && o.plannedSessionId === c.pairedWithSessionId));
-  // Een weghaling hoort bij de toevoeging die haar plaats inneemt: valt die weg, dan blijft de rij staan.
-  return withoutOrphanedRemovals(pairs, changes);
+  // Een weghaling hoort bij de toevoeging die haar plaats inneemt: valt die weg, dan blijft de rij staan; en andersom.
+  return withoutOrphanedRemovals(withoutOrphanedAdds(pairs, changes), changes);
+}
+
+// Raakt deze wijziging een rij van de planning (en kan de ronde haar dus terugdraaien)?
+const touchesRow = (c: PlanChangeItem) => c.action === 'add' || c.action === 'move' || c.action === 'swap' || c.action === 'remove';
+
+// Natellen tot de ronde niets meer weghaalt (melding van 12 november: twaalf keer op een dag hetzelfde aangenomen
+// voorstel voor een Wandeldag die er daarna niet stond). `round` rekent de planningsronde over de planning met deze
+// wijzigingen erin en geeft terug wat ze laat staan. Valt er iets weg, dan telt de rest opnieuw: een training kan
+// alleen blijven staan dankzij een andere die net wegviel. Alleen een uitkomst die de ronde zelf bevestigde komt
+// terug; lukt dat niet binnen `checks` keer, dan blijft alleen over wat geen rij raakt (een nieuw voorschrift voor
+// een training die er al staat). Eerder kwam na de derde keer een rest terug die niemand had nageteld.
+export async function settleWithRound(
+  changes: PlanChangeItem[],
+  round: (current: PlanChangeItem[]) => Promise<PlanChangeItem[]>,
+  checks: number,
+): Promise<PlanChangeItem[]> {
+  let current = changes;
+  for (let i = 0; i < checks; i++) {
+    if (!current.some(touchesRow)) return current;
+    const kept = await round(current);
+    if (kept.length === current.length) return current;
+    current = kept;
+  }
+  // Niet bevestigd: er komt geen rij bij, er gaat er geen weg en er schuift er geen. Wat overblijft raakt geen rij en
+  // wordt gewoon gemeld zoals altijd; er valt dus niets stil.
+  return current.filter((c) => !touchesRow(c));
+}
+
+// De andere kant van hetzelfde paar: valt de weghaling weg (de rij staat er weer of blijft staan), dan valt de
+// toevoeging die haar plaats zou innemen mee. Anders krijgt een week zonder vrije dag er een training bij in plaats
+// van een vervanging (review van 12 november).
+export function withoutOrphanedAdds(kept: PlanChangeItem[], all: PlanChangeItem[]): PlanChangeItem[] {
+  const stays = new Set(kept);
+  const letGo = new Set(all.filter((c) => c.action === 'remove' && c.plannedSessionId && !stays.has(c)).map((c) => c.plannedSessionId));
+  if (letGo.size === 0) return kept;
+  return kept.filter((c) => !(c.action === 'add' && c.replacesSessionId && letGo.has(c.replacesSessionId)));
 }
 
 // Een week zonder vrije dag: de weekindeling (engine/weekReconciliation.ts) haalt dan een training weg en zet de
