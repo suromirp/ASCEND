@@ -7,7 +7,7 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { makeForecast } from './fixtures/weatherFixture';
 import { resolveWatchModel } from './watchFields';
-import { BRIEFING_TEXT, ZONE_FACT, briefing, briefingEntry, briefingRowLine, entryAction, hasBriefing, missionButton, placeTransition, resolveRouteSearch, type BriefingInput } from './briefing';
+import { BRIEFING_TEXT, ZONE_FACT, briefing, briefingEntry, briefingRowLine, entryAction, footerNow, hasBriefing, missionButton, placeTransition, resolveRouteSearch, type BriefingInput } from './briefing';
 import { drinkLine } from './eveningBefore';
 import { fuelForTraining, fuelShortText } from './fuelOnTheGo';
 import { routeTarget, targetText } from './routeTarget';
@@ -475,3 +475,31 @@ describe('spoor 4: de stopregels en de regel onder de chips', () => {
 function placeChoicesOf(t: SessionTemplate): string[] {
   return (briefing(input({ template: t, session: plan(t.id) }))?.places ?? []).filter((p) => !p.locked).map((p) => p.key);
 }
+
+describe('spoor 1 met het blad in Week: de oorzaak bij de Lange duurloop', () => {
+  it('een dag die voorbij is, of vooraf, of de dag zelf: nergens nog Hoe je het doet voor een training te voet', async () => {
+    const { sessionSheetActions } = await import('./sessionActions');
+    for (const date of ['2026-11-09', TODAY, '2026-11-15']) {
+      for (const t of [LONG, RUCK]) {
+        const planned = sessionSheetActions({ date, today: TODAY, skipped: false, canComeBack: false, kind: 'log', briefing: briefingEntry(t) });
+        const all = [planned.main, ...planned.rows].map((a) => entryAction(a, t));
+        expect(all).not.toContain('start');
+        expect(all).not.toContain('preview');
+        expect(all).toContain('briefing');
+      }
+    }
+  });
+});
+
+describe('de knop die nu onderaan staat', () => {
+  const route = { kind: 'route', label: BRIEFING_TEXT.sendRoute, fallback: { kind: 'manual', label: 'Gedaan' } } as const;
+  it('de route zodra de lus er is; zolang hij zoekt (of pas na een tik) Gedaan', () => {
+    expect(footerNow(route, true, true)).toBe('route');
+    expect(footerNow(route, false, true)).toBe('manual');
+  });
+  it('zonder weg naar het invullen (vooraf): geen onderbalk', () => {
+    expect(footerNow(route, false, false)).toBe('none');
+    expect(footerNow({ kind: 'manual', label: 'Gedaan' }, false, false)).toBe('none');
+    expect(footerNow({ kind: 'route', label: BRIEFING_TEXT.sendRoute, fallback: { kind: 'none' } }, false, true)).toBe('none');
+  });
+});

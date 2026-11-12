@@ -19,7 +19,7 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { RouteStyle } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
-import { placeTransition, BRIEFING_TEXT, type BriefingRow, type BriefingView } from '../engine/briefing';
+import { footerNow, placeTransition, BRIEFING_TEXT, type BriefingRow, type BriefingView } from '../engine/briefing';
 import { isSportEnabled } from '../engine/sports';
 import { fuelCardLines, fuelForTraining, fuelOn } from '../engine/fuelOnTheGo';
 import { drinkLine } from '../engine/eveningBefore';
@@ -149,7 +149,7 @@ export function TrainingBriefing({
   const shortLabels = shortPlaceLabels(places.map((p) => p.label));
   const minutes = session?.plannedMinutes ?? resolveEffectiveFullDuration(template, date, program);
   // De ene knop onderaan: de route als de lus er is, anders Gedaan (zelf invullen), anders geen onderbalk.
-  const footerKind = view.footer.kind === 'route' ? (routeReady ? 'route' : view.footer.fallback.kind) : view.footer.kind;
+  const footerKind = footerNow(view.footer, routeReady, !!manual);
   const footer = footerKind === 'route' && picked
     ? <PrimaryButton disabled={send.busy} onClick={() => void send.go(picked.style, picked.proposal)}>{model.sender ? BRIEFING_TEXT.sendRoute : 'GPX downloaden'}</PrimaryButton>
     : footerKind === 'manual' && manual

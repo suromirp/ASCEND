@@ -203,7 +203,8 @@ export const INVARIANTEN = [
     controleer: (k) => {
       const t = k('briefing');
       if (!t) return [];
-      const zonder = t.split(/^STOP OF SCHAKEL TERUG ALS$/m)[0];
+      // Alleen wat je ziet: zonder de stopregels en zonder aria-labels (de zonebalk heet voor een schermlezer "Zone 2").
+      const zonder = t.split(/^Stop of schakel terug als$/im)[0].split('\n').filter((r) => !r.startsWith('[label: ')).join('\n');
       const uit = [];
       const tel = (re) => alle(zonder, re).length;
       for (const [wat, re] of [['zone', /\bZone \d\b/g], ['praattest', /\bpraten\b/gi], ['horloge', /\bhorloge\b/gi]]) {

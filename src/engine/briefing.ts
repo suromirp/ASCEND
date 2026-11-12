@@ -144,6 +144,13 @@ export type BriefingFooter =
   | { kind: 'manual'; label: string }
   | { kind: 'none' };
 
+// Welke knop er nu onderaan staat: de route zodra de lus er is, anders wat de engine als terugval
+// noemt (Gedaan of geen onderbalk). Gedaan alleen als het scherm een weg naar het invullen heeft.
+export function footerNow(footer: BriefingFooter, routeReady: boolean, canFill: boolean): 'route' | 'manual' | 'none' {
+  const kind = footer.kind === 'route' ? (routeReady ? 'route' : footer.fallback.kind) : footer.kind;
+  return kind === 'manual' && !canFill ? 'none' : kind;
+}
+
 // Instelling Lus zoeken (spoor 5): engine/routeSearchSetting.ts.
 export { resolveRouteSearch, type RouteSearchSetting } from './routeSearchSetting';
 
@@ -223,11 +230,11 @@ export function entryAction<A extends string>(action: A, template: SessionTempla
   return briefingEntry(template) && (action === 'start' || action === 'preview') ? 'briefing' : action;
 }
 
+export type MissionButton = 'briefing' | 'done';
+
 // De mint knop op Vandaag (spoor 6): Briefing als je horloge deze training afvinkt, anders Gedaan.
 // Eén regel met de stand van de Briefing; zolang de koppeling gelezen wordt (geen `watchLink`) of bij
 // twijfel: Gedaan, de veilige kant. Een training die al gedaan is: ook Gedaan (de kaart is dan weg).
-export type MissionButton = 'briefing' | 'done';
-
 //
 // Deze regel beweegt niet mee met de ingang van spoor 1 (die nu ook wandelen opent): de knop op Vandaag
 // blijft Briefing alleen voor een training met een route op zijn standaardplek, zoals voorheen. Een
