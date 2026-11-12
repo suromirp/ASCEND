@@ -17,7 +17,7 @@ Bijgewerkt: 12 november 2026, rond 16:10 UTC, door de coördinator session_01LnD
 - Gestart 16:09 UTC: Sherpa Opslaan dat mislukt (Sonnet), session_01LnDpSkobGWR5hY2YU789nA, branch claude/opslaan-dat-mislukt; Sherpa Weer op de gekozen plek (Fable), session_01LnDpSkruCEffoia4J8ZSsV, branch claude/weer-op-de-plek. Samen met Hoogtemeters zijn dat drie.
 - Hoogtemeters nagespeeld 16:13 UTC met de back-up van 12 november 17:11 (scratchpad, backup.json): vlakke km gaan over 5 m. Vlak samen (Garmin 132): oud 27, 15 s 161, 30 s 145; heuvelloop (Garmin 133): oud 85, 30 s 124. Opdracht naar de bouwer (trig_01MbetFbEFen1GSEcb5jJkRc): gladmaken 30 s, teller-markering op het log met migratie en eigen besluit, vlak 10 m per km voor nieuwe logs. Daarna Warden op Fable (ronde 2, 3 en dit), dan main.
 - 16:41 UTC: Opslaan (601f5e6) en Weer (9d894fd, besluit ontbreekt nog) klaar, Warden loopt op beide (Fable en Sonnet, achtergrond in deze sessie). Daarna Weer: Lookout en Pathfinder, eigen afdruk. Gestart: Sherpa Andere plek via Photon (Fable), session_01LnDpSnx15iX4EME83pMo5r, branch claude/andere-plek-photon.
-- Open vraag aan de eigenaar (advies ja, als eigen klein spoor): moet het horloge bij StairMaster een eigen wandelworkout krijgen? Nu zegt de Briefing alleen eerlijk wat er op staat.
+- StairMaster eigen wandelworkout: eigenaar ja (12 november 18:10). Gestart: Sherpa StairMaster op het horloge (Fable), session_01LnDpSndaa3UWgeoFTgJwrT, branch claude/stairmaster-horloge. Warden op Fable niet akkoord (lange duurloop eruit, soort uit antwoord, rij in sync); herstelronde 18:55 UTC (trig_011yYBSfC58wy5UuCXprgcp7). Daarna korte Warden, Lookout, Pathfinder. Eigenaar moet na live één keer zien of de Walk-workout bij Wandelen staat en welke wandelzones intervals.icu heeft.
 
 ## Volgende bouwers (hoogstens drie tegelijk)
 
@@ -46,6 +46,8 @@ Bijgewerkt: 12 november 2026, rond 16:10 UTC, door de coördinator session_01LnD
 - Afdrukken van een bouwer staan in zijn eigen scratchpad en zijn voor de coördinator niet leesbaar; maak ze zelf met de kit (een preview op een eigen poort in een worktree van de bouwerbranch).
 - Een bouwer die een vraag in zijn eigen chat stelt staat stil; de Wachter ziet dat als status need_input. Por hem met create_trigger: zelf het advies kiezen en melden.
 
+- Na de laatste eigen wijziging voor een squash altijd nog de volle vitest; de commit-hook ving het niet (c03dde9 deploy rood: werkbriefje 46 regels, scan-grens 45; hersteld in dbc93fb, live 17:46 UTC).
+
 ## Sessies en tijden
 
 - Vorige coördinatoren: session_01LnDpSm59PuKBYsAhFgUjTr (12 november, 10:27 tot ongeveer 16:10 UTC), session_01LnDpSkUxMFtEBmNMxMAKcN (12 november, tot 10:40 UTC), session_01LnDpSnA7KzoLikwifh3nyR (11 op 12 november), session_01LnDpSkFKoLuAUnLCXKbA1G, session_01LnDpSj5xhvz93hRnJrHyF8.
@@ -55,4 +57,4 @@ Bijgewerkt: 12 november 2026, rond 16:10 UTC, door de coördinator session_01LnD
 ## Live 12 november avond (c03dde9)
 
 - Hoogtemeters stap 1, Opslaan dat mislukt en Weer op de gekozen plek in één squash naar main, na Warden (alle drie), Lookout en Pathfinder (Weer), eigen afdrukken en naspelen (Hoogtemeters). Vervolgpunten staan bovenaan de Inbox. Bouwersessies gearchiveerd.
-- Lopend: Sherpa Andere plek via Photon (session_01LnDpSnx15iX4EME83pMo5r).
+- Lopend: Sherpa Andere plek via Photon (session_01LnDpSnx15iX4EME83pMo5r), branch claude/andere-plek-photon 162a479. Warden akkoord (CORS met curl gezien: *), Pathfinder 2 moet (Photon ook bij weinig treffers van Open-Meteo; foutzinnen plek en geen verbinding), Lookout groen (CORS in de browser niet te toetsen). Herstelronde a7dc940, Warden+Lookout akkoord; naar main 12 november rond 19:15 UTC. Sessie gearchiveerd.
