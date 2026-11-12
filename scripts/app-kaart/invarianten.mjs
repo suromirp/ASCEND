@@ -177,6 +177,25 @@ export const INVARIANTEN = [
           .map((m) => `${s}, kaart ${i}: "${m[0].trim()}"`);
       })),
   },
+  {
+    // Tempo bij zone 2 (engine/aerobicTrend.ts#zone2Statement, docs/beslissingen/2026-11-12-zone2-kaart.md): zolang de
+    // kaart geen uitspraak heeft (geen loopjes, een eerste schatting of te veel verschil), zegt geen scherm dat je bij
+    // dezelfde hartslag sneller loopt of fitter wordt. Alle teksten lezen dezelfde uitspraak; dit vangt een nieuwe die dat niet doet.
+    naam: 'Geen sneller of fitter zolang Tempo bij zone 2 nog niets zegt',
+    controleer: (k, schermen) => {
+      const uit = [];
+      for (const [stand, rest] of [['stand', schermen.filter((s) => !s.includes('zonder-doel'))], ['stand-zonder-doel', schermen.filter((s) => s.includes('zonder-doel'))]]) {
+        const kaart = k(stand).split(/^--- kaart \d+ ---$/m).find((t) => /^Tempo bij zone 2$/m.test(t));
+        if (!kaart || !/Nog geen loopjes|Eerste schatting: rond|Nog te veel verschil tussen je lopen/.test(kaart)) continue;
+        for (const s of rest) {
+          for (const m of alle(k(s), /^.*(?:past bij fitter worden|Een goed teken: bij dezelfde hartslag|Je loopt bij dezelfde hartslag sneller|Efficiëntie: Beter).*$/gm)) {
+            uit.push(`${s}: "${m[0].trim()}", terwijl Tempo bij zone 2 op ${stand} nog geen uitspraak heeft`);
+          }
+        }
+      }
+      return uit;
+    },
+  },
 ];
 
 const SCHERMEN = [

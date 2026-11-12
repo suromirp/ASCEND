@@ -22,7 +22,8 @@
 import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { TrendPoint } from './readiness';
-import { aerobicTrend, bandPhrase, formatPace, trendVerdict, zone2Criteria } from './aerobicTrend';
+import { aerobicTrend, bandPhrase, firstRulePhrase, formatPace, trendVerdict, zone2Criteria } from './aerobicTrend';
+import { ZONE2_RULES } from './zone2Rules';
 import type { HeartRateSettings } from './heartRateZones';
 import { isIndoorLog, logSport } from './sports';
 import { isEasyPlanned, median } from './runComparison';
@@ -98,7 +99,7 @@ function efficiencyRow(input: RunTrendsInput): TrendRow {
   const criteria = [...zone2Criteria(trend, input.tempoPieces !== false), `de laatste ${TREND_WEEKS} weken`];
   const model: SheetModel =
     !s || change === undefined || trend.recentSec === undefined || trend.earlierSec === undefined
-      ? empty('efficiency', 'Efficiëntie', 'pace', trendVerdict(trend) ?? 'Voor een uitspraak zijn minstens 8 lopen met een stuk in zone 2 nodig, over minstens 4 weken.', criteria)
+      ? empty('efficiency', 'Efficiëntie', 'pace', trendVerdict(trend) ?? `Voor een uitspraak zijn minstens ${ZONE2_RULES.firstRuns} lopen met een stuk in zone 2 nodig, ${firstRulePhrase()}.`, criteria)
       : {
           topic: 'efficiency',
           title: 'Efficiëntie',

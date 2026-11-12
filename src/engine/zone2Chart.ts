@@ -9,8 +9,8 @@
 //
 // Puur: geen React, geen IndexedDB. Plant niets.
 
-import { addDays, daysBetween } from '../utils/dates';
-import { bandPhrase, formatPace, type AerobicTrend, type Zone2Measurement } from './aerobicTrend';
+import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
+import { bandPhrase, formatPace, trendHeadline, WEEKS, type AerobicTrend, type Zone2Measurement } from './aerobicTrend';
 import { ZONE2_RULES as R } from './zone2Rules';
 
 export interface Zone2ChartDot {
@@ -176,3 +176,87 @@ export function dotLabel(d: Zone2ChartDot): string {
   const what = d.from === 'whole' ? 'hele loop' : plural(d.pieces, 'stuk', 'stukken');
   return `${formatPace(d.paceSec)} per km, ${what}${d.counts ? '' : ', warm, telt niet mee'}`;
 }
+
+// --- de grafiek op de kaart zelf ------------------------------------------------------------
+//
+// De kaart Tempo bij zone 2 op Je stand toont de weken (een stip is het gemiddelde van een week,
+// de laatste 12 weken). Besluit: docs/beslissingen/2026-11-12-zone2-kaart.md. Een lijn staat er
+// alleen bij dezelfde uitspraak als achter de i (zone2Chart, state 'uitspraak'), en dan is het de
+// lijn van die uitspraak: hij eindigt vandaag op het getal in de kop. Onder de drempel (eerste
+// schatting) en bij te veel verschil alleen stippen, zonder richting. Het eindlabel hoort bij het
+// laatste element: het eind van de lijn, of anders de laatste stip.
+
+export interface Zone2WeekDot {
+  week: string;
+  label: string;
+  // 0 is het begin van het venster (de maandag 12 weken terug), 1 is het eind van deze week.
+  x: number;
+  paceSec: number;
+  runs: number;
+}
+
+export interface Zone2WeekChart {
+  state: Zone2ChartState;
+  dots: Zone2WeekDot[];
+  line?: { x1: number; x2: number; sec1: number; sec2: number };
+  lineUnclear?: boolean;
+  // Waar het eindlabel staat en wat het zegt.
+  end?: { x: number; paceSec: number };
+  // De as: boven het snelste tempo, onder het traagste. Sneller staat boven.
+  fastSec: number;
+  slowSec: number;
+  ticks: number[];
+  fromWeek: string;
+}
+
+export function zone2WeekChart(trend: Pick<AerobicTrend, 'points' | 'statement'>, today: string): Zone2WeekChart {
+  const fromWeek = addDays(mondayOfWeek(today), -7 * (WEEKS - 1));
+  const days = 7 * WEEKS;
+  // Een datum op het midden van zijn dag; nooit voorbij vandaag.
+  const xToday = (daysBetween(fromWeek, today) + 0.5) / days;
+  const xOf = (date: string) => Math.min((daysBetween(fromWeek, date) + 0.5) / days, xToday);
+  const dots: Zone2WeekDot[] = trend.points
+    .filter((p) => p.week >= fromWeek && p.week <= today)
+    .map((p) => ({ week: p.week, label: p.label, x: Math.min((daysBetween(fromWeek, p.week) + 3.5) / days, xToday), paceSec: p.paceSec, runs: p.runs }));
+  const s = trend.statement;
+  const state: Zone2ChartState = !s ? 'leeg' : s.kind === 'eerste-schatting' ? 'eerste-schatting' : s.verdict === 'te-veel-verschil' ? 'te-veel-verschil' : 'uitspraak';
+  const line = state === 'uitspraak' && s?.kind === 'uitspraak' ? { x1: xOf(s.line.fromDate < fromWeek ? fromWeek : s.line.fromDate), x2: xToday, sec1: s.line.fromSec, sec2: s.line.toSec } : undefined;
+  const lineUnclear = s?.kind === 'uitspraak' && s.verdict === 'geen-duidelijke-verandering';
+  const lastDot = dots.at(-1);
+  const end = line ? { x: line.x2, paceSec: line.sec2 } : lastDot ? { x: lastDot.x, paceSec: lastDot.paceSec } : undefined;
+  const values = [...dots.map((d) => d.paceSec), ...(line ? [line.sec1, line.sec2] : [])];
+  const { fastSec, slowSec, ticks } = values.length > 0 ? axis(Math.min(...values), Math.max(...values)) : { fastSec: 0, slowSec: 0, ticks: [] };
+  return { state, dots, ...(line ? { line } : {}), ...(line && lineUnclear ? { lineUnclear } : {}), ...(end ? { end } : {}), fastSec, slowSec, ticks, fromWeek };
+}
+
+// Eén zin onder de grafiek: wat het getal in de kop is en wat de stippen zijn, zodat kop en
+// eindlabel elkaar niet tegenspreken. Herhaalt geen getal: de kop en het eindlabel staan er al
+// (Pathfinder 12 november). Leest dezelfde kop als de kaart (trendHeadline).
+export function zone2CardCaption(trend: Parameters<typeof trendHeadline>[0]): string | undefined {
+  const head = trendHeadline(trend);
+  if (!head) return undefined;
+  const dots = trend.points.length === 1 ? 'De stip is die week.' : 'Elke stip is een week.';
+  // Zonder lijn staat bij de laatste stip het tempo van die week; wijkt dat af van de kop, dan zegt de zin wat het is.
+  const last = trend.points.at(-1);
+  const lastWeek = last && formatPace(last.paceSec) !== formatPace(head.paceSec) ? ' Het getal bij de laatste stip is je laatste week.' : '';
+  const s = trend.statement;
+  if (s?.kind === 'eerste-schatting') {
+    return `${s.runs === 1 ? `Het getal boven is je ene loop van de laatste ${R.lineWeeks} weken.` : `Het getal boven is het gemiddelde van je ${s.runs} lopen van de laatste ${R.lineWeeks} weken.`}${lastWeek} ${dots}`;
+  }
+  if (s?.kind === 'uitspraak') {
+    return s.verdict === 'te-veel-verschil'
+      ? `Het getal boven is waar de lijn door je ${s.runs} lopen nu staat. Ze verschillen te veel om de lijn te tekenen.${lastWeek} ${dots}`
+      : `Het getal boven is waar de lijn door je ${s.runs} lopen nu staat. ${dots}`;
+  }
+  return `Het getal boven is je laatste week met een loop. ${dots}`;
+}
+
+// Waar de tooltip begint, in px vanaf de linkerrand van de grafiek: gecentreerd op zijn stip, maar
+// nooit buiten de grafiek (gemeten breedtes, dus ook op 360 px met een lange tekst). Is de tooltip
+// breder dan de grafiek, dan begint hij links.
+export function tooltipLeftPx(dotPx: number, tipW: number, boxW: number): number {
+  return Math.max(0, Math.min(dotPx - tipW / 2, boxW - tipW));
+}
+
+// Een stip in het bovenste deel van de grafiek krijgt de tooltip eronder, zodat hij de kop niet bedekt.
+export const tooltipBelow = (yFraction: number): boolean => yFraction < 0.45;
