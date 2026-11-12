@@ -106,6 +106,7 @@ Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, al
 
 ## Samenhang (Pathfinder)
 
+- Missiekaart op Vandaag (coördinator 12 november, na Trainingsscherm): de kaart herhaalt zone, praattest en tempo die nu in de Briefing staan, en heeft naast de hoofdknop nog mint-randen (Verplaatsen, Niet fit?) en mint links. Spoor 10 van de ontwerpregels (regel 1 en 5), eigen besluit. De naamknop naar de Briefing heeft geen zichtbaar teken dat hij tikbaar is.
 - Stand minimaal, opschoonstuk (Pathfinder, mag): dubbele kop op Benen en Ritme (lucht en kaartlabel); Ritme in de lege stand drie keer hetzelfde (regel, scherm, kaart); de volgorde-instelling splitsen in twee korte lijsten (regels en rijen), nu verandert schuiven tussen de groepen niets; dode code na Krachtprogressie en ForgeEntryCard opruimen. Plus de sporen 2, 3, 4 en 6 uit het ontwerp.
 - Je week tot nu (Pathfinder, mag): de kop van Week zegt "Week 1 van 4, basisfase", de rest van de app "Basisfase, week 1 van 4"; bij Week minimaal de fase voorop in de kleine regel, het grote getal blijft.
 - Je week tot nu (Pathfinder, mag): de rij Wat ASCEND aanpaste staat nog in het blad; verhuist naar Week minimaal en gaat dan hier weg.

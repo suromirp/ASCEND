@@ -423,3 +423,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Pathfinder Je week tot nu (sonnet) 38k; Pathfinder Trainingsscherm (sonnet) 47k; Warden Trainingsscherm (reviewer, sonnet) 44k, 7 min; Lookout Trainingsscherm (tester, sonnet) 94k, 15 min, 1 rood
 - 2026-11-12, Sherpa Je week tot nu, bouwer-sessie, opus, ca. $12, ca. 5 uur (incl. stilstand), 1 herstelronde (Pathfinder: week van het voorstel, losse training); op main ab5294d
 - 2026-11-12, Lookout Je week tot nu (tester, sonnet) 64k, 12 min, groen
+- 2026-11-12, Sherpa Trainingsscherm 1-4, bouwer-sessie, opus, ca. $12, ca. 1,5 uur, 1 herstelronde (Lookout rood: geen Briefing op Vandaag zonder koppeling; twee mint); op main 86be2a9
+- 2026-11-12, Warden herreview Trainingsscherm (reviewer, sonnet) 36k, akkoord; Lookout herstel Trainingsscherm (tester, sonnet) 47k, 6 min, groen
