@@ -101,7 +101,7 @@ describe('de rij Weer in de Briefing met een plek ver weg', () => {
     const line = weatherLine(input({ weatherPlace: { name: 'Verwegdal', state: 'failed' } })) ?? '';
     expect(line).toMatch(/^9 graden, /);
     expect(line.endsWith(`${placeWeatherFailed('Verwegdal')} ${PLACE_WEATHER_FROM_HOME}`)).toBe(true);
-    expect(line).not.toMatch(/[–—]/);
+    expect(line).not.toMatch(/[\u2013\u2014]/);
   });
   it('mislukt en ook geen weer van huis: nooit een leeg vak, de regel zegt wat er mis is', () => {
     expect(weatherLine(input({ forecast: undefined, weatherPlace: { name: 'Verwegdal', state: 'failed' } }))).toBe('Weer in Verwegdal laadde niet.');
