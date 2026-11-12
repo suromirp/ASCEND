@@ -7,7 +7,7 @@ import { useState } from 'react';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import { useAppData } from '../state/AppDataContext';
-import { briefing, type BriefingView } from '../engine/briefing';
+import { briefing, type BriefingInput, type BriefingView } from '../engine/briefing';
 import { showClothingAdvice, showWeatherLine } from '../engine/overviewSettings';
 import { adjustFor } from '../engine/clothingFeedback';
 import { templateSport } from '../engine/sports';
@@ -20,21 +20,29 @@ import { getTrainingGuide } from '../data/trainingGuide';
 import { useWatchStatuses } from './useWatchStatus';
 import { useWatchLink } from './useWatchLink';
 
-export function useBriefingView({ template, session, date, program, storedPlace }: {
+interface BriefingSources {
   template: SessionTemplate;
   session?: PlannedSession;
   date: string;
   program: Program | null;
   // De bewaarde keuze Waar train je? (ongelezen); afwezig: de standaard.
   storedPlace?: unknown;
-}): BriefingView | undefined {
+}
+
+export function useBriefingView(sources: BriefingSources): BriefingView | undefined {
+  return briefing(useBriefingInput(sources));
+}
+
+// De bronnen los van het rekenen: de Briefing zelf rekent een tweede keer met het weer van de gekozen
+// plek (engine/placeWeather.ts), want die plek is pas bekend na de regie van de route.
+export function useBriefingInput({ template, session, date, program, storedPlace }: BriefingSources): BriefingInput {
   const { settings, sessionLogs, weather } = useAppData();
   const [now] = useState(() => new Date());
   const { watchLink, watchSource } = useWatchLink();
   const { statusOf, ready } = useWatchStatuses();
   const guide = getTrainingGuide(template.id);
   const paces = pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces;
-  return briefing({
+  return {
     template,
     session,
     date,
@@ -57,5 +65,5 @@ export function useBriefingView({ template, session, date, program, storedPlace 
     clothingAdjust: adjustFor(settings.clothingAdjust, templateSport(template)),
     sweatEntries: settings.sweatEntries,
     fuelOn: fuelOn(settings),
-  });
+  };
 }

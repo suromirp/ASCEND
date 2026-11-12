@@ -320,6 +320,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   overviewFlag('weekvraag', 'Vraag van de week', 'weeklyQuestion'),
   overviewFlag('weerregel', 'Weer bij je training', 'weatherLine'),
   overviewFlag('beste-moment', 'Beste moment tonen', 'bestMoment'),
+  overviewFlag('weer-plek', 'Weer van de gekozen plek', 'placeWeather'),
   overviewFlag('weerruil', 'Ruilen bij slecht weer', 'weatherSwap'),
   flag('weeralarm', 'Weerwaarschuwingen', 'vandaag', 'weatherWarnings'),
   flag('lawinegevaar', 'Lawinegevaar', 'vandaag', 'avalancheBulletin'),

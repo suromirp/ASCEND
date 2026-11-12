@@ -19,7 +19,7 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { RouteStyle } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
-import { footerNow, placeRow, placeTransition, OTHER_PLACE, BRIEFING_TEXT, type BriefingRow, type BriefingView } from '../engine/briefing';
+import { briefing, footerNow, placeRow, placeTransition, OTHER_PLACE, BRIEFING_TEXT, type BriefingRow, type BriefingView } from '../engine/briefing';
 import { isSportEnabled } from '../engine/sports';
 import { fuelCardLines, fuelForTraining, fuelOn } from '../engine/fuelOnTheGo';
 import { drinkLine } from '../engine/eveningBefore';
@@ -46,7 +46,11 @@ import { TodaySheet } from './vandaag/TodaySheet';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { WatchSheet } from './WatchSheet';
 import { useWatchSheet } from './useWatchSheet';
-import { useBriefingView } from './useBriefingView';
+import { useBriefingInput } from './useBriefingView';
+import { usePlaceWeather } from './usePlaceWeather';
+import type { WeatherForecast } from '../models/weather';
+import { briefingWeather, placeWeatherTarget } from '../engine/placeWeather';
+import { showPlaceWeather } from '../engine/overviewSettings';
 import { useMotionMode } from './motion';
 import { RouteMap } from './RouteMap';
 import { RouteSearching } from './RouteSearching';
@@ -109,14 +113,21 @@ export function TrainingBriefing({
   // Het plan zoals het naar je horloge gaat; de stappen op het scherm volgen de gekozen manier (`plan` hieronder).
   const workout = buildWorkoutPlan(template, date, program);
   const watchView = useWatchSheet({ template, garmin: workout?.garmin, session, hasZonesNote: !!guide?.garminNote });
-  const view = useBriefingView({ template, session, date, program, storedPlace: stored });
+  const input = useBriefingInput({ template, session, date, program, storedPlace: stored });
+  // Met het weer van huis; de plek van Start bij is pas bekend na de regie van de route hieronder.
+  const homeView = briefing(input);
 
   // De zoektocht: alleen bij Buiten met een route, bij het openen of na een tik; Liever niet zet hem stil.
   const [tapped, setTapped] = useState(false);
   const [declined, setDeclined] = useState(false);
-  const routeMap = view?.map.kind === 'route' ? view.map : undefined;
+  const routeMap = homeView?.map.kind === 'route' ? homeView.map : undefined;
   const searchOn = !!routeMap && !declined && (routeMap.search === 'open' || tapped);
   const model = useRouteSearch({ template, date, closing, enabled: searchOn });
+
+  // Het weer van de gekozen plek: alleen bij een route op de kaart en een plek verder dan 10 km van huis.
+  const weatherTarget = placeWeatherTarget({ on: showPlaceWeather(settings.overviews) && !!routeMap && !declined, place: model.placeStart, home: model.homePoint, weatherHome: settings.homeLocation });
+  const placeWeather = briefingWeather(weatherTarget, usePlaceWeather(weatherTarget), input.forecast);
+  const view = placeWeather.place ? briefing({ ...input, forecast: placeWeather.forecast, weatherPlace: placeWeather.place }) : homeView;
 
   const [sheet, setSheet] = useState<'info' | 'watch' | 'steps' | 'fuel' | 'stretch' | 'route' | 'places' | undefined>();
   const send = useSendRoute(model, date);
@@ -287,7 +298,7 @@ export function TrainingBriefing({
       )}
       {sheet === 'fuel' && (
         <TodaySheet eyebrow={BRIEFING_TEXT.fuelSheet} title={template.name} onClose={() => setSheet(undefined)}>
-          <FuelDetail template={template} date={date} minutes={minutes} outdoor={view.map.kind !== 'place'} />
+          <FuelDetail template={template} date={date} minutes={minutes} outdoor={view.map.kind !== 'place'} forecast={placeWeather.forecast} />
         </TodaySheet>
       )}
       {sheet === 'stretch' && (
@@ -532,9 +543,10 @@ function BigRouteSheet({ template, model, date, onClose, onDecline }: { template
 }
 
 // Het blad achter Eten en drinken: de regel over drinken (zoals De avond ervoor) en Eten onderweg.
-function FuelDetail({ template, date, minutes, outdoor }: { template: SessionTemplate; date: string; minutes: number; outdoor: boolean }) {
-  const { settings, sessionLogs, weather } = useAppData();
-  const drink = outdoor ? drinkLine({ template, minutes, forecast: weather.forecast ?? undefined, logs: sessionLogs, date, now: new Date(), sweatEntries: settings.sweatEntries }) : undefined;
+// `forecast` is de voorspelling die de lijst ook leest: van huis, of van de gekozen plek ver weg.
+function FuelDetail({ template, date, minutes, outdoor, forecast }: { template: SessionTemplate; date: string; minutes: number; outdoor: boolean; forecast: WeatherForecast | undefined }) {
+  const { settings, sessionLogs } = useAppData();
+  const drink = outdoor ? drinkLine({ template, minutes, forecast, logs: sessionLogs, date, now: new Date(), sweatEntries: settings.sweatEntries }) : undefined;
   const fuel = fuelOn(settings) ? fuelForTraining(template, minutes) : undefined;
   return (
     <div className="flex flex-col gap-2">
