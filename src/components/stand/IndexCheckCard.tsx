@@ -1,9 +1,8 @@
 import type { IndexCheck } from '../../engine/learning';
 import { formatNumberNL } from '../../utils/number';
-import { Card, Eyebrow } from '../ui';
 import { formatWeekdayDayMonthNL } from '../../utils/dates';
 
-// Je stand → the leg index against your own legs: what you said at the
+// Benen → het blad achter de rij Index en je benen: the leg index against your own legs: what you said at the
 // warm-up of a hard run or test next to what the index said that morning.
 
 const LEGS_WORD = { fris: 'fris', normaal: 'normaal', zwaar: 'zwaar' } as const;
@@ -12,13 +11,10 @@ export function IndexCheckCard({ checks }: { checks: IndexCheck[] }) {
   const agree = checks.filter((c) => c.agrees).length;
   const tooLow = checks.filter((c) => c.indexTooLow).length;
   return (
-    <Card className="flex flex-col gap-3">
-      <div>
-        <Eyebrow>Index en je benen</Eyebrow>
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Je benen bij het inlopen naast wat de index die ochtend zei. ASCEND vraagt ernaar na een harde loop of test.
-        </p>
-      </div>
+    <div className="flex flex-col gap-3">
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+        Je benen bij het inlopen naast wat de index die ochtend zei. ASCEND vraagt ernaar na een harde loop of test.
+      </p>
       {checks.length === 0 ? (
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
           Nog geen metingen. Hier zie je straks hoe goed het getal bij jou klopt.
@@ -34,7 +30,7 @@ export function IndexCheckCard({ checks }: { checks: IndexCheck[] }) {
             {checks.slice(0, 5).map((c) => (
               <div key={c.date + c.name} className="flex items-baseline justify-between gap-3 text-xs">
                 <span className="truncate" style={{ color: 'var(--color-ink)' }}>{c.name} <span style={{ color: 'var(--color-ink-dim)' }}>· {formatWeekdayDayMonthNL(c.date)}</span></span>
-                <span className="shrink-0 tabular-nums" style={{ color: c.agrees ? 'var(--color-ink-dim)' : 'var(--color-action)' }}>
+                <span className="shrink-0 tabular-nums" style={{ color: c.agrees ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>
                   index {formatNumberNL(c.index, 1)}, benen {LEGS_WORD[c.legs]}{c.agrees ? '' : ', wijkt af'}
                 </span>
               </div>
@@ -42,6 +38,6 @@ export function IndexCheckCard({ checks }: { checks: IndexCheck[] }) {
           </div>
         </>
       )}
-    </Card>
+    </div>
   );
 }

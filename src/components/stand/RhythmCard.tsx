@@ -1,10 +1,9 @@
-import { useState } from 'react';
 import type { Rhythm } from '../../engine/standRhythm';
 import { formatDayMonthNL } from '../../utils/dates';
 import { useSheetClose } from '../../utils/useSheetClose';
 import { Portal } from '../Portal';
 import { SheetHeader } from '../SheetHeader';
-import { Card, Eyebrow, InfoButton, SheetGrip } from '../ui';
+import { Card, SheetGrip } from '../ui';
 
 // Je stand → Ritme: doe je over een paar weken wat gepland staat? Eén beeld (de afgesloten weken en deze
 // week als stipjes), één zin en het oordeel van de coach op Ascend. Geen eigen telling: engine/standRhythm.ts
@@ -61,15 +60,12 @@ export function RhythmSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
+// Het hart van het scherm Ritme. Geen eigen kop en i: de naam en de i staan in de lucht (pages/StandScreen.tsx),
+// zodat de lege stand één zin is en niet drie keer Ritme.
 export function RhythmCard({ rhythm, mainPast }: { rhythm: Rhythm; mainPast: boolean }) {
-  const [info, setInfo] = useState(false);
   const shown = rhythm.weeks.length > 0 && rhythm.enough;
   return (
     <Card className="flex flex-col gap-3" id="stand-ritme" aria-label="Ritme">
-      <div className="flex items-start justify-between gap-3">
-        <Eyebrow>Ritme</Eyebrow>
-        <InfoButton onClick={() => setInfo(true)} label="Wat Ritme telt" />
-      </div>
       {rhythm.enough && rhythm.verdict ? (
         <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{rhythm.verdict}</p>
       ) : (
@@ -91,7 +87,6 @@ export function RhythmCard({ rhythm, mainPast }: { rhythm: Rhythm; mainPast: boo
         </>
       )}
       {rhythm.streakLine && <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>{rhythm.streakLine}</p>}
-      {info && <RhythmSheet onClose={() => setInfo(false)} />}
     </Card>
   );
 }
