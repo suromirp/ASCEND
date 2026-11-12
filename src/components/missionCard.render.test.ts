@@ -191,7 +191,9 @@ describe('de andere missies: rustdag en al gedaan', () => {
 });
 
 describe('Beweging: Rustig en Uit', () => {
-  it('de kaart heeft geen eigen animatie of overgang; de adem staat in index.css en volgt data-motion', () => {
+  // Rustig en Uit zetten alles op de eindstand via data-motion op <html>; de kaart voegt geen beweging toe, dus er is
+  // in die standen niets wat kan blijven hangen. Dit bewijst dat de kaart geen eigen beweging heeft, niet de standen zelf.
+  it('de kaart heeft geen eigen animatie of overgang (de adem staat in index.css en volgt data-motion)', () => {
     expect(missionSrc).not.toMatch(/animate-|transition|mx-(?!primary)/);
   });
 });

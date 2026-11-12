@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { missionCardView, missionChipsShown } from './missionCard';
-import { capAboveMission, placeTodayCards } from './todayCards';
+import { TODAY_CARD_RANK, capAboveMission, placeTodayCards, type TodayCardId } from './todayCards';
 import { trainingRowsForYourDay } from './yourDay';
 import { briefingEntry, missionButton } from './briefing';
 import { buildDefaultProgramData } from '../data/defaultProgram';
@@ -87,6 +87,19 @@ describe('placeTodayCards: regel 6 rond de missie', () => {
     expect(p.above).toEqual(['ill', 'weatherWarning']);
     expect(p.underMission).toEqual(['morning']);
     expect(p.underDay).toEqual(['freshStart']);
+  });
+  it('elke aanwezige kaart komt precies één keer terug, bij elke combinatie en elke grens', () => {
+    const ids = TODAY_CARD_RANK.map((c) => c.id);
+    for (let mask = 0; mask < 1 << ids.length; mask++) {
+      const present: TodayCardId[] = ids.filter((_, i) => mask & (1 << i));
+      for (const limit of [1, 2, 'all'] as const) {
+        const p = placeTodayCards(present, limit);
+        const out = [...p.above, ...p.underMission, ...p.underDay];
+        expect(out.length).toBe(present.length);
+        expect(new Set(out)).toEqual(new Set(present));
+        expect(p.above.filter((id) => !TODAY_CARD_RANK.find((c) => c.id === id)!.always).length).toBeLessThanOrEqual(capAboveMission(limit));
+      }
+    }
   });
   it('een kaart die boven geen plek heeft wacht onder Je dag', () => {
     expect(placeTodayCards(['ramp', 'freshStart'], 1)).toEqual({ above: ['ramp'], underMission: [], underDay: ['freshStart'] });
