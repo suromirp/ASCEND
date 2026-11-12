@@ -473,9 +473,8 @@ function watchRow(input: BriefingInput, stand: BriefingStand, place: string | un
   // van de training.
   // De echte stand, ook als de instelling Horlogestatus tonen uit staat: anders zou de regel een workout verzwijgen.
   // Amber alleen als ASCEND een workout klaarzette (of gaat zetten); stel je zelf in, dan de gewone toon.
-  const onWatch = WATCH_WHEN[status?.kind ?? ''];
-  const other = watchPlaceLine(input.template, place, onWatch);
-  if (other) return { id: 'watch', label: BRIEFING_TEXT.watch, line: ticks ? `${other} ${ticks}.` : other, opens: true, ...(onWatch ? { tone: 'warn' as const } : {}) };
+  const other = watchPlaceState(input.template, place, status);
+  if (other) return { id: 'watch', label: BRIEFING_TEXT.watch, line: ticks ? `${other.line} ${ticks}.` : other.line, opens: true, ...(other.warn ? { tone: 'warn' as const } : {}) };
   const state = watchState(input, status, plan?.garmin !== undefined);
   const line = ticks ? `${state.line}. ${ticks}.` : state.line;
   return { id: 'watch', label: BRIEFING_TEXT.watch, line, opens: true, ...(state.warn ? { tone: 'warn' as const } : {}) };
@@ -486,22 +485,61 @@ const WATCH_WHEN: Record<string, 'on' | 'coming' | undefined> = { sent: 'on', st
 
 const WATCH_SPORT: Record<WatchSport, Sport> = { Run: 'running', Walk: 'hiking', Hike: 'hiking', Ride: 'cycling' };
 const WORKOUT_NAME: Record<Sport, string> = { running: 'hardloopworkout', hiking: 'wandelworkout', cycling: 'fietsworkout' };
+// Waar je een workout van die soort op je horloge start.
+const WATCH_ACTIVITY: Record<Sport, string> = { running: 'Hardlopen', hiking: 'Wandelen', cycling: 'Fietsen' };
 
-// De workout op je horloge volgt de training, niet de gekozen manier (engine/watchWorkout.ts stuurt het plan). Is
-// de manier een andere sport, dan zegt dit wat er op je horloge staat en wat je start: "Er staat een
-// hardloopworkout op. Start Stair Stepper zonder workout.", of "Er komt een hardloopworkout op je horloge." zolang
-// hij nog verstuurd wordt. Zonder workout van ASCEND alleen wat je start. Dezelfde sport (de loopband): geen regel,
-// die workout loop je ook op de band.
-export function watchPlaceLine(template: SessionTemplate, place: string | undefined, onWatch: 'on' | 'coming' | undefined): string | undefined {
+// De workout op je horloge volgt de training. Is de gekozen manier een andere sport, dan zegt dit wat er op je
+// horloge staat en wat je start. Twee gevallen (besluit 2026-11-12-stairmaster-horloge.md):
+// - De manier krijgt een eigen workout (hardlopen met een manier die wandelen is, zoals de StairMaster, en de
+//   instelling Eigen workout bij een andere manier aan): "Er staat een wandelworkout op. Start hem bij Wandelen."
+//   Staat de oude er nog: "Er staat nog een hardloopworkout op. De wandelworkout komt eraan.", en lukte het
+//   versturen niet, dan zegt de regel dat en wat je dan start.
+// - Geen eigen workout (de instelling uit, of fietsen in plaats van lopen): "Er staat een hardloopworkout op.
+//   Start Stair Stepper zonder workout.", of "Er komt een hardloopworkout op je horloge." zolang hij nog verstuurd
+//   wordt. Zonder workout van ASCEND alleen wat je start.
+// Dezelfde sport (de loopband): geen regel, die workout loop je ook op de band.
+export function watchPlaceState(
+  template: SessionTemplate,
+  place: string | undefined,
+  status: Pick<WatchStatus, 'kind' | 'wants' | 'wrote'> | undefined,
+): { line: string; warn?: boolean } | undefined {
   const workout = watchSportOf(template);
   const chosen = place ? modalitySport(place) : undefined;
   if (!workout || !chosen || WATCH_SPORT[workout] === chosen) return undefined;
   const profile = getModality(template.id, place!)?.garminProfile;
   const start = profile && !profile.includes('/') ? `Start ${profile} zonder workout.` : 'Start zonder workout.';
-  const name = WORKOUT_NAME[WATCH_SPORT[workout]];
-  if (onWatch === 'on') return `Er staat een ${name} op. ${start}`;
-  if (onWatch === 'coming') return `Er komt een ${name} op je horloge. ${start}`;
-  return start;
+  const onWatch = WATCH_WHEN[status?.kind ?? ''];
+  const wants = WATCH_SPORT[status?.wants ?? workout];
+  const wrote = WATCH_SPORT[status?.wrote ?? workout];
+  if (wants !== chosen) {
+    // Wat er echt op staat: de workout van de training, of nog de eigen workout van net (de instelling ging uit).
+    if (onWatch === 'on') return { line: `Er staat een ${WORKOUT_NAME[wrote]} op. ${start}`, warn: true };
+    if (onWatch === 'coming') return { line: `Er komt een ${WORKOUT_NAME[wants]} op je horloge. ${start}`, warn: true };
+    return { line: start };
+  }
+  const own = WORKOUT_NAME[wants];
+  switch (status?.kind) {
+    case 'sent':
+      return { line: `Er staat een ${own} op. Start hem bij ${WATCH_ACTIVITY[wants]}.` };
+    case 'stale':
+      // Een andere wijziging aan dezelfde workout: de gewone regel (Wijziging nog niet erop).
+      return wrote === wants ? undefined : { line: `Er staat nog een ${WORKOUT_NAME[wrote]} op. De ${own} komt eraan.`, warn: true };
+    case 'failed':
+      return status.wrote
+        ? { line: `Versturen lukte niet: er staat nog een ${WORKOUT_NAME[wrote]} op. ${start}`, warn: true }
+        : { line: `Versturen lukte niet. ${start}`, warn: true };
+    case 'pending':
+    case 'later':
+      return { line: `Er komt een ${own} op je horloge.` };
+    default:
+      // Niet gekoppeld of sturen staat uit: er komt niets, dus alleen wat je start.
+      return { line: start };
+  }
+}
+
+// De regel alleen, met de stand als woord (staat erop, komt eraan, of niets van ASCEND).
+export function watchPlaceLine(template: SessionTemplate, place: string | undefined, onWatch: 'on' | 'coming' | undefined): string | undefined {
+  return watchPlaceState(template, place, onWatch ? { kind: onWatch === 'on' ? 'sent' : 'pending' } : undefined)?.line;
 }
 
 function watchState(input: BriefingInput, status: WatchStatus | undefined, garmin: boolean): { line: string; warn?: boolean } {

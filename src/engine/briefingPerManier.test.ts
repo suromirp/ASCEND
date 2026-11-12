@@ -256,6 +256,46 @@ describe('het horloge bij een andere manier', () => {
   });
 });
 
+describe('de eigen wandelworkout op de StairMaster (besluit 2026-11-12-stairmaster-horloge.md)', () => {
+  const row = (watchStatus: BriefingInput['watchStatus'], over: Partial<BriefingInput> = {}) => view(HILLS, 'stairmaster_intervals', { watchStatus, watchLink: { linked: true, autoTick: false, activities: true }, ...over }).rows.find((r) => r.id === 'watch')!;
+  it('verstuurd: de wandelworkout staat erop, zonder amber en zonder Start zonder workout', () => {
+    const r = row({ kind: 'sent', wants: 'Walk', wrote: 'Walk' });
+    expect(r.line).toBe('Er staat een wandelworkout op. Start hem bij Wandelen.');
+    expect(r.tone).toBeUndefined();
+  });
+  it('gekozen na het versturen: de hardloopworkout staat er nog', () => {
+    const r = row({ kind: 'stale', wants: 'Walk', wrote: 'Run' });
+    expect(r.line).toBe('Er staat nog een hardloopworkout op. De wandelworkout komt eraan.');
+    expect(r.tone).toBe('warn');
+  });
+  it('gekozen voor het versturen, de dag zelf of de avond ervoor: hij komt eraan', () => {
+    expect(row({ kind: 'pending', wants: 'Walk' }).line).toBe('Er komt een wandelworkout op je horloge.');
+    expect(row({ kind: 'later', goesOn: '2026-11-12', wants: 'Walk' }).line).toBe('Er komt een wandelworkout op je horloge.');
+    expect(row({ kind: 'pending', wants: 'Walk' }).tone).toBeUndefined();
+  });
+  it('versturen mislukt of de koppeling verlopen: de oude blijft en de regel zegt dat', () => {
+    const r = row({ kind: 'failed', reason: 'sleutel niet herkend', wants: 'Walk', wrote: 'Run' });
+    expect(r.line).toBe('Versturen lukte niet: er staat nog een hardloopworkout op. Start Stair Stepper zonder workout.');
+    expect(r.tone).toBe('warn');
+    expect(row({ kind: 'failed', reason: 'geen verbinding', wants: 'Walk' }).line).toBe('Versturen lukte niet. Start Stair Stepper zonder workout.');
+  });
+  it('horloge sturen staat uit: er komt niets, alleen wat je start', () => {
+    expect(row({ kind: 'unlinked' }).line).toBe('Start Stair Stepper zonder workout.');
+  });
+  it('de instelling uit nadat de wandelworkout erop stond: de regel zegt wat er echt staat', () => {
+    expect(row({ kind: 'stale', wants: 'Run', wrote: 'Walk' }).line).toBe('Er staat een wandelworkout op. Start Stair Stepper zonder workout.');
+  });
+  it('terug naar buiten: de gewone regel van het horloge', () => {
+    const r = view(HILLS, 'hill_repeats_outdoor', { watchStatus: { kind: 'stale', wants: 'Run', wrote: 'Walk' } }).rows.find((x) => x.id === 'watch')!;
+    expect(r.line).toContain('Wijziging nog niet erop');
+  });
+  it('past op 360 px: geen regel langer dan drie regels van 40 tekens', () => {
+    for (const st of [{ kind: 'sent', wants: 'Walk', wrote: 'Walk' }, { kind: 'stale', wants: 'Walk', wrote: 'Run' }, { kind: 'failed', wants: 'Walk', wrote: 'Run' }] as const) {
+      expect(view(HILLS, 'stairmaster_intervals', { watchStatus: st }).rows.find((r) => r.id === 'watch')!.line.length).toBeLessThanOrEqual(120);
+    }
+  });
+});
+
 describe('het tempo staat in de Briefing', () => {
   it('een duurloop met testloop: het tempo als kerngetal en de zin over de testloop', () => {
     const v = view(EASY, undefined, { paces: PACES });

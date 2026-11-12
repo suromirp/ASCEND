@@ -1652,6 +1652,14 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Waarom', text: 'hardlopend kom je zelden onder zone 1, dus het horloge piept vooral als je te hoog gaat.' },
     ],
   },
+  horlogeEigenWorkout: {
+    title: 'Eigen workout bij een andere manier',
+    lead: 'Kies je bij een looptraining een manier die wandelen is, zoals de StairMaster, dan krijgt je horloge een wandelworkout met dezelfde blokken.',
+    points: [
+      { head: 'Waarom', text: 'een hardloopworkout met tempo klopt niet op de trap. De wandelworkout gaat op gevoel en hartslag.' },
+      { head: 'Uit', text: 'de workout van de training blijft staan en je start de manier zonder workout.' },
+    ],
+  },
   horlogeGedaanWeghalen: {
     title: 'Gedane trainingen weghalen',
     lead: 'Een training die je deed of oversloeg, verdwijnt weer uit je agenda.',

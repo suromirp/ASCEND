@@ -13,7 +13,9 @@ import {
   setWatchWorkoutsEnabled,
   syncWatchWorkouts,
   syncWatchWorkoutsAfterPlanChange,
+  syncWatchAfterPlaceChange,
 } from './watchWorkouts';
+import { resetTrainingPlaceCache, saveTrainingPlace } from './trainingPlace';
 import { selectWatchWorkouts } from '../engine/watchWorkout';
 import { addDays } from '../utils/dates';
 import type { SessionLog } from '../models/training';
@@ -590,5 +592,137 @@ describe('the heart rate of ASCEND on the watch', () => {
     const result = await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
     expect(result.status === 'ok' && result.updated).toBeGreaterThan(0);
     expect(descriptions(agenda).join('\n')).not.toMatch(/% LTHR/);
+  });
+});
+
+// Besluit docs/beslissingen/2026-11-12-stairmaster-horloge.md.
+describe('een eigen workout bij een andere manier', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+    resetTrainingPlaceCache();
+  });
+
+  // De eerste heuvelintervallen in de komende week, op een dag naar keuze (vandaag of morgen).
+  async function hillSession(today: string, days: number) {
+    const all = await PlannedSessionsRepo.getAll();
+    const found = all.find((s) => s.templateId === 'tpl_hill_intervals' && s.scheduledDate >= today)!;
+    const moved = { ...found, scheduledDate: addDays(today, days) };
+    await PlannedSessionsRepo.put(moved);
+    return moved;
+  }
+  const typeOf = (agenda: ReturnType<typeof fakeAgenda>, id: string) => agenda.events.get(`ascend:${id}`)?.body.type;
+
+  for (const [when, days] of [['de dag zelf', 0], ['de avond ervoor', 1]] as const) {
+    it(`${when}: gekozen na het versturen wordt de hardloopworkout vervangen, op dezelfde plek in de agenda`, async () => {
+      const { today } = await setup();
+      const hills = await hillSession(today, days);
+      const agenda = fakeAgenda();
+      await setWatchWorkoutsEnabled(true);
+      await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+      expect(typeOf(agenda, hills.id)).toBe('Run');
+      const idBefore = agenda.events.get(`ascend:${hills.id}`)!.id;
+      const sizeBefore = agenda.events.size;
+
+      await saveTrainingPlace(hills.id, hills.scheduledDate, 'stairmaster_intervals', today);
+      const result = await syncWatchAfterPlaceChange(hills.id, { fetchImpl: agenda.fn, today });
+      expect(result).toEqual({ status: 'ok', created: 0, updated: 1, removed: 0 });
+      expect(agenda.events.size).toBe(sizeBefore);
+      const event = agenda.events.get(`ascend:${hills.id}`)!;
+      expect(event.id).toBe(idBefore);
+      expect(event.body.type).toBe('Walk');
+      expect(String(event.body.description)).toContain('Stevig traplopen');
+      expect(String(event.body.description)).not.toMatch(/\/km|Pace/);
+      expect((await getWatchWorkoutState()).items[hills.id].type).toBe('Walk');
+
+      // Terug naar buiten: weer de hardloopworkout, nog steeds één.
+      await saveTrainingPlace(hills.id, hills.scheduledDate, 'hill_repeats_outdoor', today);
+      await syncWatchAfterPlaceChange(hills.id, { fetchImpl: agenda.fn, today });
+      expect(typeOf(agenda, hills.id)).toBe('Run');
+      expect(agenda.events.size).toBe(sizeBefore);
+      expect(agenda.events.get(`ascend:${hills.id}`)!.id).toBe(idBefore);
+    });
+  }
+
+  it('gekozen voor het versturen: meteen de wandelworkout, één keer', async () => {
+    const { today } = await setup();
+    const hills = await hillSession(today, 0);
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await saveTrainingPlace(hills.id, hills.scheduledDate, 'stairmaster_intervals', today);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    expect(typeOf(agenda, hills.id)).toBe('Walk');
+    const again = await syncWatchAfterPlaceChange(hills.id, { fetchImpl: agenda.fn, today });
+    expect(again).toEqual({ status: 'ok', created: 0, updated: 0, removed: 0 });
+    expect(agenda.calls.filter((c) => JSON.stringify(c.body ?? '').includes(`ascend:${hills.id}`)).length).toBe(1);
+  });
+
+  it('versturen mislukt of de koppeling verlopen: de oude workout blijft, met de reden', async () => {
+    const { today } = await setup();
+    const hills = await hillSession(today, 0);
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    const before = (await getWatchWorkoutState()).items[hills.id];
+
+    await saveTrainingPlace(hills.id, hills.scheduledDate, 'stairmaster_intervals', today);
+    const down = fakeAgenda({ failWith: 401 });
+    const result = await syncWatchAfterPlaceChange(hills.id, { fetchImpl: down.fn, today });
+    expect(result.status).toBe('error');
+    const state = await getWatchWorkoutState();
+    expect(state.lastError).toBeTruthy();
+    expect(state.items[hills.id]).toEqual(before);
+    expect(typeOf(agenda, hills.id)).toBe('Run');
+
+    // De volgende ronde die wel lukt vervangt hem alsnog.
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    expect(typeOf(agenda, hills.id)).toBe('Walk');
+  });
+
+  it('horloge sturen staat uit: er gaat niets naar buiten', async () => {
+    const { today } = await setup();
+    const hills = await hillSession(today, 0);
+    const agenda = fakeAgenda();
+    await saveTrainingPlace(hills.id, hills.scheduledDate, 'stairmaster_intervals', today);
+    expect(await syncWatchAfterPlaceChange(hills.id, { fetchImpl: agenda.fn, today })).toEqual({ status: 'off' });
+    expect(agenda.calls).toEqual([]);
+  });
+
+  it('een keuze die voor het horloge niets verandert (de loopband) vraagt niets van het netwerk', async () => {
+    const { today } = await setup();
+    const hills = await hillSession(today, 0);
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    const calls = agenda.calls.length;
+    await saveTrainingPlace(hills.id, hills.scheduledDate, 'incline_treadmill_intervals', today);
+    expect(await syncWatchAfterPlaceChange(hills.id, { fetchImpl: agenda.fn, today })).toEqual({ status: 'ok', created: 0, updated: 0, removed: 0 });
+    expect(agenda.calls.length).toBe(calls);
+  });
+
+  it('de instelling uit: de hardloopworkout blijft, ook met de StairMaster gekozen', async () => {
+    const { today } = await setup();
+    const hills = await hillSession(today, 0);
+    await SettingsRepo.set({ watchPlaceWorkout: false });
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await saveTrainingPlace(hills.id, hills.scheduledDate, 'stairmaster_intervals', today);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    expect(typeOf(agenda, hills.id)).toBe('Run');
+  });
+
+  it('twee snelle tikken: na elkaar, en aan het eind staat de laatste keuze er één keer', async () => {
+    const { today } = await setup();
+    const hills = await hillSession(today, 0);
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    const size = agenda.events.size;
+    void saveTrainingPlace(hills.id, hills.scheduledDate, 'stairmaster_intervals', today);
+    const a = syncWatchAfterPlaceChange(hills.id, { fetchImpl: agenda.fn, today });
+    void saveTrainingPlace(hills.id, hills.scheduledDate, 'hill_repeats_outdoor', today);
+    const b = syncWatchAfterPlaceChange(hills.id, { fetchImpl: agenda.fn, today });
+    await Promise.all([a, b]);
+    expect(typeOf(agenda, hills.id)).toBe('Run');
+    expect(agenda.events.size).toBe(size);
   });
 });

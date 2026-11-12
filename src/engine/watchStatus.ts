@@ -25,7 +25,7 @@ import type { Program } from '../models/program';
 import { addDays, formatDateNL, toISODate, weekdayLongNL } from '../utils/dates';
 import type { RacePaces } from './racePaces';
 import type { WatchHrPlan } from './watchHeartRate';
-import { buildWatchWorkout, WATCH_DAYS, type TrackedWorkout, type WatchNamePrefix } from './watchWorkout';
+import { buildWatchWorkout, watchSportOf, WATCH_DAYS, type TrackedWorkout, type WatchNamePrefix, type WatchSport } from './watchWorkout';
 import { formatClock } from '../utils/clock';
 
 export type WatchStatusKind = 'none' | 'unlinked' | 'sent' | 'stale' | 'pending' | 'later' | 'failed';
@@ -38,6 +38,11 @@ export interface WatchStatus {
   goesOn?: string;
   // failed: the short reason.
   reason?: string;
+  // The kind of workout this training wants on the watch now, and the kind ASCEND last wrote for it (absent:
+  // nothing written). Both only when one of them is not the workout of the training itself (a walking workout
+  // for the StairMaster). They differ between a change of the way of training and the next round.
+  wants?: WatchSport;
+  wrote?: WatchSport;
 }
 
 export interface WatchStatusContext {
@@ -54,25 +59,32 @@ export interface WatchStatusContext {
   namePrefix?: WatchNamePrefix;
   // The same heart rate plan the send uses (engine/watchHeartRate.ts), or the fingerprint differs.
   hr?: WatchHrPlan;
+  // The same choices Waar train je? and the same setting the send uses, or the fingerprint differs.
+  places?: Record<string, string>;
+  placeWorkout?: boolean;
   // The ids of planned sessions that have a log.
   logged: Set<string>;
 }
 
 export function watchStatusFor(session: PlannedSession, template: SessionTemplate, ctx: WatchStatusContext): WatchStatus {
   if (session.status === 'skipped' || ctx.logged.has(session.id) || session.scheduledDate < ctx.today) return { kind: 'none' };
-  const workout = buildWatchWorkout(session, template, ctx.program, ctx.paces, { namePrefix: ctx.namePrefix, hr: ctx.hr });
+  const workout = buildWatchWorkout(session, template, ctx.program, ctx.paces, { namePrefix: ctx.namePrefix, hr: ctx.hr, places: ctx.places, placeWorkout: ctx.placeWorkout });
   if (!workout) return { kind: 'none' };
   if (!ctx.linked) return { kind: 'unlinked' };
 
   const tracked = ctx.items[session.id];
+  // Only said when it is not the workout of the training itself: the usual case stays as it was.
+  const own = watchSportOf(template);
+  const wrote = tracked ? (tracked.type ?? own) : undefined;
+  const kinds = workout.type !== own || (wrote && wrote !== own) ? { wants: workout.type, ...(wrote ? { wrote } : {}) } : {};
   if (tracked && tracked.fingerprint === workout.fingerprint && tracked.date === workout.date) {
-    return { kind: 'sent', sentAt: tracked.sentAt ?? ctx.syncedAt };
+    return { kind: 'sent', sentAt: tracked.sentAt ?? ctx.syncedAt, ...kinds };
   }
   if (workout.date > addDays(ctx.today, WATCH_DAYS - 1)) {
-    return { kind: 'later', goesOn: addDays(workout.date, -(WATCH_DAYS - 1)) };
+    return { kind: 'later', goesOn: addDays(workout.date, -(WATCH_DAYS - 1)), ...kinds };
   }
-  if (ctx.lastError) return { kind: 'failed', reason: shortWatchError(ctx.lastError) };
-  return { kind: tracked ? 'stale' : 'pending' };
+  if (ctx.lastError) return { kind: 'failed', reason: shortWatchError(ctx.lastError), ...kinds };
+  return { kind: tracked ? 'stale' : 'pending', ...kinds };
 }
 
 // The long messages of integrations/intervalsIcu.ts in a few words, for a

@@ -393,6 +393,14 @@ export function GarminLinkPage() {
         )}
         {connected && (
           <UseRow
+            title="Eigen workout bij een andere manier"
+            text="Kies je bij een looptraining de StairMaster of wandelen, dan krijgt je horloge een wandelworkout met dezelfde blokken, zonder tempo."
+            checked={settings.watchPlaceWorkout !== false}
+            onChange={(on) => void updateSettings({ watchPlaceWorkout: on }).then(() => syncWatchWorkouts({ force: true }))}
+          />
+        )}
+        {connected && (
+          <UseRow
             title="Gedane trainingen weghalen"
             text="Een training die je hebt gedaan of voorbij liet gaan haalt ASCEND weer uit je intervals.icu-agenda. Je activiteit zelf blijft staan."
             checked={settings.watchRemoveDone !== false}
