@@ -53,7 +53,7 @@ describe('zone2WeekChart: stippen per week, een lijn pas na de drempel', () => {
     const last = chart.dots.at(-1)!;
     expect(chart.end).toEqual({ x: last.x, paceSec: last.paceSec });
     expect(formatPace(chart.end!.paceSec)).not.toBe(formatPace(head!.paceSec));
-    expect(caption).toBe(`${formatPace(head!.paceSec)} is het gemiddelde van je 3 lopen van de laatste 8 weken. Elke stip is het gemiddelde van een week.`);
+    expect(caption).toBe(`${formatPace(head!.paceSec)} is het gemiddelde van je 3 lopen van de laatste 8 weken. ${formatPace(last.paceSec)} is je laatste week. Elke stip is het gemiddelde van een week.`);
   });
 
   it('sneller staat boven: de as loopt van het snelste tempo (boven) naar het traagste', () => {
@@ -113,6 +113,8 @@ describe('zone2WeekChart: stippen per week, een lijn pas na de drempel', () => {
     expect(chart.state).toBe('te-veel-verschil');
     expect(chart.line).toBeUndefined();
     expect(caption).toMatch(/Ze verschillen te veel om de lijn te tekenen\./);
+    // Het getal bij de laatste stip staat ook in de zin, zodat het geen onverklaard tweede getal is.
+    expect(caption).toContain(formatPace(chart.end!.paceSec));
   });
 
   it('geen stip valt rechts van vandaag, ook niet in de week van vandaag', () => {

@@ -237,12 +237,15 @@ export function zone2CardCaption(trend: Parameters<typeof trendHeadline>[0]): st
   const pace = formatPace(head.paceSec);
   const dots = trend.points.length === 1 ? 'De stip is het gemiddelde van die week.' : 'Elke stip is het gemiddelde van een week.';
   const s = trend.statement;
+  // Zonder lijn staat bij de laatste stip het tempo van die week; wijkt dat af van de kop, dan noemt de zin het ook.
+  const lastPace = trend.points.at(-1) ? formatPace(trend.points.at(-1)!.paceSec) : pace;
+  const lastWeek = lastPace !== pace ? ` ${lastPace} is je laatste week.` : '';
   if (s?.kind === 'eerste-schatting') {
-    return s.runs === 1 ? `${pace} is je ene loop van de laatste ${R.lineWeeks} weken. ${dots}` : `${pace} is het gemiddelde van je ${s.runs} lopen van de laatste ${R.lineWeeks} weken. ${dots}`;
+    return s.runs === 1 ? `${pace} is je ene loop van de laatste ${R.lineWeeks} weken.${lastWeek} ${dots}` : `${pace} is het gemiddelde van je ${s.runs} lopen van de laatste ${R.lineWeeks} weken.${lastWeek} ${dots}`;
   }
   if (s?.kind === 'uitspraak') {
     return s.verdict === 'te-veel-verschil'
-      ? `${pace} is waar de lijn door je ${s.runs} lopen nu staat. Ze verschillen te veel om de lijn te tekenen. ${dots}`
+      ? `${pace} is waar de lijn door je ${s.runs} lopen nu staat. Ze verschillen te veel om de lijn te tekenen.${lastWeek} ${dots}`
       : `${pace} is waar de lijn door je ${s.runs} lopen nu staat. ${dots}`;
   }
   return `${pace} is je laatste week met een loop. ${dots}`;

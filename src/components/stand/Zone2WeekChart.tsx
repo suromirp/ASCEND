@@ -13,7 +13,7 @@ const TOP = 12;
 const BOTTOM = 12;
 const LEFT = 8;
 // Rechts is ruimte voor het eindlabel: het staat rechts naast zijn stip, waar geen andere stip kan staan.
-const RIGHT = 40;
+const RIGHT = 48;
 
 export function Zone2WeekChart({ chart }: { chart: Chart }) {
   const [active, setActive] = useState<number | null>(null);
