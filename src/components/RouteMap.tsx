@@ -1,10 +1,11 @@
 // ASCEND: de kaart bij Route voorstellen. Alle voorgestelde lussen (de gekozen doorgetrokken in mint,
 // de andere licht gestreept op een donkere rand), het startpunt als ring en je plek als ijsblauwe stip.
-// Tik op een lus kiest hem; tik op de kaart zet een ring neer en Start hier maakt dat punt je vaste
-// punt en zoekt opnieuw. Rechtsboven wissel je tussen Kaart en Luchtfoto (de keuze wordt onthouden in de
+// Tik op een lus kiest hem; tik op de kaart zet een ring neer en Start hier zoekt opnieuw vanaf dat punt,
+// alleen voor deze zoektocht (Thuis verschuift niet). Bewaar als plek, met Maak dit Thuis, is de enige weg
+// om dat punt te bewaren. Je stip komt van de plek die de zoektocht al vond, zonder tweede vraag. Rechtsboven wissel je tussen Kaart en Luchtfoto (de keuze wordt onthouden in de
 // stand Luchtfoto van de instelling Ondergrond van de kaart); laadt de luchtfoto niet, dan staat de kaart er met één regel. De uitleg daarover staat achter de i van het blad. Rendert alleen: de regie staat in routeMapView.ts, de stijlen en vormen in
-// engine/routeMap.ts, het bewaren van het punt in storage/routeStart.ts#startFromMap.
-// Docs: docs/beslissingen/2026-11-11-route-kaart.md.
+// engine/routeMap.ts, het getikte punt in storage/routeStart.ts#startFromMap.
+// Docs: docs/beslissingen/2026-11-11-route-kaart.md, docs/beslissingen/2026-11-11-route-start.md.
 
 import { useEffect, useRef, useState } from 'react';
 import type { RoutePoint, RouteStyle } from '../models/route';
@@ -13,23 +14,12 @@ import { ROUTE_MAP_HEIGHT, mapFallbackLine } from '../engine/routeSheet';
 import { hasWebGL2, loadMapLibre } from '../integrations/mapLibre';
 import { AERIAL_SOURCES } from '../integrations/aerialImagery';
 import { OSM_COPYRIGHT } from '../integrations/overpass';
-import { withTimeout } from '../utils/withTimeout';
 import { createRouteMapView, whereAmI, type MapViewState, type RouteMapView } from './routeMapView';
 import { useMotionMode } from './motion';
 import { TextButton } from './TextButton';
 import { Icon } from './icons';
 
 type StartAnswer = { ok: true; point: RoutePoint } | { ok: false; line: string };
-
-// Weet de browser al dat je plek mag, dan staat je stip er meteen. Anders pas na een tik.
-async function placeAllowed(): Promise<boolean> {
-  try {
-    const status = await withTimeout(navigator.permissions.query({ name: 'geolocation' }), 1_000);
-    return status.state === 'granted';
-  } catch {
-    return false;
-  }
-}
 
 // Een ronde knop op de kaart (uitzondering op de primitives, zie het besluit): 44 bij 44, woord als label.
 function MapButton({ icon, label, onClick, disabled }: { icon: 'locatie' | 'inbeeld'; label: string; onClick: () => void; disabled?: boolean }) {
@@ -73,17 +63,26 @@ function PhotoSwitch({ value, onPick }: { value: MapPhoto; onPick: (v: MapPhoto)
   );
 }
 
-export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offerHere = true, onNoMap, height, photo = 'map', onPhoto }: {
+// Bij Bewaar als plek: wat er gebeurt, in één zin.
+export const MAKE_HOME_MOVE = 'Thuis verhuist naar dit punt. Je routes bij Thuis blijven.';
+export const MAKE_HOME_NEW = 'Dit punt wordt Thuis. Wissen kan bij Startpunt van je lus.';
+
+export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome }: {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
   // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is).
   start: RoutePoint;
   base: MapBase;
   onChoose: (style: RouteStyle) => void;
-  // Start hier (een getikt punt) of Zet mijn plek als start ('here'); heeft zelf een grens in tijd.
-  onStart: (from: { tap: RoutePoint } | 'here') => Promise<StartAnswer>;
-  // Zet mijn plek als start (als vast punt); niet bij Waar je nu bent, daar is de lus al vanaf je plek.
-  offerHere?: boolean;
+  // Start hier (een getikt punt), alleen voor deze zoektocht; heeft zelf een grens in tijd.
+  onStart: (from: { tap: RoutePoint }) => Promise<StartAnswer>;
+  // Je precieze plek van deze zoektocht (Waar je nu bent), als stip; zonder tweede vraag.
+  me?: RoutePoint;
+  // Het punt waar de lus nu begint na Start hier: ook daar kan Bewaar als plek.
+  tapped?: RoutePoint;
+  hasHome?: boolean;
+  // Maak dit Thuis; zonder deze functie geen Bewaar als plek.
+  onMakeHome?: (point: RoutePoint) => Promise<boolean>;
   // De kaart kan niet tekenen of laden: dan staan de lussen alleen als tekst en zeggen de rijen niet hoe ze op de kaart staan.
   onNoMap?: () => void;
   // De lagere stand in de Briefing (engine/routeSheet.ts#BRIEFING_MAP_HEIGHT); anders die van het blad.
@@ -97,8 +96,12 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
   const view = useRef<RouteMapView | undefined>(undefined);
   const [state, setState] = useState<MapViewState>({ kind: 'loading' });
   const [pick, setPick] = useState<RoutePoint | undefined>();
-  const [me, setMe] = useState<RoutePoint | undefined>();
-  const [busy, setBusy] = useState<'me' | 'here' | 'tap' | undefined>();
+  // Naar mijn plek (een tik) mag een grove plek zijn; anders de plek die de zoektocht vond.
+  const [asked, setAsked] = useState<RoutePoint | undefined>();
+  const me = asked ?? found;
+  const [busy, setBusy] = useState<'me' | 'tap' | 'home' | undefined>();
+  // Bewaar als plek is open: de zin en Maak dit Thuis.
+  const [saving, setSaving] = useState(false);
   const [line, setLine] = useState('');
   const [fullCredit, setFullCredit] = useState(false);
   const alive = useRef(true);
@@ -130,6 +133,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
       onMapTap: (point) => {
         setPick(point);
         setLine('');
+        setSaving(false);
       },
     }, {
       load: loadMapLibre,
@@ -164,19 +168,6 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
     if (ready) view.current?.fitAll();
   }, [fitKey, ready]);
 
-  // Je stip: een grove plek is genoeg, zonder de vraag om je precieze plek.
-  useEffect(() => {
-    let on = true;
-    void placeAllowed().then(async (ok) => {
-      if (!ok || !on) return;
-      const found = await whereAmI();
-      if (on && found.ok) setMe(found.point);
-    });
-    return () => {
-      on = false;
-    };
-  }, []);
-
   async function goToMe() {
     setBusy('me');
     setLine('');
@@ -187,23 +178,35 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
       setLine(found.line);
       return;
     }
-    setMe(found.point);
+    setAsked(found.point);
     view.current?.goTo(found.point);
   }
 
-  // Een startpunt telt alleen met een precieze plek (dezelfde grens als in de instelling).
-  async function startAt(from: { tap: RoutePoint } | 'here') {
-    setBusy(from === 'here' ? 'here' : 'tap');
+  // Start hier: alleen voor deze zoektocht; er wordt niets bewaard.
+  async function startAt(from: { tap: RoutePoint }) {
+    setBusy('tap');
     setLine('');
-    const found = await onStart(from);
+    setSaving(false);
+    const answer = await onStart(from);
     if (!alive.current) return;
     setBusy(undefined);
-    if (!found.ok) {
-      setLine(found.line);
+    if (!answer.ok) {
+      setLine(answer.line);
       return;
     }
     setPick(undefined);
-    if (from === 'here') setMe(found.point);
+  }
+
+  // Maak dit Thuis: bewust, na Bewaar als plek.
+  const keepable = pick ?? tapped;
+  async function makeHome(point: RoutePoint) {
+    if (!onMakeHome) return;
+    setBusy('home');
+    const ok = await onMakeHome(point);
+    if (!alive.current) return;
+    setBusy(undefined);
+    setSaving(false);
+    setLine(ok ? 'Thuis staat nu op dit punt.' : 'Thuis kon niet bewaard worden. Probeer het nog eens.');
   }
 
   const noMap = state.kind === 'unsupported' || state.kind === 'failed';
@@ -222,7 +225,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
 
   const photoFailed = state.kind === 'ready' && state.photoFailed === true;
   const online = typeof navigator === 'undefined' || navigator.onLine !== false;
-  const status = busy === 'here' ? 'Je locatie wordt bepaald. Dat duurt hoogstens 15 seconden.' : busy === 'me' ? 'Je locatie wordt bepaald.' : line || photoFallbackLine(photoFailed, online);
+  const status = busy === 'me' ? 'Je locatie wordt bepaald.' : saving ? (hasHome ? MAKE_HOME_MOVE : MAKE_HOME_NEW) : line || photoFallbackLine(photoFailed, online);
   // Wat je ziet: viel de luchtfoto weg, dan staat de schakelaar op Kaart; de instelling blijft Luchtfoto,
   // en een tik op Luchtfoto probeert het opnieuw.
   const switchValue: MapPhoto = showPhoto && !photoFailed ? 'photo' : 'map';
@@ -264,16 +267,18 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, offer
             <span className="rounded-tl-md bg-bg/80 px-1.5 text-xs leading-5" style={dim}>© {AERIAL_SOURCES[state.aerial].short}</span>
           </button>
         ) : (
-          <a href={state.aerial ? AERIAL_SOURCES[state.aerial].href : OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 inline-flex max-w-[85%] items-end">
+          <a href={state.aerial ? AERIAL_SOURCES[state.aerial].href : OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 inline-flex min-h-[44px] min-w-[44px] max-w-[85%] items-end justify-end">
             <span className="rounded-tl-md bg-bg/80 px-1.5 text-right text-xs leading-5 underline-offset-2 hover:underline" style={dim}>{state.attribution}</span>
           </a>
         ))}
       </div>
-      {/* De uitleg over de ring en Start hier staat achter de i van het blad (MAP_HINT). */}
-      {(pick || offerHere) && (
+      {/* De uitleg over de ring en Start hier staat achter de i van het blad (MAP_HINT). Je plek als start is de chip Waar je nu bent. */}
+      {(pick || (keepable && onMakeHome)) && (
         <div className="flex flex-wrap gap-x-5">
-          {pick && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt({ tap: pick })}>Start hier</TextButton>}
-          {offerHere && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt('here')}>Zet mijn plek als start</TextButton>}
+          {pick && !saving && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt({ tap: pick })}>Start hier</TextButton>}
+          {keepable && onMakeHome && !saving && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => { setLine(''); setSaving(true); }}>Bewaar als plek</TextButton>}
+          {keepable && saving && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void makeHome(keepable)}>Maak dit Thuis</TextButton>}
+          {saving && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => setSaving(false)}>Annuleren</TextButton>}
         </div>
       )}
       {status && <p role="status" className="text-xs leading-snug" style={dim}>{status}</p>}

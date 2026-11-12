@@ -231,7 +231,9 @@ export function AdjustedTag({ hidden = false }: { hidden?: boolean }) {
 
 // Een tikbare keuze in de vorm van een afgeronde chip (de sportschool). Een
 // gestippelde chip is "Eigen gewicht" of "Anders".
-export function Chip({ selected, onClick, children, dashed = false, label }: { selected?: boolean; onClick: () => void; children: ReactNode; dashed?: boolean; label?: string }) {
+// `tone="quiet"`: gekozen zonder mint (rand control-border, achtergrond track, tekst ink, vet), voor een rij
+// keuzes op een scherm waar het mint accent al ergens anders staat (Start bij, besluit 2026-11-11-route-start.md).
+export function Chip({ selected, onClick, children, dashed = false, label, tone }: { selected?: boolean; onClick: () => void; children: ReactNode; dashed?: boolean; label?: string; tone?: 'quiet' }) {
   return (
     <button
       type="button"
@@ -241,7 +243,7 @@ export function Chip({ selected, onClick, children, dashed = false, label }: { s
       }}
       aria-pressed={selected === undefined ? undefined : selected}
       aria-label={label}
-      className={`st-chip${dashed ? ' dashed' : ''}`}
+      className={`st-chip${dashed ? ' dashed' : ''}${tone === 'quiet' ? ' quiet' : ''}`}
     >
       {children}
     </button>

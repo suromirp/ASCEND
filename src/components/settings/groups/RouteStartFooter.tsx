@@ -1,4 +1,4 @@
-// ASCEND: onder de keuze Startpunt van je lus: het eigen punt van dit toestel. Gebruik waar ik nu ben
+// ASCEND: onder de keuze Startpunt van je lus: Thuis, het eigen punt van dit toestel. Gebruik waar ik nu ben
 // vraagt één keer je plek (met een grens in tijd en een zichtbare uitkomst) en bewaart die als de plek
 // Thuis (storage/places.ts), die meegaat in je back-up; Wis startpunt haalt hem weg. Het punt zelf staat nooit op het scherm.
 
@@ -30,7 +30,7 @@ export function RouteStartFooter({ mode }: { mode: RouteStartMode }) {
     setBusy(false);
     if (found.ok) {
       setSaved(true);
-      setNote(mode === 'exact' ? 'Je startpunt staat op dit toestel.' : 'Je startpunt staat op dit toestel. Kies Vast punt om het te gebruiken.');
+      setNote(mode === 'exact' ? 'Thuis staat op dit toestel.' : 'Thuis staat op dit toestel. Kies Thuis om er standaard te beginnen.');
     } else {
       setNote(startFailureReason(found.reason));
     }

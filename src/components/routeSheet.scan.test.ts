@@ -54,9 +54,12 @@ describe('het blad Route', () => {
   it('het blad heeft een vaste hoogte: het springt niet als de lussen er zijn', () => {
     expect(line).toContain('relative h-[90vh] w-full');
   });
-  it('de tekstknop bij de kaart zegt dat hij de start verandert (Pathfinder)', () => {
-    expect(map).toContain('>Zet mijn plek als start<');
+  it('je plek als start is de chip Waar je nu bent: de rij Zet mijn plek als start is weg (Pathfinder route-start, eis 6)', () => {
+    expect(map).not.toContain('>Zet mijn plek als start<');
     expect(map).not.toContain('>Gebruik waar ik nu ben<');
+    expect(map).toContain('>Start hier<');
+    expect(map).toContain('>Bewaar als plek<');
+    expect(map).toContain('>Maak dit Thuis<');
   });
   it('de uitleg na de knop staat achter de i, niet onder de knop', () => {
     expect(panel).toContain('routeOutcomeLine(');

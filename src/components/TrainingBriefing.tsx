@@ -13,7 +13,7 @@
 // Zoeken gebeurt bij het openen (vandaag en morgen, instelling Lus zoeken) of na een tik, en stopt
 // zodra je van Buiten weggaat of het scherm sluit. Plant niets.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
@@ -52,10 +52,10 @@ import { useBriefingView } from './useBriefingView';
 import { useMotionMode } from './motion';
 import { RouteMap } from './RouteMap';
 import { RouteSearching } from './RouteSearching';
-import { RouteFailure, RouteFirstQuestion, RouteNeedsPoint, RoutePanelView } from './RoutePanel';
+import { RouteFailure, RouteFirstQuestion, RoutePanelView, StartChips } from './RoutePanel';
 import { useRouteSearch, type RouteSearchModel } from './useRouteSearch';
 import { IntervalProfile, MoreText, StepList, StretchRow } from './duur/DuurParts';
-import { splitPlaceLabel as splitLabel } from '../engine/trainingPlace';
+import { shortPlaceLabels } from '../engine/trainingPlace';
 import { StopSignals } from './SessionHeader';
 import { ZONE_SENTENCE } from './vandaag/zone';
 import type { Intensity } from '../data/workoutStructure';
@@ -153,6 +153,7 @@ export function TrainingBriefing({
   const picked = model.picked && model.pickedOutcome?.ok ? { style: model.picked, proposal: model.pickedOutcome.proposal } : undefined;
   const routeReady = view.footer.kind === 'route' && !!picked && searchOn;
   const places = view.places.filter((p) => !p.locked && (p.key === view.place || isSportEnabled(modalitySport(p.key), settings.enabledSports)));
+  const shortLabels = shortPlaceLabels(places.map((p) => p.label));
   const brief = buildSessionBrief(template, date, program, { modalityKey: view.place });
   const minutes = session?.plannedMinutes ?? resolveEffectiveFullDuration(template, date, program);
 
@@ -177,18 +178,15 @@ export function TrainingBriefing({
 
           <div className="flex flex-col gap-3">
             {places.length > 1 && (
-              // Eén rij keuzes die zijwaarts schuift: nooit twee regels hoog.
-              <div className="-mx-4 flex gap-2 overflow-x-auto px-4" role="group" aria-label="Waar train je?" style={{ scrollbarWidth: 'none' }}>
-                {places.map((p) => {
-                  const split = splitLabel(p.label);
-                  const twice = places.some((o) => o.key !== p.key && splitLabel(o.label).name === split.name);
-                  return (
-                    <span key={p.key} className="shrink-0 whitespace-nowrap">
-                      <Chip selected={p.key === view.place} onClick={() => choosePlace(p.key)}>{twice ? p.label : split.name}</Chip>
-                    </span>
-                  );
-                })}
-              </div>
+              // Eén rij keuzes met korte namen (de volle naam staat in de regel eronder); past hij niet, dan
+              // schuift hij zijwaarts met een zachte vervaging aan de rand. Nooit twee regels hoog.
+              <PlaceRow count={places.length}>
+                {places.map((p, i) => (
+                  <span key={p.key} className="shrink-0 whitespace-nowrap">
+                    <Chip selected={p.key === view.place} label={p.label} onClick={() => choosePlace(p.key)}>{shortLabels[i]}</Chip>
+                  </span>
+                ))}
+              </PlaceRow>
             )}
 
             {/* De plek van de kaart: verschijnt of verdwijnt bij een andere keuze, in Vol met een korte overgang. */}
@@ -280,6 +278,40 @@ export function TrainingBriefing({
   );
 }
 
+// De rij Waar train je?: zijwaarts schuiven, en aan de kant waar nog iets staat een zachte vervaging naar
+// de achtergrond (alleen tokens). Zonder meer keuzes buiten beeld geen vervaging.
+function PlaceRow({ children, count }: { children: ReactNode; count: number }) {
+  const row = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState({ left: false, right: false });
+  useEffect(() => {
+    const el = row.current;
+    if (!el) return;
+    const measure = () => {
+      const next = { left: el.scrollLeft > 2, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 2 };
+      setMore((m) => (m.left === next.left && m.right === next.right ? m : next));
+    };
+    measure();
+    el.addEventListener('scroll', measure, { passive: true });
+    window.addEventListener('resize', measure);
+    return () => {
+      el.removeEventListener('scroll', measure);
+      window.removeEventListener('resize', measure);
+    };
+  }, [count]);
+  const fade = (side: 'left' | 'right') => (
+    <span aria-hidden className={`pointer-events-none absolute inset-y-0 w-8 ${side === 'left' ? 'left-0' : 'right-0'}`} style={{ background: `linear-gradient(to ${side}, transparent, var(--color-bg))` }} />
+  );
+  return (
+    <div className="relative -mx-4">
+      <div ref={row} className="flex gap-2 overflow-x-auto px-4" role="group" aria-label="Waar train je?" style={{ scrollbarWidth: 'none' }}>
+        {children}
+      </div>
+      {more.left && fade('left')}
+      {more.right && fade('right')}
+    </div>
+  );
+}
+
 // Op de plek van de kaart, per stand van de engine en van de zoektocht.
 export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, onBigger, onPlace }: {
   view: BriefingView;
@@ -321,16 +353,24 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
       </div>
     );
   }
-  if (stage === 'reading') return <div className="min-h-[44px]" />;
   // Na Liever niet, na een tik (later dan morgen, of de instelling Na een tik): eerst Zoek een lus,
   // en pas daarna de eerste vraag; zo is één tik genoeg en gaat er tot dan niets de deur uit.
-  if (declined || !searchOn) return searchRow;
+  if (declined || !searchOn) return stage === 'reading' ? <div className="min-h-[44px]" /> : searchRow;
   if (stage === 'first-question') return <RouteFirstQuestion model={model} onDecline={onDecline} />;
-  if (stage === 'needs-point') return <RouteNeedsPoint model={model} />;
+  // Start bij boven de kaart en de zoekstand, in elke stand; de regel alleen bij een terugval of afwijking.
+  const start = (
+    <>
+      <StartChips model={model} />
+      {/* Vaste hoogte (twee regels), zodat de zoekstand niet verspringt als de regel komt of gaat. */}
+      <p role="status" className="min-h-[40px] text-sm leading-snug" style={dim}>{model.startLine}</p>
+    </>
+  );
+  if (stage === 'reading') return <div className="flex flex-col gap-2">{start}</div>;
   if (stage === 'searching') {
     return (
       <div className="flex flex-col gap-2">
-        <RouteSearching steps={model.steps} current={model.currentStep} limitLine={model.limitLine} height={BRIEFING_MAP_HEIGHT} />
+        {start}
+        <RouteSearching key={model.searchKey} steps={model.steps} current={model.currentStep} limitLine={model.limitLine} limitMs={model.limitMs} height={BRIEFING_MAP_HEIGHT} />
         <div className="min-h-[64px]">{targetLine}</div>
       </div>
     );
@@ -338,12 +378,18 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
   if (stage === 'offline' || stage === 'timeout') {
     return (
       <div className="flex flex-col gap-2">
+        {start}
         <RouteFailure kind={stage} onRetry={model.retry} height={BRIEFING_MAP_HEIGHT} />
         {targetLine}
       </div>
     );
   }
-  return <LoopPlace model={model} target={map.target} onBigger={onBigger} />;
+  return (
+    <div className="flex flex-col gap-2">
+      {start}
+      <LoopPlace model={model} target={map.target} onBigger={onBigger} />
+    </div>
+  );
 }
 
 // De kaart in de lagere stand, de gekozen lus, en de andere als één regel met Kies.
@@ -375,8 +421,11 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
           base={model.base}
           onChoose={model.setChosen}
           onStart={model.startOnMap}
-          offerHere={false}
           onNoMap={model.markNoMap}
+          me={model.mePoint}
+          tapped={model.tapPoint}
+          hasHome={model.hasHome}
+          onMakeHome={model.makeHome}
           height={BRIEFING_MAP_HEIGHT}
           photo={model.photo}
           onPhoto={model.setPhoto}

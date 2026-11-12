@@ -815,7 +815,7 @@ export const CHOICES = {
     help: 'routeStartpunt',
     options: [
       { value: 'here', label: 'Waar je nu bent', note: 'Bij elke zoektocht één keer je plek van dat moment', short: 'Waar je nu bent' },
-      { value: 'exact', label: 'Vast punt', note: 'Een punt dat je zelf bewaart, zoals je deur', short: 'Vast punt' },
+      { value: 'exact', label: 'Thuis', note: 'Je plek Thuis, zoals je deur', short: 'Thuis' },
       { value: 'approx', label: 'Ongeveer', note: 'Je plaats, binnen een kilometer', short: 'Ongeveer' },
     ],
   }),

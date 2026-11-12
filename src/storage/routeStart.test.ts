@@ -179,27 +179,40 @@ describe('Gebruik waar ik nu ben, strenger', () => {
 });
 
 describe('een startpunt van de kaart', () => {
-  it('Start hier: het getikte punt wordt je Precies-startpunt', async () => {
+  it('Start hier: het getikte punt geldt alleen nu en bewaart niets (route-start, eis 8)', async () => {
     const r = await startFromMap({ tap: fake });
     expect(r).toEqual({ ok: true, point: { lat: 52.12346, lon: 5.65432 } });
+    expect(await getRouteStartPoint()).toBeUndefined();
+  });
+
+  it('Start hier verschuift Thuis niet', async () => {
+    expect(await saveRouteStartPoint({ lat: 51.5, lon: 4.5 })).toBe(true);
+    const r = await startFromMap({ tap: fake });
+    expect(r.ok).toBe(true);
+    expect(await getRouteStartPoint()).toEqual({ lat: 51.5, lon: 4.5 });
+  });
+
+  it('Maak dit Thuis: bewust, dan verhuist Thuis naar het getikte punt', async () => {
+    expect(await saveRouteStartPoint({ lat: 51.5, lon: 4.5 })).toBe(true);
+    expect(await saveRouteStartPoint(fake, 'map')).toBe(true);
     expect(await getRouteStartPoint()).toEqual({ lat: 52.12346, lon: 5.65432 });
   });
 
-  it('Gebruik waar ik nu ben: een grove plek (800 m) telt niet en bewaart niets', async () => {
-    const r = await startFromMap('here', { askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 800 }) });
+  it('Gebruik waar ik nu ben (instelling): een grove plek (800 m) telt niet en bewaart niets', async () => {
+    const r = await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 800 }) });
     expect(r).toEqual({ ok: false, reason: 'coarse' });
     expect(r.ok ? '' : startFailureReason(r.reason)).toBe('ASCEND krijgt je precieze plek niet.');
     expect(await getRouteStartPoint()).toBeUndefined();
   });
 
-  it('Gebruik waar ik nu ben: een fijne plek wordt het startpunt', async () => {
-    const r = await startFromMap('here', { askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 8 }) });
+  it('Gebruik waar ik nu ben (instelling): een fijne plek wordt het startpunt', async () => {
+    const r = await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 8 }) });
     expect(r.ok).toBe(true);
     expect(await getRouteStartPoint()).toBeDefined();
   });
 
   it('fijne toestemming geweigerd in de app: geen startpunt', async () => {
-    expect(await startFromMap('here', { askPermission: async () => 'denied', locate: async () => ({ ...fake, accuracyM: 8 }) })).toEqual({ ok: false, reason: 'coarse' });
+    expect(await locateStartHere({ askPermission: async () => 'denied', locate: async () => ({ ...fake, accuracyM: 8 }) })).toEqual({ ok: false, reason: 'coarse' });
   });
 
   it('een kapot punt of een gesloten paneel bewaart niets', async () => {

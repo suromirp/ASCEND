@@ -4,7 +4,7 @@ import { proposalNotes } from './routePlanner';
 import { ROUTE_MAP_HEIGHT, loopLines, mapFallbackLine, pickTransition, routeOutcomeLine, routeSheetParts, routeSheetStage, type StageInput } from './routeSheet';
 import { SAVE_HINT, SEND_HINT } from './routeSend';
 
-const base: StageInput = { hasPlace: true, consent: true, asked: true, savedKnown: true, waitingForPoint: false, search: { kind: 'plans' } };
+const base: StageInput = { hasPlace: true, consent: true, asked: true, savedKnown: true, search: { kind: 'plans' } };
 const target: RouteTarget = { distanceKm: 10, ascentM: 200 };
 const loop = (over: Partial<RouteProposal> = {}): RouteProposal => ({ style: 'adventure', source: 'brouter', points: [], distanceM: 10_000, ascentM: 210, repeatedShare: 0, hills: 2, ...over });
 
@@ -20,9 +20,6 @@ describe('het blad Route: de stand', () => {
   });
   it('geen plaats: de bestaande regel, voor al het andere', () => {
     expect(routeSheetStage({ ...base, hasPlace: false, consent: undefined })).toBe('no-place');
-  });
-  it('vast punt zonder punt vraagt eerst een punt', () => {
-    expect(routeSheetStage({ ...base, waitingForPoint: true })).toBe('needs-point');
   });
   it('geen netwerk of een routeplanner die te laat is: een eigen stand', () => {
     expect(routeSheetStage({ ...base, search: { kind: 'offline' } })).toBe('offline');
