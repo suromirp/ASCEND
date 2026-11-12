@@ -3,10 +3,12 @@
 // trail. Nothing new is stored for it; this only makes the existing record
 // readable (Week page timeline, "aangepast" badges, weekly reflection).
 
-import type { PlanChangeProposal, EngineEvent } from '../models/planChange';
+import type { PlanChangeItem, PlanChangeProposal, EngineEvent } from '../models/planChange';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { describeChanges } from './changeImpact';
-import { addDays, mondayOfWeek, localDateOf } from '../utils/dates';
+import { caughtUpMap } from './catchUp';
+import { capitalize } from '../utils/capitalize';
+import { addDays, formatDateNL, mondayOfWeek, localDateOf, weekdayLongNL, weekdayShortNL } from '../utils/dates';
 
 const TRIGGER_LABEL: Record<EngineEvent, string> = {
   goal_created: 'Nieuw doel',
@@ -171,4 +173,206 @@ export function weekChanges(
     }
   }
   return [...latest.values()].sort((a, b) => b.at.localeCompare(a.at));
+}
+
+// ---------------------------------------------------------------------------
+// Aangepast door ASCEND (docs/beslissingen/2026-11-12-week-minimaal.md, docs/visie/Ontwerp Week minimaal.md
+// hoofdstuk 3). Eén functie, één venster: de rij in Week, het blad erachter en het woord "aangepast" op de
+// dagrij lezen allemaal deze uitkomst, zodat er nooit twee getallen zijn. Alleen lezen van het log; er wordt
+// niets opgeslagen of herschreven.
+//
+// Een regel staat er alleen als:
+// - de app de wijziging bedacht. Week opnieuw plannen vroeg je zelf (`engine/replanWeek.ts`) en de eerste
+//   opbouw van je plan bij een nieuw doel is geen aanpassing: die geven geen regel, en wat ze neerlegden
+//   wist een eerdere regel van dezelfde training.
+// - de training er nu nog zo staat.
+// - het meer is dan de weekplanning die de inhoud van een training invult (`replace` en `reduce` van
+//   weekly_prescription_computed): dat gebeurt elke week en zou elke rij "aangepast" maken.
+// - er echt iets anders staat dan daarvoor: een toevoeging met een verwijdering van dezelfde training op
+//   dezelfde dag, of een training die binnen het venster terug op zijn oude dag kwam, is geen wijziging.
+// - niemand anders hem daarna neerlegde: met jouw slot op de rij (je sleepte of verplaatste hem zelf, ook
+//   weg en weer terug) of het slot van een ander voorstel is er geen regel. Bij twijfel geen regel, zoals in
+//   `engine/systemMoves.ts`.
+// Een training die Week niet als rij toont (de oude rij van een inhaal, een overgeslagen rustdag, wat een
+// vakantie liet vallen) krijgt ook geen regel: de band of de nieuwe rij zegt het al.
+
+export const ADJUST_WINDOW_DAYS = 14;
+
+// Voorstellen die het systeem zelf toepast; binnen zoveel seconden vastgelegd is "vanzelf".
+const AUTO_TRIGGERS = new Set<EngineEvent>(['weekly_prescription_computed', 'strength_program_changed', 'plan_check']);
+const AUTO_SECONDS = 10;
+const REPLAN_BY = 'engine/replanWeek.ts';
+
+export interface WeekAdjustment {
+  sessionId: string;
+  name: string; // de naam van de training
+  what: string; // "van vr 13 naar za 14", "erbij op zo 15"
+  date: string; // waar de training nu staat
+  reason: string;
+  at: string; // wanneer het besloten is
+  how?: 'akkoord' | 'vanzelf'; // leeg als het log het niet zeker zegt
+}
+
+const dayShort = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))}`;
+
+function notAChange(p: PlanChangeProposal): boolean {
+  return p.trigger === 'goal_created' || p.id.startsWith('replan') || p.changes.some((c) => c.generatedBy?.includes(REPLAN_BY));
+}
+
+function howDecided(p: PlanChangeProposal): WeekAdjustment['how'] {
+  if (!p.resolvedAt) return undefined;
+  const gap = Math.abs(Date.parse(p.resolvedAt) - Date.parse(p.createdAt)) / 1000;
+  if (!Number.isFinite(gap)) return undefined;
+  if (gap > AUTO_SECONDS) return 'akkoord';
+  return AUTO_TRIGGERS.has(p.trigger) ? 'vanzelf' : undefined;
+}
+
+// "Dinsdag 10 november, na jouw Akkoord" of "Dinsdag 10 november, vanzelf met een melding".
+export function decidedLine(a: Pick<WeekAdjustment, 'at' | 'how'>): string {
+  const day = localDateOf(a.at);
+  const date = `${capitalize(weekdayLongNL(day))} ${formatDateNL(day)}`;
+  if (a.how === 'akkoord') return `${date}, na jouw Akkoord`;
+  if (a.how === 'vanzelf') return `${date}, vanzelf met een melding`;
+  return date;
+}
+
+export function weekAdjustments(
+  proposals: PlanChangeProposal[],
+  sessions: PlannedSession[],
+  templates: SessionTemplate[],
+  weekStart: string,
+  asOf: string,
+): WeekAdjustment[] {
+  const since = addDays(asOf, -ADJUST_WINDOW_DAYS);
+  const weekEnd = addDays(weekStart, 6);
+  const reverted = revertedIds(proposals);
+  const sessionById = new Map(sessions.map((s) => [s.id, s]));
+  const templateById = new Map(templates.map((t) => [t.id, t]));
+  const caughtUp = caughtUpMap(sessions);
+  const latest = new Map<string, WeekAdjustment>();
+  // Hoe een training stond voordat ASCEND hem in het venster voor het eerst aanraakte.
+  const origin = new Map<string, { date: string; skipped: boolean }>();
+
+  const accepted = proposals
+    .filter((p) => p.resolution === 'accepted' && !p.revertsProposalId && !reverted.has(p.id) && localDateOf(p.createdAt) >= since)
+    .sort((a, b) => (a.resolvedAt ?? a.createdAt).localeCompare(b.resolvedAt ?? b.createdAt));
+
+  for (const p of accepted) {
+    const own = (c: PlanChangeItem): PlannedSession | undefined => {
+      if (c.plannedSessionId) return sessionById.get(c.plannedSessionId);
+      const d = c.newSessionDraft;
+      if (!d) return undefined;
+      const same = sessions.filter((s) => s.templateId === d.templateId && s.scheduledDate === d.scheduledDate && s.status !== 'skipped');
+      return same.find((s) => s.lock?.proposalId === p.id) ?? (same.length === 1 ? same[0] : undefined);
+    };
+
+    if (notAChange(p)) {
+      for (const c of p.changes) {
+        const s = own(c);
+        if (s) { latest.delete(s.id); origin.delete(s.id); }
+      }
+      continue;
+    }
+
+    // Een toevoeging die hoort bij een verwijdering van dezelfde training op dezelfde dag, en een toevoeging
+    // naast een verwijdering die niet meer te lezen is: geen wijziging, of twijfel.
+    const removedHere = p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId);
+    const pairKey = (templateId: string, date: string) => `${templateId}|${date}`;
+    const removedKeys = new Set(removedHere.map((c) => sessionById.get(c.plannedSessionId!)).filter((s): s is PlannedSession => !!s).map((s) => pairKey(s.templateId, s.scheduledDate)));
+    const unreadableRemove = removedHere.some((c) => !sessionById.has(c.plannedSessionId!));
+    const paired = new Set<PlanChangeItem>();
+    for (const c of p.changes) {
+      const d = c.action === 'add' && !c.plannedSessionId ? c.newSessionDraft : undefined;
+      if (!d) continue;
+      const key = pairKey(d.templateId, d.scheduledDate);
+      if (removedKeys.has(key) || unreadableRemove) {
+        paired.add(c);
+        for (const r of removedHere) {
+          const s = sessionById.get(r.plannedSessionId!);
+          if (s && pairKey(s.templateId, s.scheduledDate) === key) paired.add(r);
+        }
+      }
+    }
+
+    for (const c of p.changes) {
+      if (c.action === 'keep') continue;
+      // De weekplanning vult elke week de inhoud van de komende trainingen in (lengte, blokken): dat is het
+      // plan dat zijn werk doet, geen aanpassing. Verplaatsen, erbij en vervallen van die ronde tellen wel.
+      if (p.trigger === 'weekly_prescription_computed' && (c.action === 'replace' || c.action === 'reduce')) continue;
+      const s = own(c);
+      if (!s) continue;
+      // Wat ASCEND eerder in het venster met deze training deed; een nieuwe rij stond nergens ('').
+      const known = origin.get(s.id);
+      if (!known) origin.set(s.id, { date: c.action === 'add' && !c.plannedSessionId ? '' : c.fromDate ?? s.scheduledDate, skipped: c.action === 'add' && !!c.plannedSessionId });
+      const drop = () => latest.delete(s.id);
+      const undoneByNow = () => { drop(); origin.delete(s.id); };
+      if (paired.has(c)) { drop(); continue; }
+      // Iemand anders legde hem daarna neer: jij, of een ander voorstel.
+      if (s.lock?.by === 'user' || (s.lock?.proposalId && s.lock.proposalId !== p.id)) { drop(); continue; }
+
+      let what: string | undefined;
+      switch (c.action) {
+        case 'add': {
+          const date = c.newSessionDraft?.scheduledDate ?? c.toDate;
+          if (s.status === 'skipped' || !date || s.scheduledDate !== date) break;
+          // Eerder in het venster door ASCEND van deze dag gehaald en nu terug: per saldo niets.
+          if (c.plannedSessionId && known && !known.skipped && known.date === date) { undoneByNow(); continue; }
+          what = c.plannedSessionId ? `weer op ${dayShort(date)}` : `erbij op ${dayShort(date)}`;
+          break;
+        }
+        case 'remove':
+          // Eerder in het venster door ASCEND erbij gezet en nu weer weg: per saldo niets.
+          if (known && known.date === '') { undoneByNow(); continue; }
+          if (s.status === 'skipped') what = `vervalt op ${dayShort(s.scheduledDate)}`;
+          break;
+        case 'move':
+        case 'swap': {
+          if (s.status === 'skipped' || !c.toDate || s.scheduledDate !== c.toDate) break;
+          if (c.templateId && c.templateId !== s.templateId) break;
+          const from = c.fromDate ?? known?.date;
+          if (from && from !== c.toDate) {
+            // Terug op de dag waar ASCEND hem vond: per saldo niets veranderd.
+            if (known && known.date === c.toDate && !known.skipped && !c.templateId) { undoneByNow(); continue; }
+            what = `van ${dayShort(from)} naar ${dayShort(c.toDate)}`;
+          } else what = c.templateId ? `andere invulling op ${dayShort(c.toDate)}` : `andere lengte op ${dayShort(c.toDate)}`;
+          break;
+        }
+        case 'reduce':
+          if (s.status !== 'skipped') what = `lichter op ${dayShort(s.scheduledDate)}`;
+          break;
+        case 'replace':
+          if (s.status !== 'skipped') what = `andere invulling op ${dayShort(s.scheduledDate)}`;
+          break;
+        default:
+          break;
+      }
+      if (!what) { drop(); continue; }
+      latest.set(s.id, {
+        sessionId: s.id,
+        name: templateById.get(s.templateId)?.name ?? 'Training',
+        what,
+        date: s.scheduledDate,
+        reason: c.reason || p.issue,
+        at: p.resolvedAt ?? p.createdAt,
+        how: howDecided(p),
+      });
+    }
+  }
+
+  // Alleen wat Week als rij in deze week toont.
+  const shown = (s: PlannedSession | undefined) => !!s && s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd
+    && !(s.status === 'skipped' && (caughtUp.has(s.id) || templateById.get(s.templateId)?.type === 'recovery' || s.leave?.role === 'dropped'));
+  return [...latest.values()]
+    .filter((a) => shown(sessionById.get(a.sessionId)))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
+}
+
+// De tweede regel van de rij: "2 trainingen deze week".
+export function adjustmentsSub(n: number, current: boolean): string {
+  return `${n} ${n === 1 ? 'training' : 'trainingen'}${current ? ' deze week' : ''}`;
+}
+
+// Het woord "aangepast" op de dagrij: precies de trainingen met een regel.
+export function adjustedIdsOf(adjustments: WeekAdjustment[]): Set<string> {
+  return new Set(adjustments.map((a) => a.sessionId));
 }

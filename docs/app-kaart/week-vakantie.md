@@ -4,7 +4,7 @@ Adres: `#/week`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 
 [link: ASCEND] (aria: ASCEND, naar Vandaag)
 [link: Meer: instellingen, gegevens, koppelingen en gidsen]
-## Week 1 van 4, basisfase
+## Week 1 Basisfase, week 1 van 4
 [knop: Vorige week]
 [knop: Volgende week]
 
@@ -38,9 +38,6 @@ Za 31 · niets gepland
 [knop: Week opnieuw plannen]
 
 --- kaart 3 ---
-[knop: Deze week door ASCEND aangepast · 3bekijk]
-
---- kaart 4 ---
 Vrije dagen en vakanties
 Tik op een periode om hem bij te werken. Eerst een voorstel, pas na Akkoord verandert er iets.
 [knop: Vakantie zonder trainingma 9 nov t/m vr 13 nov · 5 dagen] (aria: Vakantie zonder training, ma 9 november t/m vr 13 november, bijwerken)

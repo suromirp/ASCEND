@@ -35,3 +35,12 @@ export function weekHeading(position: ResolvedProgramPosition | null | undefined
   }
   return { title: 'Week', number: position.weekInPhase, line: `van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}` };
 }
+
+// De kop van de pagina Week: het grote getal blijft, de kleine regel zet de fase voorop zoals de rest van de app
+// ("Basisfase, week 1 van 4", weekPositionLabel). In een golf of een vaste week blijft de regel van weekHeading.
+// Besluit: docs/beslissingen/2026-11-12-week-minimaal.md (aanvulling).
+export function weekPageHeading(position: ResolvedProgramPosition | null | undefined): { title: string; number?: number; line: string } {
+  const heading = weekHeading(position);
+  if (!position || waveHeader(position)) return heading;
+  return { ...heading, line: weekPositionLabel(position) };
+}

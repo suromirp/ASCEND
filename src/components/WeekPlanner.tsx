@@ -84,7 +84,9 @@ function SessionRow({
   // Een vaste afspraak van een sport (engine/fixedSports.ts) heeft de lengte die jij koos.
   const duration = session.fixed && session.plannedMinutes ? session.plannedMinutes : resolveEffectiveFullDuration(template, session.scheduledDate, program);
   const dim = status === 'skipped' || status === 'missed';
-  const note = status === 'completed' ? undefined : catchNote ?? (adjusted ? 'aangepast' : wasMoved ? 'verplaatst' : undefined);
+  // "aangepast" staat op precies de rijen met een regel in Aangepast door ASCEND, ook als hij gedaan is
+  // (engine/changeLog.ts#weekAdjustments): het getal op de rij is het aantal rijen met het woord.
+  const note = status === 'completed' ? (adjusted ? 'aangepast' : undefined) : catchNote ?? (adjusted ? 'aangepast' : wasMoved ? 'verplaatst' : undefined);
   const zone = isRest ? undefined : zoneOfTemplate(template, session.scheduledDate, program, templates);
   const legs = !isRest && isLegHeavyTemplate(template);
   const doneNow = status === 'completed';

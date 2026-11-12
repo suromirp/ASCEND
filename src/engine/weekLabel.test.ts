@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { weekHeading, weekPositionLabel } from './weekLabel';
+import { weekHeading, weekPageHeading, weekPositionLabel } from './weekLabel';
 import { layoutWaves } from './programLayout';
 import { addDays, resolveProgramWeek } from '../utils/dates';
 import type { Program } from '../models/program';
@@ -44,5 +44,22 @@ describe('weekHeading', () => {
 
   it('een vaste week zonder lichte week zegt "Je vaste week"', () => {
     expect(weekHeading(resolveProgramWeek(golf(false), START))).toEqual({ title: 'Je vaste week', line: '' });
+  });
+});
+
+describe('weekPageHeading', () => {
+  const phased = (weekInPhase: number) => ({ weekInPhase, weekInProgram: 1, phase: { id: 'phase_1', name: 'Basisfase', weekCount: 4 } }) as never;
+  const START = '2026-10-26';
+  const golf = (light: boolean): Program => ({ id: 'p', name: 'P', startDate: START, phases: layoutWaves(START, START, 12, START, 0, { length: 4, light }) });
+
+  it('het grote getal blijft, de kleine regel zet de fase voorop zoals Vandaag', () => {
+    expect(weekPageHeading(phased(1))).toEqual({ title: 'Week', number: 1, line: 'Basisfase, week 1 van 4' });
+    expect(weekPageHeading(phased(1)).line).toBe(weekPositionLabel(phased(1)));
+  });
+
+  it('zonder positie, in een golf en in een vaste week verandert er niets', () => {
+    expect(weekPageHeading(null)).toEqual({ title: 'Week', line: '' });
+    expect(weekPageHeading(resolveProgramWeek(golf(true), addDays(START, 7 * 5)))).toEqual({ title: 'Week', number: 2, line: 'van 4 van je golf' });
+    expect(weekPageHeading(resolveProgramWeek(golf(false), START))).toEqual({ title: 'Je vaste week', line: '' });
   });
 });
