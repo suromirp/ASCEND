@@ -40,6 +40,24 @@ export function splitPlaceLabel(label: string): { name: string; sport?: string }
   return { name: capitalize(rest), sport: label.slice(0, i) };
 }
 
+// Korte namen voor de chips Waar train je? in de Briefing: de naam na de komma ("Buiten"); delen twee
+// keuzes die naam, dan het eerste woord van de sport ("Hardlopen", "Wandelen"), en pas als ook dat gelijk
+// is de volle naam. De volle naam staat in de regel eronder; zo passen twee of drie keuzes op 360 px.
+// Een naam zonder komma die te lang is voor een chip krijgt hier een korte vorm.
+const SHORT_NAME: Record<string, string> = { 'Hardlopen en wandelen afgewisseld': 'Afwisselen' };
+
+export function shortPlaceLabels(labels: readonly string[]): string[] {
+  const split = labels.map((l) => (SHORT_NAME[l] ? { name: SHORT_NAME[l] } : splitPlaceLabel(l)));
+  const firstWord = (s: string) => capitalize(s.split(' ')[0]);
+  return split.map((p, i) => {
+    const same = split.filter((o, j) => j !== i && o.name === p.name);
+    if (same.length === 0) return p.name;
+    const word = p.sport ? firstWord(p.sport) : undefined;
+    if (word && same.every((o) => !o.sport || firstWord(o.sport) !== word)) return word;
+    return labels[i];
+  });
+}
+
 // De standaard: de beste keuze. Op een rustdag opent het scherm alleen om een wandeling te loggen.
 export function defaultPlace(template: Pick<SessionTemplate, 'id' | 'type'>): string | undefined {
   const list = getModalities(template.id);

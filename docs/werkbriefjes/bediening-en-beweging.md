@@ -20,7 +20,7 @@ Hoe de app bedient wordt en beweegt: terugknop en bladen, scrollen en hervatten,
 - Een blad, dialoog of overlay zonder `useSheetClose`; het adres omschrijven (`navigate(..., { replace: true })`, `setSearchParams`) terwijl een laag open is.
 - Hex- of rgba-kleuren in een component: alleen de tokens uit `src/index.css` en `.on-light`.
 - Een instelling zonder rij in `src/data/settingsIndex.ts`, `src/data/settingsLayout.ts` en `src/engine/settingsSummary.ts`.
-- Bewegen als lus, buiten de adem van de missiekaart; een animatie die bij elke render speelt.
+- Bewegen als lus, buiten de adem van de missiekaart; een animatie die bij elke render speelt. Eén uitzondering op 150 tot 400 ms: de zoekbalk van Route loopt op tijd naar 90 procent in de grens, zonder herhaling, en staat in Rustig en Uit stil op de stap (`RouteSearching.tsx`, besluit `2026-11-11-route-start.md`).
 - Kleiner dan 12 px of een tikdoel onder 44 bij 44 px; een tab erbij of Meer als tab.
 - `env(safe-area-inset-bottom)` los gebruiken: alles onderaan rekent op `--rand-onder`.
 

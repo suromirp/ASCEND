@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SessionTemplate } from '../models/training';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
-import { defaultPlace, placeChoices, placeHasRoute, plannedOn, resolvePlace, routeShownFor } from './trainingPlace';
+import { defaultPlace, placeChoices, placeHasRoute, plannedOn, resolvePlace, routeShownFor, shortPlaceLabels } from './trainingPlace';
 
 const { templates } = buildDefaultProgramData();
 const byId = (id: string) => templates.find((t) => t.id === id) as SessionTemplate;
@@ -42,5 +42,20 @@ describe('routeShownFor: dezelfde regel op Vandaag, in het blad achter de i en i
     const p = (id: string, date: string, status: PlannedSession['status'] = 'planned', order = 0): PlannedSession => ({ id, templateId: 'tpl_easy_run', scheduledDate: date, weekStartDate: '2026-11-09', status, order });
     expect(plannedOn([p('a', '2026-11-11', 'skipped'), p('b', '2026-11-11', 'planned', 1), p('c', '2026-11-12')], 'tpl_easy_run', '2026-11-11')?.id).toBe('b');
     expect(plannedOn([p('c', '2026-11-12')], 'tpl_easy_run', '2026-11-11')).toBeUndefined();
+  });
+});
+
+describe('korte namen in de chips Waar train je? (route-start, punt 5)', () => {
+  it('de naam na de komma, en bij dezelfde naam het eerste woord van de sport', () => {
+    expect(shortPlaceLabels(['Hardlopen, buiten', 'Wandelen met hoogtemeters, buiten', 'Hardlopen, loopband'])).toEqual(['Hardlopen', 'Wandelen', 'Loopband']);
+  });
+  it('ook het eerste woord gelijk: de volle naam', () => {
+    expect(shortPlaceLabels(['Wandelen, buiten', 'Wandelen met rugzak, buiten'])).toEqual(['Wandelen, buiten', 'Wandelen met rugzak, buiten']);
+  });
+  it('Hardlopen en wandelen afgewisseld wordt Afwisselen, zodat drie keuzes op 360 px passen', () => {
+    expect(shortPlaceLabels(['Buiten', 'Loopband', 'Hardlopen en wandelen afgewisseld'])).toEqual(['Buiten', 'Loopband', 'Afwisselen']);
+  });
+  it('een naam zonder komma blijft', () => {
+    expect(shortPlaceLabels(['Volledige rust', 'Herstelwandeling'])).toEqual(['Volledige rust', 'Herstelwandeling']);
   });
 });
