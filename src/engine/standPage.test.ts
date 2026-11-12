@@ -97,7 +97,12 @@ describe('de lijst', () => {
 
   it('Kracht meerekenen uit: de rij blijft, met Aanzetten', () => {
     const [kracht] = standListRows({ order: ['kracht'], forge: { off: true, line: 'Kracht meerekenen staat uit.' } });
-    expect(kracht).toEqual({ id: 'kracht', label: 'Kracht', value: 'Kracht meerekenen staat uit.', off: true });
+    expect(kracht).toEqual({ id: 'kracht', label: 'Kracht', value: 'Kracht meerekenen staat uit', off: true });
+  });
+
+  it('Kracht in één regel: alleen de eerste zin van Forge', () => {
+    const [kracht] = standListRows({ order: ['kracht'], forge: { off: false, line: '1 oefening ging omhoog in 8 weken. Voor je volgende training staat een voorstel klaar.' } });
+    expect(kracht.value).toBe('1 oefening ging omhoog in 8 weken');
   });
 
   it('Wat speelde er uit in Instellingen: geen rij, ook met redenen', () => {

@@ -24,7 +24,7 @@ export function StandSummary({ lines }: { lines: SummaryLine[] }) {
               data-stand-line={l.id}
               className="flex min-h-[56px] w-full items-center gap-3 px-4 py-2.5 text-left"
             >
-              <span className="flex w-[88px] shrink-0 items-center gap-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+              <span className="flex w-[104px] shrink-0 items-center gap-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
                 {l.warn && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-warning)' }} />}
                 {l.label}
               </span>

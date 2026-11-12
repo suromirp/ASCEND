@@ -19,6 +19,10 @@ import { PaceCurveCard } from '../components/stand/PaceCurveCard';
 import { usePaceCurve } from '../components/stand/usePaceCurve';
 import { InfluenceCard } from '../components/influence/InfluenceCard';
 import { useStandData } from '../components/stand/useStandData';
+import { useInfluenceEffects } from '../components/influence/useInfluenceEffects';
+import { useAppData } from '../state/AppDataContext';
+import { hasAnythingToShow, recordedCounts } from '../engine/influenceEffects';
+import { influenceRowShown } from '../engine/standPage';
 
 // De schermen achter Je stand (docs/visie/Ontwerp Stand minimaal.md, 2): Benen, Belasting en Ritme achter de
 // drie regels, Lopen en Wat speelde er achter hun rij. Elk scherm heeft de lage lucht met de terugknop naar
@@ -83,6 +87,12 @@ function Lopen() {
 }
 
 function Invloed() {
+  const { settings } = useAppData();
+  const { entries, effects } = useInfluenceEffects();
+  // Direct geopend terwijl het overzicht uit staat of er nog niets te zien is: een regel, nooit een lege lucht.
+  if (!influenceRowShown(settings.influenceOverview, recordedCounts(entries).length, hasAnythingToShow(effects))) {
+    return <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Hier staat nog niets. Leg bij een training of een dag in het logboek vast wat er speelde.</p>;
+  }
   return <InfluenceCard />;
 }
 

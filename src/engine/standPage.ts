@@ -73,7 +73,7 @@ export function standListRows(input: {
   const rows: StandRow[] = [];
   if (input.week) rows.push({ id: 'week', label: 'Je week', value: input.week });
   for (const id of input.order) {
-    if (id === 'kracht') rows.push({ id, label: 'Kracht', value: input.forge.line, off: input.forge.off });
+    if (id === 'kracht') rows.push({ id, label: 'Kracht', value: firstSentence(input.forge.line), off: input.forge.off });
     if (id === 'lopen' && input.run) rows.push({ id, label: 'Lopen', value: input.run });
     if (id === 'invloed' && input.influence) rows.push({ id, label: 'Wat speelde er', value: input.influence });
   }
@@ -85,4 +85,11 @@ export function standListRows(input: {
 // components/influence/InfluenceCard.tsx).
 export function influenceRowShown(overviewSetting: boolean | undefined, ownReasons: number, anythingToShow: boolean): boolean {
   return overviewSetting !== false && (ownReasons > 0 || anythingToShow);
+}
+
+// Eén regel in de rij: de eerste zin van een langere tekst ("1 oefening ging omhoog in 8 weken"). De rest, zoals
+// het voorstel voor je volgende training, staat in Forge zelf.
+export function firstSentence(text: string): string {
+  const m = /^(.+?[.!?])(\s|$)/.exec(text.trim());
+  return (m ? m[1] : text.trim()).replace(/\.$/, '');
 }
