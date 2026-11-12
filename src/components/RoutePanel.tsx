@@ -145,7 +145,7 @@ export function RouteFirstQuestion({ model, onDecline }: { model: RouteSearchMod
       </p>
       <TextButton tone="dim" onClick={() => void model.choose('exact')}>Thuis</TextButton>
       <p className="text-xs leading-snug" style={dim}>
-        Een punt dat je bewaart, zoals je deur: tik het op de kaart en kies Bewaar als plek. Het gaat precies naar de routeplanner, naar OpenStreetMap en naar Open-Meteo, net als hierboven, en wordt op dit toestel bewaard; het gaat mee in je back-up. Tot er een Thuis is, begint de lus waar je nu bent. Andere plek zoekt een plek op naam; Open-Meteo krijgt alleen de plaatsnaam die je typt.
+        Een punt dat je bewaart, zoals je deur: tik het op de kaart en kies Bewaar als plek. Het gaat precies naar de routeplanner, naar OpenStreetMap en naar Open-Meteo, net als hierboven, en wordt op dit toestel bewaard; het gaat mee in je back-up. Tot er een Thuis is, begint de lus waar je nu bent.
       </p>
       <TextButton tone="dim" onClick={() => void model.choose('approx')}>Ongeveer</TextButton>
       <p className="text-xs leading-snug" style={dim}>

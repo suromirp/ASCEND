@@ -11,6 +11,8 @@ Geen nieuwe instelling. Er wordt niets voor je gekozen: zoeken gebeurt alleen al
 
 Bewaar als plek bij een gezochte plek is één tik, zonder Maak dit Thuis: een gezochte plek heeft een naam en is zelden je deur. Bij een getikt punt blijft Bewaar als plek de weg naar Maak dit Thuis.
 
+Je plekken in Instellingen (na Pathfinder): een bewaarde plek moet ergens te wissen zijn, en boven vier chips is de oudste anders onbereikbaar. De pagina Je plekken (`pages/settings/PlacesPage.tsx`, adres `#/more/vandaag/plekken`) toont de plekken, Thuis bovenaan, met per plek Naam wijzigen en Wissen na een vraag met het aantal routes (Wissen, Annuleren). Een gewone plek gaat via `removePlace`, Thuis via `clearRouteStartPoint`; `removePlace` wist bij Thuis nu ook de oude sleutel van Vast punt. Wis startpunt bij Startpunt van je lus vraagt eerst, met dezelfde zin. De rij Je plekken staat in het blad Weer en kleding, onder Startpunt van je lus, en niet onder Plaats voor het weer zoals het ontwerp zegt: de pagina Vandaag en meldingen zit op het plafond van 12 rijen (`settingsLayout.test.ts`). De rij toont Bekijken: een nieuwe bron voor het aantal plekken zou de laadproef van Instellingen veranderen (`useSettingsFacts.load.test.ts`), en de pagina leest de opslag zelf. Er komt geen nieuwe keuze.
+
 ## Reden
 
 De eigenaar wil een heuvelrug of natuurgebied kunnen intypen zodat de lus daar begint (backlog, Zoeken op de kaart en avontuurlijke plekken; spoor 7 van Plekken naar voren gehaald).
