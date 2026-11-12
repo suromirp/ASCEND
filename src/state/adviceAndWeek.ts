@@ -203,7 +203,7 @@ export function useAdviceAndWeek(deps: {
   const withFullWeek = useCallback((n: WeekNotice, weekStart: string): WeekNotice => {
     const today = todayISO();
     const id = fullWeekId(today);
-    const status = adviceResponses[id]?.response === 'declined' ? 'declined' as const : advice.some((a) => a.id === id && !!a.proposal) ? 'open' as const : undefined;
+    const status = adviceResponses[id]?.response === 'declined' ? 'declined' as const : adviceResponses[id]?.response === 'accepted' ? 'accepted' as const : advice.some((a) => a.id === id && !!a.proposal) ? 'open' as const : undefined;
     const line = fullWeekLine({
       today, sessions: plannedSessions, logs: sessionLogs, templates, leave: settings.leavePeriods, illnessEpisodes: settings.illnessEpisodes,
       removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),

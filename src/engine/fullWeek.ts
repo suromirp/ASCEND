@@ -6,7 +6,7 @@
 // - hoeveel trainingen er nog staan tegen de dagen die over zijn;
 // - dagen met twee trainingen;
 // - loopdagen op rij en zware dagen achter elkaar;
-// - wat de weekcontrole (engine/weekValidator.ts) in die dagen vindt.
+// - wat de weekcontrole (engine/weekValidator.ts) in die dagen vindt (alleen voor de keuze welke training vervalt).
 // Is de rest te vol, dan komt er één voorstel met een advies welke training vervalt, de reden in één zin en
 // een tweede keuze. Eerst wat ASCEND er zelf als extra bij zette, dan wat het minst telt voor je doel. Nooit
 // een test, een wedstrijd, je sleuteltraining of iets wat je zelf neerzette. Er vervalt niets zonder Akkoord:
@@ -41,7 +41,7 @@ export const OVER_LIMIT = 2;
 // Vier loopdagen op rij; drie zware dagen achter elkaar.
 export const RUN_STREAK_LIMIT = 4;
 export const HEAVY_STREAK_LIMIT = 3;
-// Wat de weekcontrole al kent en wat over drukte gaat. Met meer trainingen dan dagen telt elk van deze mee.
+// Wat de weekcontrole al kent en wat over drukte gaat: weegt mee in de keuze welke training vervalt.
 const CROWD_RULES: readonly CheckRule[] = ['TWO-HARD-RUNS', 'DAY-FULL', 'LEG-SPACING', 'HARD-DAYS'];
 
 // Per week, zodat Liever niet voor die week blijft gelden.
@@ -179,7 +179,9 @@ export function weekShape(input: FullWeekInput, sessions: readonly PlannedSessio
     const check: CheckInput = { ...input.check, sessions: [...sessions], logs: [...input.logs], templates: [...input.templates], today, leave: input.leave, reportYours: true };
     crowd = validateWeeks(check, new Set([monday])).filter((f) => CROWD_RULES.includes(f.rule) && f.sessionIds.some((id) => ids.has(id))).length;
   }
-  const full = doubles.length >= DOUBLE_DAY_LIMIT || over >= OVER_LIMIT || runStreak >= RUN_STREAK_LIMIT || heavyStreak >= HEAVY_STREAK_LIMIT || (over >= 1 && crowd > 0);
+  // Wat de weekcontrole vindt maakt de week niet vol: dat staat al als eigen melding in Week, met een eigen
+  // voorstel. Het weegt wel mee in de keuze welke training vervalt (weight).
+  const full = doubles.length >= DOUBLE_DAY_LIMIT || over >= OVER_LIMIT || runStreak >= RUN_STREAK_LIMIT || heavyStreak >= HEAVY_STREAK_LIMIT;
   return { trainings: open.length, days, doubles, runStreak, heavyStreak, crowd, full };
 }
 
@@ -232,10 +234,10 @@ interface Candidate {
 }
 
 const REASON: Record<Tier, string> = {
-  0: 'Die kwam er als extra bij. Je vaste trainingen blijven staan.',
-  1: 'Een rustige loop kost je doel het minst.',
-  2: 'Die telt deze week het minst voor je doel.',
-  3: 'Dat is een zware training, maar niet je sleuteltraining.',
+  0: 'die kwam er als extra bij',
+  1: 'een rustige loop kost je doel het minst',
+  2: 'die telt deze week het minst voor je doel',
+  3: 'zwaar, maar niet je sleuteltraining',
 };
 
 function tierOf(s: PlannedSession, t: SessionTemplate): Tier {
@@ -265,16 +267,13 @@ function candidates(input: FullWeekInput, ctx: Ctx, pick: (s: PlannedSession) =>
 
 const lower = (text: string) => `${text.charAt(0).toLowerCase()}${text.slice(1)}`;
 
+// Eén zin, hoe de dag ook wegviel: "Je verloor deze week een dag."
 function lostText(lost: WeekLoss[]): string {
-  const missed = new Set(lost.filter((l) => l.how === 'missed').map((l) => l.date)).size;
-  const moved = lost.filter((l) => l.how === 'moved').length;
-  const parts: string[] = [];
-  if (missed > 0) parts.push(missed === 1 ? 'Er viel deze week al een dag weg.' : `Er vielen deze week al ${missed} dagen weg.`);
-  if (moved > 0) parts.push(moved === 1 ? 'Je zette deze week al een training naar later.' : `Je zette deze week al ${moved} trainingen naar later.`);
-  return parts.join(' ');
+  const days = new Set(lost.map((l) => l.date)).size;
+  return days === 1 ? 'Je verloor deze week een dag.' : `Je verloor deze week ${days} dagen.`;
 }
 
-const WHY = 'ASCEND kijkt hiernaar zodra er in je week een training wegviel of naar later ging. Vol is: twee dagen met twee trainingen, twee trainingen meer dan er dagen over zijn, vier loopdagen op rij, drie zware dagen achter elkaar, of meer trainingen dan dagen terwijl de weekcontrole ook iets vindt. Het advies kiest eerst de extra training die je via een voorstel kreeg, dan wat het minst telt voor je doel. Een test, een wedstrijd, je sleuteltraining en wat je zelf neerzette staan nooit in het advies. Eerst een voorstel, pas na Akkoord verandert er iets.';
+const WHY = 'ASCEND kijkt hiernaar zodra er in je week een training wegviel of naar later ging. Vol is: twee dagen met twee trainingen, twee trainingen meer dan er dagen over zijn, vier loopdagen op rij of drie zware dagen achter elkaar. Het advies kiest eerst de extra training die je via een voorstel kreeg, dan wat het minst telt voor je doel. Een test, een wedstrijd, je sleuteltraining en wat je zelf neerzette staan nooit in het advies. Eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet vraagt ASCEND het deze week niet meer.';
 
 function dropProposal(c: Candidate, title: string, consequences: string): PlanChangeProposal {
   const item: PlanChangeItem = {
@@ -316,26 +315,23 @@ export function fullWeekAdvice(input: FullWeekAdviceInput): Advice[] {
     const tip = own ? ` Wil je lucht, dan ${own.tier === 3 ? `komt ${lower(own.template.name)} op ${formatWeekdayDateNL(own.session.scheduledDate)} als eerste in aanmerking` : `kost ${lower(own.template.name)} op ${formatWeekdayDateNL(own.session.scheduledDate)} je doel het minst`}. Overslaan doe je zelf in Week.` : ' Wil je lucht, dan sla je zelf een training over in Week.';
     return [{ ...base, effect: `${lead} ASCEND raadt niets aan om te laten vallen: wat er nog staat zette je zelf neer, is je sleuteltraining of een test, of maakt je week niet rustiger als het vervalt.${tip}` }];
   }
-  const QUIET = 'Met Liever niet blijft je week zoals hij is en vraagt ASCEND het deze week niet meer.';
-  const afterOf = (c: Candidate) => (c.after.full ? `Ook daarna is je week vol: ${shapeText(c.after)}.` : `Dan staan er nog ${shapeText(c.after)}.`);
-  const build = (c: Candidate, index: number): AdviceOption => {
+  // Hoogstens twee zinnen: wat vervalt en waarom, en wat er dan staat. Blijft de week ook dan vol, dan staat dat er.
+  const afterOf = (c: Candidate) => (c.after.full ? `Ook dan is je week nog vol: ${shapeText(c.after)}.` : `Dan staan er nog ${shapeText(c.after)}.`);
+  const sayOf = (c: Candidate) => `${c.template.name} van ${formatWeekdayDateNL(c.session.scheduledDate)} vervalt: ${REASON[c.tier]}. ${afterOf(c)}`;
+  const build = (c: Candidate): AdviceOption => {
     const when = formatWeekdayDateNL(c.session.scheduledDate);
-    const after = afterOf(c);
-    const consequences = `${c.template.name} van ${when} vervalt. ${after}`;
-    const effect = `${lead} ${index === 0 ? 'Advies' : 'Het alternatief'}: laat ${lower(c.template.name)} van ${when} vallen. ${REASON[c.tier]} ${after} ${QUIET}`;
-    return { label: `${c.template.name} van ${when} vervalt`, effect, proposal: dropProposal(c, title, consequences) };
+    return { label: `${c.template.name} van ${when} vervalt`, effect: `${lead} ${sayOf(c)}`, proposal: dropProposal(c, title, `${c.template.name} van ${when} vervalt. ${afterOf(c)}`) };
   };
   const built = list.slice(0, 2).map(build);
   // Het blad toont met een voorstel de feitregel, de wijzigingen en de tip: daar staan het advies en de reden.
-  const best = list[0];
-  const tip = `Advies: ${lower(best.template.name)} van ${formatWeekdayDateNL(best.session.scheduledDate)}. ${REASON[best.tier]} ${afterOf(best)} ${QUIET}`;
-  return [{ ...base, tip, effect: built[0].effect, proposal: built[0].proposal, options: built.length > 1 ? built : undefined, firstOptionNote: 'het advies' }];
+  return [{ ...base, tip: sayOf(list[0]), effect: built[0].effect, proposal: built[0].proposal, options: built.length > 1 ? built : undefined, firstOptionNote: 'het advies' }];
 }
 
 // De gewone regel op Week: de week is vol. Staat het voorstel nog open op Vandaag ('open'), dan verwijst hij
-// daarheen; na Liever niet ('declined') zegt hij dat jij alles liet staan. Alleen voor de week van vandaag.
-export function fullWeekLine(input: FullWeekInput, weekStart: string, status?: 'open' | 'declined'): string | undefined {
-  if (mondayOfWeek(weekStart) !== mondayOfWeek(input.today)) return undefined;
+// daarheen; na Liever niet ('declined') zegt hij dat jij alles liet staan. Na Akkoord ('accepted') geen regel:
+// je volgde het advies. Alleen voor de week van vandaag.
+export function fullWeekLine(input: FullWeekInput, weekStart: string, status?: 'open' | 'declined' | 'accepted'): string | undefined {
+  if (status === 'accepted' || mondayOfWeek(weekStart) !== mondayOfWeek(input.today)) return undefined;
   const state = fullWeek(input);
   if (!state) return undefined;
   const fact = `Je week is vol: ${shapeText(state.shape)}.`;

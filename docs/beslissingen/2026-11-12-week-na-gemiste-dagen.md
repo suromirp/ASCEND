@@ -11,13 +11,14 @@ Valt er in je week een training weg en is de rest van de week daarna te vol, dan
 
 Verlies: een training van deze week op een dag die voorbij is en niet gedaan (gemist of door jou overgeslagen), of een training die jij of een voorstel van een voorbije dag van deze week naar later zette terwijl die dag daarna leeg bleef. Gedaan is hetzelfde als in de andere adviezen (`adviceShared.ts#isDone`): een eigen log, of dezelfde training los gelogd binnen twee dagen. Geen verlies: een herstelwandeling, een ruil van twee dagen, wat ASCEND zelf wegliet of verving (Minder, zonder sportschool, een geaccepteerd voorstel dat een training liet vervallen), en een vakantie-, tocht- of ziektedag. Ben je ziek gemeld of net beter, dan zwijgt de regel.
 
-Vol, gemeten van vandaag tot en met zondag, is één van deze vijf:
+Vol, gemeten van vandaag tot en met zondag, is één van deze vier:
 
 - twee of meer dagen met twee trainingen;
 - twee of meer trainingen meer dan er dagen over zijn (een vakantiedag of een dag van een tocht is geen dag die over is);
 - vier loopdagen op rij;
-- drie zware dagen achter elkaar (een harde loop, een zware beendag of de lange training);
-- meer trainingen dan dagen, terwijl de weekcontrole in die dagen iets vindt over drukte (TWO-HARD-RUNS, DAY-FULL, LEG-SPACING, HARD-DAYS uit `src/engine/weekValidator.ts`).
+- drie zware dagen achter elkaar (een harde loop, een zware beendag of de lange training).
+
+Wat de weekcontrole in die dagen vindt over drukte (TWO-HARD-RUNS, DAY-FULL, LEG-SPACING, HARD-DAYS uit `src/engine/weekValidator.ts`) maakt de week niet vol: dat staat al als eigen melding in Week, met een eigen voorstel, en elke informatie staat er één keer. Het weegt wel mee in de keuze welke training vervalt. In de eerste versie was het een vijfde grens; in de nagespeelde week bleef de week ook na het advies vol heten, met nog één dag met twee trainingen. Van de grenzen kan alleen deze dat verklaren; met de back-up zelf is het door de bouwer niet nagegaan. Het advies hoort de week uit vol te halen, dus die grens is weg (coördinator, 12 november).
 
 Een reeks dagen telt alleen als er nog minstens twee van komen; op de laatste dag van de week verandert een reeks niet meer.
 
@@ -52,7 +53,8 @@ De eigenaar koos op 11 november voor "alleen laten vallen na vragen, met advies"
 - De trapsessie van de afdaalklok is geen extra in de zin van trede 1: voor een tocht dient ze het doel. Ze telt in het advies als een gewone training, na de extra.
 - In het blad staan het advies en de reden in de tip onder de wijziging; daar toont het blad ze (`CoachCard.tsx`).
 - Bekende grenzen, uit de zelfreview: de drempels zijn absoluut, dus een plan dat al zo vol gepland is (Meer per soort, vier loopdagen in een loopplan) krijgt de vraag na elke gemiste training opnieuw. De toets bij de extra training kent je tijd per dag niet, dus de regel DAY-FULL kan daar anders uitvallen dan in het voorstel. Komt de extra loop zonder verlies op vrijdag en mis je daarna een dag, dan vraagt ASCEND hem terug.
-- Na Akkoord vraagt ASCEND het die week niet nog eens, ook als de week daarna nog vol is. Het voorstel zegt dat vooraf ("Ook daarna is je week vol") en Week houdt de regel.
+- Na Akkoord vraagt ASCEND het die week niet nog eens en zegt Week niets meer: wie het advies volgde krijgt geen regel dat het nog vol is. Blijft de week ook na het advies vol, dan staat dat vooraf in het voorstel ("Ook dan is je week nog vol").
+- De teksten zijn kort gehouden (coördinator, 12 november): één feitzin ("Je verloor deze week een dag."), dan hoogstens twee zinnen advies: wat vervalt en waarom, en wat er dan staat. De zin over Liever niet staat alleen achter Waarom.
 
 ## Instelling
 

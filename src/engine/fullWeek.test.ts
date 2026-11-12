@@ -88,15 +88,11 @@ describe('WEEK-FULL: de nagemaakte week', () => {
     expect(advice.id).toBe(fullWeekId(THU));
     expect(advice.ruleId).toBe(FULL_WEEK_RULE);
     expect(advice.proposal!.changes).toEqual([expect.objectContaining({ plannedSessionId: 'tpl_strides_run@4', action: 'remove' })]);
-    expect(advice.effect).toBe(
-      'Je zette deze week al een training naar later. Tot en met zondag staan er nog 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij. '
-      + 'Advies: laat duurloop met versnellingen van vr 6 november vallen. Die kwam er als extra bij. Je vaste trainingen blijven staan. '
-      + 'Dan staan er nog 5 trainingen in 4 dagen en 1 dag met twee trainingen. '
-      + 'Met Liever niet blijft je week zoals hij is en vraagt ASCEND het deze week niet meer.',
-    );
-    // Het blad toont de feitregel, de wijziging en de tip: het advies en de reden staan in de tip.
-    expect(advice.lead).toBe('Je zette deze week al een training naar later. Tot en met zondag staan er nog 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij.');
-    expect(advice.tip).toBe('Advies: duurloop met versnellingen van vr 6 november. Die kwam er als extra bij. Je vaste trainingen blijven staan. Dan staan er nog 5 trainingen in 4 dagen en 1 dag met twee trainingen. Met Liever niet blijft je week zoals hij is en vraagt ASCEND het deze week niet meer.');
+    // Het blad toont de feitregel, de wijziging en de tip: één feitzin, en hoogstens twee zinnen advies.
+    expect(advice.lead).toBe('Je verloor deze week een dag. Tot en met zondag staan er nog 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij.');
+    expect(advice.tip).toBe('Duurloop met versnellingen van vr 6 november vervalt: die kwam er als extra bij. Dan staan er nog 5 trainingen in 4 dagen en 1 dag met twee trainingen.');
+    expect(advice.effect).toBe('Je verloor deze week een dag. Tot en met zondag staan er nog 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij. Duurloop met versnellingen van vr 6 november vervalt: die kwam er als extra bij. Dan staan er nog 5 trainingen in 4 dagen en 1 dag met twee trainingen.');
+    expect(advice.options![1].effect).toBe('Je verloor deze week een dag. Tot en met zondag staan er nog 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij. Rustige duurloop van do 5 november vervalt: een rustige loop kost je doel het minst. Ook dan is je week nog vol: 5 trainingen in 4 dagen en 2 dagen met twee trainingen.');
     // Het alternatief: de rustige loop, het minst belangrijke na de extra.
     expect(advice.options!.map((o) => o.proposal.changes[0].plannedSessionId)).toEqual(['tpl_strides_run@4', 'tpl_easy_run@3']);
     expect(advice.effect).not.toMatch(/[\u2013\u2014]/);
@@ -110,8 +106,9 @@ describe('WEEK-FULL: de nagemaakte week', () => {
     expect(after.find((s) => s.id === 'tpl_strides_run@4')!.status).toBe('skipped');
     expect(after.filter((s) => s.status === 'skipped')).toHaveLength(1);
     expect(JSON.stringify(logs)).toBe(before);
-    // Daarna is de week niet meer vol: geen regel, geen nieuw voorstel.
+    // Daarna is de week niet meer vol, en na Akkoord zegt Week hoe dan ook niets meer.
     expect(fullWeek({ ...inp, sessions: after })).toBeUndefined();
+    expect(fullWeekLine(inp, MON, 'accepted')).toBeUndefined();
   });
 
   it('Liever niet: opnieuw openen geeft geen nieuw voorstel, Week zegt het in een gewone regel', () => {
@@ -184,6 +181,7 @@ describe('WEEK-FULL: wat verlies is en wat erbij kwam (review van 12 november)',
     const block = sessions.map((s) => (s.id === 'tpl_strides_run@4' ? { ...s, lock: undefined, blockQuiet: true as const } : s));
     const [advice] = fullWeekAdvice(input(THU, block, logs));
     expect(advice.tip).not.toContain('kwam er als extra bij');
+    expect(advice.tip!.split('. ').length).toBeLessThanOrEqual(2);
     expect(advice.proposal!.changes[0].plannedSessionId).toBe('tpl_easy_run@3');
   });
 
