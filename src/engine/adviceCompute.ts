@@ -26,6 +26,7 @@ import { tooHardAdvice, tooLightAdvice, injuryAdvice, strengthAdvice, spacingAdv
 import { restWeekSkipAdvice, repeatWeekAdvice, tentPackAdvice, targetTimeAdvice } from './adviceBlock';
 import { morningAdvice } from './adviceMorning';
 import { descentAdvice } from './descentClock';
+import { fullWeekAdvice, resolveFullWeekAsk } from './fullWeek';
 
 // --- Rule TEST-RETRY ---------------------------------------------------------
 // Trigger: the last test run (the last 21 days) has a fastest 5 km with more standing still than
@@ -551,11 +552,24 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   // voorstel van vandaag iets neerzet (twee voorstellen die elk kloppen, maar samen botsen).
   const takenDays = new Set(rest.flatMap((a) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])])
     .flatMap((p) => p?.changes.filter((c) => c.action !== 'remove').map((c) => c.toDate ?? c.newSessionDraft?.scheduledDate) ?? []).filter((d): d is string => !!d));
+  // Een volle week na weggevallen dagen (engine/fullWeek.ts): één voorstel welke training vervalt. Wijkt voor elk
+  // ander voorstel dat iets in deze week verandert: eerst dat antwoord, dan pas de vraag over wat er dan staat.
+  const thisWeek = mondayOfWeek(inputs.asOf);
+  const restChanges = rest.flatMap((a) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])]).flatMap((p) => p?.changes ?? []);
+  const weekSessionIds = new Set(inputs.plannedSessions.filter((s) => mondayOfWeek(s.scheduledDate) === thisWeek).map((s) => s.id));
+  const weekBusy = restChanges.some((c) => [c.fromDate, c.toDate, c.newSessionDraft?.scheduledDate].some((d) => !!d && mondayOfWeek(d) === thisWeek) || (!!c.plannedSessionId && weekSessionIds.has(c.plannedSessionId)));
+  const fullWeekNow = inputs.noRetry || weekBusy ? [] : fullWeekAdvice({
+    today: inputs.asOf, sessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, leave: inputs.leave, keyFocus: inputs.keyFocus,
+    check: { restDay: inputs.restDay ?? inputs.extraSession?.restDay, program: inputs.program, dailyTimeBudget: inputs.dailyTimeBudget, sameDayPairingPreference: inputs.sameDayPairingPreference },
+    respondedIds: inputs.respondedIds, ask: resolveFullWeekAsk(inputs.fullWeekAsk),
+  });
+  // Geen trapsessie erbij in een week waar net de vraag ligt wat er mag vallen.
+  if (fullWeekNow.length > 0) for (let d = inputs.asOf; mondayOfWeek(d) === thisWeek; d = addDays(d, 1)) takenDays.add(d);
   const descent = descentAdvice({
     today: inputs.asOf, logs: inputs.logs, plannedSessions: inputs.plannedSessions, templates: inputs.templates, context: inputs.descentClock,
     respondedIds: inputs.respondedIds, answeredOn: inputs.answeredOn, leave: inputs.leave, illnessEpisodes: inputs.illnessEpisodes,
     restDay: inputs.restDay ?? inputs.extraSession?.restDay, taken: takenDays, keyFocus: inputs.keyFocus,
     program: inputs.program, dailyTimeBudget: inputs.dailyTimeBudget, sameDayPairingPreference: inputs.sameDayPairingPreference,
   }).filter((a) => !inputs.respondedIds.has(a.id));
-  return [...rest, ...descent].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
+  return [...rest, ...fullWeekNow, ...descent].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
 }

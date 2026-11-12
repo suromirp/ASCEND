@@ -36,6 +36,7 @@ import { needsWeather, showWeatherSwap } from '../engine/overviewSettings';
 import { mainGoal } from '../engine/mainGoal';
 import { keyFocusOf } from '../engine/keySession';
 import { answeredDays, descentClockContext } from '../engine/descentClock';
+import { fullWeekId, fullWeekLine, resolveFullWeekAsk } from '../engine/fullWeek';
 
 export function useAdviceAndWeek(deps: {
   loading: boolean;
@@ -143,6 +144,7 @@ export function useAdviceAndWeek(deps: {
         newTestOnStops: settings.newTestOnStops !== false,
         restDay: settings.restDay ?? 1,
         restDayBack: settings.restDayBack !== false,
+        fullWeekAsk: resolveFullWeekAsk(settings.fullWeekAsk),
         descentClock: descentClockContext(settings.descentClock, trainingGoals, goalMilestones, settings.leavePeriods, todayISO()),
         answeredOn: answeredDays(adviceResponses),
         // Eerst koppelen, dan inhalen (engine/missedTraining.ts#linkCandidates).
@@ -159,7 +161,7 @@ export function useAdviceAndWeek(deps: {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.descentClock, settings.missedLink, missedMemory, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction],
+    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction],
   );
 
   // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).
@@ -196,32 +198,45 @@ export function useAdviceAndWeek(deps: {
       },
     }),
   }), [settings, plannedSessions, templates, sessionLogs, injuryNotes, program, goalEngineConfig, answeredAdviceIds]);
+  // Een volle week na weggevallen dagen (engine/fullWeek.ts): de gewone regel in Week. Na Liever niet zegt hij
+  // dat jij alles liet staan; staat het voorstel nog open, dan verwijst hij naar Vandaag. Alleen tekst.
+  const withFullWeek = useCallback((n: WeekNotice, weekStart: string): WeekNotice => {
+    const today = todayISO();
+    const id = fullWeekId(today);
+    const status = adviceResponses[id]?.response === 'declined' ? 'declined' as const : advice.some((a) => a.id === id && !!a.proposal) ? 'open' as const : undefined;
+    const line = fullWeekLine({
+      today, sessions: plannedSessions, logs: sessionLogs, templates, leave: settings.leavePeriods,
+      keyFocus: keyFocusOf(trainingGoals, goalMilestones, today, { direction: settings.direction }),
+      check: { restDay: settings.restDay ?? 1, program, dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference },
+    }, weekStart, status);
+    return line ? { ...n, plain: [line] } : n;
+  }, [adviceResponses, advice, plannedSessions, sessionLogs, templates, settings.leavePeriods, settings.direction, settings.restDay, trainingGoals, goalMilestones, program, goalEngineConfig]);
   const weekNoticeState = useCallback((): NonNullable<typeof weekNoticeCache.current> => {
-    const key = [weekCheckInput, advice, keptNotice];
+    const key = [weekCheckInput, advice, keptNotice, withFullWeek];
     if (!weekNoticeCache.current || weekNoticeCache.current.key.some((v, i) => v !== key[i])) weekNoticeCache.current = { key, quick: new Map(), full: new Map() };
     return weekNoticeCache.current;
-  }, [weekCheckInput, advice, keptNotice]);
+  }, [weekCheckInput, advice, keptNotice, withFullWeek]);
   const weekNoticeFor = useCallback((weekStart: string): WeekNotice => {
     const state = weekNoticeState();
     const cached = state.quick.get(weekStart);
     if (cached) return cached;
     try {
-      const result = keptNotice(weekNoticeConcerns(weekCheckInput(), weekStart, adviceSessionIds(advice)));
+      const result = withFullWeek(keptNotice(weekNoticeConcerns(weekCheckInput(), weekStart, adviceSessionIds(advice))), weekStart);
       state.quick.set(weekStart, result);
       return result;
     } catch (err) {
       console.error('De weekmelding kon niet worden berekend:', err);
       return { concerns: [], fixes: {}, covered: [] };
     }
-  }, [weekNoticeState, weekCheckInput, advice, keptNotice]);
+  }, [weekNoticeState, weekCheckInput, advice, keptNotice, withFullWeek]);
   const weekFixesFor = useCallback((weekStart: string): WeekNotice => {
     const state = weekNoticeState();
     const cached = state.full.get(weekStart);
     if (cached) return cached;
-    const result = keptNotice(weekNotice(weekCheckInput(), weekStart, settings.weekFixProposal !== false, adviceSessionIds(advice)));
+    const result = withFullWeek(keptNotice(weekNotice(weekCheckInput(), weekStart, settings.weekFixProposal !== false, adviceSessionIds(advice))), weekStart);
     state.full.set(weekStart, result);
     return result;
-  }, [weekNoticeState, weekCheckInput, advice, settings.weekFixProposal, keptNotice]);
+  }, [weekNoticeState, weekCheckInput, advice, settings.weekFixProposal, keptNotice, withFullWeek]);
 
   // The new concerns of the week check when a training lands on a day, for the line while dragging.
   // Never throws: a failure leaves the line with only what the day itself says.

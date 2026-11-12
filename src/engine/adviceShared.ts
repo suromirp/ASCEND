@@ -44,6 +44,8 @@ export interface Advice {
   // More than one good way: the best first (the same as `proposal`), you
   // choose which one Akkoord applies.
   options?: AdviceOption[];
+  // De regel onder de eerste optie in het blad. Zonder: "de kleinste verandering".
+  firstOptionNote?: string;
   relatedLogId?: string;
   // Rule REST-WEEK-SKIP: Akkoord trains through the rest week of this
   // Monday (engine/restWeek.ts). A program change, not a session change.
@@ -133,6 +135,8 @@ export interface AdviceInputs {
   // What the key session is (engine/keySession.ts#keyFocusOf): the same as the line on Ascend.
   // Absent: the long run or the mountain hike.
   keyFocus?: KeyFocus;
+  // "Vragen als je week te vol wordt" (rule WEEK-FULL, engine/fullWeek.ts). Absent = on.
+  fullWeekAsk?: boolean;
   // Internal: leave TEST-RETRY out, for the check of its own end state (it would otherwise call itself).
   noRetry?: boolean;
 }

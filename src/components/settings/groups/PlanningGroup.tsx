@@ -191,6 +191,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <BundleSheet eyebrow="Planning" title="Meldingen in Week" line="Wat Week zegt als er iets niet klopt." onClose={close}>
           <SummaryRow id="weekvoorstel" title="Voorstel bij een probleem in de week" facts={facts} info="weekVoorstel" onChange={(on) => void updateSettings({ weekFixProposal: on })} />
           <SummaryRow id="week-na-keuze" title="Melding na jouw keuze" facts={facts} info="weekNaKeuze" onClick={() => setInner('week-na-keuze')} />
+          <SummaryRow id="week-vol" title="Vragen als je week te vol wordt" facts={facts} info="weekVol" onChange={(on) => void updateSettings({ fullWeekAsk: on })} />
         </BundleSheet>
       )}
       {sheet === 'bundel-testloop' && (

@@ -1102,6 +1102,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Niets doen', text: 'hij blijft als gemist in je week staan.' },
     ],
   },
+  weekVol: {
+    title: 'Vragen als je week te vol wordt',
+    lead: 'Viel er in je week een dag weg en is de rest te vol, dan vraagt ASCEND welke training mag vervallen.',
+    points: [
+      { head: 'Wanneer', text: 'na een gemiste of naar later gezette training, bij twee dagen met twee trainingen, vier loopdagen op rij of drie zware dagen achter elkaar.' },
+      { head: 'Het advies', text: 'eerst wat ASCEND er zelf als extra bij zette, dan wat het minst telt voor je doel. Nooit een test, een wedstrijd, je sleuteltraining of wat je zelf neerzette.' },
+      { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet blijft je week staan en zegt Week dat hij vol is. Uit: geen vraag, alleen die regel in Week.' },
+    ],
+  },
   rustdagTerug: {
     title: 'Rustdag terugzetten voorstellen',
     lead: 'Liet een voorstel je rustdag vervallen en is die dag later weer leeg, dan stelt ASCEND voor hem terug te zetten.',

@@ -272,6 +272,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('twijfeltest', 'Twijfeltest eerst vragen', 'planning', 'askDoubtTest'),
   flag('nieuwe-test', 'Nieuwe test voorstellen bij stilstand', 'planning', 'newTestOnStops'),
   flag('rustdag-terug', 'Rustdag terugzetten voorstellen', 'planning', 'restDayBack'),
+  flag('week-vol', 'Vragen als je week te vol wordt', 'planning', 'fullWeekAsk'),
   choice('niet-doorgegaan', 'Training die niet doorging', 'planning', 'missedTraining', 'ask', 'nietDoorgegaan'),
   choice('niet-doorgegaan-dagen', 'Na hoeveel dagen', 'planning', 'missedTrainingDays', 2, 'nietDoorgegaanDagen'),
   flag('log-koppelen', 'Log op een andere dag koppelen', 'planning', 'missedLink'),
