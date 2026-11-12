@@ -10,7 +10,8 @@
 import { locationSummary } from './locationSetting';
 import { resolveShorterToday } from './shorterToday';
 import { resolveJourneyOnToday } from './yourDay';
-import { isDefaultOrder, resolveCardOrder } from './cardOrder';
+import { defaultOrder, resolveCardOrder } from './cardOrder';
+import { isDefaultStandLayout } from './standPage';
 import { kgLabel } from '../utils/kg';
 import { resolveTestStops } from './bestEffort';
 import { resolveTestRest } from './testRest';
@@ -861,7 +862,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'weekvoorstel':
       return { checked: s.weekFixProposal !== false };
     case 'volgorde-stand':
-      return { value: isDefaultOrder('stand', resolveCardOrder('stand', s.cardOrder)) ? 'Standaard' : 'Eigen volgorde' };
+      return { value: isDefaultStandLayout(resolveCardOrder('stand', s.cardOrder), defaultOrder('stand')) ? 'Standaard' : 'Eigen volgorde' };
     case 'forge-verloop':
       return { value: choiceShort('forgeVerloop', resolveForgeLogView(s)) };
     case 'forge-oefeningen':

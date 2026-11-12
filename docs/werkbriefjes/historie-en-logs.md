@@ -12,6 +12,7 @@ De regel dat historie nooit herschreven wordt, de vijf uitzonderingen op verzoek
 - `src/storage/missedTraining.ts#linkLogNow` schrijft die koppeling
 - `src/engine/logDay.ts#logDay` op welke dag een log wordt getoond; alleen weergave
 - `src/engine/macrofactorDuration.ts#withChosenDuration` duur van een nieuw MacroFactor-log dat te lang is, bij het maken
+- `src/components/logForm/manualLog.ts#buildManualLog` het log van zelf invullen, voor het blad Hoe ging het? en het oude trainingsscherm samen; toestand en concept in `useLogForm.ts`, vergelijking in `manualLog.test.ts`
 - `src/storage/milestoneClearing.ts#recordClearedMilestones` `MilestoneProgress` wordt alleen toegevoegd
 
 ## Nooit
@@ -23,6 +24,7 @@ De regel dat historie nooit herschreven wordt, de vijf uitzonderingen op verzoek
 - Load, beenindex of planning de getoonde dag van `logDay` laten lezen; die blijven `completedDate` gebruiken.
 
 ## Valkuilen
+- `logSession` kan `false` geven nadat het log al geschreven is (een stap erna faalde); een scherm dat dan opnieuw laat opslaan maakt bij een losse training een tweede log (besluit `2026-11-12-hoe-ging-het.md`).
 - Afgeleide velden (`detail`, `bestEffort`, `runDetail`, `zone2Pieces`, `forgeLog`) worden één keer toegevoegd en horen bij de totalen waarvoor ze gelezen zijn; ze veranderen nooit een gemeten getal. Een beschadigd veld laat je vallen zonder het log te verliezen.
 - Elke uitzondering heeft haar eigen terugzetfunctie; een nieuwe schrijfroute zonder die terugweg breekt de afspraak.
 - Een MacroFactor-log kan na middernacht eindigen: de dag in Week en Logboek is die van de geplande training, het log zelf blijft staan.

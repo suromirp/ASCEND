@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultOrder, resolveCardOrder } from './cardOrder';
-import { influenceRowShown, influenceRowValue, runRowValue, standLayout, standListRows, standSentenceShown, standWarnings } from './standPage';
+import { climbRowValue, descentRowValue, indexCheckValue, influenceRowShown, influenceRowValue, isDefaultStandLayout, legDaysValue, legsFact, runRowValue, standLayout, standListRows, standOrderFrom, standSentenceShown, standWarnings, zone2CardSentence } from './standPage';
+import { trendVerdict } from './aerobicTrend';
 import { standLines } from './yourDay';
 import { LOAD_JUMP } from './standing';
 import { weightCardOn } from './weightCard';
@@ -134,5 +135,89 @@ describe('de lijst', () => {
     expect(influenceRowValue(1, 0)).toBe('1 reden vastgelegd');
     expect(influenceRowValue(3, 2)).toBe('3 redenen vastgelegd');
     expect(influenceRowValue(0, 2)).toBe('2 redenen met een uitkomst');
+  });
+});
+
+describe('de volgorde-instelling in twee korte lijsten (regels en rijen)', () => {
+  const STD = defaultOrder('stand');
+
+  it('wat je in de twee lijsten kiest wordt één bewaarde volgorde die precies die regels en rijen teruggeeft', () => {
+    const layout = { lines: ['ritme', 'benen', 'belasting'] as const, list: ['lopen', 'invloed', 'kracht'] as const };
+    const order = standOrderFrom({ lines: [...layout.lines], list: [...layout.list] });
+    expect(standLayout(resolveCardOrder('stand', { stand: order }))).toEqual({ lines: [...layout.lines], list: [...layout.list] });
+    expect(isDefaultStandLayout(order, STD)).toBe(false);
+  });
+
+  it('een bewaarde volgorde van voor de wijziging: in de twee lijsten staan de regels en de rijen zoals op Je stand', () => {
+    const saved = resolveCardOrder('stand', { stand: ['invloed', 'vier-regels', 'lopen', 'benen', 'belasting', 'kracht'] });
+    const layout = standLayout(saved);
+    expect(layout).toEqual({ lines: ['ritme', 'benen', 'belasting'], list: ['invloed', 'lopen', 'kracht'] });
+    // Opnieuw bewaren verandert niets aan wat je ziet.
+    expect(standLayout(resolveCardOrder('stand', { stand: standOrderFrom(layout) }))).toEqual(layout);
+  });
+
+  it('een oude volgorde die alleen Kracht tussen de regels had is gewoon de standaard', () => {
+    expect(isDefaultStandLayout(['benen', 'kracht', 'belasting', 'ritme', 'lopen', 'invloed'], STD)).toBe(true);
+    expect(isDefaultStandLayout(standOrderFrom(standLayout(STD)), STD)).toBe(true);
+  });
+
+});
+
+describe('de regels en rijen op de schermen', () => {
+  it('Benen bovenaan: wat nog doorwerkt in woorden, nooit "index 0"', () => {
+    expect(legsFact(0)).toBe('niets werkt nog door');
+    expect(legsFact(1)).toBe('1 training werkt nog door');
+    expect(legsFact(3)).toBe('3 trainingen werken nog door');
+    expect(legsFact(0)).not.toMatch(/index/);
+    // Geen training meer, wel gemelde spierpijn of pijn: de index staat boven 0.
+    expect(legsFact(0, 8.5)).toBe('wat je meldde telt mee');
+  });
+
+  it('Beendagen: de zware dagen in de kalender', () => {
+    expect(legDaysValue([0, 1, 2, 0, 0, 0, 0])).toBe('geen zware dag in één week');
+    expect(legDaysValue([...Array(28).fill(0), 3, 0, 4, 0, 0, 0, 0])).toBe('2 zware dagen in 5 weken');
+    expect(legDaysValue([3, ...Array(13).fill(0)])).toBe('1 zware dag in 2 weken');
+  });
+
+  it('Index en je benen: alleen met metingen', () => {
+    expect(indexCheckValue([])).toBeUndefined();
+    expect(indexCheckValue([{ agrees: true }, { agrees: false }, { agrees: true }])).toBe('2 van 3 keer klopte het');
+  });
+
+  it('Bergaf: de laatste vier weken; zonder daling alleen als je doel bergaf vraagt (zonder doel geen rij)', () => {
+    const w = (m: number) => ({ metres: m });
+    expect(descentRowValue([w(0), w(0), w(0)], false)).toBeUndefined();
+    expect(descentRowValue([w(0), w(0), w(0)], true)).toBe('nog niets gemeten');
+    expect(descentRowValue([w(400), w(0), w(0), w(0), w(0)], false)).toBe('niets in vier weken');
+    expect(descentRowValue([w(400), w(120), w(0), w(200), w(0)], false)).toBe('320 m in vier weken');
+  });
+
+  it('Klimtempo: instelling uit is geen rij, anders het tempo of dat het nog komt', () => {
+    expect(climbRowValue(undefined)).toBeUndefined();
+    expect(climbRowValue({ state: 'notYet' })).toBe('nog te weinig klimmen');
+    expect(climbRowValue({ state: 'enough', pace: { upMph: 412.4 } })).toBe('412 m per uur omhoog');
+  });
+});
+
+describe('Tempo bij zone 2 op Je stand: hoogstens één zin', () => {
+  const one = (t: string | undefined) => (t ?? '').split(/(?<=[.!?])\s+/).filter(Boolean).length;
+
+  it('zonder oordeel geen zin', () => {
+    expect(zone2CardSentence(undefined, false)).toBeUndefined();
+  });
+
+  it('een eerste schatting: niet het tempo dat de kop al zegt, maar wanneer je een verandering ziet', () => {
+    const v = trendVerdict({ statement: { kind: 'eerste-schatting', paceSec: 439, runs: 3 }, referenceHr: 150 } as never)!;
+    const s = zone2CardSentence(v, true)!;
+    expect(s.startsWith('Of het verandert, zie je na')).toBe(true);
+    expect(s).not.toContain('7:19');
+    expect(one(s)).toBe(1);
+  });
+
+  it('een uitspraak: de eerste zin van het oordeel', () => {
+    expect(zone2CardSentence('Gelijk aan een maand geleden. Vooruitgang gaat in weken, niet per loop.', false)).toBe('Gelijk aan een maand geleden.');
+    const s = zone2CardSentence('5 tot 9 s sneller per km dan een maand geleden, bij dezelfde hartslag. Dat past bij fitter worden.', false)!;
+    expect(s).toBe('5 tot 9 s sneller per km dan een maand geleden, bij dezelfde hartslag.');
+    expect(one(s)).toBe(1);
   });
 });

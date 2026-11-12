@@ -139,7 +139,7 @@ describe('Stand en morgen', () => {
   it('fris: benen zonder stip, en morgen', () => {
     const lines = standLines({ ...base, tomorrow: { kind: 'training', name: 'Bovenlichaam B', minutes: 60 } });
     expect(lines.map((l) => [l.label, l.value, l.warn, l.to])).toEqual([
-      ['Benen', 'Fris', false, '/stand'],
+      ['Benen', 'Fris', false, '/stand/benen'],
       ['Morgen', 'Bovenlichaam B, 60 min', false, '/week'],
     ]);
   });
@@ -151,6 +151,8 @@ describe('Stand en morgen', () => {
 
   it('een zware week: een derde regel met stip, tussen benen en morgen', () => {
     const lines = standLines({ ...base, load: { doneRatio: 1.35 }, tomorrow: { kind: 'rest' } });
+    // De regel Week opent het scherm Belasting, niet de bovenkant van Je stand (Stand minimaal, spoor 6).
+    expect(lines.find((l) => l.key === 'week')?.to).toBe('/stand/belasting');
     expect(lines.map((l) => l.key)).toEqual(['legs', 'week', 'tomorrow']);
     expect(lines[1]).toMatchObject({ value: '35% zwaarder dan de 4 weken ervoor', warn: true });
   });

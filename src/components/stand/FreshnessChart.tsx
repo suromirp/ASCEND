@@ -2,110 +2,72 @@ import { useState } from 'react';
 import { FATIGUE_BAND, FATIGUE_THRESHOLDS, fatigueWord } from '../../engine/legFatigue';
 import type { DayMark, FreshnessPoint } from '../../engine/standing';
 import { formatNumberNL } from '../../utils/number';
-import { Card, Eyebrow } from '../ui';
+import { Card, Eyebrow, InfoButton } from '../ui';
 import { formatDayMonthNL, formatWeekdayDayMonthNL } from '../../utils/dates';
+import { StandLineChart } from './StandLineChart';
+import { FRESHNESS_INFO, freshnessPoints } from './standChartData';
+import { StandInfoSheet, UnderLine } from './StandParts';
 
-// Je stand → freshness: the leg fatigue index day by day, from last week to
-// two weeks ahead. Lower is fresher. Ahead it is an estimate from the plan,
-// so it is drawn dashed with its band of uncertainty around it. Tap a day.
-
-const W = 320;
-const H = 176;
-const TOP = 10;
-const BOTTOM = 40;
-const LEFT = 4;
-const RIGHT = 36;
+// Benen → Frisheid: de beenindex per dag, van vorige week tot over twee weken, in de stijl van de zone 2-kaart
+// (StandLineChart). Frisser staat boven, dus de lijn zakt na een zware dag en klimt daarna weer. Tot vandaag vol,
+// wat nog komt gestippeld; de marge staat in de regel van de gekozen dag, niet als band in het beeld. Onder de lijn
+// een ruit voor een test of wedstrijd en een stip voor een harde dag of je benen. Alleen tekenen: de index blijft
+// de index (engine/standing.ts#freshnessCurve).
 
 const MARK_LABEL: Record<DayMark, string> = { test: 'test', race: 'wedstrijd', hard: 'hard', legs: 'benen', easy: 'rustig' };
-const MARK_COLOR: Record<DayMark, string> = {
-  test: 'var(--color-action)',
-  race: 'var(--color-action)',
-  hard: 'var(--color-progress)',
-  legs: 'var(--color-chart-strength)',
-  easy: 'var(--color-ink-dim)',
-};
 
 export function FreshnessChart({ points, today }: { points: FreshnessPoint[]; today: string }) {
-  const keyDay = points.findIndex((p) => p.date >= today && p.sessions.some((s) => !s.logged && (s.mark === 'test' || s.mark === 'race')));
-  const todayIdx = points.findIndex((p) => p.date === today);
-  const [selected, setSelected] = useState(keyDay >= 0 ? keyDay : todayIdx);
-  const max = Math.max(20, ...points.map((p) => p.index + FATIGUE_BAND));
-  const plotW = W - LEFT - RIGHT;
-  const plotH = H - TOP - BOTTOM;
-  const step = plotW / Math.max(1, points.length - 1);
-  const x = (i: number) => LEFT + i * step;
-  const y = (v: number) => TOP + plotH - (Math.min(v, max) / max) * plotH;
-  const past = points.slice(0, todayIdx + 1);
-  const ahead = points.slice(todayIdx);
-  const line = (list: FreshnessPoint[], offset: number) => list.map((p, i) => `${i ? 'L' : 'M'}${x(i + offset)},${y(p.index)}`).join(' ');
-  const band = ahead.length > 1
-    ? `M${ahead.map((p, i) => `${x(i + todayIdx)},${y(p.index + FATIGUE_BAND)}`).join(' L')} L${[...ahead].reverse().map((p, i) => `${x(todayIdx + ahead.length - 1 - i)},${y(Math.max(0, p.index - FATIGUE_BAND))}`).join(' L')} Z`
-    : '';
-  const point = points[selected];
+  const [info, setInfo] = useState(false);
+  const todayIdx = Math.max(0, points.findIndex((p) => p.date === today));
+  if (points.length === 0) return null;
+  const max = Math.max(20, ...points.map((p) => p.index));
+  const dayName = (p: FreshnessPoint) => (p.date === today ? 'Vandaag' : formatWeekdayDayMonthNL(p.date));
 
   return (
     <Card className="flex flex-col gap-3">
-      <div>
+      <div className="flex items-start justify-between gap-3">
         <Eyebrow>Frisheid</Eyebrow>
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Beenvermoeidheid per dag. Lager is frisser. Wat nog komt is een schatting, met marge.
-        </p>
+        <InfoButton onClick={() => setInfo(true)} label="Wat Frisheid laat zien" />
       </div>
-
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Frisheid van je benen per dag, van vorige week tot over twee weken">
-        {[FATIGUE_THRESHOLDS.test.fresh, FATIGUE_THRESHOLDS.hard.fresh].map((t) => (
-          <g key={t} aria-hidden>
-            <line x1={LEFT} x2={LEFT + plotW} y1={y(t)} y2={y(t)} stroke="var(--color-ink-dim)" strokeDasharray="2 4" strokeWidth={1} opacity={0.5} />
-            <text x={W - 2} y={y(t) + 3} textAnchor="end" fontSize={12} fill="var(--color-ink-dim)">{t === FATIGUE_THRESHOLDS.test.fresh ? 'test' : 'hard'}</text>
-          </g>
-        ))}
-        <line x1={LEFT} x2={LEFT + plotW} y1={TOP + plotH} y2={TOP + plotH} stroke="var(--color-card-border)" strokeWidth={1} />
-        {band && <path d={band} fill="var(--color-progress)" opacity={0.12} />}
-        <line x1={x(todayIdx)} x2={x(todayIdx)} y1={TOP} y2={TOP + plotH} stroke="var(--color-card-border)" strokeWidth={1} />
-        <text x={x(todayIdx)} y={TOP + plotH + 30} textAnchor="middle" fontSize={12} fontWeight={600} fill="var(--color-ink)">vandaag</text>
-        <path d={line(past, 0)} fill="none" stroke="var(--color-progress)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-        <path d={line(ahead, todayIdx)} fill="none" stroke="var(--color-progress)" strokeWidth={2} strokeDasharray="4 3" strokeLinejoin="round" strokeLinecap="round" />
-
-        {points.map((p, i) => {
-          const main = p.sessions.find((s) => s.mark === 'test' || s.mark === 'race') ?? p.sessions.find((s) => s.mark === 'hard') ?? p.sessions.find((s) => s.mark === 'legs') ?? p.sessions[0];
-          const cx = x(i);
-          const cy = TOP + plotH + 9;
+      <StandLineChart
+        points={freshnessPoints(points, todayIdx)}
+        min={0}
+        max={max}
+        top="low"
+        rest={todayIdx}
+        dots={false}
+        scale={['fris', 'moe']}
+        lines={[{ value: FATIGUE_THRESHOLDS.test.fresh, label: 'test' }, { value: FATIGUE_THRESHOLDS.hard.fresh, label: 'hard' }]}
+        axis={[
+          { at: 0, label: formatDayMonthNL(points[0].date) },
+          { at: todayIdx / Math.max(1, points.length - 1), label: 'vandaag', strong: true },
+          { at: 1, label: formatDayMonthNL(points[points.length - 1].date) },
+        ]}
+        label={(i) => formatNumberNL(points[i].index, 1)}
+        ariaLabel="Frisheid van je benen per dag, van vorige week tot over twee weken. Frisser staat boven."
+        valueText={(i) => `${dayName(points[i])}: ${formatNumberNL(points[i].index, 1)}, ${fatigueWord(points[i].index).word.toLowerCase()}`}
+      >
+        {(i) => {
+          const p = points[i];
+          // Vandaag zonder training: het getal en het woord staan al in het hart van Benen, dus geen regel.
+          const isToday = p.date === today;
+          if (isToday && p.sessions.length === 0) return null;
           return (
-            <g key={p.date} onClick={() => setSelected(i)} style={{ cursor: 'pointer' }}>
-              <rect x={cx - step / 2} y={0} width={step} height={H} fill="transparent" />
-              {i === selected && <circle cx={cx} cy={y(p.index)} r={4.5} fill="var(--color-card)" stroke="var(--color-action)" strokeWidth={2} />}
-              {main && (main.mark === 'test' || main.mark === 'race'
-                ? <rect x={cx - 4} y={cy - 4} width={8} height={8} transform={`rotate(45 ${cx} ${cy})`} fill={MARK_COLOR[main.mark]} opacity={main.logged ? 1 : 0.85} />
-                : <circle cx={cx} cy={cy} r={main.mark === 'easy' ? 2 : 3} fill={MARK_COLOR[main.mark]} opacity={main.logged ? 1 : 0.6} />)}
-              {(i % 7 === 0 || i === points.length - 1) && Math.abs(i - todayIdx) > 2
-                ? <text x={cx} y={TOP + plotH + 30} textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'} fontSize={12} fill="var(--color-ink-dim)">{formatDayMonthNL(p.date)}</text>
-                : null}
-            </g>
+            <UnderLine>
+              {!isToday && <p>
+                <span className="font-medium">{dayName(p)}: </span>
+                <span className="tabular-nums">{formatNumberNL(p.index, 1)}</span>, {fatigueWord(p.index).word.toLowerCase()}
+                {p.date > today && <span style={{ color: 'var(--color-ink-dim)' }}>, een schatting (ongeveer <span className="tabular-nums">{formatNumberNL(Math.max(0, p.index - FATIGUE_BAND), 0)}</span> tot <span className="tabular-nums">{formatNumberNL(p.index + FATIGUE_BAND, 0)}</span>)</span>}
+              </p>}
+              {p.sessions.length > 0 && (
+                <p style={{ color: 'var(--color-ink-dim)' }}>{p.sessions.map((s) => `${s.name} (${MARK_LABEL[s.mark]}${s.logged ? ', gedaan' : ''})`).join(' · ')}</p>
+              )}
+              <p style={{ color: 'var(--color-ink-dim)' }}>{dayAdvice(p)}</p>
+            </UnderLine>
           );
-        })}
-      </svg>
-
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rotate-45" style={{ background: MARK_COLOR.test }} aria-hidden />test of wedstrijd</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: MARK_COLOR.hard }} aria-hidden />harde loop</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: MARK_COLOR.legs }} aria-hidden />benen</span>
-      </div>
-
-      {point && (point.date !== today || point.sessions.length > 0) && (
-        <div className="rounded-xl px-3 py-2 text-xs leading-relaxed" style={{ background: 'var(--color-charcoal)', color: 'var(--color-ink)' }} aria-live="polite">
-          {point.date !== today && <p>
-            <span className="font-medium">{formatWeekdayDayMonthNL(point.date)}: </span>
-            <span className="tabular-nums">{formatNumberNL(point.index, 1)}</span>, {fatigueWord(point.index).word.toLowerCase()}
-            {point.date > today && <span style={{ color: 'var(--color-ink-dim)' }}> (ongeveer {formatNumberNL(Math.max(0, point.index - FATIGUE_BAND), 0)} tot {formatNumberNL(point.index + FATIGUE_BAND, 0)})</span>}
-          </p>}
-          {point.sessions.length > 0 && (
-            <p style={{ color: 'var(--color-ink-dim)' }}>
-              {point.sessions.map((s) => `${s.name} (${MARK_LABEL[s.mark]}${s.logged ? ', gedaan' : ''})`).join(' · ')}
-            </p>
-          )}
-          <p className="mt-1" style={{ color: 'var(--color-ink-dim)' }}>{dayAdvice(point)}</p>
-        </div>
-      )}
+        }}
+      </StandLineChart>
+      {info && <StandInfoSheet eyebrow="Benen" title="Frisheid" lines={FRESHNESS_INFO} onClose={() => setInfo(false)} />}
     </Card>
   );
 }

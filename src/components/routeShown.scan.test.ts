@@ -3,6 +3,8 @@ import line from './RouteProposalLine.tsx?raw';
 import missionCard from './TodayMissionCard.tsx?raw';
 import guideSheet from './TrainingGuideSheet.tsx?raw';
 import logger from './ExerciseLogger.tsx?raw';
+// De toestand en het concept van het formulier staan sinds Hoe ging het? in een gedeelde hook.
+import logForm from './logForm/useLogForm.ts?raw';
 import evening from './useEveningBefore.ts?raw';
 
 // Route alleen buiten en te voet, op elke plek (Pathfinder, 11 november): Loopband gekozen geeft geen route
@@ -27,7 +29,7 @@ describe('de route volgt de keuze Waar train je? overal', () => {
     expect(logger).toMatch(/<RouteProposalLine[^>]*place=\{/);
   });
   it('het concept bewaart de keuze alleen als je hem zelf tikte (Warden)', () => {
-    expect(logger).toContain('modalityKey: placeTouched.current ? modalityKey : undefined');
+    expect(logForm).toContain('modalityKey: placeTouched.current ? modalityKey : undefined');
   });
   it('De avond ervoor krijgt de bewaarde keuzes', () => {
     expect(evening).toContain('trainingPlaces');
