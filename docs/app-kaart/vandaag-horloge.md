@@ -39,7 +39,6 @@ Je dag
 
 --- kaart 5 ---
 [knop: BenenFris] (aria: Benen: Fris)
-[knop: MorgenLange duurloop, 50 min] (aria: Morgen: Lange duurloop, 50 min)
 [knop: Losse training]
 [knop: Niet fit?]
 

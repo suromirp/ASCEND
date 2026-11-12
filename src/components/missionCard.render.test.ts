@@ -9,6 +9,7 @@ import { buildSessionBrief } from '../engine/sessionBrief';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { zoneOfTemplate } from './vandaag/zone';
 import missionSrc from './TodayMissionCard.tsx?raw';
+import todaySrc from '../pages/Today.tsx?raw';
 
 // De missiekaart op Vandaag, echt gerenderd zonder DOM (besluit 2026-11-12-missiekaart.md). Nagemaakte trainingen
 // uit het demoprogramma; het horloge dat afvinkt wordt nagespeeld met de uitkomst van missionButton.
@@ -45,6 +46,7 @@ const tpl = (id: string) => program.templates.find((t) => t.id === id)!;
 
 const { TodayMissionCard } = await import('./TodayMissionCard');
 const { QuietDayCard, DoneTodayCard } = await import('./vandaag/QuietDayCard');
+const { ForecastAdjustmentBanner } = await import('./ForecastAdjustmentBanner');
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
@@ -142,13 +144,14 @@ describe('de naam opent de Briefing, met een zichtbaar teken', () => {
 
 describe('geen herhaling van wat de Briefing toont (regel 1)', () => {
   for (const id of ['tpl_easy_run', 'tpl_long_run', 'tpl_test_run', 'tpl_mountain_hike']) {
-    it(`${id}: geen zonebalk, geen zonezin, geen praattest en geen tempo`, () => {
+    it(`${id}: geen zonebalk, geen zonezin en geen praattest; het tempo hoogstens als stille regel`, () => {
       const html = card(id);
       expect(html).not.toContain('aria-label="Zone ');
       expect(html).not.toMatch(/Zone \d\./);
       expect(html).not.toMatch(/Praten kan|hele zinnen/i);
-      expect(html).not.toContain('per km');
+      // Het tempo staat nog niet in de Briefing: een stille regel, nooit een groot getal of een chip.
       expect(html).not.toContain('/km');
+      expect(html).not.toMatch(/text-\[28px\][^>]*>\d+:\d\d/);
       // Wat de kaart wel zegt: de naam en de minuten.
       expect(html).toContain(tpl(id).name);
       expect(html).toContain('minuten');
@@ -159,6 +162,19 @@ describe('geen herhaling van wat de Briefing toont (regel 1)', () => {
     const zone = zoneOfTemplate(tpl('tpl_bike'), TODAY, program.program, program.templates);
     if (zone) expect(html).toMatch(/<span class="font-semibold">Zone \d\.<\/span>/);
     expect(html).not.toContain('data-mission-name-opens');
+  });
+});
+
+describe('het tempo bij een training met een Briefing', () => {
+  it('een rustige loop met een testloop: één stille regel onder de minuten, met de zin over de testloop eronder', () => {
+    const html = card('tpl_easy_run');
+    expect(html).toMatch(/<p class="mt-1 text-sm tabular-nums" style="color:var\(--color-ink-dim\)">\d+:\d\d tot \d+:\d\d per km<\/p>/);
+    expect(html).toContain('Tempo uit je testloop van');
+    expect(html.indexOf('per km')).toBeGreaterThan(html.indexOf('minuten'));
+    expect(html.indexOf('per km')).toBeLessThan(html.indexOf('mx-primary'));
+  });
+  it('fietsen zonder Briefing houdt het oude blok', () => {
+    expect(card('tpl_bike')).not.toContain('text-sm tabular-nums" style="color:var(--color-ink-dim)">');
   });
 });
 
@@ -195,5 +211,27 @@ describe('Beweging: Rustig en Uit', () => {
   // in die standen niets wat kan blijven hangen. Dit bewijst dat de kaart geen eigen beweging heeft, niet de standen zelf.
   it('de kaart heeft geen eigen animatie of overgang (de adem staat in index.css en volgt data-motion)', () => {
     expect(missionSrc).not.toMatch(/animate-|transition|mx-(?!primary)/);
+  });
+});
+
+describe('Komende weken bijgesteld: een melding is één rij (regel 6)', () => {
+  it('één rij met een pijltje naar een blad, zonder knop op Vandaag en zonder de hele tekst', () => {
+    const html = renderToStaticMarkup(createElement(ForecastAdjustmentBanner, { summary: 'Je lange loop van volgende week is 10 minuten korter.', onDismiss: () => undefined }));
+    expect(html).toContain('Komende weken bijgesteld');
+    expect(html).toContain('data-sheet-from=""');
+    expect(html).not.toContain('Begrepen');
+    expect(html).not.toContain('10 minuten korter');
+    expect(mint(html)).toBe(0);
+    expect(outlinedMint(html)).toBe(0);
+  });
+  it('staat direct onder de missie, voor de ochtendvraag en ver voor Je dag', () => {
+    const mission = todaySrc.indexOf('{missionCard}</div>');
+    const row = todaySrc.indexOf('<ForecastAdjustmentBanner');
+    expect(row).toBeGreaterThan(mission);
+    expect(row).toBeLessThan(todaySrc.indexOf('{placement.underMission.map(around)}'));
+    expect(todaySrc.match(/<ForecastAdjustmentBanner/g)).toHaveLength(1);
+  });
+  it('Stand en morgen krijgt Morgen alleen naast de kaart van een training', () => {
+    expect(todaySrc).toContain('<StandSummaryCard tomorrow={standTomorrow(tomorrow, !!(primary && primaryTemplate && mission))} />');
   });
 });

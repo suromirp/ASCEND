@@ -76,7 +76,7 @@ import { DayRow, YourDay, type YourDayEntry } from '../components/vandaag/DayRow
 import { DoneTodayCard, QuietDayCard } from '../components/vandaag/QuietDayCard';
 import { missionFacts } from '../engine/missionFacts';
 import { recentRunPace } from '../engine/recentRunPace';
-import { tomorrowEntry, tomorrowText, trainingRowState, trainingRowsForYourDay } from '../engine/yourDay';
+import { standTomorrow, tomorrowEntry, tomorrowText, trainingRowState, trainingRowsForYourDay } from '../engine/yourDay';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -517,6 +517,9 @@ function TodayContent() {
       <div className="contents" data-today-mission="" data-above-limit={String(aboveLimit)}>{missionCard}</div>
       {/* Direct onder de missie: de ochtendvraag (een vraag is een taak van vandaag), dan de beslissingen en
           waarschuwingen die over vandaag gaan. Een beslissing heeft hier een omlijnde knop (regel 6). */}
+      {/* Komende weken bijgesteld: een melding over je planning, één rij met een pijltje naar het blad met Begrepen,
+          direct onder de missie zodat je ziet dat je week veranderde zonder te scrollen (regel 6). */}
+      {forecastSummary && <ForecastAdjustmentBanner summary={forecastSummary} onDismiss={dismissForecastSummary} />}
       {placement.underMission.map(around)}
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />
@@ -553,8 +556,9 @@ function TodayContent() {
         </ol>
       )}
 
-      {/* Stand en morgen. De grote kaart zegt al dat er morgen niets staat: dan geen regel Morgen. */}
-      <StandSummaryCard tomorrow={tomorrow.kind === 'none' && !(primary && primaryTemplate && mission) ? undefined : tomorrow} />
+      {/* Stand en morgen. Noemt de kaart van de dag morgen al (rustdag, stille dag, Vandaag zit erop), dan geen regel
+          Morgen (engine/yourDay.ts#standTomorrow). */}
+      <StandSummaryCard tomorrow={standTomorrow(tomorrow, !!(primary && primaryTemplate && mission))} />
 
       <div className="-mt-2 flex items-center justify-center gap-5">
         <button onClick={() => setAdHocOpen(true)} className="inline-flex min-h-[44px] items-center text-sm" style={{ color: 'var(--color-ink-dim)' }}>
@@ -579,9 +583,6 @@ function TodayContent() {
       <SourceSilenceLine />
       <NextTrekLine onlyWhenOn />
 
-      {forecastSummary && (
-        <ForecastAdjustmentBanner summary={forecastSummary} onDismiss={dismissForecastSummary} />
-      )}
 
       {concurrentTrainingTip && (
         <Card className="flex flex-col gap-1">

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { missionCardView, missionChipsShown } from './missionCard';
 import { TODAY_CARD_RANK, capAboveMission, placeTodayCards, type TodayCardId } from './todayCards';
-import { trainingRowsForYourDay } from './yourDay';
+import { standTomorrow, tomorrowEntry, trainingRowsForYourDay } from './yourDay';
 import { briefingEntry, missionButton } from './briefing';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { MissionChip } from './missionFacts';
@@ -19,7 +19,7 @@ const viewFor = (id: string, { watchTicks = false, quickComplete = false } = {})
 describe('missionCardView: wat de kaart toont', () => {
   it('een loop: alles van vooraf in de Briefing; weer en horloge alleen als waarschuwing', () => {
     const v = viewFor('tpl_easy_run');
-    expect(v).toMatchObject({ nameOpensBriefing: true, zone: false, pace: false, otherFacts: false, weather: 'warning', watch: 'failed', beforehand: false, button: 'done' });
+    expect(v).toMatchObject({ nameOpensBriefing: true, zone: false, pace: true, paceQuiet: true, otherFacts: false, weather: 'warning', watch: 'failed', beforehand: false, button: 'done' });
   });
   it('met een horloge dat afvinkt: de knop is Briefing; zonder: Gedaan', () => {
     expect(viewFor('tpl_long_run', { watchTicks: true }).button).toBe('briefing');
@@ -55,8 +55,8 @@ describe('missionChipsShown: de duur blijft altijd', () => {
     { text: '5:10 tot 5:30 /km', kind: 'tempo' },
     { text: 'Praten kan', kind: 'overig' },
   ];
-  it('met de Briefing alleen de duur', () => {
-    expect(missionChipsShown(chips, viewFor('tpl_intervals')).map((c) => c.kind)).toEqual(['duur']);
+  it('met de Briefing de duur en het tempo (dat nog geen thuis in de Briefing heeft)', () => {
+    expect(missionChipsShown(chips, viewFor('tpl_intervals')).map((c) => c.kind)).toEqual(['duur', 'tempo']);
   });
   it('zonder Briefing alles', () => {
     expect(missionChipsShown(chips, viewFor('tpl_bike'))).toHaveLength(4);
@@ -114,5 +114,15 @@ describe('twee trainingen op één dag', () => {
   it('is de eerste gedaan, dan staat hij als gedaan in Je dag', () => {
     const sessions = [{ id: 'a' }, { id: 'b' }];
     expect(trainingRowsForYourDay(sessions, 'b', (s) => (s.id === 'a' ? 'completed' : 'planned')).map((s) => s.id)).toEqual(['a']);
+  });
+});
+
+describe('Morgen niet dubbel op Vandaag', () => {
+  const tomorrow = { kind: 'training' } as ReturnType<typeof tomorrowEntry>;
+  it('naast de kaart van een training staat de regel Morgen in Stand en morgen', () => {
+    expect(standTomorrow(tomorrow, true)).toBe(tomorrow);
+  });
+  it('op een rustdag, een stille dag of na Vandaag zit erop noemt de kaart morgen al: geen tweede regel', () => {
+    expect(standTomorrow(tomorrow, false)).toBeUndefined();
   });
 });
