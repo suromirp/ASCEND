@@ -6,6 +6,9 @@
 // augustus 2027): het voorschrift wil bij elke opening dezelfde training op dezelfde dag, en na elke opening is die
 // rij weer van de planning (wie hem weghaalt maakt niet uit: de ronde, een periode of jij).
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// De grenzen hieronder zijn die van de eigenaar: middernacht in Nederland, ook als de omgeving in UTC draait.
+vi.stubEnv('TZ', 'Europe/Amsterdam');
 import { runBootMigrations } from './bootMigrations';
 import { runWeeklyPrescriptionStep } from './weeklyPrescriptionStep';
 import { wipeAllData, syncProgramHorizon, SettingsRepo, TrainingGoalsRepo, PlannedSessionsRepo, PlanChangeProposalsRepo, GoalEngineConfigRepo } from './database';
@@ -112,10 +115,32 @@ describe('een aangenomen voorstel van het weekvoorschrift komt niet bij elke ope
     wanted.changes = [add(day)];
     expect((await open('opening-1')).weekly.kind).toBe('applied');
     expect(live(await PlannedSessionsRepo.getAll(), day).map((s) => s.templateId)).toContain('tpl_recovery_run');
-    // Het echte voorschrift stelt niets voor als de training er staat; hier wil het hem nog steeds, en hij staat er.
-    wanted.changes = [];
+    // Het voorschrift wil hem bij de volgende opening nog steeds, en hij staat er: geen tweede rij, geen tweede regel.
     expect((await open('opening-2')).weekly.kind).toBe('unchanged');
+    expect(live(await PlannedSessionsRepo.getAll(), day).filter((s) => s.templateId === 'tpl_recovery_run')).toHaveLength(1);
     expect(await weeklyLog()).toHaveLength(1);
+  });
+
+  it('na Ongedaan maken zet de volgende opening niet terug wat je net weghaalde', async () => {
+    const day = SATURDAY;
+    wanted.changes = [add(day)];
+    const first = (await open('opening-1')).weekly;
+    expect(first.kind).toBe('applied');
+    if (first.kind !== 'applied') return;
+    // Ongedaan maken: de rij gaat weg en het logboek krijgt een regel die naar het voorstel verwijst.
+    for (const s of live(await PlannedSessionsRepo.getAll(), day).filter((x) => x.templateId === 'tpl_recovery_run')) await PlannedSessionsRepo.delete(s.id);
+    await PlanChangeProposalsRepo.put({ id: 'undo_nagemaakt', trigger: 'session_moved', issue: 'Ongedaan gemaakt', changes: [], alternatives: [], consequences: '', explanation: '', createdAt: new Date().toISOString(), resolvedAt: new Date().toISOString(), resolution: 'accepted', revertsProposalId: first.proposal.id });
+    expect((await open('opening-2')).weekly.kind).toBe('unchanged');
+    expect(live(await PlannedSessionsRepo.getAll(), day).some((s) => s.templateId === 'tpl_recovery_run')).toBe(false);
+  });
+
+  it('na vier weken mag het voorschrift het een keer opnieuw proberen, met de gewone melding', async () => {
+    const day = SATURDAY;
+    wanted.changes = [add(day)];
+    expect(await threeOpenings(day)).toEqual(['applied', 'unchanged', 'unchanged']);
+    vi.setSystemTime(new Date('2026-12-11T08:00:00'));
+    expect(await threeOpenings(day)).toEqual(['applied', 'unchanged', 'unchanged']);
+    expect(await weeklyLog()).toHaveLength(2);
   });
 
   it('een vakantie of tocht op die dag: het voorstel komt niet, ook niet één keer', async () => {

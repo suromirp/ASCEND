@@ -293,7 +293,7 @@ export function computeWeeklyPrescriptionPlan(
   // genuine hard-capacity-exhaustion reason left to report.
   const unplaceableNote = noFreeDayWeekCount > 0
     // "Elke dag is al bezet" klopte niet altijd: een week telt hier ook mee als er wel een dag vrij is, maar de
-    // training daar niet mag (een dag waarop je niet traint, te weinig tijd, te dicht op een zware dag).
+    // training daar niet mag (een dag waarop je niet traint, te weinig tijd, of te dicht op een zware dag: weekReconciliation.ts toetst `respectsHeavySpacing` hard bij de dagen die mogen).
     ? ` In ${noFreeDayWeekCount} ${noFreeDayWeekCount === 1 ? 'week' : 'weken'} past niet alles: er is geen dag waar het bij kan.`
     : '';
 

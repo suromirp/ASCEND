@@ -19,6 +19,7 @@ import type { TrainingPrescription } from '../models/prescription';
 import type { WeeklyPrescription } from '../models/weeklyPrescription';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession } from '../models/training';
+import { addDays, localDateOf } from '../utils/dates';
 
 // JSON met gesorteerde sleutels: twee objecten met dezelfde inhoud geven
 // dezelfde tekst, ongeacht de volgorde waarin hun velden zijn aangemaakt of
@@ -121,8 +122,8 @@ export function changesTheRoundKeeps(changes: PlanChangeItem[], before: PlannedS
   });
   // Een ruil is altijd een paar: valt de ene helft weg, dan de andere ook.
   const pairs = kept.filter((c) => c.action !== 'swap' || kept.some((o) => o.action === 'swap' && o.plannedSessionId === c.pairedWithSessionId));
-  // Een weghaling hoort bij de toevoeging die haar plaats inneemt: valt die weg, dan blijft de rij staan.
-  return withoutOrphanedRemovals(pairs, changes);
+  // Een weghaling hoort bij de toevoeging die haar plaats inneemt: valt die weg, dan blijft de rij staan; en andersom.
+  return withoutOrphanedRemovals(withoutOrphanedAdds(pairs, changes), changes);
 }
 
 // Raakt deze wijziging een rij van de planning (en kan de ronde haar dus terugdraaien)?
@@ -149,14 +150,19 @@ export async function settleWithRound(
   return current.filter((c) => !touchesRow(c));
 }
 
-// Wat het voorschrift al eens neerzette en wat er nu toch niet staat, zet het niet opnieuw neer. Het logboek
-// (aangenomen voorstellen van het weekvoorschrift) is het geheugen: dezelfde training op dezelfde dag, dezelfde rij
-// naar dezelfde dag, of dezelfde rij eruit terwijl ze er weer staat. Wie het terugdraaide (de planningsronde, een
-// periode, jij met Ongedaan maken) maakt niet uit: het voorstel landde niet of mocht niet blijven, dus komt het niet
-// bij elke opening terug. Een samengevat voorstel (engine/proposalTidy.ts) heeft geen wijzigingen meer en telt niet.
-export function withoutRepeatedAttempts(changes: PlanChangeItem[], log: PlanChangeProposal[], planned: PlannedSession[]): PlanChangeItem[] {
-  const tried = log.filter((p) => p.trigger === 'weekly_prescription_computed' && p.resolution === 'accepted').flatMap((p) => p.changes);
-  if (tried.length === 0) return changes;
+// Wat het voorschrift kort geleden al eens neerzette en wat er nu toch niet staat, zet het niet opnieuw neer. Het
+// logboek (aangenomen voorstellen van het weekvoorschrift) is het geheugen: dezelfde training op dezelfde dag,
+// dezelfde rij naar dezelfde dag, of dezelfde rij eruit terwijl ze er weer staat. Wie het terugdraaide (de
+// planningsronde, een periode, jij met Ongedaan maken) maakt niet uit: het voorstel landde niet of mocht niet
+// blijven, dus komt het niet bij elke opening terug. Het geheugen is vier weken lang (`REPEAT_MEMORY_DAYS`, geteld
+// vanaf het moment van het voorstel): wat de rij weghaalde kan tijdelijk zijn, dus daarna mag het voorschrift het
+// één keer opnieuw proberen, met de gewone melding. Een samengevat voorstel (engine/proposalTidy.ts) telt niet.
+export const REPEAT_MEMORY_DAYS = 28;
+export function withoutRepeatedAttempts(changes: PlanChangeItem[], log: PlanChangeProposal[], planned: PlannedSession[], asOf: string): PlanChangeItem[] {
+  const since = addDays(asOf, -REPEAT_MEMORY_DAYS);
+  const tried = log
+    .filter((p) => p.trigger === 'weekly_prescription_computed' && p.resolution === 'accepted' && !p.summarizedAt && localDateOf(p.createdAt) >= since)
+    .flatMap((p) => p.changes ?? []);
   const adds = new Set(tried.filter((c) => c.action === 'add' && !c.plannedSessionId && c.newSessionDraft).map((c) => `${c.newSessionDraft!.templateId}|${c.newSessionDraft!.scheduledDate}`));
   const moves = new Set(tried.filter((c) => (c.action === 'move' || c.action === 'swap') && c.plannedSessionId && c.toDate).map((c) => `${c.plannedSessionId}|${c.toDate}`));
   const removes = new Set(tried.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId));
@@ -165,7 +171,8 @@ export function withoutRepeatedAttempts(changes: PlanChangeItem[], log: PlanChan
   const kept = changes.filter((c) => {
     if (c.action === 'add' && !c.plannedSessionId && c.newSessionDraft) {
       const key = `${c.newSessionDraft.templateId}|${c.newSessionDraft.scheduledDate}`;
-      return !(adds.has(key) && !stands.has(key));
+      // Staat dezelfde training er die dag al, dan is een tweede rij nooit de bedoeling (ook zonder geheugen).
+      return !stands.has(key) && !adds.has(key);
     }
     if ((c.action === 'move' || c.action === 'swap') && c.plannedSessionId && c.toDate) {
       return !(moves.has(`${c.plannedSessionId}|${c.toDate}`) && byId.get(c.plannedSessionId)?.scheduledDate !== c.toDate);
@@ -178,7 +185,17 @@ export function withoutRepeatedAttempts(changes: PlanChangeItem[], log: PlanChan
   });
   if (kept.length === changes.length) return changes;
   const pairs = kept.filter((c) => c.action !== 'swap' || kept.some((o) => o.action === 'swap' && o.plannedSessionId === c.pairedWithSessionId));
-  return withoutOrphanedRemovals(pairs, changes);
+  return withoutOrphanedRemovals(withoutOrphanedAdds(pairs, changes), changes);
+}
+
+// De andere kant van hetzelfde paar: valt de weghaling weg (de rij staat er weer of blijft staan), dan valt de
+// toevoeging die haar plaats zou innemen mee. Anders krijgt een week zonder vrije dag er een training bij in plaats
+// van een vervanging (review van 12 november).
+export function withoutOrphanedAdds(kept: PlanChangeItem[], all: PlanChangeItem[]): PlanChangeItem[] {
+  const stays = new Set(kept);
+  const letGo = new Set(all.filter((c) => c.action === 'remove' && c.plannedSessionId && !stays.has(c)).map((c) => c.plannedSessionId));
+  if (letGo.size === 0) return kept;
+  return kept.filter((c) => !(c.action === 'add' && c.replacesSessionId && letGo.has(c.replacesSessionId)));
 }
 
 // Een week zonder vrije dag: de weekindeling (engine/weekReconciliation.ts) haalt dan een training weg en zet de

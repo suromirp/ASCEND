@@ -73,7 +73,7 @@ export async function keptByPlanningRound(changes: PlanChangeItem[], planned: Pl
   return settleWithRound(changes, async (current) => {
     const { sessions } = applyPlanChangeItems(current, planned);
     store ??= await readHorizonStore(planned);
-    const proposals = proposal ? [...store.proposals, { ...proposal, changes: current, resolution: 'accepted' as const }] : store.proposals;
+    const proposals = proposal ? [...store.proposals, { ...proposal, changes: current, resolvedAt: new Date().toISOString(), resolution: 'accepted' as const }] : store.proposals;
     const round = await previewProgramHorizon({ sessions, releaseAnchors: false, store: { ...store, proposals } });
     return changesTheRoundKeeps(current, planned, round.after);
   }, ROUND_CHECKS);
@@ -143,7 +143,7 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
   // de weekcontrole weghaalt, komt er niet in (melding van 9 november).
   // En niet wat al eens is aangenomen en er nu toch niet staat: dat komt niet bij
   // elke opening terug (engine/weeklyPrescriptionDiff.ts#withoutRepeatedAttempts).
-  const untried = withoutRepeatedAttempts(delta.changes, await PlanChangeProposalsRepo.getAll(), planned);
+  const untried = withoutRepeatedAttempts(delta.changes, await PlanChangeProposalsRepo.getAll(), planned, asOf);
   proposal.changes = await keptByPlanningRound(untried, planned, proposal);
 
   // Eerst uitrekenen wat de wijzigingen met de planning doen (puur, zonder
