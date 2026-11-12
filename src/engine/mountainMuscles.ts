@@ -33,6 +33,7 @@ import { isOpenOn, isSoreness } from './injuryKind';
 import { periodsInWeek } from './leave';
 import { hasRole, isGymStrengthTemplate } from './templateRoles';
 import { isRestWeekAt } from './weekLoadChange';
+import { noticeExerciseName } from './exerciseNames';
 import { isWorkSet } from './workSets';
 
 export const MOUNTAIN_MUSCLES: readonly MuscleGroup[] = ['calves', 'tibialis', 'glutes'];
@@ -250,7 +251,9 @@ export function mountainMuscleProposal(input: MuscleProposalInput): MusclePropos
 const setsWord = (n: number) => (n === 1 ? 'harde set' : 'harde sets');
 
 // De woorden van de melding: eerst het feit, dan de zorg ("kan helpen"), eerlijk over wat niet telde, en het voorstel.
-export function muscleNoticeText(p: MuscleProposal): { fact: string; care: string; unknown?: string; proposal: string } {
+// De oefening heet hier bij haar Nederlandse naam (engine/exerciseNames.ts); in Forge, logs en MacroFactor blijft
+// de naam zoals hij is. `what` en `cost` zijn het voorstel in twee delen, voor de weergave Voorstel in de weekterugblik.
+export function muscleNoticeText(p: MuscleProposal): { fact: string; care: string; unknown?: string; proposal: string; name: string; what: string; cost: string } {
   const avg = Math.round(p.avgSets * 10) / 10;
   const balance = p.muscle === 'balance';
   const span = p.restLeftOut ? `de laatste ${p.weeks === 3 ? 'drie' : p.weeks} weken zonder ${balance ? 'rustweek of vakantie' : 'de rustweek'}` : p.weeks === MOUNTAIN_WINDOW_WEEKS ? 'de laatste vier weken' : `de laatste ${p.weeks === 3 ? 'drie' : p.weeks} weken`;
@@ -258,13 +261,18 @@ export function muscleNoticeText(p: MuscleProposal): { fact: string; care: strin
   const unknown = Math.round(p.unknownSets);
   const [low, high] = p.reps.split('-');
   const hold = exerciseById(p.exerciseId)?.measure === 'hold';
+  const name = noticeExerciseName(p.exerciseId, p.exerciseName);
+  const what = `${name} erbij in ${p.templateName}`;
+  // Geen duur in minuten: die kent de app niet, dus die staat er niet.
+  const cost = hold ? `${p.sets} sets per been, zo lang je stil kunt staan.` : `${p.sets} sets van ${low}${high ? ` tot ${high}` : ''} herhalingen.`;
   return {
     // Nul is geen gemiddelde: dan zeg je gewoon dat er niets was.
     fact: `${named.your.charAt(0).toUpperCase()}${named.your.slice(1)} ${named.got} ${span} ${avg === 0 ? (balance ? 'geen werk op één been' : 'geen harde sets') : `gemiddeld ${formatNumberNL(avg, avg % 1 === 0 ? 0 : 1)} ${balance ? (avg === 1 ? 'set' : 'sets') : setsWord(avg)} per week`}.`,
     care: `Voor ${named.why} kan ${named.work} helpen.`,
     unknown: unknown > 0 ? `${unknown} ${unknown === 1 ? 'set kon' : 'sets konden'} niet aan een oefening gekoppeld worden; die tellen hier niet mee.` : undefined,
-    proposal: hold
-      ? `Voorstel: ${p.exerciseName} erbij in ${p.templateName}, ${p.sets} sets per been, zo lang je stil kunt staan.`
-      : `Voorstel: ${p.exerciseName} erbij in ${p.templateName}, ${p.sets} sets van ${low}${high ? ` tot ${high}` : ''} herhalingen.`,
+    proposal: `Voorstel: ${what}, ${cost}`,
+    name,
+    what,
+    cost,
   };
 }
