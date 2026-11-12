@@ -1,10 +1,9 @@
 import type { WeekDescent } from '../../engine/standing';
 import { formatNumberNL } from '../../utils/number';
-import { Card, Eyebrow } from '../ui';
 import { roundedTop } from './chartParts';
 import { formatDayMonthNL } from '../../utils/dates';
 
-// Je stand → descent: metres down per week. Bergaf is what makes legs sore
+// Belasting → het blad Bergaf (de rij onder Intensiteit): metres down per week. Bergaf is what makes legs sore
 // on a mountain trip, and in the Netherlands there is little of it, so this
 // is mostly a reminder that the stairs and the hills-up-and-down count.
 
@@ -12,32 +11,23 @@ const W = 320;
 const H = 96;
 const BOTTOM = 20;
 
-export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; routeDayDescent?: number }) {
+export function DescentBody({ weeks, routeDayDescent }: { weeks: WeekDescent[]; routeDayDescent?: number }) {
   const max = Math.max(1, ...weeks.map((w) => w.metres));
   const slot = W / weeks.length;
   const barW = Math.min(22, slot * 0.55);
   const plotH = H - BOTTOM - 14;
   const biggest = Math.max(0, ...weeks.map((w) => w.biggestDay));
   const last4 = weeks.slice(-4).reduce((n, w) => n + w.metres, 0);
-  // Nothing measured at all: one line instead of an empty chart with axes.
-  // Alleen een kaart als je doel dalen vraagt; anders is er niets te tonen en staat er niets.
+  // Nothing measured at all: one line instead of an empty chart with axes. De rij staat er alleen als je doel
+  // dalen vraagt (engine/standPage.ts#descentRowValue).
   if (weeks.every((w) => w.metres <= 0)) {
-    if (routeDayDescent === undefined) return null;
-    return (
-      <Card className="flex flex-col gap-1">
-        <Eyebrow>Dalen</Eyebrow>
-        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog geen dalingen gemeten. Je doel vraagt bergaf. Je lijn komt hier zodra een tocht of loop een daling meet.</p>
-      </Card>
-    );
+    return <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog geen dalingen gemeten. Je doel vraagt bergaf. Je lijn komt hier zodra een tocht of loop een daling meet.</p>;
   }
   return (
-    <Card className="flex flex-col gap-3">
-      <div>
-        <Eyebrow>Dalen</Eyebrow>
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Meters bergaf per week. Dalen geeft de meeste spierpijn op een bergtocht. Je benen wennen eraan door het te blijven doen.
-        </p>
-      </div>
+    <div className="flex flex-col gap-3">
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+        Meters bergaf per week. Dalen geeft de meeste spierpijn op een bergtocht. Je benen wennen eraan door het te blijven doen.
+      </p>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Meters bergaf de laatste ${weeks.length} weken, samen ${formatNumberNL(weeks.reduce((n, w) => n + w.metres, 0), 0)}`}>
         {weeks.map((w, i) => {
           const h = (w.metres / max) * plotH;
@@ -63,6 +53,6 @@ export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         In Nederland zijn dalen schaars. De trap, de training Heuvelsprints en afdalen en elke heuvel tellen mee. Op de loopband daal je niet.
       </p>
-    </Card>
+    </div>
   );
 }

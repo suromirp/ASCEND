@@ -1,18 +1,19 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { nextTestOrRace } from '../engine/testRaceUpcoming';
 import { useAppData } from '../state/AppDataContext';
 import { fatigueBand, fatigueStatus, fatigueWord, FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueInputs } from '../engine/legFatigue';
-import { LegFatigueInfoSheet } from './LegFatigueInfoSheet';
 import { legSorenessList } from '../engine/legSoreness';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { loadBodyKg } from '../engine/weightTrend';
 import { addDays, formatWeekdayDayMonthNL, todayISO } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
-import { Card, InfoButton } from './ui';
+import { Card } from './ui';
 
-// Vandaag → "Benen": the leg fatigue index (engine/legFatigue.ts) for you to
-// see, not only for the planning: how fresh your legs are today, what still
-// counts, and how fresh they will be at your next test or race.
+// Je stand → Benen, het hart van het scherm: the leg fatigue index (engine/legFatigue.ts) for you to
+// see, not only for the planning: how fresh your legs are today, what still counts, and how fresh they
+// will be at your next test or race. Zonder eigen kop en i: de naam en de i staan in de lucht van het
+// scherm (pages/StandScreen.tsx). Het woord staat in gewone inkt; let op is een amber stip vooraan de
+// regel van je test of wedstrijd, nooit een gekleurd woord (docs/visie/Ontwerp Stand minimaal.md, 2).
 
 const SCALE = 20;
 // Drie zones op de balk, met dezelfde grenzen als het woord erboven (engine/legFatigue.ts#fatigueWord):
@@ -39,7 +40,6 @@ export function useLegFatigueInputs(): LegFatigueInputs {
 export function LegFatigueCard() {
   const { plannedSessions, sessionLogs, templates } = useAppData();
   const inputs = useLegFatigueInputs();
-  const [info, setInfo] = useState(false);
   const today = inputs.today;
   const now = useMemo(() => legFatigueOn(today, inputs), [today, inputs]);
   // De index is je stand van vanochtend: een training van vandaag telt pas vanaf morgen. Staat er vandaag al iets
@@ -55,21 +55,15 @@ export function LegFatigueCard() {
   const nextStatus = nextResult ? fatigueStatus(nextResult, purpose) : undefined;
   const band = nextResult ? fatigueBand(nextResult.index, purpose) : undefined;
 
-  // Nothing at all for a week: no card.
-  if (now.index === 0 && !next) return null;
   const { word, level } = fatigueWord(now.index);
   const color = LEVEL_COLOR[level];
   const pct = (v: number) => `${Math.min(100, (v / SCALE) * 100)}%`;
 
   return (
     <Card className="flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-3">
-        <span className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Benen</span>
-        <InfoButton onClick={() => setInfo(true)} label="Hoe de beenindex werkt" />
-      </div>
       <div className="flex items-baseline gap-3">
         <span className="font-sans text-[40px] font-semibold leading-none tracking-[-0.03em] tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(now.index, 1)}</span>
-        <span className="text-base font-semibold" style={{ color }}>{word}</span>
+        <span className="text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{word}</span>
       </div>
 
       <div className="relative h-2" role="img" aria-label={`Beenvermoeidheid ${formatNumberNL(now.index, 1)}: ${word.toLowerCase()}`}>
@@ -105,19 +99,20 @@ export function LegFatigueCard() {
       )}
 
       {next && nextResult && nextStatus && (
-        <p className="rounded-xl border px-3 py-2 text-xs leading-relaxed" style={{ borderColor: nextStatus === 'fris' ? 'var(--color-card-border)' : 'color-mix(in srgb, var(--color-warning) 55%, var(--color-card-border))', color: 'var(--color-ink)' }}>
-          {purpose === 'race' ? 'Wedstrijd' : 'Testloop'} {formatWeekdayDayMonthNL(next.scheduledDate)}: <span className="tabular-nums">{formatNumberNL(nextResult.index, 1)}</span>
-          {band && <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}> (ongeveer {formatNumberNL(band.low, 0)} tot {formatNumberNL(band.high, 0)})</span>},{' '}
-          <span style={{ color: nextStatus === 'fris' && !band?.nearLine ? 'var(--color-status)' : 'var(--color-warning)' }}>{band?.nearLine ? 'op de grens' : nextStatus}</span>
-          {band?.nearLine && <span style={{ color: 'var(--color-ink-dim)' }}>. Voelen je benen bij het inlopen zwaarder dan normaal, dan een dag later.</span>}
-          {nextStatus !== 'fris' && nextResult.contributions[0] && (
-            <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {formatWeekdayDayMonthNL(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '.' : ': doe het korter, of na de ' + (purpose === 'race' ? 'wedstrijd' : 'test') + '.'}</span>
-          )}
-          {nextResult.painRecent && <span style={{ color: 'var(--color-ink-dim)' }}> Je meldde pijn, dus dit telt nooit vanzelf als fris.</span>}
+        // Een waarschuwing staat volledig op het scherm, als gewone regel; een grensgeval of niet fris krijgt de amber stip vooraan.
+        <p className="flex gap-2 text-xs leading-relaxed" style={{ color: 'var(--color-ink)' }} data-leg-test-line>
+          {(nextStatus !== 'fris' || band?.nearLine) && <span aria-label="Let op" role="img" className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-warning)' }} />}
+          <span>
+            {purpose === 'race' ? 'Wedstrijd' : 'Testloop'} {formatWeekdayDayMonthNL(next.scheduledDate)}: <span className="tabular-nums">{formatNumberNL(nextResult.index, 1)}</span>
+            {band && <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}> (ongeveer {formatNumberNL(band.low, 0)} tot {formatNumberNL(band.high, 0)})</span>}, {band?.nearLine ? 'op de grens' : nextStatus}
+            {band?.nearLine && <span style={{ color: 'var(--color-ink-dim)' }}>. Voelen je benen bij het inlopen zwaarder dan normaal, dan een dag later.</span>}
+            {nextStatus !== 'fris' && nextResult.contributions[0] && (
+              <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {formatWeekdayDayMonthNL(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '.' : ': doe het korter, of na de ' + (purpose === 'race' ? 'wedstrijd' : 'test') + '.'}</span>
+            )}
+            {nextResult.painRecent && <span style={{ color: 'var(--color-ink-dim)' }}> Je meldde pijn, dus dit telt nooit vanzelf als fris.</span>}
+          </span>
         </p>
       )}
-
-      {info && <LegFatigueInfoSheet onClose={() => setInfo(false)} />}
     </Card>
   );
 }

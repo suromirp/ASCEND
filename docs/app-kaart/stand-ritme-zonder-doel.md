@@ -7,8 +7,7 @@ Adres: `#/stand/ritme`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 [knop: Terug naar Je stand]
 Je stand
 ## Ritme
+[knop: Wat Ritme telt]
 
 --- kaart 1 ---
-Ritme
-[knop: Wat Ritme telt]
 Na twee volle weken zie je hier je ritme.

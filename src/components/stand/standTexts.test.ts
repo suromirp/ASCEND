@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { RhythmCard, RhythmSheet } from './RhythmCard';
 import { LegFatigueInfoSheet } from '../LegFatigueInfoSheet';
 import { IntensityMixCard } from './IntensityMixCard';
+import { intensityInfo } from './standChartData';
 import { StandSummary } from './StandSummary';
 import type { Rhythm } from '../../engine/standRhythm';
 import type { IntensityMix } from '../../engine/standing';
@@ -65,7 +66,11 @@ describe('Je stand, de teksten van de onderdelen', () => {
     for (const o of ['0.4', '0.7', '1']) expect(raw).toContain(`opacity:${o}`);
     const out = html(createElement(IntensityMixCard, { mix }));
     expect(out).toContain('75% rustig (300 min)');
-    expect(out).toContain('Goede duursporters doen ongeveer 80% rustig.');
-    expect(out).toContain('Uit je hartslag.');
+    // Wat er geteld is en de 80% staan sinds Stand minimaal achter de i, niet meer op de kaart.
+    expect(out).not.toContain('Goede duursporters');
+    expect(out).not.toContain('Uit je hartslag.');
+    const info = intensityInfo(mix).join(' ');
+    expect(info).toContain('De streep op de balk staat op 80% rustig');
+    expect(info).toContain('Uit je hartslag.');
   });
 });

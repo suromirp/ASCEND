@@ -7,11 +7,10 @@ import { StandList } from '../components/stand/StandList';
 import { useStandData } from '../components/stand/useStandData';
 import { weekPositionLabel } from '../engine/weekLabel';
 import { standSentence } from '../engine/standRhythm';
-import { standLayout, standSentenceShown, standWarnings, type StandLineId } from '../engine/standPage';
+import { legsFact, standLayout, standSentenceShown, standWarnings, type StandLineId } from '../engine/standPage';
 import { waveHeader } from '../engine/programLayout';
 import { resolveCardOrder } from '../engine/cardOrder';
 import { resolveProgramWeek } from '../utils/dates';
-import { formatNumberNL } from '../utils/number';
 
 // Je stand: hoe sta je ervoor, in je benen, je belasting en je ritme, en word je beter? Drie blokken
 // (docs/visie/Ontwerp Stand minimaal.md, besluit docs/beslissingen/2026-11-12-stand-minimaal.md):
@@ -36,7 +35,7 @@ export function StandingPage() {
       : standSentence({ legLevel: leg.level, load, rhythm, restWeek });
   const warn = standWarnings({ legsWord: leg.word, legsLevel: leg.level ?? 0, load: d.jump });
   const lineOf: Record<StandLineId, SummaryLine> = {
-    benen: { id: 'benen', label: 'Benen', word: empty ? 'Fris' : leg.word, fact: empty ? 'nog niets' : `index ${formatNumberNL(d.legNow.index, 1)}`, to: '/stand/benen', warn: !empty && warn.benen },
+    benen: { id: 'benen', label: 'Benen', word: empty ? 'Fris' : leg.word, fact: empty ? 'nog niets' : legsFact(d.legNow.contributions.length, d.legNow.index), to: '/stand/benen', warn: !empty && warn.benen },
     belasting: { id: 'belasting', label: 'Belasting', word: load?.word ?? 'Nog niets', fact: load?.fact ?? 'na enkele weken', to: '/stand/belasting', warn: warn.belasting },
     ritme: { id: 'ritme', label: 'Ritme', word: rhythm.enough && rhythm.status ? { on: 'Op koers', nearly: 'Bijna', behind: 'Achter' }[rhythm.status] : 'Nog niets', fact: rhythm.enough ? rhythm.fact : 'na twee weken', to: '/stand/ritme', warn: false },
   };
