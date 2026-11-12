@@ -14,9 +14,10 @@ Bijgewerkt: 12 november 2026, rond 10:40 UTC, door de coördinator van 12 novemb
 - Eerste taak: deploy van c92df03 nakijken en één pushmelding: "ASCEND: Stand opgeschoond en Hoe ging het? na je loop zijn live. App twee keer openen."
 - Lopende bouwers (gestart 12 november 10:29 UTC door de coördinator session_01LnDpSm59PuKBYsAhFgUjTr):
   - Sherpa Week: Wat ASCEND aanpaste (Opus), session_01LnDpSjJCfJbCemhPXHmGrs, branch claude/week-aanpassingen: spoor 1 en 5 van Week minimaal plus de kop met de fase voorop.
-  - Sherpa Dubbel log (Fable), session_01LnDpSjBETEDJqkCxJv2ia2, branch claude/dubbel-log.
+  - Sherpa Route-blok (Opus), session_01LnDpSiduYPqLcJUoFTtued, branch claude/route-blok: afdruk van de eigenaar 12 november ("niet mooi"; Thuis-chip weg, thuisplek blijft bewaard en staat bovenaan in Andere plek).
+  - Dubbel log staat op main (ec1f56e), sessie gearchiveerd.
   - Sherpa Missiekaart (Opus), session_01LnDpSmWfoTTVaYr1A2wnvY, branch claude/missiekaart: eigen besluit, ook de kaarten boven Je dag.
-  - Daarna: Week minimaal sporen 2 tot 4 en 6 (na Sherpa Week, zelfde bestanden).
+  - Zodra Sherpa Week op main staat: Hoogtemeters stap 1 (Fable, Inbox; eigenaar vroeg 12 november naar de stand), daarna Week minimaal sporen 2 tot 4 en 6 met de dode code (weekChanges, adjustedSessionReasons, changesSub, review.changes) en weekHeading samenvoegen.
 - Wachter: trig_01SkSM9teBGkQ14rUvfN3Esy op session_01LnDpSm59PuKBYsAhFgUjTr. De oude trig_01RfcpL1mKyjAquMVbctRoGN staat uit (wissen werd geweigerd door de rechtencontrole). Bij de wissel: deze uitzetten of wissen en een nieuwe op je eigen sessie.
 - Back-up van de eigenaar (12 november 02:11) stond in de scratchpad van de vorige coördinator, niet bereikbaar. Vraag een nieuwe als je moet naspelen.
 
