@@ -5,16 +5,18 @@
 // om dat punt te bewaren. Je stip komt van de plek die de zoektocht al vond, zonder tweede vraag. Rechtsboven wissel je tussen Kaart en Luchtfoto (de keuze wordt onthouden in de
 // stand Luchtfoto van de instelling Ondergrond van de kaart); laadt de luchtfoto niet, dan staat de kaart er met één regel. De uitleg daarover staat achter de i van het blad. Rendert alleen: de regie staat in routeMapView.ts, de stijlen en vormen in
 // engine/routeMap.ts, het getikte punt in storage/routeStart.ts#startFromMap.
+// In de Briefing is de kaart stil (onOpen): alleen de lus en de start, geen knoppen, de naamsvermelding
+// kort in de hoek en buiten de lus; een tik opent Groter (besluit 2026-11-12-route-blok.md).
 // Docs: docs/beslissingen/2026-11-11-route-kaart.md, docs/beslissingen/2026-11-11-route-start.md.
 
 import { useEffect, useRef, useState } from 'react';
 import type { RoutePoint, RouteStyle } from '../models/route';
-import { photoFallbackLine, photoOffered, readMapColors, type MapBase, type MapPhoto, type MapRoute } from '../engine/routeMap';
+import { photoFallbackLine, photoOffered, quietAttribution, readMapColors, type MapBase, type MapPhoto, type MapRoute } from '../engine/routeMap';
 import { ROUTE_MAP_HEIGHT, mapFallbackLine } from '../engine/routeSheet';
 import { hasWebGL2, loadMapLibre } from '../integrations/mapLibre';
 import { AERIAL_SOURCES } from '../integrations/aerialImagery';
 import { OSM_COPYRIGHT } from '../integrations/overpass';
-import { createRouteMapView, whereAmI, type MapViewState, type RouteMapView } from './routeMapView';
+import { createRouteMapView, QUIET_FIT_PADDING, whereAmI, type MapViewState, type RouteMapView } from './routeMapView';
 import { useMotionMode } from './motion';
 import { TextButton } from './TextButton';
 import { Icon } from './icons';
@@ -67,7 +69,7 @@ function PhotoSwitch({ value, onPick }: { value: MapPhoto; onPick: (v: MapPhoto)
 export const MAKE_HOME_MOVE = 'Thuis verhuist naar dit punt. Je routes bij Thuis blijven.';
 export const MAKE_HOME_NEW = 'Dit punt wordt Thuis. Wissen kan bij Startpunt van je lus.';
 
-export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep }: {
+export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep, onOpen }: {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
   // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is).
@@ -93,7 +95,11 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   // Kaart of Luchtfoto, uit de instelling; onPhoto bewaart een tik op de schakelaar.
   photo?: MapPhoto;
   onPhoto?: (v: MapPhoto) => void;
+  // De stille kaart van de Briefing (besluit 2026-11-12-route-blok.md): geen knoppen, geen tik op de kaart,
+  // de bronvermelding kort en buiten de lus; een tik waar ook op de kaart opent Groter.
+  onOpen?: () => void;
 }) {
+  const quiet = onOpen !== undefined;
   const motion = useMotionMode();
   const box = useRef<HTMLDivElement>(null);
   const view = useRef<RouteMapView | undefined>(undefined);
@@ -122,6 +128,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   }
   const showPhoto = photoOffered(base) && picked === 'photo';
   const photoShown = useRef(showPhoto);
+  const quietAtStart = useRef(quiet);
 
   useEffect(() => {
     alive.current = true;
@@ -144,6 +151,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
       online: () => typeof navigator === 'undefined' || navigator.onLine !== false,
       webgl: hasWebGL2,
       motion: () => latest.current.motion,
+      ...(quietAtStart.current ? { padding: QUIET_FIT_PADDING } : {}),
     }, photoShown.current);
     view.current = v;
     return () => {
@@ -268,38 +276,42 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
     <div className="flex flex-col gap-1">
       {/* Slepen en knijpen horen bij de kaart: niet bij het blad en niet bij de pagina. Een vaste hoogte
           (engine/routeSheet.ts), zodat de gekozen lus en de hoofdknop eronder op 360 px nog in beeld staan. */}
-      <div data-no-sheet-drag="" className="relative w-full overflow-hidden rounded-xl border" style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', touchAction: 'none', overscrollBehavior: 'contain' }}>
+      <div data-no-sheet-drag="" className="relative w-full overflow-hidden rounded-xl border" style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', touchAction: quiet ? 'pan-y' : 'none', overscrollBehavior: 'contain' }}>
         {/* MapLibre zet zelf position: relative op dit vak; daarom de volle maat, niet absolute. */}
         <div ref={box} style={{ width: '100%', height: '100%' }} />
         {state.kind === 'loading' && <p role="status" className="absolute bottom-1 left-2 text-xs" style={dim}>De kaart wordt geladen.</p>}
-        {photoOffered(base) && onPhoto && (
+        {/* De stille kaart: één knop over de hele kaart naar Groter; de pagina scrolt er gewoon overheen. */}
+        {quiet && <button type="button" aria-label="Groter: de kaart met je lus" data-sheet-from="" onClick={onOpen} className="absolute inset-0 h-full w-full rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-ink)] focus-visible:-outline-offset-2" />}
+        {!quiet && photoOffered(base) && onPhoto && (
           <div className="absolute right-[60px] top-2">
             <PhotoSwitch value={switchValue} onPick={pickPhoto} />
           </div>
         )}
-        <div className="absolute right-2 top-2 flex flex-col gap-2">
-          <MapButton icon="locatie" label="Naar mijn plek" disabled={busy !== undefined} onClick={() => void goToMe()} />
-          <MapButton icon="inbeeld" label="Alles in beeld" onClick={() => view.current?.fitAll()} />
-        </div>
+        {!quiet && (
+          <div className="absolute right-2 top-2 flex flex-col gap-2">
+            <MapButton icon="locatie" label="Naar mijn plek" disabled={busy !== undefined} onClick={() => void goToMe()} />
+            <MapButton icon="inbeeld" label="Alles in beeld" onClick={() => view.current?.fitAll()} />
+          </div>
+        )}
         {state.kind === 'ready' && state.attribution && (state.aerial && !fullCredit ? (
           // De luchtfoto: eerst de korte vorm (de volle van EOX is drie regels en bedekt de lus); een tik toont
           // de volle naamsvermelding met de link. Zo werkt de vermelding van MapLibre zelf ook.
-          <button type="button" aria-label={`Naamsvermelding: ${state.attribution}`} onClick={() => setFullCredit(true)} className="absolute bottom-0 right-0 inline-flex min-h-[44px] min-w-[44px] items-end justify-end">
+          <button type="button" aria-label={`Naamsvermelding: ${state.attribution}`} onClick={() => (quiet ? onOpen?.() : setFullCredit(true))} className="absolute bottom-0 right-0 inline-flex min-h-[44px] min-w-[44px] items-end justify-end">
             <span className="rounded-tl-md bg-bg/80 px-1.5 text-xs leading-5" style={dim}>© {AERIAL_SOURCES[state.aerial].short}</span>
           </button>
         ) : (
           <a href={state.aerial ? AERIAL_SOURCES[state.aerial].href : OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 inline-flex min-h-[44px] min-w-[44px] max-w-[85%] items-end justify-end">
-            <span className="rounded-tl-md bg-bg/80 px-1.5 text-right text-xs leading-5 underline-offset-2 hover:underline" style={dim}>{state.attribution}</span>
+            <span className="rounded-tl-md bg-bg/80 px-1.5 text-right text-xs leading-5 underline-offset-2 hover:underline" style={dim}>{quiet ? quietAttribution(state.attribution) : state.attribution}</span>
           </a>
         ))}
       </div>
       {/* De uitleg over de ring en Start hier staat achter de i van het blad (MAP_HINT). Je plek als start is de chip Waar je nu bent. */}
-      {keepFound && (
+      {!quiet && keepFound && (
         <div className="flex flex-wrap gap-x-5">
           <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void keepPlace()}>Bewaar als plek</TextButton>
         </div>
       )}
-      {(pick || (keepable && onMakeHome)) && (
+      {!quiet && (pick || (keepable && onMakeHome)) && (
         <div className="flex flex-wrap gap-x-5">
           {pick && !saving && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt({ tap: pick })}>Start hier</TextButton>}
           {keepable && onMakeHome && !saving && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => { setLine(''); setSaving(true); }}>Bewaar als plek</TextButton>}

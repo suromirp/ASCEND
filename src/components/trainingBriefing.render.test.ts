@@ -17,7 +17,7 @@ const loop = (over: Partial<RouteProposal> = {}): RouteProposal => ({ style: 'ad
 function model(over: Partial<RouteSearchModel> = {}): RouteSearchModel {
   return {
     stage: 'searching', lat: 52, lon: 5, target, startLine: '', choose: async () => undefined,
-    startChips: [{ kind: 'here', label: 'Waar je nu bent' }], startChip: 'here', pickStart: () => undefined, mePoint: undefined, hasHome: false, makeHome: async () => false, tapPoint: undefined,
+    startChips: [{ kind: 'here', label: 'Waar je nu bent' }], startChip: 'here', savedStarts: [], pickStart: () => undefined, mePoint: undefined, hasHome: false, makeHome: async () => false, tapPoint: undefined,
     order: ['adventure', 'simple'], plans: undefined, okStyles: [], picked: undefined, pickedOutcome: undefined,
     setChosen: () => undefined, mapRoutes: [], mapStartPoint: undefined, base: 'none', photo: 'map', setPhoto: () => undefined, hereMode: false, noMap: false, markNoMap: () => undefined,
     startOnMap: async () => ({ ok: false, line: '' }), steps: ['terrain', 'routes'], currentStep: 'terrain', limitLine: 'Hoogstens een halve minuut.', limitMs: 30_000, searchKey: 'k',
@@ -76,7 +76,7 @@ describe('de plek van de kaart in de Briefing', () => {
     const html = render(routeView(), model({ stage: 'plans', plans: { adventure: { ok: true, proposal: a }, simple: { ok: true, proposal: s } }, okStyles: ['adventure', 'simple'], picked: 'adventure', pickedOutcome: { ok: true, proposal: a } }));
     expect(html).toContain('Avontuurlijk');
     expect(html).toContain('Eén lus langs een helling · 7,2 km · 50 hoogtemeters');
-    expect(html).toContain('Simpel: 7 km · vrijwel vlak');
+    expect(html).toContain('Simpel, heen en terug: 7 km · vrijwel vlak');
     expect(html).toContain('>Kies<');
     expect(html).toContain('Groter');
   });

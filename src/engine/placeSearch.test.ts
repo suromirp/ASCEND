@@ -1,6 +1,6 @@
 // Andere plek: de pure regels (besluit 2026-11-12-andere-plek.md). Alle namen en punten zijn nagemaakt.
 import { describe, expect, it } from 'vitest';
-import { PLACE_NONE_LINE, PLACE_OFFLINE_LINE, PLACE_SHORT_LINE, PLACE_TIMEOUT_LINE, SAME_PLACE_M, placeLabel, placeQuery, placeSearchLine, placeToSave, placeWhere, savedAt, type FoundPlace } from './placeSearch';
+import { PLACE_NONE_LINE, PLACE_OFFLINE_LINE, PLACE_SHORT_LINE, PLACE_TIMEOUT_LINE, SAME_PLACE_M, clipName, placeLabel, placeQuery, placeSearchLine, placeToSave, placeWhere, savedAt, type FoundPlace } from './placeSearch';
 import { savePlace, readPlaceStore, type PlacesMeta } from '../storage/places';
 import { metersBetween } from './routeGeometry';
 import type { Place } from '../models/place';
@@ -59,6 +59,12 @@ describe('bewaren zonder dubbel', () => {
     expect(placeLabel(far, [other])).toBe('Heuvelrug, Gelderland');
     expect(placeLabel(far, [other, saved('place_y', 'heuvelrug, gelderland', 51, 4)])).toBe('Heuvelrug, Gelderland 2');
     expect(placeToSave(far, [other], '2026-11-12', 'place_b').place.name).toBe('Heuvelrug, Gelderland');
+  });
+  it('een lange naam wordt op een woordgrens afgekapt met een beletselteken (route-blok)', () => {
+    expect(clipName('Uitkijkpunt aan de oostkant van het rivierdal')).toBe('Uitkijkpunt aan de oostkant van het…');
+    expect(clipName('Kort')).toBe('Kort');
+    expect(clipName('Eenheelerglangwoordzonderspatiesdatnietpastinveertigtekens')).toHaveLength(40);
+    expect(clipName('Eenheelerglangwoordzonderspatiesdatnietpastinveertigtekens').endsWith('…')).toBe(true);
   });
   it('een lange naam blijft binnen 40 tekens', () => {
     const long = found('Natuurgebied met een heel erg lange naam die niet past', 52, 5);

@@ -314,6 +314,43 @@ export function startChoices(setting: RouteStartMode, places: readonly Place[], 
   return { chips, chosen: tapped ?? byMode ?? HERE_CHIP };
 }
 
+// ---------- Start bij: twee chips (besluit 2026-11-12-route-blok.md) ----------
+
+export const OTHER_PLACE_LABEL = OTHER_CHIP.label;
+
+// Welke chip het is: een bewaarde plek op zijn id, de rest op zijn soort (Thuis is 'home').
+export const startChipKey = (c: StartChip): string => (c.kind === 'place' && c.placeId ? c.placeId : c.kind);
+
+export interface StartPair {
+  hereChosen: boolean;
+  // De tweede chip: de naam van de plek die nu geldt (Thuis, een bewaarde of een gezochte plek), anders Andere plek.
+  other: { label: string; chosen: boolean; aria: string };
+}
+
+// Start bij in twee chips: Waar je nu bent, en een tweede chip die de naam draagt van de plek die nu
+// geldt. Een instelling die bij Thuis start zet Thuis op die chip. `chosen` is de sleutel van
+// startChoices (startChipKey); een onbekende sleutel valt terug op Waar je nu bent.
+export function startPair(chips: readonly StartChip[], chosen: string): StartPair {
+  const picked = chosen === 'here' ? undefined : chips.find((c) => startChipKey(c) === chosen);
+  const label = picked?.label ?? OTHER_PLACE_LABEL;
+  return {
+    hereChosen: picked === undefined,
+    other: { label, chosen: picked !== undefined, aria: label === OTHER_PLACE_LABEL ? label : `${OTHER_PLACE_LABEL}: ${label}` },
+  };
+}
+
+// De bewaarde plekken in het blad Andere plek: Thuis bovenaan, dan de rest, de recentste eerst. Alle
+// plekken, niet hoogstens vier: dit is de lijst, geen rij chips.
+export function savedStartChips(places: readonly Place[]): StartChip[] {
+  const home = homeOf(places);
+  const rest = places
+    .map((p, i) => ({ p, i }))
+    .filter(({ p }) => !p.home && p.id !== home?.id)
+    .sort((a, b) => (a.p.createdAt === b.p.createdAt ? b.i - a.i : a.p.createdAt < b.p.createdAt ? 1 : -1))
+    .map(({ p }): StartChip => ({ kind: 'place', label: p.name, placeId: p.id }));
+  return home ? [{ kind: 'home', label: home.name, placeId: home.id }, ...rest] : rest;
+}
+
 // ---------- Een spoor dun maken ----------
 
 // Ongeveer vijf meter nauwkeurig (ontwerp, hoofdstuk 1).

@@ -834,7 +834,7 @@ export const CHOICES = {
   routeKaart: def({
     group: 'Vandaag en meldingen',
     title: 'Ondergrond van de kaart',
-    line: 'Wat er onder de lussen op de kaart ligt; rechtsboven op de kaart wissel je ook tussen kaart en luchtfoto.',
+    line: 'Wat er onder de lussen op de kaart ligt; rechtsboven op de grote kaart wissel je ook tussen kaart en luchtfoto.',
     advice: 'dark' as 'dark' | 'light' | 'photo' | 'none',
     help: 'routeKaart',
     options: [

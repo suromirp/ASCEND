@@ -5,9 +5,9 @@
 // Docs: docs/visie/Ontwerp Route en trainingsscherm.md (hoofdstuk 6 en 7, spoor 2), besluit
 // docs/beslissingen/2026-11-11-briefing.md.
 
-import type { RouteProposal, RouteTarget } from '../models/route';
+import type { RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { formatNumberNL } from '../utils/number';
-import { tooShort } from './routePlanner';
+import { proposalFacts, proposalTitle, tooShort } from './routePlanner';
 import { routeActionLine, type RouteFileLine, type RouteSendOutcome, type SendLine } from './routeSend';
 
 // De kaart en de zoekstand hebben dezelfde vaste hoogte, zodat er niets verspringt als de lussen er zijn.
@@ -107,4 +107,24 @@ export function routeOutcomeLine(hasSender: boolean, done?: { send: RouteSendOut
     return { text: done.file.where === 'folder' ? `Opgeslagen als ${done.file.name} in ${done.file.label}.` : `Gedownload als ${done.file.name}.`, warn: false };
   }
   return routeActionLine(hasSender, done);
+}
+
+// De Briefing toont op de kaart alleen de gekozen lus: één duidelijke lijn. De andere lus staat als regel
+// met Kies onder de kaart, en gestreept op de grote kaart (besluit 2026-11-12-route-blok.md).
+export function briefingRoutes<T extends { style: RouteStyle }>(routes: T[], picked: RouteStyle | undefined): T[] {
+  if (!picked) return routes;
+  const chosen = routes.filter((r) => r.style === picked);
+  return chosen.length > 0 ? chosen : routes;
+}
+
+// De ruimte onder de pagina met een vaste knop: zijn hoogte en een marge, zodat de laatste regel (de lus
+// en Groter) volledig boven de knop komt. Voor de eerste meting de oude 128 px.
+export const footerRoom = (height: number | undefined): string => (height ? `${Math.ceil(height) + 16}px` : '128px');
+
+// De andere lus in één regel onder de gekozen lus in de Briefing, met zijn vorm: "Simpel, heen en
+// terug: 6 km · vrijwel vlak" of "Simpel, 3 × de helling op en af: ...". Simpel is altijd over hetzelfde
+// pad terug; Avontuurlijk is een lus (besluit 2026-11-12-route-blok.md).
+export function otherLoopLine(name: string, p: RouteProposal): string {
+  const shape = p.style === 'simple' ? ((p.repeats ?? 0) > 1 ? `${p.repeats} × de helling op en af` : 'heen en terug') : proposalTitle(p).replace(/^Eén/, 'één');
+  return `${name}, ${shape}: ${proposalFacts(p)}`;
 }
