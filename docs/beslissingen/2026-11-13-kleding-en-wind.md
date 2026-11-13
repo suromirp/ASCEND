@@ -34,3 +34,7 @@ Niets.
 ## Terugdraaien
 
 `LINE_WIND_KMH` en de tweede voorwaarde in `weatherLine` weghalen; `FIRST_STEP_C` op 0,5 zetten.
+
+## Aanvulling na Lookout (coördinator, 13 november)
+
+De rij Weer in de Briefing, waar je de kleding leest, begon met alleen "11 graden". De wind stond alleen in de weerregel van het uitlegblad. Daarom begint de rij nu met hetzelfde begin als de weerregel (`temperatureHead` in `engine/weather.ts`): met gevoel en wind als die ertoe doen, en harde wind erbij. Bijvoorbeeld "11 graden, voelt als 8, wind 20 km/u, dun shirt met lange mouwen en korte broek". Windstil blijft het "11 graden".
