@@ -1,31 +1,31 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 12 november 2026, rond 16:10 UTC, door de coördinator session_01LnDpSm59PuKBYsAhFgUjTr. Vroege wissel omdat de chat lang werd (ongeveer 560k context). Oudere overdrachten staan in de git-geschiedenis van dit bestand. Let op: de sessieketen staat op diepte 7 van 8; de volgende wissel kan create_session misschien niet meer: vraag dan de eigenaar een nieuwe coördinator-chat te starten met de prompt uit de skill coordinator-wissel.
+Bijgewerkt: 13 november 2026, 03:48 UTC, door de coördinator session_01LnDpSjwqafz47UWosn3Kyc (diepte 7 van 8). Oudere overdrachten staan in de git-geschiedenis van dit bestand. De sessieketen zit op diepte 7 van 8: een coördinator die hieruit gestart wordt kan zelf geen bouwers meer starten. De eigenaar start de volgende coördinator-chat zelf, met de prompt uit de skill coordinator-wissel.
 
 ## Opdracht van de eigenaar
 
 - 11 november: "werk de backlog af"; 12 november: "Je mag nu ook gewoon starten".
 - 12 november: voor alles wat we verbeteren een mooiere UI en makkelijkere UX, minimaal en vernieuwend; de coördinator kiest het scherm en legt elke keuze vast in een besluit. Hoogstens drie bouwers tegelijk, nooit twee aan dezelfde bestanden.
-- 12 november ochtend: "Wat vannacht gebeurd is mag niet nog een keer" (limiet van vijf uur, daarna alles stil). Daarvoor de Wachter en de regel Limiet van vijf uur in de skill werkverdeling.
-- 12 november middag (afdrukken): routeblok "niet mooi", "Thuis mag weg" (gedaan); StairMaster in de Briefing klopte niet (gedaan); "Wat is haarlijn?" (gedaan); vroeg naar de stand van de hoogtemeters (stap 1 klaar, wacht op naspelen).
+- 12 november ochtend: "Wat vannacht gebeurd is mag niet nog een keer" (limiet van vijf uur). Daarvoor de Wachter en de regel Limiet van vijf uur in de skill werkverdeling.
+- 12 november 18:10: "Ja, StairMaster een eigen wandelworkout" (gedaan).
+- 13 november 00:00 Amsterdam: "Zet die geplande taak uit, geen planning nu". De Wachter staat uit (trig_011XuFS3YNL1kFJyLEWBUYtv). De wissel van 04:47 is daarom niet uitgevoerd als nieuwe sessie: alleen deze overdracht.
+- 13 november nacht: backlog opgeschoond en een overzichtspagina gemaakt (https://claude.ai/artifact/4p47b49LkVned8uNgv9UQT).
 
 ## Stand
 
-- Live op 12 november middag (elk met Warden, Lookout, Pathfinder en eigen blik op afdrukken, pushmelding gestuurd): Dubbel log (ec1f56e), Frisheid zonder haarlijn (76b1e25), Week Wat ASCEND aanpaste (2eaa81d), Missiekaart (5f5b528), Route-blok (7fa66cc), Briefing per manier (540d0de), Week minimaal 2-4 (2eda701). Alle bouwersessies daarvan zijn gearchiveerd.
-- Lopende bouwer: Sherpa Hoogtemeters stap 1 (Fable), session_01LnDpSmaTkuQYwMVjdeQMHr, branch claude/hoogtemeters-stap-1 (kop 69bf612). Warden (Fable) akkoord, alle moet-punten verwerkt; de sessie wacht stil. NIET naar main voor naspelen met een verse back-up van de eigenaar (gevraagd om 13:10 en 14:25 UTC, nog niet ontvangen). Naspelen: de zes lopen (Garmin samen 132 m): eigen telling voor en na, en per vlakke kilometer de stijging tegen de grens van 5 m per km (zone 2 vlak). Blijven echte vlakke km onder 5 m: stap 1 naar main zoals hij is (eerst nog een Warden-blik op ronde 2 en 3, die heeft niemand gezien). Gaan ze erover: eerst de bouwer een teller-markering op het log (migratie, eigen besluit) en de grens 10 m per km voor nieuwe logs laten bouwen. Gladmaken over 15 s blijft tot het naspelen anders zegt.
-- Coördinator sinds 16:08 UTC: session_01LnDpSjwqafz47UWosn3Kyc (diepte 7 van 8). Wachter trig_011XuFS3YNL1kFJyLEWBUYtv (cron 40 * * * *) staat UIT op verzoek van de eigenaar (13 november 00:00 Amsterdam, "geen planning nu"); weer aanzetten als er een bouwer start; de oude trig_01SkSM9teBGkQ14rUvfN3Esy en trig_01RfcpL1mKyjAquMVbctRoGN staan uit. Wissel gepland: trig_01Hr5mbZvL4HQVpjuYbEcfLU (13 november 04:47 Amsterdam).
-- Gestart 16:09 UTC: Sherpa Opslaan dat mislukt (Sonnet), session_01LnDpSkobGWR5hY2YU789nA, branch claude/opslaan-dat-mislukt; Sherpa Weer op de gekozen plek (Fable), session_01LnDpSkruCEffoia4J8ZSsV, branch claude/weer-op-de-plek. Samen met Hoogtemeters zijn dat drie.
-- Hoogtemeters nagespeeld 16:13 UTC met de back-up van 12 november 17:11 (scratchpad, backup.json): vlakke km gaan over 5 m. Vlak samen (Garmin 132): oud 27, 15 s 161, 30 s 145; heuvelloop (Garmin 133): oud 85, 30 s 124. Opdracht naar de bouwer (trig_01MbetFbEFen1GSEcb5jJkRc): gladmaken 30 s, teller-markering op het log met migratie en eigen besluit, vlak 10 m per km voor nieuwe logs. Daarna Warden op Fable (ronde 2, 3 en dit), dan main.
-- 16:41 UTC: Opslaan (601f5e6) en Weer (9d894fd, besluit ontbreekt nog) klaar, Warden loopt op beide (Fable en Sonnet, achtergrond in deze sessie). Daarna Weer: Lookout en Pathfinder, eigen afdruk. Gestart: Sherpa Andere plek via Photon (Fable), session_01LnDpSnx15iX4EME83pMo5r, branch claude/andere-plek-photon.
-- StairMaster eigen wandelworkout: eigenaar ja (12 november 18:10). Gestart: Sherpa StairMaster op het horloge (Fable), session_01LnDpSndaa3UWgeoFTgJwrT, branch claude/stairmaster-horloge. Warden op Fable niet akkoord (lange duurloop eruit, soort uit antwoord, rij in sync); herstelronde 18:55 UTC (trig_011yYBSfC58wy5UuCXprgcp7). Ronde 2 (c8d35b3): Warden akkoord, Lookout groen, Pathfinder blokkerend: een Walk vinkt de looptraining niet af (activityImport.ts#fitsTemplate). Herstelronde 2 om 19:49 UTC (trig_011Hb7jpvAZUXtvNigGhEBwK): afvinken bij gekozen StairMaster, blad Je horloge, dag bij later. Daarna Warden op Fable (historie), dan main. Eigenaar moet na live één keer zien of de Walk-workout bij Wandelen staat en welke wandelzones intervals.icu heeft.
+- Live op 12 november (elk met Warden, Lookout, Pathfinder en eigen blik op afdrukken; deploy en APK groen; pushmelding gestuurd):
+  - middag: Dubbel log, Frisheid zonder haarlijn, Week Wat ASCEND aanpaste, Missiekaart, Route-blok, Briefing per manier, Week minimaal 2-4.
+  - avond: Hoogtemeters stap 1 met Opslaan dat mislukt en Weer op de gekozen plek (c03dde9, fix dbc93fb), Andere plek via Photon (41587a4), StairMaster op het horloge (a0ed63b), backlog opgeschoond (44fdcdf, 11426d4).
+- Geen lopende bouwers; alle bouwersessies van 12 november gearchiveerd. Geen geplande taken van deze coördinator aan, behalve het vaste bouwmoment (trig_01JDroCyzgfatU8c7MiK26Ei, ma wo vr 19:43; vrijdag 13 november de Inbox).
+- Wacht op de eigenaar: (1) staat de StairMaster-workout op het horloge bij Wandelen, en welke hartslagzones heeft Wandelen in intervals.icu; (2) zoekt Andere plek echt een heuvel via Photon in de app (in de testcontainer niet bereikbaar); (3) melding in Week na "Benen fris, blijft staan" (backlog, Wacht op de eigenaar); (4) vijf antwoorden voor het Info-blad.
+- Back-up van de eigenaar van 12 november 17:11 staat in de scratchpad van deze sessie (backup.json); een nieuwe coördinator heeft hem niet.
 
-## Volgende bouwers (hoogstens drie tegelijk)
+## Volgende bouwers (hoogstens drie tegelijk; Wachter weer aanzetten zodra er een start)
 
-1. Opslaan dat mislukt (Inbox; Forge gooit het concept weg, SportAskLine bewaart de sportkeuze ook zonder log). Sonnet, klein, opslag-nabij: Warden op Fable.
-2. Weer op de gekozen plek (Inbox; `engine/places.ts#weatherAtPlace` ongebruikt). Opus, Briefing.
-3. Andere plek vindt geen heuvel (Photon als tweede bron, Inbox). Fable. Start zodra een plek vrij is. (Week spoor 6, Vrije dagen als rij, bleek al live met 2eda701.)
-4. Trainingsscherm spoor 6 (WatchAskCard als rij in Je dag, één vorm met Hoe ging het?), na de toets bij vraag 2. Pathfinder-advies in de backlog.
-5. Daarna Ascend en Logboek in dezelfde lijn (eerst Cartographer), met `docs/onderhoud/2026-11-12-pathfinder-verborgen-schermen.md`.
+1. Kleding en wind (Inbox, eigenaar): bouwmoment vrijdag.
+2. Weer van de plek, vervolg (moet, Pathfinder): de pagina Weer volgt de gekozen plek.
+3. Trainingsscherm spoor 5 tot 10; daarna Ascend en Logboek in dezelfde lijn (eerst Cartographer).
+4. Zie de overzichtspagina en docs/backlog.md voor de rest.
 
 ## Inbox (docs/backlog.md) voor het bouwmoment van vrijdag 13 november 19:43
 
@@ -50,12 +50,6 @@ Bijgewerkt: 12 november 2026, rond 16:10 UTC, door de coördinator session_01LnD
 
 ## Sessies en tijden
 
-- Vorige coördinatoren: session_01LnDpSm59PuKBYsAhFgUjTr (12 november, 10:27 tot ongeveer 16:10 UTC), session_01LnDpSkUxMFtEBmNMxMAKcN (12 november, tot 10:40 UTC), session_01LnDpSnA7KzoLikwifh3nyR (11 op 12 november), session_01LnDpSkFKoLuAUnLCXKbA1G, session_01LnDpSj5xhvz93hRnJrHyF8.
+- Vorige coördinatoren: session_01LnDpSjwqafz47UWosn3Kyc (12 november 16:08 tot 13 november nacht), session_01LnDpSm59PuKBYsAhFgUjTr (12 november, 10:27 tot ongeveer 16:10 UTC), session_01LnDpSkUxMFtEBmNMxMAKcN (12 november, tot 10:40 UTC), session_01LnDpSnA7KzoLikwifh3nyR (11 op 12 november), session_01LnDpSkFKoLuAUnLCXKbA1G, session_01LnDpSj5xhvz93hRnJrHyF8.
 - Bouwmoment ma, wo, vr 19:43 (trig_01JDroCyzgfatU8c7MiK26Ei). Vrijdag 13 november: de Inbox.
 - Volgende wissel: plan je zelf met send_later op 04:47 [Europe/Amsterdam] morgen.
-
-## Live 12 november avond (c03dde9)
-
-- Hoogtemeters stap 1, Opslaan dat mislukt en Weer op de gekozen plek in één squash naar main, na Warden (alle drie), Lookout en Pathfinder (Weer), eigen afdrukken en naspelen (Hoogtemeters). Vervolgpunten staan bovenaan de Inbox. Bouwersessies gearchiveerd.
-- Lopend: Sherpa Andere plek via Photon (session_01LnDpSnx15iX4EME83pMo5r), branch claude/andere-plek-photon 162a479. Warden akkoord (CORS met curl gezien: *), Pathfinder 2 moet (Photon ook bij weinig treffers van Open-Meteo; foutzinnen plek en geen verbinding), Lookout groen (CORS in de browser niet te toetsen). Herstelronde a7dc940, Warden+Lookout akkoord; naar main 12 november rond 19:15 UTC. Sessie gearchiveerd.
-- StairMaster op het horloge: ronde 3 (9dfdc93) Warden 1 moet (omgeving Buiten op het log), door de coördinator hersteld in 17703ed; Lookout groen. Naar main 12 november avond. Sessie gearchiveerd.
