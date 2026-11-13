@@ -454,3 +454,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Warden+Lookout Photon herstel (reviewer, sonnet) 60k, 20 min, akkoord; Photon naar main
 - 2026-11-12, StairMaster ronde 2: Warden (reviewer, fable) 71k, 4 min, akkoord; Lookout (tester, sonnet) 67k, 6 min, groen; Pathfinder (sonnet) 33k, 1 blokkerend (wandeling vinkt heuvelintervallen niet af, door coördinator in code bevestigd); herstelronde 2 naar dezelfde bouwer
 - 2026-11-12, Sherpa StairMaster (fable, ca. $12 totaal, 3 rondes); Warden ronde 3 (reviewer, fable) 85k, 6 min, 1 moet (zelf hersteld); Lookout ronde 3 (tester, sonnet) 83k, 12 min, groen; naar main
+- 2026-11-13, Warden Ponytail-audit (reviewer, sonnet) 188k, 8,5 min, 12 punten (3 moet; punt 1 en 2 door coördinator in code bevestigd)
