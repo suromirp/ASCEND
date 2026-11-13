@@ -209,6 +209,8 @@ Twijfel of het af is; eerst kijken, dan schrappen of bouwen.
 
 ## Wacht op de eigenaar
 
+- Melding in Week nadat je op Vandaag "Benen fris, blijft staan" koos (open vraag uit de overdracht van een eerdere coördinator, niet beantwoord): wegblijven, of zeggen dat jij koos. Advies: zeggen dat jij koos.
+
 Niets open (11 november).
 
 ## Later
