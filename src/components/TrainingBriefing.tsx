@@ -52,6 +52,7 @@ import { useBriefingInput } from './useBriefingView';
 import { usePlaceWeather } from './usePlaceWeather';
 import type { WeatherForecast } from '../models/weather';
 import { briefingWeather, placeWeatherTarget } from '../engine/placeWeather';
+import { weatherPageLink } from '../engine/weatherPageLink';
 import { showPlaceWeather } from '../engine/overviewSettings';
 import { useMotionMode } from './motion';
 import { RouteMap } from './RouteMap';
@@ -146,15 +147,16 @@ export function TrainingBriefing({
   }
 
   // Naar een pagina: eerst alle lagen dicht, dan de pagina.
-  function toPage(to: string) {
+  function toPage(to: string, state?: unknown) {
     onLeave?.();
     requestClose();
-    navigate(to);
+    navigate(to, state === undefined ? undefined : { state });
   }
 
   function openRow(row: BriefingRow) {
     if (!row.opens) return;
-    if (row.id === 'weather') toPage('/weer');
+    // De gekozen plek gaat mee: de pagina Weer toont dan hetzelfde weer als deze rij (engine/weatherPageLink.ts).
+    if (row.id === 'weather') toPage('/weer', weatherPageLink(weatherTarget, template.id, date));
     else if (row.id === 'watch') { if (watchView.hasWatchSheet) setSheet('watch'); }
     else setSheet(row.id);
   }
