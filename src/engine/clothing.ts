@@ -12,7 +12,7 @@
 //
 // then separate rules for wind, rain, sun and darkness. All of it is a
 // starting point, which is why the user can nudge it (engine/clothingFeedback.ts
-// moves the bonus by half a degree per tap, per sport). It is advice, not
+// moves the bonus by a degree on the first tap, then half a degree, per sport). It is advice, not
 // planning: nothing here changes the plan, so no proposal with Akkoord.
 //
 // Not medical advice. Dangerous weather is judged by weather.ts ("slecht").

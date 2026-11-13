@@ -1362,7 +1362,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Je kleding',
     lead: 'Na een buitentraining kun je tikken of je kleding goed zat.',
     points: [
-      { head: 'Dan', text: 'schuift ASCEND je voorkeur een halve graad op, hooguit vier graden per sport.' },
+      { head: 'Dan', text: 'schuift ASCEND je voorkeur een graad op, daarna telkens een halve, hooguit vier graden per sport.' },
       { head: 'Terug', text: 'met Terug naar de standaard begint ASCEND weer bij nul.' },
     ],
   },

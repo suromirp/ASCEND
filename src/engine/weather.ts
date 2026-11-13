@@ -285,14 +285,23 @@ function daylightPhrase(d: Daylight, short = false): string {
   return `licht tot ${clockNL(d.sunset)}`;
 }
 
+// From this wind (km/u, highest hour) the line names the wind. Own choice, under the 25 of the
+// clothing advice (which stays); a bit of wind is not worth a word.
+export const LINE_WIND_KMH = 15;
+
 // "14 graden, droog, licht tot 18:12". Heat or cold you feel differently from
 // what the thermometer says comes with the felt temperature.
 export function weatherLine(w: SessionWeather, opts: { darkInClothing?: boolean } = {}): string {
   const temp = Math.round(w.tempC);
   const feels = Math.round(w.feelsC);
-  const parts = [Math.abs(feels - temp) >= 4 ? `${temp} graden, voelt als ${feels}` : `${temp} ${Math.abs(temp) === 1 ? 'graad' : 'graden'}`];
-  parts.push(rainPhrase(w));
   const wind = windPhrase(w);
+  // Wind that is not yet "harde wind" still cools you: from LINE_WIND_KMH it is named, and then a
+  // felt temperature two degrees colder is named too (the owner froze on 11 degrees with 20 km/u).
+  const breeze = !wind && w.windKmh >= LINE_WIND_KMH ? `wind ${Math.round(w.windKmh)} km/u` : undefined;
+  const showFeels = Math.abs(feels - temp) >= 4 || ((breeze || wind) && temp - feels >= 2);
+  const parts = [showFeels ? `${temp} graden, voelt als ${feels}` : `${temp} ${Math.abs(temp) === 1 ? 'graad' : 'graden'}`];
+  if (breeze) parts[0] += `, ${breeze}`;
+  parts.push(rainPhrase(w));
   if (wind) parts.push(wind);
   if (w.watch.includes('warm')) parts.push('warm');
   if (w.watch.includes('koud')) parts.push('koud');

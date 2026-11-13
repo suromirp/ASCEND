@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { adjustFor, applyClothingFeedback, cleanClothingAdjust, clothingAdjustSummary, hasClothingAdjust, MAX_ADJUST_C } from './clothingFeedback';
+import { adjustFor, feedbackSentence, applyClothingFeedback, cleanClothingAdjust, clothingAdjustSummary, hasClothingAdjust, MAX_ADJUST_C } from './clothingFeedback';
 
-describe('een tik schuift je opslag een halve graad', () => {
+describe('een tik schuift je opslag: de eerste een graad, daarna een halve', () => {
   it('te warm geeft meer opslag, te koud minder, goed laat het zoals het is', () => {
-    expect(applyClothingFeedback(undefined, 'running', 'too_warm')).toEqual({ running: 0.5 });
-    expect(applyClothingFeedback(undefined, 'running', 'too_cold')).toEqual({ running: -0.5 });
+    expect(applyClothingFeedback(undefined, 'running', 'too_warm')).toEqual({ running: 1 });
+    expect(applyClothingFeedback(undefined, 'running', 'too_cold')).toEqual({ running: -1 });
+    expect(applyClothingFeedback({ running: 1 }, 'running', 'too_warm')).toEqual({ running: 1.5 });
     expect(applyClothingFeedback({ running: 1 }, 'running', 'good')).toEqual({ running: 1 });
   });
 
   it('houdt elke sport apart', () => {
     const a = applyClothingFeedback({ running: 1 }, 'cycling', 'too_cold');
-    expect(a).toEqual({ running: 1, cycling: -0.5 });
+    expect(a).toEqual({ running: 1, cycling: -1 });
     expect(adjustFor(a, 'hiking')).toBe(0);
     expect(adjustFor(a, undefined)).toBe(0);
   });
@@ -56,5 +57,26 @@ describe('de zin in de instellingen', () => {
     expect(clothingAdjustSummary(undefined)).toBe('Nu: de standaard.');
     expect(clothingAdjustSummary({ running: 1.5, cycling: -0.5 })).toBe('Nu: Hardlopen 1,5 graden lichter, fietsen 0,5 graden warmer.');
     expect(clothingAdjustSummary({ hiking: 1 })).toBe('Nu: Wandelen 1 graad lichter.');
+  });
+});
+
+describe('een oude waarde en de zin na een tik', () => {
+  it('een bewaarde min een uit een oude back-up blijft geldig en schuift daarna een halve', () => {
+    expect(cleanClothingAdjust({ running: -1 })).toEqual({ value: { running: -1 }, skipped: 0 });
+    expect(applyClothingFeedback({ running: -1 }, 'running', 'too_cold')).toEqual({ running: -1.5 });
+    expect(applyClothingFeedback({ running: -1 }, 'running', 'too_warm')).toEqual({ running: -0.5 });
+  });
+
+  it('vanaf plus 3,5 stopt de eerste stap ook bij het maximum', () => {
+    expect(applyClothingFeedback({ hiking: MAX_ADJUST_C - 0.5 }, 'hiking', 'too_warm')).toEqual({ hiking: MAX_ADJUST_C });
+    expect(applyClothingFeedback({ hiking: MAX_ADJUST_C }, 'hiking', 'too_warm')).toEqual({ hiking: MAX_ADJUST_C });
+  });
+
+  it('zegt wat er de volgende keer anders wordt', () => {
+    expect(feedbackSentence(undefined, 'running', 'too_cold')).toContain('Een volgende keer warmer: nu 1 graad warmer.');
+    expect(feedbackSentence({ running: -1 }, 'running', 'too_cold')).toContain('nu 1,5 graden warmer');
+    expect(feedbackSentence({ running: 0.5 }, 'running', 'too_cold')).toBe('Genoteerd. Je zit weer op de standaard.');
+    expect(feedbackSentence({ running: -3.5 }, 'running', 'too_cold')).toContain('Verder dan 4 graden schuift het niet.');
+    expect(feedbackSentence(undefined, 'running', 'good')).toBe('Fijn, dan blijft het zo.');
   });
 });
