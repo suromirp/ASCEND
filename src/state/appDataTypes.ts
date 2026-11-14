@@ -91,7 +91,8 @@ export interface AppData {
   // caller owns, and the caller then calls announceSaved(batch) once, so they
   // get one summary instead of one screen each (MacroFactor "Alles opslaan").
   // Each caller has its own list: what one saves is never announced by another.
-  logSession: (input: LogSessionInput, opts?: { batch?: SavedMoment[] }) => Promise<boolean>;
+  // `onWriteError`: the screen shows a failed write itself (state/logSave.ts); storageNotice then stays quiet.
+  logSession: (input: LogSessionInput, opts?: { batch?: SavedMoment[]; onWriteError?: (err: unknown) => void }) => Promise<boolean>;
   announceSaved: (batch: SavedMoment[]) => void;
   // A write to local storage failed (storage full, blocked). Shown as a
   // banner so a failed save is never silent.

@@ -10,7 +10,7 @@
 // Alleen Annuleren gooit een ingevuld concept weg; het kruis, de achtergrond, wegslepen, de terugknop
 // en herladen laten het staan (een leeg concept gaat altijd weg). De terugknop gaat in stap 2 eerst terug naar stap 1 (laag voor laag).
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import type { Program } from '../models/program';
 import type { SessionTemplate, SessionVariant } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
@@ -26,6 +26,7 @@ import { useLogForm, type LogForm } from './logForm/useLogForm';
 import type { EnabledSports } from '../engine/sports';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, PlaceChoice, RpeField, VariantField } from './logForm/LogFormParts';
 import { chosenPlaceLabel, placeLabel, SheetMode, showsPlace } from './logForm/formRules';
+import { failedNote, logWithOwnNotice, reportIfGone } from '../state/logSave';
 import { alreadyLogged, clearsDraft, footState, HOW_TEXT, submitLog, type CloseWay, type FootState } from './logForm/howDidItGo';
 
 export function HowDidItGoSheet({
@@ -46,13 +47,21 @@ export function HowDidItGoSheet({
   // Na Opslaan, voor onClose: het blad lag over de Briefing, die gaat dan ook dicht.
   onSaved?: () => void;
 }) {
-  const { logSession, settings, sessionLogs } = useAppData();
+  const { logSession, reportStorageError, settings, sessionLogs } = useAppData();
   const form = useLogForm({ template, plannedSessionId, scheduledDate, program, initialVariant, startAtForm: true });
   const savingRef = useRef(false);
   // Na de grens in tijd mag het blad dicht terwijl het opslaan nog loopt; het concept blijft dan staan.
   const slowRef = useRef(false);
   const closedRef = useRef(false);
   const finish = () => { if (!closedRef.current) { closedRef.current = true; onClose(); } };
+  // Ook weg als het blad van buitenaf verdwijnt, zonder dat het zelf sloot.
+  const goneRef = useRef(false);
+  useEffect(() => {
+    goneRef.current = false;
+    return () => {
+      goneRef.current = true;
+    };
+  }, []);
   // Alleen Annuleren wist een ingevuld concept (logForm/howDidItGo.ts#clearsDraft); een tik naast het blad,
   // wegslepen, het kruis en de terugknop laten het staan. Terwijl het opslaat blijft het blad open, tot de grens.
   const wayRef = useRef<CloseWay>('backdrop');
@@ -70,6 +79,8 @@ export function HowDidItGoSheet({
   const [saving, setSaving] = useState(false);
   const [slow, setSlow] = useState(false);
   const [failed, setFailed] = useState(false);
+  // De zin bij mislukt, vastgelegd op het moment van de uitkomst.
+  const [failedText, setFailedText] = useState<string>();
   const [otherOpen, setOtherOpen] = useState(false);
   // Al gedaan (je horloge vinkte af terwijl het blad openstond): niets opslaan, geen tweede log.
   const alreadyDone = !saving && alreadyLogged(plannedSessionId, sessionLogs);
@@ -87,13 +98,20 @@ export function HowDidItGoSheet({
     setConfirmLong(false);
     setFailed(false);
     setSaving(true);
+    let writeError: unknown;
     await submitLog({
       busy: savingRef,
-      save: () => logSession(input),
+      // De zin onderaan zegt het zelf: geen melding bovenin erbij (state/logSave.ts).
+      save: () => logWithOwnNotice(logSession, input, (err) => { writeError = err; }),
       onSlow: () => { slowRef.current = true; setSlow(true); },
       onSaved: () => { form.clearDraft(); onSaved?.(); finish(); },
       // Mislukt: het blad blijft open met alles wat je invulde en het concept.
-      onFailed: () => setFailed(true),
+      // Is het blad al dicht (na de grens mag dat), dan ziet niemand de zin: de fout gaat naar de melding bovenin.
+      onFailed: () => {
+        reportIfGone(!closedRef.current && !goneRef.current, writeError, reportStorageError);
+        setFailedText(failedNote(plannedSessionId ? HOW_TEXT.failed : HOW_TEXT.failedLoose));
+        setFailed(true);
+      },
     });
     slowRef.current = false;
     setSaving(false);
@@ -105,7 +123,7 @@ export function HowDidItGoSheet({
   const day = values.doneOn === form.today ? 'Vandaag' : `${weekdayShortNL(values.doneOn)} ${formatDateNL(values.doneOn)}`;
   const place = showsPlace(form, template) ? chosenPlaceLabel(template, values.modalityKey, settings.enabledSports) : undefined;
   const dayLine = [day, place].filter(Boolean).join(' · ');
-  const footer = <SheetFoot state={foot} saving={saving} slow={slow} failed={failed} loose={!plannedSessionId} rest={shape.isRest} minutes={entryMinutes(values.duration)} onClose={closeAs(foot === 'already' ? 'already' : 'cancel')} onAdjust={() => { setConfirmLong(false); setStep(1); }} onSave={(confirmed) => void save(confirmed)} />;
+  const footer = <SheetFoot state={foot} saving={saving} slow={slow} failed={failed} failedText={failedText} loose={!plannedSessionId} rest={shape.isRest} minutes={entryMinutes(values.duration)} onClose={closeAs(foot === 'already' ? 'already' : 'cancel')} onAdjust={() => { setConfirmLong(false); setStep(1); }} onSave={(confirmed) => void save(confirmed)} />;
 
   if (step === 2) {
     return (
@@ -180,8 +198,8 @@ export function StepTwo({ form, template, scheduledDate, enabledSports, otherOpe
 
 // Onderaan: al gedaan (alleen Sluiten), Klopt dit? bij een heel lange duur, of Annuleren en Opslaan met
 // wat het opslaan zegt (duurt lang, lukte niet).
-export function SheetFoot({ state, saving, slow, failed, loose = false, rest, minutes, onClose, onAdjust, onSave }: {
-  state: FootState; saving: boolean; slow: boolean; failed: boolean; loose?: boolean; rest: boolean; minutes: number; onClose: () => void; onAdjust: () => void; onSave: (confirmed: boolean) => void;
+export function SheetFoot({ state, saving, slow, failed, failedText, loose = false, rest, minutes, onClose, onAdjust, onSave }: {
+  state: FootState; saving: boolean; slow: boolean; failed: boolean; failedText?: string; loose?: boolean; rest: boolean; minutes: number; onClose: () => void; onAdjust: () => void; onSave: (confirmed: boolean) => void;
 }) {
   if (state === 'already') {
     return (
@@ -206,7 +224,7 @@ export function SheetFoot({ state, saving, slow, failed, loose = false, rest, mi
   return (
     <div>
       {(slow || failed) && (
-        <p role="status" className="mb-2 text-xs leading-snug" style={{ color: failed ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{failed ? (loose ? HOW_TEXT.failedLoose : HOW_TEXT.failed) : HOW_TEXT.slow}</p>
+        <p role="status" className="mb-2 text-xs leading-snug" style={{ color: failed ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{failed ? failedText ?? (loose ? HOW_TEXT.failedLoose : HOW_TEXT.failed) : HOW_TEXT.slow}</p>
       )}
       <div className="flex gap-3">
         <SecondaryButton onClick={onClose} disabled={saving && !slow} className="min-w-[112px] flex-none px-4">{HOW_TEXT.cancel}</SecondaryButton>

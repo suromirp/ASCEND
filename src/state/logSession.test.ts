@@ -1,13 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { GoalMilestonesRepo, PlannedSessionsRepo, SessionLogsRepo, wipeAllData } from '../storage/database';
 import { runLogSession, settleLogOutcome, LogNotSaved, type LogSessionDeps } from './logSession';
-import { withTimeout, TimeoutError } from '../utils/withTimeout';
 import type { LogSessionInput } from './appDataTypes';
 import type { SavedMoment } from '../engine/savedMoments';
 import { todayISO } from '../utils/dates';
 
 const forgeSrc = Object.values(import.meta.glob('../components/forge/ForgeSheets.tsx', { query: '?raw', import: 'default', eager: true }))[0] as string;
-const sportSrc = Object.values(import.meta.glob('../components/sports/SportAskLine.tsx', { query: '?raw', import: 'default', eager: true }))[0] as string;
 
 // Alles nagemaakt.
 const loose = (over: Partial<LogSessionInput> = {}): LogSessionInput => ({ templateId: 'tpl_easy_run', type: 'cardio', variant: 'full', durationMinutes: 40, ...over });
@@ -126,6 +124,40 @@ describe('logSession: het log staat er, ook als een stap erna faalt', () => {
     expect(await SessionLogsRepo.getAll()).toHaveLength(1);
   });
 
+  it('een horloge-activiteit bij een geplande training hangt, daarna dezelfde activiteit los of bij een andere training: een log', async () => {
+    await PlannedSessionsRepo.put({ id: 'p1', templateId: 'tpl_easy_run', scheduledDate: '2026-11-10', weekStartDate: '2026-11-09', status: 'planned', order: 0 });
+    await PlannedSessionsRepo.put({ id: 'p2', templateId: 'tpl_easy_run', scheduledDate: '2026-11-11', weekStartDate: '2026-11-09', status: 'planned', order: 0 });
+    let release!: () => void;
+    const hold = new Promise<void>((resolve) => (release = resolve));
+    const realPut = SessionLogsRepo.put.bind(SessionLogsRepo);
+    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => {
+      await hold;
+      return realPut(log);
+    });
+    const { deps } = makeDeps();
+    const base = loose({ externalId: 'intervals.icu:i-9', source: 'garmin' });
+    const first = runLogSession({ ...base, plannedSessionId: 'p1' }, undefined, deps);
+    // Opnieuw tikken na de grens met een andere keuze, terwijl de eerste nog onderweg is.
+    expect(await runLogSession(base, undefined, deps)).toBe(false);
+    expect(await runLogSession({ ...base, plannedSessionId: 'p2' }, undefined, deps)).toBe(false);
+    release();
+    expect(await first).toBe(true);
+    expect(await runLogSession(base, undefined, deps)).toBe(false);
+    const logs = await SessionLogsRepo.getAll();
+    expect(logs).toHaveLength(1);
+    expect(logs[0].plannedSessionId).toBe('p1');
+  });
+
+  it('een horloge-activiteit waarvan het schrijven mislukte is daarna weer vrij', async () => {
+    const put = vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('vol'));
+    const { deps } = makeDeps();
+    const input = loose({ externalId: 'intervals.icu:i-10', source: 'garmin' });
+    expect(await runLogSession(input, undefined, deps)).toBe(false);
+    put.mockRestore();
+    expect(await runLogSession(input, undefined, deps)).toBe(true);
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+  });
+
   it('de dag zelf: zonder datum vandaag, met een datum die dag', async () => {
     const { deps } = makeDeps();
     await runLogSession(loose(), undefined, deps);
@@ -196,40 +228,15 @@ describe('settleLogOutcome: nee is niet altijd "staat er al"', () => {
     await expect(settleLogOutcome(await runLogSession(input, undefined, deps), input)).rejects.toBeInstanceOf(LogNotSaved);
   });
 
-  it('opslaan blijft hangen: de time-out gooit, en een keuze die na het log komt wordt niet gezet', async () => {
-    vi.useFakeTimers();
-    try {
-      let choice = false;
-      let cancelled = false;
-      const gate = new Promise<void>(() => undefined);
-      const run = withTimeout((async () => {
-        await gate;
-        if (cancelled) return;
-        choice = true;
-      })(), 8000);
-      const caught = run.catch((e) => {
-        cancelled = true;
-        return e;
-      });
-      await vi.advanceTimersByTimeAsync(8000);
-      expect(await caught).toBeInstanceOf(TimeoutError);
-      expect(choice).toBe(false);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
   it('de lezing van het logboek faalt bij nee: veilig LogNotSaved, het concept blijft', async () => {
     vi.spyOn(SessionLogsRepo, 'getAll').mockRejectedValue(new Error('kapot'));
     await expect(settleLogOutcome(false, { plannedSessionId: 'p1' })).rejects.toBeInstanceOf(LogNotSaved);
   });
 
-  it('Forge en de sportvraag gebruiken settleLogOutcome, en Forge weegt nee niet meer als "al opgeslagen"', () => {
+  // De sportvraag en haar time-out: state/logSave.ts#saveLogThenChoice, getest in logSave.test.ts.
+  it('Forge gebruikt settleLogOutcome en weegt nee niet meer als "al opgeslagen"', () => {
     const forge = forgeSrc;
-    const sport = sportSrc;
     expect(forge).toMatch(/settleLogOutcome\(await logSession\(/);
     expect(forge.indexOf('settleLogOutcome(await')).toBeLessThan(forge.indexOf('p.dropDraft();\n            if (saved)'));
-    expect(sport.match(/settleLogOutcome\(await logSession\(/g)).toHaveLength(2);
-    expect(sport.match(/if \(cancelled\) return;/g)).toHaveLength(2);
   });
 });

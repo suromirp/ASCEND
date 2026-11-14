@@ -31,7 +31,7 @@ import { makeId } from '../utils/id';
 import { showCompletionQuote } from '../engine/overviewSettings';
 import type { LogSessionInput } from './appDataTypes';
 import { bumpPlanRevision, planSettled } from './planningSync';
-import { runLogSession } from './logSession';
+import { runLogSession, type LogSessionOpts } from './logSession';
 import type { Dispatch, SetStateAction, RefObject } from 'react';
 
 export function useLogActions(deps: {
@@ -76,7 +76,7 @@ export function useLogActions(deps: {
   const { heartRate, tempoStablePieces } = settings;
   // Het schrijven zelf staat in state/logSession.ts (zonder React, met tests).
   const logSession = useCallback(
-    (input: LogSessionInput, opts?: { batch?: SavedMoment[] }): Promise<boolean> =>
+    (input: LogSessionInput, opts?: LogSessionOpts): Promise<boolean> =>
       runLogSession(input, opts, { settings: { heartRate, tempoStablePieces }, loggingInFlight, reportStorageError, refresh, announceSaved }),
     [refresh, heartRate, tempoStablePieces, reportStorageError, announceSaved, loggingInFlight],
   );
