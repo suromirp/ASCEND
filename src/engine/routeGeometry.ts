@@ -177,7 +177,8 @@ export function deadEnds(points: readonly RoutePoint[]): DeadEnd[] {
     const tip = pts[f.i];
     if (tips.some((t) => metersBetween(t.tip, tip) <= SPUR_SAME_TIP_M)) continue;
     if (!onlyTurnsAt(pts, tip)) continue;
-    tips.push({ tip, atM: at[f.i], lengthM: f.s * SPUR_STEP_M });
+    // De telling loopt door de speling van een stap twee stappen te ver: die gaan eraf.
+    tips.push({ tip, atM: at[f.i], lengthM: Math.max(0, f.s - 2) * SPUR_STEP_M });
   }
   return tips;
 }
@@ -214,9 +215,10 @@ export function withoutDeadEnds(points: RoutePoint[]): RoutePoint[] {
 
 // ---------- Grote wegen ----------
 
-// Meters over een grote weg: een stap telt als het punt waar hij eindigt op een grote weg ligt (`bigRoad`).
+// Meters over een grote weg: een stap telt als beide punten op een grote weg liggen (`bigRoad`). Zo telt
+// een omgekeerde lijn (de terugweg van heen en terug) hetzelfde als de heenweg.
 export function bigRoadMeters(points: readonly RoutePoint[]): number {
   let total = 0;
-  for (let i = 1; i < points.length; i++) if (points[i].bigRoad) total += metersBetween(points[i - 1], points[i]);
+  for (let i = 1; i < points.length; i++) if (points[i].bigRoad && points[i - 1].bigRoad) total += metersBetween(points[i - 1], points[i]);
   return total;
 }

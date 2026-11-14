@@ -25,6 +25,12 @@ export function brouterUrl(waypoints: RoutePoint[], profile = BROUTER_PROFILE, a
   return `${BROUTER_URL}?lonlats=${lonlats}${nogos}&profile=${profile}${BROUTER_PROFILE_PARAMS}&alternativeidx=0&format=geojson`;
 }
 
+// Hemelsbreed in meters (plat gerekend; op de stukjes van een routeplanner klopt dat op een meter).
+function metersApart(a: RoutePoint, b: RoutePoint): number {
+  const k = Math.cos((a.lat * Math.PI) / 180);
+  return Math.hypot((b.lat - a.lat) * 111_195, (b.lon - a.lon) * 111_195 * k);
+}
+
 const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
 
 // De punten uit het GeoJSON-antwoord; undefined als de vorm niet klopt. De tabel `messages` zegt per
@@ -57,7 +63,9 @@ function markBigRoads(points: RoutePoint[], messages: unknown): void {
   const lonAt = head.indexOf('Longitude');
   const latAt = head.indexOf('Latitude');
   const tagsAt = head.indexOf('WayTags');
+  const distAt = head.indexOf('Distance');
   if (lonAt < 0 || latAt < 0 || tagsAt < 0) return;
+  const step = (i: number) => metersApart(points[i - 1], points[i]);
   const key = (lon: number, lat: number) => `${Math.round(lon * 1e6)},${Math.round(lat * 1e6)}`;
   const flags: boolean[] = new Array(points.length).fill(false);
   let from = 1;
@@ -67,9 +75,17 @@ function markBigRoads(points: RoutePoint[], messages: unknown): void {
     const lat = Number(row[latAt]);
     if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
     const end = `${Math.round(lon)},${Math.round(lat)}`;
+    // Het eind van de rij: het punt met die plek waar ook de lengte van de rij klopt (een lijn die zichzelf
+    // kruist raakt dezelfde plek eerder). Zonder lengte in de rij: de eerste treffer.
+    const want = distAt >= 0 ? Number(row[distAt]) : NaN;
     let to = from;
-    while (to < points.length && key(points[to].lon, points[to].lat) !== end) to++;
-    if (to >= points.length) return;
+    let walked = step(from);
+    for (;;) {
+      if (to >= points.length) return;
+      if (key(points[to].lon, points[to].lat) === end && (!Number.isFinite(want) || Math.abs(walked - want) <= Math.max(10, want * 0.05))) break;
+      to++;
+      if (to < points.length) walked += step(to);
+    }
     const big = typeof row[tagsAt] === 'string' && BIG_ROAD.test(row[tagsAt] as string);
     for (let i = from; i <= to; i++) flags[i] = big;
     from = to + 1;

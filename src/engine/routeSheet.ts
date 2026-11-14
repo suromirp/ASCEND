@@ -111,7 +111,8 @@ export function loopLines(p: RouteProposal, target: RouteTarget, notes: string[]
   const warn: string[] = [];
   const info: string[] = [];
   for (const note of notes) {
-    if ((p.notice && note === p.notice) || (short && note.startsWith(short))) warn.push(note);
+    // Te kort, de melding van de lus en een stuk langs een grote weg zijn let op (amber).
+    if ((p.notice && note === p.notice) || (short && note.startsWith(short)) || note.startsWith('Langs een grote weg:')) warn.push(note);
     else info.push(note);
   }
   return { warn, info };

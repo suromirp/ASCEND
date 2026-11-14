@@ -256,6 +256,7 @@ export function cutAt(points: RoutePoint[], meters: number): RoutePoint[] {
   const b = points[i];
   const mid: RoutePoint = { lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t };
   if (a.ele !== undefined && b.ele !== undefined) mid.ele = a.ele + (b.ele - a.ele) * t;
+  if (b.bigRoad) mid.bigRoad = true;
   return [...points.slice(0, i), mid];
 }
 
@@ -626,7 +627,7 @@ export const shortLine = (p: Pick<RouteProposal, 'distanceM'>, target: RouteTarg
 
 // Vanaf zoveel meter langs een grote weg zegt de lus het erbij: de aanvraag mijdt ze al, dit is wat overblijft.
 export const BIG_ROAD_NOTE_M = 300;
-export const bigRoadLine = (meters: number): string => `${km(meters)} langs een grote weg; een rustiger weg vond de routeplanner niet.`;
+export const bigRoadLine = (meters: number): string => `Langs een grote weg: ${km(meters)}.`;
 
 // Wat je over deze lus moet weten naast de getallen: het droge feit, in korte zinnen.
 export function proposalNotes(p: RouteProposal, target: RouteTarget): string[] {

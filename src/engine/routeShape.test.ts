@@ -49,6 +49,15 @@ describe('doodlopende stukken tellen', () => {
     expect(deadEnds(line)).toHaveLength(1);
   });
 
+  it('de lengte van een tak klopt op een stap na, en knippen laat de rest staan', () => {
+    const j = at(0, 1000);
+    const y = walk(START, j, at(90, 500, j), j, at(0, 1000, j));
+    const ends = deadEnds(y);
+    expect(ends).toHaveLength(1);
+    expect(Math.abs(ends[0].lengthM - 500)).toBeLessThanOrEqual(10);
+    expect(Math.abs(lineLength(withoutDeadEnds(y)) - 2000)).toBeLessThanOrEqual(25);
+  });
+
   it('een echte lus: geen', () => {
     expect(deadEnds(walk(START, at(0, 1000), at(45, 1414), at(90, 1000), START))).toHaveLength(0);
   });
@@ -204,21 +213,30 @@ describe('grote wegen', () => {
   it('BRouter: de wegsoort per stuk wordt een markering per punt; een onbekend eindpunt markeert niets', () => {
     const coords = [[5.9, 52.1, 10], [5.901, 52.1, 10], [5.902, 52.1, 10], [5.903, 52.1, 10]];
     const head = ['Longitude', 'Latitude', 'Elevation', 'Distance', 'CostPerKm', 'ElevCost', 'TurnCost', 'NodeCost', 'InitialCost', 'WayTags', 'NodeTags', 'Time', 'Energy'];
-    const row = (lon: number, tags: string) => [String(Math.round(lon * 1e6)), '52100000', '10', '68', '0', '0', '0', '0', '0', tags, '', '0', '0'];
+    const row = (lon: number, tags: string, dist = 68) => [String(Math.round(lon * 1e6)), '52100000', '10', String(dist), '0', '0', '0', '0', '0', tags, '', '0', '0'];
     const raw = (rows: unknown[][]) => ({ features: [{ geometry: { coordinates: coords }, properties: { messages: [head, ...rows] } }] });
-    const points = mapBrouter(raw([row(5.901, 'highway=track'), row(5.903, 'highway=primary surface=asphalt')])) as RoutePoint[];
+    const points = mapBrouter(raw([row(5.901, 'highway=track'), row(5.903, 'highway=primary surface=asphalt', 137)])) as RoutePoint[];
     expect(points.map((p) => !!p.bigRoad)).toEqual([false, false, true, true]);
-    expect(bigRoadMeters(points)).toBeCloseTo(metersBetween(points[1], points[3]), 3);
+    expect(bigRoadMeters(points)).toBeCloseTo(metersBetween(points[2], points[3]), 3);
+    // Omgekeerd (de terugweg) telt hetzelfde.
+    expect(bigRoadMeters([...points].reverse())).toBeCloseTo(bigRoadMeters(points), 6);
     const lost = mapBrouter(raw([row(5.9055, 'highway=primary')])) as RoutePoint[];
     expect(lost.some((p) => p.bigRoad)).toBe(false);
     expect(mapBrouter(raw([row(5.903, 'highway=primary_linkage')]))?.some((p) => p.bigRoad)).toBe(false);
+  });
+
+  it('een lijn die dezelfde plek twee keer raakt: het eind van de rij is waar ook de lengte klopt', () => {
+    const coords = [[5.9, 52.1], [5.901, 52.1], [5.901, 52.101], [5.9, 52.101], [5.9, 52.1], [5.899, 52.1]];
+    const head = ['Longitude', 'Latitude', 'Distance', 'WayTags'];
+    const points = mapBrouter({ features: [{ geometry: { coordinates: coords }, properties: { messages: [head, ['5900000', '52100000', '359', 'highway=track'], ['5899000', '52100000', '68', 'highway=primary']] } }] }) as RoutePoint[];
+    expect(points.map((p) => !!p.bigRoad)).toEqual([false, false, false, false, false, true]);
   });
 
   it('een regel vanaf 300 m, daaronder niets', () => {
     const p: RouteProposal = { style: 'adventure', source: 'brouter', points: [START], distanceM: 6000, ascentM: 0, repeatedShare: 0 };
     const target = { distanceKm: 6, ascentM: 0 };
     expect(proposalNotes({ ...p, bigRoadM: BIG_ROAD_NOTE_M - 1 }, target)).toEqual([]);
-    expect(proposalNotes({ ...p, bigRoadM: 800 }, target)).toEqual(['0,8 km langs een grote weg; een rustiger weg vond de routeplanner niet.']);
+    expect(proposalNotes({ ...p, bigRoadM: 800 }, target)).toEqual(['Langs een grote weg: 0,8 km.']);
   });
 });
 
