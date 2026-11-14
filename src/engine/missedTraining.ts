@@ -220,7 +220,8 @@ export function planMissed(input: MissedInput): MissedPlan {
     .sort((a, b) => a.session.scheduledDate.localeCompare(b.session.scheduledDate) || a.session.order - b.session.order || a.session.id.localeCompare(b.session.id));
   // Wat voor een ziekmelding of vakantie nog open stond, vervalt: één regel zolang de pauze loopt, daarna niets.
   const lapsedPairs = recent.map((m) => ({ m, pause: pauseSince(m.session.scheduledDate, today, illnessEpisodes, leavePeriods) })).filter((x) => !!x.pause);
-  const running = lapsedPairs.filter((x) => x.pause!.running);
+  // Alleen de eerste drie dagen van de pauze, niet elke dag (Pathfinder, 14 november).
+  const running = lapsedPairs.filter((x) => x.pause!.running && daysBetween(x.pause!.start, today) <= 2);
   // Met Niets doen zegt ASCEND ook niets over vervallen.
   const lapsed = running.length > 0 && settings.choice !== 'off' ? { kind: running.at(-1)!.pause!.kind, sessions: running.map((x) => x.m) } : undefined;
   const lapsedIds = new Set(lapsedPairs.map((x) => x.m.session.id));
@@ -285,7 +286,7 @@ export function linkLine(session: PlannedSession, template: SessionTemplate, log
 export function lapsedLine(kind: 'ill' | 'away', sessions: readonly MissedSession[]): string {
   const names = sessions.map((m) => askLine(m.session, m.template));
   const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} en ${names.at(-1)}`;
-  const why = kind === 'ill' ? 'je bent ziek gemeld' : 'je bent weg';
+  const why = kind === 'ill' ? 'je meldde ziekte' : 'je meldde een vakantie';
   return `${list} ${names.length === 1 ? 'vervalt' : 'vervallen'}: ${why}. Inhalen hoeft niet.`;
 }
 

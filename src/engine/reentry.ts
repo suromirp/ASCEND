@@ -64,8 +64,9 @@ export function reentryAdjustments(weeks: unknown): DurationAdjustment[] {
 // Twee weken terugkijken; daaronder telt het als weinig training.
 export const REENTRY_LOOKBACK_DAYS = 14;
 const REENTRY_SHARE = 0.4;
-// Gevraagd op de dag dat je terug bent en de twee dagen erna.
-const OFFER_DAYS = 2;
+// Gevraagd op de dag dat je terug bent en de drie dagen erna: wie op reis is opent de app niet altijd meteen
+// (Pathfinder, 14 november). Het venster voor de kortere duur blijft zeven dagen vanaf de dag terug.
+const OFFER_DAYS = 3;
 const WINDOW_DAYS = 7;
 
 export interface ReentryInputs {
@@ -168,7 +169,7 @@ const CAUSE_TEXT: Record<ReentryCause, string> = {
 const count = (n: number) => `${n} ${n === 1 ? 'training' : 'trainingen'}`;
 const share = (factor: number) => (factor <= 0.5 ? 'de helft' : 'driekwart');
 
-export const REENTRY_TITLE = 'Rustiger instap deze week?';
+export const REENTRY_TITLE = 'Rustiger instap de eerste week terug?';
 
 export function reentryEffect(p: ReentryProposal): string {
   return `De afgelopen twee weken deed je ${count(p.done)}${CAUSE_TEXT[p.cause]}. Een gewone week heeft er ${p.usual}. Voorstel: tot en met ${formatWeekdayDateNL(p.week.until)} duren je trainingen ${share(p.week.factor)} van de gewone tijd. Welke trainingen er staan, je fase en je doeldatum blijven zoals ze zijn. Met Liever niet blijft alles staan.`;

@@ -113,7 +113,14 @@ describe('L: bij een ziekmelding of vakantie vervalt wat ervoor open stond, met 
     const plan = planMissed(missedInput({ plannedSessions: [legs, hike], leavePeriods: leave }));
     expect(plan.item).toBeUndefined();
     expect(plan.lapsed?.kind).toBe('away');
-    expect(lapsedLine(plan.lapsed!.kind, plan.lapsed!.sessions)).toBe('Benen A (zwaar) van woensdag 25 november en Bergtocht van zondag 29 november vervallen: je bent weg. Inhalen hoeft niet.');
+    expect(lapsedLine(plan.lapsed!.kind, plan.lapsed!.sessions)).toBe('Benen A (zwaar) van woensdag 25 november en Bergtocht van zondag 29 november vervallen: je meldde een vakantie. Inhalen hoeft niet.');
+  });
+
+  it('de regel staat de eerste drie dagen van de pauze, niet elke dag', () => {
+    expect(planMissed(missedInput({ plannedSessions: [legs, hike], leavePeriods: leave, today: '2026-12-02' })).lapsed).toBeDefined();
+    const later = planMissed(missedInput({ plannedSessions: [legs, hike], leavePeriods: leave, today: '2026-12-03' }));
+    expect(later.lapsed).toBeUndefined();
+    expect(later.item).toBeUndefined();
   });
 
   it('na de vakantie geen regel meer en de vraag komt niet terug', () => {
@@ -216,9 +223,10 @@ describe('K: rustiger instap na ziekte en een vakantie', () => {
     expect(resolveReentry('altijd')).toBe('three_quarters');
   });
 
-  it('hoogstens drie dagen na terugkomst, en niet terwijl je nog weg bent', () => {
+  it('tot en met dag 4 na terugkomst, met hetzelfde id en hetzelfde venster, en niet terwijl je nog weg bent', () => {
     expect(proposeReentry(input({ today: '2026-12-09' }))).toBeDefined();
-    expect(proposeReentry(input({ today: '2026-12-10' }))).toBeUndefined();
+    expect(proposeReentry(input({ today: '2026-12-10' }))).toMatchObject({ id: 'reentry:2026-12-07', week: { from: '2026-12-07', until: '2026-12-13' } });
+    expect(proposeReentry(input({ today: '2026-12-11' }))).toBeUndefined();
     expect(proposeReentry(input({ today: '2026-12-05' }))).toBeUndefined();
   });
 

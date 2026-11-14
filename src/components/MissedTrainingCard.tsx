@@ -29,7 +29,7 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
   if (!item && lapsed) {
     return (
       <Card data-missed-lapsed="">
-        <Eyebrow>Gemist</Eyebrow>
+        <Eyebrow>Vervallen</Eyebrow>
         <p className="mt-1 text-base" style={{ color: 'var(--color-ink)' }}>{lapsedLine(lapsed.kind, lapsed.sessions)}</p>
       </Card>
     );

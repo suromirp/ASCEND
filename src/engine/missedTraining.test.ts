@@ -133,7 +133,7 @@ describe('ziek gemeld: de vragen wachten', () => {
     expect(plan.item).toBeUndefined();
     expect(plan.autoSkip).toEqual([]);
     expect(plan.lapsed).toMatchObject({ kind: 'ill', sessions: [{ session: { id: 'za' } }] });
-    expect(lapsedLine(plan.lapsed!.kind, plan.lapsed!.sessions)).toBe('Rustige duurloop van zaterdag 24 oktober vervalt: je bent ziek gemeld. Inhalen hoeft niet.');
+    expect(lapsedLine(plan.lapsed!.kind, plan.lapsed!.sessions)).toBe('Rustige duurloop van zaterdag 24 oktober vervalt: je meldde ziekte. Inhalen hoeft niet.');
   });
 
   it('geen koppelvoorstel zolang je ziek bent', () => {
