@@ -42,5 +42,5 @@ Alles staat alleen op deze telefoon
 Nog nooit
 [knop: Gidsen en kennis]
 Gidsen en kennis
-Weer en kleding, kennisbank en bronnen
+Weer, kennis, datavelden en bronnen
 Versie <bouwtijd>Train. Progress. Explore. Ascend.
