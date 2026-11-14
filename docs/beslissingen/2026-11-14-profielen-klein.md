@@ -26,3 +26,7 @@ De zin "Leeg of 0 betekent: geen duur" onder het veld Duur.
 ## Terugdraaien
 
 `durationTooShort` laten teruggeven wat `entryMinutes(...) < 0` geeft; `SHORT_TRAINING_SHARE` op 0 zetten.
+
+## Aanvulling (Pathfinder, 14 november)
+
+Eén drempel en één zin: de oude tweede drempel na afronden (onder 70 procent van de duur, "Korter dan gepland. Prima: iets doen telt.") is vervallen. Onder de helft heet het een korte training, daarboven geen oordeel over de duur. "Zwaarder dan gepland" en "Slechter dan normaal" gaan voor de korte training, pijn ging al voor. Het feit "Zwaarte volgens MacroFactor" staat alleen als de aanroeper zegt dat MacroFactor gekoppeld is; zonder die opgave geen feit (ook in de Briefing en het trainingsblad).

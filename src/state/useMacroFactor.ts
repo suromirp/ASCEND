@@ -67,13 +67,19 @@ export function useMacroFactor(): MacroFactorView {
 // meteen goed, zodat de chip alleen bij de eerste opening na de start kan verschijnen.
 let lastLinked = false;
 
+// Gekoppeld: er is een export ingelezen. Los van de hook, zodat een test het kan lezen.
+export async function readMacroFactorLinked(): Promise<boolean> {
+  lastLinked = !!(await getMacroFactorState()).readAt;
+  return lastLinked;
+}
+
 export function useMacroFactorLinked(): boolean {
   const [linked, setLinked] = useState(lastLinked);
   useEffect(() => {
     let alive = true;
     const load = () =>
-      void getMacroFactorState()
-        .then((s) => { lastLinked = !!s.readAt; if (alive) setLinked(lastLinked); })
+      void readMacroFactorLinked()
+        .then((on) => { if (alive) setLinked(on); })
         .catch(() => undefined);
     load();
     const stop = onMacroFactorChange(load);

@@ -103,6 +103,9 @@ function plannedRpeTop(template: SessionTemplate, date: string, program: Program
   return m ? Number(m[2] ?? m[1]) : undefined;
 }
 
+// Het aantal korte trainingen als woord: "twee korter dan gepland".
+const SHORT_COUNT_WORD = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
+
 export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   const { weekStart, plannedSessions, logs, templates, program, planChangeLog, asOf, illnessEpisodes, weeklyChecks, keyFocus } = inputs;
   const weeklyCheck = weeklyChecks?.find((c) => c.weekStart === weekStart);
@@ -212,7 +215,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     }).length;
     advice.push(short === 0
       ? 'Alles gedaan wat gepland stond. Zo bouw je op.'
-      : `Elke training gedaan, ${short === 1 ? 'één' : short} korter dan gepland. Dat telt ook.`);
+      : `Elke training gedaan, ${SHORT_COUNT_WORD[short] ?? short} korter dan gepland. Dat telt ook.`);
   } else if (missedSessions.length > 0) {
     // Only a key session that is still open can be caught up; a skipped one
     // was already let go.

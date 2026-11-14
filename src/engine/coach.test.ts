@@ -65,7 +65,8 @@ describe('coachReaction', () => {
   it('reacts to what was filled in', () => {
     expect(coachReaction(log('tpl_easy_run', '2026-09-29', { rpe: 7, durationMinutes: 30 }), t('tpl_easy_run'), program)).toContain('Zwaarder dan gepland (zwaarte 7, gepland tot 4)');
     const planned = resolveEffectiveFullDuration(t('tpl_easy_run'), '2026-09-29', program);
-    expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: Math.round(planned * 0.6) }), t('tpl_easy_run'), program)).toContain('Korter dan gepland');
+    // Eén drempel: tussen de helft en het plan geen tweede zin meer.
+    expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: Math.round(planned * 0.6) }), t('tpl_easy_run'), program)).not.toMatch(/Korter dan gepland|korte training/);
     // Onder de helft: een korte training (profielen 14 november, punt C).
     expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: Math.floor(planned * 0.5) - 1 }), t('tpl_easy_run'), program)).toBe('Een korte training. Dat telt ook.');
     expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: 30, rpe: 3 }), t('tpl_easy_run'), program)).toBe('Gedaan zoals gepland. Zo bouw je op.');
@@ -111,6 +112,12 @@ describe('punt C: het oordeel na afronden past bij wat er gebeurde', () => {
   it('sets uit MacroFactor tellen niet tegen de template', () => {
     const r = coachReaction(log('tpl_upper_a', '2026-09-29', { durationMinutes: 55, source: 'macrofactor', strengthData: sets(2) }), upper, program);
     expect(r).not.toBe('Een korte training. Dat telt ook.');
+  });
+  it('zwaar of slechter dan normaal gaat voor de korte training', () => {
+    const heavy = coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: 5, rpe: 9 }), t('tpl_easy_run'), program);
+    expect(heavy).toContain('Zwaarder dan gepland');
+    const worse = coachReaction(log('tpl_upper_a', '2026-09-29', { durationMinutes: 55, subjectiveFeel: 'worse', strengthData: sets(2) }), upper, program);
+    expect(worse).toContain('Slechter dan normaal');
   });
   it('een afgebroken test is geen korte training', () => {
     const r = coachReaction(log('tpl_test_run', '2026-09-29', { durationMinutes: 5 }), t('tpl_test_run'), program);

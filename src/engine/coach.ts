@@ -13,7 +13,6 @@ import type { Program } from '../models/program';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { buildWorkoutPlan } from './workoutPlan';
 import { progressionTarget } from './programLayout';
-import { resolveEffectiveFullDuration } from './substitutions';
 import { INTENSITY } from '../data/workoutStructure';
 import { isLegHeavyTemplate } from './scheduler';
 import { addDays } from '../utils/dates';
@@ -153,17 +152,15 @@ export function coachReaction(log: SessionLog, template: SessionTemplate | undef
   const pain = painReaction(log, history);
   if (pain) return pain;
   if (!template || template.type === 'recovery') return 'Goed dat je bewoog. Licht en rustig is precies de bedoeling van vandaag.';
-  // Onder de helft van de werksets of de duur: een korte training, nooit "zoals gepland" (engine/shortTraining.ts).
-  if (isShortTraining(log, template, program)) return SHORT_TRAINING_TEXT;
   const top = plannedRpeTop(template, log.completedDate, program);
-  const planned = resolveEffectiveFullDuration(template, log.completedDate, program);
+  // Zwaar of slechter gaat voor: dat zegt iets over morgen, ook na een korte training.
   if (log.rpe !== undefined && top !== undefined && log.rpe >= top + 2) {
     return `Zwaarder dan gepland (zwaarte ${log.rpe}, gepland tot ${top}). Volgende keer iets rustiger? Voelt het weer zo, neem dan de korte versie.`;
   }
   if (log.subjectiveFeel === 'worse') return 'Slechter dan normaal, dat hoort erbij. Houd het morgen rustig; goed slapen en eten kan helpen.';
-  if (log.variant === 'full' && log.durationMinutes > 0 && log.durationMinutes < planned * 0.7) {
-    return 'Korter dan gepland. Prima: iets doen telt.';
-  }
+  // Eén drempel, één zin: onder de helft van de werksets of de duur is een korte training (engine/shortTraining.ts).
+  // De oude tweede drempel (70 procent, "Korter dan gepland") is vervallen (besluit 2026-11-14-profielen-klein.md).
+  if (isShortTraining(log, template, program)) return SHORT_TRAINING_TEXT;
   if (log.rpe !== undefined && top !== undefined && top > EASY_RPE_TOP && log.rpe <= top - 3) {
     return 'Lichter dan gepland. Dat kan een teken zijn dat je sterker wordt. Bouw het rustig verder op.';
   }

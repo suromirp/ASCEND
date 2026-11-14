@@ -54,8 +54,8 @@ export function buildSessionBrief(
   template: SessionTemplate,
   dateIso: string | undefined,
   program: Program | null | undefined,
-  // `macroFactor`: of MacroFactor gekoppeld is. Zonder koppeling geen feit "Zwaarte volgens MacroFactor"
-  // (profielen 14 november, punt I). Niet meegegeven: zoals het was.
+  // `macroFactor`: of MacroFactor gekoppeld is. Alleen met true het feit "Zwaarte volgens MacroFactor"
+  // (profielen 14 november, punt I); niet meegegeven telt als niet gekoppeld.
   options: { modalityKey?: string; templates?: SessionTemplate[]; macroFactor?: boolean } = {},
 ): SessionBrief {
   const style = SESSION_STYLE[template.id];
@@ -138,7 +138,7 @@ export function buildSessionBrief(
       case 'race':
         return [total, { value: 'Inlopen', label: 'met versnellingen' }, { value: 'Rustig starten', label: 'eerste km' }];
       case 'strength':
-        return options.macroFactor === false
+        return options.macroFactor !== true
           ? [total, { value: String(template.exercises?.length ?? 0), label: 'oefeningen' }]
           : [total, { value: String(template.exercises?.length ?? 0), label: 'oefeningen' }, { value: 'MacroFactor', label: 'zwaarte volgens' }];
       case 'recovery':

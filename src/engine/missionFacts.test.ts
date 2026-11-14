@@ -46,7 +46,8 @@ describe('missionFacts', () => {
     const f = missionFacts('tpl_lower_a', brief('tpl_lower_a'), paces);
     expect(f.chips.some((c) => c.kind === 'tempo')).toBe(false);
     expect(f.paceNote).toBeUndefined();
-    expect(f.chips.map((c) => c.text)).toContain('Zwaarte volgens MacroFactor');
+    // Zonder koppeling (de standaard) geen MacroFactor-chip (punt I).
+    expect(f.chips.map((c) => c.text).join(' ')).not.toContain('MacroFactor');
   });
 
   it('geeft een getal zijn uitleg mee', () => {
