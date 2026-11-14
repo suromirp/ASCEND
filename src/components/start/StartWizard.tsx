@@ -91,7 +91,9 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
     <>
       <Sheet eyebrow={stepCounter(steps, index)} title={title[step]} line={line[step]} onClose={onClose}>
         {(close) => (
-          <>
+          // Elke tik in de vraag (Volgende, De rest overslaan, Nog geen datum, een keuze) telt niet in de eerste
+          // 400 ms na een nieuwe vraag: een dubbele tik op Volgende landt anders op wat daar nu staat (punt J).
+          <div style={{ display: 'contents' }} onClickCapture={(e) => { if (tooSoon()) { e.preventDefault(); e.stopPropagation(); } }}>
             {step === 'goal' && (
               <>
                 <ChoiceList<StartGoalKind>
@@ -282,7 +284,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                 </SheetButtons>
               </>
             )}
-          </>
+          </div>
         )}
       </Sheet>
       {horizon.sheet}
