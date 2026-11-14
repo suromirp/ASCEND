@@ -59,9 +59,9 @@ describe('Je horloge: beide wegen (vraag 4) en eerst het advies (vraag 2)', () =
     expect(view.fields?.ownVersionLine).toBeUndefined();
   });
 
-  it('zonder koppeling: zelf nabouwen bovenaan, dan Vanzelf laten sturen; de datavelden staan er gewoon', () => {
+  it('zonder koppeling: Vanzelf laten sturen bovenaan, zelf nabouwen eronder; de datavelden staan er gewoon', () => {
     const view = sheet(LONG, { status: 'unlinked' });
-    expect(view.workout.parts.map((p) => p.kind)).toEqual(['manual', 'unlinked']);
+    expect(view.workout.parts.map((p) => p.kind)).toEqual(['unlinked', 'manual']);
     expect(view.fields?.state).toBe('ready');
   });
 

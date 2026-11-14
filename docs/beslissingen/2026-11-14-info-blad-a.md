@@ -12,7 +12,7 @@ De vijf antwoorden:
 1. Je horloge staat ook in het menu achter de drie puntjes op Vandaag; de missiekaart zelf blijft gelijk. Dat stond al sinds spoor 2 (`2026-11-11-info-blad-horloge-spoor-2.md`) en verandert niet.
 2. Het blad toont eerst de datavelden van het advies, met de regel "Je hebt ook een eigen versie." als die bestaat. De knop "Deze staat op mijn horloge" komt later op de pagina Datavelden; die is nu niet gebouwd. De plek is open: de groep Datavelden in `engine/watchSheet.ts` kiest de versie op één plek.
 3. Datavelden bekijken staat in de Instellingen bij Gidsen, tussen Trainingsplekken en Bronnen, in plaats van onder Koppelingen, Geavanceerd. Datavelden voor je horloge (de schakelaar) en Model blijven onder Koppelingen, Geavanceerd.
-4. Het blad Je horloge toont beide wegen: vanzelf via intervals.icu en zelf in Garmin Connect. Wat je gebruikt staat bovenaan (gekoppeld: eerst de stand; niet gekoppeld: eerst zelf nabouwen). Dat stond al sinds spoor 1.
+4. Het blad Je horloge toont beide wegen: vanzelf via intervals.icu en zelf in Garmin Connect. De eigenaar gebruikt het automatisch versturen via intervals.icu, dus die weg staat altijd bovenaan en zelf nabouwen eronder als tweede weg. Gekoppeld: eerst de stand. Niet gekoppeld: eerst "Deze workout staat nog niet op je horloge." met Vanzelf laten sturen, dan zelf nabouwen. Dit corrigeert spoor 1, waar zonder koppeling zelf nabouwen bovenaan stond.
 5. Weer en kleding staan ook op het trainingsscherm, altijd, ook als Vandaag ze al noemt.
 
 ## Wat er nu gebouwd is

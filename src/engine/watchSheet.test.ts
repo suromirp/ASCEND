@@ -32,10 +32,11 @@ describe('watchSheet', () => {
     }
   });
 
-  it('geen koppeling met intervals.icu: zelf nabouwen bovenaan, dan de zin en Vanzelf laten sturen', () => {
+  // Bewust mee (14 november): intervals.icu staat altijd bovenaan, ook zonder koppeling (vraag 4).
+  it('geen koppeling met intervals.icu: eerst de zin en Vanzelf laten sturen, dan zelf nabouwen', () => {
     const view = watchSheet(input({ status: 'unlinked' }));
-    expect(view.workout.parts.map((p) => p.kind)).toEqual(['manual', 'unlinked']);
-    expect(view.workout.parts[1]).toMatchObject({ text: WATCH_SHEET_TEXT.notLinked, rowTitle: WATCH_SHEET_TEXT.linkRow, to: '/koppelen/garmin' });
+    expect(view.workout.parts.map((p) => p.kind)).toEqual(['unlinked', 'manual']);
+    expect(view.workout.parts[0]).toMatchObject({ text: WATCH_SHEET_TEXT.notLinked, rowTitle: WATCH_SHEET_TEXT.linkRow, to: '/koppelen/garmin' });
   });
 
   it('een losse training (geen stand): alleen zelf nabouwen en de datavelden', () => {
