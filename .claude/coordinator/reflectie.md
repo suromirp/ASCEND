@@ -9,6 +9,14 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 14 november, 13:40 (Wachter)
+
+- Check-in: drie bouwers klaar en in review; voorstel begrijpelijk live; werkkaart en reflectie staan.
+- Beter: drie reviews tegelijk in plaats van na elkaar.
+- Slechter: tijden in UTC gemeld; de eigenaar zag het. Nu regel: altijd Amsterdamse tijd.
+- Gereedschap: Lookout vond een kale ISO-datum in de wizard die buiten de opdracht viel; potentie: Lookout standaard laten letten op datumnotatie.
+- Werkstijl: kleine fixes die Lookout vindt neemt de coördinator zelf mee bij de squash.
+
 ## 14 november, 12:30 (coördinator)
 
 - Check-in: voorstel begrijpelijk live; drie bouwers bezig; werkkaart staat.

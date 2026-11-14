@@ -205,12 +205,12 @@ export function SwapSheet({ ex, workout, strength, program, onPick, onClose }: {
   onPick: (exerciseId: string) => void;
   onClose: () => void;
 }) {
-  const { trainingGoals, goalMilestones, sessionLogs } = useAppData();
+  const { trainingGoals, goalMilestones, sessionLogs, leavePeriods } = useAppData();
   return (
     <ForgeSheet title={`${ex.name} ruilen`} sub="Zelfde spieren, met wat je sportschool heeft. Je programma blijft zoals het is." onClose={onClose}>
       {(close) => {
         // Bij een bergdoel staat bij gelijke keuze een oefening voorop voor een spier die weinig kreeg (engine/mountainMuscles.ts).
-        const prefer = swapPreference({ on: strength.mountainMuscles, goals: trainingGoals, milestones: goalMilestones, logs: sessionLogs, today: todayISO(), program });
+        const prefer = swapPreference({ on: strength.mountainMuscles, goals: trainingGoals, milestones: goalMilestones, logs: sessionLogs, today: todayISO(), program, leave: leavePeriods });
         const groups = swapGroups(exerciseOf(ex), strength.profile, workout.map((e) => e.exerciseId), 8, prefer);
         if (groups.same.length + groups.other.length > 0) return <SwapList groups={groups} reasonOf={(e) => swapReason(e, prefer)} onPick={(id) => { onPick(id); close(); }} />;
         return <p className="py-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>ASCEND kent deze oefening niet goed genoeg om iets met dezelfde spieren voor te stellen.</p>;
