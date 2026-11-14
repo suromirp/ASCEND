@@ -461,3 +461,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-13, Weer van de plek: Warden (reviewer, sonnet) 30k, 3 min, akkoord
 - 2026-11-14, Sherpa Opstarten en Intervals (ontwikkelaar, fable) 71k, 19 min; Warden (reviewer, fable) 84k, 14 min, akkoord, 2 belangrijk (volgorde herstelstappen zelf hersteld, grens meten naar backlog)
 - 2026-11-14, Sherpa Verborgen schermen (ontwikkelaar, sonnet) 104k + herstel 126k; Warden (reviewer, sonnet) 45k, niet akkoord (Reis-regel zonder tocht); Lookout (tester, sonnet) 89k, groen; Pathfinder (sonnet) 32k, geen moet
+- 2026-11-14, Sherpa Hoogtemeters na stap 1 (ontwikkelaar, fable) 121k + herstel 151k; Warden (reviewer, fable) 69k akkoord met 1 belangrijk (bodem in meters, hersteld), ronde 2 68k akkoord
