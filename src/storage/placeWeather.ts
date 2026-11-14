@@ -4,8 +4,8 @@
 // Eén eigen meta-sleutel naast het weer van huis (storage/weather.ts), met dezelfde regels: hoogstens
 // eens per uur voor dezelfde plek, dezelfde grens in tijd (integrations/openMeteo.ts, 15 seconden), en
 // twee vragers tegelijk delen één aanroep. Het is een cache van andermans data: niet in de export en
-// niet in een back-up. Het weer van huis blijft onaangeroerd, dus Vandaag en de pagina Weer veranderen
-// niet. Gooit nooit: een fout is een uitkomst, en dan toont het vak het weer van huis.
+// niet in een back-up. Het weer van huis blijft onaangeroerd, dus Vandaag verandert niet; de pagina Weer
+// leest deze voorspelling alleen als je uit de Briefing komt (engine/weatherPageLink.ts). Gooit nooit: een fout is een uitkomst, en dan toont het vak het weer van huis.
 
 import { MetaRepo } from './database';
 import { isFetchDue } from './weather';

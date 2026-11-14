@@ -2155,7 +2155,7 @@ Bron `src/data/settingsHelp.ts`. Per sleutel: titel, de zin vooraf en de punten.
 ### kleding (src/data/settingsHelp.ts:1328)
 - titel: Je kleding (:1329)
 - vooraf: Na een buitentraining kun je tikken of je kleding goed zat. (:1330)
-- Dan: schuift ASCEND je voorkeur een halve graad op, hooguit vier graden per sport. (:1332)
+- Dan: schuift ASCEND je voorkeur een graad op, daarna telkens een halve, hooguit vier graden per sport. (:1365)
 - Terug: met Terug naar de standaard begint ASCEND weer bij nul. (:1333)
 ### trainingsduur (src/data/settingsHelp.ts:1347)
 - titel: Trainingsduur (:1348)

@@ -71,7 +71,7 @@ const SPORTS: Sport[] = SPORT_LIST;
 export function ClothingSheet({ onClose }: { onClose: () => void }) {
   const { settings, updateSettings } = useAppData();
   const adjust = readClothingAdjust(settings.clothingAdjust);
-  // Zelf bijstellen werkt als een tik na een buitentraining: een halve graad per keer.
+  // Zelf bijstellen werkt als een tik na een buitentraining: de eerste tik een graad, daarna een halve.
   const nudge = (sport: Sport, feel: 'too_warm' | 'too_cold') => {
     const next = applyClothingFeedback(settings.clothingAdjust, sport, feel);
     void updateSettings({ clothingAdjust: Object.keys(next).length ? next : undefined });
@@ -101,7 +101,7 @@ export function ClothingSheet({ onClose }: { onClose: () => void }) {
           );
         })}
       </SettingsList>
-      <p className="st-hint">Min is warmer kleden, plus is lichter kleden, een halve graad per tik.</p>
+      <p className="st-hint">Min is warmer kleden, plus is lichter kleden. De eerste tik is een graad, daarna een halve.</p>
       <div className="st-btns">
         <button type="button" className="st-btn" disabled={!hasClothingAdjust(settings.clothingAdjust)} onClick={() => void updateSettings({ clothingAdjust: undefined })}>
           Terug naar de standaard

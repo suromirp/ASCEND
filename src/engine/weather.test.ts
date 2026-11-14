@@ -116,6 +116,18 @@ describe('sessionWeather: the line', () => {
     expect(w.line.startsWith('9 graden, voelt als 4, droog')).toBe(true);
   });
 
+  it('names the wind from 15 km/u, with the felt temperature when it is two degrees colder', () => {
+    const line = (tempC: number, feelsC: number, windKmh: number) =>
+      sessionWeather({ forecast: forecast((_, h) => (h === 18 ? { tempC, feelsC, windKmh, gustKmh: windKmh + 5 } : undefined)), date: WEEKDAY, startHour: 18, durationMinutes: 30 })!.line;
+    expect(line(11, 11, 10)).toMatch(/^11 graden, droog/); // windstil
+    expect(line(11, 8, 14)).toMatch(/^11 graden, droog/); // net onder de grens, voelt 3 kouder: niet genoemd
+    expect(line(11, 8, 15)).toMatch(/^11 graden, voelt als 8, wind 15 km\/u, droog/); // op de grens
+    expect(line(11, 8, 20)).toMatch(/^11 graden, voelt als 8, wind 20 km\/u, droog/);
+    expect(line(11, 11, 20)).toMatch(/^11 graden, wind 20 km\/u, droog/); // gevoel gelijk
+    expect(line(11, 10, 20)).toMatch(/^11 graden, wind 20 km\/u, droog/); // één graad verschil
+    expect(line(11, 8, 40)).toMatch(/^11 graden, voelt als 8, droog.*harde wind/); // harde wind eerder genoemd, niet dubbel
+  });
+
   it('names the rain and the wind', () => {
     const w = sessionWeather({ forecast: forecast((_, h) => (h === 18 ? { precipMm: 1.4, precipProb: 80, windKmh: 40, gustKmh: 58 } : undefined)), date: WEEKDAY, startHour: 18, durationMinutes: 30 })!;
     expect(w.line).toContain('lichte regen');
