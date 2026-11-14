@@ -522,6 +522,9 @@ function TodayContent() {
           direct onder de missie zodat je ziet dat je week veranderde zonder te scrollen (regel 6). */}
       {forecastSummary && <ForecastAdjustmentBanner summary={forecastSummary} onDismiss={dismissForecastSummary} />}
       {placement.underMission.map(around)}
+      {/* Racedag: in de laatste week voor een 10 km en de dag erna één rij naar het blad, direct onder de missie
+          (engine/raceDay.ts, docs/beslissingen/2026-11-14-racedag-10km.md). */}
+      <RaceDayLine />
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />
       {/* Twee van de drie getallen van je horloge wijken af op de ochtend van een zware training (engine/morningProposal.ts). */}
@@ -529,8 +532,6 @@ function TodayContent() {
       {/* Wat bevestigd moet worden. */}
       <WatchActivityCard quiet />
       <WatchAlignCard />
-      {/* Racedag: in de laatste week voor een 10 km en de dag erna één rij naar het blad (engine/raceDay.ts). */}
-      <RaceDayLine />
       {/* Een tochtdag in de bergen of de sneeuw: het weer op de hoogte van je tocht (engine/mountainWeather.ts). */}
       <MountainWeatherCard />
       <MacroFactorCard primary={false} />

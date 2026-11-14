@@ -38,7 +38,7 @@ export function RaceDayRow({ view, onOpen }: { view: RaceDayView; onOpen: () => 
     <button
       type="button"
       onClick={onOpen}
-      data-race-day={view.phase}
+      data-race-day={view.review ? 'terugblik' : view.phase}
       className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left"
       style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
       aria-label={`${view.row.eyebrow}: ${view.row.title}, ${view.row.line}`}
