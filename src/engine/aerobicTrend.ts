@@ -34,6 +34,7 @@
 import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { RunDetail } from '../models/runDetail';
+import { gainDisagreement, ownGainOf } from './elevation';
 import { isStaleRunDetail } from './runDetail';
 import { logSport } from './sports';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
@@ -106,17 +107,14 @@ const MAX_CLIMB_PER_KM = 15;
 // Met het vlakke tempo per km (run in detail) is meer helling te corrigeren (eigen aanname).
 const MAX_CLIMB_PER_KM_FLAT = 30;
 const BELOW_ZONE_BPM = 15;
-// Eigen stijging tegen die van het horloge: verder uit elkaar dan dit en de hoogte van het horloge geldt niet (zoals runMetrics.ts).
-const GAIN_AGREEMENT_RANGE: [number, number] = [60, 140];
 // A resting heart rate outside this range is not believed (then: simple proportion).
 const RESTING_RANGE: [number, number] = [30, 100];
 
 // Meters stijging per km. De stijging van het horloge, tenzij die niet te vertrouwen is
-// (gainAgreementPct buiten de marge): dan ASCEND's eigen optelling per km. Zonder hoogtegegevens
+// (engine/elevation.ts#gainDisagreement: buiten de marge in procenten en ook 20 m of meer uit elkaar): dan ASCEND's eigen optelling per km. Zonder hoogtegegevens
 // valt er niets te zeggen en geldt wat het horloge meldt (0 als dat ook niets zegt).
 function climbPerKm(watchGainM: number, km: number, log: SessionLog, rd: RunDetail | undefined): number {
-  const agree = log.detail?.quality.gainAgreementPct;
-  const untrusted = agree !== undefined && (agree < GAIN_AGREEMENT_RANGE[0] || agree > GAIN_AGREEMENT_RANGE[1]);
+  const untrusted = !!log.detail && gainDisagreement(log.detail.quality.gainAgreementPct, ownGainOf(log.detail), watchGainM) !== undefined;
   if (untrusted && rd) {
     const own = rd.kms.reduce((n, k) => n + (k.gainM ?? 0), 0);
     if (rd.kms.some((k) => k.gainM !== undefined)) return own / km;

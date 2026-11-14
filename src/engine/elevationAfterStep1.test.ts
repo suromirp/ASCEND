@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { buildActivityDetail } from './activityDetail';
-import { ELEVATION_COUNTER, climbLimitFor, counterMark, sameCounter } from './elevation';
+import { ELEVATION_COUNTER, GAIN_DISAGREEMENT_FLOOR_M, climbLimitFor, counterMark, gainDisagreement, sameCounter } from './elevation';
 import { buildRunDetail } from './runDetail';
 import { driftFromKms } from './runDetailRules';
 import { similarRuns } from './runComparison';
-import { VERDICT_MAX_CLIMB_PER_KM, formOf, isUnavailable } from './runMetrics';
+import { VERDICT_MAX_CLIMB_PER_KM, climbsOf, descentsOf, formOf, isUnavailable } from './runMetrics';
 import { trimLog, undoTrim } from './trimLog';
 import { kmPieces } from './zone2Pieces';
 import { context, runLog } from './fixtures/runLogs';
@@ -152,6 +152,8 @@ describe('vergelijkbare lopen: het horlogegetal wantrouwen en alleen gelijke tel
     // De overeenkomst van het profiel met het horloge, en het merk van het profiel.
     agree?: number;
     detailCounter?: number;
+    // De eigen stijging van het profiel in meters (de som van de stukken), waar de overeenkomst bij hoort.
+    detailOwn?: number;
   }
   const mk = (id: string, d: number, o: Mk): SessionLog => {
     const log = runLog({ id, date: date(d), spec, strap: true });
@@ -174,6 +176,7 @@ describe('vergelijkbare lopen: het horlogegetal wantrouwen en alleen gelijke tel
       },
       detail: {
         ...detail,
+        ...(o.detailOwn !== undefined ? { slices: detail.slices.map((s) => ({ ...s, gainM: o.detailOwn! / detail.slices.length })) } : {}),
         ...(o.detailCounter !== undefined ? { counter: o.detailCounter } : {}),
         quality: { ...detail.quality, ...(o.agree !== undefined ? { gainAgreementPct: o.agree } : {}) },
       },
@@ -196,30 +199,78 @@ describe('vergelijkbare lopen: het horlogegetal wantrouwen en alleen gelijke tel
     expect(ids(subject, history)).toEqual(['a', 'b']);
   });
 
-  it('een nieuw log waarvan de eigen telling ver van het horloge ligt gelooft het horloge niet', () => {
-    // Het horloge meldt op alle vier 30 m, maar op het ene log telde de app 150 m: 500 procent.
-    const subject = mk('s', 18, { ...NEW, own: 5, watch: 30, agree: 100 });
+  it('een nieuw heuvellog waarvan de eigen telling ver van het horloge ligt gelooft het horloge niet', () => {
+    // Het horloge meldt op alle 150 m (25 m per km). Op een log telde de app 750 m (500 procent),
+    // op een ander 60 m (40 procent): beide ver buiten de marge en ruim 20 m ernaast.
+    const subject = mk('s', 18, { ...NEW, own: 25, watch: 150, agree: 100, detailOwn: 150 });
     const history = [
-      mk('a', 15, { ...NEW, own: 5, watch: 30, agree: 100 }),
-      mk('b', 12, { ...NEW, own: 6, watch: 30, agree: 110 }),
-      mk('c', 9, { ...NEW, own: 4, watch: 30, agree: 90 }),
-      mk('odd', 6, { ...NEW, own: 25, watch: 30, agree: 500 }),
+      mk('a', 15, { ...NEW, own: 25, watch: 150, agree: 100, detailOwn: 150 }),
+      mk('b', 12, { ...NEW, own: 26, watch: 150, agree: 104, detailOwn: 156 }),
+      mk('c', 9, { ...NEW, own: 24, watch: 150, agree: 96, detailOwn: 144 }),
     ];
-    expect(ids(subject, history)).toEqual(['a', 'b', 'c']);
-    // En andersom: te laag geteld tegenover het horloge (onder 60 procent) geldt ook niet.
-    const low = mk('low', 6, { ...NEW, own: 25, watch: 30, agree: 40 });
-    expect(ids(subject, [...history.slice(0, 3), low])).toEqual(['a', 'b', 'c']);
+    const high = mk('high', 6, { ...NEW, own: 125, watch: 150, agree: 500, detailOwn: 750 });
+    const low = mk('low', 5, { ...NEW, own: 10, watch: 150, agree: 40, detailOwn: 60 });
+    // Met het horlogegetal zouden beide als gelijk zijn doorgegaan; de eigen telling zegt anders.
+    expect(ids(subject, [...history, high, low])).toEqual(['a', 'b', 'c']);
+  });
+
+  it('de bodem in meters: buiten de marge maar minder dan 20 m uit elkaar zegt niets', () => {
+    expect(GAIN_DISAGREEMENT_FLOOR_M).toBe(20);
+    // 14 m eigen tegen 30 m horloge: 47 procent, 16 m verschil.
+    expect(gainDisagreement(47, 14)).toBeUndefined();
+    // 57 m eigen tegen 33 m horloge: 173 procent, 24 m verschil.
+    expect(gainDisagreement(173, 57)).toBe('high');
+    // 60 m tegen 150 m: 40 procent, 90 m verschil.
+    expect(gainDisagreement(40, 60)).toBe('low');
+    // Binnen de marge is het nooit ver, hoe groot het verschil ook is.
+    expect(gainDisagreement(70, 700)).toBeUndefined();
+    expect(gainDisagreement(undefined, 700)).toBeUndefined();
+    // Met het horlogegetal van het log erbij telt dat getal.
+    expect(gainDisagreement(47, 14, 30)).toBeUndefined();
+    expect(gainDisagreement(47, 14, 60)).toBe('low');
+    // Eigen telling niets: het horlogegetal is niet af te leiden. Zonder getal geldt het als ver.
+    expect(gainDisagreement(0, 0, 12)).toBeUndefined();
+    expect(gainDisagreement(0, 0, 80)).toBe('low');
+    expect(gainDisagreement(0, 0)).toBe('low');
+    // Een overeenkomst zonder eigen telling erbij: alleen het percentage beslist.
+    expect(gainDisagreement(200, 0)).toBe('high');
+  });
+
+  it('een vlak nieuw log met 14 m eigen tegen 30 m horloge blijft vergelijkbaar met oude logs', () => {
+    const subject = mk('s', 18, { ...NEW, own: 2.3, watch: 30, agree: 47, detailOwn: 14 });
+    const history = [
+      mk('a', 15, { own: 1, watch: 30, agree: 20, detailOwn: 6 }),
+      mk('b', 12, { own: 1, watch: 28, agree: 25, detailOwn: 7 }),
+      mk('c', 9, { own: 1, watch: 33, agree: 15, detailOwn: 5 }),
+    ];
+    const c = similarRuns(subject, context([...history, subject]));
+    expect(c.logs.map((l) => l.id)).toEqual(['a', 'b', 'c']);
+    expect(c.enough).toBe(true);
+    // En als eerder log tegenover een nieuw: ook dan telt zijn horlogegetal.
+    expect(ids(mk('n', 19, { ...NEW, own: 5, watch: 30, agree: 100, detailOwn: 30 }), [subject])).toEqual(['s']);
+  });
+
+  it('de onderkant van de marge leest het merk van het profiel, niet dat van de kilometers', () => {
+    // Het horloge meldt op alle 150 m; het profiel telde 60 m (40 procent, 90 m ernaast).
+    const subject = mk('s', 18, { own: 25, watch: 150, agree: 95, detailOwn: 142 });
+    // Profiel met merk 2, kilometers zonder: het horloge geldt niet, de kilometers (10 tegen 25 m per km) wel.
+    const newDetail = mk('x', 15, { detailCounter: 2, own: 10, watch: 150, agree: 40, detailOwn: 60 });
+    expect(ids(subject, [newDetail])).toEqual([]);
+    // Omgekeerd, een oud profiel met nieuw getelde kilometers: de oude teller telde te laag, het
+    // horlogegetal blijft gelden en het log blijft erbij.
+    const oldDetail = mk('y', 15, { counter: 2, own: 10, watch: 150, agree: 40, detailOwn: 60 });
+    expect(ids(subject, [oldDetail])).toEqual(['y']);
   });
 
   it('een oud log met een lage overeenkomst houdt zijn horlogegetal: de oude teller telde altijd te laag', () => {
-    const subject = mk('s', 18, { ...NEW, own: 8, watch: 50, agree: 100 });
-    const history = [mk('a', 15, { own: 1, watch: 50, agree: 20 }), mk('b', 12, { own: 1, watch: 48, agree: 25 }), mk('c', 9, { own: 1, watch: 52, agree: 15 })];
+    const subject = mk('s', 18, { ...NEW, own: 20, watch: 120, agree: 100, detailOwn: 120 });
+    const history = [mk('a', 15, { own: 8, watch: 120, agree: 40, detailOwn: 48 }), mk('b', 12, { own: 8, watch: 118, agree: 42, detailOwn: 50 }), mk('c', 9, { own: 8, watch: 122, agree: 38, detailOwn: 46 })];
     expect(ids(subject, history)).toEqual(['a', 'b', 'c']);
   });
 
-  it('een oud log dat meer telde dan het horloge (boven 140 procent) gelooft het horloge niet', () => {
-    const subject = mk('s', 18, { own: 3, watch: 20, agree: 90 });
-    const history = [mk('a', 15, { own: 3, watch: 20, agree: 90 }), mk('odd', 12, { own: 20, watch: 20, agree: 600 })];
+  it('een oud log dat veel meer telde dan het horloge (boven 140 procent, 20 m of meer) gelooft het horloge niet', () => {
+    const subject = mk('s', 18, { own: 3, watch: 20, agree: 90, detailOwn: 18 });
+    const history = [mk('a', 15, { own: 3, watch: 20, agree: 90, detailOwn: 18 }), mk('odd', 12, { own: 20, watch: 20, agree: 600, detailOwn: 120 })];
     // Beide zonder merk: de eigen tellingen zijn te vergelijken, en 20 tegen 3 m per km is anders.
     expect(ids(subject, history)).toEqual(['a']);
   });
@@ -255,6 +306,21 @@ describe('vergelijkbare lopen: het horlogegetal wantrouwen en alleen gelijke tel
   it('zonder hoogte op het eerdere log valt er niets te toetsen: het blijft kandidaat, zoals voorheen', () => {
     const subject = mk('s', 18, { ...NEW, own: 4 });
     expect(ids(subject, [mk('none', 15, {})])).toEqual(['none']);
+  });
+});
+
+describe('klimmen en dalen: de hoogte wantrouwen heeft dezelfde bodem in meters', () => {
+  const made = runLog({ id: 'k', date: '2026-11-12', spec: { minutes: 40, pace: 330, hr: 145, seed: 3 } }).detail!;
+  const withOwn = (ownM: number, agree: number): ActivityDetail => ({ ...made, slices: made.slices.map((s) => ({ ...s, gainM: ownM / made.slices.length })), quality: { ...made.quality, gainAgreementPct: agree } });
+
+  it('vlak, 14 m eigen tegen 30 m horloge: geen reden om de hoogte niet te vertrouwen', () => {
+    expect(climbsOf(withOwn(14, 47))).toEqual([]);
+    expect(descentsOf(withOwn(14, 47))).toEqual([]);
+  });
+
+  it('heuvel, 60 m eigen tegen 150 m horloge: de hoogte geldt niet', () => {
+    expect(climbsOf(withOwn(60, 40))).toEqual({ unavailable: 'altitudeDisagrees' });
+    expect(descentsOf(withOwn(750, 500))).toEqual({ unavailable: 'altitudeDisagrees' });
   });
 });
 

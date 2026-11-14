@@ -14,7 +14,7 @@
 // Pure: no React, no IndexedDB.
 
 import type { ActivityDetail, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
-import { climbLimitFor } from './elevation';
+import { climbLimitFor, gainDisagreement, ownGainOf } from './elevation';
 
 export type Unavailable =
   | 'noDetail'
@@ -260,12 +260,11 @@ export interface DescentFact {
 const HILL_MIN = { metres: 50, sec: 240, gradientPct: 4 };
 const CLIMB_MIN = { metres: 150, sec: 480 };
 const GRADE_CLASS_WIDTH = 4;
-// Our own climb against the climb the source reports: further apart than this
-// and the altitude of this training is not trusted (a corrected altitude at the
-// source can differ legitimately, so the margin is wide).
-const GAIN_AGREEMENT_RANGE: [number, number] = [60, 140];
-
-const altitudeTrusted = (d: ActivityDetail) => d.quality.gainAgreementPct === undefined || (d.quality.gainAgreementPct >= GAIN_AGREEMENT_RANGE[0] && d.quality.gainAgreementPct <= GAIN_AGREEMENT_RANGE[1]);
+// Our own climb against the climb the source reports: further apart than the margin in percent
+// and also 20 m or more apart (engine/elevation.ts#gainDisagreement; on flat ground a percentage
+// says little), and the altitude of this training is not trusted. A corrected altitude at the
+// source can differ legitimately, so the margin is wide.
+const altitudeTrusted = (d: ActivityDetail) => gainDisagreement(d.quality.gainAgreementPct, ownGainOf(d)) === undefined;
 
 export function climbsOf(detail: ActivityDetail | undefined): ClimbFact[] | NotAvailable {
   if (!detail) return { unavailable: 'noDetail' };

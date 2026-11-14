@@ -56,6 +56,32 @@ export function sameCounter(a: unknown, b: unknown): boolean {
   return counterMark(a) === counterMark(b);
 }
 
+// Eigen stijging tegen die van het horloge (`detail.quality.gainAgreementPct`): buiten deze marge
+// in procenten, en ook minstens zoveel meters uit elkaar, en het getal van het horloge geldt niet.
+// De bodem in meters is er voor vlak land, waar procenten weinig zeggen: onder ongeveer 40 m
+// totaal weet niemand het op 20 m na (docs/onderzoek/Hoogtemeters met precisie.md, punt 4).
+export const GAIN_AGREEMENT_RANGE: [number, number] = [60, 140];
+export const GAIN_DISAGREEMENT_FLOOR_M = 20;
+
+// Wijkt de eigen telling van een profiel ver af van het horloge? 'low': de eigen telling is veel
+// lager, 'high': veel hoger, undefined: binnen de marge, of in meters te dicht bij elkaar om iets
+// te zeggen. `ownGainM` is de eigen stijging van hetzelfde profiel als de overeenkomst (de som
+// van de stukken). `watchGainM` is het getal van het horloge op het log; wie alleen het profiel
+// heeft laat het weg, dan volgt het uit de overeenkomst. Zonder eigen telling (of bij een
+// overeenkomst van 0) kan dat niet: is de afstand in meters niet vast te stellen, dan beslist
+// alleen het percentage, zoals voorheen.
+export function gainDisagreement(agreementPct: number | undefined, ownGainM: number, watchGainM?: number): 'low' | 'high' | undefined {
+  if (agreementPct === undefined || !Number.isFinite(agreementPct)) return undefined;
+  if (agreementPct >= GAIN_AGREEMENT_RANGE[0] && agreementPct <= GAIN_AGREEMENT_RANGE[1]) return undefined;
+  const watch = watchGainM !== undefined && Number.isFinite(watchGainM) ? watchGainM : agreementPct > 0 && ownGainM > 0 ? (ownGainM * 100) / agreementPct : undefined;
+  const apart = watch === undefined || !Number.isFinite(watch) ? Infinity : Math.abs(ownGainM - watch);
+  if (apart < GAIN_DISAGREEMENT_FLOOR_M) return undefined;
+  return agreementPct < GAIN_AGREEMENT_RANGE[0] ? 'low' : 'high';
+}
+
+// De eigen stijging van een profiel: de som van zijn stukken.
+export const ownGainOf = (detail: { slices: { gainM: number }[] }): number => detail.slices.reduce((n, s) => n + s.gainM, 0);
+
 type Reading = number | null | undefined;
 
 export const isNearlyFlat = (ascentM: number): boolean => !(ascentM >= NEARLY_FLAT_M);
