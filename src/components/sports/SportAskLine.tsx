@@ -99,8 +99,8 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
   const [felt, setFelt] = useState<FeltWord>('pittig');
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
-  // De uitkomst als er (nog) niets bewaard is: mislukt, of te lang (het log kan dan nog landen).
-  const [error, setError] = useState<{ kind: 'slow' | 'failed'; text: string } | null>(null);
+  // De uitkomst als niet alles bewaard is: mislukt (amber), te lang (het log kan nog landen), of alleen de keuze niet.
+  const [error, setError] = useState<ReturnType<typeof thrownSaveNote> | null>(null);
   const askFelt = counting.askFelt && question.activity.rpe === undefined && role === 'count';
   const day = question.activity.start.slice(0, 10);
 
@@ -193,8 +193,8 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
   const [felt, setFelt] = useState<FeltWord>(adviceFelt(question.sport));
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
-  // De uitkomst als er (nog) niets bewaard is: mislukt, of te lang (het log kan dan nog landen).
-  const [error, setError] = useState<{ kind: 'slow' | 'failed'; text: string } | null>(null);
+  // De uitkomst als niet alles bewaard is: mislukt (amber), te lang (het log kan nog landen), of alleen de keuze niet.
+  const [error, setError] = useState<ReturnType<typeof thrownSaveNote> | null>(null);
   // De zwaarte vraagt het blad alleen als het horloge er geen gaf en je het wilt.
   const askFelt = counting.askFelt && question.activity.rpe === undefined && role === 'count';
   const day = question.activity.start.slice(0, 10);

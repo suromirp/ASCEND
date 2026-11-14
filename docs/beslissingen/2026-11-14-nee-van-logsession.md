@@ -55,6 +55,16 @@ De back-uptip. Wat de melding bovenin wist (de opslag is vol, maak een back-up) 
 
 Eén woordenset (`LOG_SAVE_NOTE` en `FORM_SAVE_NOTE` in `state/logSave.ts`). Mislukt begint overal met "Opslaan lukte niet.", traag met "Opslaan duurt langer dan verwacht.". Waar de knop na de grens uit is staat "Je invulling blijft staan."; waar je opnieuw mag tikken "Kijk zo in je logboek of hij er staat. Zo niet, probeer het nog eens.". De woorden van het blad Hoe ging het? zijn leidend; alleen zijn zin voor traag kreeg het vaste begin. De sportvraag zegt na de grens niet meer "Dit lukte niet": het log kan nog landen. Alleen mislukt is amber, ook daar.
 
+## Aanvulling na review (Warden, ronde 4)
+
+Nooit stil. Een scherm dat `onWriteError` meegeeft is zelf verantwoordelijk voor de uitkomst zolang het in beeld is. Is het weg als het nee komt (na de grens is weggaan de uitweg), dan gaat de schrijffout alsnog naar de melding bovenin (`reportIfGone`). Dat geldt voor het oude trainingsscherm en het blad Hoe ging het?. Vanzelf afvinken blijft stil: je deed zelf niets en de activiteit blijft een voorstel.
+
+"Op rij". De teller van mislukte pogingen staat op moduleniveau in `state/logSave.ts`. Hij telt over schermen heen en zonder grens in tijd; alleen een geslaagde opslag zet hem terug. Een fout op de kaart en daarna een op het trainingsscherm is dus de tweede. Bij die tweede blijft de eigen zin van het scherm staan ("je invulling staat er nog", "kijk eerst in je logboek") en komt de reden erachter: de back-uptip, of dat de opslag vol is.
+
+De sportvraag. Mislukt (amber) is alleen een schrijffout. Nee omdat een eerdere poging nog loopt geeft de zin van de grens. Faalt de keuze nadat het log gelukt is, dan zegt het blad dat het log er staat en de keuze nog niet. De sportvraag gebruikt `LOG_SAVE_NOTE`, de set waar opnieuw tikken mag.
+
+Vanzelf afvinken dat na de grens nog liep bleef op de kaart voorgoed als "loopt nog" staan. Het late antwoord, ja of nee, haalt het nu weg.
+
 ## Nog open
 
 Het oude trainingsscherm sluiten en weer openen terwijl de eerste opslag van een losse training nog hangt, en dan iets anders invullen en opslaan, geeft een tweede log: een losse training heeft geen sleutel. Dat vraagt een keuze over wat "dezelfde losse training" is en is hier niet opgelost.

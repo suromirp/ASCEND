@@ -6,7 +6,7 @@ import { asksDoneOn } from './logForm/formRules';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, RpeField } from './logForm/LogFormParts';
 import { HowDidItGoSheet } from './HowDidItGoSheet';
 import { HOW_TEXT } from './logForm/howDidItGo';
-import { closeClearsDraft, failedNote, formAfterSave, saveLogWithin, type LogSaveOutcome } from '../state/logSave';
+import { closeClearsDraft, failedNote, formAfterSave, reportIfGone, saveLogWithin, type LogSaveOutcome } from '../state/logSave';
 import { briefingEntry } from '../engine/briefing';
 import { NumberField } from './NumberField';
 import type { SessionTemplate, SessionVariant } from '../models/training';
@@ -73,7 +73,7 @@ function GeneralLogger({
   preview?: boolean;
   onClose: () => void;
 }) {
-  const { logSession, settings, strengthExternal, templates, plannedSessions } = useAppData();
+  const { logSession, reportStorageError, settings, strengthExternal, templates, plannedSessions } = useAppData();
   const { closing, requestClose: closeSheet } = useSheetClose(onClose);
   const quickComplete = template.type === 'strength' && strengthExternal;
   // De toestand van het formulier en het concept (logForm/useLogForm.ts), gedeeld met het blad Hoe ging het?.
@@ -139,19 +139,22 @@ function GeneralLogger({
     // waarom. Na de grens in tijd loopt het opslaan nog: je ziet dat, en de knop blijft uit tot het klaar is,
     // zodat een tweede tik nooit een tweede log maakt (zoals het blad Hoe ging het?). Terug en Annuleren werken.
     let settled = false;
+    let writeError: unknown;
     const show = (outcome: LogSaveOutcome) => {
       if (settled) return;
       settled = outcome !== 'slow';
       const next = formAfterSave(outcome);
       savingRef.current = next.buttonOff;
       if (next.clearDraft) form.clearDraft();
+      // Weg terwijl het opsloeg en dan nee: niemand ziet de zin hier, dus de fout gaat naar de melding bovenin.
+      if (outcome === 'failed') reportIfGone(alive.current, writeError, reportStorageError);
       if (!alive.current) return;
       if (next.close) return onClose();
       setSaving(next.buttonOff);
       const text = next.note === 'failed' ? failedNote(plannedSessionId ? HOW_TEXT.failed : HOW_TEXT.failedLoose) : next.note ? HOW_TEXT[next.note] : undefined;
       setSaveNote(text ? { text, warn: next.note === 'failed' } : null);
     };
-    show(await saveLogWithin(logSession, input, { onLate: show }));
+    show(await saveLogWithin(logSession, input, { onLate: show, onWriteError: (err) => { writeError = err; } }));
   }
 
   const brief = buildSessionBrief(template, scheduledDate ?? today, program, {

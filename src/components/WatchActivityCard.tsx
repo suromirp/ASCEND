@@ -131,7 +131,8 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
             const ticked = await autoTickLog(logSession, { ...activityToDraft(activity, match.template, match.session, chosenWayOf(activity, match, places)), quiet: true }, async () => {
               await recordAutoTicked(activity.externalId);
               addDetail(activity);
-            });
+              // Het late antwoord, ja of nee: deze poging loopt niet meer. Een laat nee blijft stil (het blijft een voorstel).
+            }, { onLate: () => lateOutstanding.current.delete(activity.externalId) });
             // Een vanzelf afvinken dat nog loopt: een tik op Opslaan toont dan de zin van de grens, niet "lukte niet".
             if (ticked === 'slow') lateOutstanding.current.add(activity.externalId);
           }

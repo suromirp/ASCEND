@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PlannedSessionsRepo, SessionLogsRepo, wipeAllData } from '../storage/database';
 import { runLogSession, LogNotSaved, type LogSessionDeps, type LogSessionOpts } from './logSession';
-import { autoTickLog, cardAfterSave, closeClearsDraft, failedNote, formAfterSave, logWithOwnNotice, resetFailedNotes, saveLogThenChoice, saveLogWithin, thrownSaveNote, ALREADY_LOGGED_NOTE, FORM_SAVE_NOTE, LOG_SAVE_NOTE, type LogSaveResult } from './logSave';
-import { describeWriteError } from '../storage/storageError';
+import { autoTickLog, cardAfterSave, closeClearsDraft, failedNote, formAfterSave, logWithOwnNotice, reportIfGone, resetFailedNotes, saveLogThenChoice, saveLogWithin, thrownSaveNote, ChoiceNotSaved, CHOICE_NOT_SAVED, ALREADY_LOGGED_NOTE, FORM_SAVE_NOTE, LOG_SAVE_NOTE, type LogSaveResult } from './logSave';
 import { HOW_TEXT } from '../components/logForm/howDidItGo';
 import { TimeoutError } from '../utils/withTimeout';
 import type { LogSessionInput } from './appDataTypes';
@@ -160,13 +159,30 @@ describe('autoTickLog: vanzelf afvinken van het horloge', () => {
     vi.useFakeTimers();
     const { logSession, open } = gated();
     let noted = 0;
-    const run = autoTickLog(logSession, fromWatch, async () => void noted++, 8000);
+    const late: LogSaveResult[] = [];
+    const run = autoTickLog(logSession, fromWatch, async () => void noted++, { limitMs: 8000, onLate: (r) => late.push(r) });
     await vi.advanceTimersByTimeAsync(8000);
     expect(await run).toBe('slow');
     expect(noted).toBe(0);
+    expect(late).toEqual([]);
     open(true);
     await vi.advanceTimersByTimeAsync(0);
     expect(noted).toBe(1);
+    expect(late).toEqual(['saved']);
+  });
+
+  it('time-out en dan een laat nee: de aanroeper hoort het (de poging loopt niet meer), er wordt niets genoteerd', async () => {
+    vi.useFakeTimers();
+    const { logSession, open } = gated();
+    let noted = 0;
+    const late: LogSaveResult[] = [];
+    const run = autoTickLog(logSession, fromWatch, async () => void noted++, { limitMs: 8000, onLate: (r) => late.push(r) });
+    await vi.advanceTimersByTimeAsync(8000);
+    expect(await run).toBe('slow');
+    open(false);
+    await vi.advanceTimersByTimeAsync(50);
+    expect(late).toEqual(['failed']);
+    expect(noted).toBe(0);
   });
 
   it('het noteren faalt: het log staat er, er wordt niets gegooid', async () => {
@@ -219,7 +235,12 @@ describe('saveLogThenChoice: de sportvraag', () => {
   });
 
   it('de keuze zelf faalt: gooit, het log blijft staan', async () => {
-    await expect(saveLogThenChoice(makeLogSession(), fromWatch, () => Promise.reject(new Error('kapot')), 8000)).rejects.toThrow('kapot');
+    const caught = await saveLogThenChoice(makeLogSession(), fromWatch, () => Promise.reject(new Error('kapot')), 8000).catch((e: unknown) => e);
+    expect(caught).toBeInstanceOf(ChoiceNotSaved);
+    // Het log staat er: de zin zegt dat, en niet "Opslaan lukte niet".
+    expect(thrownSaveNote(caught)).toEqual({ kind: 'choice', text: CHOICE_NOT_SAVED.withLog });
+    const alone = await saveLogThenChoice(makeLogSession(), undefined, () => Promise.reject(new Error('kapot')), 8000).catch((e: unknown) => e);
+    expect(thrownSaveNote(alone)).toEqual({ kind: 'choice', text: CHOICE_NOT_SAVED.alone });
     expect(await SessionLogsRepo.getAll()).toHaveLength(1);
   });
 });
@@ -243,15 +264,62 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     expect(general).toEqual([]);
   });
 
-  it('een laat falen na een hang: ook dan niets bovenin', async () => {
+  // Een schrijven dat blijft hangen tot de test het laat mislukken.
+  function hangingPut() {
     let fail!: (err: Error) => void;
     const hold = new Promise<string>((_, reject) => (fail = reject));
+    hold.catch(() => undefined);
     vi.spyOn(SessionLogsRepo, 'put').mockImplementation(() => hold);
+    return () => fail(new Error('kapot'));
+  }
+
+  it('een laat falen na een hang: zolang het scherm in beeld is niets bovenin', async () => {
+    const fail = hangingPut();
+    const report = (err: unknown) => general.push(err);
+    let writeError: unknown;
     const late: LogSaveResult[] = [];
-    const run = saveLogWithin(makeLogSession(), fromWatch, { limitMs: 20, onLate: (r) => late.push(r) });
+    const inView = true;
+    const run = saveLogWithin(makeLogSession(), fromWatch, { limitMs: 20, onWriteError: (err) => { writeError = err; }, onLate: (r) => { late.push(r); if (r === 'failed') reportIfGone(inView, writeError, report); } });
     expect(await run).toBe('slow');
-    fail(new Error('kapot'));
+    fail();
     await vi.waitFor(() => expect(late).toEqual(['failed']));
+    expect(writeError).toBeInstanceOf(Error);
+    expect(general).toEqual([]);
+  });
+
+  it('het oude trainingsscherm: traag, weg, laat nee geeft precies een melding bovenin', async () => {
+    const fail = hangingPut();
+    const report = (err: unknown) => general.push(err);
+    let writeError: unknown;
+    let inView = true;
+    const late: LogSaveResult[] = [];
+    const run = saveLogWithin(makeLogSession(), forPlanned, { limitMs: 20, onWriteError: (err) => { writeError = err; }, onLate: (r) => { late.push(r); if (r === 'failed') reportIfGone(inView, writeError, report); } });
+    expect(await run).toBe('slow');
+    // Na de grens is weggaan de uitweg.
+    inView = false;
+    fail();
+    await vi.waitFor(() => expect(late).toEqual(['failed']));
+    expect(general).toHaveLength(1);
+    expect((general[0] as Error).message).toBe('kapot');
+  });
+
+  it('het blad Hoe ging het?: traag, dicht, laat nee geeft precies een melding bovenin; open blijft het stil', async () => {
+    for (const closed of [true, false]) {
+      general = [];
+      const fail = hangingPut();
+      let writeError: unknown;
+      const run = logWithOwnNotice(makeLogSession(), { ...fromWatch, externalId: `x-${closed}` }, (err) => { writeError = err; });
+      fail();
+      expect(await run).toBe(false);
+      // onFailed van het blad.
+      reportIfGone(!closed, writeError, (err) => general.push(err));
+      expect(general).toHaveLength(closed ? 1 : 0);
+      vi.restoreAllMocks();
+    }
+  });
+
+  it('nee zonder schrijffout (een eerdere poging loopt nog) terwijl het scherm weg is: geen melding', () => {
+    reportIfGone(false, undefined, (err) => general.push(err));
     expect(general).toEqual([]);
   });
 
@@ -262,27 +330,41 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     expect((general[0] as Error).name).toBe('LogStoredFollowUpFailed');
   });
 
-  it('de back-uptip gaat niet verloren: de eerste keer de gewone zin, bij een tweede schrijffout op rij de reden', async () => {
+  it('de back-uptip gaat niet verloren: eerst de gewone zin, bij een tweede schrijffout op rij dezelfde zin met de reden erachter', async () => {
     const put = vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
     const logSession = makeLogSession();
     expect(await saveLogWithin(logSession, fromWatch)).toBe('failed');
-    expect(failedNote(LOG_SAVE_NOTE.failed)).toBe(LOG_SAVE_NOTE.failed);
+    expect(failedNote(FORM_SAVE_NOTE.failedLoose)).toBe(FORM_SAVE_NOTE.failedLoose);
     expect(await saveLogWithin(logSession, fromWatch)).toBe('failed');
-    expect(failedNote(LOG_SAVE_NOTE.failed)).toBe(describeWriteError(new Error('kapot')));
-    expect(failedNote(LOG_SAVE_NOTE.failed)).toContain('back-up');
-    // Lukt het daarna, dan begint de telling opnieuw.
-    put.mockRestore();
-    expect(await saveLogWithin(logSession, fromWatch)).toBe('saved');
-    expect(failedNote(LOG_SAVE_NOTE.failed)).toBe(LOG_SAVE_NOTE.failed);
+    // De eigen zin blijft ("kijk eerst in je logboek", "je invulling staat er nog"), de tip komt erachter.
+    expect(failedNote(FORM_SAVE_NOTE.failedLoose).startsWith(`${FORM_SAVE_NOTE.failedLoose} `)).toBe(true);
+    expect(failedNote(FORM_SAVE_NOTE.failedLoose)).toContain('back-up via Instellingen, Gegevens en back-up');
     expect(general).toEqual([]);
+    put.mockRestore();
   });
 
-  it('de opslag is vol: de tweede keer zegt het scherm dat', async () => {
+  it('"op rij": fout, gelukt, fout geeft weer de gewone zin, ook over schermen heen', async () => {
+    const logSession = makeLogSession();
+    const fails = () => vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    let put = fails();
+    expect(await saveLogWithin(logSession, fromWatch)).toBe('failed');
+    put.mockRestore();
+    expect(await saveLogWithin(logSession, fromWatch)).toBe('saved');
+    put = fails();
+    expect(await saveLogWithin(logSession, { ...fromWatch, externalId: 'x2' })).toBe('failed');
+    expect(failedNote(LOG_SAVE_NOTE.failed)).toBe(LOG_SAVE_NOTE.failed);
+    // De teller is van de app, niet van een scherm: de volgende fout, op een ander scherm (het blad), is de tweede.
+    expect(await logWithOwnNotice(logSession, { ...fromWatch, externalId: 'x3' })).toBe(false);
+    expect(failedNote(FORM_SAVE_NOTE.failed)).not.toBe(FORM_SAVE_NOTE.failed);
+    put.mockRestore();
+  });
+
+  it('de opslag is vol: de tweede keer zegt het scherm dat erbij', async () => {
     vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(full());
     const logSession = makeLogSession();
     await saveLogWithin(logSession, fromWatch);
     await saveLogWithin(logSession, fromWatch);
-    expect(failedNote(FORM_SAVE_NOTE.failed)).toContain('vol');
+    expect(failedNote(FORM_SAVE_NOTE.failed)).toBe(`${FORM_SAVE_NOTE.failed} De opslag op deze telefoon is vol. Maak een back-up en ruim ruimte op.`);
   });
 
   it('twee keer nee zonder schrijffout (een eerdere poging loopt nog): de gewone zin blijft', async () => {
@@ -292,9 +374,17 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     expect(failedNote(LOG_SAVE_NOTE.failed)).toBe(LOG_SAVE_NOTE.failed);
   });
 
-  it('de sportvraag: te lang is niet mislukt, en mislukt is amber', () => {
+  it('de sportvraag: alleen een schrijffout is mislukt (amber); te lang of een eerdere poging die nog loopt is de zin van de grens', async () => {
     expect(thrownSaveNote(new TimeoutError())).toEqual({ kind: 'slow', text: LOG_SAVE_NOTE.slow });
-    expect(thrownSaveNote(new LogNotSaved())).toEqual({ kind: 'failed', text: FORM_SAVE_NOTE.failed });
+    // Nee omdat de eerste poging nog loopt: geen schrijffout.
+    const running = await saveLogThenChoice(() => Promise.resolve(false), fromWatch, async () => undefined, 8000).catch((e: unknown) => e);
+    expect(running).toBeInstanceOf(LogNotSaved);
+    expect(thrownSaveNote(running)).toEqual({ kind: 'slow', text: LOG_SAVE_NOTE.slow });
+    // Een echte schrijffout.
+    resetFailedNotes();
+    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    const failed = await saveLogThenChoice(makeLogSession(), fromWatch, async () => undefined, 8000).catch((e: unknown) => e);
+    expect(thrownSaveNote(failed)).toEqual({ kind: 'failed', text: LOG_SAVE_NOTE.failed });
   });
 
   it('een woordenset: mislukt en traag beginnen overal hetzelfde, en traag met de knop uit zegt niet "probeer"', () => {
@@ -310,8 +400,13 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     expect(sportSrc).not.toContain('Dit lukte niet');
     expect(sportSrc.match(/setError\(thrownSaveNote\(err\)\)/g)).toHaveLength(2);
     expect(sportSrc.match(/error\.kind === 'failed' \? 'st-hint warn' : 'st-hint'/g)).toHaveLength(2);
-    expect(howSrc).toMatch(/save: \(\) => logWithOwnNotice\(logSession, input\)/);
-    expect(howSrc).toMatch(/failedNote\(loose \? HOW_TEXT\.failedLoose : HOW_TEXT\.failed\)/);
+    expect(howSrc).toMatch(/save: \(\) => logWithOwnNotice\(logSession, input, /);
+    // De zin wordt vastgelegd bij de uitkomst, niet gelezen in de render; en een blad dat al dicht is meldt bovenin.
+    expect(howSrc).toMatch(/reportIfGone\(!closedRef\.current, writeError, reportStorageError\);\s*setFailedText\(failedNote\(/);
+    expect(howSrc.match(/failedNote\(/g)).toHaveLength(1);
+    expect(loggerSrc).toMatch(/if \(outcome === 'failed'\) reportIfGone\(alive\.current, writeError, reportStorageError\);\s*if \(!alive\.current\) return;/);
+    // Vanzelf afvinken: het late antwoord haalt de activiteit uit de lijst van wat nog loopt.
+    expect(watchSrc).toMatch(/\{ onLate: \(\) => lateOutstanding\.current\.delete\(activity\.externalId\) \}/);
     expect(loggerSrc).toMatch(/failedNote\(plannedSessionId \? HOW_TEXT\.failed : HOW_TEXT\.failedLoose\)/);
     expect(watchSrc).toMatch(/failedNote\(LOG_SAVE_NOTE\.failed\)/);
   });
