@@ -9,6 +9,14 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 17:40 (14 november)
+
+- Check-in: drie dingen live om 17:25 (Opwarmset later, Hoe ging het? in Je dag, Opslaan rest); Klein deel 2 bij Lookout; Route-kaart, Buiten en Profielen klein bouwen; vier nieuwe profielen lopen twee weken door.
+- Beter: de bouwplekken weer vol na het besluit van de eigenaar om niet af te schalen; de profielen leverden in een kwartier veel echte punten (A tot J).
+- Slechter: twee groene branches braken samen Vandaag (`question` weg en nog gelezen); de eerste profielen stopten na 8 tot 20 minuten in plaats van 90.
+- Gereedschap: Lookout op een proefmerge van alles samen is de vangst van de dag; potentie: tsc op elke proefmerge vóór Lookout, en profielen die bevindingen in de code bevestigen.
+- Werkstijl: bouwen op Opus, Warden op Fable alleen bij engine en opslag; profielen op Sonnet met een harde ondergrens in tijd.
+
 ## 14 november, 16:40 (Wachter)
 
 - Check-in: Info-blad (15c405c) en Racedag (3f9962a) live; drie bouwers in review; limiet van zeven dagen op waarschuwing tot zondag 19:00.

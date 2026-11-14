@@ -11,7 +11,7 @@ Adres: `#/week`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 --- kaart 1 ---
 Let op
 Je week is vol.
-4 trainingen in 2 dagen en 2 dagen met twee trainingen.
+2 dagen met elk twee trainingen.
 
 --- kaart 2 ---
 [knop: Rustige duurloopMa 26·56 min·zonder planGedaan]

@@ -193,10 +193,14 @@ const weight = (s: WeekShape) => s.doubles.length * 2 + Math.max(0, s.trainings 
 const stands = (s: WeekShape) => (s.trainings === 1 ? 'staat' : 'staan');
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-// "6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij".
+// "6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij". Is elke dag dubbel, dan zegt de
+// telling het al: "2 dagen met elk twee trainingen", niet "4 trainingen in 2 dagen en 2 dagen met twee trainingen".
 export function shapeText(s: WeekShape): string {
-  const parts = [`${count(s.trainings, 'training', 'trainingen')} in ${count(s.days, 'dag', 'dagen')}`];
-  if (s.doubles.length > 0) parts.push(`${count(s.doubles.length, 'dag', 'dagen')} met twee trainingen`);
+  const allDouble = s.days > 0 && s.doubles.length === s.days;
+  const parts = [allDouble && s.trainings === s.days * 2
+    ? `${count(s.days, 'dag', 'dagen')} met elk twee trainingen`
+    : `${count(s.trainings, 'training', 'trainingen')} in ${count(s.days, 'dag', 'dagen')}`];
+  if (s.doubles.length > 0 && !allDouble) parts.push(`${count(s.doubles.length, 'dag', 'dagen')} met twee trainingen`);
   if (s.runStreak >= RUN_STREAK_LIMIT) parts.push(`${s.runStreak} loopdagen op rij`);
   if (s.heavyStreak >= HEAVY_STREAK_LIMIT) parts.push(`${s.heavyStreak} zware dagen achter elkaar`);
   return parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} en ${parts.at(-1)}`;
