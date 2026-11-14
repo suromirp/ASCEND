@@ -118,7 +118,8 @@ export function isEasyRun(template: SessionTemplate, date: string, program: Prog
   if (intensity === 'moderate' || intensity === 'high') return false;
   const plan = buildWorkoutPlan(template, date, program);
   const levels = plan?.timeline.filter((s) => s.kind !== 'strength' && !s.noTarget).map((s) => s.intensity) ?? [];
-  return levels.length > 0 && Math.max(...levels) <= 2;
+  // Zonder plan met zones (een heuvelloop op gevoel) zegt het profiel van de template het: laag is rustig.
+  return levels.length > 0 ? Math.max(...levels) <= 2 : intensity === 'low';
 }
 
 export function isShortFor(minutes: number, plannedMinutes: number): boolean {
@@ -162,7 +163,8 @@ export type FitIssue =
   | { kind: 'hard'; judgment: HardJudgment; name: string }
   | { kind: 'walk'; pace: number; as: string }
   | { kind: 'hard-loose'; judgment: HardJudgment; as: string }
-  | { kind: 'other-fits'; name: string };
+  | { kind: 'other-fits'; name: string }
+  | { kind: 'walk-match'; pace: number };
 
 // Eén regel per kaart, in de volgorde van gewicht: de soort, dan de duur, dan hoe hard.
 export function fitIssueText(issue: FitIssue): string {
@@ -175,6 +177,8 @@ export function fitIssueText(issue: FitIssue): string {
       return `Kort voor ${issue.name.toLowerCase()}: ${issue.minutes} van ${issue.planned} min. Hoort hij er niet bij, kies dan Andere training.`;
     case 'hard':
       return `Harder dan gepland: ${hardText(issue.judgment)}.`;
+    case 'walk-match':
+      return `Wandeltempo, ${paceText(issue.pace)} per km. Hoort hij er niet bij, kies dan Andere training.`;
     case 'other-fits':
       return `Een andere activiteit van die dag past beter bij ${issue.name.toLowerCase()}.`;
   }

@@ -252,7 +252,9 @@ describe('herstelronde Warden: tempo zegt niets over de soort bij klimmen of op 
     // Ook zonder klim: een niet-rustige looptraining van die dag mag traag zijn.
     expect(p.activity.kind).toBe('run');
     expect(p.match?.session.id).toBe('h');
-    expect(p.fitNote).toBeUndefined();
+    expect(p.fitNote).toBe('Wandeltempo, 11:15 per km. Hoort hij er niet bij, kies dan Andere training.');
+    // Met de klim van 180 m: niets te melden.
+    expect(proposeImport(hills, plan, templates, [], undefined, undefined, FIT)!.fitNote).toBeUndefined();
     // Vanzelf afvinken mag weigeren.
     expect(autoTickMatch(flatSlow, plan, templates, [], DAY, undefined, FIT)).toBeUndefined();
   });
@@ -320,5 +322,39 @@ describe('klimgrens', () => {
     expect(isWalkLike({ minutes: 50, km: 4, gainM: 119.6 })).toBe(true);
     expect(isWalkLike({ minutes: 50, km: 4, gainM: 120 })).toBe(false);
     expect(isWalkLike({ minutes: 50, gainM: 300 })).toBe(false);
+  });
+});
+
+describe('herstelronde 2', () => {
+  it('de harde losse loop wordt de Tempoloop, in welke volgorde de templates ook staan', async () => {
+    const { hardRunTemplate } = await import('./activityImport');
+    const byKey = [...templates].sort((a, b) => a.id.localeCompare(b.id));
+    expect(hardRunTemplate(byKey)?.id).toBe('tpl_tempo_run');
+    expect(hardRunTemplate([...byKey].reverse())?.id).toBe('tpl_tempo_run');
+    expect(hardRunTemplate(templates)?.id).toBe('tpl_tempo_run');
+    const hard = act('hk', { durationSec: 44 * 60, distanceM: 10000, avgHeartRate: 172 });
+    expect(proposeImport(hard, [], byKey, [], undefined, undefined, FIT)!.template?.id).toBe('tpl_tempo_run');
+  });
+
+  it('een handmatig log van de hele training (full) is kort onder de helft', async () => {
+    const { isShortTraining } = await import('./shortTraining');
+    const hand = { id: 'm', templateId: 'tpl_easy_run', type: 'cardio', completedDate: DAY, completedAt: `${DAY}T10:00:00Z`, variant: 'full', durationMinutes: 14, source: 'manual' } as SessionLog;
+    expect(isShortTraining(hand, byId('tpl_easy_run'), null, 30)).toBe(true);
+    expect(isShortTraining({ ...hand, durationMinutes: 15 }, byId('tpl_easy_run'), null, 30)).toBe(false);
+  });
+
+  it('de harde titel: zonder "rustig" en zonder zone', async () => {
+    const { stravaText } = await import('./activityText');
+    const hard = (templateId: string) => watchLog('t', { templateId, plannedSessionId: 'p', durationMinutes: 40, cardioData: { durationMinutes: 40, distanceKm: 8, avgHeartRate: 172, source: 'garmin' } });
+    expect(stravaText({ log: hard('tpl_hill_easy'), template: byId('tpl_hill_easy'), fit: FIT }).title).toBe('Heuvelloop');
+    expect(stravaText({ log: hard('tpl_recovery_run'), template: byId('tpl_recovery_run'), fit: FIT }).title).toBe('Herstelloop');
+  });
+});
+
+describe('isEasyRun zonder plan valt terug op het profiel', () => {
+  it('de lange duurloop (laag, geen zones) is rustig: hard gelopen is harder dan gepland', () => {
+    expect(isEasyRun(byId('tpl_long_run'), DAY, null)).toBe(true);
+    const log = watchLog('lr', { templateId: 'tpl_long_run', plannedSessionId: 'long', durationMinutes: 80, cardioData: { durationMinutes: 80, distanceKm: 15, avgHeartRate: 165, source: 'garmin' } });
+    expect(coachReaction(log, byId('tpl_long_run'), null, [], FIT)).toBe('Harder dan gepland: gemiddeld 165 bpm, zone 2 gaat tot 151. Een rustige training loop je in zone 2.');
   });
 });

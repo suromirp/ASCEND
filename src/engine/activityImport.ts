@@ -27,7 +27,7 @@ import type { RunDynamics, StreamKind } from '../models/activityDetail';
 import { round } from '../utils/round';
 import { findModalityByKey } from '../data/modalities';
 import { formatHoursMinutesNL } from '../utils/dates';
-import { isTestOrRace } from './templateRoles';
+import { hasRole, isTestOrRace } from './templateRoles';
 import type { Program } from '../models/program';
 import { fitIssueText, hardEffort, isEasyRun, isShortFor, isWalkLike, paceSecKm, wholeMinutes, type FitContext, type FitIssue, type MeasuredRun } from './activityFit';
 
@@ -257,12 +257,15 @@ export function effectiveActivity(activity: ExternalActivity, fit: ImportFit | u
   return isWalkLike(measuredOf(activity)) ? { ...activity, kind: 'hike' } : activity;
 }
 
-// Waar een harde losse loop onder komt: een looptraining van matige intensiteit, geen test of wedstrijd en geen
-// eigen sport; de kortste eerst, bij gelijke lengte de volgorde van het programma (in het standaardprogramma de Tempoloop).
+// Waar een harde losse loop onder komt: een looptraining die hard is (matig of hoog), geen test of wedstrijd en
+// geen eigen sport. Eerst een training met blokken (rol `blocks`: Tempoloop, Intervallen), dan matig voor hoog,
+// dan het id. Nooit de plek in de lijst: templates uit de opslag staan in sleutelvolgorde (Warden, 14 november).
+const HARD_INTENSITY_RANK: Record<string, number> = { moderate: 0, high: 1 };
 export function hardRunTemplate(templates: SessionTemplate[]): SessionTemplate | undefined {
+  const rank = (t: SessionTemplate) => [hasRole(t, 'blocks') ? 0 : 1, HARD_INTENSITY_RANK[t.baseStressProfile?.intensity ?? ''] ?? 9] as const;
   return templates
-    .filter((t) => templateSport(t) === 'running' && t.baseStressProfile?.intensity === 'moderate' && !isTestOrRace(t) && !t.customSport && !countedSportOfTemplate(t))
-    .sort((a, b) => a.durationVariants.full - b.durationVariants.full)[0];
+    .filter((t) => templateSport(t) === 'running' && (rank(t)[1] < 9) && !isTestOrRace(t) && !t.customSport && !countedSportOfTemplate(t))
+    .sort((a, b) => rank(a)[0] - rank(b)[0] || rank(a)[1] - rank(b)[1] || a.id.localeCompare(b.id))[0];
 }
 
 // Hard gelopen bij een rustige geplande training: dan geen vinkje vanzelf en geen "rustig".
@@ -280,6 +283,8 @@ function fitIssueOf(activity: ExternalActivity, original: ExternalActivity, matc
   const minutes = wholeMinutes(activity.durationSec);
   const planned = plannedMinutes(match);
   if (isShortFor(minutes, planned)) return { kind: 'short', minutes, planned, name: match.template.name };
+  // Een vlakke loop in wandeltempo die als loop bij een niet-rustige training bleef: zeg het, de keuze blijft bij jou.
+  if (activity.kind === 'run' && isWalkLike(measuredOf(activity))) return { kind: 'walk-match', pace: paceSecKm(measuredOf(activity)) ?? 0 };
   const hard = hardOnEasyMatch(activity, match, fit);
   if (hard) return { kind: 'hard', judgment: hard, name: match.template.name };
   return undefined;
@@ -513,7 +518,7 @@ export function proposeImport(
   if (matched.has(original.externalId)) return undefined;
   const runMatch = original.kind === 'run' ? proposeMatch(original, planned, templates, logs, places, fit?.exclude) : undefined;
   const activity = effectiveActivity(original, fit, runMatch);
-  const match = activity === original ? runMatch ?? proposeMatch(activity, planned, templates, logs, places, fit?.exclude) : proposeMatch(activity, planned, templates, logs, places, fit?.exclude);
+  const match = activity === original && original.kind === 'run' ? runMatch : proposeMatch(activity, planned, templates, logs, places, fit?.exclude);
   // Een harde losse loop is geen rustige duurloop: met de keuze Soort van een loop toetsen een tempoloop.
   const hardLoose = !match && fit && fit.kindCheck !== false && activity.kind === 'run' ? hardEffort(measuredOf(activity), fit) : undefined;
   const hardTemplate = hardLoose ? hardRunTemplate(templates) : undefined;

@@ -37,3 +37,5 @@ Niets.
 ## Terugdraaien
 
 Instelling Soort van een loop toetsen uit zet de soortkeuze terug. De rest: `src/engine/activityFit.ts` en zijn aanroepen weghalen; er staat niets in de opslag dat terug moet.
+
+Aanvulling 14 november (Warden, herreview): een harde losse loop komt onder een looptraining met blokken (rol `blocks`), matig voor hoog, dan op id, nooit op de plek in de lijst; een vlakke loop in wandeltempo die als loop bij een niet-rustige training blijft, krijgt de regel "Wandeltempo, ... per km. Hoort hij er niet bij, kies dan Andere training."
