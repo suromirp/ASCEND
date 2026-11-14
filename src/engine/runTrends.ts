@@ -23,6 +23,7 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { TrendPoint } from './readiness';
 import { aerobicTrend, bandPhrase, firstRulePhrase, formatPace, trendVerdict, zone2Criteria } from './aerobicTrend';
+import { zone2SheetCaption, zone2WeekChart } from './zone2Chart';
 import { ZONE2_RULES } from './zone2Rules';
 import type { HeartRateSettings } from './heartRateZones';
 import { isIndoorLog, logSport } from './sports';
@@ -96,11 +97,14 @@ function efficiencyRow(input: RunTrendsInput): TrendRow {
   const s = trend.statement?.kind === 'uitspraak' ? trend.statement : undefined;
   const word: TrendWord = !s || s.verdict === 'te-veel-verschil' ? 'Te weinig gegevens' : s.verdict === 'geen-duidelijke-verandering' ? 'Normaal' : s.verdict === 'sneller' ? 'Beter' : 'Slechter';
   const points = trend.points.map((p) => ({ label: p.label, value: p.value }));
+  const weekChart = zone2WeekChart(trend, input.today);
+  const weekExtra = weekChart.dots.length > 0 ? { weekChart, weekCaption: zone2SheetCaption(weekChart) } : {};
   const criteria = [...zone2Criteria(trend, input.tempoPieces !== false), `de laatste ${TREND_WEEKS} weken`];
   const model: SheetModel =
     !s || change === undefined || trend.recentSec === undefined || trend.earlierSec === undefined
       ? empty('efficiency', 'Efficiëntie', 'pace', trendVerdict(trend) ?? `Voor een uitspraak zijn minstens ${ZONE2_RULES.firstRuns} lopen met een stuk in zone 2 nodig, ${firstRulePhrase()}.`, criteria)
       : {
+          ...weekExtra,
           topic: 'efficiency',
           title: 'Efficiëntie',
           word,
@@ -122,7 +126,7 @@ function efficiencyRow(input: RunTrendsInput): TrendRow {
                 : 'Gelijk aan een maand geleden. Normaal: vooruitgang gaat in weken, niet per loop.',
           basis: { logIds: [], criteria, notes: trend.outsideZone > 0 ? [`${trend.outsideZone} ${trend.outsideZone === 1 ? 'loop lag' : 'lopen lagen'} te ver van zone 2 en ${trend.outsideZone === 1 ? 'telt' : 'tellen'} niet mee.`] : [] },
         };
-  return { key: 'efficiency', title: 'Efficiëntie', word, points, model };
+  return { key: 'efficiency', title: 'Efficiëntie', word, points, model: !s || change === undefined ? { ...model, ...weekExtra } : model };
 }
 
 // --- long days: drift --------------------------------------------------------------------------------------

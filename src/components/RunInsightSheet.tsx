@@ -10,6 +10,7 @@ import { formatPace } from '../engine/aerobicTrend';
 import { formatNumberNL } from '../utils/number';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
+import { Zone2WeekChart } from './stand/Zone2WeekChart';
 import { TrendLineChart } from './TrendLineChart';
 import { Card, Eyebrow, InfoButton, SecondaryButton, SheetGrip } from './ui';
 
@@ -41,7 +42,12 @@ export function RunInsightSheet({ model, notCompared = [], onClose }: { model: S
               <Figure label="Verschil" value={figures.difference} />
             </div>
 
-            {series.length > 1 && (
+            {model.weekChart && model.weekChart.dots.length > 0 ? (
+              <div className="mt-4">
+                <Zone2WeekChart chart={model.weekChart} />
+                {model.weekCaption && <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{model.weekCaption}</p>}
+              </div>
+            ) : series.length > 1 && (
               <div className="mt-4">
                 <TrendLineChart points={series} color="var(--color-action)" height={96} formatValue={formatter(model.seriesFormat)} />
                 <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>

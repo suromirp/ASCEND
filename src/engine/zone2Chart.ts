@@ -251,6 +251,15 @@ export function zone2CardCaption(trend: Parameters<typeof trendHeadline>[0]): st
   return `Het getal boven is je laatste week met een loop. ${dots}`;
 }
 
+// De zin onder de grafiek op het blad Efficiëntie: wat de stippen en de lijn zijn. Geen lijst van lopen:
+// een tik op een stip toont de week en het aantal lopen, dus een lijst eronder zou dubbel zijn.
+export function zone2SheetCaption(chart: Pick<Zone2WeekChart, 'dots' | 'line'>): string | undefined {
+  const n = chart.dots.length;
+  if (n === 0) return undefined;
+  const dots = n === 1 ? 'De stip is die week.' : 'Elke stip is een week; tik op een stip voor de week en het aantal lopen.';
+  return chart.line ? `${dots} De lijn loopt door je lopen van de laatste ${R.lineWeeks} weken en eindigt op het getal bij Nu, op de lijn.` : `${dots} Nog zonder lijn.`;
+}
+
 // Waar de tooltip begint, in px vanaf de linkerrand van de grafiek: gecentreerd op zijn stip, maar
 // nooit buiten de grafiek (gemeten breedtes, dus ook op 360 px met een lange tekst). Is de tooltip
 // breder dan de grafiek, dan begint hij links.

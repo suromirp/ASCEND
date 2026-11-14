@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { runTrends, type RunTrendsInput } from './runTrends';
-import { aerobicTrend, bandPhrase } from './aerobicTrend';
+import { zone2WeekChart } from './zone2Chart';
+import { aerobicTrend, bandPhrase, formatPace } from './aerobicTrend';
 import { EASY, TEMPLATES, runLog } from './fixtures/runLogs';
 import type { RunSpec } from './fixtures/runStreams';
 import type { SessionLog } from '../models/training';
@@ -35,6 +36,38 @@ describe('efficiency: the same trend as the card Tempo bij zone 2', () => {
     expect(r.model.figures.difference).toBe(`ongeveer ${-s.roundedHigh} tot ${-s.roundedLow} seconden sneller per km`);
     expect(r.model.figures.today).toBe(`${Math.floor(trend.recentSec! / 60)}:${String(Math.round(trend.recentSec! % 60)).padStart(2, '0')} per km`);
     expect(r.model.strengthText).toContain('dezelfde trend als de kaart Tempo bij zone 2');
+  });
+
+  it('draws the week chart of the card: the line ends on the number of "Nu, op de lijn"', () => {
+    const r = row(better, 'efficiency');
+    const trend = aerobicTrend(better, TEMPLATES, null, HR, TODAY);
+    const chart = r.model.weekChart!;
+    expect(chart).toEqual(zone2WeekChart(trend, TODAY));
+    expect(chart.line).toBeDefined();
+    expect(chart.line!.x2).toBeGreaterThanOrEqual(chart.dots.at(-1)!.x);
+    expect(r.model.figures.todayLabel).toBe('Nu, op de lijn');
+    expect(r.model.figures.today).toBe(`${formatPace(chart.line!.sec2)} per km`);
+    expect(chart.end!.paceSec).toBe(chart.line!.sec2);
+    expect(r.model.weekCaption).toContain('Nu, op de lijn');
+    expect(r.model.weekCaption).not.toMatch(/[\u2013\u2014]/);
+  });
+
+  it('leaves weeks without a run empty: no dot, the line still ends today', () => {
+    const gap = better.filter((_, i) => i !== 4 && i !== 5);
+    const chart = row(gap, 'efficiency').model.weekChart!;
+    const trend = aerobicTrend(gap, TEMPLATES, null, HR, TODAY);
+    expect(chart.dots).toHaveLength(trend.points.length);
+    expect(new Set(chart.dots.map((d) => d.week)).size).toBe(chart.dots.length);
+  });
+
+  it('gives one dot and no line for one week, and nothing for no data', () => {
+    const one = row([better.at(-1)!], 'efficiency').model;
+    expect(one.weekChart!.dots).toHaveLength(1);
+    expect(one.weekChart!.line).toBeUndefined();
+    expect(one.weekCaption).toContain('De stip is die week.');
+    const none = row([], 'efficiency').model;
+    expect(none.weekChart).toBeUndefined();
+    expect(none.weekCaption).toBeUndefined();
   });
 
   it('is Normaal when the band lies over zero, Slechter for a clearly slower line and has too little data otherwise', () => {

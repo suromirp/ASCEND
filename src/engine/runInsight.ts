@@ -44,6 +44,7 @@ import { addDays } from '../utils/dates';
 import { zoneBpm, type HeartRateSettings } from './heartRateZones';
 import { formatPace } from './aerobicTrend';
 import type { LegFatigueInputs } from './legFatigue';
+import type { Zone2WeekChart } from './zone2Chart';
 import { resolveRunInsight, type InsightTopicSwitch, type RunInsightSettings } from './runInsightSettings';
 import {
   baselineOf,
@@ -101,7 +102,13 @@ export interface InsightLine {
 
 // What the sheet "Waarom" needs; an InsightLine fits it, and so does a row of the
 // trend on Je stand (engine/runTrends.ts).
-export type SheetModel = Pick<InsightLine, 'topic' | 'title' | 'figures' | 'series' | 'seriesFormat' | 'strengthText' | 'meaning' | 'basis'> & { word: string };
+export type SheetModel = Pick<InsightLine, 'topic' | 'title' | 'figures' | 'series' | 'seriesFormat' | 'strengthText' | 'meaning' | 'basis'> & {
+  word: string;
+  // Alleen Efficiëntie: dezelfde weekgrafiek als de kaart Tempo bij zone 2 (engine/zone2Chart.ts#zone2WeekChart).
+  // Dan tekent het blad deze en niet `series`; de lijn is de regressie waar "Nu, op de lijn" van komt.
+  weekChart?: Zone2WeekChart;
+  weekCaption?: string;
+};
 
 export interface RunInsight {
   better?: InsightLine;
