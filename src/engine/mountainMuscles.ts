@@ -8,9 +8,9 @@
 // toe te voegen; pas na Akkoord verandert er iets. In Forge zet Ruilen bij gelijke keuze een oefening voorop die
 // zo'n spier bedient (forgeWorkout.ts#swapOptions). Geen score, geen kleur per spier, geen heatmap.
 //
-// Enkel en evenwicht (docs/beslissingen/2026-11-11-enkel-evenwicht.md) is de vierde rij: geen spier maar werk op één
-// been (oefeningen met patroon 'balance'). Het telt werksets, geen harde sets, met een eigen ondergrens, en laat
-// naast een rustweek ook een week met vakantie, een tocht of zonder sportschool weg. Bij een open pijnklacht aan een
+// Enkel en evenwicht (docs/beslissingen/2026-11-11-enkel-evenwicht.md) is de vierde rij: geen spier maar
+// evenwichtsoefeningen (patroon 'balance'; lunges en split squats tellen hier niet). Het telt werksets, geen harde
+// sets, met een eigen ondergrens, en laat naast een rustweek ook een week met vakantie, een tocht of zonder sportschool weg. Bij een open pijnklacht aan een
 // enkel of voet zwijgt het. Het komt na de drie spieren: hoogstens één voorstel per keer, met dezelfde Akkoord.
 // Puur: geen React, geen opslag.
 
@@ -54,16 +54,15 @@ const BALANCE_INJURY_PARTS = ['enkel', 'voet'];
 const MOUNTAIN_FLOOR_SETS = 4;
 const MOUNTAIN_WINDOW_WEEKS = 4;
 // Na "Liever niet" blijft het voor die spier zo lang stil.
-const DECLINE_QUIET_WEEKS = 8;
+export const DECLINE_QUIET_WEEKS = 8;
 
 export const MOUNTAIN_KINDS: ReadonlySet<GoalKindId> = new Set(['trek_hut', 'trek_tent', 'day_hike', 'mountaineering']);
 
 // Hoe de spier in een zin heet.
-const NAMED: Record<string, { your: string; got: string; work: string; why: string }> = {
-  calves: { your: 'je kuiten', got: 'kregen', work: 'kuitwerk', why: 'bergop en bergaf met een rugzak' },
-  tibialis: { your: 'je scheenspier', got: 'kreeg', work: 'werk voor je scheenspier', why: 'lange afdalingen' },
-  glutes: { your: 'je bilspieren', got: 'kregen', work: 'werk voor je bilspieren', why: 'klimmen met een rugzak' },
-  balance: { your: 'je enkels en je evenwicht', got: 'kregen', work: 'werk op één been', why: 'ongelijke paden en afdalingen' },
+const NAMED: Record<string, { your: string; got: string }> = {
+  calves: { your: 'je kuiten', got: 'kregen' },
+  tibialis: { your: 'je scheenspier', got: 'kreeg' },
+  glutes: { your: 'je bilspieren', got: 'kregen' },
 };
 
 // Alleen het hoofddoel: een tocht, een bergtocht of mountaineering (zonder soort: de oude tocht).
@@ -259,31 +258,83 @@ export function reviewShowsMuscleProposal(reviewWeekStart: string, today: string
   return reviewWeekStart >= muscleProposalWeek(today);
 }
 
-const setsWord = (n: number) => (n === 1 ? 'harde set' : 'harde sets');
+const WEEKS_WORD: Record<number, string> = { 2: 'twee', 3: 'drie', 4: 'vier' };
+const TIMES_WORD: Record<number, string> = { 1: 'Eén', 2: 'Twee', 3: 'Drie', 4: 'Vier', 5: 'Vijf' };
 
-// De woorden van de melding: eerst het feit, dan de zorg ("kan helpen"), eerlijk over wat niet telde, en het voorstel.
-// De oefening heet hier bij haar Nederlandse naam (engine/exerciseNames.ts); in Forge, logs en MacroFactor blijft
-// de naam zoals hij is. `what` en `cost` zijn het voorstel in twee delen, voor de weergave Voorstel in de weekterugblik.
-export function muscleNoticeText(p: MuscleProposal): { fact: string; care: string; unknown?: string; proposal: string; name: string; what: string; cost: string } {
+// Waarom, per rij: één zin met "kan helpen", nooit "voorkomt".
+const WHY: Partial<Record<MountainArea, string>> = {
+  calves: 'Sterkere kuiten kunnen helpen bij bergop en bergaf met een rugzak.',
+  tibialis: 'Een sterkere scheenspier kan helpen bij lange afdalingen.',
+  glutes: 'Sterkere bilspieren kunnen helpen bij klimmen met een rugzak.',
+  balance: 'Evenwichtsoefeningen kunnen je enkels helpen op ongelijke paden en bij afdalen.',
+};
+
+export interface MuscleNoticeText {
+  // De Nederlandse naam van de oefening (engine/exerciseNames.ts): de titel van het voorstel en de rij.
+  name: string;
+  // In welke training hij komt.
+  where: string;
+  // Wat je doet, in gewone woorden, met de dosis.
+  how: string;
+  // Waarom: het droge feit, dan wat het kan helpen.
+  why: string;
+  // Wat de telling minder zeker maakt (sets die aan geen oefening gekoppeld konden worden): op het scherm, ook in
+  // Forge, nooit alleen achter de i.
+  unknown?: string;
+  // Als Forge de oefening anders noemt dan het voorstel: "In Forge heet hij Single Leg Stance."
+  forgeName?: string;
+  // Achter de i: wat telt en wat niet meetelde, voor deze rij, en wat Liever niet doet.
+  info: string;
+  // Wat er na Akkoord gebeurt.
+  after: string;
+  // Na Akkoord: dat hij er staat en waar (met de zin over de naam in Forge erachter).
+  done: string;
+}
+
+// De woorden van het voorstel, in lagen: de oefening, wat je doet, waarom, en wat Akkoord doet. Forge
+// (MountainMuscleNotice) en de weekterugblik gebruiken dezelfde woorden. De oefening heet hier bij haar Nederlandse
+// naam; in Forge, logs en MacroFactor blijft de naam zoals hij is. Toegevoegde oefeningen komen achter de oefeningen
+// van de training (engine/forgeSlots.ts#forgeSlotsFor), dus de nieuwste is de laatste.
+export function muscleNoticeText(p: MuscleProposal): MuscleNoticeText {
   const avg = Math.round(p.avgSets * 10) / 10;
   const balance = p.muscle === 'balance';
-  const span = p.restLeftOut ? `de laatste ${p.weeks === 3 ? 'drie' : p.weeks} weken zonder ${balance ? 'rustweek of vakantie' : 'de rustweek'}` : p.weeks === MOUNTAIN_WINDOW_WEEKS ? 'de laatste vier weken' : `de laatste ${p.weeks === 3 ? 'drie' : p.weeks} weken`;
-  const named = NAMED[p.muscle];
-  const unknown = Math.round(p.unknownSets);
-  const [low, high] = p.reps.split('-');
-  const hold = exerciseById(p.exerciseId)?.measure === 'hold';
+  const span = `de laatste ${WEEKS_WORD[p.weeks] ?? p.weeks} weken`;
+  const exercise = exerciseById(p.exerciseId);
   const name = noticeExerciseName(p.exerciseId, p.exerciseName);
-  const what = `${name} erbij in ${p.templateName}`;
+  const [low, high] = p.reps.split('-');
+  const times = TIMES_WORD[p.sets] ?? String(p.sets);
   // Geen duur in minuten: die kent de app niet, dus die staat er niet.
-  const cost = hold ? `${p.sets} sets per been, zo lang je stil kunt staan.` : `${p.sets} sets van ${low}${high ? ` tot ${high}` : ''} herhalingen.`;
+  let how: string;
+  if (exercise?.measure === 'hold') {
+    how = balance ? `Sta op één been tot je gaat wiebelen, dan op het andere been. ${times} keer per been.` : `${times} keer, zo lang je de houding goed houdt.`;
+  } else {
+    const line = exercise?.guide?.short[0];
+    how = `${line ? `${line} ` : ''}${p.sets} sets van ${low}${high ? ` tot ${high}` : ''} herhalingen${exercise?.perSide ? ' per been' : ''}.`;
+  }
+  const many = (n: number) => `${formatNumberNL(n, n % 1 === 0 ? 0 : 1)} ${n === 1 ? 'set' : 'sets'}`;
+  // Nul is geen gemiddelde: dan zeg je gewoon dat er niets was.
+  const fact = balance
+    ? (avg === 0 ? `Je deed ${span} geen evenwichtsoefening.` : `Je deed ${span} gemiddeld ${many(avg)} per week met een evenwichtsoefening.`)
+    : (avg === 0 ? `Je deed ${span} geen sets voor ${NAMED[p.muscle].your}.` : `Je deed ${span} gemiddeld ${many(avg)} per week voor ${NAMED[p.muscle].your}.`);
+  const fewer = p.restLeftOut ? `, daarom gaat het hier over ${WEEKS_WORD[p.weeks] ?? p.weeks} weken` : '';
+  const unknown = Math.round(p.unknownSets);
+  const info = [
+    balance ? 'Elke werkset van een evenwichtsoefening telt, opwarmen niet.' : 'Een set telt als je er hoogstens 4 herhalingen over had.',
+    balance ? `Een rustweek en een week met vakantie, een tocht of zonder sportschool tellen niet mee${fewer}.` : `Een rustweek telt niet mee${fewer}.`,
+    `Kies je Liever niet, dan blijft het acht weken stil over ${balance ? 'je evenwicht' : NAMED[p.muscle].your}.`,
+  ].filter(Boolean).join(' ');
+  const inForge = exercise?.name ?? p.exerciseName;
+  const forgeName = inForge && inForge !== name ? `In Forge heet hij ${inForge}.` : undefined;
   return {
-    // Nul is geen gemiddelde: dan zeg je gewoon dat er niets was.
-    fact: `${named.your.charAt(0).toUpperCase()}${named.your.slice(1)} ${named.got} ${span} ${avg === 0 ? (balance ? 'geen werk op één been' : 'geen harde sets') : `gemiddeld ${formatNumberNL(avg, avg % 1 === 0 ? 0 : 1)} ${balance ? (avg === 1 ? 'set' : 'sets') : setsWord(avg)} per week`}.`,
-    care: `Voor ${named.why} kan ${named.work} helpen.`,
-    unknown: unknown > 0 ? `${unknown} ${unknown === 1 ? 'set kon' : 'sets konden'} niet aan een oefening gekoppeld worden; die tellen hier niet mee.` : undefined,
-    proposal: `Voorstel: ${what}, ${cost}`,
     name,
-    what,
-    cost,
+    ...(unknown > 0 ? { unknown: `${unknown} ${unknown === 1 ? 'set kon' : 'sets konden'} niet aan een oefening gekoppeld worden; die tellen hier niet mee.` } : {}),
+    ...(forgeName ? { forgeName } : {}),
+    where: `Erbij in ${p.templateName}`,
+    how,
+    why: `${fact} ${WHY[p.muscle] ?? ''}`.trim(),
+    info,
+    // De naam van de training staat achteraan: een naam met haakjes (Benen A (zwaar)) leest dan als een gewone zin.
+    after: `Eerst een voorstel, pas na Akkoord verandert er iets. Daarna is hij vanaf je volgende keer de laatste oefening in ${p.templateName}. Weghalen kan in het blad van de oefening.`,
+    done: `Vanaf je volgende keer is ${name} de laatste oefening in ${p.templateName}.${forgeName ? ` ${forgeName}` : ''}`,
   };
 }
