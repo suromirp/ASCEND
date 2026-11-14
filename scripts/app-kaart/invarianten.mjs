@@ -269,11 +269,44 @@ export const INVARIANTEN = [
       return dubbel.map((z) => `${s}: "${z}" staat twee keer in één regel`);
     })),
   },
+  {
+    // De avond ervoor (besluit 2026-11-11-avond-ervoor.md): op de avondstand (20:30) staat de kaart er, na de missie, en
+    // noemt de training van morgen zoals de regel Morgen op de missiekaart (naam en minuten). Op elk ander scherm
+    // zonder avondklok (08:00) staat hij er niet.
+    naam: 'De avond ervoor: onder de missie, noemt de training van morgen, alleen op de avond',
+    controleer: (k, schermen) => {
+      const uit = [];
+      const kaarten = (t) => t.split(/^--- kaart \d+ ---$/m).slice(1);
+      const t = k('vandaag-avond');
+      if (!t) return ['vandaag-avond ontbreekt in de kaart'];
+      const lijst = kaarten(t);
+      const avond = lijst.findIndex((c) => /^De avond ervoor$/m.test(c));
+      // De missiekaart is de kaart met de eyebrow "Vandaag" en een kop (###).
+      const missie = lijst.findIndex((c) => /^Vandaag$/m.test(c) && /^### /m.test(c));
+      if (avond < 0) uit.push('vandaag-avond: de kaart De avond ervoor staat er niet');
+      if (missie < 0) uit.push('vandaag-avond: de missiekaart staat er niet');
+      if (avond >= 0 && missie >= 0) {
+        if (avond <= missie) uit.push(`vandaag-avond: De avond ervoor (kaart ${avond + 1}) staat niet onder de missie (kaart ${missie + 1})`);
+        const titel = lijst[avond].match(/^Morgen (\d{2}:\d{2}), (.+), (\d+) min$/m) ?? lijst[avond].match(/^Morgen (.+), (\d+) min$/m);
+        const morgen = lijst[missie].match(/^Morgen: (.+), (\d+) min$/m);
+        if (!titel) uit.push('vandaag-avond: De avond ervoor noemt geen training van morgen');
+        else if (morgen) {
+          const naam = titel.length === 4 ? titel[2] : titel[1];
+          const min = titel.length === 4 ? titel[3] : titel[2];
+          if (naam !== morgen[1] || min !== morgen[2]) uit.push(`vandaag-avond: de kaart zegt "${naam}, ${min} min", de missiekaart "${morgen[1]}, ${morgen[2]} min"`);
+        }
+      }
+      for (const s of schermen.filter((x) => x.startsWith('vandaag') && x !== 'vandaag-avond' && x !== 'vandaag-loop')) {
+        if (/^De avond ervoor$/m.test(k(s))) uit.push(`${s}: De avond ervoor staat er om 08:00`);
+      }
+      return uit;
+    },
+  },
 ];
 
 const SCHERMEN = [
   'vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad', 'briefing', 'briefing-heuvel', 'briefing-loopband-helling', 'briefing-stairmaster', 'briefing-loopband',
-  'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
+  'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'vandaag-avond', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
   'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek',
   'ascend-algemeen', 'ascend-vaardigheid', 'weekterugblik-voorstel', 'stand-benen', 'stand-belasting', 'stand-ritme', 'stand-lopen', 'stand-invloed',
   'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek', 'week-aangepast', 'week-aangepast-blad',
