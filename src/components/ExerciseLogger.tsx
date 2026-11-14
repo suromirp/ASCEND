@@ -6,7 +6,7 @@ import { asksDoneOn } from './logForm/formRules';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, RpeField } from './logForm/LogFormParts';
 import { HowDidItGoSheet } from './HowDidItGoSheet';
 import { HOW_TEXT } from './logForm/howDidItGo';
-import { closeClearsDraft, formAfterSave, saveLogWithin, type LogSaveOutcome } from '../state/logSave';
+import { closeClearsDraft, failedNote, formAfterSave, saveLogWithin, type LogSaveOutcome } from '../state/logSave';
 import { briefingEntry } from '../engine/briefing';
 import { NumberField } from './NumberField';
 import type { SessionTemplate, SessionVariant } from '../models/training';
@@ -148,7 +148,7 @@ function GeneralLogger({
       if (!alive.current) return;
       if (next.close) return onClose();
       setSaving(next.buttonOff);
-      const text = next.note === 'failed' ? (plannedSessionId ? HOW_TEXT.failed : HOW_TEXT.failedLoose) : next.note ? HOW_TEXT[next.note] : undefined;
+      const text = next.note === 'failed' ? failedNote(plannedSessionId ? HOW_TEXT.failed : HOW_TEXT.failedLoose) : next.note ? HOW_TEXT[next.note] : undefined;
       setSaveNote(text ? { text, warn: next.note === 'failed' } : null);
     };
     show(await saveLogWithin(logSession, input, { onLate: show }));

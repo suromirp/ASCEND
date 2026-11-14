@@ -26,6 +26,7 @@ import { useLogForm, type LogForm } from './logForm/useLogForm';
 import type { EnabledSports } from '../engine/sports';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, PlaceChoice, RpeField, VariantField } from './logForm/LogFormParts';
 import { chosenPlaceLabel, placeLabel, SheetMode, showsPlace } from './logForm/formRules';
+import { failedNote, logWithOwnNotice } from '../state/logSave';
 import { alreadyLogged, clearsDraft, footState, HOW_TEXT, submitLog, type CloseWay, type FootState } from './logForm/howDidItGo';
 
 export function HowDidItGoSheet({
@@ -89,7 +90,8 @@ export function HowDidItGoSheet({
     setSaving(true);
     await submitLog({
       busy: savingRef,
-      save: () => logSession(input),
+      // De zin onderaan zegt het zelf: geen melding bovenin erbij (state/logSave.ts).
+      save: () => logWithOwnNotice(logSession, input),
       onSlow: () => { slowRef.current = true; setSlow(true); },
       onSaved: () => { form.clearDraft(); onSaved?.(); finish(); },
       // Mislukt: het blad blijft open met alles wat je invulde en het concept.
@@ -206,7 +208,7 @@ export function SheetFoot({ state, saving, slow, failed, loose = false, rest, mi
   return (
     <div>
       {(slow || failed) && (
-        <p role="status" className="mb-2 text-xs leading-snug" style={{ color: failed ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{failed ? (loose ? HOW_TEXT.failedLoose : HOW_TEXT.failed) : HOW_TEXT.slow}</p>
+        <p role="status" className="mb-2 text-xs leading-snug" style={{ color: failed ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{failed ? failedNote(loose ? HOW_TEXT.failedLoose : HOW_TEXT.failed) : HOW_TEXT.slow}</p>
       )}
       <div className="flex gap-3">
         <SecondaryButton onClick={onClose} disabled={saving && !slow} className="min-w-[112px] flex-none px-4">{HOW_TEXT.cancel}</SecondaryButton>

@@ -3,7 +3,7 @@
 // docs/beslissingen/2026-11-12-hoe-ging-het.md.
 
 import type { SessionLog } from '../../models/training';
-import { ALREADY_LOGGED_NOTE } from '../../state/logSave';
+import { FORM_SAVE_NOTE } from '../../state/logSave';
 
 export const HOW_TEXT = {
   title: 'Hoe ging het?',
@@ -19,12 +19,12 @@ export const HOW_TEXT = {
   close: 'Sluiten',
   cancel: 'Annuleren',
   // Na de grens in tijd: het opslaan loopt nog, en je ziet dat.
-  slow: 'Opslaan duurt lang. Je invulling blijft staan.',
-  failed: 'Opslaan lukte niet. Je invulling staat er nog; probeer het opnieuw.',
+  slow: FORM_SAVE_NOTE.slow,
+  failed: FORM_SAVE_NOTE.failed,
   // Een losse training heeft geen geplande training die een tweede log tegenhoudt: eerst kijken. Sinds
   // besluit 2026-11-12-dubbel-log.md zegt logSession ja zodra het log geschreven is; deze regel blijft als voorzorg.
-  failedLoose: 'Opslaan lukte niet. Kijk eerst in je logboek of hij er toch staat; je invulling staat er nog.',
-  already: ALREADY_LOGGED_NOTE,
+  failedLoose: FORM_SAVE_NOTE.failedLoose,
+  already: FORM_SAVE_NOTE.already,
 } as const;
 
 // De grens in tijd voor Opslaan. Daarna zegt het blad dat het lang duurt; de knop blijft uit tot het

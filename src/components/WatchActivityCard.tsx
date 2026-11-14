@@ -11,7 +11,7 @@
 import { useTrainingPlaces } from './useTrainingPlaces';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { autoTickLog, cardAfterSave, saveLogWithin, LOG_SAVE_NOTE, type LogSaveOutcome } from '../state/logSave';
+import { autoTickLog, cardAfterSave, failedNote, saveLogWithin, LOG_SAVE_NOTE, type LogSaveOutcome } from '../state/logSave';
 import {
   dismissActivity,
   getWatchState,
@@ -224,7 +224,7 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
       if (!aliveRef.current) return;
       if (next.closeSheet) setChoosing(false);
       if (next.refresh) void refresh().catch(() => undefined);
-      setSaveNote(next.note ? { externalId: id, text: LOG_SAVE_NOTE[next.note], warn: next.note === 'failed' } : null);
+      setSaveNote(next.note ? { externalId: id, text: next.note === 'failed' ? failedNote(LOG_SAVE_NOTE.failed) : LOG_SAVE_NOTE[next.note], warn: next.note === 'failed' } : null);
     };
     show(await saveLogWithin(logSession, activityToDraft(activity, template, match?.session, chosenWayOf(activity, match, places)), { onLate: (result) => show(result, true) }));
     if (aliveRef.current) setSaving(false);

@@ -47,9 +47,19 @@ Zichtbaar. In het blad Andere training stonden "Opslaan…" en de foutzin onder 
 
 Toetsbaar. Wat een scherm bij welke uitkomst doet staat als pure functie in `state/logSave.ts` (`formAfterSave`, `cardAfterSave`) en is daar getest. De zin voor "stond er al" komt uit één bron (`ALREADY_LOGGED_NOTE`).
 
+## Aanvulling na de doorloop (Pathfinder, 14 november)
+
+Eén melding. Bij een mislukte schrijfactie kwam bovenin de algemene melding, over de grip van het blad heen, en daaronder de zin van het scherm zelf. Een scherm dat de uitkomst zelf toont geeft nu `onWriteError` mee aan `logSession`; de melding bovenin blijft dan weg, ook als het antwoord pas na de grens komt. `saveLogWithin`, `autoTickLog`, `saveLogThenChoice` en het blad Hoe ging het? (`logWithOwnNotice`) doen dat. Een fout na het schrijven gaat nog wel bovenin: het log staat er dan en het scherm zegt opgeslagen.
+
+De back-uptip. Wat de melding bovenin wist (de opslag is vol, maak een back-up) gaat niet verloren. De eerste keer zegt het scherm zijn gewone zin. Mislukt het schrijven een tweede keer op rij, dan zegt het scherm de reden en de tip zelf (`failedNote`, de woorden van `describeWriteError`). Vanzelf afvinken dat mislukt geeft geen melding: je deed zelf niets, en de activiteit blijft een voorstel.
+
+Eén woordenset (`LOG_SAVE_NOTE` en `FORM_SAVE_NOTE` in `state/logSave.ts`). Mislukt begint overal met "Opslaan lukte niet.", traag met "Opslaan duurt langer dan verwacht.". Waar de knop na de grens uit is staat "Je invulling blijft staan."; waar je opnieuw mag tikken "Kijk zo in je logboek of hij er staat. Zo niet, probeer het nog eens.". De woorden van het blad Hoe ging het? zijn leidend; alleen zijn zin voor traag kreeg het vaste begin. De sportvraag zegt na de grens niet meer "Dit lukte niet": het log kan nog landen. Alleen mislukt is amber, ook daar.
+
 ## Nog open
 
 Het oude trainingsscherm sluiten en weer openen terwijl de eerste opslag van een losse training nog hangt, en dan iets anders invullen en opslaan, geeft een tweede log: een losse training heeft geen sleutel. Dat vraagt een keuze over wat "dezelfde losse training" is en is hier niet opgelost.
+
+Forge (`FinishSheet.tsx`) toont bij een schrijffout nog zijn eigen zin en de melding bovenin, met zijn eigen woorden over je sets.
 
 `SessionActionSheet.tsx` (MacroFactor-training opslaan) leest nee nog kaal: het blad blijft open zonder zin. Today en Week vinken een rustdag of krachttraining af zonder het antwoord te lezen; daar wordt niets weggegooid. Het blad Hoe ging het? toont bij "stond er al" de zin voor mislukt, tot het logboek opnieuw gelezen is.
 

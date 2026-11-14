@@ -13,6 +13,14 @@ import { coachReaction } from '../engine/coach';
 import { aerobicTrend, celebratedChange, progressMoment, tempoPiecesOn, type ProgressCelebrated } from '../engine/aerobicTrend';
 import type { LogSessionInput } from './appDataTypes';
 
+// `batch`: het moment na Gedaan gaat in de lijst van de aanroeper. `onWriteError`: het scherm toont zelf dat het
+// schrijven mislukte (state/logSave.ts) en krijgt de fout hier; de melding bovenin blijft dan weg, ook als het
+// antwoord pas na de grens in tijd komt. Een fout na het schrijven (LogStoredFollowUpFailed) gaat altijd bovenin.
+export interface LogSessionOpts {
+  batch?: SavedMoment[];
+  onWriteError?: (err: unknown) => void;
+}
+
 export interface LogSessionDeps {
   settings: Pick<AppSettings, 'heartRate' | 'tempoStablePieces'>;
   loggingInFlight: { current: Set<string> };
@@ -40,7 +48,7 @@ function pendingKey(input: LogSessionInput): string | undefined {
 // geplande training of horloge-activiteit had al een log). Faalt een stap na het schrijven (mijlpalen,
 // opnieuw lezen, het moment na Gedaan), dan blijft het ja en gaat de fout apart naar de melding bovenin
 // (LogStoredFollowUpFailed), zodat geen scherm opnieuw laat opslaan.
-export function runLogSession(input: LogSessionInput, opts: { batch?: SavedMoment[] } | undefined, deps: LogSessionDeps): Promise<boolean> {
+export function runLogSession(input: LogSessionInput, opts: LogSessionOpts | undefined, deps: LogSessionDeps): Promise<boolean> {
   const externalId = input.externalId;
   if (externalId) {
     // Al onderweg: nee, zoals wanneer haar log er al staat (de aanroeper doet dan niets dubbel).
@@ -57,7 +65,7 @@ export function runLogSession(input: LogSessionInput, opts: { batch?: SavedMomen
   return mine;
 }
 
-async function writeLog(input: LogSessionInput, opts: { batch?: SavedMoment[] } | undefined, deps: LogSessionDeps): Promise<boolean> {
+async function writeLog(input: LogSessionInput, opts: LogSessionOpts | undefined, deps: LogSessionDeps): Promise<boolean> {
   const { settings, loggingInFlight, reportStorageError, refresh, announceSaved } = deps;
   const plannedId = input.plannedSessionId;
   if (plannedId) {
@@ -160,7 +168,8 @@ async function writeLog(input: LogSessionInput, opts: { batch?: SavedMoment[] } 
     }
     return true;
   } catch (err) {
-    reportStorageError(err);
+    if (opts?.onWriteError) opts.onWriteError(err);
+    else reportStorageError(err);
     return false;
   } finally {
     if (plannedId) loggingInFlight.current.delete(plannedId);

@@ -13,7 +13,7 @@ import { parseSportHandling, resolveSportCounting } from '../../engine/sportRole
 import { activityToDraft, durationLabel } from '../../engine/activityImport';
 import { sportTemplate } from '../../engine/sportTemplate';
 import { FELT_LABEL, FELT_RPE, type FeltWord } from '../../engine/sessionLoad';
-import { saveLogThenChoice } from '../../state/logSave';
+import { saveLogThenChoice, thrownSaveNote } from '../../state/logSave';
 import { anySportDefinition, type SportRole } from '../../data/sports';
 import { formatDateNL, todayISO, weekdayLongNL } from '../../utils/dates';
 import { Icon } from '../icons';
@@ -99,14 +99,15 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
   const [felt, setFelt] = useState<FeltWord>('pittig');
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(false);
+  // De uitkomst als er (nog) niets bewaard is: mislukt, of te lang (het log kan dan nog landen).
+  const [error, setError] = useState<{ kind: 'slow' | 'failed'; text: string } | null>(null);
   const askFelt = counting.askFelt && question.activity.rpe === undefined && role === 'count';
   const day = question.activity.start.slice(0, 10);
 
   async function save(close: () => void) {
     if (busy) return;
     setBusy(true);
-    setError(false);
+    setError(null);
     try {
       const sport: CustomSport = { id: customIdOf(question.type), label: question.label, type: question.type, feel, role };
       // Eerst het log, dan de keuze (state/logSave.ts): lukt het log niet, dan blijft alles zoals het was en staat de vraag er nog.
@@ -122,8 +123,8 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
         return updateSettings({ customSports: [...current.filter((c) => c.type !== sport.type), sport] });
       }, SAVE_TIMEOUT_MS);
       close();
-    } catch {
-      setError(true);
+    } catch (err) {
+      setError(thrownSaveNote(err));
     } finally {
       setBusy(false);
     }
@@ -162,7 +163,7 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
               />
             </div>
           )}
-          {error && <p className="st-hint" style={{ marginLeft: 0, color: 'var(--color-ink)' }} role="status">Dit lukte niet. Probeer het zo nog eens.</p>}
+          {error && <p className={error.kind === 'failed' ? 'st-hint warn' : 'st-hint'} style={{ marginLeft: 0 }} role="status">{error.text}</p>}
           <SheetButtons>
             <button type="button" className="st-btn" onClick={close}>Niet nu</button>
             <button type="button" className="st-btn gold" disabled={busy} onClick={() => void save(close)}>{busy ? 'Bezig…' : 'Opslaan'}</button>
@@ -192,7 +193,8 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
   const [felt, setFelt] = useState<FeltWord>(adviceFelt(question.sport));
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(false);
+  // De uitkomst als er (nog) niets bewaard is: mislukt, of te lang (het log kan dan nog landen).
+  const [error, setError] = useState<{ kind: 'slow' | 'failed'; text: string } | null>(null);
   // De zwaarte vraagt het blad alleen als het horloge er geen gaf en je het wilt.
   const askFelt = counting.askFelt && question.activity.rpe === undefined && role === 'count';
   const day = question.activity.start.slice(0, 10);
@@ -200,7 +202,7 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
   async function save(close: () => void) {
     if (busy) return;
     setBusy(true);
-    setError(false);
+    setError(null);
     try {
       // Eerst het log, dan de rol (state/logSave.ts): lukt het log niet, dan blijft alles zoals het was en staat de vraag er nog.
       const input = role === 'count'
@@ -215,8 +217,8 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
         return updateSettings({ sportHandling: { ...current, [question.sport]: { role } } });
       }, SAVE_TIMEOUT_MS);
       close();
-    } catch {
-      setError(true);
+    } catch (err) {
+      setError(thrownSaveNote(err));
     } finally {
       setBusy(false);
     }
@@ -249,7 +251,7 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
           {question.count > 1 && role === 'count' && (
             <p className="st-hint" style={{ marginLeft: 0 }}>{`De andere ${question.count - 1 === 1 ? 'activiteit' : `${question.count - 1} activiteiten`} van ${def.label.toLowerCase()} zie je daarna op Vandaag om op te slaan.`}</p>
           )}
-          {error && <p className="st-hint" style={{ marginLeft: 0, color: 'var(--color-ink)' }} role="status">Dit lukte niet. Probeer het zo nog eens.</p>}
+          {error && <p className={error.kind === 'failed' ? 'st-hint warn' : 'st-hint'} style={{ marginLeft: 0 }} role="status">{error.text}</p>}
           <SheetButtons>
             <button type="button" className="st-btn" onClick={close}>Niet nu</button>
             {role === 'fixed' ? (
