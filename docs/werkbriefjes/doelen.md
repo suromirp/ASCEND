@@ -11,8 +11,7 @@ De Ascend-tab als doelen en hoe ver je bent: volgorde, labels, conflicten, klaar
 - `src/engine/gr5Readiness.ts#computeMainGoalReadiness` het ene percentage voor een tocht
 - `src/engine/raceReadiness.ts` snelheid als hoofdmeter bij een race met doeltijd
 - `src/engine/fuelOnTheGo.ts#fuelFor` Eten onderweg: gram koolhydraten vanaf 90 minuten lopen of wandelen en per tochtdag; alleen tekst, geen registratie, geen gewicht (`docs/beslissingen/2026-11-11-eten-onderweg.md`)
-- `src/engine/racePaces.ts#raceOutlook` de ene berekening voor "past de doeltijd", ook voor TARGET-TIME
-- `src/engine/raceDay.ts#raceDayView` Racedag voor een 10 km: in de laatste week één rij op Vandaag en in het blad van het doel, het blad met start, weer thuis, inlopen en tempo, de dag erna een terugblik; alleen tekst, beoordeelt de doeltijd niet; de verwachte tijd uit `raceReadiness.ts#expectedRaceTime` (`docs/beslissingen/2026-11-14-racedag-10km.md`)
+- `src/engine/racePaces.ts#raceOutlook` de ene berekening voor "past de doeltijd", ook voor TARGET-TIME; `src/engine/raceDay.ts#raceDayView` Racedag voor een 10 km: in de laatste week één rij op Vandaag en in het blad van het doel, het blad met start, weer thuis, inlopen en tempo, de dag erna een terugblik; alleen tekst, beoordeelt de doeltijd niet; de verwachte tijd uit `raceReadiness.ts#expectedRaceTime` (`docs/beslissingen/2026-11-14-racedag-10km.md`)
 - `src/engine/onCourse.ts#recentAdherence` dezelfde telling voor de coach en Ritme
 - `src/engine/yourWeek.ts#yourWeek` Je week zonder doel, één ring
 - `src/state/goalActions.ts` waar doelen worden geschreven
