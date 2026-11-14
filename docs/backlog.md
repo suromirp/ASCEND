@@ -100,7 +100,7 @@ Elf sporen uit `docs/visie/Ontwerp Route en trainingsscherm.md`, hoofdstuk 7, al
 
 ## Samenhang (Pathfinder)
 
-- Hoe ging het? spoor 6 (Pathfinder, voor de opdracht): na een horlogeloop bestaat het log al; laat StepOne een kopregel met feiten en een modus nieuw of horloge krijgen (zonder duur en Gedaan op, met Klopt niet en Niet nu), zodat er één vorm blijft. Dubbel log is live op 12 november (ec1f56e).
+- Hoe ging het? spoor 6 gebouwd op `claude/trainingsscherm-5-6` (besluit `2026-11-14-hoe-ging-het-horloge.md`): een rij in Je dag en het blad `WatchAskSheet` met dezelfde vragen; nog open is `SportFeltBlock` en Hoe ging het? vanuit het Logboek (derde ingang van regel 7), eigen spoor.
 - Andere plek (Pathfinder, mag): de terugknop van Je plekken gaat naar Vandaag en meldingen, niet terug naar het blad Weer en kleding; het blad weer openen of de rij een gewone ingang maken.
 - Andere plek (Pathfinder, mag): Thuis wissen kan bij Wis startpunt en op Je plekken; later Wis startpunt naar Je plekken laten verwijzen.
 - Andere plek (coördinator, mag): de schuifrij Start bij knipt de laatste chip hard af ("Thu" op 360 px, een randje op 412 px); een zachte rand of een vaste breedte oogt rustiger. Op Je plekken staat bij Thuis twee keer Thuis (naam en soort).

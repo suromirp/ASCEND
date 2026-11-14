@@ -1201,6 +1201,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Je tempo\'s', text: 'veranderen niet vanzelf. Verandert er door het stilstaan een tempo, dan vraagt ASCEND eerst Akkoord in het logblad.' },
     ],
   },
+  vragenNaLoop: {
+    title: 'Vragen na je loop',
+    lead: 'Vinkt je horloge een training af, dan staat bovenaan Je dag de rij Hoe ging het?. Die opent een blad met de vragen.',
+    points: [
+      { head: 'Kort', text: 'Beter, Normaal of Slechter, pijn en de zwaarte. Je gewicht na, inkorten en de tekst voor Strava staan achter Meer.' },
+      { head: 'Alles', text: 'alles onder elkaar, zonder Meer.' },
+      { head: 'Zwaarte', text: 'staat altijd in de eerste stap, met de waarde van je horloge als die er is. Zonder zwaarte telt je belasting de zwaarte van het plan.' },
+    ],
+  },
   benenNaTest: {
     title: 'Benen vragen na een test',
     lead: 'De ochtend na een test of wedstrijd vraagt de ochtendkaart open hoe je benen voelen, zonder voorstel uit de beenindex.',

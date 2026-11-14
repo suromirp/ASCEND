@@ -1,5 +1,6 @@
 import { resolveShorterToday } from '../../../engine/shorterToday';
 import { resolveJourneyOnToday } from '../../../engine/yourDay';
+import { resolveAfterRunQuestions } from '../../../engine/afterRun';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PLACES_ROUTE } from '../../../pages/settings/placesRoute';
@@ -144,6 +145,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
                 <SummaryRow id="avond-ervoor-tijd" title="Avond begint om" facts={facts} onClick={() => setInner('avond-ervoor-tijd')} />
                 <SummaryRow id="ochtendcheck" title="Ochtendcheck" facts={facts} info="ochtendcheck" onChange={(on) => set({ morningCheckIn: on })} />
                 <SummaryRow id="benen-na-test" title="Benen vragen na een test" facts={facts} info="benenNaTest" onChange={(on) => set({ legsAfterEffort: on })} />
+                <SummaryRow id="vragen-na-loop" title="Vragen na je loop" facts={facts} info="vragenNaLoop" onClick={() => setInner('vragen-na-loop')} />
                 <SummaryRow id="weekterugblik" title="Weekterugblik" facts={facts} onChange={(on) => set({ weekReview: on })} />
                 <SummaryRow id="lijfvraag" title="Hoe voelt je lijf?" facts={facts} info="lijfvraag" onClick={() => setInner('lijfvraag')} />
                 <SummaryRow id="weekvraag" title="Vraag van de week" facts={facts} info="weekvraag" onChange={(on) => set({ weeklyQuestion: on })} />
@@ -267,6 +269,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef def={CHOICES.avondVanaf} value={resolveEveningBefore(settings).time} onPick={(v) => void updateSettings({ eveningBeforeTime: v })} onClose={closeInner} />
       )}
       {inner === 'boven-missie' && <ChoiceFromDef def={CHOICES.bovenMissie} value={capAboveMission(resolveAboveMission(settings.cardsAboveMission))} onPick={(v) => void updateSettings({ cardsAboveMission: v })} onClose={closeInner} />}
+      {inner === 'vragen-na-loop' && <ChoiceFromDef def={CHOICES.vragenNaLoop} value={resolveAfterRunQuestions(settings.afterRunQuestions)} onPick={(v) => void updateSettings({ afterRunQuestions: v })} onClose={closeInner} />}
       {inner === 'reistaak-vandaag' && <ChoiceFromDef def={CHOICES.reistaakVandaag} value={resolveJourneyOnToday(settings.journeyOnToday)} onPick={(v) => void updateSettings({ journeyOnToday: v })} onClose={closeInner} />}
       {inner === 'lijfvraag' && <ChoiceFromDef def={CHOICES.lijfvraag} value={resolveBodyCheck(settings)} onPick={(v) => void updateSettings({ bodyCheck: v })} onClose={closeInner} />}
       {inner === 'lucht-vanaf' && <ChoiceFromDef def={CHOICES.luchtVanaf} value={sky.nightFrom} onPick={(v) => void updateSettings({ skyNightFrom: v })} onClose={closeInner} />}

@@ -10,6 +10,7 @@
 import { locationSummary } from './locationSetting';
 import { resolveShorterToday } from './shorterToday';
 import { resolveJourneyOnToday } from './yourDay';
+import { resolveAfterRunQuestions } from './afterRun';
 import { defaultOrder, resolveCardOrder } from './cardOrder';
 import { isDefaultStandLayout } from './standPage';
 import { kgLabel } from '../utils/kg';
@@ -941,6 +942,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('lijfvraag', resolveBodyCheck(s)) };
     case 'korter-vandaag':
       return { value: choiceShort('korterVandaag', resolveShorterToday(s.shorterToday)) };
+    case 'vragen-na-loop':
+      return { value: choiceShort('vragenNaLoop', resolveAfterRunQuestions(s.afterRunQuestions)) };
     case 'reistaak-vandaag':
       return { value: choiceShort('reistaakVandaag', resolveJourneyOnToday(s.journeyOnToday)) };
     case 'zones-na-test':

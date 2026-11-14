@@ -29,6 +29,9 @@ import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
 import { WeightReminder } from '../components/WeightCard';
 import { useCheckInRow, useJourneyRow, useWeightRow } from '../components/vandaag/yourDayRows';
 import { WatchActivityCard } from '../components/WatchActivityCard';
+import { WatchAskSheet } from '../components/WatchAskSheet';
+import { useWatchQuestion } from '../components/vandaag/useWatchQuestion';
+import { afterRunTitle, AFTER_RUN_TEXT, resolveAfterRunQuestions, withoutAskedTraining } from '../engine/afterRun';
 import { WatchAlignCard } from '../components/WatchAlignCard';
 import { MissedTrainingCard } from '../components/MissedTrainingCard';
 import { useMissedTraining } from '../components/useMissedTraining';
@@ -106,6 +109,11 @@ function TodayContent() {
   const checkInRow = useCheckInRow({ painOnly: morningCheckInMode(settings.overviews, today, sessionLogs) === 'pain_only', hideTodo: morningCardVisible });
   const weightRow = useWeightRow();
   const journeyRow = useJourneyRow();
+  // Hoe ging het? na een training die je horloge afvinkte: een rij bovenaan Je dag (engine/afterRun.ts).
+  const watchQuestion = useWatchQuestion();
+  const [watchAskOpen, setWatchAskOpen] = useState(false);
+  // De vraag is weg (beantwoord, Klopt niet, of ouder dan 72 uur): het blad ook, zodat een volgende vraag niet vanzelf opent.
+  if (watchAskOpen && !watchQuestion) setWatchAskOpen(false);
   useSleepRefetch();
   const illnessSignState = useIllnessSign();
   const weatherWarnings = useWeatherWarnings();
@@ -303,8 +311,10 @@ function TodayContent() {
   }, []);
 
   const restHeader = !!restToday && !primary;
+  // De training die de rij Hoe ging het? al noemt staat er niet nog eens als gedaan (regel 1).
+  const askedPlannedId = watchQuestion?.question.log.plannedSessionId;
   const trainingRows = trainingRowsForYourDay(
-    todaySessions.filter((s) => !(restToday && s.id === restToday.id)),
+    withoutAskedTraining(todaySessions.filter((s) => !(restToday && s.id === restToday.id)), askedPlannedId),
     primary?.id,
     (s) => deriveSessionStatus(s, sessionLogs).status,
   );
@@ -317,6 +327,20 @@ function TodayContent() {
   // De rijen van Je dag, elk met of hij af is; de volgorde en de grens van vier doet engine/yourDay.ts.
   const checkInMode = morningCheckInMode(settings.overviews, today, sessionLogs);
   const yourDayItems: YourDayEntry[] = [];
+  if (watchQuestion) {
+    const t = watchQuestion.template;
+    yourDayItems.push({
+      key: 'watch',
+      kind: 'watch',
+      done: false,
+      word: 'hoe ging het',
+      node: (
+        <DayRow label={AFTER_RUN_TEXT.row} template={t} onClick={() => setWatchAskOpen(true)} sheetFrom>
+          {afterRunTitle(t?.name)}
+        </DayRow>
+      ),
+    });
+  }
   if (checkInMode !== 'none' && checkInRow.shown) {
     yourDayItems.push({ key: 'checkin', kind: 'checkin', done: checkInRow.done, pain: checkInRow.pain, word: checkInRow.pain ? 'pijnplek' : 'gevoel', node: <MorningCheckInCard painOnly={checkInMode === 'pain_only'} hideTodo={morningCardVisible} /> });
   }
@@ -623,6 +647,18 @@ function TodayContent() {
         <ExerciseLogger template={adHocTemplate} scheduledDate={today} program={program} onClose={() => setAdHocTemplate(null)} />
       )}
 
+      {watchAskOpen && watchQuestion && (
+        <WatchAskSheet
+          key={watchQuestion.question.entry.externalId}
+          log={watchQuestion.question.log}
+          template={watchQuestion.template}
+          mode={resolveAfterRunQuestions(settings.afterRunQuestions)}
+          canReject={watchQuestion.canReject}
+          onAnswer={watchQuestion.answer}
+          onReject={watchQuestion.reject}
+          onClose={() => setWatchAskOpen(false)}
+        />
+      )}
       {actionSheetSession && actionSheetTemplate && (
         <SessionActionSheet
           session={actionSheetSession}

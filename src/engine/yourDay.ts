@@ -54,7 +54,8 @@ export function trainingRowState(status: string, isPrimary: boolean): TrainingRo
 // --- Je dag: wat je vandaag naast je training zelf nog doet (docs/visie/Ontwerp Je dag.md) ---
 
 // Een rij in Je dag. `word` is hoe de rij heet in de regel onder "Nog 2" ("Gewicht, reis").
-export type YourDayKind = 'checkin' | 'training' | 'stretch' | 'weight' | 'journey';
+// `watch`: Hoe ging het? na een training die je horloge afvinkte (engine/afterRun.ts): bovenaan, nooit achter Nog.
+export type YourDayKind = 'watch' | 'checkin' | 'training' | 'stretch' | 'weight' | 'journey';
 export interface YourDayItem {
   key: string;
   kind: YourDayKind;
@@ -65,20 +66,22 @@ export interface YourDayItem {
 }
 
 export const YOUR_DAY_MAX = 4;
-const KIND_ORDER: Record<YourDayKind, number> = { checkin: 0, training: 1, stretch: 2, weight: 3, journey: 4 };
+const KIND_ORDER: Record<YourDayKind, number> = { watch: -1, checkin: 0, training: 1, stretch: 2, weight: 3, journey: 4 };
 
 // Open rijen eerst, gedane eronder; binnen elk deel gevoel, training, rekken, gewicht, reis.
 // Hoogstens vier rijen: zijn er meer, dan staan de eerste drie er en komt de rest achter "Nog".
-// Gedane rijen vallen dus als eerste achter Nog, de pijnplekvraag nooit.
+// Gedane rijen vallen dus als eerste achter Nog, de pijnplekvraag en Hoe ging het? na je horloge nooit: de app
+// vinkte zelf iets af, en dat moet je kunnen zien en terugdraaien.
 export function arrangeYourDay<T extends YourDayItem>(items: T[], max = YOUR_DAY_MAX): { shown: T[]; more: T[] } {
   const sorted = items
     .map((item, i) => ({ item, i }))
     .sort((a, b) => Number(a.item.done) - Number(b.item.done) || KIND_ORDER[a.item.kind] - KIND_ORDER[b.item.kind] || a.i - b.i)
     .map(({ item }) => item);
   if (sorted.length <= max) return { shown: sorted, more: [] };
+  const pinned = (i: T) => !!i.pain || i.kind === 'watch';
   const keep = new Set(sorted.slice(0, max - 1));
-  for (const pain of sorted.filter((i) => i.pain && !keep.has(i))) {
-    const last = [...keep].reverse().find((i) => !i.pain);
+  for (const pain of sorted.filter((i) => pinned(i) && !keep.has(i))) {
+    const last = [...keep].reverse().find((i) => !pinned(i));
     if (!last) break;
     keep.delete(last);
     keep.add(pain);

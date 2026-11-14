@@ -3,8 +3,9 @@
 // until the user taps Opslaan (docs/visie/Data zonder handwerk.md, idee 1),
 // with one exception: an activity that unmistakably belongs to the one planned
 // training of that day is ticked off by itself (engine/autoTick.ts, switch
-// "Vanzelf afvinken" on the link screen), and the card then only asks how it
-// went (components/WatchAskCard.tsx), with "Klopt niet" to undo it.
+// "Vanzelf afvinken" on the link screen). How it went is then asked in a row at
+// the top of Je dag (components/WatchAskSheet.tsx, engine/afterRun.ts), with
+// "Klopt niet" to undo it; this card no longer asks it itself.
 // In the Android app the trainings of Health Connect come in the same way
 // (storage/healthConnect.ts), after those of intervals.icu, which goes first.
 
@@ -17,15 +18,11 @@ import {
   getWatchState,
   onWatchChange,
   recordAutoTicked,
-  setAutoLoggedStatus,
   type WatchActivityState,
 } from '../storage/externalActivities';
 import { getHealthConnectState, onHealthConnectChange } from '../storage/healthConnect';
 import { offeredActivities } from '../engine/sourcePrecedence';
-import { canRejectAutoLog, pendingQuestions, planAutoTicks, type FeedbackPatch } from '../engine/autoTick';
-import { isTrimmable } from '../engine/trimLog';
-import { TrimSheet } from './TrimSheet';
-import { WatchAskCard } from './WatchAskCard';
+import { planAutoTicks } from '../engine/autoTick';
 import { attachActivityDetail } from '../storage/activityDetail';
 import {
   activityToDraft,
@@ -62,7 +59,7 @@ const AUTO_TICK_DELAY_MS = 1200;
 // `quiet`: Opslaan omlijnd in plaats van gevuld, op Vandaag naast de hoofdknop van de missie (regel 5: één mint per
 // scherm; besluit 2026-11-12-missiekaart.md).
 export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
-  const { plannedSessions, templates, sessionLogs, logSession, reportStorageError, undoLog, setLogFeedback, refresh } = useAppData();
+  const { plannedSessions, templates, sessionLogs, logSession, reportStorageError, refresh } = useAppData();
   // De keuze Waar train je? per geplande training; undefined zolang hij nog niet gelezen is.
   const places = useTrainingPlaces();
   const [state, setState] = useState<WatchActivityState | null>(null);
@@ -71,9 +68,6 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
   const [fromHealth, setFromHealth] = useState<ExternalActivity[]>([]);
   const [choosing, setChoosing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [later, setLater] = useState<string[]>([]);
-  // "Inkorten" straight from the question after a training (the same sheet as in the log).
-  const [trimming, setTrimming] = useState<string | null>(null);
   // De uitkomst van Opslaan als er (nog) geen log staat, per activiteit.
   const [saveNote, setSaveNote] = useState<SaveNote | null>(null);
   // Activiteiten waarvan het opslaan na de grens nog loopt.
@@ -145,61 +139,13 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
   }, [state, activities, plannedSessions, templates, sessionLogs, logSession, addDetail, places]);
 
   // Trainings switched off ("Wat ASCEND van je horloge gebruikt"): nothing of
-  // the watch is offered or asked here.
-  const questions = useMemo(
-    () => (state?.use.activities ? pendingQuestions(state.autoLogged, sessionLogs).filter((q) => !later.includes(q.entry.externalId)) : []),
-    [state, sessionLogs, later],
-  );
+  // the watch is offered here.
   const proposals = useMemo(
     () => (state?.use.activities ? pendingProposals(activities, state.dismissed, plannedSessions, templates, sessionLogs, places) : []),
     [state, activities, plannedSessions, templates, sessionLogs, places],
   );
-  const question = questions[0];
   const proposal = proposals[0];
 
-  async function answer(patch: FeedbackPatch) {
-    if (!question || saving) return;
-    setSaving(true);
-    try {
-      await setLogFeedback(question.log.id, patch);
-      await setAutoLoggedStatus(question.entry.externalId, 'done');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  // "Klopt niet": the log goes only if it is the one ASCEND made itself a
-  // moment ago and is still unanswered (canRejectAutoLog); the activity then
-  // comes back as an ordinary proposal and is never ticked off again.
-  async function reject() {
-    if (!question || saving || !canRejectAutoLog(question.entry, question.log)) return;
-    setSaving(true);
-    try {
-      await setAutoLoggedStatus(question.entry.externalId, 'rejected');
-      await undoLog(question.log.id);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (question) {
-    const template = templates.find((t) => t.id === question.log.templateId);
-    return (
-      <>
-        <WatchAskCard
-          key={question.entry.externalId}
-          log={question.log}
-          template={template}
-          busy={saving}
-          onAnswer={(patch) => void answer(patch)}
-          onReject={() => void reject()}
-          onLater={() => setLater((l) => [...l, question.entry.externalId])}
-          onTrim={isTrimmable(question.log) && !question.log.trim ? () => setTrimming(question.log.id) : undefined}
-        />
-        {trimming === question.log.id && <TrimSheet log={question.log} templateName={template?.name ?? 'Training'} onClose={() => setTrimming(null)} />}
-      </>
-    );
-  }
   if (!proposal) return null;
 
   // De zin hoort bij de activiteit waarvoor hij kwam; bij de volgende activiteit is hij weg.

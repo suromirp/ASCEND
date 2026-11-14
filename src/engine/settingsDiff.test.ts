@@ -59,6 +59,7 @@ const everything: AppSettings = {
   },
   askShortNight: false,
   journeyOnToday: 'never',
+  afterRunQuestions: 'all',
   askDoubtTest: false,
   newTestOnStops: false,
   restDayBack: false,
