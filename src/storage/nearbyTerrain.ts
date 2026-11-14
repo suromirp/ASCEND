@@ -65,9 +65,23 @@ const inFlight = new Map<string, Promise<NearbyTerrain | undefined>>();
 
 // Een sleutel op vier decimalen: een eigen startpunt (`exact`).
 const isExactKey = (key: string) => /^-?\d+\.\d{4},-?\d+\.\d{4}$/.test(key);
-// Telt elk wissen, zodat een zoektocht die al liep een gewist punt niet terugschrijft.
-let exactClears = 0;
-let allClears = 0;
+
+// Eén wachtrij voor elke stap die deze cache leest en terugschrijft (een nieuwe plek bewaren, de exacte
+// punten wissen, alles wissen). Zo leest een zoektocht nooit een stand van voor een wis en schrijft hij
+// een gewist punt niet terug, en schrijven twee zoektochten met verschillende sleutels elkaars plek niet
+// weg. Het ophalen zelf staat buiten de wachtrij: een wis wacht nooit op het netwerk. Een tweede tabblad
+// heeft een eigen wachtrij en wordt hier niet gezien.
+let queue: Promise<unknown> = Promise.resolve();
+function inQueue<T>(step: () => Promise<T>): Promise<T> {
+  const run = queue.then(step, step);
+  queue = run.catch(() => undefined);
+  return run;
+}
+
+// Telt elk wissen, op het moment dat het gevraagd wordt. De wachtrij alleen is niet genoeg voor de plek van
+// een zoektocht die al liep: na de wis is die plek weg uit de lezing, en zonder deze telling zette de
+// zoektocht hem er gewoon weer bij.
+const clears = { exact: 0, all: 0 };
 
 // Wat er bewaard is als het vers genoeg is, anders een nieuwe zoektocht. Bij een fout blijft het
 // oude resultaat van dezelfde plek staan, zonder het te vernieuwen.
@@ -77,24 +91,26 @@ export function refreshNearbyTerrain(place: WeatherPlace, options: OverpassOptio
   if (running) return running;
   const job = (async () => {
     const now = options.now ?? new Date();
-    const clearsAtStart = { exact: exactClears, all: allClears };
-    const all = await readAll();
+    const clearsAtStart = { ...clears };
+    const all = await inQueue(readAll);
     const have = all[key];
     if (have && now.getTime() - Date.parse(have.fetchedAt) < TERRAIN_FETCH_DAYS * 86_400_000) return have;
     const next = await fetchNearbyTerrain(place, { ...options, now });
     if (!next) return have;
-    // Vlak voor het wegschrijven opnieuw lezen: wat intussen gewist is, komt niet terug. Werd deze plek
-    // tijdens het zoeken gewist (het startpunt weg of vervangen), dan bewaren we hem niet.
-    const fresh = await readAll();
-    const wiped = allClears !== clearsAtStart.all || (isExactKey(key) && exactClears !== clearsAtStart.exact);
-    if (wiped) return next;
-    fresh[key] = next;
-    const newest = Object.entries(fresh).sort((a, b) => Date.parse(b[1].fetchedAt) - Date.parse(a[1].fetchedAt)).slice(0, TERRAIN_MAX_PLACES);
-    try {
-      await MetaRepo.set(KEY, Object.fromEntries(newest));
-    } catch {
-      // Niet kunnen bewaren is geen reden om het antwoord weg te gooien.
-    }
+    // Bewaren in de wachtrij: opnieuw lezen en de nieuwe plek erbij. Wat intussen gewist is, staat niet
+    // meer in die lezing en komt dus niet terug. Werd de plek van deze zoektocht zelf gewist terwijl hij
+    // liep (het startpunt weg of vervangen), dan bewaren we hem niet.
+    await inQueue(async () => {
+      if (clears.all !== clearsAtStart.all || (isExactKey(key) && clears.exact !== clearsAtStart.exact)) return;
+      const fresh = await readAll();
+      fresh[key] = next;
+      const newest = Object.entries(fresh).sort((a, b) => Date.parse(b[1].fetchedAt) - Date.parse(a[1].fetchedAt)).slice(0, TERRAIN_MAX_PLACES);
+      try {
+        await MetaRepo.set(KEY, Object.fromEntries(newest));
+      } catch {
+        // Niet kunnen bewaren is geen reden om het antwoord weg te gooien.
+      }
+    });
     return next;
   })().finally(() => {
     inFlight.delete(key);
@@ -105,23 +121,27 @@ export function refreshNearbyTerrain(place: WeatherPlace, options: OverpassOptio
 
 // Wist de plekken op vier decimalen (rond een eigen startpunt van een lus): wordt het startpunt
 // gewist of vervangen, dan blijft het niet in deze cache achter. De afgeronde plekken blijven.
-export async function clearExactTerrain(): Promise<void> {
-  exactClears++;
-  try {
-    const all = await readAll();
-    const rounded = Object.entries(all).filter(([key]) => !isExactKey(key));
-    if (rounded.length !== Object.keys(all).length) await MetaRepo.set(KEY, Object.fromEntries(rounded));
-  } catch {
-    // niets te wissen
-  }
+export function clearExactTerrain(): Promise<void> {
+  clears.exact++;
+  return inQueue(async () => {
+    try {
+      const all = await readAll();
+      const rounded = Object.entries(all).filter(([key]) => !isExactKey(key));
+      if (rounded.length !== Object.keys(all).length) await MetaRepo.set(KEY, Object.fromEntries(rounded));
+    } catch {
+      // niets te wissen
+    }
+  });
 }
 
 // Wist de bewaarde plekken (bij uitzetten of een nieuw begin); de eerste vraag blijft.
-export async function clearNearbyTerrain(): Promise<void> {
-  allClears++;
-  try {
-    await MetaRepo.set(KEY, {});
-  } catch {
-    // niets te wissen
-  }
+export function clearNearbyTerrain(): Promise<void> {
+  clears.all++;
+  return inQueue(async () => {
+    try {
+      await MetaRepo.set(KEY, {});
+    } catch {
+      // niets te wissen
+    }
+  });
 }

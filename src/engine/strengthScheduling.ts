@@ -140,7 +140,7 @@ function buildPlan(
 
   const zoneNote = zoneLabel === 'forecast'
     ? 'Geldt vanaf over twee weken. Deze en volgende week blijven zoals ze zijn. Eerst een voorstel, pas na Akkoord verandert er iets.'
-    : 'Ook deze en volgende week veranderen. Een krachttraining die niet bij het nieuwe blok hoort, schuift of vervalt. Wat je al deed, blijft staan.';
+    : 'Ook deze en volgende week veranderen. Een krachttraining die niet bij het nieuwe blok hoort, schuift of vervalt. Wat je al deed, blijft staan. Eerst een voorstel, pas na Akkoord verandert er iets.';
 
   return {
     id: makeId('planchange'),

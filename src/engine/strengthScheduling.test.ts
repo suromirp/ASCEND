@@ -547,6 +547,8 @@ describe('computeStrengthPlacementPlanForCommittedRange', () => {
     const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), sessions, templates, availability(), [], ASOF, []);
     const addItem = proposal.changes.find((c) => c.action === 'add' && c.newSessionDraft?.weekStartDate === COMMITTED_MONDAY_1);
     expect(addItem?.newSessionDraft?.templateId).toBe('tpl_upper_b');
+    // De vaste voorstelzin van de stemgids, ook in het tweede voorstel van de wizard (knop Akkoord).
+    expect(proposal.consequences).toContain('Eerst een voorstel, pas na Akkoord verandert er iets.');
   });
 
   it('removes an off-strategy committed-range session that has no log', () => {
