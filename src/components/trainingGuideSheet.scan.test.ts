@@ -23,9 +23,10 @@ describe('uitlegblad van een training', () => {
   // Zes werd vijf op 11 november: Stappen voor je Garmin verhuisde naar het blad Je horloge
   // (docs/beslissingen/2026-11-11-info-blad-horloge.md). Vijf werd bewust vier op 14 november: De stappen
   // staan op het trainingsscherm en in de Briefing (docs/beslissingen/2026-11-14-info-blad-a.md).
-  it('elk onderblad is een Sheet met de eyebrow Uitleg', () => {
+  // De eyebrow heet sinds 14 november (Info-blad, rest) zoals het blad: Waarom deze training.
+  it('elk onderblad is een Sheet met de eyebrow Waarom deze training', () => {
     expect((guideSheet.match(/<Sheet /g) ?? []).length).toBe(4);
-    expect((guideSheet.match(/<Sheet eyebrow="Uitleg"/g) ?? []).length).toBe(4);
+    expect((guideSheet.match(/<Sheet eyebrow="Waarom deze training"/g) ?? []).length).toBe(4);
   });
 
   // Richting A (14 november): niets dubbel met het trainingsscherm. Weer, heuvels, route, kleding, Je tempo,

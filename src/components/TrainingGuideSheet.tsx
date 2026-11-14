@@ -122,17 +122,17 @@ export function TrainingGuideSheet({
         </div>
       </div>
       {sub === 'teZwaar' && (
-        <Sheet eyebrow="Uitleg" title="Te zwaar? Zo pas je het aan" onClose={closeSub}>
+        <Sheet eyebrow="Waarom deze training" title="Te zwaar? Zo pas je het aan" onClose={closeSub}>
           <Sections sections={easeOff} />
         </Sheet>
       )}
       {sub === 'varianten' && template && (
-        <Sheet eyebrow="Uitleg" title="Waar train je het best?" onClose={closeSub}>
+        <Sheet eyebrow="Waarom deze training" title="Waar train je het best?" onClose={closeSub}>
           <ModalityGuide templateId={template.id} />
         </Sheet>
       )}
       {sub === 'weken' && plan && (
-        <Sheet eyebrow="Uitleg" title="Deze fase, week voor week" onClose={closeSub}>
+        <Sheet eyebrow="Waarom deze training" title="Deze fase, week voor week" onClose={closeSub}>
           <div className="grid grid-cols-4 gap-1.5">
             {plan.weeks.map((w) => (
               <div
@@ -149,7 +149,7 @@ export function TrainingGuideSheet({
         </Sheet>
       )}
       {sub === 'achtergrond' && (
-        <Sheet eyebrow="Uitleg" title="Achtergrond en bronnen" onClose={closeSub}>
+        <Sheet eyebrow="Waarom deze training" title="Achtergrond en bronnen" onClose={closeSub}>
           <Sections sections={background} />
           {guide.gear.length > 0 && (
             <div className="mt-4">
