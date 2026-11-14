@@ -188,7 +188,8 @@ function GeneralLogger({
   const outdoor = placeIsOutdoor(template.id, chosenPlace);
   const showSpots = showSpotsFor(template, plan?.keyTag, chosenPlace);
   // Het blad Je horloge (engine/watchSheet.ts): de knop onderaan heet Horloge als het blad iets te tonen
-  // heeft, anders Uitleg als er een gids is, anders Annuleren. Uitleg staat ook achter de i in de lucht.
+  // heeft, anders Waarom deze training als er een gids is, anders Annuleren. Hetzelfde blad staat ook achter de i
+  // in de lucht; knop, i en blad dragen één naam (Info-blad, rest, 14 november).
   const watchView = useWatchSheet({ template, garmin: plan?.garmin, session: plannedSession, hasZonesNote: !!guide?.garminNote });
   const restChosen = selectedModality?.environment === 'rest';
   // Onder 1 minuut is geen training: Opslaan uit, de zin staat onder het veld Duur (punt B).
@@ -447,7 +448,7 @@ function GeneralLogger({
             {watchView.hasWatchSheet ? (
               <div className="flex flex-none" data-sheet-from=""><SecondaryButton onClick={() => setShowWatch(true)} className="min-w-[88px] flex-none px-4">Horloge</SecondaryButton></div>
             ) : guide ? (
-              <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Uitleg</SecondaryButton>
+              <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Waarom deze training</SecondaryButton>
             ) : null}
             <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
           </div>
@@ -469,7 +470,7 @@ function GeneralLogger({
           {watchView.hasWatchSheet ? (
             <div className="flex flex-none" data-sheet-from=""><SecondaryButton onClick={() => setShowWatch(true)} className="min-w-[88px] flex-none px-4">Horloge</SecondaryButton></div>
           ) : guide ? (
-            <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Uitleg</SecondaryButton>
+            <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Waarom deze training</SecondaryButton>
           ) : (
             <SecondaryButton onClick={requestClose} className="min-w-[112px] flex-none px-4">Annuleren</SecondaryButton>
           )}

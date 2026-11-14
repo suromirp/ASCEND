@@ -63,9 +63,3 @@ export function markKept<T extends WeekConcern>(concerns: T[], ctx: KeptContext)
     return { ...c, kept: true, headline: `Benen fris, je liet ${name} staan.`, fact: `${c.headline} ${c.fact}` } as T;
   });
 }
-
-// Staat er alleen nog gekozen werk open? Dan is "Bekijk voorstel" geen hoofdknop maar een gewone tekstknop.
-export function onlyKept(concerns: readonly WeekConcern[], askableKeys: ReadonlySet<string>): boolean {
-  const open = concerns.filter((c) => askableKeys.has(c.key));
-  return open.length > 0 && open.every((c) => c.kept);
-}

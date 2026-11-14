@@ -250,8 +250,9 @@ export function withPlainConcern<T extends { concerns: WeekConcern[] }>(notice: 
   return { ...notice, concerns: [plain, ...notice.concerns] };
 }
 
-// Wat de kaart Let op belooft: een knop alleen als er iets te vragen is, en "Nog n punten open" telt alleen
-// punten met een voorstel hier. Een punt zonder voorstel (de volle week) vraagt niets en telt niet als open, dus
+// Wat de kaart Let op belooft: een knop alleen als er iets te vragen is, en "Nog n voorstellen open" telt alleen
+// punten met een voorstel hier. Het zegt voorstellen, geen punten: de kop telt alle punten, en "3 punten" naast
+// "Nog 1 punt open" leest als een rekenfout. Een punt zonder voorstel (de volle week) vraagt niets en telt niet als open, dus
 // een kaart met alleen zo'n punt heeft geen knop en geen telling. Puur; de component tekent de uitkomst.
 export interface NoticeCardInput {
   concerns: readonly WeekConcern[];
@@ -268,7 +269,7 @@ export interface NoticeCard {
   // 'primary': "Bekijk voorstel" als hoofdknop; 'again': "Toch een voorstel" na Liever niet; 'kept': "Bekijk
   // voorstel" als tekstknop, jij koos op Vandaag; undefined: geen knop.
   button?: 'primary' | 'again' | 'kept';
-  // "Nog 1 punt open." als je een deel beantwoordde; anders undefined.
+  // "Nog 1 voorstel open." als je een deel beantwoordde; anders undefined.
   openLine?: string;
   // Na het rekenen had geen open punt een voorstel.
   noFix: boolean;
@@ -283,7 +284,7 @@ export function noticeCard({ concerns, covered, answered, proposalsOn, hasFix }:
   const kept = !quiet && askable.length > 0 && askable.every((c) => c.kept);
   const noFix = !!hasFix && askable.length > 0 && askable.every((c) => !hasFix(c));
   if (!proposalsOn || noFix || askable.length === 0) return { noFix: proposalsOn && noFix };
-  const openLine = answeredCount > 0 && openCount > 0 ? `Nog ${openCount} ${openCount === 1 ? 'punt' : 'punten'} open.` : undefined;
+  const openLine = answeredCount > 0 && openCount > 0 ? `Nog ${openCount} ${openCount === 1 ? 'voorstel' : 'voorstellen'} open.` : undefined;
   return { button: quiet ? 'again' : kept ? 'kept' : 'primary', openLine, noFix: false };
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fullWeek, fullWeekAdvice, fullWeekConcern, fullWeekFollowed, fullWeekId, fullWithExtra, weekLoss, weekShape, FULL_WEEK_RULE, type FullWeekAdviceInput } from './fullWeek';
+import { fullWeek, fullWeekAdvice, shapeText, fullWeekConcern, fullWeekFollowed, fullWeekId, fullWithExtra, weekLoss, weekShape, FULL_WEEK_RULE, type FullWeekAdviceInput } from './fullWeek';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import { proposeExtraSession } from './extraRun';
 import { applyPlanChangeItems } from './proposalEngine';
@@ -381,7 +381,7 @@ describe('WEEK-FULL: wat de kaart Let op belooft', () => {
 
   it('samen met een open punt: de knop hoort bij dat punt, en de telling telt de volle week niet mee', () => {
     expect(card([full, legs('a')])).toEqual({ button: 'primary', openLine: undefined, noFix: false });
-    expect(card([full, legs('a'), legs('b')], ['a'])).toEqual({ button: 'primary', openLine: 'Nog 1 punt open.', noFix: false });
+    expect(card([full, legs('a'), legs('b')], ['a'])).toEqual({ button: 'primary', openLine: 'Nog 1 voorstel open.', noFix: false });
   });
 
   it('het andere punt beantwoord: "Toch een voorstel", geen telling; jij koos op Vandaag: een tekstknop', () => {
@@ -443,5 +443,25 @@ describe('WEEK-FULL: randgevallen van het punt', () => {
     const c = fullWeekConcern(input(THU, skipped, doneFriday, { leave: noGym }), MON);
     // Nog steeds vol om de loopdagen op rij, maar geen dag meer met twee trainingen: dan staat er op geen rij een stip.
     expect(c).toMatchObject({ headline: 'Je week is vol.', fact: '4 trainingen in 4 dagen en 4 loopdagen op rij.', notes: {} });
+  });
+  it('een gedane training op een volle dag krijgt geen stip; de open training naast hem wel', () => {
+    // Vandaag (donderdag) deed je al een extra Bovenlichaam B; de rustige loop staat nog open. Dat maakt vandaag een
+    // dubbele dag, maar "volle dag" hoort alleen bij wat nog moet (fullWeek.ts#fullWeekConcern, onFullDay).
+    const { sessions, logs } = crammed();
+    const doneToday = row('tpl_upper_b', 3);
+    const c = fullWeekConcern(input(THU, [...sessions, doneToday], [...logs, logOf(doneToday)], { leave: noGym }), MON)!;
+    expect(c).toBeDefined();
+    expect(c.notes['tpl_easy_run@3']).toBe('volle dag');
+    expect(c.notes['tpl_upper_b@3']).toBeUndefined();
+  });
+
+  it('elke dag dubbel: één droge zin, niet de telling twee keer', () => {
+    const shape = { trainings: 4, days: 2, doubles: [day(5), day(6)], runStreak: 0, heavyStreak: 0, full: true };
+    expect(shapeText(shape)).toBe('2 dagen met elk twee trainingen');
+    expect(shapeText({ ...shape, runStreak: 4 })).toBe('2 dagen met elk twee trainingen en 4 loopdagen op rij');
+    // Een dag met drie: de telling blijft, de dubbele dagen zeggen dan niets extra.
+    expect(shapeText({ ...shape, trainings: 5 })).toBe('5 trainingen in 2 dagen');
+    // Niet elke dag dubbel: zoals het was.
+    expect(shapeText({ ...shape, trainings: 6, days: 4 })).toBe('6 trainingen in 4 dagen en 2 dagen met twee trainingen');
   });
 });

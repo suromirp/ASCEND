@@ -4,8 +4,8 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { MorningCheckIn } from '../models/checkIn';
 import type { PlannedSession } from '../models/training';
 import { addDays } from '../utils/dates';
-import { weekConcerns } from './weekConcerns';
-import { freshLegsToday, markKept, onlyKept, resolveWeekAfterChoice } from './weekKept';
+import { noticeCard, weekConcerns } from './weekConcerns';
+import { freshLegsToday, markKept, resolveWeekAfterChoice } from './weekKept';
 import type { AdviceInputs } from './adviceEngine';
 import type { CheckInput } from './weekValidator';
 
@@ -73,8 +73,8 @@ describe('markKept', () => {
     const other = list.find((c) => c.finding.sessionIds.includes('x-2'))!;
     expect(other.kept).toBeUndefined();
     expect(other.headline).toContain('liggen te dicht op elkaar');
-    const all = new Set(list.map((c) => c.key));
-    expect(onlyKept(list, all)).toBe(false);
+    // Eén bron voor de knop: noticeCard. Een niet gekozen punt houdt de hoofdknop.
+    expect(noticeCard({ concerns: list, covered: [], answered: () => false, proposalsOn: true }).button).toBe('primary');
   });
 
   it('de instelling Gewone melding geeft het oude gedrag', () => {
@@ -89,10 +89,12 @@ describe('markKept', () => {
     expect(kept.filter((c) => c.rule !== 'LEG-SPACING')).toEqual(plain.filter((c) => c.rule !== 'LEG-SPACING'));
   });
 
-  it('onlyKept: alleen als elke open melding gekozen is', () => {
+  it('noticeCard: een tekstknop alleen als elke open melding gekozen is', () => {
     const list = run({ checkIns: [fresh(MONDAY)] }).filter((x) => x.rule === 'LEG-SPACING');
-    expect(onlyKept(list, new Set(list.map((c) => c.key)))).toBe(true);
-    expect(onlyKept(list, new Set())).toBe(false);
+    expect(list.every((c) => c.kept)).toBe(true);
+    expect(noticeCard({ concerns: list, covered: [], answered: () => false, proposalsOn: true }).button).toBe('kept');
+    // Staat er voor elk punt al een voorstel op Vandaag, dan valt er hier niets te vragen.
+    expect(noticeCard({ concerns: list, covered: list.map((c) => c.key), answered: () => false, proposalsOn: true }).button).toBeUndefined();
   });
 });
 
