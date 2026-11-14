@@ -10,6 +10,11 @@ import { ROUTE_TIMEOUT_MS, parseJson, requestText } from './routing';
 export const BROUTER_URL = 'https://brouter.de/brouter';
 // Het wandelprofiel dat paden en onverhard verkiest boven de weg.
 export const BROUTER_PROFILE = 'hiking-mountain';
+// Bij lopen weg van grote wegen en knooppunten van snelwegen: het profiel kent `consider_noise`, dat
+// een weg duurder maakt naarmate hij dichter bij verkeerslawaai ligt (eigenaar 14 november).
+export const BROUTER_PROFILE_PARAMS = '&profile:consider_noise=1';
+// Wat ASCEND een grote weg noemt in de regel bij een lus (de snelweg is voor lopen al verboden).
+const BIG_ROAD = /(^|\s)highway=(motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link)(\s|$)/;
 
 const c5 = (v: number) => (Math.round(v * 100_000) / 100_000).toString();
 
@@ -17,15 +22,17 @@ const c5 = (v: number) => (Math.round(v * 100_000) / 100_000).toString();
 export function brouterUrl(waypoints: RoutePoint[], profile = BROUTER_PROFILE, avoid: AvoidArea[] = []): string {
   const lonlats = waypoints.map((p) => `${c5(p.lon)},${c5(p.lat)}`).join('|');
   const nogos = avoid.length > 0 ? `&nogos=${avoid.map((a) => `${c5(a.lon)},${c5(a.lat)},${Math.round(a.radiusM)}`).join('|')}` : '';
-  return `${BROUTER_URL}?lonlats=${lonlats}${nogos}&profile=${profile}&alternativeidx=0&format=geojson`;
+  return `${BROUTER_URL}?lonlats=${lonlats}${nogos}&profile=${profile}${BROUTER_PROFILE_PARAMS}&alternativeidx=0&format=geojson`;
 }
 
 const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
 
-// De punten uit het GeoJSON-antwoord; undefined als de vorm niet klopt.
+// De punten uit het GeoJSON-antwoord; undefined als de vorm niet klopt. De tabel `messages` zegt per
+// stuk over welke weg het gaat (WayTags) en waar het stuk eindigt: een punt op een grote weg krijgt `bigRoad`.
 export function mapBrouter(raw: unknown): RoutePoint[] | undefined {
   const features = (raw as { features?: unknown } | null)?.features;
-  const coords = Array.isArray(features) ? (features[0] as { geometry?: { coordinates?: unknown } } | undefined)?.geometry?.coordinates : undefined;
+  const feature = Array.isArray(features) ? (features[0] as { geometry?: { coordinates?: unknown }; properties?: { messages?: unknown } } | undefined) : undefined;
+  const coords = feature?.geometry?.coordinates;
   if (!Array.isArray(coords)) return undefined;
   const points: RoutePoint[] = [];
   for (const c of coords as unknown[]) {
@@ -36,7 +43,40 @@ export function mapBrouter(raw: unknown): RoutePoint[] | undefined {
     const ele = num(c[2]);
     points.push(ele === undefined ? { lat, lon } : { lat, lon, ele });
   }
-  return points.length >= 2 ? points : undefined;
+  if (points.length < 2) return undefined;
+  markBigRoads(points, feature?.properties?.messages);
+  return points;
+}
+
+// De rijen van `messages` (na de kop): lengtegraad en breedtegraad maal een miljoen waar het stuk eindigt,
+// en de wegsoort. Elk punt tot en met dat eind hoort bij die rij. Vindt een eind geen punt, dan geen
+// markering: liever niets zeggen dan iets verkeerds.
+function markBigRoads(points: RoutePoint[], messages: unknown): void {
+  if (!Array.isArray(messages) || messages.length < 2 || !Array.isArray(messages[0])) return;
+  const head = messages[0] as unknown[];
+  const lonAt = head.indexOf('Longitude');
+  const latAt = head.indexOf('Latitude');
+  const tagsAt = head.indexOf('WayTags');
+  if (lonAt < 0 || latAt < 0 || tagsAt < 0) return;
+  const key = (lon: number, lat: number) => `${Math.round(lon * 1e6)},${Math.round(lat * 1e6)}`;
+  const flags: boolean[] = new Array(points.length).fill(false);
+  let from = 1;
+  for (const row of messages.slice(1)) {
+    if (!Array.isArray(row)) return;
+    const lon = Number(row[lonAt]);
+    const lat = Number(row[latAt]);
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+    const end = `${Math.round(lon)},${Math.round(lat)}`;
+    let to = from;
+    while (to < points.length && key(points[to].lon, points[to].lat) !== end) to++;
+    if (to >= points.length) return;
+    const big = typeof row[tagsAt] === 'string' && BIG_ROAD.test(row[tagsAt] as string);
+    for (let i = from; i <= to; i++) flags[i] = big;
+    from = to + 1;
+  }
+  flags.forEach((big, i) => {
+    if (big) points[i].bigRoad = true;
+  });
 }
 
 // "via2-position not mapped in existing datafile": bij dat punt ligt geen pad in de buurt.

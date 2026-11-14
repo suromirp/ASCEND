@@ -99,3 +99,124 @@ export function repeatedShare(points: RoutePoint[]): number {
   }
   return samples === 0 ? 0 : repeated / samples;
 }
+
+// ---------- Doodlopende stukken ----------
+// Een doodlopend stuk is een tak die je in en weer uit loopt: de lijn keert om en loopt hetzelfde pad
+// terug, en geen ander deel van de route gaat voorbij dat keerpunt. Een heen-en-terug heeft er één, een
+// Y met twee takken twee, een echte lus geen. Dezelfde top zes keer is één stuk. Pure meetkunde op de
+// punten, zonder kaart (docs/beslissingen/2026-11-14-routes-vorm.md).
+
+// Om de zoveel meter bemonsterd: een keerpunt ligt dan hoogstens een halve stap naast een monster.
+const SPUR_STEP_M = 5;
+// Een tak korter dan dit telt niet: de routeplanner maakt soms een paar meter heen en terug naar een pad.
+export const SPUR_MIN_M = 80;
+// Binnen deze afstand liggen heen en terug op hetzelfde pad (de lijn van de routeplanner, op een stap na).
+const SPUR_SAME_M = 12;
+// Rond een keerpunt: wat binnen deze straal ligt hoort bij het keerpunt.
+const SPUR_NEAR_M = 25;
+// Twee keerpunten dichter bij elkaar dan dit zijn hetzelfde (dezelfde top, steeds weer).
+const SPUR_SAME_TIP_M = 40;
+
+function resample(points: readonly RoutePoint[], stepM: number): { at: number[]; pts: RoutePoint[] } {
+  const cum = cumulative(points as RoutePoint[]);
+  const total = cum[cum.length - 1] ?? 0;
+  const at: number[] = [];
+  const pts: RoutePoint[] = [];
+  let seg = 1;
+  for (let d = 0; d <= total; d += stepM) {
+    while (seg < points.length - 1 && cum[seg] < d) seg++;
+    const span = cum[seg] - cum[seg - 1];
+    const t = span > 0 ? (d - cum[seg - 1]) / span : 0;
+    const a = points[seg - 1];
+    const b = points[seg];
+    at.push(d);
+    pts.push({ lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t });
+  }
+  return { at, pts };
+}
+
+export interface DeadEnd {
+  // Het keerpunt.
+  tip: RoutePoint;
+  // Waar langs de lijn (meters vanaf het begin) en hoe lang de tak is, bij de eerste keer dat je erin loopt.
+  atM: number;
+  lengthM: number;
+}
+
+// De doodlopende stukken van een lijn. Een keerpunt telt alleen als elke keer dat de lijn erlangs komt
+// een keer omkeren is: een voet van een helling waar je ook langs naar huis loopt is geen tak.
+// Het begin en het eind van de lijn zijn nooit een tak (daar sta je).
+export function deadEnds(points: readonly RoutePoint[]): DeadEnd[] {
+  if (points.length < 3) return [];
+  const { at, pts } = resample(points, SPUR_STEP_M);
+  const n = pts.length;
+  const k = Math.ceil(SPUR_MIN_M / SPUR_STEP_M);
+  const same = (i: number, j: number) => j >= 0 && j < n && metersBetween(pts[i], pts[j]) <= SPUR_SAME_M;
+  // Hoe ver de lijn rond monster i over zichzelf terugloopt (in stappen).
+  const foldAt = (i: number): number => {
+    let s = 0;
+    while (i - s - 1 >= 0 && i + s + 1 < n && (same(i - s - 1, i + s + 1) || same(i - s - 1, i + s + 2) || same(i - s - 1, i + s))) s++;
+    return s;
+  };
+  // Kandidaten: monsters waar de lijn minstens SPUR_MIN_M terugloopt; een rij naast elkaar is één keerpunt.
+  const folds: { i: number; s: number }[] = [];
+  for (let i = k; i + k < n; i++) {
+    if (!same(i - k, i + k) && !same(i - k, i + k + 1) && !same(i - k, i + k - 1)) continue;
+    const s = foldAt(i);
+    if (s < k) continue;
+    const last = folds[folds.length - 1];
+    if (last && i - last.i <= 2) {
+      if (s > last.s) folds[folds.length - 1] = { i, s };
+      else if (s === last.s) last.i = i; // midden van de rij: schuift mee
+      continue;
+    }
+    folds.push({ i, s });
+  }
+  const tips: DeadEnd[] = [];
+  for (const f of folds) {
+    const tip = pts[f.i];
+    if (tips.some((t) => metersBetween(t.tip, tip) <= SPUR_SAME_TIP_M)) continue;
+    if (!onlyTurnsAt(pts, tip)) continue;
+    tips.push({ tip, atM: at[f.i], lengthM: f.s * SPUR_STEP_M });
+  }
+  return tips;
+}
+
+// Elke keer dat de lijn bij `tip` komt keert hij om: wat ervoor en erna komt ligt op hetzelfde pad. Een
+// keer erdoorheen, of het begin of eind van de lijn bij het punt: geen doodlopend stuk.
+function onlyTurnsAt(pts: RoutePoint[], tip: RoutePoint): boolean {
+  const n = pts.length;
+  let i = 0;
+  while (i < n) {
+    if (metersBetween(pts[i], tip) > SPUR_NEAR_M) {
+      i++;
+      continue;
+    }
+    const a = i;
+    while (i < n && metersBetween(pts[i], tip) <= SPUR_NEAR_M) i++;
+    const b = i - 1;
+    if (a === 0 || b === n - 1) return false;
+    if (metersBetween(pts[a - 1], pts[b + 1]) > 2 * SPUR_STEP_M) return false;
+  }
+  return true;
+}
+
+// Een lijn zonder de doodlopende stukken: het stuk heen en terug valt weg, de rest sluit aan. Voor een
+// aanloop naar een helling, waar een tak alleen omweg is.
+export function withoutDeadEnds(points: RoutePoint[]): RoutePoint[] {
+  const ends = deadEnds(points);
+  if (ends.length === 0) return points;
+  const cum = cumulative(points);
+  const cuts = ends.map((e) => [e.atM - e.lengthM, e.atM + e.lengthM] as const);
+  const kept = points.filter((_, i) => !cuts.some(([from, to]) => cum[i] > from && cum[i] < to));
+  return kept.length >= 2 ? kept : points;
+}
+
+// ---------- Grote wegen ----------
+
+// Meters over een grote weg: een stap telt als het punt waar hij eindigt op een grote weg ligt (`bigRoad`).
+export function bigRoadMeters(points: readonly RoutePoint[]): number {
+  let total = 0;
+  for (let i = 1; i < points.length; i++) if (points[i].bigRoad) total += metersBetween(points[i - 1], points[i]);
+  return total;
+}

@@ -9,6 +9,8 @@ import { ROUTE_TIMEOUT_MS, parseJson, requestText } from './routing';
 
 export const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/route';
 export const ELEVATION_INTERVAL_M = 30;
+// Onder 1 is een voetpad goedkoper dan de weg; de standaard is 1.
+export const VALHALLA_WALKWAY_FACTOR = 0.8;
 
 const c5 = (v: number) => Math.round(v * 100_000) / 100_000;
 const RAD = Math.PI / 180;
@@ -31,6 +33,9 @@ export function avoidPolygon(a: AvoidArea): [number, number][] {
 export function valhallaUrl(waypoints: RoutePoint[], avoid: AvoidArea[] = []): string {
   const body = {
     locations: waypoints.map((p) => ({ lat: c5(p.lat), lon: c5(p.lon) })), costing: 'pedestrian', directions_type: 'none', elevation_interval: ELEVATION_INTERVAL_M,
+    // Bij lopen liever een voetpad dan de weg ernaast: Valhalla kent voor voetgangers geen soort weg om te
+    // mijden (de snelweg is al verboden), wel een lagere prijs voor paden.
+    costing_options: { pedestrian: { walkway_factor: VALHALLA_WALKWAY_FACTOR } },
     ...(avoid.length > 0 ? { exclude_polygons: avoid.map(avoidPolygon) } : {}),
   };
   return `${VALHALLA_URL}?json=${encodeURIComponent(JSON.stringify(body))}`;

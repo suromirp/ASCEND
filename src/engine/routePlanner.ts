@@ -11,7 +11,7 @@ import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { AvoidArea, RouteAnswer, RouteFailure, RouteFn, RoutePoint, RouteProposal, RouteTarget, RoutedLine } from '../models/route';
 import { crossesAny, insideAny, tooTiny } from './routeAdjust';
 import { isNearlyFlat, modelThresholdM } from './elevation';
-import { ASCENT_DEAD_BAND_M, ascentOf, bearing, cumulative, lineLength, metersBetween, offsetPoint, repeatedShare } from './routeGeometry';
+import { ASCENT_DEAD_BAND_M, ascentOf, bearing, bigRoadMeters, cumulative, deadEnds, lineLength, metersBetween, offsetPoint, repeatedShare, withoutDeadEnds } from './routeGeometry';
 import { formatNumberNL } from '../utils/number';
 
 // Hoogstens zoveel aanroepen van de routeplanner per soort lus: de openbare dienst is van vrijwilligers.
@@ -100,11 +100,19 @@ export const tooShort = (p: Pick<RouteProposal, 'distanceM'>, target: RouteTarge
 // De afstand past: niet meer dan SHORT_LIMIT korter en niet meer dan CLOSE_ENOUGH langer.
 export const fitsDistance = (p: Pick<RouteProposal, 'distanceM'>, target: RouteTarget): boolean => !tooShort(p, target) && p.distanceM <= target.distanceKm * 1000 * (1 + CLOSE_ENOUGH);
 
-// Een lus waarvan de afstand past gaat voor op een die niet past; daarna telt de score (lager is beter).
+// Zoveel doodlopende stukken hoort een lus te hebben: heen en terug (Simpel) één, een lus geen.
+export const allowedDeadEnds = (style: RouteProposal['style']): number => (style === 'simple' ? 1 : 0);
+export const extraDeadEnds = (p: Pick<RouteProposal, 'style' | 'deadEnds'>): number => Math.max(0, (p.deadEnds ?? 0) - allowedDeadEnds(p.style));
+
+// Een lus waarvan de afstand past gaat voor op een die niet past; dan een met minder doodlopende stukken
+// dan bij zijn soort hoort (een Y valt af als er een betere is); daarna de score (lager is beter).
 function better(a: RouteProposal, b: RouteProposal | undefined, target: RouteTarget, score: (p: RouteProposal) => number): boolean {
   if (!b) return true;
   const fa = fitsDistance(a, target);
   if (fa !== fitsDistance(b, target)) return fa;
+  const ea = extraDeadEnds(a);
+  const eb = extraDeadEnds(b);
+  if (ea !== eb) return ea < eb;
   return score(a) < score(b);
 }
 
@@ -254,7 +262,12 @@ export function cutAt(points: RoutePoint[], meters: number): RoutePoint[] {
 function proposal(style: RouteProposal['style'], line: RoutedLine, points: RoutePoint[], extra: Partial<RouteProposal> = {}): RouteProposal {
   // Eén drempel per lijn van de routeplanner, ook als de lus er een stuk van is.
   const ascentM = ascentOf(points, modelThresholdM(line.points.map((p) => p.ele)));
-  return { style, source: line.source, points, distanceM: lineLength(points), ascentM, repeatedShare: repeatedShare(points), ...extra };
+  const ends = deadEnds(points).length;
+  const bigRoadM = bigRoadMeters(points);
+  return {
+    style, source: line.source, points, distanceM: lineLength(points), ascentM, repeatedShare: repeatedShare(points),
+    ...(ends > 0 ? { deadEnds: ends } : {}), ...(bigRoadM > 0 ? { bigRoadM } : {}), ...extra,
+  };
 }
 
 // Van een lijn naar een heuvel een lus met herhalingen: heen naar de voet, zo vaak op en af als de
@@ -262,7 +275,9 @@ function proposal(style: RouteProposal['style'], line: RoutedLine, points: Route
 export function composeSimple(line: RoutedLine, target: RouteTarget): RouteProposal | undefined {
   const climb = climbOnLine(line.points, line.points.length - 1) ?? climbOnLine(line.points);
   if (!climb) return undefined;
-  const approach = line.points.slice(0, climb.foot + 1);
+  // Een tak in de aanloop (de routeplanner liep een doodlopend pad in en uit) is alleen omweg: weg ermee,
+  // anders tekent de lus een Y met twee doodlopende takken.
+  const approach = withoutDeadEnds(line.points.slice(0, climb.foot + 1));
   const up = line.points.slice(climb.foot, climb.top + 1);
   const down = reversed(up);
   // De drempel van de hele lijn, ook voor de stukken: anders telt de som van de delen anders dan het geheel.
@@ -277,7 +292,8 @@ export function composeSimple(line: RoutedLine, target: RouteTarget): RoutePropo
   for (let i = 0; i < repeats; i++) points.push(...up.slice(1), ...down.slice(1));
   points.push(...reversed(approach).slice(1));
   // Elke herhaling telt voor de hele helling: de dode band zou anders per keer een paar meter van de top afhalen.
-  return proposal('simple', line, points, { ascentM: base + repeats * perRepeat, repeats, climbM: climb.heightM, climbLengthM: climb.lengthM, repeatedShare: 1 });
+  const climbFromM = lineLength(approach);
+  return proposal('simple', line, points, { ascentM: base + repeats * perRepeat, repeats, climbM: climb.heightM, climbLengthM: climb.lengthM, climbFromM, climbToM: climbFromM + climb.lengthM, repeatedShare: 1 });
 }
 
 // Vlak: heen tot de helft van de afstand en over hetzelfde pad terug.
@@ -326,6 +342,26 @@ export async function proposeSimple(input: PlanInput, route: RouteFn, spare?: Ro
   }
   if (best) return { ok: true, proposal: best };
   return { ok: false, reason: lastFailure ?? 'nothing' };
+}
+
+// Het stuk van de lus tussen twee afstanden (meters vanaf de start), met een punt precies op elke grens.
+export function stretchOf(points: RoutePoint[], fromM: number, toM: number): RoutePoint[] {
+  if (points.length < 2 || !(toM > fromM)) return [];
+  const head = cutAt(points, toM);
+  const tail = reversed(cutAt(reversed(head), Math.max(0, lineLength(head) - fromM)));
+  return tail.length >= 2 ? tail : [];
+}
+
+// Simpel met herhalingen: het stuk dat je steeds weer op loopt, om op de kaart te markeren. Anders undefined.
+// Per lus één keer uitgerekend: dezelfde lus geeft dezelfde lijst, zodat de kaart niet bij elke render bijwerkt.
+const stretchMemo = new WeakMap<RouteProposal, RoutePoint[] | undefined>();
+export function climbStretch(p: RouteProposal): RoutePoint[] | undefined {
+  if (p.style !== 'simple' || !p.repeats || p.climbFromM === undefined || p.climbToM === undefined) return undefined;
+  if (stretchMemo.has(p)) return stretchMemo.get(p);
+  const stretch = stretchOf(p.points, p.climbFromM, p.climbToM);
+  const out = stretch.length >= 2 ? stretch : undefined;
+  stretchMemo.set(p, out);
+  return out;
 }
 
 // ---------- Avontuurlijk ----------
@@ -448,6 +484,26 @@ function ring(start: RoutePoint, distanceM: number): Via[] {
   return [270, 0, 90].map((angle) => ({ ...offsetPoint(centre, angle, radius), hill: false, value: 1, angle }));
 }
 
+// Zo dicht bij het keerpunt van een doodlopend stuk ligt het punt dat de lus daarheen trok.
+const VIA_AT_DEAD_END_M = 300;
+
+// Het punt van de lus dat het dichtst bij een keerpunt ligt (binnen VIA_AT_DEAD_END_M), of -1.
+export function viaAtDeadEnd(p: RouteProposal, vias: readonly RoutePoint[]): number {
+  if (!p.deadEnds || vias.length < 2) return -1;
+  let at = -1;
+  let near = VIA_AT_DEAD_END_M;
+  for (const end of deadEnds(p.points)) {
+    vias.forEach((v, i) => {
+      const d = metersBetween(v, end.tip);
+      if (d <= near) {
+        near = d;
+        at = i;
+      }
+    });
+  }
+  return at;
+}
+
 export async function proposeAdventure(input: PlanInput, route: RouteFn): Promise<PlanOutcome> {
   const d = input.target.distanceKm * 1000;
   const score = (p: RouteProposal) => missScore(p, input.target) * (input.target.ascentM >= MIN_ASCENT_TARGET_M ? 0.75 : 1) + 0.5 * p.repeatedShare;
@@ -478,7 +534,15 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn): Promis
     if (crossesAny(made.points, input.avoid)) break;
     if (anchored.gapM >= START_GAP_NOTE_M) made.startGapM = anchored.gapM;
     if (!tooTiny(made) && better(made, best, input.target, score)) best = made;
-    if (fitsDistance(made, input.target)) break;
+    if (fitsDistance(made, input.target)) {
+      // Past de afstand maar loopt de lus een doodlopend stuk in, dan nog een poging zonder het punt dat
+      // daar ligt; de oude lus blijft als er niets beters komt.
+      const loose = viaAtDeadEnd(made, vias);
+      if (loose < 0) break;
+      dropped.push(vias[loose]);
+      vias = vias.filter((_, j) => j !== loose);
+      continue;
+    }
     // Iets boven de afstand mikken: te kort telt als mislukt, iets te lang niet.
     const off = made.distanceM / d;
     reach = Math.min(0.6, Math.max(0.08, reach * Math.min(1.6, Math.max(0.6, AIM_LONG / off))));
@@ -530,8 +594,22 @@ export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<R
 const km = (meters: number) => `${formatNumberNL(Math.round(meters / 100) / 10, 1)} km`;
 const round10 = (m: number) => Math.round(m / 10) * 10;
 
+const COUNT_WORD: Record<number, string> = { 2: 'twee', 3: 'drie', 4: 'vier' };
+const countWord = (n: number) => COUNT_WORD[n] ?? String(n);
+
+// De naam zegt de vorm: "Eén lus" alleen zonder doodlopend stuk, heen en terug over meer dan één tak zegt
+// dat erbij (de Y van 14 november).
 export function proposalTitle(p: RouteProposal): string {
-  if (p.style === 'simple') return p.repeats ? `${p.repeats} × de helling op en af` : 'Heen en terug over hetzelfde pad';
+  const ends = p.deadEnds ?? 0;
+  if (p.style === 'simple') {
+    const branches = ends > 1 ? ` over ${countWord(ends)} takken` : '';
+    if (p.repeats) return `${p.repeats} × de helling op en af${branches ? `,${branches}` : ''}`;
+    return branches ? `Heen en terug${branches}` : 'Heen en terug over hetzelfde pad';
+  }
+  if (ends > 0) {
+    const base = !p.hills ? 'Lus' : p.hills === 1 ? 'Lus langs een helling' : `Lus langs ${p.hills} hellingen`;
+    return `${base} met ${ends === 1 ? 'een stuk' : `${countWord(ends)} stukken`} heen en terug`;
+  }
   if (!p.hills) return 'Eén lus';
   return p.hills === 1 ? 'Eén lus langs een helling' : `Eén lus langs ${p.hills} hellingen`;
 }
@@ -543,21 +621,31 @@ export function proposalFacts(p: RouteProposal): string {
   return `${km(p.distanceM)} · ${flat ? 'vrijwel vlak' : `${formatNumberNL(round10(p.ascentM), 0)} hoogtemeters`}`;
 }
 
+// De melding van een lus die meer dan SHORT_LIMIT korter is dan de training (routeSheet.ts#loopLines herkent hem).
+export const shortLine = (p: Pick<RouteProposal, 'distanceM'>, target: RouteTarget): string => `${km(p.distanceM)}, korter dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`;
+
+// Vanaf zoveel meter langs een grote weg zegt de lus het erbij: de aanvraag mijdt ze al, dit is wat overblijft.
+export const BIG_ROAD_NOTE_M = 300;
+export const bigRoadLine = (meters: number): string => `${km(meters)} langs een grote weg; een rustiger weg vond de routeplanner niet.`;
+
 // Wat je over deze lus moet weten naast de getallen: het droge feit, in korte zinnen.
 export function proposalNotes(p: RouteProposal, target: RouteTarget): string[] {
   const notes: string[] = [];
   if (p.style === 'simple' && p.climbM && p.climbLengthM) {
-    notes.push(`De helling: ${formatNumberNL(Math.round(p.climbM), 0)} m omhoog over ${formatNumberNL(Math.round(p.climbLengthM / 10) * 10, 0)} m.`);
+    const climb = `${formatNumberNL(Math.round(p.climbM), 0)} m omhoog over ${formatNumberNL(Math.round(p.climbLengthM / 10) * 10, 0)} m`;
+    // Herhalingen: de helling staat gemarkeerd op de kaart (climbStretch), de regel zegt wat je daar doet.
+    notes.push(climbStretch(p) && (p.repeats ?? 0) > 1 ? `Gemarkeerd op de kaart: hier ${p.repeats} keer op, ${climb}.` : `De helling: ${climb}.`);
   }
   if (p.style === 'simple' && (p.repeats ?? 0) > 1) notes.push('Op dezelfde helling kan je horloge naar het verkeerde stuk springen.');
   if (p.startGapM !== undefined) notes.push(`Het dichtstbijzijnde pad ligt ${formatNumberNL(round10(p.startGapM), 0)} m van je startpunt; dat stuk is een rechte lijn.`);
   const d = target.distanceKm * 1000;
   // Korter op de getallen die je ziet (op 100 m): 10,5 km tegen 10,5 km is niet korter.
   const shortBy = Math.round(d / 100) - Math.round(p.distanceM / 100);
-  if (tooShort(p, target)) notes.push(`${km(p.distanceM)}, korter dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
+  if (tooShort(p, target)) notes.push(shortLine(p, target));
   else if (shortBy > 0) notes.push(`${km(shortBy * 100)} korter dan je training. Tot ${formatNumberNL(Math.round(SHORT_LIMIT * 100), 0)} procent korter is goed genoeg.`);
   else if (p.distanceM > d * (1 + CLOSE_ENOUGH)) notes.push(`Langer dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
   if (p.notice) notes.push(p.notice);
+  if ((p.bigRoadM ?? 0) >= BIG_ROAD_NOTE_M) notes.push(bigRoadLine(p.bigRoadM as number));
   if (p.style === 'adventure' && p.repeatedShare > 0.15) notes.push('Een deel loop je twee keer.');
   return notes;
 }

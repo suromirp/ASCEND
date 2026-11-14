@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
 import type { RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { targetText } from '../engine/routeTarget';
-import { MIN_ASCENT_TARGET_M, failureLine, proposalFacts, proposalNotes, proposalTitle, type PlanOutcome } from '../engine/routePlanner';
+import { MIN_ASCENT_TARGET_M, climbStretch, failureLine, proposalFacts, proposalNotes, proposalTitle, type PlanOutcome } from '../engine/routePlanner';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import { SEND_LABEL, type RouteSendOutcome } from '../engine/routeSend';
 import { RouteSearching } from './RouteSearching';
@@ -231,7 +231,8 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
   const pieceSig = pickedOutcome?.ok ? `${picked}|${model.pieces.length}|${pickedOutcome.proposal.points.length}|${pickedOutcome.proposal.points[0]?.lat}|${pickedOutcome.proposal.points[0]?.lon}` : '';
   const [pieceAt, setPieceAt] = useState<{ sig: string; index: number } | undefined>();
   const selected = pieceAt?.sig === pieceSig ? pieceAt.index : undefined;
-  const piecePoints = selected === undefined ? undefined : model.pieces[selected]?.points;
+  // Zonder gekozen stuk: bij herhalingen de helling zelf, gemarkeerd (de regel staat bij de lus).
+  const piecePoints = selected === undefined ? (pickedOutcome?.ok ? climbStretch(pickedOutcome.proposal) : undefined) : model.pieces[selected]?.points;
 
   if (stage === 'no-place' || lat === undefined || lon === undefined) {
     return <p className="text-sm leading-snug" style={dim}>{NO_PLACE_LINE}</p>;

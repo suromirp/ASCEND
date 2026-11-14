@@ -26,8 +26,8 @@ import { drinkLine } from '../engine/eveningBefore';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { modalitySport } from '../data/modalities';
-import { failureLine, MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle } from '../engine/routePlanner';
-import { BRIEFING_MAP_HEIGHT, briefingRoutes, footerRoom, loopLines, otherLoopLine, routeOutcomeLine } from '../engine/routeSheet';
+import { climbStretch, failureLine, MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle } from '../engine/routePlanner';
+import { BRIEFING_MAP_HEIGHT, briefingRoutes, footerRoom, loopLines, otherLoopLine, otherLoopWarn, routeOutcomeLine } from '../engine/routeSheet';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import type { RouteSendOutcome } from '../engine/routeSend';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
@@ -522,6 +522,7 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
           onNoMap={model.markNoMap}
           height={BRIEFING_MAP_HEIGHT}
           photo={model.photo}
+          piece={pickedOutcome?.ok ? climbStretch(pickedOutcome.proposal) : undefined}
           onOpen={onBigger}
         />
       )}
@@ -541,7 +542,10 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
       {other && otherOutcome?.ok && (
         // Direct onder de gekozen lus: Kies is 44 px hoog, de rij schuift 4 px op zodat er geen gat valt.
         <div className="-mt-1 flex items-center justify-between gap-3">
-          <p className="min-w-0 text-sm tabular-nums leading-snug" style={dim}>{otherLoopLine(STYLE_NAME[other], otherOutcome.proposal)}</p>
+          <div className="min-w-0">
+            <p className="text-sm tabular-nums leading-snug" style={dim}>{otherLoopLine(STYLE_NAME[other], otherOutcome.proposal)}</p>
+            {otherLoopWarn(otherOutcome.proposal, target) && <p className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{otherLoopWarn(otherOutcome.proposal, target)}</p>}
+          </div>
           <TextButton tone="dim" onClick={() => model.setChosen(other)}>Kies</TextButton>
         </div>
       )}

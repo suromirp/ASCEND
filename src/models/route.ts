@@ -8,6 +8,9 @@ export interface RoutePoint {
   lon: number;
   // Hoogte in meters boven zeeniveau; ontbreekt als de bron geen hoogte gaf.
   ele?: number;
+  // De stap naar dit punt ligt op een grote weg (de bron zegt welke weg; nu alleen BRouter). Alleen in
+  // het geheugen: een bewaarde route en het GPX-bestand nemen alleen plek en hoogte mee.
+  bigRoad?: true;
 }
 
 export type RouteSource = 'brouter' | 'valhalla';
@@ -67,6 +70,14 @@ export interface RouteProposal {
   // Wat de training aan hoogtemeters vraagt, als ze die vraagt. Dan staat het getal van de lus er
   // altijd bij, ook onder de grens van vrijwel vlak.
   targetAscentM?: number;
+  // Hoeveel doodlopende stukken de lus heeft (engine/routeGeometry.ts#deadEnds): een stuk dat je in en
+  // weer uit loopt. Heen en terug heeft er één; een echte lus geen.
+  deadEnds?: number;
+  // Meters langs een grote weg, als de bron dat zei en het er zijn.
+  bigRoadM?: number;
+  // Simpel met herhalingen: waar de helling ligt, in meters langs de lus (de eerste keer omhoog).
+  climbFromM?: number;
+  climbToM?: number;
   // Een melding bij deze lus: het droge feit en wat wel kan (bijvoorbeeld geen heuvels in de buurt).
   notice?: string;
 }
