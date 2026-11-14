@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TrainingGoal } from '../models/goals';
 import type { ExercisePrescription, ExerciseSetLog, SessionLog, SessionTemplate } from '../models/training';
 import { exerciseById } from '../data/exercises';
-import { ankleComplaintOpen, balanceShort, hasMountainGoal, mountainMuscleProposal, mountainMusclesShort, muscleNoticeText, swapPreference, swapReason, type MuscleProposalInput } from './mountainMuscles';
+import { DECLINE_QUIET_WEEKS, ankleComplaintOpen, balanceShort, hasMountainGoal, mountainMuscleProposal, mountainMusclesShort, muscleNoticeText, swapPreference, swapReason, type MuscleProposalInput } from './mountainMuscles';
 import { muscleVolumeByWeek } from './muscleVolume';
 import { resolveStrengthSettings, normalizeStrengthSettings } from './strengthSettings';
 import { addedPrescription } from './addedExercises';
@@ -113,7 +113,10 @@ describe('het voorstel in de weekterugblik', () => {
 
   it('noemt sets die niet gekoppeld konden worden', () => {
     const p = mountainMuscleProposal(input({ logs: WEEKS.map((d, i) => log(`l${i}`, d, [squat(4), unknown(1)])) }));
-    expect(muscleNoticeText(p!).info).toContain('4 sets konden niet aan een oefening gekoppeld worden; die tellen hier niet mee.');
+    const text = muscleNoticeText(p!);
+    expect(text.unknown).toBe('4 sets konden niet aan een oefening gekoppeld worden; die tellen hier niet mee.');
+    // Op het scherm, niet alleen achter de i.
+    expect(text.info).not.toMatch(/gekoppeld/);
   });
 
   it('staat de spier al in het plan, dan de volgende; staat alles erin, dan niets', () => {
@@ -336,13 +339,18 @@ describe('de woorden van het voorstel', () => {
     expect(t.name).toBe('Op één been staan');
     expect(t.where).toBe('Erbij in Benen B');
     expect(t.after).toBe('Eerst een voorstel, pas na Akkoord verandert er iets. Daarna is hij vanaf je volgende keer de laatste oefening in Benen B. Weghalen kan in het blad van de oefening.');
-    expect(t.done).toBe('Vanaf je volgende keer is Op één been staan de laatste oefening in Benen B.');
+    expect(t.forgeName).toBe('In Forge heet hij Single Leg Stance.');
+    expect(t.done).toBe('Vanaf je volgende keer is Op één been staan de laatste oefening in Benen B. In Forge heet hij Single Leg Stance.');
     // Een naam met haakjes staat achteraan in de zin.
     const zwaar = make({ muscle: 'tibialis', exerciseId: 'tibialis-raise', exerciseName: 'Tibialis Raise', templateName: 'Benen A (zwaar)', reps: '15-20' });
     expect(zwaar.name).toBe('Tenen optrekken tegen de muur');
     expect(zwaar.where).toBe('Erbij in Benen A (zwaar)');
     expect(zwaar.after).toMatch(/de laatste oefening in Benen A \(zwaar\)\. Weghalen/);
-    expect(zwaar.done).toBe('Vanaf je volgende keer is Tenen optrekken tegen de muur de laatste oefening in Benen A (zwaar).');
+    expect(zwaar.done).toBe('Vanaf je volgende keer is Tenen optrekken tegen de muur de laatste oefening in Benen A (zwaar). In Forge heet hij Tibialis Raise.');
+    // Heet hij in Forge hetzelfde, dan geen zin over de naam.
+    const same = make({ exerciseId: 'bestaat-niet', exerciseName: 'Eigen oefening' });
+    expect(same.forgeName).toBeUndefined();
+    expect(same.done).toBe('Vanaf je volgende keer is Eigen oefening de laatste oefening in Benen B.');
   });
 
   it('geen gedachtestreepjes, geen "voorkomt", geen harde sets in de tekst', () => {
@@ -360,5 +368,32 @@ describe('de naam in het voorstel', () => {
     const candidates = EXERCISES.filter((e) => ['calves', 'tibialis', 'glutes'].some((m) => e.primary.includes(m as never)) && e.pattern !== 'balance').map((e) => e.id);
     expect(candidates.length).toBeGreaterThan(30);
     for (const id of [...candidates, 'single-leg-stance']) expect(dutchExerciseAlias(id), id).toBeDefined();
+  });
+});
+
+describe('randen van de woorden', () => {
+  const make = (over: Partial<Parameters<typeof muscleNoticeText>[0]>) => muscleNoticeText({
+    muscle: 'glutes', avgSets: 0, weeks: 4, restLeftOut: false, unknownSets: 0,
+    templateId: 't', templateName: 'Benen B', exerciseId: 'glute-bridge', exerciseName: 'Glute Bridge', sets: 3, reps: '10-12', ...over,
+  });
+
+  it('een oefening per kant krijgt "per been"', () => {
+    expect(exerciseById('pistol-squat')?.perSide).toBe(true);
+    expect(make({ exerciseId: 'pistol-squat', exerciseName: 'Pistol Squat' }).how).toMatch(/3 sets van 10 tot 12 herhalingen per been\.$/);
+    expect(make({}).how).not.toMatch(/per been/);
+  });
+
+  it('één set die niet gekoppeld kon worden: enkelvoud, en zonder zulke sets geen zin', () => {
+    expect(make({ unknownSets: 1 }).unknown).toBe('1 set kon niet aan een oefening gekoppeld worden; die tellen hier niet mee.');
+    expect(make({}).unknown).toBeUndefined();
+  });
+
+  it('Liever niet: precies acht weken stil, zoals de i zegt', () => {
+    expect(DECLINE_QUIET_WEEKS).toBe(8);
+    expect(make({}).info).toContain('acht weken stil');
+    const declined = [{ muscle: 'calves' as const, weekStart: '2026-11-02' }];
+    // De laatste stille week, en de week erna mag het weer.
+    expect(mountainMuscleProposal(input({ today: '2026-12-21', declined }))?.muscle).toBe('tibialis');
+    expect(mountainMuscleProposal(input({ today: '2026-12-28', declined }))?.muscle).toBe('calves');
   });
 });

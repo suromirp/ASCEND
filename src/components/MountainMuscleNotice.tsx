@@ -16,8 +16,10 @@ export function MountainMuscleNotice({ onlyFor, className = 'mt-5' }: { onlyFor?
       <div className="mt-2 flex flex-col gap-1.5">
         <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{text.name}</p>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{text.where}</p>
+        {text.forgeName && state !== 'done' && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{text.forgeName}</p>}
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{text.how}</p>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{text.why}</p>
+        {text.unknown && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{text.unknown}</p>}
         {state === 'done' ? (
           <p role="status" className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{text.done}</p>
         ) : (

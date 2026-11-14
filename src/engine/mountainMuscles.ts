@@ -54,7 +54,7 @@ const BALANCE_INJURY_PARTS = ['enkel', 'voet'];
 const MOUNTAIN_FLOOR_SETS = 4;
 const MOUNTAIN_WINDOW_WEEKS = 4;
 // Na "Liever niet" blijft het voor die spier zo lang stil.
-const DECLINE_QUIET_WEEKS = 8;
+export const DECLINE_QUIET_WEEKS = 8;
 
 export const MOUNTAIN_KINDS: ReadonlySet<GoalKindId> = new Set(['trek_hut', 'trek_tent', 'day_hike', 'mountaineering']);
 
@@ -278,11 +278,16 @@ export interface MuscleNoticeText {
   how: string;
   // Waarom: het droge feit, dan wat het kan helpen.
   why: string;
+  // Wat de telling minder zeker maakt (sets die aan geen oefening gekoppeld konden worden): op het scherm, ook in
+  // Forge, nooit alleen achter de i.
+  unknown?: string;
+  // Als Forge de oefening anders noemt dan het voorstel: "In Forge heet hij Single Leg Stance."
+  forgeName?: string;
   // Achter de i: wat telt en wat niet meetelde, voor deze rij, en wat Liever niet doet.
   info: string;
   // Wat er na Akkoord gebeurt.
   after: string;
-  // Na Akkoord: dat hij er staat en waar.
+  // Na Akkoord: dat hij er staat en waar (met de zin over de naam in Forge erachter).
   done: string;
 }
 
@@ -316,17 +321,20 @@ export function muscleNoticeText(p: MuscleProposal): MuscleNoticeText {
   const info = [
     balance ? 'Elke werkset van een evenwichtsoefening telt, opwarmen niet.' : 'Een set telt als je er hoogstens 4 herhalingen over had.',
     balance ? `Een rustweek en een week met vakantie, een tocht of zonder sportschool tellen niet mee${fewer}.` : `Een rustweek telt niet mee${fewer}.`,
-    unknown > 0 ? `${unknown} ${unknown === 1 ? 'set kon' : 'sets konden'} niet aan een oefening gekoppeld worden; die tellen hier niet mee.` : '',
     `Kies je Liever niet, dan blijft het acht weken stil over ${balance ? 'je evenwicht' : NAMED[p.muscle].your}.`,
   ].filter(Boolean).join(' ');
+  const inForge = exercise?.name ?? p.exerciseName;
+  const forgeName = inForge && inForge !== name ? `In Forge heet hij ${inForge}.` : undefined;
   return {
     name,
+    ...(unknown > 0 ? { unknown: `${unknown} ${unknown === 1 ? 'set kon' : 'sets konden'} niet aan een oefening gekoppeld worden; die tellen hier niet mee.` } : {}),
+    ...(forgeName ? { forgeName } : {}),
     where: `Erbij in ${p.templateName}`,
     how,
     why: `${fact} ${WHY[p.muscle] ?? ''}`.trim(),
     info,
     // De naam van de training staat achteraan: een naam met haakjes (Benen A (zwaar)) leest dan als een gewone zin.
     after: `Eerst een voorstel, pas na Akkoord verandert er iets. Daarna is hij vanaf je volgende keer de laatste oefening in ${p.templateName}. Weghalen kan in het blad van de oefening.`,
-    done: `Vanaf je volgende keer is ${name} de laatste oefening in ${p.templateName}.`,
+    done: `Vanaf je volgende keer is ${name} de laatste oefening in ${p.templateName}.${forgeName ? ` ${forgeName}` : ''}`,
   };
 }

@@ -125,7 +125,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
     ? <SheetHeader eyebrow={`Week van ${formatDateNL(review.weekStart)}`} title={title} facts={review.label} onClose={requestClose} />
     : <SheetHeader
         eyebrow={`Week van ${formatDateNL(review.weekStart)}`}
-        title={VIEW_TITLE[view]}
+        title={view === 'proposal' && muscle.state === 'done' ? 'Toegevoegd' : VIEW_TITLE[view]}
         info={view === 'proposal' && muscle.text ? <InfoButton onClick={() => setProposalInfo((v) => !v)} label="Meer over dit voorstel" /> : undefined}
         onBack={() => setView('main')}
         onClose={requestClose}
@@ -184,9 +184,11 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
                   <div>
                     <p className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{muscle.text.name}</p>
                     <p className="mt-0.5 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{muscle.text.where}</p>
+                    {muscle.text.forgeName && muscle.state !== 'done' && <p className="mt-0.5 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{muscle.text.forgeName}</p>}
                   </div>
                   <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{muscle.text.how}</p>
                   <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{muscle.text.why}</p>
+                  {muscle.text.unknown && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{muscle.text.unknown}</p>}
                   {proposalInfo && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{muscle.text.info}</p>}
                   {muscle.state === 'done' ? (
                     <p role="status" className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{muscle.text.done}</p>
