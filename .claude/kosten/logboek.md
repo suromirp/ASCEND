@@ -459,3 +459,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-13, Sherpa Weer van de plek vervolg met Graphify (ontwikkelaar, fable) 89k, 19 min, 27 tool-aanroepen; b11d605 op claude/weer-plek-vervolg, nog zonder Warden/Lookout/Pathfinder
 - 2026-11-13, Kleding en wind: Warden (reviewer, sonnet) 36k, 4 min, akkoord, 1 belangrijk (tekst Zelf bijstellen, zelf hersteld); Lookout (tester, sonnet) 72k, groen, vond wind niet in rij Weer van de Briefing (zelf hersteld); Pathfinder (sonnet) 47k, geen moet, 1 mag zelf gedaan
 - 2026-11-13, Weer van de plek: Warden (reviewer, sonnet) 30k, 3 min, akkoord
+- 2026-11-14, Sherpa Opstarten en Intervals (ontwikkelaar, fable) 71k, 19 min; Warden (reviewer, fable) 84k, 14 min, akkoord, 2 belangrijk (volgorde herstelstappen zelf hersteld, grens meten naar backlog)
