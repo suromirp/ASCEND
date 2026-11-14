@@ -210,7 +210,7 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
         </div>
         <div className="flex gap-3">
           <SecondaryButton onClick={() => setPhase('idle')}>Terug</SecondaryButton>
-          <PrimaryButton onClick={() => void confirmApply()}>Bevestigen</PrimaryButton>
+          <PrimaryButton onClick={() => void confirmApply()}>Akkoord</PrimaryButton>
         </div>
       </>
     );
@@ -575,7 +575,7 @@ function PreviewStep({
 
       <div className="mt-2 flex gap-3">
         <SecondaryButton onClick={onBack}>Terug</SecondaryButton>
-        <PrimaryButton onClick={onConfirm}>Blok activeren</PrimaryButton>
+        <PrimaryButton onClick={onConfirm}>Akkoord</PrimaryButton>
       </div>
     </div>
   );
