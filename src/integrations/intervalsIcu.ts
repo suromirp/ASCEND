@@ -495,38 +495,57 @@ export interface FetchOptions {
   fetchImpl?: typeof fetch;
 }
 
+// One request under one limit in time (TIMEOUT_MS), from the first byte sent to the last byte of the body
+// read. The limit used to stop at the headers; a body that stalled then left the call hanging, and the
+// background steps in state/boot.ts with it. Past the limit the request is aborted and the caller reads the
+// same sentence as for any other time-out (docs/beslissingen/2026-11-14-opstarten-en-intervals-grens.md).
+async function withinLimit<T>(work: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const limit = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      // Reject first: the abort makes the work fail too, and the time-out is the answer that counts.
+      reject(new IntervalsError('network', MESSAGES.network));
+      controller.abort();
+    }, TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([work(controller.signal), limit]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // One GET with the user's own key. The error mapping is the same for every
 // endpoint, so the user reads the same sentence for the same problem.
 async function getJson(connection: IntervalsConnection, urlFor: (athleteId: string) => string, options: FetchOptions): Promise<unknown> {
   const { athleteId, apiKey } = normalizeConnection(connection);
   const doFetch = options.fetchImpl ?? fetch;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  let response: Response;
-  try {
-    response = await doFetch(urlFor(athleteId), {
-      method: 'GET',
-      headers: { Authorization: basicAuthHeader(apiKey), Accept: 'application/json' },
-      signal: controller.signal,
-    });
-  } catch {
-    // Offline, blocked, timed out: all the same to the user.
-    throw new IntervalsError('network', MESSAGES.network);
-  } finally {
-    clearTimeout(timer);
-  }
+  return withinLimit(async (signal) => {
+    let response: Response;
+    try {
+      response = await doFetch(urlFor(athleteId), {
+        method: 'GET',
+        headers: { Authorization: basicAuthHeader(apiKey), Accept: 'application/json' },
+        signal,
+      });
+    } catch {
+      // Offline, blocked, timed out: all the same to the user.
+      throw new IntervalsError('network', MESSAGES.network);
+    }
 
-  if (response.status === 401) throw new IntervalsError('auth', MESSAGES.auth);
-  if (response.status === 403 || response.status === 404) throw new IntervalsError('athlete', MESSAGES.athlete);
-  if (response.status === 429) throw new IntervalsError('rate', MESSAGES.rate);
-  if (response.status >= 500) throw new IntervalsError('server', MESSAGES.server);
-  if (!response.ok) throw new IntervalsError('response', MESSAGES.response);
+    if (response.status === 401) throw new IntervalsError('auth', MESSAGES.auth);
+    if (response.status === 403 || response.status === 404) throw new IntervalsError('athlete', MESSAGES.athlete);
+    if (response.status === 429) throw new IntervalsError('rate', MESSAGES.rate);
+    if (response.status >= 500) throw new IntervalsError('server', MESSAGES.server);
+    if (!response.ok) throw new IntervalsError('response', MESSAGES.response);
 
-  try {
-    return await response.json();
-  } catch {
-    throw new IntervalsError('response', MESSAGES.response);
-  }
+    try {
+      return (await response.json()) as unknown;
+    } catch {
+      throw new IntervalsError('response', MESSAGES.response);
+    }
+  });
 }
 
 export async function fetchIntervalsActivities(
@@ -756,39 +775,37 @@ async function writeRequest(
 ): Promise<{ status: number; body: unknown }> {
   const { apiKey } = normalizeConnection(connection);
   const doFetch = options.fetchImpl ?? fetch;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  let response: Response;
-  try {
-    response = await doFetch(url, {
-      method,
-      headers: { Authorization: basicAuthHeader(apiKey), Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
-      signal: controller.signal,
-    });
-  } catch {
-    throw new IntervalsError('network', MESSAGES.network);
-  } finally {
-    clearTimeout(timer);
-  }
-  if (response.status === 401) throw new IntervalsError('auth', MESSAGES.auth);
-  if (response.status === 403) throw new IntervalsError('write', MESSAGES.write);
-  if (response.status === 404) {
-    if (accept404) return { status: 404, body: undefined };
-    throw new IntervalsError('athlete', MESSAGES.athlete);
-  }
-  if (response.status === 429) throw new IntervalsError('rate', MESSAGES.rate);
-  if (response.status >= 500) throw new IntervalsError('server', MESSAGES.server);
-  if (response.status === 400 || response.status === 422) throw new IntervalsError('rejected', MESSAGES.rejected);
-  if (!response.ok) throw new IntervalsError('response', MESSAGES.response);
-  let parsed: unknown;
-  try {
-    const text = await response.text();
-    parsed = text ? JSON.parse(text) : undefined;
-  } catch {
-    throw new IntervalsError('response', MESSAGES.response);
-  }
-  return { status: response.status, body: parsed };
+  return withinLimit(async (signal) => {
+    let response: Response;
+    try {
+      response = await doFetch(url, {
+        method,
+        headers: { Authorization: basicAuthHeader(apiKey), Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal,
+      });
+    } catch {
+      throw new IntervalsError('network', MESSAGES.network);
+    }
+    if (response.status === 401) throw new IntervalsError('auth', MESSAGES.auth);
+    if (response.status === 403) throw new IntervalsError('write', MESSAGES.write);
+    if (response.status === 404) {
+      if (accept404) return { status: 404, body: undefined };
+      throw new IntervalsError('athlete', MESSAGES.athlete);
+    }
+    if (response.status === 429) throw new IntervalsError('rate', MESSAGES.rate);
+    if (response.status >= 500) throw new IntervalsError('server', MESSAGES.server);
+    if (response.status === 400 || response.status === 422) throw new IntervalsError('rejected', MESSAGES.rejected);
+    if (!response.ok) throw new IntervalsError('response', MESSAGES.response);
+    let parsed: unknown;
+    try {
+      const text = await response.text();
+      parsed = text ? (JSON.parse(text) as unknown) : undefined;
+    } catch {
+      throw new IntervalsError('response', MESSAGES.response);
+    }
+    return { status: response.status, body: parsed };
+  });
 }
 
 const eventIdOf = (e: unknown): number | undefined => {
