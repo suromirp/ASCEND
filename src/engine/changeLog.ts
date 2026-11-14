@@ -3,6 +3,7 @@
 // trail. Nothing new is stored for it; this only makes the existing record
 // readable (Aangepast door ASCEND in Week, "Volgende week verandert").
 
+import { reentryAdjustments, reentryNote, type ReentryWeek } from './reentry';
 import type { PlanChangeItem, PlanChangeProposal, EngineEvent } from '../models/planChange';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { describeChanges } from './changeImpact';
@@ -131,6 +132,8 @@ export interface WeekAdjustment {
   reason: string;
   at: string; // wanneer het besloten is
   how?: 'akkoord' | 'vanzelf'; // leeg als het log het niet zeker zegt
+  // Een rustiger instap (engine/reentry.ts): alleen de duur, voor de hele week terug te zetten met Ongedaan maken.
+  reentry?: ReentryWeek;
 }
 
 const dayShort = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))}`;
@@ -163,6 +166,9 @@ export function weekAdjustments(
   templates: SessionTemplate[],
   weekStart: string,
   asOf: string,
+  // De rustiger instappen waarop je Akkoord gaf (AppSettings.reentryWeeks): ze veranderen geen rij, alleen de duur,
+  // dus ze staan niet in de wijzigingen van een voorstel. Zonder: geen regel voor een instap.
+  reentryWeeks?: unknown,
 ): WeekAdjustment[] {
   const since = addDays(asOf, -ADJUST_WINDOW_DAYS);
   const weekEnd = addDays(weekStart, 6);
@@ -277,6 +283,27 @@ export function weekAdjustments(
         reason: c.reason || p.issue,
         at: p.resolvedAt ?? p.createdAt,
         how: howDecided(p),
+      });
+    }
+  }
+
+  // Rustiger instap: elke training in die zeven dagen wordt korter. Een andere regel van ASCEND voor dezelfde
+  // training gaat voor; de reden noemt de instap niet nog eens.
+  const reentryAt = (from: string) => accepted.filter((p) => p.trigger === 'reentry_planned').map((p) => p.resolvedAt ?? p.createdAt).filter((at) => localDateOf(at) <= from).at(-1);
+  for (const w of reentryAdjustments(reentryWeeks)) {
+    if (w.until < weekStart || w.from > weekEnd) continue;
+    for (const s of sessions) {
+      if (s.status === 'skipped' || s.scheduledDate < w.from || s.scheduledDate > w.until || latest.has(s.id)) continue;
+      if (templateById.get(s.templateId)?.type === 'recovery') continue;
+      latest.set(s.id, {
+        sessionId: s.id,
+        name: templateById.get(s.templateId)?.name ?? 'Training',
+        what: `korter op ${dayShort(s.scheduledDate)}`,
+        date: s.scheduledDate,
+        reason: reentryNote(w),
+        at: reentryAt(w.from) ?? `${w.from}T00:00:00`,
+        how: 'akkoord',
+        reentry: w,
       });
     }
   }

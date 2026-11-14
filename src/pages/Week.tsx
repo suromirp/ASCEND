@@ -143,7 +143,7 @@ export function WeekPage() {
   const replanOn = !!program && trainings > 0 && addDays(weekStart, 6) >= today;
   const replanRow = replanOn && <WeekReplanRow key={weekStart} weekStart={weekStart} sub={replanSub(missed)} />;
   // Aangepast door ASCEND: één uitkomst voor de rij, het blad en het woord op de dagrij (engine/changeLog.ts).
-  const adjustments = useMemo(() => weekAdjustments(planChangeLog, plannedSessions, templates, weekStart, today), [planChangeLog, plannedSessions, templates, weekStart, today]);
+  const adjustments = useMemo(() => weekAdjustments(planChangeLog, plannedSessions, templates, weekStart, today, settings.reentryWeeks), [planChangeLog, plannedSessions, templates, weekStart, today, settings.reentryWeeks]);
   const adjustedIds = useMemo(() => adjustedIdsOf(adjustments), [adjustments]);
 
   // A completed session is still selectable — SessionActionSheet shows an

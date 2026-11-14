@@ -167,6 +167,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
         }),
         {
           eyebrow: 'Rustiger instap',
+          extraTitle: 'Andere lengte, de eerste week terug',
           ask: 'always',
           alwaysAsk: true,
           notesTitle: 'Wat er verandert',

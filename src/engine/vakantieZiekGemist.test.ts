@@ -5,7 +5,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { computeCurrentStreak } from './streak';
 import { deriveSessionStatus } from './sessionStatus';
-import { buildChangeLog } from './changeLog';
+import { buildChangeLog, weekAdjustments } from './changeLog';
 import { weekHighlights } from './weekHighlights';
 import { attentionLines } from './weekGlance';
 import { shortfallSentence } from './repeatWeek';
@@ -449,5 +449,20 @@ describe('het woord gemist, per zin', () => {
     const verdict = { fellShort: true, fewDone: true, keyMissed: true, share: 0 };
     expect(shortfallSentence({ id: 'x', weekStart: '2026-11-30', previousWeek: '2026-11-23', done: 0, planned: 5, verdict, missedKey: ['Bergtocht'] })).toBe('Vorige week deed je 0 van de 5 trainingen, en de bergtocht heb je gemist.');
     expect(shortfallSentence({ id: 'x', weekStart: '2026-11-30', previousWeek: '2026-11-23', done: 4, planned: 5, verdict: { ...verdict, fewDone: false }, missedKey: ['Bergtocht'] })).toBe('Vorige week miste je de bergtocht, de belangrijkste training van de week.');
+  });
+});
+
+describe('de rustiger instap in Week: Aangepast door ASCEND', () => {
+  it('na Akkoord staat elke training van die zeven dagen erin als korter, met de instap om terug te zetten', () => {
+    const sessions = week('2026-12-07');
+    const w = { from: '2026-12-07', until: '2026-12-13', factor: 0.75 };
+    const at = '2026-12-07T07:00:00.000Z';
+    const proposal = { id: 'p-r', trigger: 'reentry_planned' as const, issue: 'Rustiger instap', changes: [], alternatives: [], consequences: 'x', explanation: 'x', createdAt: at, resolvedAt: at, resolution: 'accepted' as const };
+    expect(weekAdjustments([proposal], sessions, templates, '2026-12-07', '2026-12-08')).toEqual([]);
+    const rows = weekAdjustments([proposal], sessions, templates, '2026-12-07', '2026-12-08', [w]);
+    expect(rows.map((r) => r.what)).toEqual(['korter op di 8', 'korter op wo 9', 'korter op do 10', 'korter op za 12', 'korter op zo 13']);
+    expect(rows.every((r) => r.reentry?.from === '2026-12-07' && r.how === 'akkoord' && r.at === at)).toBe(true);
+    // Een andere week: niets.
+    expect(weekAdjustments([proposal], week('2026-12-14'), templates, '2026-12-14', '2026-12-15', [w])).toEqual([]);
   });
 });

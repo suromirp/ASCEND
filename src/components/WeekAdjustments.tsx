@@ -1,7 +1,8 @@
 // ASCEND: Aangepast door ASCEND, de rij onder de dagen in Week en het blad erachter (docs/visie/Ontwerp Week
 // minimaal.md, hoofdstuk 3; besluit docs/beslissingen/2026-11-12-week-minimaal.md). De regels komen uit
-// engine/changeLog.ts#weekAdjustments, dezelfde uitkomst als het woord "aangepast" op de dagrij. Alleen lezen:
-// niets laadt, niets kan mislukken, en zonder regels is er geen rij.
+// engine/changeLog.ts#weekAdjustments, dezelfde uitkomst als het woord "aangepast" op de dagrij. Alleen lezen,
+// op één ding na: een rustiger instap (engine/reentry.ts) zet je hier terug met Ongedaan maken, met een grens in tijd
+// en een zichtbare uitkomst. Zonder regels is er geen rij.
 
 import { useState } from 'react';
 import { adjustmentsSub, decidedLine, type WeekAdjustment } from '../engine/changeLog';
@@ -12,7 +13,12 @@ import { useBackToClose } from '../utils/useBackToClose';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
 import { SheetRow, SheetRows } from './SheetRows';
-import { Card, SheetGrip } from './ui';
+import { Card, SecondaryButton, SheetGrip } from './ui';
+import { useAppData } from '../state/useAppData';
+import { withTimeout } from '../utils/withTimeout';
+
+// Een knop die wacht, wacht nooit langer dan dit.
+const UNDO_LIMIT_MS = 8000;
 
 const TITLE = 'Aangepast door ASCEND';
 
@@ -30,6 +36,18 @@ export function WeekAdjustmentsRow({ adjustments, weekStart, current }: { adjust
 function WeekAdjustmentsSheet({ adjustments, weekStart, onClose }: { adjustments: WeekAdjustment[]; weekStart: string; onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const [picked, setPicked] = useState<WeekAdjustment | null>(null);
+  const { settings, updateSettings } = useAppData();
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  // De hele instap terug: de duur is weer de gewone, ASCEND vraagt het voor die terugkomst niet opnieuw.
+  const undoReentry = (from: string) => {
+    setBusy(true);
+    setNote(null);
+    void withTimeout(updateSettings({ reentryWeeks: (settings.reentryWeeks ?? []).filter((w) => w.from !== from) }), UNDO_LIMIT_MS, 'Ongedaan maken')
+      .then(() => { setNote('Teruggezet. Je trainingen hebben weer hun gewone duur.'); setPicked(null); })
+      .catch(() => setNote('Dat duurde te lang. Er is niets veranderd; probeer het zo nog eens.'))
+      .finally(() => setBusy(false));
+  };
   // De terugknop van het toestel gaat eerst terug naar de lijst, daarna pas dicht.
   useBackToClose(picked !== null, () => setPicked(null));
   const eyebrow = `Week van ${formatDateNL(weekStart)}`;
@@ -47,11 +65,18 @@ function WeekAdjustmentsSheet({ adjustments, weekStart, onClose }: { adjustments
                   <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{capitalize(picked.what)}</p>
                   <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{picked.reason}</p>
                   <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{decidedLine(picked)}</p>
+                  {picked.reentry && (
+                    <>
+                      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Ongedaan maken zet de hele rustiger instap terug.</p>
+                      <SecondaryButton disabled={busy} onClick={() => undoReentry(picked.reentry!.from)}>{busy ? 'Bezig…' : 'Ongedaan maken'}</SecondaryButton>
+                    </>
+                  )}
                 </div>
               </>
             ) : (
               <>
                 <div className="-mt-2"><SheetHeader eyebrow={eyebrow} title={TITLE} onClose={requestClose} /></div>
+                {note && <p className="mt-3 text-sm" role="status" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}
                 <div className="mt-4">
                   <SheetRows label={TITLE}>
                     {adjustments.map((a) => <SheetRow key={a.sessionId} title={a.name} sub={a.what} onClick={() => setPicked(a)} />)}
