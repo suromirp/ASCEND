@@ -50,6 +50,12 @@ function currentBuild(): string {
   return typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : 'dev';
 }
 
+// A repair that builds on an earlier one waits a start when that one failed: opruimen vat oude
+// regels samen, en een samengevatte dubbele regel voegt het samenvoegen nooit meer samen (Warden 14 november).
+const WAITS_FOR: Record<string, string[]> = {
+  tidyOldProposals: ['mergeDuplicateWeeklyPrescriptionLines'],
+};
+
 const TIMED_OUT = Symbol('timed out');
 const FAILED = Symbol('failed');
 
@@ -81,6 +87,7 @@ export async function runBootMigrations(
   options.onStep?.(BOOT_MIGRATIONS_KEY);
   let record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
   const skipped: string[] = [];
+  const failed = new Set<string>();
   let repairsStopped = false;
   // The repair that went over its time and still runs. The caller keeps the
   // lock until it is really done, and the planning sync waits for it, so it
@@ -94,7 +101,7 @@ export async function runBootMigrations(
     // Na een herstelstap die bleef hangen, komen de andere herstelstappen deze
     // keer niet: ze schrijven deels dezelfde gegevens, en de hangende kan nog
     // aan het werk zijn. Volgende keer lopen ze gewoon.
-    if (!step.essential && repairsStopped) {
+    if (!step.essential && (repairsStopped || WAITS_FOR[step.id]?.some((id) => failed.has(id)))) {
       skipped.push(step.id);
       continue;
     }
@@ -118,6 +125,7 @@ export async function runBootMigrations(
       ]);
       clearTimeout(timer);
       if (outcome === FAILED) {
+        failed.add(step.id);
         skipped.push(step.id);
         continue;
       }

@@ -95,21 +95,23 @@ describe('een herstelstap die een fout gooit', () => {
 
   const fails = () => Promise.reject(new Error('nagemaakte fout'));
 
-  it('alleen die stap valt weg: de herstelstappen erna lopen en tellen als gelopen', async () => {
+  it('alleen die stap valt weg: de herstelstappen erna lopen en tellen als gelopen, behalve opruimen dat erop bouwt', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const seen: string[] = [];
     const result = await runBootMigrations({ build: 'v1', onStep: (id) => seen.push(id), overrides: { ...quickRepairs, mergeDuplicateWeeklyPrescriptionLines: fails } });
     expect(error).toHaveBeenCalledTimes(1);
-    expect(result.skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines']);
+    // Opruimen vat oude regels samen; na een mislukt samenvoegen wacht het een start (Warden 14 november).
+    expect(result.skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines', 'tidyOldProposals']);
     // Niets loopt nog: de aanroeper hoeft nergens op te wachten.
     expect(result.pending).toBeUndefined();
-    expect(seen).toEqual([BOOT_MIGRATIONS_KEY, ...BOOT_MIGRATIONS.map((m) => m.id)]);
+    expect(seen).toEqual([BOOT_MIGRATIONS_KEY, ...BOOT_MIGRATIONS.map((m) => m.id).filter((id) => id !== 'tidyOldProposals')]);
     const record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
     expect(record?.done.some((k) => k.startsWith('mergeDuplicateWeeklyPrescriptionLines@'))).toBe(false);
-    expect(record?.done).toHaveLength(BOOT_MIGRATIONS.length - 1);
-    for (const id of ['releaseSystemMoves', 'migrateGoalKinds', 'tidyOldProposals']) {
+    expect(record?.done).toHaveLength(BOOT_MIGRATIONS.length - 2);
+    for (const id of ['releaseSystemMoves', 'migrateGoalKinds']) {
       expect(record?.done.some((k) => k.startsWith(`${id}@`))).toBe(true);
     }
+    expect(record?.done.some((k) => k.startsWith('tidyOldProposals@'))).toBe(false);
   });
 
   it('de volgende start probeert alleen de mislukte stap opnieuw, en onthoudt hem als hij lukt', async () => {
@@ -118,10 +120,10 @@ describe('een herstelstap die een fout gooit', () => {
     const again: string[] = [];
     const second = await runBootMigrations({ build: 'v1', onStep: (id) => again.push(id), overrides: { mergeDuplicateWeeklyPrescriptionLines: fails } });
     expect(again).toEqual([BOOT_MIGRATIONS_KEY, 'mergeDuplicateWeeklyPrescriptionLines']);
-    expect(second.skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines']);
+    expect(second.skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines', 'tidyOldProposals']);
     const third: string[] = [];
     const ok = await runBootMigrations({ build: 'v1', onStep: (id) => third.push(id) });
-    expect(third).toEqual([BOOT_MIGRATIONS_KEY, 'mergeDuplicateWeeklyPrescriptionLines']);
+    expect(third).toEqual([BOOT_MIGRATIONS_KEY, 'mergeDuplicateWeeklyPrescriptionLines', 'tidyOldProposals']);
     expect(ok.skipped).toEqual([]);
     const record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
     expect(record?.done).toHaveLength(BOOT_MIGRATIONS.length);

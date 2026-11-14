@@ -46,3 +46,7 @@ Niets.
 ## Terugdraaien
 
 Zet de commit terug. In `src/integrations/intervalsIcu.ts` verdwijnt dan `withinLimit` en in `src/storage/bootMigrations.ts` de uitkomst `FAILED`; er is geen opgeslagen vorm veranderd, dus er hoeft niets gemigreerd te worden.
+
+## Aanvulling na Warden (coördinator, 14 november)
+
+Een herstelstap die op een eerdere bouwt, wacht een start als die eerdere mislukte (`WAITS_FOR` in `storage/bootMigrations.ts`). Nu alleen opruimen na samenvoegen: opruimen vat oude regels samen, en een samengevatte dubbele regel voegt het samenvoegen daarna nooit meer samen. Een nieuwe herstelstap die op een andere rekent, komt in die lijst. De grens van 15 seconden voor kop en inhoud samen is niet gemeten op een trage lijn met een groot antwoord; dat staat in de backlog.
