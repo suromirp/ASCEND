@@ -21,6 +21,7 @@ import type { MetricSource, PlannedSession, SessionLog, SessionTemplate, SourceN
 import { logSport, templateSport, type Sport } from './sports';
 import { anySportDefinition, type CountedSportId } from '../data/sports';
 import { countedSportOfTemplate } from './sportTemplate';
+import { sportOfLog } from './sportOfLog';
 import { formatNumberNL } from '../utils/number';
 import type { RunDynamics, StreamKind } from '../models/activityDetail';
 import { round } from '../utils/round';
@@ -334,8 +335,9 @@ export function isHandLog(log: Pick<SessionLog, 'source' | 'externalId'>): boole
 }
 
 function logFitsKind(log: SessionLog, kind: ExternalActivityKind, countedSport?: CountedSportId): boolean {
-  if (countedSport || log.countedSport) return !!countedSport && log.countedSport === countedSport;
-  if (log.customSport) return false;
+  const own = sportOfLog(log);
+  if (countedSport || own.countedSport) return !!countedSport && own.countedSport === countedSport;
+  if (own.customSport) return false;
   if (kind === 'strength') return log.type === 'strength';
   // A walk on a rest day is logged as a Herstel session.
   if (kind === 'hike' && log.type === 'recovery') return true;
@@ -413,10 +415,11 @@ export function findSimilarLog(activity: ExternalActivity, logs: SessionLog[]): 
   const minutes = activity.durationSec / 60;
   return logs.find((l) => {
     if (l.externalId || l.completedDate !== day) return false;
-    if (activity.otherType || l.customSport) {
-      if (!activity.otherType || l.customSport !== customIdOfType(activity.otherType)) return false;
-    } else if (activity.countedSport || l.countedSport) {
-      if (l.countedSport !== activity.countedSport) return false;
+    const own = sportOfLog(l);
+    if (activity.otherType || own.customSport) {
+      if (!activity.otherType || own.customSport !== customIdOfType(activity.otherType)) return false;
+    } else if (activity.countedSport || own.countedSport) {
+      if (own.countedSport !== activity.countedSport) return false;
     } else if (activity.kind === 'strength') {
       if (l.type !== 'strength') return false;
     } else if (logSport(l) !== KIND_SPORT[activity.kind]) return false;
