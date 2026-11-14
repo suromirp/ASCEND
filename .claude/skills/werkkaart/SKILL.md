@@ -9,7 +9,7 @@ Waarom (eigenaar, 14 november): een dashboard dat vanzelf bijwerkt, niet vergete
 
 ## Stappen (elke ronde van de Wachter, na elke push naar main)
 
-1. Schrijf `stand.json` in de scratchpad uit `get_session` van elke lopende bouwer (status: bezig, review, herstel, klaar, vast), de laatste deploy op main (`mcp__github__actions_list`, groen, rood of bezig), Wachter aan of uit, de tijd van de volgende ronde, en één zin `melding` in de stijl Jarvis: wat er gebeurt en wat de eigenaar moet doen, of "Niets nodig van jou." Vorm: zie de kop van `bouw.py`.
+1. Schrijf `stand.json` in de scratchpad uit `get_session` van elke lopende bouwer (status: bezig, review, herstel, klaar, vast), de laatste deploy op main (`mcp__github__actions_list`, groen, rood of bezig), Wachter aan of uit, de tijd van de volgende ronde in Amsterdamse tijd (Europe/Amsterdam, nooit UTC), en één zin `melding` in de stijl Jarvis: wat er gebeurt en wat de eigenaar moet doen, of "Niets nodig van jou." Vorm: zie de kop van `bouw.py`.
 2. Op de nieuwste origin/main: `python3 -I .claude/skills/werkkaart/bouw.py --repo . --stand <stand.json> --uit <scratchpad>/werkkaart.json`.
 3. Upload met Artifact publish (`url` hierboven, `file_path` het nieuwe bestand, `asset: true`); onthoud de nieuwe `/_blob/<id>`.
 4. Lees `datasets/kaart` en `datasets/briefing` (ArtifactData get) en `update` beide met `if_version`: `source.url` de nieuwe blob, `updated: {at, by: "Claude (coördinator)"}` en `edit: {via: "claude", at}`.
