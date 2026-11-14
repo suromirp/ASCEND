@@ -20,7 +20,47 @@ export interface DeviceShell {
   // Andere audio (je muziek) even zachter terwijl de rustbel klinkt: audio focus met ducking. Alleen in
   // de Android-app; in de browser kan het niet en ontbreekt hij.
   duckAudio?(ms: number): void;
+  // De vergrote kaart mag liggend (besluit 2026-11-11-alleen-staand.md, vervolg in
+  // 2026-11-14-route-kaart-vervolg.md): de app draait mee tot de teruggegeven functie, daarna staat hij
+  // weer rechtop. Kan het niet (een browser die niet mag vergrendelen), dan gebeurt er niets.
+  freeRotation?(): () => void;
 }
+
+// Eén plek die telt hoeveel schermen draaien toestaan: pas als de laatste dichtgaat, staat de app weer
+// rechtop. Twee keer loslaten telt één keer. Los te testen met nagemaakte `free` en `portrait`.
+export function rotationCounter(free: () => void, portrait: () => void): () => () => void {
+  let open = 0;
+  return () => {
+    open++;
+    if (open === 1) free();
+    let done = false;
+    return () => {
+      if (done) return;
+      done = true;
+      open--;
+      if (open === 0) portrait();
+    };
+  };
+}
+
+interface OrientationLike {
+  lock?: (o: string) => Promise<void>;
+  unlock?: () => void;
+}
+const screenOrientation = (): OrientationLike | undefined => (typeof screen !== 'undefined' ? (screen as Screen & { orientation?: OrientationLike }).orientation : undefined);
+
+// De browser: een geïnstalleerde web-app staat rechtop door het manifest; `lock('any')` laat hem draaien,
+// `lock('portrait')` zet hem terug. Een gewoon tabblad weigert dat (het draait toch al mee): stil.
+const browserRotation = rotationCounter(
+  () => void screenOrientation()?.lock?.('any').catch(() => undefined),
+  () => void screenOrientation()?.lock?.('portrait').catch(() => {
+    try {
+      screenOrientation()?.unlock?.();
+    } catch {
+      // Niets te doen.
+    }
+  }),
+);
 
 // ---- de browser --------------------------------------------------------------------------
 
@@ -70,6 +110,7 @@ function browserVibrate(pattern: number | number[]): void {
 const browserShell: DeviceShell = {
   vibrate: browserVibrate,
   holdScreen: browserHoldScreen,
+  freeRotation: browserRotation,
 };
 
 // ---- de Android-app ----------------------------------------------------------------------
@@ -80,6 +121,23 @@ interface AudioFocusPlugin {
   duck(options: { ms: number }): Promise<void>;
 }
 let audioFocus: AudioFocusPlugin | undefined;
+
+// Het eigen native deel OrientationPlugin.java: `free` laat de app met de telefoon meedraaien, `portrait`
+// zet hem weer rechtop (zoals het manifest). Een oudere app zonder dit deel: dan blijft hij staan.
+interface OrientationPlugin {
+  free(): Promise<void>;
+  portrait(): Promise<void>;
+}
+let orientation: OrientationPlugin | undefined;
+const nativeOrientation = (): OrientationPlugin | undefined => {
+  if (!Capacitor.isPluginAvailable('Orientation')) return undefined;
+  orientation ??= registerPlugin<OrientationPlugin>('Orientation');
+  return orientation;
+};
+const androidRotation = rotationCounter(
+  () => void nativeOrientation()?.free().catch(() => undefined),
+  () => void nativeOrientation()?.portrait().catch(() => undefined),
+);
 
 function androidShell(): DeviceShell {
   // Modules in een belofte, nooit de plugin zelf: een plugin is een Proxy met een methode `then`
@@ -127,6 +185,7 @@ function androidShell(): DeviceShell {
         remove?.();
       };
     },
+    freeRotation: androidRotation,
     duckAudio(ms) {
       if (!Capacitor.isPluginAvailable('AudioFocus')) return;
       audioFocus ??= registerPlugin<AudioFocusPlugin>('AudioFocus');

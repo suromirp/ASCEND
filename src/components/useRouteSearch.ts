@@ -34,6 +34,7 @@ import type { FileSender } from '../integrations/fileSender';
 import { withTimeout } from '../utils/withTimeout';
 import { resolveMapBase, resolveMapPhoto, type MapBase, type MapPhoto, type MapRoute } from '../engine/routeMap';
 import { routeSheetParts, routeSheetStage, type RouteSheetPart, type RouteSheetStage } from '../engine/routeSheet';
+import { NO_ADJUST, adjustKey, settleAdjust, adjustSummary, avoidPiece, canReverse, isAdjusted, loopPieces, reverseProposal, stepDistance, type AdjustAction, type LoopAdjust, type LoopPiece } from '../engine/routeAdjust';
 
 const CONSENT_LIMIT_MS = 3000;
 export const SOURCE_NAME = { brouter: 'BRouter', valhalla: 'Valhalla' } as const;
@@ -103,6 +104,20 @@ export interface RouteSearchModel {
   retry: () => void;
   // De weg naar de app van je horloge op dit toestel; null: alleen GPX downloaden.
   sender: FileSender | null;
+  // Wat de training vraagt; `target` is wat er nu gezocht wordt (na Langer of Korter).
+  trainingTarget: RouteTarget;
+  // Bijsturen (engine/routeAdjust.ts): geldt voor deze lus zolang het blad open is, plant en bewaart niets.
+  adjust: LoopAdjust;
+  adjustLine: string;
+  // De regel als bijsturen niet lukte (de lus bleef zoals hij was), anders leeg.
+  adjustFail: string;
+  canReverse: boolean;
+  reverse: () => void;
+  stepLength: (dir: 'longer' | 'shorter') => void;
+  avoidStretch: (piece: LoopPiece) => void;
+  resetAdjust: () => void;
+  // De gekozen lus in stukken, met afstand en hoogtemeters.
+  pieces: LoopPiece[];
 }
 
 export function useRouteSearch({ template, date, closing = false, enabled = true }: { template: SessionTemplate; date: string; closing?: boolean; enabled?: boolean }): RouteSearchModel {
@@ -111,7 +126,13 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const lat = place?.lat;
   const lon = place?.lon;
   const [consent, setConsent] = useState<boolean | undefined>();
-  const [found, setFound] = useState<{ key: string; result: RouteSearch } | undefined>();
+  // De laatste antwoorden per sleutel: na een mislukte bijsturing staat de vorige lus er meteen weer.
+  const [found, setFound] = useState<{ key: string; result: RouteSearch }[]>([]);
+  // Bijsturen, voor één startpunt (`base`): een ander startpunt begint weer bij de training.
+  const [adjustState, setAdjust] = useState<{ base: string; adjust: LoopAdjust }>({ base: '', adjust: NO_ADJUST });
+  // Een bijsturing die nog zoekt: wat ervoor gold, voor welke lus, en wat er gevraagd is.
+  const [pending, setPending] = useState<{ prev: LoopAdjust; style: RouteStyle | undefined; action: AdjustAction } | undefined>();
+  const [adjustFail, setAdjustFail] = useState('');
   const [attempt, setAttempt] = useState(0);
   // Het eigen startpunt (de plek Thuis): undefined zolang we lezen, null als er geen is, 'unread' als
   // de opslag niet op tijd of met een fout antwoordde (dan nooit raden dat er geen Thuis is).
@@ -152,8 +173,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     };
   }, []);
   const first = resolveRouteStyle(settings.routeStyle);
-  const target = routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy });
-  const { distanceKm, ascentM } = target;
+  const trainingTarget = routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy });
 
   useEffect(() => {
     let alive = true;
@@ -213,6 +233,12 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const terrainLon = terrainAt?.lon;
   const startReady = plan !== undefined && !locatingHere;
   const startLine = plan?.line ?? '';
+  // Bijsturen hoort bij dit startpunt en deze training.
+  const adjustBase = `${lat}|${lon}|${exactLat}|${exactLon}|${trainingTarget.distanceKm}|${trainingTarget.ascentM}`;
+  const adjust = adjustState.base === adjustBase ? adjustState.adjust : NO_ADJUST;
+  const target: RouteTarget = adjust.deltaKm !== 0 ? { ...trainingTarget, distanceKm: Math.round((trainingTarget.distanceKm + adjust.deltaKm) * 10) / 10 } : trainingTarget;
+  const { distanceKm, ascentM } = target;
+  const avoid = adjust.avoid;
 
   // Sluiten stopt ook een vraag om je plek die nog loopt: daarna gaat er niets meer uit.
   useEffect(() => {
@@ -232,8 +258,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   }, [closing, enabled, asked, locatingHere, attempt]);
 
   // Eén zoektocht per plek, training en poging; zolang het antwoord van deze sleutel er niet is, zoekt het paneel.
-  const key = `${attempt}|${lat}|${lon}|${exactLat}|${exactLon}|${terrainLat}|${terrainLon}|${distanceKm}|${ascentM}`;
-  const search: RouteSearch | 'busy' = found?.key === key ? found.result : 'busy';
+  const key = `${attempt}|${lat}|${lon}|${exactLat}|${exactLon}|${terrainLat}|${terrainLon}|${distanceKm}|${ascentM}|${adjustKey(adjust)}`;
+  const search: RouteSearch | 'busy' = found.find((f) => f.key === key)?.result ?? 'busy';
 
   useEffect(() => {
     if (closing || !enabled || !asked || !startReady || lat === undefined || lon === undefined) return;
@@ -245,13 +271,13 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     };
     const terrainPoint = terrainLat !== undefined && terrainLon !== undefined ? { lat: terrainLat, lon: terrainLon } : undefined;
     // findRoutes heeft zelf een grens in tijd en gooit nooit: "Lussen zoeken" blijft nooit staan.
-    void findRoutes({ lat, lon }, { distanceKm, ascentM }, { signal: stop.signal, onStep, terrainAt: terrainPoint }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
-      if (!stop.signal.aborted) setFound({ key, result });
+    void findRoutes({ lat, lon }, { distanceKm, ascentM }, { signal: stop.signal, onStep, terrainAt: terrainPoint, ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
+      if (!stop.signal.aborted) setFound((list) => [{ key, result }, ...list.filter((f) => f.key !== key)].slice(0, 4));
     });
     // Sluit het paneel of begint een nieuwe zoektocht, dan gaat er voor deze geen aanroep meer de deur uit.
     return () => stop.abort();
     // De sleutel bevat het punt; de afhankelijkheden zijn dezelfde getallen.
-  }, [closing, enabled, asked, startReady, lat, lon, exactLat, exactLon, terrainLat, terrainLon, distanceKm, ascentM, key]);
+  }, [closing, enabled, asked, startReady, lat, lon, exactLat, exactLon, terrainLat, terrainLon, distanceKm, ascentM, avoid, key]);
 
   // Start hier: het getikte punt geldt voor deze zoektocht en wordt niet bewaard; Thuis verschuift niet.
   async function startOnMap(from: { tap: RoutePoint }): Promise<StartAnswer> {
@@ -333,13 +359,60 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   });
 
   const order: RouteStyle[] = first === 'simple' ? ['simple', 'adventure'] : ['adventure', 'simple'];
-  const plans = search !== 'busy' && search.kind === 'plans' ? search.plans : undefined;
+  const rawPlans = search !== 'busy' && search.kind === 'plans' ? search.plans : undefined;
+
+  // Een bijsturing die klaar is: lukte hij voor de lus die je bijstuurde, dan blijft hij; anders terug
+  // naar wat ervoor gold, met één regel. Tijdens het renderen, zoals de schakelaar op de kaart.
+  if (pending && search !== 'busy') {
+    const settled = settleAdjust(pending.action, pending.style, search);
+    setPending(undefined);
+    if (!settled.keep) {
+      setAdjust({ base: adjustBase, adjust: pending.prev });
+      setAdjustFail(settled.line);
+    }
+  }
+
+  // Andere kant op: dezelfde punten achterstevoren, zonder nieuwe zoektocht.
+  const plans: typeof rawPlans = rawPlans && adjust.reversed.length > 0
+    ? { ...rawPlans, ...Object.fromEntries(adjust.reversed.map((st) => { const o = rawPlans[st]; return [st, o.ok && canReverse(o.proposal) ? { ok: true, proposal: reverseProposal(o.proposal) } : o]; })) }
+    : rawPlans;
   const sources = plans ? [...new Set(order.flatMap((s) => { const o = plans[s]; return o.ok ? [SOURCE_NAME[o.proposal.source]] : []; }))] : [];
   const okStyles = plans ? order.filter((s) => plans[s].ok) : [];
   const picked = chosen && okStyles.includes(chosen) ? chosen : okStyles[0];
   const pickedOutcome = plans && picked ? plans[picked] : undefined;
   const mapRoutes = plans ? okStyles.flatMap((s) => { const o = plans[s]; return o.ok ? [{ style: s, points: o.proposal.points }] : []; }) : [];
   const pickedRoute = mapRoutes.find((r) => r.style === picked);
+  const pieces = pickedOutcome?.ok ? loopPieces(pickedOutcome.proposal.points) : [];
+
+  const startAdjust = (next: LoopAdjust, action: AdjustAction) => {
+    setAdjustFail('');
+    setPending({ prev: adjust, style: picked, action });
+    setAdjust({ base: adjustBase, adjust: next });
+  };
+  const reverse = () => {
+    if (!picked) return;
+    setAdjustFail('');
+    const on = adjust.reversed.includes(picked);
+    setAdjust({ base: adjustBase, adjust: { ...adjust, reversed: on ? adjust.reversed.filter((x) => x !== picked) : [...adjust.reversed, picked] } });
+  };
+  const stepLength = (dir: 'longer' | 'shorter') => {
+    const next = stepDistance(trainingTarget.distanceKm, adjust.deltaKm, dir);
+    if (!next.ok) return setAdjustFail(next.line);
+    startAdjust({ ...adjust, deltaKm: next.deltaKm }, dir);
+  };
+  const avoidStretch = (piece: LoopPiece) => {
+    const start = pickedRoute?.points[0];
+    if (!start) return;
+    const next = avoidPiece(piece, start, adjust.avoid);
+    if (!next.ok) return setAdjustFail(next.line);
+    startAdjust({ ...adjust, avoid: [...adjust.avoid, next.area] }, 'avoid');
+  };
+  const resetAdjust = () => {
+    setAdjustFail('');
+    setPending(undefined);
+    setAdjust({ base: adjustBase, adjust: NO_ADJUST });
+  };
+
   const mapStartPoint = pickedRoute?.points[0] ?? exactPoint ?? (lat !== undefined && lon !== undefined ? roundStart({ lat, lon }) : undefined);
 
   return {
@@ -383,11 +456,21 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     limitLine: searchLimitLine(hereMode ? START_LOCATE_LIMIT_MS : undefined, PROPOSAL_LIMIT_MS),
     limitMs: (hereMode && hereFound === undefined ? START_LOCATE_LIMIT_MS : 0) + PROPOSAL_LIMIT_MS,
     // Per zoektocht van jou (poging, getikte chip, getikt punt), niet per stap of terugval: je plek vinden begint geen nieuwe balk.
-    searchKey: `${attempt}|${startPicked}|${startPlace?.key}|${startPlace?.point.lat}|${startPlace?.point.lon}|${mapStart?.lat}|${mapStart?.lon}`,
+    searchKey: `${attempt}|${startPicked}|${startPlace?.key}|${startPlace?.point.lat}|${startPlace?.point.lon}|${mapStart?.lat}|${mapStart?.lon}|${adjustKey(adjust)}`,
     foundLines: plans ? searchLines(plans, target) : [],
     sources,
     parts: routeSheetParts(stage, plans ? { anyOk: okStyles.length > 0, anyFailed: order.some((s) => !plans[s].ok) } : undefined),
     retry: () => setAttempt((n) => n + 1),
     sender,
+    trainingTarget,
+    adjust,
+    adjustLine: isAdjusted(adjust) ? adjustSummary(adjust, trainingTarget.distanceKm, picked) : '',
+    adjustFail,
+    canReverse: !!pickedOutcome?.ok && canReverse(pickedOutcome.proposal),
+    reverse,
+    stepLength,
+    avoidStretch,
+    resetAdjust,
+    pieces,
   };
 }

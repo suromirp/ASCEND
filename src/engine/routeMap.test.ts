@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   attributionFor, boundsOf, cameraDuration, dotFeatures, MAP_TOKENS, nextStage, overlayLayers, overlayColors, paintOpenFreeMap,
-  aerialStyle, mapLegendLine, photoFallbackLine, photoOffered, plainStyle, resolveMapPhoto, rasterStyle, readMapColors, resolveMapBase, ROUTE_HIT_LAYER, ROUTE_HIT_WIDTH, routeFeatures, stagesFor, type MapColors, type StyleSpec,
-} from './routeMap';
+  aerialStyle, mapLegendLine, photoFallbackLine, photoOffered, plainStyle, resolveMapPhoto, rasterStyle, readMapColors, resolveMapBase, ROUTE_HIT_LAYER, ROUTE_HIT_WIDTH, routeFeatures, stagesFor, type MapColors, type StyleSpec, mapStatusLine, MAKE_HOME_MOVE, MAKE_HOME_NEW, groundLine } from './routeMap';
 import { AERIAL_SOURCES } from '../integrations/aerialImagery';
 
 // Nagemaakte punten bij het Drielandenpunt (een openbare plek), nooit een echte plek van de eigenaar.
@@ -110,7 +109,7 @@ describe('stijlen', () => {
 
   it('effen vlak: geen bron van buiten, lussen erop', () => {
     const s = plainStyle(colors, overlay);
-    expect(Object.keys(s.sources)).toEqual(['ascend-routes', 'ascend-dots']);
+    expect(Object.keys(s.sources)).toEqual(['ascend-routes', 'ascend-dots', 'ascend-piece']);
     expect(JSON.stringify(s)).not.toContain('http');
     tokenOnly(s);
   });
@@ -226,5 +225,25 @@ describe('Kaart of Luchtfoto', () => {
     expect(photoFallbackLine(false, true)).toBe('');
     expect(photoFallbackLine(true, true)).toBe('De luchtfoto laadt niet. Je ziet de kaart.');
     expect(photoFallbackLine(true, false)).toContain('Zonder netwerk');
+  });
+});
+
+describe('de regel onder de kaart', () => {
+  it('tijdens het bewaren van een getikt punt als Thuis staat er een regel (Warden)', () => {
+    const base = { saving: false, hasHome: true, line: '', photoLine: '' };
+    expect(mapStatusLine({ ...base, busy: 'home' })).toBe('Thuis wordt bewaard.');
+    expect(mapStatusLine({ ...base, busy: 'tap' })).toBe('De lus wordt gezocht vanaf dit punt.');
+    expect(mapStatusLine({ ...base, saving: true })).toBe(MAKE_HOME_MOVE);
+    expect(mapStatusLine({ ...base, saving: true, hasHome: false })).toBe(MAKE_HOME_NEW);
+    expect(mapStatusLine(base)).toBe('');
+  });
+  it('offline (tegels laden niet): de kaart zegt het in één zin', () => {
+    const line = groundLine({ stage: 'plain', base: 'dark', photoFailed: false, online: false });
+    expect(line).toBe('Zonder netwerk laadt de kaart niet. Je ziet alleen de lus.');
+    expect(mapStatusLine({ saving: false, hasHome: false, line: '', photoLine: line })).toBe(line);
+    expect(groundLine({ stage: 'plain', base: 'dark', photoFailed: true, online: true })).toBe('De kaart laadt niet. Je ziet alleen de lus.');
+    expect(groundLine({ stage: 'vector', base: 'dark', photoFailed: true, online: false })).toBe('Zonder netwerk is er geen luchtfoto.');
+    // Ondergrond Geen: het effen vlak is de keuze, geen fout.
+    expect(groundLine({ stage: 'plain', base: 'none', photoFailed: false, online: false })).toBe('');
   });
 });

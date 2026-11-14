@@ -1,0 +1,62 @@
+// ASCEND: Groter, de kaart van Route voorstellen op volle hoogte met een terugknop
+// (besluit 2026-11-14-route-kaart-vervolg.md). Dezelfde kaart en dezelfde regie (useRouteSearch) als het
+// blad Route: een lus die je hier kiest of bijstuurt is de lus in het blad en in de Briefing. Alleen hier
+// mag de telefoon liggend (deviceShell.freeRotation); bij terug, de terugknop van de telefoon of sluiten
+// staat de app weer rechtop. Rendert alleen.
+
+import { useFreeRotation } from './useFreeRotation';
+import { useSheetClose } from '../utils/useSheetClose';
+import { Portal } from './Portal';
+import { Icon } from './icons';
+import { Eyebrow } from './ui';
+import { RouteMap } from './RouteMap';
+import type { RouteSearchModel } from './useRouteSearch';
+import type { RoutePoint } from '../models/route';
+
+export function RouteMapFull({ model, piece, onClose }: { model: RouteSearchModel; piece?: RoutePoint[]; onClose: () => void }) {
+  // Geen sheetRef: een kaart sleep je, dit scherm sluit niet door omlaag te vegen. Wel de terugknop.
+  const { closing, requestClose } = useSheetClose(onClose);
+  useFreeRotation();
+  const start = model.mapStartPoint;
+  return (
+    <Portal>
+      <div
+        role="dialog"
+        aria-label="Groter: de kaart met je lus"
+        className={`fixed inset-0 z-[60] flex flex-col bg-bg px-2 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+        style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'max(var(--rand-onder), 8px)' }}
+      >
+        <div className="flex h-11 shrink-0 items-center">
+          <button type="button" onClick={requestClose} aria-label="Terug" className="flex h-11 min-w-[44px] items-center gap-1 pr-2 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
+            <Icon name="terug" size={20} />
+            Terug
+          </button>
+          <div className="min-w-0 flex-1 truncate text-right"><Eyebrow tone="var(--color-ink-dim)">Route voorstellen</Eyebrow></div>
+        </div>
+        <div className="min-h-0 flex-1">
+          {start && (
+            <RouteMap
+              full
+              routes={model.mapRoutes}
+              chosen={model.picked}
+              start={start}
+              base={model.base}
+              onChoose={model.setChosen}
+              onStart={model.startOnMap}
+              onNoMap={model.markNoMap}
+              photo={model.photo}
+              onPhoto={model.setPhoto}
+              me={model.mePoint}
+              tapped={model.tapPoint}
+              hasHome={model.hasHome}
+              onMakeHome={model.makeHome}
+              keepName={model.keepName}
+              onKeep={model.keepPlace}
+              piece={piece}
+            />
+          )}
+        </div>
+      </div>
+    </Portal>
+  );
+}

@@ -169,3 +169,25 @@ describe('routeWithFallback', () => {
     expect(calls).toHaveLength(1);
   });
 });
+
+describe('een stuk vermijden', () => {
+  const area = { lat: 50.75712, lon: 6.02501, radiusM: 120 };
+  it('BRouter krijgt het als nogos: lon,lat,straal; zonder stuk geen nogos', () => {
+    expect(brouterUrl([A, B], BROUTER_PROFILE, [area])).toContain('&nogos=6.02501,50.75712,120&');
+    expect(brouterUrl([A, B])).not.toContain('nogos');
+  });
+  it('Valhalla krijgt het als een gesloten achthoek in exclude_polygons', () => {
+    const body = JSON.parse(decodeURIComponent(valhallaUrl([A, B], [area]).split('?json=')[1])) as { exclude_polygons: [number, number][][] };
+    const ring = body.exclude_polygons[0];
+    expect(ring).toHaveLength(9);
+    expect(ring[0]).toEqual(ring[8]);
+    expect(JSON.parse(decodeURIComponent(valhallaUrl([A, B]).split('?json=')[1]))).not.toHaveProperty('exclude_polygons');
+  });
+  it('de reservebron krijgt dezelfde stukken mee', async () => {
+    const seen: unknown[] = [];
+    const first: RouteFn = async (_w, o) => { seen.push(o); return { ok: false, reason: 'error' }; };
+    const second: RouteFn = async (_w, o) => { seen.push(o); return { ok: false, reason: 'error' }; };
+    await routeWithFallback([first, second], createGate(0))([A, B], { avoid: [area] });
+    expect(seen).toEqual([{ avoid: [area] }, { avoid: [area] }]);
+  });
+});

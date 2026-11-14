@@ -50,6 +50,10 @@ class FakeMap implements MapLike {
   remove() {
     this.removed = true;
   }
+  resized = 0;
+  resize() {
+    this.resized++;
+  }
 }
 
 // Een klok in de hand: timers lopen pas als de test ze laat lopen.
@@ -427,5 +431,29 @@ describe('Luchtfoto', () => {
     t.view.destroy();
     t.view.setPhoto(true);
     expect(JSON.stringify(m.styles)).not.toContain('pdok');
+  });
+});
+
+describe('Groter: draaien en een stuk', () => {
+  it('de telefoon draait terug naar staand: de kaart rekent opnieuw en zet de lus weer in beeld', async () => {
+    const t = setup();
+    await flush();
+    const before = t.map().fits.length;
+    t.view.resize();
+    expect(t.map().resized).toBe(1);
+    expect(t.map().fits.length).toBe(before + 1);
+    t.view.destroy();
+    // Na sluiten gebeurt er niets meer.
+    t.view.resize();
+    expect(t.map().resized).toBe(1);
+  });
+
+  it('een gekozen stuk gaat als lijn naar zijn eigen bron; zonder stuk is die bron leeg', async () => {
+    const t = setup();
+    await flush();
+    t.view.update({ routes: [{ style: 'adventure', points: [A, B] }], chosen: 'adventure', dots: { start: A }, piece: [A, B] });
+    expect((t.map().data['ascend-piece'] as { features: unknown[] }).features).toHaveLength(1);
+    t.view.update({ routes: [{ style: 'adventure', points: [A, B] }], chosen: 'adventure', dots: { start: A } });
+    expect((t.map().data['ascend-piece'] as { features: unknown[] }).features).toHaveLength(0);
   });
 });

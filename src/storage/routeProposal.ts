@@ -14,7 +14,7 @@ import { isOffline, routeWithFallback } from '../integrations/routing';
 import { proposeRoutes, type RoutePlans } from '../engine/routePlanner';
 import { roundStart } from '../engine/routeTarget';
 import type { NearbyTerrain } from '../models/nearbyTerrain';
-import type { RouteFn, RoutePoint, RouteTarget } from '../models/route';
+import type { AvoidArea, RouteFn, RoutePoint, RouteTarget } from '../models/route';
 import { withTimeout } from '../utils/withTimeout';
 
 const CONSENT_KEY = 'routeProposalAsked';
@@ -51,6 +51,8 @@ export interface RouteSearchDeps {
   onStep?: (step: RouteSearchStep) => void;
   // Waar heuvels en paden gezocht worden bij een precies startpunt; standaard dat punt zelf.
   terrainAt?: RoutePoint;
+  // Stukken die de lus moet mijden (Vermijd dit stuk, engine/routeAdjust.ts).
+  avoid?: AvoidArea[];
 }
 
 export type RouteSearchStep = 'terrain' | 'routes';
@@ -66,14 +68,14 @@ export async function findRoutes(place: { lat: number; lon: number }, target: Ro
   let over = false;
   const stopped = () => over || deps.signal?.aborted === true;
   const inner = deps.route ?? routeWithFallback([brouterRoute(), valhallaRoute()], undefined, stopped);
-  const route: RouteFn = (waypoints) => (stopped() ? Promise.resolve({ ok: false, reason: 'timeout' }) : inner(waypoints));
+  const route: RouteFn = (waypoints, options) => (stopped() ? Promise.resolve({ ok: false, reason: 'timeout' }) : inner(waypoints, options));
   const terrainOf = deps.terrain ?? ((p, exact) => refreshNearbyTerrain(p, { exact }).catch(() => getNearbyTerrain(p, exact)));
   const search = (async (): Promise<RouteSearch> => {
     // Zonder heuvels en paden zoekt de planner nog steeds een lus, op punten rond het startpunt.
     deps.onStep?.('terrain');
     const terrain = await terrainOf({ name: '', ...(exactStart ? deps.terrainAt ?? exactStart : rounded) }, !!exactStart).catch(() => undefined);
     if (!stopped()) deps.onStep?.('routes');
-    const plans = await proposeRoutes({ start, target, terrain, anchor: !!exactStart }, route);
+    const plans = await proposeRoutes({ start, target, terrain, anchor: !!exactStart, ...(deps.avoid && deps.avoid.length > 0 ? { avoid: deps.avoid } : {}) }, route);
     const reasons = [plans.simple, plans.adventure].map((o) => (o.ok ? undefined : o.reason));
     if (reasons.every((r) => r === 'offline')) return { kind: 'offline' };
     return { kind: 'plans', plans };
