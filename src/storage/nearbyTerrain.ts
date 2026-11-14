@@ -63,6 +63,12 @@ export async function grantTerrainConsent(): Promise<void> {
 
 const inFlight = new Map<string, Promise<NearbyTerrain | undefined>>();
 
+// Een sleutel op vier decimalen: een eigen startpunt (`exact`).
+const isExactKey = (key: string) => /^-?\d+\.\d{4},-?\d+\.\d{4}$/.test(key);
+// Telt elk wissen, zodat een zoektocht die al liep een gewist punt niet terugschrijft.
+let exactClears = 0;
+let allClears = 0;
+
 // Wat er bewaard is als het vers genoeg is, anders een nieuwe zoektocht. Bij een fout blijft het
 // oude resultaat van dezelfde plek staan, zonder het te vernieuwen.
 export function refreshNearbyTerrain(place: WeatherPlace, options: OverpassOptions = {}): Promise<NearbyTerrain | undefined> {
@@ -71,13 +77,19 @@ export function refreshNearbyTerrain(place: WeatherPlace, options: OverpassOptio
   if (running) return running;
   const job = (async () => {
     const now = options.now ?? new Date();
+    const clearsAtStart = { exact: exactClears, all: allClears };
     const all = await readAll();
     const have = all[key];
     if (have && now.getTime() - Date.parse(have.fetchedAt) < TERRAIN_FETCH_DAYS * 86_400_000) return have;
     const next = await fetchNearbyTerrain(place, { ...options, now });
     if (!next) return have;
-    all[key] = next;
-    const newest = Object.entries(all).sort((a, b) => Date.parse(b[1].fetchedAt) - Date.parse(a[1].fetchedAt)).slice(0, TERRAIN_MAX_PLACES);
+    // Vlak voor het wegschrijven opnieuw lezen: wat intussen gewist is, komt niet terug. Werd deze plek
+    // tijdens het zoeken gewist (het startpunt weg of vervangen), dan bewaren we hem niet.
+    const fresh = await readAll();
+    const wiped = allClears !== clearsAtStart.all || (isExactKey(key) && exactClears !== clearsAtStart.exact);
+    if (wiped) return next;
+    fresh[key] = next;
+    const newest = Object.entries(fresh).sort((a, b) => Date.parse(b[1].fetchedAt) - Date.parse(a[1].fetchedAt)).slice(0, TERRAIN_MAX_PLACES);
     try {
       await MetaRepo.set(KEY, Object.fromEntries(newest));
     } catch {
@@ -94,9 +106,10 @@ export function refreshNearbyTerrain(place: WeatherPlace, options: OverpassOptio
 // Wist de plekken op vier decimalen (rond een eigen startpunt van een lus): wordt het startpunt
 // gewist of vervangen, dan blijft het niet in deze cache achter. De afgeronde plekken blijven.
 export async function clearExactTerrain(): Promise<void> {
+  exactClears++;
   try {
     const all = await readAll();
-    const rounded = Object.entries(all).filter(([key]) => !/^-?\d+\.\d{4},-?\d+\.\d{4}$/.test(key));
+    const rounded = Object.entries(all).filter(([key]) => !isExactKey(key));
     if (rounded.length !== Object.keys(all).length) await MetaRepo.set(KEY, Object.fromEntries(rounded));
   } catch {
     // niets te wissen
@@ -105,6 +118,7 @@ export async function clearExactTerrain(): Promise<void> {
 
 // Wist de bewaarde plekken (bij uitzetten of een nieuw begin); de eerste vraag blijft.
 export async function clearNearbyTerrain(): Promise<void> {
+  allClears++;
   try {
     await MetaRepo.set(KEY, {});
   } catch {

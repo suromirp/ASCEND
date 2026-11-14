@@ -575,7 +575,7 @@ function PreviewStep({
 
       <div className="mt-2 flex gap-3">
         <SecondaryButton onClick={onBack}>Terug</SecondaryButton>
-        <PrimaryButton onClick={onConfirm}>Blok activeren</PrimaryButton>
+        <PrimaryButton onClick={onConfirm}>Akkoord</PrimaryButton>
       </div>
     </div>
   );
