@@ -8,7 +8,7 @@ import { sportPictogram } from '../sportKind';
 import { SessionChoiceSheet } from './SessionChoiceSheet';
 import { useLeftSession } from './useForgeSession';
 
-// Eén keer per opening van de app per sessie gaat het blad van een concept vanzelf open; Niet nu laat de pil staan.
+// Eén keer per opening van de app per concept (sessie en laatste handeling) gaat het blad van een concept vanzelf open; Niet nu laat de pil staan.
 const prompted = new Set<string>();
 
 // De pil boven de tabbalk (docs/beslissingen/2026-10-29-forge-als-sessie.md): zolang er een training loopt en
@@ -36,7 +36,7 @@ export function SessionPill({ session }: { session: SessionState }) {
   const left = useLeftSession(session);
   const [choosing, setChoosing] = useState(false);
   const [, setClosed] = useState(0);
-  const key = `${session.pointer.key}\u0001${session.startedAt}`;
+  const key = `${session.pointer.key}\u0001${session.startedAt}\u0001${left?.lastActionAt ?? ''}`;
   // Vanzelf open tot je het een keer sluit; daarna alleen met een tik op de pil.
   const open = choosing || (!!left && !prompted.has(key));
   const closeChoice = () => {

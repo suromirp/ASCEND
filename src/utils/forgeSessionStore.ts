@@ -188,6 +188,14 @@ export function discardSession(pointer: SessionPointer): void {
   clearSessionPointer(pointer.key);
 }
 
+// Mag een open Forge zijn concept nog wegschrijven? Niet als het al eens schreef en de wijzer nu ontbreekt of naar
+// een andere sessie wijst: dan is hij elders (een ander tabblad, het blad van een concept) weggegooid of afgerond,
+// en zou het terugschrijven een Weggooien ongedaan maken (Warden, 14 november).
+export function mayWriteDraft(wroteBefore: boolean, key: string): boolean {
+  if (!wroteBefore) return true;
+  return readPointer()?.key === key;
+}
+
 // Het concept is net weggeschreven of weggehaald.
 export function notifySession(): void {
   emit();

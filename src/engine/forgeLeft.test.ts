@@ -43,8 +43,16 @@ describe('leftSession: wanneer een lopende training een concept wordt', () => {
     expect(leftSession(paused, at('2026-11-18T08:05:00Z'), { afterHours: 12, dayOf })?.reason).toBe('nacht');
   });
 
-  it('overgeslagen in de planning is meteen een concept, ook binnen de grens', () => {
+  it('overgeslagen in de planning is een concept na tien minuten stilte, ook binnen de grens', () => {
     expect(leftSession(s, start + 30 * MIN, { afterHours: 12, dayOf, skipped: true })?.reason).toBe('overgeslagen');
+  });
+
+  it('overgeslagen en dan Verder: weer gewoon lopend, en pas na tien minuten stilte opnieuw een concept', () => {
+    const now = start + 30 * MIN;
+    const parked = parkLeft(s, now);
+    expect(leftSession(parked, now + MIN, { afterHours: 12, dayOf, skipped: true })).toBeUndefined();
+    expect(leftSession(parked, now + 9 * MIN, { afterHours: 12, dayOf, skipped: true })).toBeUndefined();
+    expect(leftSession(parked, now + 10 * MIN, { afterHours: 12, dayOf, skipped: true })?.reason).toBe('overgeslagen');
   });
 
   it('zonder lastActionAt telt het begin', () => {

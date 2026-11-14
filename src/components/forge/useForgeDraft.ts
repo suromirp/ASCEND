@@ -6,7 +6,7 @@ import type { WorkoutExercise } from '../../engine/forgeWorkout';
 import type { ForgeEvent } from '../../engine/forgeLog';
 import type { Pause } from '../../engine/forgeSession';
 import type { SessionVariant } from '../../models/training';
-import { clearSessionPointer, notifySession, registerForgeOpen, writeSessionPointer } from '../../utils/forgeSessionStore';
+import { clearSessionPointer, mayWriteDraft, notifySession, readPointer, registerForgeOpen, writeSessionPointer } from '../../utils/forgeSessionStore';
 import { clearDraft, saveDraft } from '../../utils/loggerDraft';
 import { DRAFT_VERSION, type WorkoutDraft } from './forgeDraft';
 import type { Rest } from './forgeWorkoutHelpers';
@@ -34,11 +34,14 @@ interface DraftInput {
 
 export function useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt, stepSwaps }: DraftInput) {
   const pendingDraft = useRef<WorkoutDraft | null>(null);
+  // Schreef deze sessie al (of liep hij al bij het openen)? Dan schrijft hij niet meer zonder eigen wijzer.
+  const wrote = useRef(readPointer()?.key === key);
   const draftTimer = useRef<number | undefined>(undefined);
   const flushDraft = useCallback(() => {
     window.clearTimeout(draftTimer.current);
     draftTimer.current = undefined;
-    if (pendingDraft.current) {
+    if (pendingDraft.current && mayWriteDraft(wrote.current, key)) {
+      wrote.current = true;
       saveDraft(key, pendingDraft.current, 'local');
       // De wijzer van de sessie: de pil boven de tabbalk vindt de training hiermee terug.
       writeSessionPointer({ key, templateId: template.id, name: template.name, ...(plannedSessionId ? { plannedSessionId } : {}), ...(scheduledDate ? { scheduledDate } : {}), variant });

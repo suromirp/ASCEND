@@ -136,6 +136,9 @@ export function resolveLeftAfter(raw: { forgeLeftAfter?: unknown } | undefined |
 // Na middernacht pas na een uur stilte: een late training die over middernacht doorloopt, blijft lopen.
 export const NIGHT_QUIET_MIN = 60;
 
+// Overgeslagen in je planning en zo lang stil: dan een concept. Kort genoeg om meteen te zien, lang genoeg voor Verder.
+export const SKIPPED_QUIET_MIN = 10;
+
 export type LeftReason = 'nacht' | 'grens' | 'overgeslagen';
 
 export interface LeftSession {
@@ -152,8 +155,9 @@ export function leftSession(
   o: { afterHours: LeftAfter; dayOf: (ms: number) => string; skipped?: boolean },
 ): LeftSession | undefined {
   const last = lastActionOf(s);
-  if (o.skipped) return { reason: 'overgeslagen', lastActionAt: last };
   const quiet = now - last;
+  // Overgeslagen: pas na tien minuten stilte, zodat Verder (dat de stilte parkeert) echt verder gaat.
+  if (o.skipped && quiet >= SKIPPED_QUIET_MIN * 60_000) return { reason: 'overgeslagen', lastActionAt: last };
   if (o.afterHours > 0 && quiet >= o.afterHours * 3_600_000) return { reason: 'grens', lastActionAt: last };
   if (quiet >= NIGHT_QUIET_MIN * 60_000 && o.dayOf(now) > o.dayOf(last)) return { reason: 'nacht', lastActionAt: last };
   return undefined;

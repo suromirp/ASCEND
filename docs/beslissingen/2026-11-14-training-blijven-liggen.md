@@ -7,6 +7,8 @@ Status: aangenomen
 
 Een begonnen, niet afgeronde training in Forge loopt niet dagen door. Na middernacht (met een uur stilte), na een vaste grens zonder handeling (advies 12 uur, instelbaar: alleen middernacht, 4, 8 of 12 uur) of als de geplande sessie in je planning overgeslagen is, wordt hij een concept. De klok staat stil op je laatste handeling, de pil zegt "Niet afgerond" in amber en bij het openen van de app gaat eenmaal het blad Training niet afgerond open met Afronden met wat je deed, Verder en Weggooien (na een tweede tik met Annuleren). Het blad "Er loopt nog een training" heeft dezelfde uitweg; na Weggooien start de nieuwe training gewoon. Er gaat nooit iets stil weg en de planning verandert niet.
 
+Een open Forge schrijft zijn concept niet terug als de wijzer elders weg is (`mayWriteDraft`): een Weggooien in een ander tabblad blijft weg. Overgeslagen telt pas na tien minuten stilte, zodat Verder echt verder gaat. Forge kijkt ook elke minuut naar de stilte als het scherm open blijft liggen: wie langer dan de drempel van Lange onderbreking (advies 45 minuten) niets doet met Forge open, krijgt de vraag ook zonder weg te zijn geweest. Dat is bewust: een nacht met het scherm aan telt anders als training.
+
 ## Reden
 
 Profiel afbreker (14 november, backlog N): een vergeten sessie liep 154 uur door naast "blijven liggen" en "Niet gedaan?", en het blok bij een nieuwe training had geen Verwijderen. Afronden met de klok van een nacht gaf een duur van uren.

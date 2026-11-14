@@ -169,3 +169,20 @@ describe('openen op Afronden', () => {
     expect(m.openRequestFinishes()).toBe(false);
   });
 });
+
+describe('een open Forge in een ander tabblad maakt Weggooien niet ongedaan (Warden)', () => {
+  it('na discardSession schrijft een sessie die al schreef niet meer terug; een nieuwe sessie mag wel', async () => {
+    store.setItem(POINTER, JSON.stringify(pointer));
+    store.setItem(KEY, JSON.stringify(draft()));
+    const m = await fresh();
+    expect(m.mayWriteDraft(true, KEY)).toBe(true);
+    m.discardSession(pointer);
+    // Tab B had Forge open op dezelfde sessie: zijn volgende wegschrijven wordt tegengehouden.
+    expect(m.mayWriteDraft(true, KEY)).toBe(false);
+    // Een sessie die nog nooit schreef (een verse start) mag zijn eerste concept en wijzer schrijven.
+    expect(m.mayWriteDraft(false, KEY)).toBe(true);
+    // Loopt er elders inmiddels een andere sessie, dan schrijft de oude ook niet.
+    store.setItem(POINTER, JSON.stringify({ ...pointer, key: OTHER }));
+    expect(m.mayWriteDraft(true, KEY)).toBe(false);
+  });
+});
