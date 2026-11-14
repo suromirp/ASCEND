@@ -8,7 +8,6 @@ import workoutSrc from './ForgeWorkout.tsx?raw';
 import otherSrc from './OtherSessionRunning.tsx?raw';
 import choiceSrc from './SessionChoiceSheet.tsx?raw';
 import draftSrc from './useForgeDraft.ts?raw';
-import clockSrc from './useForgeClock.ts?raw';
 
 // Het blad bij een training die bleef liggen en bij "Er loopt nog een training", en de pil van een concept
 // (profiel afbreker, 14 november, backlog N). Echt gerenderd zonder DOM; nagemaakte sessie.
@@ -16,7 +15,7 @@ const hook = vi.hoisted(() => ({ left: undefined as LeftSession | undefined }));
 vi.mock('../Portal', () => ({ Portal: ({ children }: { children: ReactNode }) => children }));
 vi.mock('../motion', () => ({ useMotionMode: () => 'full' }));
 vi.mock('../../state/AppDataContext', () => ({ useAppData: () => ({ templates: [], settings: {} }) }));
-vi.mock('./useForgeSession', () => ({ useLeftSession: () => hook.left }));
+vi.mock('./useForgeSession', () => ({ useLeftSession: () => hook.left, useLeftCheck: () => () => hook.left, useSessionWorld: () => ({ loading: false }) }));
 
 const { SessionChoiceSheet } = await import('./SessionChoiceSheet');
 const { whenPhrase } = await import('../../engine/forgeSession');
@@ -35,12 +34,12 @@ const sheet = (s: SessionState, l?: LeftSession) => renderToStaticMarkup(createE
 const order = (html: string, ...words: string[]) => words.map((w) => html.indexOf(`>${w}<`));
 
 describe('een training die bleef liggen', () => {
-  it('de drie keuzes in het blad zelf: Afronden met wat je deed voorop, dan Verder, Weggooien en Niet nu', () => {
+  it('de drie keuzes in het blad zelf: Afronden met wat je deed voorop, dan Verder, Verwijderen en Niet nu', () => {
     const html = sheet(session(3), left);
     expect(html).toContain('Training niet afgerond');
     expect(html).toContain('Bovenlichaam A: 3 sets afgevinkt, 35 min getraind.');
     expect(html).toContain('er gaat niets weg tot je kiest');
-    const [finish, resume, discard, later] = order(html, 'Afronden met 3 sets', 'Verder', 'Weggooien', 'Niet nu');
+    const [finish, resume, discard, later] = order(html, 'Afronden met 3 sets', 'Verder', 'Verwijderen', 'Niet nu');
     expect(finish).toBeGreaterThan(0);
     expect(finish).toBeLessThan(resume);
     expect(resume).toBeLessThan(discard);
@@ -52,7 +51,7 @@ describe('een training die bleef liggen', () => {
     const html = sheet(session(0), left);
     expect(html).not.toContain('Afronden met');
     expect(html).toContain('>Verder<');
-    expect(html).toContain('>Weggooien<');
+    expect(html).toContain('>Verwijderen<');
   });
 
   it('overgeslagen in je planning: het blad zegt het', () => {
@@ -61,22 +60,32 @@ describe('een training die bleef liggen', () => {
 });
 
 describe('er loopt nog een training (een andere starten)', () => {
-  it('Naar de training, Afronden, Weggooien en Annuleren, met hoeveel sets', () => {
+  it('Naar de training, Afronden, Verwijderen en Annuleren, met hoeveel sets', () => {
     const html = sheet(session(3));
     expect(html).toContain('Er loopt nog een training');
     expect(html).toContain('3 sets afgevinkt');
-    const [go, finish, discard, cancel] = order(html, 'Naar de training', 'Afronden met 3 sets', 'Weggooien', 'Annuleren');
+    const [go, finish, discard, cancel] = order(html, 'Naar de training', 'Afronden met 3 sets', 'Verwijderen', 'Annuleren');
     expect(go).toBeGreaterThan(0);
     expect(go).toBeLessThan(finish);
     expect(finish).toBeLessThan(discard);
     expect(discard).toBeLessThan(cancel);
   });
 
-  it('na Weggooien start de nieuwe training (ForgeWorkout zet other weg), andere keuzes sluiten', () => {
+  it('na Verwijderen start de nieuwe training (ForgeWorkout zet other weg), andere keuzes sluiten', () => {
     expect(workoutSrc).toContain('onDiscarded={() => setOther(undefined)}');
     expect(otherSrc).toContain('SessionChoiceSheet');
-    // Weggooien gaat pas na de tweede tik, met Annuleren ernaast.
-    expect(choiceSrc).toMatch(/confirm \?[\s\S]*Annuleren[\s\S]*discardSession\(session\.pointer\)/);
+  });
+
+  it('Verwijderen: beide knoppen lopen door discardTap, en alleen daarna wordt er verwijderd', () => {
+    // De eerste weergave toont geen bevestiging; de stap zelf staat getest in engine/forgeLeft.test.ts (discardTap).
+    const html = sheet(session(3), left);
+    expect(html).not.toContain('Training verwijderen?');
+    expect(html).not.toContain('gaan weg');
+    // Precies één plek roept discardSession aan, in tapDiscard na de controle op de tweede tik; elke knop
+    // Verwijderen roept tapDiscard aan. Een mutant die bij de eerste tik verwijdert, voegt een aanroep toe.
+    expect(choiceSrc.match(/discardSession\(/g)).toHaveLength(1);
+    expect(choiceSrc).toMatch(/const next = discardTap\(step\);[\s\S]*?if \(!next\.discard\) return;[\s\S]*?discardSession\(session\.pointer\)/);
+    expect(choiceSrc.match(/onClick=\{\(\) => tapDiscard\(close\)\}/g)).toHaveLength(2);
   });
 
   it('Afronden opent Forge meteen op het afrondblad', () => {
@@ -114,12 +123,11 @@ describe('whenPhrase', () => {
   });
 });
 
-describe('terug tijdens een set en een scherm dat een nacht open blijft', () => {
+describe('terug tijdens een set', () => {
   it('terug of sluiten schrijft het concept meteen weg (ook een half getypte set), niet pas na de vertraging', () => {
+    // Het wegschrijven zelf (saveSessionDraft) is gedragsgetest in utils/forgeSessionStore.test.ts; hier dat het bij
+    // het sluiten en bij pagehide gebeurt, wat zonder DOM niet te mounten is.
     expect(draftSrc).toMatch(/return \(\) => \{[\s\S]*?flushDraft\(\);\s*\};\s*\}, \[flushDraft\]\)/);
     expect(draftSrc).toContain("window.addEventListener('pagehide', flushDraft)");
-  });
-  it('Forge kijkt elke minuut naar de stilte, ook zonder terugkomst in de app', () => {
-    expect(clockSrc).toMatch(/setInterval\([\s\S]*?onVisible\(\)[\s\S]*?60_000\)/);
   });
 });

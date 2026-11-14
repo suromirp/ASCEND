@@ -474,3 +474,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-14, Sherpa Geen stille Thuis (opus); zelfreview reviewer (sonnet) akkoord, 4 kleine punten (werkbriefje verwerkt).
 - 2026-11-14, Sherpa Geen stille Thuis herstelronde (opus); zelfreview reviewer (sonnet) 38k akkoord, verspringende regel en 3 kleine punten verwerkt.
 - 2026-11-14, Sherpa Afbreker (ontwikkelaar, opus) backlog N; zelfreview reviewer (sonnet) 64k niet akkoord op 2 punten (overgeslagen bleef concept na Verder, open tab kon Weggooien terugzetten), beide hersteld met test, 1 mag-punt verwerkt.
+- 2026-11-14, Sherpa Afbreker herstelronde (opus) na Warden van de coördinator (2 moet, 8 mag); alle tien verwerkt met tests, geen eigen helper.

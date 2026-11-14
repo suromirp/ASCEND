@@ -182,7 +182,7 @@ export function parkSession(pointer: SessionPointer, now: number): boolean {
   return true;
 }
 
-// Weggooien na Annuleren-bevestiging: het concept en de wijzer van déze sessie gaan weg. Je logboek verandert niet.
+// Verwijderen na Annuleren-bevestiging: het concept en de wijzer van déze sessie gaan weg. Je logboek verandert niet.
 export function discardSession(pointer: SessionPointer): void {
   removeDraftKey(pointer.key);
   clearSessionPointer(pointer.key);
@@ -190,10 +190,41 @@ export function discardSession(pointer: SessionPointer): void {
 
 // Mag een open Forge zijn concept nog wegschrijven? Niet als het al eens schreef en de wijzer nu ontbreekt of naar
 // een andere sessie wijst: dan is hij elders (een ander tabblad, het blad van een concept) weggegooid of afgerond,
-// en zou het terugschrijven een Weggooien ongedaan maken (Warden, 14 november).
+// en zou het terugschrijven een Verwijderen ongedaan maken (Warden, 14 november).
 export function mayWriteDraft(wroteBefore: boolean, key: string): boolean {
   if (!wroteBefore) return true;
   return readPointer()?.key === key;
+}
+
+// Het concept van een open Forge wegschrijven, met de wijzer erbij. Geeft terug of deze sessie nu de wijzer heeft:
+// die uitkomst (niet de poging) is de nieuwe stand van "schreef al". Loopt er een andere sessie, dan weigert de
+// wijzer en blijft "schreef al" onwaar, zodat het concept bij de volgende beurt gewoon weer bewaard wordt
+// (Warden, 14 november). Weggegooid of afgerond elders: dan schrijft het niets en blijft het zo.
+export function saveSessionDraft(pointer: SessionPointer, draft: unknown, wroteBefore: boolean): boolean {
+  if (!mayWriteDraft(wroteBefore, pointer.key)) return wroteBefore;
+  try {
+    localStorage.setItem(pointer.key, JSON.stringify(draft));
+  } catch {
+    // geen opslag: geen concept
+  }
+  return writeSessionPointer(pointer);
+}
+
+// Staat déze sessie (zelfde concept, zelfde begin) er nog? Niet als hij elders afgerond of verwijderd werd.
+export function sessionStillThere(pointerKey: string, startedAt: number): boolean {
+  const s = readSession();
+  return !!s && s.pointer.key === pointerKey && s.startedAt === startedAt;
+}
+
+// Het blad van een concept gaat per concept één keer vanzelf open, en nooit achter een ander keuzeblad dat er al
+// over gaat. De sleutel: sessie, begin en laatste handeling, zodat een volgende nacht weer telt.
+const prompted = new Set<string>();
+export const promptKey = (s: { pointer: { key: string }; startedAt: number }, lastActionAt: number | undefined) => `${s.pointer.key}\u0001${s.startedAt}\u0001${lastActionAt ?? ''}`;
+export function markPrompted(key: string): void {
+  prompted.add(key);
+}
+export function wasPrompted(key: string): boolean {
+  return prompted.has(key);
 }
 
 // Het concept is net weggeschreven of weggehaald.

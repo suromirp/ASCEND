@@ -490,7 +490,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Afronden', text: 'met de sets die je deed en de tijd tot je laatste handeling. Is het minder dan de helft, dan heet het eerlijk een korte training.' },
       { head: 'Verder', text: 'de stille tijd wordt een pauze en je gaat door waar je was.' },
-      { head: 'Weggooien', text: 'pas na een bevestiging. Je logboek verandert niet.' },
+      { head: 'Verwijderen', text: 'pas na een bevestiging. Je logboek verandert niet.' },
       { head: 'Na 12 uur', text: 'het advies. Middernacht geldt altijd, met een uur stilte, zodat een late training gewoon doorloopt.' },
     ],
   },

@@ -1,15 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { activeMinutes, activeSeconds, formatSessionClock, isPaused, setsPhrase } from '../../engine/forgeSession';
-import { requestOpenSession, type SessionState } from '../../utils/forgeSessionStore';
+import { promptKey, requestOpenSession, wasPrompted, type SessionState } from '../../utils/forgeSessionStore';
 import { Icon } from '../icons';
 import { Pictogram } from '../pictograms';
 import { useAppData } from '../../state/AppDataContext';
 import { sportPictogram } from '../sportKind';
 import { SessionChoiceSheet } from './SessionChoiceSheet';
-import { useLeftSession } from './useForgeSession';
-
-// Eén keer per opening van de app per concept (sessie en laatste handeling) gaat het blad van een concept vanzelf open; Niet nu laat de pil staan.
-const prompted = new Set<string>();
+import { useLeftCheck, useLeftSession, useSessionWorld } from './useForgeSession';
 
 // De pil boven de tabbalk (docs/beslissingen/2026-10-29-forge-als-sessie.md): zolang er een training loopt en
 // het volle scherm van Forge niet open is. Links het pictogram van de training (kracht, of eigen gewicht) en de naam, rechts de klok. Tik opent Forge
@@ -34,23 +31,36 @@ export function SessionPill({ session }: { session: SessionState }) {
   // Bleef de training liggen (na middernacht, na de grens of overgeslagen), dan is hij een concept: geen lopende
   // klok, een regel "Niet afgerond", en een tik opent de keuze in plaats van Forge.
   const left = useLeftSession(session);
-  const [choosing, setChoosing] = useState(false);
-  const [, setClosed] = useState(0);
-  const key = `${session.pointer.key}\u0001${session.startedAt}\u0001${left?.lastActionAt ?? ''}`;
-  // Vanzelf open tot je het een keer sluit; daarna alleen met een tik op de pil.
-  const open = choosing || (!!left && !prompted.has(key));
-  const closeChoice = () => {
-    prompted.add(key);
-    setChoosing(false);
-    setClosed((n) => n + 1);
-  };
+  const check = useLeftCheck();
+  // Het blad gaat vanzelf open bij het opstarten (de pil verschijnt) en bij een terugkomst in de app, één keer per
+  // concept; nooit op een minuut-tik midden in gebruik, en niet als een ander keuzeblad er al over gaat (wasPrompted).
+  const [choosing, setChoosing] = useState(() => !!left && !wasPrompted(promptKey(session, left.lastActionAt)));
+  const checkRef = useRef(() => {});
+  useEffect(() => {
+    checkRef.current = () => {
+      const now = check(session, Date.now());
+      if (now && !wasPrompted(promptKey(session, now.lastActionAt))) setChoosing(true);
+    };
+  });
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') checkRef.current();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
+  // Bij het opstarten laadt de app nog; zodra hij klaar is, is dat nog steeds het openen.
+  const { loading } = useSessionWorld();
+  useEffect(() => {
+    if (!loading) checkRef.current();
+  }, [loading]);
   const clock = { startedAt: session.startedAt, pauses: session.pauses };
   const paused = isPaused(clock);
   const now = useSecond(!paused && !left);
   const seconds = activeSeconds(clock, now);
   const minutes = activeMinutes(clock, now);
   const label = left
-    ? `Training ${session.pointer.name}, niet afgerond, ${setsPhrase(session.doneSets)}. Afronden, verder of weggooien`
+    ? `Training ${session.pointer.name}, niet afgerond, ${setsPhrase(session.doneSets)}. Afronden, verder of verwijderen`
     : `Training ${session.pointer.name}, ${minutes === 1 ? '1 minuut' : `${minutes} minuten`}, ${paused ? 'gepauzeerd' : 'loopt'}`;
   return (
     <>
@@ -82,7 +92,7 @@ export function SessionPill({ session }: { session: SessionState }) {
         )}
       </button>
     </div>
-    {open && <SessionChoiceSheet session={session} {...(left ? { left } : {})} onClose={closeChoice} />}
+    {choosing && <SessionChoiceSheet session={session} {...(left ? { left } : {})} onClose={() => setChoosing(false)} />}
     </>
   );
 }

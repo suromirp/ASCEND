@@ -122,7 +122,7 @@ export function formatAway(ms: number): string {
 // Een sessie die je vergat loopt niet dagen door: na middernacht (met een uur stilte) of na een vaste grens
 // zonder handeling, of als de geplande sessie in je planning overgeslagen is, is hij een concept. Er gaat dan
 // niets weg en er verandert niets aan de planning: de klok staat stil op je laatste handeling, en de pil en het
-// blad vragen wat je wilt (Afronden met wat je deed, Verder of Weggooien). Alleen een keuze van jou beëindigt hem.
+// blad vragen wat je wilt (Afronden met wat je deed, Verder of Verwijderen). Alleen een keuze van jou beëindigt hem.
 
 // De instelling "Niet afgerond, concept na", in uren zonder handeling; 0 is: alleen na middernacht.
 export const LEFT_AFTER_OPTIONS = [0, 4, 8, 12] as const;
@@ -209,6 +209,34 @@ export function whenPhrase(ms: number, today = todayISO()): string {
   const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   const label = day === today ? 'vandaag' : day === addDays(today, -1) ? 'gisteren' : formatWeekdayDayMonthNL(day);
   return `${label} om ${time}`;
+}
+
+// Het blad van een concept of een lopende training, als die elders al afgerond of verwijderd is.
+export const SESSION_GONE_TEXT = 'Deze training is er niet meer. Hij is ergens anders afgerond of verwijderd; je logboek laat zien wat er bewaard is.';
+
+// Verwijderen in het blad van een concept gaat in twee tikken: de eerste toont de bevestiging met Annuleren, pas de
+// tweede (in die bevestiging) verwijdert. Het blad roept voor beide knoppen deze ene stap aan.
+export type DiscardStep = 'kiezen' | 'bevestigen';
+export function discardTap(step: DiscardStep): { step: DiscardStep; discard: boolean } {
+  return step === 'bevestigen' ? { step, discard: true } : { step: 'bevestigen', discard: false };
+}
+
+// De dag die Afronden voorstelt bij Gedaan op: een geplande training van een eerdere dag krijgt die dag; een losse
+// training de dag van je laatst afgevinkte set als die eerder was (een concept van gisteren), binnen de 60 dagen
+// van het veld. Anders vandaag. Zo komt een beendag op de dag dat je hem deed (de 48-uursregel leest die dag).
+export function finishDayDefault(o: { today: string; plannedSessionId?: string; scheduledDate?: string; lastTickAt?: number; dayOf: (ms: number) => string }): string {
+  if (o.plannedSessionId) return o.scheduledDate && o.scheduledDate < o.today ? o.scheduledDate : o.today;
+  if (o.lastTickAt === undefined) return o.today;
+  const day = o.dayOf(o.lastTickAt);
+  return day < o.today && day >= addDays(o.today, -60) ? day : o.today;
+}
+
+// De vraag Lange onderbreking: bij een echte terugkomst altijd (als de stilte de drempel haalt), op de minuut-tik
+// alleen als je het blad niet al sloot zonder antwoord voor deze zelfde stilte. Een gesloten blad komt dus niet
+// binnen een minuut terug; pas na een nieuwe handeling of een echte terugkomst.
+export function askBreakNow(o: { gapMs: number | undefined; source: 'tik' | 'terug'; lastActionAt: number; dismissedFor?: number }): boolean {
+  if (o.gapMs === undefined) return false;
+  return o.source === 'terug' || o.dismissedFor !== o.lastActionAt;
 }
 
 // De duur die Afronden voorstelt: de actieve tijd, tenzij de klok onwaarschijnlijk lang liep (een vergeten

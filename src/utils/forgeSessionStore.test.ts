@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// De lopende training in opslag (profiel afbreker, 14 november, backlog N): bewaren, parkeren, weggooien, twee
+// De lopende training in opslag (profiel afbreker, 14 november, backlog N): bewaren, parkeren, verwijderen, twee
 // tabbladen en een tweede training. Nagemaakte concepten, een nep-localStorage en een nep-venster.
 function fakeStorage() {
   const map = new Map<string, string>();
@@ -100,7 +100,7 @@ describe('parkSession: Verder en Afronden met een concept', () => {
   });
 });
 
-describe('discardSession: Weggooien na bevestiging', () => {
+describe('discardSession: Verwijderen na bevestiging', () => {
   it('alleen het concept en de wijzer van deze sessie gaan weg', async () => {
     store.setItem(POINTER, JSON.stringify(pointer));
     store.setItem(KEY, JSON.stringify(draft()));
@@ -131,7 +131,7 @@ describe('een andere training starten terwijl er een loopt', () => {
 });
 
 describe('twee tabbladen', () => {
-  it('een ander tabblad dat afvinkt of weggooit, komt hier binnen via het storage-event', async () => {
+  it('een ander tabblad dat afvinkt of verwijdert, komt hier binnen via het storage-event', async () => {
     store.setItem(POINTER, JSON.stringify(pointer));
     store.setItem(KEY, JSON.stringify(draft()));
     const m = await fresh();
@@ -170,7 +170,7 @@ describe('openen op Afronden', () => {
   });
 });
 
-describe('een open Forge in een ander tabblad maakt Weggooien niet ongedaan (Warden)', () => {
+describe('een open Forge in een ander tabblad maakt Verwijderen niet ongedaan (Warden)', () => {
   it('na discardSession schrijft een sessie die al schreef niet meer terug; een nieuwe sessie mag wel', async () => {
     store.setItem(POINTER, JSON.stringify(pointer));
     store.setItem(KEY, JSON.stringify(draft()));
@@ -184,5 +184,56 @@ describe('een open Forge in een ander tabblad maakt Weggooien niet ongedaan (War
     // Loopt er elders inmiddels een andere sessie, dan schrijft de oude ook niet.
     store.setItem(POINTER, JSON.stringify({ ...pointer, key: OTHER }));
     expect(m.mayWriteDraft(true, KEY)).toBe(false);
+  });
+});
+
+describe('saveSessionDraft: "schreef al" volgt de uitkomst van de wijzer (Warden herstelronde)', () => {
+  const pB = { ...pointer, key: OTHER, plannedSessionId: 'ps_wo18', scheduledDate: '2026-11-18' };
+
+  it('Gedaan op training B terwijl A loopt: B bewaart zijn concept bij elke beurt, ook na een geweigerde wijzer', async () => {
+    store.setItem(POINTER, JSON.stringify(pointer));
+    store.setItem(KEY, JSON.stringify(draft()));
+    const m = await fresh();
+    let wrote = false;
+    wrote = m.saveSessionDraft(pB, { v: 1, n: 1 }, wrote);
+    expect(wrote).toBe(false);
+    expect(JSON.parse(store.getItem(OTHER)!).n).toBe(1);
+    wrote = m.saveSessionDraft(pB, { v: 1, n: 2 }, wrote);
+    expect(JSON.parse(store.getItem(OTHER)!).n).toBe(2);
+    // A blijft de lopende sessie.
+    expect(m.readPointer()?.key).toBe(KEY);
+  });
+
+  it('een sessie die de wijzer kreeg, schrijft niet meer terug na Verwijderen elders', async () => {
+    const m = await fresh();
+    let wrote = m.saveSessionDraft(pointer, { v: 1, n: 1 }, false);
+    expect(wrote).toBe(true);
+    m.discardSession(pointer);
+    wrote = m.saveSessionDraft(pointer, { v: 1, n: 2 }, wrote);
+    expect(store.getItem(KEY)).toBeNull();
+    expect(store.getItem(POINTER)).toBeNull();
+    expect(wrote).toBe(true);
+  });
+});
+
+describe('sessionStillThere en het blad dat vanzelf opent', () => {
+  it('weet of déze sessie er nog is (zelfde sleutel en begin)', async () => {
+    store.setItem(POINTER, JSON.stringify(pointer));
+    store.setItem(KEY, JSON.stringify(draft()));
+    const m = await fresh();
+    expect(m.sessionStillThere(KEY, start)).toBe(true);
+    expect(m.sessionStillThere(KEY, start + 1)).toBe(false);
+    m.discardSession(pointer);
+    expect(m.sessionStillThere(KEY, start)).toBe(false);
+  });
+
+  it('per concept één keer: een volgende nacht (andere laatste handeling) telt weer', async () => {
+    const m = await fresh();
+    const s = { pointer, startedAt: start };
+    const k1 = m.promptKey(s, start + 1);
+    expect(m.wasPrompted(k1)).toBe(false);
+    m.markPrompted(k1);
+    expect(m.wasPrompted(k1)).toBe(true);
+    expect(m.wasPrompted(m.promptKey(s, start + 2))).toBe(false);
   });
 });

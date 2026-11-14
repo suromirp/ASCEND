@@ -90,14 +90,24 @@ function useMinute(): number {
 const dayOf = (ms: number) => toISODate(new Date(ms));
 
 // Is de lopende sessie blijven liggen (engine/forgeSession.ts#leftSession)? Dan is hij een concept: de pil toont
-// geen lopende klok meer en het blad vraagt Afronden, Verder of Weggooien. Leest het concept zelf, zodat een set
+// geen lopende klok meer en het blad vraagt Afronden, Verder of Verwijderen. Leest het concept zelf, zodat een set
 // die net in een ander tabblad werd afgevinkt meetelt.
 export function useLeftSession(session: SessionState | undefined): LeftSession | undefined {
+  const check = useLeftCheck();
+  const now = useMinute();
+  return session ? check(session, now) : undefined;
+}
+
+// De toets zelf, voor een moment naar keuze (de pil roept hem aan bij een terugkomst in de app). Zolang de app
+// laadt, is niets een concept: dan weten we nog niet of de geplande sessie overgeslagen is.
+export function useLeftCheck(): (session: SessionState, now: number) => LeftSession | undefined {
   const { settings } = useAppData();
   const world = useSessionWorld();
-  const now = useMinute();
-  if (!session) return undefined;
-  const fresh = readSession() ?? session;
-  const skipped = !!fresh.pointer.plannedSessionId && world.skippedIds.has(fresh.pointer.plannedSessionId);
-  return leftSession(fresh, now, { afterHours: resolveLeftAfter(settings), dayOf, skipped });
+  const afterHours = resolveLeftAfter(settings);
+  return (session, now) => {
+    if (world.loading) return undefined;
+    const fresh = readSession() ?? session;
+    const skipped = !!fresh.pointer.plannedSessionId && world.skippedIds.has(fresh.pointer.plannedSessionId);
+    return leftSession(fresh, now, { afterHours, dayOf, skipped });
+  };
 }

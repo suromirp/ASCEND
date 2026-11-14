@@ -131,7 +131,7 @@ describe('de instelling en de zinnen', () => {
     expect(minutesPhrase(120 * 60)).toBe('2 uur');
   });
 
-  it('het droge feit eerst, en Weggooien zegt wat er weggaat', () => {
+  it('het droge feit eerst, en Verwijderen zegt wat er weggaat', () => {
     const l = leftSessionLines({ name: 'Bovenlichaam A', doneSets: 3, activeSec: 35 * 60, when: 'gisteren om 23:10', reason: 'nacht' });
     expect(l.fact).toBe('Bovenlichaam A: 3 sets afgevinkt, 35 min getraind. Je laatste handeling was gisteren om 23:10.');
     expect(l.note).toBe('Hij staat als concept klaar; er gaat niets weg tot je kiest.');
@@ -161,5 +161,47 @@ describe('Afronden van een concept: eerlijk een korte training', () => {
     const log = { variant: 'full' as const, durationMinutes: minutes, completedDate: '2026-11-17', strengthData: sets, source: 'manual' as const };
     expect(isShortTraining(log, upper, null)).toBe(true);
     expect(SHORT_TRAINING_TEXT).toBe('Een korte training. Dat telt ook.');
+  });
+});
+
+describe('herstelronde Warden', () => {
+  it('Verwijderen in twee tikken: de eerste vraagt, pas de tweede verwijdert', async () => {
+    const { discardTap } = await import('./forgeSession');
+    expect(discardTap('kiezen')).toEqual({ step: 'bevestigen', discard: false });
+    expect(discardTap('bevestigen')).toEqual({ step: 'bevestigen', discard: true });
+  });
+
+  it('een overgeslagen geplande sessie is niet dood: hij wordt een concept, je sets blijven', async () => {
+    const { sessionIsDead } = await import('./forgeSession');
+    const world = { plannedIds: new Set(['ps1']), loggedIds: new Set<string>(), templateIds: new Set(['tpl_upper_a']) };
+    expect(sessionIsDead({ templateId: 'tpl_upper_a', plannedSessionId: 'ps1' }, world)).toBe(false);
+  });
+
+  it('Gedaan op: een losse training van gisteren krijgt de dag van je laatste set; gepland houdt zijn dag', async () => {
+    const { finishDayDefault } = await import('./forgeSession');
+    const lastTickAt = at('2026-11-17T22:10:00Z'); // di 17 november 23:10 in Amsterdam
+    expect(finishDayDefault({ today: '2026-11-18', lastTickAt, dayOf })).toBe('2026-11-17');
+    expect(finishDayDefault({ today: '2026-11-18', dayOf })).toBe('2026-11-18');
+    expect(finishDayDefault({ today: '2026-11-17', lastTickAt, dayOf })).toBe('2026-11-17');
+    // Buiten de 60 dagen van het veld: vandaag.
+    expect(finishDayDefault({ today: '2027-02-01', lastTickAt, dayOf })).toBe('2027-02-01');
+    expect(finishDayDefault({ today: '2026-11-18', plannedSessionId: 'ps1', scheduledDate: '2026-11-16', lastTickAt, dayOf })).toBe('2026-11-16');
+    expect(finishDayDefault({ today: '2026-11-18', plannedSessionId: 'ps1', scheduledDate: '2026-11-18', lastTickAt, dayOf })).toBe('2026-11-18');
+  });
+
+  it('Lange onderbreking: een gesloten blad komt niet terug op de minuut-tik, wel bij een terugkomst of een nieuwe stilte', async () => {
+    const { askBreakNow } = await import('./forgeSession');
+    const last = at('2026-11-17T21:30:00Z');
+    expect(askBreakNow({ gapMs: undefined, source: 'tik', lastActionAt: last })).toBe(false);
+    expect(askBreakNow({ gapMs: 50 * MIN, source: 'tik', lastActionAt: last })).toBe(true);
+    expect(askBreakNow({ gapMs: 51 * MIN, source: 'tik', lastActionAt: last, dismissedFor: last })).toBe(false);
+    expect(askBreakNow({ gapMs: 90 * MIN, source: 'terug', lastActionAt: last, dismissedFor: last })).toBe(true);
+    expect(askBreakNow({ gapMs: 46 * MIN, source: 'tik', lastActionAt: last + 60 * MIN, dismissedFor: last })).toBe(true);
+  });
+
+  it('de zin bij een training die elders weg is: geen gedachtestreepjes', async () => {
+    const { SESSION_GONE_TEXT } = await import('./forgeSession');
+    expect(SESSION_GONE_TEXT).toContain('niet meer');
+    expect(SESSION_GONE_TEXT).not.toMatch(/[–—]/);
   });
 });

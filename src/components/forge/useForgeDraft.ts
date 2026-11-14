@@ -6,8 +6,8 @@ import type { WorkoutExercise } from '../../engine/forgeWorkout';
 import type { ForgeEvent } from '../../engine/forgeLog';
 import type { Pause } from '../../engine/forgeSession';
 import type { SessionVariant } from '../../models/training';
-import { clearSessionPointer, mayWriteDraft, notifySession, readPointer, registerForgeOpen, writeSessionPointer } from '../../utils/forgeSessionStore';
-import { clearDraft, saveDraft } from '../../utils/loggerDraft';
+import { clearSessionPointer, notifySession, readPointer, registerForgeOpen, saveSessionDraft } from '../../utils/forgeSessionStore';
+import { clearDraft } from '../../utils/loggerDraft';
 import { DRAFT_VERSION, type WorkoutDraft } from './forgeDraft';
 import type { Rest } from './forgeWorkoutHelpers';
 import type { StepSwaps } from '../../engine/stepSwaps';
@@ -40,11 +40,10 @@ export function useForgeDraft({ key, template, plannedSessionId, scheduledDate, 
   const flushDraft = useCallback(() => {
     window.clearTimeout(draftTimer.current);
     draftTimer.current = undefined;
-    if (pendingDraft.current && mayWriteDraft(wrote.current, key)) {
-      wrote.current = true;
-      saveDraft(key, pendingDraft.current, 'local');
-      // De wijzer van de sessie: de pil boven de tabbalk vindt de training hiermee terug.
-      writeSessionPointer({ key, templateId: template.id, name: template.name, ...(plannedSessionId ? { plannedSessionId } : {}), ...(scheduledDate ? { scheduledDate } : {}), variant });
+    if (pendingDraft.current) {
+      // Concept en wijzer; "schreef al" volgt de uitkomst van de wijzer, nooit de poging (saveSessionDraft).
+      // De wijzer: de pil boven de tabbalk vindt de training hiermee terug.
+      wrote.current = saveSessionDraft({ key, templateId: template.id, name: template.name, ...(plannedSessionId ? { plannedSessionId } : {}), ...(scheduledDate ? { scheduledDate } : {}), variant }, pendingDraft.current, wrote.current);
     }
     pendingDraft.current = null;
   }, [key, template.id, template.name, plannedSessionId, scheduledDate, variant]);
