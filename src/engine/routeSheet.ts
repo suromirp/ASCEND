@@ -18,8 +18,20 @@ export const ROUTE_MAP_HEIGHT = 'clamp(180px, 34vh, 340px)';
 // (een scherm van ongeveer 800 px hoog); nooit hoger dan 240 px. Groter opent het blad met de volle kaart.
 export const BRIEFING_MAP_HEIGHT = 'clamp(150px, 28vh, 240px)';
 
-export const OFFLINE_LINE = 'Zonder netwerk is er geen route. Probeer het later nog eens.';
+// Zonder verbinding zegt de regel dat, en niet "probeer het later" (eigenaar 14 november, op reis).
+export const OFFLINE_LINE = 'Je hebt geen verbinding. Zonder netwerk is er geen route.';
 export const TIMEOUT_LINE = 'De routeplanner antwoordde niet op tijd. Probeer het later nog eens.';
+export const TERRAIN_TIMEOUT_LINE = 'Heuvels en paden zoeken duurde te lang. Probeer het later nog eens.';
+export const SEARCH_TIMEOUT_LINE = 'Lussen zoeken duurde te lang. Probeer het later nog eens.';
+
+// De regel als zoeken niet lukte: zonder verbinding dat, anders welke stap niet op tijd was (de stap
+// waar findRoutes was, routeSearchSteps.ts). Je plek die niet op tijd kwam is de vraag (`ask`).
+export function searchFailLine(kind: 'offline' | 'timeout', step: 'terrain' | 'routes' | undefined, online: boolean): string {
+  if (kind === 'offline' || !online) return OFFLINE_LINE;
+  if (step === 'terrain') return TERRAIN_TIMEOUT_LINE;
+  if (step === 'routes') return TIMEOUT_LINE;
+  return SEARCH_TIMEOUT_LINE;
+}
 // Achter de i: hoe de kaart werkt (stond eerder onder de kaart).
 export const MAP_HINT = 'De ring is de start. Tik op de kaart voor een ander startpunt: Start hier geldt alleen voor deze zoektocht. Bewaar als plek maakt er Thuis van; je routes bij Thuis blijven.';
 export const PICK_HINT = 'De gekozen lus is doorgetrokken, de andere gestreept. Tik een lus op de kaart of in de lijst om hem te kiezen.';
@@ -36,6 +48,8 @@ export type RouteSheetStage =
   | 'reading'
   // De eerste keer: de bestaande eerste vraag, ongewijzigd.
   | 'first-question'
+  // Je plek lukte niet: de vraag waar de lus begint (Opnieuw, Thuis, Andere plek); er wordt niet gezocht.
+  | 'ask'
   | 'searching'
   | 'offline'
   | 'timeout'
@@ -47,6 +61,8 @@ export interface StageInput {
   // Ja gezegd en een keuze voor het startpunt gemaakt.
   asked: boolean;
   savedKnown: boolean;
+  // Je plek lukte niet en er is nog niets gekozen (engine/routeStart.ts#planStart, `ask`).
+  ask?: boolean;
   search: 'busy' | { kind: 'offline' | 'timeout' | 'plans' };
 }
 
@@ -55,6 +71,7 @@ export function routeSheetStage(i: StageInput): RouteSheetStage {
   if (i.consent === undefined) return 'reading';
   if (!i.asked) return 'first-question';
   if (!i.savedKnown) return 'reading';
+  if (i.ask) return 'ask';
   if (i.search === 'busy') return 'searching';
   return i.search.kind;
 }
@@ -63,9 +80,10 @@ export function routeSheetStage(i: StageInput): RouteSheetStage {
 // de lussen als rijen om te kiezen en de hoofdknop voor de gekozen lus: dat staat boven de vouw op 390
 // en 412 px. Daarna wat er op de kaart lag, Opnieuw zoeken en de bronnen. Nergens een uitklap.
 // 'adjust': bijsturen en de gekozen lus per stuk (engine/routeAdjust.ts), onder de hoofdknop.
-export type RouteSheetPart = 'searching' | 'failure' | 'map' | 'chosen' | 'adjust' | 'loops' | 'found' | 'retry' | 'sources';
+export type RouteSheetPart = 'ask' | 'searching' | 'failure' | 'map' | 'chosen' | 'adjust' | 'loops' | 'found' | 'retry' | 'sources';
 
 export function routeSheetParts(stage: RouteSheetStage, plans?: { anyOk: boolean; anyFailed: boolean }): RouteSheetPart[] {
+  if (stage === 'ask') return ['ask'];
   if (stage === 'searching') return ['searching'];
   // De regel en Opnieuw zoeken staan in een vak op de plek van de kaart.
   if (stage === 'offline' || stage === 'timeout') return ['failure'];
