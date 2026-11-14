@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { RouteProposal } from '../models/route';
 import type { RoutePlans } from './routePlanner';
 import { NO_ADJUST, type LoopAdjust } from './routeAdjust';
-import { INITIAL_SEARCH_STATE, answerFor, currentAdjust, needsSearch, pendingStale, searchKey, searchReducer, type SearchEvent, type SearchState } from './routeSearchState';
+import { INITIAL_SEARCH_STATE, MEMORY_SIZE, answerFor, currentAdjust, failLineFor, needsSearch, pendingStale, searchKey, searchReducer, type SearchEvent, type SearchState } from './routeSearchState';
 
 // Nagemaakte lussen: alleen de vorm telt hier.
 const loop = (distanceM: number): RouteProposal => ({ style: 'adventure', source: 'brouter', points: [{ lat: 52.1, lon: 5.9 }, { lat: 52.11, lon: 5.9 }], distanceM, ascentM: 40, repeatedShare: 0 });
@@ -39,7 +39,9 @@ describe('een bijsturing die niet lukt', () => {
   it('offline: terug naar de lus die er was, met de regel; de oude sleutel zoekt niet opnieuw', () => {
     const s = run([{ type: 'answer', key: K1, answer: { kind: 'offline' }, currentKey: K1 }], longer(ready));
     expect(currentAdjust(s, BASE)).toEqual(NO_ADJUST);
-    expect(s.failLine).toBe('Zonder netwerk kan de lus niet bijgestuurd worden. De lus blijft zoals hij was.');
+    // De regel hoort bij de lus die er weer staat; bij een andere poging zwijgt hij.
+    expect(failLineFor(s, searchKey('1|52.1|5.9', NO_ADJUST))).toBe('');
+    expect(failLineFor(s, K0)).toBe('Zonder netwerk kan de lus niet bijgestuurd worden. De lus blijft zoals hij was.');
     expect(needsSearch(s, K0)).toBe(false);
     expect(answerFor(s, K0)).toEqual({ kind: 'plans', plans: plans(10) });
   });
@@ -101,5 +103,38 @@ describe('ander startpunt tijdens het zoeken', () => {
     expect(currentAdjust(dropped, BASE)).toEqual(NO_ADJUST);
     // Bij het nieuwe startpunt begint alles bij de training.
     expect(currentAdjust(dropped, 'ander|punt')).toEqual(NO_ADJUST);
+  });
+});
+
+describe('het antwoord van de training en een tweede tik', () => {
+  it('na vijf keer Langer staat de lus van de training er nog: Zoals je training zoekt niet opnieuw', () => {
+    let s = ready;
+    for (let d = 1; d <= MEMORY_SIZE + 1; d++) {
+      const next: LoopAdjust = { ...NO_ADJUST, deltaKm: d };
+      s = run([
+        { type: 'adjust', base: BASE, attempt: 0, keyBase: KB, next, action: 'longer', style: 'adventure' },
+        { type: 'answer', key: searchKey(KB, next), answer: { kind: 'plans', plans: plans(10 + d) }, currentKey: searchKey(KB, next) },
+      ], s);
+    }
+    expect(s.memory.length).toBeLessThanOrEqual(MEMORY_SIZE);
+    const back = run([{ type: 'reset', base: BASE }], s);
+    expect(needsSearch(back, K0)).toBe(false);
+  });
+
+  it('een tweede tik terwijl de eerste nog zoekt: mislukt die, dan terug naar wat er voor de eerste gold', () => {
+    const LONGER2: LoopAdjust = { ...NO_ADJUST, deltaKm: 2 };
+    const K2 = searchKey(KB, LONGER2);
+    const s = run([
+      { type: 'adjust', base: BASE, attempt: 0, keyBase: KB, next: LONGER, action: 'longer', style: 'adventure' },
+      { type: 'adjust', base: BASE, attempt: 0, keyBase: KB, next: LONGER2, action: 'longer', style: 'adventure' },
+      { type: 'answer', key: K2, answer: { kind: 'offline' }, currentKey: K2 },
+    ], ready);
+    expect(currentAdjust(s, BASE)).toEqual(NO_ADJUST);
+    expect(failLineFor(s, K0)).toBe('Zonder netwerk kan de lus niet bijgestuurd worden. De lus blijft zoals hij was.');
+  });
+
+  it('een andere start na een mislukte bijsturing: de regel staat niet onder de andere lus', () => {
+    const failed = run([{ type: 'answer', key: K1, answer: { kind: 'offline' }, currentKey: K1 }], longer(ready));
+    expect(failLineFor(failed, searchKey('0|52.2|5.8', NO_ADJUST))).toBe('');
   });
 });

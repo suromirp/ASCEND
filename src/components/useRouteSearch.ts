@@ -34,7 +34,7 @@ import type { FileSender } from '../integrations/fileSender';
 import { withTimeout } from '../utils/withTimeout';
 import { resolveMapBase, resolveMapPhoto, type MapBase, type MapPhoto, type MapRoute } from '../engine/routeMap';
 import { routeSheetParts, routeSheetStage, type RouteSheetPart, type RouteSheetStage } from '../engine/routeSheet';
-import { INITIAL_SEARCH_STATE, answerFor, currentAdjust, needsSearch, pendingStale, searchKey, searchReducer } from '../engine/routeSearchState';
+import { INITIAL_SEARCH_STATE, answerFor, currentAdjust, failLineFor, needsSearch, pendingStale, searchKey, searchReducer } from '../engine/routeSearchState';
 import { adjustKey, adjustSummary, avoidPiece, canReverse, isAdjusted, loopPieces, reverseProposal, stepDistance, type AdjustAction, type LoopAdjust, type LoopPiece } from '../engine/routeAdjust';
 
 const CONSENT_LIMIT_MS = 3000;
@@ -382,7 +382,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const pieces = pickedOutcome?.ok ? loopPieces(pickedOutcome.proposal.points) : [];
 
   const startAdjust = (next: LoopAdjust, action: AdjustAction) => dispatch({ type: 'adjust', base: adjustBase, attempt, keyBase, next, action, style: picked });
-  const setAdjustFail = (line: string) => dispatch({ type: 'failLine', line });
+  const setAdjustFail = (line: string) => dispatch({ type: 'failLine', line, key });
   const reverse = () => {
     if (picked) dispatch({ type: 'reverse', base: adjustBase, style: picked });
   };
@@ -452,7 +452,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     trainingTarget,
     adjust,
     adjustLine: isAdjusted(adjust) ? adjustSummary(adjust, trainingTarget.distanceKm, picked) : '',
-    adjustFail: searchState.failLine,
+    adjustFail: failLineFor(searchState, key),
     canReverse: !!pickedOutcome?.ok && canReverse(pickedOutcome.proposal),
     reverse,
     stepLength,

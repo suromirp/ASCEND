@@ -13,13 +13,16 @@ export const ELEVATION_INTERVAL_M = 30;
 const c5 = (v: number) => Math.round(v * 100_000) / 100_000;
 const RAD = Math.PI / 180;
 
-// Een cirkel als achthoek [lon, lat], gesloten: Valhalla mijdt een stuk met `exclude_polygons`.
+// Een cirkel als achthoek [lon, lat], gesloten: Valhalla mijdt een stuk met `exclude_polygons`. De achthoek
+// ligt om de cirkel heen (straal gedeeld door cos 22,5 graden): een lus die de cirkel mijdt zoals
+// engine/routeAdjust.ts#crossesArea toetst, valt nooit af omdat hij tussen achthoek en cirkel liep.
 export function avoidPolygon(a: AvoidArea): [number, number][] {
   const ring: [number, number][] = [];
+  const r = a.radiusM / Math.cos(Math.PI / 8);
   for (let i = 0; i <= 8; i++) {
     const t = ((i % 8) / 8) * 2 * Math.PI;
-    const dLat = (a.radiusM * Math.cos(t)) / 111_195;
-    const dLon = (a.radiusM * Math.sin(t)) / (111_195 * Math.cos(a.lat * RAD));
+    const dLat = (r * Math.cos(t)) / 111_195;
+    const dLon = (r * Math.sin(t)) / (111_195 * Math.cos(a.lat * RAD));
     ring.push([c5(a.lon + dLon), c5(a.lat + dLat)]);
   }
   return ring;

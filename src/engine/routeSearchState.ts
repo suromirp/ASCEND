@@ -22,6 +22,7 @@ export const MEMORY_SIZE = 4;
 export interface PendingAdjust {
   base: string;
   attempt: number;
+  keyBase: string;
   // De sleutel van de bijgestuurde zoektocht.
   key: string;
   prev: LoopAdjust;
@@ -34,7 +35,9 @@ export interface SearchState {
   failure?: { key: string; kind: 'offline' | 'timeout' };
   adjust: { base: string; adjust: LoopAdjust };
   pending?: PendingAdjust;
+  // De regel als bijsturen niet lukte, met de sleutel waar hij bij hoort: bij een andere start of poging zwijgt hij.
   failLine: string;
+  failKey?: string;
 }
 
 export const INITIAL_SEARCH_STATE: SearchState = { memory: [], adjust: { base: '', adjust: NO_ADJUST }, failLine: '' };
@@ -53,7 +56,18 @@ export function answerFor(s: SearchState, key: string): SearchAnswer | 'busy' {
 
 export const needsSearch = (s: SearchState, key: string): boolean => answerFor(s, key) === 'busy';
 
-const remember = (s: SearchState, key: string, plans: RoutePlans): SearchState['memory'] => [{ key, plans }, ...s.memory.filter((m) => m.key !== key)].slice(0, MEMORY_SIZE);
+// Het antwoord van de training zelf (zonder bijsturing) valt er nooit uit: anders zoekt Zoals je training
+// na een paar keer Langer opnieuw (Warden).
+const isBase = (key: string) => key.endsWith(`|${adjustKey(NO_ADJUST)}`);
+function remember(s: SearchState, key: string, plans: RoutePlans): SearchState['memory'] {
+  const list = [{ key, plans }, ...s.memory.filter((m) => m.key !== key)];
+  const base = list.filter((m) => isBase(m.key));
+  const rest = list.filter((m) => !isBase(m.key)).slice(0, Math.max(0, MEMORY_SIZE - base.length));
+  return list.filter((m) => base.includes(m) || rest.includes(m));
+}
+
+// De regel als bijsturen niet lukte, alleen bij de sleutel waar hij bij hoort.
+export const failLineFor = (s: SearchState, key: string): string => (s.failKey === key ? s.failLine : '');
 
 export type SearchEvent =
   // Een antwoord van findRoutes; `currentKey` is de sleutel die nu geldt.
@@ -63,7 +77,7 @@ export type SearchEvent =
   // Andere kant op: geen zoektocht.
   | { type: 'reverse'; base: string; style: RouteStyle }
   | { type: 'reset'; base: string }
-  | { type: 'failLine'; line: string }
+  | { type: 'failLine'; line: string; key: string }
   // Het startpunt of de poging is anders dan die van de bijsturing die nog zoekt.
   | { type: 'drop' };
 
@@ -71,7 +85,7 @@ export type SearchEvent =
 function settle(s: SearchState, p: PendingAdjust, answer: SearchAnswer): SearchState {
   const outcome = settleAdjust(p.action, p.style, answer);
   if (outcome.keep) return { ...s, pending: undefined, memory: answer.kind === 'plans' ? remember(s, p.key, answer.plans) : s.memory };
-  return { ...s, pending: undefined, adjust: { base: p.base, adjust: p.prev }, failLine: outcome.line };
+  return { ...s, pending: undefined, adjust: { base: p.base, adjust: p.prev }, failLine: outcome.line, failKey: searchKey(p.keyBase, p.prev) };
 }
 
 export function searchReducer(s: SearchState, e: SearchEvent): SearchState {
@@ -87,7 +101,9 @@ export function searchReducer(s: SearchState, e: SearchEvent): SearchState {
     case 'adjust': {
       const prev = currentAdjust(s, e.base);
       const key = searchKey(e.keyBase, e.next);
-      const pending: PendingAdjust = { base: e.base, attempt: e.attempt, key, prev, style: e.style, action: e.action };
+      // Een tweede tik terwijl de vorige nog zoekt: terug gaat naar wat er voor de eerste gold, nooit naar een bijsturing die niet is nagekeken.
+      const prevChecked = s.pending && s.pending.base === e.base && s.pending.attempt === e.attempt ? s.pending.prev : prev;
+      const pending: PendingAdjust = { base: e.base, attempt: e.attempt, keyBase: e.keyBase, key, prev: prevChecked, style: e.style, action: e.action };
       const next: SearchState = { ...s, adjust: { base: e.base, adjust: e.next }, pending, failLine: '' };
       // Al eens gelukt (bijvoorbeeld Langer na Korter): meteen klaar, zonder zoektocht.
       const known = s.memory.find((m) => m.key === key);
@@ -101,11 +117,11 @@ export function searchReducer(s: SearchState, e: SearchEvent): SearchState {
     case 'reset':
       return { ...s, failLine: '', pending: undefined, adjust: { base: e.base, adjust: NO_ADJUST } };
     case 'failLine':
-      return { ...s, failLine: e.line };
+      return { ...s, failLine: e.line, failKey: e.key };
     case 'drop':
       // Zonder regel terug naar wat er voor die bijsturing gold: anders blijft er bij dat startpunt een
       // bijsturing staan die nooit is nagekeken.
-      return s.pending ? { ...s, pending: undefined, adjust: { base: s.pending.base, adjust: s.pending.prev } } : s;
+      return s.pending ? { ...s, pending: undefined, failLine: '', failKey: undefined, adjust: { base: s.pending.base, adjust: s.pending.prev } } : s;
   }
 }
 
