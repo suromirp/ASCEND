@@ -9,6 +9,22 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 22:40 Portugal (14 november)
+
+- Check-in: live vanavond: oude sportlogs, geen stille Thuis; vier bouwers (planner, horloge, routevorm, afbreker); nachtbranch claude/nacht, één livegang om 07:25.
+- Beter: de eigenaar kreeg zijn vragen apart onderaan met keuzeknoppen; vier besluiten in één minuut.
+- Slechter: de backlog liep een dag achter op wat live ging; voortaan opschonen bij elke livegang.
+- Gereedschap: AskUserQuestion voor beslissingen werkt beter dan een vraag in de tekst; potentie: per ochtend één set knoppen.
+- Werkstijl: 's nachts verzamelen en één keer live; overdag per functie.
+
+## 21:40 Amsterdam, 20:40 Portugal (14 november)
+
+- Check-in: om 20:50 Portugese tijd live (route bijsturen, UV, korte training); drie bouwers klaar (geen stille Thuis, planner, oude sportlogs), Warden kijkt.
+- Beter: de opdracht van de eigenaar ("stoppen met automatisch thuis") binnen drie minuten bij de bouwer die die bestanden al kende.
+- Slechter: drie klare bouwers stonden een half uur stil; ze melden zich niet vanzelf en ik had geen controle gepland.
+- Gereedschap: send_later van 30 minuten na elke start is het vangnet; potentie: de bouwer zelf een send_later naar de coördinator laten zetten als hij klaar is.
+- Werkstijl: tijden in de tijd waar de eigenaar is; reviews van planner en engine op Fable, de rest op Sonnet.
+
 ## 18:40 (14 november)
 
 - Check-in: Klein deel 2 live om 18:35; Route-kaart bij Warden, Buiten bij Lookout, Profielen klein en drie profielen geport na de vijfuurslimiet; vijf profielen binnen, punten A tot L in de Inbox.
