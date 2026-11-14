@@ -3,7 +3,9 @@
 //
 // - Duur: onder de helft van gepland is kort, dezelfde grens als een korte training
 //   (engine/shortTraining.ts#SHORT_TRAINING_SHARE).
-// - Wandeltempo: een "loop" van 10 min per km of trager is een wandeling.
+// - Wandeltempo: een "loop" van 10 min per km of trager is een wandeling, behalve op een loopband, met een klim
+//   van 30 m per km of meer, of bij een looptraining die geen rustige loop is (heuvel- of afdaaltraining met
+//   wandelend terug): een tempo zegt dan niets over de soort (Warden, 14 november).
 // - Hard: bij een rustige training (gepland hoogstens zone 2) een gemiddelde hartslag meer dan 5 slagen boven
 //   zone 2, of zonder hartslag een tempo 30 s per km sneller dan de snelle kant van je rustige tempo.
 //   Zonder hartslag en zonder tempo's is er geen oordeel: dan zegt de app niets over hard of rustig.
@@ -26,6 +28,8 @@ import { hasRole } from './templateRoles';
 export const WALK_PACE_SEC_KM = 600;
 export const HARD_HR_MARGIN = 5;
 export const HARD_PACE_MARGIN_SEC = 30;
+// Vanaf deze klim per km is een traag tempo klimmen, geen wandelen.
+export const CLIMB_M_PER_KM = 30;
 // Onder een halve kilometer zegt een tempo niets.
 const MIN_PACE_KM = 0.5;
 
@@ -35,6 +39,8 @@ export interface MeasuredRun {
   km?: number;
   avgHr?: number;
   treadmill?: boolean;
+  // Gestegen meters.
+  gainM?: number;
 }
 
 // De keuze Soort van een loop toetsen (AppSettings.watchKindCheck): standaard aan.
@@ -61,9 +67,17 @@ export function paceText(secKm: number): string {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 }
 
+// Alleen het tempo: 10 min per km of trager. Vanzelf afvinken weigert hierop altijd (engine/autoTick.ts).
 export function isWalkPaced(run: MeasuredRun): boolean {
   const pace = paceSecKm(run);
   return pace !== undefined && pace >= WALK_PACE_SEC_KM;
+}
+
+// Het tempo van een wandeling, en niets wat dat tempo anders verklaart: geen loopband en geen klim van 30 m per
+// km of meer. Toets de soort nooit alleen op tempo.
+export function isWalkLike(run: MeasuredRun): boolean {
+  if (!isWalkPaced(run) || run.treadmill) return false;
+  return !(run.gainM !== undefined && run.km !== undefined && run.gainM / run.km >= CLIMB_M_PER_KM);
 }
 
 export interface HardJudgment {
@@ -114,7 +128,7 @@ export function isShortFor(minutes: number, plannedMinutes: number): boolean {
 // Wat het horloge mat volgens een log van een bron.
 export function measuredOfLog(log: Pick<SessionLog, 'durationMinutes' | 'cardioData' | 'outdoorData'>): MeasuredRun {
   const m = log.cardioData ?? log.outdoorData;
-  return { minutes: log.durationMinutes, km: m?.distanceKm, avgHr: m?.avgHeartRate, treadmill: m?.environment === 'treadmill' };
+  return { minutes: log.durationMinutes, km: m?.distanceKm, avgHr: m?.avgHeartRate, treadmill: m?.environment === 'treadmill', gainM: m?.elevationGainM };
 }
 
 // Een log die hard was bij een rustige training: voor de zin na afronden.
@@ -131,11 +145,13 @@ export function hardLogOnEasy(
 // Kan een losse log van een bron achteraf voor deze training staan (engine/looseLog.ts#sameLinkKind)? Een
 // loop of tocht van minder dan de helft van de training niet, en een log in wandeltempo niet voor een loop.
 // Kracht niet: sets uit MacroFactor volgen hun eigen lengte.
+// Een looptraining die geen rustige loop is (heuvels, afdalen met wandelend terug) mag traag zijn. Zonder programma
+// (de koppelkaart geeft het niet mee): rustig of niet hangt aan de zones van de template, niet aan de week.
 export function logSizeFits(log: SessionLog, template: SessionTemplate, plannedMinutes: number): boolean {
   if (template.type === 'strength' || log.type === 'strength') return true;
   const run = measuredOfLog(log);
   if (isShortFor(run.minutes, plannedMinutes)) return false;
-  if (templateSport(template) === 'running' && isWalkPaced(run)) return false;
+  if (templateSport(template) === 'running' && isEasyRun(template, log.completedDate, null) && isWalkLike(run)) return false;
   return true;
 }
 

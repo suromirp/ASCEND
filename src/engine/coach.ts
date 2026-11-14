@@ -151,7 +151,7 @@ function painReaction(log: SessionLog, history: SessionLog[]): string | undefine
 // One reaction after ticking a training off, based on what you filled in. `fit`: je hartslagzones en rustige
 // tempo, zodat een harde loop bij een rustige training niet "zoals gepland" heet (engine/activityFit.ts).
 export const EXTRA_TRAINING_TEXT = 'Opgeslagen als extra training.';
-export function coachReaction(log: SessionLog, template: SessionTemplate | undefined, program: Program | null | undefined, history: SessionLog[] = [], fit: Pick<FitContext, 'hr' | 'easyPace'> = {}): string {
+export function coachReaction(log: SessionLog, template: SessionTemplate | undefined, program: Program | null | undefined, history: SessionLog[] = [], fit: Pick<FitContext, 'hr' | 'easyPace'> & { sessionMinutes?: number } = {}): string {
   const pain = painReaction(log, history);
   if (pain) return pain;
   if (!template || template.type === 'recovery') return 'Goed dat je bewoog. Licht en rustig is precies de bedoeling van vandaag.';
@@ -161,12 +161,12 @@ export function coachReaction(log: SessionLog, template: SessionTemplate | undef
     return `Zwaarder dan gepland (zwaarte ${log.rpe}, gepland tot ${top}). Volgende keer iets rustiger? Voelt het weer zo, neem dan de korte versie.`;
   }
   if (log.subjectiveFeel === 'worse') return 'Slechter dan normaal, dat hoort erbij. Houd het morgen rustig; goed slapen en eten kan helpen.';
-  // Hard gelopen bij een rustige training: gemeten, niet ingevuld.
+  // Hard gelopen bij een rustige training: gemeten, niet ingevuld. Los (niet gepland) is het harder dan rustig.
   const hard = hardLogOnEasy(log, template, program, fit);
-  if (hard) return `Harder dan gepland: ${hardText(hard)}. Een rustige training loop je in zone 2.`;
+  if (hard) return log.plannedSessionId ? `Harder dan gepland: ${hardText(hard)}. Een rustige training loop je in zone 2.` : `Harder dan rustig: ${hardText(hard)}.`;
   // Eén drempel, één zin: onder de helft van de werksets of de duur is een korte training (engine/shortTraining.ts).
   // De oude tweede drempel (70 procent, "Korter dan gepland") is vervallen (besluit 2026-11-14-profielen-klein.md).
-  if (isShortTraining(log, template, program)) return SHORT_TRAINING_TEXT;
+  if (isShortTraining(log, template, program, fit.sessionMinutes)) return SHORT_TRAINING_TEXT;
   // Niet gepland is ook niet "zoals gepland" of "lichter dan gepland" (profiel horloge, punt 2).
   if (!log.plannedSessionId) return EXTRA_TRAINING_TEXT;
   if (log.rpe !== undefined && top !== undefined && top > EASY_RPE_TOP && log.rpe <= top - 3) {

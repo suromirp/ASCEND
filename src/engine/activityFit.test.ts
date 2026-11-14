@@ -5,7 +5,7 @@ import { pendingProposals, proposeImport, type ExternalActivity, type ImportFit 
 import { autoTickMatch, planAutoTicks } from './autoTick';
 import { coachReaction, EXTRA_TRAINING_TEXT } from './coach';
 import { linkCandidates } from './missedTraining';
-import { hardEffort, isEasyRun, isWalkPaced, logSizeFits, paceText, resolveWatchKindCheck } from './activityFit';
+import { hardEffort, isEasyRun, isWalkLike, isWalkPaced, logSizeFits, paceText, resolveWatchKindCheck } from './activityFit';
 import { SHORT_TRAINING_TEXT } from './shortTraining';
 
 // Alles nagemaakt: stand, lopen en hartslag.
@@ -238,5 +238,87 @@ describe('na de review', () => {
     const c = act('c', { start: `${DAY}T18:00:00`, durationSec: 15 * 60, distanceM: 2500 });
     const proposals = pendingProposals([a, b, c], [], plan, templates, [], undefined, FIT);
     expect(proposals.map((p) => [p.activity.externalId, p.match?.session.id])).toEqual([['test:b', 'easy'], ['test:c', undefined], ['test:a', undefined]]);
+  });
+});
+
+describe('herstelronde Warden: tempo zegt niets over de soort bij klimmen of op een loopband', () => {
+  // Heuvelsprints en afdalen, met wandelend terug: 45 min, 4 km, 180 m klim (11:15 per km).
+  const hills = act('hills', { durationSec: 45 * 60, distanceM: 4000, elevationGainM: 180, avgHeartRate: undefined });
+  const flatSlow = act('flat', { durationSec: 45 * 60, distanceM: 4000, elevationGainM: 20, avgHeartRate: undefined });
+
+  it('een heuveltraining met wandelend terug blijft een loop en hoort bij de geplande training', () => {
+    const plan = [planned('h', 'tpl_hills_descent', DAY, { plannedMinutes: 45 })];
+    const p = proposeImport(flatSlow, plan, templates, [], undefined, undefined, FIT)!;
+    // Ook zonder klim: een niet-rustige looptraining van die dag mag traag zijn.
+    expect(p.activity.kind).toBe('run');
+    expect(p.match?.session.id).toBe('h');
+    expect(p.fitNote).toBeUndefined();
+    // Vanzelf afvinken mag weigeren.
+    expect(autoTickMatch(flatSlow, plan, templates, [], DAY, undefined, FIT)).toBeUndefined();
+  });
+
+  it('een klim van 30 m per km of meer: geen wandeling, ook zonder planning', () => {
+    expect(proposeImport(hills, [], templates, [], undefined, undefined, FIT)!.activity.kind).toBe('run');
+    expect(proposeImport(act('c29', { durationSec: 45 * 60, distanceM: 4000, elevationGainM: 116 }), [], templates, [], undefined, undefined, FIT)!.activity.kind).toBe('hike');
+    expect(proposeImport(act('c30', { durationSec: 45 * 60, distanceM: 4000, elevationGainM: 120 }), [], templates, [], undefined, undefined, FIT)!.activity.kind).toBe('run');
+  });
+
+  it('een loopband met helling: geen wandeling', () => {
+    const treadmill = act('tm', { durationSec: 40 * 60, distanceM: 3500, treadmill: true, avgHeartRate: undefined });
+    expect(proposeImport(treadmill, [planned('easy', 'tpl_easy_run', DAY)], templates, [], undefined, undefined, FIT)!.match?.session.id).toBe('easy');
+  });
+
+  it('bij een rustige loop wel: een vlakke wandeling blijft een wandeling', () => {
+    expect(proposeImport(flatSlow, [planned('easy', 'tpl_easy_run', DAY)], templates, [], undefined, undefined, FIT)!.activity.kind).toBe('hike');
+  });
+
+  it('achteraf te koppelen aan de heuveltraining, niet aan een rustige duurloop', () => {
+    const log = watchLog('hl', { completedDate: '2026-11-04', completedAt: '2026-11-04T11:00:00Z', durationMinutes: 45, cardioData: { durationMinutes: 45, distanceKm: 4, elevationGainM: 20, source: 'garmin' } });
+    expect([...linkCandidates({ plannedSessions: [planned('h', 'tpl_hills_descent', '2026-11-03', { plannedMinutes: 45 })], logs: [log], templates, today: '2026-11-05' }).keys()]).toEqual(['h']);
+    expect(linkCandidates({ plannedSessions: [planned('e', 'tpl_easy_run', '2026-11-03')], logs: [log], templates, today: '2026-11-05' }).size).toBe(0);
+    const climbing = { ...log, cardioData: { ...log.cardioData!, elevationGainM: 180 } } as SessionLog;
+    expect(logSizeFits(climbing, byId('tpl_easy_run'), 40)).toBe(true);
+    const onBand = { ...log, cardioData: { ...log.cardioData!, environment: 'treadmill' } } as SessionLog;
+    expect(logSizeFits(onBand, byId('tpl_easy_run'), 40)).toBe(true);
+  });
+});
+
+describe('grenzen', () => {
+  it('precies 10:00 per km is wandeltempo, 9:59 niet', () => {
+    expect(isWalkPaced({ minutes: 50, km: 5 })).toBe(true);
+    expect(isWalkPaced({ minutes: 49.9, km: 5 })).toBe(false);
+  });
+  it('157 bpm bij zone 2 tot 151 is hard, 156 niet', () => {
+    expect(hardEffort({ minutes: 40, km: 7, avgHr: 157 }, FIT)?.value).toBe(157);
+    expect(hardEffort({ minutes: 40, km: 7, avgHr: 156 }, FIT)).toBeUndefined();
+  });
+  it('een losse rustige log die hard was: harder dan rustig, niet harder dan gepland', () => {
+    const log = watchLog('loose', { durationMinutes: 44, cardioData: { durationMinutes: 44, distanceKm: 10, avgHeartRate: 172, source: 'garmin' } });
+    expect(coachReaction(log, byId('tpl_easy_run'), null, [], FIT)).toBe('Harder dan rustig: gemiddeld 172 bpm, zone 2 gaat tot 151.');
+  });
+  it('kort toetst aan de geplande minuten van de sessie', () => {
+    const log = watchLog('s20', { plannedSessionId: 'easy', durationMinutes: 20, cardioData: { durationMinutes: 20, distanceKm: 3.5, avgHeartRate: 140, source: 'garmin' } });
+    expect(coachReaction(log, byId('tpl_easy_run'), null, [], { ...FIT, sessionMinutes: 30 })).toBe('Gedaan zoals gepland. Zo bouw je op.');
+    expect(coachReaction(log, byId('tpl_easy_run'), null, [], { ...FIT, sessionMinutes: 60 })).toBe(SHORT_TRAINING_TEXT);
+  });
+});
+
+describe('twee trainingen en drie activiteiten op één dag', () => {
+  it('elke training krijgt de activiteit die het best past, de derde komt los', () => {
+    const plan = [planned('easy', 'tpl_easy_run', DAY, { plannedMinutes: 40 }), planned('long', 'tpl_long_run', DAY, { plannedMinutes: 80, order: 1 })];
+    const warm = act('warm', { start: `${DAY}T06:50:00`, durationSec: 8 * 60, distanceM: 1300 });
+    const short = act('short', { start: `${DAY}T07:00:00`, durationSec: 41 * 60 });
+    const long = act('long', { start: `${DAY}T17:00:00`, durationSec: 82 * 60, distanceM: 13000 });
+    const proposals = pendingProposals([warm, short, long], [], plan, templates, [], undefined, FIT);
+    const by = Object.fromEntries(proposals.map((p) => [p.activity.externalId, p.match?.session.id]));
+    expect(by).toEqual({ 'test:short': 'easy', 'test:long': 'long', 'test:warm': undefined });
+  });
+});
+
+describe('klimgrens', () => {
+  it('29,9 m per km is wandelen, 30 klimmen; zonder afstand geen klimuitzondering nodig', () => {
+    expect(isWalkLike({ minutes: 50, km: 4, gainM: 119.6 })).toBe(true);
+    expect(isWalkLike({ minutes: 50, km: 4, gainM: 120 })).toBe(false);
+    expect(isWalkLike({ minutes: 50, gainM: 300 })).toBe(false);
   });
 });

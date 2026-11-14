@@ -73,8 +73,11 @@ const stepOf = (steps: PlanStep[] | undefined, kind: PlanStep['kind']): PlanStep
 
 const lowerFirst = (text: string): string => text.charAt(0).toLowerCase() + text.slice(1);
 
-// Dezelfde trainingen, hard gelopen: zonder zone en zonder "rustig".
-const HARD_TITLE: Record<string, string> = { tpl_easy_run: 'Duurloop', tpl_hill_easy: 'Heuvelloop', tpl_recovery_run: 'Herstelloop' };
+// Dezelfde trainingen, hard gelopen: de naam zonder zone en zonder "rustig" ("Rustige duurloop" wordt "Duurloop").
+function hardTitle(name: string): string {
+  const bare = name.replace(/^rustige\s+/i, '');
+  return bare.charAt(0).toUpperCase() + bare.slice(1);
+}
 
 // Rustige, doorlopende trainingen: de zone of het gevoel staat voorop.
 const STEADY_TITLE: Record<string, string> = {
@@ -118,7 +121,7 @@ function titleOf(input: ActivityTextInput): string {
   const climb = climbText(log);
 
   // Hard gelopen bij een rustige training: de naam, zonder "zone 2" of "rustig" (profiel horloge, 14 november).
-  if (template && STEADY_TITLE[id]) return input.fit && hardLogOnEasy(log, template, program, input.fit) ? (HARD_TITLE[id] ?? name) : STEADY_TITLE[id];
+  if (template && STEADY_TITLE[id]) return input.fit && hardLogOnEasy(log, template, program, input.fit) ? hardTitle(name) : STEADY_TITLE[id];
 
   switch (template ? id : undefined) {
     case 'tpl_hills_descent':

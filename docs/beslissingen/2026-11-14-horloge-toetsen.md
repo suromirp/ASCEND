@@ -5,7 +5,7 @@ Status: aangenomen
 
 ## Besluit
 
-Een activiteit van je horloge wordt getoetst voordat de app hem vanzelf afvinkt, aan een training koppelt of "zoals gepland" noemt (`src/engine/activityFit.ts`). Drie toetsen: duur onder de helft van gepland is kort (de grens van `isShortTraining`), een loop van 10 min per km of trager is een wandeling, en bij een rustige training (gepland hoogstens zone 2) is een gemiddelde hartslag meer dan 5 slagen boven zone 2 hard; zonder hartslag telt het tempo (30 s per km sneller dan de snelle kant van je rustige tempo, niet op de loopband), zonder beide is er geen oordeel.
+Een activiteit van je horloge wordt getoetst voordat de app hem vanzelf afvinkt, aan een training koppelt of "zoals gepland" noemt (`src/engine/activityFit.ts`). Drie toetsen: duur onder de helft van gepland is kort (de grens van `isShortTraining`), een loop van 10 min per km of trager is een wandeling (niet op een loopband, niet bij een klim van 30 m per km of meer, en niet als hij als loop past op een looptraining van die dag die geen rustige loop is; aanvulling na Warden, 14 november), en bij een rustige training (gepland hoogstens zone 2) is een gemiddelde hartslag meer dan 5 slagen boven zone 2 hard; zonder hartslag telt het tempo (30 s per km sneller dan de snelle kant van je rustige tempo, niet op de loopband), zonder beide is er geen oordeel.
 
 Wat er gebeurt:
 

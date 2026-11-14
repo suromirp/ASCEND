@@ -27,8 +27,9 @@ import type { RunDynamics, StreamKind } from '../models/activityDetail';
 import { round } from '../utils/round';
 import { findModalityByKey } from '../data/modalities';
 import { formatHoursMinutesNL } from '../utils/dates';
+import { isTestOrRace } from './templateRoles';
 import type { Program } from '../models/program';
-import { fitIssueText, hardEffort, isEasyRun, isShortFor, isWalkPaced, paceSecKm, wholeMinutes, type FitContext, type FitIssue, type MeasuredRun } from './activityFit';
+import { fitIssueText, hardEffort, isEasyRun, isShortFor, isWalkLike, paceSecKm, wholeMinutes, type FitContext, type FitIssue, type MeasuredRun } from './activityFit';
 
 export type ExternalActivityKind = 'run' | 'hike' | 'ride' | 'strength' | 'other';
 
@@ -242,14 +243,26 @@ export function measuredOf(activity: ExternalActivity): MeasuredRun {
     km: activity.distanceM !== undefined && activity.distanceM > 0 ? activity.distanceM / 1000 : undefined,
     avgHr: activity.avgHeartRate,
     treadmill: activity.treadmill,
+    gainM: activity.elevationGainM,
   };
 }
 
 // Een loop in wandeltempo is een wandeling, als de keuze Soort van een loop toetsen aan staat (standaard).
-// Alleen de soort verandert; wat het horloge mat blijft gelijk.
-export function effectiveActivity(activity: ExternalActivity, fit: ImportFit | undefined): ExternalActivity {
+// Alleen de soort verandert; wat het horloge mat blijft gelijk. Niet op een loopband, niet bij klimmen
+// (engine/activityFit.ts#isWalkLike) en niet als hij als loop past op een looptraining van die dag die geen
+// rustige loop is (`runMatch`: een heuveltraining met wandelend terug).
+export function effectiveActivity(activity: ExternalActivity, fit: ImportFit | undefined, runMatch?: PlannedMatch): ExternalActivity {
   if (!fit || fit.kindCheck === false || activity.kind !== 'run' || activity.countedSport || activity.otherType) return activity;
-  return isWalkPaced(measuredOf(activity)) ? { ...activity, kind: 'hike' } : activity;
+  if (runMatch && !isEasyRun(runMatch.template, runMatch.session.scheduledDate, fit.program)) return activity;
+  return isWalkLike(measuredOf(activity)) ? { ...activity, kind: 'hike' } : activity;
+}
+
+// Waar een harde losse loop onder komt: een looptraining van matige intensiteit, geen test of wedstrijd en geen
+// eigen sport; de kortste eerst, bij gelijke lengte de volgorde van het programma (in het standaardprogramma de Tempoloop).
+export function hardRunTemplate(templates: SessionTemplate[]): SessionTemplate | undefined {
+  return templates
+    .filter((t) => templateSport(t) === 'running' && t.baseStressProfile?.intensity === 'moderate' && !isTestOrRace(t) && !t.customSport && !countedSportOfTemplate(t))
+    .sort((a, b) => a.durationVariants.full - b.durationVariants.full)[0];
 }
 
 // Hard gelopen bij een rustige geplande training: dan geen vinkje vanzelf en geen "rustig".
@@ -498,11 +511,12 @@ export function proposeImport(
   if (logs.some((l) => l.externalId === original.externalId)) return undefined;
   const matched = matchedIds ?? new Set(pairWithManualLogs([original], logs).map((p) => p.activity.externalId));
   if (matched.has(original.externalId)) return undefined;
-  const activity = effectiveActivity(original, fit);
-  const match = proposeMatch(activity, planned, templates, logs, places, fit?.exclude);
+  const runMatch = original.kind === 'run' ? proposeMatch(original, planned, templates, logs, places, fit?.exclude) : undefined;
+  const activity = effectiveActivity(original, fit, runMatch);
+  const match = activity === original ? runMatch ?? proposeMatch(activity, planned, templates, logs, places, fit?.exclude) : proposeMatch(activity, planned, templates, logs, places, fit?.exclude);
   // Een harde losse loop is geen rustige duurloop: met de keuze Soort van een loop toetsen een tempoloop.
   const hardLoose = !match && fit && fit.kindCheck !== false && activity.kind === 'run' ? hardEffort(measuredOf(activity), fit) : undefined;
-  const hardTemplate = hardLoose ? templates.find((t) => t.id === 'tpl_tempo_run') : undefined;
+  const hardTemplate = hardLoose ? hardRunTemplate(templates) : undefined;
   const template = match?.template ?? hardTemplate ?? fallbackTemplate(activity, templates);
   // A sport that does not count (yet): nothing to save it under, so no proposal.
   if ((activity.countedSport || activity.otherType) && !template) return undefined;

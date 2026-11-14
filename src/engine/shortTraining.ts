@@ -27,6 +27,9 @@ export function isShortTraining(
   log: Pick<SessionLog, 'variant' | 'durationMinutes' | 'completedDate' | 'strengthData' | 'source' | 'externalId' | 'manualMeasured'>,
   template: SessionTemplate,
   program: Program | null | undefined,
+  // De geplande duur van de sessie zelf (PlannedSession.plannedMinutes), als die er is: de maat die de kaart Van je
+  // horloge ook gebruikt. Alleen voor de hele training (`full` of een horlogelog).
+  sessionMinutes?: number,
 ): boolean {
   // Een test of wedstrijd heeft zijn eigen oordeel: een afgebroken test is geen korte training.
   if (template.type === 'recovery' || hasRole(template, 'test') || hasRole(template, 'race')) return false;
@@ -39,6 +42,7 @@ export function isShortTraining(
   const minutes = loggedMinutes(log);
   // Een log van je horloge (`custom`) heeft geen eigen versie: hij toetst aan de hele training, zoals gepland
   // (profiel horloge, 14 november).
-  const plannedMinutes = resolveVariantDuration(template, variant === 'custom' ? 'full' : variant, log.completedDate, program);
+  const whole = variant === 'custom' || variant === 'full';
+  const plannedMinutes = whole && sessionMinutes !== undefined && sessionMinutes > 0 ? sessionMinutes : resolveVariantDuration(template, whole ? 'full' : variant, log.completedDate, program);
   return minutes !== undefined && plannedMinutes > 0 && minutes < plannedMinutes * SHORT_TRAINING_SHARE;
 }
