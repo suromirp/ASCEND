@@ -1438,6 +1438,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Akkoord', text: 'verandert alleen je doeltijd, niets anders in je planning.' },
     ],
   },
+  racedag: {
+    title: 'Racedag-blad',
+    lead: 'In de laatste week voor een 10 km staat op Vandaag en bij je doel één rij naar het blad Racedag.',
+    points: [
+      { head: 'In het blad', text: 'de start, het weer thuis met wat je aantrekt, het inlopen en een tempo per km voor je doeltijd en je verwachte tijd.' },
+      { head: 'De dag erna', text: 'een korte terugblik met je tijd uit het log.' },
+      { head: 'Alleen tekst', text: 'je planning en je doel veranderen er niet door.' },
+    ],
+  },
   afdaalklok: {
     title: 'Afdaalklok',
     lead: 'Na een afdaling zijn je bovenbenen een paar weken beschermd tegen de spierpijn van de volgende.',

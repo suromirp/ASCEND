@@ -972,8 +972,11 @@ describe('rowSummary: rijen met een blad', () => {
     expect(rowSummary('vaardigheidsdoelen', facts()).checked).toBe(true);
     const off = facts({ settings: { ...facts().settings, showSkillGoals: false } });
     expect(rowSummary('vaardigheidsdoelen', off).checked).toBe(false);
-    expect(rowSummary('bundel-ascend', off).value).toBe('Seizoensstrook');
-    expect(rowSummary('bundel-ascend', facts({ settings: { ...facts().settings, showSkillGoals: false, showSeasonStrip: false } }))).toMatchObject({ value: 'Niets extra', dim: true });
+    expect(rowSummary('bundel-ascend', off).value).toBe('2 van 3 aan');
+    expect(rowSummary('bundel-ascend', facts({ settings: { ...facts().settings, showSkillGoals: false, showSeasonStrip: false, raceDay: false } }))).toMatchObject({ value: 'Niets extra', dim: true });
+    // Racedag-blad: standaard aan, in hetzelfde blad.
+    expect(rowSummary('racedag', facts()).checked).toBe(true);
+    expect(rowSummary('racedag', facts({ settings: { ...facts().settings, raceDay: false } })).checked).toBe(false);
   });
 
   it('Tochten zegt bij een tocht als hoofddoel dat er geen andere zijn', () => {

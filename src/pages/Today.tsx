@@ -94,6 +94,7 @@ import { mainGoal as findMainGoal } from '../engine/mainGoal';
 import { planShorter, resolveShorterToday, shorterAdvice } from '../engine/shorterToday';
 import type { Advice } from '../engine/adviceEngine';
 import { ProposalSheet } from '../components/ProposalSheet';
+import { RaceDayLine } from '../components/RaceDay';
 
 function TodayContent() {
   const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
@@ -521,6 +522,9 @@ function TodayContent() {
           direct onder de missie zodat je ziet dat je week veranderde zonder te scrollen (regel 6). */}
       {forecastSummary && <ForecastAdjustmentBanner summary={forecastSummary} onDismiss={dismissForecastSummary} />}
       {placement.underMission.map(around)}
+      {/* Racedag: in de laatste week voor een 10 km en de dag erna één rij naar het blad, direct onder de missie
+          (engine/raceDay.ts, docs/beslissingen/2026-11-14-racedag-10km.md). */}
+      <RaceDayLine />
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />
       {/* Twee van de drie getallen van je horloge wijken af op de ochtend van een zware training (engine/morningProposal.ts). */}

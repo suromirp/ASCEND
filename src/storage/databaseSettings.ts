@@ -396,6 +396,10 @@ export interface AppSettings {
   // van wat je aan eten meeneemt vanaf 90 minuten lopen of wandelen en per tochtdag. Absent = aan.
   // Optional and additive, so no migration step; a backup keeps only a boolean (storage/backupClean.ts).
   fuelOnTheGo?: boolean;
+  // "Racedag-blad" (engine/raceDay.ts, docs/beslissingen/2026-11-14-racedag-10km.md): in de laatste week voor
+  // een 10 km een rij op Vandaag en bij het doel met het blad Racedag, en de dag erna een terugblik. Absent = aan.
+  // Optional and additive, so no migration step; a backup keeps only a boolean (storage/backupClean.ts).
+  raceDay?: boolean;
   // "Reeksen in back-up": the full series travel in the backup file (base64). Absent = on,
   // because the source may stop giving them out; off makes a small backup. The copies taken
   // before an import never hold them. Optional and additive.
