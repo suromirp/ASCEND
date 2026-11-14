@@ -64,11 +64,13 @@ export function startFailureReason(reason: StartFailure): string {
 
 // Je plek lukte niet: nooit stil terug op Thuis of op Ongeveer (eigenaar 14 november, op reis: "Hij moet
 // dus stoppen met automatisch thuis"). Thuis kan duizenden kilometers verderop liggen. De regel zegt
-// waarom, en jij kiest: Opnieuw, Thuis of Andere plek (besluit 2026-11-14-geen-stille-thuis.md).
-export const askStartLine = (reason: StartFailure): string => `${startFailureReason(reason)} Kies waar de lus begint.`;
+// waarom, en jij kiest: Opnieuw in het vak, of Thuis of Andere plek in de chips erboven (besluit
+// 2026-11-14-geen-stille-thuis.md). Thuis alleen als die er is.
+export const askStartLine = (reason: StartFailure, homeOffered: boolean): string =>
+  `${startFailureReason(reason)} Probeer het opnieuw, of kies hierboven ${homeOffered ? 'Thuis of Andere plek' : 'Andere plek'}.`;
 
 // De regel bovenaan het paneel Route voorstellen.
-export const START_LINE_HERE = 'De lus begint waar je nu bent.';
+// Alleen nog als bewaker in de tests: deze zin komt na een mislukte plek nooit meer voor (geen stille Thuis).
 export const START_LINE_EXACT = 'De lus begint bij Thuis.';
 export const START_LINE_TAP = 'De lus begint bij het punt dat je koos.';
 export const START_LINE_NO_HOME = 'Je hebt nog geen Thuis. De lus begint waar je nu bent.';
@@ -128,7 +130,7 @@ export function planStart(i: StartPlanInput): StartPlan {
   const noHome = i.mode === 'exact' && !home && i.picked === undefined;
   if (i.found.ok) return { kind: 'here', chip: 'here', point: i.found.point, line: noHome ? START_LINE_NO_HOME : '' };
   // Je plek lukte niet: vragen, nooit stil terug op Thuis of Ongeveer.
-  return { kind: 'ask', chip: 'here', line: askStartLine(i.found.reason), reason: i.found.reason, homeOffered: !!home };
+  return { kind: 'ask', chip: 'here', line: askStartLine(i.found.reason, !!home), reason: i.found.reason, homeOffered: !!home };
 }
 
 function planUnread(i: StartPlanInput): StartPlan {
@@ -139,12 +141,38 @@ function planUnread(i: StartPlanInput): StartPlan {
   if (i.mode === 'approx') return { kind: 'approx', chip: 'here', line: START_LINE_APPROX };
   if (!i.found) return { kind: 'locate', chip: 'here', line: START_LINE_HOME_UNREAD };
   if (i.found.ok) return { kind: 'here', chip: 'here', point: i.found.point, line: START_LINE_HOME_UNREAD };
-  return { kind: 'ask', chip: 'here', line: `${startFailureReason(i.found.reason)} Thuis kon niet gelezen worden. Kies waar de lus begint.`, reason: i.found.reason, homeOffered: false };
+  return { kind: 'ask', chip: 'here', line: `${startFailureReason(i.found.reason)} Thuis kon niet gelezen worden. Probeer het opnieuw, of kies hierboven Andere plek.`, reason: i.found.reason, homeOffered: false };
 }
 
 // Of er gezocht mag worden: er is een startpunt. Niet zolang je plek nog bepaald wordt, en niet bij de
 // vraag (`ask`): dan wacht de zoektocht op je tik.
 export const startReady = (plan: StartPlan | undefined): boolean => plan !== undefined && plan.kind !== 'locate' && plan.kind !== 'ask';
+
+// Wat de regie van Route uit een plan haalt, in één pure functie (Warden 14 november): of er gezocht mag
+// worden, de vraag als je plek niet lukte, de regel onder de chips, en of de stap Je plek bepalen erbij
+// hoort. Die stap staat er alleen zolang je plek bepaald wordt of als er een verse plek van deze poging
+// is (`here`): na een mislukte plek en een tik op Thuis is er geen plek die je afgevinkt ziet staan.
+export interface StartView {
+  ready: boolean;
+  ask: { line: string; homeOffered: boolean } | undefined;
+  line: string;
+  hereMode: boolean;
+}
+export function startView(plan: StartPlan | undefined): StartView {
+  const ask = plan?.kind === 'ask' ? { line: plan.line, homeOffered: plan.homeOffered } : undefined;
+  return {
+    ready: startReady(plan),
+    ask,
+    // De reden staat in het vak van de vraag, niet nog eens onder de chips.
+    line: ask ? '' : plan?.line ?? '',
+    hereMode: plan?.kind === 'locate' || plan?.kind === 'here',
+  };
+}
+
+// Of er nu gezocht mag worden: niet bij sluiten, niet voor de Briefing het toestaat, niet zonder ja op de
+// eerste vraag, niet zonder startpunt (ook niet bij de vraag), niet als het antwoord er al is, en niet zonder plaats.
+export const maySearch = (i: { closing: boolean; enabled: boolean; asked: boolean; ready: boolean; searchNeeded: boolean; hasPlace: boolean }): boolean =>
+  !i.closing && i.enabled && i.asked && i.ready && i.searchNeeded && i.hasPlace;
 
 // Of de plek nu gevraagd wordt: alleen bij `locate` en hoogstens één keer per poging. Opnieuw is een
 // nieuwe poging, dus precies één nieuwe vraag.

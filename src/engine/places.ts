@@ -321,21 +321,25 @@ export const OTHER_PLACE_LABEL = OTHER_CHIP.label;
 // Welke chip het is: een bewaarde plek op zijn id, de rest op zijn soort (Thuis is 'home').
 export const startChipKey = (c: StartChip): string => (c.kind === 'place' && c.placeId ? c.placeId : c.kind);
 
-export interface StartPair {
+// Start bij in vaste chips met vaste namen op een vaste plek (eigenaar 14 november, schermopname op reis):
+// Waar je nu bent, Thuis (alleen als die er is) en Andere plek. Er verspringt nooit een knop onder je
+// vinger: een gekozen plek verandert de naam van een chip niet. Andere plek staat gekozen bij een bewaarde
+// of gezochte plek die niet Thuis is; de naam daarvan staat in `other.name`, voor een regel eronder.
+export interface StartTrio {
   hereChosen: boolean;
-  // De tweede chip: de naam van de plek die nu geldt (Thuis, een bewaarde of een gezochte plek), anders Andere plek.
-  other: { label: string; chosen: boolean; aria: string };
+  home?: { chip: StartChip; chosen: boolean };
+  other: { chosen: boolean; name?: string };
 }
 
-// Start bij in twee chips: Waar je nu bent, en een tweede chip die de naam draagt van de plek die nu
-// geldt. Een instelling die bij Thuis start zet Thuis op die chip. `chosen` is de sleutel van
-// startChoices (startChipKey); een onbekende sleutel valt terug op Waar je nu bent.
-export function startPair(chips: readonly StartChip[], chosen: string): StartPair {
+export function startTrio(chips: readonly StartChip[], chosen: string): StartTrio {
+  const home = chips.find((c) => c.kind === 'home');
   const picked = chosen === 'here' ? undefined : chips.find((c) => startChipKey(c) === chosen);
-  const label = picked?.label ?? OTHER_PLACE_LABEL;
+  const homeChosen = picked?.kind === 'home';
+  const otherChosen = picked !== undefined && !homeChosen;
   return {
     hereChosen: picked === undefined,
-    other: { label, chosen: picked !== undefined, aria: label === OTHER_PLACE_LABEL ? label : `${OTHER_PLACE_LABEL}: ${label}` },
+    ...(home ? { home: { chip: home, chosen: homeChosen } } : {}),
+    other: otherChosen ? { chosen: true, name: picked.label } : { chosen: false },
   };
 }
 

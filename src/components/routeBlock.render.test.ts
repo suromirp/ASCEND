@@ -49,10 +49,21 @@ describe('het blok met de route in de Briefing', () => {
     expect(html).toContain('touch-action:pan-y');
     expect(html).toContain('>Groter<');
   });
-  it('twee chips bij Start bij, ook met een Thuis: geen chip valt af', () => {
-    const html = render(model());
-    const group = html.slice(html.indexOf('aria-label="Start bij"'));
-    expect((group.slice(0, group.indexOf('</div>')).match(/<button/g) ?? []).length).toBe(2);
+  it('vaste chips bij Start bij: Waar je nu bent, Thuis (als die er is) en Andere plek, met vaste namen', () => {
+    const chipsIn = (html: string) => {
+      const group = html.slice(html.indexOf('aria-label="Start bij"'));
+      return group.slice(0, group.indexOf('</div>'));
+    };
+    const withHome = chipsIn(render(model()));
+    expect((withHome.match(/<button/g) ?? []).length).toBe(3);
+    expect(withHome.indexOf('Waar je nu bent')).toBeLessThan(withHome.indexOf('>Thuis<'));
+    expect(withHome.indexOf('>Thuis<')).toBeLessThan(withHome.indexOf('Andere plek'));
+    // Thuis gekozen: de namen blijven gelijk, alleen de keuze verschuift.
+    const homeChosen = chipsIn(render(model({ startChip: 'home' })));
+    expect(homeChosen.replace(/aria-pressed="[a-z]+"/g, '')).toBe(withHome.replace(/aria-pressed="[a-z]+"/g, ''));
+    // Zonder Thuis: twee chips, Andere plek op dezelfde plaats achteraan.
+    const noHome = chipsIn(render(model({ startChips: [{ kind: 'here', label: 'Waar je nu bent' }, { kind: 'other', label: 'Andere plek' }] })));
+    expect((noHome.match(/<button/g) ?? []).length).toBe(2);
   });
   it('één lijn: op de kaart alleen de gekozen lus; zonder keuze alle lussen', () => {
     const routes = [{ style: 'adventure' as const, points: [] }, { style: 'simple' as const, points: [] }];
@@ -87,15 +98,16 @@ describe('het blok met de route in de Briefing', () => {
   it('geen toestemming voor je locatie: de vraag op de plek van de kaart (Opnieuw, Thuis, Andere plek), geen lus en geen stille Thuis', () => {
     const plan = planStart({ mode: 'here', home: { lat: 51.5, lon: 4.5 }, found: { ok: false, reason: 'denied' } });
     expect(plan.kind).toBe('ask');
-    const html = render(model({ stage: 'ask', ask: { line: askStartLine('denied'), homeOffered: true }, plans: undefined, okStyles: [], picked: undefined, pickedOutcome: undefined, mapRoutes: [] }));
-    expect(html).toContain(askStartLine('denied'));
+    const html = render(model({ stage: 'ask', ask: { line: askStartLine('denied', true), homeOffered: true }, plans: undefined, okStyles: [], picked: undefined, pickedOutcome: undefined, mapRoutes: [] }));
+    expect(html).toContain(askStartLine('denied', true));
     expect(html).toContain('>Opnieuw<');
-    expect(html).toContain('>Thuis<');
-    expect(html).toContain('>Andere plek<');
+    // Thuis en Andere plek staan één keer: als chip boven de vraag, niet nog eens in het vak.
+    expect(html.split('>Thuis<').length - 1).toBe(1);
+    expect(html.split('Andere plek<').length - 1).toBe(1);
     expect(html).not.toContain(START_LINE_EXACT);
     expect(html).not.toContain('Groter: de kaart met je lus');
     // Zonder Thuis: geen knop Thuis.
-    expect(render(model({ stage: 'ask', ask: { line: askStartLine('timeout'), homeOffered: false }, plans: undefined, okStyles: [], picked: undefined, pickedOutcome: undefined, mapRoutes: [] }))).not.toContain('>Thuis<');
+    expect(render(model({ stage: 'ask', startChips: [{ kind: 'here', label: 'Waar je nu bent' }, { kind: 'other', label: 'Andere plek' }], ask: { line: askStartLine('timeout', false), homeOffered: false }, plans: undefined, okStyles: [], picked: undefined, pickedOutcome: undefined, mapRoutes: [] }))).not.toContain('>Thuis<');
     expect(START_LOCATE_LIMIT_MS).toBeLessThanOrEqual(15_000);
   });
   it('Loopband of Afwisselen: geen kaart en geen Start bij', () => {

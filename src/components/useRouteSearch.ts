@@ -19,7 +19,7 @@ import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { resolveRouteStyle, roundStart, routeTarget } from '../engine/routeTarget';
 import { searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
-import { locateAnswerCounts, locateNow, planStart, startReady, resolveRouteStart, roundExact, roundHere, startFailureReason, type RouteStartMode, type StartPick } from '../engine/routeStart';
+import { locateAnswerCounts, locateNow, maySearch, planStart, startView, resolveRouteStart, roundExact, roundHere, startFailureReason, type RouteStartMode, type StartPick } from '../engine/routeStart';
 import { getRouteStartPoint, locateStartHere, saveRouteStartPoint, START_LOCATE_LIMIT_MS, startFromMap, type StartLocation } from '../storage/routeStart';
 import { homeFromStartPoint, savedStartChips, startChoices, type StartChip } from '../engine/places';
 import { placeLabel, placeToSave, savedAt, type FoundPlace } from '../engine/placeSearch';
@@ -29,6 +29,7 @@ import { makeId } from '../utils/id';
 import { todayISO } from '../utils/dates';
 import { searchLimitLine, searchSteps, type SearchStep } from '../engine/routeSearchSteps';
 import { loadMapLibre } from '../integrations/mapLibre';
+import { isOffline } from '../integrations/routing';
 import { routeSender } from '../storage/routeSend';
 import type { FileSender } from '../integrations/fileSender';
 import { withTimeout } from '../utils/withTimeout';
@@ -105,9 +106,8 @@ export interface RouteSearchModel {
   retry: () => void;
   // Je plek lukte niet: de reden, en of er een Thuis is om te kiezen. Geen zoektocht tot een tik.
   ask: { line: string; homeOffered: boolean } | undefined;
-  // Opnieuw: één nieuwe vraag om je plek (een nieuwe poging). Thuis: voor deze training.
+  // Opnieuw: één nieuwe vraag om je plek (een nieuwe poging).
   retryHere: () => void;
-  pickHome: () => void;
   // De regel als zoeken niet lukte: geen verbinding, of welke stap niet op tijd was.
   failLine: string;
   // De weg naar de app van je horloge op dit toestel; null: alleen GPX downloaden.
@@ -224,9 +224,10 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const plan = stored === undefined ? undefined : planStart({ mode, home: saved, homeUnread, picked: startPicked, tap: mapStart, place: startPlace?.point, found: hereFound });
   const chipKey = startPlace?.key ?? plan?.chip ?? (mode === 'exact' && saved ? 'home' : 'here');
   const chips = startChoices(mode, allPlaces, undefined, chipKey, startPlace?.key === 'other' ? startPlace.name : undefined).chips;
-  // Waar je nu bent: je plek komt als eerste stap in de zoekstand.
-  // Ook na een terugval op Thuis blijft je plek een (afgevinkte) stap: de stappen springen dan niet.
-  const hereMode = plan !== undefined && plan.kind !== 'tap' && plan.kind !== 'place' && (plan.kind === 'locate' || hereFound !== undefined);
+  // Wat het plan betekent (engine/routeStart.ts#startView): mag er gezocht worden, de vraag als je plek
+  // niet lukte, de regel, en of Je plek bepalen een stap is (alleen bij een verse plek van deze poging).
+  const start = startView(plan);
+  const hereMode = start.hereMode;
   const planKind = plan?.kind;
   const locatingHere = planKind === 'locate';
   const exactPoint = plan && 'point' in plan ? plan.point : undefined;
@@ -237,10 +238,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const terrainLat = terrainAt?.lat;
   const terrainLon = terrainAt?.lon;
   // Je plek lukte niet: vragen, niet zoeken (nooit stil terug op Thuis, besluit 2026-11-14-geen-stille-thuis.md).
-  const askPlan = plan?.kind === 'ask' ? plan : undefined;
-  const ready = startReady(plan);
-  // De reden staat in het vak van de vraag, niet nog eens onder de chips.
-  const startLine = askPlan ? '' : plan?.line ?? '';
+  const ready = start.ready;
+  const startLine = start.line;
   // Bijsturen hoort bij dit startpunt en deze training.
   const adjustBase = `${lat}|${lon}|${exactLat}|${exactLon}|${trainingTarget.distanceKm}|${trainingTarget.ascentM}`;
   const adjust = currentAdjust(searchState, adjustBase);
@@ -279,7 +278,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   });
 
   useEffect(() => {
-    if (closing || !enabled || !asked || !ready || !searchNeeded || lat === undefined || lon === undefined) return;
+    if (!maySearch({ closing, enabled, asked, ready, searchNeeded, hasPlace: lat !== undefined && lon !== undefined }) || lat === undefined || lon === undefined) return;
     const stop = new AbortController();
     // De kaartcode alvast laden, zodat de kaart er meteen is als de lussen er zijn. Een fout zegt de kaart zelf.
     void loadMapLibre().catch(() => undefined);
@@ -372,7 +371,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     consent,
     asked,
     savedKnown: saved !== undefined,
-    ask: !!askPlan,
+    ask: start.ask !== undefined,
     search,
   });
 
@@ -458,15 +457,14 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     sources,
     parts: routeSheetParts(stage, plans ? { anyOk: okStyles.length > 0, anyFailed: order.some((s) => !plans[s].ok) } : undefined),
     retry: () => setAttempt((n) => n + 1),
-    ask: askPlan ? { line: askPlan.line, homeOffered: askPlan.homeOffered } : undefined,
+    ask: start.ask,
     retryHere: () => {
       setMapStart(undefined);
       setStartPlace(undefined);
       setStartPicked('here');
       setAttempt((n) => n + 1);
     },
-    pickHome: () => pickStart({ kind: 'home', label: 'Thuis' }),
-    failLine: search !== 'busy' && search.kind !== 'plans' ? searchFailLine(search.kind, step?.key === key ? step.step : undefined, typeof navigator === 'undefined' || navigator.onLine !== false) : '',
+    failLine: search !== 'busy' && search.kind !== 'plans' ? searchFailLine(search.kind, step?.key === key ? step.step : undefined, !isOffline()) : '',
     sender,
     trainingTarget,
     adjust,

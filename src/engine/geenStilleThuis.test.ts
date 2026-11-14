@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { locateNow, planStart, startReady, START_LINE_EXACT, type StartFailure } from './routeStart';
+import { locateNow, maySearch, planStart, startReady, startView, START_LINE_EXACT, type StartFailure } from './routeStart';
 import { OFFLINE_LINE, SEARCH_TIMEOUT_LINE, TERRAIN_TIMEOUT_LINE, TIMEOUT_LINE, routeSheetParts, routeSheetStage, searchFailLine } from './routeSheet';
 
 // Eigenaar 14 november, op reis: "Hij moet dus stoppen met automatisch thuis." Nagemaakte punten.
@@ -56,5 +56,39 @@ describe('zoeken lukte niet: welke stap, en geen verbinding', () => {
     expect(searchFailLine('timeout', 'terrain', true)).toBe(TERRAIN_TIMEOUT_LINE);
     expect(searchFailLine('timeout', 'routes', true)).toBe(TIMEOUT_LINE);
     expect(searchFailLine('timeout', undefined, true)).toBe(SEARCH_TIMEOUT_LINE);
+  });
+});
+
+describe('startView en maySearch: wat de regie uit het plan haalt', () => {
+  const base = { closing: false, enabled: true, asked: true, searchNeeded: true, hasPlace: true };
+  it('de vraag: geen zoektocht, de reden alleen in het vak', () => {
+    const view = startView(planStart({ mode: 'here', home, found: { ok: false, reason: 'denied' } }));
+    expect(view.ready).toBe(false);
+    expect(view.ask?.homeOffered).toBe(true);
+    expect(view.line).toBe('');
+    expect(maySearch({ ...base, ready: view.ready })).toBe(false);
+  });
+  it('een startpunt: zoeken mag, tenzij het blad sluit, de Briefing het nog niet toestaat of het antwoord er al is', () => {
+    const view = startView(planStart({ mode: 'exact', home }));
+    expect(maySearch({ ...base, ready: view.ready })).toBe(true);
+    expect(maySearch({ ...base, ready: view.ready, closing: true })).toBe(false);
+    expect(maySearch({ ...base, ready: view.ready, enabled: false })).toBe(false);
+    expect(maySearch({ ...base, ready: view.ready, asked: false })).toBe(false);
+    expect(maySearch({ ...base, ready: view.ready, searchNeeded: false })).toBe(false);
+    expect(maySearch({ ...base, ready: view.ready, hasPlace: false })).toBe(false);
+  });
+});
+
+describe('de schermopname van de eigenaar (Briefing van een duurloop, op reis)', () => {
+  it('(a) een tik op Waar je nu bent: chip en regel wisselen meteen, nooit nog "De lus begint bij Thuis."', () => {
+    const plan = planStart({ mode: 'exact', home, picked: 'here' });
+    expect(plan).toEqual({ kind: 'locate', chip: 'here', line: '' });
+    expect(startView(plan).line).not.toContain(START_LINE_EXACT);
+  });
+  it('(b) Je plek bepalen is alleen een stap bij een verse plek van deze poging, niet na een mislukte plek en een tik op Thuis', () => {
+    expect(startView(planStart({ mode: 'here', home })).hereMode).toBe(true);
+    expect(startView(planStart({ mode: 'here', home, found: { ok: true, point: home } })).hereMode).toBe(true);
+    expect(startView(planStart({ mode: 'here', home, picked: 'home', found: { ok: false, reason: 'timeout' } })).hereMode).toBe(false);
+    expect(startView(planStart({ mode: 'here', home, found: { ok: false, reason: 'timeout' } })).hereMode).toBe(false);
   });
 });
