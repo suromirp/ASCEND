@@ -2,7 +2,8 @@
 // pauze (docs/beslissingen/2026-11-14-vakantie-en-ziek-niet-gemist.md; profielendoorloop ziek-vakantie 1 tot 3,
 // hardloper 3 en 7). Alles nagemaakt.
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { computeCurrentStreak } from './streak';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
@@ -231,6 +232,12 @@ describe('K: rustiger instap na ziekte en een vakantie', () => {
     expect(proposeReentry(input({ plannedSessions: withRace }))).toBeUndefined();
   });
 
+  it('ziekte voorbij maar het opbouwen loopt nog: geen voorstel, Weer opbouwen doet het al', () => {
+    // Beter op zondag 6 december na vijf dagen ziek: opbouwen tot en met 14 december.
+    const ill5: IllnessEpisode[] = [{ id: 'z3', kind: 'below_neck', startDate: '2026-12-01', endDate: '2026-12-06' }];
+    expect(proposeReentry(input({ illnessEpisodes: ill5, today: '2026-12-07' }))).toBeUndefined();
+  });
+
   it('niet tijdens het opbouwen na ziekte, en niet in de eerste twee weken van je plan', () => {
     const lateIll: IllnessEpisode[] = [{ id: 'z2', kind: 'below_neck', startDate: '2026-12-01', endDate: '2026-12-06' }];
     expect(proposeReentry(input({ illnessEpisodes: lateIll, leavePeriods: [] }))).toBeUndefined();
@@ -272,5 +279,26 @@ describe('K: rustiger instap na ziekte en een vakantie', () => {
     expect(old && 'reentryWeeks' in old).toBe(false);
     const mixed = cleanSettings({ reentryWeeks: [{ from: '2026-12-07', until: '2026-12-13', factor: 0.75 }, { from: 'x' }] }, counter);
     expect(mixed?.reentryWeeks).toEqual([{ from: '2026-12-07', until: '2026-12-13', factor: 0.75 }]);
+  });
+});
+
+describe('L: de reeks op Je stand breekt niet op een vakantie', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('een vakantie zonder sportschool over de weekgrens telt neutraal, vrije dagen niet', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-12-08T09:00:00+01:00'));
+    const two = [...week('2026-11-23'), ...week('2026-11-30')];
+    const logs = two.filter((s) => s.scheduledDate < '2026-11-27' && s.templateId !== 'tpl_herstel').map((s) => done(s));
+    const templateById = new Map(templates.map((t) => [t.id, t]));
+    const loggedIds = new Set(logs.map((l) => l.plannedSessionId));
+    const streak = (periods: LeavePeriod[]) => computeCurrentStreak(two, logs, {
+      templateById, programStart: program.startDate,
+      leftOut: leftOutOfCount(two, [], undefined, '2026-12-08', program.startDate, { periods, loggedIds }),
+    });
+    const away = streak([vacation('2026-11-27', '2026-12-06')]);
+    const free = streak([vacation('2026-11-27', '2026-12-06', 'free_days')]);
+    expect(away).toBeGreaterThan(0);
+    expect(free).toBe(0);
   });
 });
