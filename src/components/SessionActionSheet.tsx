@@ -13,7 +13,7 @@
 
 import type { AllowedPair } from '../engine/allowedPair';
 import type { PlaceReason } from '../engine/placeReason';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TextButton } from './TextButton';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
@@ -33,6 +33,7 @@ import { useWatchSheet } from './useWatchSheet';
 import { WATCH_SHEET_TEXT } from '../engine/watchSheet';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { useSheetClose } from '../utils/useSheetClose';
+import { saveOnCard, type ShownSaveNote } from '../state/logSave';
 import { PrimaryButton, SecondaryButton, InfoButton } from './ui';
 import { Icon } from './icons';
 import { SheetHeader } from './SheetHeader';
@@ -150,12 +151,21 @@ export function SessionActionSheet({
   // alternative for this session (it lists a bike modality). Hill
   // intervals and long hikes deliberately don't: their point is time and
   // climbing on foot.
-  const { settings, sessionLogs, logSession } = useAppData();
+  const { settings, sessionLogs, logSession, reportStorageError, refresh } = useAppData();
   const restMode = settings.restDayMode ?? 'rest';
   const bikeOption = isSportEnabled('cycling', settings.enabledSports) && templateSport(template) !== 'cycling'
     && (getModalities(template.id) ?? []).some((m) => isCyclingModality(m.key));
   const guide = getTrainingGuide(template.id);
-  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
+  // Vanaf het moment dat het blad begint te sluiten leest niemand zijn zin nog (state/logSave.ts#saveOnCard).
+  const leavingRef = useRef(false);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose, 200, undefined, () => { leavingRef.current = true; });
   // Het blad Je horloge (engine/watchSheet.ts): een rij in Andere keuzes, alleen voor een training die
   // nog moet komen en waarvoor het blad iets heeft (docs/visie/Ontwerp Info-blad.md, spoor 2).
   const [showWatch, setShowWatch] = useState(false);
@@ -172,6 +182,9 @@ export function SessionActionSheet({
   // saving it; otherwise its minutes are what the "Gedaan" step proposes.
   const [macroFactor, setMacroFactor] = useState<MacroFactorSource>();
   const [saving, setSaving] = useState(false);
+  // De uitkomst van Opslaan (MacroFactor) als er (nog) geen log staat; alleen mislukt is amber.
+  const [saveNote, setSaveNote] = useState<ShownSaveNote>();
+  const lateOutstanding = useRef(new Set<string>());
   useEffect(() => {
     if (!quickComplete || completedLog) return;
     let live = true;
@@ -328,7 +341,20 @@ export function SessionActionSheet({
       case 'saveWorkout':
         if (!waiting || saving) return;
         setSaving(true);
-        void logSession(workoutToDraft(waiting, template, session, allProfiles(settings.strengthModel))).then((ok) => (ok ? requestClose() : setSaving(false)));
+        if (!lateOutstanding.current.has(waiting.externalId)) setSaveNote(undefined);
+        // Het antwoord via state/logSave.ts#saveOnCard, zoals de kaart Van je horloge: het blad sluit alleen als
+        // het log er nu staat; anders blijft het open met een zin, en mag je opnieuw tikken.
+        void saveOnCard(logSession, workoutToDraft(waiting, template, session, allProfiles(settings.strengthModel)), waiting.externalId, {
+          outstanding: lateOutstanding.current,
+          mounted: () => mountedRef.current,
+          showing: () => !leavingRef.current,
+          report: reportStorageError,
+          apply: (next) => {
+            if (next.refresh) void refresh().catch(() => undefined);
+            setSaveNote(next.note);
+            if (next.closeSheet && !next.note) requestClose();
+          },
+        }).then(() => { if (mountedRef.current) setSaving(false); });
         return;
     }
   };
@@ -440,6 +466,9 @@ export function SessionActionSheet({
         ) : (<>
         <div>
           <PrimaryButton onClick={run(actions.main)} disabled={saving}>{label[actions.main]}</PrimaryButton>
+          {saveNote && actions.main === 'saveWorkout' && (
+            <p role="status" className="mt-2 text-[13px] leading-snug" style={{ color: saveNote.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{saveNote.text}</p>
+          )}
           {kind === 'quick' && actions.main === 'done' && (
             <p className="mt-2 text-center text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>{SETS_FROM_MACROFACTOR}</p>
           )}

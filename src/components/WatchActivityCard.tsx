@@ -11,7 +11,7 @@
 import { useTrainingPlaces } from './useTrainingPlaces';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { autoTickLog, cardAfterSave, failedNote, reportIfGone, saveLogWithin, LOG_SAVE_NOTE, type LogSaveOutcome } from '../state/logSave';
+import { autoTickLog, saveOnCard } from '../state/logSave';
 import {
   dismissActivity,
   getWatchState,
@@ -156,6 +156,11 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
   );
   const question = questions[0];
   const proposal = proposals[0];
+  // Het voorstel dat nu op de kaart staat; leeg als de kaart een vraag toont of niets.
+  const shownRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    shownRef.current = question ? undefined : proposal?.activity.externalId;
+  });
 
   async function answer(patch: FeedbackPatch) {
     if (!question || saving) return;
@@ -211,26 +216,22 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
     setSaving(true);
     // Een eerdere poging voor deze activiteit die na de grens nog loopt: haar zin blijft staan.
     if (!lateOutstanding.current.has(id)) setSaveNote(null);
-    // Het antwoord van logSession via state/logSave.ts#cardAfterSave. Staat er geen log, dan blijft het voorstel
-    // staan, blijft het blad Andere training open en zegt een zin wat er gebeurde. Opnieuw tikken kan: dezelfde
-    // activiteit komt nooit twee keer in je logboek (state/logSession.ts houdt een poging die onderweg is tegen).
-    let settled = false;
-    let writeError: unknown;
-    const show = (outcome: LogSaveOutcome, late = false) => {
-      if (settled) return;
-      settled = outcome !== 'slow';
-      if (late) lateOutstanding.current.delete(id);
-      const next = cardAfterSave(outcome, !late && lateOutstanding.current.has(id));
-      if (outcome === 'slow') lateOutstanding.current.add(id);
-      if (next.addDetail) addDetail(activity);
-      // Van tab gewisseld en dan nee: niemand ziet de zin hier, dus de fout gaat naar de melding bovenin.
-      if (outcome === 'failed') reportIfGone(aliveRef.current, writeError, reportStorageError);
-      if (!aliveRef.current) return;
-      if (next.closeSheet) setChoosing(false);
-      if (next.refresh) void refresh().catch(() => undefined);
-      setSaveNote(next.note ? { externalId: id, text: next.note === 'failed' ? failedNote(LOG_SAVE_NOTE.failed) : LOG_SAVE_NOTE[next.note], warn: next.note === 'failed' } : null);
-    };
-    show(await saveLogWithin(logSession, activityToDraft(activity, template, match?.session, chosenWayOf(activity, match, places)), { onLate: (result) => show(result, true), onWriteError: (err) => { writeError = err; } }));
+    // Het antwoord van logSession via state/logSave.ts#saveOnCard. Staat er geen log, dan blijft het voorstel
+    // staan, blijft het blad Andere training open en zegt een zin wat er gebeurde. Toont de kaart intussen een
+    // ander voorstel of een vraag, dan gaat een schrijffout naar de melding bovenin.
+    await saveOnCard(logSession, activityToDraft(activity, template, match?.session, chosenWayOf(activity, match, places)), id, {
+      outstanding: lateOutstanding.current,
+      mounted: () => aliveRef.current,
+      showing: () => shownRef.current === id,
+      report: reportStorageError,
+      onStored: () => addDetail(activity),
+      apply: (next) => {
+        if (next.closeSheet) setChoosing(false);
+        if (next.refresh) void refresh().catch(() => undefined);
+        // Alleen de zin van deze activiteit: een zin bij een ander voorstel blijft staan.
+        setSaveNote((current) => (next.note ? { externalId: id, ...next.note } : current?.externalId === id ? null : current));
+      },
+    });
     if (aliveRef.current) setSaving(false);
   }
 

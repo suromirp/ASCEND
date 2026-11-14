@@ -23,7 +23,7 @@ import { MachineWeightsForgeSheet } from './MachineWeights';
 import { NoteSheet } from './ExerciseSheets';
 import { FinishSheet } from './FinishSheet';
 import { AwaySheet, DiscardSheet, ExerciseMenuSheet, RirSheet, RowMenuSheet, SpotterSheet, SwapSheet, WorkoutMenuSheet } from './ForgeMenus';
-import { settleLogOutcome } from '../../state/logSession';
+import { reportIfGone, settleWithOwnNotice } from '../../state/logSave';
 import { forgeLogInput } from './forgeFinishLog';
 import { clock, type Rest } from './forgeWorkoutHelpers';
 import type { ForgeSheetState } from './useForgeSheets';
@@ -79,7 +79,7 @@ interface ForgeSheetsProps {
 
 export function ForgeSheets(p: ForgeSheetsProps) {
   const { sh, template, plannedSessionId, scheduledDate, date, program, initialVariant, readOnly, preview, strength, workout, effSlots, markCause, setExercise, saveStrength, onClose } = p;
-  const { logSession, settings, updateSettings, plannedSessions } = useAppData();
+  const { logSession, reportStorageError, settings, updateSettings, plannedSessions } = useAppData();
   const guide = getTrainingGuide(template.id);
   const menuEx = workout.find((e) => e.slot === sh.menuFor);
   const swapEx = workout.find((e) => e.slot === sh.swapFor);
@@ -220,13 +220,14 @@ export function ForgeSheets(p: ForgeSheetsProps) {
           plannedSessionId={plannedSessionId}
           scheduledDate={scheduledDate}
           onClose={() => sh.setFinishing(false)}
-          onSave={async (extra) => {
+          onSave={async (extra, seen) => {
             // Een geplande sessie die niet meer bestaat (planning vervangen): dan is het een losse training.
             const plannedStill = !!plannedSessionId && plannedSessions.some((s) => s.id === plannedSessionId);
             const input = forgeLogInput({ template, variant: initialVariant, extra, workout, readOnly, plannedSessionId, plannedStill, gymProfileId: strength.profile.id, forgeLog: p.forgeLog });
             // Een echte schrijffout gooit (het concept en het blad blijven, FinishSheet toont de fout); nee is
-            // alleen "staat al in je logboek", en dan is het concept klaar.
-            const saved = await settleLogOutcome(await logSession(input), input);
+            // alleen "staat al in je logboek", en dan is het concept klaar. Het blad zegt het zelf, dus geen
+            // melding bovenin erbij; leest niemand het blad nog (`seen`), dan gaat de fout wel bovenin.
+            const saved = await settleWithOwnNotice(logSession, input, (err) => reportIfGone(seen(), err, reportStorageError));
             p.dropDraft();
             if (saved) onClose();
             return saved;

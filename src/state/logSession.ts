@@ -34,6 +34,12 @@ export interface LogSessionDeps {
 // is (loggingInFlight) geeft de tweede nee.
 const pending = new Map<string, Promise<boolean>>();
 
+// Dezelfde losse training met een andere invulling (scherm dicht en weer open terwijl de eerste opslag hangt):
+// "dezelfde" is dezelfde training op dezelfde dag, zolang de eerste poging loopt. De tweede wacht op de eerste.
+// Staat dat log er, dan krijgt ze nee en komt er geen tweede bij; mislukte de eerste, dan schrijft ze zelf.
+// De belofte zegt of er in deze rij al een log geschreven is. Besluit 2026-11-14-opslaan-rest.md.
+const looseInFlight = new Map<string, Promise<boolean>>();
+
 // Een horloge-activiteit die nog onderweg is, met of zonder geplande training erbij: elke volgende poging met
 // dezelfde externalId krijgt nee, ook met een andere keuze (gepland of los, of een andere geplande training).
 // Kijken en schrijven is niet één transactie, dus zonder dit geeft opnieuw tikken twee logs van één activiteit.
@@ -42,6 +48,10 @@ const externalInFlight = new Set<string>();
 function pendingKey(input: LogSessionInput): string | undefined {
   if (input.plannedSessionId || input.externalId) return undefined;
   return `loose:${JSON.stringify(input)}`;
+}
+
+function looseKey(input: LogSessionInput): string {
+  return `${input.templateId}|${input.completedDate ?? todayISO()}`;
 }
 
 // Ja betekent: het log staat in de opslag. Nee: er is niets geschreven (het schrijven mislukte, of deze
@@ -60,8 +70,14 @@ export function runLogSession(input: LogSessionInput, opts: LogSessionOpts | und
   if (!key) return writeLog(input, opts, deps);
   const running = pending.get(key);
   if (running) return running;
-  const mine = writeLog(input, opts, deps).finally(() => pending.delete(key));
+  const day = looseKey(input);
+  const earlier = looseInFlight.get(day);
+  const mine = (earlier ? earlier.then((stored) => (stored ? false : writeLog(input, opts, deps))) : writeLog(input, opts, deps)).finally(() => pending.delete(key));
   pending.set(key, mine);
+  // `mine` gooit nooit: writeLog vangt zijn eigen fouten en geeft dan nee.
+  const row = earlier ? Promise.all([earlier, mine]).then(([before, now]) => before || now) : mine;
+  looseInFlight.set(day, row);
+  void row.then(() => { if (looseInFlight.get(day) === row) looseInFlight.delete(day); });
   return mine;
 }
 

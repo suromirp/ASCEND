@@ -84,10 +84,46 @@ describe('logSession: het log staat er, ook als een stap erna faalt', () => {
     expect(announced).toHaveLength(1);
   });
 
-  it('twee verschillende losse trainingen tegelijk: twee logs', async () => {
+  it('twee verschillende losse trainingen tegelijk (een andere training, of een andere dag): twee logs', async () => {
     const { deps } = makeDeps();
-    expect(await Promise.all([runLogSession(loose(), undefined, deps), runLogSession(loose({ durationMinutes: 55 }), undefined, deps)])).toEqual([true, true]);
+    expect(await Promise.all([runLogSession(loose(), undefined, deps), runLogSession(loose({ templateId: 'tpl_long_run' }), undefined, deps)])).toEqual([true, true]);
+    expect(await Promise.all([runLogSession(loose({ completedDate: '2026-11-10' }), undefined, deps), runLogSession(loose({ completedDate: '2026-11-11', durationMinutes: 55 }), undefined, deps)])).toEqual([true, true]);
+    expect(await SessionLogsRepo.getAll()).toHaveLength(4);
+  });
+
+  // Besluit 2026-11-14-opslaan-rest.md: dezelfde losse training is dezelfde training op dezelfde dag, zolang de eerste loopt.
+  it('scherm dicht en weer open met een andere invulling terwijl de eerste opslag hangt: een log, de tweede en derde nee', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    const { deps, errors } = makeDeps({ refresh: () => gate });
+    const first = runLogSession(loose(), undefined, deps);
+    const second = runLogSession(loose({ durationMinutes: 55 }), undefined, deps);
+    const third = runLogSession(loose({ durationMinutes: 70, rpe: 6 }), undefined, deps);
+    let secondDone = false;
+    void second.then(() => { secondDone = true; });
+    await new Promise((r) => setTimeout(r, 20));
+    // De tweede wacht: ze schrijft niets zolang de eerste loopt.
+    expect(secondDone).toBe(false);
+    release();
+    expect(await Promise.all([first, second, third])).toEqual([true, false, false]);
+    const logs = await SessionLogsRepo.getAll();
+    expect(logs).toHaveLength(1);
+    expect(logs[0].durationMinutes).toBe(40);
+    expect(errors).toEqual([]);
+    // Daarna is de dag weer vrij: een tweede keer gelopen is een nieuw log.
+    expect(await runLogSession(loose({ durationMinutes: 55 }), undefined, deps)).toBe(true);
     expect(await SessionLogsRepo.getAll()).toHaveLength(2);
+  });
+
+  it('de eerste losse opslag mislukt terwijl een andere invulling wacht: die schrijft dan zelf, een log en niets kwijt', async () => {
+    const { deps } = makeDeps();
+    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValueOnce(new Error('kapot'));
+    const first = runLogSession(loose(), undefined, deps);
+    const second = runLogSession(loose({ durationMinutes: 55 }), undefined, deps);
+    expect(await Promise.all([first, second])).toEqual([false, true]);
+    const logs = await SessionLogsRepo.getAll();
+    expect(logs).toHaveLength(1);
+    expect(logs[0].durationMinutes).toBe(55);
   });
 
   it('dezelfde losse training later nog eens, na een geslaagde poging: een nieuw log (twee keer gelopen)', async () => {
@@ -236,7 +272,8 @@ describe('settleLogOutcome: nee is niet altijd "staat er al"', () => {
   // De sportvraag en haar time-out: state/logSave.ts#saveLogThenChoice, getest in logSave.test.ts.
   it('Forge gebruikt settleLogOutcome en weegt nee niet meer als "al opgeslagen"', () => {
     const forge = forgeSrc;
-    expect(forge).toMatch(/settleLogOutcome\(await logSession\(/);
-    expect(forge.indexOf('settleLogOutcome(await')).toBeLessThan(forge.indexOf('p.dropDraft();\n            if (saved)'));
+    expect(forge).toMatch(/await settleWithOwnNotice\(logSession, input, \(err\) => reportIfGone\(seen\(\), err, reportStorageError\)\)/);
+    expect(forge).not.toMatch(/await logSession\(/);
+    expect(forge.indexOf('settleWithOwnNotice(logSession')).toBeLessThan(forge.indexOf('p.dropDraft();\n            if (saved)'));
   });
 });

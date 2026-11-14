@@ -35,6 +35,11 @@ export const LOG_SAVE_NOTE: Record<SaveNoteKind, string> = {
   already: ALREADY_LOGGED_NOTE,
 };
 
+// Opnieuw getikt terwijl een eerdere poging voor hetzelfde nog loopt. Nog eens tikken helpt dan niet: de eerste
+// houdt de training of activiteit vast tot ze antwoordt, en antwoordt ze nooit, dan tot de app opnieuw start.
+export const STILL_RUNNING_HELP = 'Kijk in je logboek of hij er staat. Staat hij er niet, sluit ASCEND dan af en open de app opnieuw.';
+export const LOG_STILL_RUNNING_NOTE = `${SLOW} ${STILL_RUNNING_HELP}`;
+
 // Een formulier met je eigen invulling. Na de grens blijft de knop uit, dus daar staat geen "probeer het nog eens".
 // `failedLoose`: een losse training heeft geen geplande training die een tweede log tegenhoudt, dus eerst kijken.
 export const FORM_SAVE_NOTE = {
@@ -54,8 +59,9 @@ let lastWriteError: unknown;
 type OnWriteError = (err: unknown) => void;
 
 // Alleen een aanroeper die zelf `onWriteError` geeft houdt de melding bovenin tegen. Een scherm dat het vergeet
-// is zo nooit stil: zijn schrijffout gaat gewoon naar reportStorageError.
-async function settleWithOwnNotice(logSession: LogSessionFn, input: LogSessionInput, onWriteError?: OnWriteError): Promise<boolean> {
+// is zo nooit stil: zijn schrijffout gaat gewoon naar reportStorageError. Ja: opgeslagen. Nee: stond er al.
+// Gooit LogNotSaved als er geen log is. Forge (forge/ForgeSheets.tsx) leest het zo, met zijn eigen woorden.
+export async function settleWithOwnNotice(logSession: LogSessionFn, input: LogSessionInput, onWriteError?: OnWriteError): Promise<boolean> {
   let writeError: unknown;
   const own = onWriteError ? { onWriteError: (err: unknown) => { writeError = err ?? new Error('Opslaan lukte niet.'); } } : undefined;
   try {
@@ -107,7 +113,8 @@ export const CHOICE_NOT_SAVED = {
 // schrijffout. Te lang, of nee omdat een eerdere poging nog loopt: de zin van de grens, het log kan nog landen.
 export function thrownSaveNote(err: unknown): { kind: 'slow' | 'failed' | 'choice'; text: string } {
   if (err instanceof ChoiceNotSaved) return { kind: 'choice', text: err.logStored ? CHOICE_NOT_SAVED.withLog : CHOICE_NOT_SAVED.alone };
-  if (err instanceof TimeoutError || (err instanceof LogNotSaved && lastWriteError === undefined)) return { kind: 'slow', text: LOG_SAVE_NOTE.slow };
+  if (err instanceof TimeoutError) return { kind: 'slow', text: LOG_SAVE_NOTE.slow };
+  if (err instanceof LogNotSaved && lastWriteError === undefined) return { kind: 'slow', text: LOG_STILL_RUNNING_NOTE };
   return { kind: 'failed', text: failedNote(LOG_SAVE_NOTE.failed) };
 }
 
@@ -118,10 +125,11 @@ export function resetFailedNotes(): void {
 }
 
 // Het blad Hoe ging het? leest ja of nee zelf (logForm/howDidItGo.ts#submitLog) en toont zijn eigen zin: ook
-// daar geen melding bovenin, en dezelfde teller. `onWriteError`: de fout, voor reportIfGone.
+// daar geen melding bovenin, en dezelfde teller. `onWriteError`: de fout, voor reportIfGone. Zonder `onWriteError`
+// gaat de fout gewoon bovenin, zoals bij settleWithOwnNotice: wie het vergeet is nooit stil.
 export async function logWithOwnNotice(logSession: LogSessionFn, input: LogSessionInput, onWriteError?: OnWriteError): Promise<boolean> {
   let writeError: unknown;
-  const saved = await logSession(input, { onWriteError: (err) => { writeError = err ?? new Error('Opslaan lukte niet.'); } });
+  const saved = await logSession(input, onWriteError ? { onWriteError: (err) => { writeError = err ?? new Error('Opslaan lukte niet.'); } } : undefined);
   failedInARow = saved ? 0 : failedInARow + 1;
   lastWriteError = saved ? undefined : writeError;
   if (!saved && writeError !== undefined) onWriteError?.(writeError);
@@ -153,19 +161,21 @@ export function closeClearsDraft(saving: boolean): boolean {
 
 // Wat de kaart Van je horloge doet bij welke uitkomst. Het blad Andere training gaat alleen dicht als het log
 // er staat. `earlierStillRunning`: een eerdere poging voor dezelfde activiteit is na de grens nog onderweg; een
-// tweede tik krijgt dan nee zonder log, maar mislukt is het niet, dus de zin van de grens blijft staan.
+// tweede tik krijgt dan nee zonder log, maar mislukt is het niet. De kaart zegt dan dat het opslaan nog loopt en
+// wat helpt, in plaats van nog eens "probeer het nog eens".
 export interface CardAfterSave {
   closeSheet: boolean;
   addDetail: boolean;
   refresh: boolean;
-  note?: SaveNoteKind;
+  // `stillRunning`: opnieuw getikt terwijl de eerdere poging nog loopt (LOG_STILL_RUNNING_NOTE).
+  note?: SaveNoteKind | 'stillRunning';
 }
 
 export function cardAfterSave(outcome: LogSaveOutcome, earlierStillRunning = false): CardAfterSave {
   if (outcome === 'saved') return { closeSheet: true, addDetail: true, refresh: false };
   // Het logboek op het scherm liep achter: opnieuw lezen, dan klopt het voorstel weer.
   if (outcome === 'already') return { closeSheet: true, addDetail: false, refresh: true, note: 'already' };
-  return { closeSheet: false, addDetail: false, refresh: false, note: outcome === 'failed' && !earlierStillRunning ? 'failed' : 'slow' };
+  return { closeSheet: false, addDetail: false, refresh: false, note: outcome === 'slow' ? 'slow' : earlierStillRunning ? 'stillRunning' : 'failed' };
 }
 
 // Een log opslaan en hoogstens `limitMs` wachten. Gooit nooit. Na de grens komt 'slow' terug en meldt `onLate`
@@ -190,6 +200,53 @@ export async function saveLogWithin(
     void attempt.then((result) => opts.onLate?.(result));
     return 'slow';
   }
+}
+
+// De zin op de kaart of het blad bij een uitkomst van cardAfterSave: alleen mislukt is amber.
+export interface ShownSaveNote { text: string; warn: boolean }
+
+export function cardNoteText(note: CardAfterSave['note']): ShownSaveNote | undefined {
+  if (!note) return undefined;
+  if (note === 'failed') return { text: failedNote(LOG_SAVE_NOTE.failed), warn: true };
+  return { text: note === 'stillRunning' ? LOG_STILL_RUNNING_NOTE : LOG_SAVE_NOTE[note], warn: false };
+}
+
+// Wat een kaart of blad aanlevert om een activiteit op te slaan (saveOnCard). `outstanding`: de activiteiten
+// waarvan een poging na de grens nog loopt; blijft bestaan zolang het scherm bestaat. `mounted`: het scherm
+// bestaat nog. `showing`: het toont deze activiteit nog (niet intussen een ander voorstel, niet aan het sluiten).
+export interface CardSaveUi {
+  outstanding: Set<string>;
+  mounted: () => boolean;
+  showing: () => boolean;
+  report: OnWriteError;
+  onStored?: () => void;
+  apply: (next: { closeSheet: boolean; refresh: boolean; note?: ShownSaveNote }) => void;
+  limitMs?: number;
+}
+
+// Opslaan op de kaart Van je horloge en op het blad van een training (MacroFactor): een poging, een zin. Elke
+// uitkomst komt hoogstens een keer op het scherm, ook de late. Een schrijffout die niemand ziet (scherm weg, of
+// het toont intussen iets anders) gaat naar de melding bovenin en laat geen zin achter die later nog opduikt.
+// Opnieuw tikken kan: dezelfde activiteit komt nooit twee keer in je logboek (logSession houdt haar tegen).
+export async function saveOnCard(logSession: LogSessionFn, input: LogSessionInput, id: string, ui: CardSaveUi): Promise<LogSaveOutcome> {
+  let settled = false;
+  let writeError: unknown;
+  const show = (outcome: LogSaveOutcome, late = false) => {
+    if (settled) return;
+    settled = outcome !== 'slow';
+    if (late) ui.outstanding.delete(id);
+    const next = cardAfterSave(outcome, !late && ui.outstanding.has(id));
+    if (outcome === 'slow') ui.outstanding.add(id);
+    if (next.addDetail) ui.onStored?.();
+    const seen = ui.mounted() && ui.showing();
+    if (outcome === 'failed') reportIfGone(seen, writeError, ui.report);
+    if (!ui.mounted()) return;
+    const unseenError = outcome === 'failed' && !seen && writeError !== undefined;
+    ui.apply({ closeSheet: next.closeSheet, refresh: next.refresh, note: unseenError ? undefined : cardNoteText(next.note) });
+  };
+  const outcome = await saveLogWithin(logSession, input, { limitMs: ui.limitMs, onLate: (result) => show(result, true), onWriteError: (err) => { writeError = err; } });
+  show(outcome);
+  return outcome;
 }
 
 // Vanzelf afvinken van het horloge: `onStored` (noteren dat ASCEND dit log zelf maakte) loopt alleen voor een

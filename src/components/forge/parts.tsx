@@ -181,8 +181,9 @@ export function LongPressRow({
 }
 
 // Een blad van onderen, met een titel en een sluitknop.
-export function ForgeSheet({ title, sub, onClose, children }: { title: string; sub?: string; onClose: () => void; children: (close: () => void) => ReactNode }) {
-  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
+// `onLeave`: het blad begint te sluiten (utils/useSheetClose.ts).
+export function ForgeSheet({ title, sub, onClose, onLeave, children }: { title: string; sub?: string; onClose: () => void; onLeave?: () => void; children: (close: () => void) => ReactNode }) {
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose, 200, undefined, onLeave);
   return (
     <Portal>
       <div className={`fixed inset-0 z-[60] flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
