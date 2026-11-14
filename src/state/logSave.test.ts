@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PlannedSessionsRepo, SessionLogsRepo, wipeAllData } from '../storage/database';
 import { runLogSession, LogNotSaved, type LogSessionDeps } from './logSession';
-import { autoTickLog, saveLogThenChoice, saveLogWithin, LOG_SAVE_NOTE, type LogSaveResult } from './logSave';
+import { autoTickLog, cardAfterSave, closeClearsDraft, formAfterSave, saveLogThenChoice, saveLogWithin, ALREADY_LOGGED_NOTE, LOG_SAVE_NOTE, type LogSaveResult } from './logSave';
+import { HOW_TEXT } from '../components/logForm/howDidItGo';
 import { TimeoutError } from '../utils/withTimeout';
 import type { LogSessionInput } from './appDataTypes';
 
@@ -216,19 +217,89 @@ describe('saveLogThenChoice: de sportvraag', () => {
   });
 });
 
-describe('de schermen lezen het antwoord van logSession via state/logSave.ts', () => {
-  it('het oude trainingsscherm: geen kale logSession meer, en de zinnen van het blad Hoe ging het?', () => {
-    expect(loggerSrc).not.toMatch(/await logSession\(/);
-    expect(loggerSrc).toMatch(/saveLogWithin\(logSession, input/);
-    for (const key of ['slow', 'failed', 'failedLoose', 'already']) expect(loggerSrc).toContain(`HOW_TEXT.${key}`);
+describe('formAfterSave en closeClearsDraft: wat het oude trainingsscherm doet', () => {
+  it('saved: concept weg, scherm dicht', () => {
+    expect(formAfterSave('saved')).toMatchObject({ clearDraft: true, close: true });
+    expect(formAfterSave('saved').note).toBeUndefined();
   });
 
-  it('de kaart Van je horloge: beide plekken, en het blad Andere training sluit niet meer in een finally', () => {
+  it('nee houdt de invoer: bij failed en already blijft het concept, het scherm open, de knop weer aan, met een zin', () => {
+    expect(formAfterSave('failed')).toEqual({ clearDraft: false, close: false, buttonOff: false, note: 'failed' });
+    expect(formAfterSave('already')).toEqual({ clearDraft: false, close: false, buttonOff: false, note: 'already' });
+  });
+
+  it('na de grens: de zin, het concept blijft, en de knop blijft uit tot het opslaan klaar is', () => {
+    expect(formAfterSave('slow')).toEqual({ clearDraft: false, close: false, buttonOff: true, note: 'slow' });
+  });
+
+  it('Terug of Annuleren wist het concept, behalve zolang er opgeslagen wordt', () => {
+    expect(closeClearsDraft(false)).toBe(true);
+    expect(closeClearsDraft(true)).toBe(false);
+  });
+
+  it('na de grens weggaan en dan een late nee: het concept is nooit gewist; een late ja wist het zelf', () => {
+    // De knop is uit zolang het opslaat, en dat is dezelfde stand waarin weggaan het concept laat staan.
+    expect(closeClearsDraft(formAfterSave('slow').buttonOff)).toBe(false);
+    expect(formAfterSave('failed').clearDraft).toBe(false);
+    expect(formAfterSave('saved').clearDraft).toBe(true);
+    // Na een nee die al op het scherm staat is Annuleren weer gewoon weggooien.
+    expect(closeClearsDraft(formAfterSave('failed').buttonOff)).toBe(true);
+  });
+
+  it('het scherm heeft voor elke zin woorden, en "stond er al" komt uit een bron', () => {
+    for (const kind of ['slow', 'failed', 'already'] as const) expect(HOW_TEXT[kind].length).toBeGreaterThan(10);
+    expect(HOW_TEXT.already).toBe(ALREADY_LOGGED_NOTE);
+    expect(LOG_SAVE_NOTE.already).toBe(ALREADY_LOGGED_NOTE);
+  });
+});
+
+describe('cardAfterSave: wat de kaart Van je horloge doet', () => {
+  it('saved: blad dicht, het profiel wordt opgehaald, geen zin', () => {
+    expect(cardAfterSave('saved')).toEqual({ closeSheet: true, addDetail: true, refresh: false });
+  });
+
+  it('nee zonder log: het blad Andere training blijft open, met de foutzin', () => {
+    expect(cardAfterSave('failed')).toEqual({ closeSheet: false, addDetail: false, refresh: false, note: 'failed' });
+  });
+
+  it('na de grens: het blad blijft open, met de zin van de grens', () => {
+    expect(cardAfterSave('slow')).toEqual({ closeSheet: false, addDetail: false, refresh: false, note: 'slow' });
+  });
+
+  it('een tweede tik terwijl de eerste na de grens nog loopt: niet "lukte niet", de zin van de grens blijft', () => {
+    expect(cardAfterSave('failed', true).note).toBe('slow');
+    expect(cardAfterSave('failed', true).closeSheet).toBe(false);
+  });
+
+  it('stond er al: blad dicht, logboek opnieuw lezen, geen profiel ophalen', () => {
+    expect(cardAfterSave('already')).toEqual({ closeSheet: true, addDetail: false, refresh: true, note: 'already' });
+    expect(cardAfterSave('already', true).note).toBe('already');
+  });
+});
+
+describe('de schermen lezen het antwoord van logSession via state/logSave.ts', () => {
+  it('het oude trainingsscherm: geen kale logSession, de beslissing uit formAfterSave, weggaan via closeClearsDraft', () => {
+    expect(loggerSrc).not.toMatch(/await logSession\(/);
+    expect(loggerSrc).toMatch(/saveLogWithin\(logSession, input/);
+    expect(loggerSrc).toMatch(/formAfterSave\(outcome\)/);
+    expect(loggerSrc).toMatch(/if \(closeClearsDraft\(savingRef\.current\)\) form\.clearDraft\(\);/);
+    // Het concept wordt nergens anders gewist dan bij weggaan en bij een log dat er staat.
+    expect(loggerSrc.match(/form\.clearDraft\(\)/g)).toHaveLength(2);
+    expect(loggerSrc).toMatch(/if \(next\.clearDraft\) form\.clearDraft\(\);/);
+    expect(loggerSrc).toMatch(/setSaving\(next\.buttonOff\)/);
+  });
+
+  it('de kaart Van je horloge: beide plekken, de beslissing uit cardAfterSave, het blad sluit alleen daarop', () => {
     expect(watchSrc).not.toMatch(/await logSession\(/);
     expect(watchSrc).toMatch(/autoTickLog\(logSession,/);
     expect(watchSrc).toMatch(/saveLogWithin\(logSession,/);
-    expect(watchSrc).not.toMatch(/finally \{\s*setSaving\(false\);\s*setChoosing\(false\);/);
+    expect(watchSrc).toMatch(/cardAfterSave\(outcome,/);
+    expect(watchSrc).toMatch(/if \(next\.closeSheet\) setChoosing\(false\);/);
+    // Het blad gaat verder alleen dicht via zijn eigen Annuleren (onClose).
+    expect(watchSrc.match(/setChoosing\(false\)/g)).toHaveLength(2);
     expect(watchSrc).toMatch(/LOG_SAVE_NOTE\[/);
+    // De zin staat vast onderin het blad, in beeld bij een lange lijst.
+    expect(watchSrc).toMatch(/sticky bottom-0[^\n]*\n\s*\{saving \? <SaveNoteLine/);
   });
 
   it('de sportvraag: beide bladen via saveLogThenChoice', () => {

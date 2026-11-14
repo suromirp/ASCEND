@@ -15,12 +15,59 @@ export type LogSaveOutcome = LogSaveResult | 'slow';
 
 export const LOG_SAVE_LIMIT_MS = 10_000;
 
+// Welke zin een scherm toont als er (nog) geen nieuw log staat.
+export type SaveNoteKind = Exclude<LogSaveOutcome, 'saved'>;
+
+// "Stond er al": één zin voor de kaart Van je horloge, het oude trainingsscherm en het blad Hoe ging het?
+// (components/logForm/howDidItGo.ts#HOW_TEXT leest hem hier).
+export const ALREADY_LOGGED_NOTE = 'Deze training staat al als gedaan. Er komt geen tweede log bij.';
+
 // De zinnen bij een kaart die een activiteit opslaat (dezelfde woorden als elders in de app).
-export const LOG_SAVE_NOTE: Record<Exclude<LogSaveOutcome, 'saved'>, string> = {
+export const LOG_SAVE_NOTE: Record<SaveNoteKind, string> = {
   failed: 'Opslaan lukte niet. Probeer het zo nog eens.',
   slow: 'Opslaan duurt langer dan verwacht. Probeer het zo nog eens.',
-  already: 'Deze training staat al in je logboek. Er is niets dubbel opgeslagen.',
+  already: ALREADY_LOGGED_NOTE,
 };
+
+// Wat het oude trainingsscherm doet bij welke uitkomst. Het concept gaat alleen weg en het scherm sluit alleen
+// als het log er staat. Na de grens (slow) blijft de knop uit tot het opslaan klaar is: een losse training
+// heeft geen sleutel die een tweede log tegenhoudt.
+export interface FormAfterSave {
+  clearDraft: boolean;
+  close: boolean;
+  buttonOff: boolean;
+  note?: SaveNoteKind;
+}
+
+export function formAfterSave(outcome: LogSaveOutcome): FormAfterSave {
+  if (outcome === 'saved') return { clearDraft: true, close: true, buttonOff: true };
+  if (outcome === 'slow') return { clearDraft: false, close: false, buttonOff: true, note: 'slow' };
+  return { clearDraft: false, close: false, buttonOff: false, note: outcome };
+}
+
+// Terug of Annuleren op het oude trainingsscherm wist het concept, behalve zolang er opgeslagen wordt: na de
+// grens is weggaan de enige uitweg, en als het late antwoord nee is moet je invulling er nog staan. Lukt het
+// alsnog, dan wist die uitkomst het concept zelf.
+export function closeClearsDraft(saving: boolean): boolean {
+  return !saving;
+}
+
+// Wat de kaart Van je horloge doet bij welke uitkomst. Het blad Andere training gaat alleen dicht als het log
+// er staat. `earlierStillRunning`: een eerdere poging voor dezelfde activiteit is na de grens nog onderweg; een
+// tweede tik krijgt dan nee zonder log, maar mislukt is het niet, dus de zin van de grens blijft staan.
+export interface CardAfterSave {
+  closeSheet: boolean;
+  addDetail: boolean;
+  refresh: boolean;
+  note?: SaveNoteKind;
+}
+
+export function cardAfterSave(outcome: LogSaveOutcome, earlierStillRunning = false): CardAfterSave {
+  if (outcome === 'saved') return { closeSheet: true, addDetail: true, refresh: false };
+  // Het logboek op het scherm liep achter: opnieuw lezen, dan klopt het voorstel weer.
+  if (outcome === 'already') return { closeSheet: true, addDetail: false, refresh: true, note: 'already' };
+  return { closeSheet: false, addDetail: false, refresh: false, note: outcome === 'failed' && !earlierStillRunning ? 'failed' : 'slow' };
+}
 
 // Een log opslaan en hoogstens `limitMs` wachten. Gooit nooit. Na de grens komt 'slow' terug en meldt `onLate`
 // later hoe het afliep, zodat het scherm een log dat alsnog landt niet tegenspreekt.

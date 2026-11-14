@@ -3,6 +3,7 @@
 // docs/beslissingen/2026-11-12-hoe-ging-het.md.
 
 import type { SessionLog } from '../../models/training';
+import { ALREADY_LOGGED_NOTE } from '../../state/logSave';
 
 export const HOW_TEXT = {
   title: 'Hoe ging het?',
@@ -23,7 +24,7 @@ export const HOW_TEXT = {
   // Een losse training heeft geen geplande training die een tweede log tegenhoudt: eerst kijken. Sinds
   // besluit 2026-11-12-dubbel-log.md zegt logSession ja zodra het log geschreven is; deze regel blijft als voorzorg.
   failedLoose: 'Opslaan lukte niet. Kijk eerst in je logboek of hij er toch staat; je invulling staat er nog.',
-  already: 'Deze training staat al als gedaan. Er komt geen tweede log bij.',
+  already: ALREADY_LOGGED_NOTE,
 } as const;
 
 // De grens in tijd voor Opslaan. Daarna zegt het blad dat het lang duurt; de knop blijft uit tot het

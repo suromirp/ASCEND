@@ -6,7 +6,7 @@ import { asksDoneOn } from './logForm/formRules';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, RpeField } from './logForm/LogFormParts';
 import { HowDidItGoSheet } from './HowDidItGoSheet';
 import { HOW_TEXT } from './logForm/howDidItGo';
-import { saveLogWithin, type LogSaveResult } from '../state/logSave';
+import { closeClearsDraft, formAfterSave, saveLogWithin, type LogSaveOutcome } from '../state/logSave';
 import { briefingEntry } from '../engine/briefing';
 import { NumberField } from './NumberField';
 import type { SessionTemplate, SessionVariant } from '../models/training';
@@ -81,9 +81,11 @@ function GeneralLogger({
   const { today, plan, conditioningSteps, exercises, shape, values, reachedForm } = form;
   const { variant, setLogs, guidanceMode, modalityKey } = values;
   const selectedModality = shape.selectedModality;
-  // Annuleren of terug gooit het concept weg; herladen niet.
+  // Annuleren of terug gooit het concept weg; herladen niet. Zolang er opgeslagen wordt blijft het staan
+  // (state/logSave.ts#closeClearsDraft): komt het antwoord later als nee, dan staat je invulling er nog.
+  const savingRef = useRef(false);
   const requestClose = () => {
-    form.clearDraft();
+    if (closeClearsDraft(savingRef.current)) form.clearDraft();
     closeSheet();
   };
   // The planned session behind this screen: the line about the watch is about it.
@@ -130,26 +132,26 @@ function GeneralLogger({
     }
     setConfirmLong(false);
     setSaveNote(null);
+    savingRef.current = true;
     setSaving(true);
-    // Het antwoord van logSession via state/logSave.ts: het concept gaat alleen weg als het log er staat. Staat
-    // er geen log, dan blijft het scherm open met alles wat je invulde, en zegt een zin onderaan waarom.
+    // Het antwoord van logSession via state/logSave.ts#formAfterSave: het concept gaat alleen weg als het log er
+    // staat. Staat er geen log, dan blijft het scherm open met alles wat je invulde, en zegt een zin onderaan
+    // waarom. Na de grens in tijd loopt het opslaan nog: je ziet dat, en de knop blijft uit tot het klaar is,
+    // zodat een tweede tik nooit een tweede log maakt (zoals het blad Hoe ging het?). Terug en Annuleren werken.
     let settled = false;
-    const settle = (result: LogSaveResult) => {
-      settled = true;
-      if (result === 'saved') {
-        form.clearDraft();
-        if (alive.current) onClose();
-        return;
-      }
+    const show = (outcome: LogSaveOutcome) => {
+      if (settled) return;
+      settled = outcome !== 'slow';
+      const next = formAfterSave(outcome);
+      savingRef.current = next.buttonOff;
+      if (next.clearDraft) form.clearDraft();
       if (!alive.current) return;
-      setSaving(false);
-      setSaveNote({ text: result === 'already' ? HOW_TEXT.already : plannedSessionId ? HOW_TEXT.failed : HOW_TEXT.failedLoose, warn: result === 'failed' });
+      if (next.close) return onClose();
+      setSaving(next.buttonOff);
+      const text = next.note === 'failed' ? (plannedSessionId ? HOW_TEXT.failed : HOW_TEXT.failedLoose) : next.note ? HOW_TEXT[next.note] : undefined;
+      setSaveNote(text ? { text, warn: next.note === 'failed' } : null);
     };
-    const outcome = await saveLogWithin(logSession, input, { onLate: settle });
-    // Na de grens in tijd loopt het opslaan nog: je ziet dat, en de knop blijft uit tot het klaar is, zodat een
-    // tweede tik nooit een tweede log maakt (zoals het blad Hoe ging het?). Terug en Annuleren werken gewoon.
-    if (outcome !== 'slow') settle(outcome);
-    else if (!settled && alive.current) setSaveNote({ text: HOW_TEXT.slow, warn: false });
+    show(await saveLogWithin(logSession, input, { onLate: show }));
   }
 
   const brief = buildSessionBrief(template, scheduledDate ?? today, program, {

@@ -37,6 +37,18 @@ Niets.
 
 Zet de drie aanroepen terug op `await logSession(...)` en haal `src/state/logSave.ts` weg. Er is geen opgeslagen vorm veranderd.
 
+## Aanvulling na review (Warden en Lookout, 14 november)
+
+Terug en Annuleren. Het oude trainingsscherm wiste het concept bij elk weggaan. Na de grens is weggaan de enige uitweg, en als het late antwoord dan nee is, was alles weg. Nu wist weggaan het concept alleen als er niet opgeslagen wordt (`closeClearsDraft`), zoals het blad Hoe ging het?. Lukt het opslaan alsnog, dan wist die uitkomst het concept zelf.
+
+Nooit twee keer. `runLogSession` hield een horloge-activiteit die onderweg was alleen tegen als er geen geplande training bij zat. Opnieuw tikken na de grens met een andere keuze (gepland of los, of een andere geplande training) gaf zo twee logs van dezelfde activiteit, omdat kijken en schrijven niet één transactie is. Nu krijgt elke volgende poging met dezelfde `externalId` nee zolang de eerste loopt. Op de kaart blijft bij zo'n tweede tik de zin van de grens staan, in plaats van "Opslaan lukte niet".
+
+Zichtbaar. In het blad Andere training stonden "Opslaan…" en de foutzin onder een lijst die langer kan zijn dan het scherm. Ze staan nu vast onderin het blad, boven Annuleren. Alleen mislukt is amber; de andere zinnen zijn gedempt. De keuzerijen zijn minstens 44 px hoog.
+
+Toetsbaar. Wat een scherm bij welke uitkomst doet staat als pure functie in `state/logSave.ts` (`formAfterSave`, `cardAfterSave`) en is daar getest. De zin voor "stond er al" komt uit één bron (`ALREADY_LOGGED_NOTE`).
+
 ## Nog open
+
+Het oude trainingsscherm sluiten en weer openen terwijl de eerste opslag van een losse training nog hangt, en dan iets anders invullen en opslaan, geeft een tweede log: een losse training heeft geen sleutel. Dat vraagt een keuze over wat "dezelfde losse training" is en is hier niet opgelost.
 
 `SessionActionSheet.tsx` (MacroFactor-training opslaan) leest nee nog kaal: het blad blijft open zonder zin. Today en Week vinken een rustdag of krachttraining af zonder het antwoord te lezen; daar wordt niets weggegooid. Het blad Hoe ging het? toont bij "stond er al" de zin voor mislukt, tot het logboek opnieuw gelezen is.

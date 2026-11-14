@@ -11,7 +11,7 @@
 import { useTrainingPlaces } from './useTrainingPlaces';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { autoTickLog, saveLogWithin, LOG_SAVE_NOTE, type LogSaveResult } from '../state/logSave';
+import { autoTickLog, cardAfterSave, saveLogWithin, LOG_SAVE_NOTE, type LogSaveOutcome } from '../state/logSave';
 import {
   dismissActivity,
   getWatchState,
@@ -45,6 +45,13 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
 
+// De zin na Opslaan als er (nog) geen log staat: alleen mislukt is amber.
+interface SaveNote { externalId: string; text: string; warn: boolean }
+
+function SaveNoteLine({ note }: { note: Pick<SaveNote, 'text' | 'warn'> }) {
+  return <p role="status" className="text-xs leading-snug" style={{ color: note.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{note.text}</p>;
+}
+
 function dayLabel(iso: string): string {
   return iso === todayISO() ? 'vandaag' : `${weekdayLongNL(iso)} ${formatDateNL(iso)}`;
 }
@@ -68,7 +75,9 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
   // "Inkorten" straight from the question after a training (the same sheet as in the log).
   const [trimming, setTrimming] = useState<string | null>(null);
   // De uitkomst van Opslaan als er (nog) geen log staat, per activiteit.
-  const [saveNote, setSaveNote] = useState<{ externalId: string; text: string } | null>(null);
+  const [saveNote, setSaveNote] = useState<SaveNote | null>(null);
+  // Activiteiten waarvan het opslaan na de grens nog loopt.
+  const lateOutstanding = useRef(new Set<string>());
   const aliveRef = useRef(true);
   const ticking = useRef(false);
   const attempted = useRef(new Set<string>());
@@ -191,37 +200,31 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
   if (!proposal) return null;
 
   // De zin hoort bij de activiteit waarvoor hij kwam; bij de volgende activiteit is hij weg.
-  const note = saveNote?.externalId === proposal.activity.externalId ? saveNote.text : undefined;
+  const note = saveNote?.externalId === proposal.activity.externalId ? saveNote : undefined;
 
   async function save(activity: ExternalActivity, template: SessionTemplate, match?: PlannedMatch) {
     if (saving) return;
+    const id = activity.externalId;
     setSaving(true);
-    setSaveNote(null);
-    // Het antwoord van logSession via state/logSave.ts. Staat er geen log, dan blijft het voorstel staan, blijft
-    // het blad Andere training open en zegt een zin wat er gebeurde. Opnieuw tikken kan: dezelfde activiteit
-    // komt nooit twee keer in je logboek.
+    // Een eerdere poging voor deze activiteit die na de grens nog loopt: haar zin blijft staan.
+    if (!lateOutstanding.current.has(id)) setSaveNote(null);
+    // Het antwoord van logSession via state/logSave.ts#cardAfterSave. Staat er geen log, dan blijft het voorstel
+    // staan, blijft het blad Andere training open en zegt een zin wat er gebeurde. Opnieuw tikken kan: dezelfde
+    // activiteit komt nooit twee keer in je logboek (state/logSession.ts houdt een poging die onderweg is tegen).
     let settled = false;
-    const settle = (result: LogSaveResult, late = false) => {
-      settled = true;
-      if (result === 'saved') {
-        addDetail(activity);
-        if (!aliveRef.current) return;
-        setChoosing(false);
-        setSaveNote(null);
-        return;
-      }
+    const show = (outcome: LogSaveOutcome, late = false) => {
+      if (settled) return;
+      settled = outcome !== 'slow';
+      if (late) lateOutstanding.current.delete(id);
+      const next = cardAfterSave(outcome, !late && lateOutstanding.current.has(id));
+      if (outcome === 'slow') lateOutstanding.current.add(id);
+      if (next.addDetail) addDetail(activity);
       if (!aliveRef.current) return;
-      if (result === 'already') {
-        // Het logboek op het scherm liep achter: opnieuw lezen, dan klopt het voorstel weer.
-        setChoosing(false);
-        void refresh().catch(() => undefined);
-      }
-      // Een late nee na de grens: de zin van de grens staat er al, of je probeerde het al opnieuw.
-      if (!late || result === 'already') setSaveNote({ externalId: activity.externalId, text: LOG_SAVE_NOTE[result] });
+      if (next.closeSheet) setChoosing(false);
+      if (next.refresh) void refresh().catch(() => undefined);
+      setSaveNote(next.note ? { externalId: id, text: LOG_SAVE_NOTE[next.note], warn: next.note === 'failed' } : null);
     };
-    const outcome = await saveLogWithin(logSession, activityToDraft(activity, template, match?.session, chosenWayOf(activity, match, places)), { onLate: (result) => settle(result, true) });
-    if (outcome !== 'slow') settle(outcome);
-    else if (!settled && aliveRef.current) setSaveNote({ externalId: activity.externalId, text: LOG_SAVE_NOTE.slow });
+    show(await saveLogWithin(logSession, activityToDraft(activity, template, match?.session, chosenWayOf(activity, match, places)), { onLate: (result) => show(result, true) }));
     if (aliveRef.current) setSaving(false);
   }
 
@@ -264,7 +267,7 @@ function ProposalCard({
   proposal: ImportProposal;
   more: number;
   saving: boolean;
-  note?: string;
+  note?: SaveNote;
   onSave: () => void;
   onChoose: () => void;
   onDismiss: () => void;
@@ -299,7 +302,7 @@ function ProposalCard({
           Je legde die dag al een training vast van {similarLog.durationMinutes} min. Sla dit alleen op als het een andere training was.
         </p>
       )}
-      {note && <p role="status" className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>{note}</p>}
+      {note && <SaveNoteLine note={note} />}
       {quiet
         ? <SecondaryButton onClick={onSave} disabled={saving || !template}>{saving ? 'Opslaan…' : 'Opslaan'}</SecondaryButton>
         : <PrimaryButton onClick={onSave} disabled={saving || !template}>{saving ? 'Opslaan…' : 'Opslaan'}</PrimaryButton>}
@@ -326,7 +329,7 @@ function ChooseSheet({
 }: {
   activity: ExternalActivity;
   saving: boolean;
-  note?: string;
+  note?: SaveNote;
   onPick: (template: SessionTemplate, match?: PlannedMatch) => void;
   onClose: () => void;
 }) {
@@ -359,9 +362,11 @@ function ChooseSheet({
                 ))}
               </div>
             )}
-            {saving && <p role="status" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Opslaan…</p>}
-            {note && !saving && <p role="status" className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>{note}</p>}
-            <SecondaryButton onClick={requestClose}>Annuleren</SecondaryButton>
+            {/* Vast onderin het blad, ook als de lijst langer is dan het scherm: na een tik zie je meteen wat er gebeurt. */}
+            <div className="sticky bottom-0 -mx-4 -mb-2 flex flex-col gap-2 border-t px-4 pb-2 pt-3" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
+              {saving ? <SaveNoteLine note={{ text: 'Opslaan…', warn: false }} /> : note ? <SaveNoteLine note={note} /> : null}
+              <div className="flex"><SecondaryButton onClick={requestClose}>Annuleren</SecondaryButton></div>
+            </div>
           </Card>
         </div>
       </div>
@@ -375,7 +380,7 @@ function OptionButton({ title, note, disabled, onClick }: { title: string; note:
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98] disabled:opacity-40"
+      className="flex min-h-[44px] items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98] disabled:opacity-40"
       style={{ borderColor: 'var(--color-card-border)' }}
     >
       <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{title}</span>
