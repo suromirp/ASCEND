@@ -473,3 +473,8 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-14, Sherpa Route-kaart vervolg herstelronde (opus); zelfreview reviewer (sonnet) 77k akkoord onder voorwaarde (Android-proefbouw), 2 belangrijke en 4 kleine punten verwerkt.
 - 2026-11-14, Sherpa Geen stille Thuis (opus); zelfreview reviewer (sonnet) akkoord, 4 kleine punten (werkbriefje verwerkt).
 - 2026-11-14, Sherpa Geen stille Thuis herstelronde (opus); zelfreview reviewer (sonnet) 38k akkoord, verspringende regel en 3 kleine punten verwerkt.
+- 2026-11-14, Warden horloge herreview (fable) 52k: vier punten opgelost, één moet (hardRunTemplate volgorde); herstelronde 2.
+- 2026-11-14, Warden afbreker (fable) 107k: niet akkoord, 2 moet (bevestiging Weggooien ongetest, wrote-vlag blokkeert bewaren), 2 overlevende mutanten; herstelronde.
+- 2026-11-14, Warden routes-vorm (fable) 105k: akkoord na merge van main; 5 overlevende mutanten, markBigRoads kan gooien; herstelronde.
+- 2026-11-14, Lookout planner (sonnet) 80k: vakantie-instap groen; Ongedaan maken zonder uitkomst en zonder verversen, ziek heet in Week gemist; herstelronde.
+- 2026-11-14, Cartographer Instellingen op één plek (opus high) $2,91: ontwerp in 8 groepsbestanden, 7 stappen, foto als bewijs; stap 0 en 1 gestart.
