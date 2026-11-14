@@ -16,6 +16,7 @@ import type { TrainingGoal } from '../models/goals';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { WeatherForecast } from '../models/weather';
 import { daysBetween, formatDateNL, weekdayLongNL } from '../utils/dates';
+import { GOAL_KINDS } from '../data/goalKinds';
 import { clothingAdvice } from './clothing';
 import { goalDetailsOf, goalKindOf } from './goalLabels';
 import { formatPace } from './racePaces';
@@ -168,7 +169,7 @@ export const RACE_DAY_TEXT = {
   reviewEyebrow: 'Terugblik',
   reviewLabel: 'Je race',
   rowLine: 'Weer, inlopen en je tempo',
-  startAssumed: (hour: number) => `ASCEND rekent met een start om ${hhmm(hour * 60)}.`,
+  start: (km: string, hour: number) => `${km} km, start om ${hhmm(hour * 60)}.`,
   noForecast: 'Geen weer: de voorspelling laadde niet.',
   noPlace: 'Geen weer: er is nog geen plaats voor het weer gekozen.',
   notYet: 'Het weer volgt zodra de voorspelling zo ver reikt.',
@@ -178,7 +179,7 @@ export const RACE_DAY_TEXT = {
   ],
   noTarget: 'Geen doeltijd. Vul er een in bij je doel voor een tempo per km.',
   noExpected: 'Geen verwachte tijd: er telt nog geen testloop mee.',
-  firstKm: 'Loop de eerste kilometer niet sneller dan je tempo.',
+  firstKm: (target: boolean) => `Loop de eerste kilometer niet sneller dan je ${target ? 'doeltempo' : 'verwachte tempo'}.`,
   noLog: 'Nog geen log van je race. Komt hij binnen, dan staat je tijd hier.',
   looseRun: 'Je loop van die dag hangt nog niet aan je race. Koppel hem op Vandaag of in je Logboek voor de terugblik.',
   textOnly: 'Alleen tekst: je planning verandert niet.',
@@ -209,7 +210,7 @@ function paceSection(km: number, targetMinutes: number | undefined, expectedMinu
   const lines: string[] = [];
   lines.push(targetMinutes ? `Doeltijd ${formatRaceTime(targetMinutes)}: ${exactPace(targetMinutes, km)} per km.` : RACE_DAY_TEXT.noTarget);
   lines.push(expectedMinutes ? `Verwacht ${formatRaceTime(expectedMinutes)}: ongeveer ${formatPace((expectedMinutes * 60) / km)} per km.` : RACE_DAY_TEXT.noExpected);
-  if (targetMinutes || expectedMinutes) lines.push(RACE_DAY_TEXT.firstKm);
+  if (targetMinutes || expectedMinutes) lines.push(RACE_DAY_TEXT.firstKm(!!targetMinutes));
   return { label: 'Tempo per km', lines };
 }
 
@@ -229,7 +230,9 @@ export function raceDayView(input: RaceDayInput): RaceDayView {
   const km = d.distanceKm && d.distanceKm > 0 ? d.distanceKm : 10;
   const target = d.targetMinutes && d.targetMinutes > 0 ? d.targetMinutes : undefined;
   const expected = input.expectedMinutes && input.expectedMinutes > 0 ? input.expectedMinutes : undefined;
-  const name = moment.goal.name || 'Je race';
+  // De naam van het doel; een lege naam of de naam van de soort ("Hardloopwedstrijd") zegt niets, dan "Je 10 km".
+  const own = moment.goal.name.trim();
+  const name = own && own !== GOAL_KINDS.run_race.label ? own : `Je ${kmText(km)} km`;
   const date = capital(dayText(moment.raceDate));
   const when = whenLine(moment.days);
 
@@ -247,7 +250,7 @@ export function raceDayView(input: RaceDayInput): RaceDayView {
   const hour = input.startHour ?? RACE_START_HOUR;
   const minutes = Math.round(target ?? expected ?? 60);
   const sections: RaceDaySection[] = [
-    { label: 'Start', lines: [`${date}, ${kmText(km)} km.`, RACE_DAY_TEXT.startAssumed(hour)] },
+    { label: 'Start', lines: [RACE_DAY_TEXT.start(kmText(km), hour)] },
     weatherSection(input, hour, minutes),
     { label: 'Inlopen', lines: [...RACE_DAY_TEXT.warmup, `Begin rond ${hhmm(hour * 60 - WARMUP_START_BEFORE_MIN)}, klaar 5 tot 10 minuten voor de start.`] },
     paceSection(km, target, expected),
