@@ -11,7 +11,7 @@
 import { useTrainingPlaces } from './useTrainingPlaces';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { autoTickLog, cardAfterSave, failedNote, saveLogWithin, LOG_SAVE_NOTE, type LogSaveOutcome } from '../state/logSave';
+import { autoTickLog, cardAfterSave, failedNote, reportIfGone, saveLogWithin, LOG_SAVE_NOTE, type LogSaveOutcome } from '../state/logSave';
 import {
   dismissActivity,
   getWatchState,
@@ -62,7 +62,7 @@ const AUTO_TICK_DELAY_MS = 1200;
 // `quiet`: Opslaan omlijnd in plaats van gevuld, op Vandaag naast de hoofdknop van de missie (regel 5: één mint per
 // scherm; besluit 2026-11-12-missiekaart.md).
 export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
-  const { plannedSessions, templates, sessionLogs, logSession, undoLog, setLogFeedback, refresh } = useAppData();
+  const { plannedSessions, templates, sessionLogs, logSession, reportStorageError, undoLog, setLogFeedback, refresh } = useAppData();
   // De keuze Waar train je? per geplande training; undefined zolang hij nog niet gelezen is.
   const places = useTrainingPlaces();
   const [state, setState] = useState<WatchActivityState | null>(null);
@@ -215,6 +215,7 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
     // staan, blijft het blad Andere training open en zegt een zin wat er gebeurde. Opnieuw tikken kan: dezelfde
     // activiteit komt nooit twee keer in je logboek (state/logSession.ts houdt een poging die onderweg is tegen).
     let settled = false;
+    let writeError: unknown;
     const show = (outcome: LogSaveOutcome, late = false) => {
       if (settled) return;
       settled = outcome !== 'slow';
@@ -222,12 +223,14 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
       const next = cardAfterSave(outcome, !late && lateOutstanding.current.has(id));
       if (outcome === 'slow') lateOutstanding.current.add(id);
       if (next.addDetail) addDetail(activity);
+      // Van tab gewisseld en dan nee: niemand ziet de zin hier, dus de fout gaat naar de melding bovenin.
+      if (outcome === 'failed') reportIfGone(aliveRef.current, writeError, reportStorageError);
       if (!aliveRef.current) return;
       if (next.closeSheet) setChoosing(false);
       if (next.refresh) void refresh().catch(() => undefined);
       setSaveNote(next.note ? { externalId: id, text: next.note === 'failed' ? failedNote(LOG_SAVE_NOTE.failed) : LOG_SAVE_NOTE[next.note], warn: next.note === 'failed' } : null);
     };
-    show(await saveLogWithin(logSession, activityToDraft(activity, template, match?.session, chosenWayOf(activity, match, places)), { onLate: (result) => show(result, true) }));
+    show(await saveLogWithin(logSession, activityToDraft(activity, template, match?.session, chosenWayOf(activity, match, places)), { onLate: (result) => show(result, true), onWriteError: (err) => { writeError = err; } }));
     if (aliveRef.current) setSaving(false);
   }
 

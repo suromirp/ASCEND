@@ -53,10 +53,13 @@ let lastWriteError: unknown;
 
 type OnWriteError = (err: unknown) => void;
 
+// Alleen een aanroeper die zelf `onWriteError` geeft houdt de melding bovenin tegen. Een scherm dat het vergeet
+// is zo nooit stil: zijn schrijffout gaat gewoon naar reportStorageError.
 async function settleWithOwnNotice(logSession: LogSessionFn, input: LogSessionInput, onWriteError?: OnWriteError): Promise<boolean> {
   let writeError: unknown;
+  const own = onWriteError ? { onWriteError: (err: unknown) => { writeError = err ?? new Error('Opslaan lukte niet.'); } } : undefined;
   try {
-    const saved = await settleLogOutcome(await logSession(input, { onWriteError: (err) => { writeError = err ?? new Error('Opslaan lukte niet.'); } }), input);
+    const saved = await settleLogOutcome(await logSession(input, own), input);
     failedInARow = 0;
     lastWriteError = undefined;
     return saved;
@@ -70,6 +73,7 @@ async function settleWithOwnNotice(logSession: LogSessionFn, input: LogSessionIn
 
 // Een scherm dat `onWriteError` meegeeft is zelf verantwoordelijk voor de uitkomst zolang het in beeld is. Is het
 // weg als het nee komt (na de grens is weggaan de uitweg), dan gaat de schrijffout alsnog naar de melding bovenin.
+// `inView` komt uit een ref die bij unmount omgaat. Alleen vanzelf afvinken is bewust stil.
 export function reportIfGone(inView: boolean, writeError: unknown, report: OnWriteError): void {
   if (!inView && writeError !== undefined) report(writeError);
 }
@@ -166,7 +170,7 @@ export function cardAfterSave(outcome: LogSaveOutcome, earlierStillRunning = fal
 
 // Een log opslaan en hoogstens `limitMs` wachten. Gooit nooit. Na de grens komt 'slow' terug en meldt `onLate`
 // later hoe het afliep, zodat het scherm een log dat alsnog landt niet tegenspreekt. `onWriteError` krijgt een
-// schrijffout vlak voor de uitkomst 'failed' (ook de late), voor reportIfGone.
+// schrijffout vlak voor de uitkomst 'failed' (ook de late), voor reportIfGone; zonder gaat de fout bovenin.
 export async function saveLogWithin(
   logSession: LogSessionFn,
   input: LogSessionInput,
@@ -201,7 +205,8 @@ export async function autoTickLog(
   // Lukt het noteren niet, dan staat het log er nog steeds; alleen de vraag erna blijft weg.
   const stored = (result: LogSaveResult) => (result === 'saved' ? onStored().then(() => undefined, () => undefined) : Promise.resolve());
   // `onLate`: het antwoord na de grens, ook een nee, zodat de aanroeper weet dat deze poging niet meer loopt.
-  const outcome = await saveLogWithin(logSession, input, { limitMs: opts.limitMs, onLate: (result) => { opts.onLate?.(result); void stored(result); } });
+  // Bewust stil bij een schrijffout: de lege `onWriteError` houdt de melding bovenin tegen.
+  const outcome = await saveLogWithin(logSession, input, { limitMs: opts.limitMs, onWriteError: () => undefined, onLate: (result) => { opts.onLate?.(result); void stored(result); } });
   if (outcome !== 'slow') await stored(outcome);
   return outcome;
 }
@@ -209,12 +214,20 @@ export async function autoTickLog(
 // De sportvraag: eerst het log, dan de keuze. Lukt het log niet of duurt het te lang, dan gooit dit en wordt
 // de keuze niet gezet, ook niet als het log daarna alsnog landt. Zonder log (Negeren) alleen de keuze. Faalt de
 // keuze zelf, dan gooit dit ChoiceNotSaved: het log staat er dan wel.
-export async function saveLogThenChoice(logSession: LogSessionFn, input: LogSessionInput | undefined, choose: () => Promise<unknown>, limitMs: number): Promise<void> {
+export async function saveLogThenChoice(
+  logSession: LogSessionFn,
+  input: LogSessionInput | undefined,
+  choose: () => Promise<unknown>,
+  limitMs: number,
+  // `late`: de schrijffout kwam na de grens. Het blad zei toen al "duurt langer" en hoort dit nee niet meer:
+  // de aanroeper meldt het dan altijd bovenin (reportIfGone met inView false).
+  onWriteError?: (err: unknown, late: boolean) => void,
+): Promise<void> {
   let cancelled = false;
   try {
     await withTimeout((async () => {
       // Gooit als er geen log staat; "staat er al" telt als gelukt.
-      if (input) await settleWithOwnNotice(logSession, input);
+      if (input) await settleWithOwnNotice(logSession, input, onWriteError && ((err) => onWriteError(err, cancelled)));
       if (cancelled) return;
       try {
         await choose();

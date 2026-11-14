@@ -13,7 +13,7 @@ import { parseSportHandling, resolveSportCounting } from '../../engine/sportRole
 import { activityToDraft, durationLabel } from '../../engine/activityImport';
 import { sportTemplate } from '../../engine/sportTemplate';
 import { FELT_LABEL, FELT_RPE, type FeltWord } from '../../engine/sessionLoad';
-import { saveLogThenChoice, thrownSaveNote } from '../../state/logSave';
+import { reportIfGone, saveLogThenChoice, thrownSaveNote } from '../../state/logSave';
 import { anySportDefinition, type SportRole } from '../../data/sports';
 import { formatDateNL, todayISO, weekdayLongNL } from '../../utils/dates';
 import { Icon } from '../icons';
@@ -92,7 +92,8 @@ export function SportAskLine() {
 
 // Je deed iets nieuws (stap 9): waar je het vooral merkt vult de kenmerken in, dan of het meetelt.
 function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; onClose: () => void }) {
-  const { settings, updateSettings, logSession } = useAppData();
+  const { settings, updateSettings, logSession, reportStorageError } = useAppData();
+  const alive = useAlive();
   const counting = resolveSportCounting(settings.sportCounting);
   const [feel, setFeel] = useState<CustomFeel>(FEEL_ADVICE);
   const [role, setRole] = useState<'count' | 'off'>('count');
@@ -121,7 +122,7 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
       await saveLogThenChoice(logSession, input, () => {
         const current = parseCustomSports(settings.customSports).value ?? [];
         return updateSettings({ customSports: [...current.filter((c) => c.type !== sport.type), sport] });
-      }, SAVE_TIMEOUT_MS);
+      }, SAVE_TIMEOUT_MS, (err, late) => reportIfGone(!late && alive.current, err, reportStorageError));
       close();
     } catch (err) {
       setError(thrownSaveNote(err));
@@ -174,6 +175,18 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
   );
 }
 
+// Is het blad nog in beeld? Een schrijffout die komt als het weg is, of na de grens, gaat naar de melding bovenin.
+function useAlive() {
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+  return alive;
+}
+
 function dayText(iso: string): string {
   return iso === todayISO() ? 'vandaag' : `${weekdayLongNL(iso)} ${formatDateNL(iso)}`;
 }
@@ -185,7 +198,8 @@ const ROLE_TEXT: Partial<Record<SportRole, { label: string; note: string }>> = {
 };
 
 function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose: () => void }) {
-  const { settings, updateSettings, logSession } = useAppData();
+  const { settings, updateSettings, logSession, reportStorageError } = useAppData();
+  const alive = useAlive();
   const navigate = useNavigate();
   const def = anySportDefinition(question.sport);
   const counting = resolveSportCounting(settings.sportCounting);
@@ -215,7 +229,7 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
       await saveLogThenChoice(logSession, input, () => {
         const current = parseSportHandling(settings.sportHandling).value ?? {};
         return updateSettings({ sportHandling: { ...current, [question.sport]: { role } } });
-      }, SAVE_TIMEOUT_MS);
+      }, SAVE_TIMEOUT_MS, (err, late) => reportIfGone(!late && alive.current, err, reportStorageError));
       close();
     } catch (err) {
       setError(thrownSaveNote(err));

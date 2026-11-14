@@ -10,7 +10,7 @@
 // Alleen Annuleren gooit een ingevuld concept weg; het kruis, de achtergrond, wegslepen, de terugknop
 // en herladen laten het staan (een leeg concept gaat altijd weg). De terugknop gaat in stap 2 eerst terug naar stap 1 (laag voor laag).
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import type { Program } from '../models/program';
 import type { SessionTemplate, SessionVariant } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
@@ -54,6 +54,14 @@ export function HowDidItGoSheet({
   const slowRef = useRef(false);
   const closedRef = useRef(false);
   const finish = () => { if (!closedRef.current) { closedRef.current = true; onClose(); } };
+  // Ook weg als het blad van buitenaf verdwijnt, zonder dat het zelf sloot.
+  const goneRef = useRef(false);
+  useEffect(() => {
+    goneRef.current = false;
+    return () => {
+      goneRef.current = true;
+    };
+  }, []);
   // Alleen Annuleren wist een ingevuld concept (logForm/howDidItGo.ts#clearsDraft); een tik naast het blad,
   // wegslepen, het kruis en de terugknop laten het staan. Terwijl het opslaat blijft het blad open, tot de grens.
   const wayRef = useRef<CloseWay>('backdrop');
@@ -100,7 +108,7 @@ export function HowDidItGoSheet({
       // Mislukt: het blad blijft open met alles wat je invulde en het concept.
       // Is het blad al dicht (na de grens mag dat), dan ziet niemand de zin: de fout gaat naar de melding bovenin.
       onFailed: () => {
-        reportIfGone(!closedRef.current, writeError, reportStorageError);
+        reportIfGone(!closedRef.current && !goneRef.current, writeError, reportStorageError);
         setFailedText(failedNote(plannedSessionId ? HOW_TEXT.failed : HOW_TEXT.failedLoose));
         setFailed(true);
       },
