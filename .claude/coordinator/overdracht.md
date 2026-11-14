@@ -17,10 +17,10 @@ Bijgewerkt: 14 november 2026, ongeveer 13:00 Amsterdam, door de coördinator ses
 
 ## Stand 14 november 16:40
 
-- Limiet van zeven dagen op allowed_warning, reset zondag 15 november 19:00 Amsterdam. Niets nieuws starten; afmaken wat loopt; herreviews op sonnet.
+- Limiet: niet afschalen (eigenaar 14 november 17:00, met een schermafdruk: alle modellen 73 procent, Fable 83 procent, reset zondag 15 november 18:00 Amsterdam volgens zijn scherm). Bouwplekken vol; Fable alleen waar de tabel het vraagt; meld het de eigenaar zodra Fable bijna vol is, hij heeft dan nog een reset.
 - In review: Opwarmset later (claude/opwarmset-later, herstel na Warden), Trainingsscherm 5 en 6 (claude/trainingsscherm-5-6), Opslaan rest (claude/opslaan-rest). Na groen: Lookout (één ronde voor alle drie), squash, deploy nakijken, pushmelding, werkkaart.
 - Vandaag live: voorstel begrijpelijk, Wis startpunt, krachtblok Akkoord, Spieren voor de berg rest, Avond tests, Volle week, Info-blad A, Racedag 10 km.
-- Profielendoorloop (vijf profielen, eigenaar akkoord) schuift naar na de reset.
+- Profielendoorloop (vijf profielen, eigenaar akkoord): gestart 14 november avond.
 
 ## Vandaag (14 november)
 

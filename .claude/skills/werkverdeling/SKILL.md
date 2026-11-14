@@ -181,7 +181,7 @@ Op 14 november liep een half uur maar één bouwer terwijl de coördinator wacht
 
 - Elke beurt van de coördinator eindigt met dezelfde vraag: zijn alle drie de bouwplekken bezet? Zo niet, start meteen de volgende uit de Bouwrij of de Inbox die geen bestanden deelt met wat loopt (noem in de opdracht welke bestanden niet aangeraakt mogen worden). Een bouwer in review of herstelronde houdt zijn plek bezet, maar zijn bestanden zijn dan het enige wat geblokkeerd is.
 - Elke send_later voor een check-in noemt ook: "start bij een vrije plek de volgende die geen bestanden deelt".
-- Uitzondering alleen bij `allowed_warning` in rate_limit_info, de Wachter-regels hierboven, of als de eigenaar zegt te wachten.
+- Uitzondering alleen bij de Wachter-regels hierboven of als de eigenaar zegt te wachten. Een `allowed_warning` in rate_limit_info is geen reden om af te schalen (eigenaar 14 november: "Je hebt genoeg ruimte, je hoeft niet af te schalen"). Alleen Fable is krap: houd Fable voor het werk waar de tabel het vraagt, en meld het de eigenaar zodra Fable bijna vol is (of een Fable-sessie geweigerd wordt); hij heeft dan nog een reset.
 - Meld de eigenaar welke bouwers lopen en wanneer je weer kijkt; zeg het als een plek bewust leeg blijft, met de reden.
 
 ## Check-in en reflectie (eigenaar 14 november)
