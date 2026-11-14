@@ -153,6 +153,9 @@ const CLOTHING_RULES = {
   maxLines: 4,
 } as const;
 
+// From how long a training the advice names sunscreen (engine/outdoorSun.ts follows it).
+export const SUNSCREEN_MINUTES = CLOTHING_RULES.sunMinutes;
+
 // --- input and output -----------------------------------------------------------
 
 export interface ClothingInput {
@@ -184,6 +187,8 @@ export interface ClothingAdvice {
   // True when the first line names sunscreen. The Briefing shows only that first line and then leaves
   // the advice out of its UV phrase (engine/outdoorSun.ts). The first line is the trunk, so today never.
   sunscreenFirst?: boolean;
+  // True when any line names sunscreen (the weather page shows them all).
+  sunscreenShown?: boolean;
 }
 
 const sentence = (s: string) => `${capitalize(s)}.`;
@@ -290,8 +295,16 @@ export function clothingAdvice(input: ClothingInput): ClothingAdvice {
   }
   if (lines.length > R.maxLines) drop('feet');
 
-  const sunscreenFirst = lines[0]?.slot === 'sun' && sunParts.includes('zonnebrand');
-  return { lines: lines.map((l) => l.text), packLine, darkShown: lines.some((l) => l.slot === 'dark'), ...(sunscreenFirst ? { sunscreenFirst } : {}) };
+  const sunscreen = sunParts.includes('zonnebrand');
+  const sunscreenFirst = sunscreen && lines[0]?.slot === 'sun';
+  const sunscreenShown = sunscreen && lines.some((l) => l.slot === 'sun');
+  return {
+    lines: lines.map((l) => l.text),
+    packLine,
+    darkShown: lines.some((l) => l.slot === 'dark'),
+    ...(sunscreenFirst ? { sunscreenFirst } : {}),
+    ...(sunscreenShown ? { sunscreenShown } : {}),
+  };
 
   // --- pieces, inside so they share T, Th and the flags -------------------------
 

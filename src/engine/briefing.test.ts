@@ -164,7 +164,9 @@ describe('testloop en wedstrijd', () => {
 // UV en hoogte in de rij Weer (engine/outdoorSun.ts, backlog ronde 1 "Buiten: UV en hoogte van je plek").
 describe('UV en hoogte in de rij Weer', () => {
   const sunny = (uvIndex: number, elevationM?: number) => ({ ...makeForecast(TODAY, () => ({ tempC: 9, feelsC: 8, uvIndex })), ...(elevationM !== undefined ? { elevationM } : {}) });
-  const line = (over: Partial<BriefingInput>) => tile(briefing(input(over)), 'weather')?.line ?? '';
+  // Een loop van een uur: lang genoeg voor zonnebrand in het kledingadvies (45 minuten).
+  const hour = { ...plan('tpl_easy_run'), plannedMinutes: 60 };
+  const line = (over: Partial<BriefingInput>) => tile(briefing(input({ session: hour, ...over })), 'weather')?.line ?? '';
   it('UV vanaf 3 en hoogte vanaf 1000 m, achter het weer en de kleding', () => {
     expect(line({ forecast: sunny(4.4, 1243) })).toMatch(/, UV 4, smeer je in, je plek ligt op 1\.240 m$/);
   });
@@ -200,6 +202,16 @@ describe('UV en hoogte in de rij Weer', () => {
   it('met het echte kledingadvies: de zonnebrand staat één keer in de rij, in de UV-zin', () => {
     const l = line({ forecast: sunny(5), clothingOn: true });
     expect(l.match(/zonnebrand|smeer je in/g)).toEqual(['smeer je in']);
+  });
+  it('rij Weer: vanaf 6 alleen "smeer je in", pet en zonnebril staan op de pagina Weer', () => {
+    const l = line({ forecast: sunny(8) });
+    expect(l).toMatch(/UV 8, smeer je in$/);
+    expect(l).not.toMatch(/pet|zonnebril/);
+  });
+  it('een training van 30 minuten: alleen het getal; van 45 minuten: met wat je doet', () => {
+    const at = (minutes: number) => line({ forecast: sunny(5), session: { ...plan('tpl_easy_run'), plannedMinutes: minutes } });
+    expect(at(30)).toMatch(/UV 5$/);
+    expect(at(45)).toMatch(/UV 5, smeer je in$/);
   });
   it('instelling uit: niets erbij', () => {
     expect(line({ forecast: sunny(7, 1500), uvAltitudeOn: false })).not.toMatch(/UV|ligt op/);

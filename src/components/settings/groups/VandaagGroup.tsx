@@ -191,8 +191,8 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="route-zoeken" title="Lus zoeken" facts={facts} info="routeZoeken" onClick={() => setInner('route-zoeken')} />
           <SummaryRow id="route-kaart" title="Ondergrond van de kaart" facts={facts} info="routeKaart" onClick={() => setInner('route-kaart')} />
           <SummaryRow id="maanstand" title="Maanstand bij een avondtocht" facts={facts} onChange={(on) => set({ moonLine: on })} />
-          <SummaryRow id="uv-hoogte" title="UV en hoogte bij buiten" facts={facts} onChange={(on) => set({ uvAltitude: on })} />
           <SummaryRow id="weerruil" title="Ruilen bij slecht weer" facts={facts} onChange={(on) => set({ weatherSwap: on })} />
+          <SummaryRow id="uv-hoogte" title="UV en hoogte bij buiten" facts={facts} onChange={(on) => set({ uvAltitude: on })} />
           <SummaryRow id="kledingadvies" title="Kledingadvies" facts={facts} onChange={(on) => set({ clothingAdvice: on })} />
           <SummaryRow id="kleding-voorkeur" title="Je kleding" facts={facts} info="kleding" onClick={() => setInner('kleding-voorkeur')} />
         </BundleSheet>

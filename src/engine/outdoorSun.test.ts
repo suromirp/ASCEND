@@ -9,12 +9,20 @@ describe('UV vanaf 3, op hele getallen', () => {
     expect(uvPhrase(2.4)).toBeUndefined();
     expect(uvPhrase(2.5)).toBe('UV 3, smeer je in');
   });
-  it('vanaf 6 ook pet en zonnebril', () => {
-    expect(uvPhrase(5.4)).toBe('UV 5, smeer je in');
-    expect(uvPhrase(6.2)).toBe('UV 6, smeer je in en zet pet en zonnebril op');
+  it('vanaf 6 ook pet en zonnebril, alleen op de pagina Weer (full)', () => {
+    expect(uvPhrase(5.4, { full: true })).toBe('UV 5, smeer je in');
+    expect(uvPhrase(6.2, { full: true })).toBe('UV 6, smeer je in en zet pet en zonnebril op');
+    expect(uvPhrase(8)).toBe('UV 8, smeer je in');
   });
-  it('noemt de rij de zonnebrand al, dan alleen het getal', () => {
-    expect(uvPhrase(4, true)).toBe('UV 4');
+  it('noemt het kledingadvies de zonnebrand al, dan alleen het getal', () => {
+    expect(uvPhrase(4, { sunscreenSaid: true })).toBe('UV 4');
+    expect(uvPhrase(7, { sunscreenSaid: true, full: true })).toBe('UV 7');
+  });
+  it('korter dan 45 minuten alleen het getal, zoals het kledingadvies; vanaf 45 met wat je doet', () => {
+    expect(uvPhrase(4, { minutes: 30 })).toBe('UV 4');
+    expect(uvPhrase(4, { minutes: 44 })).toBe('UV 4');
+    expect(uvPhrase(4, { minutes: 45 })).toBe('UV 4, smeer je in');
+    expect(uvPhrase(7, { minutes: 30, full: true })).toBe('UV 7');
   });
   it('een kapotte waarde zegt niets', () => {
     expect(uvPhrase(Number.NaN)).toBeUndefined();

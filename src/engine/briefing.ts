@@ -622,6 +622,7 @@ function weatherRow(input: BriefingInput, minutes: number): BriefingRow | undefi
       uvIndex: w.uvIndex,
       elevationM: at?.state === 'failed' ? undefined : input.forecast?.elevationM,
       sunscreenSaid,
+      minutes,
     }));
   }
   if (parts.length === 0) return undefined;

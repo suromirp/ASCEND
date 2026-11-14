@@ -80,7 +80,15 @@ export function WeatherTodayCard({ link: given }: { link?: WeatherPageLink }) {
   // bewaarde keuze Waar train je? van die training. De hoogte alleen als dit het weer van de plek zelf is.
   const outdoor = link ? true : placeIsOutdoor(template.id, resolvePlace(template, 'session' in next ? storedPlaces?.[next.session.id] : undefined));
   const sun = w
-    ? outdoorSunSentence({ on: showUvAltitude(settings.overviews), outdoor, uvIndex: w.uvIndex, elevationM: link && !view.place ? undefined : forecast?.elevationM })
+    ? outdoorSunSentence({
+      on: showUvAltitude(settings.overviews),
+      outdoor,
+      uvIndex: w.uvIndex,
+      elevationM: link && !view.place ? undefined : forecast?.elevationM,
+      sunscreenSaid: !!advice?.sunscreenShown,
+      minutes: durationMinutes,
+      full: true,
+    })
     : undefined;
   const stale = !!forecast && (navigator.onLine === false || isForecastStale(forecast.fetchedAt, now));
 
