@@ -110,7 +110,9 @@ describe('alle uitleg', () => {
   const BATCH4 = ['back-extension', 'chin-up', 'dead-bug', 'deadlift', 'dumbbell-bench-press', 'dumbbell-curl', 'dumbbell-glute-bridge', 'dumbbell-row', 'dumbbell-shoulder-press', 'face-pull', 'hip-thrust', 'inverted-row', 'leg-extension', 'lying-leg-curl', 'nordic-curl', 'seated-cable-row', 'standing-calf-raise', 'step-up-pack', 'tibialis-raise-loaded', 'walking-lunge'];
   // Enkel en evenwicht (docs/beslissingen/2026-11-11-enkel-evenwicht.md): vier nieuwe oefeningen.
   const BALANCE = ['single-leg-stance', 'single-leg-stance-eyes-closed', 'single-leg-stance-cushion', 'star-excursion-reach'];
-  const NEW_BATCHES = [...BATCH3, ...BATCH4, ...BALANCE];
+  // Batch 5: de elf kandidaten van Spieren voor de berg die nog alleen een dosis toonden.
+  const BATCH5 = ['barbell-glute-bridge', 'dumbbell-frog-pump', 'glute-ham-raise', 'lateral-band-walk', 'leg-press-plates', 'single-leg-rdl', 'sumo-deadlift', 'superman', 'trap-bar-deadlift', 'weighted-ghd-hip-hinge', 'weighted-roman-chair-back-extension'];
+  const NEW_BATCHES = [...BATCH3, ...BATCH4, ...BALANCE, ...BATCH5];
   it('heeft de vijf proefteksten, de 23 stappen van de overige calisthenicsladders (F4f) en batch 1 tot en met 4', () => {
     const f4f = SKILL_LADDERS.filter((l) => !['push-up', 'pull-up', 'dip'].includes(l.id)).flatMap((l) => l.steps.map((s) => s.exerciseId));
     expect(f4f).toHaveLength(23);
@@ -120,6 +122,12 @@ describe('alle uitleg', () => {
     expect(BATCH3).toHaveLength(20);
     expect(BATCH4).toHaveLength(20);
     expect(new Set(NEW_BATCHES).size).toBe(NEW_BATCHES.length);
+  });
+  it('elke oefening die Spieren voor de berg kan voorstellen heeft uitleg, zodat het voorstel zegt wat je doet', () => {
+    expect(BATCH5).toHaveLength(11);
+    const candidates = EXERCISES.filter((e) => e.pattern !== 'balance' && (['calves', 'tibialis', 'glutes'] as const).some((m) => e.primary.includes(m)));
+    expect(candidates.length).toBeGreaterThan(30);
+    for (const e of candidates) expect(e.guide, e.id).toBeDefined();
   });
   it('elke stap van een ladder heeft uitleg', () => {
     for (const step of SKILL_LADDERS.flatMap((l) => l.steps)) expect(EXERCISE_GUIDES[step.exerciseId], step.exerciseId).toBeDefined();

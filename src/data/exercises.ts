@@ -57,7 +57,12 @@ const HOLD = new Set([
   // Enkel en evenwicht (docs/beslissingen/2026-11-11-enkel-evenwicht.md): seconden per been.
   'single-leg-stance', 'single-leg-stance-eyes-closed', 'single-leg-stance-cushion',
 ]);
-const PER_SIDE = new Set(['star-excursion-reach', 'archer-push-up', 'assisted-pistol-squat', 'skater-squat', 'box-pistol-squat', 'pistol-squat']);
+const PER_SIDE = new Set([
+  'star-excursion-reach', 'archer-push-up', 'assisted-pistol-squat', 'skater-squat', 'box-pistol-squat', 'pistol-squat',
+  // Op één been of om en om: het voorstel van Spieren voor de berg zegt dan "per been" (engine/mountainMuscles.ts,
+  // de enige lezer van dit veld; Forge telt en toont er niets anders door).
+  'single-leg-calf-raise', 'bulgarian-split-squat', 'split-squat', 'walking-lunge', 'reverse-lunge', 'step-up', 'step-up-pack', 'step-down', 'step-down-pack', 'single-leg-rdl',
+]);
 // Een band helpt alleen bij Pull-Up en Dip: daar zit de sprong naar de volle stap
 // (docs/beslissingen/2026-11-09-calisthenics-forge-rij.md). Hoe sterk de band was staat in het log (SetLog.band).
 const BAND = new Set(['pull-up', 'dip']);
