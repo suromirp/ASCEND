@@ -86,8 +86,9 @@ export interface RunLine {
 export interface RunDetail {
   version: 1;
   // Met welke teller de stijging per km is geteld: 2 is engine/elevation.ts (hysterese). Ontbreekt
-  // bij een log van voor die teller; dat is geteld met de oude dode band en telt lager.
-  counter?: 2;
+  // bij een log van voor die teller; dat is geteld met de oude dode band en telt lager. Een hoger
+  // getal is een telling van een nieuwere app; lees het merk via engine/elevation.ts#counterMark.
+  counter?: number;
   // The totals of the log it was read for (its fingerprint).
   wholeKm: number;
   wholeMinutes: number;

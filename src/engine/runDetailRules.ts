@@ -14,7 +14,8 @@
 import type { DetailConditions } from '../models/activityDetail';
 import type { RunDetail, RunKm, RunLap } from '../models/runDetail';
 import { formatPace } from './aerobicTrend';
-import { LONG_RUN_SEC, NOISE, type NotAvailable } from './runMetrics';
+import { climbLimitFor } from './elevation';
+import { LONG_RUN_SEC, NOISE, VERDICT_MAX_CLIMB_PER_KM, type NotAvailable } from './runMetrics';
 import { isNum } from '../utils/guards';
 
 // --- thresholds (the research, hoofdstuk 4 and 10) ------------------------------------------
@@ -303,7 +304,8 @@ export function driftFromKms(rd: RunDetail | undefined, opts: { easyOrLong: bool
   });
   if (part.length < 4) return { unavailable: 'noSteadyBlock' };
   const climbPerKm = part.reduce((n, k) => n + (k.gainM ?? 0), 0) / part.length;
-  if (climbPerKm > 15) return { unavailable: 'hilly' };
+  // De kilometers komen uit `runDetail`, dus het merk van `runDetail` kiest de grens.
+  if (climbPerKm > climbLimitFor(rd.counter, VERDICT_MAX_CLIMB_PER_KM)) return { unavailable: 'hilly' };
   const half = Math.floor(part.length / 2);
   const ef = (xs: RunKm[]) => {
     const speed = xs.reduce((n, k) => n + k.distanceM, 0) / xs.reduce((n, k) => n + k.sec, 0);

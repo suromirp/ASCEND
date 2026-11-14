@@ -26,9 +26,35 @@ export const MOUNTAIN_RELIEF_M = 300;
 
 // Het merk van deze teller op een log (`detail.counter`, `runDetail.counter`). Een log zonder merk
 // is geteld met de oude dode band van 5 m, die tien meter per klim en afdaling verloor. Een regel
-// met een grens op de eigen stijging leest het merk en kiest de grens die bij de telling hoort.
+// met een grens op de eigen stijging leest het merk en kiest de grens die bij de telling hoort
+// (`climbLimitFor` hieronder; nooit zelf `counter === 2` vergelijken).
 // Besluit: docs/beslissingen/2026-11-12-hoogtemeters-teller-op-log.md.
 export const ELEVATION_COUNTER = 2;
+
+// Het merk zoals een regel het leest. Geen merk (of iets dat geen heel getal vanaf 2 is) is de oude
+// telling: `undefined`. Het merk van deze app is `ELEVATION_COUNTER`. Een hoger heel getal is een
+// telling van een nieuwere app dan deze (een back-up die terugkomt in een oudere versie): die is
+// niet oud en niet de onze. Besluit: docs/beslissingen/2026-11-14-hoogtemeters-na-stap-1.md.
+export function counterMark(counter: unknown): number | undefined {
+  return typeof counter === 'number' && Number.isInteger(counter) && counter >= ELEVATION_COUNTER ? counter : undefined;
+}
+
+// Een grens op de eigen stijging, voor de telling van het veld waaruit geteld wordt: `old` voor
+// een log zonder merk, `counted` voor het merk van deze app. Een nieuwer merk dan de app kent
+// krijgt de strengste (laagste) van de twee: de app weet niet hoe die telling uitvalt, dus heet
+// zo'n log eerder heuvelachtig dan ten onrechte vlak.
+export function climbLimitFor(counter: unknown, limits: { old: number; counted: number }): number {
+  const mark = counterMark(counter);
+  if (mark === undefined) return limits.old;
+  if (mark === ELEVATION_COUNTER) return limits.counted;
+  return Math.min(limits.old, limits.counted);
+}
+
+// Twee eigen tellingen zijn alleen naast elkaar te leggen als ze op dezelfde manier geteld zijn:
+// allebei zonder merk, of allebei met precies hetzelfde merk.
+export function sameCounter(a: unknown, b: unknown): boolean {
+  return counterMark(a) === counterMark(b);
+}
 
 type Reading = number | null | undefined;
 

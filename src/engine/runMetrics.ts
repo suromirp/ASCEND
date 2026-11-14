@@ -14,6 +14,7 @@
 // Pure: no React, no IndexedDB.
 
 import type { ActivityDetail, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
+import { climbLimitFor } from './elevation';
 
 export type Unavailable =
   | 'noDetail'
@@ -328,7 +329,11 @@ export interface Form {
 // people drop out (Zandbergen 2023): only when the pace of the last third is
 // within 6 percent of the first, and on terrain that is not hilly.
 const FORM_MAX_PACE_CHANGE_PCT = 6;
-const FORM_MAX_CLIMB_PER_KM = 15;
+// Te heuvelachtig voor een oordeel over tempo of loopvorm, in meters eigen stijging per km. De
+// grens hoort bij de telling: 15 voor een log zonder merk (de oude dode band), 20 voor de teller
+// van engine/elevation.ts, die op glooiend terrein 3 tot 6 m per km meer telt. Ook gelezen door
+// runDetailRules.ts#driftFromKms. Besluit: docs/beslissingen/2026-11-14-hoogtemeters-na-stap-1.md.
+export const VERDICT_MAX_CLIMB_PER_KM = { old: 15, counted: 20 } as const;
 const FORM_MIN_SEC = 20 * 60;
 
 function third(slices: DetailSlice[]): FormSample | undefined {
@@ -366,7 +371,8 @@ export function formOf(detail: ActivityDetail | undefined): Form | NotAvailable 
   const slices = detail.slices;
   const km = slices.reduce((n, s) => n + s.distanceM, 0) / 1000;
   const gain = slices.reduce((n, s) => n + s.gainM, 0);
-  if (km <= 0 || gain / km > FORM_MAX_CLIMB_PER_KM) return { unavailable: 'hilly' };
+  // De stukken komen uit `detail`, dus het merk van `detail` kiest de grens.
+  if (km <= 0 || gain / km > climbLimitFor(detail.counter, VERDICT_MAX_CLIMB_PER_KM)) return { unavailable: 'hilly' };
   const k = Math.floor(slices.length / 3);
   const first = third(slices.slice(0, k));
   const last = third(slices.slice(slices.length - k));

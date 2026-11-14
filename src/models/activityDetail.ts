@@ -134,8 +134,9 @@ export interface DetailConditions {
 export interface ActivityDetail {
   version: 1;
   // Met welke teller de stijging is geteld: 2 is engine/elevation.ts (hysterese). Ontbreekt bij
-  // een log van voor die teller; dat is geteld met de oude dode band en telt lager.
-  counter?: 2;
+  // een log van voor die teller; dat is geteld met de oude dode band en telt lager. Een hoger getal
+  // is een telling van een nieuwere app; lees het merk via engine/elevation.ts#counterMark.
+  counter?: number;
   source: MetricSource;
   sliceCount: number;
   slices: DetailSlice[];
