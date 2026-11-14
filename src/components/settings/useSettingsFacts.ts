@@ -1,3 +1,4 @@
+import { hasTrekGoal } from '../../engine/journeyAccess';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { isOpenOn, isSoreness } from '../../engine/injuryKind';
@@ -127,6 +128,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       snapshots: loaded.snapshots,
       buildLabel: buildLabel(),
       mainIsTrek,
+      trekGoal: hasTrekGoal(trainingGoals, ladder, today),
       longSundayVisible: !mainIsTrek || settings.longSundaySession === 'run',
       noGoal: listedGoals(trainingGoals, ladder, today).length === 0 && !!program && plannedSessions.length > 0,
       notice: loaded.notice,

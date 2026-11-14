@@ -1,3 +1,4 @@
+import { visibleInSearch } from '../../engine/journeyAccess';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Eyebrow } from '../../components/ui';
 import { usePageState } from '../../components/usePageState';
@@ -37,7 +38,7 @@ export function SettingsOverview() {
     ...(facts.noGoal ? { direction: directionStatus(facts.settings, facts.today) } : {}),
   });
   const searching = query.trim().length > 0;
-  const results = searching ? searchSettings(query, SETTINGS_INDEX).slice(0, MAX_RESULTS) : [];
+  const results = searching ? searchSettings(query, visibleInSearch(SETTINGS_INDEX, facts.trekGoal === true)).slice(0, MAX_RESULTS) : [];
   // Het tandwiel op een tab geeft `from` mee: de groep van die tab licht even op.
   const highlighted: SettingsPageId[] = jump.from === '/week' ? ['planning'] : jump.from === '/' ? ['vandaag'] : [];
 

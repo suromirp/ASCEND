@@ -58,6 +58,7 @@ const ForgePage = lazy(() => import('./pages/Forge').then((m) => ({ default: m.F
 const TrainingSpotsPage = lazy(() => import('./pages/TrainingSpots').then((m) => ({ default: m.TrainingSpotsPage })));
 const StandingPage = lazy(() => import('./pages/Standing').then((m) => ({ default: m.StandingPage })));
 const StandScreenPage = lazy(() => import('./pages/StandScreen').then((m) => ({ default: m.StandScreenPage })));
+import { TrekOnly } from './components/reis/TrekOnly';
 const JourneyPage = lazy(() => import('./pages/Journey').then((m) => ({ default: m.JourneyPage })));
 const PackListPage = lazy(() => import('./pages/PackList').then((m) => ({ default: m.PackListPage })));
 const EtappesPage = lazy(() => import('./pages/Etappes').then((m) => ({ default: m.EtappesPage })));
@@ -372,10 +373,13 @@ function AppShell() {
             <Route path="/forge" element={<ForgePage />} />
             <Route path="/kracht" element={<Navigate to="/forge" replace />} />
             <Route path="/blessures" element={<Navigate to="/lichaam" replace />} />
-            <Route path="/reis" element={<JourneyPage />} />
-            <Route path="/reis/paklijst" element={<PackListPage />} />
-            <Route path="/etappes" element={<EtappesPage />} />
-            <Route path="/onderweg" element={<AlleenOnderwegPage />} />
+            {/* De tochtschermen horen bij een doel dat een tocht is (engine/journeyAccess.ts). */}
+            <Route element={<TrekOnly />}>
+              <Route path="/reis" element={<JourneyPage />} />
+              <Route path="/reis/paklijst" element={<PackListPage />} />
+              <Route path="/etappes" element={<EtappesPage />} />
+              <Route path="/onderweg" element={<AlleenOnderwegPage />} />
+            </Route>
             {/* Een adres dat niet bestaat (meer) opent Vandaag, niet een leeg scherm. */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

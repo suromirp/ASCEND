@@ -142,6 +142,8 @@ export interface SettingsFacts {
   goal: { name: string; date: string } | null;
   // Het hoofddoel is zelf een tocht (GR5, een bergtocht): dan klopt "Geen tochten" niet.
   mainIsTrek?: boolean;
+  // Er is een doel dat een tocht is: dan staan Reisplanner en Paklijst in het zoekveld.
+  trekGoal?: boolean;
   // Tochten van jezelf die nog komen, en andere vrije dagen of vakanties die nog komen.
   treks: number;
   vacations: number;

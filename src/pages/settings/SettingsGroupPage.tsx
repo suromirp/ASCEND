@@ -6,7 +6,6 @@ import { SettingsAdjustedContext, SettingsAdvancedContext, SettingsJumpContext }
 import { useSettingsFacts } from '../../components/settings/useSettingsFacts';
 import { useFlashOnMount, useJumpState } from '../../components/settings/jump';
 import type { GroupProps } from '../../components/settings/groups/types';
-import { Soon } from '../../components/settings/groups/Soon';
 import { ForgeGroup } from '../../components/settings/groups/ForgeGroup';
 import { PlanningGroup } from '../../components/settings/groups/PlanningGroup';
 import { VandaagGroup } from '../../components/settings/groups/VandaagGroup';
@@ -19,8 +18,8 @@ import { GroupReset } from '../../components/settings/AdviceReset';
 import { adjustedRows } from '../../engine/settingsAvailability';
 import { PAGE_ROWS, SETTINGS_ROOT, isAdvancedRow, isSettingsPageId, placementOf, settingsAdvancedRoute, settingsPageRoute, settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
 
-// Welke inhoud bij welke groep hoort. Een groep die er nog niet is, toont Soon.
-const GROUPS: Partial<Record<SettingsPageId, ComponentType<GroupProps>>> = {
+// Welke inhoud bij welke groep hoort. Elke groep heeft inhoud; een onbekende groep gaat naar het overzicht.
+const GROUPS: Record<SettingsPageId, ComponentType<GroupProps>> = {
   planning: PlanningGroup,
   forge: ForgeGroup,
   lichaam: LichaamGroup,
@@ -63,7 +62,7 @@ function GroupPageInner({ id, advanced }: { id: SettingsPageId; advanced: boolea
   const place = jump.jumpTo ? placementOf(jump.jumpTo.replace(/^instelling-/, '')) : undefined;
   const target = place && place.page === id ? place.row : jump.jumpTo;
   const [sheet, setSheet] = useState<string | null>(target && (jump.openSheet || place?.sheet) ? target : null);
-  const Content = GROUPS[id] ?? Soon;
+  const Content = GROUPS[id];
 
   useFlashOnMount(target);
   const adjusted = useMemo(() => adjustedRows(facts.settings, id), [facts.settings, id]);
