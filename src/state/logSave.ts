@@ -46,8 +46,9 @@ export const FORM_SAVE_NOTE = {
   failed: `${FAILED} Je invulling staat er nog; probeer het opnieuw.`,
   failedLoose: `${FAILED} Kijk eerst in je logboek of hij er toch staat; je invulling staat er nog.`,
   slow: `${SLOW} Je invulling blijft staan.`,
-  // Een losse training: de knop blijft uit, en antwoordt de eerste poging nooit, dan helpt alleen opnieuw starten.
-  slowLoose: `${SLOW} Je invulling blijft staan. ${STILL_RUNNING_HELP}`,
+  // Een losse training op het blad Hoe ging het?. Geen advies om de app af te sluiten: het concept staat in
+  // sessionStorage (utils/loggerDraft.ts) en overleeft dat niet. Het blad sluiten en opnieuw openen houdt het wel.
+  slowLoose: `${SLOW} Je invulling blijft staan. Kijk in je logboek of hij er staat; staat hij er niet, probeer het dan nog eens.`,
   already: ALREADY_LOGGED_NOTE,
 } as const;
 
