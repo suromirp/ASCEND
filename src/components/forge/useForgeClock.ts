@@ -2,7 +2,7 @@
 // onderbreking (engine/forgeSession.ts). Het concept bewaart de uitkomst; dit houdt alleen de stand bij.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { breakAsPause, breakCounts, cleanPauses, isPaused, longBreakMs, pause as pauseClock, resolveBreakAsk, resume as resumeClock, type Pause } from '../../engine/forgeSession';
+import { askBreakNow, breakAsPause, breakCounts, cleanPauses, isPaused, longBreakMs, pause as pauseClock, resolveBreakAsk, resume as resumeClock, type Pause } from '../../engine/forgeSession';
 import { haptics } from '../../utils/haptics';
 import { lastActionOfDraft, type WorkoutDraft } from './forgeDraft';
 import type { useAppData } from '../../state/AppDataContext';
@@ -39,6 +39,9 @@ export function useForgeClock(restored: WorkoutDraft | undefined, readOnly: bool
     setPauses(next.pauses ?? []);
     haptics.tap();
   }, [begin, pauses]);
+  // Staat de vraag open, en voor welke stilte (laatste handeling) sloot je hem zonder antwoord?
+  const asking = useRef(awayMs !== undefined);
+  const dismissedFor = useRef<number | undefined>(undefined);
   // Terug in de app terwijl dit scherm openstond: ook dan de vraag, als de klok liep.
   const clockNow = useRef<{ startedAt: number; pauses: Pause[] } | null>(null);
   useEffect(() => {
@@ -46,14 +49,23 @@ export function useForgeClock(restored: WorkoutDraft | undefined, readOnly: bool
   });
   useEffect(() => {
     if (readOnly) return;
-    const onVisible = () => {
+    const check = (source: 'tik' | 'terug') => {
       if (document.visibilityState !== 'visible') return;
       if (!clockNow.current) return;
       const gap = longBreakMs({ ...clockNow.current, lastActionAt: lastAction.current }, Date.now(), breakAfter);
-      if (gap !== undefined) setAwayMs(gap);
+      if (!askBreakNow({ gapMs: gap, source, lastActionAt: lastAction.current, ...(dismissedFor.current !== undefined ? { dismissedFor: dismissedFor.current } : {}) })) return;
+      asking.current = true;
+      setAwayMs(gap);
     };
+    const onVisible = () => check('terug');
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+    // Het scherm bleef open liggen (een nacht met Forge open, het scherm houdt zich wakker): dan komt er geen
+    // terugkomst, dus kijkt een minuut-tik of de stilte de drempel haalde (profiel afbreker, punt 6).
+    const id = window.setInterval(() => check('tik'), 60_000);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.clearInterval(id);
+    };
   }, [readOnly, breakAfter]);
   const answerBreak = (counts: boolean) => {
     if (startedAt === null) return;
@@ -63,8 +75,15 @@ export function useForgeClock(restored: WorkoutDraft | undefined, readOnly: bool
     lastAction.current = now;
     // Altijd een nieuwe lijst, ook bij "Ja": het concept moet het nieuwe moment van handelen meekrijgen.
     setPauses([...(next.pauses ?? [])]);
+    asking.current = false;
+    setAwayMs(undefined);
+  };
+  // Het blad gesloten zonder antwoord: onthoud voor welke stilte, zodat de minuut-tik hem niet terugzet.
+  const dismissBreak = () => {
+    if (asking.current) dismissedFor.current = lastAction.current;
+    asking.current = false;
     setAwayMs(undefined);
   };
 
-  return { startedAt, pauses, paused, lastAction, awayMs, setAwayMs, begin, togglePause, answerBreak };
+  return { startedAt, pauses, paused, lastAction, awayMs, dismissBreak, begin, togglePause, answerBreak };
 }

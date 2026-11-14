@@ -126,14 +126,15 @@ export function ForgeWorkout(props: ForgeWorkoutProps) {
   const { strengthExternal } = useAppData();
   const world = useSessionWorld();
   const myKey = `${draftKey(props.template.id, props.plannedSessionId, props.scheduledDate)}:forge`;
-  const [other] = useState(() => {
+  const [other, setOther] = useState(() => {
     // "Gedaan" vanuit Vandaag of Week (startAtForm) en alleen kijken horen niet bij een sessie.
     if (props.preview || props.startAtForm || strengthExternal) return undefined;
     const live = readSession();
     if (!live || live.pointer.key === myKey) return undefined;
     return sessionIsDead(live.pointer, world) ? undefined : live;
   });
-  if (other) return <OtherSessionRunning name={other.pointer.name} onClose={props.onClose} />;
+  // Na Verwijderen van de oude training start deze gewoon; elke andere keuze sluit dit scherm.
+  if (other) return <OtherSessionRunning session={other} onClose={props.onClose} onDiscarded={() => setOther(undefined)} />;
   return <ForgeWorkoutInner {...props} />;
 }
 
@@ -237,7 +238,7 @@ function ForgeWorkoutInner({
   // De regel "Ingekort tot ongeveer 60 minuten" zegt wat er bij het openen wegviel, bij de eerste stand van de
   // sessie (een heropend concept houdt wat je al deed), en blijft dan staan.
   const [capLine] = useState(() => capLineFor(capped, workout));
-  const { startedAt, pauses, paused, lastAction, awayMs, setAwayMs, begin, togglePause, answerBreak } = useForgeClock(restored, readOnly, settings);
+  const { startedAt, pauses, paused, lastAction, awayMs, dismissBreak, begin, togglePause, answerBreak } = useForgeClock(restored, readOnly, settings);
   const later = useLater();
   const [rest, setRest] = useState<Rest | undefined>(() => (restored?.rest && restored.rest.endsAt > Date.now() - REST_DONE_LINGER_MS ? restored.rest : undefined));
   const [column, setColumn] = useState<'target' | 'previous'>(restored?.column ?? 'target');
@@ -807,7 +808,7 @@ function ForgeWorkoutInner({
         paused={paused}
         togglePause={togglePause}
         awayMs={awayMs}
-        setAwayMs={setAwayMs}
+        dismissBreak={dismissBreak}
         answerBreak={answerBreak}
         later={later}
         dropDraft={dropDraft}

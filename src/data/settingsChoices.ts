@@ -636,6 +636,19 @@ export const CHOICES = {
       { value: 90, label: 'Na 90 minuten', short: '90 minuten' },
     ],
   }),
+  forgeConcept: def({
+    group: 'Forge',
+    title: 'Niet afgerond, concept na',
+    line: 'Hoe lang een training zonder handeling mag liggen voordat Forge hem als concept bewaart en vraagt wat je wilt.',
+    advice: 12 as 0 | 4 | 8 | 12,
+    help: 'forgeConcept',
+    options: [
+      { value: 0, label: 'Alleen na middernacht', short: 'Na middernacht' },
+      { value: 4, label: 'Na 4 uur', short: '4 uur' },
+      { value: 8, label: 'Na 8 uur', short: '8 uur' },
+      { value: 12, label: 'Na 12 uur', note: 'Het advies', short: '12 uur' },
+    ],
+  }),
   plaatjes: def({
     group: 'Forge',
     title: 'Plaatjes bij oefeningen',

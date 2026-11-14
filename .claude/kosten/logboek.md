@@ -478,3 +478,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-14, Warden routes-vorm (fable) 105k: akkoord na merge van main; 5 overlevende mutanten, markBigRoads kan gooien; herstelronde.
 - 2026-11-14, Lookout planner (sonnet) 80k: vakantie-instap groen; Ongedaan maken zonder uitkomst en zonder verversen, ziek heet in Week gemist; herstelronde.
 - 2026-11-14, Cartographer Instellingen op één plek (opus high) $2,91: ontwerp in 8 groepsbestanden, 7 stappen, foto als bewijs; stap 0 en 1 gestart.
+- 2026-11-14, Sherpa Afbreker (ontwikkelaar, opus) backlog N; zelfreview reviewer (sonnet) 64k niet akkoord op 2 punten (overgeslagen bleef concept na Verder, open tab kon Weggooien terugzetten), beide hersteld met test, 1 mag-punt verwerkt.
+- 2026-11-14, Sherpa Afbreker herstelronde (opus) na Warden van de coördinator (2 moet, 8 mag); alle tien verwerkt met tests, geen eigen helper.

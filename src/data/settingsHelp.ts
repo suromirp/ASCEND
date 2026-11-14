@@ -484,6 +484,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'Forge vraagt niets en telt alles mee. Pauzeren kan altijd zelf in het menu van de training.' },
     ],
   },
+  forgeConcept: {
+    title: 'Niet afgerond, concept na',
+    lead: 'Een training die je begon en vergat af te ronden, loopt niet dagen door. Na middernacht, of na deze grens zonder handeling, staat hij als concept klaar. Er gaat niets weg en je planning verandert niet.',
+    points: [
+      { head: 'Afronden', text: 'met de sets die je deed en de tijd tot je laatste handeling. Is het minder dan de helft, dan heet het eerlijk een korte training.' },
+      { head: 'Verder', text: 'de stille tijd wordt een pauze en je gaat door waar je was.' },
+      { head: 'Verwijderen', text: 'pas na een bevestiging. Je logboek verandert niet.' },
+      { head: 'Na 12 uur', text: 'het advies. Middernacht geldt altijd, met een uur stilte, zodat een late training gewoon doorloopt.' },
+    ],
+  },
   forgeVegen: {
     title: 'Vegen om te verwijderen',
     lead: 'In een training haal je een set weg door de rij naar links te vegen. Uit, dan beweegt de rij niet meer mee met je vinger.',

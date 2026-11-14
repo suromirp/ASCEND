@@ -74,7 +74,7 @@ import { storageUseText, type StorageEstimate } from './storageUse';
 import { swipeDeleteOn } from './forgeRows';
 import { resolveForgeLayout } from './forgeLayout';
 import { resolveForgeLogView } from './forgeLog';
-import { resolveBreakAsk } from './forgeSession';
+import { resolveBreakAsk, resolveLeftAfter } from './forgeSession';
 import { resolveTimeCap } from './forgeTimeCap';
 import { resolveSportCounting } from './sportRole';
 import { sportsRowSummary } from './sportsScreen';
@@ -419,7 +419,7 @@ const waitingSummary = (base: RowSummary, value: string): RowSummary => ({ title
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
 const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
-const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-ijkset', 'forge-doorvoeren', 'forge-schijven', 'forge-opwarmset-later'];
+const BUNDLE_FILL = ['forge-onderbreking', 'forge-concept', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-ijkset', 'forge-doorvoeren', 'forge-schijven', 'forge-opwarmset-later'];
 const adviceOrCount = (ids: string[], s: AppSettings): RowSummary => {
   const n = countDifferences(ids, s);
   return n === 0 ? { value: 'Advies' } : { value: `${n} aangepast` };
@@ -892,6 +892,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('grensBeen', resolveTimeCap(s).legs) };
     case 'forge-onderbreking':
       return { value: choiceShort('forgeOnderbreking', resolveBreakAsk(s)), dim: resolveBreakAsk(s) === 0 };
+    case 'forge-concept':
+      return { value: choiceShort('forgeConcept', resolveLeftAfter(s)) };
     case 'forge-vegen':
       return { checked: swipeDeleteOn(s) };
     // Slepen in Week (engine/weekSwap.ts): "Ruilen" of "Samen", of uit.

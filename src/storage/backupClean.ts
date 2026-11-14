@@ -18,7 +18,7 @@ import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, mi
 import { normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { validCatchUp } from '../engine/catchUp';
-import { BREAK_ASK_OPTIONS } from '../engine/forgeSession';
+import { BREAK_ASK_OPTIONS, LEFT_AFTER_OPTIONS } from '../engine/forgeSession';
 import { TIME_CAP_OPTIONS } from '../engine/forgeTimeCap';
 import { isRecord } from '../utils/guards';
 import { cleanWatchFieldStore } from '../engine/watchFields';
@@ -296,6 +296,10 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   }
   if ('forgeLongBreak' in s && !(BREAK_ASK_OPTIONS as readonly number[]).includes(s.forgeLongBreak as number)) {
     delete s.forgeLongBreak;
+    skipped.n++;
+  }
+  if ('forgeLeftAfter' in s && !(LEFT_AFTER_OPTIONS as readonly number[]).includes(s.forgeLeftAfter as number)) {
+    delete s.forgeLeftAfter;
     skipped.n++;
   }
   // Hoogstens per krachttraining (engine/forgeTimeCap.ts): een van de vaste keuzes, of niet daar.
