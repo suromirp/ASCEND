@@ -9,6 +9,14 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 14 november, 14:40 (Wachter)
+
+- Check-in: 77dc3dc live (web en APK groen); drie nieuwe bouwers klaar en in review.
+- Beter: vijf controles tegelijk (drie Warden, één Lookout, één Pathfinder) in plaats van per bouwer.
+- Slechter: de volle controle liep over de tijdslimiet van tien minuten; tekstkaart los en met langere grens draaien.
+- Gereedschap: Scout op fable leverde een bruikbaar stuk met bronnen in vijf minuten; potentie: refuges.info als adapter.
+- Werkstijl: vergelijkingen en grote checks altijd op de achtergrond met een lange grens.
+
 ## 14 november, 13:40 (Wachter)
 
 - Check-in: drie bouwers klaar en in review; voorstel begrijpelijk live; werkkaart en reflectie staan.
