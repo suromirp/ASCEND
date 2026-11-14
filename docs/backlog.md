@@ -8,6 +8,7 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 
 ## Inbox
 
+- Verborgen schermen, rest (Pathfinder 12 en 14 november): ontwerp later: na een loop zes tot acht lagen (Debrief, CompletionMoment, RunInsight, RunDetail, WatchActivity, LogDetail, DaySheet) naar één moment; groep Gidsen uit het tandwiel naar ingangen op hun moment; Forge-instellingen tijdens het trainen in een blad; instellingen samenvoegen per onderwerp; Alleen onderweg samen met Als het misgaat. Mag: een trekdoel dat geen hoofddoel is krijgt geen Reis-regel (`useJourney.ts:30` neemt de datum van het hoofddoel; ook nagaan of de Reisplanner dan een verkeerde afteldatum toont); de regel op Etappes "Nog geen tocht om mee te vergelijken" wordt "Nog geen gelopen dag om mee te vergelijken"; telt een gepauzeerd of afgerond trekdoel mee in `hasTrekGoal`; de Kennisbank toont zonder doel "De GR5 in etappes" en "Je rugzak pakken" (les van de week nagaan).
 - Grens van intervals.icu meten (Warden 14 november, mag): kop en inhoud delen nu één grens van 15 s; meet met een vertraagde lijn en een lange activiteit of een groot antwoord dan nog binnenkomt. Een herstelstap die elke start faalt staat alleen in de console (teller in meta voor de diagnose?).
 - Kleding en wind, vervolg (Pathfinder en Warden 13 november, mag): de windgrens van de weerzin (15 km/u, 2 graden gevoel) en die van het windjack (25 km/u) en de warmtebonus van de lange duurloop toetsen aan bronnen met een korte Scout; staat Weer uit en Kledingadvies aan, dan noemt de kledingzin de wind niet (`briefing.ts` rij Weer, `ClothingAdvice.tsx`, `eveningBefore.ts`); een zin na een tik tegen de bestaande richting in leest vreemd (`feedbackSentence`).
 - Weer van de plek, rest (Pathfinder en Lookout 13 november, mag): De avond ervoor kent de plek niet (eigen besluit nodig); een cache per plek; de pagina rekent de duur met `resolveEffectiveFullDuration` en de Briefing met de minuten van de rij, bij een aangepaste duur kan de kop verschillen (duur meegeven in `WeatherPageLink`); "Nu verversen" in Je plaats ververst thuis, niet de plek; Terug vanaf de pagina Weer komt op Week uit, niet op de Briefing (al zo voor deze wijziging, `TrainingBriefing.toPage`).
@@ -26,7 +27,6 @@ Vast punt, elk bouwmoment: na de punten hieronder de eerstvolgende open ronde ui
 
 Leeg: alles van 11 november staat in de Bouwrij hieronder, die de coördinator deze week zelf bouwt.
 - Efficiëntie-blad op Stand (Sherpa Zone 2, 12 november): tekent de weekgemiddelden aan elkaar terwijl het cijfer "Nu, op de lijn" de regressie is, en "Je eerdere lopen met de datum" klopt niet bij weken. Dezelfde weekgrafiek als de kaart Tempo bij zone 2.
-- Verborgen schermen (Pathfinder 12 november, `docs/onderhoud/2026-11-12-pathfinder-verborgen-schermen.md`). Moet: de Kennisbank belooft een les per week op Vandaag maar `LessonCard` wordt nergens gebruikt (herstellen of de zin schrappen); Reisplanner, Paklijst, Etappes en Alleen onderweg zijn zonder trekdoel via route en instellingenzoeken bereikbaar (botst met zonder doel geen bergtocht of rugzakladder). Opruimen: AdventureCard, LessonCard, Soon, de Engelse foutmelding bij een verse start offline. Ontwerp later: na een loop zes tot acht lagen (Debrief, CompletionMoment, RunInsight, RunDetail, WatchActivity, LogDetail, DaySheet) naar één moment; groep Gidsen uit het tandwiel naar ingangen op hun moment; Forge-instellingen tijdens het trainen in een blad; instellingen samenvoegen per onderwerp; Alleen onderweg samen met Als het misgaat.
 
 ## Bouwrij deze week (coördinator, tot en met 15 november)
 
@@ -70,6 +70,7 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 
 ## Pas live
 
+- Verborgen schermen (14 november): tochtschermen, Reis-regel en zoekresultaten alleen met een trekdoel; geen valse belofte in de Kennisbank; AdventureCard, LessonCard en Soon weg; laadfout offline in het Nederlands. Besluit `2026-11-14-verborgen-schermen.md`.
 - Opstarten en intervals.icu (14 november): de grens van 15 s geldt tot het antwoord gelezen is; een herstelstap die een fout gooit wordt alleen zelf overgeslagen, opruimen wacht als samenvoegen mislukte. Besluit `2026-11-14-opstarten-en-intervals-grens.md`.
 - Kleding en wind (13 november): de weerzin en de rij Weer in de Briefing noemen gevoel en wind vanaf 15 km/u; de eerste tik Te koud of Te warm is een graad, daarna een halve, met een zin wat er verandert. Besluit `2026-11-13-kleding-en-wind.md`.
 - Weer van de plek, vervolg (13 november): een tik op de rij Weer in de Briefing opent de pagina Weer met het weer van de gekozen plek. Besluit `2026-11-13-weer-van-de-plek-pagina.md`.
