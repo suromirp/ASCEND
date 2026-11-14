@@ -30,7 +30,7 @@ import { Icon } from './icons';
 import { Chip, Eyebrow, PrimaryButton } from './ui';
 import { useRouteSearch, type RouteSearchModel } from './useRouteSearch';
 import { NewPlaceSheet } from './NewPlaceSheet';
-import { startPair } from '../engine/places';
+import { startTrio } from '../engine/places';
 import { RouteAdjust } from './RouteAdjust';
 import { RouteMapFull } from './RouteMapFull';
 
@@ -90,11 +90,26 @@ export function ChosenLoop({ style, proposal, date, target, sender }: { style: R
 
 // Geen netwerk of een routeplanner die te laat was: op de plek van de kaart, met dezelfde hoogte, de
 // regel en Opnieuw zoeken.
-export function RouteFailure({ kind, onRetry, height }: { kind: 'offline' | 'timeout'; onRetry: () => void; height?: string }) {
+// `line`: de regel van de regie (geen verbinding, of welke stap niet op tijd was); zonder de vaste regel.
+export function RouteFailure({ kind, onRetry, height, line }: { kind: 'offline' | 'timeout'; onRetry: () => void; height?: string; line?: string }) {
   return (
     <div className="flex w-full flex-col items-start justify-center gap-1 rounded-xl border px-5" style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-      <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{kind === 'offline' ? OFFLINE_LINE : TIMEOUT_LINE}</p>
+      <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{line || (kind === 'offline' ? OFFLINE_LINE : TIMEOUT_LINE)}</p>
       <TextButton tone="dim" onClick={onRetry}>Opnieuw zoeken</TextButton>
+    </div>
+  );
+}
+
+// Je plek lukte niet: op de plek van de kaart de reden en Opnieuw (één nieuwe vraag om je plek). Thuis en
+// Andere plek zijn de chips erboven; ze staan hier niet nog eens. Er wordt pas gezocht na een tik: nooit
+// stil terug op Thuis, dat kan duizenden kilometers verderop liggen (besluit 2026-11-14-geen-stille-thuis.md).
+export function AskStart({ model, height }: { model: RouteSearchModel; height?: string }) {
+  if (!model.ask) return null;
+  return (
+    <div className="flex w-full flex-col items-start justify-center gap-1 rounded-xl border px-5" style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
+      <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{model.ask.line}</p>
+      {/* Een gewone tekstknop in inkt, geen mint (dat is de knop onderaan) en niet gedempt: dit is de keuze hier. */}
+      <TextButton tone="dim" style={{ color: 'var(--color-ink)' }} onClick={model.retryHere}>Opnieuw</TextButton>
     </div>
   );
 }
@@ -160,23 +175,25 @@ export function RouteFirstQuestion({ model, onDecline }: { model: RouteSearchMod
   );
 }
 
-// Start bij: twee chips boven de kaart en de zoekstand, in elke stand (besluit 2026-11-12-route-blok.md).
-// Waar je nu bent, en een tweede chip met de naam van de plek die nu geldt (Thuis, een bewaarde of een
-// gezochte plek), anders Andere plek. Die tweede chip opent het blad Andere plek: je bewaarde plekken met
-// Thuis bovenaan, en zoeken. Een keuze geldt voor deze training en breekt een zoektocht die loopt af
-// (nieuwe sleutel). Twee chips passen altijd op 360 px: een lange naam wordt afgekort, de chip valt nooit af.
+// Start bij: vaste chips boven de kaart en de zoekstand, in elke stand: Waar je nu bent, Thuis (als die er
+// is) en Andere plek, altijd met dezelfde naam op dezelfde plek, zodat er nooit een knop onder je vinger
+// verspringt (eigenaar 14 november, besluit 2026-11-14-geen-stille-thuis.md). Andere plek opent het blad
+// met zoeken en je bewaarde plekken; een gekozen plek staat met haar naam in een regel onder de chips.
+// Het blad hangt hier, niet in de vraag (AskStart): zo sluit het netjes als de keuze de stand verandert.
+// Een keuze geldt voor deze training en breekt een zoektocht die loopt af (nieuwe sleutel).
 export function StartChips({ model }: { model: RouteSearchModel }) {
   const [open, setOpen] = useState(false);
-  const pair = startPair(model.startChips, model.startChip);
+  const trio = startTrio(model.startChips, model.startChip);
   const here = model.startChips.find((c) => c.kind === 'here');
   return (
     <div className="flex flex-col gap-1">
       <Eyebrow tone="var(--color-ink-dim)">Start bij</Eyebrow>
-      <div role="group" aria-label="Start bij" className="flex h-11 min-w-0 gap-2">
-        {here && <span className="shrink-0 whitespace-nowrap"><Chip tone="quiet" selected={pair.hereChosen} onClick={() => model.pickStart(here)}>{here.label}</Chip></span>}
-        <span className="min-w-0 whitespace-nowrap">
-          <Chip tone="quiet" selected={pair.other.chosen} label={pair.other.aria !== pair.other.label ? pair.other.aria : undefined} onClick={() => setOpen(true)}>
-            <span className="inline-block max-w-[7rem] truncate align-bottom">{pair.other.label}</span>
+      <div role="group" aria-label="Start bij" className="flex min-w-0 flex-wrap gap-2">
+        {here && <span className="shrink-0 whitespace-nowrap"><Chip tone="quiet" selected={trio.hereChosen} onClick={() => model.pickStart(here)}>Waar je nu bent</Chip></span>}
+        {trio.home && <span className="shrink-0 whitespace-nowrap"><Chip tone="quiet" selected={trio.home.chosen} onClick={() => model.pickStart(trio.home!.chip)}>Thuis</Chip></span>}
+        <span className="shrink-0 whitespace-nowrap">
+          <Chip tone="quiet" selected={trio.other.chosen} label={trio.other.name ? `Andere plek: ${trio.other.name}` : undefined} onClick={() => setOpen(true)}>
+            Andere plek
             {/* Een kleine pijl: deze chip opent een blad (Pathfinder). */}
             <span aria-hidden className="shrink-0"><Icon name="verder" size={14} /></span>
           </Chip>
@@ -230,8 +247,10 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
     switch (p) {
       case 'searching':
         return <RouteSearching key={`${p}-${model.searchKey}`} steps={model.steps} current={model.currentStep} limitLine={model.limitLine} limitMs={model.limitMs} />;
+      case 'ask':
+        return <AskStart key={p} model={model} />;
       case 'failure':
-        return <RouteFailure key={p} kind={stage === 'offline' ? 'offline' : 'timeout'} onRetry={model.retry} />;
+        return <RouteFailure key={p} kind={stage === 'offline' ? 'offline' : 'timeout'} onRetry={model.retry} line={model.failLine} />;
       case 'map':
         return model.mapStartPoint ? (
           <div key={p} className="flex flex-col gap-1">

@@ -4,6 +4,7 @@ Bijgewerkt: 14 november 2026, ongeveer 13:00 Amsterdam, door de coördinator ses
 
 ## Eerst lezen (eigenaar 14 november)
 
+- Nacht 14 op 15 november (eigenaar 22:20 Portugese tijd): "blijven gaan, maximaal, ook als de vijfuurslimiet op is". Bouwplekken vol, tot acht sessies tegelijk; bij een limiet niets forceren maar de Wachter en een send_later op resetsAt plus vijf minuten laten alles direct hervatten. Volgorde na planner en horloge: Zonder ASCEND (drie rondes), dan Instellingen op één plek, dan Q, M2, R, P. Fable alleen voor Warden op planner en historie; meld de eigenaar als Fable bijna vol is.
 - Tijd (eigenaar 14 november 20:35, op reis): zolang de eigenaar in Portugal is, alle tijden aan hem in Portugese tijd (Europe/Lisbon, een uur achter Amsterdam), tot hij zegt dat hij terug is. Nooit UTC.
 - Houd de drie bouwplekken vol: wachten op een review of herstelronde is geen reden om niets te starten. Elke beurt eindigt met: zijn alle drie bezet? Zo niet, start de volgende die geen bestanden deelt (skill werkverdeling, Bouwplekken vol houden).
 

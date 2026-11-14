@@ -36,7 +36,7 @@ import { showSpotsFor } from './trainingSpots';
 import { uvShort } from './outdoorSun';
 import { placeChoices, placeHasRoute, placeIsOutdoor, resolvePlace, type PlaceChoice } from './trainingPlace';
 import { temperatureHead, weatherForTraining, windPhrase } from './weather';
-import { PLACE_WEATHER_FROM_HOME, placeWeatherFailed, placeWeatherLine } from './placeWeather';
+import { PLACE_WEATHER_FROM_HOME, WEATHER_AT_HOME, placeWeatherFailed, placeWeatherLine } from './placeWeather';
 import { clothingForTraining } from './clothing';
 import { drinkAmount } from './eveningBefore';
 import { litersText } from './stageWater';
@@ -233,7 +233,8 @@ export interface BriefingInput {
   forecast?: WeatherForecast;
   // De gekozen plek ligt ver van huis (engine/placeWeather.ts): 'shown' als `forecast` het weer van die
   // plek is, 'failed' als hij niet geladen kon worden en `forecast` het weer van huis bleef.
-  weatherPlace?: { name: string; state: 'shown' | 'failed' };
+  // 'home': je plek lukte niet en er is nog geen plek gekozen; `forecast` is het weer van huis en dat zegt de rij.
+  weatherPlace?: { name: string; state: 'shown' | 'failed' | 'home' };
   weatherOn: boolean;
   // UV vanaf 3 en de hoogte van de plek vanaf 1000 m in de rij Weer (engine/outdoorSun.ts). Afwezig: aan.
   uvAltitudeOn?: boolean;
@@ -618,7 +619,10 @@ function weatherRow(input: BriefingInput, minutes: number): BriefingRow | undefi
   const tone = input.weatherOn && w.verdict !== 'prima' ? ('warn' as const) : undefined;
   const plain = upperFirst(parts.join(', '));
   // De plek erbij: het weer daar, of het weer van huis met de eerlijke regel dat de plek niet laadde.
-  const line = at?.state === 'shown' ? placeWeatherLine(at.name, plain) : at?.state === 'failed' ? `${placeWeatherFailed(at.name)} ${PLACE_WEATHER_FROM_HOME} ${lowerFirst(plain)}.` : plain;
+  const line = at?.state === 'shown' ? placeWeatherLine(at.name, plain)
+    : at?.state === 'failed' ? `${placeWeatherFailed(at.name)} ${PLACE_WEATHER_FROM_HOME} ${lowerFirst(plain)}.`
+    : at?.state === 'home' ? `${WEATHER_AT_HOME} ${lowerFirst(plain)}`
+    : plain;
   return { id: 'weather', label: BRIEFING_TEXT.weather, line, opens: true, ...(tone ? { tone } : {}) };
 }
 
