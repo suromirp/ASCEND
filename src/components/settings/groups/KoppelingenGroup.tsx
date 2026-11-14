@@ -159,13 +159,13 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
         <SummaryRow id="bundel-strava" title="Tekst voor Strava" facts={facts} info="stravaTekst" onClick={() => setSheet('bundel-strava')} />
       </SettingsSection>
 
-      {/* Datavelden voor je horloge: de pagina zelf staat bij Je horloge instellen en bij een training. */}
+      {/* Datavelden voor je horloge: de pagina zelf staat bij een training (Je horloge), bij Je horloge instellen
+          en sinds 14 november bij Gidsen (Datavelden bekijken). */}
       <SettingsSection
-        advancedTitles="Datavelden voor je horloge, Datavelden bekijken, Model"
+        advancedTitles="Datavelden voor je horloge, Model"
         advanced={
           <>
             <SummaryRow id="datavelden" title="Datavelden voor je horloge" facts={facts} info="datavelden" onChange={(on) => void updateSettings({ watchFieldsShown: on })} />
-            <SummaryRow id="datavelden-bekijken" title="Datavelden bekijken" facts={facts} onClick={() => navigate('/horloge/datavelden')} />
             <SummaryRow id="datavelden-model" title="Model" facts={facts} onClick={() => setSheet('datavelden-model')} />
           </>
         }

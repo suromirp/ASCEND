@@ -32,7 +32,8 @@ import { watchSheet, type WatchSheetInput } from './watchSheet';
 import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
 import { routeTarget } from './routeTarget';
-import { placeChoices, placeHasRoute, resolvePlace, type PlaceChoice } from './trainingPlace';
+import { showSpotsFor } from './trainingSpots';
+import { placeChoices, placeHasRoute, placeIsOutdoor, resolvePlace, type PlaceChoice } from './trainingPlace';
 import { temperatureHead, weatherForTraining, windPhrase } from './weather';
 import { PLACE_WEATHER_FROM_HOME, placeWeatherFailed, placeWeatherLine } from './placeWeather';
 import { clothingForTraining } from './clothing';
@@ -63,6 +64,9 @@ export const BRIEFING_TEXT = {
   weather: 'Weer',
   fuel: 'Mee',
   stretch: 'Voor en na',
+  // De rij naar de pagina Trainingsplekken (uit het oude Info-blad, 14 november).
+  spots: 'Plekken',
+  spotsLine: 'Waar kun je dit doen?',
   // Het blad achter de rij Mee.
   fuelSheet: 'Eten en drinken',
   // Het blad achter de rij Voor en na.
@@ -116,7 +120,7 @@ export type BriefingMap =
 
 // De lijst zonder kopje (spoor 3): links het vaste woord, rechts de waarde, en een pijltje als de rij
 // een blad of pagina opent. Wat je loopt staat in de hartkaart, niet in de lijst.
-export type BriefingRowId = 'watch' | 'weather' | 'fuel' | 'stretch';
+export type BriefingRowId = 'watch' | 'weather' | 'fuel' | 'stretch' | 'spots';
 
 export interface BriefingRow {
   id: BriefingRowId;
@@ -188,6 +192,10 @@ export interface BriefingView {
   placeLine?: string;
   map: BriefingMap;
   rows: BriefingRow[];
+  // De heuvelregel (HillsNearbyLine, met de vraag om OpenStreetMap): alleen buiten en niet als de training al
+  // gedaan is. Of er een regel komt (heuveltraining, of heuvels voor elke loop) zegt de regel zelf
+  // (engine/nearbyTerrain.ts#terrainWishOn). Uit het oude Info-blad, 14 november.
+  hills: boolean;
   // De stopregels, volledig en zonder kaart; leeg: geen blok.
   stopSignals: string[];
   footer: BriefingFooter;
@@ -281,7 +289,7 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
   const places = placeChoices(template.id);
   const place = resolvePlace(template, input.storedPlace);
   const modality = place ? getModality(template.id, place) : undefined;
-  const outdoor = !modality || modality.environment === 'outdoor';
+  const outdoor = placeIsOutdoor(template.id, place);
   const done = !!input.session && deriveSessionStatus(input.session, input.logs).status === 'completed';
   const minutes = input.session?.plannedMinutes ?? resolveEffectiveFullDuration(template, input.date, input.program);
 
@@ -300,6 +308,10 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
   if (fuel) rows.push(fuel);
   const stretch = stretchRow(template);
   if (stretch) rows.push(stretch);
+  // Waar kun je dit doen? Alleen buiten: de plekken zijn heuvels, trappen en paden.
+  if (showSpotsFor(template, buildWorkoutPlan(template, input.date, input.program)?.keyTag, place)) {
+    rows.push({ id: 'spots', label: BRIEFING_TEXT.spots, line: BRIEFING_TEXT.spotsLine, opens: true });
+  }
 
   // Gedaan (zelf invullen) kan pas op de dag zelf (of later); vooraf geen onderbalk.
   const due = input.date <= today;
@@ -318,6 +330,7 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
     placeLine: placeLineOf(template, place, brief.sportSwitch),
     map,
     rows,
+    hills: outdoor && !done,
     stopSignals: modality?.environment === 'rest' ? [] : brief.stopSignals,
     footer,
   };

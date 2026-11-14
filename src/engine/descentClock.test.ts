@@ -529,7 +529,6 @@ describe('Trap af op de schermen: wat je doet, zonder zone en zonder weer', () =
   it('geen zone en geen hartslag: geen zonebalk op de missiekaart en geen zones in de uitleg', () => {
     expect(brief.facts.some((f) => /zone|hartslag|praten kan/i.test(`${f.value} ${f.label}`))).toBe(false);
     expect(zoneOfTemplate(stairs, '2026-11-13', null, templates)).toBeUndefined();
-    expect(brief.levelsUsed).toEqual([]);
     expect(missionFacts(STAIRS_TEMPLATE_ID, brief, undefined).chips.map((c) => c.text)).toEqual(['20 min', '10 min dalen, na 5 min inlopen', 'Afdalen']);
     expect(missionFacts(STAIRS_TEMPLATE_ID, brief, undefined).chips.some((c) => c.kind === 'zone')).toBe(false);
   });

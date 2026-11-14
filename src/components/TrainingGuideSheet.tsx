@@ -1,47 +1,26 @@
-// ASCEND — the training guide sheet. Visual first (production feedback:
-// "een mooie visuele view, maar wel dezelfde inzichten"): summary, the
-// workout as a chart and steps with intensity in plain words, the Garmin
-// workout to rebuild, what it loads and builds, the weeks of this phase.
-// The full original text stays one tap away under "Meer uitleg".
+// ASCEND: het blad Waarom deze training (het oude Info-blad), richting A van docs/visie/Ontwerp Info-blad.md.
+// Alleen wat je wilt begrijpen: waarom, wat het vraagt van je lichaam, en een lijst met Te zwaar, Waar train
+// je het best, Deze fase en Achtergrond en bronnen. Wat je doet (stappen, tempo, weer, kleding, plekken)
+// staat op het trainingsscherm en in de Briefing; het horloge in Je horloge (docs/beslissingen/2026-11-14-info-blad-a.md).
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import type { TrainingDayGuide } from '../data/trainingGuide';
 import type { SessionTemplate } from '../models/training';
-import { INTENSITY, type Intensity } from '../data/workoutStructure';
-import { buildWorkoutPlan, formatClock, type PlanStep, type WorkoutPlan } from '../engine/workoutPlan';
+import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { useAppData } from '../state/AppDataContext';
-import { zoneText } from '../engine/heartRateZones';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
 import { Card, Eyebrow, SheetGrip } from './ui';
 import { SessionHeader } from './SessionHeader';
 import { ModalityGuide } from './ModalityPicker';
-import { WeatherLine } from './WeatherLine';
-import { HillsNearbyLine } from './HillsNearbyLine';
-import { RouteProposalLine } from './RouteProposalLine';
-import { ClothingAdvice } from './ClothingAdvice';
 import { buildSessionBrief } from '../engine/sessionBrief';
-import { paceLine } from '../engine/racePaces';
-import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { getModalities } from '../data/modalities';
-import { filterForTraining } from '../engine/trainingSpots';
 import { Icon } from './icons';
 import { Sheet } from './settings/Sheet';
-import { GuideGroupList } from './GuideRow';
+import { GuideList } from './GuideRow';
 import { guideMenu, type GuideRowId, type GuideRowSpec } from '../engine/guideMenu';
 
-// De vier niveaus lopen van rustig naar hard, dus op de inspanningsschaal van de
-// app (Z1 tot Z5, ook in de ZoneBar): bleekblauw, groen, geel, oranje. Bij elk
-// niveau staat altijd de naam, de RPE en de zone; kleur is nooit het enige signaal.
-const INTENSITY_COLOR: Record<Intensity, string> = {
-  1: 'var(--color-effort-1)',
-  2: 'var(--color-effort-2)',
-  3: 'var(--color-effort-3)',
-  4: 'var(--color-effort-4)',
-};
-const INTENSITY_HEIGHT: Record<Intensity, number> = { 1: 30, 2: 50, 3: 72, 4: 100 };
 const LOAD_WORD = ['geen', 'licht', 'gemiddeld', 'zwaar'];
 
 export function TrainingGuideSheet({
@@ -59,29 +38,20 @@ export function TrainingGuideSheet({
   template?: SessionTemplate;
   dateIso?: string;
 }) {
-  const navigate = useNavigate();
-  const { program, templates, settings, sessionLogs } = useAppData();
+  const { program, templates } = useAppData();
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const plan = template ? buildWorkoutPlan(template, dateIso, program) : undefined;
-  // Tempo run and intervals: your pace, from your latest test run.
-  const myPace = template ? paceLine(template.id, pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces) : undefined;
   const brief = template ? buildSessionBrief(template, dateIso, program, { templates }) : undefined;
   // "Te zwaar?" are the guide's own when-to-ease-off sections; the rest is
   // background.
   const easeOff = guide.sections.filter((sec) => /ZWAAR|TE HARD|TE VEEL/i.test(sec.heading));
   const background = guide.sections.filter((sec) => !easeOff.includes(sec));
   const hasModalities = !!template && (getModalities(template.id)?.length ?? 0) > 0;
-  // Spots for this training (Trainingsplekken, filtered on it), or any
-  // climbing spot for a D+ session without its own filter.
-  const spotFilter = filterForTraining(template?.id);
-  const showSpots = !!spotFilter || !!plan?.keyTag?.includes('D+') || template?.type === 'hiking';
-  // Het menu onder de delen: drie groepen, elke rij een onderblad of (plekken) een pagina. De
-  // Garmin-stappen, de datavelden en de zones-opmerking staan sinds 11 november in Je horloge (WatchSheet).
-  const groups = guideMenu({
+  // De lijst: elke rij een onderblad (engine/guideMenu.ts).
+  const rows = guideMenu({
     plan,
     easeOffCount: easeOff.length,
     modalityCount: hasModalities && template ? (getModalities(template.id)?.length ?? 0) : 0,
-    showSpots,
     backgroundCount: background.length,
     hasGear: guide.gear.length > 0,
     sourceCount: guide.sources.length,
@@ -89,12 +59,7 @@ export function TrainingGuideSheet({
   const [sub, setSub] = useState<GuideRowId | null>(null);
   const closeSub = () => setSub(null);
   function openRow(row: GuideRowSpec) {
-    if (row.id === 'plekken') {
-      onClose();
-      navigate(spotFilter ? `/plekken?training=${template!.id}` : '/plekken');
-    } else {
-      setSub(row.id);
-    }
+    setSub(row.id);
   }
 
   return (
@@ -118,36 +83,10 @@ export function TrainingGuideSheet({
             <h2 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{title}</h2>
           )}
 
-          {template && dateIso && <WeatherLine template={template} date={dateIso} className="mt-2" />}
-          {template && dateIso && <HillsNearbyLine template={template} date={dateIso} className="mt-1.5" />}
-          {template && dateIso && <RouteProposalLine template={template} date={dateIso} />}
-          {template && dateIso && <ClothingAdvice template={template} date={dateIso} className="mt-1.5" />}
-
           {plan && plan.builds.length > 0 && (
             <>
               <SectionTitle>Waarom</SectionTitle>
               <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{plan.builds.map((b) => b.why).join(' ')}</p>
-            </>
-          )}
-
-          {myPace && (
-            <>
-              <SectionTitle>Je tempo</SectionTitle>
-              <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{myPace}</p>
-            </>
-          )}
-
-          {brief && brief.levelsUsed.length > 0 && (
-            <>
-              <SectionTitle>Zo voelt elk tempo</SectionTitle>
-              <div className="mt-2 flex flex-col gap-1.5">
-                {brief.levelsUsed.map((lvl) => (
-                  <p key={lvl} className="flex items-start gap-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                    <Dot intensity={lvl} />
-                    <span><span style={{ color: 'var(--color-ink)' }}>{INTENSITY[lvl].label}</span> · {zoneText(lvl, INTENSITY[lvl].zone, settings.heartRate)} · {INTENSITY[lvl].rpe} · {INTENSITY[lvl].feel}</span>
-                  </p>
-                ))}
-              </div>
             </>
           )}
 
@@ -170,11 +109,9 @@ export function TrainingGuideSheet({
             </>
           )}
 
-          {groups.length > 0 && (
-            <div className="mt-2">
-              {groups.map((group) => (
-                <GuideGroupList key={group.id} group={group} onPick={openRow} />
-              ))}
+          {rows.length > 0 && (
+            <div className="mt-6">
+              <GuideList rows={rows} onPick={openRow} />
             </div>
           )}
 
@@ -184,11 +121,6 @@ export function TrainingGuideSheet({
         </Card>
         </div>
       </div>
-      {sub === 'stappen' && plan && (
-        <Sheet eyebrow="Uitleg" title="De stappen" onClose={closeSub}>
-          <WorkoutSteps plan={plan} compact intro={false} />
-        </Sheet>
-      )}
       {sub === 'teZwaar' && (
         <Sheet eyebrow="Uitleg" title="Te zwaar? Zo pas je het aan" onClose={closeSub}>
           <Sections sections={easeOff} />
@@ -289,101 +221,4 @@ function BulletList({ items, className = '' }: { items: string[]; className?: st
 
 function SectionTitle({ children }: { children: string }) {
   return <div className="mt-6"><Eyebrow>{children}</Eyebrow></div>;
-}
-
-function Dot({ intensity }: { intensity: Intensity }) {
-  return <span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: INTENSITY_COLOR[intensity] }} />;
-}
-
-function minutesText(seconds: number): string {
-  return seconds % 60 === 0 ? `${seconds / 60} min` : formatClock(seconds);
-}
-
-function StepRow({ step }: { step: PlanStep }) {
-  const { settings } = useAppData();
-  const level = INTENSITY[step.intensity];
-  const isStrength = step.kind === 'strength';
-  return (
-    <div className="flex gap-2.5">
-      <Dot intensity={step.intensity} />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{step.label}</span>
-          <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{minutesText(step.seconds)}</span>
-        </div>
-        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          {isStrength ? step.detail : step.noTarget ? `${level.label} · geen hartslagdoel${step.detail ? `. ${step.detail}` : ''}` : `${level.label} · ${level.rpe} · ${zoneText(step.intensity, level.zone, settings.heartRate)} · ${level.feel}${step.detail ? `. ${step.detail}` : ''}`}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// The steps of one session (summary, tags, chart, steps with intensity,
-// RPE and heart-rate zone). Shared by the guide and the training screen,
-// so both always say exactly the same thing.
-function WorkoutSteps({ plan, compact = false, intro = true }: { plan: WorkoutPlan; compact?: boolean; intro?: boolean }) {
-  const total = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
-  const peak = Math.max(...plan.timeline.map((s) => s.intensity)) as Intensity;
-  const usedLevels = [...new Set(plan.timeline.filter((s) => s.kind !== 'strength').map((s) => s.intensity))].sort() as Intensity[];
-  const tags = [`±${plan.totalMinutes} min`, plan.timeline.every((s) => s.kind === 'strength') ? 'Kracht' : INTENSITY[peak].label, ...plan.targets, plan.keyTag].filter((t): t is string => !!t);
-
-  return (
-    <>
-      {intro && (<>
-      <p className="mt-3 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{plan.summary}</p>
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        {tags.map((t) => (
-          <span key={t} className="rounded-full border px-2.5 py-0.5 text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>{t}</span>
-        ))}
-      </div>
-      </>)}
-
-      {!compact && <SectionTitle>Opbouw</SectionTitle>}
-      {/* A chart only says something when the session has steps; one
-          continuous block is just the step below. */}
-      {plan.timeline.length > 1 && (
-      <div className="mt-3 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-        <div className="flex h-16 items-end gap-[2px]" role="img" aria-label={`Opbouw van de training, ${plan.totalMinutes} minuten`}>
-          {plan.timeline.map((step, i) => (
-            <div
-              key={i}
-              className="rounded-[3px]"
-              style={{ flexGrow: step.seconds, flexBasis: 0, height: `${INTENSITY_HEIGHT[step.intensity]}%`, background: INTENSITY_COLOR[step.intensity], opacity: step.kind === 'strength' ? 0.55 : 0.9 }}
-            />
-          ))}
-        </div>
-        <div className="mt-1.5 flex justify-between text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-          <span>0</span>
-          <span>{Math.round(total / 60)} min</span>
-        </div>
-        {usedLevels.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-            {usedLevels.map((lvl) => (
-              <span key={lvl} className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                <span className="inline-block h-2 w-2 rounded-full" style={{ background: INTENSITY_COLOR[lvl] }} />
-                {INTENSITY[lvl].label} ({INTENSITY[lvl].rpe})
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-      )}
-
-      <div className="mt-4 flex flex-col gap-3">
-        {plan.items.map((item, i) =>
-          'step' in item ? (
-            <StepRow key={i} step={item.step} />
-          ) : (
-            <div key={i} className="rounded-xl border-l-2 py-1 pl-3" style={{ borderColor: 'var(--color-action)' }}>
-              <p className="text-xs font-semibold" style={{ color: 'var(--color-action)' }}>{item.repeat}× herhalen</p>
-              <div className="mt-2 flex flex-col gap-3">
-                {item.steps.map((step, j) => <StepRow key={j} step={step} />)}
-              </div>
-            </div>
-          ),
-        )}
-      </div>
-    </>
-  );
 }

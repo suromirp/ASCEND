@@ -26,7 +26,7 @@ const app = vi.hoisted(() => ({ logs: [] as unknown[] }));
 vi.mock('./Portal', () => ({ Portal: ({ children }: { children: ReactNode }) => children }));
 vi.mock('./motion', () => ({ useMotionMode: () => 'full' }));
 vi.mock('../state/AppDataContext', () => ({
-  useAppData: () => ({ logSession: async () => true, settings: {}, sessionLogs: app.logs, strengthExternal: false, templates: [], plannedSessions: [] }),
+  useAppData: () => ({ logSession: async () => true, settings: {}, weather: {}, sessionLogs: app.logs, strengthExternal: false, templates: [], plannedSessions: [] }),
 }));
 
 const { HowDidItGoSheet, StepTwo, SheetFoot } = await import('./HowDidItGoSheet');

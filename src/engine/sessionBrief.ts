@@ -13,7 +13,7 @@ import { weekPositionLabel } from './weekLabel';
 import type { Program } from '../models/program';
 import type { SessionTemplate } from '../models/training';
 import { SESSION_STYLE } from '../data/sessionStyle';
-import { INTENSITY, type Intensity } from '../data/workoutStructure';
+import { INTENSITY } from '../data/workoutStructure';
 import { modalitySport } from '../data/modalities';
 import { placeBrief } from '../data/placeBrief';
 import { buildWorkoutPlan, type WorkoutPlan } from './workoutPlan';
@@ -37,7 +37,6 @@ export interface SessionBrief {
   purpose: string;
   weekLabel?: string; // "Week 3 van 20, basisfase · zwaarste week"
   facts: BriefFact[];
-  levelsUsed: Intensity[];
   stopSignals: string[];
   tomorrow?: string; // the hiking day: what day 2 asks
   // De uitleg van het sjabloon, zin voor zin, voor een training zonder opbouw (data/sessionStyle.ts#notesAsHowTo).
@@ -80,7 +79,6 @@ export function buildSessionBrief(
   }
 
   const step = dateIso ? progressionTarget(template, program, dateIso)?.step : undefined;
-  const levelsUsed = plan ? ([...new Set(plan.timeline.filter((s) => s.kind !== 'strength' && !s.noTarget).map((s) => s.intensity))].sort() as Intensity[]) : [];
   const total = { value: durationLabel(minutes), label: 'totaal' };
   const baseFacts: BriefFact[] = (() => {
     switch (style?.facts) {
@@ -172,7 +170,6 @@ export function buildSessionBrief(
     purpose: place?.purpose ?? style?.purpose ?? plan?.summary ?? template.focus ?? '',
     weekLabel,
     facts,
-    levelsUsed,
     stopSignals: place?.stopSignals ?? style?.stopSignals ?? [],
     tomorrow,
     howTo: style?.notesAsHowTo && template.notes ? template.notes.split(/(?<=\.)\s+/).map((s) => s.trim()).filter(Boolean) : undefined,

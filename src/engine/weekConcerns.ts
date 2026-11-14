@@ -243,6 +243,50 @@ export function noticeHeadline(concerns: WeekConcern[]): string {
   return concerns.length === 1 ? concerns[0].headline : `Deze week heeft ${concerns.length} punten die niet kloppen.`;
 }
 
+// Een punt zonder voorstel (de volle week) gaat vooraan, zodat hij nooit achter "en nog" valt; een tweede met
+// dezelfde sleutel komt er niet bij. Puur: de staat rekent hem uit, dit zet hem in de lijst.
+export function withPlainConcern<T extends { concerns: WeekConcern[] }>(notice: T, plain: PlainConcern | undefined): T {
+  if (!plain || notice.concerns.some((c) => c.key === plain.key)) return notice;
+  return { ...notice, concerns: [plain, ...notice.concerns] };
+}
+
+// Wat de kaart Let op belooft: een knop alleen als er iets te vragen is, en "Nog n punten open" telt alleen
+// punten met een voorstel hier. Een punt zonder voorstel (de volle week) vraagt niets en telt niet als open, dus
+// een kaart met alleen zo'n punt heeft geen knop en geen telling. Puur; de component tekent de uitkomst.
+export interface NoticeCardInput {
+  concerns: readonly WeekConcern[];
+  // Punten waar op Vandaag al een voorstel voor staat.
+  covered: readonly string[];
+  // Is er al op het voorstel van dit punt geantwoord (Liever niet of Akkoord)?
+  answered: (c: WeekConcern) => boolean;
+  proposalsOn: boolean;
+  // Het voorstel is uitgerekend: per punt of er een is. Zolang het niet is uitgerekend: undefined.
+  hasFix?: (c: WeekConcern) => boolean;
+}
+
+export interface NoticeCard {
+  // 'primary': "Bekijk voorstel" als hoofdknop; 'again': "Toch een voorstel" na Liever niet; 'kept': "Bekijk
+  // voorstel" als tekstknop, jij koos op Vandaag; undefined: geen knop.
+  button?: 'primary' | 'again' | 'kept';
+  // "Nog 1 punt open." als je een deel beantwoordde; anders undefined.
+  openLine?: string;
+  // Na het rekenen had geen open punt een voorstel.
+  noFix: boolean;
+}
+
+export function noticeCard({ concerns, covered, answered, proposalsOn, hasFix }: NoticeCardInput): NoticeCard {
+  const askable = concerns.filter((c) => !c.plain && !covered.includes(c.key));
+  const answeredCount = askable.filter(answered).length;
+  const openCount = askable.length - answeredCount;
+  const quiet = askable.length > 0 && openCount === 0;
+  // Jij koos op Vandaag dat de training blijft staan: het voorstel is dan een gewone tekstknop (engine/weekKept.ts).
+  const kept = !quiet && askable.length > 0 && askable.every((c) => c.kept);
+  const noFix = !!hasFix && askable.length > 0 && askable.every((c) => !hasFix(c));
+  if (!proposalsOn || noFix || askable.length === 0) return { noFix: proposalsOn && noFix };
+  const openLine = answeredCount > 0 && openCount > 0 ? `Nog ${openCount} ${openCount === 1 ? 'punt' : 'punten'} open.` : undefined;
+  return { button: quiet ? 'again' : kept ? 'kept' : 'primary', openLine, noFix: false };
+}
+
 // De tekst per training voor de rij: één punt, ook als er meer over dezelfde training gaan (de dagrij heeft
 // ruimte voor één ding, docs/visie/Ontwerp Week minimaal.md hoofdstuk 5). Een punt van de weekcontrole gaat voor
 // de volle week, die het minst over die ene training zegt; de rest staat in Let op.

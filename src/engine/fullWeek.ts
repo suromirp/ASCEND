@@ -346,17 +346,10 @@ export function fullWeekFollowed(log: readonly PlanChangeProposal[], sessions: r
     && p.changes.some((c) => c.action === 'remove' && !!c.plannedSessionId && inWeek.has(c.plannedSessionId) && !!c.generatedBy?.includes(FULL_WEEK_RULE)));
 }
 
-// De gewone regel: de week is vol. Staat het voorstel nog open op Vandaag ('open'), dan verwijst hij daarheen; na
-// Liever niet ('declined') zegt hij dat jij alles liet staan. Na Akkoord ('accepted') geen regel: je volgde het
-// advies. Alleen voor de week van vandaag.
-export function fullWeekLine(input: FullWeekInput, weekStart: string, status?: 'open' | 'declined' | 'accepted'): string | undefined {
-  const concern = fullWeekConcern(input, weekStart, status);
-  return concern && `Je week is vol: ${concern.fact.charAt(0).toLowerCase()}${concern.fact.slice(1)}`;
-}
-
-// Hetzelfde als punt in Let op (engine/weekConcerns.ts), in dezelfde vorm als elk ander punt: de zin, het droge
+// De volle week als punt in Let op (engine/weekConcerns.ts), in dezelfde vorm als elk ander punt: de zin, het droge
 // feit erachter, en een amber stip op de rijen van de dagen met twee trainingen ("volle dag"). Geen voorstel in
-// Week: dat staat op Vandaag. Besluit: docs/beslissingen/2026-11-12-week-minimaal.md (aanvulling, spoor 3).
+// Week: dat staat op Vandaag. Open op Vandaag verwijst het feit daarheen, na Liever niet zegt het dat jij alles liet
+// staan, na Akkoord niets; alleen in de week van vandaag. Besluit: docs/beslissingen/2026-11-12-week-minimaal.md (aanvulling, spoor 3).
 export function fullWeekConcern(input: FullWeekInput, weekStart: string, status?: 'open' | 'declined' | 'accepted'): PlainConcern | undefined {
   if (status === 'accepted' || mondayOfWeek(weekStart) !== mondayOfWeek(input.today)) return undefined;
   const state = fullWeek(input);

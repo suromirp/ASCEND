@@ -32,6 +32,7 @@ Een lus begint bij je plaats. Die heb je nog niet gekozen.
 [knop: HorlogeWorkout zelf instellen] (aria: Horloge: Workout zelf instellen)
 [knop: WeerNog geen weer] (aria: Weer: Nog geen weer)
 [knop: Voor en na8 opwarmen, 4 rekken] (aria: Voor en na: 8 opwarmen, 4 rekken)
+[knop: PlekkenWaar kun je dit doen?] (aria: Plekken: Waar kun je dit doen?)
 Stop of schakel terug als
 het laatste kwartier voelt als een wedstrijd in plaats van rustig
 je geen hele zinnen meer kunt praten: wandel een stuk

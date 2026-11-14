@@ -38,6 +38,7 @@ import { mainGoal } from '../engine/mainGoal';
 import { keyFocusOf } from '../engine/keySession';
 import { answeredDays, descentClockContext } from '../engine/descentClock';
 import { fullWeekConcern, fullWeekFollowed, fullWeekId, resolveFullWeekAsk } from '../engine/fullWeek';
+import { withPlainConcern } from '../engine/weekConcerns';
 
 export function useAdviceAndWeek(deps: {
   loading: boolean;
@@ -224,7 +225,7 @@ export function useAdviceAndWeek(deps: {
       keyFocus: keyFocusOf(trainingGoals, goalMilestones, today, { direction: settings.direction }),
       check: { restDay: settings.restDay ?? 1, program, dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference },
     }, weekStart, status);
-    return full ? { ...n, concerns: [full, ...n.concerns] } : n;
+    return withPlainConcern(n, full);
   }, [adviceResponses, advice, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, settings.direction, settings.restDay, trainingGoals, goalMilestones, program, goalEngineConfig]);
   const weekNoticeState = useCallback((): NonNullable<typeof weekNoticeCache.current> => {
     const key = [weekCheckInput, advice, keptNotice, withFullWeek];
