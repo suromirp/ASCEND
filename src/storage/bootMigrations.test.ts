@@ -86,6 +86,68 @@ describe('opstartstappen', () => {
   });
 });
 
+// Een fout is geen hangen (docs/beslissingen/2026-11-14-opstarten-en-intervals-grens.md).
+describe('een herstelstap die een fout gooit', () => {
+  beforeEach(async () => {
+    vi.restoreAllMocks();
+    await wipeAllData();
+  });
+
+  const fails = () => Promise.reject(new Error('nagemaakte fout'));
+
+  it('alleen die stap valt weg: de herstelstappen erna lopen en tellen als gelopen, behalve opruimen dat erop bouwt', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const seen: string[] = [];
+    const result = await runBootMigrations({ build: 'v1', onStep: (id) => seen.push(id), overrides: { ...quickRepairs, mergeDuplicateWeeklyPrescriptionLines: fails } });
+    expect(error).toHaveBeenCalledTimes(1);
+    // Opruimen vat oude regels samen; na een mislukt samenvoegen wacht het een start (Warden 14 november).
+    expect(result.skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines', 'tidyOldProposals']);
+    // Niets loopt nog: de aanroeper hoeft nergens op te wachten.
+    expect(result.pending).toBeUndefined();
+    expect(seen).toEqual([BOOT_MIGRATIONS_KEY, ...BOOT_MIGRATIONS.map((m) => m.id).filter((id) => id !== 'tidyOldProposals')]);
+    const record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
+    expect(record?.done.some((k) => k.startsWith('mergeDuplicateWeeklyPrescriptionLines@'))).toBe(false);
+    expect(record?.done).toHaveLength(BOOT_MIGRATIONS.length - 2);
+    for (const id of ['releaseSystemMoves', 'migrateGoalKinds']) {
+      expect(record?.done.some((k) => k.startsWith(`${id}@`))).toBe(true);
+    }
+    expect(record?.done.some((k) => k.startsWith('tidyOldProposals@'))).toBe(false);
+  });
+
+  it('de volgende start probeert alleen de mislukte stap opnieuw, en onthoudt hem als hij lukt', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await runBootMigrations({ build: 'v1', overrides: { ...quickRepairs, mergeDuplicateWeeklyPrescriptionLines: fails } });
+    const again: string[] = [];
+    const second = await runBootMigrations({ build: 'v1', onStep: (id) => again.push(id), overrides: { mergeDuplicateWeeklyPrescriptionLines: fails } });
+    expect(again).toEqual([BOOT_MIGRATIONS_KEY, 'mergeDuplicateWeeklyPrescriptionLines']);
+    expect(second.skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines', 'tidyOldProposals']);
+    const third: string[] = [];
+    const ok = await runBootMigrations({ build: 'v1', onStep: (id) => third.push(id) });
+    expect(third).toEqual([BOOT_MIGRATIONS_KEY, 'mergeDuplicateWeeklyPrescriptionLines', 'tidyOldProposals']);
+    expect(ok.skipped).toEqual([]);
+    const record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
+    expect(record?.done).toHaveLength(BOOT_MIGRATIONS.length);
+  });
+
+  it('een stap die meteen gooit, zonder belofte, telt als dezelfde fout', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const throwsAtOnce = (() => {
+      throw new Error('nagemaakte fout');
+    }) as () => Promise<unknown>;
+    const { skipped } = await runBootMigrations({ build: 'v1', overrides: { ...quickRepairs, releaseSystemMoves: throwsAtOnce } });
+    expect(skipped).toEqual(['releaseSystemMoves']);
+  });
+
+  it('een fout en daarna een stap die hangt: alleen het hangen houdt de rest tegen', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const hangs = () => new Promise<never>(() => undefined);
+    const result = await runBootMigrations({ build: 'v1', stepLimitMs: 30, overrides: { ...quickRepairs, restorePatternSessionsRemovedByPrescription: async () => undefined, normalizePlannedSessionWeeks: async () => undefined, mergeDuplicateWeeklyPrescriptionLines: fails, releaseSystemMoves: hangs } });
+    expect(result.skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines', 'releaseSystemMoves', 'migrateGoalKinds', 'tidyOldProposals']);
+    expect(result.pending).toBeDefined();
+  });
+});
+
 describe('de opslag laat los als de app weggelegd wordt', () => {
   it('alleen in beeld mag er een transactie beginnen', () => {
     expect(storageOpenFor('visible')).toBe(true);

@@ -8,6 +8,7 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 
 ## Inbox
 
+- Grens van intervals.icu meten (Warden 14 november, mag): kop en inhoud delen nu één grens van 15 s; meet met een vertraagde lijn en een lange activiteit of een groot antwoord dan nog binnenkomt. Een herstelstap die elke start faalt staat alleen in de console (teller in meta voor de diagnose?).
 - Kleding en wind, vervolg (Pathfinder en Warden 13 november, mag): de windgrens van de weerzin (15 km/u, 2 graden gevoel) en die van het windjack (25 km/u) en de warmtebonus van de lange duurloop toetsen aan bronnen met een korte Scout; staat Weer uit en Kledingadvies aan, dan noemt de kledingzin de wind niet (`briefing.ts` rij Weer, `ClothingAdvice.tsx`, `eveningBefore.ts`); een zin na een tik tegen de bestaande richting in leest vreemd (`feedbackSentence`).
 - Weer van de plek, rest (Pathfinder en Lookout 13 november, mag): De avond ervoor kent de plek niet (eigen besluit nodig); een cache per plek; de pagina rekent de duur met `resolveEffectiveFullDuration` en de Briefing met de minuten van de rij, bij een aangepaste duur kan de kop verschillen (duur meegeven in `WeatherPageLink`); "Nu verversen" in Je plaats ververst thuis, niet de plek; Terug vanaf de pagina Weer komt op Week uit, niet op de Briefing (al zo voor deze wijziging, `TrainingBriefing.toPage`).
 - Audit 13 november (Warden met ponytail-audit, `docs/onderzoek/Ponytail en Graphify.md`), nog open na Sherpa Opstarten: een import schrijft alle logs terug uit een kopie (`backupApply.ts:125`, `backupMerge.ts:118`; alleen nieuwe of gewijzigde rijen schrijven); `SettingsRepo.set` en twee andere set-functies lezen en schrijven in losse transacties; `loadState` zonder volgnummer; dubbele mijlpaalregels bij twee schrijvers (vast id); `wipeAllData` en `resetToDemoData` lopen uiteen en zijn niet atomair; vier kopieën van dezelfde stringhash. Eerst zelf naspelen voor een bouwer.
@@ -69,6 +70,7 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 
 ## Pas live
 
+- Opstarten en intervals.icu (14 november): de grens van 15 s geldt tot het antwoord gelezen is; een herstelstap die een fout gooit wordt alleen zelf overgeslagen, opruimen wacht als samenvoegen mislukte. Besluit `2026-11-14-opstarten-en-intervals-grens.md`.
 - Kleding en wind (13 november): de weerzin en de rij Weer in de Briefing noemen gevoel en wind vanaf 15 km/u; de eerste tik Te koud of Te warm is een graad, daarna een halve, met een zin wat er verandert. Besluit `2026-11-13-kleding-en-wind.md`.
 - Weer van de plek, vervolg (13 november): een tik op de rij Weer in de Briefing opent de pagina Weer met het weer van de gekozen plek. Besluit `2026-11-13-weer-van-de-plek-pagina.md`.
 
