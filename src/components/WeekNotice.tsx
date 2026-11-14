@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { TAKEN_LINE, weekFixId, type WeekNotice as WeekNoticeData } from '../engine/weekFixProposal';
-import { noticeHeadline } from '../engine/weekConcerns';
-import { onlyKept } from '../engine/weekKept';
+import { noticeCard, noticeHeadline } from '../engine/weekConcerns';
 import { useAppData } from '../state/AppDataContext';
 import { ProposalSheet } from './ProposalSheet';
 import { Sheet } from './settings/Sheet';
@@ -36,23 +35,19 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
   const fixes = full?.fixes ?? {};
   if (concerns.length === 0) return null;
 
-  const proposalsOn = settings.weekFixProposal !== false;
   const withFix = concerns.map((c) => fixes[c.key]).filter((a): a is NonNullable<typeof a> => !!a);
   // Zonder de berekening weten we uit het id al of je Liever niet zei.
   const idOf = (c: (typeof concerns)[number]) => fixes[c.key]?.id ?? weekFixId(c, plannedSessions);
-  // Een punt zonder voorstel hier (de volle week) vraagt niets: geen knop, en het telt niet als open.
-  const askable = concerns.filter((c) => !c.plain && !covered.includes(c.key));
-  const answeredCount = askable.filter((c) => answeredAdviceIds.has(idOf(c))).length;
-  const quiet = askable.length > 0 && answeredCount === askable.length;
-  const openCount = askable.length - answeredCount;
-  // Jij koos op Vandaag dat de training blijft staan: de melding blijft, het voorstel is dan een gewone tekstknop.
-  const kept = !quiet && onlyKept(concerns, new Set(askable.map((c) => c.key)));
-  const stillOpen = answeredCount > 0 && openCount > 0;
+  // Knop, telling en de zin zonder voorstel komen uit de engine: een punt zonder voorstel hier (de volle week)
+  // vraagt niets, krijgt geen knop en telt niet als open.
+  const card = noticeCard({
+    concerns, covered, proposalsOn: settings.weekFixProposal !== false,
+    answered: (c) => answeredAdviceIds.has(idOf(c)),
+    hasFix: current.outcome === 'ready' ? (c) => !!fixes[c.key] : undefined,
+  });
   const shown = concerns.slice(0, SHOWN);
   const rest = concerns.length - shown.length;
   const sheetAdvice = withFix.find((a) => a.id === proposalId);
-  // Na het rekenen: heeft geen enkele open melding een voorstel, dan geen knop maar de zin dat er geen betere dag is.
-  const noFix = current.outcome === 'ready' && askable.every((c) => !fixes[c.key]);
 
   // Rekent het voorstel uit nadat de week getekend is en opent het blad; lukt het niet, dan staat er een zin.
   const ask = () => {
@@ -100,19 +95,17 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
           {rest > 0 && <TextButton onClick={() => setAllOpen(true)}>en nog {rest}</TextButton>}
         </div>
       )}
-      {stillOpen && proposalsOn && !noFix && (
-        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{`Nog ${openCount} ${openCount === 1 ? 'punt' : 'punten'} open.`}</p>
-      )}
-      {proposalsOn && !noFix && askable.length > 0 && !quiet && !kept && <PrimaryButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Bekijk voorstel'}</PrimaryButton>}
-      {proposalsOn && !noFix && quiet && <TextButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Toch een voorstel'}</TextButton>}
-      {proposalsOn && !noFix && kept && <TextButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Bekijk voorstel'}</TextButton>}
+      {card.openLine && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{card.openLine}</p>}
+      {card.button === 'primary' && <PrimaryButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Bekijk voorstel'}</PrimaryButton>}
+      {card.button === 'again' && <TextButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Toch een voorstel'}</TextButton>}
+      {card.button === 'kept' && <TextButton onClick={ask} disabled={busy}>{busy ? 'Even rekenen…' : 'Bekijk voorstel'}</TextButton>}
       {current.outcome === 'failed' && (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Het voorstel lukte nu niet. Probeer het straks nog eens.</p>
       )}
       {covered.length > 0 && (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{TAKEN_LINE}</p>
       )}
-      {proposalsOn && noFix && (
+      {card.noFix && (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>ASCEND vond deze week geen dag die beter past.</p>
       )}
 

@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { fullWeek, fullWeekAdvice, fullWeekConcern, fullWeekFollowed, fullWeekId, fullWeekLine, fullWithExtra, weekLoss, weekShape, FULL_WEEK_RULE, type FullWeekAdviceInput } from './fullWeek';
+import { fullWeek, fullWeekAdvice, fullWeekConcern, fullWeekFollowed, fullWeekId, fullWithExtra, weekLoss, weekShape, FULL_WEEK_RULE, type FullWeekAdviceInput } from './fullWeek';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import { proposeExtraSession } from './extraRun';
 import { applyPlanChangeItems } from './proposalEngine';
 import { validateWeeks } from './weekValidator';
-import { noticeHeadline, rowNotes, type WeekConcern } from './weekConcerns';
+import { noticeCard, noticeHeadline, rowNotes, withPlainConcern, type WeekConcern } from './weekConcerns';
 import { weekFixId } from './weekFixProposal';
 import type { PlanChangeProposal } from '../models/planChange';
 import { layoutPhasesForGoal, PHASE_BASIS } from './programLayout';
@@ -112,22 +112,22 @@ describe('WEEK-FULL: de nagemaakte week', () => {
     expect(JSON.stringify(logs)).toBe(before);
     // Daarna is de week niet meer vol, en na Akkoord zegt Week hoe dan ook niets meer.
     expect(fullWeek({ ...inp, sessions: after })).toBeUndefined();
-    expect(fullWeekLine(inp, MON, 'accepted')).toBeUndefined();
+    expect(fullWeekConcern(inp, MON, 'accepted')).toBeUndefined();
   });
 
-  it('Liever niet: opnieuw openen geeft geen nieuw voorstel, Week zegt het in een gewone regel', () => {
+  it('Liever niet: opnieuw openen geeft geen nieuw voorstel, Let op zegt het in het feit', () => {
     const answered = { ...inp, respondedIds: new Set([fullWeekId(THU)]) };
     expect(fullWeekAdvice(answered)).toEqual([]);
     expect(fullWeekAdvice({ ...answered, today: day(4) })).toEqual([]);
-    expect(fullWeekLine(inp, MON, 'declined')).toBe('Je week is vol: 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij. Je liet alles staan.');
-    expect(fullWeekLine(inp, MON, 'open')).toBe('Je week is vol: 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij. Op Vandaag staat een voorstel.');
+    expect(fullWeekConcern(inp, MON, 'declined')?.fact).toBe('6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij. Je liet alles staan.');
+    expect(fullWeekConcern(inp, MON, 'open')?.fact).toBe('6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij. Op Vandaag staat een voorstel.');
     // Een andere week dan die van vandaag zegt niets.
-    expect(fullWeekLine(inp, day(7), 'declined')).toBeUndefined();
+    expect(fullWeekConcern(inp, day(7), 'declined')).toBeUndefined();
   });
 
-  it('de instelling uit: geen voorstel, de regel op Week blijft', () => {
+  it('de instelling uit: geen voorstel, het punt in Let op blijft', () => {
     expect(fullWeekAdvice({ ...inp, ask: false })).toEqual([]);
-    expect(fullWeekLine(inp, MON)).toBe('Je week is vol: 6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij.');
+    expect(fullWeekConcern(inp, MON)?.fact).toBe('6 trainingen in 4 dagen, 2 dagen met twee trainingen en 4 loopdagen op rij.');
   });
 
   it('via computeAdvice: het voorstel staat erin, en niet met de instelling uit', () => {
@@ -237,7 +237,7 @@ describe('WEEK-FULL: na je antwoord en de weekcontrole (herreview van 12 novembe
     const [advice] = fullWeekAdvice(inp);
     // Niets geaccepteerd (ook niet na Begrepen op de variant zonder voorstel): Week houdt de regel.
     expect(fullWeekFollowed([], sessions, THU)).toBe(false);
-    expect(fullWeekLine(inp, MON)).toContain('Je week is vol');
+    expect(fullWeekConcern(inp, MON)?.headline).toBe('Je week is vol.');
     const accepted: PlanChangeProposal = { ...advice.proposal!, resolution: 'accepted' };
     expect(fullWeekFollowed([accepted], sessions, THU)).toBe(true);
     // Ongedaan gemaakt: niet meer gevolgd. Een ander voorstel dat iets liet vervallen telt ook niet.
@@ -355,10 +355,93 @@ describe('WEEK-FULL: een punt in Let op', () => {
     expect(rowNotes([c, other]).get('tpl_bodyweight@6')).toBe('volle dag');
   });
 
-  it('dezelfde woorden als de gewone regel; na Akkoord of in een andere week niets', () => {
+  it('het feit na je antwoord; na Akkoord of in een andere week niets', () => {
     expect(fullWeekConcern(inp, MON, 'declined')!.fact).toMatch(/Je liet alles staan\.$/);
     expect(fullWeekConcern(inp, MON, 'open')!.fact).toMatch(/Op Vandaag staat een voorstel\.$/);
     expect(fullWeekConcern(inp, MON, 'accepted')).toBeUndefined();
     expect(fullWeekConcern(inp, day(7))).toBeUndefined();
+  });
+});
+
+// Pathfinder Volle week: een kop Let op zonder knop belooft niet meer dan hij is. De kaart is een uitkomst van de
+// engine (weekConcerns.ts#noticeCard); de component tekent hem alleen.
+describe('WEEK-FULL: wat de kaart Let op belooft', () => {
+  const { sessions, logs } = crammed();
+  const inp = input(THU, sessions, logs, { leave: noGym });
+  const full = fullWeekConcern(inp, MON, 'open')!;
+  const legs = (key: string, kept?: boolean): WeekConcern => ({ key, rule: 'LEG-SPACING', title: 't', why: 'w', finding: {} as never, headline: 'Twee zware beendagen.', fact: 'f', notes: {}, kept });
+  const card = (concerns: WeekConcern[], answered: string[] = [], over: Partial<Parameters<typeof noticeCard>[0]> = {}) =>
+    noticeCard({ concerns, covered: [], proposalsOn: true, answered: (c) => answered.includes(c.key), ...over });
+
+  it('alleen de volle week: geen knop, geen telling, geen zin dat er geen voorstel is', () => {
+    expect(card([full])).toEqual({ noFix: false });
+    // Ook niet na het rekenen: er valt hier niets te rekenen.
+    expect(card([full], [], { hasFix: () => false })).toEqual({ noFix: false });
+  });
+
+  it('samen met een open punt: de knop hoort bij dat punt, en de telling telt de volle week niet mee', () => {
+    expect(card([full, legs('a')])).toEqual({ button: 'primary', openLine: undefined, noFix: false });
+    expect(card([full, legs('a'), legs('b')], ['a'])).toEqual({ button: 'primary', openLine: 'Nog 1 punt open.', noFix: false });
+  });
+
+  it('het andere punt beantwoord: "Toch een voorstel", geen telling; jij koos op Vandaag: een tekstknop', () => {
+    expect(card([full, legs('a')], ['a'])).toEqual({ button: 'again', openLine: undefined, noFix: false });
+    expect(card([full, legs('a', true)])).toEqual({ button: 'kept', openLine: undefined, noFix: false });
+  });
+
+  it('na het rekenen zonder voorstel voor het open punt: de zin, geen knop', () => {
+    expect(card([full, legs('a')], [], { hasFix: () => false })).toEqual({ noFix: true });
+  });
+
+  it('voorstellen uit of het punt al op Vandaag: geen knop', () => {
+    expect(card([full, legs('a')], [], { proposalsOn: false })).toEqual({ noFix: false });
+    expect(card([full, legs('a')], [], { covered: ['a'] })).toEqual({ noFix: false });
+  });
+
+  it('in de lijst vooraan, één keer; zonder punt verandert de lijst niet', () => {
+    const notice = { concerns: [legs('a')], fixes: {}, covered: [] };
+    expect(withPlainConcern(notice, full).concerns.map((c) => c.key)).toEqual([full.key, 'a']);
+    expect(withPlainConcern(withPlainConcern(notice, full), full).concerns).toHaveLength(2);
+    expect(withPlainConcern(notice, undefined)).toBe(notice);
+  });
+});
+
+describe('WEEK-FULL: randgevallen van het punt', () => {
+  it('een rustweek met minder trainingen en één gemiste dag: niet vol, geen punt', () => {
+    // Nagemaakte rustweek: herstel, bovenlichaam A, rustige loop en lange duurloop. Dinsdag gemist.
+    const rest = [row('tpl_herstel', 0), row('tpl_upper_a', 1), row('tpl_easy_run', 3), row('tpl_long_run', 6)];
+    const inp = input(THU, rest, [logOf(rest[0])]);
+    expect(fullWeekConcern(inp, MON)).toBeUndefined();
+  });
+
+  it('een vakantie in de week: alleen de dagen met twee trainingen buiten de vakantie krijgen "volle dag"', () => {
+    const { sessions, logs } = crammed();
+    const off: LeavePeriod[] = [{ id: 'off', kind: 'no_training', startDate: day(5), endDate: day(5) } as LeavePeriod];
+    const left = sessions.filter((s) => s.id !== 'tpl_hill_intervals@5');
+    const c = fullWeekConcern(input(THU, left, logs, { leave: off }), MON);
+    expect(c).toBeDefined();
+    expect(Object.keys(c!.notes).every((id) => !id.endsWith('@5'))).toBe(true);
+    expect(new Set(Object.keys(c!.notes).map((id) => id.split('@')[1]))).toEqual(new Set(['4', '6']));
+  });
+
+  it('de week van vandaag tegenover een andere week: alleen deze week, ook als je vooruit of terug bladert', () => {
+    const { sessions, logs } = crammed();
+    const inp = input(THU, sessions, logs, { leave: noGym });
+    expect(fullWeekConcern(inp, MON)).toBeDefined();
+    expect(fullWeekConcern(inp, day(3))).toBeDefined(); // een dag midden in de week telt als dezelfde week
+    expect(fullWeekConcern(inp, day(7))).toBeUndefined();
+    expect(fullWeekConcern(inp, day(-7))).toBeUndefined();
+  });
+
+  it('een dag met twee trainingen: beide rijen "volle dag"; vol om een andere reden: geen stip', () => {
+    const { sessions, logs } = crammed();
+    const skipped = sessions.map((s) => s.id === 'tpl_bodyweight@6' ? { ...s, status: 'skipped' as const } : s);
+    const doneFriday = [...logs, logOf(sessions.find((s) => s.id === 'tpl_upper_b@4')!)];
+    const base = fullWeekConcern(input(THU, sessions, logs, { leave: noGym }), MON)!;
+    expect(base.notes['tpl_upper_b@4']).toBe('volle dag');
+    expect(base.notes['tpl_strides_run@4']).toBe('volle dag');
+    const c = fullWeekConcern(input(THU, skipped, doneFriday, { leave: noGym }), MON);
+    // Nog steeds vol om de loopdagen op rij, maar geen dag meer met twee trainingen: dan staat er op geen rij een stip.
+    expect(c).toMatchObject({ headline: 'Je week is vol.', fact: '4 trainingen in 4 dagen en 4 loopdagen op rij.', notes: {} });
   });
 });
