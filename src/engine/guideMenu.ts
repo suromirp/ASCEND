@@ -16,10 +16,8 @@ export type GuideRowId = 'teZwaar' | 'varianten' | 'weken' | 'achtergrond';
 export interface GuideRowSpec {
   id: GuideRowId;
   title: string;
-  // Hoogstens één regel eronder: een feit.
+  // Hoogstens één regel eronder: een feit. Elke rij opent een onderblad; geen rij verlaat het blad.
   sub?: string;
-  // Een rij die het blad verlaat: een pagina in plaats van een onderblad. Hier nu nooit.
-  page: boolean;
 }
 
 export interface GuideMenuInput {
@@ -38,18 +36,18 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 export function guideMenu(input: GuideMenuInput): GuideRowSpec[] {
   const { plan } = input;
   const rows: GuideRowSpec[] = [];
-  if (input.easeOffCount > 0) rows.push({ id: 'teZwaar', title: 'Te zwaar? Zo pas je het aan', page: false });
-  if (input.modalityCount > 0) rows.push({ id: 'varianten', title: 'Waar train je het best?', sub: plural(input.modalityCount, 'optie', 'opties'), page: false });
+  if (input.easeOffCount > 0) rows.push({ id: 'teZwaar', title: 'Te zwaar? Zo pas je het aan' });
+  if (input.modalityCount > 0) rows.push({ id: 'varianten', title: 'Waar train je het best?', sub: plural(input.modalityCount, 'optie', 'opties') });
   if (plan && plan.weeks.length > 0) {
     const now = plan.weeks.find((w) => w.current);
-    rows.push({ id: 'weken', title: 'Deze fase, week voor week', sub: now ? `Week ${now.week} van ${plan.weeks.length}` : undefined, page: false });
+    rows.push({ id: 'weken', title: 'Deze fase, week voor week', sub: now ? `Week ${now.week} van ${plan.weeks.length}` : undefined });
   }
   if (input.backgroundCount > 0 || input.hasGear || input.sourceCount > 0) {
     const parts = [
       input.backgroundCount > 0 ? plural(input.backgroundCount, 'deel', 'delen') : '',
       input.sourceCount > 0 ? plural(input.sourceCount, 'bron', 'bronnen') : '',
     ].filter(Boolean);
-    rows.push({ id: 'achtergrond', title: 'Achtergrond en bronnen', sub: parts.length > 0 ? parts.join(', ') : undefined, page: false });
+    rows.push({ id: 'achtergrond', title: 'Achtergrond en bronnen', sub: parts.length > 0 ? parts.join(', ') : undefined });
   }
   return rows;
 }

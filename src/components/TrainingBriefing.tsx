@@ -47,6 +47,7 @@ import { SheetHeader } from './SheetHeader';
 import { TodaySheet } from './vandaag/TodaySheet';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { spotsPageFor } from '../engine/trainingSpots';
+import { HillsNearbyLine } from './HillsNearbyLine';
 import { WatchSheet } from './WatchSheet';
 import { useWatchSheet } from './useWatchSheet';
 import { useBriefingInput } from './useBriefingView';
@@ -258,6 +259,9 @@ export function TrainingBriefing({
             </div>
 
             {view.rows.length > 0 && <BriefingRows rows={view.rows} onOpen={openRow} />}
+
+            {/* Heuvels en trappen in de buurt, met de vraag om OpenStreetMap: alleen buiten (engine/briefing.ts#hills). */}
+            {view.hills && <HillsNearbyLine template={template} date={date} />}
 
             {/* De stopregels: volledig op het scherm, zonder kaart; amber is alleen de stip voor het kopje. */}
             {view.stopSignals.length > 0 && (

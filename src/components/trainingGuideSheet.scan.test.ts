@@ -41,6 +41,8 @@ describe('uitlegblad van een training', () => {
     for (const er of ['<WeatherLine', '<ClothingAdvice', '<HillsNearbyLine', '{myPace}', 'spotsPageFor(template.id)']) expect(logger, er).toContain(er);
     // De rij naar de plekken is een pagina: eerst het scherm dicht (concept bewaard), dan navigeren.
     expect(logger).toMatch(/closeSheet\(\); navigate\(spotsPageFor/);
+    // Via de bestaande rij, geen eigen opmaak.
+    expect(logger).toContain("<GuideRow row={{ id: 'plekken'");
   });
 
   it('elke ingang naar de uitleg heet Waarom deze training', () => {

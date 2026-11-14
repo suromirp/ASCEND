@@ -33,7 +33,7 @@ import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
 import { routeTarget } from './routeTarget';
 import { showSpotsFor } from './trainingSpots';
-import { placeChoices, placeHasRoute, resolvePlace, type PlaceChoice } from './trainingPlace';
+import { placeChoices, placeHasRoute, placeIsOutdoor, resolvePlace, type PlaceChoice } from './trainingPlace';
 import { temperatureHead, weatherForTraining, windPhrase } from './weather';
 import { PLACE_WEATHER_FROM_HOME, placeWeatherFailed, placeWeatherLine } from './placeWeather';
 import { clothingForTraining } from './clothing';
@@ -192,6 +192,10 @@ export interface BriefingView {
   placeLine?: string;
   map: BriefingMap;
   rows: BriefingRow[];
+  // De heuvelregel (HillsNearbyLine, met de vraag om OpenStreetMap): alleen buiten en niet als de training al
+  // gedaan is. Of er een regel komt (heuveltraining, of heuvels voor elke loop) zegt de regel zelf
+  // (engine/nearbyTerrain.ts#terrainWishOn). Uit het oude Info-blad, 14 november.
+  hills: boolean;
   // De stopregels, volledig en zonder kaart; leeg: geen blok.
   stopSignals: string[];
   footer: BriefingFooter;
@@ -285,7 +289,7 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
   const places = placeChoices(template.id);
   const place = resolvePlace(template, input.storedPlace);
   const modality = place ? getModality(template.id, place) : undefined;
-  const outdoor = !modality || modality.environment === 'outdoor';
+  const outdoor = placeIsOutdoor(template.id, place);
   const done = !!input.session && deriveSessionStatus(input.session, input.logs).status === 'completed';
   const minutes = input.session?.plannedMinutes ?? resolveEffectiveFullDuration(template, input.date, input.program);
 
@@ -305,7 +309,7 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
   const stretch = stretchRow(template);
   if (stretch) rows.push(stretch);
   // Waar kun je dit doen? Alleen buiten: de plekken zijn heuvels, trappen en paden.
-  if (outdoor && showSpotsFor(template, buildWorkoutPlan(template, input.date, input.program)?.keyTag)) {
+  if (showSpotsFor(template, buildWorkoutPlan(template, input.date, input.program)?.keyTag, place)) {
     rows.push({ id: 'spots', label: BRIEFING_TEXT.spots, line: BRIEFING_TEXT.spotsLine, opens: true });
   }
 
@@ -326,6 +330,7 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
     placeLine: placeLineOf(template, place, brief.sportSwitch),
     map,
     rows,
+    hills: outdoor && !done,
     stopSignals: modality?.environment === 'rest' ? [] : brief.stopSignals,
     footer,
   };

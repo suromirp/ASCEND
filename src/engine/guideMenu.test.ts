@@ -42,7 +42,7 @@ describe('lijst van het blad Waarom deze training', () => {
   });
 
   it('geen rij verlaat het blad: plekken staan op het trainingsscherm en in de Briefing', () => {
-    expect(guideMenu(alles).filter((r) => r.page)).toEqual([]);
+    expect(guideMenu(alles).some((r) => 'page' in r)).toBe(false);
   });
 
   it('niets dubbel met het trainingsscherm of Je horloge: geen stappen, plekken, Garmin of datavelden', () => {

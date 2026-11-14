@@ -17,7 +17,8 @@ export function GuideList({ rows, onPick }: { rows: GuideRowSpec[]; onPick: (row
 }
 
 // Ook gebruikt door het blad Je horloge (WatchSheet.tsx), met een eigen voorvoegsel voor `data-row`.
-export function GuideRow({ row, onClick, prefix = 'uitleg' }: { row: Pick<GuideRowSpec, 'title' | 'sub' | 'page'> & { id: string }; onClick: () => void; prefix?: string }) {
+// `page`: de rij verlaat het blad (een pagina): het woord Pagina rechts en geen uitgroeien.
+export function GuideRow({ row, onClick, prefix = 'uitleg' }: { row: { id: string; title: string; sub?: string; page?: boolean }; onClick: () => void; prefix?: string }) {
   const label = row.page ? `${row.title}, pagina` : row.sub ? `${row.title}, ${row.sub}` : row.title;
   return (
     <div className={`st-row go${row.sub ? ' two' : ''}`} data-row={`${prefix}-${row.id}`} data-sheet-from={row.page ? undefined : ''}>

@@ -13,6 +13,7 @@ import { BRIEFING_TEXT, briefing, type BriefingInput } from './briefing';
 import { guideMenu } from './guideMenu';
 import { buildWorkoutPlan } from './workoutPlan';
 import { showSpotsFor, spotsPageFor } from './trainingSpots';
+import { placeIsOutdoor } from './trainingPlace';
 
 const { templates } = buildDefaultProgramData();
 const byId = (id: string) => templates.find((t) => t.id === id) as SessionTemplate;
@@ -20,6 +21,7 @@ const LONG = byId('tpl_long_run');
 const HIKE = byId('tpl_mountain_hike');
 const STRENGTH = byId('tpl_upper_a');
 const REST = byId('tpl_herstel');
+const HILLS = byId('tpl_hill_intervals');
 const TODAY = '2026-11-11';
 const NOW = new Date(2026, 10, 11, 8, 0);
 const model = resolveWatchModel(undefined);
@@ -122,5 +124,36 @@ describe('weer en kleding (vraag 5)', () => {
   it('zonder horloge-koppeling: de Briefing toont nog steeds weer', () => {
     const view = brief({ watchLink: { linked: false, autoTick: false, activities: false }, watchStatus: undefined });
     expect(view?.rows.some((r) => r.id === 'weather')).toBe(true);
+  });
+});
+
+// Herstelronde na Warden (14 november).
+describe('buiten of binnen: één regel voor de Briefing en het trainingsscherm', () => {
+  it('zonder gekozen plek buiten; fietsen binnen niet; rust niet', () => {
+    expect(placeIsOutdoor('tpl_bike', undefined)).toBe(true);
+    expect(placeIsOutdoor('tpl_bike', 'bike_outdoor')).toBe(true);
+    expect(placeIsOutdoor('tpl_bike', 'bike_indoor')).toBe(false);
+    expect(placeIsOutdoor('tpl_herstel', 'rest')).toBe(false);
+    expect(placeIsOutdoor('tpl_long_run', 'long_run_treadmill')).toBe(false);
+  });
+
+  it('plekken volgen dezelfde regel: op de loopband geen plekken', () => {
+    expect(showSpotsFor(LONG, undefined, 'long_run_outdoor')).toBe(true);
+    expect(showSpotsFor(LONG, undefined, 'long_run_treadmill')).toBe(false);
+  });
+});
+
+describe('de heuvelregel staat in de Briefing', () => {
+  const hills = (over: Partial<BriefingInput> = {}) => brief({ template: HILLS, session: plan(HILLS.id), ...over });
+  it('Heuvelintervallen buiten: de heuvelregel staat er', () => {
+    expect(hills({ storedPlace: 'hill_repeats_outdoor' })?.hills).toBe(true);
+    expect(hills()?.hills).toBe(true);
+  });
+  it('Heuvelintervallen op de loopband: geen heuvelregel', () => {
+    expect(hills({ storedPlace: 'incline_treadmill_intervals' })?.hills).toBe(false);
+  });
+  it('al gedaan: geen heuvelregel', () => {
+    const log = { id: 'l1', plannedSessionId: 'p1', templateId: HILLS.id, date: TODAY, completedAt: NOW.toISOString(), durationMinutes: 45, variant: 'full' };
+    expect(hills({ logs: [log as never] })?.hills).toBe(false);
   });
 });

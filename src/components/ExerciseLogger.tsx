@@ -1,12 +1,13 @@
 import { RouteProposalLine } from './RouteProposalLine';
 import { useNavigate } from 'react-router-dom';
 import { WeatherLine } from './WeatherLine';
+import { GuideRow } from './GuideRow';
 import { HillsNearbyLine } from './HillsNearbyLine';
 import { ClothingAdvice } from './ClothingAdvice';
 import { paceLine } from '../engine/racePaces';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { showSpotsFor, spotsPageFor } from '../engine/trainingSpots';
-import { placeHasRoute } from '../engine/trainingPlace';
+import { placeHasRoute, placeIsOutdoor } from '../engine/trainingPlace';
 import { useEffect, useRef, useState } from 'react';
 import { useLogForm } from './logForm/useLogForm';
 import { asksDoneOn } from './logForm/formRules';
@@ -177,7 +178,10 @@ function GeneralLogger({
   const paceRaw = paceLine(template.id, pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces);
   const myPace = paceRaw && !brief.facts.some((f) => /per km|\/km/.test(`${f.value} ${f.label}`)) ? paceRaw : undefined;
   // Waar kun je dit doen? (de pagina Trainingsplekken): dezelfde voorwaarde als het oude Info-blad.
-  const showSpots = showSpotsFor(template, plan?.keyTag) && selectedModality?.environment !== 'rest';
+  // Buiten of niet: dezelfde regel als de Briefing. Zonder gekozen plek geldt buiten.
+  const chosenPlace = guidanceMode === 'ascend_guided' ? modalityKey : undefined;
+  const outdoor = placeIsOutdoor(template.id, chosenPlace);
+  const showSpots = showSpotsFor(template, plan?.keyTag, chosenPlace);
   // Het blad Je horloge (engine/watchSheet.ts): de knop onderaan heet Horloge als het blad iets te tonen
   // heeft, anders Uitleg als er een gids is, anders Annuleren. Uitleg staat ook achter de i in de lucht.
   const watchView = useWatchSheet({ template, garmin: plan?.garmin, session: plannedSession, hasZonesNote: !!guide?.garminNote });
@@ -238,8 +242,9 @@ function GeneralLogger({
             </div>
           )}
           {/* Weer, heuvels en kleding (uit het oude Info-blad, 14 november): altijd hier, ook als Vandaag ze al
-              noemt, want ze horen bij wat je aantrekt. Zonder weer (offline, binnen, rust) staat er niets. */}
-          {!restChosen && (
+              noemt, want ze horen bij wat je aantrekt. Alleen buiten (trainingPlace.ts#placeIsOutdoor, zoals de
+              Briefing); zonder weer (offline) staat er niets. */}
+          {outdoor && (
             <div className="-mt-2 flex flex-col gap-1.5 empty:hidden">
               <WeatherLine template={template} date={trainingDate} />
               <HillsNearbyLine template={template} date={trainingDate} />
@@ -301,7 +306,7 @@ function GeneralLogger({
           </Card>
         )}
 
-        {!restChosen && !quickComplete && (template.warmup?.length || template.cooldown?.length || showRoute || showSpots) ? (
+        {!restChosen && !quickComplete && (template.warmup?.length || template.cooldown?.length || showRoute) ? (
           <div className="mt-4 flex flex-col divide-y divide-[var(--color-card-border)] rounded-2xl border px-4" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
             {template.warmup && template.warmup.length > 0 && (
               <StretchRow icon="rekken" title="Eerst opwarmen" line={`${template.warmup.length} oefeningen`} stretches={template.warmup} />
@@ -309,23 +314,20 @@ function GeneralLogger({
             {template.cooldown && template.cooldown.length > 0 && (
               <StretchRow icon="rekken" title="Daarna rekken" line={`${template.cooldown.length} oefeningen`} stretches={template.cooldown} />
             )}
-            {showSpots && (
-              // Een pagina: eerst het trainingsscherm dicht (het concept blijft bewaard), dan de pagina.
-              <button type="button" data-row="training-plekken" aria-label={`${SPOTS_ROW}, pagina`} onClick={() => { closeSheet(); navigate(spotsPageFor(template.id)); }} className="flex min-h-[56px] w-full items-center gap-3 py-2 text-left">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-charcoal)', color: 'var(--color-ink-dim)' }}>
-                  <Icon name="locatie" size={18} />
-                </span>
-                <span className="min-w-0 flex-1 text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{SPOTS_ROW}</span>
-                <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Pagina</span>
-                <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
-              </button>
-            )}
             {showRoute && <RouteProposalLine template={template} date={scheduledDate ?? today} row place={guidanceMode === 'ascend_guided' ? (modalityKey ?? null) : null} />}
             {plannedSession && !preview && <WatchStatusRow session={plannedSession} template={template} onLeave={closeSheet} className="py-2" plain />}
           </div>
         ) : plannedSession && !preview ? (
           <WatchStatusRow session={plannedSession} template={template} onLeave={closeSheet} className="mt-4" />
         ) : null}
+
+        {/* Waar kun je dit doen?: een pagina, met de rij van de uitleg (GuideRow). Eerst het trainingsscherm dicht
+            (het concept blijft bewaard), dan de pagina. */}
+        {showSpots && !quickComplete && (
+          <div className="st-list mt-4">
+            <GuideRow row={{ id: 'plekken', title: SPOTS_ROW, page: true }} prefix="training" onClick={() => { closeSheet(); navigate(spotsPageFor(template.id)); }} />
+          </div>
+        )}
 
         {!restChosen && !quickComplete && fuel && (
           <Card className="mt-4">
