@@ -138,7 +138,7 @@ export function WeekPage() {
   // onder de dagen, met hoeveel er gemist is. De oude rij van een inhaal telt niet: die is overgeslagen.
   const missed = current ? sessions.filter((s) => {
     const t = templateById.get(s.templateId);
-    return !!t && t.type !== 'recovery' && deriveSessionStatus(s, sessionLogs, false).status === 'missed';
+    return !!t && t.type !== 'recovery' && deriveSessionStatus(s, sessionLogs, false, leavePeriods).status === 'missed';
   }).length : 0;
   const replanOn = !!program && trainings > 0 && addDays(weekStart, 6) >= today;
   const replanRow = replanOn && <WeekReplanRow key={weekStart} weekStart={weekStart} sub={replanSub(missed)} />;

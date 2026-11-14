@@ -23,12 +23,12 @@ export function weekHighlights(r: WeekReview): Highlight[] {
   // Wat vandaag nog kan staat nooit als blijven liggen (buildWeekReview telt alleen wat voor vandaag lag).
   if (r.missed.length > 0) {
     const names = joinNames(r.missed);
-    const left = `${names} ${r.missed.length === 1 ? 'bleef' : 'bleven'} liggen. `;
+    const left = `${names} gemist. `;
     out.push({
       tone: 'normal', icon: 'week',
       text: left + (r.keyMissedName
         ? `De ${lower(r.keyMissedName)} is de belangrijkste van de week. Die verplaatst ASCEND naar een vrije dag als dat past. De rest laat je los.`
-        : 'Laat los wat blijft liggen. Dubbel doen helpt niet.'),
+        : 'Laat los wat je miste. Dubbel doen helpt niet.'),
     });
   }
   if (r.heavier >= 2) {

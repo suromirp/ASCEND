@@ -15,6 +15,10 @@ Waar het staat: L en E op Vandaag (de kaart Gemist onder Je dag, het advies, de 
 
 Bewust breed (Warden): ook een periode zonder sportschool is een pauze, want je meldde dat je weg bent; een vraag die bij een pauze verviel komt na de pauze niet terug, ook niet als de regel dan weg is; binnen zeven dagen voor een wedstrijd haalt ASCEND niets meer in, ook geen sleuteltraining van voor de afbouw. De extra loop (`engine/extraRun.ts`) telt een vakantieweek wel als week zonder training, zodat er na een pauze geen extra loop bij komt; die telling staat nergens als zin over de vakantie.
 
+Geen eigen instelling voor "niet inhalen binnen zeven dagen voor een race" en "vervallen bij een pauze": beide zijn geen keuze die ASCEND voor je maakt, maar het weghalen van een advies dat op dat moment niet klopt. Een inhaal in de afbouw schaadt de wedstrijd, en een pauze meldde je zelf. Wie toch wil inhalen, verplaatst de training in Week (met Akkoord). Wie helemaal niets over gemist wil zien, kiest bij Training die niet doorging voor Niets doen: dan zegt ASCEND ook niets over vervallen. De rustiger instap is wel een keuze en heeft daarom een instelling.
+
+Herstel na Warden (14 november, ronde 2): één id per terugkomst (een Liever niet op vrijdag of zondag komt maandag niet terug), de instap leest dezelfde racebescherming als het inhalen (`raceWeekGuard`, ook een race die alleen een doel is), zonder pauze hoogstens één voorstel per drie weken, een voorbije training op een vakantiedag heeft in Week de neutrale stand `away` (`engine/sessionStatus.ts`, dezelfde afleiding als de weekterugblik), "bleef liggen" heet overal "gemist", en een lopende instap staat op Vandaag in de kaart Rustiger instap en in het logboek van voorstellen.
+
 ## Reden
 
 De profielen ziek-vakantie (1 tot 3) en hardloper (3, 4, 7) en GR5 (9): een vakantie die je zelf meldde kwam terug als verwijt, een gemiste bergtocht van voor de vakantie werd op de eerste vakantiedag als inhaaladvies aangeboden, zes dagen voor de race kwam een lange duurloop als inhaal, oude Nog open bleef weken staan, en na bijna drie weken bijna niets sprong het plan naar een volle week met 165 minuten bergtocht.

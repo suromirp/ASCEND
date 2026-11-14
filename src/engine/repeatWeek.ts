@@ -268,9 +268,9 @@ function describeLoad(l: LoadLine): string {
 export function shortfallSentence(p: RepeatWeekProposal): string {
   const counted = `${p.done} van de ${p.planned} trainingen`;
   const key = p.missedKey.length > 0 ? p.missedKey.map((n) => n.toLowerCase()).join(' en de ') : '';
-  if (p.verdict.fewDone && p.verdict.keyMissed) return `Vorige week deed je ${counted}, en de ${key} bleef liggen.`;
+  if (p.verdict.fewDone && p.verdict.keyMissed) return `Vorige week deed je ${counted}, en de ${key} heb je gemist.`;
   if (p.verdict.fewDone) return `Vorige week deed je ${counted}.`;
-  return `Vorige week bleef de ${key} liggen, de belangrijkste training van de week.`;
+  return `Vorige week miste je de ${key}, de belangrijkste training van de week.`;
 }
 
 // What the repeat costs, in the numbers of the key session.

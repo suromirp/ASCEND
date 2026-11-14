@@ -62,7 +62,8 @@ export function useHorizonActions(deps: {
     const now = new Date().toISOString();
     // Also when the sessions stayed: a rest week trained through changes only
     // the program, and belongs in the change log on Week all the same.
-    if (result.status !== 'unchanged' || result.restore.program) await PlanChangeProposalsRepo.put({ ...plan.proposal, resolvedAt: now, resolution: 'accepted' });
+    // Ook als alleen lengtes veranderen (een rustiger instap, engine/reentry.ts): dan staat het in het logboek.
+    if (result.status !== 'unchanged' || result.restore.program || plan.lengths.length > 0) await PlanChangeProposalsRepo.put({ ...plan.proposal, resolvedAt: now, resolution: 'accepted' });
     // The first plan of an empty app has no notice with undo: there is nothing
     // to go back to but an empty app, and undoing the plan would leave a
     // program the planning then fills in again without asking. The plan on

@@ -49,7 +49,7 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
   // The key session is the one of engine/keySession.ts, the same as the line on Ascend.
   const phrase = keyPhrase(inputs.keyFocus);
   const rule = phrase
-    ? `ASCEND haalt hoogstens één training in: de belangrijkste sleuteltraining die bleef liggen (${phrase}). Dat gebeurt op een vrije dag in dezelfde week, nooit binnen 48 uur van een andere zware beendag en nooit naast een andere harde loop. Staat er vandaag of morgen een rustdag en deed je de dag ervoor niets, dan wordt die rustdag de inhaaldag: er is niets om van te herstellen. De rest vervalt: twee trainingen op één dag om bij te benen helpt niet.`
+    ? `ASCEND haalt hoogstens één training in: de belangrijkste gemiste sleuteltraining (${phrase}). Dat gebeurt op een vrije dag in dezelfde week, nooit binnen 48 uur van een andere zware beendag en nooit naast een andere harde loop. Staat er vandaag of morgen een rustdag en deed je de dag ervoor niets, dan wordt die rustdag de inhaaldag: er is niets om van te herstellen. De rest vervalt: twee trainingen op één dag om bij te benen helpt niet.`
     : 'Met Rustig aan heeft je week geen sleuteltraining, dus ASCEND haalt niets in. Twee trainingen op één dag om bij te benen helpt niet.';
   const missed = recentMissed
     .map((s) => ({ s, template: templateById.get(s.templateId) }))

@@ -28,6 +28,8 @@ import type { DurationAdjustment } from './substitutions';
 import { activeIllness, recoveryRamp } from './illness';
 import { awayPeriods, isAwayDay } from './leave';
 import { isTestOrRace } from './templateRoles';
+import { raceWeekGuard } from './adviceShared';
+import type { RaceBlock } from './raceBlock';
 import { addDays, daysBetween, formatWeekdayDateNL, mondayOfWeek } from '../utils/dates';
 
 export type ReentryChoice = 'three_quarters' | 'half' | 'off';
@@ -78,6 +80,8 @@ export interface ReentryInputs {
   // Wat al met Akkoord bewaard is.
   weeks?: unknown;
   respondedIds: ReadonlySet<string>;
+  // Tussendoelen met een wedstrijddag (engine/raceBlock.ts): dezelfde bescherming als het inhalen.
+  raceGoals?: RaceBlock[];
 }
 
 export type ReentryCause = 'ill' | 'away' | 'ill_away' | 'quiet';
@@ -92,17 +96,25 @@ export interface ReentryProposal {
 
 export const reentryId = (from: string) => `reentry:${from}`;
 
-// De dag dat je terug bent: de dag van "weer beter", de dag na een vakantie of tocht, of zonder pauze de
-// maandag van deze week. Alleen als die hoogstens twee dagen geleden is.
+// De dag dat je terug bent: de dag van "weer beter" of de dag na een vakantie of tocht. Eén terugkomst, één id:
+// lag er in de laatste twee weken een terugkomst, dan geldt die, ook als hij al voorbij de drie dagen is; dan valt
+// het voorstel niet terug op de maandag met een ander id (Warden, 14 november). Zonder pauze: de maandag van
+// deze week, hoogstens één keer per drie weken.
+const QUIET_EVERY_DAYS = 21;
 function returnDay(today: string, illness: IllnessEpisode[] | undefined, leave: LeavePeriod[] | undefined): { day: string; paused: boolean } | undefined {
-  const near = (d: string) => d <= today && daysBetween(d, today) <= OFFER_DAYS;
   const pauses = [
     ...(illness ?? []).filter((e) => e.endDate).map((e) => e.endDate!),
     ...awayPeriods(leave).map((p) => addDays(p.endDate, 1)),
-  ].filter(near).sort();
+  ].filter((d) => d <= today && daysBetween(d, today) <= REENTRY_LOOKBACK_DAYS).sort();
   if (pauses.length > 0) return { day: pauses.at(-1)!, paused: true };
-  const monday = mondayOfWeek(today);
-  return near(monday) ? { day: monday, paused: false } : undefined;
+  return { day: mondayOfWeek(today), paused: false };
+}
+
+// Een eerder voorstel (beantwoord of bewaard) in de laatste drie weken.
+function askedRecently(today: string, respondedIds: ReadonlySet<string>, weeks: unknown): boolean {
+  const recent = (d: string) => d <= today && daysBetween(d, today) < QUIET_EVERY_DAYS;
+  return [...respondedIds].some((id) => id.startsWith('reentry:') && recent(id.slice('reentry:'.length)))
+    || reentryAdjustments(weeks).some((w) => recent(w.from));
 }
 
 export function proposeReentry(inputs: ReentryInputs): ReentryProposal | undefined {
@@ -110,7 +122,7 @@ export function proposeReentry(inputs: ReentryInputs): ReentryProposal | undefin
   if (!program || inputs.choice === 'off') return undefined;
   if (activeIllness(illness) || recoveryRamp(illness, today) || isAwayDay(today, leave)) return undefined;
   const back = returnDay(today, illness, leave);
-  if (!back) return undefined;
+  if (!back || daysBetween(back.day, today) > OFFER_DAYS) return undefined;
   const from = back.day;
   const until = addDays(from, WINDOW_DAYS - 1);
   const id = reentryId(from);
@@ -125,6 +137,8 @@ export function proposeReentry(inputs: ReentryInputs): ReentryProposal | undefin
   const ahead = inputs.plannedSessions.filter((s) => s.status !== 'skipped' && s.scheduledDate >= from && s.scheduledDate <= until);
   // Een test of wedstrijd in die dagen: de afbouw en de test gaan voor, en die mogen niet korter.
   if (ahead.some((s) => { const t = byId.get(s.templateId); return !!t && isTestOrRace(t); })) return undefined;
+  // Dezelfde bescherming als het inhalen: een wedstrijd of tussendoel binnen zeven dagen vanaf de dag terug.
+  if (raceWeekGuard({ asOf: from, plannedSessions: [...inputs.plannedSessions], templates: [...inputs.templates], raceGoals: inputs.raceGoals })) return undefined;
   const usual = ahead.filter((s) => byId.get(s.templateId)?.type !== 'recovery').length;
   if (usual === 0) return undefined;
   const done = inputs.logs.filter((l) => l.completedDate >= lookFrom && l.completedDate < from && byId.get(l.templateId)?.type !== 'recovery').length;
@@ -134,7 +148,7 @@ export function proposeReentry(inputs: ReentryInputs): ReentryProposal | undefin
   const ill = (illness ?? []).some((e) => e.startDate < from && (e.endDate ?? today) >= addDays(lookFrom, -7));
   const away = awayPeriods(leave).some((p) => p.startDate < from && p.endDate >= lookFrom);
   const cause: ReentryCause = ill && away ? 'ill_away' : ill ? 'ill' : away ? 'away' : 'quiet';
-  if (cause === 'quiet' && back.paused) return undefined;
+  if (cause === 'quiet' && (back.paused || askedRecently(today, inputs.respondedIds, inputs.weeks))) return undefined;
   const factor = REENTRY_FACTOR[inputs.choice];
   return { id, week: { from, until, factor }, cause, done, usual };
 }
@@ -162,4 +176,14 @@ export const REENTRY_WHY = 'Na een pauze zakt je conditie wat terug. Meteen een 
 // De regel in het voorstel van de planningsronde.
 export function reentryNote(week: ReentryWeek): string {
   return `Van ${formatWeekdayDateNL(week.from)} tot en met ${formatWeekdayDateNL(week.until)} duren je trainingen ${share(week.factor)} van de gewone tijd. Daarna gaat je schema gewoon verder.`;
+}
+
+// De instap die vandaag loopt, als je er Akkoord op gaf: de kaart Weer opbouwen op Vandaag zegt het dan.
+export function activeReentry(weeks: unknown, today: string): ReentryWeek | undefined {
+  return reentryAdjustments(weeks).find((w) => w.from <= today && w.until >= today);
+}
+
+// "Rustiger instap tot en met zo 13 december: je trainingen duren driekwart van de gewone tijd."
+export function reentryTodayLine(week: ReentryWeek): string {
+  return `Rustiger instap tot en met ${formatWeekdayDateNL(week.until)}: je trainingen duren ${share(week.factor)} van de gewone tijd. Daarna gaat je schema gewoon verder.`;
 }

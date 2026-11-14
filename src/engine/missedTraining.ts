@@ -221,7 +221,8 @@ export function planMissed(input: MissedInput): MissedPlan {
   // Wat voor een ziekmelding of vakantie nog open stond, vervalt: één regel zolang de pauze loopt, daarna niets.
   const lapsedPairs = recent.map((m) => ({ m, pause: pauseSince(m.session.scheduledDate, today, illnessEpisodes, leavePeriods) })).filter((x) => !!x.pause);
   const running = lapsedPairs.filter((x) => x.pause!.running);
-  const lapsed = running.length > 0 ? { kind: running.at(-1)!.pause!.kind, sessions: running.map((x) => x.m) } : undefined;
+  // Met Niets doen zegt ASCEND ook niets over vervallen.
+  const lapsed = running.length > 0 && settings.choice !== 'off' ? { kind: running.at(-1)!.pause!.kind, sessions: running.map((x) => x.m) } : undefined;
   const lapsedIds = new Set(lapsedPairs.map((x) => x.m.session.id));
   // Ziek gemeld: geen vragen tot je beter bent.
   if (activeIllness(illnessEpisodes)) return { autoSkip: [], ...(lapsed ? { lapsed } : {}) };

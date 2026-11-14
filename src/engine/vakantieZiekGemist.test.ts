@@ -4,6 +4,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { computeCurrentStreak } from './streak';
+import { deriveSessionStatus } from './sessionStatus';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
@@ -300,5 +301,84 @@ describe('L: de reeks op Je stand breekt niet op een vakantie', () => {
     const free = streak([vacation('2026-11-27', '2026-12-06', 'free_days')]);
     expect(away).toBeGreaterThan(0);
     expect(free).toBe(0);
+  });
+});
+
+describe('Warden ronde 2: één id per terugkomst, één racebescherming, grenzen', () => {
+  const plan = [...week('2026-11-16'), ...week('2026-11-23'), ...week('2026-11-30'), ...week('2026-12-07'), ...week('2026-12-14')];
+  const base = (over: Partial<ReentryInputs>): ReentryInputs => ({
+    program, plannedSessions: plan, logs: [], templates, today: '2026-12-04', choice: 'three_quarters', respondedIds: new Set(), ...over,
+  });
+
+  it.each([['vrijdag', '2026-11-30', '2026-12-03', '2026-12-04'], ['zondag', '2026-11-30', '2026-12-05', '2026-12-06']])('terug op %s, Liever niet: maandag komt hetzelfde voorstel niet terug met een ander id', (_, start, end, back) => {
+    const leave = [vacation(start, end)];
+    const first = proposeReentry(base({ leavePeriods: leave, today: back }))!;
+    expect(first.id).toBe(`reentry:${back}`);
+    const responded = new Set([first.id]);
+    expect(proposeReentry(base({ leavePeriods: leave, today: back, respondedIds: responded }))).toBeUndefined();
+    expect(proposeReentry(base({ leavePeriods: leave, today: '2026-12-07', respondedIds: responded }))).toBeUndefined();
+    expect(proposeReentry(base({ leavePeriods: leave, today: '2026-12-08', respondedIds: responded }))).toBeUndefined();
+  });
+
+  it('een race op dag 7 vanaf de terugkomst beschermt, op dag 8 niet; ook een race die alleen een doel is', () => {
+    const leave = [vacation('2026-11-30', '2026-12-06')];
+    const at = (d: number) => [...plan, ps('tpl_race', addDays('2026-12-07', d))];
+    expect(proposeReentry(base({ leavePeriods: leave, today: '2026-12-07', plannedSessions: at(7) }))).toBeUndefined();
+    expect(proposeReentry(base({ leavePeriods: leave, today: '2026-12-07', plannedSessions: at(8) }))).toBeDefined();
+    const goal = { goalId: 'g', name: '10 km', raceDate: '2026-12-14', blockStart: '2026-11-16', raceWeek: '2026-12-14' };
+    expect(proposeReentry(base({ leavePeriods: leave, today: '2026-12-07', raceGoals: [goal] }))).toBeUndefined();
+    expect(proposeReentry(base({ leavePeriods: leave, today: '2026-12-07', raceGoals: [{ ...goal, raceDate: '2026-12-15' }] }))).toBeDefined();
+  });
+
+  it('de grens van weinig training: 3 van 5 gedaan geeft een voorstel, 4 niet', () => {
+    const leave = [vacation('2026-11-30', '2026-12-06')];
+    const runs = (n: number) => Array.from({ length: n }, (_, i) => loose('tpl_easy_run', addDays('2026-11-23', i)));
+    expect(proposeReentry(base({ leavePeriods: leave, today: '2026-12-07', logs: runs(3) }))).toBeDefined();
+    expect(proposeReentry(base({ leavePeriods: leave, today: '2026-12-07', logs: runs(4) }))).toBeUndefined();
+  });
+
+  it('twee weken weinig training zonder pauze: hoogstens één keer per drie weken', () => {
+    const asked = new Set(['reentry:2026-11-30']);
+    expect(proposeReentry(base({ today: '2026-12-07' }))).toBeDefined();
+    expect(proposeReentry(base({ today: '2026-12-07', respondedIds: asked }))).toBeUndefined();
+    expect(proposeReentry(base({ today: '2026-12-14', respondedIds: asked }))).toBeUndefined();
+    expect(proposeReentry(base({ today: '2026-12-21', respondedIds: asked, plannedSessions: [...plan, ...week('2026-12-21')] }))).toBeDefined();
+  });
+
+  it.each([[7, false], [8, true]])('inhalen met een race op dag %i: advies %s', (day, shown) => {
+    const longRun = ps('tpl_long_run', '2027-01-03');
+    const restDay = ps('tpl_herstel', '2027-01-04');
+    const race = ps('tpl_race', addDays('2027-01-04', day));
+    const advice = computeAdvice(adviceInputs({ plannedSessions: [longRun, restDay, race], asOf: '2027-01-04' }));
+    expect(advice.some((a) => a.ruleId === 'MISSED-CATCH-UP')).toBe(shown);
+  });
+
+  it('rustdagruil en een overgeslagen sleuteltraining: niet in de week voor een race', () => {
+    // Gisteren niets, vandaag rust, morgen een training: REST-SWAP. De lange duurloop van gisteren overgeslagen: SKIPPED-KEY-TO-REST.
+    const rest = ps('tpl_herstel', '2027-01-04');
+    const tomorrow = ps('tpl_easy_run', '2027-01-05');
+    const skipped = ps('tpl_long_run', '2027-01-03', { status: 'skipped' });
+    const race = ps('tpl_race', '2027-01-10');
+    const rules = (withRace: boolean) => computeAdvice(adviceInputs({ plannedSessions: [rest, tomorrow, skipped, ...(withRace ? [race] : [])], asOf: '2027-01-04' })).map((a) => a.ruleId);
+    expect(rules(false).some((r) => r === 'REST-SWAP' || r === 'SKIPPED-KEY-TO-REST')).toBe(true);
+    expect(rules(true).some((r) => r === 'REST-SWAP' || r === 'SKIPPED-KEY-TO-REST')).toBe(false);
+  });
+
+  it('Niets doen: ook geen regel over vervallen', () => {
+    const legs = ps('tpl_lower_a', '2026-11-25');
+    const leave = [vacation('2026-11-30', '2026-12-06')];
+    expect(planMissed(missedInput({ plannedSessions: [legs], leavePeriods: leave })).lapsed).toBeDefined();
+    expect(planMissed(missedInput({ plannedSessions: [legs], leavePeriods: leave, settings: { ...MISSED_ADVICE, choice: 'off' } })).lapsed).toBeUndefined();
+  });
+
+  it('Week: een voorbije training op een vakantiedag is neutraal, niet gemist', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-12-08T09:00:00+01:00'));
+    const run = ps('tpl_easy_run', '2026-12-03');
+    expect(deriveSessionStatus(run, []).status).toBe('missed');
+    expect(deriveSessionStatus(run, [], false, [vacation('2026-11-30', '2026-12-06')]).status).toBe('away');
+    expect(deriveSessionStatus(run, [], false, [vacation('2026-11-30', '2026-12-06', 'free_days')]).status).toBe('missed');
+    expect(deriveSessionStatus(run, [done(run)], false, [vacation('2026-11-30', '2026-12-06')]).status).toBe('completed');
+    vi.useRealTimers();
   });
 });

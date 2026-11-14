@@ -55,8 +55,10 @@ const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, tran
 const DISC = 36;
 
 function SessionRow({
-  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote,
+  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote, leave,
 }: {
+  // Vakanties en tochten die je meldde: een voorbije training daar is nooit gemist (engine/sessionStatus.ts, 'away').
+  leave?: LeavePeriod[];
   session: PlannedSession;
   template: SessionTemplate;
   date: string;
@@ -84,11 +86,11 @@ function SessionRow({
 }) {
   const restMode = useAppData().settings.restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
-  const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest);
+  const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest, leave);
   // Een vaste afspraak van een sport (engine/fixedSports.ts) heeft de lengte die jij koos.
   // Gedaan: de duur van het log (engine/sessionStatus.ts#rowMinutes), niet die van het plan.
   const duration = rowMinutes(log, session.fixed && session.plannedMinutes ? session.plannedMinutes : resolveEffectiveFullDuration(template, session.scheduledDate, program));
-  const dim = status === 'skipped' || status === 'missed';
+  const dim = status === 'skipped' || status === 'missed' || status === 'away';
   const legs = !isRest && isLegHeavyTemplate(template);
   // Na de dag en de duur hoogstens één ding (engine/weekRow.ts#rowExtra). "aangepast" staat op precies de rijen
   // met een regel in Aangepast door ASCEND, ook als hij gedaan is (engine/changeLog.ts#weekAdjustments).
@@ -362,6 +364,7 @@ export function WeekPlanner({
         pairNote={pairNotes?.get(s.id)}
         handle={eligibility?.ok ? weekDrag!.handleFor(s, eligibility.askAlways) : catchable ? weekDrag!.handleFor(s, false) : undefined}
         catchNote={catchNote}
+        leave={leave}
         placeholder={pickedUp === s.id}
         ghost={extra.ghost}
       />

@@ -1,3 +1,4 @@
+import { activeReentry } from '../engine/reentry';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
@@ -464,7 +465,7 @@ function TodayContent() {
     ...(illnessSignState.shown ? (['illnessSign'] as const) : []),
     ...(weatherWarnings.shown ? (['weatherWarning'] as const) : []),
     ...(morningCardVisible ? (['morning'] as const) : []),
-    ...(!illness && recoveryRamp(settings.illnessEpisodes, today) ? (['ramp'] as const) : []),
+    ...(!illness && (recoveryRamp(settings.illnessEpisodes, today) || activeReentry(settings.reentryWeeks, today)) ? (['ramp'] as const) : []),
     ...(advice.length > 0 ? (['advice'] as const) : []),
     ...(missed.item || missed.lapsed ? (['missed'] as const) : []),
     ...(freshStart.shown ? (['freshStart'] as const) : []),
