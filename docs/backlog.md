@@ -8,6 +8,7 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 
 ## Inbox
 
+- StairMaster en wandelen naar het horloge (eigenaar 14 november, schermafdrukken van intervals.icu): intervals.icu kent alleen Fietsen, Hardlopen, Zwemmen en Andere; wandelen valt onder Andere, en daar zijn geen eigen hartslagzones zichtbaar. Een workout met doelen in zones heeft dan geen goede maat. Stuur doelen voor wandelen en StairMaster als vaste slagen per minuut (afgeleid van de hardloopzones), niet als zone; zeg in de Briefing welke bpm. Opus, Warden Sonnet. Geen hartslagwaarden van de eigenaar in tests of docs.
 - Routes op reis ((1) en (2) live 14 november, 19f4f22; (3) open) (eigenaar 14 november, in het buitenland, twee schermafdrukken): (1) moet: lukt de precieze plek niet, dan zegt de app "De lus begint bij Thuis" en zoekt een lus bij Thuis, ook als je ver weg bent; nooit stil terugvallen op een Thuis die ver weg kan zijn: vraag "Je plek lukte niet. Opnieuw, Thuis of Andere plek?" zonder te zoeken; (2) moet: de time-out zegt niet welke stap het was en niet of je offline bent; zeg de stap (plek, heuvels en paden, lussen) en bij `navigator.onLine === false` "Je hebt geen verbinding"; (3) nagaan: de routeplanners antwoorden vanaf hier in Portugal binnen een seconde (BRouter, Valhalla, 14 november), dus waarschijnlijk zwak bereik met meerdere aanvragen na elkaar binnen de grens van 30 s; overweeg minder aanvragen of de grens per stap. Opus, Warden Fable (zelfde bestanden als Route-kaart vervolg: na die branch).
 - Klein deel 2, rest (Pathfinder en Warden 14 november, mag): op het oude trainingsscherm (`ExerciseLogger.tsx:443` en `:465`) is "Waarom deze training" naast "Gedaan, invullen" op 360 px waarschijnlijk te breed (op 412 past het net); bekijken en zo nodig de knoppen laten verdelen; het onderblad Zelf nabouwen in Je horloge heeft nog eyebrow "Uitleg" (`WatchSheet.tsx:109`), advies "Je horloge"; de scan in `infoBlad.scan.test.ts` zoekt het einde van het blok met `indexOf(')}')`, een ankertekst is steviger. Klein.
 - Profielendoorloop 14 november (verslagen in `docs/profielen/2026-11-14-*.md` op de branches `claude/profiel-*`; vier van vijf binnen, ziek-vakantie loopt). Moet, gegroepeerd, in volgorde van bouwen:
@@ -218,7 +219,6 @@ Twijfel of het af is; eerst kijken, dan schrappen of bouwen.
 ## Wacht op de eigenaar
 
 - Melding in Week nadat je op Vandaag "Benen fris, blijft staan" koos (open vraag uit de overdracht van een eerdere coördinator, niet beantwoord): wegblijven, of zeggen dat jij koos. Advies: zeggen dat jij koos.
-- StairMaster: welke hartslagzones heeft Wandelen in intervals.icu? (De workout staat bij Wandelen, eigenaar 14 november.)
 - (Ontvangen 14 november, back-up van 18:00 in de scratchpad) Een verse back-up in de scratchpad van de coördinator, voor de punten die naspelen vragen (bodem van 20 m, audit 13 november).
 
 ## Later
