@@ -148,7 +148,10 @@ export function proposeReentry(inputs: ReentryInputs): ReentryProposal | undefin
   const ill = (illness ?? []).some((e) => e.startDate < from && (e.endDate ?? today) >= addDays(lookFrom, -7));
   const away = awayPeriods(leave).some((p) => p.startDate < from && p.endDate >= lookFrom);
   const cause: ReentryCause = ill && away ? 'ill_away' : ill ? 'ill' : away ? 'away' : 'quiet';
-  if (cause === 'quiet' && (back.paused || askedRecently(today, inputs.respondedIds, inputs.weeks))) return undefined;
+  // De grens van drie weken geldt voor het voorstel, niet voor één oorzaak: zonder terugkomst in de laatste twee
+  // weken (de maandag) nooit binnen drie weken na een eerder voorstel, ook als er nog een pauze in het verhaal zit.
+  if (!back.paused && askedRecently(today, inputs.respondedIds, inputs.weeks)) return undefined;
+  if (cause === 'quiet' && back.paused) return undefined;
   const factor = REENTRY_FACTOR[inputs.choice];
   return { id, week: { from, until, factor }, cause, done, usual };
 }

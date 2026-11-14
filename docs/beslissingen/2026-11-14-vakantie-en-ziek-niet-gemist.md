@@ -23,7 +23,7 @@ Herstel na Warden (14 november, ronde 2): één id per terugkomst (een Liever ni
 
 De profielen ziek-vakantie (1 tot 3) en hardloper (3, 4, 7) en GR5 (9): een vakantie die je zelf meldde kwam terug als verwijt, een gemiste bergtocht van voor de vakantie werd op de eerste vakantiedag als inhaaladvies aangeboden, zes dagen voor de race kwam een lange duurloop als inhaal, oude Nog open bleef weken staan, en na bijna drie weken bijna niets sprong het plan naar een volle week met 165 minuten bergtocht.
 
-Een meldde pauze is een feit over je kalender, net als ziekte (die telde al niet als gemist). Een week op vakantie is geen tegenvallende week. Voor de terugkomst: terugkeer op 70 tot 80 procent van de gewone omvang, dezelfde factor als Weer opbouwen na ziekte (`engine/illness.ts`, `docs/onderzoek`); de helft voor wie voorzichtiger wil.
+Een gemelde pauze is een feit over je kalender, net als ziekte (die telde al niet als gemist). Een week op vakantie is geen tegenvallende week. Voor de terugkomst: terugkeer op 70 tot 80 procent van de gewone omvang, dezelfde factor als Weer opbouwen na ziekte (`engine/illness.ts`, `docs/onderzoek`); de helft voor wie voorzichtiger wil.
 
 ## Alternatieven
 

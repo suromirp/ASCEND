@@ -20,7 +20,7 @@ import { buildMarathonGoal } from '../engine/goalMigration';
 import { PRIORITY_RULE } from '../engine/goalList';
 import { extractEvidenceFromLogs } from '../engine/capability';
 import { describeChanges } from '../engine/changeImpact';
-import { applyHorizonPlanNow, computeHorizonPlan, type HorizonApplyResult, type HorizonApplyStatus, type HorizonChangeInput, type HorizonPlan } from '../storage/horizonPlan';
+import { applyHorizonPlanNow, computeHorizonPlan, horizonLogWorthy, type HorizonApplyResult, type HorizonApplyStatus, type HorizonChangeInput, type HorizonPlan } from '../storage/horizonPlan';
 import { syncWatchWorkoutsAfterPlanChange } from '../storage/watchWorkouts';
 import { snapshotWritten } from '../storage/undoPlanChange';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
@@ -63,7 +63,7 @@ export function useHorizonActions(deps: {
     // Also when the sessions stayed: a rest week trained through changes only
     // the program, and belongs in the change log on Week all the same.
     // Ook als alleen lengtes veranderen (een rustiger instap, engine/reentry.ts): dan staat het in het logboek.
-    if (result.status !== 'unchanged' || result.restore.program || plan.lengths.length > 0) await PlanChangeProposalsRepo.put({ ...plan.proposal, resolvedAt: now, resolution: 'accepted' });
+    if (horizonLogWorthy(plan, result)) await PlanChangeProposalsRepo.put({ ...plan.proposal, resolvedAt: now, resolution: 'accepted' });
     // The first plan of an empty app has no notice with undo: there is nothing
     // to go back to but an empty app, and undoing the plan would leave a
     // program the planning then fills in again without asking. The plan on

@@ -6,6 +6,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { computeCurrentStreak } from './streak';
 import { deriveSessionStatus } from './sessionStatus';
 import { buildChangeLog } from './changeLog';
+import { weekHighlights } from './weekHighlights';
+import { attentionLines } from './weekGlance';
+import { shortfallSentence } from './repeatWeek';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
@@ -393,5 +396,50 @@ describe('de rustiger instap in het logboek van wijzigingen', () => {
     });
     const log = buildChangeLog([proposal('reentry_planned'), proposal('availability_changed')], [], templates, '2026-12-01');
     expect(log.map((e) => [e.label, e.lines])).toEqual([['Rustiger instap', ['Tot en met zo 13 december driekwart.']]]);
+  });
+});
+
+describe('de grens van drie weken geldt voor het voorstel, niet voor een oorzaak', () => {
+  const plan = [...week('2026-11-09'), ...week('2026-11-16'), ...week('2026-11-23'), ...week('2026-11-30'), ...week('2026-12-07'), ...week('2026-12-14')];
+  const early: Program = { ...program, startDate: '2026-10-05' };
+  const leave = [vacation('2026-11-16', '2026-11-23')];
+  const input = (over: Partial<ReentryInputs>): ReentryInputs => ({
+    program: early, plannedSessions: plan, logs: [], templates, today: '2026-12-09', leavePeriods: leave, choice: 'three_quarters', respondedIds: new Set(), ...over,
+  });
+
+  it('vakantie terug op dinsdag 24 november, Liever niet: woensdag 9 december (dag 15) geen nieuw voorstel', () => {
+    expect(proposeReentry(input({ today: '2026-11-24' }))?.id).toBe('reentry:2026-11-24');
+    // Zonder eerder antwoord: de oorzaak is nog de vakantie, de maandag vraagt.
+    expect(proposeReentry(input({}))).toBeDefined();
+    expect(proposeReentry(input({ respondedIds: new Set(['reentry:2026-11-24']) }))).toBeUndefined();
+  });
+
+  it('Akkoord na ziekte, maandag 15 dagen later: geen nieuw voorstel', () => {
+    // Ziek 18 tot 22 november, Akkoord op een instap vanaf zondag 22 november; maandag 7 december is dag 15.
+    const ill: IllnessEpisode[] = [{ id: 'z', kind: 'below_neck', startDate: '2026-11-18', endDate: '2026-11-22' }];
+    const weeks = [{ from: '2026-11-22', until: '2026-11-28', factor: 0.75 }];
+    const at = (today: string, over: Partial<ReentryInputs> = {}) => proposeReentry(input({ today, leavePeriods: [], illnessEpisodes: ill, ...over }));
+    expect(at('2026-12-07')).toMatchObject({ cause: 'ill' });
+    expect(at('2026-12-07', { weeks })).toBeUndefined();
+    // Drie weken na de vorige instap mag het weer.
+    expect(at('2026-12-14', { weeks })?.id).toBe('reentry:2026-12-14');
+  });
+});
+
+describe('het woord gemist, per zin', () => {
+  const sessions = week('2026-11-23');
+  const review = buildWeekReview({ weekStart: '2026-11-23', plannedSessions: sessions, logs: [], templates, program, planChangeLog: [], asOf: '2026-11-30' })!;
+
+  it('de weekterugblik, de hoogtepunten en de herhaalweek zeggen gemist, nooit liggen', () => {
+    expect(review.advice[0]).toMatch(/^5 trainingen gemist\./);
+    const highlight = weekHighlights(review).find((h) => h.icon === 'week')!;
+    expect(highlight.text).toMatch(/ gemist\. /);
+    expect(highlight.text).not.toMatch(/liggen/);
+    const glance = attentionLines(review).find((l) => l.key === 'missed')!;
+    expect(glance.label).toBe('Gemist');
+    expect(glance.value).not.toMatch(/liggen/);
+    const verdict = { fellShort: true, fewDone: true, keyMissed: true, share: 0 };
+    expect(shortfallSentence({ id: 'x', weekStart: '2026-11-30', previousWeek: '2026-11-23', done: 0, planned: 5, verdict, missedKey: ['Bergtocht'] })).toBe('Vorige week deed je 0 van de 5 trainingen, en de bergtocht heb je gemist.');
+    expect(shortfallSentence({ id: 'x', weekStart: '2026-11-30', previousWeek: '2026-11-23', done: 4, planned: 5, verdict: { ...verdict, fewDone: false }, missedKey: ['Bergtocht'] })).toBe('Vorige week miste je de bergtocht, de belangrijkste training van de week.');
   });
 });

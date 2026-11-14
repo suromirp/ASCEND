@@ -117,6 +117,14 @@ describe('proposeRepeatWeek', () => {
     expect(p.impact!.thisWeek.to.minutes).toBe(progressionTarget(longRun, program, '2026-11-08')!.minutes);
   });
 
+  it('een week die deels vakantie was en verder tegenviel: geen herhaling, de rustiger instap gaat erover', () => {
+    expect(proposeRepeatWeek(inputs())).toBeDefined();
+    const leavePeriods = [{ id: 'v', kind: 'no_gym' as const, startDate: '2026-11-03', endDate: '2026-11-04' }];
+    expect(proposeRepeatWeek(inputs({ leavePeriods }))).toBeUndefined();
+    // Vrije dagen zijn geen pauze: dan wel.
+    expect(proposeRepeatWeek(inputs({ leavePeriods: [{ ...leavePeriods[0], kind: 'free_days' as const }] }))).toBeDefined();
+  });
+
   it('in week 2 the heaviest week of the wave is named too', () => {
     const p = proposeRepeatWeek(inputs({ today: W2, logs: [logOf(W1, 'tpl_upper_a')] }))!;
     expect(p.weekStart).toBe(W2);

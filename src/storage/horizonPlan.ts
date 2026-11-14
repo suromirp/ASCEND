@@ -278,6 +278,12 @@ export type HorizonApplyResult =
 
 // What the screen hears: one of the results, or 'pending' when Akkoord is still
 // running after the caller was let go (the notice follows when it is done).
+// Of een toegepast voorstel in het logboek van wijzigingen komt: als er rijen veranderden, als het programma
+// veranderde (een rustweek doortrainen), of als alleen lengtes veranderden (een rustiger instap, engine/reentry.ts).
+export function horizonLogWorthy(plan: Pick<HorizonPlan, 'lengths'>, result: { status: string; restore: { program?: unknown } }): boolean {
+  return result.status !== 'unchanged' || !!result.restore.program || plan.lengths.length > 0;
+}
+
 export type HorizonApplyStatus = HorizonApplyResult['status'] | 'pending';
 
 const comparable = (items: PlanChangeItem[]) => JSON.stringify(items);

@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { runBootMigrations } from './bootMigrations';
 import { wipeAllData, seedIfEmpty, syncProgramHorizon, PlannedSessionsRepo, SettingsRepo } from './database';
-import { applyHorizonPlanNow, computeHorizonPlan, type HorizonChangeInput } from './horizonPlan';
+import { applyHorizonPlanNow, computeHorizonPlan, horizonLogWorthy, type HorizonChangeInput } from './horizonPlan';
+import { undoPlanChangeNow } from './undoPlanChange';
 import { addDays } from '../utils/dates';
 
 // Rustiger instap na een pauze (engine/reentry.ts) door de echte planningsronde: het voorstel noemt de
@@ -33,5 +34,12 @@ describe('rustiger instap als voorstel van de planningsronde', () => {
     expect(result.status).toMatch(/applied|unchanged/);
     expect((await SettingsRepo.get()).reentryWeeks).toEqual([week]);
     expect(JSON.stringify(await PlannedSessionsRepo.getAll())).toBe(before);
+    if (result.status === 'failed' || result.status === 'stale') throw new Error(result.status);
+    // Alleen lengtes: toch in het logboek van wijzigingen.
+    expect(horizonLogWorthy(plan, result)).toBe(true);
+    expect(horizonLogWorthy({ lengths: [] }, { status: 'unchanged', restore: {} })).toBe(false);
+    // Ongedaan maken zet de instellingen terug zoals ze waren: geen instap meer.
+    await undoPlanChangeNow({ id: plan.proposal.id, trigger: 'reentry_planned', title: 'Rustiger instap', lines: [], why: '', before: result.before, addedIds: result.addedIds, settingsBefore: result.restore.settings, createdAt: new Date().toISOString() });
+    expect((await SettingsRepo.get()).reentryWeeks).toBeUndefined();
   });
 });
