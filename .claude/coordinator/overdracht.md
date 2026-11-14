@@ -6,6 +6,8 @@ Bijgewerkt: 14 november 2026, ongeveer 13:00 Amsterdam, door de coördinator ses
 
 - Houd de drie bouwplekken vol: wachten op een review of herstelronde is geen reden om niets te starten. Elke beurt eindigt met: zijn alle drie bezet? Zo niet, start de volgende die geen bestanden deelt (skill werkverdeling, Bouwplekken vol houden).
 
+- Werkkaart (eigenaar 14 november): dashboard https://claude.ai/artifact/JAmcpeDaGBX24C22dqRFAp, vastgezet in zijn zijbalk. Bijwerken bij elke Wachter-ronde en na elke push naar main (skill werkkaart).
+- Wachter staat weer aan (eigenaar 14 november: "Zet weer aan"): trig_01BjCHkFvjvdSXwCF58by7Lm, elk uur op :40, op deze sessie. Bij de wissel verhuizen naar de nieuwe coördinator.
 - Stijl Jarvis: korte briefings, wat er gebeurt, waar de eigenaar concreet nodig is, de juiste vraag met advies (CLAUDE.md, vaste afspraken).
 - 14 november middag: de eigenaar vliegt en vertrouwt op zelfstandig doorwerken. Zelf beslissen met het advies, elke keuze en een korte reflectie hieronder onder Reflectie.
 
@@ -24,7 +26,7 @@ Bijgewerkt: 14 november 2026, ongeveer 13:00 Amsterdam, door de coördinator ses
 - 13 november: "Start een nieuwe coördinator en ga verder met de backlog"; "Ja doe alles autonoom"; "Ga daarna verder met de backlog".
 - 13 november: proef Ponytail en Graphify ("Allebei"): klaar, verslag `docs/onderzoek/Ponytail en Graphify.md`. Advies: Ponytail alleen de audit als prompt in de onderhoudsronde; Graphify weg. Niets van beide geïnstalleerd in de repo; de hook in `~/.claude/settings.json` werd door de rechten geweigerd.
 - 14 november: wil weer bouwers in eigen chats ("dat kon eerder ook"). Kan pas vanuit een coördinator-chat die de eigenaar zelf start; deze chat zat op de grens van de keten.
-- Eerdere afspraken blijven: hoogstens drie helpers tegelijk, nooit twee aan dezelfde bestanden; mooiere UI en makkelijkere UX met besluit; de Wachter staat uit sinds 13 november 00:00 ("geen planning nu"), alleen weer aanzetten als de eigenaar dat zegt.
+- Eerdere afspraken blijven: hoogstens drie helpers tegelijk, nooit twee aan dezelfde bestanden; mooiere UI en makkelijkere UX met besluit; de Wachter staat sinds 14 november weer aan (eigenaar).
 
 ## Live sinds 13 november (elk met Warden, Lookout, Pathfinder waar zichtbaar, en eigen blik op afdrukken)
 
