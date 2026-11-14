@@ -112,6 +112,7 @@ export function ForgeSheets(p: ForgeSheetsProps) {
         <ExerciseMenuSheet
           key={menuEx.slot}
           ex={menuEx}
+          workout={workout}
           effSlots={effSlots}
           readOnly={readOnly}
           preview={preview}

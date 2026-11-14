@@ -163,6 +163,9 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-sets', facts()).value).toBe('Dalend');
     expect(rowSummary('forge-opwarmen', facts()).value).toBe('Slim');
     expect(rowSummary('forge-opwarmbereik', facts()).value).toBe('Per spiergroep');
+    // Besluit 2026-11-14-opwarmset-later: standaard aan; bij Per oefening is er niets te dempen.
+    expect(rowSummary('forge-opwarmset-later', facts())).toMatchObject({ checked: true, sub: 'Gedempt, met één zin waarom' });
+    expect(rowSummary('forge-opwarmset-later', facts({ settings: { ...facts().settings, strengthModel: { warmupScope: 'exercise' } } })).sub).toBe('Niets te dempen bij Per oefening');
     expect(rowSummary('forge-schatting', facts()).value).toBe('Tot 20');
     expect(rowSummary('forge-rust', facts()).checked).toBe(true);
     expect(rowSummary('forge-signaal', facts()).value).toBe('Geluid en trillen');

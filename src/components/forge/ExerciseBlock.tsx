@@ -65,6 +65,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   noFitText,
   heavyTip,
   rirAsValue,
+  warmNow = false,
   swipeOn,
   undoText,
   quickRirRow,
@@ -103,6 +104,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   heavyTip?: string;
   // "RIR vooraf invullen: Met het doel": het doel staat er als waarde, niet als hint.
   rirAsValue: boolean;
+  // De oefening die deze opwarmset al deed is echt gedaan (engine/warmupLater.ts#warmNow): dan gedempt met de zin.
+  warmNow?: boolean;
   swipeOn: boolean;
   // "Set 3 verwijderd" zolang je het nog ongedaan kunt maken.
   undoText?: string;
@@ -139,7 +142,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   const workTotal = ex.rows.filter((r) => r.kind === 'work').length;
   const complete = !readOnly && exerciseComplete(ex);
   // Opwarmset later (engine/warmupLater.ts): de zin staat onder de laatste gedempte opwarmset, zolang die open staat.
-  const warmLineRow = !readOnly && ex.warmFrom ? ex.rows.filter((r) => mutedWarmup(r)).at(-1)?.id : undefined;
+  const warmLineRow = !readOnly && ex.warmFrom ? ex.rows.filter((r) => mutedWarmup(r, warmNow)).at(-1)?.id : undefined;
   // Met MacroFactor als bron staan kg en herhalingen al in hun eigen kolom;
   // de tweede kolom zegt dan wat je vorige keer deed.
   const showPrevious = readOnly || column === 'previous';
@@ -325,7 +328,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                     className="forge-grid forge-row items-center rounded-xl py-0.5"
                     style={{
                       background: row.done ? 'color-mix(in srgb, var(--color-progress) 16%, transparent)' : isActive ? 'color-mix(in srgb, var(--color-ink) 5%, transparent)' : 'transparent',
-                      opacity: !readOnly && mutedWarmup(row) ? 0.55 : row.kind === 'warmup' && !row.done ? 0.78 : 1,
+                      opacity: !readOnly && mutedWarmup(row, warmNow) ? 0.55 : row.kind === 'warmup' && !row.done ? 0.78 : 1,
                       transition: 'background-color 0.3s ease, opacity 0.3s ease',
                     }}
                   >

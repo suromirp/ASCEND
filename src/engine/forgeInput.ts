@@ -29,7 +29,7 @@ import { standsFor } from './toestelStanden';
 import { r2 } from '../utils/round';
 import { kgLabel } from '../utils/kg';
 import { addedKgOf } from './forgeLadder';
-import { leftAlone } from './warmupLater';
+import { leftAlone, warmNow } from './warmupLater';
 
 
 // --- steps ---------------------------------------------------------------------------------
@@ -216,10 +216,14 @@ export interface RowRef {
 // The set to do now: the first one not ticked after the given one, else the
 // first one not ticked at all. Holds count too (you tick them as well).
 export function activeRow(workout: WorkoutExercise[], after?: RowRef): RowRef | undefined {
-  const flat = workout.flatMap((e) => e.rows.map((r) => ({ slot: e.slot, rowId: r.id, done: r.done, left: leftAlone(r) })));
+  const flat = workout.flatMap((e) => {
+    const warm = warmNow(workout, e);
+    return e.rows.map((r) => ({ slot: e.slot, rowId: r.id, left: leftAlone(r, warm) }));
+  });
   const at = after ? flat.findIndex((r) => r.slot === after.slot && r.rowId === after.rowId) : -1;
-  // Terug naar boven slaat een gedempte opwarmset over die je liet liggen (engine/warmupLater.ts).
-  const next = (after ? flat.slice(at + 1).find((r) => !r.done) : undefined) ?? flat.find((r) => !r.left);
+  // Een gedempte opwarmset (engine/warmupLater.ts) wordt nooit de actieve rij, na een set en bij hervatten gelijk:
+  // hij staat in beeld en je vinkt hem zelf af als je hem doet.
+  const next = flat.slice(at + 1).find((r) => !r.left) ?? flat.find((r) => !r.left);
   return next ? { slot: next.slot, rowId: next.rowId } : undefined;
 }
 

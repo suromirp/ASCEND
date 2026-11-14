@@ -10,9 +10,9 @@ Een opwarmset later in de training, op een beweging die al warm is (de leg press
 ## Hoe
 
 - Wanneer: alleen als Forge al één aanloopset koos (`'ramp'` in `src/engine/warmup.ts`): zelfde patroon, lichaamsdeel al warm. Een nieuw patroon op warme spieren (`'feel'`, zoals deadlift na squat), een koude spier (`'light'`) en de volle opbouw (`'full'`) blijven gewoon. De stappen naar een zware topset worden nooit gedempt.
-- De bron in de zin is de laatste oefening op hetzelfde patroon die opwarmsets had, met de naam zoals op het scherm (`WarmState.by`). Bij een toestel staat "de stoel of het gewicht" erin, anders "het gewicht".
-- Logica in `src/engine/warmupLater.ts` (`warmAlready`, `warmAlreadyAfter`, `warmAlreadyLine`, `mutedWarmup`, `leftAlone`); `planExercise` zet `warmAlready` op de geplande opwarmrijen en `warmFrom` op de oefening. Alleen in het concept, nooit in het log.
-- Laten liggen: Alle sets afvinken vinkt hem niet mee af, de rust start niet na de laatste werkset alleen omdat hij nog open staat, en terug naar boven slaat hij over. De telling van sets (`progress`, `isWorkSet`, `muscleVolume`) verandert niet: opwarmsets telden al nooit.
+- De bron in de zin is de laatste oefening op hetzelfde patroon die opwarmsets had, met de naam zoals op het scherm en zijn plek (`WarmState.by`, `warmFrom` en `warmFromSlot`). De zin en de demping lezen wat er is afgevinkt, niet de geplande volgorde: alleen als de bron nog op zijn plek staat met dezelfde naam en minstens één afgevinkte set heeft (`warmNow`). Doe je de leg press eerst, of ruilde je de squat, dan is het een gewone opwarmset. Bij een toestel staat "de stoel of het gewicht" erin, anders "het gewicht".
+- Logica in `src/engine/warmupLater.ts` (`warmAlready`, `warmAlreadyAfter`, `warmNow`, `warmAlreadyLine`, `mutedWarmup`, `leftAlone`, `allTicked`); `planExercise` zet `warmAlready` op de geplande opwarmrijen en `warmFrom` op de oefening. Alleen in het concept, nooit in het log.
+- Laten liggen: Alle sets afvinken vinkt hem niet mee af, de rust start niet na de laatste werkset alleen omdat hij nog open staat, en de actieve rij springt er nooit naartoe (na een set en bij hervatten gelijk). De telling van sets (`progress`, `isWorkSet`, `muscleVolume`) verandert niet: opwarmsets telden al nooit.
 - Weergave: in het blok van de oefening, dezelfde rij met een lagere dekking (0,55 tegen 0,78 voor een gewone open opwarmset) en de zin eronder in de stijl van de andere regels onder een set. Het vinkje blijft een tikdoel van 44 px.
 
 ## Instelling

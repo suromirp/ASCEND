@@ -26,7 +26,7 @@ import { StepUndoRow } from './StepUndoRow';
 import { stepUndoFrom } from './stepUndo';
 import { RestStepper } from './ForgeTimers';
 import { addOnMenuSub } from './forgeWorkoutHelpers';
-import { leftAlone } from '../../engine/warmupLater';
+import { allTicked } from '../../engine/warmupLater';
 
 type Strength = ReturnType<typeof resolveStrengthSettings>;
 type Settings = ReturnType<typeof useAppData>['settings'];
@@ -77,8 +77,10 @@ export function RowMenuSheet({ ex, rowId, onTake, onCopy, onRemove, onClean, onC
 // Het blad Oefening (docs/beslissingen/2026-11-02-forge-herinrichting.md): bovenaan Waarom zo, dan vier
 // groepen onder elkaar. Wat eerst als snelknop onder de naam stond (Ruilen, Opwarmset, Notitie) en de kolom
 // Alles staan hier, elk één keer.
-export function ExerciseMenuSheet({ ex, effSlots, readOnly, preview, templateId, settings, strength, onSwapBack, onPickSwap, onNote, onArt, onFill, onAddOn, onRemoveAdded, onUndoStep, onAddSet, onTickAll, onRemoveLast, onRestSeconds, onStartRest, onClose }: {
+export function ExerciseMenuSheet({ ex, workout, effSlots, readOnly, preview, templateId, settings, strength, onSwapBack, onPickSwap, onNote, onArt, onFill, onAddOn, onRemoveAdded, onUndoStep, onAddSet, onTickAll, onRemoveLast, onRestSeconds, onStartRest, onClose }: {
   ex: WorkoutExercise;
+  // De hele training: of een gedempte opwarmset mag blijven liggen hangt af van wat er al is afgevinkt.
+  workout: readonly WorkoutExercise[];
   effSlots: readonly ExercisePrescription[];
   readOnly: boolean;
   preview: boolean;
@@ -111,7 +113,7 @@ export function ExerciseMenuSheet({ ex, effSlots, readOnly, preview, templateId,
         const why = reasonWithOwnCount(ex);
         const art = ex.known && !!exercise && showsExerciseArt(resolveExerciseArt(settings));
         // Een gedempte opwarmset die je liet liggen houdt Alle sets afvinken niet open (engine/warmupLater.ts).
-        const allDone = ex.rows.some((r) => r.done) && ex.rows.every(leftAlone);
+        const allDone = allTicked(workout, ex);
         const added = !readOnly && !preview && isAddedSlot(settings.strengthModel, templateId, ex.slot);
         return (
           <div className="flex flex-col">
