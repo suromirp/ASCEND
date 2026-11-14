@@ -4,6 +4,7 @@
 // ASCEND just stops putting new sessions of it on the calendar.
 
 import type { SessionTemplate, SessionLog } from '../models/training';
+import { sportOfLog } from './sportOfLog';
 import { findModalityByKey, isCyclingModality, modalitySport } from '../data/modalities';
 import { SPORTS, SPORT_IDS, anySportDefinition, type SportId } from '../data/sports';
 import { capitalize } from '../utils/capitalize';
@@ -46,9 +47,10 @@ export function sessionKindLabel(template: SessionTemplate): string {
   return sport ? SPORT_LABEL[sport] : TYPE_KIND[template.type];
 }
 
-export function logKindLabel(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData' | 'countedSport'> & { customSport?: string }): string {
-  if (log.countedSport) return anySportDefinition(log.countedSport).label;
-  if (log.customSport) return customName(log.customSport);
+export function logKindLabel(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData' | 'countedSport'> & { customSport?: string; templateId?: string }): string {
+  const { countedSport, customSport } = sportOfLog(log);
+  if (countedSport) return anySportDefinition(countedSport).label;
+  if (customSport) return customName(customSport);
   const sport = log.type === 'strength' || log.type === 'recovery' ? undefined : logSport(log);
   return sport ? SPORT_LABEL[sport] : TYPE_KIND[log.type];
 }
@@ -71,9 +73,11 @@ export function isTemplatePlannable(template: SessionTemplate, enabled: Partial<
 // Which sport a LOG was — a ride logged on the run slot with the bike
 // modality is cycling, not running. Order: the log's own sport field (set
 // when logged), then the chosen modality, then the session type.
-export function logSport(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'> & { countedSport?: SessionLog['countedSport']; customSport?: string }): Sport | undefined {
-  // A swim, a padel match or a sport of your own is no run, even though it is stored as cardio.
-  if (log.countedSport || log.customSport) return undefined;
+export function logSport(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'> & { countedSport?: SessionLog['countedSport']; customSport?: string; templateId?: string }): Sport | undefined {
+  // A swim, a padel match or a sport of your own is no run, even though it is stored as cardio; also an
+  // older one that only names its sport in the templateId (engine/sportOfLog.ts).
+  const counted = sportOfLog(log);
+  if (counted.countedSport || counted.customSport) return undefined;
   // The way it was done wins over what was stored from the template, so a
   // long run logged as a run counts as running even in older logs.
   const modality = log.cardioData?.modality ?? log.outdoorData?.modality;

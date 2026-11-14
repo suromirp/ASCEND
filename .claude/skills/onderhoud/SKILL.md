@@ -49,3 +49,12 @@ Naast de inventaris een gerichte foutenjacht, alleen lezen, zonder plugin of hoo
 ## Samenhang (Pathfinder, wekelijks)
 
 In dezelfde wekelijkse ronde start de coördinator Pathfinder op Fable voor het totaalplaatje (skill `pathfinder`, moment 3). Het rapport gaat naar `docs/onderhoud/JJJJ-MM-DD-pathfinder.md`, de punten naar de kop Samenhang in de backlog.
+
+
+## Drie getallen voor rommelige code (eigenaar 14 november: "Allebei")
+
+Elke maandag, naast de audit, drie getallen in het verslag en in het kostenlogboek:
+1. Herstelrondes per bouwer in de afgelopen week (uit `.claude/kosten/logboek.md`).
+2. De vijf bestanden in `src/` die in de afgelopen week het vaakst in een commit op main zaten (`git log --since="7 days ago" --name-only --format= -- src | grep -v test | sort | uniq -c | sort -rn | head -5`).
+3. Het aantal tests dat broncode leest in plaats van gedrag (`grep -rl "readFileSync" src --include=*.test.ts | wc -l`).
+Stijgt een getal twee weken op rij, dan krijgt dat deel een opruimklus in de Bouwrij, met de getallen als reden.

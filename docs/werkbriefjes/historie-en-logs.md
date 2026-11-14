@@ -30,7 +30,7 @@ De regel dat historie nooit herschreven wordt, de vijf uitzonderingen op verzoek
 - Elke uitzondering heeft haar eigen terugzetfunctie; een nieuwe schrijfroute zonder die terugweg breekt de afspraak. Een gedane training toont de duur van het log (`engine/sessionStatus.ts#rowMinutes`), nooit die van het plan; zonder bruikbare duur geen getal. Opslaan staat uit onder 1 minuut (`inputLimits.ts#durationTooShort`), alleen waar het veld Duur te zien is; een korte training (`engine/shortTraining.ts`) is alleen tekst, en een log zonder werksets of zonder duur telt nooit als kort (besluit `2026-11-14-profielen-klein.md`).
 - Een MacroFactor-log kan na middernacht eindigen: de dag in Week en Logboek is die van de geplande training, het log zelf blijft staan.
 - Een vorm die je bewaart verandert alleen met een migratiestap in `src/storage/migrations.ts`; oude back-ups blijven importeerbaar.
-- Een gewiste activiteit bij de bron verandert niets aan het log.
+- Een gewiste activiteit bij de bron verandert niets aan het log. De sport die meetelt van een log lees je met `engine/sportOfLog.ts#sportOfLog`, nooit met `log.countedSport` of `log.customSport` alleen: logs uit Losse training van voor 14 november noemen hun sport alleen in het templateId (`sport_<id>`, `sport_custom_<type>`). Alleen lezen, het log blijft zoals het is. Nog kaal aan de plannerkant: `engine/sportDays.ts#sportLogDays` en `engine/weekConcerns.ts` (backlog M).
 - Testdata is nagemaakt; een back-up van de eigenaar komt nooit in de repo. Een log dat de app zelf maakt met een `modality` schrijft de omgeving van die manier, niet die van de activiteit: een binnen-manier krijgt geen `environment` (Warden, 12 november).
 
 ## Testen

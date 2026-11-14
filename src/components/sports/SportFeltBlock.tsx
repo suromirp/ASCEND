@@ -6,6 +6,7 @@ import { useState } from 'react';
 import type { SessionLog } from '../../models/training';
 import { useAppData } from '../../state/AppDataContext';
 import { anySportDefinition } from '../../data/sports';
+import { sportOfLog } from '../../engine/sportOfLog';
 import { FELT_LABEL, FELT_RPE, feltWordOf, mayAskFelt, sessionLoad, type FeltWord } from '../../engine/sessionLoad';
 import { resolveSportCounting, sportCounts } from '../../engine/sportRole';
 import { FeltChoice } from './FeltChoice';
@@ -13,9 +14,11 @@ import { FeltChoice } from './FeltChoice';
 export function SportFeltBlock({ log }: { log: SessionLog }) {
   const { settings, setLogFeedback } = useAppData();
   const [saving, setSaving] = useState(false);
-  if (!log.countedSport) return null;
-  const def = anySportDefinition(log.countedSport);
-  if (!sportCounts(settings, log.countedSport)) {
+  // Ook een log van voor 14 november dat zijn sport alleen in het templateId noemt (engine/sportOfLog.ts).
+  const countedSport = sportOfLog(log).countedSport;
+  if (!countedSport) return null;
+  const def = anySportDefinition(countedSport);
+  if (!sportCounts(settings, countedSport)) {
     return <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{`Telt niet mee: je koos Negeren voor ${def.label.toLowerCase()}.`}</p>;
   }
   const load = sessionLoad(log, def.typicalIntensity);
