@@ -138,10 +138,14 @@ function placementsByRow(): Record<string, string> {
 }
 
 describe('datavelden bekijken', () => {
-  it('zoeken op "datavelden" vindt de rij die naar de pagina gaat, onder Geavanceerd van Koppelingen', () => {
+  // Bewust mee (14 november, besluit 2026-11-14-info-blad-a.md): de rij staat nu bij Gidsen, naast
+  // Trainingsplekken en Bronnen, niet meer onder Geavanceerd van Koppelingen.
+  it('zoeken op "datavelden" vindt de rij die naar de pagina gaat, bij Gidsen', () => {
     const found = searchSettings('datavelden', SETTINGS_INDEX).map((r) => r.item.id);
     expect(found).toContain('datavelden-bekijken');
-    expect(isAdvancedRow('koppelingen', 'datavelden-bekijken')).toBe(true);
+    expect(pageOfRow('datavelden-bekijken')).toBe('gidsen');
+    expect(isAdvancedRow('gidsen', 'datavelden-bekijken')).toBe(false);
+    expect(allRowIds('koppelingen')).not.toContain('datavelden-bekijken');
     expect(SETTINGS_INDEX.find((i) => i.id === 'datavelden-bekijken')?.route).toBe('/horloge/datavelden');
   });
 });

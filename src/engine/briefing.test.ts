@@ -73,8 +73,10 @@ describe('een loop met gekoppeld horloge', () => {
     expect(view?.map).toEqual({ kind: 'route', target, line: kmText(target), search: 'open' });
     expect(targetText(target).startsWith(kmText(target))).toBe(true);
   });
-  it('één lijst: horloge, weer en voor en na, behalve eten bij een korte loop, elk met één korte regel', () => {
-    expect(view?.rows.map((t) => t.id)).toEqual(['watch', 'weather', 'stretch']);
+  // Plekken erbij op 14 november: Waar kun je dit doen? verhuisde uit het blad Waarom deze training
+  // (docs/beslissingen/2026-11-14-info-blad-a.md).
+  it('één lijst: horloge, weer, voor en na en plekken, behalve eten bij een korte loop, elk met één korte regel', () => {
+    expect(view?.rows.map((t) => t.id)).toEqual(['watch', 'weather', 'stretch', 'spots']);
     expect(tile(view, 'watch')?.line).toBe('Staat erop, 07:18. Vinkt zelf af.');
     expect(tile(view, 'weather')?.line).toMatch(/^9 graden, /);
     for (const t of view?.rows ?? []) expect(t.line).not.toMatch(/[\u2013\u2014]/);

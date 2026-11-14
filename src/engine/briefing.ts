@@ -32,6 +32,7 @@ import { watchSheet, type WatchSheetInput } from './watchSheet';
 import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
 import { routeTarget } from './routeTarget';
+import { showSpotsFor } from './trainingSpots';
 import { placeChoices, placeHasRoute, resolvePlace, type PlaceChoice } from './trainingPlace';
 import { temperatureHead, weatherForTraining, windPhrase } from './weather';
 import { PLACE_WEATHER_FROM_HOME, placeWeatherFailed, placeWeatherLine } from './placeWeather';
@@ -63,6 +64,9 @@ export const BRIEFING_TEXT = {
   weather: 'Weer',
   fuel: 'Mee',
   stretch: 'Voor en na',
+  // De rij naar de pagina Trainingsplekken (uit het oude Info-blad, 14 november).
+  spots: 'Plekken',
+  spotsLine: 'Waar kun je dit doen?',
   // Het blad achter de rij Mee.
   fuelSheet: 'Eten en drinken',
   // Het blad achter de rij Voor en na.
@@ -116,7 +120,7 @@ export type BriefingMap =
 
 // De lijst zonder kopje (spoor 3): links het vaste woord, rechts de waarde, en een pijltje als de rij
 // een blad of pagina opent. Wat je loopt staat in de hartkaart, niet in de lijst.
-export type BriefingRowId = 'watch' | 'weather' | 'fuel' | 'stretch';
+export type BriefingRowId = 'watch' | 'weather' | 'fuel' | 'stretch' | 'spots';
 
 export interface BriefingRow {
   id: BriefingRowId;
@@ -300,6 +304,10 @@ export function briefing(input: BriefingInput): BriefingView | undefined {
   if (fuel) rows.push(fuel);
   const stretch = stretchRow(template);
   if (stretch) rows.push(stretch);
+  // Waar kun je dit doen? Alleen buiten: de plekken zijn heuvels, trappen en paden.
+  if (outdoor && showSpotsFor(template, buildWorkoutPlan(template, input.date, input.program)?.keyTag)) {
+    rows.push({ id: 'spots', label: BRIEFING_TEXT.spots, line: BRIEFING_TEXT.spotsLine, opens: true });
+  }
 
   // Gedaan (zelf invullen) kan pas op de dag zelf (of later); vooraf geen onderbalk.
   const due = input.date <= today;

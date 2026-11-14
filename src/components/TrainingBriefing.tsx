@@ -46,6 +46,7 @@ import { Icon } from './icons';
 import { SheetHeader } from './SheetHeader';
 import { TodaySheet } from './vandaag/TodaySheet';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
+import { spotsPageFor } from '../engine/trainingSpots';
 import { WatchSheet } from './WatchSheet';
 import { useWatchSheet } from './useWatchSheet';
 import { useBriefingInput } from './useBriefingView';
@@ -158,6 +159,8 @@ export function TrainingBriefing({
     // De gekozen plek gaat mee: de pagina Weer toont dan hetzelfde weer als deze rij (engine/weatherPageLink.ts).
     if (row.id === 'weather') toPage('/weer', weatherPageLink(weatherTarget, template.id, date));
     else if (row.id === 'watch') { if (watchView.hasWatchSheet) setSheet('watch'); }
+    // Waar kun je dit doen?: een pagina, dus eerst alle lagen dicht.
+    else if (row.id === 'spots') toPage(spotsPageFor(template.id));
     else setSheet(row.id);
   }
 
@@ -341,7 +344,7 @@ function BriefingRows({ rows, onOpen }: { rows: BriefingRow[]; onOpen: (row: Bri
         return (
           <li key={row.id} className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }} data-briefing-row={row.id}>
             {row.opens ? (
-              <button type="button" onClick={() => onOpen(row)} data-sheet-from={row.id === 'weather' ? undefined : ''} aria-label={`${row.label}: ${row.line}${row.tone === 'warn' ? ', let op' : ''}`} className={cls}>{inner}</button>
+              <button type="button" onClick={() => onOpen(row)} data-sheet-from={row.id === 'weather' || row.id === 'spots' ? undefined : ''} aria-label={`${row.label}: ${row.line}${row.tone === 'warn' ? ', let op' : ''}`} className={cls}>{inner}</button>
             ) : (
               <div className={cls}>{inner}</div>
             )}

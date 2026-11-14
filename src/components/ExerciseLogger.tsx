@@ -1,4 +1,11 @@
 import { RouteProposalLine } from './RouteProposalLine';
+import { useNavigate } from 'react-router-dom';
+import { WeatherLine } from './WeatherLine';
+import { HillsNearbyLine } from './HillsNearbyLine';
+import { ClothingAdvice } from './ClothingAdvice';
+import { paceLine } from '../engine/racePaces';
+import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
+import { showSpotsFor, spotsPageFor } from '../engine/trainingSpots';
 import { placeHasRoute } from '../engine/trainingPlace';
 import { useEffect, useRef, useState } from 'react';
 import { useLogForm } from './logForm/useLogForm';
@@ -37,6 +44,8 @@ import { TextButton } from './TextButton';
 import { fuelCardLines, fuelForTraining, fuelOn } from '../engine/fuelOnTheGo';
 
 const REST_TIMER_SECONDS = 90;
+// De rij naar de pagina Trainingsplekken (uit het oude Info-blad).
+const SPOTS_ROW = 'Waar kun je dit doen?';
 
 const VARIANT_LABEL: Record<SessionVariant, string> = { full: 'Volledig', short: 'Kort', minimum: 'Minimum', custom: 'Aangepast' };
 type LoggerProps = Parameters<typeof GeneralLogger>[0];
@@ -73,7 +82,8 @@ function GeneralLogger({
   preview?: boolean;
   onClose: () => void;
 }) {
-  const { logSession, reportStorageError, settings, strengthExternal, templates, plannedSessions } = useAppData();
+  const { logSession, reportStorageError, settings, strengthExternal, templates, plannedSessions, sessionLogs } = useAppData();
+  const navigate = useNavigate();
   const { closing, requestClose: closeSheet } = useSheetClose(onClose);
   const quickComplete = template.type === 'strength' && strengthExternal;
   // De toestand van het formulier en het concept (logForm/useLogForm.ts), gedeeld met het blad Hoe ging het?.
@@ -162,6 +172,12 @@ function GeneralLogger({
     templates,
   });
   const guide = getTrainingGuide(template.id);
+  const trainingDate = scheduledDate ?? today;
+  // Je tempo (tempo en intervallen): uit je laatste testloop, onder de stappen, tenzij de kerngetallen het al noemen.
+  const paceRaw = paceLine(template.id, pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces);
+  const myPace = paceRaw && !brief.facts.some((f) => /per km|\/km/.test(`${f.value} ${f.label}`)) ? paceRaw : undefined;
+  // Waar kun je dit doen? (de pagina Trainingsplekken): dezelfde voorwaarde als het oude Info-blad.
+  const showSpots = showSpotsFor(template, plan?.keyTag) && selectedModality?.environment !== 'rest';
   // Het blad Je horloge (engine/watchSheet.ts): de knop onderaan heet Horloge als het blad iets te tonen
   // heeft, anders Uitleg als er een gids is, anders Annuleren. Uitleg staat ook achter de i in de lucht.
   const watchView = useWatchSheet({ template, garmin: plan?.garmin, session: plannedSession, hasZonesNote: !!guide?.garminNote });
@@ -193,7 +209,7 @@ function GeneralLogger({
               <Eyebrow>{brief.headline}</Eyebrow>
               <div className="flex items-start justify-between gap-2">
                 <h1 className="font-display text-3xl leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
-                {guide && <div className="mt-2 shrink-0" data-sheet-from=""><InfoButton label="Uitleg bij deze training" onClick={() => setShowInfo(true)} /></div>}
+                {guide && <div className="mt-2 shrink-0" data-sheet-from=""><InfoButton label="Waarom deze training" onClick={() => setShowInfo(true)} /></div>}
               </div>
               {brief.purpose && <MoreText text={brief.purpose} className="mt-1" color="var(--color-ink)" />}
               <p className="mt-1 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{[dateLabel, brief.weekLabel].filter(Boolean).join(' · ')}</p>
@@ -219,6 +235,15 @@ function GeneralLogger({
             <div className="-mt-2 flex flex-col gap-1">
               {brief.sportSwitch && <p className="text-xs" style={{ color: 'var(--color-status)' }}>{brief.sportSwitch}</p>}
               {brief.tomorrow && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{brief.tomorrow}</p>}
+            </div>
+          )}
+          {/* Weer, heuvels en kleding (uit het oude Info-blad, 14 november): altijd hier, ook als Vandaag ze al
+              noemt, want ze horen bij wat je aantrekt. Zonder weer (offline, binnen, rust) staat er niets. */}
+          {!restChosen && (
+            <div className="-mt-2 flex flex-col gap-1.5 empty:hidden">
+              <WeatherLine template={template} date={trainingDate} />
+              <HillsNearbyLine template={template} date={trainingDate} />
+              <ClothingAdvice template={template} date={trainingDate} compact />
             </div>
           )}
         </Card>
@@ -248,6 +273,7 @@ function GeneralLogger({
           <Card className="mt-4">
             <Eyebrow>Zo doe je het</Eyebrow>
             <div className="mt-1"><StepList plan={plan} /></div>
+            {myPace && <p className="mt-3 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{myPace}</p>}
           </Card>
         )}
 
@@ -275,13 +301,24 @@ function GeneralLogger({
           </Card>
         )}
 
-        {!restChosen && !quickComplete && (template.warmup?.length || template.cooldown?.length || showRoute) ? (
+        {!restChosen && !quickComplete && (template.warmup?.length || template.cooldown?.length || showRoute || showSpots) ? (
           <div className="mt-4 flex flex-col divide-y divide-[var(--color-card-border)] rounded-2xl border px-4" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
             {template.warmup && template.warmup.length > 0 && (
               <StretchRow icon="rekken" title="Eerst opwarmen" line={`${template.warmup.length} oefeningen`} stretches={template.warmup} />
             )}
             {template.cooldown && template.cooldown.length > 0 && (
               <StretchRow icon="rekken" title="Daarna rekken" line={`${template.cooldown.length} oefeningen`} stretches={template.cooldown} />
+            )}
+            {showSpots && (
+              // Een pagina: eerst het trainingsscherm dicht (het concept blijft bewaard), dan de pagina.
+              <button type="button" data-row="training-plekken" aria-label={`${SPOTS_ROW}, pagina`} onClick={() => { closeSheet(); navigate(spotsPageFor(template.id)); }} className="flex min-h-[56px] w-full items-center gap-3 py-2 text-left">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-charcoal)', color: 'var(--color-ink-dim)' }}>
+                  <Icon name="locatie" size={18} />
+                </span>
+                <span className="min-w-0 flex-1 text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{SPOTS_ROW}</span>
+                <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Pagina</span>
+                <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
+              </button>
             )}
             {showRoute && <RouteProposalLine template={template} date={scheduledDate ?? today} row place={guidanceMode === 'ascend_guided' ? (modalityKey ?? null) : null} />}
             {plannedSession && !preview && <WatchStatusRow session={plannedSession} template={template} onLeave={closeSheet} className="py-2" plain />}

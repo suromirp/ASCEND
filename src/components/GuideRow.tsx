@@ -1,22 +1,18 @@
-import type { GuideGroup, GuideRowSpec } from '../engine/guideMenu';
+import type { GuideRowSpec } from '../engine/guideMenu';
 import { Icon } from './icons';
-import { Eyebrow } from './ui';
 import './settings/settings.css';
 
-// Een groep van het uitlegblad: een kopje en daaronder een lijst met haarlijnen, met dezelfde
-// klassen als de rijen van de Instellingen (settings.css). SettingsRow zelf past hier niet: die
-// zet een anker `instelling-<id>` op de pagina en kent geen `data-sheet-from`. Geen logica: welke
+// De lijst van het blad Waarom deze training: één lijst met haarlijnen, zonder groepskop (14 november),
+// met dezelfde klassen als de rijen van de Instellingen (settings.css). SettingsRow zelf past hier niet:
+// die zet een anker `instelling-<id>` op de pagina en kent geen `data-sheet-from`. Geen logica: welke
 // rijen er staan komt uit engine/guideMenu.ts.
-export function GuideGroupList({ group, onPick }: { group: GuideGroup; onPick: (row: GuideRowSpec) => void }) {
+export function GuideList({ rows, onPick }: { rows: GuideRowSpec[]; onPick: (row: GuideRowSpec) => void }) {
   return (
-    <>
-      <div className="st-eyebrow" style={{ marginLeft: 0 }}><Eyebrow>{group.title}</Eyebrow></div>
-      <div className="st-list">
-        {group.rows.map((row) => (
-          <GuideRow key={row.id} row={row} onClick={() => onPick(row)} />
-        ))}
-      </div>
-    </>
+    <div className="st-list">
+      {rows.map((row) => (
+        <GuideRow key={row.id} row={row} onClick={() => onPick(row)} />
+      ))}
+    </div>
   );
 }
 

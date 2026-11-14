@@ -5,6 +5,8 @@ import watchSheet from './WatchSheet.tsx?raw';
 import logger from './ExerciseLogger.tsx?raw';
 import weekSheet from './SessionActionSheet.tsx?raw';
 import missionCard from './TodayMissionCard.tsx?raw';
+import forgeMenus from './forge/ForgeMenus.tsx?raw';
+import briefingScreen from './TrainingBriefing.tsx?raw';
 
 // Het uitlegblad van een training: elk onderblad gaat door Sheet (useSheetClose, sheetRef, SheetGrip),
 // zodat de terugknop van het toestel eerst het onderblad sluit en daarna het uitlegblad. Een
@@ -19,10 +21,35 @@ describe('uitlegblad van een training', () => {
   });
 
   // Zes werd vijf op 11 november: Stappen voor je Garmin verhuisde naar het blad Je horloge
-  // (docs/beslissingen/2026-11-11-info-blad-horloge.md). De stappen zelf volgen in spoor 3.
+  // (docs/beslissingen/2026-11-11-info-blad-horloge.md). Vijf werd bewust vier op 14 november: De stappen
+  // staan op het trainingsscherm en in de Briefing (docs/beslissingen/2026-11-14-info-blad-a.md).
   it('elk onderblad is een Sheet met de eyebrow Uitleg', () => {
-    expect((guideSheet.match(/<Sheet /g) ?? []).length).toBe(5);
-    expect((guideSheet.match(/<Sheet eyebrow="Uitleg"/g) ?? []).length).toBe(5);
+    expect((guideSheet.match(/<Sheet /g) ?? []).length).toBe(4);
+    expect((guideSheet.match(/<Sheet eyebrow="Uitleg"/g) ?? []).length).toBe(4);
+  });
+
+  // Richting A (14 november): niets dubbel met het trainingsscherm. Weer, heuvels, route, kleding, Je tempo,
+  // Zo voelt elk tempo, De stappen en de plekken staan niet meer in het blad, en er zijn geen groepskoppen.
+  it('alleen wat je wilt begrijpen: niets van het trainingsscherm', () => {
+    for (const weg of ['WeatherLine', 'HillsNearbyLine', 'RouteProposalLine', 'ClothingAdvice', 'paceLine', 'Zo voelt elk tempo', 'WorkoutSteps', '/plekken', 'useNavigate']) {
+      expect(guideSheet, weg).not.toContain(weg);
+    }
+    expect(guideRow).not.toContain('Eyebrow');
+  });
+
+  it('weer, kleding, heuvels, tempo en plekken staan op het trainingsscherm', () => {
+    for (const er of ['<WeatherLine', '<ClothingAdvice', '<HillsNearbyLine', '{myPace}', 'spotsPageFor(template.id)']) expect(logger, er).toContain(er);
+    // De rij naar de plekken is een pagina: eerst het scherm dicht (concept bewaard), dan navigeren.
+    expect(logger).toMatch(/closeSheet\(\); navigate\(spotsPageFor/);
+  });
+
+  it('elke ingang naar de uitleg heet Waarom deze training', () => {
+    for (const src of [logger, weekSheet, missionCard, forgeMenus, briefingScreen]) {
+      expect(src).not.toContain('Uitleg bij deze training');
+      expect(src).not.toContain('Meer over deze training');
+    }
+    expect(logger).toContain('label="Waarom deze training"');
+    expect(forgeMenus).toContain('title="Waarom deze training"');
   });
 
   it('het uitlegblad zelf gaat door useSheetClose met greep en ref', () => {
@@ -78,7 +105,7 @@ describe('blad Je horloge', () => {
 
   it('het trainingsscherm: knop Horloge, Uitleg achter de i, geen knop Info meer', () => {
     expect(logger).toContain('>Horloge</SecondaryButton>');
-    expect(logger).toContain('label="Uitleg bij deze training"');
+    expect(logger).toContain('label="Waarom deze training"');
     expect(logger).not.toContain('>Info</SecondaryButton>');
     // Naar een pagina sluit het trainingsscherm zonder het concept weg te gooien.
     expect(logger).toContain('onLeave={closeSheet}');

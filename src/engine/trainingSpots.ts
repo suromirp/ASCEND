@@ -99,6 +99,20 @@ export function filterForTraining(templateId: string | undefined): TrainingFilte
   return templateId ? TRAINING_FILTERS.find((f) => f.templateIds.includes(templateId)) : undefined;
 }
 
+// Hoort de rij "Waar kun je dit doen?" (de pagina Trainingsplekken) bij deze training? Een training met
+// een eigen filter, een training met hoogtemeters (D+) of een wandeling. Dezelfde voorwaarde als het
+// oude Info-blad; sinds 14 november staat de rij op het trainingsscherm en in de Briefing
+// (docs/beslissingen/2026-11-14-info-blad-a.md).
+export function showSpotsFor(template: { id: string; type: string } | undefined, keyTag?: string): boolean {
+  if (!template) return false;
+  return !!filterForTraining(template.id) || !!keyTag?.includes('D+') || template.type === 'hiking';
+}
+
+// De pagina Trainingsplekken voor deze training: gefilterd als er een filter is, anders alles.
+export function spotsPageFor(templateId: string): string {
+  return filterForTraining(templateId) ? `/plekken?training=${templateId}` : '/plekken';
+}
+
 // Spots for a training, nearest first; a spot where it only fits in a
 // limited way comes after the ones that suit it well.
 export function spotsForTraining(spots: TrainingSpot[], home: HomeLocation | undefined, filter?: TrainingFilter): TrainingSpot[] {
