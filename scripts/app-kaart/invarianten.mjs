@@ -290,7 +290,8 @@ export const INVARIANTEN = [
         const titel = lijst[avond].match(/^Morgen (\d{2}:\d{2}), (.+), (\d+) min$/m) ?? lijst[avond].match(/^Morgen (.+), (\d+) min$/m);
         const morgen = lijst[missie].match(/^Morgen: (.+), (\d+) min$/m);
         if (!titel) uit.push('vandaag-avond: De avond ervoor noemt geen training van morgen');
-        else if (morgen) {
+        else if (!morgen) uit.push('vandaag-avond: de missiekaart noemt geen training van morgen, dus de avondkaart is niet te toetsen');
+        else {
           const naam = titel.length === 4 ? titel[2] : titel[1];
           const min = titel.length === 4 ? titel[3] : titel[2];
           if (naam !== morgen[1] || min !== morgen[2]) uit.push(`vandaag-avond: de kaart zegt "${naam}, ${min} min", de missiekaart "${morgen[1]}, ${morgen[2]} min"`);
