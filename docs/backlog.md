@@ -8,6 +8,18 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 
 ## Inbox
 
+- Profielendoorloop 14 november (verslagen in `docs/profielen/2026-11-14-*.md` op de branches `claude/profiel-*`; vier van vijf binnen, ziek-vakantie loopt). Moet, gegroepeerd, in volgorde van bouwen:
+  - A. Je dag noemt de geplande duur, de kaart de gelogde (beginner 2, hardloper 6, dwarsligger 2): overal de duur van het log. Klein, Opus.
+  - B. Duur 0 of negatief wordt stil een log van 0 min en telt als gedaan (dwarsligger): Opslaan uit onder 1 minuut of eerst vragen. Klein, Opus.
+  - C. Een training met 2 van 23 sets krijgt "Gedaan zoals gepland" en de weekterugblik "Alles gedaan" (beginner 3): oordeel naar wat er gebeurde. Klein, Opus.
+  - D. Eén plan: het eerste voorstel noemt een herstelwandeling die daarna nergens staat en 2 keer kracht bij 1 in het plan (beginner 1, GR5 7); Vandaag, Week en de weekbalk noemen verschillende trainingen (hardloper 1); het voorstel Deze week nog een keer? noemt 60, 55 en 50 min voor dezelfde loop (GR5 5); na een zware test "je benen zijn dan fris" naast "rustig houden" (hardloper 2). Planner, Opus met Warden op Fable; eerst naspelen.
+  - E. De taperweek en de racedag beschermen tegen inhaaladvies, en Nog open ouder dan een week weg (hardloper 3, 4, 7; GR5 9: twee kaarten voor gemist met andere woorden). Planner, Opus, Warden Fable.
+  - F. Tempoloop: de kaart zegt "hele zinnen praten", de Briefing "korte zinnen" (hardloper 5). Klein.
+  - G. Reisplanner begint in juli met taken uit het verleden; doelkop zegt hutten, paklijst is bivak voor augustus bij start in maart (GR5 1, 2). Opus.
+  - H. Beginner: "de eerste vier weken alleen makkelijk" maar week 1 heeft 75 min kracht met 23 sets en een lange loop van 60 min; vaktaal (RIR, RPE, Zone 2, Voorschrift) zonder uitleg (beginner 4, 5). Eerst Cartographer en Scout op Fable, dan planner.
+  - I. De chip "Zwaarte volgens MacroFactor" en "Nog geen krachttrainingen ingelezen uit MacroFactor" zonder koppeling (beginner 6, GR5 11): alleen met koppeling. Klein.
+  - J. Tikdoelen: Jaaroverzicht 38 px breed, Forge 32 en 24 px (GR5 3, 4); de start: vraagnummer verspringt en een dubbele tik op Volgende slaat een vraag over (dwarsligger). Klein.
+  Mag: zie de verslagen (back-upkaart op dag 1, dubbele zin na afronden, Kies je plaats landt op Weer en kleding, 0 km voor onbekend, afronding van weken).
 - Samen 14 november, rest (Lookout, Pathfinder en Sherpa Opslaan, mag): het oude trainingsscherm (`ExerciseLogger.tsx`) toont bij een losse training nog de wachtzin zonder uitweg; de wachtzin bij opslaan is lang voor 360 px (Lookout zag hem niet live); de uitleg van "Vragen na je loop" zegt dat de rij na 72 uur verdwijnt; Forge heeft kleine tikdoelen (afvinkvakjes 32 px, Voorschrift 24 px, Toon vorige keer 16 px hoog, i-icoontjes 20 px), nagaan of dat al op main stond; een bron geruild voor een oefening op hetzelfde patroon geeft een gewone opwarmset in plaats van een gedempte (zin in het besluit); `src/engine/warmupLater` in de testregel van `docs/werkbriefjes/forge.md`. Klein.
 - Les samenvoegen (14 november): twee branches die elk groen zijn, kunnen samen stuk gaan zonder conflict (`question` weg in de ene, gelezen in de andere; Vandaag crashte). Altijd tsc op de proefmerge, voor Lookout.
 - Opslaan, rest van de rest (Sherpa Opslaan rest, 14 november, branch `claude/opslaan-rest`, besluit `2026-11-14-opslaan-rest.md`; mag): het oude trainingsscherm (`ExerciseLogger.tsx`) heeft nog bronscans in plaats van gedragstests; de sportvraag telt tijdens zijn sluitanimatie nog als in beeld; Today en Week lezen het antwoord van een afgevinkte rustdag of krachttraining niet; het blad Hoe ging het? toont bij "stond er al" de zin voor mislukt.
