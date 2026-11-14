@@ -18,6 +18,7 @@ import { isLegHeavyTemplate } from './scheduler';
 import { addDays } from '../utils/dates';
 import { hasRole } from './templateRoles';
 import { joinNL } from '../utils/joinNL';
+import { hardLogOnEasy, hardText, type FitContext } from './activityFit';
 
 // The top of the planned effort, e.g. 4 for "RPE 3-4".
 export function plannedRpeTop(template: SessionTemplate, date: string, program: Program | null | undefined): number | undefined {
@@ -147,8 +148,10 @@ function painReaction(log: SessionLog, history: SessionLog[]): string | undefine
   return `Pijn aan je ${where}. Trainen mag, zolang het morgenochtend niet erger is; de komende 2 weken bouwt ASCEND op die plek niet verder op. Scherpe pijn of pijn die erger wordt is een reden om te stoppen.`;
 }
 
-// One reaction after ticking a training off, based on what you filled in.
-export function coachReaction(log: SessionLog, template: SessionTemplate | undefined, program: Program | null | undefined, history: SessionLog[] = []): string {
+// One reaction after ticking a training off, based on what you filled in. `fit`: je hartslagzones en rustige
+// tempo, zodat een harde loop bij een rustige training niet "zoals gepland" heet (engine/activityFit.ts).
+export const EXTRA_TRAINING_TEXT = 'Opgeslagen als extra training.';
+export function coachReaction(log: SessionLog, template: SessionTemplate | undefined, program: Program | null | undefined, history: SessionLog[] = [], fit: Pick<FitContext, 'hr' | 'easyPace'> = {}): string {
   const pain = painReaction(log, history);
   if (pain) return pain;
   if (!template || template.type === 'recovery') return 'Goed dat je bewoog. Licht en rustig is precies de bedoeling van vandaag.';
@@ -158,9 +161,14 @@ export function coachReaction(log: SessionLog, template: SessionTemplate | undef
     return `Zwaarder dan gepland (zwaarte ${log.rpe}, gepland tot ${top}). Volgende keer iets rustiger? Voelt het weer zo, neem dan de korte versie.`;
   }
   if (log.subjectiveFeel === 'worse') return 'Slechter dan normaal, dat hoort erbij. Houd het morgen rustig; goed slapen en eten kan helpen.';
+  // Hard gelopen bij een rustige training: gemeten, niet ingevuld.
+  const hard = hardLogOnEasy(log, template, program, fit);
+  if (hard) return `Harder dan gepland: ${hardText(hard)}. Een rustige training loop je in zone 2.`;
   // Eén drempel, één zin: onder de helft van de werksets of de duur is een korte training (engine/shortTraining.ts).
   // De oude tweede drempel (70 procent, "Korter dan gepland") is vervallen (besluit 2026-11-14-profielen-klein.md).
   if (isShortTraining(log, template, program)) return SHORT_TRAINING_TEXT;
+  // Niet gepland is ook niet "zoals gepland" of "lichter dan gepland" (profiel horloge, punt 2).
+  if (!log.plannedSessionId) return EXTRA_TRAINING_TEXT;
   if (log.rpe !== undefined && top !== undefined && top > EASY_RPE_TOP && log.rpe <= top - 3) {
     return 'Lichter dan gepland. Dat kan een teken zijn dat je sterker wordt. Bouw het rustig verder op.';
   }

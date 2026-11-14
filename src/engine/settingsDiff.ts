@@ -445,6 +445,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('etappetijd-eigen', 'Etappetijd op je eigen tempo', 'lichaam', 'stageOwnPace'),
   flag('klimtempo', 'Je klimtempo', 'lichaam', 'climbPace'),
   flag('horloge-stil', 'Melden als je horloge stilvalt', 'koppelingen', 'watchSilence'),
+  flag('horloge-soort', 'Soort van een loop toetsen', 'koppelingen', 'watchKindCheck'),
   flag('ochtend-backup', 'Ochtendgetallen in back-up', 'gegevens', 'morningInBackup'),
   {
     id: 'reeksen-backup', title: 'Reeksen in back-up', page: 'gegevens',

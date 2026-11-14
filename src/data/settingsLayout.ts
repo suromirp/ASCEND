@@ -81,7 +81,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   },
   koppelingen: {
     rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-stil', 'bundel-horloge-sturen', 'health-connect', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'bundel-strava'],
-    advanced: ['datavelden', 'datavelden-model'],
+    advanced: ['datavelden', 'datavelden-model', 'horloge-soort'],
   },
   gegevens: { rows: ['backup', 'auto-backup', 'backupmap', 'toestemmingen', 'ruimte-app', 'momentopnamen', 'reeksen-bewaren', 'reeksen-backup', 'reeksen-ruimte', 'ochtend-backup', 'aangepast', 'wissen'], advanced: ['auto-bijwerken', 'voorstellen-opruimen', 'herbouwen', 'startniveau'], footer: ['versie'] },
   // Datavelden bekijken staat sinds 14 november bij Gidsen (docs/beslissingen/2026-11-14-info-blad-a.md).
@@ -325,7 +325,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   // Koppelingen
   ...rule([B.garmin], 'horloge-stil', 'bundel-horloge-sturen', 'naar-horloge'),
   ...rule([B.watchData], 'bundel-horloge-gebruik', 'garmin-trainingen', 'slaap', 'rusthartslag', 'hrv'),
-  ...rule([B.garmin, B.activities], 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-details'),
+  ...rule([B.garmin, B.activities], 'vanzelf-afvinken', 'horloge-soort', 'garmin-leidend', 'correcties-overnemen', 'horloge-details'),
   ...rule([B.garmin, B.send], 'horloge-voorvoegsel', 'horloge-hartslag', 'horloge-eigen-workout', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week'),
   ...rule([B.garmin, B.send, B.ascendHr], 'horloge-rustige-loop'),
   ...rule([B.mf], 'macrofactor-leidend', 'macrofactor-gewicht'),

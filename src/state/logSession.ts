@@ -160,7 +160,7 @@ async function writeLog(input: LogSessionInput, opts: LogSessionOpts | undefined
       const allTemplates = await SessionTemplatesRepo.getAll();
       const currentProgram = (await ProgramsRepo.getAll())[0] ?? null;
       const allLogs = await SessionLogsRepo.getAll();
-      let coachNote = coachReaction(log, allTemplates.find((t) => t.id === log.templateId), currentProgram, allLogs);
+      let coachNote = coachReaction(log, allTemplates.find((t) => t.id === log.templateId), currentProgram, allLogs, { hr: settings.heartRate });
       // Faster at the same heart rate over weeks: said once, right after
       // an easy run (engine/aerobicTrend.ts#progressMoment).
       // A training set to "Niet meetellen voor hartslag" stays out of the trend (engine/influence.ts).

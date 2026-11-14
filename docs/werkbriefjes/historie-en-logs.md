@@ -14,7 +14,7 @@ De regel dat historie nooit herschreven wordt, de vijf uitzonderingen op verzoek
 - `src/engine/macrofactorDuration.ts#withChosenDuration` duur van een nieuw MacroFactor-log dat te lang is, bij het maken
 - `src/components/logForm/manualLog.ts#buildManualLog` het log van zelf invullen, voor het blad Hoe ging het? en het oude trainingsscherm samen; toestand en concept in `useLogForm.ts`, vergelijking in `manualLog.test.ts`; na een training die je horloge afvinkte: `src/engine/afterRun.ts`, een rij in Je dag en `components/WatchAskSheet.tsx`, het antwoord via `setLogFeedback` (besluit `2026-11-14-hoe-ging-het-horloge.md`)
 - `src/state/logSession.ts#runLogSession` een nieuw log schrijven na Gedaan; tests in `logSession.test.ts`; `src/state/logSave.ts#saveLogWithin` het antwoord van `logSession` op een scherm lezen, met een grens in tijd; ook `autoTickLog` en `saveLogThenChoice` (sportvraag); tests in `logSave.test.ts`
-- `src/storage/milestoneClearing.ts#recordClearedMilestones` `MilestoneProgress` wordt alleen toegevoegd
+- `src/storage/milestoneClearing.ts#recordClearedMilestones` `MilestoneProgress` wordt alleen toegevoegd; `src/engine/activityFit.ts` toetst een horlogeactiviteit aan duur, wandeltempo en hartslag (vanzelf afvinken, kaart, zin na afronden, koppelkaart via `looseLog.ts#sameLinkKind`), alleen oordelen (besluit `2026-11-14-horloge-toetsen.md`)
 
 ## Nooit
 - Een bestaand `SessionLog` of `MilestoneProgress` omschrijven omdat de planning verandert, of om iets recht te zetten.

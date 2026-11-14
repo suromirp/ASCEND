@@ -821,6 +821,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Hoe zeker', text: 'een vuistregel, geen meting. Het bewijs is matig.' },
     ],
   },
+  horlogeSoort: {
+    title: 'Soort van een loop toetsen',
+    lead: 'Je horloge noemt een activiteit een loop als je hem als loop startte. ASCEND kijkt ook naar tempo en hartslag voordat het hem opslaat.',
+    points: [
+      { head: 'Wandeltempo', text: 'een loop van 10 min per km of trager wordt een wandeling. Bij Andere training sla je hem toch als loop op.' },
+      { head: 'Hard', text: 'een losse loop met een gemiddelde hartslag ruim boven zone 2 wordt een tempoloop, geen rustige duurloop. Zonder hartslag telt je tempo, zonder beide oordeelt ASCEND niet.' },
+      { head: 'Altijd', text: 'te kort, te hard of in wandeltempo vinkt nooit vanzelf af en heet nooit "zoals gepland", ook als dit uit staat.' },
+    ],
+  },
   horlogeStil: {
     title: 'Melden als je horloge stilvalt',
     lead: 'Geeft intervals.icu niets meer door, dan zie je geen foutmelding: het ophalen lukt, er komt alleen niets mee. ASCEND meldt dat.',

@@ -37,6 +37,8 @@ export function isShortTraining(
     if (planned > 0 && done < planned * SHORT_TRAINING_SHARE) return true;
   }
   const minutes = loggedMinutes(log);
-  const plannedMinutes = resolveVariantDuration(template, variant, log.completedDate, program);
+  // Een log van je horloge (`custom`) heeft geen eigen versie: hij toetst aan de hele training, zoals gepland
+  // (profiel horloge, 14 november).
+  const plannedMinutes = resolveVariantDuration(template, variant === 'custom' ? 'full' : variant, log.completedDate, program);
   return minutes !== undefined && plannedMinutes > 0 && minutes < plannedMinutes * SHORT_TRAINING_SHARE;
 }

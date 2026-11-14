@@ -27,6 +27,8 @@ import type { RunDynamics, StreamKind } from '../models/activityDetail';
 import { round } from '../utils/round';
 import { findModalityByKey } from '../data/modalities';
 import { formatHoursMinutesNL } from '../utils/dates';
+import type { Program } from '../models/program';
+import { fitIssueText, hardEffort, isEasyRun, isShortFor, isWalkPaced, paceSecKm, wholeMinutes, type FitContext, type FitIssue, type MeasuredRun } from './activityFit';
 
 export type ExternalActivityKind = 'run' | 'hike' | 'ride' | 'strength' | 'other';
 
@@ -176,7 +178,7 @@ export function candidatePlanned(
   planned: PlannedSession[],
   templates: SessionTemplate[],
   logs: SessionLog[],
-  options: { sameDayOnly?: boolean; anyKind?: boolean; notAfter?: string; places?: Readonly<Record<string, string>> } = {},
+  options: { sameDayOnly?: boolean; anyKind?: boolean; notAfter?: string; places?: Readonly<Record<string, string>>; exclude?: ReadonlySet<string> } = {},
 ): PlannedMatch[] {
   const templateById = new Map(templates.map((t) => [t.id, t]));
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
@@ -189,7 +191,7 @@ export function candidatePlanned(
     fitsTemplate(activity.kind, template, activity.countedSport, activity.otherType) || (distance === 0 && fitsChosenWay(activity, session, template, options.places));
   const matches: (PlannedMatch & { distance: number })[] = [];
   for (const session of planned) {
-    if (logged.has(session.id) || session.status === 'skipped') continue;
+    if (logged.has(session.id) || session.status === 'skipped' || options.exclude?.has(session.id)) continue;
     if (options.notAfter && session.scheduledDate > options.notAfter) continue;
     const template = templateById.get(session.templateId);
     if (!template) continue;
@@ -222,8 +224,52 @@ export function proposeMatch(
   templates: SessionTemplate[],
   logs: SessionLog[],
   places?: Readonly<Record<string, string>>,
+  exclude?: ReadonlySet<string>,
 ): PlannedMatch | undefined {
-  return candidatePlanned(activity, planned, templates, logs, { sameDayOnly: true, places })[0];
+  return candidatePlanned(activity, planned, templates, logs, { sameDayOnly: true, places, exclude })[0];
+}
+
+// --- toetsen aan duur en intensiteit (engine/activityFit.ts) ------------------------
+
+// Wat de kaart en het vanzelf afvinken nodig hebben om een activiteit te toetsen.
+export interface ImportFit extends FitContext {
+  program?: Program | null;
+}
+
+export function measuredOf(activity: ExternalActivity): MeasuredRun {
+  return {
+    minutes: activity.durationSec / 60,
+    km: activity.distanceM !== undefined && activity.distanceM > 0 ? activity.distanceM / 1000 : undefined,
+    avgHr: activity.avgHeartRate,
+    treadmill: activity.treadmill,
+  };
+}
+
+// Een loop in wandeltempo is een wandeling, als de keuze Soort van een loop toetsen aan staat (standaard).
+// Alleen de soort verandert; wat het horloge mat blijft gelijk.
+export function effectiveActivity(activity: ExternalActivity, fit: ImportFit | undefined): ExternalActivity {
+  if (!fit || fit.kindCheck === false || activity.kind !== 'run' || activity.countedSport || activity.otherType) return activity;
+  return isWalkPaced(measuredOf(activity)) ? { ...activity, kind: 'hike' } : activity;
+}
+
+// Hard gelopen bij een rustige geplande training: dan geen vinkje vanzelf en geen "rustig".
+export function hardOnEasyMatch(activity: ExternalActivity, match: PlannedMatch, fit: ImportFit | undefined) {
+  if (!fit || activity.kind !== 'run') return undefined;
+  if (!isEasyRun(match.template, match.session.scheduledDate, fit.program)) return undefined;
+  return hardEffort(measuredOf(activity), fit);
+}
+
+// Waarom deze activiteit niet zonder meer bij de training past, of undefined.
+function fitIssueOf(activity: ExternalActivity, original: ExternalActivity, match: PlannedMatch | undefined, template: SessionTemplate | undefined, fit: ImportFit | undefined, hardLoose: ReturnType<typeof hardEffort>): FitIssue | undefined {
+  if (activity !== original && template) return { kind: 'walk', pace: paceSecKm(measuredOf(original)) ?? 0, as: template.name };
+  if (hardLoose && template) return { kind: 'hard-loose', judgment: hardLoose, as: template.name };
+  if (!match) return undefined;
+  const minutes = wholeMinutes(activity.durationSec);
+  const planned = plannedMinutes(match);
+  if (isShortFor(minutes, planned)) return { kind: 'short', minutes, planned, name: match.template.name };
+  const hard = hardOnEasyMatch(activity, match, fit);
+  if (hard) return { kind: 'hard', judgment: hard, name: match.template.name };
+  return undefined;
 }
 
 // When nothing is planned for it: the template an unplanned activity is
@@ -404,6 +450,11 @@ export interface ImportProposal {
   // and already paired with another activity. Only a hint on the card; saving
   // stays the user's call.
   similarLog?: SessionLog;
+  // De activiteit zoals het horloge hem gaf, als de soort anders werd (een loop in wandeltempo is een
+  // wandeling): `activity` is dan de wandeling, dit de loop, voor Andere training.
+  original?: ExternalActivity;
+  // Waarom hij niet zonder meer past (engine/activityFit.ts#fitIssueText): kort, hard, wandeltempo.
+  fitNote?: string;
 }
 
 // A log made by hand that day, of the same sport and about as long: probably
@@ -435,31 +486,54 @@ export function findSimilarLog(activity: ExternalActivity, logs: SessionLog[]): 
 // the activities, so two runs on one day are paired together); left out, only
 // this activity is looked at.
 export function proposeImport(
-  activity: ExternalActivity,
+  original: ExternalActivity,
   planned: PlannedSession[],
   templates: SessionTemplate[],
   logs: SessionLog[],
   matchedIds?: Set<string>,
   places?: Readonly<Record<string, string>>,
+  fit?: ImportFit & { exclude?: ReadonlySet<string> },
 ): ImportProposal | undefined {
-  if (!isImportable(activity)) return undefined;
-  if (logs.some((l) => l.externalId === activity.externalId)) return undefined;
-  const matched = matchedIds ?? new Set(pairWithManualLogs([activity], logs).map((p) => p.activity.externalId));
-  if (matched.has(activity.externalId)) return undefined;
-  const match = proposeMatch(activity, planned, templates, logs, places);
-  const template = match?.template ?? fallbackTemplate(activity, templates);
+  if (!isImportable(original)) return undefined;
+  if (logs.some((l) => l.externalId === original.externalId)) return undefined;
+  const matched = matchedIds ?? new Set(pairWithManualLogs([original], logs).map((p) => p.activity.externalId));
+  if (matched.has(original.externalId)) return undefined;
+  const activity = effectiveActivity(original, fit);
+  const match = proposeMatch(activity, planned, templates, logs, places, fit?.exclude);
+  // Een harde losse loop is geen rustige duurloop: met de keuze Soort van een loop toetsen een tempoloop.
+  const hardLoose = !match && fit && fit.kindCheck !== false && activity.kind === 'run' ? hardEffort(measuredOf(activity), fit) : undefined;
+  const hardTemplate = hardLoose ? templates.find((t) => t.id === 'tpl_tempo_run') : undefined;
+  const template = match?.template ?? hardTemplate ?? fallbackTemplate(activity, templates);
   // A sport that does not count (yet): nothing to save it under, so no proposal.
   if ((activity.countedSport || activity.otherType) && !template) return undefined;
-  return {
+  const issue = fitIssueOf(activity, original, match, template, fit, hardTemplate ? hardLoose : undefined);
+  return clean({
     activity,
     match,
     template,
     similarLog: findSimilarLog(activity, logs),
-  };
+    original: activity !== original ? original : undefined,
+    fitNote: issue ? fitIssueText(issue) : undefined,
+  });
 }
 
-// The proposals the Today card works through: the newest first, none for an
-// activity that is stored or that the user said no to.
+// Welke van twee activiteiten die naar dezelfde training wijzen hem houdt: eerst een duur in de buurt van
+// gepland, dan het kleinste verschil, dan de eerste van de dag.
+function claimRank(p: ImportProposal): [number, number, string] {
+  const minutes = p.activity.durationSec / 60;
+  const planned = p.match ? plannedMinutes(p.match) : 0;
+  return [durationIsClose(minutes, planned) ? 0 : 1, Math.abs(minutes - planned), p.activity.start];
+}
+function compareRank(a: ImportProposal, b: ImportProposal): number {
+  const [ca, ga, sa] = claimRank(a);
+  const [cb, gb, sb] = claimRank(b);
+  return ca - cb || ga - gb || sa.localeCompare(sb);
+}
+
+// The proposals the Today card works through, none for an activity that is stored or that the user said no
+// to. Per day the newest day first; op één dag eerst wat bij een geplande training hoort. Twee activiteiten
+// die naar dezelfde training wijzen krijgen hem niet allebei: de best passende houdt hem (claimRank), de
+// andere zoekt verder of komt los, met een regel waarom (profiel horloge, 14 november).
 export function pendingProposals(
   activities: ExternalActivity[],
   dismissedIds: string[],
@@ -467,14 +541,45 @@ export function pendingProposals(
   templates: SessionTemplate[],
   logs: SessionLog[],
   places?: Readonly<Record<string, string>>,
+  fit?: ImportFit,
 ): ImportProposal[] {
   const dismissed = new Set(dismissedIds);
   const matchedIds = new Set(pairWithManualLogs(activities, logs).map((p) => p.activity.externalId));
-  return [...activities]
-    .filter((a) => !dismissed.has(a.externalId))
-    .sort((a, b) => b.start.localeCompare(a.start))
-    .map((a) => proposeImport(a, planned, templates, logs, matchedIds, places))
-    .filter((p): p is ImportProposal => !!p);
+  const open = activities.filter((a) => !dismissed.has(a.externalId));
+  const exclude = new Map<string, Set<string>>();
+  // Zonder `fit` geen toetsen (zoals vroeger); alleen de uitsluiting van een training die een ander houdt.
+  const propose = (a: ExternalActivity) => proposeImport(a, planned, templates, logs, matchedIds, places, fit ? { ...fit, exclude: exclude.get(a.externalId) } : { kindCheck: false, exclude: exclude.get(a.externalId) });
+  let proposals = open.map(propose).filter((p): p is ImportProposal => !!p);
+  const lostTo = new Map<string, string>();
+  // Elke ronde houdt per training één activiteit hem; met weinig activiteiten per dag zijn een paar rondes genoeg.
+  // Blijft er na vier rondes toch een dubbele over (zeldzaam), dan staan beide voorstellen er zoals voorheen.
+  for (let round = 0; round < 4; round++) {
+    const bySession = new Map<string, ImportProposal[]>();
+    for (const p of proposals) if (p.match) bySession.set(p.match.session.id, [...(bySession.get(p.match.session.id) ?? []), p]);
+    const losers = [...bySession.values()].filter((g) => g.length > 1).flatMap((g) => {
+      const [winner, ...rest] = [...g].sort(compareRank);
+      return rest.map((p) => ({ p, session: winner.match!.session.id, name: winner.match!.template.name }));
+    });
+    if (losers.length === 0) break;
+    for (const { p, session, name } of losers) {
+      const id = p.activity.externalId;
+      exclude.set(id, new Set([...(exclude.get(id) ?? []), session]));
+      lostTo.set(id, name);
+    }
+    const again = new Set(losers.map((l) => l.p.activity.externalId));
+    proposals = proposals.map((p) => (again.has(p.activity.externalId) ? propose(p.original ?? p.activity) : p)).filter((p): p is ImportProposal => !!p);
+  }
+  proposals = proposals.map((p) => {
+    const name = lostTo.get(p.activity.externalId);
+    return name && !p.match && !p.fitNote ? { ...p, fitNote: fitIssueText({ kind: 'other-fits', name }) } : p;
+  });
+  return proposals.sort((a, b) => {
+    const da = activityDate(a.activity);
+    const db = activityDate(b.activity);
+    if (da !== db) return db.localeCompare(da);
+    if (!!a.match !== !!b.match) return a.match ? -1 : 1;
+    return b.activity.start.localeCompare(a.activity.start);
+  });
 }
 
 // --- words ------------------------------------------------------------------------

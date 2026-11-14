@@ -132,6 +132,7 @@ const everything: AppSettings = {
   raceDay: false,
   morningInBackup: false,
   watchSilence: false,
+  watchKindCheck: false,
   illnessSigns: false,
   heatPace: false,
   weekdayPattern: false,

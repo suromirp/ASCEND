@@ -9,6 +9,8 @@ import { logSport, templateSport } from './sports';
 import { isHandLog } from './activityImport';
 import { watchPlaceOf } from './watchWorkout';
 import { isTestOrRace } from './templateRoles';
+import { logSizeFits } from './activityFit';
+import { durationForVariant } from './substitutions';
 
 // De soort van een training: kracht, of de sport (data/sports.ts). Een rustdag heeft geen soort.
 export function templateKind(t: SessionTemplate): string | undefined {
@@ -29,11 +31,18 @@ export function isLooseSourceLog(l: SessionLog, plannedIds?: ReadonlySet<string>
   return !l.plannedSessionId || (!!plannedIds && !plannedIds.has(l.plannedSessionId));
 }
 
-// Kan deze log bij deze training horen: zelfde soort, en test of wedstrijd alleen tegen test of wedstrijd.
-export function sameLinkKind(log: SessionLog, logTemplate: SessionTemplate | undefined, template: SessionTemplate): boolean {
+// Kan deze log bij deze training horen: zelfde soort, test of wedstrijd alleen tegen test of wedstrijd, en
+// een grootte die erbij past: een loop of tocht van minder dan de helft van de training niet, en een log in
+// wandeltempo niet voor een loop (engine/activityFit.ts#logSizeFits; profiel horloge, 14 november: een
+// wandeling van 4 km is niet de lange duurloop). Vaste grenzen, los van de keuze Soort van een loop toetsen:
+// zonder koppelvoorstel verandert er niets.
+// `plannedMinutes`: de geplande duur van de training. Zonder (de koppelkaart achteraf) de kortste versie van de
+// template, zodat een ingekorte training nooit een log mist die er wel bij hoort.
+export function sameLinkKind(log: SessionLog, logTemplate: SessionTemplate | undefined, template: SessionTemplate, plannedMinutes?: number): boolean {
   const kind = logKind(log);
   if (!kind || templateKind(template) !== kind) return false;
-  return (!!logTemplate && isTestOrRace(logTemplate)) === isTestOrRace(template);
+  if ((!!logTemplate && isTestOrRace(logTemplate)) !== isTestOrRace(template)) return false;
+  return logSizeFits(log, template, plannedMinutes ?? durationForVariant(template, 'minimum'));
 }
 
 // Een looptraining met de StairMaster gekozen (engine/watchWorkout.ts#watchPlaceOf) doe je als wandelworkout: een
@@ -66,7 +75,7 @@ export function looseStandIns(input: {
     const best = (onDay.get(log.completedDate) ?? [])
       .filter((s) => s.status !== 'skipped' && !logged.has(s.id) && !covered.has(s.id))
       .map((s) => ({ s, t: byId.get(s.templateId) }))
-      .filter((x): x is { s: PlannedSession; t: SessionTemplate } => !!x.t && sameLinkKind(log, logTemplate, x.t))
+      .filter((x): x is { s: PlannedSession; t: SessionTemplate } => !!x.t && sameLinkKind(log, logTemplate, x.t, input.minutesOf(x.s, x.t)))
       .map((x) => ({ id: x.s.id, d: Math.abs(input.minutesOf(x.s, x.t) - log.durationMinutes) }))
       .sort((a, b) => a.d - b.d || a.id.localeCompare(b.id))[0];
     if (best) covered.add(best.id);
