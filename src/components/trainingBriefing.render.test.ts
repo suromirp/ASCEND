@@ -29,7 +29,7 @@ const routeView = (search: 'open' | 'tap' = 'open'): BriefingView => ({
   head: { eyebrow: 'HARDLOPEN', purpose: 'Rustig.', dayLine: 'Zo 15 november' },
   heart: { facts: [{ value: '40 min', label: 'totaal' }], zone: 2, steps: false },
   stand: { kind: 'watch', line: 'Vinkt zelf af', manualLabel: 'Zelf invullen' },
-  places: [], place: 'run_outdoor', map: { kind: 'route', target, line: '7 km, 40 m stijgen', search }, rows: [], stopSignals: [], footer: { kind: 'route', label: 'Route naar Garmin Connect', fallback: { kind: 'none' } },
+  places: [], place: 'run_outdoor', map: { kind: 'route', target, line: '7 km, 40 m stijgen', search }, rows: [], hills: false, stopSignals: [], footer: { kind: 'route', label: 'Route naar Garmin Connect', fallback: { kind: 'none' } },
 });
 
 const render = (view: BriefingView, m: RouteSearchModel, { searchOn = true, declined = false } = {}) =>

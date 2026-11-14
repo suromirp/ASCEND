@@ -18,12 +18,17 @@ describe('de route volgt de keuze Waar train je? overal', () => {
     // Zolang de keuzes niet gelezen zijn: geen route.
     expect(line).toContain('if (!places) return null;');
   });
-  it('Vandaag en het blad achter de i tonen de route alleen via RouteProposalLine', () => {
-    for (const src of [missionCard, guideSheet]) {
-      expect(src).toContain('<RouteProposalLine');
-      expect(src).not.toMatch(/wantsRoute(At)?\(/);
-      expect(src).not.toContain('<RoutePanel');
-    }
+  it('Vandaag toont de route alleen via RouteProposalLine', () => {
+    expect(missionCard).toContain('<RouteProposalLine');
+    expect(missionCard).not.toMatch(/wantsRoute(At)?\(/);
+    expect(missionCard).not.toContain('<RoutePanel');
+  });
+  // Bewust mee (14 november, docs/beslissingen/2026-11-14-info-blad-a.md): het blad achter de i (Waarom deze
+  // training) toont geen route meer; die staat op het trainingsscherm en in de Briefing.
+  it('het blad achter de i toont geen route', () => {
+    expect(guideSheet).not.toContain('<RouteProposalLine');
+    expect(guideSheet).not.toMatch(/wantsRoute(At)?\(/);
+    expect(guideSheet).not.toContain('<RoutePanel');
   });
   it('het trainingsscherm geeft zijn eigen keuze mee', () => {
     expect(logger).toMatch(/<RouteProposalLine[^>]*place=\{/);

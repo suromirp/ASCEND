@@ -280,7 +280,7 @@ export function WorkoutMenuSheet({ name, readOnly, preview, paused, hasGuide, la
             sub="Opzij vegen van oefening naar oefening. Uit zet ze onder elkaar."
             right={<Toggle checked={layoutPaged} onChange={onLayout} label="Een oefening per scherm" />}
           />
-          {hasGuide && <MenuRow title="Uitleg bij deze training" onClick={() => { close(); onGuide(); }} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />}
+          {hasGuide && <MenuRow title="Waarom deze training" onClick={() => { close(); onGuide(); }} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />}
           {!readOnly && (
             <MenuRow icon="sluiten" title="Training verwijderen" sub="De sets van deze training gaan weg; de training blijft gepland." danger onClick={() => { close(); onDiscard(); }} />
           )}

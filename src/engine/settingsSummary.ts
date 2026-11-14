@@ -1269,7 +1269,7 @@ function groupSummaryNow(page: SettingsPageId, f: SettingsFacts): GroupSummary {
       };
     }
     case 'gidsen':
-      return { sub: 'Weer en kleding, kennisbank en bronnen' };
+      return { sub: 'Weer, kennis, datavelden en bronnen' };
   }
 }
 

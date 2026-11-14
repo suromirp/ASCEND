@@ -108,17 +108,15 @@ function workoutGroup(input: WatchSheetInput): WatchWorkoutGroup {
     ? { kind: 'manual', title: WATCH_SHEET_TEXT.manual, sub: `${garmin.sport}, ${stepCount(garmin.lines)} ${stepCount(garmin.lines) === 1 ? 'stap' : 'stappen'}` }
     : undefined;
   const parts: WatchWorkoutPart[] = [];
-  // Wat je gebruikt staat bovenaan: gekoppeld eerst de stand, anders eerst zelf nabouwen.
-  if (linked) {
-    if (showStatus) parts.push({ kind: 'status' });
-    if (manual) parts.push(manual);
-  } else {
-    if (manual) parts.push(manual);
-    // Zoals de regel op het trainingsscherm: met "Laten zien of het gelukt is" uit vraagt hij ook niet om te koppelen.
-    if (status === 'unlinked' && showStatus) {
-      parts.push({ kind: 'unlinked', text: WATCH_SHEET_TEXT.notLinked, rowTitle: WATCH_SHEET_TEXT.linkRow, to: GARMIN_PAGE });
-    }
+  // De weg via intervals.icu staat altijd bovenaan, zelf nabouwen in Garmin Connect eronder als tweede weg
+  // (de eigenaar op 14 november: hij laat versturen via intervals.icu; besluit 2026-11-14-info-blad-a.md).
+  // Gekoppeld: de stand. Niet gekoppeld: de zin en Vanzelf laten sturen. Zoals de regel op het trainingsscherm:
+  // met "Laten zien of het gelukt is" uit vraagt hij ook niet om te koppelen.
+  if (linked && showStatus) parts.push({ kind: 'status' });
+  if (!linked && status === 'unlinked' && showStatus) {
+    parts.push({ kind: 'unlinked', text: WATCH_SHEET_TEXT.notLinked, rowTitle: WATCH_SHEET_TEXT.linkRow, to: GARMIN_PAGE });
   }
+  if (manual) parts.push(manual);
   const goesToWatch = !!garmin || (!!status && status !== 'none');
   return goesToWatch ? { parts } : { parts, emptyText: WATCH_SHEET_TEXT.noWorkout };
 }

@@ -7,7 +7,7 @@
 // het log komt, bepaalt het formulier zoals altijd.
 
 import type { PlannedSession, SessionTemplate } from '../models/training';
-import { ROLE_LABEL, defaultModality, getModalities, type ModalityDefinition } from '../data/modalities';
+import { ROLE_LABEL, defaultModality, getModalities, getModality, type ModalityDefinition } from '../data/modalities';
 import { wantsRouteAt } from './routeTarget';
 import { capitalize } from '../utils/capitalize';
 
@@ -87,6 +87,15 @@ export function resolvePlace(template: Pick<SessionTemplate, 'id' | 'type'>, sto
     if (found && !found.locked) return found.key;
   }
   return defaultPlace(template);
+}
+
+// Train je buiten? Zonder gekozen plek (of een plek die de training niet kent) wel; anders volgt het de
+// omgeving van de gekozen plek. Binnen, loopband en rust zijn niet buiten. Eén regel voor de Briefing en
+// het trainingsscherm: weer, kleding, heuvels en plekken staan alleen bij buiten
+// (docs/beslissingen/2026-11-14-info-blad-a.md).
+export function placeIsOutdoor(templateId: string, placeKey: string | undefined): boolean {
+  const modality = placeKey ? getModality(templateId, placeKey) : undefined;
+  return !modality || modality.environment === 'outdoor';
 }
 
 // Hoort er bij deze keuze een route? Eén regel voor elk scherm (engine/routeTarget.ts#wantsRouteAt).

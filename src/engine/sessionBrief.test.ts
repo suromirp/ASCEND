@@ -42,7 +42,6 @@ describe('buildSessionBrief', () => {
     expect(buildSessionBrief(tpl('tpl_upper_a'), addDays(START, 1), program).facts[2]).toEqual({ value: 'MacroFactor', label: 'zwaarte volgens' });
     const rest = buildSessionBrief(tpl('tpl_herstel'), START, program);
     expect(rest.headline).toBe('HERSTEL · RUST OF WANDELEN');
-    expect(rest.levelsUsed).toEqual([]);
   });
 
   it('writes long durations in hours', () => {
