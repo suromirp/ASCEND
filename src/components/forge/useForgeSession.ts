@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useAppData } from '../../state/AppDataContext';
-import { draftsToPrune, sessionIsDead, type SessionWorld } from '../../engine/forgeSession';
-import { todayISO } from '../../utils/dates';
+import { draftsToPrune, leftSession, resolveLeftAfter, sessionIsDead, type LeftSession, type SessionWorld } from '../../engine/forgeSession';
+import { todayISO, toISODate } from '../../utils/dates';
 import { clearDraft } from '../../utils/loggerDraft';
 import {
   clearSessionPointer, forgeDraftKeys, forgeOpenSnapshot, openRequestSnapshot, readPointer, readSession, removeDraftKey, sessionSnapshot, subscribeForgeOpen,
@@ -9,7 +9,7 @@ import {
 } from '../../utils/forgeSessionStore';
 
 // Wat er bestaat: de training, de geplande sessie en of die al gelogd is.
-export function useSessionWorld(): SessionWorld & { loading: boolean } {
+export function useSessionWorld(): SessionWorld & { loading: boolean; skippedIds: ReadonlySet<string> } {
   const { loading, bootError, plannedSessions, sessionLogs, templates } = useAppData();
   return useMemo(
     () => ({
@@ -18,6 +18,8 @@ export function useSessionWorld(): SessionWorld & { loading: boolean } {
       plannedIds: new Set(plannedSessions.map((p) => p.id)),
       loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId).filter((id): id is string => !!id)),
       templateIds: new Set(templates.map((t) => t.id)),
+      // Overgeslagen in je planning: een sessie daarvan is een concept dat om een keuze vraagt, nooit stil weg.
+      skippedIds: new Set(plannedSessions.filter((p) => p.status === 'skipped').map((p) => p.id)),
     }),
     [loading, bootError, plannedSessions, sessionLogs, templates],
   );
@@ -65,4 +67,37 @@ export function useSessionPill(): SessionState | undefined {
 
 export function useOpenRequest(): boolean {
   return useSyncExternalStore(subscribeOpenRequest, openRequestSnapshot);
+}
+
+// Een minuut-tik (en terug in de app): genoeg om middernacht en de grens van uren te zien zonder elke seconde te rekenen.
+function useMinute(): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    const id = window.setInterval(tick, 60_000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+  return now;
+}
+
+const dayOf = (ms: number) => toISODate(new Date(ms));
+
+// Is de lopende sessie blijven liggen (engine/forgeSession.ts#leftSession)? Dan is hij een concept: de pil toont
+// geen lopende klok meer en het blad vraagt Afronden, Verder of Weggooien. Leest het concept zelf, zodat een set
+// die net in een ander tabblad werd afgevinkt meetelt.
+export function useLeftSession(session: SessionState | undefined): LeftSession | undefined {
+  const { settings } = useAppData();
+  const world = useSessionWorld();
+  const now = useMinute();
+  if (!session) return undefined;
+  const fresh = readSession() ?? session;
+  const skipped = !!fresh.pointer.plannedSessionId && world.skippedIds.has(fresh.pointer.plannedSessionId);
+  return leftSession(fresh, now, { afterHours: resolveLeftAfter(settings), dayOf, skipped });
 }

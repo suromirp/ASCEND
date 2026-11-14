@@ -76,6 +76,7 @@ const everything: AppSettings = {
   forgeLayout: 'lijst',
   forgeLogView: 'alle',
   forgeLongBreak: 90,
+  forgeLeftAfter: 4,
   forgeCapStrength: 45,
   forgeCapLegs: 90,
   haptics: false,

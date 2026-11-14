@@ -53,7 +53,15 @@ export function useForgeClock(restored: WorkoutDraft | undefined, readOnly: bool
       if (gap !== undefined) setAwayMs(gap);
     };
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+    // Het scherm bleef open liggen (een nacht met Forge open, het scherm houdt zich wakker): dan komt er geen
+    // terugkomst, dus kijkt een minuut-tik of de stilte de drempel haalde (profiel afbreker, punt 6).
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible') onVisible();
+    }, 60_000);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.clearInterval(id);
+    };
   }, [readOnly, breakAfter]);
   const answerBreak = (counts: boolean) => {
     if (startedAt === null) return;

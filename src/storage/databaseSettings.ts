@@ -338,6 +338,10 @@ export interface AppSettings {
   // handeling zo lang geleden terwijl de klok liep, dan vraagt Forge of die tijd meetelt. In minuten; 0 is uit.
   // Afwezig is 45 (het advies). Optional and additive; read defensively, so no migration step is needed.
   forgeLongBreak?: 0 | 30 | 45 | 60 | 90;
+  // "Niet afgerond, concept na" (engine/forgeSession.ts#leftSession): zoveel uur zonder handeling en een lopende
+  // training wordt een concept dat om een keuze vraagt; na middernacht altijd. 0 is alleen middernacht. Afwezig is
+  // 12 (het advies). Optional and additive; read defensively, so no migration step is needed.
+  forgeLeftAfter?: 0 | 4 | 8 | 12;
   // "Hoogstens per krachttraining" (engine/forgeTimeCap.ts): Forge kort een krachttraining in tot ongeveer zoveel
   // minuten, eerst het bijwerk. Gewone krachttraining (afwezig = 60, het advies) en beendag (afwezig = 75); 0 is uit.
   // Optional and additive; read defensively by resolveTimeCap, so no migration step is needed.

@@ -126,14 +126,15 @@ export function ForgeWorkout(props: ForgeWorkoutProps) {
   const { strengthExternal } = useAppData();
   const world = useSessionWorld();
   const myKey = `${draftKey(props.template.id, props.plannedSessionId, props.scheduledDate)}:forge`;
-  const [other] = useState(() => {
+  const [other, setOther] = useState(() => {
     // "Gedaan" vanuit Vandaag of Week (startAtForm) en alleen kijken horen niet bij een sessie.
     if (props.preview || props.startAtForm || strengthExternal) return undefined;
     const live = readSession();
     if (!live || live.pointer.key === myKey) return undefined;
     return sessionIsDead(live.pointer, world) ? undefined : live;
   });
-  if (other) return <OtherSessionRunning name={other.pointer.name} onClose={props.onClose} />;
+  // Na Weggooien van de oude training start deze gewoon; elke andere keuze sluit dit scherm.
+  if (other) return <OtherSessionRunning session={other} onClose={props.onClose} onDiscarded={() => setOther(undefined)} />;
   return <ForgeWorkoutInner {...props} />;
 }
 
