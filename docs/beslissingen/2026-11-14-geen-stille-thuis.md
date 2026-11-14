@@ -11,9 +11,9 @@ Daarnaast zegt de regel als zoeken niet lukt welke stap niet op tijd was (heuvel
 
 ## Na Warden en de schermopname (14 november)
 
-- Start bij heeft vaste chips met vaste namen op een vaste plek: Waar je nu bent, Thuis (alleen als die er is) en Andere plek. Eerder droeg de tweede chip de naam van de plek die gold ("Thuis", dan "Andere plek"), en dan versprong er een knop onder je vinger. Een gekozen andere plek staat met haar naam in een regel onder de chips ("Bij ..."). Dit zet de chip Thuis terug die `2026-11-12-route-blok.md` uit de rij haalde.
+- Start bij heeft vaste chips met vaste namen op een vaste plek: Waar je nu bent, Thuis (alleen als die er is) en Andere plek. Eerder droeg de tweede chip de naam van de plek die gold ("Thuis", dan "Andere plek"), en dan versprong er een knop onder je vinger. Een gekozen andere plek staat met haar naam in de vaste regel onder de chips ("Bij ..."), niet in een eigen regel die bij een keuze de kaart laat zakken. Dit zet de chip Thuis terug die `2026-11-12-route-blok.md` uit de rij haalde.
 - De vraag in het vak heeft alleen nog de reden en Opnieuw; Thuis en Andere plek zijn de chips erboven, dus ze staan er niet twee keer. Het blad Andere plek hangt aan de chip en sluit netjes als de keuze de stand verandert.
-- Je plek bepalen staat alleen als stap in de zoekbalk zolang je plek bepaald wordt of als er een verse plek van deze poging is; na een mislukte plek en een tik op Thuis staat er geen afgevinkte plek meer.
+- Je plek bepalen staat alleen als stap in de zoekbalk zolang je plek bepaald wordt of als er een verse plek van deze poging is; na een mislukte plek en een tik op Thuis staat er geen afgevinkte plek meer. Bewust ook na een gelukte plek: kies je daarna Thuis, een plek of een punt, dan zoekt de lus niet vanaf je plek en staat die stap er niet (eerder bleef hij afgevinkt staan, zodat de stappen niet sprongen).
 - Een tik op Waar je nu bent zet chip en regel meteen om; "De lus begint bij Thuis." komt na een mislukte plek nergens meer voor.
 - Wat de regie uit het plan haalt staat puur in `engine/routeStart.ts#startView` en `#maySearch`, met tests; `routeStart.scan.test.ts` legt vast dat de regie ze gebruikt.
 
@@ -28,7 +28,7 @@ De eigenaar, 14 november, op reis in het buitenland: "Hij moet dus stoppen met a
 
 ## Bron
 
-Opdracht van de eigenaar via de coördinator, 14 november. Code: `engine/routeStart.ts#planStart` (stand `ask`, `startReady`, `locateNow`), `engine/routeSheet.ts#searchFailLine`, `components/RoutePanel.tsx#AskStart`, `components/TrainingBriefing.tsx` (de stand in de Briefing).
+Opdracht van de eigenaar via de coördinator, 14 november. Code: `engine/routeStart.ts#planStart` (stand `ask`, `startReady`, `locateNow`), `engine/routeSheet.ts#searchFailLine`, `components/RoutePanel.tsx#AskStart` (de vraag) en `#StartChips` (de vaste chips met het blad Andere plek), `engine/places.ts#startTrio`, `components/TrainingBriefing.tsx` (de stand in de Briefing).
 
 ## Vervangt
 
@@ -36,4 +36,4 @@ Uit `2026-11-11-route-kaart-2.md`: "Lukt het niet, dan je vaste punt als dat er 
 
 ## Terugdraaien
 
-In `planStart` bij een mislukte plek weer `home` of `approx` teruggeven in plaats van `ask`; de stand `ask` valt dan nooit en `AskStart` tekent niets.
+In `planStart` bij een mislukte plek weer `home` of `approx` teruggeven in plaats van `ask`; de stand `ask` valt dan nooit en `AskStart` tekent niets. De chips: `StartChips` weer één tweede chip met de naam van de plek laten tekenen (de oude `startPair`, in de geschiedenis van `engine/places.ts`).

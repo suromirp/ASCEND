@@ -198,7 +198,6 @@ export function StartChips({ model }: { model: RouteSearchModel }) {
           </Chip>
         </span>
       </div>
-      {trio.other.name && <p className="truncate text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Bij {trio.other.name}</p>}
       {open && (
         <NewPlaceSheet
           saved={model.savedStarts}

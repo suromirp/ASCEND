@@ -35,10 +35,9 @@ describe('StartChips', () => {
     expect(buttons(html)[2]).toContain('Andere plek');
     expect(html).not.toContain('Natuurgebied Noord');
   });
-  it('een gekozen bewaarde plek: Andere plek gekozen, met haar naam in een regel eronder; de chips houden hun naam', () => {
+  it('een gekozen bewaarde plek: Andere plek gekozen, met haar naam in het label; de chips houden hun naam', () => {
     const html = renderToStaticMarkup(createElement(StartChips, { model: model({ startChip: 'p1' }) }));
     expect(html).toMatch(/aria-pressed="true"[^>]*aria-label="Andere plek: Natuurgebied Noord"/);
-    expect(html).toContain('>Bij Natuurgebied Noord<');
     expect(html).toMatch(/aria-pressed="false"[^>]*>Waar je nu bent</);
     expect(buttons(html)[1]).toContain('>Thuis<');
   });
@@ -51,7 +50,6 @@ describe('StartChips', () => {
   it('een instelling die bij Thuis start: de chip Thuis staat gekozen', () => {
     const html = renderToStaticMarkup(createElement(StartChips, { model: model({ startChip: 'home' }) }));
     expect(buttons(html)[1]).toMatch(/aria-pressed="true"[^>]*>Thuis</);
-    expect(html).not.toContain('>Bij ');
   });
   it('een gezochte plek: Andere plek gekozen met haar naam; zonder Thuis geen chip Thuis', () => {
     const html = renderToStaticMarkup(createElement(StartChips, { model: model({ startChip: 'other', startChips: [{ kind: 'here', label: 'Waar je nu bent' }, { kind: 'other', label: 'Heuvelrug' }] }) }));

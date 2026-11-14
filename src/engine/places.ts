@@ -316,7 +316,6 @@ export function startChoices(setting: RouteStartMode, places: readonly Place[], 
 
 // ---------- Start bij: twee chips (besluit 2026-11-12-route-blok.md) ----------
 
-export const OTHER_PLACE_LABEL = OTHER_CHIP.label;
 
 // Welke chip het is: een bewaarde plek op zijn id, de rest op zijn soort (Thuis is 'home').
 export const startChipKey = (c: StartChip): string => (c.kind === 'place' && c.placeId ? c.placeId : c.kind);

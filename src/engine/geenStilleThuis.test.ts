@@ -91,4 +91,18 @@ describe('de schermopname van de eigenaar (Briefing van een duurloop, op reis)',
     expect(startView(planStart({ mode: 'here', home, picked: 'home', found: { ok: false, reason: 'timeout' } })).hereMode).toBe(false);
     expect(startView(planStart({ mode: 'here', home, found: { ok: false, reason: 'timeout' } })).hereMode).toBe(false);
   });
+  it('(b) ook na een gelukte plek: kies je daarna Thuis, een plek of een punt, dan is je plek geen stap meer (bewust)', () => {
+    const ok = { ok: true as const, point: { lat: 50.1, lon: 6.2 } };
+    expect(startView(planStart({ mode: 'here', home, picked: 'home', found: ok })).hereMode).toBe(false);
+    expect(startView(planStart({ mode: 'here', home, place: { lat: 50.3, lon: 6.4 }, found: ok })).hereMode).toBe(false);
+    expect(startView(planStart({ mode: 'here', home, tap: { lat: 50.3, lon: 6.4 }, found: ok })).hereMode).toBe(false);
+    expect(startView(planStart({ mode: 'approx', home })).hereMode).toBe(false);
+  });
+  it('Thuis niet gelezen en je plek lukt niet: vragen, zonder Thuis in de regel en zonder stap Je plek bepalen', () => {
+    const view = startView(planStart({ mode: 'here', home: null, homeUnread: true, found: { ok: false, reason: 'denied' } }));
+    expect(view.ask?.homeOffered).toBe(false);
+    expect(view.ask?.line).not.toContain('Thuis of Andere plek');
+    expect(view.hereMode).toBe(false);
+    expect(view.ready).toBe(false);
+  });
 });

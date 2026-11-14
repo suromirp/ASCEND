@@ -239,7 +239,9 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const terrainLon = terrainAt?.lon;
   // Je plek lukte niet: vragen, niet zoeken (nooit stil terug op Thuis, besluit 2026-11-14-geen-stille-thuis.md).
   const ready = start.ready;
-  const startLine = start.line;
+  // Een gekozen andere plek (bewaard of gezocht) staat met haar naam in de vaste regel onder de chips, niet in
+  // een eigen regel die verspringt (review 14 november).
+  const startLine = plan?.kind === 'place' && startPlace ? `Bij ${startPlace.name}.` : start.line;
   // Bijsturen hoort bij dit startpunt en deze training.
   const adjustBase = `${lat}|${lon}|${exactLat}|${exactLon}|${trainingTarget.distanceKm}|${trainingTarget.ascentM}`;
   const adjust = currentAdjust(searchState, adjustBase);
