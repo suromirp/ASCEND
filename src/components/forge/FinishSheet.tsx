@@ -1,6 +1,6 @@
 // Het blad om een training in Forge af te ronden of af te vinken.
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { progress, type WorkoutExercise } from '../../engine/forgeWorkout';
 import { isLegHeavyTemplate } from '../../engine/scheduler';
 import type { SessionTemplate } from '../../models/training';
@@ -12,6 +12,7 @@ import { PainReportFields } from '../PainReportFields';
 import { PrimaryButton, SecondaryButton } from '../ui';
 import { finishDuration } from '../../engine/forgeSession';
 import { ForgeSheet } from './parts';
+import { forgeFinishNote, type ForgeFinishNote } from './forgeFinishLog';
 
 const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'Beter', normal: 'Normaal', worse: 'Slechter' };
 
@@ -48,7 +49,8 @@ export function FinishSheet({
   plannedSessionId?: string;
   scheduledDate?: string;
   onClose: () => void;
-  onSave: (extra: FinishExtra) => Promise<boolean>;
+  // `seen`: leest iemand de zin van dit blad nog? Nee als het weg is, aan het sluiten, of al zei dat het langer duurt.
+  onSave: (extra: FinishExtra, seen: () => boolean) => Promise<boolean>;
 }) {
   const today = todayISO();
   const { done, total } = progress(workout);
@@ -63,8 +65,16 @@ export function FinishSheet({
   const plannedInPast = !!plannedSessionId && !!scheduledDate && scheduledDate < today;
   const [doneOn, setDoneOn] = useState(plannedInPast ? scheduledDate! : today);
   const [saving, setSaving] = useState(false);
-  const [outcome, setOutcome] = useState<string | null>(null);
+  const [outcome, setOutcome] = useState<ForgeFinishNote | null>(null);
   const busy = useRef(false);
+  // Weg of aan het sluiten: dan leest niemand de zin hier.
+  const away = useRef(false);
+  useEffect(() => {
+    away.current = false;
+    return () => {
+      away.current = true;
+    };
+  }, []);
   const notTicked = total - done;
 
   async function save() {
@@ -72,12 +82,20 @@ export function FinishSheet({
     busy.current = true;
     setSaving(true);
     setOutcome(null);
+    // Na de grens zei het blad al dat het langer duurt: een nee dat dan nog komt gaat bovenin.
+    let late = false;
+    let sawWriteError = false;
     try {
-      const ok = await withTimeout(onSave({ minutes: minutes ?? 0, rpe, feel, pain, notes, doneOn }), SAVE_LIMIT_MS);
+      const ok = await withTimeout(onSave({ minutes: minutes ?? 0, rpe, feel, pain, notes, doneOn }, () => {
+        // Alleen gevraagd bij een schrijffout (ForgeSheets, reportIfGone): zo weet het blad dat het echt mislukte.
+        sawWriteError = true;
+        return !late && !away.current;
+      }), SAVE_LIMIT_MS);
       if (ok === true) return;
-      setOutcome('Deze training staat al in je logboek. Er is niets dubbel opgeslagen.');
+      setOutcome(forgeFinishNote('already'));
     } catch (err) {
-      setOutcome(err instanceof TimeoutError ? 'Opslaan duurt langer dan normaal. Je sets blijven bewaard; probeer het zo nog eens.' : 'Opslaan lukte niet. Je sets blijven bewaard; probeer het zo nog eens.');
+      late = err instanceof TimeoutError;
+      setOutcome(forgeFinishNote(late ? 'slow' : sawWriteError ? 'failed' : 'stillRunning'));
     }
     busy.current = false;
     setSaving(false);
@@ -88,6 +106,7 @@ export function FinishSheet({
       title={readOnly ? 'Training afvinken' : 'Training afronden'}
       sub={readOnly ? 'Sets en gewichten komen uit MacroFactor.' : `${done} van ${total} werksets gedaan.${notTicked > 0 && anyTicked ? ' Wat niet is afgevinkt, wordt niet bewaard.' : ''}`}
       onClose={onClose}
+      onLeave={() => { away.current = true; }}
     >
       {(close) => (
         <div className="flex flex-col gap-4">
@@ -140,7 +159,7 @@ export function FinishSheet({
             <label htmlFor="forge-notes" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Notitie bij deze training</label>
             <textarea id="forge-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} />
           </div>
-          {outcome && <p className="text-xs leading-snug" role="status" style={{ color: 'var(--color-warning)' }}>{outcome}</p>}
+          {outcome && <p className="text-xs leading-snug" role="status" style={{ color: outcome.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{outcome.text}</p>}
           <div className="flex gap-3">
             <SecondaryButton onClick={close}>Annuleren</SecondaryButton>
             <PrimaryButton

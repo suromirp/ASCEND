@@ -66,10 +66,12 @@ export function HowDidItGoSheet({
   // wegslepen, het kruis en de terugknop laten het staan. Terwijl het opslaat blijft het blad open, tot de grens.
   const wayRef = useRef<CloseWay>('backdrop');
   const canClose = () => !savingRef.current || slowRef.current;
+  // Vanaf het begin van het sluiten leest niemand de zin onderaan nog, ook al staat het blad er nog 200 ms.
+  const leavingRef = useRef(false);
   const { closing, requestClose, sheetRef } = useSheetClose(() => {
     if (!savingRef.current && clearsDraft(wayRef.current, form.filled())) form.clearDraft();
     finish();
-  }, 200, canClose);
+  }, 200, canClose, () => { leavingRef.current = true; });
   const closeAs = (way: CloseWay) => () => { if (!canClose()) return; wayRef.current = way; requestClose(); };
   const close = closeAs('cross');
   const [step, setStep] = useState<1 | 2>(1);
@@ -108,7 +110,7 @@ export function HowDidItGoSheet({
       // Mislukt: het blad blijft open met alles wat je invulde en het concept.
       // Is het blad al dicht (na de grens mag dat), dan ziet niemand de zin: de fout gaat naar de melding bovenin.
       onFailed: () => {
-        reportIfGone(!closedRef.current && !goneRef.current, writeError, reportStorageError);
+        reportIfGone(!leavingRef.current && !closedRef.current && !goneRef.current, writeError, reportStorageError);
         setFailedText(failedNote(plannedSessionId ? HOW_TEXT.failed : HOW_TEXT.failedLoose));
         setFailed(true);
       },
@@ -224,7 +226,7 @@ export function SheetFoot({ state, saving, slow, failed, failedText, loose = fal
   return (
     <div>
       {(slow || failed) && (
-        <p role="status" className="mb-2 text-xs leading-snug" style={{ color: failed ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{failed ? failedText ?? (loose ? HOW_TEXT.failedLoose : HOW_TEXT.failed) : HOW_TEXT.slow}</p>
+        <p role="status" className="mb-2 text-xs leading-snug" style={{ color: failed ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{failed ? failedText ?? (loose ? HOW_TEXT.failedLoose : HOW_TEXT.failed) : loose ? HOW_TEXT.slowLoose : HOW_TEXT.slow}</p>
       )}
       <div className="flex gap-3">
         <SecondaryButton onClick={onClose} disabled={saving && !slow} className="min-w-[112px] flex-none px-4">{HOW_TEXT.cancel}</SecondaryButton>

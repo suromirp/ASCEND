@@ -142,6 +142,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-soort" title="Calisthenics per training" facts={facts} info="forgeSoort" onClick={() => setInner('forge-soort')} />
           <SummaryRow id="forge-doorvoeren" title="Wijzigingen doorvoeren" facts={facts} info="forgeDoorvoeren" onClick={() => setInner('forge-doorvoeren')} />
           <SummaryRow id="forge-schijven" title="Schijven bij de set tonen" facts={facts} info="forgeSchijven" onChange={(on) => save({ showPlates: on })} />
+          <SummaryRow id="forge-opwarmset-later" title="Opwarmset later dempen" facts={facts} info="forgeOpwarmsetLater" onChange={(on) => save({ warmupMuted: on })} />
         </BundleSheet>
       )}
       {sheet === 'forge-tijdsgrens' && (

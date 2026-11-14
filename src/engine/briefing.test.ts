@@ -197,6 +197,10 @@ describe('UV en hoogte in de rij Weer', () => {
   it('het weer van de gekozen plek: wel de hoogte', () => {
     expect(line({ forecast: sunny(4, 1500), weatherPlace: { name: 'Bergdorp', state: 'shown' } })).toMatch(/ligt op 1\.500 m/);
   });
+  it('met het echte kledingadvies: de zonnebrand staat één keer in de rij, in de UV-zin', () => {
+    const l = line({ forecast: sunny(5), clothingOn: true });
+    expect(l.match(/zonnebrand|smeer je in/g)).toEqual(['smeer je in']);
+  });
   it('instelling uit: niets erbij', () => {
     expect(line({ forecast: sunny(7, 1500), uvAltitudeOn: false })).not.toMatch(/UV|ligt op/);
   });

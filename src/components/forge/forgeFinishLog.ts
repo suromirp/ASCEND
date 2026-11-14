@@ -7,6 +7,7 @@ import type { ForgeEvent } from '../../engine/forgeLog';
 import type { SessionTemplate, SessionVariant } from '../../models/training';
 import type { LogSessionInput } from '../../state/AppDataContext';
 import type { FinishExtra } from './FinishSheet';
+import { failedNote, STILL_RUNNING_HELP } from '../../state/logSave';
 
 export function forgeLogInput({ template, variant, extra, workout, readOnly, plannedSessionId, plannedStill, gymProfileId, forgeLog }: {
   template: SessionTemplate;
@@ -40,4 +41,16 @@ export function forgeLogInput({ template, variant, extra, workout, readOnly, pla
     ...(strengthData && strengthData.length > 0 ? { gymProfileId } : {}),
     ...(!readOnly && forgeLog.length > 0 ? { forgeLog } : {}),
   };
+}
+
+// De zin op het blad Afronden als er (nog) geen nieuw log staat, met de woorden van Forge over je sets. Alleen
+// mislukt is amber. Het begin is dat van elk scherm dat opslaat (state/logSave.ts); bij een tweede schrijffout
+// op rij komt de reden erachter (failedNote), want de melding bovenin blijft hier weg.
+export interface ForgeFinishNote { text: string; warn: boolean }
+
+export function forgeFinishNote(kind: 'already' | 'slow' | 'failed' | 'stillRunning'): ForgeFinishNote {
+  if (kind === 'already') return { text: 'Deze training staat al in je logboek. Er is niets dubbel opgeslagen.', warn: false };
+  if (kind === 'slow') return { text: 'Opslaan duurt langer dan verwacht. Je sets blijven bewaard; probeer het zo nog eens.', warn: false };
+  if (kind === 'stillRunning') return { text: `Opslaan duurt langer dan verwacht. Je sets blijven bewaard. ${STILL_RUNNING_HELP}`, warn: false };
+  return { text: failedNote('Opslaan lukte niet. Je sets blijven bewaard; probeer het zo nog eens.'), warn: true };
 }

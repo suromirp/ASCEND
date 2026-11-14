@@ -1,7 +1,7 @@
 # UV en hoogte bij een training buiten
 
 Datum: 2026-11-14
-Status: voorgesteld
+Status: vastgelegd
 
 ## Besluit
 

@@ -109,8 +109,14 @@ export function DetailsField({ form, template }: Part) {
 }
 
 export function RpeField({ form }: { form: LogForm }) {
-  const { planRpe, peak, conditioningSteps } = form;
-  const rpe = form.values.rpe;
+  return <RpeChoice value={form.values.rpe} onChange={form.setRpe} planRpe={form.planRpe} peak={form.peak} steps={form.conditioningSteps} />;
+}
+
+// De zwaarte, 1 tot 10, met de waarde in gewone getallen. Ook het blad Hoe ging het? na je horloge (WatchAskSheet.tsx)
+// gebruikt dit, zodat de vraag overal gelijk is (regel 7). `note`: een regel eronder, bijvoorbeeld dat de waarde van je horloge komt.
+export function RpeChoice({ value: rpe, onChange, planRpe, peak, steps = [], note }: {
+  value: number | ''; onChange: (v: number | '') => void; planRpe?: [number, number] | null; peak?: LogForm['peak']; steps?: LogForm['conditioningSteps']; note?: string;
+}) {
   const quiet = useContext(SheetMode);
   const [rpeInfo, setRpeInfo] = useState(false);
   return (
@@ -135,7 +141,7 @@ export function RpeField({ form }: { form: LogForm }) {
               type="button"
               role="radio"
               aria-checked={active}
-              onClick={() => form.setRpe(active ? '' : n)}
+              onClick={() => onChange(active ? '' : n)}
               className={quiet ? 'st-chip quiet' : 'st-chip'}
               style={{ padding: 0, borderColor: active ? undefined : inPlan ? (quiet ? 'var(--color-control-border)' : 'var(--color-action-muted)') : undefined, color: inPlan && !active ? 'var(--color-ink)' : undefined }}
             >
@@ -146,9 +152,10 @@ export function RpeField({ form }: { form: LogForm }) {
       </div>
       {peak && (
         <p className="mt-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Het plan: {INTENSITY[peak].label.toLowerCase()} ({INTENSITY[peak].rpe}){peak >= 3 && conditioningSteps.some((st) => st.intensity <= 2) ? ' in de zware stukken, rustig ertussen' : ''}.
+          Het plan: {INTENSITY[peak].label.toLowerCase()} ({INTENSITY[peak].rpe}){peak >= 3 && steps.some((st) => st.intensity <= 2) ? ' in de zware stukken, rustig ertussen' : ''}.
         </p>
       )}
+      {note && <p className="mt-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}
     </div>
   );
 }
@@ -179,9 +186,13 @@ export function LegsField({ form, template }: Part) {
 }
 
 export function FeelField({ form, template }: Part) {
-  const quiet = useContext(SheetMode);
   if (template.type === 'recovery') return null;
-  const subjectiveFeel = form.values.subjectiveFeel;
+  return <FeelChoice value={form.values.subjectiveFeel} onChange={form.setSubjectiveFeel} />;
+}
+
+// Beter, Normaal of Slechter. Ook het blad Hoe ging het? na je horloge gebruikt dit (regel 7: overal dezelfde woorden).
+export function FeelChoice({ value: subjectiveFeel, onChange }: { value: 'better' | 'normal' | 'worse' | undefined; onChange: (v: 'better' | 'normal' | 'worse' | undefined) => void }) {
+  const quiet = useContext(SheetMode);
   return (
     <div>
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{quiet ? SHORT_TEXT.feel : 'Hoe voelde het ten opzichte van normaal? (optioneel)'}</p>
@@ -190,7 +201,7 @@ export function FeelField({ form, template }: Part) {
           tall
           label="Ten opzichte van normaal"
           value={subjectiveFeel}
-          onChange={(f) => form.setSubjectiveFeel(subjectiveFeel === f ? undefined : f)}
+          onChange={(f) => onChange(subjectiveFeel === f ? undefined : f)}
           options={(['better', 'normal', 'worse'] as const).map((value) => ({ value, label: FEEL_LABEL[value] }))}
         />
       </div>

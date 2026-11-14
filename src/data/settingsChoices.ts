@@ -684,6 +684,17 @@ export const CHOICES = {
       { value: 'never', label: 'Nooit', note: 'Alleen bij je doel op Ascend', short: 'Nooit' },
     ],
   }),
+  vragenNaLoop: def({
+    group: 'Vandaag en meldingen',
+    title: 'Vragen na je loop',
+    line: 'Wat Hoe ging het? vraagt na een training die je horloge afvinkte.',
+    advice: 'short' as 'short' | 'all',
+    help: 'vragenNaLoop',
+    options: [
+      { value: 'short', label: 'Kort', note: 'Gevoel, pijn en zwaarte; de rest achter Meer', short: 'Kort' },
+      { value: 'all', label: 'Alles', note: 'Ook je gewicht na, inkorten en de tekst voor Strava', short: 'Alles' },
+    ],
+  }),
   lichterbenen: def({
     group: 'Vandaag en meldingen',
     title: 'Lichter bij vermoeide benen',

@@ -605,8 +605,11 @@ function weatherRow(input: BriefingInput, minutes: number): BriefingRow | undefi
   const parts: string[] = [];
   // De temperatuur zoals de weerregel hem begint: met gevoel en wind als die ertoe doen, harde wind erbij.
   if (input.weatherOn) parts.push([temperatureHead(w), windPhrase(w)].filter(Boolean).join(', '));
+  let sunscreenSaid = false;
   if (input.clothingOn) {
-    const first = clothingForTraining({ ...base, adjustC: input.clothingAdjust })?.lines[0];
+    const advice = clothingForTraining({ ...base, adjustC: input.clothingAdjust });
+    const first = advice?.lines[0];
+    sunscreenSaid = !!advice?.sunscreenFirst;
     // Alleen de eerste zin: de rest staat op de weerpagina erachter.
     if (first) parts.push(lowerFirst(firstSentence(first)));
   }
@@ -618,7 +621,7 @@ function weatherRow(input: BriefingInput, minutes: number): BriefingRow | undefi
       outdoor: true,
       uvIndex: w.uvIndex,
       elevationM: at?.state === 'failed' ? undefined : input.forecast?.elevationM,
-      sunscreenSaid: parts.some((p) => p.includes('zonnebrand')),
+      sunscreenSaid,
     }));
   }
   if (parts.length === 0) return undefined;
