@@ -133,6 +133,10 @@ export function buildManualLog(values: LogFormValues, ctx: LogContext): LogSessi
     completedDate: values.doneOn,
     templateId: template.id,
     type: template.type,
+    // Een sport uit Losse training (zwemmen, padel, een eigen sport) draagt zijn sport mee; zonder dit veld
+    // valt het log terug op type cardio en telt het als hardlopen (profiel meerdere sporten, 14 november).
+    ...(template.countedSport ? { countedSport: template.countedSport } : {}),
+    ...(template.customSport ? { customSport: template.customSport } : {}),
     // The way you trained decides the sport: a ride on a run day is cycling, also when Garmin
     // suggested the ride.
     sport: (guidanceMode === 'ascend_guided' ? modalitySport(modalityKey) : guidanceMode === 'garmin_suggested' && garminSuggestedType === 'Bike' ? 'cycling' : undefined) ?? templateSport(template),

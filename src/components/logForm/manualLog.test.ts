@@ -10,6 +10,8 @@ import { getModalities, getModality, modalitySport } from '../../data/modalities
 import type { TrainingEnvironment } from '../../models/training';
 import { blocksSave, buildManualLog, type LogFormValues } from './manualLog';
 import { exercisesForVariant } from '../../engine/substitutions';
+import { sportTemplate } from '../../engine/sportTemplate';
+import { logSport } from '../../engine/sports';
 
 // De vaste vergelijking van spoor 5 (docs/visie/Ontwerp trainingsscherm minimaal.md): wat het blad
 // Hoe ging het? opslaat is veld voor veld gelijk aan wat het oude formulier opsloeg bij dezelfde invoer.
@@ -115,6 +117,16 @@ describe('Hoe ging het? slaat op wat het oude formulier opsloeg', () => {
       expect(now).toStrictEqual(oudFormulier(values, template, planned));
     });
   }
+
+  it('een sport uit Losse training draagt zijn sport mee en is nooit hardlopen', () => {
+    const swim = sportTemplate('swimming');
+    const log = buildManualLog({ ...empty, duration: 40, guidanceMode: 'free' }, { template: swim, quickComplete: false, exercises: [] });
+    expect(log.countedSport).toBe('swimming');
+    expect(logSport({ ...log, id: 'l', completedAt: '2026-11-16T18:00:00Z' } as never)).not.toBe('running');
+    const own = buildManualLog({ ...empty, duration: 60, guidanceMode: 'free' }, { template: { ...swim, countedSport: undefined, customSport: 'custom_klimmen' }, quickComplete: false, exercises: [] });
+    expect(own.customSport).toBe('custom_klimmen');
+    expect(own.countedSport).toBeUndefined();
+  });
 
   it('de loop buiten, uitgeschreven', () => {
     const template = tpl('tpl_easy_run');

@@ -9,6 +9,14 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 18:40 (14 november)
+
+- Check-in: Klein deel 2 live om 18:35; Route-kaart bij Warden, Buiten bij Lookout, Profielen klein en drie profielen geport na de vijfuurslimiet; vijf profielen binnen, punten A tot L in de Inbox.
+- Beter: zelf niet afgeschaald na de correctie van de eigenaar, en het werk liep door tot de limiet.
+- Slechter: negen sessies tegelijk liepen de vijfuurslimiet in anderhalf uur vol (17:50 tot 18:40 stil); daarvoor was ik zelf de oorzaak.
+- Gereedschap: get_session met rate_limit_info per helper is het vroege signaal; potentie: een teller van lopende sessies in de werkkaart.
+- Werkstijl: hoogstens zes sessies tegelijk, profielen in rondes van drie.
+
 ## 17:40 (14 november)
 
 - Check-in: drie dingen live om 17:25 (Opwarmset later, Hoe ging het? in Je dag, Opslaan rest); Klein deel 2 bij Lookout; Route-kaart, Buiten en Profielen klein bouwen; vier nieuwe profielen lopen twee weken door.
