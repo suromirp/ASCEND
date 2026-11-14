@@ -15,6 +15,13 @@ Bijgewerkt: 14 november 2026, ongeveer 13:00 Amsterdam, door de coördinator ses
 
 - 14 november: een half uur maar één bouwer terwijl ik op een review wachtte; de eigenaar zag stilstand. Nu de regel Bouwplekken vol houden. Goed: eigen blik op afdrukken ving de Engelse naam in Forge, die Warden en Pathfinder niet zagen.
 
+## Stand 14 november 16:40
+
+- Limiet van zeven dagen op allowed_warning, reset zondag 15 november 19:00 Amsterdam. Niets nieuws starten; afmaken wat loopt; herreviews op sonnet.
+- In review: Opwarmset later (claude/opwarmset-later, herstel na Warden), Trainingsscherm 5 en 6 (claude/trainingsscherm-5-6), Opslaan rest (claude/opslaan-rest). Na groen: Lookout (één ronde voor alle drie), squash, deploy nakijken, pushmelding, werkkaart.
+- Vandaag live: voorstel begrijpelijk, Wis startpunt, krachtblok Akkoord, Spieren voor de berg rest, Avond tests, Volle week, Info-blad A, Racedag 10 km.
+- Profielendoorloop (vijf profielen, eigenaar akkoord) schuift naar na de reset.
+
 ## Vandaag (14 november)
 
 - Live: Voorstel begrijpelijk (887aa8b), backlog nagelopen en wekelijkse audit op fouten in de skill onderhoud (5fdcce8; eigenaar: "Ja, zet de audit in onderhoud"). Ponytail en Graphify niet installeren (advies aan de eigenaar gegeven, hij koos alleen de audit).

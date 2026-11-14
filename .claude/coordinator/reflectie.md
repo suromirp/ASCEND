@@ -9,6 +9,14 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 14 november, 16:40 (Wachter)
+
+- Check-in: Info-blad (15c405c) en Racedag (3f9962a) live; drie bouwers in review; limiet van zeven dagen op waarschuwing tot zondag 19:00.
+- Beter: kleine laatste fixes (een tekstregel) zelf gedaan in plaats van een extra ronde.
+- Slechter: veel Fable-reviews op één dag; de weeklimiet kwam in zicht. Volgende keer reviews van tekst en schermen op sonnet.
+- Gereedschap: Warden op fable blijft de beste vanger van echte fouten; voor herreviews volstaat sonnet.
+- Werkstijl: bij een waarschuwing alleen afmaken, herreviews op sonnet, geen nieuwe bouwers.
+
 ## 14 november, 15:40 (Wachter)
 
 - Check-in: fe3e80a live (web en APK groen); Racedag en Info-blad herstelronde klaar, Opwarmset klaar; alle drie in review.
