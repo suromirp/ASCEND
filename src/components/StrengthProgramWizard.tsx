@@ -204,13 +204,13 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
           ))}
           {added.map((c, i) => (
             <div key={i} className="text-xs" style={{ color: 'var(--color-success-text)' }}>
-              + {c.newSessionDraft?.scheduledDate}: {templateById.get(c.newSessionDraft?.templateId ?? '')?.name ?? c.newSessionDraft?.templateId}
+              + {dayNL(c.newSessionDraft?.scheduledDate)}: {templateById.get(c.newSessionDraft?.templateId ?? '')?.name ?? c.newSessionDraft?.templateId}
             </div>
           ))}
         </div>
         <div className="flex gap-3">
           <SecondaryButton onClick={() => setPhase('idle')}>Terug</SecondaryButton>
-          <PrimaryButton onClick={() => void confirmApply()}>Bevestigen</PrimaryButton>
+          <PrimaryButton onClick={() => void confirmApply()}>Akkoord</PrimaryButton>
         </div>
       </>
     );
@@ -567,7 +567,7 @@ function PreviewStep({
           ))}
           {added.map((c, i) => (
             <div key={i} className="text-xs" style={{ color: 'var(--color-success-text)' }}>
-              + {c.newSessionDraft?.scheduledDate}: {templateById.get(c.newSessionDraft?.templateId ?? '')?.name ?? c.newSessionDraft?.templateId}
+              + {dayNL(c.newSessionDraft?.scheduledDate)}: {templateById.get(c.newSessionDraft?.templateId ?? '')?.name ?? c.newSessionDraft?.templateId}
             </div>
           ))}
         </div>
@@ -575,7 +575,7 @@ function PreviewStep({
 
       <div className="mt-2 flex gap-3">
         <SecondaryButton onClick={onBack}>Terug</SecondaryButton>
-        <PrimaryButton onClick={onConfirm}>Blok activeren</PrimaryButton>
+        <PrimaryButton onClick={onConfirm}>Akkoord</PrimaryButton>
       </div>
     </div>
   );

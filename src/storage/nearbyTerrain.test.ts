@@ -58,6 +58,90 @@ describe('heuvels in de buurt in de opslag', () => {
     expect(JSON.stringify(await MetaRepo.get('nearbyTerrain'))).not.toContain('52.1235');
   });
 
+  it('wissen tijdens een lopende zoektocht: het gewiste punt komt niet terug', async () => {
+    const point = { name: '', lat: 52.1235, lon: 5.6543 };
+    const other = { name: '', lat: 51.4321, lon: 4.1234 };
+    await refreshNearbyTerrain(other, { fetchImpl: as(ok()), exact: true });
+    // Het antwoord komt pas als het startpunt intussen gewist is.
+    const slow = vi.fn(async () => {
+      await clearExactTerrain();
+      return new Response(JSON.stringify(answer), { status: 200 });
+    });
+    expect(await refreshNearbyTerrain(point, { fetchImpl: as(slow), exact: true })).toBeDefined();
+    expect(await getNearbyTerrain(point, true)).toBeUndefined();
+    // Ook een ander gewist punt komt niet terug via de oude lezing.
+    expect(await getNearbyTerrain(other, true)).toBeUndefined();
+    expect(JSON.stringify(await MetaRepo.get('nearbyTerrain'))).not.toMatch(/52\.1235|51\.4321/);
+  });
+
+  it('een zoektocht die faalt na het wissen schrijft niets terug', async () => {
+    const point = { name: '', lat: 52.1235, lon: 5.6543 };
+    const failAfterClear = vi.fn(async () => {
+      await clearExactTerrain();
+      return new Response('', { status: 500 });
+    });
+    expect(await refreshNearbyTerrain(point, { fetchImpl: as(failAfterClear), exact: true })).toBeUndefined();
+    expect(await getNearbyTerrain(point, true)).toBeUndefined();
+  });
+
+  it('een afgeronde plek wordt gewoon bewaard, ook als intussen de exacte punten gewist worden', async () => {
+    const point = { name: '', lat: 52.1235, lon: 5.6543 };
+    await refreshNearbyTerrain(point, { fetchImpl: as(ok()), exact: true });
+    const slow = vi.fn(async () => {
+      await clearExactTerrain();
+      return new Response(JSON.stringify(answer), { status: 200 });
+    });
+    await refreshNearbyTerrain(place, { fetchImpl: as(slow) });
+    expect(await getNearbyTerrain(place)).toBeDefined();
+    expect(await getNearbyTerrain(point, true)).toBeUndefined();
+  });
+
+  it('een afgeronde zoektocht schrijft een punt dat intussen gewist wordt niet terug (wis niet afgewacht)', async () => {
+    const point = { name: '', lat: 52.1235, lon: 5.6543 };
+    await refreshNearbyTerrain(point, { fetchImpl: as(ok()), exact: true });
+    let clearing: Promise<void> | undefined;
+    const slow = vi.fn(async () => {
+      clearing = clearExactTerrain();
+      return new Response(JSON.stringify(answer), { status: 200 });
+    });
+    await refreshNearbyTerrain(place, { fetchImpl: as(slow) });
+    await clearing;
+    expect(await getNearbyTerrain(place)).toBeDefined();
+    expect(await getNearbyTerrain(point, true)).toBeUndefined();
+    expect(JSON.stringify(await MetaRepo.get('nearbyTerrain'))).not.toContain('52.1235');
+  });
+
+  it('twee zoektochten tegelijk met een wis ertussen: beide afgeronde plekken blijven, het punt niet', async () => {
+    const point = { name: '', lat: 52.1235, lon: 5.6543 };
+    const second = { name: '', lat: 48.5, lon: 7.5 };
+    await refreshNearbyTerrain(point, { fetchImpl: as(ok()), exact: true });
+    let clearing: Promise<void> | undefined;
+    const withClear = vi.fn(async () => {
+      clearing = clearExactTerrain();
+      return new Response(JSON.stringify(answer), { status: 200 });
+    });
+    await Promise.all([
+      refreshNearbyTerrain(place, { fetchImpl: as(withClear) }),
+      refreshNearbyTerrain(second, { fetchImpl: as(ok()) }),
+    ]);
+    await clearing;
+    expect(await getNearbyTerrain(place)).toBeDefined();
+    expect(await getNearbyTerrain(second)).toBeDefined();
+    expect(await getNearbyTerrain(point, true)).toBeUndefined();
+  });
+
+  it('een exacte zoektocht die loopt tijdens een niet afgewachte wis bewaart zijn punt niet', async () => {
+    const point = { name: '', lat: 52.1235, lon: 5.6543 };
+    let clearing: Promise<void> | undefined;
+    const slow = vi.fn(async () => {
+      clearing = clearExactTerrain();
+      return new Response(JSON.stringify(answer), { status: 200 });
+    });
+    expect(await refreshNearbyTerrain(point, { fetchImpl: as(slow), exact: true })).toBeDefined();
+    await clearing;
+    expect(await getNearbyTerrain(point, true)).toBeUndefined();
+  });
+
   it('de sleutel van een exact punt rondt zoals de plek die bewaard wordt', () => {
     for (const v of [52.12345, 52.123449999, 1.00005, -0.00005, 8.34565]) {
       const r = Math.round(v * 10_000) / 10_000;

@@ -5,9 +5,11 @@
 import { describe, expect, it } from 'vitest';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { LeavePeriod } from '../models/leave';
+import { addDays } from '../utils/dates';
 import { makeForecast } from './fixtures/weatherFixture';
 import {
   DEFAULT_EVENING_TIME,
+  EVENING_TIMES,
   EVENING_NOTICE_ID,
   MAX_LINES,
   cleanEveningTime,
@@ -15,6 +17,7 @@ import {
   eveningNotice,
   eveningNoticeAt,
   isEveningNow,
+  lampLine,
   resolveEveningBefore,
   type EveningInput,
 } from './eveningBefore';
@@ -210,4 +213,94 @@ describe('de melding', () => {
     expect(n.largeBody).toBe(view.lines.join('\n'));
     expect(eveningNotice(undefined, at(TODAY, 20), 'ascend-meldingen')).toBeUndefined();
   });
+});
+
+// Zomer- en wintertijd in Europe/Amsterdam 2026: zondag 29 maart (02:00 wordt 03:00, de dag duurt 23 uur) en
+// zondag 25 oktober (03:00 wordt 02:00, de dag duurt 25 uur). De kaart rekent met kalenderdata en de klok
+// van het toestel, niet met 24 uur erbij.
+describe('de dag van zomer- en wintertijd', () => {
+  const nodark = (date: string) => makeForecast(date, () => ({ tempC: 8, feelsC: 6 }), { sunrise: '07:00', sunset: '20:00' });
+  const base = (today: string, over: Partial<EveningInput> = {}) => {
+    const tomorrow = addDays(today, 1);
+    return input({
+      now: at(today, 20, 30),
+      planned: [plan('p1', 'tpl_long_run', tomorrow)],
+      forecast: nodark(today),
+      ...over,
+    });
+  };
+
+  it('de test draait echt op Europe/Amsterdam', () => {
+    expect(at('2026-03-28', 12).getTimezoneOffset()).toBe(-60);
+    expect(at('2026-03-29', 12).getTimezoneOffset()).toBe(-120);
+    expect(at('2026-10-24', 12).getTimezoneOffset()).toBe(-120);
+    expect(at('2026-10-25', 12).getTimezoneOffset()).toBe(-60);
+  });
+  it('zaterdagavond 28 maart: morgen is de dag van 23 uur', () => {
+    expect(eveningBefore(base('2026-03-28'))?.date).toBe('2026-03-29');
+  });
+  it('zondagavond 29 maart: morgen is maandag 30 maart', () => {
+    expect(eveningBefore(base('2026-03-29'))?.date).toBe('2026-03-30');
+  });
+  it('zaterdagavond 24 oktober: morgen is de dag van 25 uur', () => {
+    expect(eveningBefore(base('2026-10-24'))?.date).toBe('2026-10-25');
+  });
+  it('zondagavond 25 oktober: morgen is maandag 26 oktober', () => {
+    expect(eveningBefore(base('2026-10-25'))?.date).toBe('2026-10-26');
+  });
+  it('de grens van 20:00 en 23:59 geldt ook op de wisseldag', () => {
+    for (const today of ['2026-03-29', '2026-10-25']) {
+      expect(eveningBefore(base(today, { now: at(today, 19, 59) }))).toBeUndefined();
+      expect(eveningBefore(base(today, { now: at(today, 20, 0) }))).toBeDefined();
+      expect(eveningBefore(base(today, { now: at(today, 23, 59) }))).toBeDefined();
+    }
+  });
+  it('na middernacht is morgen vandaag: de training van de wisseldag zelf krijgt geen kaart meer', () => {
+    // 00:00 op zondag 29 maart (de dag van 23 uur): de training van die dag staat op de missie. Pas om 20:00 gaat de kaart over maandag.
+    const planned = [plan('p1', 'tpl_long_run', '2026-03-29')];
+    expect(eveningBefore(base('2026-03-28', { now: at('2026-03-29', 0, 0), planned }))).toBeUndefined();
+    expect(eveningBefore(base('2026-03-28', { now: at('2026-03-29', 12, 0), planned }))).toBeUndefined();
+    expect(eveningBefore(base('2026-03-28', { now: at('2026-03-28', 20, 0), planned }))?.date).toBe('2026-03-29');
+  });
+  it('het lampje volgt de klok van die dag, zonder voorspelling uit de zon', () => {
+    // Rond 52,1 N en 5,1 O. De zon zakt op de dag zelf even laat; de klok springt een uur.
+    // Zaterdag 28 maart (wintertijd) om 18:00 tot 19:40: zonsondergang net na 19:00.
+    expect(lampLine('2026-03-28', 18 * 60, 100, PLACE)).toMatch(/^Donker vanaf 19:0\d, neem een lampje mee\.$/);
+    // Maandag 30 maart (zomertijd): dezelfde training eindigt voor zonsondergang (rond 20:08), dus geen lampje.
+    expect(lampLine('2026-03-30', 18 * 60, 100, PLACE)).toBeUndefined();
+    // Eén start later laat zien dat de zon op de klok van de zomertijd staat: rond 20:08, niet rond 19:08.
+    expect(lampLine('2026-03-30', 19 * 60, 100, PLACE)).toMatch(/^Donker vanaf 20:0\d, neem een lampje mee\.$/);
+    // Zaterdag 24 oktober (zomertijd): zonsondergang rond 18:29. Maandag 26 oktober (wintertijd): rond 17:25.
+    expect(lampLine('2026-10-24', 17 * 60, 100, PLACE)).toMatch(/^Donker vanaf 18:[23]\d, neem een lampje mee\.$/);
+    expect(lampLine('2026-10-26', 16 * 60, 100, PLACE)).toMatch(/^Donker vanaf 17:[0-3]\d, neem een lampje mee\.$/);
+  });
+  it('de melding van die avond staat op 20:00 van de klok, ook op de wisseldag', () => {
+    for (const today of ['2026-03-28', '2026-03-29', '2026-10-24', '2026-10-25']) {
+      const t = eveningNoticeAt(at(today, 12), '20:00')!;
+      expect(t.getFullYear() * 10000 + (t.getMonth() + 1) * 100 + t.getDate()).toBe(Number(today.replaceAll('-', '')));
+      expect([t.getHours(), t.getMinutes()]).toEqual([20, 0]);
+    }
+  });
+});
+
+describe('elke tijd uit EVENING_TIMES', () => {
+  it('de lijst is wat de instelling aanbiedt', () => {
+    expect([...EVENING_TIMES]).toEqual(['19:00', '20:00', '21:00', '22:00']);
+  });
+  for (const time of EVENING_TIMES) {
+    const h = Number(time.slice(0, 2));
+    const settings = resolveEveningBefore({ eveningBeforeTime: time });
+    it(`${time}: een minuut ervoor niets, op de tijd wel, tot 23:59, na middernacht niet meer`, () => {
+      expect(cleanEveningTime(time)).toBe(time);
+      expect(isEveningNow(at(TODAY, h - 1, 59), time)).toBe(false);
+      expect(eveningBefore(input({ settings, now: at(TODAY, h - 1, 59) }))).toBeUndefined();
+      expect(eveningBefore(input({ settings, now: at(TODAY, h, 0) }))?.date).toBe(TOMORROW);
+      expect(eveningBefore(input({ settings, now: at(TODAY, 23, 59) }))?.date).toBe(TOMORROW);
+      expect(isEveningNow(at(TOMORROW, 0, 0), time)).toBe(false);
+    });
+    it(`${time}: de melding komt op die tijd, en niet meer als die voorbij is`, () => {
+      expect(eveningNoticeAt(at(TODAY, h - 1, 0), time)?.getTime()).toBe(at(TODAY, h).getTime());
+      expect(eveningNoticeAt(at(TODAY, h, 0), time)).toBeUndefined();
+    });
+  }
 });

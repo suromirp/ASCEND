@@ -3,14 +3,15 @@
 //
 // Bij een bergdoel kijkt ASCEND naar drie spieren die een bergwandelaar met rugzak nodig heeft en die een gewoon
 // krachtschema vaak overslaat: kuiten, tibialis (de voorkant van je scheen) en bilspieren. Krijgt een ervan de
-// laatste vier weken gemiddeld minder dan 4 harde sets per week (engine/muscleVolume.ts, sets via isWorkSet, een
-// rustweek telt niet mee), dan staat er één rustige melding in de weekterugblik met een voorstel om één oefening
+// laatste vier weken gemiddeld minder dan 4 harde sets per week (engine/muscleVolume.ts, sets via isWorkSet; een
+// rustweek en een week met vakantie, een tocht of zonder sportschool tellen niet mee,
+// docs/beslissingen/2026-11-14-bergspieren-zonder-vakantieweek.md), dan staat er één rustige melding in de weekterugblik met een voorstel om één oefening
 // toe te voegen; pas na Akkoord verandert er iets. In Forge zet Ruilen bij gelijke keuze een oefening voorop die
 // zo'n spier bedient (forgeWorkout.ts#swapOptions). Geen score, geen kleur per spier, geen heatmap.
 //
 // Enkel en evenwicht (docs/beslissingen/2026-11-11-enkel-evenwicht.md) is de vierde rij: geen spier maar
 // evenwichtsoefeningen (patroon 'balance'; lunges en split squats tellen hier niet). Het telt werksets, geen harde
-// sets, met een eigen ondergrens, en laat naast een rustweek ook een week met vakantie, een tocht of zonder sportschool weg. Bij een open pijnklacht aan een
+// sets, met een eigen ondergrens, en laat dezelfde weken weg als de spieren. Bij een open pijnklacht aan een
 // enkel of voet zwijgt het. Het komt na de drie spieren: hoogstens één voorstel per keer, met dezelfde Akkoord.
 // Puur: geen React, geen opslag.
 
@@ -45,9 +46,9 @@ const BALANCE_FLOOR_SETS = 2;
 // De eerste oefening van het voorstel: op één been staan met ogen open, de makkelijkste vorm. Zwaarder gaat via de
 // uitleg (ogen dicht, kussen) of Ruilen binnen de familie.
 const BALANCE_START = 'single-leg-stance';
-// Een week met zo'n periode telt niet mee voor evenwicht: op vakantie, op tocht of zonder sportschool train je niet in
-// Forge, en dan zou er na elke vakantie meteen een melding staan.
-const BALANCE_LEAVE_SKIP: ReadonlySet<LeavePeriod['kind']> = new Set(['no_training', 'trek', 'no_gym']);
+// Een week met zo'n periode telt niet mee, voor de drie spieren en voor evenwicht: op vakantie, op tocht of zonder
+// sportschool train je niet in Forge, en dan zou er na elke vakantie meteen een melding staan. Vrije dagen tellen wel.
+const LEAVE_SKIP: ReadonlySet<LeavePeriod['kind']> = new Set(['no_training', 'trek', 'no_gym']);
 // Een open pijnklacht aan een van deze plekken: geen voorstel voor evenwicht.
 const BALANCE_INJURY_PARTS = ['enkel', 'voet'];
 // Onder dit gemiddelde per week is het te weinig om op peil te blijven (afgeleid, nog te ijken).
@@ -84,22 +85,30 @@ export interface MuscleShort {
   muscle: MountainArea;
   // Gemiddeld aantal harde sets per week over de weken die meetellen.
   avgSets: number;
-  // Hoeveel weken meetelden (een rustweek en weken voor het programma niet).
+  // Hoeveel weken meetelden (een rustweek, een week met vakantie, een tocht of zonder sportschool en weken voor het
+  // programma niet).
   weeks: number;
-  // Of er een rustweek uit het venster viel.
+  // Of er zo'n week uit het venster viel (een rustweek, vakantie, een tocht of zonder sportschool).
   restLeftOut: boolean;
   // Harde sets van oefeningen die ASCEND niet kent, in die weken: ze tellen nergens mee.
   unknownSets: number;
 }
 
-// De bergspieren onder de ondergrens, de laagste eerst, over de vier weken die eindigen met `lastWeekStart`.
-// Leeg bij minder dan twee weken die meetellen of als er in die weken helemaal geen krachtwerk was.
-export function mountainMusclesShort(logs: readonly SessionLog[], lastWeekStart: string, program?: Program | null): MuscleShort[] {
+// De weken van het venster van vier die meetellen, eindigend met `lastWeekStart`: binnen het programma, geen
+// rustweek en geen week met vakantie, een tocht of zonder sportschool. `leftOut`: of er zo'n week wegviel.
+function countedWeeks(lastWeekStart: string, program?: Program | null, leave?: readonly LeavePeriod[]): { weeks: string[]; leftOut: boolean } {
   const last = mondayOfWeek(lastWeekStart);
   const start = program ? mondayOfWeek(program.startDate) : undefined;
   const inProgram = Array.from({ length: MOUNTAIN_WINDOW_WEEKS }, (_, k) => addDays(last, -7 * k)).filter((w) => start === undefined || w >= start);
-  const weeks = inProgram.filter((w) => !(program && isRestWeekAt(program, w)));
-  const restLeftOut = weeks.length < inProgram.length;
+  const away = (w: string) => periodsInWeek([...(leave ?? [])], w).some((p) => LEAVE_SKIP.has(p.kind));
+  const weeks = inProgram.filter((w) => !(program && isRestWeekAt(program, w)) && !away(w));
+  return { weeks, leftOut: weeks.length < inProgram.length };
+}
+
+// De bergspieren onder de ondergrens, de laagste eerst, over de vier weken die eindigen met `lastWeekStart`.
+// Leeg bij minder dan twee weken die meetellen of als er in die weken helemaal geen krachtwerk was.
+export function mountainMusclesShort(logs: readonly SessionLog[], lastWeekStart: string, program?: Program | null, leave?: readonly LeavePeriod[]): MuscleShort[] {
+  const { weeks, leftOut: restLeftOut } = countedWeeks(lastWeekStart, program, leave);
   if (weeks.length < 2) return [];
   const byWeek = new Map(muscleVolumeByWeek(logs as SessionLog[]).map((v) => [v.weekStart, v]));
   const counted = weeks.map((w) => byWeek.get(w)).filter((v) => !!v);
@@ -136,17 +145,13 @@ function balanceSetsByWeek(logs: readonly SessionLog[]): Map<string, { sets: num
 // en een week met vakantie, een tocht of zonder sportschool tellen niet mee; zonder krachtwerk in die weken, of met
 // minder dan twee weken die meetellen, zwijgt het.
 export function balanceShort(logs: readonly SessionLog[], lastWeekStart: string, program?: Program | null, leave?: readonly LeavePeriod[]): MuscleShort | null {
-  const last = mondayOfWeek(lastWeekStart);
-  const start = program ? mondayOfWeek(program.startDate) : undefined;
-  const inProgram = Array.from({ length: MOUNTAIN_WINDOW_WEEKS }, (_, k) => addDays(last, -7 * k)).filter((w) => start === undefined || w >= start);
-  const away = (w: string) => periodsInWeek([...(leave ?? [])], w).some((p) => BALANCE_LEAVE_SKIP.has(p.kind));
-  const weeks = inProgram.filter((w) => !(program && isRestWeekAt(program, w)) && !away(w));
+  const { weeks, leftOut } = countedWeeks(lastWeekStart, program, leave);
   if (weeks.length < 2) return null;
   const byWeek = balanceSetsByWeek(logs);
   if (!weeks.some((w) => byWeek.get(w)?.strength)) return null;
   const avgSets = weeks.reduce((n, w) => n + (byWeek.get(w)?.sets ?? 0), 0) / weeks.length;
   if (avgSets >= BALANCE_FLOOR_SETS) return null;
-  return { muscle: 'balance', avgSets, weeks: weeks.length, restLeftOut: weeks.length < inProgram.length, unknownSets: 0 };
+  return { muscle: 'balance', avgSets, weeks: weeks.length, restLeftOut: leftOut, unknownSets: 0 };
 }
 
 // Een open pijnklacht aan een enkel of voet (spierpijn en stijf tellen niet): dan geen evenwichtswerk voorstellen.
@@ -156,10 +161,10 @@ export function ankleComplaintOpen(injuries: readonly InjuryNote[] | undefined, 
 }
 
 // De spieren die Ruilen in Forge voorrang geeft: alleen bij een bergdoel en met de instelling aan.
-export function swapPreference(input: { on: boolean; goals: readonly TrainingGoal[]; milestones: Ladder; logs: readonly SessionLog[]; today: string; program?: Program | null }): MuscleGroup[] {
+export function swapPreference(input: { on: boolean; goals: readonly TrainingGoal[]; milestones: Ladder; logs: readonly SessionLog[]; today: string; program?: Program | null; leave?: readonly LeavePeriod[] }): MuscleGroup[] {
   if (!input.on || !hasMountainGoal(input.goals, input.milestones)) return [];
   // De vier hele weken voor deze week: de lopende week is nog niet af.
-  return mountainMusclesShort(input.logs, addDays(mondayOfWeek(input.today), -7), input.program).map((m) => m.muscle as MuscleGroup);
+  return mountainMusclesShort(input.logs, addDays(mondayOfWeek(input.today), -7), input.program, input.leave).map((m) => m.muscle as MuscleGroup);
 }
 
 // De korte reden bij een keuze in het ruilblad die zo'n spier bedient.
@@ -203,8 +208,9 @@ export interface MuscleProposalInput {
   declined?: readonly MuscleDecline[];
   // Enkel en evenwicht binnen Spieren voor de berg (StrengthSettings.mountainBalance). Ontbreekt het: aan, het advies.
   balance?: boolean;
-  // Voor enkel en evenwicht: vakanties en tochten (weken die niet meetellen) en klachten uit Lichaam.
+  // Vakanties, tochten en periodes zonder sportschool: weken die voor geen rij meetellen.
   leave?: readonly LeavePeriod[];
+  // Voor enkel en evenwicht: klachten uit Lichaam.
   injuries?: readonly InjuryNote[];
 }
 
@@ -228,7 +234,7 @@ export function mountainMuscleProposal(input: MuscleProposalInput): MusclePropos
   if (input.canAdd && !input.canAdd(target.id)) return null;
   const now = mondayOfWeek(input.today);
   const quiet = (m: MountainArea) => (input.declined ?? []).some((d) => d.muscle === m && d.weekStart <= now && addDays(d.weekStart, 7 * DECLINE_QUIET_WEEKS) > now);
-  for (const short of mountainMusclesShort(input.logs, input.weekStart, input.program)) {
+  for (const short of mountainMusclesShort(input.logs, input.weekStart, input.program, input.leave)) {
     if (quiet(short.muscle)) continue;
     const muscle = short.muscle as MuscleGroup;
     if ([...inPlan].some((id) => { const e = exerciseById(id); return !!e && !isBalance(e) && e.primary.includes(muscle); })) continue;
@@ -319,9 +325,11 @@ export function muscleNoticeText(p: MuscleProposal): MuscleNoticeText {
   const fewer = p.restLeftOut ? `, daarom gaat het hier over ${WEEKS_WORD[p.weeks] ?? p.weeks} weken` : '';
   const unknown = Math.round(p.unknownSets);
   const info = [
-    balance ? 'Elke werkset van een evenwichtsoefening telt, opwarmen niet.' : 'Een set telt als je er hoogstens 4 herhalingen over had.',
-    balance ? `Een rustweek en een week met vakantie, een tocht of zonder sportschool tellen niet mee${fewer}.` : `Een rustweek telt niet mee${fewer}.`,
-    `Kies je Liever niet, dan blijft het acht weken stil over ${balance ? 'je evenwicht' : NAMED[p.muscle].your}.`,
+    // Zoals engine/muscleVolume.ts telt: ook een set zonder ingevulde reserve, en een spier die alleen meehelpt half
+    // (vandaar een gemiddelde als 1,5).
+    balance ? 'Elke werkset van een evenwichtsoefening telt, opwarmen niet.' : 'Een set telt met hoogstens 4 herhalingen over, ook als je dat niet invulde. Helpt de spier alleen mee, dan half.',
+    `Een rustweek en een week met vakantie, een tocht of zonder sportschool tellen niet mee${fewer}.`,
+    `Na Liever niet blijft het acht weken stil over ${balance ? 'je evenwicht' : NAMED[p.muscle].your}.`,
   ].filter(Boolean).join(' ');
   const inForge = exercise?.name ?? p.exerciseName;
   const forgeName = inForge && inForge !== name ? `In Forge heet hij ${inForge}.` : undefined;

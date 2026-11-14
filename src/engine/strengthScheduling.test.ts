@@ -108,8 +108,8 @@ describe('computeStrengthPlacementPlan', () => {
     const removeItem = proposal.changes.find((c) => c.plannedSessionId === 'leftover');
     expect(removeItem?.action).toBe('remove');
     expect(removeItem?.reason).toMatch(/Lower B/);
-    // De vaste voorstelzin van de stemgids, met de knop die er staat (Blok activeren).
-    expect(proposal.consequences).toBe('Geldt vanaf over twee weken. Deze en volgende week blijven zoals ze zijn. Eerst een voorstel, pas na Blok activeren verandert er iets.');
+    // De vaste voorstelzin van de stemgids, met de knop die er staat (Akkoord).
+    expect(proposal.consequences).toBe('Geldt vanaf over twee weken. Deze en volgende week blijven zoals ze zijn. Eerst een voorstel, pas na Akkoord verandert er iets.');
   });
 
   it('adds a missing on-strategy session when the week is short one', () => {
@@ -547,6 +547,8 @@ describe('computeStrengthPlacementPlanForCommittedRange', () => {
     const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), sessions, templates, availability(), [], ASOF, []);
     const addItem = proposal.changes.find((c) => c.action === 'add' && c.newSessionDraft?.weekStartDate === COMMITTED_MONDAY_1);
     expect(addItem?.newSessionDraft?.templateId).toBe('tpl_upper_b');
+    // De vaste voorstelzin van de stemgids, ook in het tweede voorstel van de wizard (knop Akkoord).
+    expect(proposal.consequences).toContain('Eerst een voorstel, pas na Akkoord verandert er iets.');
   });
 
   it('removes an off-strategy committed-range session that has no log', () => {

@@ -225,7 +225,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Spieren voor de berg',
     lead: 'Bergop en bergaf met een rugzak vragen veel van je kuiten, je scheenspier en je bilspieren, en juist die slaat een gewoon krachtschema vaak over. Bij een bergdoel let ASCEND daar rustig op.',
     points: [
-      { head: 'De melding', text: 'krijgt een van die spieren de laatste vier weken gemiddeld minder dan 4 harde sets per week, dan staat dat één keer in de weekterugblik, met een voorstel voor één oefening. Een rustweek telt niet mee.' },
+      { head: 'De melding', text: 'krijgt een van die spieren de laatste vier weken gemiddeld minder dan 4 harde sets per week, dan staat dat één keer in de weekterugblik, met een voorstel voor één oefening. Een rustweek en een week met vakantie, een tocht of zonder sportschool tellen niet mee.' },
       { head: 'In Forge', text: 'hetzelfde voorstel staat ook rustig bovenaan de training waar de oefening bij zou komen, zolang je nog geen set afvinkte.' },
       { head: 'Pas na Akkoord', text: 'de oefening komt als laatste oefening in je krachttraining met het meeste beenwerk, vanaf de volgende keer. In het blad van de oefening haal je hem weer weg. Liever niet laat die spier acht weken met rust.' },
       { head: 'Bij Ruilen', text: 'is de keuze verder gelijk, dan staat een oefening voor zo’n spier voorop, met een korte reden. Forge ruilt nooit zelf.' },
