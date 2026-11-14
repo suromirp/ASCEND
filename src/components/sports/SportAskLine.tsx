@@ -13,8 +13,7 @@ import { parseSportHandling, resolveSportCounting } from '../../engine/sportRole
 import { activityToDraft, durationLabel } from '../../engine/activityImport';
 import { sportTemplate } from '../../engine/sportTemplate';
 import { FELT_LABEL, FELT_RPE, type FeltWord } from '../../engine/sessionLoad';
-import { withTimeout } from '../../utils/withTimeout';
-import { settleLogOutcome } from '../../state/logSession';
+import { saveLogThenChoice } from '../../state/logSave';
 import { anySportDefinition, type SportRole } from '../../data/sports';
 import { formatDateNL, todayISO, weekdayLongNL } from '../../utils/dates';
 import { Icon } from '../icons';
@@ -108,27 +107,22 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
     if (busy) return;
     setBusy(true);
     setError(false);
-    let cancelled = false;
     try {
-      await withTimeout((async () => {
-        const sport: CustomSport = { id: customIdOf(question.type), label: question.label, type: question.type, feel, role };
-        // Eerst het log, dan de keuze: lukt het log niet, dan blijft alles zoals het was en staat de vraag er nog.
-        if (role === 'count') {
-          const input = {
+      const sport: CustomSport = { id: customIdOf(question.type), label: question.label, type: question.type, feel, role };
+      // Eerst het log, dan de keuze (state/logSave.ts): lukt het log niet, dan blijft alles zoals het was en staat de vraag er nog.
+      const input = role === 'count'
+        ? {
             ...activityToDraft(question.activity, customTemplate(sport)),
             ...(askFelt ? { rpe: FELT_RPE[felt], ...(touched ? {} : { rpeAssumed: true as const }) } : {}),
             quiet: true,
-          };
-          // Gooit als er geen log staat; "staat er al" telt als gelukt.
-          await settleLogOutcome(await logSession(input), input);
-        }
-        if (cancelled) return;
+          }
+        : undefined;
+      await saveLogThenChoice(logSession, input, () => {
         const current = parseCustomSports(settings.customSports).value ?? [];
-        await updateSettings({ customSports: [...current.filter((c) => c.type !== sport.type), sport] });
-      })(), SAVE_TIMEOUT_MS);
+        return updateSettings({ customSports: [...current.filter((c) => c.type !== sport.type), sport] });
+      }, SAVE_TIMEOUT_MS);
       close();
     } catch {
-      cancelled = true;
       setError(true);
     } finally {
       setBusy(false);
@@ -207,27 +201,21 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
     if (busy) return;
     setBusy(true);
     setError(false);
-    let cancelled = false;
     try {
-      await withTimeout((async () => {
-        // Eerst het log, dan de rol: lukt het log niet, dan blijft alles zoals het was en staat de vraag er nog.
-        if (role === 'count') {
-          const draft = activityToDraft(question.activity, sportTemplate(question.sport));
-          const input = {
-            ...draft,
+      // Eerst het log, dan de rol (state/logSave.ts): lukt het log niet, dan blijft alles zoals het was en staat de vraag er nog.
+      const input = role === 'count'
+        ? {
+            ...activityToDraft(question.activity, sportTemplate(question.sport)),
             ...(askFelt ? { rpe: FELT_RPE[felt], ...(touched ? {} : { rpeAssumed: true as const }) } : {}),
             quiet: true,
-          };
-          // Gooit als er geen log staat; "staat er al" telt als gelukt.
-          await settleLogOutcome(await logSession(input), input);
-        }
-        if (cancelled) return;
+          }
+        : undefined;
+      await saveLogThenChoice(logSession, input, () => {
         const current = parseSportHandling(settings.sportHandling).value ?? {};
-        await updateSettings({ sportHandling: { ...current, [question.sport]: { role } } });
-      })(), SAVE_TIMEOUT_MS);
+        return updateSettings({ sportHandling: { ...current, [question.sport]: { role } } });
+      }, SAVE_TIMEOUT_MS);
       close();
     } catch {
-      cancelled = true;
       setError(true);
     } finally {
       setBusy(false);

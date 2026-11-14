@@ -5,6 +5,8 @@ import { useLogForm } from './logForm/useLogForm';
 import { asksDoneOn } from './logForm/formRules';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, RpeField } from './logForm/LogFormParts';
 import { HowDidItGoSheet } from './HowDidItGoSheet';
+import { HOW_TEXT } from './logForm/howDidItGo';
+import { saveLogWithin, type LogSaveResult } from '../state/logSave';
 import { briefingEntry } from '../engine/briefing';
 import { NumberField } from './NumberField';
 import type { SessionTemplate, SessionVariant } from '../models/training';
@@ -94,6 +96,8 @@ function GeneralLogger({
   // Boven de grens eerst "Klopt dit?" vragen, een keer.
   const [confirmLong, setConfirmLong] = useState(false);
   const [saving, setSaving] = useState(false);
+  // De uitkomst van Opslaan als er (nog) geen log staat: het duurt lang, het lukte niet, of hij stond er al.
+  const [saveNote, setSaveNote] = useState<{ text: string; warn: boolean } | null>(null);
   const [restTimerFor, setRestTimerFor] = useState<string | null>(null);
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [otherOpen, setOtherOpen] = useState(false);
@@ -107,8 +111,17 @@ function GeneralLogger({
   // Route voorstellen: alleen buiten en te voet (engine/trainingPlace.ts#placeHasRoute). Dit scherm is zelf al een blad, dus het paneel klapt op zijn plek open.
   const showRoute = settings.routeProposal !== false && placeHasRoute(template, guidanceMode === 'ascend_guided' ? modalityKey : undefined);
 
+  // Na een late uitkomst bestaat dit scherm misschien niet meer: dan sluit het niets.
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+
   async function handleSave(confirmed = false) {
-    if (preview) return;
+    if (preview || saving) return;
     // Leeg of 0 is "geen duur"; heel lang vraagt eerst "Klopt dit?". Een echte rustdag: 0 minuten.
     const input = form.buildInput();
     if (!confirmed && durationNeedsCheck(input.durationMinutes)) {
@@ -116,15 +129,27 @@ function GeneralLogger({
       return;
     }
     setConfirmLong(false);
+    setSaveNote(null);
     setSaving(true);
-    const saved = await logSession(input);
-    setSaving(false);
-    // On a failed write the form stays open with everything filled in; the
-    // app-wide notice says what went wrong.
-    if (saved) {
-      form.clearDraft();
-      onClose();
-    }
+    // Het antwoord van logSession via state/logSave.ts: het concept gaat alleen weg als het log er staat. Staat
+    // er geen log, dan blijft het scherm open met alles wat je invulde, en zegt een zin onderaan waarom.
+    let settled = false;
+    const settle = (result: LogSaveResult) => {
+      settled = true;
+      if (result === 'saved') {
+        form.clearDraft();
+        if (alive.current) onClose();
+        return;
+      }
+      if (!alive.current) return;
+      setSaving(false);
+      setSaveNote({ text: result === 'already' ? HOW_TEXT.already : plannedSessionId ? HOW_TEXT.failed : HOW_TEXT.failedLoose, warn: result === 'failed' });
+    };
+    const outcome = await saveLogWithin(logSession, input, { onLate: settle });
+    // Na de grens in tijd loopt het opslaan nog: je ziet dat, en de knop blijft uit tot het klaar is, zodat een
+    // tweede tik nooit een tweede log maakt (zoals het blad Hoe ging het?). Terug en Annuleren werken gewoon.
+    if (outcome !== 'slow') settle(outcome);
+    else if (!settled && alive.current) setSaveNote({ text: HOW_TEXT.slow, warn: false });
   }
 
   const brief = buildSessionBrief(template, scheduledDate ?? today, program, {
@@ -384,6 +409,10 @@ function GeneralLogger({
             </div>
           </div>
         ) : (
+        <>
+        {saveNote && (
+          <p role="status" className="mx-auto max-w-md px-4 pt-3 text-xs leading-snug" style={{ color: saveNote.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{saveNote.text}</p>
+        )}
         <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(var(--rand-onder), 12px)' }}>
           {watchView.hasWatchSheet ? (
             <div className="flex flex-none" data-sheet-from=""><SecondaryButton onClick={() => setShowWatch(true)} className="min-w-[88px] flex-none px-4">Horloge</SecondaryButton></div>
@@ -400,6 +429,7 @@ function GeneralLogger({
             </PrimaryButton>
           )}
         </div>
+        </>
         )}
       </div>
       </div>

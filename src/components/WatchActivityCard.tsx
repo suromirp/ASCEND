@@ -11,6 +11,7 @@
 import { useTrainingPlaces } from './useTrainingPlaces';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
+import { autoTickLog, saveLogWithin, LOG_SAVE_NOTE, type LogSaveResult } from '../state/logSave';
 import {
   dismissActivity,
   getWatchState,
@@ -66,11 +67,15 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
   const [later, setLater] = useState<string[]>([]);
   // "Inkorten" straight from the question after a training (the same sheet as in the log).
   const [trimming, setTrimming] = useState<string | null>(null);
+  // De uitkomst van Opslaan als er (nog) geen log staat, per activiteit.
+  const [saveNote, setSaveNote] = useState<{ externalId: string; text: string } | null>(null);
+  const aliveRef = useRef(true);
   const ticking = useRef(false);
   const attempted = useRef(new Set<string>());
 
   useEffect(() => {
     let alive = true;
+    aliveRef.current = true;
     const load = () => void getWatchState().then((s) => alive && setState(s)).catch(() => undefined);
     load();
     const stop = onWatchChange(load);
@@ -81,6 +86,7 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
     // op elk tabblad; deze kaart leest daarna via de signalen hierboven.
     return () => {
       alive = false;
+      aliveRef.current = false;
       stop();
       stopHealth();
     };
@@ -111,11 +117,12 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
         try {
           for (const { activity, match } of ticks) {
             attempted.current.add(activity.externalId);
-            const stored = await logSession({ ...activityToDraft(activity, match.template, match.session, chosenWayOf(activity, match, places)), quiet: true });
-            if (stored) {
+            // Alleen een log dat nu geschreven werd telt als vanzelf afgevinkt (state/logSave.ts#autoTickLog). Lukt
+            // het niet of duurt het te lang, dan gaat de rij verder en blijft de activiteit een gewoon voorstel.
+            await autoTickLog(logSession, { ...activityToDraft(activity, match.template, match.session, chosenWayOf(activity, match, places)), quiet: true }, async () => {
               await recordAutoTicked(activity.externalId);
               addDetail(activity);
-            }
+            });
           }
         } finally {
           ticking.current = false;
@@ -183,15 +190,39 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
   }
   if (!proposal) return null;
 
+  // De zin hoort bij de activiteit waarvoor hij kwam; bij de volgende activiteit is hij weg.
+  const note = saveNote?.externalId === proposal.activity.externalId ? saveNote.text : undefined;
+
   async function save(activity: ExternalActivity, template: SessionTemplate, match?: PlannedMatch) {
     if (saving) return;
     setSaving(true);
-    try {
-      if (await logSession(activityToDraft(activity, template, match?.session, chosenWayOf(activity, match, places)))) addDetail(activity);
-    } finally {
-      setSaving(false);
-      setChoosing(false);
-    }
+    setSaveNote(null);
+    // Het antwoord van logSession via state/logSave.ts. Staat er geen log, dan blijft het voorstel staan, blijft
+    // het blad Andere training open en zegt een zin wat er gebeurde. Opnieuw tikken kan: dezelfde activiteit
+    // komt nooit twee keer in je logboek.
+    let settled = false;
+    const settle = (result: LogSaveResult, late = false) => {
+      settled = true;
+      if (result === 'saved') {
+        addDetail(activity);
+        if (!aliveRef.current) return;
+        setChoosing(false);
+        setSaveNote(null);
+        return;
+      }
+      if (!aliveRef.current) return;
+      if (result === 'already') {
+        // Het logboek op het scherm liep achter: opnieuw lezen, dan klopt het voorstel weer.
+        setChoosing(false);
+        void refresh().catch(() => undefined);
+      }
+      // Een late nee na de grens: de zin van de grens staat er al, of je probeerde het al opnieuw.
+      if (!late || result === 'already') setSaveNote({ externalId: activity.externalId, text: LOG_SAVE_NOTE[result] });
+    };
+    const outcome = await saveLogWithin(logSession, activityToDraft(activity, template, match?.session, chosenWayOf(activity, match, places)), { onLate: (result) => settle(result, true) });
+    if (outcome !== 'slow') settle(outcome);
+    else if (!settled && aliveRef.current) setSaveNote({ externalId: activity.externalId, text: LOG_SAVE_NOTE.slow });
+    if (aliveRef.current) setSaving(false);
   }
 
   return (
@@ -201,6 +232,7 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
         proposal={proposal}
         more={proposals.length - 1}
         saving={saving}
+        note={choosing ? undefined : note}
         onSave={() => proposal.template && void save(proposal.activity, proposal.template, proposal.match)}
         onChoose={() => setChoosing(true)}
         onDismiss={() => void dismissActivity(proposal.activity.externalId)}
@@ -208,6 +240,8 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
       {choosing && (
         <ChooseSheet
           activity={proposal.activity}
+          saving={saving}
+          note={note}
           onPick={(template, match) => void save(proposal.activity, template, match)}
           onClose={() => setChoosing(false)}
         />
@@ -221,6 +255,7 @@ function ProposalCard({
   proposal,
   more,
   saving,
+  note,
   onSave,
   onChoose,
   onDismiss,
@@ -229,6 +264,7 @@ function ProposalCard({
   proposal: ImportProposal;
   more: number;
   saving: boolean;
+  note?: string;
   onSave: () => void;
   onChoose: () => void;
   onDismiss: () => void;
@@ -263,6 +299,7 @@ function ProposalCard({
           Je legde die dag al een training vast van {similarLog.durationMinutes} min. Sla dit alleen op als het een andere training was.
         </p>
       )}
+      {note && <p role="status" className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>{note}</p>}
       {quiet
         ? <SecondaryButton onClick={onSave} disabled={saving || !template}>{saving ? 'Opslaan…' : 'Opslaan'}</SecondaryButton>
         : <PrimaryButton onClick={onSave} disabled={saving || !template}>{saving ? 'Opslaan…' : 'Opslaan'}</PrimaryButton>}
@@ -282,10 +319,14 @@ function ProposalCard({
 // "Andere training": a planned session of that week, or save it on its own.
 function ChooseSheet({
   activity,
+  saving,
+  note,
   onPick,
   onClose,
 }: {
   activity: ExternalActivity;
+  saving: boolean;
+  note?: string;
   onPick: (template: SessionTemplate, match?: PlannedMatch) => void;
   onClose: () => void;
 }) {
@@ -306,7 +347,7 @@ function ChooseSheet({
               <div className="flex flex-col gap-2">
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoort bij een geplande training:</p>
                 {planned.map((m) => (
-                  <OptionButton key={m.session.id} title={m.template.name} note={dayLabel(m.session.scheduledDate)} onClick={() => onPick(m.template, m)} />
+                  <OptionButton key={m.session.id} title={m.template.name} note={dayLabel(m.session.scheduledDate)} disabled={saving} onClick={() => onPick(m.template, m)} />
                 ))}
               </div>
             )}
@@ -314,10 +355,12 @@ function ChooseSheet({
               <div className="flex flex-col gap-2">
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Of los opslaan, zonder geplande training af te vinken:</p>
                 {loose.map((t) => (
-                  <OptionButton key={t.id} title={t.name} note="los" onClick={() => onPick(t)} />
+                  <OptionButton key={t.id} title={t.name} note="los" disabled={saving} onClick={() => onPick(t)} />
                 ))}
               </div>
             )}
+            {saving && <p role="status" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Opslaan…</p>}
+            {note && !saving && <p role="status" className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>{note}</p>}
             <SecondaryButton onClick={requestClose}>Annuleren</SecondaryButton>
           </Card>
         </div>
@@ -326,11 +369,13 @@ function ChooseSheet({
   );
 }
 
-function OptionButton({ title, note, onClick }: { title: string; note: string; onClick: () => void }) {
+function OptionButton({ title, note, disabled, onClick }: { title: string; note: string; disabled?: boolean; onClick: () => void }) {
   return (
     <button
+      type="button"
+      disabled={disabled}
       onClick={onClick}
-      className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98]"
+      className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98] disabled:opacity-40"
       style={{ borderColor: 'var(--color-card-border)' }}
     >
       <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{title}</span>
