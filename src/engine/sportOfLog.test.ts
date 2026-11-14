@@ -6,6 +6,7 @@ import { lookOfLog, sportKeyOfLog } from '../components/logbook/sportLook';
 import { extractEvidenceFromLogs } from './capability';
 import { sportTemplateId } from './sportTemplate';
 import { normalizeBackupToCurrentModel } from '../storage/backupNormalize';
+import { findSimilarLog, type ExternalActivity } from './activityImport';
 
 // Backlog M: tot 14 november bewaarde Losse training een sport zonder countedSport of customSport, alleen met het
 // templateId van het afgeleide sjabloon en type cardio. Bij het lezen telt zo'n log als die sport, niet als
@@ -59,6 +60,8 @@ describe('sportOfLog (oude sportlogs)', () => {
     expect(sportOfLog({ ...oldPadel, templateId: 'sport_' })).toEqual({});
     expect(sportOfLog({ ...oldPadel, templateId: 'sport_custom_' })).toEqual({});
     expect(sportOfLog({ ...oldPadel, templateId: 'sport_custom_Ten nis' })).toEqual({});
+    // Een sport die ASCEND plant is geen sport die meetelt: geen vals padel of zwemmen uit sport_running.
+    expect(sportOfLog({ ...oldPadel, templateId: 'sport_running' })).toEqual({});
   });
 
   it('alleen een oud log van type cardio zonder eigen sport', () => {
@@ -85,5 +88,14 @@ describe('sportOfLog (oude sportlogs)', () => {
     expect(logKindLabel(byId.get('old_swim')!)).toBe('Zwemmen');
     expect(logKindLabel(byId.get('old_tennis')!)).toBe('Tennis');
     expect(logSport(byId.get('run')!)).toBe('running');
+  });
+
+  it('een oud sportlog koppelt aan een horloge-activiteit van dezelfde sport, niet aan een loop', () => {
+    const act = (extra: Partial<ExternalActivity>): ExternalActivity => ({ externalId: 'a1', source: 'garmin', kind: 'other', start: '2026-11-10T18:00:00Z', durationSec: 3600, treadmill: false, ...extra } as ExternalActivity);
+    expect(findSimilarLog(act({ countedSport: 'padel' }), [oldPadel])?.id).toBe('old_padel');
+    expect(findSimilarLog(act({ countedSport: 'swimming' }), [oldPadel])).toBeUndefined();
+    expect(findSimilarLog(act({ kind: 'run' }), [oldPadel])).toBeUndefined();
+    expect(findSimilarLog(act({ kind: 'run' }), [realRun])?.id).toBe('run');
+    expect(findSimilarLog(act({ otherType: 'Tennis' }), [oldCustom])?.id).toBe('old_tennis');
   });
 });
