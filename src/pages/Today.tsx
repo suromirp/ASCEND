@@ -263,6 +263,8 @@ function TodayContent() {
   // en vandaag afliep draagt de datum van het bestand, maar telt op de dag van zijn geplande training).
   const plannedById = plannedByIdOf(plannedSessions);
   const doneToday = sessionLogs.filter((l) => logDay(l, plannedById) === today);
+  // Alleen minuten uit logs met een bruikbare duur; zonder zulke logs geen getal (punt A).
+  const doneMinutes = doneToday.reduce((sum, l) => sum + (loggedMinutes(l) ?? 0), 0);
   const restMode = settings.restDayMode ?? 'rest';
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
   const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;
@@ -435,7 +437,7 @@ function TodayContent() {
   ) : allTodayDone && anyDoneToday ? (
     <DoneTodayCard
       title="Vandaag zit erop"
-      line={`${doneToday.map((l) => templateById.get(l.templateId)?.name).filter(Boolean).join(' en ')} gedaan, ${doneToday.reduce((sum, l) => sum + (loggedMinutes(l) ?? 0), 0)} min`}
+      line={`${doneToday.map((l) => templateById.get(l.templateId)?.name).filter(Boolean).join(' en ')} gedaan${doneMinutes > 0 ? `, ${doneMinutes} min` : ''}`}
       tomorrow={tomorrowLine}
     />
   ) : (

@@ -10,6 +10,7 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import { exercisesForVariant, resolveVariantDuration } from './substitutions';
 import { isWorkSet } from './workSets';
 import { loggedMinutes } from './sessionStatus';
+import { hasRole } from './templateRoles';
 
 export const SHORT_TRAINING_SHARE = 0.5;
 export const SHORT_TRAINING_TEXT = 'Een korte training. Dat telt ook.';
@@ -27,7 +28,8 @@ export function isShortTraining(
   template: SessionTemplate,
   program: Program | null | undefined,
 ): boolean {
-  if (template.type === 'recovery') return false;
+  // Een test of wedstrijd heeft zijn eigen oordeel: een afgebroken test is geen korte training.
+  if (template.type === 'recovery' || hasRole(template, 'test') || hasRole(template, 'race')) return false;
   const variant = log.variant ?? 'full';
   if (log.strengthData && !fromMacroFactor(log)) {
     const planned = exercisesForVariant(template, variant).reduce((n, e) => n + (e.sets > 0 ? e.sets : 0), 0);

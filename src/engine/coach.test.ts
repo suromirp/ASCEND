@@ -112,6 +112,10 @@ describe('punt C: het oordeel na afronden past bij wat er gebeurde', () => {
     const r = coachReaction(log('tpl_upper_a', '2026-09-29', { durationMinutes: 55, source: 'macrofactor', strengthData: sets(2) }), upper, program);
     expect(r).not.toBe('Een korte training. Dat telt ook.');
   });
+  it('een afgebroken test is geen korte training', () => {
+    const r = coachReaction(log('tpl_test_run', '2026-09-29', { durationMinutes: 5 }), t('tpl_test_run'), program);
+    expect(r).not.toBe('Een korte training. Dat telt ook.');
+  });
   it('een oud log zonder duur is nooit kort', () => {
     const r = coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: undefined as unknown as number }), t('tpl_easy_run'), program);
     expect(r).not.toBe('Een korte training. Dat telt ook.');
@@ -125,6 +129,8 @@ describe('punt F: de tempoloop zegt hetzelfde over praten als de Briefing', () =
       expect(line).toContain('korte zinnen');
       expect(line).not.toMatch(/hele zinnen|rustig/i);
     }
+    const before = coachLineForToday({ template: t('tpl_tempo_run'), date: '2026-09-29', program, tomorrow: [t('tpl_lower_a')], yesterdayLogs: [], templateById: byId });
+    expect(before).toContain('Morgen staat Benen A (zwaar).');
   });
   it('een rustige duurloop houdt hele zinnen', () => {
     const line = coachLineForToday({ template: t('tpl_easy_run'), date: '2026-09-29', program, tomorrow: [], yesterdayLogs: [], templateById: byId });

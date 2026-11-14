@@ -104,8 +104,9 @@ export function coachLineForToday({ template, date, program, tomorrow, yesterday
   // Een training boven zone 2 (tempoloop): dezelfde praatregel als de Briefing (engine/sessionBrief.ts,
   // "Zone 3, korte zinnen"), nooit "hele zinnen" of "rustig" (profielen 14 november, punt F).
   const zone = template.type === 'cardio' || template.type === 'hiking' ? briefZone(template, date, program, templateById) : undefined;
-  if (zone === 3) return 'Stevig en gelijkmatig. Praten gaat in korte zinnen; lukt dat niet meer, dan loop je te hard.';
-  if (zone !== undefined && zone > 3) return 'Hard in de zware stukken, rustig ertussen. Praten lukt dan nauwelijks.';
+  const legsNote = legsTomorrow ? ` Morgen staat ${legsTomorrow.name}.` : '';
+  if (zone === 3) return `Stevig en gelijkmatig. Praten gaat in korte zinnen; lukt dat niet meer, dan loop je te hard.${legsNote}`;
+  if (zone !== undefined && zone > 3) return `Hard in de zware stukken, rustig ertussen. Praten lukt dan nauwelijks.${legsNote}`;
   if (legsTomorrow && (template.type === 'cardio' || template.type === 'hiking')) {
     return `Houd het vandaag rustig: morgen staat ${legsTomorrow.name}.`;
   }

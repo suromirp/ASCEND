@@ -63,13 +63,17 @@ export function useMacroFactor(): MacroFactorView {
 // (engine/settingsSummary.ts). Licht: alleen de stand, geen plan. Tot het gelezen is: niet gekoppeld, zodat
 // een tekst over MacroFactor nooit verschijnt en weer verdwijnt bij wie hem niet gebruikt (profielen 14
 // november, punt I). Ontkoppelen (storage/macrofactor.ts#clearMacroFactorWorkouts) wist readAt.
+// De laatst gelezen stand blijft in het geheugen: een tweede scherm of een terugkeer naar Vandaag begint
+// meteen goed, zodat de chip alleen bij de eerste opening na de start kan verschijnen.
+let lastLinked = false;
+
 export function useMacroFactorLinked(): boolean {
-  const [linked, setLinked] = useState(false);
+  const [linked, setLinked] = useState(lastLinked);
   useEffect(() => {
     let alive = true;
     const load = () =>
       void getMacroFactorState()
-        .then((s) => { if (alive) setLinked(!!s.readAt); })
+        .then((s) => { lastLinked = !!s.readAt; if (alive) setLinked(lastLinked); })
         .catch(() => undefined);
     load();
     const stop = onMacroFactorChange(load);

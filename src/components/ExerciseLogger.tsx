@@ -192,7 +192,8 @@ function GeneralLogger({
   const watchView = useWatchSheet({ template, garmin: plan?.garmin, session: plannedSession, hasZonesNote: !!guide?.garminNote });
   const restChosen = selectedModality?.environment === 'rest';
   // Onder 1 minuut is geen training: Opslaan uit, de zin staat onder het veld Duur (punt B).
-  const blocked = (reachedForm || quickComplete) && blocksSave(values, template);
+  // Alleen waar het veld Duur te zien is: bij Afvinken (quickComplete) zou de knop anders uit staan zonder uitweg.
+  const blocked = reachedForm && !quickComplete && blocksSave(values, template);
   const weekday = weekdayShortNL(scheduledDate ?? today);
   const dateLabel = `${weekday.charAt(0).toUpperCase()}${weekday.slice(1).toLowerCase()} ${formatDateNL(scheduledDate ?? today)}`;
   // Eén doorlopend blok: geen profiel, wel de zone (zoals de missiekaart).
