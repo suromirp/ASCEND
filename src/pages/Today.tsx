@@ -94,6 +94,7 @@ import { mainGoal as findMainGoal } from '../engine/mainGoal';
 import { planShorter, resolveShorterToday, shorterAdvice } from '../engine/shorterToday';
 import type { Advice } from '../engine/adviceEngine';
 import { ProposalSheet } from '../components/ProposalSheet';
+import { RaceDayLine } from '../components/RaceDay';
 
 function TodayContent() {
   const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
@@ -528,6 +529,8 @@ function TodayContent() {
       {/* Wat bevestigd moet worden. */}
       <WatchActivityCard quiet />
       <WatchAlignCard />
+      {/* Racedag: in de laatste week voor een 10 km en de dag erna één rij naar het blad (engine/raceDay.ts). */}
+      <RaceDayLine />
       {/* Een tochtdag in de bergen of de sneeuw: het weer op de hoogte van je tocht (engine/mountainWeather.ts). */}
       <MountainWeatherCard />
       <MacroFactorCard primary={false} />

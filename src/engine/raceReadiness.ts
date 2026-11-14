@@ -23,7 +23,7 @@ import { computeGoalReadiness, readinessInputOf, type GoalReadiness, type Missin
 import { goalDetailsOf } from './goalLabels';
 import { GOAL_GROWTH, growthPer, type GrowthChoice } from '../data/goalGrowth';
 import { fillFromWeeks, weeksOfWork } from './goalGap';
-import { outlookSaid, outlookWeeksSaid, raceOutlook, racePaces } from './racePaces';
+import { outlookSaid, outlookWeeksSaid, raceOutlook, racePaces, type RacePaces } from './racePaces';
 import { countedTests, formatRaceTime, type TestResult } from './racePrediction';
 import { awaitsEffort } from './testJudgment';
 
@@ -92,22 +92,33 @@ interface Speed {
   test?: TestResult;
 }
 
+// De verwachte tijd over `km` uit de tests die meetellen, op `date`: dezelfde tijd als de meter Tempo, ook
+// zonder doeltijd (Racedag, engine/raceDay.ts). Een snelste 5 km die op Akkoord wacht verandert het getal
+// nog: dan geen tijd (zoals TARGET-TIME).
+export type ExpectedRaceTime = { status: 'none' | 'waiting' } | { status: 'ok'; paces: RacePaces; minutes: number };
+
+export function expectedRaceTime(logs: SessionLog[], date: string, km: number, options: { judgments?: TestJudgment[]; ask?: boolean } = {}): ExpectedRaceTime {
+  const seen = logs.filter((l) => l.completedDate <= date);
+  const counted = countedTests(seen, { judgments: options.judgments, ask: options.ask });
+  const latest = counted.tests.at(-1);
+  if (!latest || awaitsEffort(seen, latest.logId)) {
+    const waiting = !!latest || counted.pending !== undefined || counted.waiting.length > 0;
+    return { status: waiting ? 'waiting' : 'none' };
+  }
+  const paces = racePaces(counted.tests, km);
+  const minutes = paces?.race?.minutes;
+  if (!paces || minutes === undefined) return { status: 'none' };
+  return { status: 'ok', paces, minutes };
+}
+
 function speedAt(goal: TrainingGoal, logs: SessionLog[], date: string, options: RaceReadinessOptions): Speed {
   const d = goalDetailsOf(goal);
   const target = d.targetMinutes;
   const km = d.distanceKm;
   if (!target || !km || !(d.variant === '5k' || d.variant === '10k' || d.variant === 'half')) return { facts: { status: 'no-target' } };
-  const seen = logs.filter((l) => l.completedDate <= date);
-  const counted = countedTests(seen, { judgments: options.judgments, ask: options.ask });
-  const latest = counted.tests.at(-1);
-  // Een snelste 5 km die op Akkoord wacht verandert het getal nog: dan geen tijd noemen (zoals TARGET-TIME).
-  if (!latest || awaitsEffort(seen, latest.logId)) {
-    const waiting = !!latest || counted.pending !== undefined || counted.waiting.length > 0;
-    return { facts: { status: waiting ? 'waiting' : 'none', targetMinutes: target, statusLine: waiting ? WAITING_LINE : NO_TEST_LINE } };
-  }
-  const paces = racePaces(counted.tests, km);
-  const expected = paces?.race?.minutes;
-  if (!paces || expected === undefined) return { facts: { status: 'none', targetMinutes: target, statusLine: NO_TEST_LINE } };
+  const time = expectedRaceTime(logs, date, km, options);
+  if (time.status !== 'ok') return { facts: { status: time.status, targetMinutes: target, statusLine: time.status === 'waiting' ? WAITING_LINE : NO_TEST_LINE } };
+  const { paces, minutes: expected } = time;
 
   const work = weeksOfWork({ now: expected, need: target, lowerIsBetter: true, weeklyGain: growthPer(GOAL_GROWTH.run, options.growth) });
   const share = fillFromWeeks(work);

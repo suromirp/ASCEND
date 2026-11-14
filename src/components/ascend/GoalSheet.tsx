@@ -23,6 +23,8 @@ import { LabelPill } from './GoalLabel';
 import { JourneyRows } from './JourneyRows';
 import type { GoalView } from './useGoalViews';
 import { RaceFactsBlock } from './GoalCard';
+import { RaceDayRow, RaceDaySheet } from '../RaceDay';
+import { useRaceDay } from '../useRaceDay';
 
 // Het blad van één doel: de meters achter het percentage, de volgende stap, de coach, bij een
 // tocht de tochtmodule en de mijlpalen, en onderaan "Dit doel": label, plek in de lijst (Hoger en
@@ -49,6 +51,9 @@ export function GoalSheet({
   const when = whenText(view);
   const [ladderOpen, setLadderOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  // Racedag: alleen bij een 10 km in de laatste week en de dag erna (engine/raceDay.ts).
+  const raceDay = useRaceDay(goal.id);
+  const [raceDayOpen, setRaceDayOpen] = useState(false);
   const milestones = useMemo(() => goalMilestones.filter((m) => m.goalId === goal.id), [goalMilestones, goal.id]);
   const progress = useMemo(
     () => (milestones.length > 0 ? computeGoalProgress(goal.id, goal.name, milestones, goalMilestoneProgress, sessionLogs) : null),
@@ -95,6 +100,7 @@ export function GoalSheet({
               </div>
             </div>
 
+            {raceDay && <RaceDayRow view={raceDay} onOpen={() => setRaceDayOpen(true)} />}
             {readiness?.race && <RaceFactsBlock race={readiness.race} withBasis />}
             {readiness?.race && readiness.race.status !== 'no-target' && kind && (
               <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{labelLine(goal, item.priority)}</p>
@@ -154,6 +160,7 @@ export function GoalSheet({
           </div>
         )}
       </Sheet>
+      {raceDayOpen && raceDay && <RaceDaySheet view={raceDay} onClose={() => setRaceDayOpen(false)} />}
       {selectedMilestone && selectedDetail && (
         <MilestoneDetailSheet title={selectedMilestone.definition.title} detail={selectedDetail} onClose={() => setSelected(null)} />
       )}

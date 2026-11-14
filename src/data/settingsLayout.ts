@@ -144,7 +144,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   // Doel en tochten
   ...inSheet('bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
   // De seizoensstrook en de vaardigheden: wat de Ascend-tab laat zien (de pagina had al twaalf rijen).
-  ...inSheet('bundel-ascend', 'seizoensstrook', 'vaardigheidsdoelen'),
+  ...inSheet('bundel-ascend', 'seizoensstrook', 'vaardigheidsdoelen', 'racedag'),
   ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'afdaalklok', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
   ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'standen-onthouden', 'tussengewichten', 'spotterrek'),

@@ -304,6 +304,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('klaar-groei', 'Groei bij het rekenen', 'doel', 'goalGrowth', 'average', 'klaarGroei'),
   choice('klaar-marge', 'Marge bij een tijdslimiet', 'doel', 'limitMargin', 'ten', 'klaarMarge'),
   flag('doeltijd-voorstel', 'Doeltijd aanpassen voorstellen', 'doel', 'proposeTargetTime'),
+  flag('racedag', 'Racedag-blad', 'doel', 'raceDay'),
   choice('test-rust', 'Rust voor een test', 'planning', 'testRest', 72, 'testRust', true),
   choice('test-stilstaan', 'Stilstaan bij een testloop', 'planning', 'testStops', 'skip', 'testStilstaan'),
   flag('korte-nacht', 'Vragen bij een korte nacht', 'vandaag', 'askShortNight'),

@@ -442,8 +442,11 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: `Rust ${lower(WEEKDAYS_SHORT[restDayIndex(f)])}`, dim: false };
     }
     case 'bundel-ascend': {
-      const shown = [s.showSeasonStrip !== false, s.showSkillGoals !== false].filter(Boolean).length;
-      return shown === 2 ? { value: 'Alles' } : shown === 0 ? { value: 'Niets extra', dim: true } : { value: s.showSeasonStrip !== false ? 'Seizoensstrook' : 'Vaardigheden' };
+      const flags = [s.showSeasonStrip !== false, s.showSkillGoals !== false, s.raceDay !== false];
+      const shown = flags.filter(Boolean).length;
+      if (shown === flags.length) return { value: 'Alles' };
+      if (shown === 0) return { value: 'Niets extra', dim: true };
+      return { value: `${shown} van ${flags.length} aan` };
     }
     case 'bundel-tochten':
       if (f.treks > 0) return { value: plural(f.treks, 'tocht', 'tochten') };
@@ -812,6 +815,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('klaarMarge', resolveLimitMargin(s.limitMargin)) };
     case 'doeltijd-voorstel':
       return { checked: s.proposeTargetTime !== false };
+    case 'racedag':
+      return { checked: s.raceDay !== false };
     // Testloop: de vier keuzes rond een test in één blad; de rij noemt de rust, de rest staat in het blad.
     case 'bundel-testloop':
       return { value: `${choiceShort('testRust', resolveTestRest(s.testRest))} rust`, sub: s.newTestOnStops === false ? 'Geen nieuwe test bij stilstand' : 'Nieuwe test bij stilstand' };

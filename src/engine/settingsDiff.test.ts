@@ -128,6 +128,7 @@ const everything: AppSettings = {
   keepStreams: false,
   tempoStablePieces: false,
   fuelOnTheGo: false,
+  raceDay: false,
   morningInBackup: false,
   watchSilence: false,
   illnessSigns: false,

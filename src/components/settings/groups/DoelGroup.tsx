@@ -88,6 +88,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
         <BundleSheet eyebrow="Doel en tochten" title="Op de Ascend-tab" line="Wat Ascend naast je doelen laat zien." onClose={close}>
           <SummaryRow id="seizoensstrook" title="Seizoensstrook tonen" facts={facts} info="seizoensstrook" onChange={(on) => void updateSettings({ showSeasonStrip: on })} />
           <SummaryRow id="vaardigheidsdoelen" title="Calisthenicsdoelen tonen" facts={facts} info="vaardigheidsdoelen" onChange={(on) => void updateSettings({ showSkillGoals: on })} />
+          <SummaryRow id="racedag" title="Racedag-blad" facts={facts} info="racedag" onChange={(on) => void updateSettings({ raceDay: on })} />
         </BundleSheet>
       )}
       {sheet === 'programma' && <ProgramSheet onClose={close} onRestart={() => setSheet('opnieuw')} />}
