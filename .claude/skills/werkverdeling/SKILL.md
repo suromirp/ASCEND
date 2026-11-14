@@ -184,6 +184,17 @@ Op 14 november liep een half uur maar één bouwer terwijl de coördinator wacht
 - Uitzondering alleen bij `allowed_warning` in rate_limit_info, de Wachter-regels hierboven, of als de eigenaar zegt te wachten.
 - Meld de eigenaar welke bouwers lopen en wanneer je weer kijkt; zeg het als een plek bewust leeg blijft, met de reden.
 
+## Check-in en reflectie (eigenaar 14 november)
+
+Elke ronde van de Wachter schrijft een blok in `.claude/coordinator/reflectie.md` (check-in, beter, slechter, gereedschap met potentie, werkstijl per soort werk) en zet de check-in als zin `melding` op de werkkaart (skill werkkaart). Bij de wissel vat de coördinator de dag samen onder Wat werkt hieronder.
+
+## Wat werkt, per soort werk (bijwerken bij de wissel)
+
+- Tekst en schermen: opus, één ronde plus één herstelronde; Lookout laat ontbrekende standen zelf namaken; eigen blik op elke afdruk.
+- Engine, opslag, races: fable, Warden op fable met mutatietests en een proeftest voor races.
+- Alleen tests of docs: sonnet.
+- Gereedschap: Ponytail alleen als audit-prompt in onderhoud; Graphify niet, wel het idee van een graaf (werkkaart).
+
 ## Limiet van vijf uur (eigenaar 12 november: "mag niet nog een keer gebeuren")
 
 In de nacht van 12 november raakte het account om ongeveer 03:00 UTC het limiet van vijf uur; het ging om 03:20 weer open, maar niets maakte de coördinator of de bouwers wakker tot 06:33. Ruim drie uur stilstand. Het limiet zelf is soms niet te vermijden; de stilstand wel.

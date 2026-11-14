@@ -47,6 +47,14 @@ def main():
     for gid, kop in [('inbox', 'Inbox'), ('bouwrij', 'Bouwrij'), ('wacht', 'Wacht op de eigenaar')]:
         for j, it in enumerate(sectie(backlog, kop)):
             rows.append({'id': f'{gid}{j}', 'label': it['titel'], 'groep': gid, 'ouder': gid, 'status': 'wacht' if gid == 'wacht' else 'open', 'detail': it['detail'], 'wanneer': ''})
+    reflectie = ''
+    try:
+        rt = open(f'{o.repo}/.claude/coordinator/reflectie.md', encoding='utf-8').read()
+        blok = re.search(r'^## (.+?)$\n(.*?)(?=^## |\Z)', rt, re.S | re.M)
+        if blok:
+            reflectie = blok.group(1).strip() + '\n' + '\n'.join(l[2:] for l in blok.group(2).splitlines() if l.startswith('- '))
+    except FileNotFoundError:
+        pass
     nu = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
     bezig = [b for b in stand.get('bouwers', []) if b.get('status') != 'klaar']
     dep = stand.get('deploy', {})
@@ -54,7 +62,7 @@ def main():
                 'wacht': len([r for r in rows if r['groep'] == 'wacht' and r['ouder'] == 'wacht']),
                 'deploy': dep.get('status', 'onbekend'), 'commit': dep.get('commit', ''),
                 'laatst_live': log[0].split('\t', 2)[2] if log else '',
-                'wachter': stand.get('wachter', 'onbekend'), 'volgende': stand.get('volgende', ''), 'melding': stand.get('melding', '')}
+                'wachter': stand.get('wachter', 'onbekend'), 'volgende': stand.get('volgende', ''), 'melding': stand.get('melding', ''), 'reflectie': stand.get('reflectie', reflectie)}
     json.dump({'rows': rows, 'briefing': briefing,
                'meta': [{'label': 'Gemaakt door', 'value': '.claude/skills/werkkaart/bouw.py'}, {'label': 'Bijgewerkt', 'value': nu}]},
               open(o.uit, 'w'), ensure_ascii=False, indent=1)
