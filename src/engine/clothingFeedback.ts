@@ -74,7 +74,9 @@ export function feedbackSentence(raw: unknown, sport: Sport, feel: ClothingFeel)
   if (now === 0) return 'Genoteerd. Je zit weer op de standaard.';
   const end = Math.abs(now) === MAX_ADJUST_C && Math.sign(now) === (warmer ? -1 : 1) ? ` Verder dan ${MAX_ADJUST_C} graden schuift het niet.` : '';
   const how = `${degrees(now)} ${Math.abs(now) === 1 ? 'graad' : 'graden'} ${now > 0 ? 'lichter' : 'warmer'}`;
-  return `Genoteerd. Een volgende keer ${warmer ? 'warmer' : 'lichter'}: nu ${how}. Een kledingstuk verandert pas als het weer net op een grens zit.${end}`;
+  // The garment line only after the first tap; after that it is known and the sentence stays short.
+  const first = adjustFor(raw, sport) === 0 ? ' Een kledingstuk verandert pas als het weer net op een grens zit.' : '';
+  return `Genoteerd. Een volgende keer ${warmer ? 'warmer' : 'lichter'}: nu ${how}.${first}${end}`;
 }
 
 export const hasClothingAdjust = (raw: unknown): boolean => Object.keys(readClothingAdjust(raw)).length > 0;

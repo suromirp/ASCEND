@@ -75,6 +75,9 @@ describe('een oude waarde en de zin na een tik', () => {
   it('zegt wat er de volgende keer anders wordt', () => {
     expect(feedbackSentence(undefined, 'running', 'too_cold')).toContain('Een volgende keer warmer: nu 1 graad warmer.');
     expect(feedbackSentence({ running: -1 }, 'running', 'too_cold')).toContain('nu 1,5 graden warmer');
+    // De zin over het kledingstuk alleen na de eerste tik (Pathfinder 13 november).
+    expect(feedbackSentence(undefined, 'running', 'too_cold')).toContain('grens zit');
+    expect(feedbackSentence({ running: -1 }, 'running', 'too_cold')).not.toContain('grens zit');
     expect(feedbackSentence({ running: 0.5 }, 'running', 'too_cold')).toBe('Genoteerd. Je zit weer op de standaard.');
     expect(feedbackSentence({ running: -3.5 }, 'running', 'too_cold')).toContain('Verder dan 4 graden schuift het niet.');
     expect(feedbackSentence(undefined, 'running', 'good')).toBe('Fijn, dan blijft het zo.');
