@@ -74,7 +74,7 @@ describe('vlak bij zone 2: de grens hoort bij de telling', () => {
     expect(kmPieces({ kms: steep, counter: 2 })[0].flat).toBe(false);
   });
 
-  it('een merk dat de app niet kent telt als geen merk', () => {
+  it('een merk dat de app niet kent krijgt de strengste grens (5 m), zoals een log zonder merk', () => {
     const odd = { kms, counter: 7 } as unknown as Pick<RunDetail, 'kms' | 'counter'>;
     expect(kmPieces(odd)[0].flat).toBe(false);
   });

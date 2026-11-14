@@ -15,6 +15,7 @@
 import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { DetailConditions } from '../models/activityDetail';
+import { counterMark, gainDisagreement, ownGainOf, sameCounter } from './elevation';
 import { logSport, isIndoorLog } from './sports';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { zoneBpm, type HeartRateSettings } from './heartRateZones';
@@ -346,28 +347,47 @@ export function comparableLogs(subject: SessionLog, topic: InsightTopic, ctx: Co
 const SIMILAR_DISTANCE_PCT = 15;
 const SIMILAR_CLIMB_M_PER_KM = 5;
 
-// Stijging per km van een log, op twee manieren. `watch` is het getal van het horloge op het log:
-// dat verandert niet met de teller. `own` is de eigen optelling van de bewaarde kilometers; die is
-// bij logs van voor 12 november 2026 lager dan bij latere (besluit 2026-11-12-hoogtemeters-stap-1.md).
+// Is het getal van het horloge op dit log te geloven? Een 0 is geen meting (een horloge met hoogte
+// meldt op een loop vrijwel nooit precies niets, een horloge zonder hoogte wel). Verder de
+// overeenkomst met de eigen telling van het profiel (engine/elevation.ts#gainDisagreement: buiten
+// 60 tot 140 procent en ook 20 m of meer uit elkaar, want in vlak land zeggen procenten weinig),
+// gelezen met het merk van `detail`: de teller van engine/elevation.ts ligt dicht bij het horloge,
+// dus ver uiteen is het horloge niet te vertrouwen. De oude dode band telde altijd te laag: een
+// lage overeenkomst zegt daar niets over het horloge, alleen een te hoge.
+function watchClimbTrusted(log: SessionLog, reported: number | undefined): reported is number {
+  if (reported === undefined || !Number.isFinite(reported) || reported <= 0) return false;
+  const detail = log.detail;
+  if (!detail) return true;
+  const apart = gainDisagreement(detail.quality.gainAgreementPct, ownGainOf(detail), reported);
+  if (apart === 'high') return false;
+  return apart === undefined || counterMark(detail.counter) === undefined;
+}
+
+// Stijging per km van een log, op twee manieren. `watch` is het getal van het horloge op het log,
+// alleen als het te geloven is: dat verandert niet met de teller. `own` is de eigen optelling van
+// de bewaarde kilometers, geteld zoals `runDetail.counter` zegt; die is bij logs van
+// voor 12 november 2026 lager dan bij latere (besluit 2026-11-12-hoogtemeters-stap-1.md).
 const climbPerKm = (log: SessionLog): { watch?: number; own?: number } => {
   const rd = log.runDetail;
   if (!rd || rd.totalM <= 0) return {};
   const km = rd.totalM / 1000;
   const reported = (log.cardioData ?? log.outdoorData)?.elevationGainM;
   return {
-    ...(reported !== undefined && Number.isFinite(reported) ? { watch: reported / km } : {}),
+    ...(watchClimbTrusted(log, reported) ? { watch: reported / km } : {}),
     ...(rd.kms.some((k) => k.gainM !== undefined) ? { own: rd.kms.reduce((n, k) => n + (k.gainM ?? 0), 0) / km } : {}),
   };
 };
 
-// Het verschil in stijging per km tussen twee logs. Op het getal van het horloge als beide het
-// hebben, zodat een oud en een nieuw log van dezelfde route gelijk tellen; anders op de eigen
-// optelling van beide; anders valt er niets te vergelijken.
-function climbDifference(a: SessionLog, b: SessionLog): number | undefined {
+// Het verschil in stijging per km tussen twee logs. Op het getal van het horloge als dat op beide
+// te geloven is, zodat een oud en een nieuw log van dezelfde route gelijk tellen. Anders op de
+// eigen optelling van beide, maar alleen als ze met dezelfde teller geteld zijn. Hebben beide een
+// eigen telling en is er toch geen gelijke maat, dan is het antwoord 'unknown': de stijging is er
+// wel maar valt niet te vergelijken. Zonder hoogte op een van beide valt er niets te zeggen.
+function climbDifference(a: SessionLog, b: SessionLog): number | 'unknown' | undefined {
   const x = climbPerKm(a);
   const y = climbPerKm(b);
   if (x.watch !== undefined && y.watch !== undefined) return Math.abs(x.watch - y.watch);
-  if (x.own !== undefined && y.own !== undefined) return Math.abs(x.own - y.own);
+  if (x.own !== undefined && y.own !== undefined) return sameCounter(a.runDetail?.counter, b.runDetail?.counter) ? Math.abs(x.own - y.own) : 'unknown';
   return undefined;
 }
 
@@ -414,6 +434,10 @@ export function similarRuns(subject: SessionLog, ctx: ComparisonContext): Compar
       continue;
     }
     const climbDiff = indoor ? undefined : climbDifference(subject, log);
+    // Stijging die niet te vergelijken is (een oude tegen een nieuwe telling, zonder betrouwbaar
+    // horlogegetal): geen kandidaat, en ook geen reden om te noemen, want of de route anders was
+    // weet de app niet.
+    if (climbDiff === 'unknown') continue;
     if (climbDiff !== undefined && climbDiff > SIMILAR_CLIMB_M_PER_KM) {
       drop('otherDistance');
       continue;

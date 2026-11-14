@@ -1,6 +1,7 @@
 // Migratiestappen voor het profiel van een activiteit: loopinzicht, Run in
 // detail en de reeksen, inkorten en correcties uit intervals.icu.
 
+import { counterMark } from '../engine/elevation';
 import { isUsableRunDetail } from '../engine/runDetail';
 import { deserializeStreams } from '../engine/streamPack';
 import { readZone2Pieces } from '../engine/zone2Pieces';
@@ -93,9 +94,10 @@ export function migrateActivityDetail(raw: unknown): ActivityDetail | undefined 
   const conditions = raw.conditions === undefined ? undefined : readConditions(raw.conditions);
   return {
     version: 1,
-    // Het merk van de teller (models/activityDetail.ts): alleen de bekende waarde blijft; zonder
-    // merk, of met iets anders, is het een log van de oude telling.
-    ...(raw.counter === 2 ? { counter: 2 as const } : {}),
+    // Het merk van de teller (models/activityDetail.ts): een heel getal vanaf 2 blijft, ook een
+    // hoger merk dan deze app kent (een nieuwere telling is niet de oude). Zonder merk, of met
+    // iets anders, is het een log van de oude telling.
+    ...(counterMark(raw.counter) !== undefined ? { counter: counterMark(raw.counter) } : {}),
     source: raw.source as MetricSource,
     sliceCount: raw.sliceCount,
     slices: slices as DetailSlice[],
