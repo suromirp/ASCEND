@@ -128,10 +128,12 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
             attempted.current.add(activity.externalId);
             // Alleen een log dat nu geschreven werd telt als vanzelf afgevinkt (state/logSave.ts#autoTickLog). Lukt
             // het niet of duurt het te lang, dan gaat de rij verder en blijft de activiteit een gewoon voorstel.
-            await autoTickLog(logSession, { ...activityToDraft(activity, match.template, match.session, chosenWayOf(activity, match, places)), quiet: true }, async () => {
+            const ticked = await autoTickLog(logSession, { ...activityToDraft(activity, match.template, match.session, chosenWayOf(activity, match, places)), quiet: true }, async () => {
               await recordAutoTicked(activity.externalId);
               addDetail(activity);
             });
+            // Een vanzelf afvinken dat nog loopt: een tik op Opslaan toont dan de zin van de grens, niet "lukte niet".
+            if (ticked === 'slow') lateOutstanding.current.add(activity.externalId);
           }
         } finally {
           ticking.current = false;

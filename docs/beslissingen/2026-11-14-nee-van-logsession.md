@@ -52,3 +52,7 @@ Toetsbaar. Wat een scherm bij welke uitkomst doet staat als pure functie in `sta
 Het oude trainingsscherm sluiten en weer openen terwijl de eerste opslag van een losse training nog hangt, en dan iets anders invullen en opslaan, geeft een tweede log: een losse training heeft geen sleutel. Dat vraagt een keuze over wat "dezelfde losse training" is en is hier niet opgelost.
 
 `SessionActionSheet.tsx` (MacroFactor-training opslaan) leest nee nog kaal: het blad blijft open zonder zin. Today en Week vinken een rustdag of krachttraining af zonder het antwoord te lezen; daar wordt niets weggegooid. Het blad Hoe ging het? toont bij "stond er al" de zin voor mislukt, tot het logboek opnieuw gelezen is.
+
+## Aanvulling na Warden ronde 2 (coördinator, 14 november)
+
+Een poging die nooit antwoordt houdt haar geplande training of horloge-activiteit vast tot de app herlaadt. Dat is bewust: de schrijfactie kan alsnog landen, en vrijgeven op een klok kan een tweede log geven. Nog open: de kaart zegt dan blijvend "Probeer het zo nog eens", terwijl alleen herstarten helpt; een eigen zin daarvoor volgt. Een vanzelf afvinken dat nog loopt telt nu ook als laat antwoord, zodat een tik op Opslaan de zin van de grens toont.

@@ -287,6 +287,10 @@ describe('de schermen lezen het antwoord van logSession via state/logSave.ts', (
     expect(loggerSrc.match(/form\.clearDraft\(\)/g)).toHaveLength(2);
     expect(loggerSrc).toMatch(/if \(next\.clearDraft\) form\.clearDraft\(\);/);
     expect(loggerSrc).toMatch(/setSaving\(next\.buttonOff\)/);
+    // Bezig staat aan voor het opslaan begint en volgt daarna de uitkomst: zonder deze twee regels wist
+    // Annuleren tijdens het opslaan het concept weer (Warden ronde 2).
+    expect(loggerSrc).toMatch(/savingRef\.current = true;\s*setSaving\(true\);[\s\S]*saveLogWithin\(logSession, input/);
+    expect(loggerSrc).toMatch(/savingRef\.current = next\.buttonOff;/);
   });
 
   it('de kaart Van je horloge: beide plekken, de beslissing uit cardAfterSave, het blad sluit alleen daarop', () => {
