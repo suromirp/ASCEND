@@ -22,7 +22,7 @@ export function KnowledgePage() {
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
       <PageHeader eyebrow="Gidsen" title="Kennisbank" line="Alles voor onderweg" />
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        {ready.length} van {KNOWLEDGE_TOPICS.length} onderwerpen staan klaar, {read.filter((id) => topicById(id)).length} gelezen. Elke week kiest ASCEND er een voor je uit, op Vandaag.
+        {ready.length} van {KNOWLEDGE_TOPICS.length} onderwerpen staan klaar, {read.filter((id) => topicById(id)).length} gelezen.
       </p>
       {lesson && (
         <Card className="flex flex-col gap-1" texture>

@@ -13,6 +13,7 @@
 // componentDidCatch) on classes, there is no hook equivalent.
 
 import { Component, type ReactNode } from 'react';
+import { CHUNK_LINE, CHUNK_TITLE, isChunkLoadError } from '../engine/chunkLoadError';
 
 interface Props {
   children: ReactNode;
@@ -52,6 +53,25 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     const { error } = this.state;
     if (!error) return this.props.children;
+
+    // Een scherm dat niet kon laden omdat er geen verbinding was: geen technische melding, wel
+    // wat er aan de hand is. Opnieuw proberen laadt de pagina opnieuw (een mislukte lazy-import
+    // blijft anders mislukt).
+    if (isChunkLoadError(error)) {
+      return (
+        <div className="flex flex-1 flex-col gap-4 px-6 py-10" style={{ color: 'var(--color-ink)' }}>
+          <p className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{CHUNK_TITLE}</p>
+          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>{CHUNK_LINE}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="min-h-[44px] w-full rounded-xl py-3 text-sm font-semibold"
+            style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-action)' }}
+          >
+            Opnieuw proberen
+          </button>
+        </div>
+      );
+    }
 
     return (
       <div className="flex flex-1 flex-col gap-4 px-6 py-10" style={{ color: 'var(--color-ink)' }}>

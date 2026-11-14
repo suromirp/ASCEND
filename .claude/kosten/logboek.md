@@ -460,3 +460,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-13, Kleding en wind: Warden (reviewer, sonnet) 36k, 4 min, akkoord, 1 belangrijk (tekst Zelf bijstellen, zelf hersteld); Lookout (tester, sonnet) 72k, groen, vond wind niet in rij Weer van de Briefing (zelf hersteld); Pathfinder (sonnet) 47k, geen moet, 1 mag zelf gedaan
 - 2026-11-13, Weer van de plek: Warden (reviewer, sonnet) 30k, 3 min, akkoord
 - 2026-11-14, Sherpa Opstarten en Intervals (ontwikkelaar, fable) 71k, 19 min; Warden (reviewer, fable) 84k, 14 min, akkoord, 2 belangrijk (volgorde herstelstappen zelf hersteld, grens meten naar backlog)
+- 2026-11-14, Sherpa Verborgen schermen (ontwikkelaar, sonnet) 104k + herstel 126k; Warden (reviewer, sonnet) 45k, niet akkoord (Reis-regel zonder tocht); Lookout (tester, sonnet) 89k, groen; Pathfinder (sonnet) 32k, geen moet

@@ -1,3 +1,4 @@
+import { effectiveGoalKind } from '../../engine/journeyAccess';
 import { forwardRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CountUp } from '../CountUp';
@@ -7,7 +8,6 @@ import { TextButton } from '../TextButton';
 import { formatDateNL, formatShortDayNL } from '../../utils/dates';
 import { GOAL_KINDS } from '../../data/goalKinds';
 import { changeLabel } from '../../engine/goalReadiness';
-import { goalKindOf } from '../../engine/goalLabels';
 import { labelLine } from '../../engine/goalList';
 import type { NextKeySession } from '../../engine/keySession';
 import { LabelPill } from './GoalLabel';
@@ -61,7 +61,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
   const [metersOpen, setMetersOpen] = useState(false);
   const { item, readiness, timing } = view;
   const goal = item.goal;
-  const kind = goalKindOf(goal) ?? (item.isMain ? 'trek_hut' : undefined);
+  const kind = effectiveGoalKind(goal, item.isMain);
   const when = whenText(view);
   const kindName = kind ? GOAL_KINDS[kind].label : undefined;
   const percent = readiness?.percent;
