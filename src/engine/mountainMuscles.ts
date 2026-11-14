@@ -325,7 +325,8 @@ export function muscleNoticeText(p: MuscleProposal): MuscleNoticeText {
     how,
     why: `${fact} ${WHY[p.muscle] ?? ''}`.trim(),
     info,
-    after: `Eerst een voorstel, pas na Akkoord verandert er iets. Daarna doe je hem vanaf je volgende ${p.templateName} als laatste oefening. Weghalen kan in het blad van de oefening.`,
-    done: `Vanaf je volgende ${p.templateName} doe je ${name} als laatste oefening.`,
+    // De naam van de training staat achteraan: een naam met haakjes (Benen A (zwaar)) leest dan als een gewone zin.
+    after: `Eerst een voorstel, pas na Akkoord verandert er iets. Daarna is hij vanaf je volgende keer de laatste oefening in ${p.templateName}. Weghalen kan in het blad van de oefening.`,
+    done: `Vanaf je volgende keer is ${name} de laatste oefening in ${p.templateName}.`,
   };
 }

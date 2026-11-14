@@ -335,13 +335,30 @@ describe('de woorden van het voorstel', () => {
     const t = make({ muscle: 'balance', exerciseId: 'single-leg-stance', exerciseName: 'Single Leg Stance' });
     expect(t.name).toBe('Op één been staan');
     expect(t.where).toBe('Erbij in Benen B');
-    expect(t.after).toBe('Eerst een voorstel, pas na Akkoord verandert er iets. Daarna doe je hem vanaf je volgende Benen B als laatste oefening. Weghalen kan in het blad van de oefening.');
-    expect(t.done).toBe('Vanaf je volgende Benen B doe je Op één been staan als laatste oefening.');
+    expect(t.after).toBe('Eerst een voorstel, pas na Akkoord verandert er iets. Daarna is hij vanaf je volgende keer de laatste oefening in Benen B. Weghalen kan in het blad van de oefening.');
+    expect(t.done).toBe('Vanaf je volgende keer is Op één been staan de laatste oefening in Benen B.');
+    // Een naam met haakjes staat achteraan in de zin.
+    const zwaar = make({ muscle: 'tibialis', exerciseId: 'tibialis-raise', exerciseName: 'Tibialis Raise', templateName: 'Benen A (zwaar)', reps: '15-20' });
+    expect(zwaar.name).toBe('Tenen optrekken tegen de muur');
+    expect(zwaar.where).toBe('Erbij in Benen A (zwaar)');
+    expect(zwaar.after).toMatch(/de laatste oefening in Benen A \(zwaar\)\. Weghalen/);
+    expect(zwaar.done).toBe('Vanaf je volgende keer is Tenen optrekken tegen de muur de laatste oefening in Benen A (zwaar).');
   });
 
   it('geen gedachtestreepjes, geen "voorkomt", geen harde sets in de tekst', () => {
     for (const muscle of ['calves', 'tibialis', 'glutes', 'balance'] as const) {
       expect(Object.values(make({ muscle, unknownSets: 2 })).join(' ')).not.toMatch(/[–—]|voorkom|harde set/i);
     }
+  });
+});
+
+// Elke oefening die Spieren voor de berg kan voorstellen heeft een Nederlandse naam in het voorstel.
+describe('de naam in het voorstel', () => {
+  it('elke kandidaat voor kuiten, scheenspier en bilspieren, en de evenwichtsoefening, heet Nederlands', async () => {
+    const { EXERCISES } = await import('../data/exercises');
+    const { dutchExerciseAlias } = await import('./exerciseNames');
+    const candidates = EXERCISES.filter((e) => ['calves', 'tibialis', 'glutes'].some((m) => e.primary.includes(m as never)) && e.pattern !== 'balance').map((e) => e.id);
+    expect(candidates.length).toBeGreaterThan(30);
+    for (const id of [...candidates, 'single-leg-stance']) expect(dutchExerciseAlias(id), id).toBeDefined();
   });
 });
