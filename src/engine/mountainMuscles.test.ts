@@ -80,7 +80,10 @@ describe('bergspieren onder de ondergrens', () => {
     expect(rest[0].weeks).toBe(3);
     expect(rest.find((s) => s.muscle === 'calves')?.avgSets).toBe(3);
     const p = mountainMuscleProposal(input({ logs, program, templates: [upper, tpl('tpl_lower_a', 'Onderlichaam A', [...lower.exercises!, slot('ex11', 'Tibialis Raise')])] }));
-    expect(muscleNoticeText(p!).fact).toBe('Je kuiten kregen de laatste drie weken zonder de rustweek gemiddeld 3 harde sets per week.');
+    const text = muscleNoticeText(p!);
+    expect(text.why).toMatch(/^Je deed de laatste drie weken gemiddeld 3 sets per week voor je kuiten\. /);
+    expect(text.info).toContain('Een rustweek telt niet mee, daarom gaat het hier over drie weken.');
+    expect(text.info).not.toMatch(/vakantie|tocht/);
   });
 
   it('zegt niets zonder krachtwerk of met te weinig weken', () => {
@@ -101,16 +104,16 @@ describe('het voorstel in de weekterugblik', () => {
     expect(p).toMatchObject({ muscle: 'calves', templateId: 'tpl_lower_a', templateName: 'Onderlichaam A', sets: 3 });
     expect(exerciseById(p!.exerciseId)!.primary).toContain('calves');
     const text = muscleNoticeText(p!);
-    expect(text.fact).toBe('Je kuiten kregen de laatste vier weken geen harde sets.');
-    expect(text.care).toContain('kan kuitwerk helpen');
-    expect(`${text.fact} ${text.care} ${text.proposal}`).not.toMatch(/voorkomt|voorkomen/i);
-    expect(text.proposal).toMatch(/^Voorstel: .+ erbij in Onderlichaam A, 3 sets van \d+ tot \d+ herhalingen\.$/);
-    expect(text.unknown).toBeUndefined();
+    expect(text.why).toBe('Je deed de laatste vier weken geen sets voor je kuiten. Sterkere kuiten kunnen helpen bij bergop en bergaf met een rugzak.');
+    expect(text.where).toBe('Erbij in Onderlichaam A');
+    expect(text.how).toMatch(/3 sets van \d+ tot \d+ herhalingen\.$/);
+    expect(Object.values(text).join(' ')).not.toMatch(/voorkomt|voorkomen|harde set|[–—]/i);
+    expect(text.info).not.toMatch(/gekoppeld/);
   });
 
   it('noemt sets die niet gekoppeld konden worden', () => {
     const p = mountainMuscleProposal(input({ logs: WEEKS.map((d, i) => log(`l${i}`, d, [squat(4), unknown(1)])) }));
-    expect(muscleNoticeText(p!).unknown).toBe('4 sets konden niet aan een oefening gekoppeld worden; die tellen hier niet mee.');
+    expect(muscleNoticeText(p!).info).toContain('4 sets konden niet aan een oefening gekoppeld worden; die tellen hier niet mee.');
   });
 
   it('staat de spier al in het plan, dan de volgende; staat alles erin, dan niets', () => {
@@ -154,7 +157,7 @@ describe('het voorstel in de weekterugblik', () => {
   it('een tibialis-melding spreekt in het enkelvoud', () => {
     const withCalf = tpl('tpl_lower_a', 'Onderlichaam A', [...lower.exercises!, slot('ex10', 'Standing Calf Raise')]);
     const p = mountainMuscleProposal(input({ templates: [upper, withCalf] }))!;
-    expect(muscleNoticeText(p).fact).toMatch(/^Je scheenspier kreeg /);
+    expect(muscleNoticeText(p).why).toMatch(/voor je scheenspier\. Een sterkere scheenspier kan helpen bij lange afdalingen\.$/);
   });
 });
 
@@ -186,16 +189,13 @@ describe('enkel en evenwicht', () => {
     const p = mountainMuscleProposal(base());
     expect(p).toMatchObject({ muscle: 'balance', exerciseId: 'single-leg-stance', templateId: 'tpl_lower_a', sets: 3, avgSets: 0, weeks: 4 });
     const text = muscleNoticeText(p!);
-    expect(text.fact).toBe('Je enkels en je evenwicht kregen de laatste vier weken geen werk op één been.');
-    expect(text.care).toBe('Voor ongelijke paden en afdalingen kan werk op één been helpen.');
+    expect(text.why).toBe('Je deed de laatste vier weken geen evenwichtsoefening. Evenwichtsoefeningen kunnen je enkels helpen op ongelijke paden en bij afdalen.');
     // De melding noemt de Nederlandse naam (besluit 2026-11-12-je-week-tot-nu); de oefening zelf blijft Single Leg Stance.
-    expect(text.proposal).toBe('Voorstel: Op één been staan erbij in Onderlichaam A, 3 sets per been, zo lang je stil kunt staan.');
-    expect(text.what).toBe('Op één been staan erbij in Onderlichaam A');
-    expect(text.cost).toBe('3 sets per been, zo lang je stil kunt staan.');
+    expect(text.name).toBe('Op één been staan');
+    expect(text.where).toBe('Erbij in Onderlichaam A');
+    expect(text.how).toBe('Sta op één been tot je gaat wiebelen, dan op het andere been. Drie keer per been.');
     expect(p!.exerciseName).toBe('Single Leg Stance');
-    expect(`${text.what} ${text.cost}`).not.toMatch(/minuten/);
-    expect(text.unknown).toBeUndefined();
-    expect(`${text.fact} ${text.care} ${text.proposal}`).not.toMatch(/voorkomt|voorkomen|[–—]/);
+    expect(Object.values(text).join(' ')).not.toMatch(/minuten|voorkomt|voorkomen|werk op één been|zo lang je stil|[–—]/);
   });
 
   it('de spieren gaan voor: met kuiten en evenwicht allebei te weinig komt eerst de kuit', () => {
@@ -207,7 +207,7 @@ describe('enkel en evenwicht', () => {
     expect(balanceShort(logs, LAST)).toBeNull();
     const one = WEEKS.map((d, i) => log(`l${i}`, d, [squat(4), stance(1)]));
     expect(balanceShort(one, LAST)).toMatchObject({ muscle: 'balance', avgSets: 1 });
-    expect(muscleNoticeText(mountainMuscleProposal(base({ logs: one }))!).fact).toBe('Je enkels en je evenwicht kregen de laatste vier weken gemiddeld 1 set per week.');
+    expect(muscleNoticeText(mountainMuscleProposal(base({ logs: one }))!).why).toMatch(/^Je deed de laatste vier weken gemiddeld 1 set per week met een evenwichtsoefening\. /);
     const warm = WEEKS.map((d, i) => log(`l${i}`, d, [squat(4), { ...stance(3), sets: stance(3).sets.map((x) => ({ ...x, kind: 'warmup' as const })) }]));
     expect(balanceShort(warm, LAST)?.avgSets).toBe(0);
   });
@@ -245,7 +245,9 @@ describe('enkel en evenwicht', () => {
     // Met een te korte rest zwijgt het, en de tekst noemt de weggelaten weken eerlijk.
     expect(balanceShort(logs, LAST, null, [away('trek', '2026-10-05', '2026-10-25')])).toBeNull();
     const p = mountainMuscleProposal(base({ leave: [away('trek', '2026-10-27', '2026-10-31')] }));
-    expect(muscleNoticeText(p!).fact).toBe('Je enkels en je evenwicht kregen de laatste drie weken zonder rustweek of vakantie geen werk op één been.');
+    const text = muscleNoticeText(p!);
+    expect(text.why).toMatch(/^Je deed de laatste drie weken geen evenwichtsoefening\. /);
+    expect(text.info).toContain('Een rustweek en een week met vakantie, een tocht of zonder sportschool tellen niet mee, daarom gaat het hier over drie weken.');
     // Het voorstel plant niets: het noemt alleen een training, de tocht verandert niet.
     expect(p).not.toHaveProperty('date');
   });
@@ -280,5 +282,66 @@ describe('enkel en evenwicht', () => {
     expect(addedPrescription(exerciseById('single-leg-stance')!)).toEqual({ sets: 3, reps: '4-6' });
     expect(exerciseById('single-leg-stance')!.measure).toBe('hold');
     expect(exerciseById('star-excursion-reach')!.measure).toBeUndefined();
+  });
+});
+
+// De woorden van het voorstel (muscleNoticeText): gemaakt met de hand, zodat elke rij en elk getal vastligt.
+describe('de woorden van het voorstel', () => {
+  const make = (over: Partial<Parameters<typeof muscleNoticeText>[0]>) => muscleNoticeText({
+    muscle: 'calves', avgSets: 0, weeks: 4, restLeftOut: false, unknownSets: 0,
+    templateId: 't', templateName: 'Benen B', exerciseId: 'bodyweight-calf-raise', exerciseName: 'Bodyweight Calf Raise', sets: 3, reps: '10-15', ...over,
+  });
+
+  it('elk van de vier rijen: het feit, wat het kan helpen, en wat er achter de i telt', () => {
+    expect(make({}).why).toBe('Je deed de laatste vier weken geen sets voor je kuiten. Sterkere kuiten kunnen helpen bij bergop en bergaf met een rugzak.');
+    expect(make({ muscle: 'tibialis', exerciseId: 'tibialis-raise', reps: '15-20' }).why).toBe('Je deed de laatste vier weken geen sets voor je scheenspier. Een sterkere scheenspier kan helpen bij lange afdalingen.');
+    expect(make({ muscle: 'glutes', exerciseId: 'glute-bridge', reps: '10-12' }).why).toBe('Je deed de laatste vier weken geen sets voor je bilspieren. Sterkere bilspieren kunnen helpen bij klimmen met een rugzak.');
+    expect(make({ muscle: 'balance', exerciseId: 'single-leg-stance', reps: '4-6' }).why).toBe('Je deed de laatste vier weken geen evenwichtsoefening. Evenwichtsoefeningen kunnen je enkels helpen op ongelijke paden en bij afdalen.');
+    // Vakantie of een tocht valt alleen bij evenwicht weg; bij de drie spieren alleen een rustweek.
+    for (const muscle of ['calves', 'tibialis', 'glutes'] as const) {
+      const info = make({ muscle }).info;
+      expect(info).toContain('Een rustweek telt niet mee.');
+      expect(info).not.toMatch(/vakantie|tocht/);
+    }
+    expect(make({ muscle: 'balance', exerciseId: 'single-leg-stance' }).info).toBe('Elke werkset van een evenwichtsoefening telt, opwarmen niet. Een rustweek en een week met vakantie, een tocht of zonder sportschool tellen niet mee. Kies je Liever niet, dan blijft het acht weken stil over je evenwicht.');
+    expect(make({ muscle: 'glutes', exerciseId: 'glute-bridge' }).info).toBe('Een set telt als je er hoogstens 4 herhalingen over had. Een rustweek telt niet mee. Kies je Liever niet, dan blijft het acht weken stil over je bilspieren.');
+  });
+
+  it('gemiddeld 0, 1 en een breuk', () => {
+    expect(make({ avgSets: 1 }).why).toMatch(/^Je deed de laatste vier weken gemiddeld 1 set per week voor je kuiten\. /);
+    expect(make({ avgSets: 1.5 }).why).toMatch(/^Je deed de laatste vier weken gemiddeld 1,5 sets per week voor je kuiten\. /);
+    expect(make({ muscle: 'balance', exerciseId: 'single-leg-stance', avgSets: 1.5 }).why).toMatch(/^Je deed de laatste vier weken gemiddeld 1,5 sets per week met een evenwichtsoefening\. /);
+    expect(make({ avgSets: 0.04 }).why).toMatch(/geen sets voor je kuiten/);
+  });
+
+  it('vier weken tegenover drie weken met een weggevallen week', () => {
+    expect(make({}).why).toContain('de laatste vier weken');
+    const three = make({ weeks: 3, restLeftOut: true });
+    expect(three.why).toContain('de laatste drie weken');
+    // Op het scherm alleen de weken; wat niet meetelde staat achter de i.
+    expect(three.why).not.toMatch(/zonder|rustweek|vakantie/);
+    expect(three.info).toContain('Een rustweek telt niet mee, daarom gaat het hier over drie weken.');
+    expect(make({ weeks: 2, restLeftOut: true }).why).toContain('de laatste twee weken');
+  });
+
+  it('met een gids de eerste regel en de dosis, zonder gids alleen de dosis; een houding in gewone woorden', () => {
+    expect(make({}).how).toBe('Voorvoet op een trede, kom hoog op je tenen. 3 sets van 10 tot 15 herhalingen.');
+    expect(exerciseById('dumbbell-frog-pump')?.guide).toBeUndefined();
+    expect(make({ muscle: 'glutes', exerciseId: 'dumbbell-frog-pump', exerciseName: 'Dumbbell Frog Pump', reps: '10-12' }).how).toBe('3 sets van 10 tot 12 herhalingen.');
+    expect(make({ muscle: 'balance', exerciseId: 'single-leg-stance', exerciseName: 'Single Leg Stance', reps: '4-6' }).how).toBe('Sta op één been tot je gaat wiebelen, dan op het andere been. Drie keer per been.');
+  });
+
+  it('de titel, waar hij komt, wat Akkoord doet en de tekst na Akkoord', () => {
+    const t = make({ muscle: 'balance', exerciseId: 'single-leg-stance', exerciseName: 'Single Leg Stance' });
+    expect(t.name).toBe('Op één been staan');
+    expect(t.where).toBe('Erbij in Benen B');
+    expect(t.after).toBe('Eerst een voorstel, pas na Akkoord verandert er iets. Daarna doe je hem vanaf je volgende Benen B als laatste oefening. Weghalen kan in het blad van de oefening.');
+    expect(t.done).toBe('Vanaf je volgende Benen B doe je Op één been staan als laatste oefening.');
+  });
+
+  it('geen gedachtestreepjes, geen "voorkomt", geen harde sets in de tekst', () => {
+    for (const muscle of ['calves', 'tibialis', 'glutes', 'balance'] as const) {
+      expect(Object.values(make({ muscle, unknownSets: 2 })).join(' ')).not.toMatch(/[–—]|voorkom|harde set/i);
+    }
   });
 });

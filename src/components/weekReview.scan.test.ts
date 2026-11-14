@@ -58,4 +58,13 @@ describe('Je week tot nu, de bron', () => {
     expect(notice).toContain('useMountainMuscleProposal({ onlyFor })');
     expect(sheet).toContain('useMountainMuscleProposal({ active: reviewShowsMuscleProposal(review.weekStart, today) })');
   });
+
+  it('één versie van de woorden: Forge en het blad tonen dezelfde lagen uit muscleNoticeText', () => {
+    for (const field of ['name', 'where', 'how', 'why', 'after', 'done']) {
+      expect(sheet).toContain(`muscle.text.${field}}`);
+      expect(notice).toContain(`text.${field}}`);
+    }
+    expect(sheet).toContain('sub={muscle.text.name}');
+    expect(sheet + notice).not.toMatch(/staat erin|Weghalen kan later|Eerst een voorstel/);
+  });
 });
