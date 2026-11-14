@@ -10,7 +10,7 @@ import type { LogSessionInput } from '../../state/AppDataContext';
 import type { LegsAtStart } from '../../engine/learning';
 import { asksLegs } from '../../engine/learning';
 import { cleanDetails, detailForm } from '../../engine/workoutDetails';
-import { entryMinutes } from '../../engine/inputLimits';
+import { durationTooShort, entryAmount, entryMinutes } from '../../engine/inputLimits';
 import { templateSport } from '../../engine/sports';
 import { getModalities, getModality, modalitySport, type ModalityDefinition } from '../../data/modalities';
 
@@ -85,6 +85,11 @@ export function loggedMinutesOf(values: Pick<LogFormValues, 'duration' | 'guidan
   return logFormShape(template, values.guidanceMode, values.modalityKey).isRest ? 0 : entryMinutes(values.duration);
 }
 
+// Opslaan staat uit zolang de duur onder 1 minuut is; een rustdag vraagt geen duur (punt B).
+export function blocksSave(values: Pick<LogFormValues, 'duration' | 'guidanceMode' | 'modalityKey'>, template: SessionTemplate): boolean {
+  return !logFormShape(template, values.guidanceMode, values.modalityKey).isRest && durationTooShort(values.duration);
+}
+
 export interface LogContext {
   template: SessionTemplate;
   plannedSessionId?: string;
@@ -111,8 +116,8 @@ export function buildManualLog(values: LogFormValues, ctx: LogContext): LogSessi
 
   const activityCommon = {
     durationMinutes: loggedMinutes,
-    distanceKm: values.distanceKm === '' ? undefined : values.distanceKm,
-    elevationGainM: elevation.gainM === '' ? undefined : elevation.gainM,
+    distanceKm: entryAmount(values.distanceKm),
+    elevationGainM: elevation.gainM === '' || elevation.gainM < 0 ? undefined : elevation.gainM,
     estimatedElevation: elevation.estimated || undefined,
     environment,
     modality: guidanceMode === 'ascend_guided' ? modalityKey : undefined,
@@ -150,7 +155,7 @@ export function buildManualLog(values: LogFormValues, ctx: LogContext): LogSessi
         ? {
             ...activityCommon,
             power: values.power === '' ? undefined : values.power,
-            elevationLossM: values.elevationLossM === '' ? undefined : values.elevationLossM,
+            elevationLossM: values.elevationLossM === '' || values.elevationLossM < 0 ? undefined : values.elevationLossM,
             backpackWeightKg: values.backpackWeightKg === '' ? undefined : values.backpackWeightKg,
             poles: fields.elevationLoss && values.poles ? true : undefined,
             terrain: values.terrain || undefined,

@@ -118,3 +118,14 @@ describe('afstand bij een rustige loop', () => {
     expect(distanceLine(undefined, { fast: 400, slow: 455 })).toBeUndefined();
   });
 });
+
+describe('punt I: MacroFactor alleen met een koppeling', () => {
+  it('zonder koppeling geen chip "Zwaarte volgens MacroFactor", met koppeling wel', () => {
+    const t = byId.get('tpl_lower_a')!;
+    const without = missionFacts('tpl_lower_a', buildSessionBrief(t, DATE, program, { templates, macroFactor: false }), undefined);
+    expect(without.chips.map((c) => c.text).join(' ')).not.toContain('MacroFactor');
+    expect(without.chips.length).toBeGreaterThanOrEqual(2);
+    const linked = missionFacts('tpl_lower_a', buildSessionBrief(t, DATE, program, { templates, macroFactor: true }), undefined);
+    expect(linked.chips.map((c) => c.text)).toContain('Zwaarte volgens MacroFactor');
+  });
+});

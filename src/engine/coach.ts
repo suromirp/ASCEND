@@ -6,6 +6,8 @@
 //
 // Pure: no React, no IndexedDB.
 
+import { buildSessionBrief } from './sessionBrief';
+import { isShortTraining, SHORT_TRAINING_TEXT } from './shortTraining';
 import { isStopPain, painReports, significantPain } from './pain';
 import type { Program } from '../models/program';
 import type { SessionLog, SessionTemplate } from '../models/training';
@@ -45,6 +47,12 @@ export interface CoachLineInputs {
   tomorrow: SessionTemplate[];
   yesterdayLogs: SessionLog[];
   templateById: Map<string, SessionTemplate>;
+}
+
+// De zone uit de feiten van de sessiebrief ("Zone 3"), zoals de Briefing en de missiekaart hem tonen.
+function briefZone(template: SessionTemplate, date: string, program: Program | null | undefined, templateById: Map<string, SessionTemplate>): number | undefined {
+  const fact = buildSessionBrief(template, date, program, { templates: [...templateById.values()] }).facts.find((f) => /^zone \d/i.test(f.value));
+  return fact ? Number(/\d/.exec(fact.value)![0]) : undefined;
 }
 
 // One sentence for today's training, the most useful one first.
@@ -93,6 +101,11 @@ export function coachLineForToday({ template, date, program, tomorrow, yesterday
         ? `Zware beendag. Morgen staat ${legsTomorrow.name}, dus houd een herhaling in de tank.`
         : 'Zware beendag. Techniek eerst.';
   }
+  // Een training boven zone 2 (tempoloop): dezelfde praatregel als de Briefing (engine/sessionBrief.ts,
+  // "Zone 3, korte zinnen"), nooit "hele zinnen" of "rustig" (profielen 14 november, punt F).
+  const zone = template.type === 'cardio' || template.type === 'hiking' ? briefZone(template, date, program, templateById) : undefined;
+  if (zone === 3) return 'Stevig en gelijkmatig. Praten gaat in korte zinnen; lukt dat niet meer, dan loop je te hard.';
+  if (zone !== undefined && zone > 3) return 'Hard in de zware stukken, rustig ertussen. Praten lukt dan nauwelijks.';
   if (legsTomorrow && (template.type === 'cardio' || template.type === 'hiking')) {
     return `Houd het vandaag rustig: morgen staat ${legsTomorrow.name}.`;
   }
@@ -139,6 +152,8 @@ export function coachReaction(log: SessionLog, template: SessionTemplate | undef
   const pain = painReaction(log, history);
   if (pain) return pain;
   if (!template || template.type === 'recovery') return 'Goed dat je bewoog. Licht en rustig is precies de bedoeling van vandaag.';
+  // Onder de helft van de werksets of de duur: een korte training, nooit "zoals gepland" (engine/shortTraining.ts).
+  if (isShortTraining(log, template, program)) return SHORT_TRAINING_TEXT;
   const top = plannedRpeTop(template, log.completedDate, program);
   const planned = resolveEffectiveFullDuration(template, log.completedDate, program);
   if (log.rpe !== undefined && top !== undefined && log.rpe >= top + 2) {

@@ -8,6 +8,7 @@
 // Rest days are never trainings (no counting, never missed). Weeks before
 // week 1 are not reviewed. Pure: no React, no IndexedDB.
 
+import { isShortTraining } from './shortTraining';
 import type { WeeklyHealthCheck } from '../models/checkIn';
 import { significantPain } from './pain';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
@@ -203,7 +204,15 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   const advice: string[] = [];
   const missedNames = missedSessions.map((s) => byId.get(s.templateId)?.name ?? 'een training');
   if (missedSessions.length === 0 && trainings.length > 0 && done === trainings.length) {
-    advice.push('Alles gedaan wat gepland stond. Zo bouw je op.');
+    // Een korte training (engine/shortTraining.ts) telt als gedaan, maar is niet "alles wat gepland stond".
+    const trainingIds = new Set(trainings.map((s) => s.id));
+    const short = weekLogs.filter((l) => {
+      const t = byId.get(l.templateId);
+      return !!l.plannedSessionId && trainingIds.has(l.plannedSessionId) && !!t && isShortTraining(l, t, program);
+    }).length;
+    advice.push(short === 0
+      ? 'Alles gedaan wat gepland stond. Zo bouw je op.'
+      : `Elke training gedaan, ${short === 1 ? 'één' : short} korter dan gepland. Dat telt ook.`);
   } else if (missedSessions.length > 0) {
     // Only a key session that is still open can be caught up; a skipped one
     // was already let go.

@@ -54,7 +54,9 @@ export function buildSessionBrief(
   template: SessionTemplate,
   dateIso: string | undefined,
   program: Program | null | undefined,
-  options: { modalityKey?: string; templates?: SessionTemplate[] } = {},
+  // `macroFactor`: of MacroFactor gekoppeld is. Zonder koppeling geen feit "Zwaarte volgens MacroFactor"
+  // (profielen 14 november, punt I). Niet meegegeven: zoals het was.
+  options: { modalityKey?: string; templates?: SessionTemplate[]; macroFactor?: boolean } = {},
 ): SessionBrief {
   const style = SESSION_STYLE[template.id];
   const plan = buildWorkoutPlan(template, dateIso, program);
@@ -136,7 +138,9 @@ export function buildSessionBrief(
       case 'race':
         return [total, { value: 'Inlopen', label: 'met versnellingen' }, { value: 'Rustig starten', label: 'eerste km' }];
       case 'strength':
-        return [total, { value: String(template.exercises?.length ?? 0), label: 'oefeningen' }, { value: 'MacroFactor', label: 'zwaarte volgens' }];
+        return options.macroFactor === false
+          ? [total, { value: String(template.exercises?.length ?? 0), label: 'oefeningen' }]
+          : [total, { value: String(template.exercises?.length ?? 0), label: 'oefeningen' }, { value: 'MacroFactor', label: 'zwaarte volgens' }];
       case 'recovery':
         return [{ value: 'Rust', label: 'of rustig wandelen' }, { value: '30-60 min', label: 'als je wandelt' }, { value: 'Geen doel', label: 'tempo of hartslag' }];
       default:

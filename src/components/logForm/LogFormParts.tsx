@@ -9,7 +9,7 @@ import { PainReportFields } from '../PainReportFields';
 import { WorkoutDetailsFields } from '../WorkoutDetailsFields';
 import { addDays, formatDateNL, weekdayShortNL } from '../../utils/dates';
 import { formatNumberNL } from '../../utils/number';
-import { entryMinutes } from '../../engine/inputLimits';
+import { durationTooShort, SHORT_DURATION_TEXT } from '../../engine/inputLimits';
 import { detailForm } from '../../engine/workoutDetails';
 import { asksLegs, type LegsAtStart } from '../../engine/learning';
 import { availableVariants } from '../../engine/substitutions';
@@ -97,8 +97,9 @@ export function DurationField({ form, onChange }: { form: LogForm; onChange?: ()
   return (
     <>
       <Field label="Duur" unit="min" value={duration} onChange={(v) => { form.setDuration(v); onChange?.(); }} />
-      {entryMinutes(duration) === 0 && (
-        <p className="-mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Leeg of 0 betekent: geen duur. De training wordt zonder minuten bewaard.</p>
+      {/* Onder 1 minuut staat Opslaan uit (logForm/manualLog.ts#blocksSave): deze zin zegt waarom. */}
+      {durationTooShort(duration) && (
+        <p className="-mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{SHORT_DURATION_TEXT}</p>
       )}
     </>
   );

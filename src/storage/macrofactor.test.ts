@@ -35,6 +35,13 @@ describe('the file', () => {
     expect(state).toMatchObject({ fileName: 'workout-log.csv', readAt: '2026-10-19T08:00:00.000Z' });
   });
 
+  it('punt I: ontkoppelen na een import wist readAt, het teken voor "gekoppeld" (state/useMacroFactor.ts#useMacroFactorLinked)', async () => {
+    await importMacroFactorText(csv, 'workout-log.csv', new Date('2026-10-19T08:00:00.000Z'));
+    expect(!!(await getMacroFactorState()).readAt).toBe(true);
+    await clearMacroFactorWorkouts();
+    expect((await getMacroFactorState()).readAt).toBeUndefined();
+  });
+
   it('refuses a wrong file with a Dutch message and keeps what was there', async () => {
     await importMacroFactorText(csv);
     await expect(importMacroFactorText('Date,Calories\n2026-10-12,2400\n')).rejects.toBeInstanceOf(MacroFactorFormatError);

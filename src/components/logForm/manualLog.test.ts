@@ -8,7 +8,7 @@ import { entryMinutes } from '../../engine/inputLimits';
 import { templateSport } from '../../engine/sports';
 import { getModalities, getModality, modalitySport } from '../../data/modalities';
 import type { TrainingEnvironment } from '../../models/training';
-import { buildManualLog, type LogFormValues } from './manualLog';
+import { blocksSave, buildManualLog, type LogFormValues } from './manualLog';
 import { exercisesForVariant } from '../../engine/substitutions';
 
 // De vaste vergelijking van spoor 5 (docs/visie/Ontwerp trainingsscherm minimaal.md): wat het blad
@@ -154,5 +154,26 @@ describe('Hoe ging het? slaat op wat het oude formulier opsloeg', () => {
     expect(log).toStrictEqual(oudFormulier(values, template, undefined));
     expect(log.durationMinutes).toBe(0);
     expect(log.sport).toBe('cycling');
+  });
+});
+
+describe('punt B: een duur onder 1 minuut en een afstand van 0 of minder', () => {
+  const run = tpl('tpl_easy_run');
+  it('Opslaan staat uit bij leeg, 0, negatief of minder dan een halve minuut', () => {
+    for (const duration of ['' as const, 0, -5, 0.4, Number.NaN]) expect(blocksSave({ ...runOutside, duration }, run)).toBe(true);
+    for (const duration of [0.6, 1, 42]) expect(blocksSave({ ...runOutside, duration }, run)).toBe(false);
+  });
+  it('een rustdag vraagt geen duur', () => {
+    const rest = templates.find((t) => getModalities(t.id)?.some((m) => m.environment === 'rest'));
+    if (!rest) return;
+    const key = getModalities(rest.id)!.find((m) => m.environment === 'rest')!.key;
+    expect(blocksSave({ ...empty, modalityKey: key }, rest)).toBe(false);
+  });
+  it('0 km is geen afstand en een negatieve afstand of hoogte wordt nooit bewaard', () => {
+    expect(buildManualLog({ ...runOutside, distanceKm: 0 }, { template: run, quickComplete: false, exercises: [] }).cardioData?.distanceKm).toBeUndefined();
+    expect(buildManualLog({ ...runOutside, distanceKm: -3 }, { template: run, quickComplete: false, exercises: [] }).cardioData?.distanceKm).toBeUndefined();
+    expect(buildManualLog({ ...runOutside, elevationGainM: -40 }, { template: run, quickComplete: false, exercises: [] }).cardioData?.elevationGainM).toBeUndefined();
+    expect(buildManualLog({ ...runOutside, elevationGainM: 0 }, { template: run, quickComplete: false, exercises: [] }).cardioData?.elevationGainM).toBe(0);
+    expect(buildManualLog(runOutside, { template: run, quickComplete: false, exercises: [] }).cardioData?.distanceKm).toBe(7.35);
   });
 });

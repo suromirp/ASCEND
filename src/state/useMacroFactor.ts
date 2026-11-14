@@ -58,3 +58,25 @@ export function useMacroFactor(): MacroFactorView {
   }, [state, mapping, loose, plannedSessions, templates, sessionLogs, program]);
   return { loaded: !!state && !!mapping, state: state ?? EMPTY, mapping: mapping ?? {}, loose: loose ?? [], plan, rows };
 }
+
+// Of MacroFactor gekoppeld is: er is een export ingelezen (readAt), zoals de rij Koppelingen het zegt
+// (engine/settingsSummary.ts). Licht: alleen de stand, geen plan. Tot het gelezen is: niet gekoppeld, zodat
+// een tekst over MacroFactor nooit verschijnt en weer verdwijnt bij wie hem niet gebruikt (profielen 14
+// november, punt I). Ontkoppelen (storage/macrofactor.ts#clearMacroFactorWorkouts) wist readAt.
+export function useMacroFactorLinked(): boolean {
+  const [linked, setLinked] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      void getMacroFactorState()
+        .then((s) => { if (alive) setLinked(!!s.readAt); })
+        .catch(() => undefined);
+    load();
+    const stop = onMacroFactorChange(load);
+    return () => {
+      alive = false;
+      stop();
+    };
+  }, []);
+  return linked;
+}
