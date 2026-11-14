@@ -4,6 +4,7 @@ Bijgewerkt: 14 november 2026, ongeveer 13:00 Amsterdam, door de coördinator ses
 
 ## Eerst lezen (eigenaar 14 november)
 
+- Tijd (eigenaar 14 november 20:35, op reis): zolang de eigenaar in Portugal is, alle tijden aan hem in Portugese tijd (Europe/Lisbon, een uur achter Amsterdam), tot hij zegt dat hij terug is. Nooit UTC.
 - Houd de drie bouwplekken vol: wachten op een review of herstelronde is geen reden om niets te starten. Elke beurt eindigt met: zijn alle drie bezet? Zo niet, start de volgende die geen bestanden deelt (skill werkverdeling, Bouwplekken vol houden).
 
 - Werkkaart (eigenaar 14 november): dashboard https://claude.ai/artifact/JAmcpeDaGBX24C22dqRFAp, vastgezet in zijn zijbalk. Bijwerken bij elke Wachter-ronde en na elke push naar main (skill werkkaart).
@@ -20,7 +21,7 @@ Bijgewerkt: 14 november 2026, ongeveer 13:00 Amsterdam, door de coördinator ses
 - Limiet: niet afschalen (eigenaar 14 november 17:00, met een schermafdruk: alle modellen 73 procent, Fable 83 procent, reset zondag 15 november 18:00 Amsterdam volgens zijn scherm). Bouwplekken vol; Fable alleen waar de tabel het vraagt; meld het de eigenaar zodra Fable bijna vol is, hij heeft dan nog een reset.
 - In review: Opwarmset later (claude/opwarmset-later, herstel na Warden), Trainingsscherm 5 en 6 (claude/trainingsscherm-5-6), Opslaan rest (claude/opslaan-rest). Na groen: Lookout (één ronde voor alle drie), squash, deploy nakijken, pushmelding, werkkaart.
 - Vandaag live: voorstel begrijpelijk, Wis startpunt, krachtblok Akkoord, Spieren voor de berg rest, Avond tests, Volle week, Info-blad A, Racedag 10 km.
-- Profielendoorloop (vijf profielen, eigenaar akkoord): gestart 14 november avond.
+- Profielendoorloop: negen profielen gedaan op 14 november (verslagen op de branches claude/profiel-*), punten A tot P in de Inbox. Opdracht eigenaar 14 november: "Hij moet dus stoppen met automatisch thuis" (branch claude/geen-thuis bij Sherpa Route).
 
 ## Vandaag (14 november)
 

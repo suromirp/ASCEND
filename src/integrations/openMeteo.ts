@@ -77,7 +77,7 @@ const num = (v: unknown): number | undefined => (typeof v === 'number' && Number
 const isLocalTime = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v);
 
 export function mapForecast(raw: unknown, place: WeatherPlace, fetchedAt: string): WeatherForecast {
-  const body = raw as { hourly?: Record<string, unknown>; daily?: Record<string, unknown> } | null;
+  const body = raw as { hourly?: Record<string, unknown>; daily?: Record<string, unknown>; elevation?: unknown } | null;
   const h = body?.hourly;
   const d = body?.daily;
   if (!h || !d || !Array.isArray(h.time) || !Array.isArray(d.time)) throw new OpenMeteoError('response', MESSAGES.response);
@@ -127,7 +127,9 @@ export function mapForecast(raw: unknown, place: WeatherPlace, fetchedAt: string
     days.push({ date, sunrise: sunrise[i] as string, sunset: sunset[i] as string });
   });
 
-  return { fetchedAt, place: roundedPlace(place), hours, days };
+  // De hoogte van de plek (meters boven zee) staat in elk antwoord; een vreemde waarde laten we weg.
+  const elevation = num(body?.elevation);
+  return { fetchedAt, place: roundedPlace(place), hours, days, ...(elevation !== undefined && elevation > -500 && elevation < 9000 ? { elevationM: Math.round(elevation) } : {}) };
 }
 
 // --- the requests --------------------------------------------------------------

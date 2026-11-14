@@ -13,6 +13,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(FileOpenPlugin.class);
         // Andere audio even zachter terwijl de rustbel klinkt (src/integrations/deviceShell.ts).
         registerPlugin(AudioFocusPlugin.class);
+        // De vergrote kaart van Route mag liggend (src/integrations/deviceShell.ts#freeRotation).
+        registerPlugin(OrientationPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

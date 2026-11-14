@@ -42,3 +42,17 @@ export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[],
   if (session.status === 'moved') return { status: 'moved', wasMoved: true };
   return { status: 'planned', wasMoved: false };
 }
+
+// De duur van een gedane training is die van het log, in hele minuten, nooit die van het plan
+// (profielen 14 november, punt A). Een log zonder bruikbare duur (oud, leeg, 0 of negatief) heeft
+// geen duur: dan staat er geen getal, ook niet het plan.
+export function loggedMinutes(log: Pick<SessionLog, 'durationMinutes'> | undefined): number | undefined {
+  const m = log?.durationMinutes;
+  if (typeof m !== 'number' || !Number.isFinite(m) || m < 0.5) return undefined;
+  return Math.round(m);
+}
+
+// De minuten op een rij: met een log die van het log (of geen), zonder log het plan.
+export function rowMinutes(log: Pick<SessionLog, 'durationMinutes'> | undefined, plannedMinutes: number): number | undefined {
+  return log ? loggedMinutes(log) : plannedMinutes;
+}

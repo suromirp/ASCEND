@@ -17,7 +17,7 @@ import { Icon } from './icons';
 import { RoutePanel } from './RoutePanel';
 import { WATCH_STEPS_TITLE, watchSteps } from '../engine/routeSend';
 import { routeSender } from '../storage/routeSend';
-import { MAP_HINT, PICK_HINT } from '../engine/routeSheet';
+import { ADJUST_HINT, MAP_HINT, PICK_HINT } from '../engine/routeSheet';
 
 // Achter de i van het blad Route: hoe de kaart werkt en hoe een lus op je horloge komt. Stond eerder
 // onder de kaart en in een uitklap; niets is weg.
@@ -35,6 +35,7 @@ function RouteInfoSheet({ onClose }: { onClose: () => void }) {
             <div className="-mt-2"><SheetHeader eyebrow="Route voorstellen" title="Zo werkt de kaart" onClose={requestClose} /></div>
             <p className="text-sm leading-relaxed" style={dim}>{PICK_HINT}</p>
             <p className="text-sm leading-relaxed" style={dim}>{MAP_HINT}</p>
+            <p className="text-sm leading-relaxed" style={dim}>{ADJUST_HINT}</p>
             <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{WATCH_STEPS_TITLE}</p>
             <ol className="flex list-decimal flex-col gap-1 pl-5 text-sm leading-snug" style={dim}>
               {watchSteps(sender !== null).map((step) => <li key={step}>{step}</li>)}

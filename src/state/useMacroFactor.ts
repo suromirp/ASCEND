@@ -58,3 +58,35 @@ export function useMacroFactor(): MacroFactorView {
   }, [state, mapping, loose, plannedSessions, templates, sessionLogs, program]);
   return { loaded: !!state && !!mapping, state: state ?? EMPTY, mapping: mapping ?? {}, loose: loose ?? [], plan, rows };
 }
+
+// Of MacroFactor gekoppeld is: er is een export ingelezen (readAt), zoals de rij Koppelingen het zegt
+// (engine/settingsSummary.ts). Licht: alleen de stand, geen plan. Tot het gelezen is: niet gekoppeld, zodat
+// een tekst over MacroFactor nooit verschijnt en weer verdwijnt bij wie hem niet gebruikt (profielen 14
+// november, punt I). Ontkoppelen (storage/macrofactor.ts#clearMacroFactorWorkouts) wist readAt.
+// De laatst gelezen stand blijft in het geheugen: een tweede scherm of een terugkeer naar Vandaag begint
+// meteen goed, zodat de chip alleen bij de eerste opening na de start kan verschijnen.
+let lastLinked = false;
+
+// Gekoppeld: er is een export ingelezen. Los van de hook, zodat een test het kan lezen.
+export async function readMacroFactorLinked(): Promise<boolean> {
+  lastLinked = !!(await getMacroFactorState()).readAt;
+  return lastLinked;
+}
+
+export function useMacroFactorLinked(): boolean {
+  const [linked, setLinked] = useState(lastLinked);
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      void readMacroFactorLinked()
+        .then((on) => { if (alive) setLinked(on); })
+        .catch(() => undefined);
+    load();
+    const stop = onMacroFactorChange(load);
+    return () => {
+      alive = false;
+      stop();
+    };
+  }, []);
+  return linked;
+}

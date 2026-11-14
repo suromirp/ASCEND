@@ -31,6 +31,8 @@ import { Chip, Eyebrow, PrimaryButton } from './ui';
 import { useRouteSearch, type RouteSearchModel } from './useRouteSearch';
 import { NewPlaceSheet } from './NewPlaceSheet';
 import { startPair } from '../engine/places';
+import { RouteAdjust } from './RouteAdjust';
+import { RouteMapFull } from './RouteMapFull';
 
 const STYLE_NAME: Record<RouteStyle, string> = { simple: 'Simpel', adventure: 'Avontuurlijk' };
 const STYLE_LINE: Record<RouteStyle, string> = {
@@ -206,6 +208,13 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
   const motion = useMotionMode();
   const dim = { color: 'var(--color-ink-dim)' };
   const { stage, lat, lon, target, plans, order, okStyles, picked, pickedOutcome, sender, parts, noMap } = model;
+  // Hele kaart: de kaart op volle hoogte, met dezelfde regie.
+  const [bigger, setBigger] = useState(false);
+  // Het stuk dat in Per stuk gekozen is; hoort bij deze lus (een andere lus of bijsturing wist de keuze).
+  const pieceSig = pickedOutcome?.ok ? `${picked}|${model.pieces.length}|${pickedOutcome.proposal.points.length}|${pickedOutcome.proposal.points[0]?.lat}|${pickedOutcome.proposal.points[0]?.lon}` : '';
+  const [pieceAt, setPieceAt] = useState<{ sig: string; index: number } | undefined>();
+  const selected = pieceAt?.sig === pieceSig ? pieceAt.index : undefined;
+  const piecePoints = selected === undefined ? undefined : model.pieces[selected]?.points;
 
   if (stage === 'no-place' || lat === undefined || lon === undefined) {
     return <p className="text-sm leading-snug" style={dim}>{NO_PLACE_LINE}</p>;
@@ -226,11 +235,13 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
       case 'map':
         return model.mapStartPoint ? (
           <div key={p} className="flex flex-col gap-1">
-            <RouteMap routes={model.mapRoutes} chosen={picked} start={model.mapStartPoint} base={model.base} onChoose={model.setChosen} onStart={model.startOnMap} onNoMap={model.markNoMap} photo={model.photo} onPhoto={model.setPhoto} me={model.mePoint} tapped={model.tapPoint} hasHome={model.hasHome} onMakeHome={model.makeHome} keepName={model.keepName} onKeep={model.keepPlace} />
+            <RouteMap routes={model.mapRoutes} chosen={picked} start={model.mapStartPoint} base={model.base} onChoose={model.setChosen} onStart={model.startOnMap} onNoMap={model.markNoMap} photo={model.photo} onPhoto={model.setPhoto} me={model.mePoint} tapped={model.tapPoint} hasHome={model.hasHome} onMakeHome={model.makeHome} keepName={model.keepName} onKeep={model.keepPlace} piece={bigger ? undefined : piecePoints} onBigger={() => setBigger(true)} />
           </div>
         ) : null;
       case 'chosen':
         return picked && pickedOutcome?.ok ? <ChosenLoop key={`chosen-${picked}`} style={picked} proposal={pickedOutcome.proposal} date={date} target={target} sender={sender} /> : null;
+      case 'adjust':
+        return picked && pickedOutcome?.ok ? <RouteAdjust key={p} model={model} selected={selected} onSelect={(i) => setPieceAt(i === undefined ? undefined : { sig: pieceSig, index: i })} motion={motion} /> : null;
       case 'loops':
         return plans ? (
           <div key={p} className="flex flex-col gap-2">
@@ -258,8 +269,10 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
       {/* Waar de lus begint staat er in elke stand, ook bij zoeken, een fout of zonder kaart (Warden): de
           chips, en de regel alleen bij een terugval of afwijking. */}
       <StartChips model={model} />
-      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(target)}.{model.startLine ? ` ${model.startLine}` : ''}</p>
+      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(model.trainingTarget)}.{model.startLine ? ` ${model.startLine}` : ''}</p>
       {parts.map(part)}
+      {/* Groter staat buiten de delen: een nieuwe zoektocht (Langer, een andere chip) sluit hem niet. */}
+      {bigger && <RouteMapFull model={model} piece={piecePoints} onClose={() => setBigger(false)} />}
     </div>
   );
 }

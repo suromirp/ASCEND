@@ -8,7 +8,7 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import { useAppData } from '../state/AppDataContext';
 import { briefing, type BriefingInput, type BriefingView } from '../engine/briefing';
-import { showClothingAdvice, showWeatherLine } from '../engine/overviewSettings';
+import { showClothingAdvice, showUvAltitude, showWeatherLine } from '../engine/overviewSettings';
 import { adjustFor } from '../engine/clothingFeedback';
 import { templateSport } from '../engine/sports';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
@@ -61,6 +61,7 @@ export function useBriefingInput({ template, session, date, program, storedPlace
     watchStatus: session && ready ? statusOf(session, template) : undefined,
     forecast: weather.forecast ?? undefined,
     weatherOn: showWeatherLine(settings.overviews),
+    uvAltitudeOn: showUvAltitude(settings.overviews),
     clothingOn: showClothingAdvice(settings.overviews),
     clothingAdjust: adjustFor(settings.clothingAdjust, templateSport(template)),
     sweatEntries: settings.sweatEntries,

@@ -283,6 +283,8 @@ const PATHS = {
   hartslag: <path d="M2.5 12.5h4l2.2-5 3.6 10 2.6-7 1.6 2H21.5" />,
   // Alles in beeld op de kaart bij Route voorstellen: een lus binnen vier hoeken (geen volledig scherm).
   inbeeld: <path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M12 7.5l4.5 4.5-4.5 4.5-4.5-4.5Z" />,
+  // Groter op de kaart bij Route voorstellen: twee pijlen naar de hoeken (de kaart op volle hoogte).
+  groter: <path d="M14 4h6v6M20 4l-6.5 6.5M10 20H4v-6M4 20l6.5-6.5" />,
   // De greep om een doel te slepen: zes punten.
   greep: (
     <g fill="currentColor" stroke="none">

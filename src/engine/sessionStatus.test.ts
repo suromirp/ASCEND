@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveSessionStatus } from './sessionStatus';
+import { deriveSessionStatus, loggedMinutes, rowMinutes } from './sessionStatus';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 import type { PlannedSession, SessionLog } from '../models/training';
 
@@ -77,5 +77,17 @@ describe('deriveSessionStatus', () => {
     const lock = { by: 'proposal' as const, proposalId: 'p', at: '' };
     expect(deriveSessionStatus(session({ movedFromDate: today, lock }), []).wasMoved).toBe(false);
     expect(deriveSessionStatus(session({ movedFromDate: today, lock }), [log('s1')]).wasMoved).toBe(false);
+  });
+});
+
+describe('punt A: de duur van een gedane training is die van het log', () => {
+  it('hele minuten uit het log, nooit het plan', () => {
+    expect(rowMinutes({ durationMinutes: 55 }, 75)).toBe(55);
+    expect(rowMinutes({ durationMinutes: 29.4 }, 45)).toBe(29);
+    expect(rowMinutes(undefined, 75)).toBe(75);
+  });
+  it('een oud log zonder bruikbare duur toont geen getal, ook niet het plan', () => {
+    for (const durationMinutes of [0, -5, Number.NaN, undefined as unknown as number]) expect(rowMinutes({ durationMinutes }, 95)).toBeUndefined();
+    expect(loggedMinutes(undefined)).toBeUndefined();
   });
 });

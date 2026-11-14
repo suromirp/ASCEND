@@ -3,6 +3,7 @@ import type { SubjectiveFeel } from '../models/training';
 import { QUICK_RPE_SCALE, type DoneDuration } from '../engine/sessionActions';
 import { ChoiceStrip } from './ChoiceStrip';
 import { PrimaryButton } from './ui';
+import { durationTooShort, entryMinutes, SHORT_DURATION_TEXT } from '../engine/inputLimits';
 
 const FEELS = [
   { value: 'better', label: 'Beter' },
@@ -96,7 +97,9 @@ export function StrengthDoneElsewhere({
       </div>
 
       <div>
-        <PrimaryButton onClick={() => onDone(feel, duration === '' || duration < 1 ? fullDuration : duration, { rpe, rir })}>{submitLabel}</PrimaryButton>
+        {/* Onder 1 minuut nooit stil het plan: Opslaan uit met één zin (profielen 14 november, punt B). */}
+        {durationTooShort(duration) && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{SHORT_DURATION_TEXT}</p>}
+        <PrimaryButton disabled={durationTooShort(duration)} onClick={() => { if (!durationTooShort(duration)) onDone(feel, entryMinutes(duration), { rpe, rir }); }}>{submitLabel}</PrimaryButton>
         <p className="mt-2 text-center text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>Je sets komen vanzelf uit MacroFactor</p>
       </div>
     </div>

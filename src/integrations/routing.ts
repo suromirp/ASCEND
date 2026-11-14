@@ -82,10 +82,10 @@ export const routeGate: Gate = createGate();
 export function routeWithFallback(sources: RouteFn[], gate: Gate = routeGate, stopped: () => boolean = () => false): RouteFn {
   let from = 0;
   const halted = (): RouteAnswer | undefined => (stopped() ? { ok: false, reason: 'timeout' } : undefined);
-  return async (waypoints) => {
+  return async (waypoints, options) => {
     let last: RouteAnswer = { ok: false, reason: 'error' };
     for (let i = from; i < sources.length; i++) {
-      last = await gate(() => sources[i](waypoints), halted);
+      last = await gate(() => sources[i](waypoints, options), halted);
       if (last.ok || last.reason === 'offline' || last.reason === 'unmapped' || stopped()) return last;
       if (i + 1 < sources.length) from = i + 1;
     }

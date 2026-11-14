@@ -4,7 +4,7 @@ import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
 import { leaveLabelOn } from '../engine/leave';
 import { groupDaysByBand, leaveWeek, quietWordOn } from '../engine/leaveWeek';
-import { deriveSessionStatus } from '../engine/sessionStatus';
+import { deriveSessionStatus, rowMinutes } from '../engine/sessionStatus';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { isLegHeavyTemplate } from '../engine/scheduler';
 import { REST_DAY_COPY } from '../data/restDayCopy';
@@ -84,9 +84,10 @@ function SessionRow({
 }) {
   const restMode = useAppData().settings.restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
-  const { status, wasMoved } = deriveSessionStatus(session, logs, isRest);
+  const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest);
   // Een vaste afspraak van een sport (engine/fixedSports.ts) heeft de lengte die jij koos.
-  const duration = session.fixed && session.plannedMinutes ? session.plannedMinutes : resolveEffectiveFullDuration(template, session.scheduledDate, program);
+  // Gedaan: de duur van het log (engine/sessionStatus.ts#rowMinutes), niet die van het plan.
+  const duration = rowMinutes(log, session.fixed && session.plannedMinutes ? session.plannedMinutes : resolveEffectiveFullDuration(template, session.scheduledDate, program));
   const dim = status === 'skipped' || status === 'missed';
   const legs = !isRest && isLegHeavyTemplate(template);
   // Na de dag en de duur hoogstens één ding (engine/weekRow.ts#rowExtra). "aangepast" staat op precies de rijen
@@ -124,14 +125,14 @@ function SessionRow({
             <span>· bewust herstel</span>
           ) : (
             <>
-              <span aria-hidden="true">·</span>
+              {(zone || duration !== undefined) && <span aria-hidden="true">·</span>}
               {zone && (
                 <>
                   <span className="inline-block h-[3px] w-3 shrink-0 rounded-full" style={{ background: EFFORT_COLOR[zone] }} aria-hidden="true" />
                   <span className="sr-only">Zone {zone}</span>
                 </>
               )}
-              <span>{duration} min</span>
+              {duration !== undefined && <span>{duration} min</span>}
               {/* Het horloge staat in de tweede regel, onder dezelfde instelling; mislukt houdt zijn amber. */}
               {watch === 'sent' && <span className="flex" style={{ color: 'var(--color-ink-dim)' }}><Icon name="horloge" size={12} label="Verstuurd naar je horloge" /></span>}
               {watch === 'failed' && <span className="flex" style={{ color: 'var(--color-warning)' }}><Icon name="horloge" size={12} label="Versturen naar je horloge is niet gelukt" /></span>}

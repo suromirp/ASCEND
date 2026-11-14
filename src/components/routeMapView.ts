@@ -9,7 +9,7 @@
 
 import {
   AERIAL_LIMIT_MS, aerialStyle, attributionFor, baseSourcesOf, boundsOf, cameraDuration, DOT_SOURCE, dotFeatures, MAP_LOAD_LIMIT_MS, MAP_SOURCE_LIMIT_MS,
-  nextStage, OPENFREEMAP_STYLE, paintOpenFreeMap, plainStyle, rasterStyle, ROUTE_HIT_LAYER, ROUTE_SOURCE, routeFeatures, stagesFor,
+  nextStage, OPENFREEMAP_STYLE, paintOpenFreeMap, PIECE_SOURCE, pieceFeatures, plainStyle, rasterStyle, ROUTE_HIT_LAYER, ROUTE_SOURCE, routeFeatures, stagesFor,
   type MapBase, type MapColors, type MapDot, type MapRoute, type MapStage, type StyleSpec,
 } from '../engine/routeMap';
 import type { RoutePoint, RouteStyle } from '../models/route';
@@ -28,6 +28,7 @@ export interface MapLike {
   easeTo(options: Record<string, unknown>): unknown;
   queryRenderedFeatures(point: unknown, options: { layers: string[] }): { properties?: Record<string, unknown> | null }[];
   remove(): void;
+  resize?(): unknown;
   touchZoomRotate?: { disableRotation(): void };
   keyboard?: { disableRotation(): void };
 }
@@ -49,6 +50,8 @@ export interface MapViewData {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
   dots: Partial<Record<MapDot, RoutePoint>>;
+  // Het stuk dat in de lijst Per stuk gekozen is.
+  piece?: RoutePoint[];
 }
 
 export interface MapViewDeps {
@@ -82,6 +85,8 @@ export interface RouteMapView {
   // Kaart of Luchtfoto: begint de trap opnieuw, met dezelfde camera.
   setPhoto(on: boolean): void;
   fitAll(): void;
+  // Het vak veranderde van maat (de telefoon draaide, Groter): de kaart rekent opnieuw en zet alles in beeld.
+  resize(): void;
   goTo(point: RoutePoint): void;
   destroy(): void;
 }
@@ -112,7 +117,7 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
   let aerial: AerialSource | undefined;
   let photoFailed = false;
 
-  const overlay = () => ({ routes: routeFeatures(latest.routes, latest.chosen), dots: dotFeatures(latest.dots) });
+  const overlay = () => ({ routes: routeFeatures(latest.routes, latest.chosen), dots: dotFeatures(latest.dots), piece: pieceFeatures(latest.piece) });
   const allPoints = () => [...latest.routes.flatMap((r) => r.points), ...Object.values(latest.dots).filter((p): p is RoutePoint => !!p)];
   const report = (state: MapViewState) => {
     if (!destroyed) events.onState(state);
@@ -286,6 +291,7 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
       try {
         map.getSource(ROUTE_SOURCE)?.setData?.(o.routes);
         map.getSource(DOT_SOURCE)?.setData?.(o.dots);
+        map.getSource(PIECE_SOURCE)?.setData?.(o.piece);
       } catch {
         // De stijl wisselt: de nieuwe stijl neemt de laatste lussen zelf mee.
       }
@@ -298,6 +304,15 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
       show(stages[0]);
     },
     fitAll: () => fit(true),
+    resize() {
+      if (!map || destroyed) return;
+      try {
+        map.resize?.();
+      } catch {
+        // Zonder maat: de volgende keer.
+      }
+      fit(false);
+    },
     goTo(point) {
       if (!map) return;
       try {

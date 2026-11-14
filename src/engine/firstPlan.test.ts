@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { buildFirstPlan, defaultAnswers, kindOfExistingGoals, startDateProblem, startSteps, GOAL_OPTIONS } from './firstPlan';
+import { buildFirstPlan, defaultAnswers, kindOfExistingGoals, startDateProblem, startSteps, stepCounter, tapTooSoon, GOAL_OPTIONS, STEP_TAP_GUARD_MS } from './firstPlan';
 import { adviceDays } from './weekShape';
 
 const templates = buildDefaultProgramData().templates;
@@ -153,5 +153,26 @@ describe('goals that are already there', () => {
     expect(kindOfExistingGoals(race.goals, race.milestones)).toBe('race');
     expect(kindOfExistingGoals([], [])).toBe('fit');
     expect(kindOfExistingGoals([{ ...race.goals[0], status: 'archived' }], [])).toBe('fit');
+  });
+});
+
+describe('punt J: het vraagnummer verspringt niet en een dubbele tik slaat niets over', () => {
+  it('het totaal staat er pas als het vaststaat, en verandert dan niet meer', () => {
+    for (const goal of ['fit', 'trek', 'race'] as const) {
+      const steps = startSteps(goal, false, false);
+      const shown = steps.map((_, i) => stepCounter(steps, i));
+      const totals = new Set(shown.map((t) => / van (\d+)$/.exec(t)?.[1]).filter(Boolean));
+      expect(totals.size).toBe(1);
+      expect(shown[0]).toBe('Vraag 1');
+      expect(shown.at(-1)).toBe(`Vraag ${steps.length} van ${steps.length}`);
+    }
+  });
+  it('een bestaand doel: het totaal staat er meteen', () => {
+    const steps = startSteps('fit', true, false);
+    expect(stepCounter(steps, 0)).toBe(`Vraag 1 van ${steps.length}`);
+  });
+  it('een tweede tik vlak na een nieuwe vraag telt niet', () => {
+    expect(tapTooSoon(1000, 1000 + STEP_TAP_GUARD_MS - 1)).toBe(true);
+    expect(tapTooSoon(1000, 1000 + STEP_TAP_GUARD_MS)).toBe(false);
   });
 });

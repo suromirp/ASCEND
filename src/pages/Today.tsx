@@ -5,7 +5,7 @@ import { resolveProgramWeek } from '../utils/dates';
 import { weekPositionLabel } from '../engine/weekLabel';
 import { waveHeader } from '../engine/programLayout';
 import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL, localDateOf } from '../utils/dates';
-import { deriveSessionStatus } from '../engine/sessionStatus';
+import { deriveSessionStatus, loggedMinutes, rowMinutes } from '../engine/sessionStatus';
 import { activeIllness, isHeavySession, recoveryRamp } from '../engine/illness';
 import { QUIET_TODAY_LINES, capAboveMission, isSafetyCard, placeTodayCards, resolveAboveMission, type TodayCardId } from '../engine/todayCards';
 import { hasRole } from '../engine/templateRoles';
@@ -68,6 +68,7 @@ import { WeeklyQuestionCard } from '../components/WeeklyQuestionCard';
 import { reviewWeekToShow, morningCheckInMode, showWeeklyQuestion } from '../engine/overviewSettings';
 import { leaveLabelOn } from '../engine/leave';
 import { coachLineForToday } from '../engine/coach';
+import { useMacroFactorLinked } from '../state/useMacroFactor';
 import { CoachCard } from '../components/CoachCard';
 import { LegEaseCard } from '../components/LegEaseCard';
 import { InfluenceMoveCard } from '../components/influence/InfluenceMoveCard';
@@ -248,10 +249,11 @@ function TodayContent() {
   // The order card has its own say; the old tip only for what it doesn't cover.
   const concurrentTrainingTip = dayOrderAdvice ? null : suggestSameDayOrder(todaySessions, templateById);
   // The mission's three key numbers; the pace comes from the latest test run.
+  const macroFactorLinked = useMacroFactorLinked();
   const paces = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces, [sessionLogs, settings]);
   const recentPaceOfRuns = primaryTemplate ? recentRunPace(sessionLogs, primaryTemplate.id, today) : undefined;
   const mission = primary && primaryTemplate
-    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces, resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program), recentPaceOfRuns?.range, recentPaceOfRuns?.runs)
+    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates, macroFactor: macroFactorLinked }), paces, resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program), recentPaceOfRuns?.range, recentPaceOfRuns?.runs)
     : undefined;
   const tomorrow = tomorrowEntry(today, plannedSessions, templateById, program);
   const tomorrowLine = `Morgen: ${tomorrowText(tomorrow)}`;
@@ -261,6 +263,8 @@ function TodayContent() {
   // en vandaag afliep draagt de datum van het bestand, maar telt op de dag van zijn geplande training).
   const plannedById = plannedByIdOf(plannedSessions);
   const doneToday = sessionLogs.filter((l) => logDay(l, plannedById) === today);
+  // Alleen minuten uit logs met een bruikbare duur; zonder zulke logs geen getal (punt A).
+  const doneMinutes = doneToday.reduce((sum, l) => sum + (loggedMinutes(l) ?? 0), 0);
   const restMode = settings.restDayMode ?? 'rest';
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
   const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;
@@ -348,8 +352,9 @@ function TodayContent() {
   for (const s of trainingRows) {
     const t = templateById.get(s.templateId);
     if (!t) continue;
-    const { status, wasMoved } = deriveSessionStatus(s, sessionLogs);
+    const { status, wasMoved, log } = deriveSessionStatus(s, sessionLogs);
     const rest = isRestSession(s);
+    const minutes = rowMinutes(log, resolveEffectiveFullDuration(t, s.scheduledDate, program));
     const done = status === 'completed';
     const skipped = status === 'skipped';
     yourDayItems.push({
@@ -364,7 +369,7 @@ function TodayContent() {
           state={trainingRowState(status, false)}
           onClick={() => setActionSheetSession(s)}
           sheetFrom
-          trailing={rest ? REST_DAY_COPY[restMode].badge : `${resolveEffectiveFullDuration(t, s.scheduledDate, program)} min`}
+          trailing={rest ? REST_DAY_COPY[restMode].badge : minutes !== undefined ? `${minutes} min` : undefined}
         >
           {rest ? REST_DAY_COPY[restMode].title : t.name}
           {skipped ? <span> · overgeslagen</span> : wasMoved && !done ? <span> · verplaatst</span> : null}
@@ -432,7 +437,7 @@ function TodayContent() {
   ) : allTodayDone && anyDoneToday ? (
     <DoneTodayCard
       title="Vandaag zit erop"
-      line={`${doneToday.map((l) => templateById.get(l.templateId)?.name).filter(Boolean).join(' en ')} gedaan, ${doneToday.reduce((sum, l) => sum + l.durationMinutes, 0)} min`}
+      line={`${doneToday.map((l) => templateById.get(l.templateId)?.name).filter(Boolean).join(' en ')} gedaan${doneMinutes > 0 ? `, ${doneMinutes} min` : ''}`}
       tomorrow={tomorrowLine}
     />
   ) : (

@@ -153,6 +153,9 @@ const CLOTHING_RULES = {
   maxLines: 4,
 } as const;
 
+// From how long a training the advice names sunscreen (engine/outdoorSun.ts follows it).
+export const SUNSCREEN_MINUTES = CLOTHING_RULES.sunMinutes;
+
 // --- input and output -----------------------------------------------------------
 
 export interface ClothingInput {
@@ -181,6 +184,8 @@ export interface ClothingAdvice {
   // True when one of the lines is the one about darkness (it can be dropped on
   // a crowded day). The weather line leaves the darkness to it then.
   darkShown?: boolean;
+  // True when any line names sunscreen (the weather page shows them all).
+  sunscreenShown?: boolean;
 }
 
 const sentence = (s: string) => `${capitalize(s)}.`;
@@ -287,7 +292,14 @@ export function clothingAdvice(input: ClothingInput): ClothingAdvice {
   }
   if (lines.length > R.maxLines) drop('feet');
 
-  return { lines: lines.map((l) => l.text), packLine, darkShown: lines.some((l) => l.slot === 'dark') };
+  const sunscreen = sunParts.includes('zonnebrand');
+  const sunscreenShown = sunscreen && lines.some((l) => l.slot === 'sun');
+  return {
+    lines: lines.map((l) => l.text),
+    packLine,
+    darkShown: lines.some((l) => l.slot === 'dark'),
+    ...(sunscreenShown ? { sunscreenShown } : {}),
+  };
 
   // --- pieces, inside so they share T, Th and the flags -------------------------
 
