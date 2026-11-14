@@ -454,3 +454,8 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-12, Warden+Lookout Photon herstel (reviewer, sonnet) 60k, 20 min, akkoord; Photon naar main
 - 2026-11-12, StairMaster ronde 2: Warden (reviewer, fable) 71k, 4 min, akkoord; Lookout (tester, sonnet) 67k, 6 min, groen; Pathfinder (sonnet) 33k, 1 blokkerend (wandeling vinkt heuvelintervallen niet af, door coördinator in code bevestigd); herstelronde 2 naar dezelfde bouwer
 - 2026-11-12, Sherpa StairMaster (fable, ca. $12 totaal, 3 rondes); Warden ronde 3 (reviewer, fable) 85k, 6 min, 1 moet (zelf hersteld); Lookout ronde 3 (tester, sonnet) 83k, 12 min, groen; naar main
+- 2026-11-13, Warden Ponytail-audit (reviewer, sonnet) 188k, 8,5 min, 12 punten (3 moet; punt 1 en 2 door coördinator in code bevestigd)
+- 2026-11-13, Sherpa Kleding en wind met Ponytail lite (ontwikkelaar, sonnet) 68k, 18 min, 32 tool-aanroepen, 0 herstelrondes tot nu; f60bf80 op claude/kleding-en-wind, nog zonder Warden/Lookout/Pathfinder
+- 2026-11-13, Sherpa Weer van de plek vervolg met Graphify (ontwikkelaar, fable) 89k, 19 min, 27 tool-aanroepen; b11d605 op claude/weer-plek-vervolg, nog zonder Warden/Lookout/Pathfinder
+- 2026-11-13, Kleding en wind: Warden (reviewer, sonnet) 36k, 4 min, akkoord, 1 belangrijk (tekst Zelf bijstellen, zelf hersteld); Lookout (tester, sonnet) 72k, groen, vond wind niet in rij Weer van de Briefing (zelf hersteld); Pathfinder (sonnet) 47k, geen moet, 1 mag zelf gedaan
+- 2026-11-13, Weer van de plek: Warden (reviewer, sonnet) 30k, 3 min, akkoord

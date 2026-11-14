@@ -1,6 +1,6 @@
 // ASCEND: learning from you what to wear. After an outdoor training you can
 // tap once "Te warm", "Goed" or "Te koud". Every tap moves your personal
-// bonus half a degree for that sport: "te warm" adds to it (the advice dresses
+// bonus a degree (first tap) or half a degree for that sport: "te warm" adds to it (the advice dresses
 // lighter), "te koud" takes from it. Limited to plus or minus four degrees,
 // separately for running, walking and cycling. "Goed" changes nothing.
 //
@@ -18,6 +18,8 @@ export type ClothingAdjust = Partial<Record<Sport, number>>;
 export const CLOTHING_FEEL_LABEL: Record<ClothingFeel, string> = { too_warm: 'Te warm', good: 'Goed', too_cold: 'Te koud' };
 
 const FEEDBACK_STEP_C = 0.5;
+// The first tap for a sport (nothing nudged yet) moves a whole degree, so one tap is felt.
+const FIRST_STEP_C = 1;
 export const MAX_ADJUST_C = 4;
 const SPORTS: Sport[] = SPORT_LIST;
 const SPORT_WORD = Object.fromEntries(DEFINED_SPORTS.map((s) => [s.id, s.verb])) as Record<Sport, string>;
@@ -54,11 +56,27 @@ export const adjustFor = (raw: unknown, sport: Sport | undefined): number => (sp
 export function applyClothingFeedback(raw: unknown, sport: Sport, feel: ClothingFeel): ClothingAdjust {
   const current = readClothingAdjust(raw);
   if (feel === 'good') return current;
-  const next = snap((current[sport] ?? 0) + (feel === 'too_warm' ? FEEDBACK_STEP_C : -FEEDBACK_STEP_C));
+  const was = current[sport] ?? 0;
+  const step = was === 0 ? FIRST_STEP_C : FEEDBACK_STEP_C;
+  const next = snap(was + (feel === 'too_warm' ? step : -step));
   const out = { ...current };
   if (next === 0) delete out[sport];
   else out[sport] = next;
   return out;
+}
+
+// One sentence after a tap: what changes next time. Without the weather we cannot name the
+// garment, so it says honestly that a piece only changes when the day sits on a limit.
+export function feedbackSentence(raw: unknown, sport: Sport, feel: ClothingFeel): string {
+  if (feel === 'good') return 'Fijn, dan blijft het zo.';
+  const now = adjustFor(applyClothingFeedback(raw, sport, feel), sport);
+  const warmer = feel === 'too_cold';
+  if (now === 0) return 'Genoteerd. Je zit weer op de standaard.';
+  const end = Math.abs(now) === MAX_ADJUST_C && Math.sign(now) === (warmer ? -1 : 1) ? ` Verder dan ${MAX_ADJUST_C} graden schuift het niet.` : '';
+  const how = `${degrees(now)} ${Math.abs(now) === 1 ? 'graad' : 'graden'} ${now > 0 ? 'lichter' : 'warmer'}`;
+  // The garment line only after the first tap; after that it is known and the sentence stays short.
+  const first = adjustFor(raw, sport) === 0 ? ' Een kledingstuk verandert pas als het weer net op een grens zit.' : '';
+  return `Genoteerd. Een volgende keer ${warmer ? 'warmer' : 'lichter'}: nu ${how}.${first}${end}`;
 }
 
 export const hasClothingAdjust = (raw: unknown): boolean => Object.keys(readClothingAdjust(raw)).length > 0;

@@ -33,7 +33,7 @@ import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
 import { routeTarget } from './routeTarget';
 import { placeChoices, placeHasRoute, resolvePlace, type PlaceChoice } from './trainingPlace';
-import { weatherForTraining } from './weather';
+import { temperatureHead, weatherForTraining, windPhrase } from './weather';
 import { PLACE_WEATHER_FROM_HOME, placeWeatherFailed, placeWeatherLine } from './placeWeather';
 import { clothingForTraining } from './clothing';
 import { drinkAmount } from './eveningBefore';
@@ -587,7 +587,8 @@ function weatherRow(input: BriefingInput, minutes: number): BriefingRow | undefi
   // Geen weer voor die dag: bij een plek die niet laadde zegt de regel dat, anders het vaste woord.
   if (!w) return { id: 'weather', label: BRIEFING_TEXT.weather, line: at?.state === 'failed' ? placeWeatherFailed(at.name) : BRIEFING_TEXT.noWeather, opens: true };
   const parts: string[] = [];
-  if (input.weatherOn) parts.push(`${Math.round(w.tempC)} ${Math.abs(Math.round(w.tempC)) === 1 ? 'graad' : 'graden'}`);
+  // De temperatuur zoals de weerregel hem begint: met gevoel en wind als die ertoe doen, harde wind erbij.
+  if (input.weatherOn) parts.push([temperatureHead(w), windPhrase(w)].filter(Boolean).join(', '));
   if (input.clothingOn) {
     const first = clothingForTraining({ ...base, adjustC: input.clothingAdjust })?.lines[0];
     // Alleen de eerste zin: de rest staat op de weerpagina erachter.
