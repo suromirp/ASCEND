@@ -1,6 +1,16 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 14 november 2026, ongeveer 04:30 Amsterdam, door de coördinator session_01LnDpSnUEEuPrNVonLWzZVf (diepte 8 van 8: kon geen sessies, geplande taken of send_later meer maken). Oudere overdrachten staan in de git-geschiedenis van dit bestand. De eigenaar start de nieuwe coördinator-chat zelf (begint weer op diepte 0) met de prompt uit de skill coordinator-wissel.
+Bijgewerkt: 14 november 2026, ongeveer 13:00 Amsterdam, door de coördinator session_01LnDpSj1W4nzauWSf6spDy3 (diepte 1). Oudere overdrachten staan in de git-geschiedenis van dit bestand.
+
+## Eerst lezen (eigenaar 14 november)
+
+- Houd de drie bouwplekken vol: wachten op een review of herstelronde is geen reden om niets te starten. Elke beurt eindigt met: zijn alle drie bezet? Zo niet, start de volgende die geen bestanden deelt (skill werkverdeling, Bouwplekken vol houden).
+
+## Vandaag (14 november)
+
+- Live: Voorstel begrijpelijk (887aa8b), backlog nagelopen en wekelijkse audit op fouten in de skill onderhoud (5fdcce8; eigenaar: "Ja, zet de audit in onderhoud"). Ponytail en Graphify niet installeren (advies aan de eigenaar gegeven, hij koos alleen de audit).
+- Lopend: Sherpa Klein 14 november (session_01LnDpSia85ogXyrmEQhUGfb, `claude/klein-14-nov`, herstelronde na Warden: wachtrij in nearbyTerrain, Akkoord in beide voorstellen van de wizard; Warden-agent te hervatten), Sherpa Spieren voor de berg rest (session_01LnDpSjCLgK2kJLBZyM8BYY, fable, `claude/spieren-berg-rest`), Sherpa Avond ervoor tests (session_01LnDpSmXbcTKCq9WwFkfTxU, sonnet, `claude/avond-ervoor-tests`).
+- Wissel: send_later 15 november 04:47 Amsterdam staat (trig_016NjGn4ZxB5Gt7zdHv9dYAU).
 
 ## Opdracht van de eigenaar
 

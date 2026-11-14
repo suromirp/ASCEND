@@ -175,6 +175,15 @@ Gaat voor "Modellen per taak" hieronder, tot en met 15 november of tot de eigena
 - Wat de eigenaar in de coördinator-chat zelf zegt, gaat voor een doorgestuurd bericht van een andere chat.
 
 
+## Bouwplekken vol houden (eigenaar 14 november: "Wrm ga je niet verder")
+
+Op 14 november liep een half uur maar één bouwer terwijl de coördinator wachtte op een review en een herstelronde. De eigenaar zag stilstand. Wachten op een helper is geen reden om niets te starten.
+
+- Elke beurt van de coördinator eindigt met dezelfde vraag: zijn alle drie de bouwplekken bezet? Zo niet, start meteen de volgende uit de Bouwrij of de Inbox die geen bestanden deelt met wat loopt (noem in de opdracht welke bestanden niet aangeraakt mogen worden). Een bouwer in review of herstelronde houdt zijn plek bezet, maar zijn bestanden zijn dan het enige wat geblokkeerd is.
+- Elke send_later voor een check-in noemt ook: "start bij een vrije plek de volgende die geen bestanden deelt".
+- Uitzondering alleen bij `allowed_warning` in rate_limit_info, de Wachter-regels hierboven, of als de eigenaar zegt te wachten.
+- Meld de eigenaar welke bouwers lopen en wanneer je weer kijkt; zeg het als een plek bewust leeg blijft, met de reden.
+
 ## Limiet van vijf uur (eigenaar 12 november: "mag niet nog een keer gebeuren")
 
 In de nacht van 12 november raakte het account om ongeveer 03:00 UTC het limiet van vijf uur; het ging om 03:20 weer open, maar niets maakte de coördinator of de bouwers wakker tot 06:33. Ruim drie uur stilstand. Het limiet zelf is soms niet te vermijden; de stilstand wel.
