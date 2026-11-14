@@ -6,6 +6,13 @@ Bijgewerkt: 14 november 2026, ongeveer 13:00 Amsterdam, door de coördinator ses
 
 - Houd de drie bouwplekken vol: wachten op een review of herstelronde is geen reden om niets te starten. Elke beurt eindigt met: zijn alle drie bezet? Zo niet, start de volgende die geen bestanden deelt (skill werkverdeling, Bouwplekken vol houden).
 
+- Stijl Jarvis: korte briefings, wat er gebeurt, waar de eigenaar concreet nodig is, de juiste vraag met advies (CLAUDE.md, vaste afspraken).
+- 14 november middag: de eigenaar vliegt en vertrouwt op zelfstandig doorwerken. Zelf beslissen met het advies, elke keuze en een korte reflectie hieronder onder Reflectie.
+
+## Reflectie (coördinator, per dag aanvullen)
+
+- 14 november: een half uur maar één bouwer terwijl ik op een review wachtte; de eigenaar zag stilstand. Nu de regel Bouwplekken vol houden. Goed: eigen blik op afdrukken ving de Engelse naam in Forge, die Warden en Pathfinder niet zagen.
+
 ## Vandaag (14 november)
 
 - Live: Voorstel begrijpelijk (887aa8b), backlog nagelopen en wekelijkse audit op fouten in de skill onderhoud (5fdcce8; eigenaar: "Ja, zet de audit in onderhoud"). Ponytail en Graphify niet installeren (advies aan de eigenaar gegeven, hij koos alleen de audit).
