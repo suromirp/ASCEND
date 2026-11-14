@@ -323,6 +323,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.journeyOnToday;
     skipped.n++;
   }
+  // Vragen na je loop (engine/afterRun.ts): Kort of Alles, of niet daar.
+  if ('afterRunQuestions' in s && s.afterRunQuestions !== 'short' && s.afterRunQuestions !== 'all') {
+    delete s.afterRunQuestions;
+    skipped.n++;
+  }
   if ('intensityCounting' in s && s.intensityCounting !== 'heartrate' && s.intensityCounting !== 'plan') {
     delete s.intensityCounting;
     skipped.n++;

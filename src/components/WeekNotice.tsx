@@ -14,7 +14,7 @@ import { Card, Eyebrow, PrimaryButton } from './ui';
 // weggevallen dagen is een punt zoals elk ander, zonder voorstel hier (dat staat op Vandaag).
 // "Bekijk voorstel" opent het voorstel in de ProposalSheet; Liever niet laat de week zoals hij is
 // en de melding blijft, rustiger, met "Toch een voorstel". Niets verandert zonder Akkoord. Zonder knop belooft
-// de kaart niets: geen "Nog 2 punten open", alleen wat er is.
+// de kaart niets: geen "Nog 2 voorstellen open", alleen wat er is.
 const SHOWN = 3;
 
 // Het voorstel wordt pas uitgerekend als je erom vraagt (een paar honderd milliseconden): het tekenen van de week

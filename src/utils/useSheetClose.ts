@@ -25,7 +25,10 @@ import { startSheetGrow, type SheetGrow } from './sheetGrowDom';
 // shrink back into it on the cross, the backdrop, the back button and dragging away, in Beweging
 // Normaal only (utils/sheetGrowDom.ts). Closing by hand on `onClose` (after Gedaan or Verplaatsen)
 // never shrinks. Without a row found, the sheet is the sheet it was.
-export function useSheetClose(onClose: () => void, durationMs = 200, canClose?: () => boolean) {
+//
+// `onLeave` fires the moment the sheet starts to close, before the exit animation: from then on nobody reads
+// what it says, so a late "saving failed" must go to the notice at the top (state/logSave.ts#reportIfGone).
+export function useSheetClose(onClose: () => void, durationMs = 200, canClose?: () => boolean, onLeave?: () => void) {
   const [closing, setClosing] = useState(false);
   // A tap and the back button in the same frame must not close it twice.
   const closingRef = useRef(false);
@@ -34,6 +37,7 @@ export function useSheetClose(onClose: () => void, durationMs = 200, canClose?: 
   function requestClose() {
     if (closingRef.current) return;
     closingRef.current = true;
+    onLeave?.();
     const shrink = grow.current?.close() ?? 0;
     setClosing(true);
     setTimeout(onClose, shrink ? Math.max(durationMs, shrink + 10) : durationMs);

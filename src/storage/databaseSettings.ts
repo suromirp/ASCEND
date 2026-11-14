@@ -378,6 +378,10 @@ export interface AppSettings {
   // last-week) zet de reistaak alleen in de laatste week dat hij nog kan in Je dag, 'every-week'
   // elke week, 'never' nooit. De reis zelf blijft op Ascend. Optional and additive.
   journeyOnToday?: 'last-week' | 'every-week' | 'never';
+  // "Vragen na je loop" (engine/afterRun.ts): 'short' (advice, absent = short) zet in het blad Hoe ging het?
+  // na een training van je horloge gevoel, pijn en zwaarte voorop en de rest achter Meer; 'all' alles in één
+  // stap. Optional and additive.
+  afterRunQuestions?: 'short' | 'all';
   // "Zones bijwerken na een test" (engine/zoneUpdate.ts): na een test die meetelt een voorstel met
   // Akkoord voor je drempelhartslag. Absent = on. Optional and additive.
   zonesAfterTest?: boolean;

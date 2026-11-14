@@ -582,6 +582,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Alleen kijken', text: 'het blok verandert je plan en je logs nooit. Met te weinig sets staat er "nog te weinig data".' },
     ],
   },
+  forgeOpwarmsetLater: {
+    title: 'Opwarmset later dempen',
+    lead: 'Een opwarmset op een beweging die al warm is, zoals de leg press na de squat, is vaak niet nodig.',
+    points: [
+      { head: 'Aan', text: 'de set blijft staan, gedempt, met één zin waarom. Afvinken telt als opwarmset; laten liggen telt niet als gemist.' },
+      { head: 'Gewoon', text: 'bij een nieuwe spiergroep of een nieuwe beweging, en bij de stappen naar een zware topset.' },
+      { head: 'Uit', text: 'elke opwarmset staat er zoals altijd.' },
+    ],
+  },
   forgeSchijven: {
     title: 'Schijven bij de set',
     lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt. Standaard uit: het cijferblok toont ze als je het gewicht intikt.',
@@ -1199,6 +1208,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Niet meetellen', text: 'de tijd dat je stilstond telt niet in je snelste 5 km. ASCEND zegt hoe vaak en hoelang. Na meer dan een minuut of meer dan 3 stops zegt ASCEND dat de test iets te gunstig is.' },
       { head: 'Meetellen', text: 'de klok loopt door. Pauzeert je horloge vanzelf, dan telt een stuk met zo\'n gat niet mee.' },
       { head: 'Je tempo\'s', text: 'veranderen niet vanzelf. Verandert er door het stilstaan een tempo, dan vraagt ASCEND eerst Akkoord in het logblad.' },
+    ],
+  },
+  vragenNaLoop: {
+    title: 'Vragen na je loop',
+    lead: 'Vinkt je horloge een training af, dan staat bovenaan Je dag de rij Hoe ging het?. Die opent een blad met de vragen.',
+    points: [
+      { head: 'Kort', text: 'Beter, Normaal of Slechter, pijn en de zwaarte. Je gewicht na, inkorten en de tekst voor Strava staan achter Meer.' },
+      { head: 'Alles', text: 'alles onder elkaar, zonder Meer.' },
+      { head: 'Zwaarte', text: 'staat altijd in de eerste stap, met de waarde van je horloge als die er is. Zonder zwaarte telt je belasting de zwaarte van het plan.' },
     ],
   },
   benenNaTest: {

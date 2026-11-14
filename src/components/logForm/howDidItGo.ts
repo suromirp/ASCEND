@@ -20,6 +20,7 @@ export const HOW_TEXT = {
   cancel: 'Annuleren',
   // Na de grens in tijd: het opslaan loopt nog, en je ziet dat.
   slow: FORM_SAVE_NOTE.slow,
+  slowLoose: FORM_SAVE_NOTE.slowLoose,
   failed: FORM_SAVE_NOTE.failed,
   // Een losse training heeft geen geplande training die een tweede log tegenhoudt: eerst kijken. Sinds
   // besluit 2026-11-12-dubbel-log.md zegt logSession ja zodra het log geschreven is; deze regel blijft als voorzorg.
