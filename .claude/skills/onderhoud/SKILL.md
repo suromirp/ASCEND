@@ -1,6 +1,6 @@
 ---
 name: onderhoud
-description: Wekelijkse goedkope controle van de code van ASCEND op onderhoud (ongebruikte code, dubbele hulpfuncties, oude namen, te grote bestanden, oude notities, overbodige pakketten, groei van CLAUDE.md). Gebruik bij de wekelijkse onderhoudsronde of als de eigenaar vraagt hoe de code ervoor staat.
+description: Wekelijkse goedkope controle van de code van ASCEND op onderhoud (ongebruikte code, dubbele hulpfuncties, oude namen, te grote bestanden, oude notities, overbodige pakketten, groei van CLAUDE.md) en een gerichte audit op fouten. Gebruik bij de wekelijkse onderhoudsronde of als de eigenaar vraagt hoe de code ervoor staat.
 ---
 
 # Onderhoud: de wekelijkse ronde
@@ -34,6 +34,17 @@ zelf alleen wat veilig en klein is; al het andere wordt een voorstel.
 8. Schrijf een regel in `.claude/kosten/logboek.md` met de tokens van de helpers.
 
 Geen persoonsgegevens, nooit een back-up van de eigenaar lezen, nooit `.claude/settings.json` wijzigen.
+
+## Audit op fouten (wekelijks, naar de audit van Ponytail; eigenaar 14 november)
+
+Naast de inventaris een gerichte foutenjacht, alleen lezen, zonder plugin of hook (proef: `docs/onderzoek/Ponytail en Graphify.md`). Eén helper `reviewer` (Warden) op `sonnet`, in een eigen worktree in de scratchpad, nooit de werkmap van de coördinator.
+
+- Per week één deel, om de beurt: week 1 `src/engine/`, week 2 `src/storage/` en `src/integrations/`, week 3 `src/state/` en `src/pages/`, week 4 `src/components/`. Het rapport noemt welk deel aan de beurt was en welke bestanden echt gelezen zijn.
+- De opdracht: zoek fouten die de gebruiker raken: een grens in tijd die te vroeg stopt, een fout die stil wordt ingeslikt, schrijven buiten een transactie, twee schrijvers op dezelfde rij, een log dat herschreven wordt, een datum rond middernacht of zomertijd, een oude back-up die niet meer leest. Geen stijl, geen smaak.
+- Elk punt met bestand en regel, een concreet pad van invoer naar verkeerde uitkomst, en moet of mag. Wat niet in de code bevestigd is heet vermoeden.
+- De coördinator bevestigt elk moet-punt zelf in de code voor het in de Inbox van de backlog komt; een vermoeden gaat alleen met een naspeelplan erin. Dit deel bouwt niets.
+- Niet overnemen van Ponytail: zelf kleiner kiezen, één test per wijziging, geen instellingen. Daar gaan de afspraken van de eigenaar voor.
+- Het rapport komt bij het rapport van de week, als kop Audit; de tokens in het kostenlogboek.
 
 ## Samenhang (Pathfinder, wekelijks)
 
