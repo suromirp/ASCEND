@@ -168,8 +168,8 @@ Elke maandag (samen met de weekbriefing) kijkt de coördinator naar het logboek 
 
 Gaat voor "Modellen per taak" hieronder, tot en met 15 november of tot de eigenaar iets anders zegt; daarna terug naar de gewone verdeling. De eigenaar wil de reset maximaal benutten. Fable is grondiger maar trager, Opus sneller en veelzijdiger.
 
-- Fable (nieuwste die create_session aanneemt, nu claude-fable-5-2): planner en engine, opslag en migraties, reviews van Warden, onderzoek van Scout, ontwerp van Cartographer, lastige fouten.
-- Opus (claude-opus-5-5): de coördinator en snel, gevarieerd bouwwerk (schermen, instellingen, kleine fouten).
+- Fable (nieuwste die create_session aanneemt, nu claude-fable-5-2): Warden bij alles wat engine, opslag of planning raakt (met proefmerge en mutaties), onderzoek van Scout, ontwerp van Cartographer.
+- Opus (claude-opus-5-5): de coördinator en al het bouwen, ook in de engine en opslag (eigenaar 14 november: "Wat jij adviseert"). Reden uit het logboek van 12 tot 14 november: Fable als bouwer had niet minder rondes (Nee van logSession vijf, StairMaster drie) en elke ronde kost Fable-ruimte; Warden op Fable vangt wat Opus mist (opwarmset volgde het plan). Uitzondering: een fout die Opus na twee rondes niet oplost gaat naar een bouwer op Fable.
 - Sonnet of Haiku: alleen licht werk (teksten, Lookout, zoeken).
 - Bouwen buiten het bouwmoment mag deze week (eigenaar 11 november: "in principe mag je nu gaan bouwen"); hoogstens drie bouwers tegelijk, nooit twee aan dezelfde bestanden, bouwers in een eigen chat (create_session) die zich bij de coördinator meldt. Kort onderzoek of ontwerp (onder een uur, alleen docs) mag als helper binnen de coördinator-chat.
 - Wat de eigenaar in de coördinator-chat zelf zegt, gaat voor een doorgestuurd bericht van een andere chat.
@@ -191,7 +191,7 @@ Elke ronde van de Wachter schrijft een blok in `.claude/coordinator/reflectie.md
 ## Wat werkt, per soort werk (bijwerken bij de wissel)
 
 - Tekst en schermen: opus, één ronde plus één herstelronde; Lookout laat ontbrekende standen zelf namaken; eigen blik op elke afdruk.
-- Engine, opslag, races: fable, Warden op fable met mutatietests en een proeftest voor races.
+- Engine, opslag, races: bouwen op opus, Warden op fable met mutatietests en een proeftest voor races (sinds 14 november avond; eerst op fable).
 - Alleen tests of docs: sonnet.
 - In elke bouwopdracht (14 november, twee moet-punten): welk scherm opent deze training (Briefing, trainingsscherm of Forge), en welke precisie heeft elk getal dat je toont (een log bewaart minuten, geen seconden).
 - Gereedschap: Ponytail alleen als audit-prompt in onderhoud; Graphify niet, wel het idee van een graaf (werkkaart).
