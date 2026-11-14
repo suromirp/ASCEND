@@ -13,5 +13,5 @@ export function isChunkLoadError(error: { message?: string } | null | undefined)
   return CHUNK_PATTERNS.some((p) => p.test(message));
 }
 
-export const CHUNK_TITLE = 'Dit scherm is er nog niet';
+export const CHUNK_TITLE = 'Dit scherm kon niet laden';
 export const CHUNK_LINE = 'Het kon niet laden, waarschijnlijk omdat je geen verbinding hebt. Zodra je weer online bent, opent het. De rest van ASCEND werkt gewoon.';

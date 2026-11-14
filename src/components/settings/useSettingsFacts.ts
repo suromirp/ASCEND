@@ -1,4 +1,3 @@
-import { hasTrekGoal } from '../../engine/journeyAccess';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { isOpenOn, isSoreness } from '../../engine/injuryKind';
@@ -30,6 +29,7 @@ import { startFactsLoading, type LoaderState, type SourceLink } from './factsLoa
 import { resolveProgramWeek, todayISO } from '../../utils/dates';
 import { mainGoal as findMainGoal } from '../../engine/mainGoal';
 import { listedGoals } from '../../engine/goalList';
+import { hasTrekGoal } from '../../engine/journeyAccess';
 
 const FACT_LINKS: SourceLink[] = [
   { subscribe: onWatchChange, sources: ['watch'] },

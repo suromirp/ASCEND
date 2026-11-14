@@ -1,4 +1,3 @@
-import { visibleInSearch } from '../../engine/journeyAccess';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Eyebrow } from '../../components/ui';
 import { usePageState } from '../../components/usePageState';
@@ -13,6 +12,7 @@ import { searchSettings } from '../../engine/settingsSearch';
 import { settingAvailabilityOnPage } from '../../engine/settingsAvailability';
 import { groupSummary, searchValue } from '../../engine/settingsSummary';
 import { backupSpoken, directionStatus, statusCells } from '../../engine/settingsStatus';
+import { visibleInSearch } from '../../engine/journeyAccess';
 
 const MAX_RESULTS = 10;
 

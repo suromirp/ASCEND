@@ -35,6 +35,7 @@ import { AscendPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
 import { SessionPill } from './components/forge/SessionPill';
 import { useOpenRequest, useSessionHousekeeping, useSessionPill } from './components/forge/useForgeSession';
+import { TrekOnly } from './components/reis/TrekOnly';
 // Pages you open now and then load on demand, so the first start only
 // downloads what Today needs. The service worker precaches every chunk, so
 // they still work offline.
@@ -58,7 +59,6 @@ const ForgePage = lazy(() => import('./pages/Forge').then((m) => ({ default: m.F
 const TrainingSpotsPage = lazy(() => import('./pages/TrainingSpots').then((m) => ({ default: m.TrainingSpotsPage })));
 const StandingPage = lazy(() => import('./pages/Standing').then((m) => ({ default: m.StandingPage })));
 const StandScreenPage = lazy(() => import('./pages/StandScreen').then((m) => ({ default: m.StandScreenPage })));
-import { TrekOnly } from './components/reis/TrekOnly';
 const JourneyPage = lazy(() => import('./pages/Journey').then((m) => ({ default: m.JourneyPage })));
 const PackListPage = lazy(() => import('./pages/PackList').then((m) => ({ default: m.PackListPage })));
 const EtappesPage = lazy(() => import('./pages/Etappes').then((m) => ({ default: m.EtappesPage })));

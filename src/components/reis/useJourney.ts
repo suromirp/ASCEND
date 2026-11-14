@@ -1,3 +1,4 @@
+import { useHasTrekGoal } from './useHasTrekGoal';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { JOURNEY_TASKS } from '../../data/journeyTasks';
@@ -25,7 +26,9 @@ export function useJourney(): {
 } {
   const { settings, updateSettings, trainingGoals, goalMilestones, sessionLogs } = useAppData();
   const today = todayISO();
-  const goalDate = programAnchorDate(trainingGoals, goalMilestones, today);
+  // Zonder tocht als doel bestaat de reis niet: de ankerdatum is er ook bij een loopdoel.
+  const trek = useHasTrekGoal();
+  const goalDate = trek ? programAnchorDate(trainingGoals, goalMilestones, today) : undefined;
   const stored = useMemo(() => normalizeJourneyState(settings.journey).state, [settings.journey]);
   const boots = useMemo(
     () => bootBreakInStatus({ boots: stored?.boots, logs: sessionLogs, goalKm: bootGoalKm(settings.bootBreakInKm), today, departure: goalDate }),

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { hasTrekGoal, isJourneyLink, visibleInSearch, NO_TREK_LINE } from './journeyAccess';
+import { placementOf } from '../data/settingsLayout';
+import { effectiveGoalKind, hasTrekGoal, isJourneyLink, visibleInSearch, NO_TREK_LINE } from './journeyAccess';
 import { searchSettings } from './settingsSearch';
 import { SETTINGS_INDEX } from '../data/settingsIndex';
 import type { TrainingGoal } from '../models/goals';
@@ -26,6 +27,23 @@ describe('hasTrekGoal', () => {
   });
 });
 
+describe('een doel zonder soort', () => {
+  const old = goal({ kind: undefined });
+  it('het hoofddoel (met mijlpalen) telt als tocht', () => {
+    expect(effectiveGoalKind(old, true)).toBe('trek_hut');
+    expect(hasTrekGoal([old], new Set(['g1']), today)).toBe(true);
+  });
+
+  it('een ander doel zonder soort telt niet', () => {
+    expect(effectiveGoalKind(old, false)).toBeUndefined();
+    expect(hasTrekGoal([old], none, today)).toBe(false);
+  });
+
+  it('alleen een loopdoel als hoofddoel is geen tocht', () => {
+    expect(hasTrekGoal([goal({ kind: 'run_race' })], new Set(['g1']), today)).toBe(false);
+  });
+});
+
 describe('zoeken zonder trekdoel', () => {
   const ids = (q: string, trek: boolean) => searchSettings(q, visibleInSearch(SETTINGS_INDEX, trek)).map((r) => r.item.id);
 
@@ -40,6 +58,13 @@ describe('zoeken zonder trekdoel', () => {
   it('met een trekdoel staan ze er wel', () => {
     expect(ids('reisplanner', true)).toContain('reisplanner');
     expect(ids('paklijst', true)).toContain('paklijst');
+  });
+
+  it('Bergschoenen inlopen opent de instelling, niet het scherm /reis', () => {
+    const place = placementOf('bergschoenen');
+    expect(place).toBeDefined();
+    expect(place?.link).toBeUndefined();
+    expect(isJourneyLink('bergschoenen')).toBe(false);
   });
 
   it('andere instellingen blijven vindbaar', () => {

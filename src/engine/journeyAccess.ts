@@ -8,11 +8,19 @@ import { listedGoals } from './goalList';
 
 export const isTrekKind = (kind: GoalKindId): boolean => kind === 'trek_hut' || kind === 'trek_tent';
 
-// Is er een doel dat een tocht is? Een hoofddoel zonder soort (van voor de soorten) telt als
-// tocht, zoals de doelkaart dat ook doet.
+// De soort van een doel zoals de doelkaart en het blad hem lezen: een hoofddoel zonder soort (van
+// voor de soorten) is een tocht met hutten, een ander doel zonder soort heeft geen soort. Dit is
+// iets anders dan `usesMilestoneReadiness` (goalReadinessFor.ts): die vraagt alleen of de soort
+// ontbreekt, voor de rekening van het hoofddoel, niet of er een tochtmodule bij hoort.
+export function effectiveGoalKind(goal: TrainingGoal, isMain: boolean): GoalKindId | undefined {
+  return goalKindOf(goal) ?? (isMain ? 'trek_hut' : undefined);
+}
+
+// Is er een doel dat een tocht is? Programma-ankerdatum (programAnchorDate) is de datum van elk
+// hoofddoel en bewijst dus geen tocht; dit wel.
 export function hasTrekGoal(goals: readonly TrainingGoal[], ladderGoalIds: ReadonlySet<string>, today: string): boolean {
   return listedGoals(goals, ladderGoalIds, today).some(({ goal, isMain }) => {
-    const kind = goalKindOf(goal) ?? (isMain ? 'trek_hut' : undefined);
+    const kind = effectiveGoalKind(goal, isMain);
     return !!kind && isTrekKind(kind);
   });
 }
