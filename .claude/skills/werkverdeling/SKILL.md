@@ -193,6 +193,7 @@ Elke ronde van de Wachter schrijft een blok in `.claude/coordinator/reflectie.md
 - Tekst en schermen: opus, één ronde plus één herstelronde; Lookout laat ontbrekende standen zelf namaken; eigen blik op elke afdruk.
 - Engine, opslag, races: fable, Warden op fable met mutatietests en een proeftest voor races.
 - Alleen tests of docs: sonnet.
+- In elke bouwopdracht (14 november, twee moet-punten): welk scherm opent deze training (Briefing, trainingsscherm of Forge), en welke precisie heeft elk getal dat je toont (een log bewaart minuten, geen seconden).
 - Gereedschap: Ponytail alleen als audit-prompt in onderhoud; Graphify niet, wel het idee van een graaf (werkkaart).
 
 ## Limiet van vijf uur (eigenaar 12 november: "mag niet nog een keer gebeuren")
