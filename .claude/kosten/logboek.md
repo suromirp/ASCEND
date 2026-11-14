@@ -471,3 +471,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-14, Sherpa Volle week (opus); Warden (fable) akkoord, 9 van 11 mutaties; Sherpa Racedag en Info-blad (opus) elk een herstelronde na Warden; Lookout drie branches (sonnet) 85k; Pathfinder (sonnet) 52k.
 - 2026-11-14, Info-blad A (opus) 2 rondes; Warden (fable) 95k + 125k akkoord na herstel; Opwarmset (opus) Warden 97k niet akkoord (demping volgt plan, niet afvinken); Lookout ronde 2 (sonnet) 133k; Pathfinder ronde 2 (sonnet) 79k.
 - 2026-11-14, Sherpa Route-kaart vervolg herstelronde (opus); zelfreview reviewer (sonnet) 77k akkoord onder voorwaarde (Android-proefbouw), 2 belangrijke en 4 kleine punten verwerkt.
+- 2026-11-14, Sherpa Geen stille Thuis (opus); zelfreview reviewer (sonnet) akkoord, 4 kleine punten (werkbriefje verwerkt).
