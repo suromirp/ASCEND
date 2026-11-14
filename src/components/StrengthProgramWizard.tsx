@@ -204,7 +204,7 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
           ))}
           {added.map((c, i) => (
             <div key={i} className="text-xs" style={{ color: 'var(--color-success-text)' }}>
-              + {c.newSessionDraft?.scheduledDate}: {templateById.get(c.newSessionDraft?.templateId ?? '')?.name ?? c.newSessionDraft?.templateId}
+              + {dayNL(c.newSessionDraft?.scheduledDate)}: {templateById.get(c.newSessionDraft?.templateId ?? '')?.name ?? c.newSessionDraft?.templateId}
             </div>
           ))}
         </div>
@@ -567,7 +567,7 @@ function PreviewStep({
           ))}
           {added.map((c, i) => (
             <div key={i} className="text-xs" style={{ color: 'var(--color-success-text)' }}>
-              + {c.newSessionDraft?.scheduledDate}: {templateById.get(c.newSessionDraft?.templateId ?? '')?.name ?? c.newSessionDraft?.templateId}
+              + {dayNL(c.newSessionDraft?.scheduledDate)}: {templateById.get(c.newSessionDraft?.templateId ?? '')?.name ?? c.newSessionDraft?.templateId}
             </div>
           ))}
         </div>
