@@ -181,6 +181,19 @@ export function isLeaveBlockedDay(periods: LeavePeriod[] | undefined, date: stri
   return kind === 'off' || kind === 'trek';
 }
 
+// A day you said you are away (a holiday, a tocht, away without a gym): what was planned there and not
+// done never counts as missed, is never caught up and asks no "Niet gedaan?" (docs/beslissingen/
+// 2026-11-14-vakantie-en-ziek-niet-gemist.md). Free days are time you have, not time away: they count as usual.
+export function isAwayDay(date: string, periods: LeavePeriod[] | undefined, days: Map<string, LeaveDay> = leaveDays(periods)): boolean {
+  const kind = days.get(date)?.kind;
+  return kind === 'off' || kind === 'trek' || kind === 'nogym';
+}
+
+// The away periods (no free days), in date order.
+export function awayPeriods(periods: LeavePeriod[] | undefined): LeavePeriod[] {
+  return sortPeriods((periods ?? []).filter((p) => p.kind !== 'free_days'));
+}
+
 // --- how it reads -----------------------------------------------------------------
 export type LeaveLabelKind = LeaveDayKind | 'light';
 export interface LeaveLabel {

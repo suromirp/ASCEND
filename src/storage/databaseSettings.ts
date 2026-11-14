@@ -5,6 +5,7 @@ import type { ZoneAnswer } from '../models/zoneAnswer';
 import type { AboveMission } from '../engine/todayCards';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
+import type { ReentryChoice, ReentryWeek } from '../engine/reentry';
 import type { ExternalOneRm, WeightEntry } from '../models/metrics';
 import type { SweatEntry, SweatPre } from '../models/sweat';
 import type { MorningCheckIn, NightJudgment, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
@@ -121,6 +122,11 @@ export interface AppSettings {
   // a backup (backup schema 5, storage/migrations.ts#migrateLeavePeriods).
   // Added and removed only with Akkoord on the proposal that goes with it.
   leavePeriods?: LeavePeriod[];
+  // Rustiger instap na een pauze (engine/reentry.ts): het advies is driekwart. Optional, no migration.
+  reentry?: ReentryChoice;
+  // De rustiger instappen waarop je Akkoord gaf (engine/reentry.ts#ReentryWeek). Alleen via het voorstel
+  // geschreven; de duurregisters lezen ze. Optional and additive, so older settings and backups need no change.
+  reentryWeeks?: ReentryWeek[];
   // The next tocht (a trek you set up as a goal of your own, models/leave.ts
   // TrekDetails) on Vandaag. Absent = on. Optional and additive.
   showNextTrek?: boolean;

@@ -10,8 +10,9 @@ import { respectsHeavySpacing } from './scheduler';
 import { isTemplatePlannable } from './sports';
 import { addDays, daysBetween, formatWeekdayDateNL } from '../utils/dates';
 import { proposeExtraSession } from './extraRun';
-import { lastDeclinedOn, linkCandidates } from './missedTraining';
-import { type AdviceInputs, type Advice, isDone, inProgram, isKeySession, findCatchUpDate, findRestDayToUse, keyCatchUpShort, type AdviceOption, catchUpDates, moveOptions, proposal } from './adviceShared';
+import { lastDeclinedOn, linkCandidates, pauseSince } from './missedTraining';
+import { isAwayDay } from './leave';
+import { type AdviceInputs, type Advice, isDone, inProgram, isKeySession, findCatchUpDate, findRestDayToUse, keyCatchUpShort, raceWeekGuard, type AdviceOption, catchUpDates, moveOptions, proposal } from './adviceShared';
 import { TEST_RUN_ID } from './adviceTestRun';
 
 // Een naam midden in een zin: "Tempoloop" wordt "tempoloop".
@@ -25,6 +26,8 @@ const lower = (name: string) => `${name.charAt(0).toLowerCase()}${name.slice(1)}
 export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
   // Ill or building back up: nothing gets caught up (engine/illness.ts).
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  // De afbouw voor een race en de racedag: niets inhalen. Weg (vakantie, tocht): ook niet.
+  if (raceWeekGuard(inputs) || (inputs.leave?.length && isAwayDay(inputs.asOf, inputs.leave))) return [];
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   // First link, then catch up: a training a loose log may belong to gets the link proposal on Vandaag
   // (engine/missedTraining.ts), not a catch-up of something that was perhaps done.
@@ -34,7 +37,9 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
   const windowFrom = (s: PlannedSession) => [s.scheduledDate, lastDeclinedOn(s.id, inputs.missedLink?.declinedOn) ?? ''].sort().at(-1)!;
   const recentMissed = inputs.plannedSessions.filter(
     (s) => s.templateId !== TEST_RUN_ID && s.status !== 'skipped' && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(windowFrom(s), inputs.asOf) <= 3
-      && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf) && !linkable.has(s.id),
+      && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf) && !linkable.has(s.id)
+      // Een vakantie of tocht die je meldde is nooit gemist; wat ervoor open stond vervalt (engine/missedTraining.ts#pauseSince).
+      && !isAwayDay(s.scheduledDate, inputs.leave) && !pauseSince(s.scheduledDate, inputs.asOf, inputs.illnessEpisodes, inputs.leave),
   );
   // One advice for everything missed, not one each (production feedback:
   // a stack of "gemist" cards). Only a key session (engine/keySession.ts:
@@ -88,7 +93,7 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
   const names = missed.map((m) => m.template.name);
   // Een naam met "en" erin ("Heuvelsprints en afdalen") maakt een opsomming met "en" onleesbaar; dan alleen komma's.
   const list = (xs: string[]) => (xs.length === 1 ? xs[0] : xs.some((x) => / en /.test(x)) ? xs.join(', ') : `${xs.slice(0, -1).join(', ')} en ${xs.at(-1)}`);
-  const title = missed.length === 1 ? `${names[0]} van ${formatWeekdayDateNL(missed[0].s.scheduledDate)} is blijven liggen` : `${missed.length} trainingen zijn blijven liggen: ${list(names)}`;
+  const title = missed.length === 1 ? `${names[0]} van ${formatWeekdayDateNL(missed[0].s.scheduledDate)} gemist` : `${missed.length} trainingen gemist: ${list(names)}`;
   const effect = [
     caughtUp.length > 0 ? `${caughtUp.join('; ')}.` : '',
     dropped.length > 0 ? `${list(dropped)} ${dropped.length === 1 ? 'vervalt' : 'vervallen'}. De rest van je week blijft zoals gepland.` : '',
@@ -108,7 +113,7 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
     ruleId: 'MISSED-CATCH-UP',
     title,
     effect,
-    why: `${missed.length === 1 ? 'Deze training is blijven liggen.' : 'Deze trainingen zijn blijven liggen.'} ${rule}`,
+    why: `${missed.length === 1 ? 'Deze training is gemist.' : 'Deze trainingen zijn gemist.'} ${rule}`,
     priority: caughtUp.length > 0 ? 3 : 2,
     proposal: proposal(title, items, effect, rule),
   }];
@@ -123,6 +128,7 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
 // already uses this rest day for a catch-up.
 export function restSwapAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  if (raceWeekGuard(inputs) || isAwayDay(inputs.asOf, inputs.leave)) return [];
   const today = inputs.asOf;
   const yesterday = addDays(today, -1);
   const tomorrow = addDays(today, 1);
@@ -161,6 +167,7 @@ export function restSwapAdvice(inputs: AdviceInputs, templateById: Map<string, S
 // straight away, the evening of the skip, not only the next morning.
 export function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  if (raceWeekGuard(inputs) || isAwayDay(inputs.asOf, inputs.leave)) return [];
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const skipped = inputs.plannedSessions
     .filter((s) => s.status === 'skipped' && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program)

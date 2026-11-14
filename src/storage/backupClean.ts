@@ -1,6 +1,7 @@
 // Back-up inlezen: elk record nakijken en de instellingen opschonen voordat iets
 // de opslag bereikt.
 
+import { isReentryWeek } from '../engine/reentry';
 import { cleanCardOrder } from '../engine/cardOrder';
 import type { PlannedSession } from '../models/training';
 import type { WeeklyHealthCheck } from '../models/checkIn';
@@ -62,6 +63,8 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   const lists: [string, (v: unknown) => boolean][] = [
     ['weightEntries', (e) => isRecord(e) && isDate(e.date) && typeof e.kg === 'number' && Number.isFinite(e.kg) && (e.basis === undefined || e.basis === 'trend' || e.basis === 'scale') && (e.scaleKg === undefined || (typeof e.scaleKg === 'number' && Number.isFinite(e.scaleKg)))],
     ['illnessEpisodes', (e) => hasId(e) && isDate(e.startDate) && typeof e.kind === 'string'],
+    // Rustiger instap na een pauze (engine/reentry.ts): een beschadigde rij valt weg, de rest blijft.
+    ['reentryWeeks', isReentryWeek],
     ['morningCheckIns', (e) => isRecord(e) && isDate(e.date)],
     ['weeklyHealthChecks', (e) => isRecord(e) && isDate(e.weekStart) && typeof e.trouble === 'string'],
     ['weeklyIntentions', isWeeklyIntention],

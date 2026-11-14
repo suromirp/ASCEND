@@ -29,9 +29,9 @@ export function DeviceNoticesHost() {
     if (!port.timed || !notices.week) return null;
     const sunday = toISODate(nextWeekNoticeAt(new Date(), notices.weekTime));
     const weekStart = mondayOfWeek(sunday);
-    const review = buildWeekReview({ weekStart, plannedById: plannedByIdOf(plannedSessions), plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: todayISO(), illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: counting, keyFocus });
+    const review = buildWeekReview({ weekStart, plannedById: plannedByIdOf(plannedSessions), plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: todayISO(), illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: counting, keyFocus });
     return weekNoticeText(review);
-  }, [keyFocus, port.timed, notices.week, notices.weekTime, plannedSessions, sessionLogs, templates, program, planChangeLog, settings.illnessEpisodes, settings.weeklyHealthChecks, settings.heartRate, counting]);
+  }, [keyFocus, port.timed, notices.week, notices.weekTime, plannedSessions, sessionLogs, templates, program, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, settings.weeklyHealthChecks, settings.heartRate, counting]);
 
   const morningKey = JSON.stringify([notices.morning, resolveOverviews(settings.overviews).morningCheckIn, morningFromHour(settings.overviews), (settings.morningCheckIns ?? []).map((c) => c.date).slice(-3)]);
 

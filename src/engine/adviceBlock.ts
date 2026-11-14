@@ -3,6 +3,7 @@
 
 import { proposeRestWeekSkip } from './restWeek';
 import { costSentence, proposeRepeatWeek, shortfallSentence } from './repeatWeek';
+import { proposeReentry, reentryEffect, REENTRY_ADVICE, REENTRY_TITLE, REENTRY_WHY } from './reentry';
 import { mondayOfWeek, formatWeekdayDateNL } from '../utils/dates';
 import { PACK_WEIGHT_EXPLANATION } from './gr5Profile';
 import { checkTargetTime, outlookSaid, outlookWeeksSaid, racePaces } from './racePaces';
@@ -35,7 +36,7 @@ export function restWeekSkipAdvice(inputs: AdviceInputs): Advice[] {
 export function repeatWeekAdvice(inputs: AdviceInputs): Advice[] {
   const found = proposeRepeatWeek({
     program: inputs.program, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates,
-    today: inputs.asOf, illnessEpisodes: inputs.illnessEpisodes, planChangeLog: inputs.extraSession?.planChangeLog,
+    today: inputs.asOf, illnessEpisodes: inputs.illnessEpisodes, leavePeriods: inputs.leave, planChangeLog: inputs.extraSession?.planChangeLog,
     // Races still ahead (their goals) and races already run (their session
     // or log): the week after a race is its own recovery, never a repeat.
     raceWeeks: [...new Set([
@@ -49,6 +50,19 @@ export function repeatWeekAdvice(inputs: AdviceInputs): Advice[] {
   const effect = `${shortfallSentence(found)} Voorstel: deze week houdt de belasting van vorige week, in plaats van een stap omhoog. ${costSentence(found.impact)} De rustweek, de golven daarna, de taper en je doeldatum blijven zoals ze waren. Met Liever niet blijft alles staan en vraagt ASCEND er deze week niet meer naar.`;
   const why = 'Een week herhalen na een tegenvallende week werkt beter dan doorschuiven naar de zwaardere week: je bouwt pas verder als de belasting van vorige week er echt in zit. ASCEND remt alleen. Na een goede week bouwt het niet sneller, want vooruitgang laat je zien in je test, niet in extra minuten; bijsturen door te remmen geeft in studies vooral minder slechte uitkomsten (Nuuttila e.a. 2022). Het kost je doeldatum niets: alleen de zwaarste week van deze golf wordt lichter, de rustweek en alle golven daarna staan nog op de kalender. De 110%-regel houdt de stap daarna klein, want die meet tegen wat je echt liep. Was je ziek, dan geldt het terugkomschema en vraagt ASCEND dit niet. Je kunt het altijd terugzetten in Week.';
   return [{ id: found.id, trigger: 'plan_update', ruleId: 'REPEAT-WEEK', title, effect, why, priority: 3, repeatWeek: found.weekStart }];
+}
+
+// Rule REENTRY: na een pauze (ziek en een vakantie, of twee weken weinig training) een rustiger instap
+// (engine/reentry.ts). Een voorstel: de duur van zeven dagen gaat pas omlaag na Akkoord op het voorstel van de
+// planningsronde. Wijkt niet voor andere adviezen; het raakt geen enkele rij, alleen de duur.
+export function reentryAdvice(inputs: AdviceInputs): Advice[] {
+  const found = proposeReentry({
+    program: inputs.program, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, today: inputs.asOf,
+    illnessEpisodes: inputs.illnessEpisodes, leavePeriods: inputs.leave, choice: inputs.reentry?.choice ?? REENTRY_ADVICE,
+    weeks: inputs.reentry?.weeks, respondedIds: inputs.respondedIds,
+  });
+  if (!found) return [];
+  return [{ id: found.id, trigger: 'plan_update', ruleId: 'REENTRY', title: REENTRY_TITLE, effect: reentryEffect(found), why: REENTRY_WHY, priority: 3, reentry: found.week }];
 }
 
 export function tentPackAdvice(inputs: AdviceInputs): Advice[] {

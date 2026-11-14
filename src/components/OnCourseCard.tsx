@@ -19,8 +19,8 @@ export function OnCourseCard({ goalName, goalDate }: { goalName: string; goalDat
   const { program, plannedSessions, sessionLogs, templates, planChangeLog, settings } = useAppData();
   const keyFocus = useKeyFocus();
   const course = useMemo(
-    () => assessOnCourse({ today: todayISO(), goalName, goalDate, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes, keyFocus }),
-    [goalName, goalDate, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, keyFocus],
+    () => assessOnCourse({ today: todayISO(), goalName, goalDate, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, keyFocus }),
+    [goalName, goalDate, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, keyFocus],
   );
   return (
     <Card className="flex flex-col gap-2">

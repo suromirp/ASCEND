@@ -1115,9 +1115,18 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Training die niet doorging',
     lead: 'Wat ASCEND doet met een training die een paar dagen voorbij is zonder log. ASCEND verzint nooit een log.',
     points: [
-      { head: 'Vragen', text: 'één vraag op Vandaag, de oudste eerst. Niet gedaan zet hem op overgeslagen, Toch gedaan opent het gewone invullen, Niet nu laat hem rusten. Ouder dan twee weken vraagt ASCEND niet meer.' },
+      { head: 'Vragen', text: 'één vraag op Vandaag, de oudste eerst. Niet gedaan zet hem op overgeslagen, Toch gedaan opent het gewone invullen, Niet nu laat hem rusten. Ouder dan een week vraagt ASCEND niet meer, en op een racedag niet. Wat op een vakantie of tocht stond is nooit gemist; wat ervoor nog open stond vervalt bij een ziekmelding of vakantie, met één regel op Vandaag.' },
       { head: 'Zelf overslaan', text: 'ASCEND zet hem op overgeslagen en meldt het, met Ongedaan maken. Een test, een wedstrijd en wat je zelf vastzette krijgen toch de vraag.' },
       { head: 'Niets doen', text: 'hij blijft als gemist in je week staan.' },
+    ],
+  },
+  rustigerInstap: {
+    title: 'Rustiger instap na een pauze',
+    lead: 'Na ziekte en een vakantie, of na twee weken met weinig training, stelt ASCEND op de dag dat je terug bent een rustiger week voor.',
+    points: [
+      { head: 'Wanneer', text: 'op de eerste drie dagen terug, als je in de twee weken ervoor minder dan 40 procent van twee gewone weken deed. Niet terwijl je ziek bent of nog opbouwt na ziekte, niet met een test of wedstrijd in die week, en niet in de eerste twee weken van je plan.' },
+      { head: 'Wat er verandert', text: 'zeven dagen lang duren je trainingen driekwart (het advies) of de helft van de gewone tijd. Welke trainingen er staan, je fase en je doeldatum blijven zoals ze zijn.' },
+      { head: 'Alleen met Akkoord', text: 'eerst een voorstel met de trainingen die korter worden; pas na Akkoord verandert er iets, met Ongedaan maken. Uit: na een pauze gaat je plan gewoon verder.' },
     ],
   },
   weekVol: {

@@ -14,6 +14,7 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import type { Program } from '../models/program';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
+import type { LeavePeriod } from '../models/leave';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { plannedByIdOf } from './logDay';
 import type { HeartRateSettings } from './heartRateZones';
@@ -39,6 +40,8 @@ interface CourseInputs {
   templates: SessionTemplate[];
   planChangeLog: PlanChangeProposal[];
   illnessEpisodes?: IllnessEpisode[];
+  // Vakanties en tochten die je zelf meldde: wat daar open bleef telt niet als gemist (engine/leave.ts#isAwayDay).
+  leavePeriods?: LeavePeriod[];
   // Wat de sleuteltraining is (engine/keySession.ts), zoals op Ascend. Zonder: de lange duurloop of de bergtocht.
   keyFocus?: KeyFocus;
 }
@@ -76,7 +79,7 @@ export interface Adherence {
 }
 
 type ReviewInputsLite = { heartRate: HeartRateSettings; intensityCounting: IntensityCounting };
-export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes' | 'keyFocus'> & Partial<Pick<ReviewInputsLite, 'heartRate' | 'intensityCounting'>>;
+export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes' | 'leavePeriods' | 'keyFocus'> & Partial<Pick<ReviewInputsLite, 'heartRate' | 'intensityCounting'>>;
 
 export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const { today, program, logs, templates, planChangeLog, illnessEpisodes } = inputs;
@@ -86,7 +89,7 @@ export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const thisMonday = mondayOfWeek(today);
   const reviews: WeekReview[] = [];
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
-    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, heartRate: inputs.heartRate, intensityCounting: inputs.intensityCounting, keyFocus: inputs.keyFocus });
+    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, leavePeriods: inputs.leavePeriods, heartRate: inputs.heartRate, intensityCounting: inputs.intensityCounting, keyFocus: inputs.keyFocus });
     if (review && review.planned > 0) reviews.push(review);
   }
   return {

@@ -461,7 +461,7 @@ function TodayContent() {
     ...(morningCardVisible ? (['morning'] as const) : []),
     ...(!illness && recoveryRamp(settings.illnessEpisodes, today) ? (['ramp'] as const) : []),
     ...(advice.length > 0 ? (['advice'] as const) : []),
-    ...(missed.item ? (['missed'] as const) : []),
+    ...(missed.item || missed.lapsed ? (['missed'] as const) : []),
     ...(freshStart.shown ? (['freshStart'] as const) : []),
     ...(showExportReminder ? (['backup'] as const) : []),
     ...(backupCard === 'due' ? (['backupDue'] as const) : []),

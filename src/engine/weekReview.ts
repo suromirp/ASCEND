@@ -26,6 +26,7 @@ import type { PlannedById } from './logDay';
 import { countsAsTraining as countsAsTrainingShared, leftOutOfCount, weekDoneMinutes, weekLogsOf } from './weekLogs';
 import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
+import type { LeavePeriod } from '../models/leave';
 import { weekKeySession, type KeyFocus } from './keySession';
 import { kgLabel } from '../utils/kg';
 import type { HeartRateSettings } from './heartRateZones';
@@ -77,6 +78,8 @@ interface ReviewInputs {
   planChangeLog: PlanChangeProposal[];
   asOf: string;
   illnessEpisodes?: IllnessEpisode[];
+  // Vakanties en tochten die je zelf meldde (engine/leave.ts#isAwayDay): wat daar open bleef, telt niet als gemist.
+  leavePeriods?: LeavePeriod[];
   weeklyChecks?: WeeklyHealthCheck[];
   heartRate?: HeartRateSettings;
   // Instelling "Intensiteit tellen" (engine/intensitySettings.ts): bij "plan" telt de hartslag niet.
@@ -116,7 +119,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // while two trainings were skipped). Not counted: sessions ASCEND itself
   // took out while rearranging the plan (a new strength block, the weekly
   // planning), days you were ill and days before the program started.
-  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate);
+  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate, { periods: inputs.leavePeriods, loggedIds });
   const countsAsTraining = (s: PlannedSession) => countsAsTrainingShared(s, byId.get(s.templateId), leftOut);
   // De oude rij van een gemiste training die je naar later zette telt niet: de nieuwe rij telt
   // (docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md).

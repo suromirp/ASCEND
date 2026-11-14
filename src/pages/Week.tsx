@@ -126,8 +126,8 @@ export function WeekPage() {
       previous: dayLoads({ weekStart: addDays(weekStart, -7), plannedSessions, logs: sessionLogs, templates, today, minutesOf }),
     };
   }, [weekStart, plannedSessions, sessionLogs, templates, today, program]);
-  const progress = weekProgress(sessions, sessionLogs, templateById, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate));
-  const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings), keyFocus }) : null;
+  const progress = weekProgress(sessions, sessionLogs, templateById, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)) }));
+  const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings), keyFocus }) : null;
   const heading = weekHeading(position);
   // Een week zonder trainingen zegt dat in de lucht; de rijen over je week zijn er dan niet.
   const trainings = sessions.filter((s) => templateById.get(s.templateId)?.type !== 'recovery').length;

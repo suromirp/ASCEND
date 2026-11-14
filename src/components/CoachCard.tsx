@@ -4,6 +4,7 @@
 // Het waarom zit dicht achter "Waarom?". Akkoord is het enige gevulde mint als het de enige keuze is;
 // een advies zonder `lead` houdt zijn alinea (`effect`). Zie docs/beslissingen/2026-10-28-adviesblad-compact.md.
 
+import { REENTRY_TITLE, REENTRY_WHY, reentryNote } from '../engine/reentry';
 import { ProposalChangeList, ProposalSheet } from './ProposalSheet';
 import { useState, type ReactNode } from 'react';
 import { useAppData } from '../state/AppDataContext';
@@ -81,7 +82,7 @@ export function CoachCard() {
   if (advice.length === 0) return null;
   const first = advice[0];
   const kind = KIND[first.trigger];
-  const plain = !(first.proposal || first.restWeekSkip || first.repeatWeek || first.goalChange || first.goalTargetTime || first.noGoalWaves);
+  const plain = !(first.proposal || first.restWeekSkip || first.repeatWeek || first.goalChange || first.goalTargetTime || first.noGoalWaves || first.reentry);
   const more = advice.length - 1;
   return (
     <Card className="flex flex-col gap-3" data-advice-ids={advice.map((a) => a.id).join(' ')}>
@@ -126,14 +127,14 @@ export function CoachCard() {
 // in plaats van de alinea; de andere houden hun effect, zodat er niets verdwijnt.
 // `primary`: Akkoord is gevuld mint, omdat het de enige keuze in het blad is; anders omlijnd.
 export function AdviceItem({ advice, compact = false, primary = false }: { advice: Advice; compact?: boolean; primary?: boolean }) {
-  const { respondToAdvice, planWeekLoadChange, planHorizonChange } = useAppData();
+  const { respondToAdvice, planWeekLoadChange, planHorizonChange, settings } = useAppData();
   // Training through a rest week and "Deze week nog een keer" change the
   // program: first their own proposal with what changes, Akkoord in there
   // (storage/weekLoadPlan.ts). Only then the answer to the advice is recorded.
   const horizon = useHorizonChange();
   const weekLoad = advice.restWeekSkip ? { kind: 'rest' as const, week: advice.restWeekSkip } : advice.repeatWeek ? { kind: 'repeat' as const, week: advice.repeatWeek } : undefined;
   // Neutrale golven zonder doel (engine/noGoalWaves.ts): ook eerst het eigen voorstel met de hele planningsronde.
-  const ownProposal = !!weekLoad || !!advice.noGoalWaves;
+  const ownProposal = !!weekLoad || !!advice.noGoalWaves || !!advice.reentry;
   const [open, setOpen] = useState(false);
   const [showWeek, setShowWeek] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -149,6 +150,31 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
         declined: 'Je week blijft zoals hij was.',
         onStored: () => void respondToAdvice(advice, 'accepted'),
       });
+      return;
+    }
+    // Rustiger instap na een pauze (engine/reentry.ts): eerst het voorstel van de planningsronde met de trainingen
+    // die korter worden, Akkoord daarin bewaart de week.
+    if (response === 'accepted' && advice.reentry) {
+      const week = advice.reentry;
+      await horizon.propose(
+        () => planHorizonChange({
+          title: REENTRY_TITLE,
+          why: 'Rustiger instap na een pauze.',
+          explanation: REENTRY_WHY,
+          trigger: 'reentry_planned',
+          settings: { reentryWeeks: [...(settings.reentryWeeks ?? []).filter((w) => w.from !== week.from), week] },
+          notes: [reentryNote(week)],
+        }),
+        {
+          eyebrow: 'Rustiger instap',
+          ask: 'always',
+          alwaysAsk: true,
+          notesTitle: 'Wat er verandert',
+          declined: 'Je week blijft zoals hij was. ASCEND vraagt het voor deze terugkomst niet meer.',
+          onStored: () => void respondToAdvice(advice, 'accepted'),
+          onDeclined: () => void respondToAdvice(advice, 'declined'),
+        },
+      );
       return;
     }
     if (response === 'accepted' && advice.noGoalWaves) {
@@ -180,7 +206,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
 
   const actions = (
     <div className="mt-3 flex items-center gap-3">
-      {advice.proposal || advice.restWeekSkip || advice.repeatWeek || advice.goalChange || advice.goalTargetTime || advice.noGoalWaves ? (
+      {advice.proposal || advice.restWeekSkip || advice.repeatWeek || advice.goalChange || advice.goalTargetTime || advice.noGoalWaves || advice.reentry ? (
         <>
           <SecondaryButton onClick={() => void respond('declined')} disabled={busy || horizon.busy} className={primary && !ownProposal ? 'min-h-[52px]' : ''}>Liever niet</SecondaryButton>
           {primary && !ownProposal

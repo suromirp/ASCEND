@@ -82,6 +82,7 @@ import { isRowPending, isRowUnknown, type SettingsSource } from './settingsPendi
 import { kindAmountSummary, parseKindAmounts } from './kindAmount';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
+import { resolveReentry } from './reentry';
 import { capAboveMission, resolveAboveMission } from './todayCards';
 import { resolveDropOnTraining } from './dropOnTraining';
 import { resolveWeekAfterChoice } from './weekKept';
@@ -857,6 +858,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveSportCounting(s.sportCounting).askFelt };
     case 'sport-rust':
       return { value: choiceShort('sportRust', resolveSportCounting(s.sportCounting).rest) };
+    case 'rustiger-instap':
+      return { value: choiceShort('rustigerInstap', resolveReentry(s.reentry)) };
     case 'rustdag-terug':
       return { checked: s.restDayBack !== false };
     case 'week-vol':

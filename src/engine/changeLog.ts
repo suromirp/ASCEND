@@ -37,6 +37,7 @@ const TRIGGER_LABEL: Record<EngineEvent, string> = {
   week_load_changed: 'Rustweek of herhaalde week',
   direction_changed: 'Je richting',
   wave_review: 'Na je golf',
+  reentry_planned: 'Rustiger instap',
 };
 
 export interface ChangeLogEntry {

@@ -69,6 +69,18 @@ export const CHOICES = {
       { value: 'off', label: 'Niets doen', note: 'Hij blijft als gemist in je week staan' },
     ],
   }),
+  rustigerInstap: def({
+    group: 'Lichaam',
+    title: 'Rustiger instap na een pauze',
+    line: 'Na ziekte, een vakantie of twee weken weinig training.',
+    advice: 'three_quarters' as 'three_quarters' | 'half' | 'off',
+    help: 'rustigerInstap',
+    options: [
+      { value: 'three_quarters', label: 'Driekwart', note: 'Een voorstel: zeven dagen je trainingen driekwart van de gewone tijd', short: 'Driekwart' },
+      { value: 'half', label: 'De helft', note: 'Een voorstel: zeven dagen de helft van de gewone tijd', short: 'De helft' },
+      { value: 'off', label: 'Niet voorstellen', note: 'Na een pauze gaat je plan gewoon verder', short: 'Uit' },
+    ],
+  }),
   nietDoorgegaanDagen: def({
     group: 'Planning',
     title: 'Na hoeveel dagen',
