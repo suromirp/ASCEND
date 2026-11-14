@@ -19,10 +19,11 @@ const BIG_ROAD = /(^|\s)highway=(motorway|motorway_link|trunk|trunk_link|primary
 const c5 = (v: number) => (Math.round(v * 100_000) / 100_000).toString();
 
 // Een stuk vermijden: BRouter kent `nogos` als lon,lat,straal in meters, gescheiden door |.
-export function brouterUrl(waypoints: RoutePoint[], profile = BROUTER_PROFILE, avoid: AvoidArea[] = []): string {
+// `quiet`: grote wegen mijden (instelling Grote wegen mijden, standaard aan).
+export function brouterUrl(waypoints: RoutePoint[], profile = BROUTER_PROFILE, avoid: AvoidArea[] = [], quiet = true): string {
   const lonlats = waypoints.map((p) => `${c5(p.lon)},${c5(p.lat)}`).join('|');
   const nogos = avoid.length > 0 ? `&nogos=${avoid.map((a) => `${c5(a.lon)},${c5(a.lat)},${Math.round(a.radiusM)}`).join('|')}` : '';
-  return `${BROUTER_URL}?lonlats=${lonlats}${nogos}&profile=${profile}${BROUTER_PROFILE_PARAMS}&alternativeidx=0&format=geojson`;
+  return `${BROUTER_URL}?lonlats=${lonlats}${nogos}&profile=${profile}${quiet ? BROUTER_PROFILE_PARAMS : ''}&alternativeidx=0&format=geojson`;
 }
 
 // Hemelsbreed in meters (plat gerekend; op de stukjes van een routeplanner klopt dat op een meter).
@@ -78,6 +79,8 @@ function markBigRoads(points: RoutePoint[], messages: unknown): void {
     // Het eind van de rij: het punt met die plek waar ook de lengte van de rij klopt (een lijn die zichzelf
     // kruist raakt dezelfde plek eerder). Zonder lengte in de rij: de eerste treffer.
     const want = distAt >= 0 ? Number(row[distAt]) : NaN;
+    // Een rij na het laatste punt: de tabel past niet bij de lijn, dus geen markering.
+    if (from >= points.length) return;
     let to = from;
     let walked = step(from);
     for (;;) {
@@ -104,10 +107,10 @@ export function unmappedWaypoint(text: string, count: number): number | undefine
   return Number(m[2]);
 }
 
-export function brouterRoute(options: { fetchImpl?: typeof fetch; timeoutMs?: number } = {}): RouteFn {
+export function brouterRoute(options: { fetchImpl?: typeof fetch; timeoutMs?: number; quiet?: boolean } = {}): RouteFn {
   return async (waypoints, routeOptions): Promise<RouteAnswer> => {
     if (waypoints.length < 2) return { ok: false, reason: 'error' };
-    const answer = await requestText(brouterUrl(waypoints, BROUTER_PROFILE, routeOptions?.avoid), options.timeoutMs ?? ROUTE_TIMEOUT_MS, options.fetchImpl ?? fetch, { headers: { Accept: 'application/json' } });
+    const answer = await requestText(brouterUrl(waypoints, BROUTER_PROFILE, routeOptions?.avoid, options.quiet ?? true), options.timeoutMs ?? ROUTE_TIMEOUT_MS, options.fetchImpl ?? fetch, { headers: { Accept: 'application/json' } });
     if (typeof answer === 'string') return { ok: false, reason: answer };
     if (answer.status !== 200) {
       if (/not mapped/.test(answer.text)) return { ok: false, reason: 'unmapped', waypoint: unmappedWaypoint(answer.text, waypoints.length) };

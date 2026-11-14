@@ -331,7 +331,8 @@ export async function proposeSimple(input: PlanInput, route: RouteFn, spare?: Ro
     if (anchored.gapM >= START_GAP_NOTE_M) made.startGapM = anchored.gapM;
     if (better(made, best, input.target, score)) best = made;
     // Past de afstand en zit de lus dicht genoeg bij de training, dan vraagt de planner niets meer.
-    if (best && fitsDistance(best, input.target) && score(best) <= CLOSE_ENOUGH) break;
+    // Een lus met meer doodlopende stukken dan bij Simpel hoort (een Y) is nog geen reden om te stoppen.
+    if (best && fitsDistance(best, input.target) && score(best) <= CLOSE_ENOUGH && extraDeadEnds(best) === 0) break;
   }
   if (!best && !flat && spare) {
     // De lus in beide richtingen: de helling met de kortste aanloop past meestal het best.
@@ -357,7 +358,8 @@ export function stretchOf(points: RoutePoint[], fromM: number, toM: number): Rou
 // Per lus één keer uitgerekend: dezelfde lus geeft dezelfde lijst, zodat de kaart niet bij elke render bijwerkt.
 const stretchMemo = new WeakMap<RouteProposal, RoutePoint[] | undefined>();
 export function climbStretch(p: RouteProposal): RoutePoint[] | undefined {
-  if (p.style !== 'simple' || !p.repeats || p.climbFromM === undefined || p.climbToM === undefined) return undefined;
+  // Alleen bij herhalingen: één keer op en af is gewoon heen en terug.
+  if (p.style !== 'simple' || !p.repeats || p.repeats < 2 || p.climbFromM === undefined || p.climbToM === undefined) return undefined;
   if (stretchMemo.has(p)) return stretchMemo.get(p);
   const stretch = stretchOf(p.points, p.climbFromM, p.climbToM);
   const out = stretch.length >= 2 ? stretch : undefined;
@@ -627,15 +629,19 @@ export const shortLine = (p: Pick<RouteProposal, 'distanceM'>, target: RouteTarg
 
 // Vanaf zoveel meter langs een grote weg zegt de lus het erbij: de aanvraag mijdt ze al, dit is wat overblijft.
 export const BIG_ROAD_NOTE_M = 300;
-export const bigRoadLine = (meters: number): string => `Langs een grote weg: ${km(meters)}.`;
+// routeSheet.ts#loopLines herkent de regel aan dit begin: verander ze samen via deze constante.
+export const BIG_ROAD_LEAD = 'Langs een grote weg:';
+export const bigRoadLine = (meters: number): string => `${BIG_ROAD_LEAD} ${km(meters)}.`;
 
 // Wat je over deze lus moet weten naast de getallen: het droge feit, in korte zinnen.
-export function proposalNotes(p: RouteProposal, target: RouteTarget): string[] {
+// `climbMarked`: de helling staat nu gemarkeerd op de kaart (niet als je in Per stuk een stuk koos).
+export function proposalNotes(p: RouteProposal, target: RouteTarget, climbMarked = true): string[] {
   const notes: string[] = [];
   if (p.style === 'simple' && p.climbM && p.climbLengthM) {
     const climb = `${formatNumberNL(Math.round(p.climbM), 0)} m omhoog over ${formatNumberNL(Math.round(p.climbLengthM / 10) * 10, 0)} m`;
     // Herhalingen: de helling staat gemarkeerd op de kaart (climbStretch), de regel zegt wat je daar doet.
-    notes.push(climbStretch(p) && (p.repeats ?? 0) > 1 ? `Gemarkeerd op de kaart: hier ${p.repeats} keer op, ${climb}.` : `De helling: ${climb}.`);
+    const repeats = (p.repeats ?? 0) > 1 ? `hier ${p.repeats} keer op, ` : '';
+    notes.push(climbMarked && climbStretch(p) ? `Gemarkeerd op de kaart: ${repeats}${climb}.` : `De helling: ${repeats}${climb}.`);
   }
   if (p.style === 'simple' && (p.repeats ?? 0) > 1) notes.push('Op dezelfde helling kan je horloge naar het verkeerde stuk springen.');
   if (p.startGapM !== undefined) notes.push(`Het dichtstbijzijnde pad ligt ${formatNumberNL(round10(p.startGapM), 0)} m van je startpunt; dat stuk is een rechte lijn.`);

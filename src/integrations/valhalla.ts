@@ -30,12 +30,13 @@ export function avoidPolygon(a: AvoidArea): [number, number][] {
   return ring;
 }
 
-export function valhallaUrl(waypoints: RoutePoint[], avoid: AvoidArea[] = []): string {
+// `quiet`: grote wegen mijden (instelling Grote wegen mijden, standaard aan).
+export function valhallaUrl(waypoints: RoutePoint[], avoid: AvoidArea[] = [], quiet = true): string {
   const body = {
     locations: waypoints.map((p) => ({ lat: c5(p.lat), lon: c5(p.lon) })), costing: 'pedestrian', directions_type: 'none', elevation_interval: ELEVATION_INTERVAL_M,
     // Bij lopen liever een voetpad dan de weg ernaast: Valhalla kent voor voetgangers geen soort weg om te
     // mijden (de snelweg is al verboden), wel een lagere prijs voor paden.
-    costing_options: { pedestrian: { walkway_factor: VALHALLA_WALKWAY_FACTOR } },
+    ...(quiet ? { costing_options: { pedestrian: { walkway_factor: VALHALLA_WALKWAY_FACTOR } } } : {}),
     ...(avoid.length > 0 ? { exclude_polygons: avoid.map(avoidPolygon) } : {}),
   };
   return `${VALHALLA_URL}?json=${encodeURIComponent(JSON.stringify(body))}`;
@@ -104,10 +105,10 @@ export function mapValhalla(raw: unknown): RoutePoint[] | undefined {
   return points.length >= 2 ? points : undefined;
 }
 
-export function valhallaRoute(options: { fetchImpl?: typeof fetch; timeoutMs?: number } = {}): RouteFn {
+export function valhallaRoute(options: { fetchImpl?: typeof fetch; timeoutMs?: number; quiet?: boolean } = {}): RouteFn {
   return async (waypoints, routeOptions): Promise<RouteAnswer> => {
     if (waypoints.length < 2) return { ok: false, reason: 'error' };
-    const answer = await requestText(valhallaUrl(waypoints, routeOptions?.avoid), options.timeoutMs ?? ROUTE_TIMEOUT_MS, options.fetchImpl ?? fetch, { headers: { Accept: 'application/json' } });
+    const answer = await requestText(valhallaUrl(waypoints, routeOptions?.avoid, options.quiet ?? true), options.timeoutMs ?? ROUTE_TIMEOUT_MS, options.fetchImpl ?? fetch, { headers: { Accept: 'application/json' } });
     if (typeof answer === 'string') return { ok: false, reason: answer };
     const raw = parseJson(answer.text);
     if (answer.status !== 200) {

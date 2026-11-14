@@ -507,6 +507,7 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
   }
   const other = order.find((s) => s !== picked && plans[s].ok);
   const otherOutcome = other ? plans[other] : undefined;
+  const otherWarn = otherOutcome?.ok ? otherLoopWarn(otherOutcome.proposal, target) : undefined;
   return (
     <div className="flex flex-col gap-2">
       {model.mapStartPoint && (
@@ -544,7 +545,7 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
         <div className="-mt-1 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm tabular-nums leading-snug" style={dim}>{otherLoopLine(STYLE_NAME[other], otherOutcome.proposal)}</p>
-            {otherLoopWarn(otherOutcome.proposal, target) && <p className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{otherLoopWarn(otherOutcome.proposal, target)}</p>}
+            {otherWarn && <p className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{otherWarn}</p>}
           </div>
           <TextButton tone="dim" onClick={() => model.setChosen(other)}>Kies</TextButton>
         </div>

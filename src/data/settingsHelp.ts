@@ -875,6 +875,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Wat de deur uit gaat', text: `standaard je plek van nu, precies, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS), en op ongeveer 100 m naar OpenStreetMap voor heuvels en paden; de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Bij Startpunt van je lus kies je ook Thuis, of Ongeveer: dan gaat alleen je plek, afgerond op ongeveer een kilometer, de deur uit. Geen naam, geen adres. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. ${PHOTO_SOURCES_LINE} De route wordt niet bewaard.` },
     ],
   },
+  routeGroteWegen: {
+    title: 'Grote wegen mijden',
+    lead: 'Bij een voorgestelde lus vraagt ASCEND de routeplanner om grote wegen en knooppunten van snelwegen te mijden. Het advies is aan.',
+    points: [
+      { head: 'Aan', text: 'BRouter maakt een weg duurder naarmate hij dichter bij verkeerslawaai ligt; Valhalla kiest liever een voetpad dan de weg ernaast. Een lus kan daardoor iets langer omlopen.' },
+      { head: 'Uit', text: 'de routeplanner kiest de kortste goede weg, ook langs een drukke weg.' },
+      { head: 'Altijd', text: 'loopt er 300 m of meer langs een grote weg, dan zegt een regel bij de lus dat.' },
+    ],
+  },
   routeKaart: {
     title: 'Ondergrond van de kaart',
     lead: 'De kaart in Route voorstellen toont je lussen, je startpunt en je plek. Dit kiest wat eronder ligt. Rechtsboven op de kaart wissel je ook snel tussen de kaart en de luchtfoto; ASCEND onthoudt wat je het laatst koos.',

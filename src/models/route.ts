@@ -8,8 +8,9 @@ export interface RoutePoint {
   lon: number;
   // Hoogte in meters boven zeeniveau; ontbreekt als de bron geen hoogte gaf.
   ele?: number;
-  // De stap naar dit punt ligt op een grote weg (de bron zegt welke weg; nu alleen BRouter). Alleen in
-  // het geheugen: een bewaarde route en het GPX-bestand nemen alleen plek en hoogte mee.
+  // Dit punt ligt op een grote weg (de bron zegt welke weg; nu alleen BRouter). Een stap telt in
+  // engine/routeGeometry.ts#bigRoadMeters alleen als beide punten het hebben. Alleen in het geheugen: een
+  // bewaarde route en het GPX-bestand nemen alleen plek en hoogte mee.
   bigRoad?: true;
 }
 

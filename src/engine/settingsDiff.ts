@@ -333,6 +333,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('route-soort', 'Welke lus eerst', 'vandaag', 'routeStyle', 'adventure', 'routeSoort'),
   choice('route-start', 'Startpunt van je lus', 'vandaag', 'routeStart', 'here', 'routeStart'),
   choice('route-zoeken', 'Lus zoeken', 'vandaag', 'routeSearch', 'open', 'routeZoeken'),
+  flag('route-grote-wegen', 'Grote wegen mijden', 'vandaag', 'routeAvoidBigRoads'),
   {
     // Eén instelling in twee velden (engine/routeMap.ts#resolveMapGround).
     id: 'route-kaart', title: 'Ondergrond van de kaart', page: 'vandaag',

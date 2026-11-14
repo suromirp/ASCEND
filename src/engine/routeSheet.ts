@@ -7,7 +7,10 @@
 
 import type { RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { formatNumberNL } from '../utils/number';
-import { proposalFacts, proposalTitle, shortLine, tooShort } from './routePlanner';
+import { BIG_ROAD_LEAD, proposalFacts, proposalTitle, shortLine, tooShort } from './routePlanner';
+
+// Zoveel regels in amber hoogstens in één rij van een lus.
+export const MAX_WARN_LINES = 2;
 import { routeActionLine, type RouteFileLine, type RouteSendOutcome, type SendLine } from './routeSend';
 
 // De kaart en de zoekstand hebben dezelfde vaste hoogte, zodat er niets verspringt als de lussen er zijn.
@@ -111,8 +114,10 @@ export function loopLines(p: RouteProposal, target: RouteTarget, notes: string[]
   const warn: string[] = [];
   const info: string[] = [];
   for (const note of notes) {
-    // Te kort, de melding van de lus en een stuk langs een grote weg zijn let op (amber).
-    if ((p.notice && note === p.notice) || (short && note.startsWith(short)) || note.startsWith('Langs een grote weg:')) warn.push(note);
+    // Te kort, de melding van de lus en een stuk langs een grote weg zijn let op (amber), hoogstens
+    // MAX_WARN_LINES in een rij; wat overblijft staat bij de uitleg.
+    const isWarn = (p.notice && note === p.notice) || (short && note.startsWith(short)) || note.startsWith(BIG_ROAD_LEAD);
+    if (isWarn && warn.length < MAX_WARN_LINES) warn.push(note);
     else info.push(note);
   }
   return { warn, info };

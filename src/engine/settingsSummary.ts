@@ -987,6 +987,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('routeSoort', resolveRouteStyle(s.routeStyle)) };
     case 'route-start':
       return { value: choiceShort('routeStart', resolveRouteStart(s.routeStart)) };
+    case 'route-grote-wegen':
+      return { checked: s.routeAvoidBigRoads !== false };
     case 'route-zoeken':
       return { value: choiceShort('routeZoeken', resolveRouteSearch(s.routeSearch)) };
     case 'route-kaart':

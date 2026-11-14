@@ -10,6 +10,7 @@ import { MapPlace } from './TrainingBriefing';
 import { briefingRoutes, footerRoom, otherLoopLine } from '../engine/routeSheet';
 import { askStartLine, planStart, START_LINE_EXACT } from '../engine/routeStart';
 import { START_LOCATE_LIMIT_MS } from '../storage/routeStart';
+import briefingSource from './TrainingBriefing.tsx?raw';
 
 const motion = vi.hoisted(() => ({ mode: 'full' as 'full' | 'calm' | 'off' }));
 vi.mock('./motion', () => ({ useMotionMode: () => motion.mode }));
@@ -129,5 +130,16 @@ describe('het blok met de route in de Briefing', () => {
     expect(big).toContain('useSheetClose(onClose)');
     expect(big).toContain('ref={sheetRef}');
     expect(big).toContain('<SheetGrip />');
+  });
+  it('de andere lus: te kort staat één keer in amber in zijn ingeklapte rij, anders niets (routes-vorm)', () => {
+    const short = loop({ style: 'simple', distanceM: 5_000, ascentM: 0, hills: 0 });
+    const html = render(model({ plans: { adventure: { ok: true, proposal: a }, simple: { ok: true, proposal: short } } }));
+    const warn = '5 km, korter dan de 7 km van je training.';
+    expect(html.split(warn).length - 1).toBe(1);
+    expect(html).toContain(`color:var(--color-warning)">${warn}`);
+    expect(render(model())).not.toContain('korter dan de 7 km');
+  });
+  it('de Briefing geeft de helling bij herhalingen als gemarkeerd stuk aan de kaart (routes-vorm)', () => {
+    expect(briefingSource).toContain('piece={pickedOutcome?.ok ? climbStretch(pickedOutcome.proposal) : undefined}');
   });
 });

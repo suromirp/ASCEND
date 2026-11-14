@@ -43,7 +43,8 @@ const STYLE_LINE: Record<RouteStyle, string> = {
 // De hoofdknop voor de gekozen lus, direct onder de rijen. Titel en feiten staan alleen in de rij
 // (Pathfinder: dezelfde zin nooit twee keer). Onder de knop alleen de uitkomst van een tik; wat je in
 // Garmin Connect doet staat achter de i. Elke lus heeft zijn eigen uitkomst (`key` op de soort).
-export function ChosenLoop({ style, proposal, date, target, sender }: { style: RouteStyle; proposal: RouteProposal; date: string; target: RouteTarget; sender: FileSender | null }) {
+// `climbMarked`: de helling staat op de kaart gemarkeerd (geen stuk gekozen in Per stuk).
+export function ChosenLoop({ style, proposal, date, target, sender, climbMarked = true }: { style: RouteStyle; proposal: RouteProposal; date: string; target: RouteTarget; sender: FileSender | null; climbMarked?: boolean }) {
   // De laatste uitkomst van een van de twee knoppen; 'busy' zolang er een loopt (beide hebben een grens in tijd).
   const [done, setDone] = useState<{ send: RouteSendOutcome } | { file: RouteFileResult } | 'busy' | undefined>();
   const mounted = useRef(true);
@@ -69,7 +70,7 @@ export function ChosenLoop({ style, proposal, date, target, sender }: { style: R
 
   // Eén regel onder de knoppen: leeg tot je tikt, dan de uitkomst.
   const line = routeOutcomeLine(!!sender, done === 'busy' ? undefined : done);
-  const { info } = loopLines(proposal, target, proposalNotes(proposal, target));
+  const { info } = loopLines(proposal, target, proposalNotes(proposal, target, climbMarked));
 
   return (
     <div className="flex flex-col gap-1">
@@ -259,7 +260,7 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
           </div>
         ) : null;
       case 'chosen':
-        return picked && pickedOutcome?.ok ? <ChosenLoop key={`chosen-${picked}`} style={picked} proposal={pickedOutcome.proposal} date={date} target={target} sender={sender} /> : null;
+        return picked && pickedOutcome?.ok ? <ChosenLoop key={`chosen-${picked}`} style={picked} proposal={pickedOutcome.proposal} date={date} target={target} sender={sender} climbMarked={selected === undefined} /> : null;
       case 'adjust':
         return picked && pickedOutcome?.ok ? <RouteAdjust key={p} model={model} selected={selected} onSelect={(i) => setPieceAt(i === undefined ? undefined : { sig: pieceSig, index: i })} motion={motion} /> : null;
       case 'loops':

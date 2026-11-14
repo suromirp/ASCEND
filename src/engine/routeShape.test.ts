@@ -6,9 +6,10 @@ import { describe, expect, it } from 'vitest';
 import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { RouteAnswer, RouteFn, RoutePoint, RouteProposal } from '../models/route';
 import { bearing, bigRoadMeters, deadEnds, lineLength, metersBetween, offsetPoint, withoutDeadEnds } from './routeGeometry';
-import { BIG_ROAD_NOTE_M, adventureVias, climbStretch, composeSimple, proposalNotes, proposalTitle, proposeAdventure, proposeRoutes, viaAtDeadEnd } from './routePlanner';
-import { otherLoopLine, otherLoopWarn } from './routeSheet';
-import { mapBrouter } from '../integrations/brouter';
+import { BIG_ROAD_LEAD, BIG_ROAD_NOTE_M, proposeSimple, adventureVias, climbStretch, composeSimple, proposalNotes, proposalTitle, proposeAdventure, proposeRoutes, viaAtDeadEnd } from './routePlanner';
+import { MAX_WARN_LINES, loopLines, otherLoopLine, otherLoopWarn } from './routeSheet';
+import { brouterUrl, mapBrouter } from '../integrations/brouter';
+import { valhallaUrl } from '../integrations/valhalla';
 
 const START: RoutePoint = { lat: 52.1, lon: 5.9 };
 
@@ -160,6 +161,20 @@ describe('de keuze: een Y valt af als er een betere is', () => {
     expect(out.ok && proposalTitle(out.proposal)).toBe('Eén lus');
   });
 
+  it('Simpel stopt niet bij een passende Y: de volgende kandidaat zonder tak wint', async () => {
+    const path: TerrainFeature = { kind: 'dirt_path', ...at(0, 1500), distanceM: 1500 };
+    const terrain: NearbyTerrain = { source: 'osm', fetchedAt: '2026-11-01T08:00:00.000Z', place: { name: '', lat: START.lat, lon: START.lon }, radiusM: 3000, features: [path] };
+    const j = at(90, 500);
+    const y = walk(START, j, at(0, 200, j), j, at(90, 2500));
+    const straight = walk(START, at(180, 2500));
+    let calls = 0;
+    const route: RouteFn = async () => ({ ok: true, line: { source: 'brouter', points: ++calls === 1 ? y : straight } });
+    const out = await proposeSimple({ start: START, target: { distanceKm: 4, ascentM: 0 }, terrain }, route);
+    expect(calls).toBe(2);
+    expect(out.ok && out.proposal.deadEnds).toBe(1);
+    expect(out.ok && proposalTitle(out.proposal)).toBe('Heen en terug over hetzelfde pad');
+  });
+
   it('viaAtDeadEnd: geen tak of geen punt in de buurt is -1', () => {
     const p: RouteProposal = { style: 'adventure', source: 'brouter', points: walk(START, at(0, 1000), at(90, 1000), START), distanceM: 3400, ascentM: 0, repeatedShare: 0 };
     expect(viaAtDeadEnd(p, [at(0, 1000), at(90, 1000)])).toBe(-1);
@@ -202,6 +217,16 @@ describe('heuvelintervallen: de helling op de kaart', () => {
     expect(proposalNotes(made, { distanceKm: 8, ascentM: 300 })[0]).toBe(`Gemarkeerd op de kaart: hier ${made.repeats} keer op, 50 m omhoog over 500 m.`);
   });
 
+  it('bij één keer op en af geen markering en geen regel erover; met een stuk gekozen in Per stuk ook niet', () => {
+    const foot = { ...at(0, 900), ele: 20 };
+    const top = { ...at(0, 1400), ele: 70 };
+    const made = composeSimple({ source: 'brouter', points: walk({ ...START, ele: 20 }, foot, top) }, { distanceKm: 8, ascentM: 300 }) as RouteProposal;
+    const once = { ...made, repeats: 1 };
+    expect(climbStretch(once)).toBeUndefined();
+    expect(proposalNotes(once, { distanceKm: 8, ascentM: 300 })[0]).toBe('De helling: 50 m omhoog over 500 m.');
+    expect(proposalNotes(made, { distanceKm: 8, ascentM: 300 }, false)[0]).toBe(`De helling: hier ${made.repeats} keer op, 50 m omhoog over 500 m.`);
+  });
+
   it('heen en terug zonder helling en Avontuurlijk hebben geen gemarkeerd stuk', () => {
     const p: RouteProposal = { style: 'adventure', source: 'brouter', points: walk(START, at(0, 1000), START), distanceM: 2000, ascentM: 0, repeatedShare: 1 };
     expect(climbStretch(p)).toBeUndefined();
@@ -223,6 +248,12 @@ describe('grote wegen', () => {
     const lost = mapBrouter(raw([row(5.9055, 'highway=primary')])) as RoutePoint[];
     expect(lost.some((p) => p.bigRoad)).toBe(false);
     expect(mapBrouter(raw([row(5.903, 'highway=primary_linkage')]))?.some((p) => p.bigRoad)).toBe(false);
+    // Een provinciale weg (secondary) telt ook als grote weg.
+    expect(mapBrouter(raw([row(5.903, 'highway=secondary', 205)]))?.filter((p) => p.bigRoad)).toHaveLength(3);
+    // Een rij te veel na het laatste punt: geen fout, geen markering.
+    const extra = mapBrouter(raw([row(5.903, 'highway=primary', 205), row(5.904, 'highway=primary')])) as RoutePoint[];
+    expect(extra).toHaveLength(4);
+    expect(extra.some((p) => p.bigRoad)).toBe(false);
   });
 
   it('een lijn die dezelfde plek twee keer raakt: het eind van de rij is waar ook de lengte klopt', () => {
@@ -230,6 +261,22 @@ describe('grote wegen', () => {
     const head = ['Longitude', 'Latitude', 'Distance', 'WayTags'];
     const points = mapBrouter({ features: [{ geometry: { coordinates: coords }, properties: { messages: [head, ['5900000', '52100000', '359', 'highway=track'], ['5899000', '52100000', '68', 'highway=primary']] } }] }) as RoutePoint[];
     expect(points.map((p) => !!p.bigRoad)).toEqual([false, false, false, false, false, true]);
+  });
+
+  it('de regel en de amber-herkenning delen hun begin; hoogstens twee regels in amber per rij', () => {
+    const p: RouteProposal = { style: 'adventure', source: 'brouter', points: [START], distanceM: 4000, ascentM: 0, repeatedShare: 0, bigRoadM: 800, notice: 'Deze lus stijgt 0 m; de training vraagt 100 m.' };
+    const target = { distanceKm: 6, ascentM: 100 };
+    const { warn, info } = loopLines(p, target, proposalNotes(p, target));
+    expect(warn).toHaveLength(MAX_WARN_LINES);
+    expect(info.some((n) => n.startsWith(BIG_ROAD_LEAD))).toBe(true);
+    expect(loopLines({ ...p, notice: undefined, distanceM: 6000 }, target, proposalNotes({ ...p, notice: undefined, distanceM: 6000 }, target)).warn).toEqual(['Langs een grote weg: 0,8 km.']);
+  });
+
+  it('instelling Grote wegen mijden: aan vraagt de rustige weg, uit niet', () => {
+    expect(brouterUrl([START, at(0, 1000)])).toContain('profile:consider_noise=1');
+    expect(brouterUrl([START, at(0, 1000)], undefined, [], false)).not.toContain('consider_noise');
+    expect(valhallaUrl([START, at(0, 1000)])).toContain('walkway_factor');
+    expect(valhallaUrl([START, at(0, 1000)], [], false)).not.toContain('costing_options');
   });
 
   it('een regel vanaf 300 m, daaronder niets', () => {
