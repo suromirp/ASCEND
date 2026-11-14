@@ -50,7 +50,14 @@ function currentBuild(): string {
   return typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : 'dev';
 }
 
+// A repair that builds on an earlier one waits a start when that one failed: opruimen vat oude
+// regels samen, en een samengevatte dubbele regel voegt het samenvoegen nooit meer samen (Warden 14 november).
+const WAITS_FOR: Record<string, string[]> = {
+  tidyOldProposals: ['mergeDuplicateWeeklyPrescriptionLines'],
+};
+
 const TIMED_OUT = Symbol('timed out');
+const FAILED = Symbol('failed');
 
 export async function runBootMigrations(
   options: {
@@ -80,6 +87,7 @@ export async function runBootMigrations(
   options.onStep?.(BOOT_MIGRATIONS_KEY);
   let record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
   const skipped: string[] = [];
+  const failed = new Set<string>();
   let repairsStopped = false;
   // The repair that went over its time and still runs. The caller keeps the
   // lock until it is really done, and the planning sync waits for it, so it
@@ -93,7 +101,7 @@ export async function runBootMigrations(
     // Na een herstelstap die bleef hangen, komen de andere herstelstappen deze
     // keer niet: ze schrijven deels dezelfde gegevens, en de hangende kan nog
     // aan het werk zijn. Volgende keer lopen ze gewoon.
-    if (!step.essential && repairsStopped) {
+    if (!step.essential && (repairsStopped || WAITS_FOR[step.id]?.some((id) => failed.has(id)))) {
       skipped.push(step.id);
       continue;
     }
@@ -102,16 +110,25 @@ export async function runBootMigrations(
       await run();
     } else {
       let timer: ReturnType<typeof setTimeout> | undefined;
-      const running = run().catch((err: unknown) => {
+      // Een fout is geen hangen: de stap is klaar en schrijft niets meer. Hij
+      // telt niet als gelopen, dus de volgende start probeert hem opnieuw, en de
+      // herstelstappen erna lopen gewoon
+      // (docs/beslissingen/2026-11-14-opstarten-en-intervals-grens.md).
+      const running = (async () => run())().catch((err: unknown) => {
         // Een herstelstap die misgaat houdt het openen niet tegen.
         console.error(`Opstartstap ${step.id} mislukt`, err);
-        return TIMED_OUT;
+        return FAILED;
       });
       const outcome = await Promise.race([
         running,
         new Promise<typeof TIMED_OUT>((resolve) => (timer = setTimeout(() => resolve(TIMED_OUT), limit))),
       ]);
       clearTimeout(timer);
+      if (outcome === FAILED) {
+        failed.add(step.id);
+        skipped.push(step.id);
+        continue;
+      }
       if (outcome === TIMED_OUT) {
         console.warn(`Opstartstap ${step.id} niet afgerond; ASCEND opent zonder, volgende keer opnieuw.`);
         skipped.push(step.id);

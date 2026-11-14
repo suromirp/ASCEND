@@ -19,7 +19,7 @@ import type { StreamSet } from '../models/activityDetail';
 import type { RunDetail, RunKm } from '../models/runDetail';
 import type { Zone2Piece, Zone2Pieces } from '../models/zone2Pieces';
 import { deadBand, fillGaps, ALTITUDE_DEAD_BAND_M } from './activityDetail';
-import { ELEVATION_COUNTER } from './elevation';
+import { climbLimitFor } from './elevation';
 import { alignedPoints, minettiCost, pausePerSegment, type Pt } from './runDetail';
 import { ZONE2_RULES as R } from './zone2Rules';
 import { median } from '../utils/stats';
@@ -312,8 +312,9 @@ interface KmAt {
 
 export function kmPieces(rd: Pick<RunDetail, 'kms' | 'counter'>): Zone2Piece[] {
   // De grens voor vlak hoort bij de telling van het log: 10 m per km met de nieuwe teller, 5 m
-  // bij een log zonder merk (de oude dode band).
-  const flatLimit = rd.counter === ELEVATION_COUNTER ? R.flatMetresPerKmCounted : R.flatMetresPerKm;
+  // bij een log zonder merk (de oude dode band). Een nieuwer merk dan de app kent krijgt de
+  // strengste van de twee (engine/elevation.ts#climbLimitFor).
+  const flatLimit = climbLimitFor(rd.counter, { old: R.flatMetresPerKm, counted: R.flatMetresPerKmCounted });
   // Begin en eind van elke km in seconden sinds de start, pauzes meegeteld.
   let t = 0;
   const kms: (KmAt | undefined)[] = rd.kms.map((km) => {

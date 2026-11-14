@@ -1,3 +1,4 @@
+import { effectiveGoalKind } from '../../engine/journeyAccess';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../state/AppDataContext';
@@ -5,7 +6,6 @@ import { GOAL_KINDS } from '../../data/goalKinds';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION } from '../../data/gr5Details';
 import { changeLabel } from '../../engine/goalReadiness';
 import { raceWeightSentence } from '../../engine/raceReadiness';
-import { goalKindOf } from '../../engine/goalLabels';
 import { computeGoalProgress } from '../../engine/progression';
 import { labelLine } from '../../engine/goalList';
 import type { NextKeySession } from '../../engine/keySession';
@@ -45,7 +45,7 @@ export function GoalSheet({
   const { sessionLogs, goalMilestones, goalMilestoneProgress, clearMilestoneManually } = useAppData();
   const { item, readiness, timing } = view;
   const goal = item.goal;
-  const kind = goalKindOf(goal) ?? (item.isMain ? 'trek_hut' : undefined);
+  const kind = effectiveGoalKind(goal, item.isMain);
   const when = whenText(view);
   const [ladderOpen, setLadderOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);

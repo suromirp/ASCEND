@@ -170,6 +170,15 @@ describe('geen weer', () => {
     const storm = makeForecast(TODAY, () => ({ tempC: 9, feelsC: 5, windKmh: 70, gustKmh: 100 }));
     expect(tile(briefing(input({ forecast: storm })), 'weather')?.tone).toBe('warn');
   });
+  it('wind die ertoe doet staat in de rij, voor de kleding (eigenaar 12 november)', () => {
+    const breezy = makeForecast(TODAY, () => ({ tempC: 11, feelsC: 8, windKmh: 20, gustKmh: 30 }));
+    expect(tile(briefing(input({ forecast: breezy })), 'weather')?.line).toMatch(/^11 graden, voelt als 8, wind 20 km\/u, /);
+  });
+  it('windstil: alleen de temperatuur, zoals voorheen', () => {
+    const calm = makeForecast(TODAY, () => ({ tempC: 11, feelsC: 10, windKmh: 5, gustKmh: 10 }));
+    expect(tile(briefing(input({ forecast: calm })), 'weather')?.line).toMatch(/^11 graden, /);
+    expect(tile(briefing(input({ forecast: calm })), 'weather')?.line).not.toMatch(/voelt als|wind/);
+  });
 });
 
 describe('eten en drinken', () => {

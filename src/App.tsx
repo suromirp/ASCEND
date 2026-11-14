@@ -35,6 +35,7 @@ import { AscendPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
 import { SessionPill } from './components/forge/SessionPill';
 import { useOpenRequest, useSessionHousekeeping, useSessionPill } from './components/forge/useForgeSession';
+import { TrekOnly } from './components/reis/TrekOnly';
 // Pages you open now and then load on demand, so the first start only
 // downloads what Today needs. The service worker precaches every chunk, so
 // they still work offline.
@@ -372,10 +373,13 @@ function AppShell() {
             <Route path="/forge" element={<ForgePage />} />
             <Route path="/kracht" element={<Navigate to="/forge" replace />} />
             <Route path="/blessures" element={<Navigate to="/lichaam" replace />} />
-            <Route path="/reis" element={<JourneyPage />} />
-            <Route path="/reis/paklijst" element={<PackListPage />} />
-            <Route path="/etappes" element={<EtappesPage />} />
-            <Route path="/onderweg" element={<AlleenOnderwegPage />} />
+            {/* De tochtschermen horen bij een doel dat een tocht is (engine/journeyAccess.ts). */}
+            <Route element={<TrekOnly />}>
+              <Route path="/reis" element={<JourneyPage />} />
+              <Route path="/reis/paklijst" element={<PackListPage />} />
+              <Route path="/etappes" element={<EtappesPage />} />
+              <Route path="/onderweg" element={<AlleenOnderwegPage />} />
+            </Route>
             {/* Een adres dat niet bestaat (meer) opent Vandaag, niet een leeg scherm. */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

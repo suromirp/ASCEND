@@ -272,7 +272,7 @@ function rainPhrase(w: SessionWeather): string {
   return 'droog';
 }
 
-function windPhrase(w: SessionWeather): string | undefined {
+export function windPhrase(w: SessionWeather): string | undefined {
   if (w.bad.includes('storm')) return `storm, vlagen tot ${Math.round(w.gustKmh)} km/u`;
   if (w.watch.includes('harde wind')) return `harde wind, vlagen tot ${Math.round(w.gustKmh)} km/u`;
   return undefined;
@@ -285,14 +285,30 @@ function daylightPhrase(d: Daylight, short = false): string {
   return `licht tot ${clockNL(d.sunset)}`;
 }
 
+// From this wind (km/u, highest hour) the line names the wind. Own choice, under the 25 of the
+// clothing advice (which stays); a bit of wind is not worth a word.
+export const LINE_WIND_KMH = 15;
+
+// The start of the line: the temperature, with the felt temperature and a breeze under "harde wind".
+// Also the start of the weather row in the Briefing, so the wind is named where you read the clothing.
+export function temperatureHead(w: SessionWeather): string {
+  const temp = Math.round(w.tempC);
+  const feels = Math.round(w.feelsC);
+  const wind = windPhrase(w);
+  // Wind that is not yet "harde wind" still cools you: from LINE_WIND_KMH it is named, and then a
+  // felt temperature two degrees colder is named too (the owner froze on 11 degrees with 20 km/u).
+  const breeze = !wind && w.windKmh >= LINE_WIND_KMH ? `wind ${Math.round(w.windKmh)} km/u` : undefined;
+  const showFeels = Math.abs(feels - temp) >= 4 || ((breeze || wind) && temp - feels >= 2);
+  const head = showFeels ? `${temp} graden, voelt als ${feels}` : `${temp} ${Math.abs(temp) === 1 ? 'graad' : 'graden'}`;
+  return breeze ? `${head}, ${breeze}` : head;
+}
+
 // "14 graden, droog, licht tot 18:12". Heat or cold you feel differently from
 // what the thermometer says comes with the felt temperature.
 export function weatherLine(w: SessionWeather, opts: { darkInClothing?: boolean } = {}): string {
-  const temp = Math.round(w.tempC);
-  const feels = Math.round(w.feelsC);
-  const parts = [Math.abs(feels - temp) >= 4 ? `${temp} graden, voelt als ${feels}` : `${temp} ${Math.abs(temp) === 1 ? 'graad' : 'graden'}`];
-  parts.push(rainPhrase(w));
   const wind = windPhrase(w);
+  const parts = [temperatureHead(w)];
+  parts.push(rainPhrase(w));
   if (wind) parts.push(wind);
   if (w.watch.includes('warm')) parts.push('warm');
   if (w.watch.includes('koud')) parts.push('koud');

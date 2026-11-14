@@ -11,6 +11,7 @@
 // in a short message: no button stays on "Bezig" when an answer stalls.
 
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Icon } from '../components/icons';
 import { Card, Eyebrow, InfoButton, PrimaryButton, SecondaryButton, PageHeader } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
@@ -22,6 +23,8 @@ import { locationEnabled, weatherFollowsLocation, weatherLocateText } from '../e
 import { isMyLocation, myLocation } from '../engine/weatherLocation';
 import { locateErrorMessage, locateMe } from '../utils/geolocation';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
+import { readWeatherPageLink } from '../engine/weatherPageLink';
+import { todayISO } from '../utils/dates';
 
 const fieldStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 const hairline = { borderColor: 'var(--color-card-border)' };
@@ -39,6 +42,8 @@ type Notice = { area: 'place' | 'search'; tone: 'ok' | 'error'; text: string };
 export function WeatherPage() {
   const { settings, updateSettings, weather } = useAppData();
   const place = settings.homeLocation;
+  // De plek uit de Briefing, als je via de rij Weer kwam; anders, of als hij niet klopt, thuis.
+  const briefingLink = readWeatherPageLink(useLocation().state, todayISO());
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PlaceResult[] | null>(null);
   const [busy, setBusy] = useState<Record<Action, boolean>>({ locate: false, search: false, refresh: false, clear: false });
@@ -121,7 +126,7 @@ export function WeatherPage() {
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <PageHeader eyebrow="Buiten" title="Weer en kleding" line="Het weer en wat je aantrekt bij je buitentraining" />
 
-      <WeatherTodayCard />
+      <WeatherTodayCard link={briefingLink} />
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>Je plaats</Eyebrow>

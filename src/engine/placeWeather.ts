@@ -3,7 +3,8 @@
 // Kies je bij Start bij een plek die verder dan 10 km van huis ligt (engine/places.ts#weatherAtPlace),
 // dan volgt het weer-vak die plek. Dit bestand zegt voor welke plek er een tweede voorspelling nodig
 // is, en welke voorspelling het vak daarna toont. Puur: het ophalen staat in storage/placeWeather.ts.
-// Het plant niets en bewaart niets; Vandaag en de pagina Weer blijven het weer van huis tonen.
+// Het plant niets en bewaart niets; Vandaag blijft het weer van huis tonen. De pagina Weer toont de
+// plek alleen als je er via de rij Weer van de Briefing komt (engine/weatherPageLink.ts).
 
 import type { RoutePoint } from '../models/route';
 import type { WeatherForecast, WeatherPlace } from '../models/weather';

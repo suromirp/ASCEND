@@ -29,6 +29,7 @@ import { startFactsLoading, type LoaderState, type SourceLink } from './factsLoa
 import { resolveProgramWeek, todayISO } from '../../utils/dates';
 import { mainGoal as findMainGoal } from '../../engine/mainGoal';
 import { listedGoals } from '../../engine/goalList';
+import { hasTrekGoal } from '../../engine/journeyAccess';
 
 const FACT_LINKS: SourceLink[] = [
   { subscribe: onWatchChange, sources: ['watch'] },
@@ -127,6 +128,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       snapshots: loaded.snapshots,
       buildLabel: buildLabel(),
       mainIsTrek,
+      trekGoal: hasTrekGoal(trainingGoals, ladder, today),
       longSundayVisible: !mainIsTrek || settings.longSundaySession === 'run',
       noGoal: listedGoals(trainingGoals, ladder, today).length === 0 && !!program && plannedSessions.length > 0,
       notice: loaded.notice,
