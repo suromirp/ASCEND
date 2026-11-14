@@ -208,7 +208,7 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
   const motion = useMotionMode();
   const dim = { color: 'var(--color-ink-dim)' };
   const { stage, lat, lon, target, plans, order, okStyles, picked, pickedOutcome, sender, parts, noMap } = model;
-  // Groter: de kaart op volle hoogte, met dezelfde regie.
+  // Hele kaart: de kaart op volle hoogte, met dezelfde regie.
   const [bigger, setBigger] = useState(false);
   // Het stuk dat in Per stuk gekozen is; hoort bij deze lus (een andere lus of bijsturing wist de keuze).
   const pieceSig = pickedOutcome?.ok ? `${picked}|${model.pieces.length}|${pickedOutcome.proposal.points.length}|${pickedOutcome.proposal.points[0]?.lat}|${pickedOutcome.proposal.points[0]?.lon}` : '';

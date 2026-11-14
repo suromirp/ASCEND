@@ -99,7 +99,8 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   onOpen?: () => void;
   // Het stuk dat in de lijst Per stuk gekozen is: een rand om dat deel van de lus.
   piece?: RoutePoint[];
-  // Groter: de kaart op volle hoogte (RouteMapFull); alleen op de grote kaart, niet als hij al groot is.
+  // Hele kaart: de kaart op volle hoogte (RouteMapFull); alleen in het blad, niet als hij al groot is.
+  // Niet "Groter": zo heet de knop in de Briefing die dit blad opent (Pathfinder).
   onBigger?: () => void;
   // De vergrote kaart: het vak vult de hoogte en volgt het draaien van de telefoon (ResizeObserver).
   full?: boolean;
@@ -314,7 +315,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
           <div className="absolute right-2 top-2 flex flex-col gap-2">
             <MapButton icon="locatie" label="Naar mijn plek" disabled={busy !== undefined} onClick={() => void goToMe()} />
             <MapButton icon="inbeeld" label="Alles in beeld" onClick={() => view.current?.fitAll()} />
-            {onBigger && !full && <MapButton icon="groter" label="Groter" onClick={onBigger} />}
+            {onBigger && !full && <MapButton icon="groter" label="Hele kaart" onClick={onBigger} />}
           </div>
         )}
         {state.kind === 'ready' && state.attribution && (state.aerial && !fullCredit ? (

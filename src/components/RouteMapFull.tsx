@@ -1,6 +1,6 @@
-// ASCEND: Groter, de kaart van Route voorstellen op volle hoogte met een terugknop
-// (besluit 2026-11-14-route-kaart-vervolg.md). Dezelfde kaart en dezelfde regie (useRouteSearch) als het
-// blad Route: een lus die je hier kiest of bijstuurt is de lus in het blad en in de Briefing. Alleen hier
+// ASCEND: Hele kaart, de kaart van Route voorstellen op volle hoogte met een terugknop
+// (besluit 2026-11-14-route-kaart-vervolg.md). Om te kijken en een lus te kiezen; bijsturen doe je in het
+// blad. Dezelfde regie (useRouteSearch): een lus die je hier kiest is de lus in het blad en in de Briefing. Alleen hier
 // mag de telefoon liggend (deviceShell.freeRotation); bij terug, de terugknop van de telefoon of sluiten
 // staat de app weer rechtop. Rendert alleen.
 
@@ -22,7 +22,7 @@ export function RouteMapFull({ model, piece, onClose }: { model: RouteSearchMode
     <Portal>
       <div
         role="dialog"
-        aria-label="Groter: de kaart met je lus"
+        aria-label="Hele kaart: de kaart met je lus"
         className={`fixed inset-0 z-[60] flex flex-col bg-bg ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         // Liggend zit de inkeping of de ronde hoek links of rechts: daar blijft de kaart vandaan.
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'max(var(--rand-onder), 8px)', paddingLeft: 'max(env(safe-area-inset-left, 0px), 8px)', paddingRight: 'max(env(safe-area-inset-right, 0px), 8px)' }}

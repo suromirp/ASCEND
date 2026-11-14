@@ -107,7 +107,7 @@ describe('ander startpunt tijdens het zoeken', () => {
 });
 
 describe('het antwoord van de training en een tweede tik', () => {
-  it('na vijf keer Langer staat de lus van de training er nog: Zoals je training zoekt niet opnieuw', () => {
+  it('na vijf keer Langer staat de lus van de training er nog: Terug naar het voorstel zoekt niet opnieuw', () => {
     let s = ready;
     for (let d = 1; d <= MEMORY_SIZE + 1; d++) {
       const next: LoopAdjust = { ...NO_ADJUST, deltaKm: d };

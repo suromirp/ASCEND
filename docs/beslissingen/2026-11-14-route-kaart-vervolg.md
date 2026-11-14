@@ -25,6 +25,13 @@ In het blad Route (bereikbaar via Groter in de Briefing en via Route voorstellen
 - Een bijsturing die nog zoekt hoort bij één startpunt en één poging; is dat intussen anders, dan vervalt hij zonder regel en geldt bij dat startpunt weer wat ervoor gold.
 - Groter staat buiten de delen van het blad en blijft open tijdens een nieuwe zoektocht, met één regel; liggend blijft de kaart van de inkeping en de ronde hoeken vandaan (`safe-area-inset-left` en `-right`).
 
+## Na Pathfinder (14 november)
+
+- De kaartknop in het blad heet Hele kaart (niet Groter: zo heet de knop in de Briefing die het blad opent). Hele kaart is om te kijken en een lus te kiezen; bijsturen doe je in het blad.
+- Zoals je training heet Terug naar het voorstel: hij zet ook Andere kant op en vermeden stukken terug.
+- Per stuk staat standaard dicht achter één tikregel ("Per stuk: 4 stukken"), zodat wat er gevonden is, Opnieuw zoeken en de bronnen niet ver naar beneden gaan. Dit is een bewuste uitzondering op "nergens een uitklap" van het blad Route.
+- De uitleg achter de i over bijsturen is één zin: Bijsturen geldt alleen voor deze lus; lukt het niet, dan blijft de lus zoals hij was.
+
 ## Niet gedaan: hoogtelijnen
 
 De tegels kunnen: Mapterhorn (`tiles.mapterhorn.com`, terrarium in webp, 512 px) antwoordt zonder sleutel met `access-control-allow-origin: *` (gemeten 14 november). Het pakket `maplibre-contour` (0.1.1) installeren werd in deze sessie door de rechten van de omgeving tegengehouden, dus zonder pakket geen hoogtelijnen; zelf hoogtelijnen uit tegels rekenen is te veel voor deze taak. Voor de volgende bouwer: pakket toevoegen (exacte versie, zoals `maplibre-gl`), een `raster-dem`-bron op Mapterhorn met maxzoom 12, de lijnen in een token, Mapterhorn erbij in de eerste vraag, de uitleg en de zoekregel (elke tegelhost staat daar), en een instelling Hoogtelijnen (aan op de grote kaart, uit op de stille kaart) in settingsIndex, settingsLayout, settingsSummary en een groepspagina. Een reliëfschaduw (`hillshade`) kan zonder pakket, maar is niet gevraagd.

@@ -158,7 +158,7 @@ export const insideAny = (p: RoutePoint, areas: readonly AvoidArea[] | undefined
 
 // Vermijd dit stuk: een cirkel om het midden van het stuk, of de regel waarom het niet kan.
 export function avoidPiece(piece: LoopPiece, start: RoutePoint, avoided: readonly AvoidArea[]): { ok: true; area: AvoidArea } | { ok: false; line: string } {
-  if (avoided.length >= MAX_AVOID) return { ok: false, line: `Hoogstens ${MAX_AVOID} stukken vermijden. Kies Zoals je training om alles terug te zetten.` };
+  if (avoided.length >= MAX_AVOID) return { ok: false, line: `Hoogstens ${MAX_AVOID} stukken vermijden. Kies Terug naar het voorstel om alles terug te zetten.` };
   const cum = cumulative(piece.points);
   const mid = pointAt(piece.points, cum, cum[cum.length - 1] / 2);
   const radiusM = Math.round(Math.max(AVOID_MIN_M, Math.min(AVOID_MAX_M, piece.distanceM / 4)));

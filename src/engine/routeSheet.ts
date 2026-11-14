@@ -25,7 +25,7 @@ export const MAP_HINT = 'De ring is de start. Tik op de kaart voor een ander sta
 export const PICK_HINT = 'De gekozen lus is doorgetrokken, de andere gestreept. Tik een lus op de kaart of in de lijst om hem te kiezen.';
 
 // Achter de i: bijsturen, per stuk en Groter (besluit 2026-11-14-route-kaart-vervolg.md).
-export const ADJUST_HINT = 'Onder de knop stuur je de gekozen lus bij: Andere kant op, Langer of Korter, of tik een stuk en kies Vermijd dit stuk. Dat geldt alleen voor deze lus; lukt het niet, dan blijft de lus zoals hij was. Groter, rechts op de kaart, toont de kaart op volle hoogte; daar mag je de telefoon draaien.';
+export const ADJUST_HINT = 'Bijsturen geldt alleen voor deze lus; lukt het niet, dan blijft de lus zoals hij was.';
 
 export const NO_PLACE_LINE = 'Kies eerst een plaats bij Instellingen, Vandaag en meldingen, Plaats. Daar begint de lus.';
 

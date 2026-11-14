@@ -56,7 +56,7 @@ export function answerFor(s: SearchState, key: string): SearchAnswer | 'busy' {
 
 export const needsSearch = (s: SearchState, key: string): boolean => answerFor(s, key) === 'busy';
 
-// Het antwoord van de training zelf (zonder bijsturing) valt er nooit uit: anders zoekt Zoals je training
+// Het antwoord van de training zelf (zonder bijsturing) valt er nooit uit: anders zoekt Terug naar het voorstel
 // na een paar keer Langer opnieuw (Warden).
 const isBase = (key: string) => key.endsWith(`|${adjustKey(NO_ADJUST)}`);
 function remember(s: SearchState, key: string, plans: RoutePlans): SearchState['memory'] {
