@@ -38,8 +38,9 @@ describe('buildSessionBrief', () => {
     expect(day1.tomorrow).toBe('Morgen: bergtocht van 5 uur, 1.000 m omhoog, 15 kg rugzak.');
   });
 
-  it('strength defers the effort to MacroFactor, recovery has no target', () => {
-    expect(buildSessionBrief(tpl('tpl_upper_a'), addDays(START, 1), program).facts[2]).toEqual({ value: 'MacroFactor', label: 'zwaarte volgens' });
+  it('strength defers the effort to MacroFactor only when linked, recovery has no target', () => {
+    expect(buildSessionBrief(tpl('tpl_upper_a'), addDays(START, 1), program, { macroFactor: true }).facts[2]).toEqual({ value: 'MacroFactor', label: 'zwaarte volgens' });
+    expect(buildSessionBrief(tpl('tpl_upper_a'), addDays(START, 1), program).facts).toHaveLength(2);
     const rest = buildSessionBrief(tpl('tpl_herstel'), START, program);
     expect(rest.headline).toBe('HERSTEL · RUST OF WANDELEN');
   });

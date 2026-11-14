@@ -3,6 +3,7 @@ import { coachLineForToday, coachReaction } from './coach';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { Program } from '../models/program';
 import type { SessionLog } from '../models/training';
+import { resolveEffectiveFullDuration } from './substitutions';
 
 const { templates } = buildDefaultProgramData();
 const byId = new Map(templates.map((t) => [t.id, t]));
@@ -63,7 +64,11 @@ describe('coachLineForToday bij een test of wedstrijd', () => {
 describe('coachReaction', () => {
   it('reacts to what was filled in', () => {
     expect(coachReaction(log('tpl_easy_run', '2026-09-29', { rpe: 7, durationMinutes: 30 }), t('tpl_easy_run'), program)).toContain('Zwaarder dan gepland (zwaarte 7, gepland tot 4)');
-    expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: 10 }), t('tpl_easy_run'), program)).toContain('Korter dan gepland');
+    const planned = resolveEffectiveFullDuration(t('tpl_easy_run'), '2026-09-29', program);
+    // Eén drempel: tussen de helft en het plan geen tweede zin meer.
+    expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: Math.round(planned * 0.6) }), t('tpl_easy_run'), program)).not.toMatch(/Korter dan gepland|korte training/);
+    // Onder de helft: een korte training (profielen 14 november, punt C).
+    expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: Math.floor(planned * 0.5) - 1 }), t('tpl_easy_run'), program)).toBe('Een korte training. Dat telt ook.');
     expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: 30, rpe: 3 }), t('tpl_easy_run'), program)).toBe('Gedaan zoals gepland. Zo bouw je op.');
   });
 });
@@ -89,5 +94,53 @@ describe('coachLineForToday bij Trap af', () => {
     const l = coachLineForToday({ template: t('tpl_stairs_down'), date: '2026-09-29', program, tomorrow: [], yesterdayLogs: [], templateById: byId });
     expect(l).toContain('trappenhuis');
     expect(l).not.toMatch(/Rustig en gelijkmatig|hele zinnen/);
+  });
+});
+
+describe('punt C: het oordeel na afronden past bij wat er gebeurde', () => {
+  const upper = t('tpl_upper_a');
+  const planned = upper.exercises!.reduce((n, e) => n + e.sets, 0);
+  const sets = (n: number) => [{ exerciseId: upper.exercises![0].id, exerciseName: 'x', sets: Array.from({ length: n }, () => ({ reps: 8, weightKg: 20 })) }];
+  it('2 van alle sets is een korte training, nooit "zoals gepland"', () => {
+    const r = coachReaction(log('tpl_upper_a', '2026-09-29', { durationMinutes: 55, strengthData: sets(2) }), upper, program);
+    expect(r).toBe('Een korte training. Dat telt ook.');
+  });
+  it('de helft of meer van de sets is geen korte training', () => {
+    const r = coachReaction(log('tpl_upper_a', '2026-09-29', { durationMinutes: 55, strengthData: sets(Math.ceil(planned / 2)) }), upper, program);
+    expect(r).not.toBe('Een korte training. Dat telt ook.');
+  });
+  it('sets uit MacroFactor tellen niet tegen de template', () => {
+    const r = coachReaction(log('tpl_upper_a', '2026-09-29', { durationMinutes: 55, source: 'macrofactor', strengthData: sets(2) }), upper, program);
+    expect(r).not.toBe('Een korte training. Dat telt ook.');
+  });
+  it('zwaar of slechter dan normaal gaat voor de korte training', () => {
+    const heavy = coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: 5, rpe: 9 }), t('tpl_easy_run'), program);
+    expect(heavy).toContain('Zwaarder dan gepland');
+    const worse = coachReaction(log('tpl_upper_a', '2026-09-29', { durationMinutes: 55, subjectiveFeel: 'worse', strengthData: sets(2) }), upper, program);
+    expect(worse).toContain('Slechter dan normaal');
+  });
+  it('een afgebroken test is geen korte training', () => {
+    const r = coachReaction(log('tpl_test_run', '2026-09-29', { durationMinutes: 5 }), t('tpl_test_run'), program);
+    expect(r).not.toBe('Een korte training. Dat telt ook.');
+  });
+  it('een oud log zonder duur is nooit kort', () => {
+    const r = coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: undefined as unknown as number }), t('tpl_easy_run'), program);
+    expect(r).not.toBe('Een korte training. Dat telt ook.');
+  });
+});
+
+describe('punt F: de tempoloop zegt hetzelfde over praten als de Briefing', () => {
+  it('korte zinnen, nooit hele zinnen of rustig', () => {
+    for (const tomorrow of [[], [t('tpl_lower_a')]]) {
+      const line = coachLineForToday({ template: t('tpl_tempo_run'), date: '2026-09-29', program, tomorrow, yesterdayLogs: [], templateById: byId });
+      expect(line).toContain('korte zinnen');
+      expect(line).not.toMatch(/hele zinnen|rustig/i);
+    }
+    const before = coachLineForToday({ template: t('tpl_tempo_run'), date: '2026-09-29', program, tomorrow: [t('tpl_lower_a')], yesterdayLogs: [], templateById: byId });
+    expect(before).toContain('Morgen staat Benen A (zwaar).');
+  });
+  it('een rustige duurloop houdt hele zinnen', () => {
+    const line = coachLineForToday({ template: t('tpl_easy_run'), date: '2026-09-29', program, tomorrow: [], yesterdayLogs: [], templateById: byId });
+    expect(line).toContain('hele zinnen');
   });
 });

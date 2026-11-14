@@ -4,7 +4,7 @@
 //   GET https://valhalla1.openstreetmap.de/route?json={"locations":[...],"costing":"pedestrian","directions_type":"none","elevation_interval":30}
 // Alleen punten gaan de deur uit, nooit een naam. Gooit nooit. Kaartgegevens van OpenStreetMap (ODbL).
 
-import type { RouteAnswer, RouteFn, RoutePoint } from '../models/route';
+import type { AvoidArea, RouteAnswer, RouteFn, RoutePoint } from '../models/route';
 import { ROUTE_TIMEOUT_MS, parseJson, requestText } from './routing';
 
 export const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/route';
@@ -13,8 +13,26 @@ export const ELEVATION_INTERVAL_M = 30;
 const c5 = (v: number) => Math.round(v * 100_000) / 100_000;
 const RAD = Math.PI / 180;
 
-export function valhallaUrl(waypoints: RoutePoint[]): string {
-  const body = { locations: waypoints.map((p) => ({ lat: c5(p.lat), lon: c5(p.lon) })), costing: 'pedestrian', directions_type: 'none', elevation_interval: ELEVATION_INTERVAL_M };
+// Een cirkel als achthoek [lon, lat], gesloten: Valhalla mijdt een stuk met `exclude_polygons`. De achthoek
+// ligt om de cirkel heen (straal gedeeld door cos 22,5 graden): een lus die de cirkel mijdt zoals
+// engine/routeAdjust.ts#crossesArea toetst, valt nooit af omdat hij tussen achthoek en cirkel liep.
+export function avoidPolygon(a: AvoidArea): [number, number][] {
+  const ring: [number, number][] = [];
+  const r = a.radiusM / Math.cos(Math.PI / 8);
+  for (let i = 0; i <= 8; i++) {
+    const t = ((i % 8) / 8) * 2 * Math.PI;
+    const dLat = (r * Math.cos(t)) / 111_195;
+    const dLon = (r * Math.sin(t)) / (111_195 * Math.cos(a.lat * RAD));
+    ring.push([c5(a.lon + dLon), c5(a.lat + dLat)]);
+  }
+  return ring;
+}
+
+export function valhallaUrl(waypoints: RoutePoint[], avoid: AvoidArea[] = []): string {
+  const body = {
+    locations: waypoints.map((p) => ({ lat: c5(p.lat), lon: c5(p.lon) })), costing: 'pedestrian', directions_type: 'none', elevation_interval: ELEVATION_INTERVAL_M,
+    ...(avoid.length > 0 ? { exclude_polygons: avoid.map(avoidPolygon) } : {}),
+  };
   return `${VALHALLA_URL}?json=${encodeURIComponent(JSON.stringify(body))}`;
 }
 
@@ -82,9 +100,9 @@ export function mapValhalla(raw: unknown): RoutePoint[] | undefined {
 }
 
 export function valhallaRoute(options: { fetchImpl?: typeof fetch; timeoutMs?: number } = {}): RouteFn {
-  return async (waypoints): Promise<RouteAnswer> => {
+  return async (waypoints, routeOptions): Promise<RouteAnswer> => {
     if (waypoints.length < 2) return { ok: false, reason: 'error' };
-    const answer = await requestText(valhallaUrl(waypoints), options.timeoutMs ?? ROUTE_TIMEOUT_MS, options.fetchImpl ?? fetch, { headers: { Accept: 'application/json' } });
+    const answer = await requestText(valhallaUrl(waypoints, routeOptions?.avoid), options.timeoutMs ?? ROUTE_TIMEOUT_MS, options.fetchImpl ?? fetch, { headers: { Accept: 'application/json' } });
     if (typeof answer === 'string') return { ok: false, reason: answer };
     const raw = parseJson(answer.text);
     if (answer.status !== 200) {

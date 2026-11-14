@@ -11,7 +11,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { RoutePoint, RouteStyle } from '../models/route';
-import { photoFallbackLine, photoOffered, quietAttribution, readMapColors, type MapBase, type MapPhoto, type MapRoute } from '../engine/routeMap';
+import { groundLine, MAKE_HOME_MOVE, MAKE_HOME_NEW, mapStatusLine, photoOffered, quietAttribution, readMapColors, type MapBase, type MapPhoto, type MapRoute } from '../engine/routeMap';
 import { ROUTE_MAP_HEIGHT, mapFallbackLine } from '../engine/routeSheet';
 import { hasWebGL2, loadMapLibre } from '../integrations/mapLibre';
 import { AERIAL_SOURCES } from '../integrations/aerialImagery';
@@ -24,7 +24,7 @@ import { Icon } from './icons';
 type StartAnswer = { ok: true; point: RoutePoint } | { ok: false; line: string };
 
 // Een ronde knop op de kaart (uitzondering op de primitives, zie het besluit): 44 bij 44, woord als label.
-function MapButton({ icon, label, onClick, disabled }: { icon: 'locatie' | 'inbeeld'; label: string; onClick: () => void; disabled?: boolean }) {
+function MapButton({ icon, label, onClick, disabled }: { icon: 'locatie' | 'inbeeld' | 'groter'; label: string; onClick: () => void; disabled?: boolean }) {
   return (
     <button
       type="button"
@@ -65,11 +65,10 @@ function PhotoSwitch({ value, onPick }: { value: MapPhoto; onPick: (v: MapPhoto)
   );
 }
 
-// Bij Bewaar als plek: wat er gebeurt, in één zin.
-export const MAKE_HOME_MOVE = 'Thuis verhuist naar dit punt. Je routes bij Thuis blijven.';
-export const MAKE_HOME_NEW = 'Dit punt wordt Thuis. Wissen kan bij Startpunt van je lus.';
+// Bij Bewaar als plek: wat er gebeurt, in één zin (engine/routeMap.ts).
+export { MAKE_HOME_MOVE, MAKE_HOME_NEW };
 
-export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep, onOpen }: {
+export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep, onOpen, piece, onBigger, full = false }: {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
   // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is).
@@ -98,6 +97,13 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   // De stille kaart van de Briefing (besluit 2026-11-12-route-blok.md): geen knoppen, geen tik op de kaart,
   // de bronvermelding kort en buiten de lus; een tik waar ook op de kaart opent Groter.
   onOpen?: () => void;
+  // Het stuk dat in de lijst Per stuk gekozen is: een rand om dat deel van de lus.
+  piece?: RoutePoint[];
+  // Hele kaart: de kaart op volle hoogte (RouteMapFull); alleen in het blad, niet als hij al groot is.
+  // Niet "Groter": zo heet de knop in de Briefing die dit blad opent (Pathfinder).
+  onBigger?: () => void;
+  // De vergrote kaart: het vak vult de hoogte en volgt het draaien van de telefoon (ResizeObserver).
+  full?: boolean;
 }) {
   const quiet = onOpen !== undefined;
   const motion = useMotionMode();
@@ -115,9 +121,9 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   const [fullCredit, setFullCredit] = useState(false);
   const alive = useRef(true);
   // Wat de kaart nodig heeft, ook binnen de callbacks van de kaart zelf.
-  const latest = useRef({ routes, chosen, dots: { start, me, pick }, motion, onChoose, photo });
+  const latest = useRef({ routes, chosen, dots: { start, me, pick }, piece, motion, onChoose, photo });
   useEffect(() => {
-    latest.current = { routes, chosen, dots: { start, me, pick }, motion, onChoose, photo };
+    latest.current = { routes, chosen, dots: { start, me, pick }, piece, motion, onChoose, photo };
   });
   // De keuze geldt meteen op het scherm; het bewaren (onPhoto) volgt, en lukt dat niet, dan wisselt hij toch.
   const [picked, setPicked] = useState<MapPhoto>(photo);
@@ -162,8 +168,26 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   }, [base]);
 
   useEffect(() => {
-    view.current?.update({ routes, chosen, dots: { start, me, pick } });
-  }, [routes, chosen, start, me, pick]);
+    view.current?.update({ routes, chosen, dots: { start, me, pick }, piece });
+  }, [routes, chosen, start, me, pick, piece]);
+
+  // De vergrote kaart: draait de telefoon (of verandert het vak anders van maat), dan rekent de kaart
+  // opnieuw en staat de lus weer in beeld, ook terug naar staand.
+  useEffect(() => {
+    const el = box.current;
+    if (!full || !el || typeof ResizeObserver === 'undefined') return;
+    let first = true;
+    const watch = new ResizeObserver(() => {
+      // De eerste melding is de maat bij het openen: die heeft de kaart al.
+      if (first) {
+        first = false;
+        return;
+      }
+      view.current?.resize();
+    });
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, [full]);
 
   // Een tik op de schakelaar (of de instelling): dezelfde kaart, een andere ondergrond.
   useEffect(() => {
@@ -254,7 +278,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
 
   const photoFailed = state.kind === 'ready' && state.photoFailed === true;
   const online = typeof navigator === 'undefined' || navigator.onLine !== false;
-  const status = busy === 'me' ? 'Je locatie wordt bepaald.' : busy === 'keep' ? 'De plek wordt bewaard.' : saving ? (hasHome ? MAKE_HOME_MOVE : MAKE_HOME_NEW) : line || photoFallbackLine(photoFailed, online);
+  const status = mapStatusLine({ busy, saving, hasHome, line, photoLine: groundLine({ stage: state.kind === 'ready' ? state.stage : undefined, base, photoFailed, online }) });
   // Wat je ziet: viel de luchtfoto weg, dan staat de schakelaar op Kaart; de instelling blijft Luchtfoto,
   // en een tik op Luchtfoto probeert het opnieuw.
   const switchValue: MapPhoto = showPhoto && !photoFailed ? 'photo' : 'map';
@@ -273,10 +297,10 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   };
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className={`flex flex-col gap-1${full ? ' h-full min-h-0' : ''}`}>
       {/* Slepen en knijpen horen bij de kaart: niet bij het blad en niet bij de pagina. Een vaste hoogte
           (engine/routeSheet.ts), zodat de gekozen lus en de hoofdknop eronder op 360 px nog in beeld staan. */}
-      <div data-no-sheet-drag="" className="relative w-full overflow-hidden rounded-xl border" style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', touchAction: quiet ? 'pan-y' : 'none', overscrollBehavior: 'contain' }}>
+      <div data-no-sheet-drag="" className={`relative w-full overflow-hidden rounded-xl border${full ? ' min-h-0 flex-1' : ''}`} style={{ ...(full ? {} : { height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}) }), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', touchAction: quiet ? 'pan-y' : 'none', overscrollBehavior: 'contain' }}>
         {/* MapLibre zet zelf position: relative op dit vak; daarom de volle maat, niet absolute. */}
         <div ref={box} style={{ width: '100%', height: '100%' }} />
         {state.kind === 'loading' && <p role="status" className="absolute bottom-1 left-2 text-xs" style={dim}>De kaart wordt geladen.</p>}
@@ -291,6 +315,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
           <div className="absolute right-2 top-2 flex flex-col gap-2">
             <MapButton icon="locatie" label="Naar mijn plek" disabled={busy !== undefined} onClick={() => void goToMe()} />
             <MapButton icon="inbeeld" label="Alles in beeld" onClick={() => view.current?.fitAll()} />
+            {onBigger && !full && <MapButton icon="groter" label="Hele kaart" onClick={onBigger} />}
           </div>
         )}
         {state.kind === 'ready' && state.attribution && (state.aerial && !fullCredit ? (

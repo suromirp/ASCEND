@@ -8,7 +8,8 @@
 // Zie docs/beslissingen/2026-11-09-routeplanner.md.
 
 import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
-import type { RouteAnswer, RouteFailure, RouteFn, RoutePoint, RouteProposal, RouteTarget, RoutedLine } from '../models/route';
+import type { AvoidArea, RouteAnswer, RouteFailure, RouteFn, RoutePoint, RouteProposal, RouteTarget, RoutedLine } from '../models/route';
+import { crossesAny, insideAny, tooTiny } from './routeAdjust';
 import { isNearlyFlat, modelThresholdM } from './elevation';
 import { ASCENT_DEAD_BAND_M, ascentOf, bearing, cumulative, lineLength, metersBetween, offsetPoint, repeatedShare } from './routeGeometry';
 import { formatNumberNL } from '../utils/number';
@@ -48,7 +49,14 @@ export interface PlanInput {
   terrain?: NearbyTerrain;
   // Het startpunt is een echt punt van de gebruiker (Precies): de lus begint en eindigt er precies.
   anchor?: boolean;
+  // Stukken die de lus moet mijden (Vermijd dit stuk). Een punt erin wordt geen doel, de routeplanner
+  // krijgt ze mee, en een lus die er toch doorheen gaat telt niet (dan is er geen weg omheen).
+  avoid?: AvoidArea[];
 }
+
+const routeOptions = (input: PlanInput) => (input.avoid && input.avoid.length > 0 ? { avoid: input.avoid } : undefined);
+// Een lus die door een vermeden stuk gaat, of na bijsturen onder 1 km komt, is geen lus.
+const usable = (input: PlanInput, p: RouteProposal) => !crossesAny(p.points, input.avoid) && !tooTiny(p);
 
 // `at: 'start'`: bij het startpunt zelf ligt geen pad; een andere lus proberen heeft dan geen zin.
 export type PlanOutcome = { ok: true; proposal: RouteProposal } | { ok: false; reason: RouteFailure | 'nothing'; at?: 'start' };
@@ -290,8 +298,8 @@ export async function proposeSimple(input: PlanInput, route: RouteFn, spare?: Ro
   const score = (p: RouteProposal) => missScore(p, input.target);
   let best: RouteProposal | undefined;
   let lastFailure: RouteFailure | undefined;
-  for (const candidate of simpleCandidates(input)) {
-    const answer = await route([input.start, candidate]);
+  for (const candidate of simpleCandidates(input).filter((c) => !insideAny(c, input.avoid))) {
+    const answer = await route([input.start, candidate], routeOptions(input));
     if (failed(answer)) {
       lastFailure = answer.reason;
       if (stops(answer.reason)) break;
@@ -302,7 +310,7 @@ export async function proposeSimple(input: PlanInput, route: RouteFn, spare?: Ro
     const anchored = input.anchor ? anchorLine(answer.line.points, input.start, false) : { points: answer.line.points, gapM: 0 };
     const line: RoutedLine = { source: answer.line.source, points: anchored.points };
     const made = flat ? composeOutAndBack(line, input.target) : composeSimple(line, input.target);
-    if (!made) continue;
+    if (!made || !usable(input, made)) continue;
     if (anchored.gapM >= START_GAP_NOTE_M) made.startGapM = anchored.gapM;
     if (better(made, best, input.target, score)) best = made;
     // Past de afstand en zit de lus dicht genoeg bij de training, dan vraagt de planner niets meer.
@@ -313,7 +321,7 @@ export async function proposeSimple(input: PlanInput, route: RouteFn, spare?: Ro
     for (const points of [spare.points, reversed(spare.points)]) {
       const line = tallestClimbLine(points);
       const made = line ? composeSimple({ source: spare.source, points: line }, input.target) : undefined;
-      if (made && better(made, best, input.target, score)) best = made;
+      if (made && usable(input, made) && better(made, best, input.target, score)) best = made;
     }
   }
   if (best) return { ok: true, proposal: best };
@@ -444,14 +452,15 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn): Promis
   const d = input.target.distanceKm * 1000;
   const score = (p: RouteProposal) => missScore(p, input.target) * (input.target.ascentM >= MIN_ASCENT_TARGET_M ? 0.75 : 1) + 0.5 * p.repeatedShare;
   let reach = 0.25;
-  let vias = adventureVias(input, reach);
+  const viasAt = (r: number) => adventureVias(input, r).filter((v) => !insideAny(v, input.avoid));
+  let vias = viasAt(reach);
   let best: RouteProposal | undefined;
   let lastFailure: RouteFailure | undefined;
   // Een punt zonder pad in de buurt komt in een volgende ronde niet terug.
   const dropped: RoutePoint[] = [];
   const kept = (list: Via[]) => list.filter((v) => !dropped.some((x) => x.lat === v.lat && x.lon === v.lon));
   for (let call = 0; call < MAX_ROUTE_CALLS && vias.length > 0; call++) {
-    const answer = await route([input.start, ...vias, input.start]);
+    const answer = await route([input.start, ...vias, input.start], routeOptions(input));
     if (failed(answer)) {
       lastFailure = answer.reason;
       if (stops(answer.reason)) break;
@@ -465,13 +474,15 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn): Promis
     }
     const anchored = input.anchor ? anchorLine(answer.line.points, input.start, true) : { points: answer.line.points, gapM: 0 };
     const made = proposal('adventure', answer.line, anchored.points, { hills: vias.filter((v) => v.hill).length });
+    // Door een vermeden stuk: de routeplanner vond er geen weg omheen; nog een keer vragen geeft hetzelfde.
+    if (crossesAny(made.points, input.avoid)) break;
     if (anchored.gapM >= START_GAP_NOTE_M) made.startGapM = anchored.gapM;
-    if (better(made, best, input.target, score)) best = made;
+    if (!tooTiny(made) && better(made, best, input.target, score)) best = made;
     if (fitsDistance(made, input.target)) break;
     // Iets boven de afstand mikken: te kort telt als mislukt, iets te lang niet.
     const off = made.distanceM / d;
     reach = Math.min(0.6, Math.max(0.08, reach * Math.min(1.6, Math.max(0.6, AIM_LONG / off))));
-    const next = kept(adventureVias(input, reach));
+    const next = kept(viasAt(reach));
     // Dezelfde punten geven dezelfde lus: dan is er niets beters te halen.
     if (next.length === vias.length && next.every((v, i) => v.lat === vias[i].lat && v.lon === vias[i].lon)) break;
     vias = next;

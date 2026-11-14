@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { outdoorSunSentence } from './outdoorSun';
 import type { SessionTemplate } from '../models/training';
 import type { WeatherForecast } from '../models/weather';
 import { clothingAdvice, clothingForTraining, weatherLineForTraining, clothingKind, isHeatSession, type ClothingInput } from './clothing';
@@ -332,5 +333,23 @@ describe('het donker in de weerregel', () => {
   it('geeft bij fietsen maar één lichtzin', () => {
     const line = run(true, 'tpl_bike')!;
     expect(line).not.toContain('lampje');
+  });
+});
+
+// De pagina Weer toont het hele kledingadvies en de UV-zin eronder (engine/outdoorSun.ts). Ze mogen
+// elkaar niet herhalen of tegenspreken (Pathfinder, 14 november).
+describe('zonnebrand: kledingadvies en UV-zin op de pagina Weer', () => {
+  const sun = (durationMinutes: number) => clothingForTraining({ forecast: forecast({ feelsC: 20, uv: 5 }), template: template({}), logs: [], date: '2026-11-03', durationMinutes });
+  it('vanaf 45 minuten noemt het advies de zonnebrand, dan zegt de UV-zin alleen het getal', () => {
+    const advice = sun(60);
+    expect(advice?.lines.some((l) => l.includes('Zonnebrand'))).toBe(true);
+    expect(advice?.sunscreenShown).toBe(true);
+    expect(outdoorSunSentence({ on: true, outdoor: true, uvIndex: 5, elevationM: undefined, sunscreenSaid: !!advice?.sunscreenShown, minutes: 60, full: true })).toBe('UV 5.');
+  });
+  it('korter dan 45 minuten noemt het advies geen zonnebrand en de UV-zin ook niet', () => {
+    const advice = sun(30);
+    expect(advice?.lines.some((l) => /zonnebrand/i.test(l))).toBe(false);
+    expect(advice?.sunscreenShown).toBeUndefined();
+    expect(outdoorSunSentence({ on: true, outdoor: true, uvIndex: 5, elevationM: undefined, sunscreenSaid: !!advice?.sunscreenShown, minutes: 30, full: true })).toBe('UV 5.');
   });
 });

@@ -4,7 +4,7 @@
 // Alleen punten gaan de deur uit (het startpunt is al afgerond door de aanroeper), nooit een naam.
 // Gooit nooit. Kaartgegevens van OpenStreetMap (ODbL).
 
-import type { RouteAnswer, RouteFn, RoutePoint } from '../models/route';
+import type { AvoidArea, RouteAnswer, RouteFn, RoutePoint } from '../models/route';
 import { ROUTE_TIMEOUT_MS, parseJson, requestText } from './routing';
 
 export const BROUTER_URL = 'https://brouter.de/brouter';
@@ -13,9 +13,11 @@ export const BROUTER_PROFILE = 'hiking-mountain';
 
 const c5 = (v: number) => (Math.round(v * 100_000) / 100_000).toString();
 
-export function brouterUrl(waypoints: RoutePoint[], profile = BROUTER_PROFILE): string {
+// Een stuk vermijden: BRouter kent `nogos` als lon,lat,straal in meters, gescheiden door |.
+export function brouterUrl(waypoints: RoutePoint[], profile = BROUTER_PROFILE, avoid: AvoidArea[] = []): string {
   const lonlats = waypoints.map((p) => `${c5(p.lon)},${c5(p.lat)}`).join('|');
-  return `${BROUTER_URL}?lonlats=${lonlats}&profile=${profile}&alternativeidx=0&format=geojson`;
+  const nogos = avoid.length > 0 ? `&nogos=${avoid.map((a) => `${c5(a.lon)},${c5(a.lat)},${Math.round(a.radiusM)}`).join('|')}` : '';
+  return `${BROUTER_URL}?lonlats=${lonlats}${nogos}&profile=${profile}&alternativeidx=0&format=geojson`;
 }
 
 const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
@@ -47,9 +49,9 @@ export function unmappedWaypoint(text: string, count: number): number | undefine
 }
 
 export function brouterRoute(options: { fetchImpl?: typeof fetch; timeoutMs?: number } = {}): RouteFn {
-  return async (waypoints): Promise<RouteAnswer> => {
+  return async (waypoints, routeOptions): Promise<RouteAnswer> => {
     if (waypoints.length < 2) return { ok: false, reason: 'error' };
-    const answer = await requestText(brouterUrl(waypoints), options.timeoutMs ?? ROUTE_TIMEOUT_MS, options.fetchImpl ?? fetch, { headers: { Accept: 'application/json' } });
+    const answer = await requestText(brouterUrl(waypoints, BROUTER_PROFILE, routeOptions?.avoid), options.timeoutMs ?? ROUTE_TIMEOUT_MS, options.fetchImpl ?? fetch, { headers: { Accept: 'application/json' } });
     if (typeof answer === 'string') return { ok: false, reason: answer };
     if (answer.status !== 200) {
       if (/not mapped/.test(answer.text)) return { ok: false, reason: 'unmapped', waypoint: unmappedWaypoint(answer.text, waypoints.length) };

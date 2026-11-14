@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { durationNeedsCheck, entryMinutes, heartRateProblem, LONG_SESSION_MIN, longDurationText } from './inputLimits';
+import { durationNeedsCheck, durationTooShort, entryAmount, entryMinutes, heartRateProblem, LONG_SESSION_MIN, longDurationText, SHORT_DURATION_TEXT } from './inputLimits';
 
 describe('duur', () => {
   it('leeg, 0 en negatief betekenen geen duur', () => {
@@ -41,5 +41,21 @@ describe('hartslag', () => {
   });
   it('de drempel kan niet boven het maximum liggen', () => {
     expect(heartRateProblem('lthr', 200, { maxHr: 190 })).toMatch(/niet hoger/);
+  });
+});
+
+describe('punt B: grenzen voor duur en afstand', () => {
+  it('onder 1 minuut is te kort', () => {
+    expect(durationTooShort('')).toBe(true);
+    expect(durationTooShort(-5)).toBe(true);
+    expect(durationTooShort(0)).toBe(true);
+    expect(durationTooShort(1)).toBe(false);
+    expect(SHORT_DURATION_TEXT).toBe('Vul een duur in van minstens 1 minuut.');
+  });
+  it('0 of negatief is geen afstand', () => {
+    expect(entryAmount(0)).toBeUndefined();
+    expect(entryAmount(-2)).toBeUndefined();
+    expect(entryAmount('')).toBeUndefined();
+    expect(entryAmount(5.2)).toBe(5.2);
   });
 });

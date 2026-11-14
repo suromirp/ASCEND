@@ -11,6 +11,7 @@ import { NumberField } from '../NumberField';
 import { PainReportFields } from '../PainReportFields';
 import { PrimaryButton, SecondaryButton } from '../ui';
 import { finishDuration } from '../../engine/forgeSession';
+import { durationTooShort, entryMinutes, SHORT_DURATION_TEXT } from '../../engine/inputLimits';
 import { ForgeSheet } from './parts';
 import { forgeFinishNote, type ForgeFinishNote } from './forgeFinishLog';
 
@@ -76,9 +77,11 @@ export function FinishSheet({
     };
   }, []);
   const notTicked = total - done;
+  // Onder 1 minuut is geen training: Opslaan uit met één zin (profielen 14 november, punt B).
+  const tooShort = durationTooShort(minutes);
 
   async function save() {
-    if (busy.current) return;
+    if (busy.current || tooShort) return;
     busy.current = true;
     setSaving(true);
     setOutcome(null);
@@ -86,7 +89,7 @@ export function FinishSheet({
     let late = false;
     let sawWriteError = false;
     try {
-      const ok = await withTimeout(onSave({ minutes: minutes ?? 0, rpe, feel, pain, notes, doneOn }, () => {
+      const ok = await withTimeout(onSave({ minutes: entryMinutes(minutes), rpe, feel, pain, notes, doneOn }, () => {
         // Alleen gevraagd bij een schrijffout (ForgeSheets, reportIfGone): zo weet het blad dat het echt mislukte.
         sawWriteError = true;
         return !late && !away.current;
@@ -134,6 +137,7 @@ export function FinishSheet({
             <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Duur</span>
             <div className="w-32"><NumberField value={minutes} onChange={setMinutes} unit="min" tall /></div>
           </div>
+          {tooShort && <p className="-mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{SHORT_DURATION_TEXT}</p>}
           <div>
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE) van de hele training, als je wilt</p>
             <div className="mt-2 grid grid-cols-5 gap-2" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
@@ -164,7 +168,7 @@ export function FinishSheet({
             <SecondaryButton onClick={close}>Annuleren</SecondaryButton>
             <PrimaryButton
               fullWidth={false}
-              disabled={saving}
+              disabled={saving || tooShort}
               onClick={() => void save()}
             >
               {saving ? 'Opslaan…' : readOnly ? 'Afvinken' : 'Opslaan'}

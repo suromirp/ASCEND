@@ -85,6 +85,13 @@ describe('mapping a forecast', () => {
     expect(h.feelsC).toBe(h.tempC);
   });
 
+  it('keeps the height of the place from `elevation`, rounded to the metre; without one, none', () => {
+    expect(mapForecast({ ...rawOpenMeteo(), elevation: 1243.4 }, PLACE, 'x').elevationM).toBe(1243);
+    expect(mapForecast(rawOpenMeteo(), PLACE, 'x').elevationM).toBeUndefined();
+    expect('elevationM' in mapForecast({ ...rawOpenMeteo(), elevation: 'hoog' }, PLACE, 'x')).toBe(false);
+    expect(mapForecast({ ...rawOpenMeteo(), elevation: 99999 }, PLACE, 'x').elevationM).toBeUndefined();
+  });
+
   it('refuses an answer in another shape', () => {
     expect(() => mapForecast({ hourly: {}, daily: {} }, PLACE, 'x')).toThrow(OpenMeteoError);
     expect(() => mapForecast(null, PLACE, 'x')).toThrow(OpenMeteoError);

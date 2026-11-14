@@ -24,6 +24,9 @@ export const TIMEOUT_LINE = 'De routeplanner antwoordde niet op tijd. Probeer he
 export const MAP_HINT = 'De ring is de start. Tik op de kaart voor een ander startpunt: Start hier geldt alleen voor deze zoektocht. Bewaar als plek maakt er Thuis van; je routes bij Thuis blijven.';
 export const PICK_HINT = 'De gekozen lus is doorgetrokken, de andere gestreept. Tik een lus op de kaart of in de lijst om hem te kiezen.';
 
+// Achter de i: bijsturen, per stuk en Groter (besluit 2026-11-14-route-kaart-vervolg.md).
+export const ADJUST_HINT = 'Bijsturen geldt alleen voor deze lus; lukt het niet, dan blijft de lus zoals hij was.';
+
 export const NO_PLACE_LINE = 'Kies eerst een plaats bij Instellingen, Vandaag en meldingen, Plaats. Daar begint de lus.';
 
 export type RouteSheetStage =
@@ -59,7 +62,8 @@ export function routeSheetStage(i: StageInput): RouteSheetStage {
 // De delen onder de kop, van boven naar onder. De kaart (of wat op haar plek staat) altijd eerst, dan
 // de lussen als rijen om te kiezen en de hoofdknop voor de gekozen lus: dat staat boven de vouw op 390
 // en 412 px. Daarna wat er op de kaart lag, Opnieuw zoeken en de bronnen. Nergens een uitklap.
-export type RouteSheetPart = 'searching' | 'failure' | 'map' | 'chosen' | 'loops' | 'found' | 'retry' | 'sources';
+// 'adjust': bijsturen en de gekozen lus per stuk (engine/routeAdjust.ts), onder de hoofdknop.
+export type RouteSheetPart = 'searching' | 'failure' | 'map' | 'chosen' | 'adjust' | 'loops' | 'found' | 'retry' | 'sources';
 
 export function routeSheetParts(stage: RouteSheetStage, plans?: { anyOk: boolean; anyFailed: boolean }): RouteSheetPart[] {
   if (stage === 'searching') return ['searching'];
@@ -69,7 +73,7 @@ export function routeSheetParts(stage: RouteSheetStage, plans?: { anyOk: boolean
   // Kaart, dan de rijen (de gekozen met vinkje), dan de hoofdknop direct eronder: titel en feiten van
   // een lus staan alleen in zijn rij (Pathfinder, 11 november).
   const parts: RouteSheetPart[] = ['map', 'loops'];
-  if (plans.anyOk) parts.push('chosen');
+  if (plans.anyOk) parts.push('chosen', 'adjust');
   parts.push('found');
   if (plans.anyFailed) parts.push('retry');
   parts.push('sources');

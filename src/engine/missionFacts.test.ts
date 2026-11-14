@@ -46,7 +46,8 @@ describe('missionFacts', () => {
     const f = missionFacts('tpl_lower_a', brief('tpl_lower_a'), paces);
     expect(f.chips.some((c) => c.kind === 'tempo')).toBe(false);
     expect(f.paceNote).toBeUndefined();
-    expect(f.chips.map((c) => c.text)).toContain('Zwaarte volgens MacroFactor');
+    // Zonder koppeling (de standaard) geen MacroFactor-chip (punt I).
+    expect(f.chips.map((c) => c.text).join(' ')).not.toContain('MacroFactor');
   });
 
   it('geeft een getal zijn uitleg mee', () => {
@@ -116,5 +117,16 @@ describe('afstand bij een rustige loop', () => {
   it('75 minuten tussen 6:40 en 7:35 per km is ongeveer 10 tot 11 km', () => {
     expect(distanceLine(75, { fast: 400, slow: 455 })).toBe('Dat is ongeveer 10 tot 11 km.');
     expect(distanceLine(undefined, { fast: 400, slow: 455 })).toBeUndefined();
+  });
+});
+
+describe('punt I: MacroFactor alleen met een koppeling', () => {
+  it('zonder koppeling geen chip "Zwaarte volgens MacroFactor", met koppeling wel', () => {
+    const t = byId.get('tpl_lower_a')!;
+    const without = missionFacts('tpl_lower_a', buildSessionBrief(t, DATE, program, { templates, macroFactor: false }), undefined);
+    expect(without.chips.map((c) => c.text).join(' ')).not.toContain('MacroFactor');
+    expect(without.chips.length).toBeGreaterThanOrEqual(2);
+    const linked = missionFacts('tpl_lower_a', buildSessionBrief(t, DATE, program, { templates, macroFactor: true }), undefined);
+    expect(linked.chips.map((c) => c.text)).toContain('Zwaarte volgens MacroFactor');
   });
 });

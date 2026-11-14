@@ -10,6 +10,8 @@ import { showSpotsFor, spotsPageFor } from '../engine/trainingSpots';
 import { placeHasRoute, placeIsOutdoor } from '../engine/trainingPlace';
 import { useEffect, useRef, useState } from 'react';
 import { useLogForm } from './logForm/useLogForm';
+import { blocksSave } from './logForm/manualLog';
+import { useMacroFactorLinked } from '../state/useMacroFactor';
 import { asksDoneOn } from './logForm/formRules';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, RpeField } from './logForm/LogFormParts';
 import { HowDidItGoSheet } from './HowDidItGoSheet';
@@ -91,6 +93,8 @@ function GeneralLogger({
   const form = useLogForm({ template, plannedSessionId, scheduledDate, program, initialVariant, startAtForm, preview, quickComplete });
   const { today, plan, conditioningSteps, exercises, shape, values, reachedForm } = form;
   const { variant, setLogs, guidanceMode, modalityKey } = values;
+  // MacroFactor alleen noemen als het gekoppeld is (punt I).
+  const macroFactorLinked = useMacroFactorLinked();
   const selectedModality = shape.selectedModality;
   // Annuleren of terug gooit het concept weg; herladen niet. Zolang er opgeslagen wordt blijft het staan
   // (state/logSave.ts#closeClearsDraft): komt het antwoord later als nee, dan staat je invulling er nog.
@@ -134,8 +138,8 @@ function GeneralLogger({
   }, []);
 
   async function handleSave(confirmed = false) {
-    if (preview || saving) return;
-    // Leeg of 0 is "geen duur"; heel lang vraagt eerst "Klopt dit?". Een echte rustdag: 0 minuten.
+    if (preview || saving || blocked) return;
+    // Onder 1 minuut staat Opslaan uit (punt B); heel lang vraagt eerst "Klopt dit?". Een echte rustdag: 0 minuten.
     const input = form.buildInput();
     if (!confirmed && durationNeedsCheck(input.durationMinutes)) {
       setConfirmLong(true);
@@ -171,6 +175,7 @@ function GeneralLogger({
   const brief = buildSessionBrief(template, scheduledDate ?? today, program, {
     modalityKey: guidanceMode === 'ascend_guided' ? modalityKey : undefined,
     templates,
+    macroFactor: macroFactorLinked,
   });
   const guide = getTrainingGuide(template.id);
   const trainingDate = scheduledDate ?? today;
@@ -187,6 +192,9 @@ function GeneralLogger({
   // in de lucht; knop, i en blad dragen één naam (Info-blad, rest, 14 november).
   const watchView = useWatchSheet({ template, garmin: plan?.garmin, session: plannedSession, hasZonesNote: !!guide?.garminNote });
   const restChosen = selectedModality?.environment === 'rest';
+  // Onder 1 minuut is geen training: Opslaan uit, de zin staat onder het veld Duur (punt B).
+  // Alleen waar het veld Duur te zien is: bij Afvinken (quickComplete) zou de knop anders uit staan zonder uitweg.
+  const blocked = reachedForm && !quickComplete && blocksSave(values, template);
   const weekday = weekdayShortNL(scheduledDate ?? today);
   const dateLabel = `${weekday.charAt(0).toUpperCase()}${weekday.slice(1).toLowerCase()} ${formatDateNL(scheduledDate ?? today)}`;
   // Eén doorlopend blok: geen profiel, wel de zone (zoals de missiekaart).
@@ -344,7 +352,7 @@ function GeneralLogger({
         {template.type === 'strength' && !restChosen && !quickComplete && !preview && (
           <Card className="mt-4">
             <div className="flex flex-col gap-2">
-                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte volgens MacroFactor. Vul alleen in wat je wilt bijhouden.</p>
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{macroFactorLinked ? 'Zwaarte volgens MacroFactor. ' : ''}Vul alleen in wat je wilt bijhouden.</p>
                 {exercises.map((ex) => {
                   const timed = /\d\s*(s|sec)\b/i.test(ex.reps);
                   const open = openExercise === ex.id;
@@ -467,7 +475,7 @@ function GeneralLogger({
             <SecondaryButton onClick={requestClose} className="min-w-[112px] flex-none px-4">Annuleren</SecondaryButton>
           )}
           {reachedForm || restChosen || quickComplete ? (
-            <PrimaryButton onClick={() => void handleSave()} disabled={saving}>{saveLabel}</PrimaryButton>
+            <PrimaryButton onClick={() => void handleSave()} disabled={saving || blocked}>{saveLabel}</PrimaryButton>
           ) : (
             <PrimaryButton onClick={goToForm}>
               <span className="inline-flex items-center justify-center gap-2"><CheckGlyph size={18} />Gedaan, invullen</span>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FORGE_FALLBACK_LINE, FORGE_NO_DATA_LINE, FORGE_OFF_LINE, forgeEntryLine } from './forgeEntry';
+import { FORGE_FALLBACK_LINE, FORGE_NO_DATA_LINE, FORGE_NO_SETS_LINE, FORGE_OFF_LINE, forgeEntryLine } from './forgeEntry';
 import type { ForgePoint } from './forgeHistory';
 
 const pt = (date: string, value: number): ForgePoint => ({ date, unit: 'kg', value, workSets: [] });
@@ -10,7 +10,10 @@ describe('forgeEntryLine', () => {
     expect(forgeEntryLine({ ...base, enabled: false, series: [] })).toEqual({ state: 'off', line: FORGE_OFF_LINE });
   });
   it('zonder gegevens', () => {
-    expect(forgeEntryLine({ ...base, series: [] })).toEqual({ state: 'empty', line: FORGE_NO_DATA_LINE });
+    expect(forgeEntryLine({ ...base, series: [], macroFactor: true })).toEqual({ state: 'empty', line: FORGE_NO_DATA_LINE });
+    // Punt I: zonder koppeling (ook na ontkoppelen) noemt de lege regel MacroFactor niet.
+    expect(forgeEntryLine({ ...base, series: [] })).toEqual({ state: 'empty', line: FORGE_NO_SETS_LINE });
+    expect(forgeEntryLine({ ...base, series: [], macroFactor: false }).line).not.toContain('MacroFactor');
     expect(forgeEntryLine({ ...base, series: [[]] }).state).toBe('empty');
   });
   it('telt stijgers en noemt het voorstel', () => {

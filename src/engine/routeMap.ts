@@ -51,6 +51,13 @@ export function photoFallbackLine(photoFailed: boolean, online: boolean): string
   return online ? 'De luchtfoto laadt niet. Je ziet de kaart.' : 'Zonder netwerk is er geen luchtfoto.';
 }
 
+// Wat de ondergrond zegt als er geen tegels zijn: viel alles terug op het effen vlak (geen netwerk, of geen
+// bron antwoordde), dan zegt één zin het; anders de regel van de luchtfoto. Bij Ondergrond Geen niets.
+export function groundLine(i: { stage: MapStage | undefined; base: MapBase; photoFailed: boolean; online: boolean }): string {
+  if (i.stage === 'plain' && i.base !== 'none') return i.online ? 'De kaart laadt niet. Je ziet alleen de lus.' : 'Zonder netwerk laadt de kaart niet. Je ziet alleen de lus.';
+  return photoFallbackLine(i.photoFailed, i.online);
+}
+
 // De volgende stap na een bron die wegviel; undefined: er is geen volgende (het effen vlak blijft).
 export function nextStage(stages: MapStage[], current: MapStage): MapStage | undefined {
   const i = stages.indexOf(current);
@@ -188,7 +195,16 @@ export interface StyleSpec extends Json {
   layers: Json[];
 }
 
-type Overlay = { routes: ReturnType<typeof routeFeatures>; dots: ReturnType<typeof dotFeatures> };
+type Overlay = { routes: ReturnType<typeof routeFeatures>; dots: ReturnType<typeof dotFeatures>; piece?: ReturnType<typeof pieceFeatures> };
+
+// Het stuk dat je in de lijst Per stuk koos (engine/routeAdjust.ts): een lichte rand om dat deel van de
+// gekozen lus. Zonder stuk een lege bron.
+export const PIECE_SOURCE = 'ascend-piece';
+export const PIECE_WIDTH = 14;
+export function pieceFeatures(points: RoutePoint[] | undefined): { type: 'FeatureCollection'; features: { type: 'Feature'; properties: Record<string, never>; geometry: { type: 'LineString'; coordinates: [number, number][] } }[] } {
+  if (!points || points.length < 2) return { type: 'FeatureCollection', features: [] };
+  return { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: points.map((p) => [p.lon, p.lat]) } }] };
+}
 
 // De andere lus: breedte van de streepjes, van de donkere rand eronder, en hoeveel px hij naast de lijn ligt.
 export const OTHER_WIDTH = 3.5;
@@ -204,6 +220,8 @@ export function overlayLayers(colors: ReturnType<typeof overlayColors>): Json[] 
     // is waar hij met de gekozen lus samenloopt (het eerste stuk vanaf de start).
     { id: 'ascend-route-other-casing', type: 'line', source: ROUTE_SOURCE, filter: ['!', isChosen], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': colors.otherCasing, 'line-width': OTHER_CASING_WIDTH, 'line-offset': OTHER_OFFSET } },
     { id: 'ascend-route-other', type: 'line', source: ROUTE_SOURCE, filter: ['!', isChosen], layout: { 'line-join': 'round' }, paint: { 'line-color': colors.other, 'line-width': OTHER_WIDTH, 'line-offset': OTHER_OFFSET, 'line-dasharray': [2, 1.25] } },
+    // Het gekozen stuk: een rand in inkt om de gekozen lus heen, onder de lus zelf; geen tweede mint.
+    { id: 'ascend-piece', type: 'line', source: PIECE_SOURCE, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': colors.pick, 'line-width': PIECE_WIDTH } },
     { id: 'ascend-route-casing', type: 'line', source: ROUTE_SOURCE, filter: isChosen, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': colors.casing, 'line-width': 8 } },
     { id: 'ascend-route-chosen', type: 'line', source: ROUTE_SOURCE, filter: isChosen, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': colors.chosen, 'line-width': 4.5 } },
     // Startpunt en een gekozen punt: een ring. Je plek: een volle stip.
@@ -222,7 +240,7 @@ export function overlayLayers(colors: ReturnType<typeof overlayColors>): Json[] 
 function withOverlay(style: StyleSpec, overlay: Overlay, colors: ReturnType<typeof overlayColors>): StyleSpec {
   return {
     ...style,
-    sources: { ...style.sources, [ROUTE_SOURCE]: { type: 'geojson', data: overlay.routes }, [DOT_SOURCE]: { type: 'geojson', data: overlay.dots } },
+    sources: { ...style.sources, [ROUTE_SOURCE]: { type: 'geojson', data: overlay.routes }, [DOT_SOURCE]: { type: 'geojson', data: overlay.dots }, [PIECE_SOURCE]: { type: 'geojson', data: overlay.piece ?? pieceFeatures(undefined) } },
     layers: [...style.layers, ...overlayLayers(colors)],
   };
 }
@@ -313,4 +331,22 @@ export function paintOpenFreeMap(style: StyleSpec, c: MapColors, base: MapBase, 
       return { ...l, paint: { ...(paint['fill-color'] ? rest : (l.paint as Json | undefined) ?? {}), ...paint } };
     });
   return withOverlay({ ...style, sources: style.sources ?? {}, layers: painted }, overlay, overlayColors(c, base, 'vector'));
+}
+
+// ── Wat er onder de kaart staat ──────────────────────────────────────────
+
+// Bij Bewaar als plek: wat er gebeurt, in één zin.
+export const MAKE_HOME_MOVE = 'Thuis verhuist naar dit punt. Je routes bij Thuis blijven.';
+export const MAKE_HOME_NEW = 'Dit punt wordt Thuis. Wissen kan bij Startpunt van je lus.';
+
+// De ene regel onder de kaart: wat er nu loopt (ook tijdens het bewaren van een getikt punt als Thuis,
+// Warden 12 november), anders de keuze bij Bewaar als plek, de uitkomst van een tik of de regel van de
+// luchtfoto. Leeg als er niets te zeggen is.
+export function mapStatusLine(i: { busy?: 'me' | 'tap' | 'home' | 'keep'; saving: boolean; hasHome: boolean; line: string; photoLine: string }): string {
+  if (i.busy === 'me') return 'Je locatie wordt bepaald.';
+  if (i.busy === 'keep') return 'De plek wordt bewaard.';
+  if (i.busy === 'home') return 'Thuis wordt bewaard.';
+  if (i.busy === 'tap') return 'De lus wordt gezocht vanaf dit punt.';
+  if (i.saving) return i.hasHome ? MAKE_HOME_MOVE : MAKE_HOME_NEW;
+  return i.line || i.photoLine;
 }

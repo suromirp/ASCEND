@@ -23,6 +23,7 @@ import { SheetHeader } from './SheetHeader';
 import { SheetRow, SheetRows } from './SheetRows';
 import { PrimaryButton, SecondaryButton } from './ui';
 import { useLogForm, type LogForm } from './logForm/useLogForm';
+import { blocksSave } from './logForm/manualLog';
 import type { EnabledSports } from '../engine/sports';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, PlaceChoice, RpeField, VariantField } from './logForm/LogFormParts';
 import { chosenPlaceLabel, placeLabel, SheetMode, showsPlace } from './logForm/formRules';
@@ -88,9 +89,11 @@ export function HowDidItGoSheet({
   const alreadyDone = !saving && alreadyLogged(plannedSessionId, sessionLogs);
   const foot = footState({ alreadyDone, confirmLong });
   const { shape, values } = form;
+  // Onder 1 minuut is geen training: Opslaan uit, de zin staat onder het veld Duur (punt B).
+  const blocked = blocksSave(values, template);
 
   async function save(confirmed = false) {
-    if (savingRef.current || alreadyDone) return;
+    if (savingRef.current || alreadyDone || blocked) return;
     const input = form.buildInput();
     // Heel lang vraagt eerst "Klopt dit?", een keer.
     if (!confirmed && durationNeedsCheck(input.durationMinutes)) {
@@ -125,7 +128,7 @@ export function HowDidItGoSheet({
   const day = values.doneOn === form.today ? 'Vandaag' : `${weekdayShortNL(values.doneOn)} ${formatDateNL(values.doneOn)}`;
   const place = showsPlace(form, template) ? chosenPlaceLabel(template, values.modalityKey, settings.enabledSports) : undefined;
   const dayLine = [day, place].filter(Boolean).join(' · ');
-  const footer = <SheetFoot state={foot} saving={saving} slow={slow} failed={failed} failedText={failedText} loose={!plannedSessionId} rest={shape.isRest} minutes={entryMinutes(values.duration)} onClose={closeAs(foot === 'already' ? 'already' : 'cancel')} onAdjust={() => { setConfirmLong(false); setStep(1); }} onSave={(confirmed) => void save(confirmed)} />;
+  const footer = <SheetFoot state={foot} saving={saving} slow={slow} failed={failed} failedText={failedText} loose={!plannedSessionId} rest={shape.isRest} blocked={blocked} minutes={entryMinutes(values.duration)} onClose={closeAs(foot === 'already' ? 'already' : 'cancel')} onAdjust={() => { setConfirmLong(false); setStep(1); }} onSave={(confirmed) => void save(confirmed)} />;
 
   if (step === 2) {
     return (
@@ -200,8 +203,8 @@ export function StepTwo({ form, template, scheduledDate, enabledSports, otherOpe
 
 // Onderaan: al gedaan (alleen Sluiten), Klopt dit? bij een heel lange duur, of Annuleren en Opslaan met
 // wat het opslaan zegt (duurt lang, lukte niet).
-export function SheetFoot({ state, saving, slow, failed, failedText, loose = false, rest, minutes, onClose, onAdjust, onSave }: {
-  state: FootState; saving: boolean; slow: boolean; failed: boolean; failedText?: string; loose?: boolean; rest: boolean; minutes: number; onClose: () => void; onAdjust: () => void; onSave: (confirmed: boolean) => void;
+export function SheetFoot({ state, saving, slow, failed, failedText, loose = false, rest, blocked = false, minutes, onClose, onAdjust, onSave }: {
+  state: FootState; saving: boolean; slow: boolean; failed: boolean; failedText?: string; loose?: boolean; rest: boolean; blocked?: boolean; minutes: number; onClose: () => void; onAdjust: () => void; onSave: (confirmed: boolean) => void;
 }) {
   if (state === 'already') {
     return (
@@ -230,7 +233,7 @@ export function SheetFoot({ state, saving, slow, failed, failedText, loose = fal
       )}
       <div className="flex gap-3">
         <SecondaryButton onClick={onClose} disabled={saving && !slow} className="min-w-[112px] flex-none px-4">{HOW_TEXT.cancel}</SecondaryButton>
-        <PrimaryButton onClick={() => onSave(false)} disabled={saving}>{saving ? HOW_TEXT.saving : rest ? HOW_TEXT.rest : HOW_TEXT.save}</PrimaryButton>
+        <PrimaryButton onClick={() => onSave(false)} disabled={saving || blocked}>{saving ? HOW_TEXT.saving : rest ? HOW_TEXT.rest : HOW_TEXT.save}</PrimaryButton>
       </div>
     </div>
   );

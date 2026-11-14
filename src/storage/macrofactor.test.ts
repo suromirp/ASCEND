@@ -12,6 +12,7 @@ import {
   setMapping,
 } from './macrofactor';
 import { buildBackupEnvelope } from './backupExport';
+import { readMacroFactorLinked } from '../state/useMacroFactor';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { MacroFactorFormatError, readMacroFactorCsv } from '../engine/macrofactorImport';
 import type { SessionLog } from '../models/training';
@@ -33,6 +34,15 @@ describe('the file', () => {
     const state = await getMacroFactorState();
     expect(state.workouts).toHaveLength(4);
     expect(state).toMatchObject({ fileName: 'workout-log.csv', readAt: '2026-10-19T08:00:00.000Z' });
+  });
+
+  it('punt I: ontkoppelen na een import wist readAt, het teken voor "gekoppeld" (state/useMacroFactor.ts#useMacroFactorLinked)', async () => {
+    await importMacroFactorText(csv, 'workout-log.csv', new Date('2026-10-19T08:00:00.000Z'));
+    expect(!!(await getMacroFactorState()).readAt).toBe(true);
+    expect(await readMacroFactorLinked()).toBe(true);
+    await clearMacroFactorWorkouts();
+    expect((await getMacroFactorState()).readAt).toBeUndefined();
+    expect(await readMacroFactorLinked()).toBe(false);
   });
 
   it('refuses a wrong file with a Dutch message and keeps what was there', async () => {

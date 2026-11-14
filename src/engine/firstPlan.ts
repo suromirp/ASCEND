@@ -83,6 +83,22 @@ export function startSteps(goal: StartGoalKind, hasGoal = false, hasHistory = fa
   ];
 }
 
+// Het vraagnummer in de start (profielen 14 november, punt J). Het totaal hangt af van de keuze bij Wat wil
+// je? en Een tocht of een wedstrijd?: zolang een van die twee nog komt of open staat, staat er alleen het
+// nummer. Daarna staat het totaal er en verspringt het niet meer.
+export function stepCounter(steps: StartStep[], index: number): string {
+  const settledFrom = Math.max(steps.indexOf('goal'), steps.indexOf('target')) + 1;
+  return index >= settledFrom ? `Vraag ${index + 1} van ${steps.length}` : `Vraag ${index + 1}`;
+}
+
+// Een tik binnen zo veel ms na een nieuwe vraag telt niet: een dubbele tik op Volgende raakt anders de
+// knop van de volgende vraag op dezelfde plek en slaat die vraag over (punt J).
+export const STEP_TAP_GUARD_MS = 400;
+
+export function tapTooSoon(stepShownAt: number, now: number): boolean {
+  return now - stepShownAt < STEP_TAP_GUARD_MS;
+}
+
 export interface StartAnswers {
   goal: StartGoalKind;
   race: StartRace;

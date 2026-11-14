@@ -122,7 +122,8 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
     });
   }
   if (garminType) rows.push({ label: 'Garmin stelde voor', value: garminType });
-  if (activity?.distanceKm !== undefined) rows.push({ label: 'Afstand', value: `${formatNumberNL(activity.distanceKm, 2)} km` });
+  // 0 km is "weet ik niet": geen rij (profielen 14 november, punt B).
+  if (activity?.distanceKm !== undefined && activity.distanceKm > 0) rows.push({ label: 'Afstand', value: `${formatNumberNL(activity.distanceKm, 2)} km` });
   if (activity?.elevationGainM !== undefined) {
     rows.push({ label: 'Stijging', value: `${formatNumberNL(activity.elevationGainM, 0)} m D+${activity.estimatedElevation ? ' (geschat)' : ''}` });
   }

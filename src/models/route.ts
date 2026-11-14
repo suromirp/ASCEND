@@ -25,8 +25,20 @@ export type RouteAnswer =
   // `waypoint`: bij 'unmapped' de index van het punt waar geen pad in de buurt ligt, als de bron dat zegt.
   | { ok: false; reason: RouteFailure; waypoint?: number };
 
+// Een stuk dat de routeplanner moet mijden (Vermijd dit stuk, engine/routeAdjust.ts): een cirkel.
+export interface AvoidArea {
+  lat: number;
+  lon: number;
+  radiusM: number;
+}
+
+export interface RouteOptions {
+  avoid?: AvoidArea[];
+}
+
 // De routeplanner zoals de engine hem ziet: een rij punten erin, een lijn eruit. Gooit nooit.
-export type RouteFn = (waypoints: RoutePoint[]) => Promise<RouteAnswer>;
+// `options.avoid`: cirkels die de lijn niet mag raken; elke bron vertaalt ze naar haar eigen vorm.
+export type RouteFn = (waypoints: RoutePoint[], options?: RouteOptions) => Promise<RouteAnswer>;
 
 export type RouteStyle = 'simple' | 'adventure';
 

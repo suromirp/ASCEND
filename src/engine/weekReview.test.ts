@@ -50,6 +50,16 @@ describe('buildWeekReview', () => {
     expect(review.advice.some((a) => a.includes('zwaarder dan gepland'))).toBe(true);
   });
 
+  it('punt C: alles afgevinkt maar een training met 2 sets is niet "alles gedaan"', () => {
+    const upper = templates.find((t) => t.id === 'tpl_upper_a')!;
+    const twoSets = [{ exerciseId: upper.exercises![0].id, exerciseName: 'x', sets: [{ reps: 8, weightKg: 20 }, { reps: 8, weightKg: 20 }] }];
+    const logs = week.filter((s) => s.templateId !== 'tpl_herstel').map((s) => log(s.id, s.templateId, s.scheduledDate, s.templateId === 'tpl_upper_a' ? { strengthData: twoSets } : {}));
+    const review = buildWeekReview({ weekStart: W, plannedSessions: week, logs, templates, program, planChangeLog: [], asOf: '2026-10-11' })!;
+    expect(review.done).toBe(review.planned);
+    expect(review.advice[0]).toBe('Elke training gedaan, één korter dan gepland. Dat telt ook.');
+    expect(review.advice.join(' ')).not.toContain('Alles gedaan');
+  });
+
   // Production feedback: "4 van 4, alles gedaan" while the hill intervals
   // and the easy run had been skipped.
   it('counts a skipped training as planned and not done, but not one ASCEND took out itself', () => {
