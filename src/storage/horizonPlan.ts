@@ -225,6 +225,14 @@ export async function withResolvedConflicts(input: HorizonChangeInput, conflicts
   return { ...input, goals: goalsAfter(input.goals ?? [], all.filter((g) => touched.has(g.id))) };
 }
 
+// Geen rij verandert, wel de lengte (een rustiger instap, engine/reentry.ts): dan zegt de kop dat, niet "Je planning
+// hoeft niet te veranderen" (Lookout, 14 november).
+function lengthsOnly(items: number, lengths: string[]): string | undefined {
+  if (items > 0 || lengths.length === 0) return undefined;
+  const n = lengths.length;
+  return `${n === 1 ? '1 training krijgt' : `${n} trainingen krijgen`} een andere lengte. Wat je al deed en wat je zelf vastzette blijft staan.`;
+}
+
 export async function computeHorizonPlan(given: HorizonChangeInput, deps: HorizonDeps = {}): Promise<HorizonPlan> {
   const today = todayISO();
   if (deps.prime) await deps.prime();
@@ -255,7 +263,7 @@ export async function computeHorizonPlan(given: HorizonChangeInput, deps: Horizo
     issue: input.title,
     changes: diff.items,
     alternatives: [],
-    consequences: diff.consequences,
+    consequences: lengthsOnly(diff.items.length, input.lengths ?? lengths) ?? diff.consequences,
     explanation: input.explanation,
     createdAt: new Date().toISOString(),
   };

@@ -5,6 +5,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { computeCurrentStreak } from './streak';
 import { deriveSessionStatus } from './sessionStatus';
+import { rowExtra } from './weekRow';
 import { buildChangeLog, weekAdjustments } from './changeLog';
 import { weekHighlights } from './weekHighlights';
 import { attentionLines } from './weekGlance';
@@ -388,9 +389,9 @@ describe('Warden ronde 2: één id per terugkomst, één racebescherming, grenze
     vi.setSystemTime(new Date('2026-12-08T09:00:00+01:00'));
     const run = ps('tpl_easy_run', '2026-12-03');
     expect(deriveSessionStatus(run, []).status).toBe('missed');
-    expect(deriveSessionStatus(run, [], false, [vacation('2026-11-30', '2026-12-06')]).status).toBe('away');
-    expect(deriveSessionStatus(run, [], false, [vacation('2026-11-30', '2026-12-06', 'free_days')]).status).toBe('missed');
-    expect(deriveSessionStatus(run, [done(run)], false, [vacation('2026-11-30', '2026-12-06')]).status).toBe('completed');
+    expect(deriveSessionStatus(run, [], false, { leave: [vacation('2026-11-30', '2026-12-06')] }).status).toBe('away');
+    expect(deriveSessionStatus(run, [], false, { leave: [vacation('2026-11-30', '2026-12-06', 'free_days')] }).status).toBe('missed');
+    expect(deriveSessionStatus(run, [done(run)], false, { leave: [vacation('2026-11-30', '2026-12-06')] }).status).toBe('completed');
     vi.useRealTimers();
   });
 });
@@ -464,5 +465,25 @@ describe('de rustiger instap in Week: Aangepast door ASCEND', () => {
     expect(rows.every((r) => r.reentry?.from === '2026-12-07' && r.how === 'akkoord' && r.at === at)).toBe(true);
     // Een andere week: niets.
     expect(weekAdjustments([proposal], week('2026-12-14'), templates, '2026-12-14', '2026-12-15', [w])).toEqual([]);
+  });
+});
+
+describe('ziek in Week: vervallen, nooit gemist', () => {
+  it('een dag binnen de ziekte is vervallen, de dagen voor de melding blijven gemist', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-27T09:00:00+01:00'));
+    const ill: IllnessEpisode[] = [{ id: 'z', kind: 'below_neck', startDate: '2026-11-24' }];
+    const days = week('2026-11-23');
+    const status = (s: PlannedSession) => deriveSessionStatus(s, [], templates.find((t) => t.id === s.templateId)?.type === 'recovery', { illness: ill }).status;
+    expect(days.map((s) => [s.scheduledDate, status(s)])).toEqual([
+      ['2026-11-23', 'rest'], ['2026-11-24', 'away'], ['2026-11-25', 'away'], ['2026-11-26', 'away'], ['2026-11-28', 'planned'], ['2026-11-29', 'planned'],
+    ]);
+    // De regel "Je hebt n trainingen gemist" in Week telt zo: alleen wat voor de melding lag.
+    const early = ps('tpl_easy_run', '2026-11-20');
+    expect(deriveSessionStatus(early, [], false, { illness: ill }).status).toBe('missed');
+    expect(days.filter((s) => status(s) === 'missed')).toEqual([]);
+    // De dagrij zegt vervallen.
+    expect(rowExtra({ lapsed: true })).toEqual({ text: 'vervallen', warn: false });
+    vi.useRealTimers();
   });
 });

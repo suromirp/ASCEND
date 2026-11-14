@@ -2,9 +2,12 @@ import type { PlannedSession, SessionLog } from '../models/training';
 import { todayISO } from '../utils/dates';
 import type { LeavePeriod } from '../models/leave';
 import { isAwayDay } from './leave';
+import type { IllnessEpisode } from '../models/illness';
+import { isIllnessDay } from './illness';
 
 // 'away': voorbij en niet gedaan op een dag van een vakantie, tocht of periode zonder sportschool die je meldde
-// (engine/leave.ts#isAwayDay). Nooit gemist, dezelfde afleiding als de weekterugblik (engine/weekLogs.ts#leftOutOfCount).
+// (engine/leave.ts#isAwayDay), of op een dag dat je ziek gemeld was (engine/illness.ts#isIllnessDay). Heet
+// Vervallen, nooit gemist: dezelfde afleiding als de weekterugblik (engine/weekLogs.ts#leftOutOfCount).
 export type DisplayStatus = 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' | 'rest' | 'away';
 
 export interface DisplaySessionState {
@@ -35,14 +38,22 @@ function movedByYou(session: PlannedSession): boolean {
   return !!session.movedFromDate && session.movedFromDate !== session.scheduledDate && (session.status === 'moved' || !!session.lock);
 }
 
-export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[], isRest = false, leave?: LeavePeriod[]): DisplaySessionState {
+export interface PauseContext {
+  leave?: LeavePeriod[];
+  illness?: IllnessEpisode[];
+}
+
+export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[], isRest = false, pause?: PauseContext): DisplaySessionState {
   const log = logs.find((l) => l.plannedSessionId === session.id);
   const wasMoved = movedByYou(session);
   if (log) return { status: 'completed', wasMoved, log };
   if (isRest) return { status: 'rest', wasMoved };
   if (session.status === 'skipped') return { status: 'skipped', wasMoved };
   if (session.scheduledDate === todayISO()) return { status: 'today', wasMoved };
-  if (session.scheduledDate < todayISO()) return { status: leave?.length && isAwayDay(session.scheduledDate, leave) ? 'away' : 'missed', wasMoved };
+  if (session.scheduledDate < todayISO()) {
+    const paused = (!!pause?.leave?.length && isAwayDay(session.scheduledDate, pause.leave)) || isIllnessDay(session.scheduledDate, pause?.illness, todayISO());
+    return { status: paused ? 'away' : 'missed', wasMoved };
+  }
   if (session.status === 'moved') return { status: 'moved', wasMoved: true };
   return { status: 'planned', wasMoved: false };
 }

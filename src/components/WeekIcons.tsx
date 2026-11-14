@@ -21,7 +21,7 @@ const STATUS: Record<DisplayStatus, { color: string; label: string }> = {
   skipped: { color: 'var(--color-danger-text)', label: 'Overgeslagen' },
   missed: { color: 'var(--color-warning)', label: 'Gemist' },
   rest: { color: 'var(--color-ink-dim)', label: 'Rustdag' },
-  away: { color: 'var(--color-ink-dim)', label: 'Weg, telt niet als gemist' },
+  away: { color: 'var(--color-ink-dim)', label: 'Vervallen' },
 };
 
 export function WeekStatusIcon({ status }: { status: DisplayStatus }) {

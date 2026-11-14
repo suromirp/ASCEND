@@ -36,14 +36,15 @@ export function WeekAdjustmentsRow({ adjustments, weekStart, current }: { adjust
 function WeekAdjustmentsSheet({ adjustments, weekStart, onClose }: { adjustments: WeekAdjustment[]; weekStart: string; onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const [picked, setPicked] = useState<WeekAdjustment | null>(null);
-  const { settings, updateSettings } = useAppData();
+  const { undoReentry } = useAppData();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   // De hele instap terug: de duur is weer de gewone, ASCEND vraagt het voor die terugkomst niet opnieuw.
-  const undoReentry = (from: string) => {
+  const undoNow = (from: string) => {
     setBusy(true);
     setNote(null);
-    void withTimeout(updateSettings({ reentryWeeks: (settings.reentryWeeks ?? []).filter((w) => w.from !== from) }), UNDO_LIMIT_MS, 'Ongedaan maken')
+    // De uitkomst staat in de meldingsbalk (state/goalActions.ts#undoReentry): die blijft staan als dit blad dichtgaat.
+    void withTimeout(undoReentry(from), UNDO_LIMIT_MS, 'Ongedaan maken')
       .then(() => { setNote('Teruggezet. Je trainingen hebben weer hun gewone duur.'); setPicked(null); })
       .catch(() => setNote('Dat duurde te lang. Er is niets veranderd; probeer het zo nog eens.'))
       .finally(() => setBusy(false));
@@ -68,7 +69,7 @@ function WeekAdjustmentsSheet({ adjustments, weekStart, onClose }: { adjustments
                   {picked.reentry && (
                     <>
                       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Ongedaan maken zet de hele rustiger instap terug.</p>
-                      <SecondaryButton disabled={busy} onClick={() => undoReentry(picked.reentry!.from)}>{busy ? 'Bezig…' : 'Ongedaan maken'}</SecondaryButton>
+                      <SecondaryButton disabled={busy} onClick={() => undoNow(picked.reentry!.from)}>{busy ? 'Bezig…' : 'Ongedaan maken'}</SecondaryButton>
                     </>
                   )}
                 </div>
