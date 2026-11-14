@@ -1,5 +1,5 @@
 // ASCEND: wat de weekterugblik als eerste zegt. Hoogstens twee regels over de week ("Wat telt"), gekozen uit
-// wat buildWeekReview al levert, in vaste volgorde: pijn die je meldde, een sleuteltraining die bleef liggen,
+// wat buildWeekReview al levert, in vaste volgorde: pijn die je meldde, een gemiste sleuteltraining,
 // trainingen die zwaarder of lichter voelden, de wekelijkse lijfvraag, en anders het advies. De volgende
 // week staat er apart onder. Puur: geen React, niets wordt opgeslagen of gepland.
 
@@ -20,7 +20,7 @@ export function weekHighlights(r: WeekReview): Highlight[] {
   if (r.pain.length > 0) {
     out.push({ tone: 'warning', icon: 'lichaam', text: `Pijn deze week: ${r.pain.join(', ')}. Meld het bij Lichaam, dan houdt ASCEND er rekening mee.` });
   }
-  // Wat vandaag nog kan staat nooit als blijven liggen (buildWeekReview telt alleen wat voor vandaag lag).
+  // Wat vandaag nog kan staat nooit als gemist (buildWeekReview telt alleen wat voor vandaag lag).
   if (r.missed.length > 0) {
     const names = joinNames(r.missed);
     const left = `${names} gemist. `;

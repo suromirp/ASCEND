@@ -57,7 +57,7 @@ function checkLine(r: WeekReview): AttentionLine | null {
 }
 
 // Hoogstens twee regels, de zorg eerst: een klacht uit de lijfvraag, pijn uit je logs (zonder de plek die de
-// lijfvraag al noemt), een training die bleef liggen, en trainingen die zwaarder of lichter voelden. Zonder iets
+// lijfvraag al noemt), een gemiste training, en trainingen die zwaarder of lichter voelden. Zonder iets
 // om op te letten is de lijst leeg: geen vervangende zin.
 export function attentionLines(r: WeekReview): AttentionLine[] {
   const out: AttentionLine[] = [];

@@ -5,6 +5,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { computeCurrentStreak } from './streak';
 import { deriveSessionStatus } from './sessionStatus';
+import { buildChangeLog } from './changeLog';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
@@ -380,5 +381,17 @@ describe('Warden ronde 2: één id per terugkomst, één racebescherming, grenze
     expect(deriveSessionStatus(run, [], false, [vacation('2026-11-30', '2026-12-06', 'free_days')]).status).toBe('missed');
     expect(deriveSessionStatus(run, [done(run)], false, [vacation('2026-11-30', '2026-12-06')]).status).toBe('completed');
     vi.useRealTimers();
+  });
+});
+
+describe('de rustiger instap in het logboek van wijzigingen', () => {
+  it('een voorstel met alleen lengtes staat erin met zijn eigen regel; een ander leeg voorstel niet', () => {
+    const at = '2026-12-07T08:00:00.000Z';
+    const proposal = (trigger: 'reentry_planned' | 'availability_changed') => ({
+      id: `p-${trigger}`, trigger, issue: 'Rustiger instap', changes: [], alternatives: [], consequences: 'Tot en met zo 13 december driekwart.',
+      explanation: 'Test.', createdAt: at, resolvedAt: at, resolution: 'accepted' as const,
+    });
+    const log = buildChangeLog([proposal('reentry_planned'), proposal('availability_changed')], [], templates, '2026-12-01');
+    expect(log.map((e) => [e.label, e.lines])).toEqual([['Rustiger instap', ['Tot en met zo 13 december driekwart.']]]);
   });
 });

@@ -53,11 +53,11 @@ export interface WeekReview {
   avgRpe?: number;
   // Minuten rustig en hard (engine/weekEffort.ts), in plaats van een gemiddelde zwaarte.
   effort: EffortMinutes;
-  // De week loopt nog (asOf valt erin): dan is het "je week tot nu" en blijft wat vandaag nog staat niet liggen.
+  // De week loopt nog (asOf valt erin): dan is het "je week tot nu" en is wat vandaag nog staat niet gemist.
   running: boolean;
   // Hoeveel trainingen er vandaag nog open staan, alleen als de week nog loopt.
   todayLeft: number;
-  keyMissedName?: string; // de sleuteltraining die nog open blijft liggen
+  keyMissedName?: string; // de sleuteltraining die gemist is en nog open staat
   checkAdvice?: string; // de zin uit je wekelijkse lijfvraag
   // `label`: de naam van de week ("Opbouw, week 4 van 18", "Rustweek", de golf), uit engine/weekLabel.ts#weekNameAt;
   // `rest`: volgens het programma een rustweek die je niet doortraint.
@@ -224,7 +224,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     // was already let go.
     const keyMissed = keyMissedSession;
     advice.push(
-      // Geen namen: die staan al onder "Blijven liggen" op de terugblik.
+      // Geen namen: die staan al onder Gemist op de terugblik.
       `${missedNames.length === 1 ? 'Eén training' : `${missedNames.length} trainingen`} gemist. ` +
       (keyMissed
         ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week. Die verplaatst ASCEND naar een vrije dag als dat past. De rest laat je los.`
