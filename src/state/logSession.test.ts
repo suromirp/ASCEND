@@ -126,6 +126,25 @@ describe('logSession: het log staat er, ook als een stap erna faalt', () => {
     expect(logs[0].durationMinutes).toBe(55);
   });
 
+  it('de eerste mislukt, de tweede hangt na het schrijven, dan een derde invulling: die wacht op de tweede, een log', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    let refreshing = 0;
+    const { deps } = makeDeps({ refresh: () => { refreshing += 1; return gate; } });
+    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValueOnce(new Error('kapot'));
+    const day = { completedDate: '2026-11-08' };
+    const first = runLogSession(loose(day), undefined, deps);
+    const second = runLogSession(loose({ ...day, durationMinutes: 55 }), undefined, deps);
+    expect(await first).toBe(false);
+    await vi.waitFor(() => expect(refreshing).toBe(1));
+    // De rij van de eerste is klaar, maar de dag is nu van de tweede: het vrijgeven mag die niet weghalen.
+    const third = runLogSession(loose({ ...day, durationMinutes: 70 }), undefined, deps);
+    await new Promise((r) => setTimeout(r, 20));
+    release();
+    expect(await Promise.all([second, third])).toEqual([true, false]);
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+  });
+
   it('dezelfde losse training later nog eens, na een geslaagde poging: een nieuw log (twee keer gelopen)', async () => {
     const { deps } = makeDeps();
     await runLogSession(loose(), undefined, deps);

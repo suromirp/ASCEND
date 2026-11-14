@@ -46,6 +46,8 @@ export const FORM_SAVE_NOTE = {
   failed: `${FAILED} Je invulling staat er nog; probeer het opnieuw.`,
   failedLoose: `${FAILED} Kijk eerst in je logboek of hij er toch staat; je invulling staat er nog.`,
   slow: `${SLOW} Je invulling blijft staan.`,
+  // Een losse training: de knop blijft uit, en antwoordt de eerste poging nooit, dan helpt alleen opnieuw starten.
+  slowLoose: `${SLOW} Je invulling blijft staan. ${STILL_RUNNING_HELP}`,
   already: ALREADY_LOGGED_NOTE,
 } as const;
 

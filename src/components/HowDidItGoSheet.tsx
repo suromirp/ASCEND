@@ -226,7 +226,7 @@ export function SheetFoot({ state, saving, slow, failed, failedText, loose = fal
   return (
     <div>
       {(slow || failed) && (
-        <p role="status" className="mb-2 text-xs leading-snug" style={{ color: failed ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{failed ? failedText ?? (loose ? HOW_TEXT.failedLoose : HOW_TEXT.failed) : HOW_TEXT.slow}</p>
+        <p role="status" className="mb-2 text-xs leading-snug" style={{ color: failed ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{failed ? failedText ?? (loose ? HOW_TEXT.failedLoose : HOW_TEXT.failed) : loose ? HOW_TEXT.slowLoose : HOW_TEXT.slow}</p>
       )}
       <div className="flex gap-3">
         <SecondaryButton onClick={onClose} disabled={saving && !slow} className="min-w-[112px] flex-none px-4">{HOW_TEXT.cancel}</SecondaryButton>

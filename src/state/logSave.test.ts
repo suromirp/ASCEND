@@ -465,6 +465,10 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     for (const text of [LOG_SAVE_NOTE.failed, FORM_SAVE_NOTE.failed, FORM_SAVE_NOTE.failedLoose]) expect(text.startsWith('Opslaan lukte niet.')).toBe(true);
     for (const text of [LOG_SAVE_NOTE.slow, FORM_SAVE_NOTE.slow]) expect(text.startsWith('Opslaan duurt langer dan verwacht.')).toBe(true);
     expect(FORM_SAVE_NOTE.slow).not.toMatch(/probeer/i);
+    // Een losse training: de uitweg staat in de zin, want de knop blijft uit.
+    expect(FORM_SAVE_NOTE.slowLoose).toBe(`${FORM_SAVE_NOTE.slow} Kijk in je logboek of hij er staat. Staat hij er niet, sluit ASCEND dan af en open de app opnieuw.`);
+    expect(HOW_TEXT.slowLoose).toBe(FORM_SAVE_NOTE.slowLoose);
+    expect(howSrc).toMatch(/: loose \? HOW_TEXT\.slowLoose : HOW_TEXT\.slow\}/);
     expect(HOW_TEXT.slow).toBe(FORM_SAVE_NOTE.slow);
     expect(HOW_TEXT.failed).toBe(FORM_SAVE_NOTE.failed);
     expect(HOW_TEXT.failedLoose).toBe(FORM_SAVE_NOTE.failedLoose);
