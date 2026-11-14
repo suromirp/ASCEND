@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import { TextButton } from './TextButton';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import type { Program } from '../models/program';
+import { loggedMinutes } from '../engine/sessionStatus';
 import { availableVariants, resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
@@ -222,7 +223,7 @@ export function SessionActionSheet({
           onClose={requestClose}
           facts={(
             <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--color-success-text)' }}>
-              <Icon name="gedaan" size={16} />{macroFactorLine(completedLog) ?? `Gedaan · ${completedLog.durationMinutes} min`}
+              <Icon name="gedaan" size={16} />{macroFactorLine(completedLog) ?? (loggedMinutes(completedLog) !== undefined ? `Gedaan · ${loggedMinutes(completedLog)} min` : 'Gedaan')}
             </span>
           )}
         />}>

@@ -8,6 +8,7 @@
 // Rest days are never trainings (no counting, never missed). Weeks before
 // week 1 are not reviewed. Pure: no React, no IndexedDB.
 
+import { isShortTraining } from './shortTraining';
 import type { WeeklyHealthCheck } from '../models/checkIn';
 import { significantPain } from './pain';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
@@ -101,6 +102,9 @@ function plannedRpeTop(template: SessionTemplate, date: string, program: Program
   const m = INTENSITY[Math.max(...levels) as 1 | 2 | 3 | 4].rpe.match(/(\d+)(?:-(\d+))?/);
   return m ? Number(m[2] ?? m[1]) : undefined;
 }
+
+// Het aantal korte trainingen als woord: "twee korter dan gepland".
+const SHORT_COUNT_WORD = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
 
 export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   const { weekStart, plannedSessions, logs, templates, program, planChangeLog, asOf, illnessEpisodes, weeklyChecks, keyFocus } = inputs;
@@ -203,7 +207,15 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   const advice: string[] = [];
   const missedNames = missedSessions.map((s) => byId.get(s.templateId)?.name ?? 'een training');
   if (missedSessions.length === 0 && trainings.length > 0 && done === trainings.length) {
-    advice.push('Alles gedaan wat gepland stond. Zo bouw je op.');
+    // Een korte training (engine/shortTraining.ts) telt als gedaan, maar is niet "alles wat gepland stond".
+    const trainingIds = new Set(trainings.map((s) => s.id));
+    const short = weekLogs.filter((l) => {
+      const t = byId.get(l.templateId);
+      return !!l.plannedSessionId && trainingIds.has(l.plannedSessionId) && !!t && isShortTraining(l, t, program);
+    }).length;
+    advice.push(short === 0
+      ? 'Alles gedaan wat gepland stond. Zo bouw je op.'
+      : `Elke training gedaan, ${SHORT_COUNT_WORD[short] ?? short} korter dan gepland. Dat telt ook.`);
   } else if (missedSessions.length > 0) {
     // Only a key session that is still open can be caught up; a skipped one
     // was already let go.

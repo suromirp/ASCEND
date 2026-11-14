@@ -8,8 +8,10 @@ import { entryMinutes } from '../../engine/inputLimits';
 import { templateSport } from '../../engine/sports';
 import { getModalities, getModality, modalitySport } from '../../data/modalities';
 import type { TrainingEnvironment } from '../../models/training';
-import { buildManualLog, type LogFormValues } from './manualLog';
+import { blocksSave, buildManualLog, type LogFormValues } from './manualLog';
 import { exercisesForVariant } from '../../engine/substitutions';
+import { sportTemplate } from '../../engine/sportTemplate';
+import { logSport } from '../../engine/sports';
 
 // De vaste vergelijking van spoor 5 (docs/visie/Ontwerp trainingsscherm minimaal.md): wat het blad
 // Hoe ging het? opslaat is veld voor veld gelijk aan wat het oude formulier opsloeg bij dezelfde invoer.
@@ -116,6 +118,16 @@ describe('Hoe ging het? slaat op wat het oude formulier opsloeg', () => {
     });
   }
 
+  it('een sport uit Losse training draagt zijn sport mee en is nooit hardlopen', () => {
+    const swim = sportTemplate('swimming');
+    const log = buildManualLog({ ...empty, duration: 40, guidanceMode: 'free' }, { template: swim, quickComplete: false, exercises: [] });
+    expect(log.countedSport).toBe('swimming');
+    expect(logSport({ ...log, id: 'l', completedAt: '2026-11-16T18:00:00Z' } as never)).not.toBe('running');
+    const own = buildManualLog({ ...empty, duration: 60, guidanceMode: 'free' }, { template: { ...swim, countedSport: undefined, customSport: 'custom_klimmen' }, quickComplete: false, exercises: [] });
+    expect(own.customSport).toBe('custom_klimmen');
+    expect(own.countedSport).toBeUndefined();
+  });
+
   it('de loop buiten, uitgeschreven', () => {
     const template = tpl('tpl_easy_run');
     const log = buildManualLog(runOutside, { template, plannedSessionId: 'ps_run', quickComplete: false, exercises: [] });
@@ -154,5 +166,26 @@ describe('Hoe ging het? slaat op wat het oude formulier opsloeg', () => {
     expect(log).toStrictEqual(oudFormulier(values, template, undefined));
     expect(log.durationMinutes).toBe(0);
     expect(log.sport).toBe('cycling');
+  });
+});
+
+describe('punt B: een duur onder 1 minuut en een afstand van 0 of minder', () => {
+  const run = tpl('tpl_easy_run');
+  it('Opslaan staat uit bij leeg, 0, negatief of minder dan een halve minuut', () => {
+    for (const duration of ['' as const, 0, -5, 0.4, Number.NaN]) expect(blocksSave({ ...runOutside, duration }, run)).toBe(true);
+    for (const duration of [0.6, 1, 42]) expect(blocksSave({ ...runOutside, duration }, run)).toBe(false);
+  });
+  it('een rustdag vraagt geen duur', () => {
+    const rest = templates.find((t) => getModalities(t.id)?.some((m) => m.environment === 'rest'));
+    if (!rest) return;
+    const key = getModalities(rest.id)!.find((m) => m.environment === 'rest')!.key;
+    expect(blocksSave({ ...empty, modalityKey: key }, rest)).toBe(false);
+  });
+  it('0 km is geen afstand en een negatieve afstand of hoogte wordt nooit bewaard', () => {
+    expect(buildManualLog({ ...runOutside, distanceKm: 0 }, { template: run, quickComplete: false, exercises: [] }).cardioData?.distanceKm).toBeUndefined();
+    expect(buildManualLog({ ...runOutside, distanceKm: -3 }, { template: run, quickComplete: false, exercises: [] }).cardioData?.distanceKm).toBeUndefined();
+    expect(buildManualLog({ ...runOutside, elevationGainM: -40 }, { template: run, quickComplete: false, exercises: [] }).cardioData?.elevationGainM).toBeUndefined();
+    expect(buildManualLog({ ...runOutside, elevationGainM: 0 }, { template: run, quickComplete: false, exercises: [] }).cardioData?.elevationGainM).toBe(0);
+    expect(buildManualLog(runOutside, { template: run, quickComplete: false, exercises: [] }).cardioData?.distanceKm).toBe(7.35);
   });
 });

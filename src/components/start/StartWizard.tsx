@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { useHorizonChange } from '../useHorizonChange';
 import { ChoiceList, Sheet, SheetButtons } from '../settings/Sheet';
 import { TextButton } from '../TextButton';
-import { buildFirstPlan, defaultAnswers, isDirectionKind, kindOfExistingGoals, GOAL_OPTIONS, RACE_OPTIONS, STRONGER_ADVICE, STRONGER_SESSIONS, TARGET_OPTIONS, startDateProblem, startSteps, WEEKDAY_NAMES, WEEKDAY_SHORT, type StartAnswers, type StartRace, type StartStep } from '../../engine/firstPlan';
+import { buildFirstPlan, defaultAnswers, isDirectionKind, kindOfExistingGoals, GOAL_OPTIONS, RACE_OPTIONS, STRONGER_ADVICE, STRONGER_SESSIONS, TARGET_OPTIONS, startDateProblem, startSteps, stepCounter, tapTooSoon, WEEKDAY_NAMES, WEEKDAY_SHORT, type StartAnswers, type StartRace, type StartStep } from '../../engine/firstPlan';
 import { adviceDays, maxDaysWithoutStrength, MAX_DAYS, MIN_DAYS, type StartGoalKind } from '../../engine/weekShape';
 import { addDays, todayISO } from '../../utils/dates';
 import { haptics } from '../../utils/haptics';
@@ -29,7 +29,16 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
   const index = steps.indexOf(step);
   const today = todayISO();
   const set = (patch: Partial<StartAnswers>) => onAnswers({ ...answers, ...patch });
-  const go = (delta: number) => setStep(steps[Math.max(0, Math.min(steps.length - 1, index + delta))]);
+  // Een dubbele tik op Volgende slaat geen vraag over: de tweede tik raakt de nieuwe vraag te vroeg (punt J).
+  const shownAt = useRef(0);
+  useEffect(() => {
+    shownAt.current = performance.now();
+  }, [step]);
+  const tooSoon = () => tapTooSoon(shownAt.current, performance.now());
+  const go = (delta: number) => {
+    if (tooSoon()) return;
+    setStep(steps[Math.max(0, Math.min(steps.length - 1, index + delta))]);
+  };
   const advice = adviceDays(existing?.kind ?? answers.goal);
 
   async function makePlan(close: () => void, withAnswers: StartAnswers = answers) {
@@ -80,9 +89,11 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
 
   return (
     <>
-      <Sheet eyebrow={`Vraag ${index + 1} van ${steps.length}`} title={title[step]} line={line[step]} onClose={onClose}>
+      <Sheet eyebrow={stepCounter(steps, index)} title={title[step]} line={line[step]} onClose={onClose}>
         {(close) => (
-          <>
+          // Elke tik in de vraag (Volgende, De rest overslaan, Nog geen datum, een keuze) telt niet in de eerste
+          // 400 ms na een nieuwe vraag: een dubbele tik op Volgende landt anders op wat daar nu staat (punt J).
+          <div style={{ display: 'contents' }} onClickCapture={(e) => { if (tooSoon()) { e.preventDefault(); e.stopPropagation(); } }}>
             {step === 'goal' && (
               <>
                 <ChoiceList<StartGoalKind>
@@ -243,7 +254,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                 <SheetButtons>
                   {index > 0 && <button type="button" className="st-btn" disabled={horizon.busy} onClick={() => go(-1)}>Terug</button>}
                   {last ? (
-                    <button type="button" className="st-btn gold" disabled={horizon.busy} onClick={() => void makePlan(close)}>
+                    <button type="button" className="st-btn gold" disabled={horizon.busy} onClick={() => { if (!tooSoon()) void makePlan(close); }}>
                       {horizon.busy ? 'Even rekenen…' : 'Bekijk je plan'}
                     </button>
                   ) : (
@@ -267,13 +278,13 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                 {horizon.note && <p className="st-hint warn" role="status" style={{ marginLeft: 0, marginRight: 0 }}>{horizon.note}</p>}
                 <SheetButtons>
                   <button type="button" className="st-btn" disabled={horizon.busy} onClick={() => go(-1)}>Terug</button>
-                  <button type="button" className="st-btn gold" disabled={horizon.busy || answers.beginner === undefined} onClick={() => void makePlan(close)}>
+                  <button type="button" className="st-btn gold" disabled={horizon.busy || answers.beginner === undefined} onClick={() => { if (!tooSoon()) void makePlan(close); }}>
                     {horizon.busy ? 'Even rekenen…' : 'Bekijk je plan'}
                   </button>
                 </SheetButtons>
               </>
             )}
-          </>
+          </div>
         )}
       </Sheet>
       {horizon.sheet}

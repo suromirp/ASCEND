@@ -26,3 +26,13 @@ describe('de plek van de Briefing op de pagina Weer', () => {
     expect(todayCard).toMatch(/\{view\.note && <p role="status"[\s\S]*?\{view\.loading \? null : w \?/);
   });
 });
+
+// UV en hoogte op de pagina Weer (engine/outdoorSun.ts): de kaart geeft door of het kledingadvies de
+// zonnebrand al noemt en hoe lang de training is, zoals de Briefing; pet en zonnebril alleen hier.
+describe('UV op de pagina Weer', () => {
+  it('geeft de zonnebrand van het kledingadvies, de minuten en full door', () => {
+    expect(todayCard).toContain('sunscreenSaid: !!advice?.sunscreenShown,');
+    expect(todayCard).toContain('minutes: durationMinutes,');
+    expect(todayCard).toContain('full: true,');
+  });
+});

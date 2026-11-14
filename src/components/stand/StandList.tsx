@@ -1,3 +1,4 @@
+import { useMacroFactorLinked } from '../../state/useMacroFactor';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TextButton } from '../TextButton';
@@ -33,6 +34,7 @@ function useForgeEntry() {
   const today = todayISO();
   const bodyKg = loadBodyKg(settings);
   const strengthKey = strengthModelKey(settings.strengthModel);
+  const macroFactor = useMacroFactorLinked();
   return useMemo(() => {
     const s = resolveStrengthSettings(JSON.parse(strengthKey) as typeof settings.strengthModel);
     if (!s.enabled) return forgeEntryLine({ enabled: false, series: [], proposals: 0, today, weeks: 8 });
@@ -47,8 +49,9 @@ function useForgeEntry() {
       proposals: views.filter((v) => v.next && !v.weightMismatch).length,
       today,
       weeks,
+      macroFactor,
     });
-  }, [strengthKey, sessionLogs, templates, program, bodyKg, today, injuryNotes, settings.morningCheckIns]);
+  }, [strengthKey, sessionLogs, templates, program, bodyKg, today, injuryNotes, settings.morningCheckIns, macroFactor]);
 }
 
 export function StandList({ order }: { order: StandListId[] }) {

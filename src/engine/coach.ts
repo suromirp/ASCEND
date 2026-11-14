@@ -6,12 +6,13 @@
 //
 // Pure: no React, no IndexedDB.
 
+import { buildSessionBrief } from './sessionBrief';
+import { isShortTraining, SHORT_TRAINING_TEXT } from './shortTraining';
 import { isStopPain, painReports, significantPain } from './pain';
 import type { Program } from '../models/program';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { buildWorkoutPlan } from './workoutPlan';
 import { progressionTarget } from './programLayout';
-import { resolveEffectiveFullDuration } from './substitutions';
 import { INTENSITY } from '../data/workoutStructure';
 import { isLegHeavyTemplate } from './scheduler';
 import { addDays } from '../utils/dates';
@@ -45,6 +46,12 @@ export interface CoachLineInputs {
   tomorrow: SessionTemplate[];
   yesterdayLogs: SessionLog[];
   templateById: Map<string, SessionTemplate>;
+}
+
+// De zone uit de feiten van de sessiebrief ("Zone 3"), zoals de Briefing en de missiekaart hem tonen.
+function briefZone(template: SessionTemplate, date: string, program: Program | null | undefined, templateById: Map<string, SessionTemplate>): number | undefined {
+  const fact = buildSessionBrief(template, date, program, { templates: [...templateById.values()] }).facts.find((f) => /^zone \d/i.test(f.value));
+  return fact ? Number(/\d/.exec(fact.value)![0]) : undefined;
 }
 
 // One sentence for today's training, the most useful one first.
@@ -93,6 +100,12 @@ export function coachLineForToday({ template, date, program, tomorrow, yesterday
         ? `Zware beendag. Morgen staat ${legsTomorrow.name}, dus houd een herhaling in de tank.`
         : 'Zware beendag. Techniek eerst.';
   }
+  // Een training boven zone 2 (tempoloop): dezelfde praatregel als de Briefing (engine/sessionBrief.ts,
+  // "Zone 3, korte zinnen"), nooit "hele zinnen" of "rustig" (profielen 14 november, punt F).
+  const zone = template.type === 'cardio' || template.type === 'hiking' ? briefZone(template, date, program, templateById) : undefined;
+  const legsNote = legsTomorrow ? ` Morgen staat ${legsTomorrow.name}.` : '';
+  if (zone === 3) return `Stevig en gelijkmatig. Praten gaat in korte zinnen; lukt dat niet meer, dan loop je te hard.${legsNote}`;
+  if (zone !== undefined && zone > 3) return `Hard in de zware stukken, rustig ertussen. Praten lukt dan nauwelijks.${legsNote}`;
   if (legsTomorrow && (template.type === 'cardio' || template.type === 'hiking')) {
     return `Houd het vandaag rustig: morgen staat ${legsTomorrow.name}.`;
   }
@@ -140,14 +153,14 @@ export function coachReaction(log: SessionLog, template: SessionTemplate | undef
   if (pain) return pain;
   if (!template || template.type === 'recovery') return 'Goed dat je bewoog. Licht en rustig is precies de bedoeling van vandaag.';
   const top = plannedRpeTop(template, log.completedDate, program);
-  const planned = resolveEffectiveFullDuration(template, log.completedDate, program);
+  // Zwaar of slechter gaat voor: dat zegt iets over morgen, ook na een korte training.
   if (log.rpe !== undefined && top !== undefined && log.rpe >= top + 2) {
     return `Zwaarder dan gepland (zwaarte ${log.rpe}, gepland tot ${top}). Volgende keer iets rustiger? Voelt het weer zo, neem dan de korte versie.`;
   }
   if (log.subjectiveFeel === 'worse') return 'Slechter dan normaal, dat hoort erbij. Houd het morgen rustig; goed slapen en eten kan helpen.';
-  if (log.variant === 'full' && log.durationMinutes > 0 && log.durationMinutes < planned * 0.7) {
-    return 'Korter dan gepland. Prima: iets doen telt.';
-  }
+  // Eén drempel, één zin: onder de helft van de werksets of de duur is een korte training (engine/shortTraining.ts).
+  // De oude tweede drempel (70 procent, "Korter dan gepland") is vervallen (besluit 2026-11-14-profielen-klein.md).
+  if (isShortTraining(log, template, program)) return SHORT_TRAINING_TEXT;
   if (log.rpe !== undefined && top !== undefined && top > EASY_RPE_TOP && log.rpe <= top - 3) {
     return 'Lichter dan gepland. Dat kan een teken zijn dat je sterker wordt. Bouw het rustig verder op.';
   }

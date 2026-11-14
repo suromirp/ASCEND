@@ -40,4 +40,7 @@ export interface WeatherForecast {
   place: WeatherPlace;
   hours: WeatherHour[];
   days: WeatherDay[];
+  // De hoogte van de plek in meters, zoals Open-Meteo hem meestuurt (`elevation`). Ontbreekt in een
+  // oudere cache of als de dienst hem niet gaf (engine/outdoorSun.ts).
+  elevationM?: number;
 }

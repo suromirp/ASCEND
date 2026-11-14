@@ -55,6 +55,9 @@ export interface OverviewSettings {
   // De maanstand bij een avondtocht of een tocht met bivak (engine/moon.ts). Alleen tekst.
   // Ontbreekt de sleutel, dan staat hij aan.
   moonLine?: boolean;
+  // UV en hoogte bij een training buiten (engine/outdoorSun.ts): UV vanaf 3, hoogte vanaf 1000 m, in de
+  // rij Weer van de Briefing en op de pagina Weer. Alleen tekst. Ontbreekt de sleutel, dan staat hij aan.
+  uvAltitude?: boolean;
   // Het kledingadvies bij het weer (engine/clothing.ts).
   clothingAdvice?: boolean;
   // "Weer volgt je locatie" (engine/weatherLocation.ts): een plaats die "Mijn
@@ -84,6 +87,7 @@ export const DEFAULT_OVERVIEWS: ResolvedOverviews = {
   rainSoon: true,
   hillsNearby: true,
   moonLine: true,
+  uvAltitude: true,
   clothingAdvice: true,
   weatherFollowsLocation: true,
   completionMoment: true,
@@ -112,6 +116,7 @@ export function resolveOverviews(raw: OverviewSettings | undefined | null): Reso
     rainSoon: flag('rainSoon'),
     hillsNearby: flag('hillsNearby'),
     moonLine: flag('moonLine'),
+    uvAltitude: flag('uvAltitude'),
     clothingAdvice: flag('clothingAdvice'),
     weatherFollowsLocation: flag('weatherFollowsLocation'),
     completionMoment: flag('completionMoment'),
@@ -175,6 +180,7 @@ export const showBestMoment = (raw: OverviewSettings | undefined) => resolveOver
 export const showRainSoon = (raw: OverviewSettings | undefined) => resolveOverviews(raw).rainSoon;
 export const showHillsNearby = (raw: OverviewSettings | undefined) => resolveOverviews(raw).hillsNearby;
 export const showMoonLine = (raw: OverviewSettings | undefined) => resolveOverviews(raw).moonLine;
+export const showUvAltitude = (raw: OverviewSettings | undefined) => resolveOverviews(raw).uvAltitude;
 // Het scherm na een training blijft altijd (feiten, coachregel, doel, week en
 // benen). De schakelaar bepaalt alleen of het citaat erbij staat. Een behaalde
 // mijlpaal krijgt het citaat altijd.
