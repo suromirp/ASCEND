@@ -89,7 +89,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: je romp blijft bijna rechtop.',
     'Vaak fout: ellebogen laten zakken, waardoor de stang wegrolt.',
   ]),
-  ex('goblet-squat', 'Goblet Squat', ['Dumbbell Goblet Squat', 'Goblet Squat (Dumbbell)'], ['quadriceps', 'glutes'], ['core', 'hip_adductors'], 'dumbbell', 'squat', true, [
+  ex('goblet-squat', 'Goblet Squat', ['Dumbbell Goblet Squat', 'Goblet Squat (Dumbbell)', 'Squat met een dumbbell voor je borst'], ['quadriceps', 'glutes'], ['core', 'hip_adductors'], 'dumbbell', 'squat', true, [
     'Doen: houd één gewicht tegen je borst en zak diep tussen je knieën.',
     'Let op: je ellebogen mogen binnen je knieën blijven.',
     'Vaak fout: voorover buigen in plaats van zakken.',
@@ -129,7 +129,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: de voorste voet staat ver genoeg naar voren om je hiel te houden.',
     'Vaak fout: te dicht bij de bank staan, waardoor de knie doorschiet.',
   ], 1),
-  ex('split-squat', 'Split Squat', ['Dumbbell Split Squat', 'Static Lunge', 'Split Squat (Dumbbell)'], ['quadriceps', 'glutes'], ['hip_adductors', 'core'], 'dumbbell', 'lunge_step', true, [
+  ex('split-squat', 'Split Squat', ['Dumbbell Split Squat', 'Static Lunge', 'Split Squat (Dumbbell)', 'Uitvalspas op de plaats'], ['quadriceps', 'glutes'], ['hip_adductors', 'core'], 'dumbbell', 'lunge_step', true, [
     'Doen: sta in spreidstand, zak recht naar beneden en kom weer omhoog.',
     'Let op: kleine stap is niet erg, zolang je stabiel blijft.',
     'Vaak fout: de achterste knie neerploffen.',
@@ -144,7 +144,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: het gewicht blijft op het voorste been.',
     'Vaak fout: te veel afzetten met het achterste been.',
   ], 1),
-  ex('step-up', 'Step-Up', ['Step Up', 'Step-Ups', 'Dumbbell Step-Up', 'Box Step-Up', 'Step-Up (Dumbbell)'], ['quadriceps', 'glutes'], ['hamstrings', 'calves', 'core'], 'dumbbell', 'lunge_step', true, [
+  ex('step-up', 'Step-Up', ['Step Up', 'Step-Ups', 'Dumbbell Step-Up', 'Box Step-Up', 'Step-Up (Dumbbell)', 'Opstappen op een bank'], ['quadriceps', 'glutes'], ['hamstrings', 'calves', 'core'], 'dumbbell', 'lunge_step', true, [
     'Doen: zet een voet op een stevige verhoging en sta op met dat been alleen.',
     'Let op: kies een hoogte waarbij je knie ongeveer 90 graden krijgt.',
     'Vaak fout: afzetten met het been dat op de grond blijft.',
@@ -154,7 +154,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: laat de rugzak stevig zitten, zodat hij niet schommelt.',
     'Vaak fout: te veel gewicht te snel, en dan schokkerig omhoog komen.',
   ], 1),
-  ex('step-down', 'Step-Down', ['Step Down', 'Step-Downs', 'Eccentric Step-Down', 'Lateral Step-Down', 'Forward Step-Down'], ['quadriceps', 'glutes'], ['calves', 'core', 'hip_abductors'], 'bodyweight', 'lunge_step', true, [
+  ex('step-down', 'Step-Down', ['Step Down', 'Step-Downs', 'Eccentric Step-Down', 'Lateral Step-Down', 'Forward Step-Down', 'Afstappen van een bank'], ['quadriceps', 'glutes'], ['calves', 'core', 'hip_abductors'], 'bodyweight', 'lunge_step', true, [
     'Doen: sta op een verhoging en zak langzaam met één been tot de andere hiel de grond raakt.',
     'Let op: je knie blijft boven je tweede teen, je bekken blijft recht.',
     'Vaak fout: neerploffen in plaats van afremmen. Juist het remmen is de oefening.',
@@ -166,7 +166,7 @@ export const EXERCISES: Exercise[] = [
   ], 1),
 
   // --- heupscharnier en hamstrings ------------------------------------------
-  ex('deadlift', 'Conventional Deadlift', ['Barbell Deadlift', 'Deadlift (Barbell)', 'Deadlift'], ['glutes', 'hamstrings', 'lower_back'], ['quadriceps', 'traps', 'forearms', 'core', 'lats'], 'barbell', 'hinge', true, [
+  ex('deadlift', 'Conventional Deadlift', ['Barbell Deadlift', 'Deadlift (Barbell)', 'Deadlift', 'Deadlift met de stang'], ['glutes', 'hamstrings', 'lower_back'], ['quadriceps', 'traps', 'forearms', 'core', 'lats'], 'barbell', 'hinge', true, [
     'Doen: stang over het midden van je voet, rug strak, duw de vloer van je weg.',
     'Let op: de stang blijft dicht langs je benen.',
     'Vaak fout: de heupen eerst laten stijgen, zodat je met een ronde rug trekt.',
@@ -191,7 +191,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: je heupen blijven recht naar de grond gericht.',
     'Vaak fout: je bekken opendraaien.',
   ]),
-  ex('hip-thrust', 'Barbell Hip Thrust', ['Hip Thrust (Barbell)', 'Hip Thrust', 'Hip thrust'], ['glutes'], ['hamstrings', 'quadriceps', 'core'], 'barbell', 'hinge', true, [
+  ex('hip-thrust', 'Barbell Hip Thrust', ['Hip Thrust (Barbell)', 'Hip Thrust', 'Hip thrust', 'Hip thrust met de stang'], ['glutes'], ['hamstrings', 'quadriceps', 'core'], 'barbell', 'hinge', true, [
     'Doen: schouderbladen op een bank, stang op je heupen, duw je heupen omhoog.',
     'Let op: bovenaan staan je scheenbenen verticaal.',
     'Vaak fout: je onderrug laten doorhangen in plaats van met je billen duwen.',
@@ -243,12 +243,12 @@ export const EXERCISES: Exercise[] = [
     'Let op: met gebogen knie werkt vooral de diepe kuitspier, belangrijk bij lange afdalingen.',
     'Vaak fout: kleine halve herhalingen.',
   ]),
-  ex('tibialis-raise', 'Tibialis Raise', ['Tibialis Raises', 'Tib Raise', 'Wall Tibialis Raise', 'Shin Raise', 'Tibialis Anterior Raise'], ['tibialis'], [], 'bodyweight', 'shin', true, [
+  ex('tibialis-raise', 'Tibialis Raise', ['Tibialis Raises', 'Tib Raise', 'Wall Tibialis Raise', 'Shin Raise', 'Tibialis Anterior Raise', 'Tenen optrekken tegen de muur'], ['tibialis'], [], 'bodyweight', 'shin', true, [
     'Doen: rug en billen tegen de muur, voeten naar voren, trek je tenen naar je scheenbenen.',
     'Let op: hoe verder je voeten van de muur, hoe zwaarder.',
     'Vaak fout: er maar een paar doen. Neem 15 tot 25 herhalingen.',
   ]),
-  ex('tibialis-raise-loaded', 'Weighted Tibialis Raise', ['Tibialis Bar Raise', 'Dumbbell Tibialis Raise', 'Loaded Tibialis Raise', 'Tibialis Raise (Weighted)', 'Tibialis raise met gewicht'], ['tibialis'], [], 'dumbbell', 'shin', true, [
+  ex('tibialis-raise-loaded', 'Weighted Tibialis Raise', ['Tenen optrekken met gewicht', 'Tibialis Bar Raise', 'Dumbbell Tibialis Raise', 'Loaded Tibialis Raise', 'Tibialis Raise (Weighted)', 'Tibialis raise met gewicht'], ['tibialis'], [], 'dumbbell', 'shin', true, [
     'Doen: zit op een bank, hang een gewicht aan je voorvoet en trek je tenen omhoog.',
     'Let op: beweeg vanuit je enkel, niet vanuit je knie.',
     'Vaak fout: te veel gewicht waardoor je het omhoog zwaait.',
@@ -683,7 +683,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: je knie volgt je tweede teen en je hiel blijft op de grond.',
     'Vaak fout: je aan de steun optrekken in plaats van met je been duwen.',
   ]),
-  ex('skater-squat', 'Skater Squat', ['Skater Squats'], ['quadriceps', 'glutes'], ['hip_adductors', 'core'], 'bodyweight', 'lunge_step', true, [
+  ex('skater-squat', 'Skater Squat', ['Skater Squats', 'Squat op één been, knie naar achteren'], ['quadriceps', 'glutes'], ['hip_adductors', 'core'], 'bodyweight', 'lunge_step', true, [
     'Doen: sta op één been, het andere been achter je, zak tot je achterknie bijna de grond raakt.',
     'Let op: je romp leunt voorover en je knie van het standbeen blijft boven je voet.',
     'Vaak fout: je achterknie hard op de grond laten vallen.',
@@ -808,12 +808,12 @@ export const EXERCISES: Exercise[] = [
     'Let op: je ellebogen blijven naast of iets achter je lichaam.',
     'Vaak fout: de bank te recht zetten en je ellebogen naar voren laten komen.',
   ]),
-  ex('sumo-deadlift', 'Sumo Deadlift', ['Barbell Sumo Deadlift', 'Sumo Deadlift (Barbell)'], ['glutes', 'hip_adductors', 'hamstrings'], ['quadriceps', 'lower_back', 'traps', 'forearms', 'core'], 'barbell', 'hinge', true, [
+  ex('sumo-deadlift', 'Sumo Deadlift', ['Barbell Sumo Deadlift', 'Sumo Deadlift (Barbell)', 'Deadlift met brede stand'], ['glutes', 'hip_adductors', 'hamstrings'], ['quadriceps', 'lower_back', 'traps', 'forearms', 'core'], 'barbell', 'hinge', true, [
     'Doen: voeten wijd met tenen naar buiten, pak de stang binnen je knieën, duw de vloer uit elkaar en kom omhoog.',
     'Let op: knieën volgen de richting van je tenen, borst blijft hoog.',
     'Vaak fout: je heupen eerst laten stijgen, zodat je met een ronde rug trekt.',
   ]),
-  ex('pause-back-squat', 'Pause Back Squat', ['Paused Back Squat', 'Pause Squat', 'Pause Barbell Back Squat'], ['quadriceps', 'glutes'], ['hamstrings', 'lower_back', 'core', 'hip_adductors'], 'barbell', 'squat', true, [
+  ex('pause-back-squat', 'Pause Back Squat', ['Paused Back Squat', 'Pause Squat', 'Pause Barbell Back Squat', 'Squat met pauze onderin'], ['quadriceps', 'glutes'], ['hamstrings', 'lower_back', 'core', 'hip_adductors'], 'barbell', 'squat', true, [
     'Doen: een back squat met een stilstand van een tot twee seconden in het diepste punt.',
     'Let op: houd tijdens de pauze je romp strak en je borst hoog.',
     'Vaak fout: in de pauze ontspannen en dan stuiteren uit het gat.',
@@ -823,7 +823,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: je hielen blijven op het plateau en je billen op de zitting.',
     'Vaak fout: de knieën helemaal slot strekken onder zwaar gewicht.',
   ]),
-  ex('leg-press-calf-raise', 'Pin-Loaded Leg Press Calf Raise', ['Leg Press Calf Raise', 'Calf Press', 'Leg Press Calf Press'], ['calves'], [], 'machine_stack', 'calf', true, [
+  ex('leg-press-calf-raise', 'Pin-Loaded Leg Press Calf Raise', ['Leg Press Calf Raise', 'Calf Press', 'Leg Press Calf Press', 'Kuitheffen op de beenpers'], ['calves'], [], 'machine_stack', 'calf', true, [
     'Doen: voorvoeten onderaan het plateau, duw door je tenen en laat de hielen diep zakken.',
     'Let op: houd je knieën bijna gestrekt en pauzeer onderaan kort.',
     'Vaak fout: stuiteren in plaats van gecontroleerd zakken.',
@@ -833,17 +833,17 @@ export const EXERCISES: Exercise[] = [
     'Let op: het kussen op je bovenbeen zit stevig.',
     'Vaak fout: met je bovenlichaam meeschommelen.',
   ]),
-  ex('weighted-roman-chair-back-extension', 'Weighted Roman Chair Back Extension', ['Weighted Roman Chair Hip Hinge', 'Weighted Back Extension', 'Weighted Hyperextension'], ['lower_back', 'glutes'], ['hamstrings'], 'dumbbell', 'hinge', true, [
+  ex('weighted-roman-chair-back-extension', 'Weighted Roman Chair Back Extension', ['Weighted Roman Chair Hip Hinge', 'Weighted Back Extension', 'Weighted Hyperextension', 'Rugstrekken met gewicht'], ['lower_back', 'glutes'], ['hamstrings'], 'dumbbell', 'hinge', true, [
     'Doen: heupen op het kussen, houd een gewicht tegen je borst, zak voorover en kom terug tot een rechte lijn.',
     'Let op: stop bovenaan op een rechte lijn.',
     'Vaak fout: bovenaan in een hol kruis doorbuigen.',
   ], 0.4),
-  ex('weighted-ghd-hip-hinge', 'Weighted Glute Ham Developer Hip Hinge', ['Weighted GHD Hip Hinge', 'Glute Ham Developer Hip Hinge'], ['glutes', 'hamstrings'], ['lower_back'], 'dumbbell', 'hinge', true, [
+  ex('weighted-ghd-hip-hinge', 'Weighted Glute Ham Developer Hip Hinge', ['Weighted GHD Hip Hinge', 'Glute Ham Developer Hip Hinge', 'Heupscharnier op de GHD met gewicht'], ['glutes', 'hamstrings'], ['lower_back'], 'dumbbell', 'hinge', true, [
     'Doen: op de glute ham developer, houd een gewicht vast en scharnier vanuit je heupen.',
     'Let op: je rug blijft recht en de beweging komt uit je heupen.',
     'Vaak fout: je rug ronden om dieper te komen.',
   ], 0.4),
-  ex('glute-ham-raise', 'Glute Ham Raise', ['GHR', 'Glute-Ham Raise', 'Glute Ham Developer Raise'], ['hamstrings', 'glutes'], ['calves', 'lower_back'], 'bodyweight', 'isolation_leg', true, [
+  ex('glute-ham-raise', 'Glute Ham Raise', ['GHR', 'Glute-Ham Raise', 'Glute Ham Developer Raise', 'Opkomen op de GHD'], ['hamstrings', 'glutes'], ['calves', 'lower_back'], 'bodyweight', 'isolation_leg', true, [
     'Doen: enkels vast, zak voorover met een rechte lijn en kom terug door je hamstrings te buigen.',
     'Let op: je heupen blijven gestrekt.',
     'Vaak fout: bovenaan met je rug de beweging afmaken.',
@@ -853,22 +853,22 @@ export const EXERCISES: Exercise[] = [
     'Let op: kom zo ver als je rustig terug kunt komen.',
     'Vaak fout: in je heupen knikken in plaats van met je bovenbenen remmen.',
   ], 0.6),
-  ex('dumbbell-glute-bridge', 'Dumbbell Glute Bridge', ['Glute Bridge (Dumbbell)'], ['glutes'], ['hamstrings', 'core'], 'dumbbell', 'hinge', true, [
+  ex('dumbbell-glute-bridge', 'Dumbbell Glute Bridge', ['Glute Bridge (Dumbbell)', 'Bilbrug met dumbbell'], ['glutes'], ['hamstrings', 'core'], 'dumbbell', 'hinge', true, [
     'Doen: lig op je rug met een dumbbell op je heupen en duw je heupen omhoog.',
     'Let op: knijp bovenaan even je billen samen.',
     'Vaak fout: een hol kruis maken in plaats van je heupen strekken.',
   ]),
-  ex('dumbbell-frog-pump', 'Dumbbell Frog Pump', ['Frog Pump', 'Frog Pumps'], ['glutes'], ['hip_abductors', 'core'], 'dumbbell', 'hinge', true, [
+  ex('dumbbell-frog-pump', 'Dumbbell Frog Pump', ['Frog Pump', 'Frog Pumps', 'Bilbrug met je voetzolen tegen elkaar'], ['glutes'], ['hip_abductors', 'core'], 'dumbbell', 'hinge', true, [
     'Doen: lig op je rug met de voetzolen tegen elkaar en de knieën open, duw je heupen omhoog.',
     'Let op: maak veel herhalingen met een korte, strakke beweging.',
     'Vaak fout: door je onderrug omhoog duwen in plaats van door je billen.',
   ]),
-  ex('barbell-glute-bridge', 'Barbell Glute Bridge', ['Glute Bridge (Barbell)'], ['glutes'], ['hamstrings', 'core'], 'barbell', 'hinge', true, [
+  ex('barbell-glute-bridge', 'Barbell Glute Bridge', ['Glute Bridge (Barbell)', 'Bilbrug met de stang'], ['glutes'], ['hamstrings', 'core'], 'barbell', 'hinge', true, [
     'Doen: lig op de grond met de stang op je heupen en duw je heupen omhoog.',
     'Let op: gebruik een pad of handdoek om de stang prettig te laten liggen.',
     'Vaak fout: een hol kruis maken in plaats van je heupen strekken.',
   ]),
-  ex('superman', 'Superman', ['Superman Hold'], ['lower_back', 'glutes'], ['upper_back'], 'bodyweight', 'hinge', false, [
+  ex('superman', 'Superman', ['Superman Hold', 'Superman op je buik'], ['lower_back', 'glutes'], ['upper_back'], 'bodyweight', 'hinge', false, [
     'Doen: lig op je buik en til tegelijk je armen en benen een stukje van de grond.',
     'Let op: kijk naar de grond en houd je nek lang.',
     'Vaak fout: je nek achterover trekken om hoger te komen.',

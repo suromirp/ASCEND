@@ -14,7 +14,8 @@ describe('de Nederlandse naam in een melding', () => {
   });
 
   it('zonder Nederlandse alias blijft de eigen naam, en een onbekende id houdt wat je meegeeft', () => {
-    expect(noticeExerciseName('tibialis-raise', 'x')).toBe(exerciseById('tibialis-raise')!.name);
+    expect(noticeExerciseName('lat-pulldown', 'x')).toBe(exerciseById('lat-pulldown')!.name);
+    expect(noticeExerciseName('tibialis-raise', 'x')).toBe('Tenen optrekken tegen de muur');
     expect(noticeExerciseName('bestaat-niet', 'Eigen oefening')).toBe('Eigen oefening');
   });
 

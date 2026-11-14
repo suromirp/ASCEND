@@ -125,7 +125,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
     ? <SheetHeader eyebrow={`Week van ${formatDateNL(review.weekStart)}`} title={title} facts={review.label} onClose={requestClose} />
     : <SheetHeader
         eyebrow={`Week van ${formatDateNL(review.weekStart)}`}
-        title={VIEW_TITLE[view]}
+        title={view === 'proposal' && muscle.state === 'done' ? 'Toegevoegd' : VIEW_TITLE[view]}
         info={view === 'proposal' && muscle.text ? <InfoButton onClick={() => setProposalInfo((v) => !v)} label="Meer over dit voorstel" /> : undefined}
         onBack={() => setView('main')}
         onClose={requestClose}
@@ -167,7 +167,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
                 {hasRows && (
                   <div className="mt-5">
                     <SheetRows>
-                      {muscle.proposal && muscle.text && <SheetRow title={muscle.state === 'done' ? 'Toegevoegd' : 'Voorstel'} sub={muscle.text.what} onClick={() => setView('proposal')} sheetFrom />}
+                      {muscle.proposal && muscle.text && <SheetRow title={muscle.state === 'done' ? 'Toegevoegd' : 'Voorstel'} sub={muscle.text.name} onClick={() => setView('proposal')} sheetFrom />}
                       {weekLogs.length > 0 && <SheetRow title="Je trainingen" sub={`${weekLogs.length} ${weekLogs.length === 1 ? 'training' : 'trainingen'}`} onClick={() => setView('trainings')} sheetFrom />}
                       {intention?.answer && <SheetRow title="Je antwoord deze week" onClick={() => setView('answer')} sheetFrom />}
                     </SheetRows>
@@ -181,21 +181,20 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
             {view === 'proposal' && (
               muscle.proposal && muscle.text ? (
                 <div className="mt-4 flex flex-col gap-3" role="group" aria-label="Kracht voor de berg">
-                  <p className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{muscle.text.what}</p>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{muscle.text.fact} {muscle.text.care}</p>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{muscle.text.cost}</p>
-                  {proposalInfo && (
-                    <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-                      Een rustweek en een week met vakantie of een tocht tellen niet mee. Kies je Liever niet, dan blijft het acht weken stil over deze spier.{muscle.text.unknown ? ` ${muscle.text.unknown}` : ''}
-                    </p>
-                  )}
+                  <div>
+                    <p className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{muscle.text.name}</p>
+                    <p className="mt-0.5 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{muscle.text.where}</p>
+                    {muscle.text.forgeName && muscle.state !== 'done' && <p className="mt-0.5 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{muscle.text.forgeName}</p>}
+                  </div>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{muscle.text.how}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{muscle.text.why}</p>
+                  {muscle.text.unknown && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{muscle.text.unknown}</p>}
+                  {proposalInfo && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{muscle.text.info}</p>}
                   {muscle.state === 'done' ? (
-                    <p role="status" className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-                      {muscle.text.name} staat in {muscle.proposal.templateName}. Je ziet hem bij je volgende training.
-                    </p>
+                    <p role="status" className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{muscle.text.done}</p>
                   ) : (
                     <>
-                      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Eerst een voorstel, pas na Akkoord verandert er iets. Weghalen kan later in het blad van de oefening.</p>
+                      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{muscle.text.after}</p>
                       {muscle.state === 'failed' && <p role="status" className="text-xs" style={{ color: 'var(--color-warning)' }}>Opslaan lukte niet op tijd. Probeer het nog eens; hij komt er hoogstens één keer in.</p>}
                       <div className="mt-1 flex gap-3">
                         <SecondaryButton disabled={muscle.state === 'busy'} onClick={decline} className="min-h-[52px]">Liever niet</SecondaryButton>

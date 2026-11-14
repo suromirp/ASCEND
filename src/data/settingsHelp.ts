@@ -227,7 +227,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'De melding', text: 'krijgt een van die spieren de laatste vier weken gemiddeld minder dan 4 harde sets per week, dan staat dat één keer in de weekterugblik, met een voorstel voor één oefening. Een rustweek telt niet mee.' },
       { head: 'In Forge', text: 'hetzelfde voorstel staat ook rustig bovenaan de training waar de oefening bij zou komen, zolang je nog geen set afvinkte.' },
-      { head: 'Pas na Akkoord', text: 'de oefening komt in je krachttraining met het meeste beenwerk. In het blad van de oefening haal je hem weer weg. Liever niet laat die spier acht weken met rust.' },
+      { head: 'Pas na Akkoord', text: 'de oefening komt als laatste oefening in je krachttraining met het meeste beenwerk, vanaf de volgende keer. In het blad van de oefening haal je hem weer weg. Liever niet laat die spier acht weken met rust.' },
       { head: 'Bij Ruilen', text: 'is de keuze verder gelijk, dan staat een oefening voor zo’n spier voorop, met een korte reden. Forge ruilt nooit zelf.' },
       { head: 'Wat telt', text: 'werksets met hoogstens 4 herhalingen over, ook zonder RIR. Een oefening die ASCEND niet kent telt niet; dat staat er dan eerlijk bij.' },
       { head: 'Uit', text: 'geen melding, in de weekterugblik noch in Forge, en de gewone volgorde bij Ruilen.' },
@@ -237,7 +237,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Enkel en evenwicht',
     lead: 'Bij bergwandelaars die vallen is de enkel de vaakst getroffen plek. Evenwichtstraining verlaagde in zeven studies het aantal verzwikkingen met ongeveer een derde, het duidelijkst bij wie al eens verzwikte.',
     points: [
-      { head: 'De melding', text: 'deed je de laatste vier weken gemiddeld minder dan 2 sets per week op één been, dan staat dat in de weekterugblik, na de spieren, met een voorstel: op één been staan in je training met het meeste beenwerk.' },
+      { head: 'De melding', text: 'deed je de laatste vier weken gemiddeld minder dan 2 sets per week met een evenwichtsoefening (lunges en split squats tellen hier niet), dan staat dat in de weekterugblik, na de spieren, met een voorstel: op één been staan in je training met het meeste beenwerk.' },
       { head: 'Zwaarder', text: 'in de uitleg van de oefening: eerst met je ogen dicht, dan op een kussen, of reiken op één been. Forge neemt je beste tijd van de vorige keer over.' },
       { head: 'Telt niet mee', text: 'een rustweek, en een week met vakantie, een tocht of zonder sportschool: dan train je niet in Forge, en zo komt er na je vakantie niet meteen een melding.' },
       { head: 'Pijn aan je enkel of voet', text: 'staat er in Lichaam een open klacht, dan geen voorstel. Een enkel na een verzwikking oefen je met een fysiotherapeut.' },
