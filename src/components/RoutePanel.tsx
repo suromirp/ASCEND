@@ -90,11 +90,39 @@ export function ChosenLoop({ style, proposal, date, target, sender }: { style: R
 
 // Geen netwerk of een routeplanner die te laat was: op de plek van de kaart, met dezelfde hoogte, de
 // regel en Opnieuw zoeken.
-export function RouteFailure({ kind, onRetry, height }: { kind: 'offline' | 'timeout'; onRetry: () => void; height?: string }) {
+// `line`: de regel van de regie (geen verbinding, of welke stap niet op tijd was); zonder de vaste regel.
+export function RouteFailure({ kind, onRetry, height, line }: { kind: 'offline' | 'timeout'; onRetry: () => void; height?: string; line?: string }) {
   return (
     <div className="flex w-full flex-col items-start justify-center gap-1 rounded-xl border px-5" style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-      <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{kind === 'offline' ? OFFLINE_LINE : TIMEOUT_LINE}</p>
+      <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{line || (kind === 'offline' ? OFFLINE_LINE : TIMEOUT_LINE)}</p>
       <TextButton tone="dim" onClick={onRetry}>Opnieuw zoeken</TextButton>
+    </div>
+  );
+}
+
+// Je plek lukte niet: op de plek van de kaart de reden en drie keuzes. Er wordt pas gezocht na een tik:
+// nooit stil terug op Thuis, dat kan duizenden kilometers verderop liggen (besluit
+// 2026-11-14-geen-stille-thuis.md). Opnieuw vraagt één keer je plek; Thuis alleen als die er is.
+export function AskStart({ model, height }: { model: RouteSearchModel; height?: string }) {
+  const [open, setOpen] = useState(false);
+  if (!model.ask) return null;
+  return (
+    <div className="flex w-full flex-col items-start justify-center gap-1 rounded-xl border px-5" style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
+      <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{model.ask.line}</p>
+      <div className="flex flex-wrap gap-x-5">
+        <TextButton tone="dim" onClick={model.retryHere}>Opnieuw</TextButton>
+        {model.ask.homeOffered && <TextButton tone="dim" onClick={model.pickHome}>Thuis</TextButton>}
+        <TextButton tone="dim" data-sheet-from="" onClick={() => setOpen(true)}>Andere plek</TextButton>
+      </div>
+      {open && (
+        <NewPlaceSheet
+          saved={model.savedStarts}
+          chosen={model.startChip}
+          onPickSaved={(c) => model.pickStart(c)}
+          onPick={model.choosePlace}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -230,8 +258,10 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
     switch (p) {
       case 'searching':
         return <RouteSearching key={`${p}-${model.searchKey}`} steps={model.steps} current={model.currentStep} limitLine={model.limitLine} limitMs={model.limitMs} />;
+      case 'ask':
+        return <AskStart key={p} model={model} />;
       case 'failure':
-        return <RouteFailure key={p} kind={stage === 'offline' ? 'offline' : 'timeout'} onRetry={model.retry} />;
+        return <RouteFailure key={p} kind={stage === 'offline' ? 'offline' : 'timeout'} onRetry={model.retry} line={model.failLine} />;
       case 'map':
         return model.mapStartPoint ? (
           <div key={p} className="flex flex-col gap-1">

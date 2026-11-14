@@ -13,7 +13,8 @@ const css = nodeFs.readFileSync(new URL('./settings/settings.css', import.meta.u
 describe('Start bij in de regie en op het scherm', () => {
   it('een locatie-antwoord telt alleen voor de poging die hem stelde, en er is één vraag per poging', () => {
     expect(search).toContain('locateAnswerCounts(askedFor.current, attempt)) setHere(');
-    expect(search).toContain('askedFor.current === attempt) return;');
+    // Eén vraag per poging: engine/routeStart.ts#locateNow (getest in engine/geenStilleThuis.test.ts).
+    expect(search).toContain('!locateNow(planKind, askedFor.current, attempt)) return;');
   });
   it('sluiten stopt ook de vraag om je plek; een nieuwe controller per mount', () => {
     expect(search).toContain('if (closing) locateStop.current.abort();');

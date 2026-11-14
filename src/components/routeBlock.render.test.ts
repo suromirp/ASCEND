@@ -8,7 +8,7 @@ import type { BriefingView } from '../engine/briefing';
 import type { RouteSearchModel } from './useRouteSearch';
 import { MapPlace } from './TrainingBriefing';
 import { briefingRoutes, footerRoom, otherLoopLine } from '../engine/routeSheet';
-import { planStart, START_LINE_NO_HOME_NO_PLACE } from '../engine/routeStart';
+import { askStartLine, planStart, START_LINE_EXACT } from '../engine/routeStart';
 import { START_LOCATE_LIMIT_MS } from '../storage/routeStart';
 
 const motion = vi.hoisted(() => ({ mode: 'full' as 'full' | 'calm' | 'off' }));
@@ -84,10 +84,18 @@ describe('het blok met de route in de Briefing', () => {
     expect(html).toContain('>Opnieuw zoeken<');
     expect(html).not.toContain('Groter: de kaart met je lus');
   });
-  it('geen toestemming voor je locatie: de regel van de terugval staat zichtbaar onder de chips, de lus komt er toch', () => {
-    const html = render(model({ startLine: START_LINE_NO_HOME_NO_PLACE }));
-    expect(html).toContain(`role="status" class="text-sm leading-snug" style="color:var(--color-ink-dim)">${START_LINE_NO_HOME_NO_PLACE}<`);
-    expect(planStart({ mode: 'here', home: null, found: { ok: false, reason: 'denied' } }).line).toBe(START_LINE_NO_HOME_NO_PLACE);
+  it('geen toestemming voor je locatie: de vraag op de plek van de kaart (Opnieuw, Thuis, Andere plek), geen lus en geen stille Thuis', () => {
+    const plan = planStart({ mode: 'here', home: { lat: 51.5, lon: 4.5 }, found: { ok: false, reason: 'denied' } });
+    expect(plan.kind).toBe('ask');
+    const html = render(model({ stage: 'ask', ask: { line: askStartLine('denied'), homeOffered: true }, plans: undefined, okStyles: [], picked: undefined, pickedOutcome: undefined, mapRoutes: [] }));
+    expect(html).toContain(askStartLine('denied'));
+    expect(html).toContain('>Opnieuw<');
+    expect(html).toContain('>Thuis<');
+    expect(html).toContain('>Andere plek<');
+    expect(html).not.toContain(START_LINE_EXACT);
+    expect(html).not.toContain('Groter: de kaart met je lus');
+    // Zonder Thuis: geen knop Thuis.
+    expect(render(model({ stage: 'ask', ask: { line: askStartLine('timeout'), homeOffered: false }, plans: undefined, okStyles: [], picked: undefined, pickedOutcome: undefined, mapRoutes: [] }))).not.toContain('>Thuis<');
     expect(START_LOCATE_LIMIT_MS).toBeLessThanOrEqual(15_000);
   });
   it('Loopband of Afwisselen: geen kaart en geen Start bij', () => {
