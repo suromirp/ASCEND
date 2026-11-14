@@ -33,7 +33,7 @@ import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
 import { routeTarget } from './routeTarget';
 import { showSpotsFor } from './trainingSpots';
-import { outdoorSunParts } from './outdoorSun';
+import { uvShort } from './outdoorSun';
 import { placeChoices, placeHasRoute, placeIsOutdoor, resolvePlace, type PlaceChoice } from './trainingPlace';
 import { temperatureHead, weatherForTraining, windPhrase } from './weather';
 import { PLACE_WEATHER_FROM_HOME, placeWeatherFailed, placeWeatherLine } from './placeWeather';
@@ -605,26 +605,15 @@ function weatherRow(input: BriefingInput, minutes: number): BriefingRow | undefi
   const parts: string[] = [];
   // De temperatuur zoals de weerregel hem begint: met gevoel en wind als die ertoe doen, harde wind erbij.
   if (input.weatherOn) parts.push([temperatureHead(w), windPhrase(w)].filter(Boolean).join(', '));
-  let sunscreenSaid = false;
   if (input.clothingOn) {
-    const advice = clothingForTraining({ ...base, adjustC: input.clothingAdjust });
-    const first = advice?.lines[0];
-    sunscreenSaid = !!advice?.sunscreenFirst;
+    const first = clothingForTraining({ ...base, adjustC: input.clothingAdjust })?.lines[0];
     // Alleen de eerste zin: de rest staat op de weerpagina erachter.
     if (first) parts.push(lowerFirst(firstSentence(first)));
   }
-  // UV en hoogte (engine/outdoorSun.ts): alleen als er al een weerregel is, en de hoogte alleen als het weer
-  // van de plek van je training is (niet het weer van huis omdat de plek niet laadde).
-  if (parts.length > 0) {
-    parts.push(...outdoorSunParts({
-      on: input.uvAltitudeOn !== false,
-      outdoor: true,
-      uvIndex: w.uvIndex,
-      elevationM: at?.state === 'failed' ? undefined : input.forecast?.elevationM,
-      sunscreenSaid,
-      minutes,
-    }));
-  }
+  // UV (engine/outdoorSun.ts): alleen het getal en alleen als er al een weerregel is. Wat je doet en de
+  // hoogte van je plek staan op de pagina Weer, waar deze rij naartoe leidt; zo blijft de rij op 360 px kort.
+  const uv = input.uvAltitudeOn !== false ? uvShort(w.uvIndex) : undefined;
+  if (parts.length > 0 && uv) parts.push(uv);
   if (parts.length === 0) return undefined;
   const tone = input.weatherOn && w.verdict !== 'prima' ? ('warn' as const) : undefined;
   const plain = upperFirst(parts.join(', '));

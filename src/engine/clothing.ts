@@ -184,9 +184,6 @@ export interface ClothingAdvice {
   // True when one of the lines is the one about darkness (it can be dropped on
   // a crowded day). The weather line leaves the darkness to it then.
   darkShown?: boolean;
-  // True when the first line names sunscreen. The Briefing shows only that first line and then leaves
-  // the advice out of its UV phrase (engine/outdoorSun.ts). The first line is the trunk, so today never.
-  sunscreenFirst?: boolean;
   // True when any line names sunscreen (the weather page shows them all).
   sunscreenShown?: boolean;
 }
@@ -296,13 +293,11 @@ export function clothingAdvice(input: ClothingInput): ClothingAdvice {
   if (lines.length > R.maxLines) drop('feet');
 
   const sunscreen = sunParts.includes('zonnebrand');
-  const sunscreenFirst = sunscreen && lines[0]?.slot === 'sun';
   const sunscreenShown = sunscreen && lines.some((l) => l.slot === 'sun');
   return {
     lines: lines.map((l) => l.text),
     packLine,
     darkShown: lines.some((l) => l.slot === 'dark'),
-    ...(sunscreenFirst ? { sunscreenFirst } : {}),
     ...(sunscreenShown ? { sunscreenShown } : {}),
   };
 

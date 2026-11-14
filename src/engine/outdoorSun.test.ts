@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALTITUDE_FROM_M, UV_FROM, altitudePhrase, outdoorSunParts, outdoorSunSentence, uvPhrase } from './outdoorSun';
+import { ALTITUDE_FROM_M, UV_FROM, altitudePhrase, outdoorSunParts, outdoorSunSentence, uvPhrase, uvShort } from './outdoorSun';
 
 describe('UV vanaf 3, op hele getallen', () => {
   it('onder 3 niets, ook 2,4; 2,5 rondt naar 3', () => {
@@ -58,5 +58,14 @@ describe('alleen buiten en met de instelling aan', () => {
   });
   it('nacht (UV 0) op een plek zonder hoogte: niets', () => {
     expect(outdoorSunSentence({ ...base, uvIndex: 0, elevationM: undefined })).toBeUndefined();
+  });
+});
+
+describe('uvShort, voor de rij Weer in de Briefing', () => {
+  it('alleen het getal met een vaste spatie, vanaf 3', () => {
+    expect(uvShort(8.2)).toBe('UV\u00A08');
+    expect(uvShort(2.4)).toBeUndefined();
+    expect(uvShort(0)).toBeUndefined();
+    expect(uvShort(undefined)).toBeUndefined();
   });
 });

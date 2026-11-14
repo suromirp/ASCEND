@@ -43,6 +43,15 @@ export function uvPhrase(uvIndex: number | undefined, options: UvOptions = {}): 
   return options.full && uv >= UV_STRONG ? `UV ${uv}, smeer je in en zet pet en zonnebril op` : `UV ${uv}, smeer je in`;
 }
 
+// Voor de rij Weer in de Briefing: alleen "UV 8", met een vaste spatie (U+00A0) zodat hij op 360 px nooit
+// over twee regels breekt. Wat je doet en de hoogte staan op de pagina Weer, waar de rij naartoe leidt
+// (besluit 2026-11-14-uv-rij-alleen-getal.md).
+export function uvShort(uvIndex: number | undefined): string | undefined {
+  if (uvIndex === undefined || !Number.isFinite(uvIndex)) return undefined;
+  const uv = Math.round(uvIndex);
+  return uv >= UV_FROM ? `UV\u00A0${uv}` : undefined;
+}
+
 // "je plek ligt op 1.240 m". Onder de 1000 m, of zonder hoogte: niets.
 export function altitudePhrase(elevationM: number | undefined): string | undefined {
   if (elevationM === undefined || !Number.isFinite(elevationM)) return undefined;
