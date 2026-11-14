@@ -52,13 +52,14 @@ describe('Langer en Korter', () => {
 
 describe('Andere kant op', () => {
   it('dezelfde punten achterstevoren, dezelfde afstand, de hoogtemeters opnieuw geteld', () => {
-    // Langzaam 40 m omhoog en in één keer terug: achterstevoren is het andersom, de lus blijft gesloten.
-    const out = northLine(2000, (m) => 20 + Math.min(40, m / 40));
-    const loop = [...out, ...northLine(2000).reverse().slice(1)];
+    // Omhoog en omlaag verschillen: van 20 naar 60 m en dan terug naar 50 m. Heen 40 m omhoog, achterstevoren
+    // maar 10 m: zonder hertelling zou de lus achterstevoren nog 40 m zeggen.
+    const loop = northLine(3000, (m) => (m <= 2000 ? 20 + m / 50 : 60 - (m - 2000) / 100));
     const p = proposal(loop, { ascentM: 40 });
     const back = reverseProposal(p);
     expect(back.points[0]).toEqual(loop[loop.length - 1]);
     expect(back.distanceM).toBe(p.distanceM);
+    expect(Math.round(back.ascentM)).toBe(10);
     expect(back.ascentM).toBe(climbAndDescent(back.points.map((x) => x.ele), modelThresholdM(back.points.map((x) => x.ele))).ascentM);
   });
 

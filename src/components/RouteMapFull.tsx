@@ -23,8 +23,9 @@ export function RouteMapFull({ model, piece, onClose }: { model: RouteSearchMode
       <div
         role="dialog"
         aria-label="Groter: de kaart met je lus"
-        className={`fixed inset-0 z-[60] flex flex-col bg-bg px-2 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
-        style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'max(var(--rand-onder), 8px)' }}
+        className={`fixed inset-0 z-[60] flex flex-col bg-bg ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+        // Liggend zit de inkeping of de ronde hoek links of rechts: daar blijft de kaart vandaan.
+        style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'max(var(--rand-onder), 8px)', paddingLeft: 'max(env(safe-area-inset-left, 0px), 8px)', paddingRight: 'max(env(safe-area-inset-right, 0px), 8px)' }}
       >
         <div className="flex h-11 shrink-0 items-center">
           <button type="button" onClick={requestClose} aria-label="Terug" className="flex h-11 min-w-[44px] items-center gap-1 pr-2 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
@@ -34,7 +35,9 @@ export function RouteMapFull({ model, piece, onClose }: { model: RouteSearchMode
           <div className="min-w-0 flex-1 truncate text-right"><Eyebrow tone="var(--color-ink-dim)">Route voorstellen</Eyebrow></div>
         </div>
         <div className="min-h-0 flex-1">
-          {start && (
+          {/* Tijdens een nieuwe zoektocht (na Langer of een andere start) blijft Groter open, met één regel. */}
+          {(!start || model.stage !== 'plans') && <p role="status" className="py-2 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{model.stage === 'searching' ? 'Lussen zoeken…' : 'Er is nu geen lus om te tonen.'}</p>}
+          {start && model.stage === 'plans' && (
             <RouteMap
               full
               routes={model.mapRoutes}

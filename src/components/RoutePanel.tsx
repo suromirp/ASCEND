@@ -236,7 +236,6 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
         return model.mapStartPoint ? (
           <div key={p} className="flex flex-col gap-1">
             <RouteMap routes={model.mapRoutes} chosen={picked} start={model.mapStartPoint} base={model.base} onChoose={model.setChosen} onStart={model.startOnMap} onNoMap={model.markNoMap} photo={model.photo} onPhoto={model.setPhoto} me={model.mePoint} tapped={model.tapPoint} hasHome={model.hasHome} onMakeHome={model.makeHome} keepName={model.keepName} onKeep={model.keepPlace} piece={bigger ? undefined : piecePoints} onBigger={() => setBigger(true)} />
-            {bigger && <RouteMapFull model={model} piece={piecePoints} onClose={() => setBigger(false)} />}
           </div>
         ) : null;
       case 'chosen':
@@ -272,6 +271,8 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
       <StartChips model={model} />
       <p className="text-sm leading-snug" style={dim}>Je training: {targetText(model.trainingTarget)}.{model.startLine ? ` ${model.startLine}` : ''}</p>
       {parts.map(part)}
+      {/* Groter staat buiten de delen: een nieuwe zoektocht (Langer, een andere chip) sluit hem niet. */}
+      {bigger && <RouteMapFull model={model} piece={piecePoints} onClose={() => setBigger(false)} />}
     </div>
   );
 }

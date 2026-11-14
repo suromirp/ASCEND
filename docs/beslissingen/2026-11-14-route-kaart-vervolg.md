@@ -1,7 +1,7 @@
 # Route-kaart, vervolg: bijsturen, per stuk en Groter
 
 Datum: 2026-11-14
-Status: voorgesteld
+Status: aangenomen
 
 ## Besluit
 
@@ -17,6 +17,13 @@ In het blad Route (bereikbaar via Groter in de Briefing en via Route voorstellen
 - Offline: valt de kaart terug op het effen vlak omdat geen tegels laden, dan zegt één regel onder de kaart "Zonder netwerk laadt de kaart niet. Je ziet alleen de lus." (online maar geen bron: "De kaart laadt niet."). Bij Ondergrond Geen zwijgt hij.
 - Van Warden: tijdens het bewaren van een getikt punt als Thuis staat er "Thuis wordt bewaard." (en tijdens Start hier "De lus wordt gezocht vanaf dit punt."), `routeMap.ts#mapStatusLine`.
 - Geen nieuwe instelling: ASCEND kiest hier niets voor je; elke bijsturing is een tik.
+
+## Na review (Warden, 14 november)
+
+- De regie van de zoektochten staat nu puur in `engine/routeSearchState.ts` (useReducer in `useRouteSearch.ts`). Eerst zocht het blad ook voor een sleutel waarvan het antwoord al in het geheugen stond: na een mislukte bijsturing begon dan stil een nieuwe zoektocht voor de oude sleutel, die de bewaarde lus overschreef (offline: lus weg; time-out: een andere lus onder "De lus blijft zoals hij was"). Nu zoekt het blad alleen voor een sleutel zonder antwoord, ook niet opnieuw na een mislukt antwoord.
+- Alleen gelukte antwoorden gaan het geheugen in: een tweede tik op Langer na een fout zoekt echt opnieuw. Een laat antwoord voor een sleutel die niet meer geldt telt niet.
+- Een bijsturing die nog zoekt hoort bij één startpunt en één poging; is dat intussen anders, dan vervalt hij zonder regel en geldt bij dat startpunt weer wat ervoor gold.
+- Groter staat buiten de delen van het blad en blijft open tijdens een nieuwe zoektocht, met één regel; liggend blijft de kaart van de inkeping en de ronde hoeken vandaan (`safe-area-inset-left` en `-right`).
 
 ## Niet gedaan: hoogtelijnen
 

@@ -11,7 +11,7 @@
 // alleen Maak dit Thuis en Bewaar als plek bewaren iets (besluiten 2026-11-11-route-start.md en
 // 2026-11-12-andere-plek.md). Plant niets en bewaart geen lus.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
 import type { RoutePoint, RouteStyle, RouteTarget } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
@@ -34,7 +34,8 @@ import type { FileSender } from '../integrations/fileSender';
 import { withTimeout } from '../utils/withTimeout';
 import { resolveMapBase, resolveMapPhoto, type MapBase, type MapPhoto, type MapRoute } from '../engine/routeMap';
 import { routeSheetParts, routeSheetStage, type RouteSheetPart, type RouteSheetStage } from '../engine/routeSheet';
-import { NO_ADJUST, adjustKey, settleAdjust, adjustSummary, avoidPiece, canReverse, isAdjusted, loopPieces, reverseProposal, stepDistance, type AdjustAction, type LoopAdjust, type LoopPiece } from '../engine/routeAdjust';
+import { INITIAL_SEARCH_STATE, answerFor, currentAdjust, needsSearch, pendingStale, searchKey, searchReducer } from '../engine/routeSearchState';
+import { adjustKey, adjustSummary, avoidPiece, canReverse, isAdjusted, loopPieces, reverseProposal, stepDistance, type AdjustAction, type LoopAdjust, type LoopPiece } from '../engine/routeAdjust';
 
 const CONSENT_LIMIT_MS = 3000;
 export const SOURCE_NAME = { brouter: 'BRouter', valhalla: 'Valhalla' } as const;
@@ -126,13 +127,9 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const lat = place?.lat;
   const lon = place?.lon;
   const [consent, setConsent] = useState<boolean | undefined>();
-  // De laatste antwoorden per sleutel: na een mislukte bijsturing staat de vorige lus er meteen weer.
-  const [found, setFound] = useState<{ key: string; result: RouteSearch }[]>([]);
-  // Bijsturen, voor één startpunt (`base`): een ander startpunt begint weer bij de training.
-  const [adjustState, setAdjust] = useState<{ base: string; adjust: LoopAdjust }>({ base: '', adjust: NO_ADJUST });
-  // Een bijsturing die nog zoekt: wat ervoor gold, voor welke lus, en wat er gevraagd is.
-  const [pending, setPending] = useState<{ prev: LoopAdjust; style: RouteStyle | undefined; action: AdjustAction } | undefined>();
-  const [adjustFail, setAdjustFail] = useState('');
+  // De gelukte antwoorden per sleutel, het mislukte antwoord van nu, de bijsturing en wat nog zoekt
+  // (engine/routeSearchState.ts): nooit zoeken voor een sleutel die er al is, nooit vanzelf opnieuw.
+  const [searchState, dispatch] = useReducer(searchReducer, INITIAL_SEARCH_STATE);
   const [attempt, setAttempt] = useState(0);
   // Het eigen startpunt (de plek Thuis): undefined zolang we lezen, null als er geen is, 'unread' als
   // de opslag niet op tijd of met een fout antwoordde (dan nooit raden dat er geen Thuis is).
@@ -235,7 +232,9 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const startLine = plan?.line ?? '';
   // Bijsturen hoort bij dit startpunt en deze training.
   const adjustBase = `${lat}|${lon}|${exactLat}|${exactLon}|${trainingTarget.distanceKm}|${trainingTarget.ascentM}`;
-  const adjust = adjustState.base === adjustBase ? adjustState.adjust : NO_ADJUST;
+  const adjust = currentAdjust(searchState, adjustBase);
+  // Een bijsturing die nog zoekt bij een ander startpunt of een andere poging vervalt.
+  if (pendingStale(searchState, adjustBase, attempt)) dispatch({ type: 'drop' });
   const target: RouteTarget = adjust.deltaKm !== 0 ? { ...trainingTarget, distanceKm: Math.round((trainingTarget.distanceKm + adjust.deltaKm) * 10) / 10 } : trainingTarget;
   const { distanceKm, ascentM } = target;
   const avoid = adjust.avoid;
@@ -258,11 +257,18 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   }, [closing, enabled, asked, locatingHere, attempt]);
 
   // Eén zoektocht per plek, training en poging; zolang het antwoord van deze sleutel er niet is, zoekt het paneel.
-  const key = `${attempt}|${lat}|${lon}|${exactLat}|${exactLon}|${terrainLat}|${terrainLon}|${distanceKm}|${ascentM}|${adjustKey(adjust)}`;
-  const search: RouteSearch | 'busy' = found.find((f) => f.key === key)?.result ?? 'busy';
+  const keyBase = `${attempt}|${lat}|${lon}|${exactLat}|${exactLon}|${terrainLat}|${terrainLon}|${trainingTarget.distanceKm}|${ascentM}`;
+  const key = searchKey(keyBase, adjust);
+  const search: RouteSearch | 'busy' = answerFor(searchState, key);
+  const searchNeeded = needsSearch(searchState, key);
+  // De sleutel die nu geldt, voor een antwoord dat binnenkomt: een laat antwoord telt niet.
+  const keyNow = useRef(key);
+  useEffect(() => {
+    keyNow.current = key;
+  });
 
   useEffect(() => {
-    if (closing || !enabled || !asked || !startReady || lat === undefined || lon === undefined) return;
+    if (closing || !enabled || !asked || !startReady || !searchNeeded || lat === undefined || lon === undefined) return;
     const stop = new AbortController();
     // De kaartcode alvast laden, zodat de kaart er meteen is als de lussen er zijn. Een fout zegt de kaart zelf.
     void loadMapLibre().catch(() => undefined);
@@ -272,12 +278,12 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     const terrainPoint = terrainLat !== undefined && terrainLon !== undefined ? { lat: terrainLat, lon: terrainLon } : undefined;
     // findRoutes heeft zelf een grens in tijd en gooit nooit: "Lussen zoeken" blijft nooit staan.
     void findRoutes({ lat, lon }, { distanceKm, ascentM }, { signal: stop.signal, onStep, terrainAt: terrainPoint, ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
-      if (!stop.signal.aborted) setFound((list) => [{ key, result }, ...list.filter((f) => f.key !== key)].slice(0, 4));
+      if (!stop.signal.aborted) dispatch({ type: 'answer', key, answer: result, currentKey: keyNow.current });
     });
     // Sluit het paneel of begint een nieuwe zoektocht, dan gaat er voor deze geen aanroep meer de deur uit.
     return () => stop.abort();
     // De sleutel bevat het punt; de afhankelijkheden zijn dezelfde getallen.
-  }, [closing, enabled, asked, startReady, lat, lon, exactLat, exactLon, terrainLat, terrainLon, distanceKm, ascentM, avoid, key]);
+  }, [closing, enabled, asked, startReady, searchNeeded, lat, lon, exactLat, exactLon, terrainLat, terrainLon, distanceKm, ascentM, avoid, key]);
 
   // Start hier: het getikte punt geldt voor deze zoektocht en wordt niet bewaard; Thuis verschuift niet.
   async function startOnMap(from: { tap: RoutePoint }): Promise<StartAnswer> {
@@ -363,15 +369,6 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
 
   // Een bijsturing die klaar is: lukte hij voor de lus die je bijstuurde, dan blijft hij; anders terug
   // naar wat ervoor gold, met één regel. Tijdens het renderen, zoals de schakelaar op de kaart.
-  if (pending && search !== 'busy') {
-    const settled = settleAdjust(pending.action, pending.style, search);
-    setPending(undefined);
-    if (!settled.keep) {
-      setAdjust({ base: adjustBase, adjust: pending.prev });
-      setAdjustFail(settled.line);
-    }
-  }
-
   // Andere kant op: dezelfde punten achterstevoren, zonder nieuwe zoektocht.
   const plans: typeof rawPlans = rawPlans && adjust.reversed.length > 0
     ? { ...rawPlans, ...Object.fromEntries(adjust.reversed.map((st) => { const o = rawPlans[st]; return [st, o.ok && canReverse(o.proposal) ? { ok: true, proposal: reverseProposal(o.proposal) } : o]; })) }
@@ -384,16 +381,10 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const pickedRoute = mapRoutes.find((r) => r.style === picked);
   const pieces = pickedOutcome?.ok ? loopPieces(pickedOutcome.proposal.points) : [];
 
-  const startAdjust = (next: LoopAdjust, action: AdjustAction) => {
-    setAdjustFail('');
-    setPending({ prev: adjust, style: picked, action });
-    setAdjust({ base: adjustBase, adjust: next });
-  };
+  const startAdjust = (next: LoopAdjust, action: AdjustAction) => dispatch({ type: 'adjust', base: adjustBase, attempt, keyBase, next, action, style: picked });
+  const setAdjustFail = (line: string) => dispatch({ type: 'failLine', line });
   const reverse = () => {
-    if (!picked) return;
-    setAdjustFail('');
-    const on = adjust.reversed.includes(picked);
-    setAdjust({ base: adjustBase, adjust: { ...adjust, reversed: on ? adjust.reversed.filter((x) => x !== picked) : [...adjust.reversed, picked] } });
+    if (picked) dispatch({ type: 'reverse', base: adjustBase, style: picked });
   };
   const stepLength = (dir: 'longer' | 'shorter') => {
     const next = stepDistance(trainingTarget.distanceKm, adjust.deltaKm, dir);
@@ -407,11 +398,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     if (!next.ok) return setAdjustFail(next.line);
     startAdjust({ ...adjust, avoid: [...adjust.avoid, next.area] }, 'avoid');
   };
-  const resetAdjust = () => {
-    setAdjustFail('');
-    setPending(undefined);
-    setAdjust({ base: adjustBase, adjust: NO_ADJUST });
-  };
+  const resetAdjust = () => dispatch({ type: 'reset', base: adjustBase });
 
   const mapStartPoint = pickedRoute?.points[0] ?? exactPoint ?? (lat !== undefined && lon !== undefined ? roundStart({ lat, lon }) : undefined);
 
@@ -465,7 +452,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     trainingTarget,
     adjust,
     adjustLine: isAdjusted(adjust) ? adjustSummary(adjust, trainingTarget.distanceKm, picked) : '',
-    adjustFail,
+    adjustFail: searchState.failLine,
     canReverse: !!pickedOutcome?.ok && canReverse(pickedOutcome.proposal),
     reverse,
     stepLength,

@@ -171,9 +171,9 @@ describe('routeWithFallback', () => {
 });
 
 describe('een stuk vermijden', () => {
-  const area = { lat: 50.75712, lon: 6.02501, radiusM: 120 };
+  const area = { lat: 52.1, lon: 5.9, radiusM: 120 };
   it('BRouter krijgt het als nogos: lon,lat,straal; zonder stuk geen nogos', () => {
-    expect(brouterUrl([A, B], BROUTER_PROFILE, [area])).toContain('&nogos=6.02501,50.75712,120&');
+    expect(brouterUrl([A, B], BROUTER_PROFILE, [area])).toContain('&nogos=5.9,52.1,120&');
     expect(brouterUrl([A, B])).not.toContain('nogos');
   });
   it('Valhalla krijgt het als een gesloten achthoek in exclude_polygons', () => {
