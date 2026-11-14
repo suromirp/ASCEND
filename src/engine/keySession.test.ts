@@ -156,10 +156,12 @@ describe('één betekenis', () => {
       const phrase = keyPhrase(focus) ?? '';
       for (const t of templates) {
         const label = keyLabel(t, focus);
-        if (label) expect(phrase, `${t.name} bij ${JSON.stringify(focus)}`).toContain(label);
+        for (const part of label?.split(' of ') ?? []) expect(phrase, `${t.name} bij ${JSON.stringify(focus)}`).toContain(part);
       }
+      // Eén leesbare zin: hoogstens één keer "of".
+      expect(phrase.split(' of ').length, JSON.stringify(focus)).toBeLessThanOrEqual(2);
     }
-    expect(keyPhrase(TEN_K)).toBe('de tempoloop of de intervallen, de heuvelintervallen of de lange duurloop');
+    expect(keyPhrase(TEN_K)).toBe('de tempoloop, de intervallen, de heuvelintervallen of de lange duurloop');
   });
 
   it('zonder focus is het inhalen wat het was: de lange duurloop, de bergtocht en wandeldag 1', () => {

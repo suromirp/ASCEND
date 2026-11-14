@@ -144,6 +144,9 @@ const SCHERMEN = {
   // Een dag later (zondag 1 november), zodat er een looptraining op Vandaag staat: de missiekaart met Gedaan en de
   // routerij (zonder koppeling met je horloge; met koppeling staat er Briefing, engine/briefing.ts#missionButton).
   'vandaag-loop': { titel: 'Vandaag met een looptraining (Lange duurloop)', pad: '#/', klok: '2026-11-01T08:00:00+01:00' },
+  // De avond ervoor (docs/beslissingen/2026-11-11-avond-ervoor.md): zaterdag 31 oktober 20:30, standaardtijd 20:00 is voorbij.
+  // Morgen staat de Lange duurloop; de kaart staat onder de missie en noemt hem. Zonder netwerk geen weerregel.
+  'vandaag-avond': { titel: 'Vandaag om 20:30, de avond ervoor (morgen de Lange duurloop)', pad: '#/', klok: '2026-10-31T20:30:00+01:00' },
   // Forge (docs/beslissingen/2026-11-11-forge-kern-zichtbaar.md): Benen A uit Week (woensdag 28 oktober), na Training
   // starten. Elke oefening toont zijn rol (Kern, Bijwerk, Extra); de klok loopt nog niet, dus geen regel onder de klok.
   forge: { titel: 'Forge met Benen A (blad in Week, Training starten)', pad: '#/week', actie: async (p) => { await tik(p, 'button[data-sheet-from]:has-text("Benen A")'); await tik(p, 'button:has-text("Training starten")'); } },

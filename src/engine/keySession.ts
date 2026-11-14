@@ -30,7 +30,8 @@ export const DEFAULT_KEY_FOCUS: KeyFocus = { goal: undefined };
 
 type Tpl = Pick<SessionTemplate, 'id' | 'name' | 'type' | 'roles' | 'sport'>;
 // Een soort sleuteltraining: hoe je hem herkent, en hoe hij heet in een zin.
-interface Kind { test: (t: Tpl) => boolean; label: string }
+// `parts`: de losse namen voor de opsomming van `keyPhrase`, zodat er maar één "of" in de zin staat.
+interface Kind { test: (t: Tpl) => boolean; label: string; parts?: readonly string[] }
 
 // De bouwstenen. Een rol op het sjabloon gaat voor; de naam vangt een eigen sjabloon zonder rol.
 const LONG_RUN: Kind = { label: 'de lange duurloop', test: (t) => (hasRole(t, 'long') && hasRole(t, 'easy_pace')) || /lange duurloop/i.test(t.name) };
@@ -40,7 +41,7 @@ const RUCK: Kind = { label: 'de rugzakwandeling', test: (t) => hasRole(t, 'ruck'
 const RIDE: Kind = { label: 'de fietstocht', test: (t) => t.sport === 'cycling' };
 // De kwaliteitstraining: tempo of intervallen (`blocks`), en heuvelintervallen (`hills`) als kwaliteit van
 // de basis. Voor een snelle afstand gaat het specifieke werk voor de heuvels.
-const BLOCKS: Kind = { label: 'de tempoloop of de intervallen', test: (t) => hasRole(t, 'blocks') };
+const BLOCKS: Kind = { label: 'de tempoloop of de intervallen', parts: ['de tempoloop', 'de intervallen'], test: (t) => hasRole(t, 'blocks') };
 const HILLS: Kind = { label: 'de heuvelintervallen', test: (t) => hasRole(t, 'hills') };
 const STRENGTH: Kind = { label: 'de krachttraining', test: (t) => hasRole(t, 'strength') };
 
@@ -98,10 +99,10 @@ export function keyLabel(template: Tpl, focus: KeyFocus = DEFAULT_KEY_FOCUS): st
   return kindOf(template, focus)?.kind.label;
 }
 
-// Alles wat als sleuteltraining telt, in volgorde: "de tempoloop of de intervallen, de heuvelintervallen of
-// de lange duurloop". Undefined: geen sleuteltraining (Rustig aan).
+// Alles wat als sleuteltraining telt, in volgorde, met één "of": "de tempoloop, de intervallen, de
+// heuvelintervallen of de lange duurloop". Undefined: geen sleuteltraining (Rustig aan).
 export function keyPhrase(focus: KeyFocus = DEFAULT_KEY_FOCUS): string | undefined {
-  const labels = tiersFor(focus).flat().map((k) => k.label);
+  const labels = tiersFor(focus).flat().flatMap((k) => k.parts ?? [k.label]);
   if (labels.length === 0) return undefined;
   return labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} of ${labels.at(-1)}`;
 }
