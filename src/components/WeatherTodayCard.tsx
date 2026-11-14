@@ -16,7 +16,10 @@ import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { isForecastStale, nextOutdoorTraining, updatedLabel, verdictLine, weatherForTraining } from '../engine/weather';
 import { clothingForTraining, weatherLineForTraining } from '../engine/clothing';
 import { adjustFor } from '../engine/clothingFeedback';
-import { showBestMoment, showClothingAdvice } from '../engine/overviewSettings';
+import { showBestMoment, showClothingAdvice, showUvAltitude } from '../engine/overviewSettings';
+import { outdoorSunSentence } from '../engine/outdoorSun';
+import { placeIsOutdoor, resolvePlace } from '../engine/trainingPlace';
+import { useTrainingPlaces } from './useTrainingPlaces';
 import { bestMomentForTraining } from '../engine/bestMoment';
 import { templateSport } from '../engine/sports';
 import { addDays, todayISO, weekdayLongNL } from '../utils/dates';
@@ -41,6 +44,7 @@ export function WeatherTodayCard({ link: given }: { link?: WeatherPageLink }) {
   const linked = given ? templateById.get(given.templateId) : undefined;
   const link = linked ? given : undefined;
   const view = weatherPageView(link, usePlaceWeather(link?.place), weather.forecast);
+  const storedPlaces = useTrainingPlaces();
   if (!settings.homeLocation && !link) return null;
 
   const now = new Date();
@@ -72,6 +76,12 @@ export function WeatherTodayCard({ link: given }: { link?: WeatherPageLink }) {
   const best = w && showBestMoment(settings.overviews)
     ? bestMomentForTraining({ forecast, template, logs: sessionLogs, date, durationMinutes, now })
     : undefined;
+  // UV en hoogte (engine/outdoorSun.ts). Buiten: uit de Briefing kom je alleen bij een plek buiten; anders de
+  // bewaarde keuze Waar train je? van die training. De hoogte alleen als dit het weer van de plek zelf is.
+  const outdoor = link ? true : placeIsOutdoor(template.id, resolvePlace(template, 'session' in next ? storedPlaces?.[next.session.id] : undefined));
+  const sun = w
+    ? outdoorSunSentence({ on: showUvAltitude(settings.overviews), outdoor, uvIndex: w.uvIndex, elevationM: link && !view.place ? undefined : forecast?.elevationM })
+    : undefined;
   const stale = !!forecast && (navigator.onLine === false || isForecastStale(forecast.fetchedAt, now));
 
   return (
@@ -90,6 +100,7 @@ export function WeatherTodayCard({ link: given }: { link?: WeatherPageLink }) {
             {line}
             {stale && forecast ? ` · ${updatedLabel(forecast.fetchedAt)}` : ''}
           </p>
+          {sun && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sun}</p>}
           {best && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{best.text}</p>}
         </div>
       ) : (

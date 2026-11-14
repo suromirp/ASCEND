@@ -161,6 +161,50 @@ describe('testloop en wedstrijd', () => {
   });
 });
 
+// UV en hoogte in de rij Weer (engine/outdoorSun.ts, backlog ronde 1 "Buiten: UV en hoogte van je plek").
+describe('UV en hoogte in de rij Weer', () => {
+  const sunny = (uvIndex: number, elevationM?: number) => ({ ...makeForecast(TODAY, () => ({ tempC: 9, feelsC: 8, uvIndex })), ...(elevationM !== undefined ? { elevationM } : {}) });
+  const line = (over: Partial<BriefingInput>) => tile(briefing(input(over)), 'weather')?.line ?? '';
+  it('UV vanaf 3 en hoogte vanaf 1000 m, achter het weer en de kleding', () => {
+    expect(line({ forecast: sunny(4.4, 1243) })).toMatch(/, UV 4, smeer je in, je plek ligt op 1\.240 m$/);
+  });
+  it('UV onder 3 en een plek laag: niets erbij, de rij zoals voorheen', () => {
+    expect(line({ forecast: sunny(2, 40) })).toBe(line({ forecast: makeForecast(TODAY, () => ({ tempC: 9, feelsC: 8 })) }));
+  });
+  it('nacht, UV 0: niets', () => {
+    expect(line({ forecast: sunny(0) })).not.toMatch(/UV/);
+  });
+  it('een plek zonder hoogte: alleen de UV', () => {
+    const l = line({ forecast: sunny(5) });
+    expect(l).toMatch(/UV 5, smeer je in$/);
+    expect(l).not.toMatch(/ligt op/);
+  });
+  it('offline of geen antwoord binnen de grens: geen voorspelling, de rij blijft zonder UV', () => {
+    expect(line({ forecast: undefined })).toBe('Nog geen weer');
+  });
+  it('een voorspelling zonder UV-waarden: geen UV en geen lege plek', () => {
+    const l = line({ forecast: makeForecast(TODAY, () => ({ tempC: 9, feelsC: 8 })) });
+    expect(l).not.toMatch(/UV|, ,|, $/);
+  });
+  it('binnen trainen (loopband): geen rij Weer, dus ook geen UV', () => {
+    expect(tile(briefing(input({ storedPlace: 'run_treadmill', forecast: sunny(7, 1500) })), 'weather')).toBeUndefined();
+  });
+  it('de plek laadde niet en het weer is van huis: geen hoogte van huis', () => {
+    const l = line({ forecast: sunny(4, 1500), weatherPlace: { name: 'Bergdorp', state: 'failed' } });
+    expect(l).toMatch(/UV 4/);
+    expect(l).not.toMatch(/ligt op/);
+  });
+  it('het weer van de gekozen plek: wel de hoogte', () => {
+    expect(line({ forecast: sunny(4, 1500), weatherPlace: { name: 'Bergdorp', state: 'shown' } })).toMatch(/ligt op 1\.500 m/);
+  });
+  it('instelling uit: niets erbij', () => {
+    expect(line({ forecast: sunny(7, 1500), uvAltitudeOn: false })).not.toMatch(/UV|ligt op/);
+  });
+  it('verandert de toon niet: amber blijft alleen voor let op', () => {
+    expect(tile(briefing(input({ forecast: sunny(9, 2000) })), 'weather')?.tone).toBeUndefined();
+  });
+});
+
 describe('geen weer', () => {
   it('zonder voorspelling zegt de rij dat er nog geen weer is', () => {
     expect(tile(briefing(input({ forecast: undefined })), 'weather')?.line).toBe('Nog geen weer');

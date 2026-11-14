@@ -339,6 +339,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
     reset: () => ({ routeMapBase: undefined, routeMapPhoto: undefined }),
   },
   overviewFlag('maanstand', 'Maanstand bij een avondtocht', 'moonLine'),
+  overviewFlag('uv-hoogte', 'UV en hoogte bij buiten', 'uvAltitude'),
   overviewFlag('kledingadvies', 'Kledingadvies', 'clothingAdvice'),
   overviewFlag('citaten', 'Citaat', 'completionMoment'),
   flag('geluid', 'Geluid', 'vandaag', 'introSoundEnabled', { resetTo: true }),

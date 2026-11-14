@@ -33,6 +33,7 @@ import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
 import { routeTarget } from './routeTarget';
 import { showSpotsFor } from './trainingSpots';
+import { outdoorSunParts } from './outdoorSun';
 import { placeChoices, placeHasRoute, placeIsOutdoor, resolvePlace, type PlaceChoice } from './trainingPlace';
 import { temperatureHead, weatherForTraining, windPhrase } from './weather';
 import { PLACE_WEATHER_FROM_HOME, placeWeatherFailed, placeWeatherLine } from './placeWeather';
@@ -234,6 +235,8 @@ export interface BriefingInput {
   // plek is, 'failed' als hij niet geladen kon worden en `forecast` het weer van huis bleef.
   weatherPlace?: { name: string; state: 'shown' | 'failed' };
   weatherOn: boolean;
+  // UV vanaf 3 en de hoogte van de plek vanaf 1000 m in de rij Weer (engine/outdoorSun.ts). Afwezig: aan.
+  uvAltitudeOn?: boolean;
   clothingOn: boolean;
   clothingAdjust?: number;
   sweatEntries?: SweatEntry[];
@@ -606,6 +609,17 @@ function weatherRow(input: BriefingInput, minutes: number): BriefingRow | undefi
     const first = clothingForTraining({ ...base, adjustC: input.clothingAdjust })?.lines[0];
     // Alleen de eerste zin: de rest staat op de weerpagina erachter.
     if (first) parts.push(lowerFirst(firstSentence(first)));
+  }
+  // UV en hoogte (engine/outdoorSun.ts): alleen als er al een weerregel is, en de hoogte alleen als het weer
+  // van de plek van je training is (niet het weer van huis omdat de plek niet laadde).
+  if (parts.length > 0) {
+    parts.push(...outdoorSunParts({
+      on: input.uvAltitudeOn !== false,
+      outdoor: true,
+      uvIndex: w.uvIndex,
+      elevationM: at?.state === 'failed' ? undefined : input.forecast?.elevationM,
+      sunscreenSaid: parts.some((p) => p.includes('zonnebrand')),
+    }));
   }
   if (parts.length === 0) return undefined;
   const tone = input.weatherOn && w.verdict !== 'prima' ? ('warn' as const) : undefined;
