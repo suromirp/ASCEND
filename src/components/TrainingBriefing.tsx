@@ -133,7 +133,8 @@ export function TrainingBriefing({
 
   // Het weer van de gekozen plek: alleen bij een route op de kaart en een plek verder dan 10 km van huis.
   const weatherTarget = placeWeatherTarget({ on: showPlaceWeather(settings.overviews) && !!routeMap && !declined, place: model.placeStart, home: model.homePoint, weatherHome: settings.homeLocation });
-  const placeWeather = briefingWeather(weatherTarget, usePlaceWeather(weatherTarget), input.forecast);
+  // Bij de vraag waar de lus begint (je plek lukte niet) zegt de rij Weer dat het weer van thuis is.
+  const placeWeather = briefingWeather(weatherTarget, usePlaceWeather(weatherTarget), input.forecast, searchOn && model.stage === 'ask');
   const view = placeWeather.place ? briefing({ ...input, forecast: placeWeather.forecast, weatherPlace: placeWeather.place }) : homeView;
 
   const [sheet, setSheet] = useState<'info' | 'watch' | 'steps' | 'fuel' | 'stretch' | 'route' | 'places' | undefined>();

@@ -108,7 +108,8 @@ export function AskStart({ model, height }: { model: RouteSearchModel; height?: 
   return (
     <div className="flex w-full flex-col items-start justify-center gap-1 rounded-xl border px-5" style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
       <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{model.ask.line}</p>
-      <TextButton tone="dim" onClick={model.retryHere}>Opnieuw</TextButton>
+      {/* Een gewone tekstknop in inkt, geen mint (dat is de knop onderaan) en niet gedempt: dit is de keuze hier. */}
+      <TextButton tone="dim" style={{ color: 'var(--color-ink)' }} onClick={model.retryHere}>Opnieuw</TextButton>
     </div>
   );
 }

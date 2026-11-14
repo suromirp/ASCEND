@@ -67,7 +67,7 @@ export function startFailureReason(reason: StartFailure): string {
 // waarom, en jij kiest: Opnieuw in het vak, of Thuis of Andere plek in de chips erboven (besluit
 // 2026-11-14-geen-stille-thuis.md). Thuis alleen als die er is.
 export const askStartLine = (reason: StartFailure, homeOffered: boolean): string =>
-  `${startFailureReason(reason)} Probeer het opnieuw, of kies hierboven ${homeOffered ? 'Thuis of Andere plek' : 'Andere plek'}.`;
+  `${startFailureReason(reason)} Probeer het opnieuw, of kies hierboven ${homeOffered ? 'Andere plek of Thuis' : 'Andere plek'}.`;
 
 // De regel bovenaan het paneel Route voorstellen.
 // Alleen nog als bewaker in de tests: deze zin komt na een mislukte plek nooit meer voor (geen stille Thuis).

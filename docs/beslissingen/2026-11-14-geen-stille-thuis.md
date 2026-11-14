@@ -17,6 +17,11 @@ Daarnaast zegt de regel als zoeken niet lukt welke stap niet op tijd was (heuvel
 - Een tik op Waar je nu bent zet chip en regel meteen om; "De lus begint bij Thuis." komt na een mislukte plek nergens meer voor.
 - Wat de regie uit het plan haalt staat puur in `engine/routeStart.ts#startView` en `#maySearch`, met tests; `routeStart.scan.test.ts` legt vast dat de regie ze gebruikt.
 
+## Na Pathfinder (14 november)
+
+- Zolang de vraag staat is er geen plek gekozen, dus het weer in de Briefing is van huis. De rij Weer zegt dat nu: "Weer thuis: ...". Zodra een plek gekozen is, volgt het weer die plek zoals voorheen (besluit `2026-11-12-weer-op-de-plek.md`).
+- Opnieuw in het vak is een gewone tekstknop in inkt; de vraagzin noemt Andere plek vóór Thuis.
+
 ## Reden
 
 De eigenaar, 14 november, op reis in het buitenland: "Hij moet dus stoppen met automatisch thuis." Thuis kan duizenden kilometers verderop liggen; een lus daar is nutteloos en de regel erboven las je makkelijk over.

@@ -7,7 +7,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import { resolveWatchModel } from './watchFields';
 import { makeForecast } from './fixtures/weatherFixture';
 import { briefing, type BriefingInput } from './briefing';
-import { PLACE_WEATHER_FROM_HOME, briefingWeather, placeWeatherFailed, placeWeatherTarget } from './placeWeather';
+import { PLACE_WEATHER_FROM_HOME, WEATHER_AT_HOME, briefingWeather, placeWeatherFailed, placeWeatherTarget } from './placeWeather';
 import { WEATHER_AT_PLACE_KM } from './places';
 import { metersBetween } from './routeGeometry';
 import { addDays } from '../utils/dates';
@@ -130,5 +130,23 @@ describe('de juiste dag uit de voorspelling van de plek', () => {
     expect(now.getHours()).toBe(0);
     const line = weatherLine(input({ session: plan(TOMORROW), date: TOMORROW, now, forecast: awayForecast, weatherPlace: at }));
     expect(line).toMatch(/^In Verwegdal: 1 graad, /);
+  });
+});
+
+// Pathfinder 14 november: bij de vraag waar de lus begint (je plek lukte niet, op reis) stond het weer van
+// thuis zonder woord naast "je plek lukte niet". Nu zegt de rij dat het weer van thuis is.
+describe('de vraag waar de lus begint: het weer zegt dat het van thuis is', () => {
+  it('zolang de vraag staat en er geen plek gekozen is: het weer van huis, met Weer thuis ervoor', () => {
+    const w = briefingWeather(undefined, undefined, homeForecast, true);
+    expect(w).toEqual({ forecast: homeForecast, place: { name: '', state: 'home' } });
+    expect(weatherLine(input({ weatherPlace: w.place }))).toMatch(new RegExp(`^${WEATHER_AT_HOME} 9 graden, `));
+  });
+  it('zonder de vraag: de regel zoals hij was', () => {
+    expect(briefingWeather(undefined, undefined, homeForecast, false)).toEqual({ forecast: homeForecast });
+  });
+  it('een plek gekozen: het weer volgt die plek, ook als de vraag nog zou staan', () => {
+    const target = placeWeatherTarget({ on: true, place: place(40), home: HOME });
+    const w = briefingWeather(target, { status: 'ok', forecast: awayForecast }, homeForecast, true);
+    expect(w.place).toEqual({ name: 'Verwegdal', state: 'shown' });
   });
 });

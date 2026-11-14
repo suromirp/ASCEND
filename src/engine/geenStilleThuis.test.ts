@@ -101,7 +101,7 @@ describe('de schermopname van de eigenaar (Briefing van een duurloop, op reis)',
   it('Thuis niet gelezen en je plek lukt niet: vragen, zonder Thuis in de regel en zonder stap Je plek bepalen', () => {
     const view = startView(planStart({ mode: 'here', home: null, homeUnread: true, found: { ok: false, reason: 'denied' } }));
     expect(view.ask?.homeOffered).toBe(false);
-    expect(view.ask?.line).not.toContain('Thuis of Andere plek');
+    expect(view.ask?.line).not.toContain('Andere plek of Thuis');
     expect(view.hereMode).toBe(false);
     expect(view.ready).toBe(false);
   });
