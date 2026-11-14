@@ -16,7 +16,7 @@ const MISSION = new Set(['TodayMissionCard', 'QuietDayCard', 'DoneTodayCard', 'S
 // De knop staat alleen in een blad dat de kaart opent (eigen laag, één knop in die laag).
 const IN_SHEET = new Set([
   'AdHocLogSheet', 'CoachCard', 'DailyStretchCard', 'ExerciseLogger', 'JourneyWeekCard', 'NotFitLink', 'ProposalSheet',
-  'RescheduleDialog', 'SessionActionSheet', 'WeekReviewCard', 'WeeklyQuestionCard', 'WeightReminder',
+  'RescheduleDialog', 'SessionActionSheet', 'WatchAskSheet', 'WeekReviewCard', 'WeeklyQuestionCard', 'WeightReminder',
 ]);
 // Vandaag geeft een stille stand mee: de knop wordt omlijnd naast de missie (en een beslissing is altijd omlijnd).
 const QUIETED: Record<string, RegExp> = {

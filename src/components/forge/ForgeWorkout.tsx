@@ -101,6 +101,7 @@ import { RestBar } from './ForgeTimers';
 import { ForgeIntro } from './ForgeIntro';
 import { ForgeHeader } from './ForgeHeader';
 import { LegEasePanel } from './LegEasePanel';
+import { warmNow } from '../../engine/warmupLater';
 
 // Een reden die ouder is dan dit hoort niet meer bij de volgende verandering van de rijen.
 const CAUSE_MAX_AGE_MS = 2000;
@@ -692,6 +693,7 @@ function ForgeWorkoutInner({
               noFitText={noFit[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, noFit[ex.slot]) ? noFitLine(noFit[ex.slot], !!ownWeightsFor(strength.profile, exerciseOf(ex))) : undefined}
               heavyTip={heavyTip[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, heavyTip[ex.slot]) ? heavyTip[ex.slot].text : undefined}
               rirAsValue={strength.rirPrefill === 'target'}
+              warmNow={warmNow(workout, ex)}
               swipeOn={swipeDeleteOn(settings)}
               undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
               quickRirRow={quickRir?.slot === ex.slot && asksReserve(ex, quickRir.rowId, strength.enabled && strength.assumedCounts, strength.quickRirMode === 'vaker' ? 'vaker' : 'twijfel') ? quickRir.rowId : undefined}
