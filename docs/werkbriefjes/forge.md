@@ -19,7 +19,7 @@ De krachttraining: de sessie met klok en concept, het voorschrift per oefening, 
 
 ## Nooit
 - Een bestaand log beschrijven; Afronden maakt een nieuw log (hoogstens één Forge-sessie). Een stand staat alleen bij het sportschoolprofiel, nooit in een log.
-- Sets tellen zonder `isWorkSet`; een opwarmset wordt bewaard maar telt niet.
+- Sets tellen zonder `isWorkSet`; een opwarmset wordt bewaard maar telt niet. Een opwarmset later stil weglaten: een aanloopset op een warm patroon blijft staan, gedempt en met één zin (`src/engine/warmupLater.ts`, `docs/beslissingen/2026-11-14-opwarmset-later.md`); `warmAlready` en `warmFrom` gaan nooit in het log.
 - De planning of een template wijzigen vanuit Forge, ook niet vanuit het blok Hoe goed kent Forge je, en een oude set zonder `rirAsked` raden (die telt niet voor de voorspelling); de tijdsgrens en Lichter raken alleen het scherm. Uitzondering: het voorstel Spieren voor de berg mag met Akkoord een oefening toevoegen, en het stapvoorstel mag met Akkoord een oefening op een andere ladderstap zetten; de lopende sessie verandert niet.
 - Een training herkennen aan een template-id: gebruik `src/engine/scheduler.ts#isLegHeavyTemplate` en rollen.
 - De tekeningen in `globPatterns` van `vite.config.ts` zetten; een gewijzigde tekening houdt `LICENSE.md` en `ATTRIBUTION.md` in `public/exercise-art/` waar.

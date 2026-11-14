@@ -36,9 +36,12 @@ export interface WarmState {
   muscles: Map<MuscleGroup, number>;
   // The compound movements done so far.
   patterns: Set<MovementPattern>;
+  // Per movement: the name of the last exercise that warmed it, as you saw it on the screen
+  // (engine/warmupLater.ts: "Je benen zijn warm van de Back Squat.").
+  by: Map<MovementPattern, string>;
 }
 
-export const newWarmState = (): WarmState => ({ regions: new Set(), muscles: new Map(), patterns: new Set() });
+export const newWarmState = (): WarmState => ({ regions: new Set(), muscles: new Map(), patterns: new Set(), by: new Map() });
 
 export const isCompound = (exercise: Pick<Exercise, 'pattern'>): boolean => COMPOUND_PATTERNS.has(exercise.pattern);
 
@@ -65,12 +68,13 @@ export function warmupKind(exercise: Exercise | undefined, state: WarmState): Wa
 // weight, not a light weight). A compound exercise that could not does not make
 // the body part count as warm: a heavy squat after a glute bridge still gets
 // its build-up.
-export function noteWorked(state: WarmState, exercise: Exercise | undefined, warmed = true): void {
+export function noteWorked(state: WarmState, exercise: Exercise | undefined, warmed = true, label?: string): void {
   if (!exercise) return;
   for (const m of exercise.primary) state.muscles.set(m, 1);
   if (isCompound(exercise) && warmed) {
     for (const m of exercise.secondary) state.muscles.set(m, Math.max(state.muscles.get(m) ?? 0, 0.5));
     state.regions.add(regionOf(exercise));
     state.patterns.add(exercise.pattern);
+    state.by.set(exercise.pattern, label ?? exercise.name);
   }
 }

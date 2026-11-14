@@ -26,6 +26,7 @@ import { StepUndoRow } from './StepUndoRow';
 import { stepUndoFrom } from './stepUndo';
 import { RestStepper } from './ForgeTimers';
 import { addOnMenuSub } from './forgeWorkoutHelpers';
+import { leftAlone } from '../../engine/warmupLater';
 
 type Strength = ReturnType<typeof resolveStrengthSettings>;
 type Settings = ReturnType<typeof useAppData>['settings'];
@@ -109,7 +110,8 @@ export function ExerciseMenuSheet({ ex, effSlots, readOnly, preview, templateId,
         const exercise = exerciseOf(ex);
         const why = reasonWithOwnCount(ex);
         const art = ex.known && !!exercise && showsExerciseArt(resolveExerciseArt(settings));
-        const allDone = ex.rows.length > 0 && ex.rows.every((r) => r.done);
+        // Een gedempte opwarmset die je liet liggen houdt Alle sets afvinken niet open (engine/warmupLater.ts).
+        const allDone = ex.rows.some((r) => r.done) && ex.rows.every(leftAlone);
         const added = !readOnly && !preview && isAddedSlot(settings.strengthModel, templateId, ex.slot);
         return (
           <div className="flex flex-col">

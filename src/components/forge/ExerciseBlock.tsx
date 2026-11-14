@@ -41,6 +41,7 @@ import { Segmented } from '../ui';
 import { addedKgOf, BAND_LABEL, bandOf, countsForLine, type LadderLines } from '../../engine/forgeLadder';
 import { SET_BANDS, type SetBand } from '../../models/training';
 import type { BlockActions } from './forgeWorkoutHelpers';
+import { mutedWarmup, warmAlreadyLine } from '../../engine/warmupLater';
 
 // Een uitleg onder de kop langer dan dit staat op één regel met "Waarom zo", dat het blad Oefening opent; daar
 // staat de hele reden bovenaan (docs/beslissingen/2026-11-02-forge-herinrichting.md).
@@ -137,6 +138,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   const workDone = ex.rows.filter((r) => r.kind === 'work' && r.done).length;
   const workTotal = ex.rows.filter((r) => r.kind === 'work').length;
   const complete = !readOnly && exerciseComplete(ex);
+  // Opwarmset later (engine/warmupLater.ts): de zin staat onder de laatste gedempte opwarmset, zolang die open staat.
+  const warmLineRow = !readOnly && ex.warmFrom ? ex.rows.filter((r) => mutedWarmup(r)).at(-1)?.id : undefined;
   // Met MacroFactor als bron staan kg en herhalingen al in hun eigen kolom;
   // de tweede kolom zegt dan wat je vorige keer deed.
   const showPrevious = readOnly || column === 'previous';
@@ -322,7 +325,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                     className="forge-grid forge-row items-center rounded-xl py-0.5"
                     style={{
                       background: row.done ? 'color-mix(in srgb, var(--color-progress) 16%, transparent)' : isActive ? 'color-mix(in srgb, var(--color-ink) 5%, transparent)' : 'transparent',
-                      opacity: row.kind === 'warmup' && !row.done ? 0.78 : 1,
+                      opacity: !readOnly && mutedWarmup(row) ? 0.55 : row.kind === 'warmup' && !row.done ? 0.78 : 1,
                       transition: 'background-color 0.3s ease, opacity 0.3s ease',
                     }}
                   >
@@ -390,6 +393,9 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                     </span>
                   </LongPressRow>
                   </SwipeRow>
+                  {row.id === warmLineRow && ex.warmFrom && (
+                    <p role="note" className="ml-9 font-sans text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{warmAlreadyLine(exercise, ex.warmFrom)}</p>
+                  )}
                   {!readOnly && row.kind === 'work' && addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg) && (
                     <p className="ml-9 h-5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg)} kg</p>
                   )}

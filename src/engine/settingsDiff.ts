@@ -198,6 +198,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthChoice('forge-sets', 'Werksets', 'workSets', 'werksets'),
   strengthChoice('forge-opwarmen', 'Opwarmen', 'warmup', 'opwarmen'),
   strengthChoice('forge-opwarmbereik', 'Opwarmen per', 'warmupScope', 'opwarmbereik'),
+  strengthFlag('forge-opwarmset-later', 'Opwarmset later dempen', 'warmupMuted'),
   strengthChoice('forge-vermoeidheid', 'Vermoeidheid per set', 'fatigue', 'vermoeidheid'),
   strengthFlag('forge-pauze', 'Na een pauze lichter beginnen', 'lighterAfterBreak'),
   strengthFlag('forge-rekent-mee', 'Forge rekent mee', 'reckon'),

@@ -35,7 +35,7 @@ const everything: AppSettings = {
   bootBreakInReminder: false,
   strengthModel: {
     enabled: false, progression: 'reps_first', workSets: 'equal', warmup: 'off', warmupScope: 'exercise', widenRange: false,
-    estimateUpTo: 12, restAuto: false, restAlert: 'off', restSound: 'templebell', restVolume: 'clear', restPreTick: true, restNextExercise: false, keepScreenOn: false, carryMode: 'off', showPlates: true, quickRir: false, quickRirMode: 'uit', ladderRow: false, askClean: false, askBand: false, stepProposal: false, calibration: false, knowsYou: false,
+    estimateUpTo: 12, restAuto: false, restAlert: 'off', restSound: 'templebell', restVolume: 'clear', restPreTick: true, restNextExercise: false, keepScreenOn: false, carryMode: 'off', showPlates: true, warmupMuted: false, quickRir: false, quickRirMode: 'uit', ladderRow: false, askClean: false, askBand: false, stepProposal: false, calibration: false, knowsYou: false,
     showOneRm: false, oneRmView: 'work_weight', showMacroFactorOneRm: false, compareWeeks: '2_4', listSort: 'name', showExtras: false,
     showTrendLines: false, stackWeights: 'used_only', lighterAfterBreak: false, dumbbellLog: 'total', fatigue: 'fixed', showComparison: true,
     adjustLive: false, reckon: false, learnStands: false, assumedCounts: false, crossFatigue: false, noSpotter: false, mountainMuscles: false, mountainBalance: false, rirPrefill: 'target',

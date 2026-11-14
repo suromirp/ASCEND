@@ -31,6 +31,7 @@ import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
 import { assumedRaise, DEFAULT_RIR, dumbbellTotalFor, expectedReps, fatigueFactor, formatWeight, HARD_SET_MAX_RIR, isHardPair, lastDateBefore, prescribe, raisedText, TOP_SET_LADDER, topSetWarmups, usedBefore, warmupSets, warmupShapes, type DoneBefore, type Prescription, type SetAim, type WarmupSet } from './strengthModel';
 import { COMPOUND_PATTERNS, isCompound, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmState } from './warmup';
+import { leftAlone, warmAlready } from './warmupLater';
 import { programLine } from './programLine';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
 import { barFor, candidatesFor, loadFromExternal, profileFor } from './strengthWeights';
@@ -100,6 +101,9 @@ export interface WorkoutRow {
   // do not touch the row, it follows that weight (and an empty row fills in as
   // soon as set 1 gets a weight). Lives in the draft only.
   share?: number;
+  // Een geplande opwarmset op een patroon dat in deze training al warm is (engine/warmupLater.ts): gedempt, met de
+  // zin bij de oefening (`WorkoutExercise.warmFrom`). Laten liggen telt niet als gemist. Alleen in het concept.
+  warmAlready?: boolean;
 }
 
 export interface WorkoutExercise {
@@ -123,6 +127,9 @@ export interface WorkoutExercise {
   restSec: number;
   // The name of the exercise this one replaced, for this training only.
   swappedFrom?: string;
+  // De oefening ervoor die dit patroon al warm maakte (engine/warmupLater.ts): de opwarmset staat gedempt met
+  // de zin "Je benen zijn warm van de ...". Afwezig: gewone opwarmset of geen.
+  warmFrom?: string;
   // De ruil kwam van Stap lichter of Stap zwaarder (niet van Ruilen): de rijen zijn die van de stap zelf. Staat in
   // het concept naast `swappedFrom`; een heropend concept houdt een geruilde oefening zoals hij was (mergeDraft).
   ladderStep?: boolean;
@@ -278,7 +285,7 @@ export function planStateBefore(ctx: PlanContext, workout: WorkoutExercise[], sl
     if (ex.slot === slot) break;
     // Zelfde regel als planExercise: een timed oefening en een houding keren daar vroeg terug en tellen niet mee.
     if (!ex.timed && !ex.hold) {
-      noteWorked(state.warm, exerciseOf(ex), ex.rows.some((r) => r.kind === 'warmup'));
+      noteWorked(state.warm, exerciseOf(ex), ex.rows.some((r) => r.kind === 'warmup'), ex.name);
       noteDone(state, exerciseOf(ex), ex.rows);
       state.before?.push({ exercise: exerciseOf(ex), hard: expectedHard(hardPlanned(ex.rows), loggedHard(state.histories.get(exerciseKey(ex.exerciseId, ex.name).key), ctx)) });
     }
@@ -405,6 +412,8 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   // warm van een oefening ervoor op dezelfde spieren alleen de stappen naar de topset (strengthModel.ts#topSetWarmups).
   const firstAim = targets?.[0] ? { rir: targets[0].rir, failure: targets[0].failure } : { rir: rx?.sets[0]?.rir ?? baseRir };
   const hardTop = !!exercise && isCompound(exercise) && (!!firstAim.failure || firstAim.rir <= HARD_SET_MAX_RIR);
+  // Stappen naar een zware topset zijn nooit overbodig: die worden niet gedempt (engine/warmupLater.ts).
+  let topSteps = false;
   if (hardTop && ctx.modelOn && warmKind !== 'none' && workWeights[0] !== undefined) {
     const candidates = candidatesFor(exercise, profileFor(ctx.settings.profile, dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: workWeights[0], usedKg: learned, stackWeights: ctx.settings.stackWeights, dumbbellTotal });
     const cold = warmKind === 'full';
@@ -413,6 +422,7 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
     if (!cold || (warmups.length < TOP_SET_LADDER && made.length > warmups.length)) {
       warmups = made;
       emptyWarmups = [];
+      topSteps = true;
     }
   }
   let rows: WorkoutRow[] = [];
@@ -488,9 +498,13 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
   }
   // Band bij optrekken en dip: de band van je vorige keer staat klaar op de werksets.
   if (bandOn && exercise?.assist === 'band') rows = withLastBand(rows, last?.sets);
+  // Opwarmset later (engine/warmupLater.ts): een aanloopset op een patroon dat al warm is blijft staan, gedempt en
+  // met één zin. Vóór noteWorked, anders is deze oefening zelf de bron.
+  const warmFrom = ctx.settings.warmupMuted && !topSteps && rows.some((r) => r.kind === 'warmup') ? warmAlready(exercise, warmKind, state.warm) : undefined;
+  if (warmFrom) rows = rows.map((r) => (r.kind === 'warmup' ? { ...r, warmAlready: true } : r));
   // The body part counts as warm only after an exercise that got warm-up sets. Na de bijstelling hierboven, zodat
   // de volgende oefening het echte werkgewicht en de echte opwarmsets ziet.
-  noteWorked(state.warm, exercise, rows.some((r) => r.kind === 'warmup'));
+  noteWorked(state.warm, exercise, rows.some((r) => r.kind === 'warmup'), name);
   noteDone(state, exercise, rows);
   // "Forge rekent mee" ging een stap omhoog: de sets zoals ze zonder die stap waren, voor Terugzetten.
   let raise: WorkoutExercise['raise'];
@@ -552,6 +566,7 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
     ...(rx ? { fatiguePerSet: rx.fatiguePerSet, fatigueAfterHard: rx.fatigueAfterHard, strengthKg: cross && crossNote ? rx.strengthKg * cross.factor : rx.strengthKg } : {}),
     ...(raise ? { raise } : {}),
     ...(swapTo ? { swappedFrom: cleanExerciseName(slot.exerciseName) } : {}),
+    ...(warmFrom ? { warmFrom } : {}),
   };
 }
 
@@ -699,14 +714,15 @@ function unticked(row: WorkoutRow): WorkoutRow {
 export function tickAllRows(workout: WorkoutExercise[], slot: string, now: number = Date.now()): TickResult {
   const ex = workout.find((e) => e.slot === slot);
   if (!ex || ex.rows.length === 0) return { workout };
-  const untick = ex.rows.every((r) => r.done);
+  // Een gedempte opwarmset (engine/warmupLater.ts) vinkt alles afvinken niet mee af: laten liggen mag.
+  const untick = ex.rows.every(leftAlone) && ex.rows.some((r) => r.done);
   let carry: number | undefined;
   const next = workout.map((e) =>
     e.slot === slot
       ? {
           ...e,
           rows: e.rows.map((r) => {
-            const out = untick ? unticked(r) : r.done ? r : fillTicked(r, carry, now);
+            const out = untick ? (r.done ? unticked(r) : r) : r.done || leftAlone(r) ? r : fillTicked(r, carry, now);
             if (r.kind === 'work' && out.weightKg !== undefined) carry = out.weightKg;
             return out;
           }),
@@ -714,7 +730,7 @@ export function tickAllRows(workout: WorkoutExercise[], slot: string, now: numbe
       : e,
   );
   if (untick) return { workout: next };
-  const allDone = next.every((e) => e.rows.every((r) => r.done));
+  const allDone = next.every((e) => e.rows.every(leftAlone));
   return allDone ? { workout: next } : { workout: next, restSec: ex.restSec };
 }
 
@@ -729,7 +745,7 @@ export function tickRow(workout: WorkoutExercise[], slot: string, rowId: string,
   const next = workout.map((e) => (e.slot === slot ? { ...e, rows: e.rows.map((r) => (r.id === rowId ? filled : r)) } : e));
   if (!done) return { workout: next };
   const lastWarmup = row.kind === 'warmup' && !ex.rows.slice(index + 1).some((r) => r.kind === 'warmup');
-  const allDone = next.every((e) => e.rows.every((r) => r.done));
+  const allDone = next.every((e) => e.rows.every(leftAlone));
   const rest = (row.kind === 'work' || lastWarmup) && !allDone;
   if (!rest) return { workout: next };
   if (row.kind === 'work') return { workout: next, restSec: ex.restSec };

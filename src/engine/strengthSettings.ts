@@ -20,7 +20,7 @@ type ProgressionFirst = 'weight_first' | 'reps_first';
 export type WorkSetsMode = 'descending' | 'equal';
 type WarmupMode = 'smart' | 'scheme' | 'off';
 // Who gets the full build-up: the first heavy exercise of a body part, or every compound exercise.
-type WarmupScope = 'group' | 'exercise';
+export type WarmupScope = 'group' | 'exercise';
 // What happens when the rest timer of the workout screen runs out.
 export type RestAlert = 'sound_vibrate' | 'vibrate' | 'sound' | 'off';
 // The sound at the end of the rest and its volume: engine/restSounds.ts.
@@ -205,6 +205,9 @@ export interface StrengthSettings {
   workSets?: WorkSetsMode;
   warmup?: WarmupMode;
   warmupScope?: WarmupScope;
+  // Opwarmset later dempen (engine/warmupLater.ts): een aanloopset op een patroon dat al warm is staat gedempt, met
+  // één zin waarom. Absent: aan.
+  warmupMuted?: boolean;
   // Widen the rep range for a while when the step of the machine is too coarse.
   widenRange?: boolean;
   // Up to how many reps to failure a set counts for the estimate (12, 15 or 20).
@@ -337,6 +340,7 @@ export interface ResolvedStrengthSettings {
   workSets: WorkSetsMode;
   warmup: WarmupMode;
   warmupScope: WarmupScope;
+  warmupMuted: boolean;
   widenRange: boolean;
   estimateUpTo: number;
   profile: GymProfile;
@@ -564,6 +568,7 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (warmup) out.warmup = warmup;
   const warmupScope = WARMUP_SCOPES.find((p) => p === raw.warmupScope);
   if (warmupScope) out.warmupScope = warmupScope;
+  if (typeof raw.warmupMuted === 'boolean') out.warmupMuted = raw.warmupMuted;
   const upTo = ESTIMATE_UP_TO_OPTIONS.find((n) => n === raw.estimateUpTo);
   if (upTo) out.estimateUpTo = upTo;
   if (Array.isArray(raw.profiles)) {
@@ -651,6 +656,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     workSets: s.workSets ?? 'descending',
     warmup: s.warmup ?? 'smart',
     warmupScope: s.warmupScope ?? 'group',
+    warmupMuted: s.warmupMuted ?? true,
     widenRange: s.widenRange ?? true,
     estimateUpTo: s.estimateUpTo ?? 20,
     profile,
@@ -760,6 +766,8 @@ export function strengthModelKey(raw: StrengthSettings | undefined): string {
   delete copy.quickRir;
   delete copy.quickRirMode;
   delete copy.showPlates;
+  // Opwarmset later dempen verandert geen gewicht en geen telling, alleen hoe de set eruitziet.
+  delete copy.warmupMuted;
   return JSON.stringify(copy);
 }
 

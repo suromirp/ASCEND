@@ -418,7 +418,7 @@ const waitingSummary = (base: RowSummary, value: string): RowSummary => ({ title
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
 const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
-const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-ijkset', 'forge-doorvoeren', 'forge-schijven'];
+const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-ijkset', 'forge-doorvoeren', 'forge-schijven', 'forge-opwarmset-later'];
 const adviceOrCount = (ids: string[], s: AppSettings): RowSummary => {
   const n = countDifferences(ids, s);
   return n === 0 ? { value: 'Advies' } : { value: `${n} aangepast` };
@@ -596,6 +596,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('opwarmen', forge.warmup) };
     case 'forge-opwarmbereik':
       return { value: choiceShort('opwarmbereik', forge.warmupScope) };
+    case 'forge-opwarmset-later':
+      return { checked: forge.warmupMuted, sub: forge.warmupScope === 'exercise' ? 'Niets te dempen bij Per oefening' : 'Gedempt, met één zin waarom' };
     case 'forge-bereik':
       return { checked: forge.widenRange, sub: 'Bij toestellen met grote stappen' };
     case 'forge-schatting':

@@ -582,6 +582,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Alleen kijken', text: 'het blok verandert je plan en je logs nooit. Met te weinig sets staat er "nog te weinig data".' },
     ],
   },
+  forgeOpwarmsetLater: {
+    title: 'Opwarmset later dempen',
+    lead: 'Een opwarmset op een beweging die al warm is, zoals de leg press na de squat, is vaak niet nodig.',
+    points: [
+      { head: 'Aan', text: 'de set blijft staan, gedempt, met één zin waarom. Afvinken telt als opwarmset; laten liggen telt niet als gemist.' },
+      { head: 'Gewoon', text: 'bij een nieuwe spiergroep of een nieuwe beweging, en bij de stappen naar een zware topset.' },
+      { head: 'Uit', text: 'elke opwarmset staat er zoals altijd.' },
+    ],
+  },
   forgeSchijven: {
     title: 'Schijven bij de set',
     lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt. Standaard uit: het cijferblok toont ze als je het gewicht intikt.',
