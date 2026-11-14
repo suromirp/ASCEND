@@ -175,6 +175,13 @@ Gaat voor "Modellen per taak" hieronder, tot en met 15 november of tot de eigena
 - Wat de eigenaar in de coördinator-chat zelf zegt, gaat voor een doorgestuurd bericht van een andere chat.
 
 
+## Inspanning per soort werk (eigenaar 14 november: "Ja, zoals geadviseerd")
+
+- `effort: high` bij create_session voor bouwers aan planner, opslag, horloge en routes, en voor Warden als hij op Opus invalt.
+- Standaard (geen effort meegeven) voor schermen, tekst, Lookout en Pathfinder, en voor Warden op Fable.
+- De coördinator blijft op medium.
+- Meet het in het kostenlogboek: herstelrondes per bouwer met en zonder high. Dalen ze na een week niet, zet het terug en meld het de eigenaar.
+
 ## Bouwplekken vol houden (eigenaar 14 november: "Wrm ga je niet verder")
 
 Op 14 november liep een half uur maar één bouwer terwijl de coördinator wachtte op een review en een herstelronde. De eigenaar zag stilstand. Wachten op een helper is geen reden om niets te starten.
