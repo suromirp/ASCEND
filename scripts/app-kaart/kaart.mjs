@@ -126,6 +126,39 @@ async function openRunInDetail(page) {
   await page.waitForTimeout(1500);
 }
 
+// Een rij van Instellingen openen: links op de titel tikken, want rechts staat de InfoButton over de rij heen.
+async function rij(page, id) {
+  const l = page.locator(`[data-row="${id}"] .st-hit`).first();
+  if (!(await l.count())) throw new Error('niet gevonden: rij ' + id);
+  await l.scrollIntoViewIfNeeded();
+  await l.tap({ position: { x: 24, y: 18 } });
+  await page.waitForTimeout(1200);
+}
+
+// De instellingenschermen (docs/visie/Ontwerp instellingen op een plek.md, stap 0): elke groepspagina, elke pagina
+// Geavanceerd en elk blad van een rij met meer keuzes (MOVED met sheet in data/settingsLayout.ts). Gegevens staat
+// hierboven al als eigen scherm. Vier bladen zijn met geen nagemaakte stand te openen en staan er niet in:
+// bundel-tochten (geen hoofddoel of tocht), bundel-horloge-gebruik en bundel-horloge-sturen (Garmin niet gekoppeld)
+// en bundel-toets (geen MacroFactor-export).
+const GROEPEN = { planning: 'Planning', doel: 'Doel en tochten', forge: 'Forge', lichaam: 'Lichaam', vandaag: 'Vandaag en meldingen', koppelingen: 'Koppelingen', gegevens: 'Gegevens en back-up', gidsen: 'Gidsen en kennis' };
+const GEAVANCEERD = ['planning', 'forge', 'vandaag', 'koppelingen', 'gegevens'];
+const BLADEN = [
+  ['planning', 'bundel-dagen'], ['planning', 'meerdere'], ['planning', 'bundel-sporten-tellen'], ['planning', 'ambitie'], ['planning', 'bundel-testloop'], ['planning', 'bundel-weekmelding'],
+  ['planning/geavanceerd', 'bundel-niet-doorgegaan'], ['planning/geavanceerd', 'bundel-slepen'],
+  ['doel', 'bundel-zonder-doel', 'zonder-doel'], ['doel', 'bundel-ascend'],
+  ['forge', 'bundel-weergave'], ['forge', 'bundel-rusttimer'], ['forge', 'bundel-sportschool'],
+  ['forge/geavanceerd', 'forge-tijdsgrens'], ['forge/geavanceerd', 'bundel-rekenmodel'], ['forge/geavanceerd', 'bundel-invullen'], ['forge/geavanceerd', 'forge-bergspieren'],
+  ['lichaam', 'lichaamsgewicht'], ['lichaam', 'bundel-wat'], ['lichaam', 'bundel-signalen'],
+  ['vandaag', 'kaarten'], ['vandaag', 'lichterbenen'], ['vandaag', 'bundel-meldingen'], ['vandaag', 'weerplaats'], ['vandaag', 'bundel-weer'], ['vandaag', 'lucht'], ['vandaag', 'bundel-inzicht'], ['vandaag', 'bundel-run-detail'],
+  ['koppelingen', 'bundel-strava'],
+  ['gegevens', 'toestemmingen'], ['gegevens', 'auto-backup'],
+];
+const INSTELLINGEN = Object.fromEntries([
+  ...Object.entries(GROEPEN).filter(([g]) => g !== 'gegevens').map(([g, t]) => [`instellingen-${g}`, { titel: `Instellingen: ${t}`, pad: `#/more/${g}` }]),
+  ...GEAVANCEERD.map((g) => [`instellingen-${g}-geavanceerd`, { titel: `Instellingen: ${GROEPEN[g]}, Geavanceerd`, pad: `#/more/${g}/geavanceerd` }]),
+  ...BLADEN.map(([pad, id, stand]) => [`instellingen-blad-${id}`, { titel: `Instellingen: blad ${id} (${GROEPEN[pad.split('/')[0]]}${pad.includes('/') ? ', Geavanceerd' : ''}${stand ? `, stand ${stand}` : ''})`, pad: `#/more/${pad}`, ...(stand ? { stand } : {}), actie: (p) => rij(p, id) }]),
+]);
+
 const SCHERMEN = {
   vandaag: { titel: 'Vandaag', pad: '#/' },
   week: { titel: 'Week', pad: '#/week' },
@@ -193,6 +226,7 @@ const SCHERMEN = {
   'week-voorstel-wacht': { titel: 'Week met Let op en een voorstel dat wacht', pad: '#/week', stand: 'voorstel-wacht' },
   'week-rustweek': { titel: 'Week in een rustweek', pad: '#/week', stand: 'rustweek' },
   'week-rustweek-blad': { titel: 'Blad Rustweek (Week)', pad: '#/week', stand: 'rustweek', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Rustweek")') },
+  ...INSTELLINGEN,
 };
 
 // Van een regel van de kaart naar wat je op het scherm zoekt: de tekst van een knop, een kop, een kaart of gewone tekst.
