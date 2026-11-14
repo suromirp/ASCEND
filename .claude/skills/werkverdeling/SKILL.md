@@ -175,6 +175,13 @@ Gaat voor "Modellen per taak" hieronder, tot en met 15 november of tot de eigena
 - Wat de eigenaar in de coördinator-chat zelf zegt, gaat voor een doorgestuurd bericht van een andere chat.
 
 
+## Inspanning per soort werk (eigenaar 14 november: "Ja, zoals geadviseerd")
+
+- `effort: high` bij create_session voor bouwers aan planner, opslag, horloge en routes, en voor Warden als hij op Opus invalt.
+- Standaard (geen effort meegeven) voor schermen, tekst, Lookout en Pathfinder, en voor Warden op Fable.
+- De coördinator blijft op medium.
+- Meet het in het kostenlogboek: herstelrondes per bouwer met en zonder high. Dalen ze na een week niet, zet het terug en meld het de eigenaar.
+
 ## Bouwplekken vol houden (eigenaar 14 november: "Wrm ga je niet verder")
 
 Op 14 november liep een half uur maar één bouwer terwijl de coördinator wachtte op een review en een herstelronde. De eigenaar zag stilstand. Wachten op een helper is geen reden om niets te starten.
@@ -184,7 +191,7 @@ Op 14 november liep een half uur maar één bouwer terwijl de coördinator wacht
 - Elke send_later voor een check-in noemt ook: "start bij een vrije plek de volgende die geen bestanden deelt".
 - Uitzondering alleen bij de Wachter-regels hierboven of als de eigenaar zegt te wachten. Een `allowed_warning` in rate_limit_info is geen reden om af te schalen (eigenaar 14 november: "Je hebt genoeg ruimte, je hoeft niet af te schalen"). Alleen Fable is krap: houd Fable voor het werk waar de tabel het vraagt, en meld het de eigenaar zodra Fable bijna vol is (of een Fable-sessie geweigerd wordt); hij heeft dan nog een reset.
 - Meld de eigenaar welke bouwers lopen en wanneer je weer kijkt; zeg het als een plek bewust leeg blijft, met de reden.
-- Hoogstens zes sessies tegelijk, helpers van de coördinator meegeteld: drie bouwers plus drie profielen, reviewers of Lookouts (14 november: negen tegelijk liep de vijfuurslimiet in anderhalf uur vol, 45 minuten stilstand). Profielen in rondes van hoogstens drie.
+- Hoogstens zes sessies tegelijk (tot acht als de eigenaar zegt maximaal door te gaan, zoals in de nacht van 14 november), helpers van de coördinator meegeteld: drie bouwers plus drie profielen, reviewers of Lookouts (14 november: negen tegelijk liep de vijfuurslimiet in anderhalf uur vol, 45 minuten stilstand). Profielen in rondes van hoogstens drie.
 
 ## Check-in en reflectie (eigenaar 14 november)
 

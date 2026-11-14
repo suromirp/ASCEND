@@ -13,7 +13,21 @@ const css = nodeFs.readFileSync(new URL('./settings/settings.css', import.meta.u
 describe('Start bij in de regie en op het scherm', () => {
   it('een locatie-antwoord telt alleen voor de poging die hem stelde, en er is één vraag per poging', () => {
     expect(search).toContain('locateAnswerCounts(askedFor.current, attempt)) setHere(');
-    expect(search).toContain('askedFor.current === attempt) return;');
+    // Eén vraag per poging: engine/routeStart.ts#locateNow (getest in engine/geenStilleThuis.test.ts).
+    expect(search).toContain('!locateNow(planKind, askedFor.current, attempt)) return;');
+  });
+  // Geen stille Thuis (Warden 14 november: deze regels overleefden eerst elke test). De logica zelf staat in
+  // engine/routeStart.ts#startView en #maySearch (getest in engine/geenStilleThuis.test.ts); hier staat vast
+  // dat de regie ze gebruikt.
+  it('de regie zoekt alleen via maySearch, met de vraag uit startView, en Opnieuw is een nieuwe poging', () => {
+    expect(search).toContain('const start = startView(plan);');
+    expect(search).toContain('const ready = start.ready;');
+    expect(search).toContain('if (!maySearch({ closing, enabled, asked, ready, searchNeeded,');
+    expect(search).toContain('ask: start.ask !== undefined,');
+    expect(search).toContain('ask: start.ask,');
+    expect(search).toMatch(/retryHere: \(\) => \{[^}]*setStartPicked\('here'\);[^}]*setAttempt\(\(n\) => n \+ 1\);/);
+    expect(search).toContain("searchFailLine(search.kind, step?.key === key ? step.step : undefined, !isOffline())");
+    expect(search).not.toMatch(/navigator\.onLine/);
   });
   it('sluiten stopt ook de vraag om je plek; een nieuwe controller per mount', () => {
     expect(search).toContain('if (closing) locateStop.current.abort();');

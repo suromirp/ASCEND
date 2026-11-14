@@ -59,7 +59,7 @@ import { showPlaceWeather } from '../engine/overviewSettings';
 import { useMotionMode } from './motion';
 import { RouteMap } from './RouteMap';
 import { RouteSearching } from './RouteSearching';
-import { RouteFailure, RouteFirstQuestion, RoutePanelView, StartChips } from './RoutePanel';
+import { AskStart, RouteFailure, RouteFirstQuestion, RoutePanelView, StartChips } from './RoutePanel';
 import { useRouteSearch, type RouteSearchModel } from './useRouteSearch';
 import { IntervalProfile, KeyNumbers, StepList } from './duur/DuurParts';
 import { StretchItems } from './StretchList';
@@ -133,7 +133,8 @@ export function TrainingBriefing({
 
   // Het weer van de gekozen plek: alleen bij een route op de kaart en een plek verder dan 10 km van huis.
   const weatherTarget = placeWeatherTarget({ on: showPlaceWeather(settings.overviews) && !!routeMap && !declined, place: model.placeStart, home: model.homePoint, weatherHome: settings.homeLocation });
-  const placeWeather = briefingWeather(weatherTarget, usePlaceWeather(weatherTarget), input.forecast);
+  // Bij de vraag waar de lus begint (je plek lukte niet) zegt de rij Weer dat het weer van thuis is.
+  const placeWeather = briefingWeather(weatherTarget, usePlaceWeather(weatherTarget), input.forecast, searchOn && model.stage === 'ask');
   const view = placeWeather.place ? briefing({ ...input, forecast: placeWeather.forecast, weatherPlace: placeWeather.place }) : homeView;
 
   const [sheet, setSheet] = useState<'info' | 'watch' | 'steps' | 'fuel' | 'stretch' | 'route' | 'places' | undefined>();
@@ -460,11 +461,21 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
       </div>
     );
   }
+  // Je plek lukte niet: de vraag waar de lus begint, op de plek van de kaart; er wordt niet gezocht.
+  if (stage === 'ask') {
+    return (
+      <div className="flex flex-col gap-2">
+        {start}
+        <AskStart model={model} height={BRIEFING_MAP_HEIGHT} />
+        {targetLine}
+      </div>
+    );
+  }
   if (stage === 'offline' || stage === 'timeout') {
     return (
       <div className="flex flex-col gap-2">
         {start}
-        <RouteFailure kind={stage} onRetry={model.retry} height={BRIEFING_MAP_HEIGHT} />
+        <RouteFailure kind={stage} onRetry={model.retry} height={BRIEFING_MAP_HEIGHT} line={model.failLine} />
         {targetLine}
       </div>
     );

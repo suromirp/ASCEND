@@ -45,12 +45,17 @@ export type PlaceWeatherState = { status: 'loading' } | { status: 'ok'; forecast
 export interface BriefingWeather {
   forecast?: WeatherForecast;
   // 'shown': dit is het weer van de plek. 'failed': dit is het weer van huis, en dat zegt de regel.
-  place?: { name: string; state: 'shown' | 'failed' };
+  // 'home': je plek lukte niet en er is nog geen plek gekozen (de vraag van Route); het weer is van huis,
+  // en dat zegt de regel (Pathfinder 14 november: op reis stond anders het weer van thuis zonder woord).
+  place?: { name: string; state: 'shown' | 'failed' | 'home' };
 }
 
 // Zolang de voorspelling van de plek laadt staat het weer van huis er, zonder plaatsnaam: nooit een
 // leeg vak. Mislukt hij, dan blijft het weer van huis staan met één eerlijke regel.
-export function briefingWeather(target: WeatherPlace | undefined, state: PlaceWeatherState | undefined, home: WeatherForecast | undefined): BriefingWeather {
+// `asking`: de Briefing staat op de vraag waar de lus begint (je plek lukte niet); zodra er een plek
+// gekozen is, volgt het weer die plek weer zoals hierboven.
+export function briefingWeather(target: WeatherPlace | undefined, state: PlaceWeatherState | undefined, home: WeatherForecast | undefined, asking = false): BriefingWeather {
+  if (!target && asking) return { forecast: home, place: { name: '', state: 'home' } };
   if (!target || !state || state.status === 'loading') return { forecast: home };
   if (state.status === 'ok') return { forecast: state.forecast, place: { name: target.name, state: 'shown' } };
   return { forecast: home, place: { name: target.name, state: 'failed' } };
@@ -61,3 +66,4 @@ const nameOf = (name: string) => (name ? name : 'je plek');
 export const placeWeatherLine = (name: string, line: string): string => `In ${nameOf(name)}: ${line.charAt(0).toLowerCase()}${line.slice(1)}`;
 export const placeWeatherFailed = (name: string): string => `Weer in ${nameOf(name)} laadde niet.`;
 export const PLACE_WEATHER_FROM_HOME = 'Thuis:';
+export const WEATHER_AT_HOME = 'Weer thuis:';
