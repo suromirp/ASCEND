@@ -26,9 +26,17 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Stuk of vast
 
+- Waar je nu bent in de Briefing: "Je precieze plek is niet beschikbaar" (21:42, binnen). De app keurt de eerste grove plek af zonder te wachten, en zegt niet of Android alleen bij benadering geeft. Herstel wordt gebouwd; tot dan werkt Andere plek.
 - Back-up: de oplossing staat live (17:45). Graag een test op uw toestel: Gedwongen stoppen, openen, meteen Back-up maken, drie keer; kijk in Documents/ASCEND of er een bestand zonder -2 staat.
 
 ## Net live
+
+### 15 november 22:45
+- Week zegt overal hetzelfde: een training die je op een andere dag deed zegt "gedaan di 27", de weekterugblik noemt ook overgeslagen en vervallen, en bij gemist is er één advies: niet dubbel doen, zet de rest terug.
+- Forge: Training afronden stelt de dag van je laatste set voor, met het tijdstip van die set.
+- Een back-up terugzetten schrijft alleen wat nieuw is; een fout halverwege laat niets half staan.
+- Het oude trainingsscherm en afvinken op Vandaag en Week: een tijdgrens, een uitweg en nooit een tweede log.
+- Weer van de plek: de plek die je in de Briefing kiest, geldt voor die training, ook voor het weer de avond ervoor. Instelling Gekozen plek onthouden in Weer en kleding.
 
 ### 15 november 20:50
 - Ziek melden: de keuzes heten "Neus of keel, zonder koorts" en "Koorts, ook als je verkouden bent".

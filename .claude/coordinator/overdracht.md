@@ -27,20 +27,15 @@ Bijgewerkt: 15 november 2026, 18:40 Portugese tijd, door de coördinator session
 - Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam] staat (trig_01SgRjhVtzejbpKaz26bmsAi).
 - 18:35: deploy en Android van 8cce377 groen. Lookout en Pathfinder Beginner heel licht en Pathfinder Routes op reis 3 lopen als helpers in de coördinator-chat.
 
-## Stand 19:50 (coördinator session_01LnDpSjEhK5wS8sN1rH1p5c)
+## Stand 22:45 (coördinator session_01LnDpSjEhK5wS8sN1rH1p5c)
 
-- Live vanavond: 09c716d Routes op reis 3 (I-8), 8af3e43 Beginner heel licht stap 1 en 2 (I-18 loopt door: stap 3), 91a4419 Ziek melden (I-48), e24d944 Back-up mag-punten. Deploy van deze vier nog nakijken.
-- Wacht op herstel van de bouwer, daarna cherry-pick op main en main (de bouwer meldt zich hier met create_trigger):
-  - Oud trainingsscherm (session_01LnDpSnt3xo2ApGNgFFNvxQ): M1 en M2 in logSave.ts, dan `claude/oud-trainingsscherm-main`. Daarna Lookout (trage opslag) en Pathfinder.
-  - Forge nawerk (session_01LnDpSmRtKRvbByZGmXjMaJ): twee moet, dan `claude/forge-nawerk-main`. Daarna Lookout (forge-afronden-gisteren, twee tabbladen).
-  - Week samenhang (session_01LnDpSk1qS9r2sGs2psx7dK): opnieuw op main, besluit rechtzetten, proeftests, dan `claude/week-samenhang-main`. Daarna Lookout (360 px, schermlezer "gedaan di 27") en Pathfinder.
-  - Weer van de plek (session_01LnDpSnTsArC7Mn2MPLRgzq): twee moet, dan `claude/weer-plek-main`. Daarna Lookout en Pathfinder.
-  - Import alleen nieuw (session_01LnDpSjqJSAJ7omGDnaWV7c): M1, dan `claude/import-main`. Geen Lookout.
-- Wachter: ook om 19:44 geweigerd (Undermining Oversight), na de vraag van de eigenaar om oude coördinators te archiveren. De vorige coördinator session_01LnDpSnngzUAioWQ5b8xBWH blijft dus staan als thuis van de Wachter; niet archiveren. Gevraagd aan de eigenaar.
-- Gearchiveerd 19:45 (eigenaar: "oude bouwers, coördinators en chats archiveren"): Onderhoud, Pathfinder totaal, Warden beginner 4, bouwers Beginner, Routes, Ziek, Back-up, en een losse Werkkaart-run.
-- Geleerd: fire_trigger op de Werkkaart opent een nieuwe chat zonder repo (de eigenaar zag "geen skill werkkaart"). Een extra ronde altijd met create_trigger op session_01LnDpSktfMxYFgMMgDhw8Do, run_once_at een paar minuten vooruit.
-- Geleerd: een bouwer met een oude basis nooit squashen; zijn eigen commits cherry-picken op origin/main. Een tijdtest (leavePlanAround "stays fast") faalt als twee volle testrondes naast elkaar draaien; los groen.
-- Nieuwe Inboxpunten I-50 tot I-56 uit de reviews.
+- Live vanavond op main: 09c716d Routes op reis (I-8), 8af3e43 Beginner heel licht 1 en 2 (I-18 loopt: stap 3), 91a4419 Ziek melden (I-48), e24d944 Back-up mag, dee69d9 Week samenhang (I-40 tot I-43), 701578c Forge nawerk (I-44, I-45), 9cdc1fb Import alleen nieuw (I-38), 9d035be Oud trainingsscherm (I-9, I-32), 5d68b87 Weer van de plek (I-37). Pushmelding gedaan; Werkkaart extra ronde 21:50.
+- Bouwers (melden zich hier met create_trigger):
+  - Waar je nu bent (I-61, session_01LnDpSnPGLTDDzKiyRqt4fW, `claude/waar-je-nu-bent`): eigenaar zag 21:42 "Je precieze plek is niet beschikbaar". Daarna Warden op Fable, Lookout, main. Eigenaar gevraagd of Precieze locatie in Android aan staat.
+  - Back-up telling (I-50, I-55, session_01LnDpSnaiuj5CodXD7EQjxY, `claude/backup-telling`). Daarna Warden op Fable (opslag).
+- Wachter: eigenaar 21:20 "Nee" op laten staan. Zelf aanmaken blijft geweigerd (Undermining Oversight); hem gevraagd de taak zelf op deze chat te zetten en "staat" te zeggen. Dan trig_01CDpj9NsMnvoumE9kVDUPt3 uitzetten en session_01LnDpSnngzUAioWQ5b8xBWH archiveren.
+- Alle bouwers van vanavond gearchiveerd, en alle worktrees in de scratchpad opgeruimd.
+- Geleerd: (1) fire_trigger op de Werkkaart opent een lege chat zonder repo: extra ronde altijd met create_trigger op session_01LnDpSktfMxYFgMMgDhw8Do. (2) Bouwers met een oude basis: eigen commits cherry-picken op origin/main, nooit de boom squashen; conflicten in kennisindex met `npm run kennisindex`, bronnen.json als unie onder "documenten". (3) Bouwers maken eigen I-codes op een oude backlog: bij de squash de backlog van main houden; nacht = backlog van main plus backlog:bij. (4) Een korte hash vergelijken faalt bij 8 tekens: vergelijk op prefix. (5) `&` in een gewone Bash-aanroep sterft met de shell: lange controles met run_in_background. (6) Werk in /home/user/ascend altijd op de branch claude/nacht (git checkout -B claude/nacht origin/claude/nacht) en push met HEAD:claude/nacht: tussen 20:00 en 22:45 stond de map los en gingen vier updates verloren. (7) Een tijdtest (leavePlanAround) faalt als twee volle testrondes naast elkaar draaien.
 
 ## Live vandaag
 
