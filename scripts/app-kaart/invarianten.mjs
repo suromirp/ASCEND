@@ -28,7 +28,7 @@ const alle = (t, re) => [...t.matchAll(re)];
 // "Het" als verwijzing naar de app telt niet mee: dat is zonder zinsbouw niet te scheiden van "het regent" of
 // "het lukt", en een valse telling zou het plafond onbetrouwbaar maken.
 // De telling loopt over elk scherm in de map, dus nieuwe schermen (zoals de instellingenschermen) tellen vanzelf mee.
-export const PLAFOND_ASCEND_ONDERWERP = 12;
+export const PLAFOND_ASCEND_ONDERWERP = 11;
 const WERKWOORDEN = new Set(['kan', 'kon', 'mag', 'mocht', 'zal', 'zou', 'wil', 'wilde', 'moet', 'is', 'was', 'heeft', 'had', 'vond', 'deed', 'ging', 'zag', 'wist', 'nam', 'gaf', 'bleef', 'zet', 'weet', 'ziet', 'doet', 'gaat', 'staat', 'laat', 'houdt', 'vraagt', 'plant', 'kiest', 'leert', 'legt', 'zoekt', 'rekent', 'schat', 'bouwt', 'stelt']);
 const GEEN_WERKWOORD = new Set(['niet', 'dat', 'met', 'tot', 'het', 'wat', 'uit', 'ooit', 'net', 'want', 'licht', 'recht', 'echt', 'meest', 'best', 'eerst', 'laatst', 'vast', 'toest', 'altijd', 'pas']);
 const VOEGWOORDEN = new Set(['die', 'dat', 'wat', 'als', 'zodat', 'omdat', 'waarmee', 'waarin', 'waarop', 'waar', 'terwijl', 'tenzij', 'of', 'voordat', 'nadat', 'zodra']);

@@ -38,7 +38,7 @@ describe('zone2Chart: wat de grafiek draagt', () => {
     expect(chart.line).toBeUndefined();
     expect(chart.ticks).toEqual([]);
     expect(text).toMatch(/nog geen loop die meetelt/);
-    expect(text).toMatch(/zegt ASCEND nog niets/);
+    expect(text).toMatch(/staat er nog niets over je tempo/);
     expect(text).not.toMatch(/sneller per km|langzamer per km/);
   });
 
@@ -116,7 +116,7 @@ describe('zone2Chart: wat de grafiek draagt', () => {
     expect(chart.line).toBeUndefined();
     expect(chart.fan).toBeUndefined();
     expect(chart.dots.length).toBeGreaterThan(0);
-    expect(text).toMatch(/zegt ASCEND niets over sneller of trager/);
+    expect(text).toMatch(/niets over sneller of trager/);
     expect(text).not.toMatch(/waarschijnlijk tussen twee grenzen/);
   });
 

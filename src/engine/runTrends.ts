@@ -113,7 +113,7 @@ function efficiencyRow(input: RunTrendsInput): TrendRow {
           },
           series: points,
           seriesFormat: 'pace',
-          strengthText: `Dit is dezelfde trend als de kaart Tempo bij zone 2. Het is je tempo bij één hartslag, als rechte lijn door je lopen van de laatste 8 weken, met een marge waar je voor 80 procent zeker van bent. Eén rustige loop schommelt zelf zo'n 3 procent. Een echte verbetering is ongeveer 1 tot 2 procent per maand. Ligt de marge over nul, dan noemt ASCEND het Normaal.`,
+          strengthText: `Dit is dezelfde trend als de kaart Tempo bij zone 2. Het is je tempo bij één hartslag, als rechte lijn door je lopen van de laatste 8 weken, met een marge waar je voor 80 procent zeker van bent. Eén rustige loop schommelt zelf zo'n 3 procent. Een echte verbetering is ongeveer 1 tot 2 procent per maand. Ligt de marge over nul, dan heet het Normaal.`,
           meaning:
             word === 'Beter'
               ? 'Je loopt bij dezelfde hartslag sneller dan een maand geleden. Dat is de vooruitgang die telt.'
@@ -177,7 +177,7 @@ function driftRow(input: RunTrendsInput): TrendRow {
     },
     series: points,
     seriesFormat: 'percent',
-    strengthText: 'Drift is het zakken van je tempo per hartslag van de eerste naar de tweede helft. Het schommelt per loop zo\'n 3 procentpunten en verschilt sterk per persoon, dus ASCEND zegt pas iets vanaf 3 procentpunten verschil tussen het midden van de laatste drie en de drie daarvoor. Onder de 5 procent noemt een coach goed. Dat is een richtlijn, geen gemeten grens.',
+    strengthText: 'Drift is het zakken van je tempo per hartslag van de eerste naar de tweede helft. Het schommelt per loop zo\'n 3 procentpunten en verschilt sterk per persoon, dus pas vanaf 3 procentpunten verschil staat er iets tussen het midden van de laatste drie en de drie daarvoor. Onder de 5 procent noemt een coach goed. Dat is een richtlijn, geen gemeten grens.',
     meaning:
       word === 'Beter'
         ? 'Je hartslag blijft op lange dagen beter bij je tempo. Dat is wat een lange dag in de bergen vraagt.'
@@ -246,7 +246,7 @@ function climbingRow(input: RunTrendsInput): TrendRow {
     },
     series: points,
     seriesFormat: 'metresPerHour',
-    strengthText: `Klimsnelheid schommelt zelf zo'n 8 procent en hangt sterk af van de helling, dus dit zijn klimmen van ${from} tot ${from + 4} procent helling. ASCEND noemt het Beter bij 8 procent sneller met een hartslag die niet hoger is, en Slechter bij 8 procent trager zonder lagere hartslag.${descentText}`,
+    strengthText: `Klimsnelheid schommelt zelf zo'n 8 procent en hangt sterk af van de helling, dus dit zijn klimmen van ${from} tot ${from + 4} procent helling. Het heet Beter bij 8 procent sneller met een hartslag die niet hoger is, en Slechter bij 8 procent trager zonder lagere hartslag.${descentText}`,
     meaning:
       word === 'Beter'
         ? 'Je klimt sneller dan eerst bij een vergelijkbare hartslag. Dat is wat je op de GR5 nodig hebt.'
@@ -335,7 +335,7 @@ function formRow(input: RunTrendsInput): TrendRow {
     },
     series: points,
     seriesFormat: 'ms',
-    strengthText: `Grondcontacttijd verschilt van dag tot dag zo'n 1 tot 2 procent, en meer op een heuvelachtige of onregelmatige route. ASCEND zegt pas iets bij 4 procent of 10 ms verschil, en alleen als de laatste twee lopen op rij hetzelfde laten zien. Dat zijn eigen aannames, te ijken op jouw gegevens.`,
+    strengthText: `Grondcontacttijd verschilt van dag tot dag zo'n 1 tot 2 procent, en meer op een heuvelachtige of onregelmatige route. Pas bij 4 procent of 10 ms verschil staat er iets, en alleen als de laatste twee lopen op rij hetzelfde laten zien. Dat zijn eigen aannames, te ijken op jouw gegevens.`,
     meaning:
       word === 'Slechter'
         ? 'Je staat langer op de grond dan bij je eerdere lopen op hetzelfde tempo. Dat past bij moe zijn. Het is geen diagnose. Neem een paar dagen rustiger.'

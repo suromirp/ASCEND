@@ -25,24 +25,24 @@ const TEXT: Record<WeekLoadKind, Record<'on' | 'off', { title: string; why: stri
     on: {
       title: 'Doortrainen in de rustweek',
       why: 'Je traint deze week door als een normale opbouwweek.',
-      explanation: 'De rustweek wordt een normale opbouwweek, geen tweede zwaarste week. Alleen de trainingen die nog komen veranderen; wat je deed en wat je zelf vastzette blijft zoals het was. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord.',
+      explanation: 'De rustweek wordt een normale opbouwweek, geen tweede zwaarste week. Alleen de trainingen die nog komen veranderen; wat je deed en wat je zelf vastzette blijft zoals het was. Eerst zie je wat er verandert; het gebeurt pas na jouw akkoord.',
     },
     off: {
       title: 'Rustweek terugzetten',
       why: 'De rustweek staat weer op de kalender.',
-      explanation: 'De trainingen die nog komen worden weer die van een rustweek, zodat de opbouw van de vorige weken binnenkomt. Wat je deed en wat je zelf vastzette blijft zoals het was. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord.',
+      explanation: 'De trainingen die nog komen worden weer die van een rustweek, zodat de opbouw van de vorige weken binnenkomt. Wat je deed en wat je zelf vastzette blijft zoals het was. Eerst zie je wat er verandert; het gebeurt pas na jouw akkoord.',
     },
   },
   repeat: {
     on: {
       title: 'Deze week nog een keer',
       why: 'Deze week houdt de belasting van vorige week.',
-      explanation: 'Je minuten, hoogtemeters en rugzak blijven op het niveau van vorige week, in plaats van een stap omhoog. De rustweek en de golven daarna blijven staan. Alleen de trainingen die nog komen veranderen; wat je deed en wat je zelf vastzette blijft zoals het was. ASCEND past het pas toe na jouw akkoord.',
+      explanation: 'Je minuten, hoogtemeters en rugzak blijven op het niveau van vorige week, in plaats van een stap omhoog. De rustweek en de golven daarna blijven staan. Alleen de trainingen die nog komen veranderen; wat je deed en wat je zelf vastzette blijft zoals het was. Het gebeurt pas na jouw akkoord.',
     },
     off: {
       title: 'Herhaling terugzetten',
       why: 'De opbouw loopt weer volgens de kalender.',
-      explanation: 'De trainingen die nog komen krijgen weer de belasting van de kalender. Wat je deed en wat je zelf vastzette blijft zoals het was. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord.',
+      explanation: 'De trainingen die nog komen krijgen weer de belasting van de kalender. Wat je deed en wat je zelf vastzette blijft zoals het was. Eerst zie je wat er verandert; het gebeurt pas na jouw akkoord.',
     },
   },
 };

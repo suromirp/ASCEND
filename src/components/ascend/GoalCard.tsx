@@ -175,7 +175,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
         <Gr5ReadinessSheet readiness={{ percent, meters: readiness.meters, weakest: readiness.weakest, sentence: readiness.sentence, weakestSentence: readiness.weakestSentence, change: readiness.change }} title="Klaar voor je doel" onClose={() => setMetersOpen(false)} />
       )}
       {timing.state === 'underway' && (
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Tijdens het doel plant ASCEND geen training. Het doel is je training.</p>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Tijdens het doel staat er geen training. Het doel is je training.</p>
       )}
     </div>
   );
