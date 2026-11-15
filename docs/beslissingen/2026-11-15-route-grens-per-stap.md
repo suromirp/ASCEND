@@ -5,7 +5,7 @@ Status: aangenomen
 
 ## Besluit
 
-De zoektocht naar een lus houdt zijn grens van 30 seconden, maar verdeelt die. Heuvels en paden (Overpass en de hoogtes van Open-Meteo) krijgen hoogstens 10 seconden; is de kaart dan niet binnen, dan zoekt de planner verder met wat er al bewaard lag, of zonder kaart. De aanvraag loopt door en komt in de cache, zodat Opnieuw zoeken hem dan wel heeft. De routeplanner krijgt de rest, tot een seconde voor de grens. Is de tijd op, dan antwoordt een aanroep die nog loopt als "niet op tijd" en houdt de planner de beste lus die er al is. Alleen als er geen enkele lus is, is de uitkomst de regel van de tijdgrens met de stap erbij. Een lus die niet op tijd kwam zegt in zijn rij "De routeplanner antwoordde niet op tijd."
+De zoektocht naar een lus houdt zijn grens van 30 seconden, maar verdeelt die. Heuvels en paden (Overpass en de hoogtes van Open-Meteo) krijgen hoogstens 10 seconden; is de kaart dan niet binnen, dan zoekt de planner verder met wat er al bewaard lag (daarvoor nog hoogstens 2 seconden), of zonder kaart. Alleen de grens stopt de rest; een andere fout van een bron blijft een fout. De aanvraag loopt door en komt in de cache, zodat Opnieuw zoeken hem dan wel heeft. De routeplanner krijgt de rest, tot een seconde voor de grens. Is de tijd op, dan antwoordt een aanroep die nog loopt als "niet op tijd" en houdt de planner de beste lus die er al is. Alleen als er geen enkele lus is, is de uitkomst de regel van de tijdgrens met de stap erbij. Een lus die niet op tijd kwam zegt in zijn rij "De routeplanner antwoordde niet op tijd."
 
 Er komt geen instelling bij: dit is geen keuze voor de gebruiker maar hoe een vaste grens verdeeld wordt; de grens zelf blijft dezelfde.
 

@@ -15,7 +15,7 @@ import { proposeRoutes, type RoutePlans } from '../engine/routePlanner';
 import { roundStart } from '../engine/routeTarget';
 import type { NearbyTerrain } from '../models/nearbyTerrain';
 import type { AvoidArea, RouteAnswer, RouteFn, RoutePoint, RouteTarget } from '../models/route';
-import { withTimeout } from '../utils/withTimeout';
+import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
 const CONSENT_KEY = 'routeProposalAsked';
 export const PROPOSAL_LIMIT_MS = 30_000;
@@ -91,7 +91,9 @@ export async function findRoutes(place: { lat: number; lon: number }, target: Ro
       over = true;
       return Promise.resolve({ ok: false, reason: 'timeout' });
     }
-    return withTimeout(inner(waypoints, options), left).catch((): RouteAnswer => {
+    return withTimeout(inner(waypoints, options), left).catch((err: unknown): RouteAnswer => {
+      // Alleen de grens stopt de rest; een andere fout van een bron is een fout, geen tijdgrens.
+      if (!(err instanceof TimeoutError)) return { ok: false, reason: 'error' };
       over = true;
       return { ok: false, reason: 'timeout' };
     });
