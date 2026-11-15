@@ -31,6 +31,13 @@ Bijgewerkt: 15 november 2026, 14:20 Portugese tijd, door de coördinator session
 - 4de3367 (12:20): Q instellingen terug met Akkoord, kracht uit, wandelen in vaste bpm, kennisindex. Deploy en Android groen.
 - b2439653 (13:15): kracht en bpm netjes in Instellingen, weesregel Stand, backlog met codes en `npm run backlog:bij`. Deploy en Android groen.
 
+## Alle trossen los (eigenaar 17:33, "nog een halfuurtje"; weeklimiet alle modellen 87%, reset 17:59; Fable 47%, reset 18:00; sessielimiet 70%, reset 18:30)
+
+- Gestart 17:34: Sherpa Week samenhang I-40 tot I-43 (session_01LnDpSk1qS9r2sGs2psx7dK, Opus, `claude/week-samenhang`), Sherpa Forge Afronden nawerk I-44 en I-45 (session_01LnDpSmRtKRvbByZGmXjMaJ, Opus, `claude/forge-afronden-nawerk`), Sherpa Ziek met koorts I-48 (session_01LnDpSmh3tLbznWZY1MRKPp, Sonnet, `claude/ziek-koorts`), Back-up mag-punten via trigger op session_01LnDpSnNF5icymXAJ1Rc6xC (`claude/backup-mag`), Pathfinder totaalplaatje (session_01LnDpSmkwo3AgWvu81SUx2M, Fable, `pathfinder/totaal-15-nov`), Onderhoud en audit (session_01LnDpSk8Few3HKY4zYcJf8n, Fable, `warden/onderhoud-15-nov`). Elke bouwer meldt zich met een trigger.
+- Weekbudget (I-39) en Back-up gaan samen naar main: proef `proef/wb` in worktree scratchpad/wt-wb; Lookout ronde 3 session_01LnDpSnHKQiSjzMz8hPhs3X (`lookout/weekbudget-3`). Back-up Warden ronde 3 (subagent, Fable): Akkoord op 0dcb233.
+- Beginner: Warden ronde 4 session_01LnDpSmDUxGVe9KVaLoPRYv (`warden/beginner-herstel-4`).
+- Eigenaar ziek boven de nek, koorts komt op: advies gegeven (nu laten staan, bij 38 graden op "Toch koorts"; geen harde training, hoogstens 20 tot 30 minuten rustig).
+
 ## Lopend (16:20)
 
 - Live 49eca57 (16:20): Week telling (I-1), Afbreker (I-4), hitteregel (melding eigenaar 15:37, besluit 2026-11-15-hitte-bij-herhalingen), kennisindex ronde 2. Deploy en Android groen.
