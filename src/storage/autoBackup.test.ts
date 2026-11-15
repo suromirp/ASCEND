@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { MetaRepo, PlannedSessionsRepo, SettingsRepo, wipeAllData } from './database';
-import { forgetAutoBackupFolder, getAutoBackupStatus, noteBackupMade, readAutoBackupState, runAutoBackupIfDue } from './autoBackup';
+import { forgetHalfWritten, forgetAutoBackupFolder, getAutoBackupStatus, noteBackupMade, readAutoBackupState, runAutoBackupIfDue } from './autoBackup';
 import { CURRENT_BACKUP_SCHEMA_VERSION } from './backupTypes';
 import { buildBackupEnvelope } from './backupExport';
 import { normalizeBackupToCurrentModel } from './backupNormalize';
@@ -30,9 +30,11 @@ function fakeTarget(opts: {
   hangAccess?: boolean;
   hidden?: string[];
   verifyFails?: number;
+  verifyUnknown?: number;
   removeFails?: boolean;
 } = {}) {
   let verifyFails = opts.verifyFails ?? 0;
+  let verifyUnknown = opts.verifyUnknown ?? 0;
   const files = new Map<string, string>([...(opts.files ?? []), ...(opts.foreign ?? [])].map((f) => [f, '{}']));
   const foreign = new Set(opts.foreign ?? []);
   const removed: string[] = [];
@@ -54,7 +56,10 @@ function fakeTarget(opts: {
       if (files.has(n)) overwritten.push(n);
       files.set(n, opts.corrupt ? text.slice(0, 10) : text);
     },
-    verify: async (n, bytes) => (verifyFails-- > 0 ? false : new TextEncoder().encode(files.get(n) ?? '').length === bytes),
+    verify: async (n, bytes) => {
+      if (verifyUnknown-- > 0) return 'unknown';
+      return verifyFails-- > 0 ? false : new TextEncoder().encode(files.get(n) ?? '').length === bytes;
+    },
     remove: async (n) => {
       if (foreign.has(n)) throw new Error(`vreemd bestand weggehaald: ${n}`);
       if (opts.removeFails) throw new Error('weghalen lukte niet');
@@ -68,6 +73,7 @@ function fakeTarget(opts: {
 
 describe('de automatische back-up', () => {
   beforeEach(async () => {
+    forgetHalfWritten();
     await wipeAllData();
     await PlannedSessionsRepo.put(session);
   });
@@ -286,6 +292,26 @@ describe('de automatische back-up', () => {
     expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 2 * 3_600_000), target, verifyPauseMs: 0 })).toBe('saved');
     expect([...files.keys()]).toEqual([name('2026-11-02')]);
     expect(overwritten).toEqual([name('2026-11-02')]);
+  });
+
+  it('na een schone schrijfactie faalt teruglezen drie keer: het bestand blijft staan, en de volgende poging vervangt het zonder volgnummer', async () => {
+    const { target, files, removed, overwritten } = fakeTarget({ verifyUnknown: 3 });
+    expect(await runAutoBackupIfDue({ now: MONDAY, target, verifyPauseMs: 0 })).toBe('failed');
+    // Een leesfout haalt nooit iets weg.
+    expect(removed).toEqual([]);
+    expect([...files.keys()]).toEqual([name('2026-11-02')]);
+    expect((await readAutoBackupState()).failure?.reason).toBe('write');
+    expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 2 * 3_600_000), target, verifyPauseMs: 0 })).toBe('saved');
+    expect([...files.keys()]).toEqual([name('2026-11-02')]);
+    expect(overwritten).toEqual([name('2026-11-02')]);
+  });
+
+  it('nakijken antwoordt niet binnen de grens: het bestand blijft staan', async () => {
+    const { target, files, removed } = fakeTarget();
+    target.verify = () => new Promise(() => undefined);
+    expect(await runAutoBackupIfDue({ now: MONDAY, target, timeoutMs: 20 })).toBe('failed');
+    expect(removed).toEqual([]);
+    expect([...files.keys()]).toEqual([name('2026-11-02')]);
   });
 
   it('een fout na een gelukt bestand maakt de back-up niet mislukt', async () => {

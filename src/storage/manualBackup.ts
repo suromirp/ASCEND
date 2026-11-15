@@ -90,11 +90,16 @@ async function write(folder: AppBackupFolder, text: string, now: Date, abort: { 
       if (err instanceof AutoBackupError && (err.step === 'rename' || err.step === 'verify') && !mine && (await folder.exists(name).catch(() => false))) own.add(name);
       throw err instanceof AutoBackupError ? err : new AutoBackupError('write', 'temp');
     }
-    // Het bestand staat er onder zijn naam. Nakijken geeft niet te vroeg op; lukt het echt niet, of is de
-    // poging intussen opgegeven en klopt het bestand niet, dan gaat het weg. Lukt weghalen niet, dan
-    // onthoudt de app de naam, zodat de volgende poging hem vervangt.
-    const ok = await verifySettled(folder, name, new TextEncoder().encode(text).length, { pauseMs: verifyPauseMs });
-    if (!ok) {
+    // Het bestand staat er onder zijn naam. Nakijken geeft niet te vroeg op. Kapot (gelezen, maar het klopt
+    // niet): het gaat weg, en lukt weghalen niet, dan onthoudt de app de naam. Niet te lezen: het blijft
+    // staan, want het kan de hele back-up zijn, en de app onthoudt de naam. De volgende poging vervangt
+    // een onthouden naam in plaats van er een volgnummer naast te zetten.
+    const seen = await verifySettled(folder, name, new TextEncoder().encode(text).length, { pauseMs: verifyPauseMs });
+    if (seen === 'unknown') {
+      own.add(name);
+      throw new AutoBackupError('write', 'verify');
+    }
+    if (seen === 'broken') {
       const gone = await folder.remove(name).then(() => true, () => false);
       if (gone && !(await folder.exists(name).catch(() => true))) own.delete(name);
       else own.add(name);

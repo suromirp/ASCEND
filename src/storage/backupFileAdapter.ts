@@ -223,17 +223,19 @@ export const webFolderTarget: AutoBackupTarget = {
     try {
       await handle.getFileHandle(name);
       return true;
-    } catch {
-      return false;
+    } catch (err) {
+      // Alleen "niet gevonden" is vrij; elke andere fout telt als bezet, want schrijven vervangt het bestand.
+      return !(err instanceof DOMException && err.name === 'NotFoundError');
     }
   },
   async verify(name, bytes) {
     const handle = await getStoredDirectoryHandle().catch(() => undefined);
-    if (!handle) return false;
+    if (!handle) return 'unknown';
     try {
-      return (await (await handle.getFileHandle(name)).getFile()).size === bytes;
+      return (await (await handle.getFileHandle(name)).getFile()).size === bytes ? 'ok' : 'broken';
     } catch {
-      return false;
+      // Lezen lukte niet: dat zegt niets over het bestand, dus het blijft staan.
+      return 'unknown';
     }
   },
   async remove(name) {

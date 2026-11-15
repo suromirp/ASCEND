@@ -226,7 +226,7 @@ describe('schrijven via een tijdelijk bestand', () => {
 describe('nakijken geeft niet te vroeg op', () => {
   it('de eerste keer nog niet te lezen, de tweede keer wel: goed', async () => {
     let calls = 0;
-    expect(await verifySettled({ verify: async () => ++calls > 1 }, NAME, 5, { pauseMs: 0 })).toBe(true);
+    expect(await verifySettled({ verify: async () => ++calls > 1 }, NAME, 5, { pauseMs: 0 })).toBe('ok');
     expect(calls).toBe(2);
   });
 
@@ -236,7 +236,14 @@ describe('nakijken geeft niet te vroeg op', () => {
       calls++;
       throw new Error('stat failed');
     };
-    expect(await verifySettled({ verify }, NAME, 5, { pauseMs: 0 })).toBe(false);
+    // Een fout bij het nakijken zelf zegt niets over het bestand.
+    expect(await verifySettled({ verify }, NAME, 5, { pauseMs: 0 })).toBe('unknown');
     expect(calls).toBe(3);
+  });
+
+  it('gelezen maar het klopt niet: kapot, en dat is iets anders dan niet te lezen', async () => {
+    expect(await verifySettled({ verify: async () => 'broken' }, NAME, 5, { pauseMs: 0 })).toBe('broken');
+    expect(await verifySettled({ verify: async () => false }, NAME, 5, { pauseMs: 0 })).toBe('broken');
+    expect(await verifySettled({ verify: async () => 'unknown' }, NAME, 5, { pauseMs: 0 })).toBe('unknown');
   });
 });

@@ -194,6 +194,11 @@ let running: Promise<AutoBackupOutcome> | undefined;
 // Alleen in het geheugen.
 const halfWritten = new Set<string>();
 
+// Alleen voor tests.
+export function forgetHalfWritten(): void {
+  halfWritten.clear();
+}
+
 // Kijkt of er een back-up nodig is en maakt hem als dat stil kan. Twee aanroepen tegelijk delen
 // dezelfde poging; na de tijdsgrens is hij altijd voorbij.
 export function runAutoBackupIfDue(options: RunOptions = {}): Promise<AutoBackupOutcome> {
@@ -283,10 +288,12 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
     }
     if (!name) throw new AutoBackupError('write');
     // Eerst nakijken of het bestand er heel staat; pas daarna opruimen.
-    const ok = await withTimeout(verifySettled(target, name, new TextEncoder().encode(text).length, { pauseMs: verifyPauseMs }), timeoutMs).catch(() => false);
-    if (!ok) {
-      // Geen half bestand laten staan: de volgende poging zou er anders een volgnummer naast zetten.
-      const gone = await withTimeout(target.remove(name), 5_000).then(() => true, () => false);
+    // Een tijdsgrens of fout bij het nakijken is 'unknown': het bestand kan heel zijn en blijft staan.
+    const seen = await withTimeout(verifySettled(target, name, new TextEncoder().encode(text).length, { pauseMs: verifyPauseMs }), timeoutMs).catch(() => 'unknown' as const);
+    if (seen !== 'ok') {
+      // Kapot: geen half bestand laten staan. Niet te lezen, of weghalen lukt niet: de naam onthouden,
+      // zodat de volgende poging hem vervangt in plaats van er een volgnummer naast te zetten.
+      const gone = seen === 'broken' && (await withTimeout(target.remove(name), 5_000).then(() => true, () => false));
       if (gone) halfWritten.delete(name);
       else halfWritten.add(name);
       throw new AutoBackupError('write', 'verify');
@@ -298,6 +305,7 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
   }
   if (abort.aborted) return 'failed';
 
+  halfWritten.delete(name);
   // Het bestand staat er. Wat hierna misgaat (opruimen, bijhouden) maakt de back-up niet mislukt.
   const at = now.toISOString();
   const label = backupWhereText(where);

@@ -17,6 +17,7 @@ const APP_BACKUP_DIR = 'ASCEND';
 export const APP_BACKUP_LABEL = 'Interne opslag > Documents > ASCEND';
 
 export type FolderAccess = 'ready' | 'needs-tap' | 'denied';
+export type Verified = 'ok' | 'broken' | 'unknown';
 
 // Waar een automatische back-up naartoe kan: de map van de app of de vaste map van de browser.
 export interface AutoBackupTarget {
@@ -33,7 +34,10 @@ export interface AutoBackupTarget {
   // Met `neverReplace` wordt een bestaande naam nooit vervangen (NameTakenError).
   write(name: string, text: string, attemptId: string, opts?: { neverReplace?: boolean }): Promise<void>;
   // Staat het bestand er heel (zoveel bytes, en in de app een back-up die te lezen is)?
-  verify(name: string, bytes: number): Promise<boolean>;
+  // 'ok': heel. 'broken': gelezen, maar de grootte of de inhoud klopt niet. 'unknown': kijken of lezen
+  // lukte niet, dus het kan de hele back-up zijn; dat is nooit een reden om het bestand weg te halen.
+  // Waar en onwaar (oude vorm) tellen als 'ok' en 'broken'.
+  verify(name: string, bytes: number): Promise<Verified | boolean>;
   remove(name: string): Promise<void>;
   // Een id van deze installatie, dat niet meegaat in de back-up van Android. Opruimen gebeurt alleen
   // als de lijst met eigen bestanden door deze installatie is gemaakt.
@@ -82,18 +86,22 @@ const VERIFY_TRIES = 3;
 const VERIFY_PAUSE_MS = 300;
 
 // Nakijken dat niet te vroeg opgeeft: een bestand dat net zijn naam kreeg is op de telefoon soms een
-// tel later pas te lezen. Hoogstens drie keer, met een korte pauze; daarna is het echt mislukt.
+// tel later pas te lezen. Hoogstens drie keer, met een korte pauze; daarna geldt de laatste uitkomst.
+// Een fout bij het nakijken zelf is 'unknown', nooit 'broken'.
 export async function verifySettled(
   target: Pick<AutoBackupTarget, 'verify'>,
   name: string,
   bytes: number,
   { tries = VERIFY_TRIES, pauseMs = VERIFY_PAUSE_MS }: { tries?: number; pauseMs?: number } = {},
-): Promise<boolean> {
+): Promise<Verified> {
+  let last: Verified = 'unknown';
   for (let i = 0; i < tries; i++) {
     if (i > 0) await pause(pauseMs);
-    if (await target.verify(name, bytes).catch(() => false)) return true;
+    const seen = await target.verify(name, bytes).catch(() => 'unknown' as const);
+    last = seen === true ? 'ok' : seen === false ? 'broken' : seen;
+    if (last === 'ok') return last;
   }
-  return false;
+  return last;
 }
 
 // Wat er onder een naam staat, vergeleken met de tekst van deze poging. 'unknown': lezen lukte niet, dus
@@ -255,17 +263,24 @@ function androidFolder(): AppBackupFolder {
         },
       }, name, text, attemptId, opts);
     },
-    async verify(name, bytes) {
+    async verify(name, bytes): Promise<Verified> {
       const fs = await load();
       const dir = fs.Directory.Documents;
+      let text: string;
       try {
         const info = await fs.Filesystem.stat({ path: path(name), directory: dir });
-        if (info.size !== bytes) return false;
+        if (info.size !== bytes) return 'broken';
         const read = await fs.Filesystem.readFile({ path: path(name), directory: dir, encoding: fs.Encoding.UTF8 });
-        const parsed = JSON.parse(typeof read.data === 'string' ? read.data : await read.data.text()) as { backupSchemaVersion?: unknown };
-        return typeof parsed.backupSchemaVersion === 'number';
+        text = typeof read.data === 'string' ? read.data : await read.data.text();
       } catch {
-        return false;
+        // Kijken of lezen lukte niet: dat zegt niets over het bestand.
+        return 'unknown';
+      }
+      try {
+        const parsed = JSON.parse(text) as { backupSchemaVersion?: unknown };
+        return typeof parsed.backupSchemaVersion === 'number' ? 'ok' : 'broken';
+      } catch {
+        return 'broken';
       }
     },
     async remove(name) {
@@ -279,8 +294,9 @@ function androidFolder(): AppBackupFolder {
           const read = await fs.Filesystem.readFile({ path: INSTALL_FILE, directory: fs.Directory.Data, encoding: fs.Encoding.UTF8 });
           const id = typeof read.data === 'string' ? read.data.trim() : '';
           if (id) return id;
-        } catch {
-          // Nog geen id: hieronder een nieuw.
+        } catch (err) {
+          // Alleen als het bestand er niet is komt er een nieuw id; een leesfout schrijft er nooit overheen.
+          if (!missing(err)) throw err;
         }
         const id = crypto.randomUUID();
         await fs.Filesystem.writeFile({ path: INSTALL_FILE, data: id, directory: fs.Directory.Data, encoding: fs.Encoding.UTF8 });

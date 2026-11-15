@@ -336,6 +336,31 @@ describe('de eerste tik na het openen', () => {
     expect(mem.files.get(`ASCEND/${N2}`)).toBe(TEXT);
   });
 
+  it('na een schone rename faalt teruglezen drie keer: het bestand blijft staan, en de volgende tik vervangt het zonder -2', async () => {
+    mem.readErrors = 3;
+    await expect(saveManualBackup(appBackupFolder()!, TEXT, fast)).rejects.toMatchObject({ reason: 'write', step: 'verify' });
+    // De complete back-up staat er nog: een leesfout haalt nooit iets weg.
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe(TEXT);
+    const later = TEXT.replace('{}', '{"later":true}');
+    expect(await saveManualBackup(appBackupFolder()!, later, fast)).toEqual({ name: NAME });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe(later);
+  });
+
+  it('na een schone rename hapert stat drie keer: ook dan blijft het bestand staan', async () => {
+    // De blikken vooraf (twee keer exists) zien een vrije naam; daarna hapert stat bij elk nakijken.
+    const folder = appBackupFolder()!;
+    const verify = folder.verify.bind(folder);
+    const spy = vi.spyOn(folder, 'verify').mockImplementation(async (n, b) => {
+      mem.statErrors = 1;
+      return verify(n, b);
+    });
+    await expect(saveManualBackup(folder, TEXT, fast)).rejects.toMatchObject({ reason: 'write', step: 'verify' });
+    spy.mockRestore();
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe(TEXT);
+  });
+
   it('het tijdelijke bestand lukt niet: de zin over ruimte, en er blijft niets achter', async () => {
     mem.failWrite = true;
     await expect(saveManualBackup(appBackupFolder()!, TEXT, fast)).rejects.toMatchObject({ reason: 'write', step: 'temp' });
