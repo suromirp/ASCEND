@@ -308,6 +308,8 @@ function bundles(): Record<string, string[]> {
   return out;
 }
 
+const byKey = ([a]: [string, unknown], [b]: [string, unknown]) => (a < b ? -1 : a > b ? 1 : 0);
+
 const numbered = (i: number, id: string) => `${String(i).padStart(3, '0')} ${id}`;
 
 function photo(): string {
@@ -326,10 +328,11 @@ function photo(): string {
   sections.pagina = Object.fromEntries(SETTINGS_PAGES.map((p) => [p.id, { ...p, rows: PAGE_ROWS[p.id] }]));
   sections.plek = Object.fromEntries(ALL_IDS.map((id) => [id, { placement: placementOf(id) ?? null, page: pageOfRow(id) ?? null, advanced: SETTINGS_PAGES.some((p) => isAdvancedRow(p.id, id)) }]));
   // Op id gesorteerd: de volgorde van de sleutels in SHOW_WHEN doet niets (sinds stap 2 volgt ze de verklaringen).
-  sections.voorwaarden = Object.fromEntries(Object.entries(SHOW_WHEN).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([id, list]) => [id, list.map((b) => ({ reason: b.reason, parent: b.parent }))]));
-  sections.uitleg = { ...SETTINGS_HELP };
-  sections['uitleg zonder namen'] = Object.fromEntries(Object.keys(SETTINGS_HELP).flatMap((k) => (settingsHelp(k, false) === SETTINGS_HELP[k] ? [] : [[k, settingsHelp(k, false)]])));
-  sections.keuzes = Object.fromEntries(Object.entries(CHOICES).map(([k, c]) => [k, { ...c, shorts: c.options.map((o) => choiceShort(k as ChoiceId, o.value)) }]));
+  sections.voorwaarden = Object.fromEntries(Object.entries(SHOW_WHEN).sort(byKey).map(([id, list]) => [id, list.map((b) => ({ reason: b.reason, parent: b.parent }))]));
+  // Uitleg en keuzes op sleutel gesorteerd: de volgorde van de sleutels doet niets (sinds stap 3 volgt ze de verklaringen).
+  sections.uitleg = Object.fromEntries(Object.entries(SETTINGS_HELP).sort(byKey));
+  sections['uitleg zonder namen'] = Object.fromEntries(Object.keys(SETTINGS_HELP).sort().flatMap((k) => (settingsHelp(k, false) === SETTINGS_HELP[k] ? [] : [[k, settingsHelp(k, false)]])));
+  sections.keuzes = Object.fromEntries(Object.entries(CHOICES).sort(byKey).map(([k, c]) => [k, { ...c, shorts: c.options.map((o) => choiceShort(k as ChoiceId, o.value)) }]));
   sections.adviesregels = Object.fromEntries(ADVICE_SPECS.map((s, i) => [numbered(i, s.id), { title: s.title, page: s.page, plan: s.plan === true }]));
   sections.zoeken = Object.fromEntries(searchQueries().map((q) => [q, searchSettings(q, SETTINGS_INDEX).map((r) => `${r.item.id}:${r.score}`).join(' ')]));
   const sheetRows = bundles();

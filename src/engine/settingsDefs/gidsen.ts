@@ -1,9 +1,8 @@
 // ASCEND: de instellingen van de groep Gidsen en kennis (docs/visie/Ontwerp instellingen op een plek.md).
 //
-// Stap 1: alleen de teksten en de plek, één keer gegenereerd uit de exports van 14 november en daarna met de
-// hand bijgewerkt. De bron blijft data/settingsIndex.ts, settingsLayout.ts, settingsHelp.ts en
-// settingsChoices.ts tot stap 2 en 3; settingsDefs.parity.test.ts bewaakt dat de teksten gelijk zijn. De volgorde
-// is die van de pagina: een rij, met daaronder wat in haar blad staat.
+// Elke instelling van deze groep staat hier één keer: titel, zin en trefwoorden voor het zoekveld, de plek op de
+// pagina, de voorwaarden en de keuze; de uitleg achter de i staat in uitleg/gidsen.ts. De volgorde is die van de
+// pagina: een rij, met daaronder wat in haar blad staat. Samenvatting en advies volgen in stap 4.
 
 import type { SettingDef } from './types';
 

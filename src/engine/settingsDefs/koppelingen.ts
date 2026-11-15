@@ -1,13 +1,57 @@
 // ASCEND: de instellingen van de groep Koppelingen (docs/visie/Ontwerp instellingen op een plek.md).
 //
-// Stap 1: alleen de teksten en de plek, één keer gegenereerd uit de exports van 14 november en daarna met de
-// hand bijgewerkt. De bron blijft data/settingsIndex.ts, settingsLayout.ts, settingsHelp.ts en
-// settingsChoices.ts tot stap 2 en 3; settingsDefs.parity.test.ts bewaakt dat de teksten gelijk zijn. De volgorde
-// is die van de pagina: een rij, met daaronder wat in haar blad staat.
+// Elke instelling van deze groep staat hier één keer: titel, zin en trefwoorden voor het zoekveld, de plek op de
+// pagina, de voorwaarden en de keuze; de uitleg achter de i staat in uitleg/koppelingen.ts. De volgorde is die van de
+// pagina: een rij, met daaronder wat in haar blad staat. Samenvatting en advies volgen in stap 4.
 
 import { DEFAULT_WATCH_MODEL_ID, WATCH_MODELS } from '../../data/watchModels';
-import { B } from './parts';
+import { B, def } from './parts';
 import type { SettingDef } from './types';
+
+// De keuzes van deze groep, onder hun oude sleutel in CHOICES (data/settingsChoices.ts leest ze hier).
+export const KOPPELINGEN_CHOICES = {
+  hartslagHorloge: def({
+    group: 'Koppelingen',
+    title: 'Hartslag op je horloge',
+    line: 'Welke slagen je horloge bij een hartslagdoel krijgt.',
+    advice: 'ascend' as 'ascend' | 'intervals',
+    help: 'hartslagHorloge',
+    options: [
+      { value: 'ascend', label: 'Zones van ASCEND', note: 'Dezelfde slagen als in de app', short: 'ASCEND' },
+      { value: 'intervals', label: 'Zones van intervals.icu', note: 'De zonenaam, intervals.icu rekent om', short: 'intervals.icu' },
+    ],
+  }),
+  stravaInhoud: def({
+    group: 'Koppelingen',
+    title: 'Wat erin staat',
+    line: 'Wat ASCEND bij een training voor Strava klaarzet.',
+    advice: 'title-line' as 'title' | 'title-line',
+    help: 'stravaTekst',
+    options: [
+      { value: 'title-line', label: 'Titel en regel', note: 'Het soort training en één regel waarom', short: 'Titel en regel' },
+      { value: 'title', label: 'Alleen de titel', note: 'Het soort training, zoals Zone 2 · rustige duurloop', short: 'Titel' },
+    ],
+  }),
+  horlogeModel: def({
+    group: 'Koppelingen',
+    title: 'Model',
+    line: 'Voor welk horloge ASCEND de datapagina\'s tekent.',
+    advice: DEFAULT_WATCH_MODEL_ID as string,
+    help: 'datavelden',
+    options: Object.values(WATCH_MODELS).map((m) => ({ value: m.id, label: m.name, note: `Velden en indelingen van de ${m.name}`, short: m.name })),
+  }),
+  voorvoegsel: def({
+    group: 'Koppelingen',
+    title: 'Voorvoegsel voor de naam',
+    line: 'Zo herken je de trainingen van ASCEND.',
+    advice: 'short' as 'short' | 'long' | 'none',
+    options: [
+      { value: 'short', label: 'Kort', note: 'ASC, past het beste op je horloge', short: 'Kort' },
+      { value: 'long', label: 'Lang', note: 'ASCEND, voor de naam', short: 'Lang' },
+      { value: 'none', label: 'Geen', note: 'De naam zoals die is', short: 'Geen' },
+    ],
+  }),
+} as const;
 
 export const KOPPELINGEN: SettingDef[] = [
   {
@@ -19,14 +63,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Trainingen van je horloge komen vanzelf binnen, zonder overtypen.',
     keywords: ['horloge', 'garmin', 'intervals', 'intervals.icu', 'sync', 'koppelen', 'smartwatch', 'activiteiten'],
     route: '/koppelen/garmin',
-    help: {
-      title: 'Via intervals.icu',
-      lead: 'Je trainingen, slaap en hartslag komen van je Garmin via intervals.icu binnen, zonder overtypen.',
-      points: [
-        { head: 'Waarvoor', text: 'afvinken, slaap, rusthartslag en HRV. Wat je gebruikt kies je bij Gebruik van je horloge.' },
-        { head: 'Niet te lezen', text: 'lukt het kijken naar de koppeling even niet, dan staat dat er. Probeer het zo opnieuw.' },
-      ],
-    },
+    help: true,
   },
   {
     id: 'garmin-gids',
@@ -45,14 +82,7 @@ export const KOPPELINGEN: SettingDef[] = [
     title: 'Gebruik van je horloge',
     search: false,
     sheet: { eyebrow: 'Koppelingen', title: 'Gebruik van je horloge', line: 'Uit betekent: ASCEND haalt het niet meer op en bewaart het niet.' },
-    help: {
-      title: 'Gebruik van je horloge',
-      lead: 'Per soort gegeven of ASCEND het ophaalt.',
-      points: [
-        { head: 'Uit', text: 'betekent: niet ophalen en niet bewaren.' },
-        { head: 'Health Connect', text: 'de keuzes gelden ook daarvoor. Staat Health Connect aan, dan heet deze rij Gebruik van je gegevens.' },
-      ],
-    },
+    help: true,
     helpKey: 'bundelHorlogeGebruik',
     showWhen: [B.watchData],
   },
@@ -123,15 +153,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Een training van je horloge vinkt zichzelf af als het niet anders kan.',
     keywords: ['garmin', 'horloge', 'afvinken', 'automatisch', 'gedaan'],
     route: '/koppelen/garmin',
-    help: {
-      title: 'Vanzelf afvinken',
-      lead: 'Een training van je horloge vinkt zichzelf af, maar alleen als het niet anders kan.',
-      points: [
-        { head: 'Alleen', text: 'dezelfde dag, één geplande training van dezelfde soort en ongeveer even lang.' },
-        { head: 'Nooit', text: 'een test of wedstrijd. Die vink je zelf af.' },
-        { head: 'Daarna', text: 'vraagt ASCEND hoe het ging. Met Klopt niet haal je het weg.' },
-      ],
-    },
+    help: true,
     helpKey: 'vanzelfAfvinken',
     showWhen: [B.garmin, B.activities],
   },
@@ -143,15 +165,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Een training die je zelf invulde krijgt de cijfers van je horloge.',
     keywords: ['garmin', 'horloge', 'cijfers', 'gelijktrekken', 'overnemen'],
     route: '/koppelen/garmin',
-    help: {
-      title: 'Garmin is leidend',
-      lead: 'Komt een training die je zelf invulde ook van je horloge, dan tellen de cijfers van het horloge.',
-      points: [
-        { head: 'Overgenomen', text: 'duur, afstand, hartslag en hoogtemeters.' },
-        { head: 'Blijft staan', text: 'gevoel, inspanning, pijn en je rugzak.' },
-        { head: 'Terug', text: 'je eigen cijfers zijn bewaard. Je kunt ze terugzetten.' },
-      ],
-    },
+    help: true,
     helpKey: 'garminLeidend',
     showWhen: [B.garmin, B.activities],
   },
@@ -163,15 +177,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Past een training in intervals.icu aan, dan volgt ASCEND.',
     keywords: ['intervals', 'correctie', 'inkorten', 'hoogtemeters', 'afstand', 'bijwerken', 'garmin', 'horloge'],
     route: '/koppelen/garmin',
-    help: {
-      title: 'Correcties uit intervals.icu overnemen',
-      lead: 'Knip je in intervals.icu een stuk van een training af, of corrigeer je de hoogtemeters of de afstand, dan neemt ASCEND dat over.',
-      points: [
-        { head: 'Overgenomen', text: 'duur, afstand, stijging, daling, hartslag en cadans, alleen als ze in intervals.icu veranderden.' },
-        { head: 'Blijft staan', text: 'gevoel, inspanning, pijn, notities, je rugzak, je krachtsets en de koppeling aan je planning. Een inkorting in ASCEND ook: het logboek vraagt dan of je de nieuwe cijfers wilt.' },
-        { head: 'Terug', text: 'de vorige cijfers zijn bewaard. In het logboek zet je ze terug.' },
-      ],
-    },
+    help: true,
     helpKey: 'correctiesOvernemen',
     showWhen: [B.garmin, B.activities],
   },
@@ -182,15 +188,7 @@ export const KOPPELINGEN: SettingDef[] = [
     title: 'Melden als je horloge stilvalt',
     note: 'Eén zin op Vandaag als er drie dagen niets van je horloge binnenkomt terwijl de koppeling werkt.',
     keywords: ['horloge', 'garmin', 'intervals', 'stil', 'stilte', 'niets', 'binnen', 'synchroniseren', 'bron', 'bewaking', 'ochtend', 'activiteit'],
-    help: {
-      title: 'Melden als je horloge stilvalt',
-      lead: 'Geeft intervals.icu niets meer door, dan zie je geen foutmelding: het ophalen lukt, er komt alleen niets mee. ASCEND meldt dat.',
-      points: [
-        { head: 'Wanneer', text: 'drie dagen geen ochtendgetallen, of geen training terwijl je er wel een invulde, en de koppeling zelf werkt.' },
-        { head: 'Waar', text: 'één zin op Vandaag. Een tik opent de koppeling, Begrepen verbergt hem tot het opnieuw gebeurt.' },
-        { head: 'Wat je kunt doen', text: 'kijk of je horloge nog synchroniseert met Garmin Connect en of intervals.icu je activiteiten nog toont.' },
-      ],
-    },
+    help: true,
     helpKey: 'horlogeStil',
     showWhen: [B.garmin],
   },
@@ -201,13 +199,7 @@ export const KOPPELINGEN: SettingDef[] = [
     title: 'Trainingen naar je horloge',
     search: false,
     sheet: { eyebrow: 'Koppelingen', title: 'Trainingen naar je horloge' },
-    help: {
-      title: 'Trainingen naar je horloge',
-      lead: 'ASCEND zet ze in je intervals.icu-agenda en Garmin brengt ze naar je horloge.',
-      points: [
-        { head: 'Komende week', text: 'de trainingen van de komende week staan er.' },
-      ],
-    },
+    help: true,
     helpKey: 'naarHorloge',
     showWhen: [B.garmin],
   },
@@ -230,28 +222,9 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Zet ASC voor de naam van elke training die naar je horloge gaat, zodat je ze herkent tussen je eigen trainingen. Kort, lang of geen.',
     keywords: ['voorvoegsel', 'naam', 'herkennen', 'herkenbaar', 'horloge', 'garmin', 'intervals.icu', 'opruimen', 'trainingen naar je horloge'],
     route: '/koppelen/garmin',
-    help: {
-      title: 'Voorvoegsel voor de naam',
-      lead: 'Standaard ASC voor de naam, of ASCEND, of niets. Zo herken je de trainingen van ASCEND op je horloge.',
-      points: [
-        { head: 'Geen', text: 'dan staat de naam van de training er alleen.' },
-      ],
-    },
+    help: true,
     helpKey: 'horlogeVoorvoegsel',
-    choice: {
-      key: 'voorvoegsel',
-      def: {
-        group: 'Koppelingen',
-        title: 'Voorvoegsel voor de naam',
-        line: 'Zo herken je de trainingen van ASCEND.',
-        advice: 'short',
-        options: [
-          { value: 'short', label: 'Kort', note: 'ASC, past het beste op je horloge', short: 'Kort' },
-          { value: 'long', label: 'Lang', note: 'ASCEND, voor de naam', short: 'Lang' },
-          { value: 'none', label: 'Geen', note: 'De naam zoals die is', short: 'Geen' },
-        ],
-      },
-    },
+    choice: { key: 'voorvoegsel', def: KOPPELINGEN_CHOICES.voorvoegsel },
     showWhen: [B.garmin, B.send],
   },
   {
@@ -262,30 +235,9 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Bij een hartslagdoel de slagen van ASCEND sturen of die van intervals.icu.',
     keywords: ['hartslag', 'zones', 'zone 2', 'drempel', 'lthr', 'intervals.icu', 'piepen', 'bpm', 'trainingen naar je horloge'],
     route: '/koppelen/garmin',
-    help: {
-      title: 'Hartslag op je horloge',
-      lead: 'Bij een hartslagdoel krijgt je horloge slagen, uit de zones van ASCEND of uit die van intervals.icu.',
-      points: [
-        { head: 'ASCEND', text: 'je horloge piept op dezelfde slagen als waarmee ASCEND de training achteraf beoordeelt.' },
-        { head: 'intervals.icu', text: 'ASCEND stuurt de zonenaam en intervals.icu rekent die om met zijn eigen drempel. Dat kan anders uitkomen.' },
-        { head: 'Rustige loop', text: 'de grens loopt van het begin van zone 1 tot het einde van zone 2. Zonder drempel of maximale hartslag blijft het bij de zonenaam.' },
-      ],
-    },
+    help: true,
     helpKey: 'hartslagHorloge',
-    choice: {
-      key: 'hartslagHorloge',
-      def: {
-        group: 'Koppelingen',
-        title: 'Hartslag op je horloge',
-        line: 'Welke slagen je horloge bij een hartslagdoel krijgt.',
-        advice: 'ascend',
-        help: 'hartslagHorloge',
-        options: [
-          { value: 'ascend', label: 'Zones van ASCEND', note: 'Dezelfde slagen als in de app', short: 'ASCEND' },
-          { value: 'intervals', label: 'Zones van intervals.icu', note: 'De zonenaam, intervals.icu rekent om', short: 'intervals.icu' },
-        ],
-      },
-    },
+    choice: { key: 'hartslagHorloge', def: KOPPELINGEN_CHOICES.hartslagHorloge },
     showWhen: [B.garmin, B.send],
   },
   {
@@ -296,13 +248,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Van het begin van zone 1 tot het einde van zone 2, zodat het horloge alleen piept als je te hoog gaat.',
     keywords: ['rustige loop', 'bovengrens', 'zone 2', 'piepen', 'duurloop', 'hartslag', 'trainingen naar je horloge'],
     route: '/koppelen/garmin',
-    help: {
-      title: 'Rustige loop: ruime grens',
-      lead: 'Bij een rustige loop loopt de grens van zone 1 tot en met zone 2, zodat je niet piept bij even zakken. Alleen bij een hartslagdoel.',
-      points: [
-        { head: 'Waarom', text: 'hardlopend kom je zelden onder zone 1, dus het horloge piept vooral als je te hoog gaat.' },
-      ],
-    },
+    help: true,
     helpKey: 'horlogeRustigeLoop',
     showWhen: [B.garmin, B.send, B.ascendHr],
   },
@@ -314,15 +260,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Kies je bij een looptraining de StairMaster, dan krijgt je horloge een wandelworkout met dezelfde blokken, zonder tempo.',
     keywords: ['stairmaster', 'traplopen', 'stair stepper', 'wandelworkout', 'wandelen', 'manier', 'waar train je', 'horloge', 'garmin', 'trainingen naar je horloge'],
     route: '/koppelen/garmin',
-    help: {
-      title: 'Eigen workout bij een andere manier',
-      lead: 'Kies je bij een looptraining de StairMaster, dan krijgt je horloge een wandelworkout met dezelfde blokken.',
-      points: [
-        { head: 'Waarom', text: 'een hardloopworkout met tempo klopt niet op de trap. De wandelworkout gaat op gevoel en hartslag.' },
-        { head: 'Let op', text: 'je start hem bij Wandelen, dus je horloge legt de training vast als wandeling, zonder traptelling.' },
-        { head: 'Uit', text: 'de workout van de training blijft staan en je start de manier zonder workout.' },
-      ],
-    },
+    help: true,
     helpKey: 'horlogeEigenWorkout',
     showWhen: [B.garmin, B.send],
   },
@@ -334,13 +272,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Een training die je hebt gedaan of voorbij liet gaan haalt ASCEND weer uit je intervals.icu-agenda.',
     keywords: ['gedaan', 'opruimen', 'weghalen', 'verwijderen', 'horloge', 'garmin', 'intervals.icu', 'agenda', 'te veel', 'trainingen naar je horloge'],
     route: '/koppelen/garmin',
-    help: {
-      title: 'Gedane trainingen weghalen',
-      lead: 'Een training die je deed of oversloeg, verdwijnt weer uit je agenda.',
-      points: [
-        { head: 'Waarom', text: 'een opgeruimde agenda laat zien wat er nog komt.' },
-      ],
-    },
+    help: true,
     helpKey: 'horlogeGedaanWeghalen',
     showWhen: [B.garmin, B.send],
   },
@@ -353,13 +285,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Op het trainingsscherm één regel die zegt of de training naar je horloge is gestuurd.',
     keywords: ['verstuurd', 'gelukt', 'status', 'sturen', 'opnieuw', 'horloge', 'garmin', 'intervals.icu', 'trainingen naar je horloge', 'versturen', 'status van het versturen'],
     route: '/koppelen/garmin',
-    help: {
-      title: 'Laten zien of het gelukt is',
-      lead: 'Eén regel bij de training en een klein horloge in Week, alleen als het verstuurd is of niet lukte.',
-      points: [
-        { head: 'Uit', text: 'geen regel en geen horloge, het versturen gaat gewoon door.' },
-      ],
-    },
+    help: true,
     helpKey: 'horlogeStatus',
     showWhen: [B.garmin, B.send],
   },
@@ -380,15 +306,7 @@ export const KOPPELINGEN: SettingDef[] = [
     title: 'Health Connect',
     note: 'In de Android-app je trainingen, slaap, rusthartslag, HRV en gewicht uit Health Connect lezen. Standaard uit.',
     keywords: ['android', 'google', 'gezondheid', 'trainingen', 'slaap', 'rusthartslag', 'hrv', 'garmin connect', 'toestemming', 'gewicht', 'weegschaal'],
-    help: {
-      title: 'Health Connect',
-      lead: 'In de Android-app leest ASCEND je trainingen, slaap, rusthartslag, HRV en gewicht uit Health Connect, als je dat aanzet.',
-      points: [
-        { head: 'Toestemming', text: 'Android vraagt pas als je het aanzet. ASCEND vraagt alleen leesrechten en schrijft nooit iets in Health Connect. Wat je bij Gebruik van je gegevens uitzet, haalt ASCEND ook hier niet op.' },
-        { head: 'Met intervals.icu', text: 'intervals.icu gaat voor. Health Connect vult alleen aan wat ontbreekt. Ophalen gebeurt bij het openen van de app, hoogstens elke drie uur.' },
-        { head: 'Je planning', text: 'verandert er niet door. Een training wordt pas een log als je hem op Vandaag opslaat. Uit haalt wat ASCEND ophaalde van je telefoon. Je logs blijven staan.' },
-      ],
-    },
+    help: true,
     helpKey: 'healthConnect',
   },
   {
@@ -400,13 +318,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Krachttrainingen en gewicht uit je export, met echte duur en herhalingen in reserve.',
     keywords: ['macrofactor', 'voeding', 'export', 'import', 'kracht', 'sets', 'rir', 'inlezen'],
     route: '/koppelen/macrofactor',
-    help: {
-      title: 'Laatste export',
-      lead: 'Krachttrainingen en gewicht uit je MacroFactor-export, met de echte duur en herhalingen in reserve.',
-      points: [
-        { head: 'Opnieuw inlezen', text: 'lees de export opnieuw in voor nieuwe dagen.' },
-      ],
-    },
+    help: true,
     helpKey: 'macrofactorExport',
   },
   {
@@ -417,15 +329,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Een krachttraining die je al vastlegde krijgt de cijfers van MacroFactor.',
     keywords: ['macrofactor', 'kracht', 'cijfers', 'overnemen', 'sets'],
     route: '/koppelen/macrofactor',
-    help: {
-      title: 'Leidend voor kracht',
-      lead: 'Voor een krachttraining die je al vastlegde, nemen de cijfers van MacroFactor het over.',
-      points: [
-        { head: 'Overgenomen', text: 'duur, oefeningen, sets en herhalingen in reserve.' },
-        { head: 'Blijft staan', text: 'gevoel, inspanning, pijn en notities.' },
-        { head: 'Uit', text: 'ASCEND vult alleen aan wat nog leeg is.' },
-      ],
-    },
+    help: true,
     helpKey: 'macrofactorLeidend',
     showWhen: [B.mf],
   },
@@ -448,15 +352,7 @@ export const KOPPELINGEN: SettingDef[] = [
     title: 'Tekst voor Strava',
     search: false,
     sheet: { eyebrow: 'Koppelingen', title: 'Tekst voor Strava', line: 'Bij een gedane training staat een titel klaar om in Strava te plakken.' },
-    help: {
-      title: 'Tekst voor Strava',
-      lead: 'ASCEND zet een titel klaar die zegt wat voor training het was. Je plakt hem zelf in Strava.',
-      points: [
-        { head: 'Wat', text: 'een titel zoals Heuvelintervallen · 6 × 90 s, en als je wilt één regel waarom. Geen afstand, totale tijd of tempo: die toont Strava al.' },
-        { head: 'Waar', text: 'bij een gedane training in het logboek en in de vraag erna op Vandaag.' },
-        { head: 'Zelf plakken', text: 'ASCEND schrijft niet naar Strava. Daar is een server voor nodig.' },
-      ],
-    },
+    help: true,
     helpKey: 'stravaTekst',
   },
   {
@@ -475,20 +371,7 @@ export const KOPPELINGEN: SettingDef[] = [
     title: 'Wat erin staat',
     note: 'Alleen de titel, of de titel met één regel waarom. Voor de tekst voor Strava.',
     keywords: ['strava', 'titel', 'regel', 'waarom', 'tekst', 'kopiëren', 'inhoud', 'kort'],
-    choice: {
-      key: 'stravaInhoud',
-      def: {
-        group: 'Koppelingen',
-        title: 'Wat erin staat',
-        line: 'Wat ASCEND bij een training voor Strava klaarzet.',
-        advice: 'title-line',
-        help: 'stravaTekst',
-        options: [
-          { value: 'title-line', label: 'Titel en regel', note: 'Het soort training en één regel waarom', short: 'Titel en regel' },
-          { value: 'title', label: 'Alleen de titel', note: 'Het soort training, zoals Zone 2 · rustige duurloop', short: 'Titel' },
-        ],
-      },
-    },
+    choice: { key: 'stravaInhoud', def: KOPPELINGEN_CHOICES.stravaInhoud },
     showWhen: [B.strava],
   },
   {
@@ -500,15 +383,7 @@ export const KOPPELINGEN: SettingDef[] = [
     adviceTitle: 'Datavelden voor je horloge',
     note: 'Laat per soort training zien welke datapagina\'s je op je horloge zet. Er verandert niets aan je planning.',
     keywords: ['datavelden', 'dataschermen', 'gegevensschermen', 'horloge', 'pagina', 'hartslag', 'tempo', 'garmin', 'scherm', 'velden', 'je horloge', 'workout'],
-    help: {
-      title: 'Datavelden voor je horloge',
-      lead: 'ASCEND tekent per soort training welke datapagina\'s je op je horloge zet. Er verandert niets aan je planning.',
-      points: [
-        { head: 'Zelf kiezen', text: 'tik een veld aan en kies een ander. Het advies zelf blijft staan.' },
-        { head: 'Zelf instellen', text: 'ASCEND stuurt niets naar je horloge.' },
-        { head: 'Bij een training', text: 'onder Horloge op het trainingsscherm staan ze als tekst.' },
-      ],
-    },
+    help: true,
   },
   {
     id: 'datavelden-model',
@@ -517,17 +392,7 @@ export const KOPPELINGEN: SettingDef[] = [
     title: 'Model',
     note: 'Voor welk model ASCEND de datapagina\'s tekent. Nu de Forerunner 255.',
     keywords: ['model', 'forerunner', 'datavelden', 'welk'],
-    choice: {
-      key: 'horlogeModel',
-      def: {
-        group: 'Koppelingen',
-        title: 'Model',
-        line: 'Voor welk horloge ASCEND de datapagina\'s tekent.',
-        advice: DEFAULT_WATCH_MODEL_ID,
-        help: 'datavelden',
-        options: Object.values(WATCH_MODELS).map((m) => ({ value: m.id, label: m.name, note: `Velden en indelingen van de ${m.name}`, short: m.name })),
-      },
-    },
+    choice: { key: 'horlogeModel', def: KOPPELINGEN_CHOICES.horlogeModel },
     showWhen: [B.watchFields],
   },
   {
@@ -538,15 +403,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Een loop in wandeltempo wordt een wandeling, een harde losse loop een tempoloop.',
     keywords: ['horloge', 'garmin', 'wandeling', 'wandeltempo', 'loop', 'hard', 'tempoloop', 'rustig', 'hartslag', 'soort', 'toetsen'],
     route: '/koppelen/garmin',
-    help: {
-      title: 'Soort van een loop toetsen',
-      lead: 'Je horloge noemt een activiteit een loop als je hem als loop startte. Tempo en hartslag tellen mee voordat hij wordt opgeslagen.',
-      points: [
-        { head: 'Wandeltempo', text: 'een loop van 10 min per km of trager wordt een wandeling. Bij Andere training sla je hem toch als loop op.' },
-        { head: 'Hard', text: 'een losse loop met een gemiddelde hartslag ruim boven zone 2 wordt een harde training (meestal de tempoloop), geen rustige duurloop. Zonder hartslag telt je tempo, zonder beide volgt geen oordeel.' },
-        { head: 'Altijd', text: 'te kort, te hard of in wandeltempo vinkt nooit vanzelf af en heet nooit "zoals gepland", ook als dit uit staat.' },
-      ],
-    },
+    help: true,
     helpKey: 'horlogeSoort',
     showWhen: [B.garmin, B.activities],
   },

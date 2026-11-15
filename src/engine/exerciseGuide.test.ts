@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SETTINGS_INDEX } from '../data/settingsIndex';
+import { SETTINGS_HELP } from '../data/settingsHelp';
 import { placementOf } from '../data/settingsLayout';
 import { EXERCISES, exerciseById } from '../data/exercises';
 import { EXERCISE_GUIDES } from '../data/exerciseGuides';
@@ -53,7 +54,7 @@ describe('de rij Uitleg standaard uitgeklapt', () => {
     // Sinds stap 2 van het ontwerp instellingen op een plek komen index en indeling uit engine/settingsDefs/.
     expect(SETTINGS_INDEX.some((i) => i.id === 'forge-uitleg-open')).toBe(true);
     expect(placementOf('forge-uitleg-open')).toEqual({ page: 'forge', row: 'bundel-weergave', sheet: true });
-    expect(src('../data/settingsHelp.ts')).toContain('forgeUitlegOpen:');
+    expect(SETTINGS_HELP.forgeUitlegOpen).toBeDefined();
   });
 });
 
