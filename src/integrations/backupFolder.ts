@@ -10,7 +10,7 @@
 // geeft null) en gebruikt storage/autoBackup.ts de vaste map van de browser.
 
 import { Capacitor } from '@capacitor/core';
-import { AutoBackupError, NameTakenError, type BackupWhere } from '../engine/autoBackup';
+import { AutoBackupError, NameTakenError, type BackupWhere, type BackupWriteStep } from '../engine/autoBackup';
 
 const APP_BACKUP_DIR = 'ASCEND';
 // Zoals de bestandsbeheerder het toont (Samsung: Mijn bestanden, Interne opslag, Documents, ASCEND).
@@ -58,18 +58,49 @@ export interface TempFs {
   writeFile(name: string, text: string): Promise<void>;
   rename(from: string, to: string): Promise<void>;
   remove(name: string): Promise<void>;
+  // Staat onder deze naam precies deze tekst? Voor een rename die een fout meldt terwijl het bestand er
+  // wel staat (de plugin kopieert als hernoemen niet lukt en meldt een fout als daarna het opruimen mislukt).
+  holds?(name: string, text: string): Promise<boolean>;
+  // Wachten voor de tweede poging om te hernoemen; in tests nul.
+  pauseMs?: number;
 }
 
-function asBackupError(err: unknown): AutoBackupError {
+function asBackupError(err: unknown, step: BackupWriteStep): AutoBackupError {
   if (err instanceof AutoBackupError) return err;
   const message = err instanceof Error ? err.message.toLowerCase() : '';
-  return new AutoBackupError(message.includes('permission') || message.includes('denied') ? 'permission' : 'write');
+  // De echte melding van de telefoon, voor wie meekijkt; nooit op het scherm.
+  console.warn(`Back-up: stap ${step} mislukte`, err);
+  return message.includes('permission') || message.includes('denied') ? new AutoBackupError('permission') : new AutoBackupError('write', step);
+}
+
+const RENAME_PAUSE_MS = 250;
+const pause = (ms: number) => (ms > 0 ? new Promise<void>((r) => setTimeout(r, ms)) : Promise.resolve());
+
+// Hoe vaak en hoe lang nakijken wacht op een bestand dat er net staat.
+const VERIFY_TRIES = 3;
+const VERIFY_PAUSE_MS = 300;
+
+// Nakijken dat niet te vroeg opgeeft: een bestand dat net zijn naam kreeg is op de telefoon soms een
+// tel later pas te lezen. Hoogstens drie keer, met een korte pauze; daarna is het echt mislukt.
+export async function verifySettled(
+  target: Pick<AutoBackupTarget, 'verify'>,
+  name: string,
+  bytes: number,
+  { tries = VERIFY_TRIES, pauseMs = VERIFY_PAUSE_MS }: { tries?: number; pauseMs?: number } = {},
+): Promise<boolean> {
+  for (let i = 0; i < tries; i++) {
+    if (i > 0) await pause(pauseMs);
+    if (await target.verify(name, bytes).catch(() => false)) return true;
+  }
+  return false;
 }
 
 // Eerst een tijdelijk bestand met de id van de poging, dan hernoemen: een half bestand krijgt nooit de
 // echte naam. Staat er al een eigen bestand met die naam (de opslag kijkt na dat het van ASCEND is), dan
 // gaat dat eerst opzij naar `.old` en pas na een gelukte rename weg; mislukt de rename, dan komt het terug.
-// Leek de naam vrij en lukt de rename toch niet, dan is hij bezet door een bestand dat de app niet ziet.
+// Meldt de rename een fout, dan kijkt de laag eerst of het bestand er toch staat (`holds`): dan is het
+// gelukt en wordt alleen opgeruimd. Staat het er niet, dan nog één keer na een korte pauze. Pas als de naam
+// dan nog niet lukt en hij vrij leek, is hij bezet door een bestand dat de app niet ziet (NameTakenError).
 // Met `neverReplace` (Back-up maken met de hand) gaat een bestaand bestand nooit opzij: een bestaande naam
 // geeft meteen een NameTakenError en er wordt niets geschreven.
 export async function writeThroughTemp(fs: TempFs, name: string, text: string, attemptId: string, opts: { neverReplace?: boolean } = {}): Promise<void> {
@@ -80,7 +111,7 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
     await fs.writeFile(tmp, text);
   } catch (err) {
     await fs.remove(tmp).catch(() => undefined);
-    throw asBackupError(err);
+    throw asBackupError(err, 'temp');
   }
   let moved = false;
   if (await fs.exists(name).catch(() => false)) {
@@ -89,17 +120,38 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
       moved = true;
     } catch (err) {
       await fs.remove(tmp).catch(() => undefined);
-      throw asBackupError(err);
+      throw asBackupError(err, 'rename');
     }
   }
-  try {
-    await fs.rename(tmp, name);
-  } catch (err) {
-    await fs.remove(tmp).catch(() => undefined);
+  const landed = () => (fs.holds ? fs.holds(name, text).catch(() => false) : Promise.resolve(false));
+  let failure: unknown;
+  let done = false;
+  for (let attempt = 0; attempt < 2 && !done; attempt++) {
+    if (attempt > 0) await pause(fs.pauseMs ?? RENAME_PAUSE_MS);
+    try {
+      await fs.rename(tmp, name);
+      done = true;
+    } catch (err) {
+      failure = err;
+      // De fout kwam na het werk: het bestand staat er heel. Of het tijdelijke bestand is weg, dan valt er
+      // niets meer te hernoemen.
+      if (await landed()) done = true;
+      else if (!(await fs.exists(tmp).catch(() => true))) break;
+    }
+  }
+  await fs.remove(tmp).catch(() => undefined);
+  if (!done) {
     if (moved) {
       await fs.rename(old, name).catch(() => undefined);
-      throw asBackupError(err);
+      throw asBackupError(failure, 'rename');
     }
+    // De naam was vrij en nu staat er iets dat niet de back-up is: een halve kopie van deze poging zelf.
+    // Die gaat weg; de naam is dan niet bezet, het schrijven is mislukt.
+    if (await fs.exists(name).catch(() => false)) {
+      await fs.remove(name).catch(() => undefined);
+      throw asBackupError(failure, 'rename');
+    }
+    console.warn('Back-up: de naam lukte niet, het volgende volgnummer', failure);
     throw new NameTakenError(name);
   }
   if (moved) await fs.remove(old).catch(() => undefined);
@@ -154,6 +206,10 @@ function androidFolder(): AppBackupFolder {
         },
         remove: async (n) => {
           await fs.Filesystem.deleteFile({ path: path(n), directory: dir });
+        },
+        holds: async (n, expected) => {
+          const read = await fs.Filesystem.readFile({ path: path(n), directory: dir, encoding: fs.Encoding.UTF8 });
+          return (typeof read.data === 'string' ? read.data : await read.data.text()) === expected;
         },
       }, name, text, attemptId, opts);
     },

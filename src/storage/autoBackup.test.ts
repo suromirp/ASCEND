@@ -29,7 +29,10 @@ function fakeTarget(opts: {
   corrupt?: boolean;
   hangAccess?: boolean;
   hidden?: string[];
+  verifyFails?: number;
+  removeFails?: boolean;
 } = {}) {
+  let verifyFails = opts.verifyFails ?? 0;
   const files = new Map<string, string>([...(opts.files ?? []), ...(opts.foreign ?? [])].map((f) => [f, '{}']));
   const foreign = new Set(opts.foreign ?? []);
   const removed: string[] = [];
@@ -51,9 +54,10 @@ function fakeTarget(opts: {
       if (files.has(n)) overwritten.push(n);
       files.set(n, opts.corrupt ? text.slice(0, 10) : text);
     },
-    verify: async (n, bytes) => new TextEncoder().encode(files.get(n) ?? '').length === bytes,
+    verify: async (n, bytes) => (verifyFails-- > 0 ? false : new TextEncoder().encode(files.get(n) ?? '').length === bytes),
     remove: async (n) => {
       if (foreign.has(n)) throw new Error(`vreemd bestand weggehaald: ${n}`);
+      if (opts.removeFails) throw new Error('weghalen lukte niet');
       removed.push(n);
       files.delete(n);
     },
@@ -262,9 +266,26 @@ describe('de automatische back-up', () => {
     await MetaRepo.set('autoBackupState', { files: own, filesIn: 'In Documenten/ASCEND', filesBy: INSTALL });
     const { target, removed } = fakeTarget({ files: own, corrupt: true });
     expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('failed');
-    expect(removed).toEqual([]);
+    // Alleen het halve bestand van vandaag gaat weg; van de oude back-ups niets.
+    expect(removed).toEqual([name('2026-11-02')]);
     expect((await readAutoBackupState()).failure?.reason).toBe('write');
     expect((await SettingsRepo.get()).lastExportedAt).toBeUndefined();
+  });
+
+  it('nakijken komt te vroeg (eerste keer na het openen): de tweede blik is goed en de back-up is gelukt', async () => {
+    const { target, files } = fakeTarget({ verifyFails: 1 });
+    expect(await runAutoBackupIfDue({ now: MONDAY, target, verifyPauseMs: 0 })).toBe('saved');
+    expect([...files.keys()]).toEqual([name('2026-11-02')]);
+  });
+
+  it('schrijven lukt, nakijken en weghalen niet: de volgende poging vervangt het halve bestand, zonder volgnummer', async () => {
+    const { target, files, overwritten } = fakeTarget({ verifyFails: 3, removeFails: true });
+    expect(await runAutoBackupIfDue({ now: MONDAY, target, verifyPauseMs: 0 })).toBe('failed');
+    expect([...files.keys()]).toEqual([name('2026-11-02')]);
+    // Een uur later mag hij het opnieuw proberen.
+    expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 2 * 3_600_000), target, verifyPauseMs: 0 })).toBe('saved');
+    expect([...files.keys()]).toEqual([name('2026-11-02')]);
+    expect(overwritten).toEqual([name('2026-11-02')]);
   });
 
   it('een fout na een gelukt bestand maakt de back-up niet mislukt', async () => {

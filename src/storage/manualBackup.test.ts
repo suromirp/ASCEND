@@ -8,6 +8,18 @@ const mem = vi.hoisted(() => ({
   hang: false,
   failWrite: false,
   hidden: new Set<string>(),
+  // De map ASCEND bestaat pas na een schrijfactie met `recursive`.
+  noDir: false,
+  // De volgende zoveel renames mislukken zonder iets te doen (koude start).
+  renameFails: 0,
+  // De volgende rename kopieert naar de echte naam en meldt dan een fout (zo valt de plugin terug).
+  renameCopiesThenFails: 0,
+  // De volgende zoveel keer geeft stat op een back-up nog niets terug (nakijken komt te vroeg).
+  statMisses: 0,
+  deleteFails: false,
+  // Schrijven antwoordt pas na zoveel ms (een laat antwoord van de telefoon).
+  writeDelayMs: 0,
+  writes: 0,
 }));
 
 vi.mock('@capacitor/core', async (original) => ({
@@ -29,29 +41,55 @@ vi.mock('@capacitor/filesystem', async () => {
       stat: (o) => {
         const p = (o as { path: string }).path;
         if (!mem.files.has(p)) throw new Error('File does not exist');
+        if (p.endsWith('.json') && mem.statMisses > 0) {
+          mem.statMisses--;
+          throw new Error('File does not exist');
+        }
         return { size: bytes(mem.files.get(p)!) };
       },
       readFile: (o) => ({ data: mem.files.get((o as { path: string }).path) ?? '' }),
       writeFile: (o) => {
         if (mem.hang) return new Promise(() => undefined);
         if (mem.failWrite) throw new Error('No space left on device');
-        const { path, data } = o as { path: string; data: string };
+        const { path, data, recursive } = o as { path: string; data: string; recursive?: boolean };
+        if (mem.noDir && !recursive) throw new Error('Parent directory does not exist');
+        mem.noDir = false;
+        mem.writes++;
+        if (mem.writeDelayMs > 0) {
+          return new Promise((resolve) => setTimeout(() => {
+            mem.files.set(path, data);
+            resolve({});
+          }, mem.writeDelayMs));
+        }
         mem.files.set(path, data);
         return {};
       },
       rename: (o) => {
         const { from, to } = o as { from: string; to: string };
+        if (mem.renameFails > 0) {
+          mem.renameFails--;
+          throw new Error('rename failed');
+        }
+        if (mem.renameCopiesThenFails > 0) {
+          mem.renameCopiesThenFails--;
+          mem.files.set(to, mem.files.get(from)!);
+          throw new Error('Unknown error');
+        }
         if (mem.hidden.has(to) || mem.files.has(to)) throw new Error('rename failed');
         mem.files.set(to, mem.files.get(from)!);
         mem.files.delete(from);
       },
-      deleteFile: (o) => void mem.files.delete((o as { path: string }).path),
+      deleteFile: (o) => {
+        const p = (o as { path: string }).path;
+        if (mem.deleteFails && p.endsWith('.json')) throw new Error('delete failed');
+        mem.files.delete(p);
+      },
     }),
   };
 });
 
 import { webBackupFileAdapter } from './backupFileAdapter';
-import { runManualBackup, saveManualBackup } from './manualBackup';
+import { forgetManualBackupAttempts, runManualBackup, saveManualBackup } from './manualBackup';
 import { APP_BACKUP_LABEL, appBackupFolder } from '../integrations/backupFolder';
 
 const NOW = new Date(2026, 10, 2, 14, 30);
@@ -59,11 +97,19 @@ const NAME = 'ascend-2026-11-02-14u30.ascend-backup.json';
 const TEXT = JSON.stringify({ backupSchemaVersion: 5, payload: {} });
 
 beforeEach(() => {
+  forgetManualBackupAttempts();
   mem.files.clear();
   mem.permission = 'granted';
   mem.hang = false;
   mem.failWrite = false;
   mem.hidden.clear();
+  mem.noDir = false;
+  mem.renameFails = 0;
+  mem.renameCopiesThenFails = 0;
+  mem.statMisses = 0;
+  mem.deleteFails = false;
+  mem.writeDelayMs = 0;
+  mem.writes = 0;
 });
 
 describe('Back-up maken in de Android-app', () => {
@@ -167,5 +213,105 @@ describe('uitkomst en Laatste back-up', () => {
     const outcome = await runManualBackup({ prepare, adapter: { saveBackup: async () => ({ success: false }) }, markMade });
     expect(outcome).toEqual({ status: 'cancelled' });
     expect(markMade).not.toHaveBeenCalled();
+  });
+});
+
+// De melding van 15 november: de eerste tik na het openen meldde "kon niet worden geschreven" terwijl
+// het bestand er stond, en de tweede tik zette er een bestand met -2 naast.
+describe('de eerste tik na het openen', () => {
+  const N2 = 'ascend-2026-11-02-14u30-2.ascend-backup.json';
+  const names = () => [...mem.files.keys()];
+  const fast = { now: NOW, verifyPauseMs: 0 };
+
+  it('koude start, de rename mislukt een keer: toch de eerste naam, geen volgnummer en geen rest', async () => {
+    mem.renameFails = 1;
+    expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: NAME });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+  });
+
+  it('de rename meldt een fout terwijl het bestand er staat: gelukt onder de eerste naam, nooit -2', async () => {
+    mem.renameCopiesThenFails = 1;
+    expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: NAME });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe(TEXT);
+  });
+
+  it('de map ASCEND bestaat nog niet: hij wordt bij het schrijven gemaakt', async () => {
+    mem.noDir = true;
+    expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: NAME });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+  });
+
+  it('naam bezet door een echt ander bestand: een volgnummer, en het andere blijft heel', async () => {
+    mem.files.set(`ASCEND/${NAME}`, 'een eerdere back-up');
+    expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: N2 });
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe('een eerdere back-up');
+  });
+
+  it('schrijven lukt, nakijken komt te vroeg: de tweede blik is goed en er komt geen fout', async () => {
+    mem.statMisses = 2; // de eerste twee keer nakijken ziet het bestand nog niet
+    expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: NAME });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+  });
+
+  it('schrijven lukt, nakijken blijft mislukken: de echte reden, het bestand is weg en de volgende tik krijgt de eerste naam', async () => {
+    const original = mem.files.set.bind(mem.files);
+    // Het bestand komt beschadigd aan: korter dan wat er geschreven werd.
+    mem.files.set = (k, v) => original(k, k.endsWith('.tmp') ? v.slice(0, 5) : v);
+    const outcome = await runManualBackup({ prepare: async () => ({ text: TEXT, fileName: 'x.json' }), adapter: { saveBackup: async (d) => ({ success: true, savedTo: (await saveManualBackup(appBackupFolder()!, await d.text(), fast)).name }) }, markMade: async () => undefined });
+    mem.files.set = original;
+    expect(outcome).toEqual({ status: 'failed', message: 'Opslaan lukte niet: het bestand is geschreven, maar teruglezen lukte niet. Probeer het nog eens.' });
+    expect(names()).toEqual([]);
+    expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: NAME });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+  });
+
+  it('nakijken mislukt en weghalen ook: de volgende tik vervangt het eigen halve bestand, zonder -2', async () => {
+    const original = mem.files.set.bind(mem.files);
+    mem.files.set = (k, v) => original(k, k.endsWith('.tmp') ? v.slice(0, 5) : v);
+    mem.deleteFails = true;
+    await expect(saveManualBackup(appBackupFolder()!, TEXT, fast)).rejects.toMatchObject({ reason: 'write', step: 'verify' });
+    mem.files.set = original;
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+    mem.deleteFails = false;
+    expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: NAME });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe(TEXT);
+  });
+
+  it('het tijdelijke bestand lukt niet: de zin over ruimte, en er blijft niets achter', async () => {
+    mem.failWrite = true;
+    await expect(saveManualBackup(appBackupFolder()!, TEXT, fast)).rejects.toMatchObject({ reason: 'write', step: 'temp' });
+    expect(names()).toEqual([]);
+  });
+
+  it('tweede tik terwijl de eerste nog loopt: dezelfde poging, één bestand, dezelfde naam', async () => {
+    mem.writeDelayMs = 30;
+    const folder = appBackupFolder()!;
+    const [a, b] = await Promise.all([saveManualBackup(folder, TEXT, fast), saveManualBackup(folder, TEXT, fast)]);
+    expect(a).toEqual({ name: NAME });
+    expect(b).toEqual({ name: NAME });
+    expect(mem.writes).toBe(1);
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+  });
+
+  it('laat antwoord na de tijdsgrens: eerst "duurde te lang", de tik daarna meldt hetzelfde bestand en maakt geen tweede', async () => {
+    mem.writeDelayMs = 60;
+    const folder = appBackupFolder()!;
+    await expect(saveManualBackup(folder, TEXT, { ...fast, limitMs: 10 })).rejects.toMatchObject({ reason: 'timeout' });
+    // De telefoon antwoordt alsnog; de volgende tik valt in dezelfde minuut.
+    expect(await saveManualBackup(folder, TEXT, fast)).toEqual({ name: NAME });
+    expect(mem.writes).toBe(1);
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe(TEXT);
+  });
+
+  it('een poging die nooit antwoordt houdt de knop niet voor altijd vast: na de grens begint een nieuwe', async () => {
+    mem.hang = true;
+    const folder = appBackupFolder()!;
+    await expect(saveManualBackup(folder, TEXT, { ...fast, limitMs: 10 })).rejects.toMatchObject({ reason: 'timeout' });
+    mem.hang = false;
+    expect(await saveManualBackup(folder, TEXT, { ...fast, staleMs: 0 })).toEqual({ name: NAME });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
   });
 });
