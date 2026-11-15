@@ -7,6 +7,7 @@ import { useAppData } from '../state/AppDataContext';
 import { weekdayPattern } from '../engine/weekdayPattern';
 import { leaveDays } from '../engine/leave';
 import { isIllnessDay } from '../engine/illness';
+import { isTaperDay, raceDatesOf } from '../engine/raceWindow';
 import { signalOn } from '../engine/signalSettings';
 import { MetaRepo } from '../storage/database';
 import { addDays, todayISO } from '../utils/dates';
@@ -30,7 +31,9 @@ export function WeekdayPatternLine() {
   const pattern = useMemo(() => {
     if (!on) return undefined;
     const excludedDays = new Set(leaveDays(settings.leavePeriods).keys());
-    for (let d = addDays(today, -56); d < today; d = addDays(d, 1)) if (isIllnessDay(d, settings.illnessEpisodes, today)) excludedDays.add(d);
+    // Ziek, en de afbouw van een race die er al was: die dagen zeggen niets over je weekdag (engine/raceWindow.ts).
+    const races = raceDatesOf(plannedSessions, templateById);
+    for (let d = addDays(today, -56); d < today; d = addDays(d, 1)) if (isIllnessDay(d, settings.illnessEpisodes, today) || isTaperDay(d, races, today)) excludedDays.add(d);
     return weekdayPattern({ today, planned: plannedSessions, logs: sessionLogs, excludedDays, isRest: (s) => templateById.get(s.templateId)?.type === 'recovery' });
   }, [on, today, plannedSessions, sessionLogs, settings.leavePeriods, settings.illnessEpisodes, templateById]);
 

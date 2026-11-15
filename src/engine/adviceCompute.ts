@@ -19,7 +19,8 @@ import { CONCERN_RULES } from './weekConcerns';
 import { applyPlanChangeItems } from './proposalEngine';
 import { weatherAdvice } from './weatherSwap';
 import { restBackAdvice } from './restDayBack';
-import { type AdviceInputs, type Advice, MAX_OPTIONS, proposal, leavesNextHardFresh, catchUpMinutes } from './adviceShared';
+import { type AdviceInputs, type Advice, MAX_OPTIONS, proposal, leavesNextHardFresh, catchUpMinutes, recoveryWeekGuard } from './adviceShared';
+import { isTaperDay, raceDatesOf } from './raceWindow';
 import { TEST_RUN_ID, testRunAdvice } from './adviceTestRun';
 import { missedAdvice, skippedKeyAdvice, restSwapAdvice, restPullAdvice, extraSessionAdvice } from './adviceWeek';
 import { tooHardAdvice, tooLightAdvice, injuryAdvice, strengthAdvice, spacingAdvice } from './adviceLoad';
@@ -50,6 +51,8 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
   // TEST-MAKE-ROOM already speaks about a test: one voice for the same test.
   if (testRoom.length > 0) return [];
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  // De herstelweek na een race: geen nieuwe testpoging (engine/raceWindow.ts).
+  if (recoveryWeekGuard(inputs)) return [];
   const test = templateById.get(TEST_RUN_ID);
   if (!test) return [];
   const today = inputs.asOf;
@@ -162,7 +165,9 @@ function retryAgainAdvice(inputs: AdviceInputs, templateById: Map<string, Sessio
   if (inputs.respondedIds.has(id) || !inputs.retryRows || inputs.retryRows.size === 0) return [];
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const row = inputs.plannedSessions
-    .filter((s) => inputs.retryRows!.has(s.id) && s.templateId === TEST_RUN_ID && s.scheduledDate > last.date && !loggedIds.has(s.id) && (s.status === 'skipped' || s.scheduledDate < today))
+    .filter((s) => inputs.retryRows!.has(s.id) && s.templateId === TEST_RUN_ID && s.scheduledDate > last.date && !loggedIds.has(s.id) && (s.status === 'skipped' || s.scheduledDate < today)
+      // Een herkansing in de afbouw van een race die er al was, vervalt (engine/raceWindow.ts).
+      && !isTaperDay(s.scheduledDate, raceDatesOf(inputs.plannedSessions, templateById), today))
     .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
   if (!row) return [];
   const when = formatWeekdayDateNL(row.scheduledDate);

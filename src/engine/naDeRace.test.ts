@@ -12,6 +12,10 @@ import { deriveSessionStatus } from './sessionStatus';
 import { leftOutOfCount } from './weekLogs';
 import { buildWeekReview } from './weekReview';
 import { afterRaceGuard, isTaperDay, raceDatesOf } from './raceWindow';
+import { strengthAdvice } from './adviceLoad';
+import { weekLoss } from './fullWeek';
+import restDayBackSrc from './restDayBack.ts?raw';
+import weekdayPattern from '../components/WeekdayPatternLine.tsx?raw';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import weekPage from '../pages/Week.tsx?raw';
 import weekPlanner from '../components/WeekPlanner.tsx?raw';
@@ -187,7 +191,106 @@ describe('R: de afbouw telt niet als gemist', () => {
     expect(weekPage).toMatch(/illness: settings\.illnessEpisodes, races \}/);
     expect(weekPlanner).toMatch(/illness: illnessEpisodes, races \}/);
     expect(weekPlanner).toMatch(/illness: settings\.illnessEpisodes, races \}/);
+    expect(weekPage).toMatch(/loggedIds: new Set\(sessionLogs\.map\(\(l\) => l\.plannedSessionId\)\), races \}\)\);/);
+    expect(weekPlanner).toMatch(/races=\{races\}/);
     expect(standData).toMatch(/races: raceDatesOf\(/);
     expect(season).toMatch(/races: raceDatesOf\(/);
+  });
+});
+
+describe('Warden ronde 2: elke stem, en een antwoord op de race klapt niets terug', () => {
+  afterEach(() => vi.useRealTimers());
+  const at = (day: string) => { vi.useFakeTimers(); vi.setSystemTime(new Date(`${day}T09:00:00+01:00`)); };
+
+  it('TEST-MAKE-ROOM: een testloop uit de afbouw krijgt na de race geen inhaalvoorstel', () => {
+    const test = ps('tpl_test_run', '2027-03-11');
+    const sessions = [taperRest, upper, test, race, recRest, recEasy, recLong];
+    const room = (list: PlannedSession[], asOf: string) => computeAdvice(adviceInputs({ plannedSessions: list, asOf })).filter((a) => a.ruleId === 'TEST-MAKE-ROOM');
+    expect(room(sessions.filter((s) => s.id !== race.id), '2027-03-15').length).toBeGreaterThan(0);
+    for (const day of ['2027-03-15', '2027-03-17', '2027-03-21']) expect(room(sessions, day)).toEqual([]);
+  });
+
+  it('Niet gedaan op de race zelf: de race blijft tellen, de afbouw blijft vervallen', () => {
+    const skipped = { ...race, status: 'skipped' as const, lock: { by: 'user' as const, at: '2027-03-15T08:10:00+01:00' } };
+    const list = plan.map((s) => (s.id === race.id ? skipped : s));
+    const noRaceLog = [done(upper, 45)];
+    expect(raceDatesOf(list, templates)).toEqual([RACE]);
+    expect(planMissed(missedInput({ plannedSessions: list, logs: noRaceLog, today: '2027-03-15' })).item).toBeUndefined();
+    expect(computeAdvice(adviceInputs({ plannedSessions: list, logs: noRaceLog, asOf: '2027-03-15' })).filter((a) => a.ruleId === 'MISSED-CATCH-UP')).toEqual([]);
+    const review = buildWeekReview({ weekStart: '2027-03-08', plannedSessions: list, logs: noRaceLog, templates, program, planChangeLog: [], asOf: '2027-03-15' })!;
+    // Alleen de race zelf: je zei dat je hem niet liep.
+    expect(review.missed).toHaveLength(1);
+    at('2027-03-16');
+    expect(deriveSessionStatus(easy, noRaceLog, false, { races: raceDatesOf(list, templates) }).status).toBe('away');
+  });
+
+  it('een race die vóór zijn dag is afgezegd, telt niet: dan is er geen afbouw', () => {
+    const cancelled = { ...race, status: 'skipped' as const, lock: { by: 'user' as const, at: '2027-03-12T20:00:00+01:00' } };
+    expect(raceDatesOf(plan.map((s) => (s.id === race.id ? cancelled : s)), templates)).toEqual([]);
+    expect(raceDatesOf([{ ...race, status: 'skipped' }], templates)).toEqual([]);
+  });
+
+  it('een niet gelogde eerste race vervalt niet in de afbouw van een tweede', () => {
+    const race2 = ps('tpl_race', '2027-03-18');
+    const list = [...plan, race2];
+    const races = raceDatesOf(list, templates);
+    expect(isTaperDay(RACE, races, '2027-03-19')).toBe(false);
+    at('2027-03-19');
+    expect(deriveSessionStatus(race, [done(race2)], false, { races }).status).toBe('missed');
+    expect(deriveSessionStatus(recEasy, [done(race2)], false, { races }).status).toBe('away');
+  });
+
+  it('STRENGTH-REGULARITY: kracht uit de afbouw telt na de race niet als gemist', () => {
+    const a = ps('tpl_upper_a', '2027-03-08');
+    const b = ps('tpl_upper_b', '2027-03-11');
+    const byId = new Map(templates.map((t) => [t.id, t]));
+    const hint = (list: PlannedSession[]) => strengthAdvice(adviceInputs({ plannedSessions: list, logs: [done(race)], asOf: '2027-03-15' }), byId);
+    expect(hint([a, b]).length).toBe(1);
+    expect(hint([a, b, race])).toEqual([]);
+  });
+
+  it('de volle week: een training uit de afbouw is op de racedag geen verlies', () => {
+    const loss = (list: PlannedSession[]) => weekLoss({ today: RACE, sessions: list, logs, templates });
+    expect(loss(withoutRace).map((l) => l.date)).toEqual(['2027-03-10', '2027-03-12']);
+    expect(loss(plan)).toEqual([]);
+  });
+
+  it('rustdag terug en het weekdagpatroon lezen het venster ook', () => {
+    expect(restDayBackSrc).toMatch(/isTaperDay\(m\.scheduledDate, races, input\.today\)/);
+    expect(weekdayPattern).toMatch(/isTaperDay\(d, races, today\)/);
+  });
+});
+
+// TEST-RETRY opnieuw: dezelfde opzet als testRetryOpnieuw.test.ts, nagemaakt. Een testloop op dinsdag 29 september
+// 2026 met veel stilstand; de herkansing op zondag 4 oktober zette je op overgeslagen. Vandaag maandag 5 oktober.
+describe('Warden ronde 2: TEST-RETRY na een race', () => {
+  const TEST_DAY = '2026-09-29';
+  const lock = { by: 'user' as const, at: '2026-10-04T18:00:00Z' };
+  const testLog = { id: 'log-test', templateId: 'tpl_test_run', type: 'cardio', completedDate: TEST_DAY, completedAt: `${TEST_DAY}T10:00:00Z`, variant: 'full', durationMinutes: 36, rpe: 9, source: 'manual',
+    cardioData: { durationMinutes: 36, distanceKm: 6, source: 'manual' },
+    bestEffort: { km: 5, minutes: 27.67, wholeKm: 6, wholeMinutes: 36, accepted: true, v: 2, stops: 5, stoppedSec: 136 } } as SessionLog;
+  const row = (id: string, templateId: string, date: string, over: Partial<PlannedSession> = {}): PlannedSession => ({ id, templateId, scheduledDate: date, weekStartDate: mondayOfWeek(date), status: 'planned', order: 0, ...over });
+  const base = [
+    row('retry', 'tpl_test_run', '2026-10-04', { status: 'skipped', lock, movedFromDate: '2026-10-03' }),
+    row('easy', 'tpl_easy_run', '2026-10-08'), row('upperB', 'tpl_upper_b', '2026-10-09'), row('long2', 'tpl_long_run', '2026-10-11'),
+    row('rest2', 'tpl_herstel', '2026-10-12'), row('upperA2', 'tpl_upper_a', '2026-10-13'), row('easy2', 'tpl_easy_run', '2026-10-15'),
+  ];
+  const again = (sessions: PlannedSession[], extraLogs: SessionLog[] = []) => computeAdvice({
+    logs: [testLog, ...extraLogs], plannedSessions: sessions, templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic',
+    respondedIds: new Set([`retest:${TEST_DAY}`]), retryRows: new Set(['retry']), asOf: '2026-10-05', restDay: 1,
+  }).find((a) => a.id === `retest:${TEST_DAY}:opnieuw`);
+
+  it('zonder race de vraag om een nieuwe dag', () => {
+    expect(again(base)).toBeDefined();
+  });
+
+  it('in de herstelweek na een race geen herkansing', () => {
+    const r = row('race', 'tpl_race', '2026-10-03');
+    expect(again([...base, r], [done(r)])).toBeUndefined();
+  });
+
+  it('een herkansing uit de afbouw van een race die er nu is, vervalt', () => {
+    const r = row('race', 'tpl_race', '2026-10-05');
+    expect(again([...base, r], [done(r)])).toBeUndefined();
   });
 });

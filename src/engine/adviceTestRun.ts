@@ -6,7 +6,8 @@ import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
 import { findHeavyConflicts, freshnessAt, respectsHeavySpacing, dayHasRoomFor, isHeavyBeforeTest, isLegHeavyTemplate, testRestHours, withTestRestHours } from './scheduler';
 import { addDays, daysBetween, mondayOfWeek, formatWeekdayDateNL } from '../utils/dates';
-import { type AdviceInputs, type Advice, isDone, inProgram, leavesNextHardFresh, proposal, MAX_OPTIONS } from './adviceShared';
+import { type AdviceInputs, type Advice, isDone, inProgram, leavesNextHardFresh, proposal, MAX_OPTIONS, recoveryWeekGuard } from './adviceShared';
+import { isTaperDay, raceDatesOf } from './raceWindow';
 
 // --- Rule TEST-MAKE-ROOM -----------------------------------------------------
 // Trigger: the 5 km test run was missed or skipped (no time). The test is
@@ -55,9 +56,13 @@ interface RetryAgain {
 
 export function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>, forced?: ForcedTestMove, again?: RetryAgain): Advice[] {
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  // De herstelweek na een race: geen testloop inhalen en geen herkansing (engine/raceWindow.ts). Een test die je
+  // avond ervoor verschuift (`forced`) is geen inhalen en blijft.
+  if (!forced && recoveryWeekGuard(inputs)) return [];
   const test = templateById.get(TEST_RUN_ID);
   if (!test) return [];
   const today = inputs.asOf;
+  const races = raceDatesOf(inputs.plannedSessions, templateById);
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const open = (s: PlannedSession) => s.status !== 'skipped' && !loggedIds.has(s.id);
   // Not in the two weeks before a race: that is the taper.
@@ -88,6 +93,8 @@ export function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, Se
   const lost = again?.row ?? around ?? inputs.plannedSessions
     .filter((s) => s.templateId === TEST_RUN_ID && !loggedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id) && !inputs.retryRows?.has(s.id)
       && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, today)
+      // Een testloop uit de afbouw van een race die er al was, vervalt zoals in Week.
+      && !isTaperDay(s.scheduledDate, races, today)
       && (s.status === 'skipped' ? daysBetween(s.scheduledDate, today) >= -14 && daysBetween(s.scheduledDate, today) <= 7 : s.scheduledDate < today && daysBetween(s.scheduledDate, today) <= 7))
     .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
   if (!lost) return [];
