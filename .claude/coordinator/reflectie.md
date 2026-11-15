@@ -9,6 +9,12 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 15 november 15:40 (Wachter, Portugese tijd)
+- Check-in: Week en Afbreker door Warden en Pathfinder, Lookout loopt; Weekbudget niet af (kracht op drie plekken), eigen Sherpa; Back-up en Beginner in herstel na Warden op Fable.
+- Beter: Wardens in een eigen sessie met herstel.md op een branch: geen context bij mij, uitslag in één git show.
+- Slechter: een branchwissel tijdens kaart:vergelijk brak de run; voortaan altijd een worktree. Een hook draait alle tests bij elke commit: commit los.
+- Werkstijl: Pathfinder vond wat Warden en de bouwer misten (dezelfde belofte op drie andere schermen); bij "nergens nog" eerst laten zoeken waar het nog staat.
+
 ## 15 november 12:45 (Wachter, Portugese tijd)
 - Check-in: Q, kracht uit, wandelen in bpm en kennisindex live (4de3367, deploy en Android groen). Week en beginner in herstel, back-up in review, backlog opgeruimd met codes.
 - Beter: naspelen met de echte back-up vond de oorzaak in een kwartier (advies zonder periode, oude versie op de telefoon).
