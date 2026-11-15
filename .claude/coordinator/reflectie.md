@@ -9,7 +9,7 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
-## 09:45 Portugal (15 november)
+## 09:05 Portugal (15 november)
 - Main fe704a3: 20 onderdelen uit de nacht, web en Android groen. Alle poorten liepen; Warden of Lookout hielden zes keer iets tegen dat de tests niet zagen.
 - Les: proefmerges bundelen scheelt tijd maar geeft conflicten in de foto en de standen; steeds de foto opnieuw maken en het verschil lezen.
 - Les: effort high voor de coördinator ving de meeste conflicten zelf op; het waard voor een nacht met acht sessies.
