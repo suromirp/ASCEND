@@ -7,11 +7,11 @@
 
 import type { RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { formatNumberNL } from '../utils/number';
-import { BIG_ROAD_LEAD, proposalFacts, proposalTitle, shortLine, tooShort } from './routePlanner';
+import { BIG_ROAD_LEAD, BIG_ROAD_NOTE_M, bigRoadLine, proposalFacts, proposalTitle, shortLine, tooShort } from './routePlanner';
+import { routeActionLine, type RouteFileLine, type RouteSendOutcome, type SendLine } from './routeSend';
 
 // Zoveel regels in amber hoogstens in één rij van een lus.
 export const MAX_WARN_LINES = 2;
-import { routeActionLine, type RouteFileLine, type RouteSendOutcome, type SendLine } from './routeSend';
 
 // De kaart en de zoekstand hebben dezelfde vaste hoogte, zodat er niets verspringt als de lussen er zijn.
 // Laag genoeg dat op 360 px (een scherm van 640 px hoog) de gekozen lus en de hoofdknop eronder nog in
@@ -116,11 +116,13 @@ export function loopLines(p: RouteProposal, target: RouteTarget, notes: string[]
   for (const note of notes) {
     // Te kort, de melding van de lus en een stuk langs een grote weg zijn let op (amber), hoogstens
     // MAX_WARN_LINES in een rij; wat overblijft staat bij de uitleg.
+    // De grote weg gaat voor: hij raakt je veiligheid en valt nooit weg.
     const isWarn = (p.notice && note === p.notice) || (short && note.startsWith(short)) || note.startsWith(BIG_ROAD_LEAD);
-    if (isWarn && warn.length < MAX_WARN_LINES) warn.push(note);
+    if (isWarn) warn.push(note);
     else info.push(note);
   }
-  return { warn, info };
+  const ordered = [...warn.filter((n) => n.startsWith(BIG_ROAD_LEAD)), ...warn.filter((n) => !n.startsWith(BIG_ROAD_LEAD))];
+  return { warn: ordered.slice(0, MAX_WARN_LINES), info: [...ordered.slice(MAX_WARN_LINES), ...info] };
 }
 
 // Een andere lus kiezen: in Vol een overgang van 150 ms, in Rustig en Uit meteen op de eindstand.
@@ -160,8 +162,9 @@ export function otherLoopLine(name: string, p: RouteProposal): string {
   return `${name}, ${shape}: ${proposalFacts(p)}`;
 }
 
-// De waarschuwing in de ingeklapte rij van de andere lus: alleen als hij te kort is voor de training
-// (meer dan SHORT_LIMIT korter), in amber zoals bij de gekozen lus. Anders niets.
+// De waarschuwing in de ingeklapte rij van de andere lus, in amber zoals bij de gekozen lus: een stuk
+// langs een grote weg (dat weet je voor je op Kies tikt), anders te kort voor de training. Anders niets.
 export function otherLoopWarn(p: RouteProposal, target: RouteTarget): string | undefined {
+  if ((p.bigRoadM ?? 0) >= BIG_ROAD_NOTE_M) return bigRoadLine(p.bigRoadM as number);
   return tooShort(p, target) ? shortLine(p, target) : undefined;
 }

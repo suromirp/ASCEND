@@ -2,14 +2,16 @@
 // twee doodlopende takken, een "Eén lus" had een doodlopend stuk. Hier de telling, de naam, de keuze, de
 // klim op de kaart, grote wegen en de waarschuwing in de ingeklapte rij. Alles is nagemaakt: een plek
 // die nergens is en lijnen die niet bestaan.
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { RouteAnswer, RouteFn, RoutePoint, RouteProposal } from '../models/route';
 import { bearing, bigRoadMeters, deadEnds, lineLength, metersBetween, offsetPoint, withoutDeadEnds } from './routeGeometry';
 import { BIG_ROAD_LEAD, BIG_ROAD_NOTE_M, proposeSimple, adventureVias, climbStretch, composeSimple, proposalNotes, proposalTitle, proposeAdventure, proposeRoutes, viaAtDeadEnd } from './routePlanner';
 import { MAX_WARN_LINES, loopLines, otherLoopLine, otherLoopWarn } from './routeSheet';
-import { brouterUrl, mapBrouter } from '../integrations/brouter';
-import { valhallaUrl } from '../integrations/valhalla';
+import { brouterRoute, brouterUrl, mapBrouter } from '../integrations/brouter';
+import { valhallaRoute, valhallaUrl } from '../integrations/valhalla';
+import { findRoutes } from '../storage/routeProposal';
+import routeSearchSource from '../components/useRouteSearch.ts?raw';
 
 const START: RoutePoint = { lat: 52.1, lon: 5.9 };
 
@@ -268,9 +270,39 @@ describe('grote wegen', () => {
     const target = { distanceKm: 6, ascentM: 100 };
     const { warn, info } = loopLines(p, target, proposalNotes(p, target));
     expect(warn).toHaveLength(MAX_WARN_LINES);
-    expect(info.some((n) => n.startsWith(BIG_ROAD_LEAD))).toBe(true);
+    // De grote weg gaat voor en valt nooit weg; te kort (4 km) blijft, de melding over hoogtemeters gaat naar de uitleg.
+    expect(warn[0].startsWith(BIG_ROAD_LEAD)).toBe(true);
+    expect(warn[1]).toBe('4 km, korter dan de 6 km van je training.');
+    expect(info).toContain(p.notice);
     expect(loopLines({ ...p, notice: undefined, distanceM: 6000 }, target, proposalNotes({ ...p, notice: undefined, distanceM: 6000 }, target)).warn).toEqual(['Langs een grote weg: 0,8 km.']);
   });
+
+  it('de leiding: de aanvraag van brouterRoute en valhallaRoute volgt quiet', async () => {
+    const urls: string[] = [];
+    const fetchImpl = vi.fn(async (u: RequestInfo | URL) => { urls.push(String(u)); return new Response('stuk', { status: 500 }); });
+    await brouterRoute({ fetchImpl, quiet: false })([START, at(0, 1000)]);
+    await brouterRoute({ fetchImpl })([START, at(0, 1000)]);
+    await valhallaRoute({ fetchImpl, quiet: false })([START, at(0, 1000)]);
+    await valhallaRoute({ fetchImpl })([START, at(0, 1000)]);
+    expect(urls[0]).not.toContain('consider_noise');
+    expect(urls[1]).toContain('consider_noise');
+    expect(decodeURIComponent(urls[2])).not.toContain('walkway_factor');
+    expect(decodeURIComponent(urls[3])).toContain('walkway_factor');
+  });
+
+  it('de leiding: findRoutes geeft avoidBigRoads door, en de Briefing geeft de instelling mee', async () => {
+    const urls: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (u: RequestInfo | URL) => { urls.push(decodeURIComponent(String(u))); return new Response('stuk', { status: 500 }); }));
+    const deps = { terrain: async () => undefined, offline: () => false, limitMs: 20_000 };
+    await findRoutes(START, { distanceKm: 3, ascentM: 0 }, { ...deps, avoidBigRoads: false });
+    const off = urls.splice(0);
+    await findRoutes(START, { distanceKm: 3, ascentM: 0 }, deps);
+    expect(off.length).toBeGreaterThan(0);
+    expect(off.some((u) => u.includes('consider_noise') || u.includes('walkway_factor'))).toBe(false);
+    expect(urls.some((u) => u.includes('consider_noise'))).toBe(true);
+    expect(routeSearchSource).toContain('avoidBigRoads, ...(avoid.length');
+    expect(routeSearchSource).toContain('const avoidBigRoads = settings.routeAvoidBigRoads !== false;');
+  }, 30_000);
 
   it('instelling Grote wegen mijden: aan vraagt de rustige weg, uit niet', () => {
     expect(brouterUrl([START, at(0, 1000)])).toContain('profile:consider_noise=1');
@@ -287,10 +319,15 @@ describe('grote wegen', () => {
   });
 });
 
+afterEach(() => vi.unstubAllGlobals());
+
 describe('de ingeklapte rij van de andere lus', () => {
   const p: RouteProposal = { style: 'adventure', source: 'brouter', points: [START], distanceM: 6000, ascentM: 0, repeatedShare: 0 };
   it('zegt het als hij veel korter is dan de training', () => {
     expect(otherLoopWarn(p, { distanceKm: 10, ascentM: 0 })).toBe('6 km, korter dan de 10 km van je training.');
     expect(otherLoopWarn(p, { distanceKm: 6.5, ascentM: 0 })).toBeUndefined();
+    // Een grote weg gaat voor, ook als hij ook te kort is.
+    expect(otherLoopWarn({ ...p, bigRoadM: 500 }, { distanceKm: 10, ascentM: 0 })).toBe('Langs een grote weg: 0,5 km.');
+    expect(otherLoopWarn({ ...p, bigRoadM: 200 }, { distanceKm: 6.5, ascentM: 0 })).toBeUndefined();
   });
 });

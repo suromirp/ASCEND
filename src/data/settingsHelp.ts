@@ -877,7 +877,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   routeGroteWegen: {
     title: 'Grote wegen mijden',
-    lead: 'Bij een voorgestelde lus vraagt ASCEND de routeplanner om grote wegen en knooppunten van snelwegen te mijden. Het advies is aan.',
+    lead: 'Een voorgestelde lus mijdt grote wegen en knooppunten van snelwegen. Het advies is aan.',
     points: [
       { head: 'Aan', text: 'BRouter maakt een weg duurder naarmate hij dichter bij verkeerslawaai ligt; Valhalla kiest liever een voetpad dan de weg ernaast. Een lus kan daardoor iets langer omlopen.' },
       { head: 'Uit', text: 'de routeplanner kiest de kortste goede weg, ook langs een drukke weg.' },

@@ -476,7 +476,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'bundel-signalen':
       return { value: `${signalsOnCount(s)} van ${SIGNAL_KEYS.length} aan` };
     case 'bundel-weer':
-      return { value: `${countOn([o.weatherLine, o.bestMoment, o.placeWeather, s.weatherWarnings !== false, s.avalancheBulletin !== false, o.rainSoon, o.hillsNearby, s.routeProposal !== false, o.moonLine, o.uvAltitude, o.weatherSwap, o.clothingAdvice])} van 12 aan` };
+      return { value: `${countOn([o.weatherLine, o.bestMoment, o.placeWeather, s.weatherWarnings !== false, s.avalancheBulletin !== false, o.rainSoon, o.hillsNearby, s.routeProposal !== false, s.routeAvoidBigRoads !== false, o.moonLine, o.uvAltitude, o.weatherSwap, o.clothingAdvice])} van 13 aan` };
     case 'bundel-run-detail': {
       const d = resolveRunInsight(s.runInsight).detail;
       return d.show ? { value: 'Aan', sub: `Loopvorm: ${formSwitchesLine(d.form)}` } : { value: 'Uit', dim: true };
