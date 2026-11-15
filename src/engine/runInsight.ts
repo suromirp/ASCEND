@@ -481,7 +481,7 @@ function climbTopic(input: RunInsightInput, ctx: ComparisonContext): TopicResult
       },
       series,
       seriesFormat: 'metresPerHour',
-      strengthText: `Klimsnelheid schommelt zelf zo'n 8 procent en hangt sterk af van de helling en je rugzak. Daarom vergelijkt ASCEND alleen klimmen op ${c.gradeFrom} tot ${c.gradeFrom + 4} procent helling en met een rugzak binnen 2 kg. Dit verschil is ${num(Math.abs(speedPct), 1)} procent.`,
+      strengthText: `Klimsnelheid schommelt zelf zo'n 8 procent en hangt sterk af van de helling en je rugzak. Daarom telt alleen klimmen op ${c.gradeFrom} tot ${c.gradeFrom + 4} procent helling en met een rugzak binnen 2 kg. Dit verschil is ${num(Math.abs(speedPct), 1)} procent.`,
       meaning: better
         ? 'Je klom efficiënter dan je laatste tochten op vergelijkbare helling. Dat heb je op de GR5 nodig: dezelfde hoogtemeters met minder werk.'
         : 'Je klom langzamer terwijl je hartslag niet lager was. Dat gebeurt bij vermoeide benen, warmte of een zwaardere rugzak. Neem de volgende klim in een rustiger tempo.',

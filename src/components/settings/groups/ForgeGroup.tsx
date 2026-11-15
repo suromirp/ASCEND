@@ -161,8 +161,8 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         </BundleSheet>
       )}
       {sheet === 'bundel-toets' && (
-        <BundleSheet eyebrow="Forge" title="Toets tegen MacroFactor" line="ASCEND meet stil mee. Jij beslist wat je ziet." onClose={close}>
-          <SummaryRow id="forge-naast" title="ASCEND naast MacroFactor" facts={facts} info="forgeNaast" onChange={(on) => save({ showComparison: on })} />
+        <BundleSheet eyebrow="Forge" title="Toets tegen MacroFactor" line="Stil meegemeten. Jij beslist wat je ziet." onClose={close}>
+          <SummaryRow id="forge-naast" title="Voorstel naast MacroFactor" facts={facts} info="forgeNaast" onChange={(on) => save({ showComparison: on })} />
           <SummaryRow id="forge-sinds" title="Stil meten sinds" facts={facts} info="forgeSinds" onClick={() => setInner('forge-sinds')} />
         </BundleSheet>
       )}

@@ -156,7 +156,7 @@ describe('workout events: errors in plain Dutch', () => {
   it('403: the key may not write', async () => {
     const err = await kindOfError(403);
     expect(err.kind).toBe('write');
-    expect(err.message).toMatch(/geen trainingen in je agenda/);
+    expect(err.message).toMatch(/geen recht om trainingen in je agenda/);
   });
   it('422: intervals.icu does not accept the training', async () => {
     const err = await kindOfError(422);

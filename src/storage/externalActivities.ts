@@ -327,7 +327,7 @@ async function runWatchSync(options: SyncOptions = {}): Promise<SyncResult> {
     if (nothingWanted(use) && !options.force) return { status: 'off' };
     if (!options.force && !isFetchDue(state.fetchedAt, now)) return { status: 'too-soon' };
   } catch {
-    return { status: 'error', message: 'ASCEND kan de opgeslagen koppeling niet lezen.' };
+    return { status: 'error', message: 'De opgeslagen koppeling is niet te lezen.' };
   }
 
   try {

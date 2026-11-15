@@ -31,7 +31,8 @@ export function RirBubble({ rir, onClick, label, hint = false }: { rir: number; 
   const face = <span className="flex h-6 w-6 items-center justify-center rounded-full font-sans text-xs font-semibold tabular-nums" style={style}>{rir >= 5 ? '5+' : rir}</span>;
   if (!onClick) return <span aria-label={label} className="flex h-6 w-6 items-center justify-center">{face}</span>;
   return (
-    <button type="button" onClick={onClick} aria-label={label} className="relative flex h-6 w-6 items-center justify-center before:absolute before:-inset-2.5 before:content-['']">
+    // Een echte knop van 44 bij 44 om het rondje van 24 px, zoals InfoButton; de negatieve marge houdt de rij zoals hij was.
+    <button type="button" onClick={onClick} aria-label={label} className="-m-2.5 flex h-11 w-11 shrink-0 items-center justify-center">
       {face}
     </button>
   );
@@ -42,6 +43,7 @@ export function RirBubble({ rir, onClick, label, hint = false }: { rir: number; 
 export function TickBox({ done, onClick, label }: { done: boolean; onClick: () => void; label: string }) {
   const [played, setPlayed] = useState(false);
   return (
+    // Een echte knop van 44 bij 44 om het vakje van 32 px, zoals InfoButton; de negatieve marge houdt de rij zoals hij was.
     <button
       type="button"
       role="checkbox"
@@ -51,20 +53,24 @@ export function TickBox({ done, onClick, label }: { done: boolean; onClick: () =
         setPlayed(!done);
         onClick();
       }}
-      className={`relative flex h-8 w-8 items-center justify-center rounded-lg border before:absolute before:-inset-2 before:content-[''] ${done && played ? 'forge-pop' : ''}`}
-      style={{
-        borderColor: done ? 'var(--color-progress)' : 'var(--color-control-border)',
-        background: done ? 'var(--color-progress)' : 'transparent',
-        color: done ? 'var(--color-on-action)' : 'var(--color-ink)',
-        transition: 'background-color 0.2s ease, border-color 0.2s ease',
-      }}
+      className="-m-1.5 flex h-11 w-11 shrink-0 items-center justify-center"
     >
-      {done && played && <span aria-hidden="true" className="mx-tick-ripple" />}
-      {done && (
-        <span className={played ? 'forge-check-draw' : 'forge-check'} style={{ display: 'flex' }}>
-          <Icon name="vinkje" size={20} />
-        </span>
-      )}
+      <span
+        className={`relative flex h-8 w-8 items-center justify-center rounded-lg border ${done && played ? 'forge-pop' : ''}`}
+        style={{
+          borderColor: done ? 'var(--color-progress)' : 'var(--color-control-border)',
+          background: done ? 'var(--color-progress)' : 'transparent',
+          color: done ? 'var(--color-on-action)' : 'var(--color-ink)',
+          transition: 'background-color 0.2s ease, border-color 0.2s ease',
+        }}
+      >
+        {done && played && <span aria-hidden="true" className="mx-tick-ripple" />}
+        {done && (
+          <span className={played ? 'forge-check-draw' : 'forge-check'} style={{ display: 'flex' }}>
+            <Icon name="vinkje" size={20} />
+          </span>
+        )}
+      </span>
     </button>
   );
 }

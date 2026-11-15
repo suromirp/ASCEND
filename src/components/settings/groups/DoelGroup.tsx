@@ -79,7 +79,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       </SettingsSection>
 
       {sheet === 'bundel-tochten' && (
-        <BundleSheet eyebrow="Doel en tochten" title="Tochten" line="Wat ASCEND doet rond een tocht." onClose={close}>
+        <BundleSheet eyebrow="Doel en tochten" title="Tochten" line="Wat er gebeurt rond een tocht." onClose={close}>
           <SummaryRow id="slapen-onderweg" title="Slapen onderweg" facts={facts} info="slapenOnderweg" onClick={() => setInner('slapen-onderweg')} />
           <SummaryRow id="volgende-tocht" title="Volgende tocht op Vandaag" facts={facts} onChange={(on) => void updateSettings({ showNextTrek: on })} />
           <SummaryRow id="water-per-etappe" title="Water per etappe tonen" facts={facts} info="waterPerEtappe" onChange={(on) => void updateSettings({ showStageWater: on })} />
@@ -99,7 +99,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'programma' && <ProgramSheet onClose={close} onRestart={() => setSheet('opnieuw')} />}
       {sheet === 'opnieuw' && <RestartSheet onClose={close} />}
       {sheet === 'bundel-zonder-doel' && (
-        <BundleSheet eyebrow="Doel en tochten" title="Zonder doel" line="Hoe ASCEND je weken plant en telt als je geen doel hebt." onClose={close}>
+        <BundleSheet eyebrow="Doel en tochten" title="Zonder doel" line="Hoe je weken gepland en geteld worden als je geen doel hebt." onClose={close}>
           <SummaryRow id="richting" title="Richting" facts={facts} info="richting" onClick={() => setInner('richting')} />
           <SummaryRow id="weekbudget" title="Weekbudget" facts={facts} info="weekbudget" onClick={() => setInner('weekbudget')} />
           <SummaryRow id="golven" title="Golven" facts={facts} info="golven" onClick={() => setInner('golven')} />
@@ -157,7 +157,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
               try {
                 await updateSettings({ afterMainGoal: v });
                 await refresh();
-                setNote(v === 'stop' ? 'Opgeslagen. Na je hoofddoel plant ASCEND niets meer.' : 'Opgeslagen. ASCEND plant weer onderhoudsweken.');
+                setNote(v === 'stop' ? 'Opgeslagen. Na je hoofddoel wordt niets meer gepland.' : 'Opgeslagen. Na je hoofddoel komen weer onderhoudsweken.');
               } finally {
                 setAfterGoalBusy(false);
                 setAfterGoalPlan(null);

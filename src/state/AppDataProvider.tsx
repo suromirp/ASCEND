@@ -205,7 +205,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // Not on a fresh install: there is nothing of yours to put right yet.
     if (repaired && logs.length > 0) {
       const id = makeId('plancheck');
-      const why = 'Na elke wijziging controleert ASCEND je weken op vaste regels: je rustdag vrij, niet te veel op een dag, genoeg ruimte tussen zware dagen, frisse benen voor een test. Wat het systeem zelf plande, zet het dan recht. Wat jij zelf zette en je test of wedstrijd verschuift het nooit; daarvoor krijg je een voorstel.';
+      const why = 'Na elke wijziging gaan je weken langs vaste regels: je rustdag vrij, niet te veel op een dag, genoeg ruimte tussen zware dagen, frisse benen voor een test. Wat vanzelf gepland was, wordt dan rechtgezet. Wat jij zelf zette en je test of wedstrijd schuiven nooit; daarvoor krijg je een voorstel.';
       const now = new Date().toISOString();
       await PlanChangeProposalsRepo.put({ id, trigger: 'plan_check', issue: 'Weekcontrole', changes: [], alternatives: [], consequences: repaired.lines.join('; '), explanation: why, createdAt: now, resolvedAt: now, resolution: 'accepted' });
       setRecentChange((prev) => {

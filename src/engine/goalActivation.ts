@@ -94,7 +94,7 @@ export function computeGoalActivationPlan(inputs: GoalActivationInputs): GoalAct
         issue: 'Nog te weinig over jou bekend om verantwoord te plannen',
         changes: [],
         alternatives: [],
-        consequences: 'ASCEND weet nog te weinig over je om deze en volgende week op dit doel af te stemmen. Zodra het genoeg weet, volgen concrete voorstellen.',
+        consequences: 'Nog te weinig gegevens om deze en volgende week op dit doel af te stemmen. Zodra er genoeg zijn, volgen concrete voorstellen.',
         explanation: feasibility.explanation,
         createdAt: new Date().toISOString(),
       }
@@ -112,8 +112,8 @@ export function computeGoalActivationPlan(inputs: GoalActivationInputs): GoalAct
     // from now under conditions (evidence, readiness) that don't exist yet.
     changes: [],
     alternatives: [],
-    consequences: 'Verandert het doel je fasen of weken, dan zie je na Doel activeren eerst het voorstel, met Akkoord of Liever niet. Daarna stemt ASCEND je schema doorlopend af op je herstel en vooruitgang, vanaf twee weken verder.',
-    explanation: `Wordt pas na activatie zichtbaar: ASCEND beoordeelt dan doorlopend je herstel en vooruitgang voor de weken erna (huidige status: ${feasibility.status}).`,
+    consequences: 'Verandert het doel je fasen of weken, dan zie je na Doel activeren eerst het voorstel, met Akkoord of Liever niet. Daarna volgen doorlopend voorstellen op basis van je herstel en vooruitgang, vanaf twee weken verder.',
+    explanation: `Wordt pas na activatie zichtbaar: dan telt doorlopend je herstel en vooruitgang voor de weken erna (huidige status: ${feasibility.status}).`,
     createdAt: new Date().toISOString(),
   };
 
@@ -127,7 +127,7 @@ export function computeGoalActivationPlan(inputs: GoalActivationInputs): GoalAct
     committedWeekChanges,
     forecastChanges,
     consequences: feasibility.status === 'insufficient_data'
-      ? 'Dit doel wordt geactiveerd zonder schemawijzigingen, ASCEND wacht met concrete voorstellen tot er genoeg over je bekend is.'
+      ? 'Dit doel wordt geactiveerd zonder schemawijzigingen; concrete voorstellen volgen als er genoeg over je bekend is.'
       : 'Bestaande sessies die al bijdragen blijven ongewijzigd; latere aanpassingen verschijnen als voorstel zodra dat nodig is.',
     computedAt: new Date().toISOString(),
     inputStateHash: computeInputStateHash({ goalDraft, allEvidence, plannedSessions }),

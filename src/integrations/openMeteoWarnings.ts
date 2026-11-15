@@ -47,7 +47,7 @@ const isLocalTime = (v: unknown): v is string => typeof v === 'string' && /^\d{4
 export function mapWarningForecast(raw: unknown, place: WeatherPlace, fetchedAt: string): WarningForecast {
   const body = raw as { hourly?: Record<string, unknown>; utc_offset_seconds?: unknown } | null;
   const h = body?.hourly;
-  if (!h || !Array.isArray(h.time)) throw new OpenMeteoError('response', 'Open-Meteo gaf een antwoord dat ASCEND niet begrijpt.');
+  if (!h || !Array.isArray(h.time)) throw new OpenMeteoError('response', 'Open-Meteo gaf een onleesbaar antwoord.');
   const col = (key: string): unknown[] => (Array.isArray(h[key]) ? (h[key] as unknown[]) : []);
   const temp = col('temperature_2m');
   const gust = col('wind_gusts_10m');
@@ -64,7 +64,7 @@ export function mapWarningForecast(raw: unknown, place: WeatherPlace, fetchedAt:
     if (w !== undefined) hour.code = w;
     if (t !== undefined || g !== undefined || w !== undefined) hours.push(hour);
   });
-  if (hours.length === 0) throw new OpenMeteoError('response', 'Open-Meteo gaf een antwoord dat ASCEND niet begrijpt.');
+  if (hours.length === 0) throw new OpenMeteoError('response', 'Open-Meteo gaf een onleesbaar antwoord.');
   const offset = num(body?.utc_offset_seconds) ?? 0;
   return { fetchedAt, place: { name: place.name, lat: roundCoordinate(place.lat), lon: roundCoordinate(place.lon) }, utcOffsetSec: offset, hours };
 }

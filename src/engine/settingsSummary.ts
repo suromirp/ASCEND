@@ -544,7 +544,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
 
     // Doel en tochten
     case 'doelen':
-      return f.goal ? { value: `${shortGoalName(f.goal.name)}, ${formatDayMonthNL(f.goal.date)}` } : { value: 'Geen doel', dim: true, sub: 'Een doel geeft ASCEND een einddatum' };
+      return f.goal ? { value: `${shortGoalName(f.goal.name)}, ${formatDayMonthNL(f.goal.date)}` } : { value: 'Geen doel', dim: true, sub: 'Een doel geeft je planning een einddatum' };
     case 'programma':
       return f.position
         ? { value: `Week ${f.position.weekInProgram} van ${f.position.totalWeeks}`, sub: f.goal ? `${capitalize(lower(f.position.phaseName))}, teruggerekend vanaf je doel` : capitalize(lower(f.position.phaseName)) }
@@ -922,7 +922,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'ochtendmelding': {
       const n = noticeState(f);
       if (n.support === 'unavailable') return { value: 'Niet mogelijk', dim: true, sub: 'Alleen als je de app opent' };
-      if (n.support === 'not_installed') return { value: 'Niet mogelijk', dim: true, sub: 'Zet ASCEND eerst op je beginscherm' };
+      if (n.support === 'not_installed') return { value: 'Niet mogelijk', dim: true, sub: 'Eerst op je beginscherm zetten' };
       return { checked: n.on, sub: n.support === 'blocked' ? 'Geblokkeerd in je telefoon' : undefined };
     }
     case 'bundel-meldingen':

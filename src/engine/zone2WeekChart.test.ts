@@ -67,7 +67,7 @@ describe('zone2WeekChart: stippen per week, een lijn pas na de drempel', () => {
 
   it('de tekst noemt de echte drempel uit zone2Rules (8 lopen, 4 weken, 3 verschillende weken)', () => {
     const { trend } = build(runs(3, 7));
-    expect(trendVerdict(trend)).toContain('zie je na 8 lopen, verspreid over minstens 4 weken en 3 verschillende weken.');
+    expect(trendVerdict(trend)).toContain('zie je na 8 lopen, verspreid over minstens 4 weken, in minstens 3 daarvan.');
   });
 
   it('7 lopen over ruim vier weken: nog onder de drempel, alleen stippen', () => {

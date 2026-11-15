@@ -14,4 +14,4 @@ export function isChunkLoadError(error: { message?: string } | null | undefined)
 }
 
 export const CHUNK_TITLE = 'Dit scherm kon niet laden';
-export const CHUNK_LINE = 'Het kon niet laden, waarschijnlijk omdat je geen verbinding hebt. Zodra je weer online bent, opent het. De rest van ASCEND werkt gewoon.';
+export const CHUNK_LINE = 'Het kon niet laden, waarschijnlijk omdat je geen verbinding hebt. Zodra je weer online bent, opent het. De rest werkt gewoon.';

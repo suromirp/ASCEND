@@ -25,7 +25,7 @@ Hoe sporten meetellen
 [knop: Uitleg: Hoe sporten meetellen]
 auto
 Vragen
-Hoe ASCEND plant
+Hoe je planning werkt
 [knop: Twee trainingen per dag, Auto]
 Twee trainingen per dag
 [knop: Uitleg: Twee trainingen per dag]

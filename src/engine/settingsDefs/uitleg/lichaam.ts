@@ -7,7 +7,7 @@ import type { SettingsHelp } from '../../../data/settingsHelp';
 export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
   lichaamsgewicht: {
     title: 'Lichaamsgewicht',
-    lead: 'Je gewicht, voor je rugzak, je zweetverlies, de beenindex, eiwit per kilo en oefeningen met je eigen gewicht. ASCEND neemt je nieuwste weging.',
+    lead: 'Je gewicht, voor je rugzak, je zweetverlies, de beenindex, eiwit per kilo en oefeningen met je eigen gewicht. Je nieuwste weging telt.',
     points: [
       { head: 'Uit MacroFactor', text: 'het trendgewicht uit de export als dat er is, anders de weging zelf.' },
       { head: 'Uit Health Connect', text: 'in de Android-app je eerste weging van de dag.' },
@@ -16,11 +16,11 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
   },
   'health-connect-gewicht': {
     title: 'Gewicht uit Health Connect',
-    lead: 'In de Android-app leest ASCEND je wegingen uit Health Connect, met je vetpercentage als je weegschaal dat meet. Het advies is aan.',
+    lead: 'In de Android-app komen je wegingen uit Health Connect, met je vetpercentage als je weegschaal dat meet. Het advies is aan.',
     points: [
-      { head: 'Welke weging', text: 'de eerste van de dag. Een getal onder 30 of boven 250 kg laat ASCEND weg.' },
+      { head: 'Welke weging', text: 'de eerste van de dag. Een getal onder 30 of boven 250 kg telt niet mee.' },
       { head: 'Voorrang', text: 'wat je zelf invult of uit MacroFactor inleest gaat op die dag voor.' },
-      { head: 'Uit', text: 'ASCEND leest je gewicht niet meer en rekent er niet mee. Wat er al stond blijft bewaard en gaat mee in je back-up.' },
+      { head: 'Uit', text: 'Je gewicht komt niet meer binnen en telt niet mee. Wat er al stond blijft bewaard en gaat mee in je back-up.' },
     ],
   },
   gewichtstrend: {
@@ -55,7 +55,7 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
     lead: 'Een weegschaal schat je vet met een zwak stroompje door je lichaam. Kijk naar de trend, niet naar één dag.',
     points: [
       { head: 'Eerlijk', text: 'de meting schommelt met vocht, eten en het tijdstip. Het getal kan een paar procentpunten naast de werkelijkheid zitten.' },
-      { head: 'Wel bruikbaar', text: 'de richting over weken, als je steeds hetzelfde weegt, bijvoorbeeld nuchter in de ochtend. ASCEND zet het gemiddelde van je laatste 7 metingen naast dat van 4 weken eerder.' },
+      { head: 'Wel bruikbaar', text: 'de richting over weken, als je steeds hetzelfde weegt, bijvoorbeeld nuchter in de ochtend. Het gemiddelde van je laatste 7 metingen staat naast dat van 4 weken eerder.' },
       { head: 'Vetvrije massa', text: 'je gewicht min het vet. Voor kracht en de GR5 zegt die meer dan het percentage.' },
     ],
   },
@@ -64,7 +64,7 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
     lead: 'De hartslag die je ongeveer een uur vol kunt houden. Garmin noemt hem lactaatdrempel (LTHR).',
     points: [
       { head: 'Waar', text: 'in Garmin Connect, bij je hartslagzones.' },
-      { head: 'Zonder', text: 'rekent ASCEND met je maximale hartslag. Dat is minder precies.' },
+      { head: 'Zonder', text: 'geldt je maximale hartslag. Dat is minder precies.' },
     ],
   },
   blessures: {
@@ -78,13 +78,13 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
     title: 'Figuur',
     lead: 'Het figuur op Lichaam is een man of een vrouw.',
     points: [
-      { head: 'Automatisch', text: 'ASCEND neemt het over van een koppeling. Nu weet geen koppeling het, dus je ziet een man.' },
+      { head: 'Automatisch', text: 'Overgenomen van een koppeling. Nu weet geen koppeling het, dus je ziet een man.' },
       { head: 'Man of vrouw', text: 'het silhouet verschilt in schouders, heupen en borst. De plekken en de oefeningen blijven hetzelfde.' },
     ],
   },
   'bundel-wat': {
     title: 'Wat speelde er',
-    lead: 'Je eigen aantekeningen bij een training of een dag, en wat ASCEND ermee doet.',
+    lead: 'Je eigen aantekeningen bij een training of een dag, en wat ermee gebeurt.',
     points: [
       { head: 'Alleen op je telefoon', text: 'wat je vastlegt blijft hier.' },
     ],
@@ -100,11 +100,11 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
   },
   'wat-oorzaak': {
     title: 'Mogelijke oorzaak',
-    lead: 'In het blad van een training of een dag zegt ASCEND wat het al weet, met de bron erbij.',
+    lead: 'In het blad van een training of een dag staat wat al bekend is, met de bron erbij.',
     points: [
-      { head: 'Wat ASCEND weet', text: 'warmte uit het weer, een zware beendag uit je logboek, een korte nacht van je horloge en een ziekmelding. Dat telt altijd mee in "Wat doet dit met je?", ook als dit uit staat.' },
+      { head: 'Wat al bekend is', text: 'warmte uit het weer, een zware beendag uit je logboek, een korte nacht van je horloge en een ziekmelding. Dat telt altijd mee in "Wat doet dit met je?", ook als dit uit staat.' },
       { head: 'Je patroon', text: '"lijkt op" staat er pas als een reden minstens 4 keer is vastgelegd, je gewone lopen ook, en de banden elkaar niet raken.' },
-      { head: 'Alcohol en wiet', text: 'noemt ASCEND nooit uit zichzelf.' },
+      { head: 'Alcohol en wiet', text: 'komt nooit uit zichzelf ter sprake.' },
     ],
   },
   'wat-overzicht': {
@@ -117,7 +117,7 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
   },
   'wat-test': {
     title: 'Test verschuiven',
-    lead: 'ASCEND kan voorstellen een testloop te verschuiven na een avond die je zelf zwaar noteerde.',
+    lead: 'Na een avond die je zelf zwaar noteerde, kan een voorstel komen om een testloop te verschuiven.',
     points: [
       { head: 'Wanneer', text: 'een testloop vandaag na 3 of meer glazen de avond ervoor, of morgen na 6 of meer. Bij wiet alleen op dezelfde dag.' },
       { head: 'Altijd een voorstel', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Gewone trainingen schuiven nooit om een reden.' },
@@ -129,16 +129,16 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
     points: [
       { head: 'Aan', text: 'de uitleg noemt alcohol en wiet bij naam.' },
       { head: 'Uit', text: 'neutrale woorden, zoals "wat je dronk of gebruikte". De keuzes voor je eigen notitie blijven staan.' },
-      { head: 'Altijd', text: 'ASCEND noemt alcohol of wiet nooit zelf als reden in een lijst, een melding of een tekst voor Strava.' },
+      { head: 'Altijd', text: 'Alcohol of wiet staat nooit vanzelf als reden in een lijst, een melding of een tekst voor Strava.' },
     ],
   },
   'vroeg-ziek': {
     title: 'Vroeg ziek zien',
-    lead: 'Als je ziek wordt, kan je rusthartslag stijgen en je HRV dalen voor je iets merkt. ASCEND let daarop.',
+    lead: 'Als je ziek wordt, kan je rusthartslag stijgen en je HRV dalen voor je iets merkt. Daar wordt op gelet.',
     points: [
       { head: 'Wanneer', text: 'twee ochtenden op rij je rusthartslag minstens 6 slagen hoger en je HRV onder je gewone bereik van de laatste vier weken.' },
       { head: 'Wat je ziet', text: 'een vraag op Vandaag: Voel me goed, Word ziek of Niet nu. Word ziek opent de gewone ziekmelding. Je planning verandert pas na Akkoord.' },
-      { head: 'Hoe zeker', text: 'het bewijs is zwak tot matig. Alcohol, een warme kamer of stress geven hetzelfde beeld. Legde je bij Wat speelde er iets vast, dan vraagt ASCEND niets.' },
+      { head: 'Hoe zeker', text: 'het bewijs is zwak tot matig. Alcohol, een warme kamer of stress geven hetzelfde beeld. Legde je bij Wat speelde er iets vast, dan komt er geen vraag.' },
       { head: 'Geen diagnose', text: 'bij hoge koorts, pijn op de borst of als je je echt slecht voelt: neem contact op met je huisarts.' },
     ],
   },
@@ -152,7 +152,7 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
   },
   'weekdag-patroon': {
     title: 'Patronen per weekdag',
-    lead: 'ASCEND kijkt acht weken terug of je training op één weekdag vaker wegvalt dan op de andere.',
+    lead: 'Acht weken terug gekeken: valt je training op één weekdag vaker weg dan op de andere?',
     points: [
       { head: 'Wanneer', text: 'de training stond er minstens zes keer, viel minstens vier keer en de helft van de keren weg, en duidelijk vaker dan op je andere dagen.' },
       { head: 'Wat telt', text: 'overgeslagen, gemist of door jou verschoven. Vrije dagen, vakanties, tochten en ziekte tellen niet mee.' },
@@ -179,7 +179,7 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
   },
   'etappetijd-eigen': {
     title: 'Etappetijd op je eigen tempo',
-    lead: 'De looptijd op de bordjes is een norm. Met je eigen klimtempo zegt ASCEND hoe lang een etappe voor jou ongeveer duurt.',
+    lead: 'De looptijd op de bordjes is een norm. Met je eigen klimtempo zie je hoe lang een etappe voor jou ongeveer duurt.',
     points: [
       { head: 'Wat je ziet', text: 'bij een etappe en op Je stand een band, zoals 6,5 tot 7,5 uur lopen, zonder pauzes.' },
       { head: 'Wanneer', text: 'zodra je klimtempo er is, na zes klimmen uit drie tochten. Tot dan blijft de looptijd van de site staan.' },
@@ -188,7 +188,7 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
   },
   tempocurve: {
     title: 'Tempocurve tussen testen',
-    lead: 'Tussen twee testen loop je in training ook snelle stukken. ASCEND legt de snelste naast je test, als controle.',
+    lead: 'Tussen twee testen loop je in training ook snelle stukken. De snelste staan naast je test, als controle.',
     points: [
       { head: 'Wat je ziet', text: 'op Je stand onder Lopen je snelste 5 km in training sinds je test, met één zin: past bij je testtempo\'s, wijst op iets sneller, of is rustiger.' },
       { head: 'De test blijft de bron', text: 'je tempo\'s, de voorspelling en wat naar je horloge gaat veranderen hier niet door.' },
@@ -209,7 +209,7 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
     lead: 'Op de pas is het anders dan in het dal. Geef je bij een tocht in de bergen of de sneeuw het hoogste punt op, dan toont Vandaag het weer op die hoogte.',
     points: [
       { head: 'Wat je ziet', text: 'op een dag van je tocht de temperatuur, windstoten, kans op onweer en het vriespunt op die hoogte, met een verwijzing naar het officiële bergweer.' },
-      { head: 'Alleen informatie', text: 'ASCEND zegt niet of je moet gaan. Dat is vakwerk. Je planning verandert er niet door.' },
+      { head: 'Alleen informatie', text: 'Geen oordeel of je moet gaan. Dat is vakwerk. Je planning verandert er niet door.' },
       { head: 'Waar het vandaan komt', text: 'Open-Meteo, hoogstens eens per uur, alleen als het weer je locatie volgt. Een weermodel rekent een bergkam grof uit.' },
     ],
   },
@@ -259,7 +259,7 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
   },
   'rustiger-instap': {
     title: 'Rustiger instap na een pauze',
-    lead: 'Na ziekte en een vakantie, of na twee weken met weinig training, stelt ASCEND op de dag dat je terug bent een rustiger week voor.',
+    lead: 'Na ziekte en een vakantie, of na twee weken met weinig training, krijg je op de dag dat je terug bent een rustiger week als voorstel.',
     points: [
       { head: 'Wanneer', text: 'op de eerste vier dagen terug, als je in de twee weken ervoor minder dan 40 procent van twee gewone weken deed. Niet terwijl je ziek bent of nog opbouwt na ziekte, niet met een test of wedstrijd in die week, en niet in de eerste twee weken van je plan.' },
       { head: 'Wat er verandert', text: 'zeven dagen lang duren je trainingen driekwart (het advies) of de helft van de gewone tijd. Welke trainingen er staan, je fase en je doeldatum blijven zoals ze zijn.' },
@@ -272,16 +272,16 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
 export const LICHAAM_ZONDER_NAMEN: Record<string, SettingsHelp> = {
   'wat-oorzaak': {
     title: 'Mogelijke oorzaak',
-    lead: 'In het blad van een training of een dag zegt ASCEND wat het al weet, met de bron erbij.',
+    lead: 'In het blad van een training of een dag staat wat al bekend is, met de bron erbij.',
     points: [
-      { head: 'Wat ASCEND weet', text: 'warmte uit het weer, een zware beendag uit je logboek, een korte nacht van je horloge en een ziekmelding. Dat telt altijd mee in "Wat doet dit met je?", ook als dit uit staat.' },
+      { head: 'Wat al bekend is', text: 'warmte uit het weer, een zware beendag uit je logboek, een korte nacht van je horloge en een ziekmelding. Dat telt altijd mee in "Wat doet dit met je?", ook als dit uit staat.' },
       { head: 'Je patroon', text: '"lijkt op" staat er pas als een reden minstens 4 keer is vastgelegd, je gewone lopen ook, en de banden elkaar niet raken.' },
-      { head: 'Wat je dronk of gebruikte', text: 'noemt ASCEND nooit uit zichzelf.' },
+      { head: 'Wat je dronk of gebruikte', text: 'komt nooit uit zichzelf ter sprake.' },
     ],
   },
   'wat-test': {
     title: 'Test verschuiven',
-    lead: 'ASCEND kan voorstellen een testloop te verschuiven na een avond die je zelf zwaar noteerde.',
+    lead: 'Na een avond die je zelf zwaar noteerde, kan een voorstel komen om een testloop te verschuiven.',
     points: [
       { head: 'Wanneer', text: 'een testloop vandaag of morgen, na een avond waarvan je veel vastlegde van wat je dronk of gebruikte. Bij wat je gebruikte alleen op dezelfde dag.' },
       { head: 'Altijd een voorstel', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Gewone trainingen schuiven nooit om een reden.' },

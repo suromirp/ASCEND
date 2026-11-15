@@ -162,9 +162,9 @@ describe('what is said when the layout is not known', () => {
         { name: 'Stappen', rows: [['Datum', 'Steps (count)'], [day('2026-10-14'), 9000]] },
       ]),
     );
-    expect(e.message).toMatch(/geen gewicht en geen krachttrainingen/);
+    expect(e.message).toMatch(/Geen gewicht en geen krachttrainingen/);
     expect(e.message).not.toContain('Calories');
-    expect(e.details).toMatch(/herkent geen werkblad/);
+    expect(e.details).toMatch(/Geen bekend werkblad/);
     expect(e.details).toContain('Voeding (Date, Calories, Protein)');
     expect(e.details).toContain('Stappen (Datum, Steps (count))');
     expect(e.details).toMatch(/Geef deze kolomnamen door/);
@@ -172,7 +172,7 @@ describe('what is said when the layout is not known', () => {
 
   it('gives the usual message for a single sheet that is not known', async () => {
     const e = await refused(makeXlsx([{ name: 'Stappen', rows: [['Date', 'Steps', 'Floors'], [day('2026-10-14'), 9400, 12]] }]));
-    expect(e.message).toMatch(/geen gewicht en geen krachttrainingen/);
+    expect(e.message).toMatch(/Geen gewicht en geen krachttrainingen/);
     expect(e.details).toMatch(/niet de Workout Log van MacroFactor/);
     expect(e.details).toContain('Gevonden kolommen: Date, Steps, Floors');
   });
@@ -261,7 +261,7 @@ describe('the summary of a whole export', () => {
     expect(lines).toEqual([
       'Gewicht: 85,6 kg op 13 oktober (trendgewicht), stond al in ASCEND.',
       'Trainingen: geen in dit bestand. Voor je sets en RIR deel je de Workout Log.',
-      'Voeding en andere gegevens laat ASCEND liggen.',
+      'Voeding en andere gegevens blijven liggen.',
     ]);
   });
 
@@ -322,7 +322,7 @@ describe('an export with the sheet Exercises - 1-RM', () => {
   it('is enough for a file on its own, and a 3-RM sheet alone is still refused', async () => {
     expect((await readMacroFactorBytes(makeXlsx([oneRmSheet()]))).oneRm?.exercises).toHaveLength(2);
     const e = await refused(makeXlsx([oneRmSheet('Exercises - 3-RM')]));
-    expect(e.message).toContain('geen gewicht en geen krachttrainingen');
+    expect(e.message).toContain('Geen gewicht en geen krachttrainingen');
   });
 
   it('reads the sheet when MacroFactor wrote every line as one cell', () => {

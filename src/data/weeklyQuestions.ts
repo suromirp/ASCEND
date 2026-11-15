@@ -151,7 +151,7 @@ export const WEEK_QUESTIONS: WeekQuestion[] = [
   },
   {
     id: 'WQ-opbouw-02', phase: 'opbouw', theme: 'voorbereiding',
-    vraag: 'Als ASCEND een extra training voorstelt en je twijfelt of je lichaam dat aankan, op welk teken zeg je dan nee?',
+    vraag: 'Als je een extra training als voorstel krijgt en je twijfelt of je lichaam dat aankan, op welk teken zeg je dan nee?',
     bron: { tekst: 'Wil je winnen bij de Olympische Spelen? Bedenk eerst wat eraan voorafgaat en wat erop volgt, en begin dan pas. Je moet je aan regels houden, op vaste uren trainen, in hitte en in kou.', auteur: 'Epictetus', werk: 'Handboekje 29' },
   },
   {

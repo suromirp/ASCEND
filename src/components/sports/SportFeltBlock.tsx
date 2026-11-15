@@ -29,7 +29,7 @@ export function SportFeltBlock({ log }: { log: SessionLog }) {
   const assumed = FELT_LABEL[feltWordOf(load.rpe - 1)].toLowerCase();
   // Vragen hoe zwaar het was staat uit: alleen wat ASCEND aannam.
   if (!resolveSportCounting(settings.sportCounting).askFelt) {
-    return <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{`ASCEND nam aan: ${assumed}.`}</p>;
+    return <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{`Aangenomen: ${assumed}.`}</p>;
   }
   async function pick(word: FeltWord) {
     if (saving || !mayAskFelt(log)) return;
@@ -45,7 +45,7 @@ export function SportFeltBlock({ log }: { log: SessionLog }) {
       <FeltChoice
         value={undefined}
         onPick={(w) => void pick(w)}
-        note={`ASCEND nam aan: ${assumed}. Tik als het anders was. Je antwoord staat daarna vast.`}
+        note={`Aangenomen: ${assumed}. Tik als het anders was. Je antwoord staat daarna vast.`}
       />
     </div>
   );

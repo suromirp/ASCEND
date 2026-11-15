@@ -178,7 +178,7 @@ async function runSync(options: WorkoutOptions & { force?: boolean }): Promise<W
     if (!connection) return { status: 'not-connected' };
     if (!options.force && !isFetchDue(state.syncedAt, now, MIN_FETCH_INTERVAL_MINUTES)) return { status: 'too-soon' };
   } catch {
-    return { status: 'error', message: 'ASCEND kan de opgeslagen koppeling niet lezen.' };
+    return { status: 'error', message: 'De opgeslagen koppeling is niet te lezen.' };
   }
 
   const items = { ...state.items };
@@ -219,7 +219,7 @@ async function runSync(options: WorkoutOptions & { force?: boolean }): Promise<W
     await putState({ ...state, items, syncedAt: now.toISOString(), lastError: undefined });
     return { status: 'ok', ...counts };
   } catch {
-    const message = 'ASCEND kan je planning niet lezen om trainingen te sturen.';
+    const message = 'Je planning is niet te lezen, dus er gaan geen trainingen weg.';
     try {
       // Read again: a threshold just read from intervals.icu must not vanish.
       await putState({ ...(await getWatchWorkoutState()), items, lastError: message });
@@ -285,7 +285,7 @@ async function sendNextWatchWorkoutNow(options: WorkoutOptions): Promise<TestSen
   try {
     connection = options.connection ?? (await getConnection());
   } catch {
-    return { status: 'error', message: 'ASCEND kan de opgeslagen koppeling niet lezen.' };
+    return { status: 'error', message: 'De opgeslagen koppeling is niet te lezen.' };
   }
   if (!connection) return { status: 'not-connected' };
   try {
@@ -332,7 +332,7 @@ async function removeWatchWorkoutsNow(options: WorkoutOptions): Promise<{ status
     await putState({ ...state, items });
     return { status: 'ok', removed: upcoming.length };
   } catch {
-    return { status: 'error', message: 'ASCEND kan de opgeslagen koppeling niet lezen.' };
+    return { status: 'error', message: 'De opgeslagen koppeling is niet te lezen.' };
   }
 }
 
@@ -356,7 +356,7 @@ async function setEnabledNow(enabled: boolean, options: WorkoutOptions): Promise
     if (removal.status === 'not-connected') return { status: 'ok', removed: 0 };
     return { status: 'error', message: `${removal.message} De schakelaar staat uit, maar de al verstuurde trainingen staan nog in intervals.icu.` };
   } catch {
-    return { status: 'error', message: 'ASCEND kan de instelling niet opslaan.' };
+    return { status: 'error', message: 'De instelling is niet opgeslagen.' };
   }
 }
 
@@ -410,7 +410,7 @@ async function cleanUpWatchWorkoutsNow(options: WorkoutOptions): Promise<CleanUp
     if (!connection) return { status: 'not-connected' };
     state = await getWatchWorkoutState();
   } catch {
-    return { status: 'error', message: 'ASCEND kan de opgeslagen koppeling niet lezen.' };
+    return { status: 'error', message: 'De opgeslagen koppeling is niet te lezen.' };
   }
   try {
     const found = await fetchAscendEvents(connection, { from: today, to: addDays(today, CLEANUP_DAYS) }, options);
@@ -443,7 +443,7 @@ export async function resendWatchWorkouts(options: WorkoutOptions = {}): Promise
   try {
     if (!(await getWatchWorkoutState()).enabled) return { status: 'off' };
   } catch {
-    return { status: 'error', message: 'ASCEND kan de opgeslagen koppeling niet lezen.' };
+    return { status: 'error', message: 'De opgeslagen koppeling is niet te lezen.' };
   }
   const cleaned = await cleanUpWatchWorkouts(options);
   if (cleaned.status !== 'ok') return cleaned;

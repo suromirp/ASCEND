@@ -18,7 +18,7 @@ export const GEGEVENS_UITLEG: Record<string, SettingsHelp> = {
     points: [
       { head: 'Wanneer', text: 'zondagavond vanaf 18:00, of bij dagelijks elke avond. Is de app dan dicht, dan gebeurt het de eerstvolgende keer dat je hem opent.' },
       { head: 'In de app en in de browser', text: 'de app maakt het bestand zelf in Interne opslag > Documents > ASCEND. Er gaat niets naar buiten. In de browser staat er een kaart op Vandaag met Back-up maken, tenzij je browser je vaste map zonder vragen vrijgeeft.' },
-      { head: 'Bewaren', text: 'het aantal dat je kiest (het advies is 8) blijft staan, oudere ruimt ASCEND op. Wat je er zelf in zet blijft altijd staan. Lukt een back-up niet, dan zegt ASCEND dat hier en op Vandaag.' },
+      { head: 'Bewaren', text: 'het aantal dat je kiest (het advies is 8) blijft staan, oudere gaan weg. Wat je er zelf in zet blijft altijd staan. Lukt een back-up niet, dan staat dat hier en op Vandaag.' },
     ],
   },
   backupmap: {
@@ -50,24 +50,24 @@ export const GEGEVENS_UITLEG: Record<string, SettingsHelp> = {
   },
   'ruimte-app': {
     title: 'Ruimte op dit toestel',
-    lead: 'Je browser geeft ASCEND een deel van de ruimte op je telefoon. Hier zie je hoeveel daarvan in gebruik is.',
+    lead: 'Je browser reserveert een deel van de ruimte op je telefoon voor ASCEND. Hier zie je hoeveel daarvan in gebruik is.',
     points: [
-      { head: 'Bijna vol', text: 'boven 80 % waarschuwt ASCEND. Maak dan een back-up en verwijder de reeksen onder Ruimte van reeksen. De kilometers blijven.' },
+      { head: 'Bijna vol', text: 'boven 80 % krijg je een waarschuwing. Maak dan een back-up en verwijder de reeksen onder Ruimte van reeksen. De kilometers blijven.' },
       { head: 'Ongeveer', text: 'de browser geeft een schatting, geen exact getal.' },
     ],
   },
   momentopnamen: {
     title: 'Kopieën van voor een import',
-    lead: 'Voor elke import bewaart ASCEND een kopie, zodat je terug kunt. De laatste vijf blijven.',
+    lead: 'Voor elke import blijft een kopie bewaard, zodat je terug kunt. De laatste vijf blijven.',
     points: [
       { head: 'Waarom', text: 'een import vervangt je gegevens. Met de kopie kun je terug als het niet is wat je dacht.' },
     ],
   },
   'reeksen-bewaren': {
     title: 'Volledige reeks bewaren',
-    lead: 'Je horloge meet bijna elke seconde je tempo, hartslag en hoogte. ASCEND kan dat helemaal op deze telefoon bewaren.',
+    lead: 'Je horloge meet bijna elke seconde je tempo, hartslag en hoogte. Dat kan helemaal op deze telefoon bewaard blijven.',
     points: [
-      { head: 'Waarvoor', text: 'kilometer na kilometer, de rondes van je horloge en de grafieken van een loop. Verandert je drempel later, dan rekent ASCEND opnieuw zonder iets op te halen.' },
+      { head: 'Waarvoor', text: 'kilometer na kilometer, de rondes van je horloge en de grafieken van een loop. Verandert je drempel later, dan wordt alles opnieuw gerekend zonder iets op te halen.' },
       { head: 'Ruimte', text: 'ongeveer 120 KB voor een uur lopen, enkele tientallen MB per jaar.' },
       { head: 'Uit', text: 'alleen de samenvatting en de kilometers. Wat al bewaard is blijft staan. Je route wordt nooit bewaard, alleen de richting per kilometer, voor de wind.' },
     ],
@@ -77,7 +77,7 @@ export const GEGEVENS_UITLEG: Record<string, SettingsHelp> = {
     lead: 'De reeksen van je horloge komen van intervals.icu, en die kan ze later misschien niet meer geven. Daarom gaan die van de laatste 2 jaar standaard mee in je back-up.',
     points: [
       { head: 'De laatste 2 jaar', text: 'ongeveer 100 KB per training, 15 tot 25 MB per jaar.' },
-      { head: 'Alle of geen', text: 'alle reeksen geeft een back-up die elk jaar groeit. Geen reeksen geeft een kleine back-up. Na een herstel haalt ASCEND ze opnieuw op zolang dat kan.' },
+      { head: 'Alle of geen', text: 'alle reeksen geeft een back-up die elk jaar groeit. Geen reeksen geeft een kleine back-up. Na een herstel komen ze opnieuw binnen zolang dat kan.' },
       { head: 'Altijd mee', text: 'de samenvatting per loop: kilometers, rondes en je beste stukken. Kopieën van voor een import bevatten de reeksen nooit.' },
     ],
   },
@@ -87,7 +87,7 @@ export const GEGEVENS_UITLEG: Record<string, SettingsHelp> = {
     points: [
       { head: 'Wat mee gaat', text: 'per ochtend de datum, je rusthartslag, je HRV, hoe lang je sliep en je slaapscore. Niets anders van je horloge. Zolang dit aan staat blijven ze op je telefoon, ook na 400 dagen en als je ontkoppelt.' },
       { head: 'Let op', text: 'het back-upbestand bevat dan ook gezondheidsgegevens. Bewaar het waar alleen jij erbij kunt.' },
-      { head: 'Uit', text: 'een back-up zonder ochtendgetallen. Zet je dit uit zonder koppeling, dan vraagt ASCEND eerst, want de bewaarde ochtenden gaan dan van je telefoon.' },
+      { head: 'Uit', text: 'een back-up zonder ochtendgetallen. Zet je dit uit zonder koppeling, dan komt er eerst een vraag, want de bewaarde ochtenden gaan dan van je telefoon.' },
     ],
   },
   aangepast: {
@@ -109,14 +109,14 @@ export const GEGEVENS_UITLEG: Record<string, SettingsHelp> = {
     title: 'Automatisch bijwerken',
     lead: 'De app kijkt bij het openen of er een nieuwe versie is, haalt hem op de achtergrond op en gebruikt hem bij de volgende start.',
     points: [
-      { head: 'Wat er naar buiten gaat', text: 'niets van jou. ASCEND vraagt alleen een klein versiebestand en de nieuwe versie op bij de site van ASCEND.' },
+      { head: 'Wat er naar buiten gaat', text: 'niets van jou. Alleen een klein versiebestand en de nieuwe versie komen van de site van ASCEND.' },
       { head: 'Gaat het mis', text: 'start een nieuwe versie niet goed, dan valt de app terug op de vorige. Vraagt een versie een nieuwe toestemming, dan zegt de app dat er een nieuwe klaarstaat om te installeren.' },
       { head: 'Uit', text: 'de app blijft zoals hij is tot je zelf een nieuwe installeert.' },
     ],
   },
   'voorstellen-opruimen': {
     title: 'Oude voorstellen opruimen',
-    lead: 'ASCEND bewaart elk voorstel met alle details. Na een paar maanden maakt het daar een korte regel van.',
+    lead: 'Elk voorstel blijft bewaard met alle details. Na een paar maanden wordt het een korte regel.',
     points: [
       { head: 'Blijft staan', text: 'de datum, de titel, of je Akkoord of Liever niet koos, en wat het uit je planning haalde.' },
       { head: 'Nooit', text: 'een voorstel dat nog open staat, een training die er nog aan vastzit, iets wat je ongedaan maakte, of een vrije periode die nog bestaat.' },
@@ -125,14 +125,14 @@ export const GEGEVENS_UITLEG: Record<string, SettingsHelp> = {
   },
   herbouwen: {
     title: 'Adviezen opnieuw berekenen',
-    lead: 'ASCEND kijkt opnieuw naar je planning en je adviezen. Er wordt niets verwijderd.',
+    lead: 'Je planning en je adviezen worden opnieuw bekeken. Er wordt niets verwijderd.',
     points: [
-      { head: 'Meestal niet nodig', text: 'ASCEND doet het zelf na een update of import. Dit is een noodknop.' },
+      { head: 'Meestal niet nodig', text: 'het gebeurt vanzelf na een update of import. Dit is een noodknop.' },
     ],
   },
   startniveau: {
     title: 'Startniveau zelf invullen',
-    lead: 'Meestal niet nodig, want ASCEND vraagt zelf wat ontbreekt. Hier vul je het in als je dat liever doet.',
+    lead: 'Meestal niet nodig, want wat ontbreekt, komt vanzelf als vraag. Hier vul je het in als je dat liever doet.',
     points: [
       { head: 'Je historie', text: 'blijft zoals hij was.' },
     ],

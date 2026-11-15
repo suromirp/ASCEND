@@ -33,7 +33,7 @@ export function healthEnableNote(result: HealthEnableResult): HealthNote {
   switch (result.status) {
     case 'on': {
       const missing = ORDER.filter((k) => !result.granted.includes(k)).map((k) => KIND_WORD[k]);
-      const partly = missing.length > 0 ? ` Je gaf niet alles vrij: ${list(missing)} haalt ASCEND niet op.` : '';
+      const partly = missing.length > 0 ? ` Je gaf niet alles vrij: ${list(missing)} blijft daarom weg.` : '';
       const sync = result.sync;
       if (sync.status === 'error') return { text: `Health Connect staat aan, maar ophalen lukte nog niet. ${sync.message}${partly}`, tone: 'warn' };
       if (sync.status !== 'ok') return { text: `Health Connect staat aan.${partly}`, tone: 'ok' };

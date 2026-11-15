@@ -8,7 +8,7 @@ Vandaag en meldingen
 Na spierpijn of een zware loop een lichtere beendag of een dag later.
 [label: Lichter bij vermoeide benen]
 [knop: Met een voorstelAdviesEen kaart met Lichter, een dag later en Liever niet]
-[knop: Alleen een regelWat ASCEND ziet, zonder dat er iets te kiezen is]
+[knop: Alleen een regelWat opvalt, zonder dat er iets te kiezen is]
 [knop: UitNiets, ook niet bij het verplaatsen van een beendag]
 [knop: Meer uitleg]
 [knop: Hoe licht, Standaard]
