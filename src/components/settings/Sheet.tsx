@@ -91,7 +91,7 @@ export function InfoSheet({ helpKey, onClose }: { helpKey: string; onClose: () =
       <Sheet eyebrow="Uitleg" title="Uitleg laadt niet" onClose={onClose}>
         {(close) => (
           <>
-            <p className="st-lead">Probeer het zo opnieuw.</p>
+            <p className="st-lead">Sluit de app en open hem opnieuw.</p>
             <div className="st-btns">
               <button type="button" className="st-btn" onClick={close}>Begrepen</button>
             </div>
