@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSheetClose } from '../../utils/useSheetClose';
-import { SETTINGS_HELP, settingsHelp } from '../../data/settingsHelp';
+import { hasSettingsHelp, loadSettingsHelp, settingsHelpIfLoaded } from '../../data/settingsHelpKeys';
 import { useAppData } from '../../state/AppDataContext';
 import { Portal } from '../Portal';
 import { Icon } from '../icons';
@@ -63,11 +63,43 @@ export function Sheet({
 }
 
 // Uitleg die snel te lezen is: één zin vooraf, daarna korte punten met een
-// vetgedrukt begin. De teksten staan in data/settingsHelp.ts.
+// vetgedrukt begin. De teksten staan in engine/settingsDefs/uitleg/ en laden niet bij de start
+// (data/settingsHelpKeys.ts): zijn ze er nog niet, dan opent het blad zodra ze binnen zijn, en na
+// HELP_LIMIT_MS zonder tekst zegt het dat de uitleg niet laadt.
+const HELP_LIMIT_MS = 4000;
+
 export function InfoSheet({ helpKey, onClose }: { helpKey: string; onClose: () => void }) {
   const { settings } = useAppData();
-  const help = settingsHelp(helpKey, settings.influenceNames !== false);
-  if (!help) return null;
+  const named = settings.influenceNames !== false;
+  const [, setLoaded] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const help = settingsHelpIfLoaded(helpKey, named);
+  const waiting = !help && hasSettingsHelp(helpKey);
+  useEffect(() => {
+    if (!waiting) return;
+    let live = true;
+    const limit = window.setTimeout(() => live && setFailed(true), HELP_LIMIT_MS);
+    loadSettingsHelp().then(
+      () => { if (live) { window.clearTimeout(limit); setLoaded((n) => n + 1); } },
+      () => { if (live) { window.clearTimeout(limit); setFailed(true); } },
+    );
+    return () => { live = false; window.clearTimeout(limit); };
+  }, [waiting]);
+  if (!help) {
+    if (!failed) return null;
+    return (
+      <Sheet eyebrow="Uitleg" title="Uitleg laadt niet" onClose={onClose}>
+        {(close) => (
+          <>
+            <p className="st-lead">Probeer het zo opnieuw.</p>
+            <div className="st-btns">
+              <button type="button" className="st-btn" onClick={close}>Begrepen</button>
+            </div>
+          </>
+        )}
+      </Sheet>
+    );
+  }
   return (
     <Sheet eyebrow="Uitleg" title={help.title} onClose={onClose}>
       {(close) => (
@@ -186,7 +218,7 @@ export function ChoiceSheet<T extends string | number>({
                   if (!keepOpen) timer.current = window.setTimeout(() => closeRef.current?.(), 240);
                 }}
               />
-              {helpKey && SETTINGS_HELP[helpKey] && (
+              {helpKey && hasSettingsHelp(helpKey) && (
                 <button type="button" className="st-more" style={{ marginTop: 8 }} onClick={() => setHelp(true)}>
                   <span>Meer uitleg</span>
                   <Icon name="verder" size={16} />

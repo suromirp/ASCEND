@@ -1,10 +1,9 @@
 // ASCEND: de vorm van één verklaring van een instelling (docs/visie/Ontwerp instellingen op een plek.md,
-// hoofdstuk 2). Stap 1 en 2: de tekstvelden, de plek en de voorwaarden. De samenvatting, het advies en het
-// lezen en schrijven komen er in latere stappen bij, elk in de stap die ze verhuist.
+// hoofdstuk 2). Stap 1 tot en met 3: de tekstvelden, de plek, de voorwaarden en de keuzes; de uitleg zelf staat
+// apart in uitleg/<groep>.ts, zodat die lange tekst niet bij de start van de app laadt. De samenvatting, het
+// advies en het lezen en schrijven komen er in latere stappen bij, elk in de stap die ze verhuist.
 
 import type { SettingsPageId } from '../../data/settingsLayout';
-import type { SettingsHelp } from '../../data/settingsHelp';
-import type { ChoiceDef } from '../../data/settingsChoices';
 import type { AppSettings } from '../../storage/database';
 
 // Wat deze telefoon en deze gegevens zijn, voor de voorwaarden (engine/settingsSummary.ts#rowContext).
@@ -48,6 +47,19 @@ export interface Blocker {
   parent: string;
 }
 
+// Een keuze: een titel, één regel erboven, het advies en per optie een naam, één regel eronder en soms een
+// kortere waarde voor in de rij. Het keuzeblad (ChoiceSheet) en de samenvatting lezen allebei hier.
+export interface ChoiceDef<T extends string | number> {
+  // De groep boven de titel in het blad.
+  group: string;
+  title: string;
+  line?: string;
+  advice: T;
+  // De sleutel van de uitleg (helpKey ?? id van een verklaring), voor "Meer uitleg".
+  help?: string;
+  options: { value: T; label: string; note?: string; short?: string }[];
+}
+
 // Waar de instelling staat.
 export type Place =
   // Een eigen rij op de pagina; de volgorde is die in het bestand. `advanced` staat op de pagina Geavanceerd,
@@ -80,12 +92,10 @@ export interface SettingDef {
   search?: false;
   // De kop van het blad dat de rij opent.
   sheet?: { eyebrow: string; title: string; line?: string };
-  // De uitleg, of: dezelfde als bij die andere id (een uitleg die door meer rijen gedeeld wordt).
-  help?: SettingsHelp | { from: string };
-  // De oude sleutel van de uitleg (camelCase) zolang code die nog gebruikt.
+  // Heeft uitleg achter de i (de tekst staat in uitleg/<groep>.ts onder deze id), of leent die van een andere id.
+  help?: true | { from: string };
+  // De oude sleutel van de uitleg (camelCase) zolang code die nog gebruikt; de sleutel is `helpKey ?? id`.
   helpKey?: string;
-  // De uitleg zonder namen (NEUTRAL_HELP), als "Voorbeelden bij naam noemen" uit staat.
-  neutralHelp?: SettingsHelp;
   // De keuze; `key` is de oude sleutel in CHOICES.
   choice?: { key: string; def: ChoiceDef<string | number> };
   // De voorwaarden, in deze volgorde (de gedeelde staan in parts.ts als B).
