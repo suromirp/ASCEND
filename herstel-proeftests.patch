@@ -1,0 +1,278 @@
+diff --git a/src/engine/wardenWeekProef.test.ts b/src/engine/wardenWeekProef.test.ts
+new file mode 100644
+index 0000000..27e7980
+--- /dev/null
++++ b/src/engine/wardenWeekProef.test.ts
+@@ -0,0 +1,272 @@
++// Warden Week samenhang: proeftests voor de randen (logdag in een andere week, zondag-maandag, zonder sportschool,
++// ziek en vakantie Vervallen) en een willekeurige vergelijking tussen de rijen van Week en de weekterugblik.
++// Alles nagemaakt.
++import { afterEach, describe, expect, it, vi } from 'vitest';
++import { buildDefaultProgramData } from '../data/defaultProgram';
++import type { PlannedSession, SessionLog } from '../models/training';
++import type { Program } from '../models/program';
++import type { LeavePeriod } from '../models/leave';
++import type { IllnessEpisode } from '../models/illness';
++import { buildWeekReview } from './weekReview';
++import { attentionLines, weekCountLine, weekRestLines } from './weekGlance';
++import { missedInWeek } from './weekList';
++import { deriveSessionStatus } from './sessionStatus';
++import { doneOnOtherDay, rowExtra } from './weekRow';
++import { caughtUpMap } from './catchUp';
++import { raceDatesOf } from './raceWindow';
++import { addDays, mondayOfWeek } from '../utils/dates';
++import { dayLoads } from './weekProfile';
++
++const { templates } = buildDefaultProgramData();
++const byId = new Map(templates.map((t) => [t.id, t]));
++const program: Program = { id: 'p', name: 'P', startDate: '2026-09-28', phases: [{ id: 'phase_1', name: 'BASISFASE', order: 1, weekCount: 4 }, { id: 'phase_2', name: 'OPBOUW', order: 2, weekCount: 4 }] };
++const ps = (id: string, templateId: string, date: string, over: Partial<PlannedSession> = {}): PlannedSession => ({ id, templateId, scheduledDate: date, weekStartDate: mondayOfWeek(date), status: 'planned', order: 0, ...over });
++const log = (s: PlannedSession, date = s.scheduledDate, over: Partial<SessionLog> = {}): SessionLog => ({
++  id: `l-${s.id}`, plannedSessionId: s.id, templateId: s.templateId, type: byId.get(s.templateId)!.type, completedDate: date, completedAt: `${date}T10:00:00Z`, variant: 'full', durationMinutes: 45, source: 'manual', ...over,
++});
++const W = '2026-10-05';
++const clock = (day: string) => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date(`${day}T12:00:00`)); };
++afterEach(() => { vi.useRealTimers(); });
++
++interface Stand { plan: PlannedSession[]; logs: SessionLog[]; leave?: LeavePeriod[]; illness?: IllnessEpisode[]; openDraft?: string }
++const reviewOf = (s: Stand, asOf: string, weekStart = W) => buildWeekReview({ weekStart, plannedSessions: s.plan, logs: s.logs, templates, program, planChangeLog: [], asOf, leavePeriods: s.leave, illnessEpisodes: s.illness, openDraft: s.openDraft })!;
++// De rijen van Week (pages/Week.tsx regel 103 en components/WeekPlanner.tsx regel 410) met hun stand.
++const weekRows = (s: Stand, weekStart = W) => {
++  const moved = caughtUpMap(s.plan);
++  const pause = { leave: s.leave, templates: byId, illness: s.illness, races: raceDatesOf(s.plan, byId), openDraft: s.openDraft };
++  return s.plan
++    .filter((x) => x.weekStartDate === weekStart)
++    .filter((x) => !(x.status === 'skipped' && (byId.get(x.templateId)?.type === 'recovery' || x.leave?.role === 'dropped')))
++    .filter((x) => !(x.status === 'skipped' && moved.has(x.id)))
++    .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))
++    .map((x) => ({ s: x, name: byId.get(x.templateId)!.name, status: deriveSessionStatus(x, s.logs, byId.get(x.templateId)?.type === 'recovery', pause).status }));
++};
++const namesWith = (rows: ReturnType<typeof weekRows>, status: string) => rows.filter((r) => r.status === status).map((r) => r.name);
++
++describe('logdag in een andere week', () => {
++  // Lange duurloop gepland op zondag 11 oktober, gedaan op maandag 12 oktober (de week erna).
++  const lr = ps('lr', 'tpl_long_run', '2026-10-11');
++  const ua = ps('ua', 'tpl_upper_a', '2026-10-06');
++  const nx = ps('nx', 'tpl_upper_a', '2026-10-13');
++  const stand: Stand = { plan: [ua, lr, nx], logs: [log(ua), log(lr, '2026-10-12', { durationMinutes: 90 })] };
++
++  it('de rij blijft op zondag en zegt "gedaan ma 12"; de log en de planning zijn niet aangeraakt', () => {
++    const before = JSON.stringify(stand);
++    const doneOn = doneOnOtherDay(lr, stand.logs[1]);
++    expect(doneOn).toBe('2026-10-12');
++    expect(rowExtra({ done: true, doneOn })?.text).toBe('gedaan ma 12');
++    expect(JSON.stringify(stand)).toBe(before);
++    expect(lr.scheduledDate).toBe('2026-10-11');
++  });
++
++  it('de telling: gedaan telt in de geplande week, de minuten in de week van de log (vastgelegd, geen oordeel)', () => {
++    const a = reviewOf(stand, '2026-10-14');
++    const b = reviewOf(stand, '2026-10-14', '2026-10-12');
++    expect(a.done).toBe(2);
++    expect(a.planned).toBe(2);
++    expect(a.missed).toEqual([]);
++    // De week van het plan zegt 2 van 2 gedaan met alleen de 45 minuten van dinsdag: de 90 minuten staan een week later.
++    expect(weekCountLine(a)).toBe('2 van 2 gedaan · 45 min');
++    expect(b.minutes).toBe(90);
++    expect(b.extraLogged).toBe(1);
++  });
++
++  it('een log een week eerder (zondag voor de geplande maandag) geeft "gedaan zo 4"', () => {
++    const mo = ps('mo', 'tpl_easy_run', '2026-10-05');
++    expect(rowExtra({ done: true, doneOn: doneOnOtherDay(mo, log(mo, '2026-10-04')) })?.text).toBe('gedaan zo 4');
++  });
++
++  it('RAND: een log van een maand eerder of later noemt alleen dag en getal, zonder maand', () => {
++    const mo = ps('mo', 'tpl_easy_run', '2026-10-06');
++    // Dinsdag 6 oktober gepland, achteraf gekoppeld aan een log van dinsdag 6 november: de rij zegt "gedaan vr 6".
++    const text = rowExtra({ done: true, doneOn: doneOnOtherDay(mo, log(mo, '2026-11-06')) })?.text;
++    expect(text).toBe('gedaan vr 6');
++  });
++});
++
++describe('zondag en maandag', () => {
++  const plan = [ps('ub', 'tpl_upper_b', '2026-10-07'), ps('lr', 'tpl_long_run', '2026-10-11')];
++  it('zondag: de training van vandaag is niet gemist, de week loopt en Gemist verwijst naar Week opnieuw plannen', () => {
++    const r = reviewOf({ plan, logs: [] }, '2026-10-11');
++    expect(r.missed).toEqual(['Bovenlichaam B']);
++    expect(r.replan).toBe(true);
++    clock('2026-10-11');
++    expect(missedInWeek(plan, [], byId, { leave: undefined, templates: byId })).toBe(1);
++    expect(attentionLines(r).find((a) => a.key === 'missed')!.value).toContain('Week opnieuw plannen');
++  });
++  it('maandag: de voorbije week telt zondag als gemist en verwijst nergens meer naar', () => {
++    const r = reviewOf({ plan, logs: [] }, '2026-10-12');
++    expect(r.missed).toEqual(['Bovenlichaam B', 'Lange duurloop']);
++    expect(r.replan).toBe(false);
++    expect(attentionLines(r).find((a) => a.key === 'missed')!.value).not.toContain('Week opnieuw plannen');
++  });
++});
++
++describe('zonder sportschool', () => {
++  const leave: LeavePeriod[] = [{ id: 'g', kind: 'no_gym', startDate: '2026-10-06', endDate: '2026-10-09' }];
++  const plan = [ps('er', 'tpl_easy_run', '2026-10-06'), ps('la', 'tpl_lower_a', '2026-10-07'), ps('ub', 'tpl_upper_b', '2026-10-08'), ps('ua', 'tpl_upper_a', '2026-10-09', { status: 'skipped' })];
++  it('een loop blijft gemist, kracht vervalt, gelogde kracht is gedaan, overgeslagen kracht telt niet mee', () => {
++    const stand: Stand = { plan, logs: [log(plan[2])], leave };
++    const r = reviewOf(stand, '2026-10-13');
++    clock('2026-10-13');
++    const rows = weekRows(stand);
++    expect(r.missed).toEqual(namesWith(rows, 'missed'));
++    expect(r.lapsed).toEqual(namesWith(rows, 'away'));
++    expect([...(r.skipped ?? []), ...(r.skippedOff ?? [])]).toEqual(namesWith(rows, 'skipped'));
++    expect(r.missed).toEqual(['Rustige duurloop']);
++    expect(r.lapsed).toEqual(['Benen A (zwaar)']);
++    expect(r.done).toBe(1);
++    expect(r.planned).toBe(2);
++    expect(r.skippedOff).toEqual(['Bovenlichaam A']);
++  });
++});
++
++describe('ziek en vakantie', () => {
++  it('ziek vanaf woensdag: dinsdag blijft gemist, woensdag tot de dag van beter melden vervalt, de dag erna is weer gemist', () => {
++    const illness: IllnessEpisode[] = [{ id: 'i', kind: 'below_neck', startDate: '2026-10-07', endDate: '2026-10-09' }];
++    const plan = [ps('a', 'tpl_upper_a', '2026-10-06'), ps('b', 'tpl_easy_run', '2026-10-07'), ps('c', 'tpl_upper_b', '2026-10-09'), ps('d', 'tpl_long_run', '2026-10-10')];
++    const stand: Stand = { plan, logs: [], illness };
++    const r = reviewOf(stand, '2026-10-13');
++    clock('2026-10-13');
++    const rows = weekRows(stand);
++    expect(r.missed).toEqual(['Bovenlichaam A', 'Lange duurloop']);
++    expect(r.lapsed).toEqual(['Rustige duurloop', 'Bovenlichaam B']);
++    expect(r.missed).toEqual(namesWith(rows, 'missed'));
++    expect(r.lapsed).toEqual(namesWith(rows, 'away'));
++    expect(r.planned).toBe(2);
++    expect(weekRestLines(r, { missedShown: true })).toEqual(['Vervallen: Rustige duurloop en Bovenlichaam B, telt niet mee']);
++  });
++
++  it('ziek en toch gelogd: gedaan, niet vervallen', () => {
++    const illness: IllnessEpisode[] = [{ id: 'i', kind: 'above_neck', startDate: '2026-10-06' }];
++    const plan = [ps('a', 'tpl_easy_run', '2026-10-06'), ps('b', 'tpl_upper_b', '2026-10-07')];
++    const r = reviewOf({ plan, logs: [log(plan[0])], illness }, '2026-10-08');
++    expect(r.done).toBe(1);
++    expect(r.lapsed).toEqual(['Bovenlichaam B']);
++    expect(r.planned).toBe(1);
++  });
++
++  it('vakantie in een lopende week: voorbij vervalt, wat nog komt staat nergens en telt niet', () => {
++    const leave: LeavePeriod[] = [{ id: 'v', kind: 'no_training', startDate: '2026-10-07', endDate: '2026-10-10' }];
++    const plan = [ps('a', 'tpl_upper_a', '2026-10-06'), ps('b', 'tpl_easy_run', '2026-10-07'), ps('c', 'tpl_upper_b', '2026-10-09'), ps('d', 'tpl_long_run', '2026-10-11')];
++    const stand: Stand = { plan, logs: [log(plan[0])], leave };
++    const r = reviewOf(stand, '2026-10-08');
++    clock('2026-10-08');
++    const rows = weekRows(stand);
++    expect(r.lapsed).toEqual(['Rustige duurloop']);
++    expect(r.lapsed).toEqual(namesWith(rows, 'away'));
++    expect(r.planned).toBe(2);
++    expect(r.missed).toEqual([]);
++  });
++});
++
++describe('afbouw voor een race en de start van het programma', () => {
++  it('na de racedag vervalt wat in de afbouw niet gedaan is, zoals in Week; de race zelf blijft gemist', () => {
++    const plan = [ps('a', 'tpl_easy_run', '2026-10-07'), ps('r', 'tpl_race', '2026-10-10')];
++    const stand: Stand = { plan, logs: [] };
++    const r = reviewOf(stand, '2026-10-12');
++    clock('2026-10-12');
++    const rows = weekRows(stand);
++    expect(r.lapsed).toEqual(['Rustige duurloop']);
++    expect(r.lapsed).toEqual(namesWith(rows, 'away'));
++    expect(r.missed).toEqual(namesWith(rows, 'missed'));
++  });
++  it('voor de start van het programma vervalt niets in de terugblik', () => {
++    const late: Program = { ...program, startDate: '2026-10-08' };
++    const leave: LeavePeriod[] = [{ id: 'v', kind: 'no_training', startDate: '2026-10-06', endDate: '2026-10-09' }];
++    const plan = [ps('a', 'tpl_upper_a', '2026-10-06'), ps('b', 'tpl_easy_run', '2026-10-09')];
++    const r = buildWeekReview({ weekStart: W, plannedSessions: plan, logs: [], templates, program: late, planChangeLog: [], asOf: '2026-10-12', leavePeriods: leave })!;
++    expect(r.lapsed).toEqual(['Rustige duurloop']);
++  });
++});
++
++describe('RAND: een rij van voor de start van het programma', () => {
++  it('Week noemt hem gemist en de kaart telt hem; de terugblik telt en noemt hem niet (bestond al, vastgelegd)', () => {
++    const late: Program = { ...program, startDate: '2026-10-08' };
++    const plan = [ps('a', 'tpl_upper_a', '2026-10-06'), ps('b', 'tpl_easy_run', '2026-10-09')];
++    const r = buildWeekReview({ weekStart: W, plannedSessions: plan, logs: [], templates, program: late, planChangeLog: [], asOf: '2026-10-10' })!;
++    clock('2026-10-10');
++    expect(r.missed).toEqual(['Rustige duurloop']);
++    expect(missedInWeek(plan, [], byId, { leave: undefined, templates: byId })).toBe(2);
++  });
++});
++
++describe('RAND: een inhaal die zelf is overgeslagen', () => {
++  it('de oude en de nieuwe rij staan allebei als overgeslagen in Week; de terugblik noemt de naam twee keer', () => {
++    const old = ps('old', 'tpl_long_run', '2026-10-06', { status: 'skipped' });
++    const nw = ps('new', 'tpl_long_run', '2026-10-08', { status: 'skipped', catchUp: { fromId: 'old', fromDate: '2026-10-06' } });
++    const stand: Stand = { plan: [old, nw], logs: [] };
++    const r = reviewOf(stand, '2026-10-13');
++    clock('2026-10-13');
++    expect(namesWith(weekRows(stand), 'skipped')).toEqual(['Lange duurloop', 'Lange duurloop']);
++    expect(weekRestLines(r, { missedShown: true })).toEqual(['Overgeslagen: Lange duurloop en Lange duurloop']);
++    expect(r.planned).toBe(2);
++  });
++});
++
++// Willekeurige standen: wat de terugblik gemist, overgeslagen en vervallen noemt, is wat de rijen in Week zeggen, en de
++// som sluit. Vaste zaadwaarde, zodat een fout terug te vinden is.
++describe('willekeurig: terugblik tegen de rijen van Week', () => {
++  const pool = ['tpl_upper_a', 'tpl_upper_b', 'tpl_lower_a', 'tpl_easy_run', 'tpl_long_run', 'tpl_herstel'].filter((id) => byId.has(id));
++  let seed = 20261115;
++  const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
++  const pick = <T,>(xs: T[]) => xs[Math.floor(rnd() * xs.length)];
++
++  it('400 standen over elke dag van de week en de maandag erna', () => {
++    const fouten: string[] = [];
++    const gezien = { vervallen: 0, overgeslagen: 0, nietMee: 0, gemist: 0, inhaal: 0 };
++    for (let n = 0; n < 400; n++) {
++      const plan: PlannedSession[] = [];
++      const logs: SessionLog[] = [];
++      for (let d = 0; d < 7; d++) {
++        if (rnd() < 0.25) continue;
++        const date = addDays(W, d);
++        const s = ps(`s${d}`, pick(pool), date, rnd() < 0.25 ? { status: 'skipped' } : {});
++        if (s.status === 'skipped' && rnd() < 0.2) s.leave = { role: 'dropped' } as PlannedSession['leave'];
++        plan.push(s);
++        // Een inhaal: een latere rij die naar een overgeslagen eerdere rij wijst.
++        const earlier = plan.find((x) => x.status === 'skipped' && x.id !== s.id && !x.leave);
++        if (earlier && rnd() < 0.3) s.catchUp = { fromId: earlier.id, fromDate: earlier.scheduledDate };
++        if (rnd() < 0.3) logs.push(log(s, addDays(date, pick([-1, 0, 0, 0, 1, 2]))));
++      }
++      const start = addDays(W, Math.floor(rnd() * 7));
++      const leave: LeavePeriod[] | undefined = rnd() < 0.5 ? [{ id: 'p', kind: pick(['no_gym', 'no_training', 'trek', 'free_days'] as const), startDate: start, endDate: addDays(start, Math.floor(rnd() * 3)) }] : undefined;
++      const iStart = addDays(W, Math.floor(rnd() * 7));
++      const illness: IllnessEpisode[] | undefined = rnd() < 0.4 ? [{ id: 'i', kind: 'below_neck', startDate: iStart, endDate: rnd() < 0.5 ? addDays(iStart, Math.floor(rnd() * 3)) : undefined }] : undefined;
++      const asOf = addDays(W, Math.floor(rnd() * 9));
++      const open = rnd() < 0.2 && plan.length ? pick(plan) : undefined;
++      const openDraft = open && !logs.some((l) => l.plannedSessionId === open.id) ? open.id : undefined;
++      const stand: Stand = { plan, logs, leave, illness, openDraft };
++      clock(asOf);
++      const r = reviewOf(stand, asOf);
++      const rows = weekRows(stand);
++      const upcoming = rows.filter((x) => x.status === 'today' || x.status === 'planned' || x.status === 'moved');
++      const say = (what: string, got: string[], want: string[]) => { if (JSON.stringify(got) !== JSON.stringify(want)) fouten.push(`stand ${n} (${asOf}) ${what}: terugblik ${JSON.stringify(got)}, Week ${JSON.stringify(want)}\n  ${JSON.stringify(stand)}`); };
++      say('gemist', r.missed, namesWith(rows, 'missed'));
++      say('vervallen', r.lapsed ?? [], namesWith(rows, 'away'));
++      say('overgeslagen', [...(r.skipped ?? []), ...(r.skippedOff ?? [])].sort(), namesWith(rows, 'skipped').sort());
++      gezien.vervallen += r.lapsed?.length ?? 0; gezien.overgeslagen += r.skipped?.length ?? 0; gezien.nietMee += r.skippedOff?.length ?? 0; gezien.gemist += r.missed.length; gezien.inhaal += caughtUpMap(plan).size;
++      // De som: gedaan, gemist, overgeslagen en wat nog komt en meetelt is "van n".
++      const left = r.planned - r.done - r.missed.length - (r.skipped?.length ?? 0);
++      if (left < 0 || left > upcoming.length) fouten.push(`stand ${n} (${asOf}) som: van ${r.planned}, gedaan ${r.done}, gemist ${r.missed.length}, overgeslagen ${r.skipped?.length}, komt nog ${upcoming.length}\n  ${JSON.stringify(stand)}`);
++      vi.useRealTimers();
++    }
++    expect(fouten.slice(0, 5)).toEqual([]);
++    // Niet stil leeg: elke soort kwam voor.
++    for (const [soort, aantal] of Object.entries(gezien)) expect(aantal, soort).toBeGreaterThan(20);
++  });
++});
++
++describe('belasting en beendag bij een log op een andere dag', () => {
++  it('Benen A gepland op maandag, gedaan op dinsdag: de belasting en de beendag staan op dinsdag, de rij op maandag', () => {
++    const la = ps('la', 'tpl_lower_a', '2026-10-05');
++    const days = dayLoads({ weekStart: W, logs: [log(la, '2026-10-06')], plannedSessions: [la], templates, today: '2026-10-08' });
++    const mon = days.find((d) => d.date === '2026-10-05')!;
++    const tue = days.find((d) => d.date === '2026-10-06')!;
++    expect(mon.load).toBe(0);
++    expect(mon.legTemplate).toBeUndefined();
++    expect(tue.load).toBeGreaterThan(0);
++    expect(tue.legTemplate?.id).toBe('tpl_lower_a');
++    expect(la.scheduledDate).toBe('2026-10-05');
++  });
++});
