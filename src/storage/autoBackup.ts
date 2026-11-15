@@ -27,7 +27,7 @@ import {
   type AutoBackupFailureReason,
   type BackupWhere,
 } from '../engine/autoBackup';
-import { APP_BACKUP_LABEL, appBackupFolder, type AutoBackupTarget } from '../integrations/backupFolder';
+import { APP_BACKUP_LABEL, appBackupFolder, verifySettled, type AutoBackupTarget, type Written } from '../integrations/backupFolder';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { buildBackupEnvelope } from './backupExport';
 import { toISODate } from '../utils/dates';
@@ -185,9 +185,19 @@ export interface RunOptions {
   // Tijdsgrens voor schrijven en nakijken, en voor de hele poging.
   timeoutMs?: number;
   attemptMs?: number;
+  // Pauze tussen twee keer nakijken (integrations/backupFolder.ts#verifySettled); in tests nul.
+  verifyPauseMs?: number;
 }
 
 let running: Promise<AutoBackupOutcome> | undefined;
+// Namen die de app zelf schreef, niet kon nakijken en niet kon weghalen: de volgende poging vervangt ze.
+// Alleen in het geheugen.
+const halfWritten = new Set<string>();
+
+// Alleen voor tests.
+export function forgetHalfWritten(): void {
+  halfWritten.clear();
+}
 
 // Kijkt of er een back-up nodig is en maakt hem als dat stil kan. Twee aanroepen tegelijk delen
 // dezelfde poging; na de tijdsgrens is hij altijd voorbij.
@@ -220,7 +230,7 @@ async function guarded(options: RunOptions): Promise<AutoBackupOutcome> {
   }
 }
 
-async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved, timeoutMs = AUTO_BACKUP_WRITE_MS }: RunOptions, abort: Abort): Promise<AutoBackupOutcome> {
+async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved, timeoutMs = AUTO_BACKUP_WRITE_MS, verifyPauseMs }: RunOptions, abort: Abort): Promise<AutoBackupOutcome> {
   const done = (outcome: AutoBackupOutcome, failure?: AutoBackupFailure) => {
     if (!abort.aborted) setStatus({ checked: true, outcome, failure, platform: target.platform });
     return outcome;
@@ -248,6 +258,7 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
   if (access === 'denied') return fail('permission');
 
   let name: string | undefined;
+  let written: Written | void = undefined;
   let where: BackupWhere;
   let own: string[];
   let by: string | undefined;
@@ -267,9 +278,9 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
     let taken = 0;
     for (let n = 1; n <= 99 && !name; n++) {
       const candidate = autoBackupFileName(day, n);
-      if (!own.includes(candidate) && (await target.exists(candidate))) continue;
+      if (!own.includes(candidate) && !halfWritten.has(candidate) && (await target.exists(candidate))) continue;
       try {
-        await withTimeout(target.write(candidate, text, attemptId), timeoutMs);
+        written = await withTimeout(target.write(candidate, text, attemptId), timeoutMs);
         name = candidate;
       } catch (err) {
         if (err instanceof NameTakenError && ++taken < MAX_TAKEN) continue;
@@ -278,8 +289,23 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
     }
     if (!name) throw new AutoBackupError('write');
     // Eerst nakijken of het bestand er heel staat; pas daarna opruimen.
-    const ok = await withTimeout(target.verify(name, new TextEncoder().encode(text).length), timeoutMs).catch(() => false);
-    if (!ok) throw new AutoBackupError('write');
+    // Een tijdsgrens of fout bij het nakijken is 'unknown': het bestand kan heel zijn en blijft staan.
+    const seen = await withTimeout(verifySettled(target, name, new TextEncoder().encode(text).length, { pauseMs: verifyPauseMs }), timeoutMs).catch(() => 'unknown' as const);
+    if (seen !== 'ok') {
+      // Kapot: geen half bestand laten staan. Niet te lezen, of weghalen lukt niet: de naam onthouden,
+      // zodat de volgende poging hem vervangt in plaats van er een volgnummer naast te zetten.
+      // Verving deze poging het eigen bestand van vandaag, dan komt dat bij kapot terug.
+      const made = name;
+      if (seen === 'broken') await withTimeout(written ? written.undo() : target.remove(made), 5_000).catch(() => undefined);
+      // Niet afgaan op "undo is afgelopen": kijken wat er nu onder de naam staat. Staat er nog iets (het
+      // kapotte bestand wilde niet weg, het was niet te lezen, of het eigen bestand kwam terug), dan
+      // onthouden; twijfel telt als "staat er nog".
+      if (await withTimeout(target.exists(made), 5_000).catch(() => true)) halfWritten.add(made);
+      else halfWritten.delete(made);
+      throw new AutoBackupError('write', 'verify');
+    }
+    if (written) await withTimeout(written.keep(), 5_000).catch(() => undefined);
+    await withTimeout(Promise.resolve(target.tidy?.(name)), 5_000).catch(() => undefined);
   } catch (err) {
     if (err instanceof AutoBackupError) return fail(err.reason);
     if (err instanceof TimeoutError) return fail('timeout');
@@ -287,6 +313,7 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
   }
   if (abort.aborted) return 'failed';
 
+  halfWritten.delete(name);
   // Het bestand staat er. Wat hierna misgaat (opruimen, bijhouden) maakt de back-up niet mislukt.
   const at = now.toISOString();
   const label = backupWhereText(where);

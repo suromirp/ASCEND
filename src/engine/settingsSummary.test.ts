@@ -1141,6 +1141,11 @@ describe('rowSummary: weekbudget', () => {
     expect(found).toMatchObject({ value: '105 min, 2\u00d7 kracht', advice: '150 min, 2\u00d7 kracht', page: 'doel', plan: false });
   });
 
+  it('met kracht uit noemt de afwijkingenlijst geen kracht', () => {
+    const found = adviceDifferences({ strengthTrackedExternally: false, introSoundEnabled: true, strengthTraining: false, weekBudget: { minutes: 105 } }).find((d) => d.id === 'weekbudget');
+    expect(found).toMatchObject({ value: '105 min', advice: '150 min' });
+  });
+
   it('heeft uitleg zonder gedachtestreepjes of uitroeptekens', () => {
     const help = settingsHelp('weekbudget', true)!;
     expect(`${help.title} ${help.lead} ${help.points.map((p) => p.head + p.text).join(' ')}`).not.toMatch(/[\u2013\u2014!]/);
@@ -1158,6 +1163,13 @@ describe('rowSummary: richting en zonder doel', () => {
   it('toont de gekozen richting', () => {
     expect(rowSummary('richting', withSettings({ direction: 'easy' })).value).toBe('Rustig aan');
     expect(rowSummary('bundel-zonder-doel', withSettings({ direction: 'easy' }))).toMatchObject({ value: 'Rustig aan', sub: '90 min, 1× kracht' });
+  });
+
+  it('volgt kracht uit zoals de rij Weekbudget', () => {
+    expect(rowSummary('bundel-zonder-doel', withSettings({ strengthTraining: false }))).toMatchObject({ value: 'Nog geen richting', sub: '150 min' });
+    expect(rowSummary('bundel-zonder-doel', withSettings({ direction: 'easy', strengthTraining: false }))).toMatchObject({ sub: '90 min' });
+    expect(rowSummary('bundel-zonder-doel', withSettings({ direction: 'improve', strengthTraining: false }))).toMatchObject({ sub: 'Eigen weken' });
+    expect(rowSummary('weekbudget', withSettings({ strengthTraining: false })).sub).toBe('Zonder kracht, advies Fit blijven');
   });
 
   it('staat er niet met een doel', () => {

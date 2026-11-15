@@ -104,7 +104,7 @@ export function useDirectionChange(): {
         trigger: 'direction_changed',
         settings: { weekBudget, ...kracht.settings },
         ...kracht.block,
-        notes: [...directionChangeLines(id, { weekBudget }).slice(1, 2), ...kracht.lines, ...(wavesHeld(settings, program) ? noGoalWavesLines() : [])],
+        notes: [...directionChangeLines(id, { weekBudget, strengthTraining: settings.strengthTraining }).slice(1, 2), ...kracht.lines, ...(wavesHeld(settings, program) ? noGoalWavesLines() : [])],
       }),
       { eyebrow: 'Je richting', ask: 'always', alwaysAsk: true, notesTitle: 'Je week', declined: 'Je weekbudget en je planning blijven zoals ze waren.' },
     );
@@ -126,7 +126,7 @@ export function useDirectionChange(): {
         trigger: 'wave_review',
         settings: { ...patch, ...kracht.settings },
         ...kracht.block,
-        notes: [...directionChangeLines(id, { weekBudget: patch.weekBudget }).slice(0, 2), ...kracht.lines],
+        notes: [...directionChangeLines(id, { weekBudget: patch.weekBudget, strengthTraining: settings.strengthTraining }).slice(0, 2), ...kracht.lines],
       }),
       { eyebrow: 'Na je golf', ask: 'always', alwaysAsk: true, notesTitle: 'Je volgende golf', declined: 'Alles blijft zoals het was. De kaart blijft nog even staan.' },
     );

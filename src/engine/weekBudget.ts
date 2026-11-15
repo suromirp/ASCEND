@@ -151,9 +151,10 @@ export function budgetFor(id: DirectionId, ctx: BudgetContext = {}): WeekBudget 
   return { minutes: base, strength, light: false };
 }
 
-// Onder de richtlijn is een keuze, geen fout: de kaart zegt het rustig.
-export function belowGuideline(budget: Pick<WeekBudget, 'minutes' | 'strength'>): boolean {
-  return budget.minutes < GUIDELINE_MINUTES || budget.strength < GUIDELINE_STRENGTH;
+// Onder de richtlijn is een keuze, geen fout: de kaart zegt het rustig. Met krachttraining uit
+// (engine/strengthTraining.ts) telt het budget geen kracht, dan toetst alleen de minuten.
+export function belowGuideline(budget: Pick<WeekBudget, 'minutes' | 'strength'>, strengthOn = true): boolean {
+  return budget.minutes < GUIDELINE_MINUTES || (strengthOn && budget.strength < GUIDELINE_STRENGTH);
 }
 
 export interface WeekProgress {
@@ -215,4 +216,6 @@ export function settingBudget(s: { direction?: unknown; weekBudget?: unknown }):
   return { id, chosen: chosen !== undefined, budget: budgetFor(id, { choice }), choice };
 }
 
-export const budgetText = (b: Pick<WeekBudget, 'minutes' | 'strength'>): string => `${b.minutes} min, ${b.strength}\u00d7 kracht`;
+// Met krachttraining uit noemt de tekst alleen de minuten.
+export const budgetText = (b: Pick<WeekBudget, 'minutes' | 'strength'>, strengthOn = true): string =>
+  strengthOn ? `${b.minutes} min, ${b.strength}\u00d7 kracht` : `${b.minutes} min`;

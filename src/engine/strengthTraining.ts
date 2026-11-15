@@ -6,6 +6,8 @@
 // Puur: geen React, geen IndexedDB.
 
 import type { SessionTemplate } from '../models/training';
+import type { StrengthProgramStrategy } from '../models/strengthProgram';
+import { activeStrengthStrategy } from './strengthProgram';
 
 // Absent is aan (het advies); alleen `false` zet het uit.
 export function strengthTrainingOn(s: { strengthTraining?: unknown }): boolean {
@@ -24,3 +26,16 @@ export function strengthAllows(template: Pick<SessionTemplate, 'type'>, s: { str
 
 // De waarschuwing bij uitzetten: één zin waarom kracht helpt, het droge feit eerst.
 export const STRENGTH_OFF_WARNING = 'Kracht helpt bij bergtochten: sterke benen en romp vangen de klappen van het dalen op en sparen je knieën.';
+
+// De rij Krachtblok op Ascend (pages/Ascend.tsx). Met kracht uit plant de planning geen kracht (strengthAllows), dus
+// een nieuw blok maken is een dode weg: zonder actief blok en zonder krachtschema buiten ASCEND staat de rij er niet.
+// Loopt er nog een blok of houd je kracht elders bij, dan blijft hij, zodat je het blok kunt beëindigen, en zegt hij
+// dat kracht uit staat (Pathfinder weekbudget, punt 2).
+export function strengthBlockRowLine(
+  s: { strengthTraining?: unknown },
+  strategies: StrengthProgramStrategy[],
+  external: boolean,
+): string | undefined {
+  if (strengthTrainingOn(s)) return 'Hoe kracht in je week past';
+  return activeStrengthStrategy(strategies) || external ? 'Kracht staat uit in je planning' : undefined;
+}
