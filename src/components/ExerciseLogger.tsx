@@ -15,7 +15,7 @@ import { useMacroFactorLinked } from '../state/useMacroFactor';
 import { asksDoneOn } from './logForm/formRules';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, RpeField } from './logForm/LogFormParts';
 import { HowDidItGoSheet } from './HowDidItGoSheet';
-import { closeClearsDraft, saveOnLogger } from '../state/logSave';
+import { closeClearsDraft, loggerShowsClose, saveOnLogger } from '../state/logSave';
 import { briefingEntry } from '../engine/briefing';
 import { NumberField } from './NumberField';
 import type { SessionTemplate, SessionVariant } from '../models/training';
@@ -195,7 +195,7 @@ function GeneralLogger({
   // Eén doorlopend blok: geen profiel, wel de zone (zoals de missiekaart).
   const singleZone = conditioningSteps.length === 1 && !conditioningSteps[0].noTarget ? conditioningSteps[0].intensity : undefined;
   // Na de grens in tijd: het opslaan loopt nog (alleen dan staat er een zin terwijl de knop uit is).
-  const slow = saving && !!saveNote && !saveNote.warn;
+  const slow = loggerShowsClose(saving, saveNote);
   const saveLabel = saving ? 'Opslaan…' : quickComplete ? 'Afvinken' : restChosen ? 'Rustdag afvinken' : 'Opslaan';
 
   function goToForm() {

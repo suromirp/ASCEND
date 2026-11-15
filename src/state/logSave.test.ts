@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PlannedSessionsRepo, SessionLogsRepo, wipeAllData } from '../storage/database';
 import { runLogSession, LogNotSaved, type LogSessionDeps, type LogSessionOpts } from './logSession';
-import { autoTickLog, cardAfterSave, closeClearsDraft, failedNote, formAfterSave, logOrAlready, reportIfGone, resetFailedNotes, saveLogThenChoice, saveLogWithin, saveOnCard, saveOnLogger, formNoteText, tickOff, settleWithOwnNotice, thrownSaveNote, ChoiceNotSaved, CHOICE_NOT_SAVED, ALREADY_LOGGED_NOTE, FORM_SAVE_NOTE, LOG_SAVE_NOTE, LOG_STILL_RUNNING_NOTE, type CardSaveUi, type LoggerSaveUi, type LogSaveResult, type ShownSaveNote } from './logSave';
+import { autoTickLog, cardAfterSave, closeClearsDraft, failedNote, formAfterSave, logOrAlready, reportIfGone, resetFailedNotes, saveLogThenChoice, saveLogWithin, saveOnCard, saveOnLogger, formNoteText, loggerShowsClose, tickOff, settleWithOwnNotice, thrownSaveNote, ChoiceNotSaved, CHOICE_NOT_SAVED, ALREADY_LOGGED_NOTE, FORM_SAVE_NOTE, LOG_SAVE_NOTE, LOG_STILL_RUNNING_NOTE, type CardSaveUi, type LoggerSaveUi, type LogSaveResult, type ShownSaveNote } from './logSave';
 import { forgeFinishNote } from '../components/forge/forgeFinishLog';
 import { HOW_TEXT } from '../components/logForm/howDidItGo';
 import { TimeoutError } from '../utils/withTimeout';
@@ -571,6 +571,8 @@ describe('de schermen lezen het antwoord van logSession via state/logSave.ts', (
     expect(loggerSrc).not.toMatch(/await logSession\(/);
     expect(loggerSrc).toMatch(/await saveOnLogger\(logSession, input, \{/);
     expect(loggerSrc).toMatch(/busy: \(on\) => \{ savingRef\.current = on;/);
+    expect(loggerSrc).toContain('const slow = loggerShowsClose(saving, saveNote);');
+    expect(loggerSrc).toMatch(/\{slow \? \(\s*\/\/[^\n]*\n\s*<SecondaryButton onClick=\{requestClose\}[^>]*>Sluiten</);
     expect(loggerSrc).toMatch(/if \(closeClearsDraft\(savingRef\.current\)\) form\.clearDraft\(\);/);
   });
 
@@ -976,5 +978,28 @@ describe('tickOff: afvinken met één tik op Vandaag en Week (I-32)', () => {
     expect(report).toHaveLength(1);
     expect(describeWriteError(report[0])).toBe(TICK_OFF_STILL_RUNNING);
     open(true);
+  });
+});
+
+describe('loggerShowsClose: Sluiten onderaan het oude trainingsscherm', () => {
+  it('alleen na de grens, met de wachtzin', () => {
+    expect(loggerShowsClose(true, formNoteText('slow', true))).toBe(true);
+    expect(loggerShowsClose(true, formNoteText('slow', false))).toBe(true);
+    // Voor de grens: nog geen zin. Na een laat nee: knop weer aan, amber.
+    expect(loggerShowsClose(true, null)).toBe(false);
+    expect(loggerShowsClose(false, formNoteText('failed', true))).toBe(false);
+    expect(loggerShowsClose(false, formNoteText('already', false))).toBe(false);
+  });
+
+  it('aan het sluiten en dan gelukt: het concept gaat weg, maar het scherm sluit niet nog eens', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const closes: boolean[] = [];
+    let drafts = 0;
+    await saveOnLogger(makeLogSession(), forPlanned, {
+      loose: false, mounted: () => true, showing: () => false, busy: () => undefined,
+      clearDraft: () => { drafts += 1; }, report: () => undefined, apply: (next) => closes.push(next.close), limitMs: 1000,
+    });
+    expect(drafts).toBe(1);
+    expect(closes).toEqual([false]);
   });
 });

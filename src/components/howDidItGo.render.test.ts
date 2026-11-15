@@ -209,6 +209,10 @@ describe('opslaan in het blad', () => {
     const html = renderToStaticMarkup(createElement(SheetFoot, { state: 'already', saving: false, slow: false, failed: false, rest: false, minutes: 40, onClose: () => undefined, onAdjust: () => undefined, onSave: () => undefined }));
     expect(html).toContain(HOW_TEXT.already);
     expect(html).not.toContain(HOW_TEXT.failed);
+    // De aansluiting in het blad (Warden): stond er al zet de voet op al gedaan, ook voor het logboek opnieuw gelezen is.
+    expect(sheetSrc).toContain('save: () => logOrAlready(logSession, input, ');
+    expect(sheetSrc).toContain('onAlready: () => setAlreadyNow(true),');
+    expect(sheetSrc).toContain('const alreadyDone = !saving && (alreadyNow || alreadyLogged(plannedSessionId, sessionLogs));');
   });
 
   it('gelukt: één aanroep met het hele log, daarna concept weg en blad dicht; een tweede tik tijdens het opslaan doet niets', async () => {
