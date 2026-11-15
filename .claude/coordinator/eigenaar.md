@@ -4,11 +4,6 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-### Wandeling plannen zonder training
-- Keuzes: nu bouwen (advies), eerst de plek door Pathfinder, waarschijnlijk morgen live. Of: op het bouwmoment van maandag. Of: niet, de omweg via een geplande wandeltraining.
-- Zonder antwoord: in de backlog voor maandag.
-- Sinds: 15 november 21:55
-
 ### De Wachter op deze chat zetten
 - Keuzes: zelf in de app een taak op de chat Coördinator ASCEND 15 november avond, elk uur op :40, en "staat" zeggen (het systeem laat mij dat niet doen). Daarna gaat de oude uit.
 - Zonder antwoord: de oude blijft draaien in de vorige coördinator-chat.
