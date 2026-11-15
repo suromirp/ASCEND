@@ -49,6 +49,8 @@ Bijgewerkt: 15 november 2026, 11:20 Portugese tijd, door de coördinator session
 
 ## Werkwijze, geleerd
 
+- Uit het archief halen (eigenaar 15 november vroeg ernaar): kan met unarchive_session, maar alleen voor een kleine herstelronde op eigen werk dezelfde dag, als de bouwer iets weet dat niet in de repo staat. Anders een verse bouwer met branch, besluit en opdracht: een oude sessie leest bij elke stap zijn hele geschiedenis (200 tot 500k tokens).
+
 - Een fix in foutafhandeling opent telkens een nieuwe naad: vraag de bouwer vooraf naar elk pad (in beeld, weg, laat antwoord, tweede poging, automatisch).
 - Kijk voor je een bouwer start of het scherm uit de backlogregel nog bereikbaar is.
 - Een werkbriefje heeft hoogstens 45 regels (`src/werkbriefjes.scan.test.ts`).
