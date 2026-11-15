@@ -56,8 +56,8 @@ describe('de lijst onder de dagen', () => {
 
   it('Week opnieuw plannen zegt na een gemiste training waarom', () => {
     expect(replanSub(0)).toBe(REPLAN_SUB);
-    expect(replanSub(1)).toBe('Je hebt 1 training gemist. Zet de rest terug naar het plan.');
-    expect(replanSub(2)).toBe('Je hebt 2 trainingen gemist. Zet de rest terug naar het plan.');
+    expect(replanSub(1)).toBe('Deze week 1 training gemist. Niet dubbel doen; zet de rest terug.');
+    expect(replanSub(2)).toBe('Deze week 2 trainingen gemist. Niet dubbel doen; zet de rest terug.');
   });
 
   it('vaste woorden in zinsletters', () => {

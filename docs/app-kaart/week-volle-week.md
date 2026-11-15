@@ -35,7 +35,7 @@ Twee rustige lopen
 
 --- kaart 3 ---
 [label: Wat nu wacht]
-[knop: Week opnieuw plannenJe hebt 2 trainingen gemist. Zet de rest terug naar het plan.]
+[knop: Week opnieuw plannenDeze week 2 trainingen gemist. Niet dubbel doen; zet de rest terug.]
 
 --- kaart 4 ---
 Belasting per dag
