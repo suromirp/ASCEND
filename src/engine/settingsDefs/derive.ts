@@ -1,12 +1,12 @@
 // ASCEND: de oude vormen, afgeleid uit de verklaringen (docs/visie/Ontwerp instellingen op een plek.md,
-// hoofdstuk 2, "Hoe de oude vormen eruit volgen"). Stap 1: alleen voor settingsDefs.parity.test.ts, naast de
-// oude bestanden die nog de bron zijn. Vanaf stap 2 en 3 lezen de oude exports hier.
+// hoofdstuk 2, "Hoe de oude vormen eruit volgen"). Sinds stap 2 lezen SETTINGS_INDEX (data/settingsIndex.ts) en
+// PAGE_ROWS, MOVED, LINKS en SHOW_WHEN (data/settingsLayout.ts) hier; de uitleg en de keuzes volgen in stap 3.
 
 import type { PageRows, SettingPlacement, SettingsPageId } from '../../data/settingsLayout';
 import type { SettingsIndexItem } from '../../data/settingsIndex';
 import type { SettingsHelp } from '../../data/settingsHelp';
 import type { ChoiceDef } from '../../data/settingsChoices';
-import type { SettingDef } from './types';
+import type { Blocker, SettingDef } from './types';
 import { ALL_DEFS, PAGE_ORDER } from './index';
 import { INDEX_ORDER } from './order';
 
@@ -54,6 +54,10 @@ export function deriveLinks(defs: readonly SettingDef[] = ALL_DEFS): Record<stri
 
 export function deriveMoved(defs: readonly SettingDef[] = ALL_DEFS): Record<string, { row: string; sheet?: boolean }> {
   return Object.fromEntries(defs.flatMap((d) => ('in' in d.place ? [[d.id, { row: d.place.in, sheet: true }]] : 'on' in d.place ? [[d.id, { row: d.place.on }]] : [])));
+}
+
+export function deriveShowWhen(defs: readonly SettingDef[] = ALL_DEFS): Record<string, Blocker[]> {
+  return Object.fromEntries(defs.flatMap((d) => (d.showWhen ? [[d.id, d.showWhen]] : [])));
 }
 
 // Dezelfde regels als placementOf in data/settingsLayout.ts.
