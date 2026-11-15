@@ -3962,6 +3962,14 @@
    "kern": "Ontwerpvoorstel van 15 november 2026 voor een beginner die heel licht begint; besloten in `docs/beslissingen/2026-11-15-beginner-tien-procent.md`.",
    "stand": "achtergrond"
   },
+  "docs/visie/Ontwerp een regel voor uitzonderingen.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Ontwerpvoorstel van 15 november 2026 voor één functie in `engine/` die zegt of een training of stap op een dag mag (ziek, periodes, afbouw, rustdag), met twaalf gevonden gaten en de migratie in vijf stappen; backlogpunt I-67.",
+   "stand": "achtergrond"
+  },
   "docs/visie/Ontwerp en gebruik.md": {
    "onderwerpen": [
     "bediening-en-beweging"

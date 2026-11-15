@@ -54,6 +54,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 
 - [visie/Ontwerp Je week tot nu.md](../visie/Ontwerp%20Je%20week%20tot%20nu.md): Ontwerpvoorstel van 12 november 2026 voor het blad Je week tot nu; besloten in `docs/beslissingen/2026-11-12-je-week-tot-nu.md`.
 - [visie/Ontwerp Week minimaal.md](../visie/Ontwerp%20Week%20minimaal.md): Ontwerpvoorstel van 12 november 2026 voor de tab Week; besloten in `docs/beslissingen/2026-11-12-week-minimaal.md`.
+- [visie/Ontwerp een regel voor uitzonderingen.md](../visie/Ontwerp%20een%20regel%20voor%20uitzonderingen.md): Ontwerpvoorstel van 15 november 2026 voor één functie in `engine/` die zegt of een training of stap op een dag mag (ziek, periodes, afbouw, rustdag), met twaalf gevonden gaten en de migratie in vijf stappen; backlogpunt I-67.
 - [visie/Slepen in Week.md](../visie/Slepen%20in%20Week.md): Ontwerp voor het slepen van een training in Week; besloten in `docs/beslissingen/2026-10-28-slepen-in-week.md`.
 - [visie/Waarschuwingen in Week.md](../visie/Waarschuwingen%20in%20Week.md): Ontwerp voor waarschuwingen in woorden in Week; besloten in `docs/beslissingen/2026-10-28-waarschuwingen-in-week.md`.
 
