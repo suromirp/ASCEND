@@ -14,6 +14,7 @@ import { templateSport } from '../engine/sports';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { fuelOn } from '../engine/fuelOnTheGo';
 import { recentRunPace } from '../engine/recentRunPace';
+import { loadBodyKg } from '../engine/weightTrend';
 import { toISODate } from '../utils/dates';
 import { watchFieldsShown, resolveWatchModel } from '../engine/watchFields';
 import { getTrainingGuide } from '../data/trainingGuide';
@@ -36,7 +37,7 @@ export function useBriefingView(sources: BriefingSources): BriefingView | undefi
 // De bronnen los van het rekenen: de Briefing zelf rekent een tweede keer met het weer van de gekozen
 // plek (engine/placeWeather.ts), want die plek is pas bekend na de regie van de route.
 export function useBriefingInput({ template, session, date, program, storedPlace }: BriefingSources): BriefingInput {
-  const { settings, sessionLogs, weather } = useAppData();
+  const { settings, sessionLogs, weather, leavePeriods } = useAppData();
   const [now] = useState(() => new Date());
   const { watchLink, watchSource } = useWatchLink();
   const { statusOf, ready } = useWatchStatuses();
@@ -53,6 +54,8 @@ export function useBriefingInput({ template, session, date, program, storedPlace
     routeOn: settings.routeProposal !== false,
     routeSearch: settings.routeSearch,
     easyPace: paces?.easy,
+    bodyKg: loadBodyKg(settings),
+    leavePeriods,
     paces,
     recentPace: recentRunPace(sessionLogs, template.id, toISODate(now)),
     watchLink,
