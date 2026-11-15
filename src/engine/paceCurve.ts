@@ -103,5 +103,5 @@ export function paceCurveWaitLine(curve: Extract<PaceCurve, { state: 'wait' }>, 
   const parts: string[] = [];
   if (today < curve.readyFrom) parts.push(`Vanaf ${formatDayMonthNL(curve.readyFrom)}`);
   if (runs > 0) parts.push(`${parts.length > 0 ? 'na' : 'Na'} nog ${runs} ${runs === 1 ? 'loop' : 'loopjes'} met details`);
-  return `${parts.join(' en ')} legt ASCEND je snelste stukken in training naast je test.`;
+  return `${parts.join(' en ')} staan je snelste stukken in training naast je test.`;
 }

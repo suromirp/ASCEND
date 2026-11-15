@@ -121,7 +121,7 @@ describe('paceCurveLine: de zin onder je testtempo', () => {
   });
 
   it('zegt zolang het wacht vanaf wanneer en hoeveel loopjes er nog nodig zijn', () => {
-    expect(paceCurveWaitLine({ state: 'wait', test: TEST, runs: 1, readyFrom: '2026-09-22' }, '2026-09-10')).toBe('Vanaf 22 sep en na nog 2 loopjes met details legt ASCEND je snelste stukken in training naast je test.');
-    expect(paceCurveWaitLine({ state: 'wait', test: TEST, runs: 2, readyFrom: '2026-09-22' }, '2026-10-01')).toBe('Na nog 1 loop met details legt ASCEND je snelste stukken in training naast je test.');
+    expect(paceCurveWaitLine({ state: 'wait', test: TEST, runs: 1, readyFrom: '2026-09-22' }, '2026-09-10')).toBe('Vanaf 22 sep en na nog 2 loopjes met details staan je snelste stukken in training naast je test.');
+    expect(paceCurveWaitLine({ state: 'wait', test: TEST, runs: 2, readyFrom: '2026-09-22' }, '2026-10-01')).toBe('Na nog 1 loop met details staan je snelste stukken in training naast je test.');
   });
 });
