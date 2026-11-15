@@ -10,7 +10,7 @@ import { clearStepDeclines } from '../utils/stepDeclines';
 import { MetaRepo, putAll, ProgramsRepo, PlannedSessionsRepo, SessionLogsRepo, SessionTemplatesRepo, clearStore, replacePlannedSessions } from './databaseRepos';
 import { SCHEMA_VERSION } from './databaseSchema';
 import { patternContext, defaultPatternSelector, patternSessions, withPackTarget } from './databaseHorizon';
-import { SettingsRepo } from './databaseSettings';
+import { clearAllStores } from './databaseBackupWrites';
 
 // --- seeding & reset ---------------------------------------------------
 
@@ -193,56 +193,23 @@ export async function clearLegacyObjectiveStores(): Promise<void> {
 }
 
 export async function resetToDemoData(): Promise<void> {
+  // "Alles verwijderen" means everything, in one transaction (databaseBackupWrites.ts#clearAllStores):
+  // settings, availability, coach answers, illness and weight history, the full series of runs, and
+  // the pre-import copies that hold a full copy of the old history. Settings go with `meta`, so the
+  // marathon fields that once re-minted a wiped goal (storage/goalMigration.ts#migrateToGoalEngine)
+  // are gone too. The start flags are written in the same transaction.
+  await clearAllStores({ seeded: false, goalEngineMigrated: false, strengthProgramDefaultSeeded: false });
+  // Only once the database is empty: what this device remembers outside it.
   // Een lopende training hoort bij de planning die nu weggaat: wijzer en concepten mee.
   clearForgeSessions();
   // Wat dit toestel onthield van Liever niet bij Spieren voor de berg gaat ook weg.
   clearMuscleDeclines();
   // En van Liever niet bij een stapvoorstel op een ladder.
   clearStepDeclines();
-  await Promise.all([
-    clearStore('programs'),
-    clearStore('sessionTemplates'),
-    clearStore('plannedSessions'),
-    clearStore('sessionLogs'),
-    clearStore('objectives'),
-    clearStore('milestoneProgress'),
-    clearStore('recoveryMetrics'),
-    clearStore('bodyMetrics'),
-    clearStore('nutritionMetrics'),
-    clearStore('injuryNotes'),
-    clearStore('trainingGoals'),
-    clearStore('goalMilestones'),
-    clearStore('goalMilestoneProgress'),
-    clearStore('trainingPrescriptions'),
-    clearStore('capabilityEvidence'),
-    clearStore('planChangeProposals'),
-    clearStore('strengthProgramStrategies'),
-    clearStore('strengthProgramRecommendations'),
-    clearStore('weeklyPrescriptions'),
-    // "Alles verwijderen" means everything: settings, availability, coach
-    // answers, illness and weight history, and the pre-import copies that
-    // hold a full copy of the old history.
-    clearStore('backupSnapshots'),
-    // The full series of runs belong to the logs and go with them.
-    clearStore('activityStreams'),
-    clearStore('meta'),
-  ]);
-  // Production incident: trainingGoals above is cleared, but the marathon
-  // fields in `settings` (AppSettings) are a second, shadow pointer into
-  // that same goal — storage/goalMigration.ts#migrateToGoalEngine reads
-  // them straight back out and silently re-mints the exact same
-  // TrainingGoal (buildMarathonGoal) the moment goalEngineMigrated is unset
-  // below. Without this, "reset alles" leaves a stale marathonRaceType
-  // behind that regenerates a goal the user believed they'd wiped —
-  // status:'paused' if marathonTargetDate was never set, which is silently
-  // invisible everywhere (see MarathonGoalCard's status badge/pages/Ascend.tsx).
-  await SettingsRepo.set({ marathonRaceType: undefined, marathonTargetDate: undefined, marathonTargetTimeMinutes: undefined });
-  await MetaRepo.set('seeded', false);
-  await MetaRepo.set('goalEngineMigrated', false);
-  await MetaRepo.set('strengthProgramDefaultSeeded', false);
   // Like a fresh install: only the templates, no program or planning, so the app
   // opens on the welcome and asks before it plans anything
-  // (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md).
+  // (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md). Stops it halfway, the
+  // next start seeds the same (seeded is false).
   await seedIfEmpty({ withProgram: false });
 }
 

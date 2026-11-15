@@ -12,7 +12,7 @@ import type { ActivityStreams } from '../models/activityStreams';
 import { BOOT_MIGRATIONS_KEY } from '../engine/bootWatch';
 import type { AppSettings } from './databaseSettings';
 import { getDB } from './databaseSchema';
-import { withDerivedWeek, clearStore } from './databaseRepos';
+import { withDerivedWeek } from './databaseRepos';
 
 // --- atomic multi-store backup writes -----------------------------------
 
@@ -130,28 +130,20 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
   }
 }
 
+// Every store in one transaction: all of it is gone, or (on a failure halfway) none
+// of it. Taken from the database itself, so a new store can never be forgotten here.
+// `meta` is written in the same transaction after the clear (flags for the next start).
+export async function clearAllStores(meta: Record<string, unknown> = {}): Promise<void> {
+  const db = await getDB();
+  const names = [...db.objectStoreNames];
+  const tx = db.transaction(names, 'readwrite');
+  const ops: Promise<unknown>[] = names.map((name) => tx.objectStore(name).clear());
+  for (const [key, value] of Object.entries(meta)) ops.push(tx.objectStore('meta').put(value, key));
+  await Promise.all([...ops, tx.done]);
+}
+
+// Everything, the pre-import copies included: the same wipe as "Alles verwijderen"
+// (databaseSeed.ts#resetToDemoData), without putting the start back.
 export async function wipeAllData(): Promise<void> {
-  await Promise.all([
-    clearStore('programs'),
-    clearStore('sessionTemplates'),
-    clearStore('plannedSessions'),
-    clearStore('sessionLogs'),
-    clearStore('objectives'),
-    clearStore('milestoneProgress'),
-    clearStore('recoveryMetrics'),
-    clearStore('bodyMetrics'),
-    clearStore('nutritionMetrics'),
-    clearStore('injuryNotes'),
-    clearStore('trainingGoals'),
-    clearStore('goalMilestones'),
-    clearStore('goalMilestoneProgress'),
-    clearStore('trainingPrescriptions'),
-    clearStore('capabilityEvidence'),
-    clearStore('planChangeProposals'),
-    clearStore('strengthProgramStrategies'),
-    clearStore('strengthProgramRecommendations'),
-    clearStore('weeklyPrescriptions'),
-    clearStore('activityStreams'),
-    clearStore('meta'),
-  ]);
+  await clearAllStores();
 }
