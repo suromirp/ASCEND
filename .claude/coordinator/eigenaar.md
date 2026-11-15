@@ -31,7 +31,7 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Stuk of vast
 
-- Week telt anders dan hij toont: drie rode kruisen, maar "1 training gemist"; zaterdag zonder kruis; een waarschuwing over een lange loop die niet gedaan is. De volgende coördinator speelt het na zodra er een verse back-up is.
+- Week telt anders dan hij toont: drie rode kruisen, maar "1 training gemist"; zaterdag zonder kruis; een waarschuwing over een lange loop die niet gedaan is; het inhaaladvies zegt "vandaag deed je geen training" terwijl er vandaag nog een training staat. Een bouwer werkt eraan sinds 10:50; met een verse back-up speel ik het ook na.
 
 ## Net live
 
