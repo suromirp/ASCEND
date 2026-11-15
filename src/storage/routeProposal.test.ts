@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import type { RouteFn, RoutePoint } from '../models/route';
 import { cleanSettings } from './backupClean';
 import { findRoutes } from './routeProposal';
+import { buildDefaultProgramData } from '../data/defaultProgram';
+import { routeTarget } from '../engine/routeTarget';
+import { searchTarget } from '../engine/routeAdjust';
 import { MAX_ROUTE_CALLS } from '../engine/routePlanner';
 import type { NearbyTerrain } from '../models/nearbyTerrain';
 import { saveRouteGpx } from './routeFile';
@@ -167,5 +170,30 @@ describe('de instelling Route voorstellen in een back-up', () => {
     const out = cleanSettings({ stravaText: true }, skipped);
     expect(out && ('routeStyle' in out || 'routeProposal' in out)).toBe(false);
     expect(skipped.n).toBe(0);
+  });
+});
+
+// De keten van een wandeltraining (Lookout, 15 november): van het doel van de training via het doel van de
+// zoektocht (engine/routeAdjust.ts#searchTarget, wat useRouteSearch aan findRoutes geeft) tot de zin van de lus.
+describe('een wandeltraining: het hele doel gaat mee tot de zin', () => {
+  it('de bergtocht van 3 uur met 500 m: de lus zegt wat de training vraagt, ook na Langer', async () => {
+    const { templates } = buildDefaultProgramData();
+    const mountain = templates.find((t) => t.id === 'tpl_mountain_hike')!;
+    const training = routeTarget({ template: mountain, date: '2026-11-14' });
+    expect(training).toMatchObject({ ascentM: 375, askedAscentM: 500, minutes: 180 });
+    for (const delta of [0, 1]) {
+      const target = searchTarget(training, delta);
+      expect(target).toStrictEqual({ ...training, distanceKm: training.distanceKm + delta });
+      // Een vlakke routeplanner: elke lus stijgt 0 m en haalt de hoogtemeters dus niet.
+      const found = await findRoutes(place, target, { route: straight, terrain: async () => undefined, offline: () => false });
+      if (found.kind !== 'plans') throw new Error(found.kind);
+      const made = [found.plans.simple, found.plans.adventure].filter((o) => o.ok);
+      expect(made.length).toBeGreaterThan(0);
+      for (const o of made) {
+        if (!o.ok) continue;
+        expect(o.proposal.targetAscentM).toBe(500);
+        expect(o.proposal.notice).toBe('Deze lus stijgt 0 m; de training vraagt 500 m.');
+      }
+    }
   });
 });
