@@ -7,6 +7,10 @@ description: Houdt de Werkkaart van ASCEND bij, het dashboard voor de eigenaar (
 
 Waarom (eigenaar, 14 november): een dashboard dat vanzelf bijwerkt, niet vergeten wordt en niet op de achtergrond valt, als graaf zoals Graphify. Het dashboard leest één bestand, `werkkaart.json`. Live uit GitHub lezen kan niet: GitHub is geen connector van zijn account, alleen een tool van de sessie. Dus werkt de coördinator het bestand bij. Staat het bijgewerkt meer dan drie uur stil, dan kleurt de tegel Bijgewerkt amber.
 
+## Wie het doet (eigenaar 15 november: blijvend, los van de coördinator)
+
+Een eigen sessie "Werkkaart ASCEND (elk uur)" op Sonnet doet het elk uur op :20 (taak "Werkkaart ASCEND elk uur"). De coördinator werkt hem daarnaast bij na elke push naar main. De Wachter controleert alleen of hij vers is (niet ouder dan 90 minuten) en grijpt in als de eigen taak faalt. Bij de coördinator-wissel blijft de werkkaart-sessie gewoon lopen.
+
 ## Stappen (elke ronde van de Wachter, na elke push naar main)
 
 1. Schrijf `stand.json` in de scratchpad uit `get_session` van elke lopende bouwer (status: bezig, review, herstel, klaar, vast), de laatste deploy op main (`mcp__github__actions_list`, groen, rood of bezig), Wachter aan of uit, de tijd van de volgende ronde in Amsterdamse tijd (Europe/Amsterdam, nooit UTC), en één zin `melding` in de stijl Jarvis: wat er gebeurt en wat de eigenaar moet doen, of "Niets nodig van jou." Vorm: zie de kop van `bouw.py`.
