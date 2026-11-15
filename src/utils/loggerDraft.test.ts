@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearDraft, draftKey, draftNumber, loadDraft, saveDraft } from './loggerDraft';
+import { clearDraft, clearDraftIfSame, draftKey, draftNumber, draftSnapshot, loadDraft, saveDraft } from './loggerDraft';
 
 function fakeStorage() {
   const data = new Map<string, string>();
@@ -23,6 +23,19 @@ describe('het concept van het afvinkblad', () => {
 
   it('een losse training krijgt een sleutel van training en dag', () => {
     expect(draftKey('tpl_x', undefined, '2026-10-22')).not.toBe(draftKey('tpl_x', undefined, '2026-10-23'));
+  });
+
+  it('een laat ja wist het concept alleen als het sinds Opslaan niet veranderde (Warden)', () => {
+    const key = draftKey('tpl_bike', undefined, '2026-11-15');
+    saveDraft(key, { duration: 45 });
+    const snapshot = draftSnapshot(key);
+    // Scherm opnieuw open, andere invulling: die blijft staan.
+    saveDraft(key, { duration: 60 });
+    clearDraftIfSame(key, snapshot);
+    expect(loadDraft<{ duration: number }>(key)).toEqual({ duration: 60 });
+    // Niets veranderd: weg.
+    clearDraftIfSame(key, draftSnapshot(key));
+    expect(loadDraft(key)).toBeUndefined();
   });
 
   it('wist het concept', () => {

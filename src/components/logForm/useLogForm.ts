@@ -15,7 +15,7 @@ import { plannedDetails } from '../../engine/workoutDetails';
 import { progressionTarget } from '../../engine/programLayout';
 import { resolvePlace } from '../../engine/trainingPlace';
 import { getTrainingPlace, saveTrainingPlace } from '../../storage/trainingPlace';
-import { clearDraft, draftKey, draftNumber, loadDraft, saveDraft } from '../../utils/loggerDraft';
+import { clearDraft, clearDraftIfSame, draftKey, draftSnapshot, draftNumber, loadDraft, saveDraft } from '../../utils/loggerDraft';
 import { todayISO } from '../../utils/dates';
 import { INTENSITY, type Intensity } from '../../data/workoutStructure';
 import { getCompatibility } from '../../data/garminSuggested';
@@ -178,6 +178,9 @@ export function useLogForm({ template, plannedSessionId, scheduledDate, program,
     setPower, setSteps, setMachineVerticalM, setTerrain, setInclinePercent, selectVariant, updateSet,
     // Annuleren of terug gooit het concept weg; herladen niet.
     clearDraft: () => { if (!preview) clearDraft(storageKey); },
+    // Het concept op het moment van Opslaan, en wissen alleen als het daarna niet veranderde (laat ja).
+    draftSnapshot: () => draftSnapshot(storageKey),
+    clearDraftIf: (snapshot: string | null) => { if (!preview) clearDraftIfSame(storageKey, snapshot); },
     buildInput: () => buildManualLog(values, { template, plannedSessionId, quickComplete, exercises }),
   };
 }

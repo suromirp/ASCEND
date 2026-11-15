@@ -47,6 +47,21 @@ export function clearDraft(key: string, store: DraftStore = 'session'): void {
   }
 }
 
+// Het concept zoals het nu bewaard staat, als tekst (null: geen concept of geen opslag).
+export function draftSnapshot(key: string, store: DraftStore = 'session'): string | null {
+  try {
+    return storeOf(store).getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+// Wis het concept alleen als het nog gelijk is aan `snapshot`: een opslag die laat landt wist zo nooit een
+// invulling die intussen in een opnieuw geopend scherm is veranderd (Warden, state/logSave.ts#saveOnLogger).
+export function clearDraftIfSame(key: string, snapshot: string | null, store: DraftStore = 'session'): void {
+  if (draftSnapshot(key, store) === snapshot) clearDraft(key, store);
+}
+
 // Een getal of '' uit een concept; alles anders valt terug op de standaard.
 export function draftNumber<D extends number | ''>(value: unknown, fallback: D): number | '' | D {
   return typeof value === 'number' && Number.isFinite(value) ? value : value === '' ? '' : fallback;

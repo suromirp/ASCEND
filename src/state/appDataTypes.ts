@@ -99,6 +99,8 @@ export interface AppData {
   storageNotice: string | null;
   reportStorageError: (err: unknown) => void;
   dismissStorageNotice: () => void;
+  // Trekt de melding bovenin in als die nog de zin van `err` toont (state/logSave.ts#tickOff: het log landde toch).
+  withdrawStorageNotice: (err: unknown) => void;
   undoLog: (logId: string) => Promise<void>;
   // "Hoe ging het?" on a training that was ticked off by itself: adds the RPE,
   // the feel and any pain to that log, nothing else (engine/autoTick.ts).

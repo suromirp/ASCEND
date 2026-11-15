@@ -139,7 +139,8 @@ function GeneralLogger({
   }, []);
 
   async function handleSave(confirmed = false) {
-    if (preview || saving || blocked) return;
+    // De ref, niet alleen de state: twee tikken in hetzelfde frame zien de state nog niet (Warden).
+    if (preview || saving || savingRef.current || blocked) return;
     // Onder 1 minuut staat Opslaan uit (punt B); heel lang vraagt eerst "Klopt dit?". Een echte rustdag: 0 minuten.
     const input = form.buildInput();
     if (!confirmed && durationNeedsCheck(input.durationMinutes)) {
@@ -153,12 +154,14 @@ function GeneralLogger({
     // log, dan blijft het scherm open met alles wat je invulde, en zegt een zin onderaan waarom. Na de grens in tijd
     // loopt het opslaan nog: je ziet dat, en de knop blijft uit tot het klaar is, zodat een tweede tik nooit een
     // tweede log maakt. Links staat dan Sluiten; het concept blijft staan (closeClearsDraft).
+    // Het concept zoals het nu bewaard staat: een laat ja wist het alleen als het intussen niet veranderde.
+    const snapshot = form.draftSnapshot();
     await saveOnLogger(logSession, input, {
       loose: !plannedSessionId,
       mounted: () => alive.current,
       showing: () => !leavingRef.current,
       busy: (on) => { savingRef.current = on; if (alive.current) setSaving(on); },
-      clearDraft: form.clearDraft,
+      clearDraft: () => form.clearDraftIf(snapshot),
       report: reportStorageError,
       apply: ({ close, note }) => {
         if (close) return onClose();
