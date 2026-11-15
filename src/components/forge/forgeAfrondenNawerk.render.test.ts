@@ -225,7 +225,7 @@ describe('Onderhoud 15 november: completedAt hoort bij de gekozen dag', () => {
     expect(forgeLogInput({ ...base, extra: extra('2026-11-18'), workout: w, now }).completedAt).toBe(new Date(now).toISOString());
   });
 
-  it('nooit in de toekomst en nooit een dag naast completedDate, over vijf tijdzones en een week dagen', () => {
+  it('nooit in de toekomst en nooit een dag naast completedDate, in Amsterdam over een week dagen (vijf tijdzones: wardenForgeNawerk.test.ts)', () => {
     const now = at('2026-11-18T09:30:00Z');
     for (let back = 0; back <= 7; back++) {
       for (const tickBack of [undefined, 0, 1, 2, 3]) {

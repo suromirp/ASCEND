@@ -730,8 +730,19 @@ function earliest(a: unknown, b: unknown): number | undefined {
 // aan zette telt op het moment dat je hem de eerste keer afvinkte (I-45). Alleen afgevinkte rijen; undefined
 // zonder afgevinkte set. Afronden stelt de dag hiervan voor (engine/forgeSession.ts#finishDayDefault).
 export function lastWorkMoment(workout: WorkoutExercise[]): number | undefined {
-  const moments = workout.flatMap((e) => e.rows.filter((r) => r.done).map((r) => earliest(r.firstDoneAt, r.doneAt))).filter((t): t is number => t !== undefined);
+  const moments = workMoments(workout);
   return moments.length > 0 ? Math.max(...moments) : undefined;
+}
+
+// Het laatste moment van echt werk op één dag (zelfde regel als `lastWorkMoment`): het tijdstip van het log bij een
+// gekozen dag (engine/forgeSession.ts#finishCompletedAt). Een set na middernacht telt niet voor de dag ervoor.
+export function lastWorkMomentOn(workout: WorkoutExercise[], day: string, dayOf: (ms: number) => string): number | undefined {
+  const moments = workMoments(workout).filter((t) => dayOf(t) === day);
+  return moments.length > 0 ? Math.max(...moments) : undefined;
+}
+
+function workMoments(workout: WorkoutExercise[]): number[] {
+  return workout.flatMap((e) => e.rows.filter((r) => r.done).map((r) => earliest(r.firstDoneAt, r.doneAt))).filter((t): t is number => t !== undefined);
 }
 
 // The box above the column: every set of the exercise ticked at once, or all

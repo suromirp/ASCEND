@@ -304,7 +304,7 @@ export async function buildImportPreview(
     Number.isFinite(ageMs) && ageMs > THIRTY_DAYS_MS
       ? 'Deze back-up is meer dan 30 dagen oud. Je planning en instellingen gaan terug naar die stand.'
       : undefined;
-  const logsSinceBackup = current.sessionLogs.filter((l) => l.completedAt > backup.createdAt).length;
+  const logsSinceBackup = logsNotInBackup(current.sessionLogs, backup.sessionLogs);
   const fixedSportNote = fixedSportImportNote(backup, current.settings);
   const skillGoalNote = skillGoalImportNote(backup.skillGoals, effective.objectives_and_milestones);
 
@@ -324,4 +324,11 @@ export async function buildImportPreview(
     diffByCategory,
     settingsChanges,
   };
+}
+
+// Trainingen op dit toestel die niet in de back-up staan: op id, niet op tijd. Een log kan een `completedAt` van voor de
+// back-up hebben (Forge op een eerdere dag afgerond, horloge, MacroFactor) en toch na de back-up zijn bewaard.
+export function logsNotInBackup(current: readonly { id: string }[], inBackup: readonly { id: string }[]): number {
+  const ids = new Set(inBackup.map((l) => l.id));
+  return current.filter((l) => !ids.has(l.id)).length;
 }

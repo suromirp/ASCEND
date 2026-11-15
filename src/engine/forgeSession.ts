@@ -243,7 +243,8 @@ function tickDay(o: { today: string; lastTickAt?: number; dayOf: (ms: number) =>
 }
 
 // Het tijdstip (`completedAt`) van het nieuwe log bij de dag van Afronden (onderhoud 15 november): vandaag is het nu;
-// een eerdere dag krijgt het moment van je laatste echte werk als dat op die dag viel, anders 12:00 op die dag. Nooit
+// een eerdere dag krijgt het moment van je laatste echte werk op die dag (`lastWorkAt`, uit
+// engine/forgeWorkout.ts#lastWorkMomentOn), en 12:00 alleen zonder set op die dag. Nooit
 // later dan nu, en nooit een dag naast `completedDate` (die twee lopen niet uiteen). Alleen voor een nieuw log.
 export function finishCompletedAt(o: { doneOn: string; today: string; now: number; lastWorkAt?: number; dayOf: (ms: number) => string }): string {
   if (o.doneOn >= o.today) return new Date(o.now).toISOString();
