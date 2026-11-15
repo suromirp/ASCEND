@@ -480,3 +480,10 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-14, Cartographer Instellingen op één plek (opus high) $2,91: ontwerp in 8 groepsbestanden, 7 stappen, foto als bewijs; stap 0 en 1 gestart.
 - 2026-11-14, Sherpa Afbreker (ontwikkelaar, opus) backlog N; zelfreview reviewer (sonnet) 64k niet akkoord op 2 punten (overgeslagen bleef concept na Verder, open tab kon Weggooien terugzetten), beide hersteld met test, 1 mag-punt verwerkt.
 - 2026-11-14, Sherpa Afbreker herstelronde (opus) na Warden van de coördinator (2 moet, 8 mag); alle tien verwerkt met tests, geen eigen helper.
+- 2026-11-15, Warden afbreker herreview (fable) 89k: door, beide moet opgelost, mutaties vallen; coördinator deed de scan-regel en de naam van de instelling zelf.
+- 2026-11-15, Lookout afbreker (sonnet) 65k groen; Pathfinder afbreker (sonnet) 39k akkoord.
+- 2026-11-15, Warden routes herreview (fable) 69k: één moet (ASCEND als onderwerp); Lookout routes (sonnet) 101k: teller van Weer rood; Pathfinder routes (sonnet) 33k akkoord.
+- 2026-11-15, Warden horloge ronde 3 (fable) 48k: door; Lookout horloge (sonnet) 67k: ASCEND in uitleg, logboekkop gevonden; Pathfinder horloge (sonnet) 34k akkoord.
+- 2026-11-15, Warden logboek (sonnet) 33k akkoord; Sherpa logboekkop (opus) $1,88.
+- 2026-11-15, Warden planner herstel (fable) 89k: door, randen van ziek getoetst; Lookout planner ronde 2 (sonnet) 65k: Vervallen-kaart tegen Week.
+- 2026-11-15, Warden instellingen stap 0+1 (fable) 81k: werk schoon, 17 van 17 mutaties; rood op de nacht van nu door nieuwe instellingen.
