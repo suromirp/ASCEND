@@ -31,6 +31,7 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Stuk of vast
 
+- Week: Bovenlichaam A staat op woensdag 18 november, binnen uw periode zonder sportschool. Wordt uitgezocht en hersteld.
 - Waar je nu bent in de Briefing: "Je precieze plek is niet beschikbaar" (21:42, binnen). De app keurt de eerste grove plek af zonder te wachten, en zegt niet of Android alleen bij benadering geeft. Herstel wordt gebouwd; tot dan werkt Andere plek.
 - Back-up: de oplossing staat live (17:45). Graag een test op uw toestel: Gedwongen stoppen, openen, meteen Back-up maken, drie keer; kijk in Documents/ASCEND of er een bestand zonder -2 staat.
 
