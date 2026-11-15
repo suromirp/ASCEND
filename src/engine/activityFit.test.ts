@@ -125,7 +125,7 @@ describe('een harde loop bij een rustige training', () => {
 
   it('opgeslagen: harder dan gepland, niet zoals gepland', () => {
     const log = watchLog('hard', { plannedSessionId: 'easy', durationMinutes: 44, cardioData: { durationMinutes: 44, distanceKm: 10, avgHeartRate: 172, source: 'garmin' } });
-    expect(coachReaction(log, byId('tpl_easy_run'), null, [], FIT)).toBe('Harder dan gepland: gemiddeld 172 bpm, zone 2 gaat tot 151. Een rustige training loop je in zone 2.');
+    expect(coachReaction(log, byId('tpl_easy_run'), null, [], FIT)).toBe('Dit telt zwaarder dan gepland. Houd je volgende training rustig.');
   });
 
   it('een harde loop zonder training wordt een tempoloop, met de keuze uit blijft hij rustig', () => {
@@ -296,7 +296,7 @@ describe('grenzen', () => {
   });
   it('een losse rustige log die hard was: harder dan rustig, niet harder dan gepland', () => {
     const log = watchLog('loose', { durationMinutes: 44, cardioData: { durationMinutes: 44, distanceKm: 10, avgHeartRate: 172, source: 'garmin' } });
-    expect(coachReaction(log, byId('tpl_easy_run'), null, [], FIT)).toBe('Harder dan rustig: gemiddeld 172 bpm, zone 2 gaat tot 151.');
+    expect(coachReaction(log, byId('tpl_easy_run'), null, [], FIT)).toBe('Dit was geen rustige loop. Houd je volgende training rustig.');
   });
   it('kort toetst aan de geplande minuten van de sessie', () => {
     const log = watchLog('s20', { plannedSessionId: 'easy', durationMinutes: 20, cardioData: { durationMinutes: 20, distanceKm: 3.5, avgHeartRate: 140, source: 'garmin' } });
@@ -355,7 +355,7 @@ describe('isEasyRun zonder plan valt terug op het profiel', () => {
   it('de lange duurloop (laag, geen zones) is rustig: hard gelopen is harder dan gepland', () => {
     expect(isEasyRun(byId('tpl_long_run'), DAY, null)).toBe(true);
     const log = watchLog('lr', { templateId: 'tpl_long_run', plannedSessionId: 'long', durationMinutes: 80, cardioData: { durationMinutes: 80, distanceKm: 15, avgHeartRate: 165, source: 'garmin' } });
-    expect(coachReaction(log, byId('tpl_long_run'), null, [], FIT)).toBe('Harder dan gepland: gemiddeld 165 bpm, zone 2 gaat tot 151. Een rustige training loop je in zone 2.');
+    expect(coachReaction(log, byId('tpl_long_run'), null, [], FIT)).toBe('Dit telt zwaarder dan gepland. Houd je volgende training rustig.');
   });
 });
 

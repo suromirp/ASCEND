@@ -18,7 +18,7 @@ import { isLegHeavyTemplate } from './scheduler';
 import { addDays } from '../utils/dates';
 import { hasRole } from './templateRoles';
 import { joinNL } from '../utils/joinNL';
-import { hardLogOnEasy, hardText, type FitContext } from './activityFit';
+import { hardLogOnEasy, type FitContext } from './activityFit';
 
 // The top of the planned effort, e.g. 4 for "RPE 3-4".
 export function plannedRpeTop(template: SessionTemplate, date: string, program: Program | null | undefined): number | undefined {
@@ -151,6 +151,8 @@ function painReaction(log: SessionLog, history: SessionLog[]): string | undefine
 // One reaction after ticking a training off, based on what you filled in. `fit`: je hartslagzones en rustige
 // tempo, zodat een harde loop bij een rustige training niet "zoals gepland" heet (engine/activityFit.ts).
 export const EXTRA_TRAINING_TEXT = 'Opgeslagen als extra training.';
+export const HARD_PLANNED_TEXT = 'Dit telt zwaarder dan gepland. Houd je volgende training rustig.';
+export const HARD_LOOSE_TEXT = 'Dit was geen rustige loop. Houd je volgende training rustig.';
 export function coachReaction(log: SessionLog, template: SessionTemplate | undefined, program: Program | null | undefined, history: SessionLog[] = [], fit: Pick<FitContext, 'hr' | 'easyPace'> & { sessionMinutes?: number } = {}): string {
   const pain = painReaction(log, history);
   if (pain) return pain;
@@ -163,7 +165,8 @@ export function coachReaction(log: SessionLog, template: SessionTemplate | undef
   if (log.subjectiveFeel === 'worse') return 'Slechter dan normaal, dat hoort erbij. Houd het morgen rustig; goed slapen en eten kan helpen.';
   // Hard gelopen bij een rustige training: gemeten, niet ingevuld. Los (niet gepland) is het harder dan rustig.
   const hard = hardLogOnEasy(log, template, program, fit);
-  if (hard) return log.plannedSessionId ? `Harder dan gepland: ${hardText(hard)}. Een rustige training loop je in zone 2.` : `Harder dan rustig: ${hardText(hard)}.`;
+  // Het getal stond al op de kaart Van je horloge: hier wat het betekent (Pathfinder, 15 november).
+  if (hard) return log.plannedSessionId ? HARD_PLANNED_TEXT : HARD_LOOSE_TEXT;
   // Eén drempel, één zin: onder de helft van de werksets of de duur is een korte training (engine/shortTraining.ts).
   // De oude tweede drempel (70 procent, "Korter dan gepland") is vervallen (besluit 2026-11-14-profielen-klein.md).
   if (isShortTraining(log, template, program, fit.sessionMinutes)) return SHORT_TRAINING_TEXT;
