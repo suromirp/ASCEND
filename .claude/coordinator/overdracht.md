@@ -26,7 +26,7 @@ Bijgewerkt: 15 november 2026, 22:40 Portugese tijd. Coördinator sinds 22:35: se
 - Wachter elk uur op :40: trig_01CDpj9NsMnvoumE9kVDUPt3 wekt de coördinator van de middag (session_01LnDpSnngzUAioWQ5b8xBWH). Aanmaken op een eigen sessie werd drie keer geweigerd (Undermining Oversight), ook na het "Nee" van de eigenaar. Gevraagd dat hij hem zelf in de app op de coördinator-chat zet en "staat" zegt; dan de oude uit en die chat archiveren. Niet opnieuw zelf proberen.
 - Werkkaart elk uur op :20: eigen sessie session_01LnDpSktfMxYFgMMgDhw8Do (trig_01JoRN6XzHJ17frpcWQAdEzB). Niet aanraken, niet archiveren.
 - Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam] staat (trig_01Qg2WuDADEAMtB5t5FFvGeZ) op session_01LnDpSncLf13Bm9hk3D5VBF.
-- 22:35: Warden en Lookout van I-61 en Warden van Back-up telling hebben nog niets gepusht (helpers in session_01LnDpSjEhK5wS8sN1rH1p5c). I-61-bouwer meldt een extra fix (tikken kiest het startpunt), melding om 23:31. I-62, I-64, I-65 nog bezig.
+- 22:35: Warden en Lookout van I-61 en Warden van Back-up telling hebben nog niets gepusht (helpers in session_01LnDpSjEhK5wS8sN1rH1p5c). I-61-bouwer meldt een extra fix (tikken kiest het startpunt), melding om 23:31. I-62 en I-64 nog bezig. I-65 klaar 22:43 (`claude/ijkset-automatisch` ede7563d): Warden Fable (`warden/ijkset-herstel`), Lookout (`lookout/ijkset`) en Pathfinder lopen sinds 22:45 als helpers in session_01LnDpSncLf13Bm9hk3D5VBF; niet dubbel starten.
 - Bouwers melden zich met create_trigger bij session_01LnDpSjEhK5wS8sN1rH1p5c; bij de wissel kregen ze de nieuwe id. Kijk ook zelf met get_session.
 
 ## Bij de wissel (22:40) in behandeling
