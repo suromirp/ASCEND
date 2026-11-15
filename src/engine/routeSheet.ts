@@ -7,7 +7,7 @@
 
 import type { RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { formatNumberNL } from '../utils/number';
-import { BIG_ROAD_LEAD, BIG_ROAD_NOTE_M, bigRoadLine, proposalFacts, proposalTitle, shortLine, tooShort } from './routePlanner';
+import { BIG_ROAD_LEAD, BIG_ROAD_NOTE_M, LONGER_WALK_LEAD, bigRoadLine, longerWalkLine, loopMinutes, proposalFacts, proposalTitle, shortLine, tooShort, walkTooLong } from './routePlanner';
 import { routeActionLine, type RouteFileLine, type RouteSendOutcome, type SendLine } from './routeSend';
 
 // Zoveel regels in amber hoogstens in één rij van een lus.
@@ -117,7 +117,8 @@ export function loopLines(p: RouteProposal, target: RouteTarget, notes: string[]
     // Te kort, de melding van de lus en een stuk langs een grote weg zijn let op (amber), hoogstens
     // MAX_WARN_LINES in een rij; wat overblijft staat bij de uitleg.
     // De grote weg gaat voor: hij raakt je veiligheid en valt nooit weg.
-    const isWarn = (p.notice && note === p.notice) || (short && note.startsWith(short)) || note.startsWith(BIG_ROAD_LEAD);
+    // Een wandeling die langer duurt dan de training is ook let op (LONGER_WALK_LEAD).
+    const isWarn = (p.notice && note === p.notice) || (short && note.startsWith(short)) || note.startsWith(BIG_ROAD_LEAD) || note.startsWith(LONGER_WALK_LEAD);
     if (isWarn) warn.push(note);
     else info.push(note);
   }
@@ -154,17 +155,21 @@ export const footerRoom = (height: number | undefined): string => (height ? `${M
 // De andere lus in één regel onder de gekozen lus in de Briefing, met zijn vorm: "Simpel, heen en
 // terug: 6 km · vrijwel vlak" of "Simpel, 3 × de helling op en af: ...". Simpel is altijd over hetzelfde
 // pad terug; Avontuurlijk is een lus (besluit 2026-11-12-route-blok.md).
-export function otherLoopLine(name: string, p: RouteProposal): string {
+export function otherLoopLine(name: string, p: RouteProposal, target?: RouteTarget): string {
   const title = proposalTitle(p);
   const shape = p.style === 'simple'
     ? ((p.repeats ?? 0) > 1 ? title : (p.deadEnds ?? 0) > 1 ? title.replace(/^Heen/, 'heen') : 'heen en terug')
     : title.replace(/^Eén/, 'één').replace(/^Lus/, 'lus');
-  return `${name}, ${shape}: ${proposalFacts(p)}`;
+  return `${name}, ${shape}: ${proposalFacts(p, target)}`;
 }
 
 // De waarschuwing in de ingeklapte rij van de andere lus, in amber zoals bij de gekozen lus: een stuk
 // langs een grote weg (dat weet je voor je op Kies tikt), anders te kort voor de training. Anders niets.
-export function otherLoopWarn(p: RouteProposal, target: RouteTarget): string | undefined {
+// Te lang voor de wandeling alleen als de gekozen lus dat niet al in amber zegt: de tijd staat al in de
+// regel zelf, en twee keer dezelfde waarschuwing op één kaart is ruis (Lookout, 15 november).
+export function otherLoopWarn(p: RouteProposal, target: RouteTarget, picked?: RouteProposal): string | undefined {
   if ((p.bigRoadM ?? 0) >= BIG_ROAD_NOTE_M) return bigRoadLine(p.bigRoadM as number);
-  return tooShort(p, target) ? shortLine(p, target) : undefined;
+  if (tooShort(p, target)) return shortLine(p, target);
+  if (picked && walkTooLong(picked, target)) return undefined;
+  return walkTooLong(p, target) ? longerWalkLine(loopMinutes(p, target) as number, target.minutes as number) : undefined;
 }

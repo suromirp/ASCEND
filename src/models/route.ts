@@ -58,6 +58,21 @@ export interface RouteTarget {
   packKg?: number;
   // De hoogtemeters die de training vraagt, als hij die vraagt (ook als ze niet in de duur passen).
   askedAscentM?: number;
+  // Het tempo waarmee de tijd van een lus gerekend wordt (engine/hikeTarget.ts#walkRates); alleen bij een
+  // wandeltraining, alleen in het geheugen.
+  rates?: WalkRates;
+}
+
+// Het wandeltempo van een lus: vlak, omhoog en omlaag, op je eigen klimtempo of op de wandelnorm.
+export interface WalkRates {
+  flatKmh: number;
+  upMph: number;
+  downMph: number;
+  // Waar het op rust: je eigen klimtempo of de wandelnorm.
+  basis: 'own' | 'norm';
+  // De rugzak die is meegerekend; alleen op je eigen tempo met een bekend gewicht op je klimmen en een
+  // bekend lichaamsgewicht. Afwezig: de tijd rekent zonder rugzak.
+  packKg?: number;
 }
 
 export interface RouteProposal {

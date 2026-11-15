@@ -8,7 +8,7 @@ import type { LeavePeriod } from '../models/leave';
 import { addDays } from '../utils/dates';
 import { makeForecast } from './fixtures/weatherFixture';
 import { climbHikes } from './fixtures/climbLogs';
-import { routeTarget, targetText } from './routeTarget';
+import { routeTarget, walkShortText } from './routeTarget';
 import {
   DEFAULT_EVENING_TIME,
   EVENING_TIMES,
@@ -138,7 +138,7 @@ describe('de regels', () => {
   it('een wandeltraining buiten krijgt ook de route; een herstelwandeling (geen Briefing) staat hier nooit', () => {
     const ruck = eveningBefore(input({ planned: [plan('p1', 'tpl_ruck_walk')], routeOn: true, forecast: undefined }))!;
     // 60 minuten op de wandelnorm: 4 km.
-    expect(ruck.lines).toContain('Route 4 km: je lus staat in de Briefing.');
+    expect(ruck.lines).toContain('Route 1 uur, ongeveer 4 km: je lus staat in de Briefing.');
     const herstel: SessionTemplate = { id: 'tpl_herstel', name: 'Herstelwandeling', type: 'recovery', durationVariants: { full: 45 } };
     const view = eveningBefore(input({ planned: [plan('p1', 'tpl_herstel')], templateById: new Map([...byId, [herstel.id, herstel]]), routeOn: true, forecast: undefined }));
     expect(view?.lines.some((l) => l.startsWith('Route ')) ?? false).toBe(false);
@@ -148,9 +148,9 @@ describe('de regels', () => {
     const logs = climbHikes(2);
     const line = (bodyKg?: number) => eveningBefore(input({ planned: [plan('p1', heavy.id)], templateById: new Map([...byId, [heavy.id, heavy]]), logs, routeOn: true, forecast: undefined, bodyKg }))!
       .lines.find((l) => l.startsWith('Route '));
-    expect(line(75)).toBe(`Route ${targetText(routeTarget({ template: heavy, date: TOMORROW, logs, bodyKg: 75 }))}: je lus staat in de Briefing.`);
-    expect(line(75)).toBe('Route 8 km, 500 hoogtemeters: je lus staat in de Briefing.');
-    expect(line(undefined)).toBe('Route 8,5 km, 500 hoogtemeters: je lus staat in de Briefing.');
+    expect(line(75)).toBe(`Route ${walkShortText(routeTarget({ template: heavy, date: TOMORROW, logs, bodyKg: 75 }))}: je lus staat in de Briefing.`);
+    expect(line(75)).toBe('Route 3 uur, ongeveer 8 km: je lus staat in de Briefing.');
+    expect(line(undefined)).toBe('Route 3 uur, ongeveer 8,5 km: je lus staat in de Briefing.');
   });
   it('rugzak met gewicht bij een rugzaktraining', () => {
     const view = eveningBefore(input({ planned: [plan('p1', 'tpl_ruck_walk')] }))!;
