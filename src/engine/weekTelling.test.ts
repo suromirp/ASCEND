@@ -229,6 +229,23 @@ describe('randgevallen', () => {
     });
   }
 
+  it('zoals de back-up: de lange duurloop is een wandelsjabloon en geruild met Heuvelintervallen (beide verplaatst)', () => {
+    // Coördinator, naspelen met de echte back-up (15 november): Lange duurloop heeft het type hiking, staat op za 14 met
+    // status moved (van zo 15), Heuvelintervallen op zo 15 met status moved (van za 14). Nagemaakt in dezelfde vorm.
+    at('2026-11-15');
+    expect(byId.get('tpl_long_run')!.type).toBe('hiking');
+    const { plan, logs, leave, today } = ownerWeek('2026-11-09');
+    const swapped = plan.map((s) => (s.id === 'lr5' ? { ...s, status: 'moved' as const, movedFromDate: '2026-11-15' } : s.id === 'hi6' ? { ...s, status: 'moved' as const, movedFromDate: '2026-11-14' } : s));
+    const lr = swapped.find((s) => s.id === 'lr5')!;
+    expect(isAwayFor(lr.scheduledDate, byId.get(lr.templateId), leave)).toBe(false);
+    expect(deriveSessionStatus(lr, logs, false, pauseOf(leave)).status).toBe('missed');
+    expect(deriveSessionStatus(swapped.find((s) => s.id === 'hi6')!, logs, false, pauseOf(leave)).status).toBe('today');
+    expect(missedInWeek(swapped.filter((s) => s.weekStartDate === '2026-11-09'), logs, byId, pauseOf(leave))).toBe(1);
+    expect(rowNotes(weekConcerns({ sessions: swapped, logs, templates, today, restDay: 1, program, leave }, '2026-11-09')).get('hi6')).toBeUndefined();
+    const text = catchUp(adviceInputs({ plannedSessions: swapped, logs, leave, asOf: today })).map((a) => a.effect).join(' ');
+    expect(text).not.toMatch(/vandaag deed je geen training|in plaats van je rustdag/);
+  });
+
   it('punt 8: de week heeft een naam', () => {
     at('2026-11-15');
     expect(weekWord('2026-11-15', '2026-11-15')).toBe('deze week');

@@ -18,6 +18,8 @@ Gemist heeft één afleiding voor de rijen in Week, de kaart "Je hebt n training
 
 Melding van de eigenaar, zondag 15 november 10:40, met een periode Zonder sportschool van za 14 tot en met wo 18 november. Week toonde rode kruisen op vrijdag (twee, overgeslagen) en op zondag (Eigen gewicht, zelf overgeslagen), maar de kaart zei "Je hebt 1 training gemist": die ene was de lange duurloop van zaterdag, juist de rij zonder kruis. Diezelfde lange loop kreeg amber "1 dag voor Heuvelintervallen" terwijl hij niet gedaan was, en het advies zette hem op maandag direct na de heuvelintervallen ("want vandaag deed je geen training" om 10:40, met Heuvelintervallen nog gepland). Nagespeeld met nagemaakte gegevens op de versie van voor 14 november: precies die kaart en die zin. Op de versie van daarna stond de lange loop grijs als vervallen en zei de kaart niets: een loop zonder sportschool viel helemaal uit beeld.
 
+Naspelen met de echte back-up (de coördinator, gemaakt om 11:50 op versie fe704a3) gaf op die versie 0 gemist en geen advies. Het advies van 10:40 komt dus van de build ervoor: de app werkt pas bij na Bijwerken (`registerType: 'prompt'`), en de enige aanroeper van het advies (`state/adviceAndWeek.ts`) geeft de periodes mee sinds 12 november; het advies wordt nergens bewaard. In de back-up is de lange duurloop een wandelsjabloon (type hiking) en geruild met Heuvelintervallen; dat telt nu ook als gewone loop (toets in `src/engine/weekTelling.test.ts`).
+
 Een periode zonder sportschool meldt dat de sportschool er niet is, niet dat je niet traint. Wie dan een lange loop laat liggen, heeft hem gemist, zoals op elke andere dag; het plan zette hem er juist neer omdat hij kon.
 
 ## Botsing met 14 november
