@@ -137,6 +137,24 @@ describe('de voorbeeldweek van de eigenaar (zondag 15 november 10:40)', () => {
     expect(monday[0]?.effect).toBe('Lange duurloop vervalt. De rest van je week blijft zoals gepland.');
   });
 
+  it('Warden A: alleen wat Week open noemt houdt het voorstel tegen, niet een vervallen, weggelaten of geschrapte training', () => {
+    at(today);
+    const hills = plan.find((s) => s.id === 'hi6')!;
+    const done = [...logs, log(hills, 45)];
+    const expectAdvice = (extra: PlannedSession) => {
+      const advice = catchUp(adviceInputs({ plannedSessions: [...plan, extra], logs: done, leave, asOf: today }));
+      expect(advice[0]?.effect, extra.id).toBe('Lange duurloop vervalt. De rest van je week blijft zoals gepland.');
+    };
+    // D: een sportschooltraining op zo 15 in de periode zonder sportschool: in Week vervallen, dus geen open training.
+    expectAdvice(ps('gym15', 'tpl_lower_b', today, { order: 2 }));
+    // Door de periode geschrapt (leave.role 'dropped'), al heeft hij geen status overgeslagen.
+    expectAdvice(ps('drop15', 'tpl_easy_run', today, { order: 2, leave: { periodId: 'p1', role: 'dropped' } }));
+    // Door ASCEND weggelaten (amount.change 'left_out').
+    expectAdvice(ps('left15', 'tpl_easy_run', today, { order: 2, amount: { kind: 'easy', change: 'left_out' } }));
+    // Een gewone loop vandaag is wel open: dan wacht het voorstel.
+    expect(catchUp(adviceInputs({ plannedSessions: [...plan, ps('run15', 'tpl_easy_run', today, { order: 2 })], logs: done, leave, asOf: today }))).toEqual([]);
+  });
+
   it('punt 5: de dag in "verplaatst van do 12" wordt nooit afgekapt', () => {
     const extra = rowExtra({ moved: true, movedFrom: '2026-11-12' })!;
     expect(extra.text).toBe('verplaatst van do 12');
@@ -281,11 +299,12 @@ describe('randgevallen', () => {
   it('bewaking (Warden 4): isAwayDay (de dag als geheel weg, ook zonder sportschool) leest niemand voor gemist', () => {
     // Gemist gaat door isAwayFor of isPauseDay. isAwayDay is alleen voor de dag als geheel: de rustiger instap en
     // "Deze week nog een keer?" (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md).
-    const sources = import.meta.glob<string>('./*.ts', { query: '?raw', import: 'default', eager: true });
+    // Over heel src/, ook een naamruimte (`import * as leave` en dan `leave.isAwayDay`) of een her-export: elk bestand
+    // dat de naam noemt telt.
+    const sources = import.meta.glob<string>(['../**/*.ts', '../**/*.tsx', '!../**/*.test.ts', '!../**/*.test.tsx'], { query: '?raw', import: 'default', eager: true });
     const users = Object.entries(sources)
-      .filter(([f]) => !f.endsWith('.test.ts') && f !== './leave.ts')
-      .filter(([, src]) => /import\s*\{[^}]*\bisAwayDay\b[^}]*\}\s*from '\.\/leave'/.test(src))
-      .map(([f]) => f.slice(2));
+      .filter(([f, src]) => !/(^\.|\/engine)\/leave\.ts$/.test(f) && /\bisAwayDay\b/.test(src))
+      .map(([f]) => f.replace(/^.*\//, ''));
     expect(users.sort()).toEqual(['reentry.ts', 'repeatWeek.ts']);
   });
 

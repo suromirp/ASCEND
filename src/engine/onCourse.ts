@@ -40,7 +40,8 @@ interface CourseInputs {
   templates: SessionTemplate[];
   planChangeLog: PlanChangeProposal[];
   illnessEpisodes?: IllnessEpisode[];
-  // Vakanties en tochten die je zelf meldde: wat daar open bleef telt niet als gemist (engine/leave.ts#isAwayDay).
+  // Vakanties en tochten die je zelf meldde, en zonder sportschool wat de sportschool nodig heeft: wat daar open bleef
+  // telt niet als gemist (engine/leave.ts#isAwayFor).
   leavePeriods?: LeavePeriod[];
   // Wat de sleuteltraining is (engine/keySession.ts), zoals op Ascend. Zonder: de lange duurloop of de bergtocht.
   keyFocus?: KeyFocus;

@@ -114,7 +114,15 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
   // vandaag overgeslagen, dan kan de sleuteltraining vandaag nog (aanvulling op
   // docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md, Warden). Zonder sleuteltraining vervalt alles hoe
   // dan ook: dat voorstel komt meteen.
-  const openToday = inputs.plannedSessions.some((s) => s.scheduledDate === inputs.asOf && s.status !== 'skipped' && !loggedIds.has(s.id) && templateById.get(s.templateId)?.type !== 'recovery');
+  // Open is wat Week open noemt: dezelfde afleiding als gemist. Een training die de periode laat vervallen (zonder
+  // sportschool een sportschooltraining, engine/leave.ts#isAwayFor), die een periode of ASCEND wegliet, of die buiten
+  // het programma valt, houdt niets tegen (Warden, 15 november).
+  const openToday = inputs.plannedSessions.some((s) => {
+    const t = templateById.get(s.templateId);
+    return s.scheduledDate === inputs.asOf && s.status !== 'skipped' && !loggedIds.has(s.id) && !!t && t.type !== 'recovery'
+      && s.leave?.role !== 'dropped' && s.amount?.change !== 'left_out' && inProgram(s, inputs.program)
+      && !isAwayFor(inputs.asOf, t, inputs.leave);
+  });
   if (caughtUp.length === 0 && chosen && openToday) return [];
   const names = missed.map((m) => m.template.name);
   // Een naam met "en" erin ("Heuvelsprints en afdalen") maakt een opsomming met "en" onleesbaar; dan alleen komma's.
