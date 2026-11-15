@@ -8,7 +8,7 @@ De bron is `docs/kennisindex/bronnen.json`: per document het onderwerp, de kern 
 "Vervangt" van een besluit komen uit het besluit zelf. Een nieuw document in `docs/` krijgt een regel in
 `bronnen.json`, daarna `npm run kennisindex`; de test `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 523 documenten: 392 gelden, 2 vervangen, 3 verouderd, 126 achtergrond.
+Stand van de 524 documenten: 393 gelden, 2 vervangen, 3 verouderd, 126 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; achtergrond is onderzoek, een ontwerp of een verslag waar een besluit
@@ -26,13 +26,13 @@ op steunt; vervangen en verouderd staan onderaan elk onderwerp en lees je alleen
 - Werkbriefje: [werkbriefjes/koppelingen-en-data.md](../werkbriefjes/koppelingen-en-data.md)
 - [android-sleutel.md](../android-sleutel.md): De Android-app wordt altijd met dezelfde sleutel ondertekend, anders kan een nieuwe versie niet over de oude heen; hier staat hoe de workflow dat doet.
 - [architectuur/koppelingen-en-data.md](../architectuur/koppelingen-en-data.md): Wat ASCEND van Garmin leert (intensiteit, zweet, bergschoenen) en de tekst voor Strava.
-- Alles over dit onderwerp: [koppelingen-en-data.md](koppelingen-en-data.md) (79 besluiten die gelden, 18 keer onderzoek, ontwerp of verslag, 1 vervangen of verouderd).
+- Alles over dit onderwerp: [koppelingen-en-data.md](koppelingen-en-data.md) (80 besluiten die gelden, 18 keer onderzoek, ontwerp of verslag, 1 vervangen of verouderd).
 
 ## Lopen en tests
 
 - Werkbriefje: [werkbriefjes/lopen-en-tests.md](../werkbriefjes/lopen-en-tests.md)
 - [architectuur/lopen-en-tests.md](../architectuur/lopen-en-tests.md): Het lange verhaal bij lopen: hartslag op het horloge, run in detail en de testloop met de tempo's.
-- Alles over dit onderwerp: [lopen-en-tests.md](lopen-en-tests.md) (37 besluiten die gelden, 11 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [lopen-en-tests.md](lopen-en-tests.md) (38 besluiten die gelden, 11 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Doelen
 

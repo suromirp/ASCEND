@@ -2805,6 +2805,14 @@
    "kern": "Vervallen betekent overal hetzelfde: een voorbije training zonder log op een dag binnen een gemelde ziekte (tot en met de dag van beter melden) of vakantie, tocht of periode zonder sportschool.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-15-wandelen-vaste-bpm.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "lopen-en-tests"
+   ],
+   "kern": "Een wandelworkout naar het horloge krijgt geen zonedoel maar een regel met vaste bpm uit je hardloopzones in de beschrijving, omdat intervals.icu voor wandelen geen eigen zones heeft.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/_sjabloon.md": {
    "onderwerpen": [
     "werkwijze"
