@@ -381,6 +381,9 @@ describe('de woorden van een wandeling', () => {
     const flat = { ...hike, askedAscentM: undefined, ascentM: 0 };
     expect(proposalNotes(loop(13, 0, { targetAscentM: undefined }), flat).some((n) => n.startsWith(LONGER_WALK_LEAD))).toBe(false);
     expect(proposalNotes(loop(13.6, 0, { targetAscentM: undefined }), flat)).toContain('Deze lus duurt ongeveer 3 uur 25, langer dan de 3 uur van je training.');
+    // Vlak bij de grens (201,6 minuten): 13,4 km (201 minuten) nog niet, 13,5 km (202,5 minuten) wel. Zo valt een grens van 10 procent op.
+    expect(proposalNotes(loop(13.4, 0, { targetAscentM: undefined }), flat).some((n) => n.startsWith(LONGER_WALK_LEAD))).toBe(false);
+    expect(proposalNotes(loop(13.5, 0, { targetAscentM: undefined }), flat).some((n) => n.startsWith(LONGER_WALK_LEAD))).toBe(true);
     // Op de duur af (3 uur 5 bij 3 uur): geen regel.
     expect(proposalNotes(loop(8.4, 360), hike).some((n) => n.startsWith(LONGER_WALK_LEAD))).toBe(false);
   });
