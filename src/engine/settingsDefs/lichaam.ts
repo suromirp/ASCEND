@@ -5,6 +5,7 @@
 // settingsChoices.ts tot stap 2 en 3; settingsDefs.parity.test.ts bewaakt dat de teksten gelijk zijn. De volgorde
 // is die van de pagina: een rij, met daaronder wat in haar blad staat.
 
+import { B } from './parts';
 import type { SettingDef } from './types';
 
 export const LICHAAM: SettingDef[] = [
@@ -44,6 +45,7 @@ export const LICHAAM: SettingDef[] = [
       ],
     },
     helpKey: 'healthConnectGewicht',
+    showWhen: [B.hc],
   },
   {
     id: 'gewichtstrend',
@@ -174,6 +176,7 @@ export const LICHAAM: SettingDef[] = [
         { head: 'Vetvrije massa', text: 'je gewicht min het vet. Voor kracht en de GR5 zegt die meer dan het percentage.' },
       ],
     },
+    showWhen: [B.bodyFat],
   },
   {
     id: 'hartslag',

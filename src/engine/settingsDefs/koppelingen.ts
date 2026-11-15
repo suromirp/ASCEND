@@ -6,6 +6,7 @@
 // is die van de pagina: een rij, met daaronder wat in haar blad staat.
 
 import { DEFAULT_WATCH_MODEL_ID, WATCH_MODELS } from '../../data/watchModels';
+import { B } from './parts';
 import type { SettingDef } from './types';
 
 export const KOPPELINGEN: SettingDef[] = [
@@ -53,6 +54,7 @@ export const KOPPELINGEN: SettingDef[] = [
       ],
     },
     helpKey: 'bundelHorlogeGebruik',
+    showWhen: [B.watchData],
   },
   {
     id: 'garmin-trainingen',
@@ -62,6 +64,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Of trainingen van je horloge worden opgehaald en aangeboden.',
     keywords: ['garmin', 'horloge', 'activiteiten', 'sync', 'wat ik van mijn horloge gebruik'],
     route: '/koppelen/garmin',
+    showWhen: [B.watchData],
   },
   {
     id: 'horloge-details',
@@ -71,6 +74,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'ASCEND haalt per loop of tocht hartslag, tempo en hoogte op, rekent er een samenvatting en de kilometers uit en bewaart de reeks op je toestel.',
     keywords: ['horloge', 'reeks', 'streams', 'loopdynamica', 'grondcontact', 'cadans', 'hoogte', 'tempo', 'details', 'loopinzicht', 'hardlopen', 'wat ik van mijn horloge gebruik', 'loopjes'],
     route: '/koppelen/garmin',
+    showWhen: [B.garmin, B.activities],
   },
   {
     id: 'slaap',
@@ -80,6 +84,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Hoe lang de nacht was, in de ochtendcheck.',
     keywords: ['garmin', 'horloge', 'nacht', 'slapen', 'ochtendcheck', 'wat ik van mijn horloge gebruik'],
     route: '/koppelen/garmin',
+    showWhen: [B.watchData],
   },
   {
     id: 'rusthartslag',
@@ -89,6 +94,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Je rusthartslag in de ochtendcheck.',
     keywords: ['garmin', 'horloge', 'hartslag', 'rust', 'ochtendcheck', 'wat ik van mijn horloge gebruik'],
     route: '/koppelen/garmin',
+    showWhen: [B.watchData],
   },
   {
     id: 'hrv',
@@ -98,6 +104,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'De variatie tussen je hartslagen in rust, in de ochtendcheck.',
     keywords: ['garmin', 'horloge', 'hartslagvariatie', 'herstel', 'ochtendcheck', 'wat ik van mijn horloge gebruik'],
     route: '/koppelen/garmin',
+    showWhen: [B.watchData],
   },
   {
     id: 'horloge-gebruik',
@@ -126,6 +133,7 @@ export const KOPPELINGEN: SettingDef[] = [
       ],
     },
     helpKey: 'vanzelfAfvinken',
+    showWhen: [B.garmin, B.activities],
   },
   {
     id: 'garmin-leidend',
@@ -145,6 +153,7 @@ export const KOPPELINGEN: SettingDef[] = [
       ],
     },
     helpKey: 'garminLeidend',
+    showWhen: [B.garmin, B.activities],
   },
   {
     id: 'correcties-overnemen',
@@ -164,6 +173,7 @@ export const KOPPELINGEN: SettingDef[] = [
       ],
     },
     helpKey: 'correctiesOvernemen',
+    showWhen: [B.garmin, B.activities],
   },
   {
     id: 'horloge-stil',
@@ -182,6 +192,7 @@ export const KOPPELINGEN: SettingDef[] = [
       ],
     },
     helpKey: 'horlogeStil',
+    showWhen: [B.garmin],
   },
   {
     id: 'bundel-horloge-sturen',
@@ -198,6 +209,7 @@ export const KOPPELINGEN: SettingDef[] = [
       ],
     },
     helpKey: 'naarHorloge',
+    showWhen: [B.garmin],
   },
   {
     id: 'naar-horloge',
@@ -208,6 +220,7 @@ export const KOPPELINGEN: SettingDef[] = [
     keywords: ['garmin', 'horloge', 'agenda', 'sturen', 'intervals'],
     route: '/koppelen/garmin',
     help: { from: 'bundel-horloge-sturen' },
+    showWhen: [B.garmin],
   },
   {
     id: 'horloge-voorvoegsel',
@@ -239,6 +252,7 @@ export const KOPPELINGEN: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.garmin, B.send],
   },
   {
     id: 'horloge-hartslag',
@@ -272,6 +286,7 @@ export const KOPPELINGEN: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.garmin, B.send],
   },
   {
     id: 'horloge-rustige-loop',
@@ -289,6 +304,7 @@ export const KOPPELINGEN: SettingDef[] = [
       ],
     },
     helpKey: 'horlogeRustigeLoop',
+    showWhen: [B.garmin, B.send, B.ascendHr],
   },
   {
     id: 'horloge-eigen-workout',
@@ -308,6 +324,7 @@ export const KOPPELINGEN: SettingDef[] = [
       ],
     },
     helpKey: 'horlogeEigenWorkout',
+    showWhen: [B.garmin, B.send],
   },
   {
     id: 'horloge-gedaan-weghalen',
@@ -325,6 +342,7 @@ export const KOPPELINGEN: SettingDef[] = [
       ],
     },
     helpKey: 'horlogeGedaanWeghalen',
+    showWhen: [B.garmin, B.send],
   },
   {
     id: 'horloge-status',
@@ -343,6 +361,7 @@ export const KOPPELINGEN: SettingDef[] = [
       ],
     },
     helpKey: 'horlogeStatus',
+    showWhen: [B.garmin, B.send],
   },
   {
     id: 'horloge-status-week',
@@ -352,6 +371,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Een klein horloge achter een training in de weeklijst, alleen als hij is verstuurd of het niet lukte.',
     keywords: ['markering', 'icoon', 'week', 'verstuurd', 'mislukt', 'status', 'horloge', 'garmin', 'trainingen naar je horloge'],
     route: '/koppelen/garmin',
+    showWhen: [B.garmin, B.send],
   },
   {
     id: 'health-connect',
@@ -407,6 +427,7 @@ export const KOPPELINGEN: SettingDef[] = [
       ],
     },
     helpKey: 'macrofactorLeidend',
+    showWhen: [B.mf],
   },
   {
     id: 'macrofactor-gewicht',
@@ -418,6 +439,7 @@ export const KOPPELINGEN: SettingDef[] = [
     note: 'Of ASCEND rekent met het gewicht uit je MacroFactor-export.',
     keywords: ['gewicht', 'macrofactor', 'kilo', 'trendgewicht', 'weegschaal', 'rugzak'],
     route: '/koppelen/macrofactor',
+    showWhen: [B.mf],
   },
   {
     id: 'bundel-strava',
@@ -467,6 +489,7 @@ export const KOPPELINGEN: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.strava],
   },
   {
     id: 'datavelden',
@@ -505,6 +528,7 @@ export const KOPPELINGEN: SettingDef[] = [
         options: Object.values(WATCH_MODELS).map((m) => ({ value: m.id, label: m.name, note: `Velden en indelingen van de ${m.name}`, short: m.name })),
       },
     },
+    showWhen: [B.watchFields],
   },
   {
     id: 'horloge-soort',
@@ -524,5 +548,6 @@ export const KOPPELINGEN: SettingDef[] = [
       ],
     },
     helpKey: 'horlogeSoort',
+    showWhen: [B.garmin, B.activities],
   },
 ];

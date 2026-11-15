@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
+import { PAGE_ROWS } from '../../../data/settingsLayout';
 import { resolveExerciseArt } from '../../../engine/exerciseArtSettings';
 import { resolveForgeLayout } from '../../../engine/forgeLayout';
 import { resolveForgeLogView } from '../../../engine/forgeLog';
@@ -18,7 +19,8 @@ import { SummaryRow } from './SummaryRow';
 import { anyShown, rowShown } from './rowShown';
 import type { GroupProps } from './types';
 
-const ADVANCED = ['trainingsduur', 'forge-tijdsgrens', 'bundel-rekenmodel', 'bundel-invullen', 'bundel-toets', 'forge-bergspieren'];
+// De rijen van Geavanceerd, uit de verklaringen (engine/settingsDefs/forge.ts).
+const ADVANCED = PAGE_ROWS.forge.advanced;
 
 // Forge: kracht meerekenen, wat je bijhoudt, de voorstellen en je sportschool. Elke keuze heeft
 // het advies als standaard (docs/beslissingen/2026-10-22-alles-instelbaar.md). Keuzes die bij
