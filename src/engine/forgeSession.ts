@@ -275,6 +275,15 @@ export function sessionIdentity(s: { pointer: { key: string }; startedAt: number
   return `${s.pointer.key}\u0001${s.startedAt}`;
 }
 
+// De laatste stand die de plek van de pil onthoudt: de live sessie, behalve als het blad openstaat en er een andere
+// training loopt dan die waarvoor het openging; dan blijft de oude stand (pillSlot zegt dan weg). Een nieuwe stand van
+// dezelfde training neemt hij altijd over.
+export function nextPillLast<S>(o: { live: S | undefined; last: S | undefined; sheetOpen: boolean; keyOf: (s: S) => string }): S | undefined {
+  if (o.live === undefined || o.live === o.last) return o.last;
+  if (!o.sheetOpen || o.last === undefined || o.keyOf(o.live) === o.keyOf(o.last)) return o.live;
+  return o.last;
+}
+
 // De pil en zijn keuzeblad: verdwijnt de training terwijl het blad openstaat, dan blijft het blad staan met de
 // laatste stand (en zegt het zelf dat hij weg is); de pil zelf gaat weg. Loopt er intussen een andere training
 // (in een ander tabblad A verwijderd en meteen B gestart), dan is A voor het open blad net zo goed weg: B komt nooit

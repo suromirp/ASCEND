@@ -6,7 +6,8 @@ import { createElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { SessionTemplate } from '../../models/training';
 import { lastWorkMoment, tickAllRows, tickRow, toStrengthData, type WorkoutExercise } from '../../engine/forgeWorkout';
-import { finishDayChoices, finishDayDefault, pillSlot, sessionIdentity } from '../../engine/forgeSession';
+import { finishDayChoices, finishDayDefault, nextPillLast, pillSlot, sessionIdentity } from '../../engine/forgeSession';
+import { mergeDraft } from '../../engine/forgeInput';
 import { toISODate } from '../../utils/dates';
 import finishSrc from './FinishSheet.tsx?raw';
 import pillSrc from './SessionPill.tsx?raw';
@@ -153,5 +154,43 @@ describe('I-44. De dagknoppen bij Gedaan op zijn de primitive Chip', () => {
     const chips = [...html.matchAll(/<button[^>]*class="st-chip quiet"[^>]*>([^<]*)</g)].map((m) => m[1]);
     expect(chips).toEqual(['ma 16 november', 'vandaag']);
     expect(finishSrc).not.toMatch(/rounded-full border px-3/);
+  });
+});
+
+describe('I-45. Reviewer: de plek van de pil en het concept', () => {
+  const a = { pointer: { key: 'tpl_a' }, startedAt: 1 };
+  const a2 = { pointer: { key: 'tpl_a' }, startedAt: 1, doneSets: 3 };
+  const b = { pointer: { key: 'tpl_b' }, startedAt: 2 };
+  const keyOf = sessionIdentity;
+
+  it('een reeks: blad open op A, B komt, blad dicht, A2 nooit meer', () => {
+    // Blad open op A, A krijgt een nieuwe stand: die neemt hij over.
+    let last = nextPillLast({ live: a2, last: a, sheetOpen: true, keyOf });
+    expect(last).toBe(a2);
+    // B start terwijl het blad openstaat: de plek houdt A, en het blad zegt weg.
+    last = nextPillLast({ live: b, last, sheetOpen: true, keyOf });
+    expect(last).toBe(a2);
+    expect(pillSlot({ live: b, last, sheetOpen: true, keyOf })).toEqual({ session: a2, gone: true });
+    // Blad dicht: nu B.
+    last = nextPillLast({ live: b, last, sheetOpen: false, keyOf });
+    expect(last).toBe(b);
+    expect(pillSlot({ live: b, last, sheetOpen: false, keyOf })).toEqual({ session: b, gone: false });
+    // Geen live sessie: de laatste stand blijft (voor een open blad).
+    expect(nextPillLast({ live: undefined, last: b, sheetOpen: true, keyOf })).toBe(b);
+  });
+
+  it('de component gebruikt deze stap', () => {
+    expect(pillSrc).toContain('nextPillLast({ live: session, last, sheetOpen, keyOf: sessionIdentity })');
+  });
+
+  it('een oefening met alleen uitgezette sets houdt firstDoneAt bij een nieuw plan en na opslaan en herladen', () => {
+    let w = plan(2);
+    w = tickRow(w, 'a', 'r0', mon).workout;
+    w = tickRow(w, 'a', 'r0', wed).workout; // weer uit
+    const stored = JSON.parse(JSON.stringify(w)) as WorkoutExercise[];
+    const merged = mergeDraft(stored, plan(2));
+    expect(merged[0].rows[0].firstDoneAt).toBe(mon);
+    const again = tickRow(merged, 'a', 'r0', wed + 60_000).workout;
+    expect(lastWorkMoment(again)).toBe(mon);
   });
 });
