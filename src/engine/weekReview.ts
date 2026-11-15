@@ -35,7 +35,7 @@ import type { IntensityCounting } from './intensitySettings';
 import { effortMinutes, type EffortMinutes } from './weekEffort';
 import { caughtUpMap } from './catchUp';
 import { raceDatesOf } from './raceWindow';
-import { isPausedFor } from './sessionStatus';
+import { isDraftOpen, isPausedFor } from './sessionStatus';
 
 export interface WeekReview {
   weekStart: string;
@@ -45,8 +45,9 @@ export interface WeekReview {
   minutes: number;
   perSport: string[]; // "Hardlopen: 18,4 km, 320 m D+"
   missed: string[]; // template names
-  // Overgeslagen: telt mee als gepland en niet gedaan, maar heet niet gemist (dezelfde rijen als Week, die
-  // "overgeslagen" zeggen). Vervallen: voorbij en niet gedaan in een pauze (ziek, weg, zonder sportschool wat de
+  // Overgeslagen: telt mee als gepland en niet gedaan, maar heet niet gemist: de overgeslagen rijen in Week die
+  // meetellen. De oude rij van een inhaal, wat ASCEND zelf weghaalde en wat in een pauze overgeslagen is tellen niet in
+  // "van n" en staan hier dus ook niet. Vervallen: voorbij en niet gedaan in een pauze (ziek, weg, zonder sportschool wat de
   // sportschool nodig heeft, de afbouw na een race), telt niet mee. Samen met gedaan en gemist sluit zo de som
   // (Pathfinder, 15 november, I-40).
   skipped?: string[];
@@ -72,7 +73,8 @@ export interface WeekReview {
   next?: { title: string; note?: string; minutes: number; key?: string; label?: string; rest?: boolean };
   label?: string; // de naam van deze week, zoals bij next
   extraLogged?: number; // logs van deze week die niet bij een geplande training van deze week horen
-  // De week loopt en heeft een programma: dan staat in Week de rij Week opnieuw plannen (pages/Week.tsx, replanOn), en
+  // De week loopt en heeft een programma: dan staat in Week de rij Week opnieuw plannen (pages/Week.tsx, replanOn; die
+  // staat ook in een week zonder trainingen of in een toekomstige week, maar daar is niets gemist), en
   // verwijst de regel Gemist ernaar (docs/beslissingen/2026-11-15-gemist-en-opnieuw-plannen.md).
   replan?: boolean;
   advice: string[];
@@ -170,7 +172,9 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   const pause = { leave: inputs.leavePeriods, templates: byId, illness: illnessEpisodes, races, openDraft: inputs.openDraft };
   const lapsedSessions = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd && s.scheduledDate < asOf
     && !isRest(s) && !loggedIds.has(s.id) && s.status !== 'skipped' && s.leave?.role !== 'dropped'
-    && (!program || s.scheduledDate >= program.startDate) && isPausedFor(s, pause, asOf)).sort(byDay);
+    && (!program || s.scheduledDate >= program.startDate)
+    // Dezelfde volgorde als Week: een open concept loopt nog, ook in een pauze (Warden, 15 november).
+    && !isDraftOpen(s, inputs.openDraft, asOf) && isPausedFor(s, pause, asOf)).sort(byDay);
 
   // Per sport: kilometers and climbing, from what was logged.
   const sportTotals = new Map<Sport, { km: number; dplus: number }>();

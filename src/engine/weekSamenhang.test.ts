@@ -64,6 +64,12 @@ describe('I-40: de weekterugblik sluit de som', () => {
     expect(weekRestLines(full, { missedShown: false })[0]).toBe('Gemist: Bovenlichaam B en Lange duurloop');
   });
 
+  it('een open concept in een pauze loopt nog: niet vervallen, zoals Week (Warden)', () => {
+    const r = review('2026-10-13', { openDraft: 'la' });
+    expect(r.lapsed).toEqual([]);
+    expect(weekRestLines(r, { missedShown: true })).toEqual(['Overgeslagen: Rustige duurloop']);
+  });
+
   it('niets overgeslagen of vervallen: geen extra regel', () => {
     const r = buildWeekReview({ weekStart: W, plannedSessions: plan.slice(0, 2), logs, templates, program, planChangeLog: [], asOf: '2026-10-13' })!;
     expect(weekRestLines(r, { missedShown: true })).toEqual([]);
@@ -79,6 +85,13 @@ describe('I-42: gemist heeft één richting', () => {
     expect(missed.value).toContain('Week opnieuw plannen');
     // De kaart zegt hetzelfde: niet dubbel, de rest terug naar het plan.
     expect(replanSub(1)).toMatch(/niet dubbel; zet de rest terug naar het plan\.$/);
+  });
+
+  it('een gemiste sleuteltraining houdt zijn eigen zin, en ook dan verwijst Gemist naar Week opnieuw plannen', () => {
+    const r = review('2026-10-12', { asOf: '2026-10-12' } as never);
+    const missed = attentionLines({ ...r, running: true, replan: true }).find((a) => a.key === 'missed')!;
+    expect(r.keyMissedName).toBe('Lange duurloop');
+    expect(missed.value).toMatch(/De lange duurloop is de belangrijkste; die komt na Akkoord op een vrije dag, als dat past\. De rest van je week zet Week opnieuw plannen terug naar het plan\.$/);
   });
 
   it('een voorbije week heeft geen rij Week opnieuw plannen: dan ook geen verwijzing', () => {
