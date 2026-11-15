@@ -35,7 +35,7 @@ Het besluit `2026-11-14-vakantie-en-ziek-niet-gemist.md` (punt L) noemde zonder 
 
 ## Bron
 
-Melding en twee schermafdrukken van de eigenaar (15 november 10:40), nagespeeld met nagemaakte gegevens op `1861809^` en `claude/nacht`; toetsen in `src/engine/weekTelling.test.ts`.
+De eigenaar koos dit zelf (15 november, via de coördinator: "Ja advies"): zonder sportschool vervalt alleen wat de sportschool nodig heeft; een duurloop of wandeling die je niet deed telt gewoon als gemist en kan het gewone inhaaladvies krijgen. Melding en twee schermafdrukken van de eigenaar (15 november 10:40), nagespeeld met nagemaakte gegevens op `1861809^` en `claude/nacht`; toetsen in `src/engine/weekTelling.test.ts`.
 
 ## Vervangt
 
