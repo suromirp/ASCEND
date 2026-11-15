@@ -215,7 +215,8 @@ export function askMapCenter(i: { rough?: unknown; home?: unknown; town?: unknow
   const rough = validStartPoint(i.rough);
   if (rough) return { kind: 'device', point: roundHere(rough), line: ASK_MAP_HINT };
   const home = validStartPoint(i.home);
-  if (home) return { kind: 'home', point: home, line: ASK_MAP_HINT };
+  // Thuis ook afgerond (ongeveer 100 m): het midden van het beeld is anders precies je deur.
+  if (home) return { kind: 'home', point: roundHere(home), line: ASK_MAP_HINT };
   const town = validStartPoint(i.town);
   if (town) return { kind: 'town', point: { lat: Math.round(town.lat * 100) / 100, lon: Math.round(town.lon * 100) / 100 }, line: ASK_MAP_HINT };
   return { kind: 'overview', line: ASK_MAP_OVERVIEW };

@@ -12,7 +12,9 @@ De reden als het niet lukt is nu eerlijk:
 - Toegang geweigerd: "Geen toegang tot je locatie."
 - Android gaf alleen je plek bij benadering: "Android geeft alleen je plek bij benadering. Zet Precieze locatie aan voor ASCEND in de instellingen van je telefoon." Er wordt dan niet gewacht, want scherper komt hij nooit.
 - Na de grens alleen grove plekken: "Je plek is nog niet scherp genoeg." met "Probeer het buiten of bij een raam opnieuw, of kies hierboven Andere plek." De vaste vraag van `askStartLine` blijft; alleen het woord voor opnieuw proberen past zich aan, zodat er geen twee keer "probeer opnieuw" staat.
-- Een vraag om toegang die zelf faalt, of 'prompt' teruggeeft, telt niet als weigering: de app probeert de plek dan gewoon en Android zegt zelf of het mag.
+- Een vraag om toegang die zelf faalt, of 'prompt' of 'unknown' teruggeeft, telt niet als weigering. Dan leest de app één keer zonder venster wat Android weet (`checkPermissions`): alleen bij benadering zegt meteen `approximate`; anders probeert de app de plek gewoon en zegt Android zelf of het mag.
+
+De grens van 15 seconden telt vanaf de start van het volgen. Vraagt Android dan zelf nog om toegang (na 'prompt' of een vraag die faalde), dan valt dat venster binnen die 15 seconden; wie rustig leest, krijgt daarna "Je locatie kwam niet op tijd." en tikt Opnieuw. Naar de achtergrond stopt het volgen niet zelf, wel altijd bij de grens; dat is bewust, want de grens houdt het kort.
 
 Nooit stil terug op Thuis of Ongeveer (`2026-11-14-geen-stille-thuis.md` blijft). Er komt geen nieuwe bewaarde vorm bij; de nieuwe reden `approximate` leeft alleen in het geheugen.
 
@@ -21,6 +23,13 @@ Nooit stil terug op Thuis of Ongeveer (`2026-11-14-geen-stille-thuis.md` blijft)
 De eigenaar, 15 november 21:58: "waarom kan ik de kaart niet zien als er nog geen route is; soms wil je gewoon een startpunt selecteren in je omgeving." Lukt je plek niet, dan staat onder de reden en Opnieuw toch de kaart (dezelfde ondergrond, in de Briefing dezelfde lage hoogte), zonder lussen, met de regel "Tik op de kaart waar je wilt beginnen." Een tik zet de ring en Start hier zoekt vanaf dat punt, zoals al na een zoektocht (`startFromMap`; niets bewaard tenzij Bewaar als plek of Maak dit Thuis). In de Briefing is deze kaart niet stil: tikken is hier de keuze, dus geen omweg via Groter.
 
 Het midden van de kaart (`engine/routeStart.ts#askMapCenter`): de laatste grove plek van het volgen van deze poging (alleen in het geheugen, op drie decimalen), anders Thuis, anders je plaats voor het weer (twee decimalen); zonder iets een overzicht met "Tik op de kaart waar je wilt beginnen, of kies hierboven Andere plek." Het midden is nooit een startpunt: geen ring, geen zoektocht, de stand blijft de vraag tot je tikt of een chip kiest. Bij Ongeveer komt de vraag niet voor (de lus begint dan afgerond), dus daar verandert niets.
+
+## Na Warden (15 november)
+
+- Een watch van de plugin kan pas beginnen nadat de app hem stopte (het venster van Android stond nog open, of `clearWatch` kwam net eerder); de plugin kende het id toen nog niet. Een plek voor een handle die al gestopt is, stopt de plugin nu nog een keer (`integrations/geolocation.ts`). Getest met een nagemaakte plugin die "WatchId not found." geeft zolang het volgen niet begon (`src/integrations/geolocationWatch.test.ts`).
+- Een fout van de plugin wordt gelezen op zijn code (`OS-PLUG-GLOC-0003` geweigerd, `-0010` te laat), de Engelse tekst alleen als terugval.
+- Thuis als midden van de kaart gaat ook afgerond op drie decimalen, zoals de grove plek.
+- Nog open: bij `approximate` geeft Android wel een grove plek, maar die wordt nog niet gevraagd voor het midden van de kaart.
 
 ## Reden
 

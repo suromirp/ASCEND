@@ -14,12 +14,16 @@ const isApp = () => Capacitor.getPlatform() === 'android';
 // De module in een belofte, nooit de plugin zelf: een plugin is een Proxy met een methode `then`.
 const load = () => import('@capacitor/geolocation');
 
-// De plugin gooit een gewone fout met een tekst; de code die locateMe verwacht is die van de browser
-// (1 geweigerd, 2 niet beschikbaar, 3 te laat).
-function errorCode(err: unknown): 1 | 2 | 3 {
+// De plugin gooit een fout met een code (OS-PLUG-GLOC-0003 geweigerd, -0010 te laat) en een Engelse tekst;
+// de code die locateMe verwacht is die van de browser (1 geweigerd, 2 niet beschikbaar, 3 te laat). Eerst
+// de code van de plugin, de tekst alleen als terugval.
+export function errorCode(err: unknown): 1 | 2 | 3 {
+  const code = String((err as { code?: unknown } | undefined)?.code ?? '');
+  if (/GLOC-0003$/.test(code)) return 1;
+  if (/GLOC-0010$/.test(code)) return 3;
   const text = String((err as { message?: unknown } | undefined)?.message ?? err).toLowerCase();
   if (/denied|permission|toestemming/.test(text)) return 1;
-  if (/timeout|timed out/.test(text)) return 3;
+  if (/timeout|timed out|in time/.test(text)) return 3;
   return 2;
 }
 
@@ -43,13 +47,18 @@ const appGeolocation: Pick<Geolocation, 'getCurrentPosition' | 'watchPosition' |
   // Elke seconde een nieuwe plek (de plugin wacht anders 5 s): binnen de grens van 15 s telt elke fix.
   watchPosition(success: Callback[0], failure?: Callback[1], options?: Callback[2]): number {
     const handle = nextWatch++;
-    const id = load()
+    const id: Promise<string | undefined> = load()
       .then((m) =>
         m.Geolocation.watchPosition(
           { enableHighAccuracy: options?.enableHighAccuracy === true, timeout: options?.timeout, maximumAge: options?.maximumAge, interval: 1000, minimumUpdateInterval: 1000 },
           (pos, err) => {
-            // Na stoppen telt niets meer.
-            if (!appWatches.has(handle)) return;
+            // Na stoppen telt niets meer. Komt er toch nog een plek, dan begon het volgen pas na het stoppen
+            // (het venster van Android stond nog open, of clearWatch was net eerder): de plugin kende het id
+            // toen nog niet. Dan stopt deze plek het volgen nog een keer (Warden, I-61).
+            if (!appWatches.has(handle)) {
+              void id.then((cid) => (cid === undefined ? undefined : load().then((m) => m.Geolocation.clearWatch({ id: cid })))).catch(() => undefined);
+              return;
+            }
             if (pos) success({ coords: pos.coords, timestamp: pos.timestamp } as unknown as GeolocationPosition);
             else failure?.(toPositionError(err));
           },
@@ -121,6 +130,17 @@ export async function requestFineAppLocationPermission(): Promise<FineLocationAc
   if (!isApp()) return undefined;
   try {
     return fineAccessOf(await (await load()).Geolocation.requestPermissions({ permissions: ['location'] }));
+  } catch {
+    return 'unknown';
+  }
+}
+
+// Zonder venster: wat Android nu weet over je fijne plek, vlak voor het volgen (na een antwoord dat geen
+// ja of nee was). Undefined in de browser; 'unknown' als de plugin gooit.
+export async function checkFineAppLocationPermission(): Promise<FineLocationAccess | undefined> {
+  if (!isApp()) return undefined;
+  try {
+    return fineAccessOf(await (await load()).Geolocation.checkPermissions());
   } catch {
     return 'unknown';
   }

@@ -16,7 +16,7 @@ import { MAX_START_ACCURACY_M, roundExact, validStartPoint, type StartFailure } 
 import type { RoutePoint } from '../models/route';
 import { watchFine, type Position2, type WatchFn } from '../utils/geolocation';
 import { withTimeout } from '../utils/withTimeout';
-import { requestFineAppLocationPermission } from '../integrations/geolocation';
+import { checkFineAppLocationPermission, requestFineAppLocationPermission } from '../integrations/geolocation';
 
 export const START_LOCATE_LIMIT_MS = 15_000;
 
@@ -63,6 +63,8 @@ export interface UseMyPlaceDeps {
   watch?: WatchFn;
   // Geeft undefined in de browser; in de app de uitkomst van het venster van Android.
   askPermission?: () => Promise<unknown>;
+  // Zonder venster lezen wat Android weet; alleen na een antwoord dat geen ja of nee was.
+  checkPermission?: () => Promise<unknown>;
   limitMs?: number;
   // Sluit het paneel, dan stopt het volgen en wordt er niets meer bewaard.
   signal?: AbortSignal;
@@ -122,14 +124,22 @@ function followUntilSharp(watch: WatchFn, limitMs: number, signal?: AbortSignal)
 
 // Gebruik waar ik nu ben, en Waar je nu bent bij elke zoektocht (met `persist: false`): de fijne plek van
 // het toestel, gevolgd tot hij scherp is, met een grens in tijd. Het venster van Android heeft een eigen
-// ruime grens; de 15 seconden gelden voor de plek zelf. Slaat het punt op bij een goede plek. Toegang
-// geweigerd: `denied`; alleen bij benadering toegestaan: `approximate`, zonder te wachten. Een vraag om
-// toegang die zelf faalt, telt niet als weigering: dan probeert de app de plek gewoon.
+// ruime grens. De 15 seconden tellen vanaf de start van het volgen; vraagt Android dan zelf nog om toegang
+// (na 'prompt' of een vraag die faalde), dan valt dat venster binnen de 15 seconden. Slaat het punt op bij een
+// goede plek. Toegang geweigerd: `denied`; alleen bij benadering toegestaan: `approximate`, zonder te wachten.
+// Een vraag om toegang die zelf faalt of geen ja of nee geeft, telt niet als weigering: dan leest de app één
+// keer wat Android weet (zonder venster): bij benadering zegt dat meteen, anders probeert de app de plek gewoon. Naar de achtergrond stopt het volgen
+// niet zelf, wel altijd bij de grens (besluit 2026-11-15-waar-je-nu-bent-scherp.md).
 export async function locateStartHere(deps: UseMyPlaceDeps = {}): Promise<StartLocation> {
   try {
-    const perm = await withTimeout((deps.askPermission ?? requestFineAppLocationPermission)(), PERMISSION_LIMIT_MS).catch(() => undefined);
-    if (perm === 'denied') return { ok: false, reason: 'denied' };
-    if (perm === 'approximate') return { ok: false, reason: 'approximate' };
+    const asked = await withTimeout((deps.askPermission ?? requestFineAppLocationPermission)(), PERMISSION_LIMIT_MS).catch(() => 'unknown');
+    if (asked === 'denied') return { ok: false, reason: 'denied' };
+    if (asked === 'approximate') return { ok: false, reason: 'approximate' };
+    // Geen ja of nee (het venster weggetikt, een fout, of niet op tijd): één keer kijken wat Android nu weet.
+    // Alleen bij benadering telt dan meteen; een andere stand beslist Android zelf bij het volgen.
+    const known = asked === undefined || asked === 'granted' ? asked : await withTimeout((deps.checkPermission ?? checkFineAppLocationPermission)(), PERMISSION_LIMIT_MS).catch(() => undefined);
+    if (known === 'approximate') return { ok: false, reason: 'approximate' };
+    if (deps.signal?.aborted) return { ok: false, reason: 'timeout' };
     const watch = deps.watch ?? watchFine({ timeoutMs: deps.limitMs ?? START_LOCATE_LIMIT_MS });
     const found = await followUntilSharp(watch, deps.limitMs ?? START_LOCATE_LIMIT_MS, deps.signal);
     if (!found.ok) return found;

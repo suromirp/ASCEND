@@ -9,7 +9,7 @@
 // kort in de hoek en buiten de lus; een tik opent Groter (besluit 2026-11-12-route-blok.md).
 // Docs: docs/beslissingen/2026-11-11-route-kaart.md, docs/beslissingen/2026-11-11-route-start.md.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RoutePoint, RouteStyle } from '../models/route';
 import { groundLine, MAKE_HOME_MOVE, MAKE_HOME_NEW, mapStatusLine, photoOffered, quietAttribution, readMapColors, type MapBase, type MapPhoto, type MapRoute } from '../engine/routeMap';
 import { ROUTE_MAP_HEIGHT, mapFallbackLine } from '../engine/routeSheet';
@@ -68,7 +68,7 @@ function PhotoSwitch({ value, onPick }: { value: MapPhoto; onPick: (v: MapPhoto)
 // Bij Bewaar als plek: wat er gebeurt, in één zin (engine/routeMap.ts).
 export { MAKE_HOME_MOVE, MAKE_HOME_NEW };
 
-export function RouteMap({ routes, chosen, start, center, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep, onOpen, piece, onBigger, full = false }: {
+export function RouteMap({ routes, chosen, start, center: centerIn, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep, onOpen, piece, onBigger, full = false }: {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
   // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is). Zonder start: de kaart zonder lus.
@@ -108,6 +108,10 @@ export function RouteMap({ routes, chosen, start, center, base, onChoose, onStar
   full?: boolean;
 }) {
   const quiet = onOpen !== undefined;
+  // Het midden op zijn getallen: een nieuw object met dezelfde plek zet de kaart niet opnieuw.
+  const centerLat = centerIn?.lat;
+  const centerLon = centerIn?.lon;
+  const center = useMemo(() => (centerLat !== undefined && centerLon !== undefined ? { lat: centerLat, lon: centerLon } : undefined), [centerLat, centerLon]);
   const motion = useMotionMode();
   const box = useRef<HTMLDivElement>(null);
   const view = useRef<RouteMapView | undefined>(undefined);
