@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionLog } from '../models/training';
 import {
-  belowGuideline, budgetFor, countedDetail, recentAverage, resolveWeekBudget, strengthCount, weekProgress,
+  belowGuideline, budgetFor, budgetText, countedDetail, recentAverage, resolveWeekBudget, strengthCount, weekProgress,
   type CountOptions,
 } from './weekBudget';
 
@@ -143,6 +143,14 @@ describe('belowGuideline', () => {
     expect(belowGuideline({ minutes: 150, strength: 2 })).toBe(false);
     expect(belowGuideline({ minutes: 90, strength: 1 })).toBe(true);
     expect(belowGuideline({ minutes: 200, strength: 1 })).toBe(true);
+  });
+  it('toetst met kracht uit alleen de minuten', () => {
+    expect(belowGuideline({ minutes: 200, strength: 1 }, false)).toBe(false);
+    expect(belowGuideline({ minutes: 90, strength: 1 }, false)).toBe(true);
+  });
+  it('budgetText noemt met kracht uit alleen de minuten', () => {
+    expect(budgetText({ minutes: 150, strength: 2 })).toBe('150 min, 2\u00d7 kracht');
+    expect(budgetText({ minutes: 150, strength: 2 }, false)).toBe('150 min');
   });
 });
 

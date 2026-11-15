@@ -210,6 +210,16 @@ const SCHERMEN = {
   'ascend-zonder-doel': { titel: 'Ascend zonder doel (Fit blijven)', pad: '#/ascend', stand: 'zonder-doel' },
   'stand-zonder-doel': { titel: 'Stand zonder doel (Fit blijven)', pad: '#/stand', stand: 'zonder-doel' },
   'stand-ritme-zonder-doel': { titel: 'Stand: Ritme zonder doel (Fit blijven)', pad: '#/stand/ritme', stand: 'zonder-doel' },
+  // Zonder doel, Rustig aan, krachttraining uit (stand zonder-kracht): de Je week-kaart, haar blad, de rij en het blad Zonder
+  // doel en het blad Weekbudget. Invariant: daar komt het woord kracht niet voor.
+  'ascend-zonder-kracht': { titel: 'Ascend zonder doel, Rustig aan, kracht uit', pad: '#/ascend', stand: 'zonder-kracht' },
+  'ascend-je-week-zonder-kracht': { titel: 'Blad Je week (Ascend), kracht uit', pad: '#/ascend', stand: 'zonder-kracht', actie: (p) => tik(p, 'button[aria-label="Je week bekijken"]') },
+  // Zonder krachtblok en zonder schema buiten ASCEND staat de rij Krachtblok er met kracht uit niet (Pathfinder weekbudget, punt 2).
+  'ascend-zonder-kracht-geen-blok': { titel: 'Ascend zonder doel, kracht uit, zonder krachtblok', pad: '#/ascend', stand: 'zonder-kracht-geen-blok' },
+  'stand-zonder-kracht': { titel: 'Stand zonder doel, Rustig aan, kracht uit', pad: '#/stand', stand: 'zonder-kracht' },
+  'instellingen-doel-zonder-kracht': { titel: 'Instellingen: Doel en tochten, kracht uit', pad: '#/more/doel', stand: 'zonder-kracht' },
+  'instellingen-blad-bundel-zonder-doel-zonder-kracht': { titel: 'Instellingen: blad bundel-zonder-doel (Doel en tochten, stand zonder-kracht)', pad: '#/more/doel', stand: 'zonder-kracht', actie: (p) => rij(p, 'bundel-zonder-doel') },
+  'instellingen-blad-weekbudget-zonder-kracht': { titel: 'Instellingen: blad Weekbudget (Doel en tochten, stand zonder-kracht)', pad: '#/more/doel', stand: 'zonder-kracht', actie: async (p) => { await rij(p, 'bundel-zonder-doel'); await rij(p, 'weekbudget'); } },
   'stand-vakantie': { titel: 'Stand met een vakantie', pad: '#/stand', stand: 'vakantie' },
   'stand-ziek': { titel: 'Stand, ziek gemeld', pad: '#/stand', stand: 'ziek' },
   'vandaag-ziek': { titel: 'Vandaag, ziek gemeld', pad: '#/', stand: 'ziek' },
