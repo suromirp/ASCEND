@@ -4,6 +4,8 @@ ASCEND is a mobile-first personal training and adventure application.
 
 Guidance for Claude Code (and any other agent) working in this repository.
 
+Lees eerst `docs/kennisindex/README.md`: per onderwerp waar alles staat, welke besluiten gelden en wat verouderd is (`npm run kennisindex`).
+
 Werk je aan een onderwerp, lees dan eerst het werkbriefje in `docs/werkbriefjes/` (bestanden, wat nooit mag, valkuilen, tests; kort) en begin daar. Het lange verhaal met de redenen staat in `docs/architectuur/`. Een fout met echte data speel je eerst na met de skill `naspelen`.
 
 ## Core identity
