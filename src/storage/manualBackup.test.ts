@@ -20,6 +20,12 @@ const mem = vi.hoisted(() => ({
   // Schrijven antwoordt pas na zoveel ms (een laat antwoord van de telefoon).
   writeDelayMs: 0,
   writes: 0,
+  // De volgende zoveel keer hapert stat op een back-up met een andere fout dan "bestaat niet".
+  statErrors: 0,
+  // De volgende zoveel keer lukt een back-up teruglezen niet.
+  readErrors: 0,
+  // De volgende rename lukt, maar de brug meldt toch een fout.
+  renameWorksThenFails: 0,
 }));
 
 vi.mock('@capacitor/core', async (original) => ({
@@ -40,6 +46,10 @@ vi.mock('@capacitor/filesystem', async () => {
       },
       stat: (o) => {
         const p = (o as { path: string }).path;
+        if (p.endsWith('.json') && mem.statErrors > 0) {
+          mem.statErrors--;
+          throw new Error('I/O error');
+        }
         if (!mem.files.has(p)) throw new Error('File does not exist');
         if (p.endsWith('.json') && mem.statMisses > 0) {
           mem.statMisses--;
@@ -47,7 +57,15 @@ vi.mock('@capacitor/filesystem', async () => {
         }
         return { size: bytes(mem.files.get(p)!) };
       },
-      readFile: (o) => ({ data: mem.files.get((o as { path: string }).path) ?? '' }),
+      readFile: (o) => {
+        const p = (o as { path: string }).path;
+        if (p.endsWith('.json') && mem.readErrors > 0) {
+          mem.readErrors--;
+          throw new Error('I/O error');
+        }
+        if (!mem.files.has(p)) throw new Error("'readFile' failed because file does not exist.");
+        return { data: mem.files.get(p)! };
+      },
       writeFile: (o) => {
         if (mem.hang) return new Promise(() => undefined);
         if (mem.failWrite) throw new Error('No space left on device');
@@ -75,7 +93,15 @@ vi.mock('@capacitor/filesystem', async () => {
           mem.files.set(to, mem.files.get(from)!);
           throw new Error('Unknown error');
         }
-        if (mem.hidden.has(to) || mem.files.has(to)) throw new Error('rename failed');
+        // Zoals de plugin echt hernoemt (ionfilesystem renameFile): het doel gaat eerst weg.
+        mem.files.delete(to);
+        if (mem.hidden.has(to)) throw new Error('rename failed');
+        if (mem.renameWorksThenFails > 0) {
+          mem.renameWorksThenFails--;
+          mem.files.set(to, mem.files.get(from)!);
+          mem.files.delete(from);
+          throw new Error('bridge error');
+        }
         mem.files.set(to, mem.files.get(from)!);
         mem.files.delete(from);
       },
@@ -110,6 +136,9 @@ beforeEach(() => {
   mem.deleteFails = false;
   mem.writeDelayMs = 0;
   mem.writes = 0;
+  mem.statErrors = 0;
+  mem.readErrors = 0;
+  mem.renameWorksThenFails = 0;
 });
 
 describe('Back-up maken in de Android-app', () => {
@@ -277,6 +306,34 @@ describe('de eerste tik na het openen', () => {
     expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: NAME });
     expect(names()).toEqual([`ASCEND/${NAME}`]);
     expect(mem.files.get(`ASCEND/${NAME}`)).toBe(TEXT);
+  });
+
+  it('hernoemen lukt, de brug meldt toch een fout en het eerste teruglezen faalt: het bestand blijft en het is gelukt', async () => {
+    mem.renameWorksThenFails = 1;
+    mem.readErrors = 1;
+    expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: NAME });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe(TEXT);
+  });
+
+  it('na een fout bij de naam blijft teruglezen mislukken: het bestand blijft staan, en de volgende tik vervangt het zonder -2', async () => {
+    mem.renameWorksThenFails = 1;
+    mem.readErrors = 3;
+    await expect(saveManualBackup(appBackupFolder()!, TEXT, fast)).rejects.toMatchObject({ reason: 'write', step: 'verify' });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe(TEXT);
+    const later = TEXT.replace('{}', '{"later":true}');
+    expect(await saveManualBackup(appBackupFolder()!, later, fast)).toEqual({ name: NAME });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe(later);
+  });
+
+  it('stat hapert op een naam waar een echt ander bestand staat: bezet, dus een volgnummer en het andere blijft heel', async () => {
+    mem.files.set(`ASCEND/${NAME}`, 'een eerdere back-up');
+    mem.statErrors = 1;
+    expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: N2 });
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe('een eerdere back-up');
+    expect(mem.files.get(`ASCEND/${N2}`)).toBe(TEXT);
   });
 
   it('het tijdelijke bestand lukt niet: de zin over ruimte, en er blijft niets achter', async () => {

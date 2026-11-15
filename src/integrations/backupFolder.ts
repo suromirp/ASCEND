@@ -54,13 +54,14 @@ const INSTALL_FILE = 'ascend-installatie.txt';
 
 // Het deel van de map dat schrijven nodig heeft, los te testen (backupFolder.test.ts).
 export interface TempFs {
+  // Alleen onwaar als het bestand er zeker niet is; een fout bij het kijken is een worp of waar.
   exists(name: string): Promise<boolean>;
   writeFile(name: string, text: string): Promise<void>;
   rename(from: string, to: string): Promise<void>;
   remove(name: string): Promise<void>;
-  // Staat onder deze naam precies deze tekst? Voor een rename die een fout meldt terwijl het bestand er
-  // wel staat (de plugin kopieert als hernoemen niet lukt en meldt een fout als daarna het opruimen mislukt).
-  holds?(name: string, text: string): Promise<boolean>;
+  // Wat staat er onder deze naam, vergeleken met deze tekst? Voor een rename die een fout meldt terwijl het
+  // bestand er wel staat. Een leesfout is 'unknown' (of een worp), nooit 'different' of 'absent'.
+  holds?(name: string, text: string): Promise<Held>;
   // Wachten voor de tweede poging om te hernoemen; in tests nul.
   pauseMs?: number;
 }
@@ -95,16 +96,40 @@ export async function verifySettled(
   return false;
 }
 
+// Wat er onder een naam staat, vergeleken met de tekst van deze poging. 'unknown': lezen lukte niet, dus
+// het is niet te zeggen; dat is nooit "niet van ons" en nooit een reden om iets weg te halen.
+export type Held = 'same' | 'different' | 'absent' | 'unknown';
+
+const HOLDS_TRIES = 3;
+
+// Een paar keer kijken, zoals verifySettled: een bestand dat er net staat is soms een tel later pas te lezen.
+async function holdsSettled(fs: TempFs, name: string, text: string): Promise<Held> {
+  for (let i = 0; i < HOLDS_TRIES; i++) {
+    if (i > 0) await pause(fs.pauseMs ?? RENAME_PAUSE_MS);
+    const held: Held = fs.holds
+      ? await fs.holds(name, text).catch(() => 'unknown' as const)
+      : await fs.exists(name).then((there) => (there ? 'unknown' : 'absent') as Held, () => 'unknown' as const);
+    if (held !== 'unknown') return held;
+  }
+  return 'unknown';
+}
+
 // Eerst een tijdelijk bestand met de id van de poging, dan hernoemen: een half bestand krijgt nooit de
 // echte naam. Staat er al een eigen bestand met die naam (de opslag kijkt na dat het van ASCEND is), dan
 // gaat dat eerst opzij naar `.old` en pas na een gelukte rename weg; mislukt de rename, dan komt het terug.
-// Meldt de rename een fout, dan kijkt de laag eerst of het bestand er toch staat (`holds`): dan is het
-// gelukt en wordt alleen opgeruimd. Staat het er niet, dan nog één keer na een korte pauze. Pas als de naam
-// dan nog niet lukt en hij vrij leek, is hij bezet door een bestand dat de app niet ziet (NameTakenError).
+//
+// Let op hoe de plugin hernoemt (ionfilesystem `renameFile`): hij gooit het doel eerst weg, hernoemt dan,
+// en valt bij een mislukking terug op kopiëren en het tijdelijke bestand weghalen. Dus: of een naam vrij is
+// hangt alleen aan `exists`, en een fout daar telt als bezet. Meldt de rename een fout, dan kijkt de laag
+// wat er nu onder de naam staat (`holds`): precies deze tekst is gelukt; niets is nog een keer proberen;
+// iets anders is een halve kopie van deze poging (de naam was vrij) en gaat weg; niet te lezen blijft staan
+// en geeft een fout met stap `verify`. Lukt de naam na twee keer niet en stond er nooit iets, dan is hij
+// bezet door een bestand dat de app niet ziet (NameTakenError).
 // Met `neverReplace` (Back-up maken met de hand) gaat een bestaand bestand nooit opzij: een bestaande naam
 // geeft meteen een NameTakenError en er wordt niets geschreven.
 export async function writeThroughTemp(fs: TempFs, name: string, text: string, attemptId: string, opts: { neverReplace?: boolean } = {}): Promise<void> {
-  if (opts.neverReplace && (await fs.exists(name).catch(() => false))) throw new NameTakenError(name);
+  const taken = () => fs.exists(name).catch(() => true);
+  if (opts.neverReplace && (await taken())) throw new NameTakenError(name);
   const tmp = `${name}.${attemptId}.tmp`;
   const old = `${name}.${attemptId}.old`;
   try {
@@ -114,7 +139,12 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
     throw asBackupError(err, 'temp');
   }
   let moved = false;
-  if (await fs.exists(name).catch(() => false)) {
+  if (await taken()) {
+    // Tussen de eerste blik en nu kwam er iets onder de naam, of de blik lukte niet: nooit vervangen.
+    if (opts.neverReplace) {
+      await fs.remove(tmp).catch(() => undefined);
+      throw new NameTakenError(name);
+    }
     try {
       await fs.rename(name, old);
       moved = true;
@@ -123,9 +153,9 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
       throw asBackupError(err, 'rename');
     }
   }
-  const landed = () => (fs.holds ? fs.holds(name, text).catch(() => false) : Promise.resolve(false));
   let failure: unknown;
   let done = false;
+  let sawHalf = false;
   for (let attempt = 0; attempt < 2 && !done; attempt++) {
     if (attempt > 0) await pause(fs.pauseMs ?? RENAME_PAUSE_MS);
     try {
@@ -133,24 +163,27 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
       done = true;
     } catch (err) {
       failure = err;
-      // De fout kwam na het werk: het bestand staat er heel. Of het tijdelijke bestand is weg, dan valt er
-      // niets meer te hernoemen.
-      if (await landed()) done = true;
-      else if (!(await fs.exists(tmp).catch(() => true))) break;
+      const held = await holdsSettled(fs, name, text);
+      if (held === 'same') {
+        done = true;
+      } else if (held === 'unknown') {
+        // Er staat iets dat niet te lezen is; het kan de hele back-up zijn. Niets weghalen, ook `.old` niet.
+        await fs.remove(tmp).catch(() => undefined);
+        console.warn('Back-up: na een fout bij de naam is het bestand niet te lezen', failure);
+        throw new AutoBackupError('write', 'verify');
+      } else if (held === 'different') {
+        // De naam was vrij of het eigen bestand ging opzij: dit is een halve kopie van deze poging.
+        sawHalf = true;
+        await fs.remove(name).catch(() => undefined);
+      }
+      // Het tijdelijke bestand is weg: er valt niets meer te hernoemen.
+      if (!done && !(await fs.exists(tmp).catch(() => true))) break;
     }
   }
   await fs.remove(tmp).catch(() => undefined);
   if (!done) {
-    if (moved) {
-      await fs.rename(old, name).catch(() => undefined);
-      throw asBackupError(failure, 'rename');
-    }
-    // De naam was vrij en nu staat er iets dat niet de back-up is: een halve kopie van deze poging zelf.
-    // Die gaat weg; de naam is dan niet bezet, het schrijven is mislukt.
-    if (await fs.exists(name).catch(() => false)) {
-      await fs.remove(name).catch(() => undefined);
-      throw asBackupError(failure, 'rename');
-    }
+    if (moved) await fs.rename(old, name).catch(() => undefined);
+    if (moved || sawHalf) throw asBackupError(failure, 'rename');
     console.warn('Back-up: de naam lukte niet, het volgende volgnummer', failure);
     throw new NameTakenError(name);
   }
@@ -164,13 +197,18 @@ function androidFolder(): AppBackupFolder {
   const state = (s: { publicStorage?: string }) => s.publicStorage;
   let install: Promise<string> | undefined;
 
+  // De plugin zegt bij een bestand dat er niet is "... does not exist." (FilesystemErrors.doesNotExist).
+  const missing = (err: unknown) => err instanceof Error && err.message.toLowerCase().includes('does not exist');
+
+  // Alleen "bestaat niet" telt als vrij. Elke andere fout telt als bezet: de plugin gooit bij hernoemen het
+  // doel eerst weg, dus een haperende blik mag nooit een bestaand bestand vrij verklaren.
   const exists = async (name: string) => {
     const fs = await load();
     try {
       await fs.Filesystem.stat({ path: path(name), directory: fs.Directory.Documents });
       return true;
-    } catch {
-      return false;
+    } catch (err) {
+      return !missing(err);
     }
   };
 
@@ -207,9 +245,13 @@ function androidFolder(): AppBackupFolder {
         remove: async (n) => {
           await fs.Filesystem.deleteFile({ path: path(n), directory: dir });
         },
-        holds: async (n, expected) => {
-          const read = await fs.Filesystem.readFile({ path: path(n), directory: dir, encoding: fs.Encoding.UTF8 });
-          return (typeof read.data === 'string' ? read.data : await read.data.text()) === expected;
+        holds: async (n, expected): Promise<Held> => {
+          try {
+            const read = await fs.Filesystem.readFile({ path: path(n), directory: dir, encoding: fs.Encoding.UTF8 });
+            return (typeof read.data === 'string' ? read.data : await read.data.text()) === expected ? 'same' : 'different';
+          } catch (err) {
+            return missing(err) ? 'absent' : 'unknown';
+          }
         },
       }, name, text, attemptId, opts);
     },

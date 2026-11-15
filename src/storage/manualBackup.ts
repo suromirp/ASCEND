@@ -22,7 +22,7 @@ const STALE_WRITE_MS = 60_000;
 interface Running {
   promise: Promise<{ name: string }>;
   startedAt: number;
-  // De poging is opgegeven: hij stopt bij de volgende stap en ruimt zijn eigen bestand op.
+  // De poging is opgegeven: hij begint niet meer aan een volgende naam. Wat hij al schreef blijft staan.
   abort: { aborted: boolean };
 }
 
@@ -85,7 +85,9 @@ async function write(folder: AppBackupFolder, text: string, now: Date, abort: { 
     } catch (err) {
       if (err instanceof NameTakenError) continue;
       // Bleef er na een mislukte naam toch iets van deze poging staan, dan mag de volgende het vervangen.
-      if (err instanceof AutoBackupError && err.step === 'rename' && !mine && (await folder.exists(name).catch(() => false))) own.add(name);
+      // Dat geldt ook voor een bestand dat na een fout bij de naam niet te lezen was (stap verify): de naam
+      // was vrij, dus wat er staat is van deze poging.
+      if (err instanceof AutoBackupError && (err.step === 'rename' || err.step === 'verify') && !mine && (await folder.exists(name).catch(() => false))) own.add(name);
       throw err instanceof AutoBackupError ? err : new AutoBackupError('write', 'temp');
     }
     // Het bestand staat er onder zijn naam. Nakijken geeft niet te vroeg op; lukt het echt niet, of is de
