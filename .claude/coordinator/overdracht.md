@@ -4,6 +4,9 @@ Bijgewerkt: 15 november 2026, 11:20 Portugese tijd, door de coördinator session
 
 ## Vaste afspraken van nu
 
+- Fable (eigenaar 15 november 13:52, schermafdruk: alle modellen 79 procent, Fable 36 procent, reset 17:59 en 18:00): "Blijf maar doorgaan, fable mag je ook gwn gebruiken." Kennisindex ronde 2 gestart op Fable (session_01LnDpSn9oU4BwQzag7cN8tZ, `claude/kennisindex-2`).
+- Wissel vervroegd naar 15 november 16:47 Portugese tijd (trig_01UT8WTii7cMsygUM8oqaRTm): deze chat zit op 64 procent context. De nieuwe zet de wissel weer op 04:47 Amsterdam.
+
 - Eigenaar 15 november 12:15: "ik vertrouw erop dat jij weet wat de beste aanpak is": zelf beslissen met het advies, keuzes hier vastleggen.
 - Backlog bijhouden (eigenaar 12:18, "hoe blijft dit up to date?"): Sherpa Backlog session_01LnDpSj5qWPZmyX97SijVCU (`claude/backlog-bijhouden`): eenmalig opruimen, codes [I-n], `npm run backlog:bij` na elke squash, test. Tot dan: voor elke start eerst in de code en git log kijken of het al gebouwd is.
 
