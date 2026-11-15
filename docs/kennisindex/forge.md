@@ -12,9 +12,10 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 Nieuwste eerst. Bij een besluit staat welk later besluit het deels vervangt of aanvult.
 
+- 2026-11-15 [De dag van een afgeronde training in Forge](../beslissingen/2026-11-15-dag-van-afronden.md): Afronden in Forge geeft het log de dag van je laatst afgevinkte set, ook bij een geplande training die je een dag eerder of later deed.
 - 2026-11-15 [Een training die bleef liggen loopt nog](../beslissingen/2026-11-15-concept-loopt-nog.md): Een voorbije geplande training waar nog een concept van in Forge ligt, heet "loopt nog".
 - 2026-11-14 [Het voorstel van Spieren voor de berg in lagen](../beslissingen/2026-11-14-voorstel-begrijpelijk.md): Het voorstel van Spieren voor de berg toont één korte laag per regel: de oefening, de training, de dosis, waarom, wat onzeker is en wat Akkoord doet. Aangevuld door: 2026-11-14-bergspieren-zonder-vakantieweek.
-- 2026-11-14 [Een training die bleef liggen](../beslissingen/2026-11-14-training-blijven-liggen.md): Een begonnen, niet afgeronde training in Forge loopt niet dagen door. Aangevuld door: 2026-11-15-concept-loopt-nog.
+- 2026-11-14 [Een training die bleef liggen](../beslissingen/2026-11-14-training-blijven-liggen.md): Een begonnen, niet afgeronde training in Forge loopt niet dagen door. Aangevuld door: 2026-11-15-concept-loopt-nog, 2026-11-15-dag-van-afronden.
 - 2026-11-14 [Opwarmset later in de training](../beslissingen/2026-11-14-opwarmset-later.md): Een opwarmset later in de training, op een beweging die al warm is (de leg press na squat en deadlift), blijft in Forge zichtbaar maar gedempt, met één zin waarom: "Je benen zijn warm van de Barbell Back Squat.
 - 2026-11-14 [Spieren voor de berg: een week weg telt voor geen rij mee](../beslissingen/2026-11-14-bergspieren-zonder-vakantieweek.md): Een week met vakantie (`no_training`), een tocht (`trek`) of zonder sportschool (`no_gym`) telt ook voor kuiten, scheenspier en bilspieren niet mee in het gemiddelde van Spieren voor de berg, net als een rustweek en net als al bij enkel en evenwicht.
 - 2026-11-11 [Rusttimer: tien geluiden, volume met piekgrens, vooraankondiging](../beslissingen/2026-11-11-rusttimer-geluiden.md): De rustbel van Forge heeft tien klanken in vijf groepen, een volume met piekgrens en een vooraankondiging.

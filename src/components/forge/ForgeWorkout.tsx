@@ -126,15 +126,18 @@ export function ForgeWorkout(props: ForgeWorkoutProps) {
   const { strengthExternal } = useAppData();
   const world = useSessionWorld();
   const myKey = `${draftKey(props.template.id, props.plannedSessionId, props.scheduledDate)}:forge`;
-  const [other, setOther] = useState(() => {
+  // Loopt er een andere training? Ook opnieuw gevraagd na Verwijderen of Begrepen: start ondertussen een derde
+  // training ergens anders, dan zegt dit blad dat eerlijk in plaats van er twee tegelijk te laten lopen.
+  const findOther = () => {
     // "Gedaan" vanuit Vandaag of Week (startAtForm) en alleen kijken horen niet bij een sessie.
     if (props.preview || props.startAtForm || strengthExternal) return undefined;
     const live = readSession();
     if (!live || live.pointer.key === myKey) return undefined;
     return sessionIsDead(live.pointer, world) ? undefined : live;
-  });
-  // Na Verwijderen van de oude training start deze gewoon; elke andere keuze sluit dit scherm.
-  if (other) return <OtherSessionRunning session={other} onClose={props.onClose} onDiscarded={() => setOther(undefined)} />;
+  };
+  const [other, setOther] = useState(findOther);
+  // Na Verwijderen van de oude training (of Begrepen als hij elders al weg was) start deze gewoon; elke andere keuze sluit dit scherm.
+  if (other) return <OtherSessionRunning key={`${other.pointer.key}\u0001${other.startedAt}`} session={other} onClose={props.onClose} onDiscarded={() => setOther(findOther())} />;
   return <ForgeWorkoutInner {...props} />;
 }
 

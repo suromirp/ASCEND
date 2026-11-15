@@ -8,7 +8,7 @@ De bron is `docs/kennisindex/bronnen.json`: per document het onderwerp, de kern 
 "Vervangt" van een besluit komen uit het besluit zelf. Een nieuw document in `docs/` krijgt een regel in
 `bronnen.json`, daarna `npm run kennisindex`; de test `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 525 documenten: 394 gelden, 2 vervangen, 3 verouderd, 126 achtergrond.
+Stand van de 526 documenten: 395 gelden, 2 vervangen, 3 verouderd, 126 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; achtergrond is onderzoek, een ontwerp of een verslag waar een besluit
@@ -19,7 +19,7 @@ op steunt; vervangen en verouderd staan onderaan elk onderwerp en lees je alleen
 - Werkbriefje: [werkbriefjes/forge.md](../werkbriefjes/forge.md)
 - [architectuur/forge.md](../architectuur/forge.md): Het lange verhaal bij Forge: Je stand en volgorde, sessie, verloop, spotter, plaatjes, het blad Oefening en spieren voor de berg.
 - [visie/Los van MacroFactor.md](../visie/Los%20van%20MacroFactor.md): Het doel van de eigenaar van 9 november 2026: Forge maakt MacroFactor Workouts overbodig, de voedingsapp blijft.
-- Alles over dit onderwerp: [forge.md](forge.md) (78 besluiten die gelden, 20 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [forge.md](forge.md) (79 besluiten die gelden, 20 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Koppelingen en data
 

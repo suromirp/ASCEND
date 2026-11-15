@@ -10,7 +10,7 @@ import { TimeoutError, withTimeout } from '../../utils/withTimeout';
 import { NumberField } from '../NumberField';
 import { PainReportFields } from '../PainReportFields';
 import { PrimaryButton, SecondaryButton } from '../ui';
-import { finishDayDefault, finishDuration } from '../../engine/forgeSession';
+import { finishDayChoices, finishDayDefault, finishDuration } from '../../engine/forgeSession';
 import { durationTooShort, entryMinutes, SHORT_DURATION_TEXT } from '../../engine/inputLimits';
 import { ForgeSheet } from './parts';
 import { forgeFinishNote, type ForgeFinishNote } from './forgeFinishLog';
@@ -63,12 +63,17 @@ export function FinishSheet({
   const [feel, setFeel] = useState<FinishExtra['feel']>();
   const [pain, setPain] = useState<PainReport[]>([]);
   const [notes, setNotes] = useState('');
-  const plannedInPast = !!plannedSessionId && !!scheduledDate && scheduledDate < today;
-  // Een concept van gisteren afronden: de dag van je laatst afgevinkte set, ook bij een losse training.
-  const [doneOn, setDoneOn] = useState(() => {
+  // Een concept van gisteren afronden: de dag van je laatst afgevinkte set, ook bij een geplande training die je een
+  // dag eerder of later deed (de training blijft gekoppeld; alleen de dag van het nieuwe log volgt het werk).
+  const [lastTickAt] = useState(() => {
     const ticks = workout.flatMap((e) => e.rows.map((r) => r.doneAt)).filter((t): t is number => typeof t === 'number' && Number.isFinite(t));
-    return finishDayDefault({ today, plannedSessionId, scheduledDate, ...(ticks.length > 0 ? { lastTickAt: Math.max(...ticks) } : {}), dayOf: (ms) => toISODate(new Date(ms)) });
+    return ticks.length > 0 ? Math.max(...ticks) : undefined;
   });
+  const dayOf = (ms: number) => toISODate(new Date(ms));
+  const tick = lastTickAt !== undefined ? { lastTickAt } : {};
+  const [doneOn, setDoneOn] = useState(() => finishDayDefault({ today, plannedSessionId, scheduledDate, ...tick, dayOf }));
+  // Een geplande training: de geplande dag, de dag van je laatste set en vandaag als knoppen (alleen als er iets te kiezen is).
+  const dayChoices = plannedSessionId ? finishDayChoices({ today, scheduledDate, ...tick, dayOf }) : [];
   const [saving, setSaving] = useState(false);
   const [outcome, setOutcome] = useState<ForgeFinishNote | null>(null);
   const busy = useRef(false);
@@ -123,12 +128,12 @@ export function FinishSheet({
           {!readOnly && anyTicked && dur.clamped && (
             <p className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>De klok zegt {dur.clockSaid}. Klopt dat niet, dan staat hier je gewone duur.</p>
           )}
-          {(plannedInPast || !plannedSessionId) && (
+          {(dayChoices.length > 0 || !plannedSessionId) && (
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <span style={{ color: 'var(--color-ink-dim)' }}>Gedaan op</span>
-              {plannedInPast ? (
-                [scheduledDate!, today].map((d) => (
-                  <button key={d} type="button" onClick={() => setDoneOn(d)} className="min-h-[44px] rounded-full border px-3" style={{ borderColor: doneOn === d ? 'var(--color-ink)' : 'var(--color-card-border)', color: 'var(--color-ink)' }}>
+              {plannedSessionId ? (
+                dayChoices.map((d) => (
+                  <button key={d} type="button" aria-pressed={doneOn === d} onClick={() => setDoneOn(d)} className="min-h-[44px] rounded-full border px-3" style={{ borderColor: doneOn === d ? 'var(--color-ink)' : 'var(--color-card-border)', color: 'var(--color-ink)' }}>
                     {d === today ? 'vandaag' : `${weekdayShortNL(d).toLowerCase()} ${formatDateNL(d)}`}
                   </button>
                 ))

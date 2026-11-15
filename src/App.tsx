@@ -33,7 +33,7 @@ import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
 import { AscendPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
-import { SessionPill } from './components/forge/SessionPill';
+import { SessionPillSlot } from './components/forge/SessionPill';
 import { useOpenRequest, useSessionHousekeeping, useSessionPill } from './components/forge/useForgeSession';
 import { TrekOnly } from './components/reis/TrekOnly';
 // Pages you open now and then load on demand, so the first start only
@@ -393,7 +393,7 @@ function AppShell() {
           <button onClick={() => setOfflineNotice(false)} aria-label="Melding sluiten" className="min-h-[44px] min-w-[44px] text-sm" style={{ color: 'var(--color-ink-dim)' }}><Icon name="sluiten" size={20} /></button>
         </div>
       )}
-      {pill && <SessionPill session={pill} />}
+      <SessionPillSlot session={pill} />
       <BottomNav />
       {openSession && (
         <Suspense fallback={null}>
