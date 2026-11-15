@@ -99,7 +99,15 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
       const store = tx.objectStore(key);
       if (write.clear) ops.push(store.clear());
       const keyPath = store.keyPath as string;
+      // Two rows with one key in the same write: with onlyNew both would read "not there yet"
+      // and the last would win; history keeps the first.
+      const seenKeys = new Set<unknown>();
       for (const raw of write.puts) {
+        if (!write.clear && write.onlyNew) {
+          const k = (raw as unknown as Record<string, unknown>)[keyPath];
+          if (k !== undefined && seenKeys.has(k)) continue;
+          seenKeys.add(k);
+        }
         const value = (key === 'plannedSessions' ? withDerivedWeek(raw as PlannedSession) : raw) as never;
         if (!write.clear && write.onlyNew && key === 'goalMilestoneProgress') {
           // One line per milestone: also not next to a line with another id (storage/milestoneClearing.ts).

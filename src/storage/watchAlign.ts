@@ -76,7 +76,8 @@ export function restoreAlignments(logIds: string[]): Promise<number> {
     for (const id of logIds) {
       const log = (await SessionLogsRepo.getAll()).find((l) => l.id === id);
       if (!log?.manualMeasured) continue;
-      for (const progressId of log.manualMeasured.clearedProgressIds ?? []) await GoalMilestoneProgressRepo.delete(progressId);
+      // Only the lines this log cleared: the fixed id is the milestone's (a line made by hand stays).
+      for (const progressId of log.manualMeasured.clearedProgressIds ?? []) await GoalMilestoneProgressRepo.deleteIfFromLog(progressId, log.id);
       if (log.externalId) externalIds.push(log.externalId);
       // A cut made after the watch took over is taken back first: the hand-made
       // numbers come back on top of the watch's, as they were before it.

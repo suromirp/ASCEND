@@ -71,4 +71,15 @@ describe('recordClearedMilestones', () => {
     expect(await GoalMilestoneProgressRepo.addOnce({ id: milestoneProgressId('g1', 'm1'), goalId: 'g1', milestoneId: 'm1', clearedDate: '2026-10-20' })).toBe(false);
     expect(await GoalMilestoneProgressRepo.getAll()).toEqual([{ id: 'progress_oud', goalId: 'g1', milestoneId: 'm1', clearedDate: '2026-10-01' }]);
   });
+
+  it('deleteIfFromLog wist alleen een regel van dat log, nooit een met de hand of van een ander log', async () => {
+    const id = milestoneProgressId('g1', 'm1');
+    await GoalMilestoneProgressRepo.put({ id, goalId: 'g1', milestoneId: 'm1', clearedDate: '2026-10-01' });
+    await GoalMilestoneProgressRepo.put({ id: 'p2', goalId: 'g1', milestoneId: 'm2', clearedDate: '2026-10-02', sourceSessionLogId: 'a' });
+    expect(await GoalMilestoneProgressRepo.deleteIfFromLog(id, 'a')).toBe(false);
+    expect(await GoalMilestoneProgressRepo.deleteIfFromLog('p2', 'b')).toBe(false);
+    expect(await GoalMilestoneProgressRepo.deleteIfFromLog('p2', 'a')).toBe(true);
+    expect(await GoalMilestoneProgressRepo.deleteIfFromLog('weg', 'a')).toBe(false);
+    expect((await GoalMilestoneProgressRepo.getAll()).map((r) => r.id)).toEqual([id]);
+  });
 });
