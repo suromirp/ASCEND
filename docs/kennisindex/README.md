@@ -11,7 +11,7 @@ Een nieuw document in `docs/` krijgt een regel in `bronnen.json`, en haalt het e
 oudere besluit de stand deels of vervangen. Daarna `npm run kennisindex`; de test
 `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 528 documenten: 315 gelden, 81 deels ingehaald, 3 vervangen, 3 verouderd, 126 achtergrond.
+Stand van de 529 documenten: 316 gelden, 81 deels ingehaald, 3 vervangen, 3 verouderd, 126 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; deels ingehaald geldt alleen nog voor wat achter "Geldt nog" staat, de
@@ -30,7 +30,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 - Werkbriefje: [werkbriefjes/koppelingen-en-data.md](../werkbriefjes/koppelingen-en-data.md)
 - [android-sleutel.md](../android-sleutel.md): De Android-app wordt altijd met dezelfde sleutel ondertekend, anders kan een nieuwe versie niet over de oude heen; hier staat hoe de workflow dat doet.
 - [architectuur/koppelingen-en-data.md](../architectuur/koppelingen-en-data.md): Wat ASCEND van Garmin leert (intensiteit, zweet, bergschoenen) en de tekst voor Strava.
-- Alles over dit onderwerp: [koppelingen-en-data.md](koppelingen-en-data.md) (61 besluiten die gelden, 18 deels ingehaald, 18 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
+- Alles over dit onderwerp: [koppelingen-en-data.md](koppelingen-en-data.md) (62 besluiten die gelden, 18 deels ingehaald, 18 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
 
 ## Lopen en tests
 
@@ -66,7 +66,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/historie-en-logs.md](../werkbriefjes/historie-en-logs.md)
 - [architectuur/historie-en-logs.md](../architectuur/historie-en-logs.md): De volledige regel dat historie nooit herschreven wordt, met de uitzonderingen op verzoek van de eigenaar en het append-only patroon.
-- Alles over dit onderwerp: [historie-en-logs.md](historie-en-logs.md) (20 besluiten die gelden, 5 deels ingehaald, 3 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [historie-en-logs.md](historie-en-logs.md) (21 besluiten die gelden, 5 deels ingehaald, 3 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Bediening en beweging
 

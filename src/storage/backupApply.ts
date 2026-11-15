@@ -11,7 +11,14 @@ import { BackupMessageError } from './backupMessage';
 import { clearForgeSessions } from '../utils/forgeSessionStore';
 import { buildBackupEnvelope } from './backupExport';
 import { normalizeBackupToCurrentModel } from './backupNormalize';
-import { defaultActionsForMode, type ResolvedListCategory } from './backupMerge';
+import { defaultActionsForMode, mergeSettingsHistory, type ResolvedListCategory } from './backupMerge';
+import { DEFAULT_SETTINGS, type AppSettings } from './databaseSettings';
+import { SKILL_GOALS_KEY } from './skillGoals';
+import { SAVED_ROUTES_KEY } from './places';
+import { readSavedRouteList, routesOfPlaces } from './migrationsPlaces';
+import { readSkillGoalStore } from './migrationsSkill';
+import { mergeSkillStores } from '../engine/skillGoal';
+import type { GoalMilestoneProgress } from '../models/goals';
 import { loadCurrentData, computeDiff } from './backupPreview';
 
 // --- plan & apply ---------------------------------------------------------
@@ -125,6 +132,27 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
     morningPuts = filterRecovery(backup.mornings.filter((m) => !have.has(m.id)), (await getWatchState()).use);
   }
 
+  // What merges with the device (the history lists in settings, the skill goals, the routes
+  // that stay with the places) is merged again with what is stored at the moment of writing,
+  // inside the transaction: a weighing, an illness or a route saved between the preview and
+  // Akkoord is not lost. A plain value from the file is written as it is.
+  const settingsWrite = resolved.settings && effective.app_settings === 'replace' && backup.settings
+    ? (stored: unknown): AppSettings => {
+      const now: AppSettings = { ...DEFAULT_SETTINGS, ...(stored as Partial<AppSettings> | undefined) };
+      return { ...now, ...mergeSettingsHistory(now, backup.settings) };
+    }
+    : resolved.settings;
+  const metaWrites: Record<string, unknown> = { ...resolved.meta, ...restoredMeta };
+  if (SKILL_GOALS_KEY in metaWrites && backup.skillGoals) {
+    const incoming = backup.skillGoals;
+    const replace = goalsAction === 'replace';
+    metaWrites[SKILL_GOALS_KEY] = (stored: unknown) => mergeSkillStores(readSkillGoalStore(stored), incoming, replace);
+  }
+  if (SAVED_ROUTES_KEY in metaWrites && backup.places && !backup.savedRoutes) {
+    const places = backup.places;
+    metaWrites[SAVED_ROUTES_KEY] = (stored: unknown) => routesOfPlaces(readSavedRouteList(stored), places);
+  }
+
   try {
     await applyBackupWrites({
       programs: touches(programAction) && resolved.program ? { clear: true, puts: [resolved.program] } : undefined,
@@ -139,11 +167,11 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
       recoveryMetrics: morningPuts.length > 0 ? { clear: false, onlyNew: true, puts: morningPuts } : undefined,
       trainingGoals: listWrite(goalsAction, resolved.trainingGoals),
       goalMilestones: listWrite(goalsAction, resolved.goalMilestones),
-      goalMilestoneProgress: touches(goalsAction) ? historyWrite(resolved.goalMilestoneProgress) : undefined,
+      goalMilestoneProgress: touches(goalsAction) ? historyWrite(oneLinePerMilestone(resolved.goalMilestoneProgress)) : undefined,
       capabilityEvidence: listWrite(effective.capability_evidence, resolved.capabilityEvidence),
       injuryNotes: listWrite(effective.injuries, resolved.injuryNotes),
-      settings: resolved.settings,
-      meta: Object.keys({ ...resolved.meta, ...restoredMeta }).length > 0 ? { ...resolved.meta, ...restoredMeta } : undefined,
+      settings: settingsWrite,
+      meta: Object.keys(metaWrites).length > 0 ? metaWrites : undefined,
     });
   } catch (err) {
     const detail = err instanceof Error ? ` (${err.message})` : '';
@@ -151,4 +179,17 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   }
   // De geplande sessies zijn vervangen: een lopende training hoort bij de oude planning (wijzer en concepten mee).
   if (touches(effective.planned_schedule) || touches(programAction)) clearForgeSessions();
+}
+
+// A milestone has one line: of two lines in the file for the same milestone only the first
+// is written (the store checks the device's own lines inside the transaction).
+function oneLinePerMilestone(r: ResolvedListCategory<GoalMilestoneProgress>): ResolvedListCategory<GoalMilestoneProgress> {
+  const seen = new Set<string>();
+  const writes = r.writes.filter((p) => {
+    const key = `${p.goalId}|${p.milestoneId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return { ...r, writes };
 }

@@ -58,4 +58,10 @@ describe('alles wissen', () => {
     expect(settings?.marathonRaceType).toBeUndefined();
     expect(await MetaRepo.get('goalEngineMigrated')).not.toBe(true);
   });
+
+  it('wist niets als een vlag niet bewaard kan worden', async () => {
+    await fillEveryStore();
+    await expect(clearAllStores({ kapot: () => 'geen kloon' })).rejects.toThrow();
+    expect(Object.values(await countEveryStore()).every((n) => n === 1)).toBe(true);
+  });
 });
