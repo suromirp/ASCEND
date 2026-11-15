@@ -106,11 +106,13 @@ export function withShelter(goal: TrainingGoal, shelter: TrekShelter, now: strin
   return { ...goal, kind: kindForShelter(shelter), details: { ...(goal.details ?? {}), shelter, shelterChosen: true }, updatedAt: now };
 }
 
-// --- Een doel dat de migratie op hutten zette ---------------------------------------------
+// --- Een tocht op hutten zonder vastgelegde eigen keuze ----------------------------------
 // Een hoofddoel van voor de soorten werd trek_hut met shelter 'hut' als het etappeplan geen nacht in
 // tent of bivak had (storage/migrationsGoals.ts). Sinds de keuze de paklijst en de Reisplanner bepaalt,
 // zou zo iemand stil de tent en de tenttaken kwijtraken. Het doel blijft het doel: de app vraagt het
 // één keer, met Klopt, Tent of Beide; Tent en Beide gaan als voorstel met Akkoord.
+// Niet alleen gemigreerde doelen: wie vóór 15 november zelf hutten koos (Doel toevoegen of aanpassen),
+// heeft nog geen `shelterChosen` en krijgt de vraag ook één keer. Een keuze vanaf nu legt het wel vast.
 
 export function readShelterAsked(raw: unknown): string[] {
   return Array.isArray(raw) ? raw.filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 200) : [];
@@ -121,7 +123,8 @@ export function withShelterAsked(raw: unknown, goalId: string): string[] {
   return list.includes(goalId) ? list : [...list, goalId];
 }
 
-// Vraagt de app het bij dit doel? Alleen bij hutten zonder eigen keuze, en nog niet gevraagd.
+// Vraagt de app het bij dit doel? Bij hutten zonder vastgelegde eigen keuze (gemigreerd, of zelf gekozen vóór
+// 15 november), en nog niet gevraagd.
 export function needsShelterCheck(goal: TrainingGoal, isMain: boolean, asked: unknown): boolean {
   if (shelterOfGoal(goal, isMain) !== 'hut') return false;
   if (goal.details?.shelterChosen === true) return false;
