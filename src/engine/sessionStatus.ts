@@ -7,7 +7,9 @@ import { isIllnessDay } from './illness';
 
 // 'away': voorbij en niet gedaan op een dag van een vakantie, tocht of periode zonder sportschool die je meldde
 // (engine/leave.ts#isAwayDay), of op een dag dat je ziek gemeld was (engine/illness.ts#isIllnessDay). Heet
-// Vervallen, nooit gemist: dezelfde afleiding als de weekterugblik (engine/weekLogs.ts#leftOutOfCount).
+// Vervallen, nooit gemist. Een dag vóór de melding blijft gemist. Wat je op zo'n dag wel logde, is gedaan en telt
+// mee: dezelfde afleiding als de weekterugblik, de ring in Week en de reeks (engine/weekLogs.ts#leftOutOfCount,
+// engine/streak.ts) en als de kaart Vervallen op Vandaag (engine/missedTraining.ts#planMissed), via isPausedDay.
 export type DisplayStatus = 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' | 'rest' | 'away';
 
 export interface DisplaySessionState {
@@ -43,6 +45,12 @@ export interface PauseContext {
   illness?: IllnessEpisode[];
 }
 
+// Een dag binnen een pauze die je meldde: ziek (tot en met de dag van beter melden, of tot vandaag) of weg. De ene
+// toets voor Vervallen; wie een voorbije dag toont, geeft { leave, illness } mee.
+export function isPausedDay(date: string, pause: PauseContext | undefined, today: string): boolean {
+  return (!!pause?.leave?.length && isAwayDay(date, pause.leave)) || isIllnessDay(date, pause?.illness, today);
+}
+
 export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[], isRest = false, pause?: PauseContext): DisplaySessionState {
   const log = logs.find((l) => l.plannedSessionId === session.id);
   const wasMoved = movedByYou(session);
@@ -51,8 +59,7 @@ export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[],
   if (session.status === 'skipped') return { status: 'skipped', wasMoved };
   if (session.scheduledDate === todayISO()) return { status: 'today', wasMoved };
   if (session.scheduledDate < todayISO()) {
-    const paused = (!!pause?.leave?.length && isAwayDay(session.scheduledDate, pause.leave)) || isIllnessDay(session.scheduledDate, pause?.illness, todayISO());
-    return { status: paused ? 'away' : 'missed', wasMoved };
+    return { status: isPausedDay(session.scheduledDate, pause, todayISO()) ? 'away' : 'missed', wasMoved };
   }
   if (session.status === 'moved') return { status: 'moved', wasMoved: true };
   return { status: 'planned', wasMoved: false };

@@ -12,7 +12,10 @@ describe('Ongedaan maken van de rustiger instap', () => {
     expect(body).toContain('bumpPlanRevision()');
     expect(body).toContain('await refresh()');
     expect(body).toContain('setRecentChange(');
-    expect(body).toContain("title: 'Rustiger instap teruggezet'");
+    expect(body).toContain('title: REENTRY_UNDONE_TITLE');
+    // Het terugzetten staat zelf in het logboek; de melding draagt het id van die regel (storage/reentryUndo.ts).
+    expect(body).toContain('await undoReentryNow(from)');
+    expect(body).toContain('id: record?.id');
   });
   it('het blad gebruikt die actie, niet een losse instelling', () => {
     const sheet = weekAdjustments;

@@ -69,7 +69,8 @@ export function leftOutOfCount(
   asOf: string,
   programStart?: string,
   // Een vakantie, tocht of periode zonder sportschool die je zelf meldde (engine/leave.ts#isAwayDay): wat daar
-  // stond en niet gedaan is, telt niet als gemist. Wat je er wel deed, telt gewoon mee als gedaan.
+  // stond en niet gedaan is, telt niet als gemist. Wat je er wel deed, telt gewoon mee als gedaan; zo ook op een
+  // zieke dag (`loggedIds` geldt voor beide, engine/sessionStatus.ts#isPausedDay).
   away?: { periods: LeavePeriod[] | undefined; loggedIds: ReadonlySet<string | undefined> },
 ): (id: string) => boolean {
   const removedBy = new Map<string, string>();
@@ -88,7 +89,7 @@ export function leftOutOfCount(
     const s = byId.get(id);
     if (!s) return false;
     if (programStart && s.scheduledDate < programStart) return true;
-    if (illnessEpisodes && isIllnessDay(s.scheduledDate, illnessEpisodes, asOf)) return true;
+    if (illnessEpisodes && !away?.loggedIds.has(s.id) && isIllnessDay(s.scheduledDate, illnessEpisodes, asOf)) return true;
     if (awayDays && !away!.loggedIds.has(s.id) && isAwayDay(s.scheduledDate, away!.periods, awayDays)) return true;
     if (s.status !== 'skipped') return false;
     if (movedOn.has(id)) return true;

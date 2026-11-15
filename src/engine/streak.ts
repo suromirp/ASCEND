@@ -29,16 +29,18 @@ export interface StreakContext {
 // a skipped or missed session ends it.
 //
 // Neutral too, like on Logboek (pages/History.tsx#countMissed): a rest day, a
-// day you were ill, a session that fell away because of a leave
+// day you were ill and logged nothing on, a session that fell away because of a leave
 // (`leave.role === 'dropped'`), a session ASCEND itself took out of the plan
 // (`leftOut`, as on Week) and days before the program started.
 export function computeCurrentStreak(plannedSessions: PlannedSession[], logs: SessionLog[], context: StreakContext = {}): number {
   const { templateById, programStart, illnessEpisodes, leftOut } = context;
   const today = todayISO();
   const isRest = (s: PlannedSession) => templateById?.get(s.templateId)?.type === 'recovery';
+  // Wat je op een zieke dag toch deed, telt mee als gedaan (zoals bij vakantie, engine/weekLogs.ts#leftOutOfCount).
+  const logged = new Set(logs.map((l) => l.plannedSessionId));
   const neutral = (s: PlannedSession) =>
     (programStart !== undefined && s.scheduledDate < programStart) ||
-    (illnessEpisodes !== undefined && isIllnessDay(s.scheduledDate, illnessEpisodes, today)) ||
+    (illnessEpisodes !== undefined && !logged.has(s.id) && isIllnessDay(s.scheduledDate, illnessEpisodes, today)) ||
     (s.status === 'skipped' && s.leave?.role === 'dropped') ||
     (leftOut?.(s.id) ?? false);
   const statusOf = (s: PlannedSession) => deriveSessionStatus(s, logs, isRest(s)).status;

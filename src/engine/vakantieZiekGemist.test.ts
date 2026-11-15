@@ -24,6 +24,9 @@ import { durationScopeFor } from './durationScope';
 import { resolveEffectiveFullDuration, withDurationScope } from './substitutions';
 import { cleanSettings } from '../storage/backupClean';
 import { addDays, mondayOfWeek } from '../utils/dates';
+import { weekProgress } from './weekProfile';
+import weekPage from '../pages/Week.tsx?raw';
+import weekPlanner from '../components/WeekPlanner.tsx?raw';
 
 const { templates, program: base } = buildDefaultProgramData();
 const program: Program = { ...base, startDate: '2026-11-16' };
@@ -102,24 +105,26 @@ describe('L: een vakantie die je meldde telt nooit als gemist', () => {
 
 const missedInput = (over: Partial<MissedInput>): MissedInput => ({ plannedSessions: [], logs: [], templates, today: '2026-11-30', settings: MISSED_ADVICE, memory: {}, ...over });
 
-describe('L: bij een ziekmelding of vakantie vervalt wat ervoor open stond, met één regel', () => {
+describe('L: bij een vakantie geen vraag meer over wat ervoor lag; de regel Vervallen noemt alleen de vakantiedagen', () => {
   // Benen A op woensdag 25 november en de bergtocht op zondag 29 november, niet gedaan. Vakantie vanaf 30 november.
   const legs = ps('tpl_lower_a', '2026-11-25');
   const hike = ps('tpl_mountain_hike', '2026-11-29');
   const rest = ps('tpl_herstel', '2026-11-30');
   const leave = [vacation('2026-11-30', '2026-12-06')];
 
-  it('zonder vakantie de vraag Niet gedaan?, met vakantie één regel en geen vraag', () => {
+  it('zonder vakantie de vraag Niet gedaan?, met vakantie geen vraag en geen regel: wat ervoor lag blijft gemist', () => {
     expect(planMissed(missedInput({ plannedSessions: [legs, hike] })).item).toMatchObject({ kind: 'ask', session: { id: legs.id } });
     const plan = planMissed(missedInput({ plannedSessions: [legs, hike], leavePeriods: leave }));
     expect(plan.item).toBeUndefined();
-    expect(plan.lapsed?.kind).toBe('away');
-    expect(lapsedLine(plan.lapsed!.kind, plan.lapsed!.sessions)).toBe('Benen A (zwaar) van woensdag 25 november en Bergtocht van zondag 29 november vervallen: je meldde een vakantie. Inhalen hoeft niet.');
+    expect(plan.lapsed).toBeUndefined();
   });
 
-  it('de regel staat de eerste drie dagen van de pauze, niet elke dag', () => {
-    expect(planMissed(missedInput({ plannedSessions: [legs, hike], leavePeriods: leave, today: '2026-12-02' })).lapsed).toBeDefined();
-    const later = planMissed(missedInput({ plannedSessions: [legs, hike], leavePeriods: leave, today: '2026-12-03' }));
+  it('wat op een vakantiedag stond: één regel, de eerste drie dagen van de pauze, niet elke dag', () => {
+    const run = ps('tpl_easy_run', '2026-12-01');
+    const plan = planMissed(missedInput({ plannedSessions: [legs, hike, run], leavePeriods: leave, today: '2026-12-02' }));
+    expect(plan.lapsed?.kind).toBe('away');
+    expect(lapsedLine(plan.lapsed!.kind, plan.lapsed!.sessions)).toBe('Rustige duurloop van dinsdag 1 december vervalt: je meldde een vakantie. Inhalen hoeft niet.');
+    const later = planMissed(missedInput({ plannedSessions: [legs, hike, run], leavePeriods: leave, today: '2026-12-03' }));
     expect(later.lapsed).toBeUndefined();
     expect(later.item).toBeUndefined();
   });
@@ -143,12 +148,12 @@ describe('L: bij een ziekmelding of vakantie vervalt wat ervoor open stond, met 
     expect(adv(leave).some((a) => a.ruleId === 'MISSED-CATCH-UP' || a.ruleId === 'REST-SWAP' || a.ruleId === 'SKIPPED-KEY-TO-REST')).toBe(false);
   });
 
-  it('ziekte die in een vakantie overgaat: wat ervoor stond vervalt, de ziektedagen en vakantiedagen zijn nooit gemist', () => {
+  it('ziekte die in een vakantie overgaat: geen vraag; de geëindigde ziekte krijgt geen regel meer', () => {
     const ill: IllnessEpisode[] = [{ id: 'z', kind: 'below_neck', startDate: '2026-11-27', endDate: '2026-11-29' }];
     const onIll = ps('tpl_hill_intervals', '2026-11-28');
     const plan = planMissed(missedInput({ plannedSessions: [legs, onIll, hike], leavePeriods: leave, illnessEpisodes: ill, today: '2026-12-01' }));
     expect(plan.item).toBeUndefined();
-    expect(plan.lapsed?.sessions.map((m) => m.session.id)).toEqual([legs.id]);
+    expect(plan.lapsed).toBeUndefined();
   });
 });
 
@@ -378,10 +383,10 @@ describe('Warden ronde 2: één id per terugkomst, één racebescherming, grenze
   });
 
   it('Niets doen: ook geen regel over vervallen', () => {
-    const legs = ps('tpl_lower_a', '2026-11-25');
+    const run = ps('tpl_easy_run', '2026-12-01');
     const leave = [vacation('2026-11-30', '2026-12-06')];
-    expect(planMissed(missedInput({ plannedSessions: [legs], leavePeriods: leave })).lapsed).toBeDefined();
-    expect(planMissed(missedInput({ plannedSessions: [legs], leavePeriods: leave, settings: { ...MISSED_ADVICE, choice: 'off' } })).lapsed).toBeUndefined();
+    expect(planMissed(missedInput({ plannedSessions: [run], leavePeriods: leave, today: '2026-12-02' })).lapsed).toBeDefined();
+    expect(planMissed(missedInput({ plannedSessions: [run], leavePeriods: leave, today: '2026-12-02', settings: { ...MISSED_ADVICE, choice: 'off' } })).lapsed).toBeUndefined();
   });
 
   it('Week: een voorbije training op een vakantiedag is neutraal, niet gemist', () => {
@@ -485,5 +490,113 @@ describe('ziek in Week: vervallen, nooit gemist', () => {
     // De dagrij zegt vervallen.
     expect(rowExtra({ lapsed: true })).toEqual({ text: 'vervallen', warn: false });
     vi.useRealTimers();
+  });
+});
+
+// Eén bron voor Vervallen (Warden en Lookout, 15 november): Week, de weekterugblik en de kaart Vervallen op Vandaag
+// lezen dezelfde afleiding (engine/sessionStatus.ts#isPausedDay). Ziek vanaf vrijdag 13 november, vandaag zondag 15.
+describe('ziek vanaf 13 november: Vandaag en Week zeggen hetzelfde', () => {
+  const ill: IllnessEpisode[] = [{ id: 'z13', kind: 'below_neck', startDate: '2026-11-13' }];
+  const long = ps('tpl_long_run', '2026-11-08');
+  const upper = ps('tpl_upper_a', '2026-11-10');
+  const legs = ps('tpl_lower_a', '2026-11-11');
+  const easy = ps('tpl_easy_run', '2026-11-12');
+  const hills = ps('tpl_hill_intervals', '2026-11-14');
+  const hike = ps('tpl_mountain_hike', '2026-11-15');
+  const all = [long, upper, legs, easy, hills, hike];
+  afterEach(() => vi.useRealTimers());
+  const at = (iso: string) => { vi.useFakeTimers(); vi.setSystemTime(new Date(`${iso}T09:00:00+01:00`)); };
+
+  it('Week: di 10, wo 11 en do 12 gemist, za 14 vervallen; de kaart noemt alleen za 14', () => {
+    at('2026-11-15');
+    const status = (s: PlannedSession) => deriveSessionStatus(s, [], false, { illness: ill }).status;
+    expect(all.map((s) => [s.scheduledDate, status(s)])).toEqual([
+      ['2026-11-08', 'missed'], ['2026-11-10', 'missed'], ['2026-11-11', 'missed'], ['2026-11-12', 'missed'], ['2026-11-14', 'away'], ['2026-11-15', 'today'],
+    ]);
+    const plan = planMissed(missedInput({ plannedSessions: all, illnessEpisodes: ill, today: '2026-11-15' }));
+    expect(plan.item).toBeUndefined();
+    expect(plan.lapsed?.sessions.map((m) => m.session.id)).toEqual([hills.id]);
+    expect(lapsedLine(plan.lapsed!.kind, plan.lapsed!.sessions)).toBe('Heuvelintervallen van zaterdag 14 november vervalt: je meldde ziekte. Inhalen hoeft niet.');
+    // Elke dag op de kaart heet in Week Vervallen, en omgekeerd.
+    for (const m of plan.lapsed!.sessions) expect(status(m.session)).toBe('away');
+    expect(all.filter((s) => status(s) === 'away').map((s) => s.id)).toEqual(plan.lapsed!.sessions.map((m) => m.session.id));
+  });
+
+  it('de weekterugblik noemt dezelfde dagen gemist als Week', () => {
+    at('2026-11-15');
+    const review = buildWeekReview({ weekStart: '2026-11-09', plannedSessions: all, logs: [], templates, program: { ...program, startDate: '2026-11-02' }, planChangeLog: [], asOf: '2026-11-15', illnessEpisodes: ill })!;
+    expect(review.missedTemplateIds).toEqual(['tpl_upper_a', 'tpl_lower_a', 'tpl_easy_run']);
+    expect(review.advice[0]).toMatch(/^3 trainingen gemist\./);
+  });
+
+  it('de datumgrens: de dag voor de melding niet op de kaart, de eerste ziektedag wel, vandaag nog niet', () => {
+    const ill12: IllnessEpisode[] = [{ id: 'z12', kind: 'below_neck', startDate: '2026-11-12' }];
+    const plan = planMissed(missedInput({ plannedSessions: all, illnessEpisodes: ill12, today: '2026-11-14' }));
+    expect(plan.lapsed?.sessions.map((m) => m.session.scheduledDate)).toEqual(['2026-11-12']);
+    // Op de dag van de melding zelf staat er nog niets voorbij binnen de ziekte: geen regel.
+    expect(planMissed(missedInput({ plannedSessions: all, illnessEpisodes: ill, today: '2026-11-13' })).lapsed).toBeUndefined();
+    // Een dag binnen de ziekte met een log staat er niet op.
+    expect(planMissed(missedInput({ plannedSessions: all, logs: [done(hills)], illnessEpisodes: ill, today: '2026-11-15' })).lapsed).toBeUndefined();
+  });
+
+  it('een geëindigde ziekte: de einddag is vervallen, de dag erna gemist', () => {
+    at('2026-11-17');
+    const ended: IllnessEpisode[] = [{ id: 'z', kind: 'below_neck', startDate: '2026-11-12', endDate: '2026-11-14' }];
+    const sun = ps('tpl_mountain_hike', '2026-11-15');
+    expect(deriveSessionStatus(hills, [], false, { illness: ended }).status).toBe('away');
+    expect(deriveSessionStatus(sun, [], false, { illness: ended }).status).toBe('missed');
+    expect(leftOutOfCount([hills, sun], [], ended, '2026-11-17')(hills.id)).toBe(true);
+    expect(leftOutOfCount([hills, sun], [], ended, '2026-11-17')(sun.id)).toBe(false);
+  });
+});
+
+describe('een training die je op een zieke dag toch deed, telt mee', () => {
+  const ill: IllnessEpisode[] = [{ id: 'z', kind: 'above_neck', startDate: '2026-11-10' }];
+  afterEach(() => vi.useRealTimers());
+
+  it('gelogd op een zieke dag blijft completed, met illness in de context', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-13T09:00:00+01:00'));
+    const run = ps('tpl_easy_run', '2026-11-12');
+    expect(deriveSessionStatus(run, [done(run)], false, { illness: ill }).status).toBe('completed');
+    expect(deriveSessionStatus(run, [], false, { illness: ill }).status).toBe('away');
+  });
+
+  it('de ring in Week: 1 van 1, niet 0 van 0; wat je niet deed blijft eruit', () => {
+    const run = ps('tpl_easy_run', '2026-11-12');
+    const legs = ps('tpl_lower_a', '2026-11-11');
+    const logs = [done(run)];
+    const byId = new Map(templates.map((t) => [t.id, t]));
+    const leftOut = leftOutOfCount([run, legs], [], ill, '2026-11-13', undefined, { periods: undefined, loggedIds: new Set(logs.map((l) => l.plannedSessionId)) });
+    expect(weekProgress([run, legs], logs, byId, leftOut)).toEqual({ done: 1, total: 1 });
+  });
+
+  it('de weekterugblik telt hem als gedaan, niet als extra', () => {
+    const run = ps('tpl_easy_run', '2026-11-12');
+    const review = buildWeekReview({ weekStart: '2026-11-09', plannedSessions: [run], logs: [done(run)], templates, program: { ...program, startDate: '2026-11-02' }, planChangeLog: [], asOf: '2026-11-16', illnessEpisodes: ill })!;
+    expect(review.done).toBe(1);
+    expect(review.extraLogged).toBe(0);
+  });
+
+  it('de reeks telt hem mee; een zieke dag zonder log blijft neutraal', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-13T20:00:00+01:00'));
+    const before = ps('tpl_upper_a', '2026-11-09');
+    const legs = ps('tpl_lower_a', '2026-11-11');
+    const run = ps('tpl_easy_run', '2026-11-12');
+    const ctx = { templateById: new Map(templates.map((t) => [t.id, t])), illnessEpisodes: ill };
+    expect(computeCurrentStreak([before, legs, run], [done(before), done(run)], ctx)).toBe(2);
+    expect(computeCurrentStreak([before, legs, run], [done(before)], ctx)).toBe(1);
+  });
+});
+
+describe('elke aanroeper die een voorbije dag toont geeft de pauze mee', () => {
+  it('Week en WeekPlanner geven illness en leave mee aan deriveSessionStatus', () => {
+    for (const src of [weekPage, weekPlanner]) {
+      const calls = src.match(/deriveSessionStatus\([^;]*?\)\.status|deriveSessionStatus\([^;]*?\);/g) ?? [];
+      expect(calls.length).toBeGreaterThan(0);
+      for (const c of calls) expect(c).toMatch(/illness:/);
+      for (const c of calls) expect(c).toMatch(/leave/);
+    }
   });
 });
