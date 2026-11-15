@@ -5,7 +5,7 @@ Status: aangenomen
 
 ## Besluit
 
-De regel onder het weer zegt "trager", nooit "lager". Is het alleen vochtig (dauwpunt 16 of hoger) en voelt het onder de 22 graden, dan is de band 5 tot 10 seconden per km in plaats van 10 tot 20. Bij intervallen en heuvelherhalingen (intensiteit high) staat er geen tempoband en geen raad om op hartslag te lopen, maar: "Herhalingen voelen zwaarder: neem wat meer rust ertussen en drink vooraf."
+De regel onder het weer zegt "trager", nooit "lager". Is het alleen vochtig (dauwpunt 16 of hoger) en voelt het onder de 22 graden, dan is de band 5 tot 10 seconden per km in plaats van 10 tot 20. Bij herhalingen (intervallen, heuvelherhalingen, heuvelsprints en fartlek: intensiteit high, `engine/heatPace.ts#heatRunKind`) staat er geen tempoband en geen raad om op hartslag te lopen, maar: "Herhalingen voelen zwaarder: neem wat meer rust ertussen en drink vooraf." Een testloop of wedstrijd is geen herhaling en houdt de gewone band.
 
 ## Reden
 
@@ -25,4 +25,4 @@ Niets; vult `2026-10-31-kansen-stap-0.md` aan.
 
 ## Terugdraaien
 
-In `heatPace.ts` de tak `reps` en de band `onlyHumid` weghalen; `WeatherLine.tsx` roept dan weer `heatPace(w)` aan.
+In `heatPace.ts` de tak `reps` en de band `onlyHumid` weghalen; `WeatherLine.tsx` roept dan weer `heatPace(w)` aan zonder `heatRunKind`. De kleinere band bij alleen vocht is een losse keuze: zet `onlyHumid` terug naar 10 tot 20.

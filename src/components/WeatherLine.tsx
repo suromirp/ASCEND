@@ -25,7 +25,7 @@ import { bestMomentForTraining } from '../engine/bestMoment';
 import { weatherLineForTraining } from '../engine/clothing';
 import { adjustFor } from '../engine/clothingFeedback';
 import { templateSport } from '../engine/sports';
-import { heatPace } from '../engine/heatPace';
+import { heatPace, heatRunKind } from '../engine/heatPace';
 import { useAirQualityNote } from './useAirQualityNote';
 import { useRainSoonNote } from './useRainSoonNote';
 import { eveningMoonNote } from '../engine/moon';
@@ -80,7 +80,7 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen, o
     : undefined;
   // Warm of vochtig bij een loop: loop op hartslag, met een band voor het tempo (engine/heatPace.ts).
   const heat = templateSport(template) === 'running' && signalOn(settings, 'heatPace')
-    ? heatPace(w, template.baseStressProfile?.intensity === 'high' ? 'reps' : 'steady')
+    ? heatPace(w, heatRunKind(template))
     : undefined;
   // Een wandeling of tocht die na zonsondergang eindigt: bij volle of nieuwe maan één regel (engine/moon.ts).
   const moon = !quietMain && showMoonLine(settings.overviews) && templateSport(template) === 'hiking'

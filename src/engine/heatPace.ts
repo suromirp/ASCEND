@@ -10,7 +10,7 @@
 //
 // Alleen vochtig (dauwpunt 16 of hoger) bij een gevoel onder de 22 graden kost minder: een band van
 // 5 tot 10 seconden. Bij intervallen of heuvelherhalingen (intensiteit high) geen tempoband en geen
-// raad om op hartslag te lopen: de hartslag loopt achter in korte herhalingen; daar zegt de regel
+// raad om op hartslag te lopen (een testloop of wedstrijd is geen herhaling en houdt de band): de hartslag loopt achter in korte herhalingen; daar zegt de regel
 // dat herhalingen zwaarder voelen en je meer rust neemt (eigenaar 15 november: "Dit klopt niet toch?").
 //
 // Alleen bij een loop buiten (niet op de loopband, die beslist het weer niet). Extreme hitte
@@ -18,7 +18,9 @@
 //
 // Puur: geen React, geen IndexedDB.
 
+import type { SessionTemplate } from '../models/training';
 import type { SessionWeather } from './weather';
+import { isTestOrRace } from './templateRoles';
 
 const WARM_FEELS_C = 22;
 const HOT_FEELS_C = 28;
@@ -62,4 +64,12 @@ export function heatPace(
     slowerTo,
     text: `${what} (${detail}). Loop op hartslag: je tempo ligt dan zo'n ${slowerFrom} tot ${slowerTo} seconden per km trager, en dat is goed.`,
   };
+}
+
+// Welke regel een loop krijgt: herhalingen (intervallen, heuvelherhalingen, heuvelsprints, fartlek:
+// intensiteit high) of een doorlopende inspanning. Een testloop of wedstrijd is doorlopend, ook al is
+// hij zwaar. Een sjabloon zonder profiel is doorlopend.
+export function heatRunKind(template: Pick<SessionTemplate, 'id' | 'roles' | 'baseStressProfile'>): 'steady' | 'reps' {
+  if (isTestOrRace(template)) return 'steady';
+  return template.baseStressProfile?.intensity === 'high' ? 'reps' : 'steady';
 }

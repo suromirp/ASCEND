@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { heatPace } from './heatPace';
+import { heatPace, heatRunKind } from './heatPace';
+import { buildDefaultProgramData } from '../data/defaultProgram';
 import { mapForecast, forecastUrl } from '../integrations/openMeteo';
 
 describe('hitte en dauwpunt bij het tempo', () => {
@@ -31,6 +32,12 @@ describe('hitte en dauwpunt bij het tempo', () => {
     expect(h.text).toBe('Vochtig (voelt als 19 graden, dauwpunt 17). Herhalingen voelen zwaarder: neem wat meer rust ertussen en drink vooraf.');
     expect(h.text).not.toMatch(/hartslag|seconden/);
     expect(heatPace({ feelsC: 15, dewPointC: 9, bad: [] }, 'reps')).toBeUndefined();
+  });
+
+  it('herhalingen zijn intervallen, heuvels, sprints en fartlek; een testloop of wedstrijd niet', () => {
+    const byName = new Map(buildDefaultProgramData().templates.map((t) => [t.name, t]));
+    for (const name of ['Heuvelintervallen', 'Intervallen', 'Fartlek']) expect(heatRunKind(byName.get(name)!), name).toBe('reps');
+    for (const name of ['Testloop 5 km', 'Wedstrijd', 'Rustige duurloop', 'Lange duurloop']) expect(heatRunKind(byName.get(name)!), name).toBe('steady');
   });
 
   it('zegt nooit dat je tempo lager ligt (dat leest als sneller)', () => {
