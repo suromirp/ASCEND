@@ -465,6 +465,41 @@ export const INVARIANTEN = [
       return uit;
     },
   },
+  {
+    // Gemist heeft één afleiding (besluit 2026-11-15-week-telling-zonder-sportschool.md, engine/weekList.ts#missedInWeek):
+    // het getal op "Je hebt n training gemist" is het aantal dagrijen die gemist zeggen, in elk week-scherm met die rij.
+    // Een overgeslagen of vervallen rij telt niet. De terugblik van dezelfde stand noemt dezelfde trainingen onder Gemist.
+    // Eerst zei de kaart 1 terwijl de rijen rode kruisen op overgeslagen trainingen toonden (eigenaar, 15 november).
+    naam: 'De kaart Je hebt n training gemist telt de dagrijen die gemist zeggen',
+    controleer: (k, schermen, alleSchermen = schermen) => {
+      const uit = [];
+      const dagRij = /^\[knop: (?!Verplaats of ruil)(.+?)(?:Vandaag|(?:Ma|Di|Wo|Do|Vr|Za|Zo) \d{1,2})·.*\]$/;
+      const zegtGemist = (r) => /· gemist(?:[,·]|\]|$)|Gemist\]$/.test(r);
+      const rijen = (t) => t.split('\n').filter((r) => dagRij.test(r));
+      for (const w of alleSchermen.filter((x) => x === 'week' || (x.startsWith('week-') && !x.endsWith('-blad')))) {
+        const t = k(w);
+        if (!/\[knop: Week opnieuw plannen/.test(t)) continue;
+        const kaart = t.match(/Je hebt\s(\d+)\straining(?:en)?\sgemist/);
+        const n = kaart ? Number(kaart[1]) : 0;
+        const gemist = rijen(t).filter(zegtGemist).length;
+        if (gemist !== n) uit.push(`${w}: de kaart zegt ${n} gemist, ${gemist} dagrijen zeggen gemist`);
+      }
+      // Nooit stil leeg: de stand zonder-sportschool heeft een gemiste loop, een vervallen sportschooltraining en een
+      // overgeslagen rij.
+      const t = k('week-zonder-sportschool');
+      const r = rijen(t);
+      if (!r.some(zegtGemist)) uit.push('week-zonder-sportschool heeft geen rij die gemist zegt: de invariant toetst niets');
+      if (!r.some((x) => /vervallen/i.test(x))) uit.push('week-zonder-sportschool heeft geen vervallen rij (de sportschooltraining)');
+      if (!r.some((x) => /overgeslagen/i.test(x))) uit.push('week-zonder-sportschool heeft geen overgeslagen rij');
+      for (const x of r.filter((y) => /overgeslagen/i.test(y))) if (zegtGemist(x)) uit.push(`week-zonder-sportschool: een overgeslagen rij zegt gemist: ${x}`);
+      const blik = k('weekterugblik-zonder-sportschool').match(/^Gemist\n(.+)$/m);
+      const namen = blik ? blik[1].replace(/\.\s.*$/, '').split(/, | en /).filter(Boolean) : [];
+      const gemisteNamen = r.filter(zegtGemist).map((x) => x.match(dagRij)[1]);
+      if (namen.length !== gemisteNamen.length) uit.push(`weekterugblik-zonder-sportschool noemt ${namen.length} onder Gemist, Week ${gemisteNamen.length}`);
+      for (const nm of namen) if (!gemisteNamen.includes(nm)) uit.push(`weekterugblik-zonder-sportschool noemt ${nm} gemist, Week niet`);
+      return uit;
+    },
+  },
 ];
 
 const SCHERMEN = [
@@ -473,7 +508,7 @@ const SCHERMEN = [
   'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek', 'vandaag-ziek-eerder', 'week-ziek-eerder',
   'ascend-algemeen', 'ascend-vaardigheid', 'weekterugblik-voorstel', 'stand-benen', 'stand-belasting', 'stand-ritme', 'stand-lopen', 'stand-invloed',
   'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek', 'week-aangepast', 'week-aangepast-blad', 'logboek-herstel',
-  'vandaag-concept', 'week-concept', 'weekterugblik-concept',
+  'vandaag-concept', 'week-concept', 'weekterugblik-concept', 'week-zonder-sportschool', 'weekterugblik-zonder-sportschool',
 ];
 
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {

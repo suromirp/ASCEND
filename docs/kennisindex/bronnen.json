@@ -2715,7 +2715,7 @@
     "planning",
     "week"
    ],
-   "kern": "Een vakantie, tocht of periode zonder sportschool die je zelf meldde, telt nooit als gemist.",
+   "kern": "Een vakantie of tocht die je zelf meldde telt nooit als gemist; zonder sportschool is dat voor gemist vervangen door 2026-11-15-week-telling-zonder-sportschool.md (alleen wat de sportschool nodig heeft vervalt).",
    "stand": "geldt"
   },
   "docs/beslissingen/2026-11-14-verborgen-schermen.md": {
@@ -2819,6 +2819,14 @@
     "lopen-en-tests"
    ],
    "kern": "Een wandelworkout naar het horloge krijgt geen zonedoel maar een regel met vaste bpm uit je hardloopzones in de beschrijving, omdat intervals.icu voor wandelen geen eigen zones heeft.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Gemist heeft één afleiding voor Week, de kaart, de weekterugblik en het inhaaladvies: zonder sportschool vervalt alleen wat de sportschool nodig heeft, overgeslagen is geen gemist, en het inhalen leest dezelfde weekcontrole als Let op.",
    "stand": "geldt"
   },
   "docs/beslissingen/_sjabloon.md": {

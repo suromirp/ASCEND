@@ -80,7 +80,8 @@ interface ReviewInputs {
   planChangeLog: PlanChangeProposal[];
   asOf: string;
   illnessEpisodes?: IllnessEpisode[];
-  // Vakanties en tochten die je zelf meldde (engine/leave.ts#isAwayDay): wat daar open bleef, telt niet als gemist.
+  // Vakanties en tochten die je zelf meldde, en zonder sportschool wat de sportschool nodig heeft (engine/leave.ts#isAwayFor):
+  // wat daar open bleef, telt niet als gemist.
   leavePeriods?: LeavePeriod[];
   // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, niet
   // gemist en niet gedaan.
@@ -128,7 +129,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // took out while rearranging the plan (a new strength block, the weekly
   // planning), days you were ill and days before the program started.
   // Een training uit de afbouw die na de race niet gedaan is, telt niet als gemist (engine/raceWindow.ts).
-  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate, { periods: inputs.leavePeriods, loggedIds, races: raceDatesOf(plannedSessions, byId), openDraft: inputs.openDraft });
+  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate, { periods: inputs.leavePeriods, templates: byId, loggedIds, races: raceDatesOf(plannedSessions, byId), openDraft: inputs.openDraft });
   const countsAsTraining = (s: PlannedSession) => countsAsTrainingShared(s, byId.get(s.templateId), leftOut);
   // De oude rij van een gemiste training die je naar later zette telt niet: de nieuwe rij telt
   // (docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md).
@@ -142,7 +143,12 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // minuten, niet in "gedaan". Het blad zegt het dan apart, zodat "0 gedaan · 56 min" geen tegenspraak is.
   const trainingIds = new Set(trainings.map((s) => s.id));
   const extraLogged = weekLogs.filter((l) => !l.plannedSessionId || !trainingIds.has(l.plannedSessionId)).length;
-  const missedSessions = trainings.filter((s) => !loggedIds.has(s.id) && (s.scheduledDate < asOf || s.status === 'skipped')).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
+  // Gemist is overal dezelfde afleiding (engine/sessionStatus.ts#isMissedSession): voorbij, zonder log en niet
+  // overgeslagen. Een overgeslagen training telt wel als gepland en niet gedaan ("2 van 5"), maar heet niet gemist:
+  // Week toont hem als overgeslagen, en de kaart in Week telt hem ook niet
+  // (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md). Wat een pauze of een concept uit de telling
+  // haalt, zit al niet in `trainings`.
+  const missedSessions = trainings.filter((s) => !loggedIds.has(s.id) && s.status !== 'skipped' && s.scheduledDate < asOf).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
   const minutes = weekDoneMinutes(logs, byId, weekStart, inputs.plannedById);
 
   // Per sport: kilometers and climbing, from what was logged.

@@ -25,8 +25,7 @@ import { WeekReplanRow } from '../components/WeekReplanRow';
 import { WeekProposalRow } from '../components/WeekProposalRow';
 import { SheetRow, SheetRows } from '../components/SheetRows';
 import { TextButton } from '../components/TextButton';
-import { replanSub, SEASON_ROW, weekBox, weekSkyLine, weekSoFarRow } from '../engine/weekList';
-import { deriveSessionStatus } from '../engine/sessionStatus';
+import { missedInWeek, replanSub, SEASON_ROW, weekBox, weekSkyLine, weekSoFarRow } from '../engine/weekList';
 import { raceDatesOf } from '../engine/raceWindow';
 import { rowNotes } from '../engine/weekConcerns';
 import { allowedPairs } from '../engine/allowedPair';
@@ -129,7 +128,7 @@ export function WeekPage() {
   }, [weekStart, plannedSessions, sessionLogs, templates, today, program]);
   // De races in de planning: een training uit de afbouw die na de race niet gedaan is, vervalt (engine/raceWindow.ts).
   const races = useMemo(() => raceDatesOf(plannedSessions, templateById), [plannedSessions, templateById]);
-  const progress = weekProgress(sessions, sessionLogs, templateById, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)), races, openDraft: openDraftId }));
+  const progress = weekProgress(sessions, sessionLogs, templateById, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate, { periods: settings.leavePeriods, templates: templateById, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)), races, openDraft: openDraftId }));
   const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, openDraft: openDraftId, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings), keyFocus }) : null;
   const heading = weekHeading(position);
   // Een week zonder trainingen zegt dat in de lucht; de rijen over je week zijn er dan niet.
@@ -139,10 +138,7 @@ export function WeekPage() {
   const { box, waiting } = weekBox({ notice: notice.concerns.length > 0, rest: restCard, extra: extraAdvice });
   // Gemist in de lopende week (afgeleid uit de logs, engine/sessionStatus.ts): dan staat Week opnieuw plannen direct
   // onder de dagen, met hoeveel er gemist is. De oude rij van een inhaal telt niet: die is overgeslagen.
-  const missed = current ? sessions.filter((s) => {
-    const t = templateById.get(s.templateId);
-    return !!t && t.type !== 'recovery' && deriveSessionStatus(s, sessionLogs, false, { leave: leavePeriods, illness: settings.illnessEpisodes, races, openDraft: openDraftId }).status === 'missed';
-  }).length : 0;
+  const missed = current ? missedInWeek(sessions, sessionLogs, templateById, { leave: leavePeriods, templates: templateById, illness: settings.illnessEpisodes, races, openDraft: openDraftId }) : 0;
   const replanOn = !!program && trainings > 0 && addDays(weekStart, 6) >= today;
   const replanRow = replanOn && <WeekReplanRow key={weekStart} weekStart={weekStart} sub={replanSub(missed)} />;
   // Aangepast door ASCEND: één uitkomst voor de rij, het blad en het woord op de dagrij (engine/changeLog.ts).

@@ -1,7 +1,7 @@
 // De vormen van een advies en de hulpjes die meerdere regels delen
 // (zie adviceEngine.ts voor de uitgangspunten).
 
-import { hardRunApart } from './hardRunApart';
+import { hardRunApart, weekAccepts } from './hardRunApart';
 import { isKeyFor, keyRank, type KeyFocus } from './keySession';
 import type { MorningCheckIn } from '../models/checkIn';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
@@ -22,7 +22,7 @@ import type { RaceBlock } from './raceBlock';
 import type { WeatherForecast } from '../models/weather';
 import type { TestJudgment } from '../models/testJudgment';
 import type { LeavePeriod } from '../models/leave';
-import { isAwayDay } from './leave';
+import { isAwayFor, isPauseDay } from './leave';
 import type { ReentryChoice, ReentryWeek } from './reentry';
 import { idHasRole } from './templateRoles';
 import { RACE_GUARD_DAYS, afterRaceGuard, raceDatesOf } from './raceWindow';
@@ -130,6 +130,9 @@ export interface AdviceInputs {
   answeredOn?: Readonly<Record<string, string>>;
   // Your rest day, 1 to 7 (rule REST-BACK). Absent: the rest day of the extra training, if any.
   restDay?: number;
+  // The weekday of each place in the week (database.ts#patternDays), as the week check in Week reads it: the
+  // catch-up asks the same check (engine/hardRunApart.ts#weekAccepts). Absent: each template's own day.
+  slotDays?: Map<string, number>;
   // "Rustdag terugzetten voorstellen" (rule REST-BACK, engine/restDayBack.ts). Absent = on.
   restDayBack?: boolean;
   // "Log op een andere dag koppelen" (engine/missedTraining.ts) and the pairs you said Liever niet to.
@@ -190,8 +193,13 @@ export function recoveryWeekGuard(inputs: Pick<AdviceInputs, 'asOf' | 'plannedSe
   return afterRaceGuard(inputs.asOf, raceDatesOf(inputs.plannedSessions, inputs.templates));
 }
 
-// A day you said you are away (engine/leave.ts#isAwayDay): never a day to catch up on.
-const awayOn = (date: string, inputs: Pick<AdviceInputs, 'leave'>) => !!inputs.leave?.length && isAwayDay(date, inputs.leave);
+// A day you are away for this training (engine/leave.ts#isAwayFor): a holiday or a tocht, or away without a gym for
+// what needs the gym. Never a day to catch it up on. A run can be caught up on a day without a gym.
+const awayOn = (date: string, inputs: Pick<AdviceInputs, 'leave'>, template?: SessionTemplate) => !!inputs.leave?.length && (template ? isAwayFor(date, template, inputs.leave) : isPauseDay(date, inputs.leave));
+
+// The same week check as Let op in Week, for a catch-up of the key session (engine/hardRunApart.ts#weekAccepts).
+const weekTakes = (date: string, session: PlannedSession, template: SessionTemplate, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, removeIds: string[] = []) =>
+  weekAccepts(date, session, { ...inputs, slotDays: inputs.slotDays }, { plannedMinutes: keyCatchUpShort(session, template, date, inputs, templateById)?.minutes, removeIds });
 
 // A free day for `session` from `fromDate` to the end of its week: room
 // under the user's time budget/pairing preference, and no second
@@ -208,7 +216,7 @@ export function findCatchUpDate(
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   for (const date of weekDates(session.weekStartDate)) {
     if (date < fromDate) continue;
-    if (awayOn(date, inputs)) continue;
+    if (awayOn(date, inputs, template)) continue;
     if (!dayHasRoomFor(date, template, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) continue;
     // Same 48-hour rule as everywhere else, for legs and upper body alike, also across the
     // week boundary (a Sunday catch-up before Monday's leg day); a session that was itself
@@ -216,6 +224,7 @@ export function findCatchUpDate(
     const withLoad = inputs.plannedSessions.filter((other) => other.id !== session.id && other.status !== 'skipped' && (other.scheduledDate >= inputs.asOf || loggedIds.has(other.id)));
     if (!respectsHeavySpacing(date, template, withLoad, templateById, inputs.logs, session.id)) continue;
     if (opts.hardApart && !hardRunApart(date, session, template, inputs, templateById)) continue;
+    if (opts.hardApart && !weekTakes(date, session, template, inputs, templateById)) continue;
     return date;
   }
   return undefined;
@@ -261,16 +270,20 @@ export function findRestDayToUse(
   const isRest = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'recovery';
   for (const date of [inputs.asOf, addDays(inputs.asOf, 1)]) {
     const rest = inputs.plannedSessions.find((s) => s.scheduledDate === date && s.status !== 'skipped' && isRest(s) && !loggedIds.has(s.id));
-    if (!rest || awayOn(date, inputs)) continue;
+    if (!rest || awayOn(date, inputs, template)) continue;
     const dayBefore = addDays(date, -1);
     const trainedDayBefore = inputs.logs.some((l) => l.completedDate === dayBefore && templateById.get(l.templateId)?.type !== 'recovery');
     if (trainedDayBefore) continue;
+    // "Vandaag deed je geen training" zegt alleen iets als de dag om is of er niets meer staat: met een training die
+    // vandaag nog open staat is morgen geen rustdag om op te vullen (eigenaar, 15 november).
+    if (dayBefore === inputs.asOf && inputs.plannedSessions.some((s) => s.scheduledDate === dayBefore && s.id !== session.id && s.status !== 'skipped' && !isRest(s) && !loggedIds.has(s.id))) continue;
     // Nothing else of weight on that day, and 48 hours from the next heavy day.
     const sameDay = inputs.plannedSessions.filter((s) => s.scheduledDate === date && s.id !== rest.id && s.status !== 'skipped' && !isRest(s));
     if (sameDay.length > 0) continue;
     const around = inputs.plannedSessions.filter((s) => s.id !== session.id && s.id !== rest.id && s.status !== 'skipped' && (s.scheduledDate >= inputs.asOf || loggedIds.has(s.id)));
     if (!respectsHeavySpacing(date, template, around, templateById, inputs.logs, session.id)) continue;
     if (opts.hardApart && !hardRunApart(date, session, template, inputs, templateById, [rest.id])) continue;
+    if (opts.hardApart && !weekTakes(date, session, template, inputs, templateById, [rest.id])) continue;
     return rest;
   }
   return undefined;

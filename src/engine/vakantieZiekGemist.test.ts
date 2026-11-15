@@ -56,7 +56,9 @@ function week(monday: string): PlannedSession[] {
   ];
 }
 
-const vacation = (startDate: string, endDate: string, kind: LeavePeriod['kind'] = 'no_gym'): LeavePeriod => ({ id: `v-${startDate}`, kind, startDate, endDate });
+// Een vakantie zonder training. Zonder sportschool telt sinds 15 november alleen wat de sportschool nodig heeft als weg
+// (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md, toetsen in src/engine/weekTelling.test.ts).
+const vacation = (startDate: string, endDate: string, kind: LeavePeriod['kind'] = 'no_training'): LeavePeriod => ({ id: `v-${startDate}`, kind, startDate, endDate });
 
 describe('L: een vakantie die je meldde telt nooit als gemist', () => {
   const sessions = [...week('2026-11-30')];
@@ -88,7 +90,7 @@ describe('L: een vakantie die je meldde telt nooit als gemist', () => {
     const two = [...week('2026-11-23'), ...week('2026-11-30')];
     const over = [vacation('2026-11-27', '2026-12-01', 'no_training')];
     const loggedIds = new Set<string | undefined>();
-    const leftOut = leftOutOfCount(two, [], undefined, '2026-12-07', program.startDate, { periods: over, loggedIds });
+    const leftOut = leftOutOfCount(two, [], undefined, '2026-12-07', program.startDate, { periods: over, templates, loggedIds });
     const left = two.filter((s) => leftOut(s.id)).map((s) => s.scheduledDate);
     expect(left).toEqual(['2026-11-28', '2026-11-29', '2026-11-30', '2026-12-01']);
     const first = buildWeekReview({ weekStart: '2026-11-23', plannedSessions: two, logs: [], templates, program, planChangeLog: [], asOf: '2026-12-07', leavePeriods: over })!;
@@ -304,7 +306,7 @@ describe('K: rustiger instap na ziekte en een vakantie', () => {
 describe('L: de reeks op Je stand breekt niet op een vakantie', () => {
   afterEach(() => vi.useRealTimers());
 
-  it('een vakantie zonder sportschool over de weekgrens telt neutraal, vrije dagen niet', () => {
+  it('een vakantie over de weekgrens telt neutraal, vrije dagen niet', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-12-08T09:00:00+01:00'));
     const two = [...week('2026-11-23'), ...week('2026-11-30')];
@@ -313,7 +315,7 @@ describe('L: de reeks op Je stand breekt niet op een vakantie', () => {
     const loggedIds = new Set(logs.map((l) => l.plannedSessionId));
     const streak = (periods: LeavePeriod[]) => computeCurrentStreak(two, logs, {
       templateById, programStart: program.startDate,
-      leftOut: leftOutOfCount(two, [], undefined, '2026-12-08', program.startDate, { periods, loggedIds }),
+      leftOut: leftOutOfCount(two, [], undefined, '2026-12-08', program.startDate, { periods, templates, loggedIds }),
     });
     const away = streak([vacation('2026-11-27', '2026-12-06')]);
     const free = streak([vacation('2026-11-27', '2026-12-06', 'free_days')]);
@@ -394,9 +396,9 @@ describe('Warden ronde 2: één id per terugkomst, één racebescherming, grenze
     vi.setSystemTime(new Date('2026-12-08T09:00:00+01:00'));
     const run = ps('tpl_easy_run', '2026-12-03');
     expect(deriveSessionStatus(run, []).status).toBe('missed');
-    expect(deriveSessionStatus(run, [], false, { leave: [vacation('2026-11-30', '2026-12-06')] }).status).toBe('away');
-    expect(deriveSessionStatus(run, [], false, { leave: [vacation('2026-11-30', '2026-12-06', 'free_days')] }).status).toBe('missed');
-    expect(deriveSessionStatus(run, [done(run)], false, { leave: [vacation('2026-11-30', '2026-12-06')] }).status).toBe('completed');
+    expect(deriveSessionStatus(run, [], false, { leave: [vacation('2026-11-30', '2026-12-06')], templates }).status).toBe('away');
+    expect(deriveSessionStatus(run, [], false, { leave: [vacation('2026-11-30', '2026-12-06', 'free_days')], templates }).status).toBe('missed');
+    expect(deriveSessionStatus(run, [done(run)], false, { leave: [vacation('2026-11-30', '2026-12-06')], templates }).status).toBe('completed');
     vi.useRealTimers();
   });
 });
@@ -592,8 +594,9 @@ describe('een training die je op een zieke dag toch deed, telt mee', () => {
 
 describe('elke aanroeper die een voorbije dag toont geeft de pauze mee', () => {
   it('Week en WeekPlanner geven illness en leave mee aan deriveSessionStatus', () => {
+    // De kaart in Week telt met missedInWeek (engine/weekList.ts), die dezelfde pauze doorgeeft.
     for (const src of [weekPage, weekPlanner]) {
-      const calls = src.match(/deriveSessionStatus\([^;]*?\)\.status|deriveSessionStatus\([^;]*?\);/g) ?? [];
+      const calls = src.match(/deriveSessionStatus\([^;]*?\)\.status|deriveSessionStatus\([^;]*?\);|missedInWeek\([^;]*?\}\)/g) ?? [];
       expect(calls.length).toBeGreaterThan(0);
       for (const c of calls) expect(c).toMatch(/illness:/);
       for (const c of calls) expect(c).toMatch(/leave/);

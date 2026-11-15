@@ -18,7 +18,9 @@ const STATUS: Record<DisplayStatus, { color: string; label: string }> = {
   today: { color: 'var(--color-action)', label: 'Vandaag' },
   planned: { color: 'var(--color-ink-dim)', label: 'Gepland' },
   moved: { color: 'var(--color-status)', label: 'Verplaatst' },
-  skipped: { color: 'var(--color-danger-text)', label: 'Overgeslagen' },
+  // Overgeslagen is een keuze, geen fout: gedempt, zoals op Vandaag ("Eigen gewicht · overgeslagen") en bij een
+  // overgeslagen rustdag. Rood staat in de app voor iets dat misging.
+  skipped: { color: 'var(--color-ink-dim)', label: 'Overgeslagen' },
   missed: { color: 'var(--color-warning)', label: 'Gemist' },
   rest: { color: 'var(--color-ink-dim)', label: 'Rustdag' },
   away: { color: 'var(--color-ink-dim)', label: 'Vervallen' },

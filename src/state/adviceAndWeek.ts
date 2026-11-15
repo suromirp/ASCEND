@@ -134,6 +134,10 @@ export function useAdviceAndWeek(deps: {
     };
   }, []);
   const answeredAdviceIds = useMemo(() => new Set(Object.keys(adviceResponses)), [adviceResponses]);
+  const adviceSlotDays = useMemo(
+    () => patternDays(templates, { enabledSports: settings.enabledSports, sportFrequency: settings.sportFrequency, weekShape: settings.weekShape }, settings.restDay ?? 1),
+    [templates, settings.enabledSports, settings.sportFrequency, settings.weekShape, settings.restDay],
+  );
   const advice = useMemo(
     // Proposals you kept turning down come last (engine/learning.ts).
     () => learnFromDeclines([
@@ -160,6 +164,8 @@ export function useAdviceAndWeek(deps: {
         goalGrowth: resolveGrowthChoice(settings.goalGrowth),
         newTestOnStops: settings.newTestOnStops !== false,
         restDay: settings.restDay ?? 1,
+        // De dagen van je weekpatroon, zoals de weekcontrole in Week ze leest: het inhalen vraagt dezelfde controle.
+        slotDays: adviceSlotDays,
         restDayBack: settings.restDayBack !== false,
         fullWeekAsk: resolveFullWeekAsk(settings.fullWeekAsk),
         descentClock: descentClockContext(settings.descentClock, trainingGoals, goalMilestones, settings.leavePeriods, todayISO()),
@@ -182,7 +188,7 @@ export function useAdviceAndWeek(deps: {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, openDraftId, places, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction, settings.reentry, settings.reentryWeeks],
+    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, openDraftId, places, adviceResponses, adviceSlotDays, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction, settings.reentry, settings.reentryWeeks],
   );
 
   // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).
