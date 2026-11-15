@@ -192,21 +192,21 @@ describe('weekProgress met een training die naar later is gezet', () => {
 
   it('telt de oude rij niet als de nieuwe rij er staat', () => {
     const logs = [log('tpl_easy_run', '2026-10-20', 40, { plannedSessionId: run.id }), log('tpl_upper_a', '2026-10-22', 50, { plannedSessionId: moved.id })];
-    expect(weekProgress(all, logs, byId, leftOutOfCount(all, [], undefined, TODAY))).toEqual({ done: 2, total: 2 });
+    expect(weekProgress(all, logs, byId, leftOutOfCount(all, [], undefined, TODAY, undefined, { periods: undefined, loggedIds: new Set() }))).toEqual({ done: 2, total: 2 });
   });
 
   it('telt de nieuwe rij als open zolang die geen log heeft', () => {
     const logs = [log('tpl_easy_run', '2026-10-20', 40, { plannedSessionId: run.id })];
-    expect(weekProgress(all, logs, byId, leftOutOfCount(all, [], undefined, TODAY))).toEqual({ done: 1, total: 2 });
+    expect(weekProgress(all, logs, byId, leftOutOfCount(all, [], undefined, TODAY, undefined, { periods: undefined, loggedIds: new Set() }))).toEqual({ done: 1, total: 2 });
   });
 
   it('telt de oude rij weer als de nieuwe rij zelf is overgeslagen', () => {
     const skippedAgain = [run, old, { ...moved, status: 'skipped' as const }];
-    expect(weekProgress(skippedAgain, [], byId, leftOutOfCount(skippedAgain, [], undefined, TODAY)).total).toBe(3);
+    expect(weekProgress(skippedAgain, [], byId, leftOutOfCount(skippedAgain, [], undefined, TODAY, undefined, { periods: undefined, loggedIds: new Set() })).total).toBe(3);
   });
 
   it('een gewone overgeslagen training zonder nieuwe rij telt nog steeds als gepland en niet gedaan', () => {
     const plain = [run, old];
-    expect(weekProgress(plain, [], byId, leftOutOfCount(plain, [], undefined, TODAY))).toEqual({ done: 0, total: 2 });
+    expect(weekProgress(plain, [], byId, leftOutOfCount(plain, [], undefined, TODAY, undefined, { periods: undefined, loggedIds: new Set() }))).toEqual({ done: 0, total: 2 });
   });
 });

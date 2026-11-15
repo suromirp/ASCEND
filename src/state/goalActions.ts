@@ -173,8 +173,11 @@ export function useGoalActions(deps: {
     setSettings(next);
     bumpPlanRevision();
     await refresh();
+    // Was de instap al weg (een dubbele tik, of hij verliep intussen), dan is er niets teruggezet en staat er niets in
+    // het logboek: dan ook geen melding, want Ongedaan maken zou naar een regel verwijzen die niet bestaat.
+    if (!record) return;
     setRecentChange({
-      id: record?.id ?? makeId('reentry-undo'),
+      id: record.id,
       trigger: 'reentry_planned',
       title: REENTRY_UNDONE_TITLE,
       lines: [REENTRY_UNDONE_LINE],

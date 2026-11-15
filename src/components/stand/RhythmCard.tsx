@@ -49,7 +49,7 @@ export function RhythmSheet({ onClose }: { onClose: () => void }) {
               <p>Elke kolom is een week, elk stipje een geplande training.</p>
               <ul className="flex flex-col gap-1.5">
                 <li className="flex gap-2"><span aria-hidden>·</span><span>Mint is gedaan, grijs is niet gedaan, een open rondje komt deze week nog.</span></li>
-                <li className="flex gap-2"><span aria-hidden>·</span><span>Overslaan telt als niet gedaan. Ziek zijn, rustdagen en wat ASCEND uit je plan haalde tellen niet mee.</span></li>
+                <li className="flex gap-2"><span aria-hidden>·</span><span>Overslaan telt als niet gedaan. Ziek zijn, rustdagen en wat het advies uit je week haalde tellen niet mee.</span></li>
                 <li className="flex gap-2"><span aria-hidden>·</span><span>De coach op Ascend telt dezelfde vier weken. Deze week telt nog niet mee. De reeks telt trainingsdagen op rij die je deed.</span></li>
               </ul>
             </div>

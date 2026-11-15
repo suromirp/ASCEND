@@ -746,6 +746,6 @@ export function looksLikeText(l: LooksLike): { title: string; line: string } {
   const name = l.group.label ? l.group.name : l.group.name.charAt(0).toLowerCase() + l.group.name.slice(1);
   return {
     title: `Lijkt op je lopen bij ${name}`,
-    line: `Uit ${l.times} keer met die reden en ${l.otherTimes} keer zonder. Zeker weten doet ASCEND het niet.`,
+    line: `Uit ${l.times} keer met die reden en ${l.otherTimes} keer zonder. Zeker is het niet.`,
   };
 }

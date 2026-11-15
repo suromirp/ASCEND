@@ -67,11 +67,12 @@ export function leftOutOfCount(
   planChangeLog: readonly PlanChangeProposal[],
   illnessEpisodes: IllnessEpisode[] | undefined,
   asOf: string,
-  programStart?: string,
+  programStart: string | undefined,
   // Een vakantie, tocht of periode zonder sportschool die je zelf meldde (engine/leave.ts#isAwayDay): wat daar
   // stond en niet gedaan is, telt niet als gemist. Wat je er wel deed, telt gewoon mee als gedaan; zo ook op een
-  // zieke dag (`loggedIds` geldt voor beide, engine/sessionStatus.ts#isPausedDay).
-  away?: { periods: LeavePeriod[] | undefined; loggedIds: ReadonlySet<string | undefined> },
+  // zieke dag (`loggedIds` geldt voor beide, engine/sessionStatus.ts#isPausedDay). Verplicht: zonder loggedIds viel
+  // een gelogde training op een zieke dag stil uit de telling (Warden, 15 november).
+  away: { periods: LeavePeriod[] | undefined; loggedIds: ReadonlySet<string | undefined> },
 ): (id: string) => boolean {
   const removedBy = new Map<string, string>();
   for (const p of planChangeLog) {
@@ -84,13 +85,13 @@ export function leftOutOfCount(
   // als de weekterugblik.
   const movedOn = new Set<string>();
   for (const s of plannedSessions) if (s.catchUp?.fromId && s.status !== 'skipped') movedOn.add(s.catchUp.fromId);
-  const awayDays = away?.periods?.length ? leaveDays(away.periods) : undefined;
+  const awayDays = away.periods?.length ? leaveDays(away.periods) : undefined;
   return (id) => {
     const s = byId.get(id);
     if (!s) return false;
     if (programStart && s.scheduledDate < programStart) return true;
-    if (illnessEpisodes && !away?.loggedIds.has(s.id) && isIllnessDay(s.scheduledDate, illnessEpisodes, asOf)) return true;
-    if (awayDays && !away!.loggedIds.has(s.id) && isAwayDay(s.scheduledDate, away!.periods, awayDays)) return true;
+    if (illnessEpisodes && !away.loggedIds.has(s.id) && isIllnessDay(s.scheduledDate, illnessEpisodes, asOf)) return true;
+    if (awayDays && !away.loggedIds.has(s.id) && isAwayDay(s.scheduledDate, away.periods, awayDays)) return true;
     if (s.status !== 'skipped') return false;
     if (movedOn.has(id)) return true;
     const trigger = removedBy.get(id);

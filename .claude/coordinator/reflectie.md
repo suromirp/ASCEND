@@ -9,6 +9,12 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 05:40 Portugal (15 november)
+- Op claude/nacht: afbreker, horloge, routes-vorm, logboek, planner (gemist, ziek, randen), M2, instellingen stap 0 tot 2, zonder ASCEND ronde 1 en 2. Lookout over de hele nacht: groen.
+- Tegengehouden door de poorten: routes wandelen (getal kwam niet aan in de app), G (eigenaar zou stil zijn tent verliezen), R (afbouw klapte om). Alle drie gevonden door Warden of Lookout, niet door de tests.
+- Les: een test op de engine bewijst niet dat de component het doorgeeft; Lookout op het echte scherm blijft nodig.
+- Instellingen stap 2 maakt de startlading 4% groter tot stap 3.
+
 ## 00:45 Portugal (15 november)
 - Goed: Afbreker op claude/nacht na alle poorten; horloge, routes en logboek in één proefmerge (scheelt drie keer tien minuten controles).
 - Fout van mij: aangenomen dat bouwers zich niet kunnen melden; twee deden het wel. Vangnet van een half uur blijft.

@@ -13,7 +13,7 @@ export function IndexCheckCard({ checks }: { checks: IndexCheck[] }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        Je benen bij het inlopen naast wat de index die ochtend zei. ASCEND vraagt ernaar na een harde loop of test.
+        Je benen bij het inlopen naast wat de index die ochtend zei. De vraag komt na een harde loop of test.
       </p>
       {checks.length === 0 ? (
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>

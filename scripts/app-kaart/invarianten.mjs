@@ -28,7 +28,7 @@ const alle = (t, re) => [...t.matchAll(re)];
 // "Het" als verwijzing naar de app telt niet mee: dat is zonder zinsbouw niet te scheiden van "het regent" of
 // "het lukt", en een valse telling zou het plafond onbetrouwbaar maken.
 // De telling loopt over elk scherm in de map, dus nieuwe schermen (zoals de instellingenschermen) tellen vanzelf mee.
-export const PLAFOND_ASCEND_ONDERWERP = 12;
+export const PLAFOND_ASCEND_ONDERWERP = 11;
 const WERKWOORDEN = new Set(['kan', 'kon', 'mag', 'mocht', 'zal', 'zou', 'wil', 'wilde', 'moet', 'is', 'was', 'heeft', 'had', 'vond', 'deed', 'ging', 'zag', 'wist', 'nam', 'gaf', 'bleef', 'zet', 'weet', 'ziet', 'doet', 'gaat', 'staat', 'laat', 'houdt', 'vraagt', 'plant', 'kiest', 'leert', 'legt', 'zoekt', 'rekent', 'schat', 'bouwt', 'stelt']);
 const GEEN_WERKWOORD = new Set(['niet', 'dat', 'met', 'tot', 'het', 'wat', 'uit', 'ooit', 'net', 'want', 'licht', 'recht', 'echt', 'meest', 'best', 'eerst', 'laatst', 'vast', 'toest', 'altijd', 'pas']);
 const VOEGWOORDEN = new Set(['die', 'dat', 'wat', 'als', 'zodat', 'omdat', 'waarmee', 'waarin', 'waarop', 'waar', 'terwijl', 'tenzij', 'of', 'voordat', 'nadat', 'zodra']);
@@ -391,12 +391,42 @@ export const INVARIANTEN = [
       return [];
     },
   },
+  {
+    // Vervallen heeft één bron (besluit 2026-11-15-vervallen-een-bron.md, engine/sessionStatus.ts#isPausedDay): wat de
+    // kaart Vervallen op een vandaag-scherm noemt, heet op het week-scherm van dezelfde stand nergens gemist. Ziek vanaf
+    // 13 november noemde de kaart eerst ook de dagen ervoor, terwijl Week die terecht gemist noemde (Warden, 15 november).
+    naam: 'Vervallen op Vandaag heet in Week van dezelfde stand nergens gemist',
+    controleer: (k, schermen) => {
+      const uit = [];
+      let getoetst = 0;
+      const kort = { maandag: 'Ma', dinsdag: 'Di', woensdag: 'Wo', donderdag: 'Do', vrijdag: 'Vr', zaterdag: 'Za', zondag: 'Zo' };
+      const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      for (const v of schermen.filter((x) => x === 'vandaag' || x.startsWith('vandaag-'))) {
+        const w = v === 'vandaag' ? 'week' : `week-${v.slice('vandaag-'.length)}`;
+        if (!schermen.includes(w)) continue;
+        const regel = k(v).match(/^(.+) (?:vervalt|vervallen): je meldde .*$/m);
+        if (!regel) continue;
+        getoetst++;
+        const week = k(w);
+        const items = alle(regel[1], /(?:^|, | en )(.+?) van (maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag) (\d{1,2}) [a-z]+/g);
+        if (items.length === 0) uit.push(`${v}: de kaart Vervallen noemt geen training die te lezen is`);
+        for (const [, naam, dag, nr] of items) {
+          const rij = new RegExp(`^\\[knop: ${esc(naam)}${kort[dag]} ${nr}·.*gemist.*\\]$`, 'im');
+          if (rij.test(week)) uit.push(`${v} noemt ${naam} van ${dag} ${nr} vervallen, ${w} noemt hem gemist`);
+        }
+      }
+      // Nooit stil leeg: zonder een vandaag-scherm met een regel Vervallen toetst deze invariant niets. De stand
+      // ziek-eerder (ziek vanaf twee dagen terug, met trainingen ervoor en erin) levert die regel.
+      if (getoetst === 0) uit.push('geen enkel vandaag-scherm met een week-scherm erbij heeft een regel Vervallen: de invariant toetst niets (stand ziek-eerder ontbreekt of de kaart is weg)');
+      return uit;
+    },
+  },
 ];
 
 const SCHERMEN = [
   'vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad', 'briefing', 'briefing-heuvel', 'briefing-loopband-helling', 'briefing-stairmaster', 'briefing-loopband',
   'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'vandaag-avond', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
-  'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek',
+  'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek', 'vandaag-ziek-eerder', 'week-ziek-eerder',
   'ascend-algemeen', 'ascend-vaardigheid', 'weekterugblik-voorstel', 'stand-benen', 'stand-belasting', 'stand-ritme', 'stand-lopen', 'stand-invloed',
   'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek', 'week-aangepast', 'week-aangepast-blad', 'logboek-herstel',
 ];

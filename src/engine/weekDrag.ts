@@ -124,7 +124,7 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
 
     if (kept === 'rest') {
       const reason = 'Dit is je rustdag. Een rustdag is er om te herstellen.';
-      return { date, kind: 'rest', droppable: true, tone: 'warn', chip: 'Je rustdag', line: `${day}. Dit is je rustdag. Als je loslaat, vraagt ASCEND eerst of je dat echt wilt.`, ask: true, askReason: reason };
+      return { date, kind: 'rest', droppable: true, tone: 'warn', chip: 'Je rustdag', line: `${day}. Dit is je rustdag. Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: reason };
     }
 
     const simulated = ctx.sessions.map((s) => (s.id === sessionId ? { ...s, scheduledDate: date } : s));
@@ -161,7 +161,7 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
       if (!normal && !fitsWhenAsked(date)) {
         const never = ctx.sameDayPairingPreference === 'never';
         const reason = never ? 'Je wilt geen twee trainingen op één dag.' : `Samen ${total} min, meer dan je die dag wilt trainen.`;
-        return { date, kind: 'tight', droppable: true, tone: 'warn', chip: fit('Meer dan je wilt', 'Dag wordt druk'), line: `${day}. ${reason} Als je loslaat, vraagt ASCEND eerst of je dat echt wilt.`, ask: true, askReason: reason };
+        return { date, kind: 'tight', droppable: true, tone: 'warn', chip: fit('Meer dan je wilt', 'Dag wordt druk'), line: `${day}. ${reason} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: reason };
       }
       const dayAdvice = dayOrder(
         [...others.filter((s) => s.scheduledDate === date), { ...session, scheduledDate: date }],
