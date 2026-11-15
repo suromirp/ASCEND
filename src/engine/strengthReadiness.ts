@@ -116,8 +116,8 @@ function noteOf(reads: ExerciseRead[], growth: GrowthChoice): string | undefined
     if (list.length === 0) continue;
     const pct = formatNumberNL(growthPer(STRENGTH_GROWTH[level], growth) * 100, 2);
     parts.push(level === 'ervaren'
-      ? `Voor het tempo rekent ASCEND met ervaren (${pct}% per week) voor ${list.map((r) => r.exercise).join(' en ')}, omdat je die oefening al meer dan twee jaar logt.`
-      : `Voor het tempo rekent ASCEND met gevorderd (${pct}% per week) voor ${list.map((r) => r.exercise).join(' en ')}: je geschiedenis daarop is korter dan twee jaar, en ASCEND gaat dan niet uit van beginnerswinst. Begin je net, dan gaat het sneller.`);
+      ? `Voor het tempo geldt ervaren (${pct}% per week) voor ${list.map((r) => r.exercise).join(' en ')}, omdat je die oefening al meer dan twee jaar logt.`
+      : `Voor het tempo geldt gevorderd (${pct}% per week) voor ${list.map((r) => r.exercise).join(' en ')}: je geschiedenis daarop is korter dan twee jaar, en dan telt er geen beginnerswinst. Begin je net, dan gaat het sneller.`);
   }
   const weeks = reads.filter((r) => r.weeks > 0).map((r) => `${r.exercise} ${weeksWorkSaid(r.weeks)}`);
   if (weeks.length > 0) parts.push(`Bij ${growth === 'careful' ? 'voorzichtige' : 'gemiddelde'} groei: ${weeks.join(', ')}. Een schatting, geen voorspelling.`);

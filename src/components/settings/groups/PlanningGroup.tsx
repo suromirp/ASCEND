@@ -71,7 +71,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
       </SettingsSection>
 
       <SettingsSection
-        title="Hoe ASCEND plant"
+        title="Hoe je planning werkt"
         advancedTitles="Training die niet doorging, Beenkracht de dag na de lange duurloop, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie, Zones bijwerken na een test"
         advanced={
           <>
@@ -103,7 +103,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
       )}
       {sheet === 'bundel-niet-doorgegaan' && (
         <BundleSheet eyebrow="Planning" title="Training die niet doorging" line="Een training die voorbij is zonder log." onClose={close}>
-          <SummaryRow id="niet-doorgegaan" title="Wat ASCEND doet" facts={facts} info="nietDoorgegaan" onClick={() => setInner('niet-doorgegaan')} />
+          <SummaryRow id="niet-doorgegaan" title="Wat er gebeurt" facts={facts} info="nietDoorgegaan" onClick={() => setInner('niet-doorgegaan')} />
           {rowShown('niet-doorgegaan-dagen', facts) && <SummaryRow id="niet-doorgegaan-dagen" title="Na hoeveel dagen" facts={facts} onClick={() => setInner('niet-doorgegaan-dagen')} />}
           <SummaryRow id="log-koppelen" title="Log op een andere dag koppelen" facts={facts} onChange={(on) => void updateSettings({ missedLink: on })} />
         </BundleSheet>
@@ -195,7 +195,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         </BundleSheet>
       )}
       {sheet === 'bundel-testloop' && (
-        <BundleSheet eyebrow="Planning" title="Testloop" line="Hoe ASCEND een test leest en plant." onClose={close}>
+        <BundleSheet eyebrow="Planning" title="Testloop" line="Hoe een test gelezen en gepland wordt." onClose={close}>
           <SummaryRow id="twijfeltest" title="Twijfeltest eerst vragen" facts={facts} info="twijfeltest" onChange={(on) => void updateSettings({ askDoubtTest: on })} />
           <SummaryRow id="test-stilstaan" title="Stilstaan bij een testloop" facts={facts} info="testStilstaan" onClick={() => setInner('test-stilstaan')} />
           <SummaryRow id="nieuwe-test" title="Nieuwe test voorstellen bij stilstand" facts={facts} info="nieuweTest" onChange={(on) => void updateSettings({ newTestOnStops: on })} />

@@ -142,7 +142,7 @@ export function bootStuckLines(step: BootStep, migration: string | null | undefi
 // The advice when the storage does not answer, also for Back-up maken.
 export function storageSilentAdvice(): string[] {
   return [
-    'De opslag van ASCEND antwoordt niet. ASCEND staat waarschijnlijk nog ergens anders open of is vastgelopen.',
+    'De opslag antwoordt niet. Waarschijnlijk staat er nog een ander venster open, of is iets vastgelopen.',
     'Sluit alle ASCEND-tabbladen in Chrome en kies in je telefooninstellingen Apps, Chrome, Geforceerd stoppen. Open ASCEND daarna opnieuw. Je gegevens blijven staan.',
   ];
 }

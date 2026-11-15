@@ -556,7 +556,7 @@ function pacePattern(p: Pacing | undefined, inBest: boolean): RunPattern | undef
       strength: p.firstFastPct / PACING.fastStartPct,
       why: {
         compared: 'Je eerste kilometer tegen het gemiddelde van de hele loop, en de twee helften tegen elkaar.',
-        strength: `${GPS_NOTE} Dit verschil is ${Math.round(p.firstFastPct)} procent. Vanaf ${PACING.fastStartPct} procent noemt ASCEND het een snelle start.`,
+        strength: `${GPS_NOTE} Dit verschil is ${Math.round(p.firstFastPct)} procent. Vanaf ${PACING.fastStartPct} procent heet het een snelle start.`,
         meaning: 'Een start die te snel is kost meestal meer dan hij oplevert. Gelijkmatig lopen is meestal het snelst. De grens is te ijken op jouw gegevens.',
       },
     };
@@ -568,7 +568,7 @@ function pacePattern(p: Pacing | undefined, inBest: boolean): RunPattern | undef
       strength: p.sag.pct / PACING.sagPct,
       why: {
         compared: 'Elke kilometer vanaf de derde tegen het gemiddelde van de loop.',
-        strength: `${GPS_NOTE} Dit verschil is ${Math.round(p.sag.pct)} procent. Vanaf ${PACING.sagPct} procent noemt ASCEND het inzakken.`,
+        strength: `${GPS_NOTE} Dit verschil is ${Math.round(p.sag.pct)} procent. Vanaf ${PACING.sagPct} procent heet het inzakken.`,
         meaning: 'Inzakken kan van een te snelle start komen, maar ook van vermoeidheid van die dag.',
       },
     };
@@ -580,7 +580,7 @@ function pacePattern(p: Pacing | undefined, inBest: boolean): RunPattern | undef
       strength: Math.abs(p.halfSlowPct) / PACING.halfPct,
       why: {
         compared: 'De eerste helft van de afstand tegen de tweede.',
-        strength: `Vanaf ${PACING.halfPct} procent noemt ASCEND het een sterkere tweede helft. Dit verschil is ${Math.round(Math.abs(p.halfSlowPct))} procent.`,
+        strength: `Vanaf ${PACING.halfPct} procent heet het een sterkere tweede helft. Dit verschil is ${Math.round(Math.abs(p.halfSlowPct))} procent.`,
         meaning: 'Je had aan het eind nog over. Bij een test kan dat betekenen dat je iets sneller kunt beginnen.',
       },
     };
@@ -605,7 +605,7 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
         strength: fade.slowerPct / 4,
         why: {
           compared: `Je laatste werkblok tegen je eerste, van ${fade.blocks} blokken.`,
-          strength: `${GPS_NOTE} Dit verschil is ${Math.round(fade.slowerPct)} procent. Vanaf 4 procent noemt ASCEND het.`,
+          strength: `${GPS_NOTE} Dit verschil is ${Math.round(fade.slowerPct)} procent. Vanaf 4 procent staat het hier.`,
           meaning: 'Het laatste blok even snel als het eerste is het doel van een tempoloop.',
         },
       });
@@ -621,7 +621,7 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
         strength: drift.percent / NOISE.driftPoints,
         why: {
           compared: `Je tempo per hartslag in de tweede helft tegen de eerste, over ${drift.blockMinutes} minuten zonder de eerste tien.`,
-          strength: `De drift is ${nl(drift.percent)} procent. Vanaf ${NOISE.driftPoints} procent zegt ASCEND er iets over.`,
+          strength: `De drift is ${nl(drift.percent)} procent. Vanaf ${NOISE.driftPoints} procent staat het hier.`,
           meaning: 'Een hartslag die oploopt bij gelijk tempo kan van warmte, te weinig drinken of vermoeidheid komen. De grens is een richtlijn van coaches, geen meting.',
         },
       });
@@ -638,7 +638,7 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
         strength: pc / NOISE.stancePct,
         why: {
           compared: 'Je grondcontact in het eerste derde van de kilometers tegen het laatste derde, alleen als het tempo binnen 6 procent bleef.',
-          strength: `Het verschil is ${Math.round(pc)} procent. Vanaf ${NOISE.stancePct} procent zegt ASCEND er iets over.`,
+          strength: `Het verschil is ${Math.round(pc)} procent. Vanaf ${NOISE.stancePct} procent staat het hier.`,
           meaning: 'Een langer grondcontact bij hetzelfde tempo kan op vermoeidheid wijzen, maar dat verschilt sterk per persoon.',
         },
       });
@@ -650,7 +650,7 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
         strength: -f.change / 0.03,
         why: {
           compared: 'Je staplengte in het eerste derde van de kilometers tegen het laatste derde, alleen als het tempo binnen 6 procent bleef.',
-          strength: `Het verschil is ${Math.round(-f.change * 100)} cm. Vanaf 3 cm zegt ASCEND er iets over.`,
+          strength: `Het verschil is ${Math.round(-f.change * 100)} cm. Vanaf 3 cm staat het hier.`,
           meaning: 'Een kortere pas bij hetzelfde tempo kan op vermoeide benen wijzen.',
         },
       });
@@ -699,7 +699,7 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
       strength: 1 + ctx.recurring.count / 10,
       why: {
         compared: 'De verdeling van je laatste tests, wedstrijden en lopen met blokken.',
-        strength: `Vanaf 3 van de laatste 5 noemt ASCEND het een gewoonte.`,
+        strength: `Vanaf 3 van de laatste 5 heet het een gewoonte.`,
         meaning: 'Een gewoonte is makkelijker te veranderen als je hem kent. De grens is een eigen aanname.',
       },
     });
@@ -715,7 +715,7 @@ export function runPatterns(rd: RunDetail, ctx: PatternContext): RunPattern[] {
         text: f.text,
         strength: 1,
         why: {
-          compared: 'Wat ASCEND van die dag weet: het weer, je benen, wat je meldde en de reeks zelf.',
+          compared: 'Wat er van die dag bekend is: het weer, je benen, wat je meldde en de reeks zelf.',
           strength: 'Een feit, geen oordeel.',
           meaning: 'Een test onder zwaardere omstandigheden geeft meestal tragere tempo\'s. Dat is de veilige kant op.',
         },
@@ -775,7 +775,7 @@ export function runAdvice(rd: RunDetail, kind: RunKind, opts: { pain?: boolean; 
     if (!opts.indoor && km > 0 && climb / km > HILLY_M_PER_KM) lines.push(`Kies voor je volgende test een vlakkere route; deze had ${Math.round(climb / km)} meter stijging per kilometer.`);
     if (lines.length === 0 && a?.kind === 'even') lines.push('Gelijkmatig gelopen. Houd dezelfde aanpak bij je volgende test.');
     return lines.length > 0
-      ? { title: 'Voor de volgende test', lines: lines.slice(0, 2), why: 'Uit de verdeling van je test en wat ASCEND van die dag weet. Gelijkmatig lopen is meestal het snelst. Hoeveel sneller jij dan bent, zegt niemand vooraf.' }
+      ? { title: 'Voor de volgende test', lines: lines.slice(0, 2), why: 'Uit de verdeling van je test en wat er van die dag bekend is. Gelijkmatig lopen is meestal het snelst. Hoeveel sneller jij dan bent, zegt niemand vooraf.' }
       : undefined;
   }
   if (kind === 'blocks') {

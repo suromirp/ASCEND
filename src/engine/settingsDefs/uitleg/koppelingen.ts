@@ -15,7 +15,7 @@ export const KOPPELINGEN_UITLEG: Record<string, SettingsHelp> = {
   },
   'bundel-horloge-gebruik': {
     title: 'Gebruik van je horloge',
-    lead: 'Per soort gegeven of ASCEND het ophaalt.',
+    lead: 'Per soort gegeven of het opgehaald wordt.',
     points: [
       { head: 'Uit', text: 'betekent: niet ophalen en niet bewaren.' },
       { head: 'Health Connect', text: 'de keuzes gelden ook daarvoor. Staat Health Connect aan, dan heet deze rij Gebruik van je gegevens.' },
@@ -27,7 +27,7 @@ export const KOPPELINGEN_UITLEG: Record<string, SettingsHelp> = {
     points: [
       { head: 'Alleen', text: 'dezelfde dag, één geplande training van dezelfde soort en ongeveer even lang.' },
       { head: 'Nooit', text: 'een test of wedstrijd. Die vink je zelf af.' },
-      { head: 'Daarna', text: 'vraagt ASCEND hoe het ging. Met Klopt niet haal je het weg.' },
+      { head: 'Daarna', text: 'komt de vraag hoe het ging. Met Klopt niet haal je het weg.' },
     ],
   },
   'garmin-leidend': {
@@ -41,7 +41,7 @@ export const KOPPELINGEN_UITLEG: Record<string, SettingsHelp> = {
   },
   'correcties-overnemen': {
     title: 'Correcties uit intervals.icu overnemen',
-    lead: 'Knip je in intervals.icu een stuk van een training af, of corrigeer je de hoogtemeters of de afstand, dan neemt ASCEND dat over.',
+    lead: 'Knip je in intervals.icu een stuk van een training af, of corrigeer je de hoogtemeters of de afstand, dan wordt dat overgenomen.',
     points: [
       { head: 'Overgenomen', text: 'duur, afstand, stijging, daling, hartslag en cadans, alleen als ze in intervals.icu veranderden.' },
       { head: 'Blijft staan', text: 'gevoel, inspanning, pijn, notities, je rugzak, je krachtsets en de koppeling aan je planning. Een inkorting in ASCEND ook: het logboek vraagt dan of je de nieuwe cijfers wilt.' },
@@ -50,7 +50,7 @@ export const KOPPELINGEN_UITLEG: Record<string, SettingsHelp> = {
   },
   'horloge-stil': {
     title: 'Melden als je horloge stilvalt',
-    lead: 'Geeft intervals.icu niets meer door, dan zie je geen foutmelding: het ophalen lukt, er komt alleen niets mee. ASCEND meldt dat.',
+    lead: 'Geeft intervals.icu niets meer door, dan zie je geen foutmelding: het ophalen lukt, er komt alleen niets mee. Daar komt een melding van.',
     points: [
       { head: 'Wanneer', text: 'drie dagen geen ochtendgetallen, of geen training terwijl je er wel een invulde, en de koppeling zelf werkt.' },
       { head: 'Waar', text: 'één zin op Vandaag. Een tik opent de koppeling, Begrepen verbergt hem tot het opnieuw gebeurt.' },
@@ -59,14 +59,14 @@ export const KOPPELINGEN_UITLEG: Record<string, SettingsHelp> = {
   },
   'bundel-horloge-sturen': {
     title: 'Trainingen naar je horloge',
-    lead: 'ASCEND zet ze in je intervals.icu-agenda en Garmin brengt ze naar je horloge.',
+    lead: 'Ze komen in je intervals.icu-agenda en Garmin brengt ze naar je horloge.',
     points: [
       { head: 'Komende week', text: 'de trainingen van de komende week staan er.' },
     ],
   },
   'horloge-voorvoegsel': {
     title: 'Voorvoegsel voor de naam',
-    lead: 'Standaard ASC voor de naam, of ASCEND, of niets. Zo herken je de trainingen van ASCEND op je horloge.',
+    lead: 'Voor de naam standaard ASC, anders de hele naam ASCEND, of niets. Zo herken je de trainingen van ASCEND op je horloge.',
     points: [
       { head: 'Geen', text: 'dan staat de naam van de training er alleen.' },
     ],
@@ -75,8 +75,8 @@ export const KOPPELINGEN_UITLEG: Record<string, SettingsHelp> = {
     title: 'Hartslag op je horloge',
     lead: 'Bij een hartslagdoel krijgt je horloge slagen, uit de zones van ASCEND of uit die van intervals.icu.',
     points: [
-      { head: 'ASCEND', text: 'je horloge piept op dezelfde slagen als waarmee ASCEND de training achteraf beoordeelt.' },
-      { head: 'intervals.icu', text: 'ASCEND stuurt de zonenaam en intervals.icu rekent die om met zijn eigen drempel. Dat kan anders uitkomen.' },
+      { head: 'ASCEND', text: 'je horloge piept op dezelfde slagen als waarmee de training achteraf beoordeeld wordt.' },
+      { head: 'intervals.icu', text: 'Alleen de zonenaam gaat mee en intervals.icu rekent die om met zijn eigen drempel. Dat kan anders uitkomen.' },
       { head: 'Rustige loop', text: 'de grens loopt van het begin van zone 1 tot het einde van zone 2. Zonder drempel of maximale hartslag blijft het bij de zonenaam.' },
     ],
   },
@@ -112,11 +112,11 @@ export const KOPPELINGEN_UITLEG: Record<string, SettingsHelp> = {
   },
   'health-connect': {
     title: 'Health Connect',
-    lead: 'In de Android-app leest ASCEND je trainingen, slaap, rusthartslag, HRV en gewicht uit Health Connect, als je dat aanzet.',
+    lead: 'In de Android-app komen je trainingen, slaap, rusthartslag, HRV en gewicht uit Health Connect, als je dat aanzet.',
     points: [
-      { head: 'Toestemming', text: 'Android vraagt pas als je het aanzet. ASCEND vraagt alleen leesrechten en schrijft nooit iets in Health Connect. Wat je bij Gebruik van je gegevens uitzet, haalt ASCEND ook hier niet op.' },
+      { head: 'Toestemming', text: 'Android vraagt pas als je het aanzet. Alleen leesrechten, en er komt nooit iets in Health Connect. Wat je bij Gebruik van je gegevens uitzet, wordt ook hier niet opgehaald.' },
       { head: 'Met intervals.icu', text: 'intervals.icu gaat voor. Health Connect vult alleen aan wat ontbreekt. Ophalen gebeurt bij het openen van de app, hoogstens elke drie uur.' },
-      { head: 'Je planning', text: 'verandert er niet door. Een training wordt pas een log als je hem op Vandaag opslaat. Uit haalt wat ASCEND ophaalde van je telefoon. Je logs blijven staan.' },
+      { head: 'Je planning', text: 'verandert er niet door. Een training wordt pas een log als je hem op Vandaag opslaat. Uit haalt wat al opgehaald was van je telefoon. Je logs blijven staan.' },
     ],
   },
   macrofactor: {
@@ -132,24 +132,24 @@ export const KOPPELINGEN_UITLEG: Record<string, SettingsHelp> = {
     points: [
       { head: 'Overgenomen', text: 'duur, oefeningen, sets en herhalingen in reserve.' },
       { head: 'Blijft staan', text: 'gevoel, inspanning, pijn en notities.' },
-      { head: 'Uit', text: 'ASCEND vult alleen aan wat nog leeg is.' },
+      { head: 'Uit', text: 'Alleen wat nog leeg is, wordt aangevuld.' },
     ],
   },
   'bundel-strava': {
     title: 'Tekst voor Strava',
-    lead: 'ASCEND zet een titel klaar die zegt wat voor training het was. Je plakt hem zelf in Strava.',
+    lead: 'Er staat een titel klaar die zegt wat voor training het was. Je plakt hem zelf in Strava.',
     points: [
       { head: 'Wat', text: 'een titel zoals Heuvelintervallen · 6 × 90 s, en als je wilt één regel waarom. Geen afstand, totale tijd of tempo: die toont Strava al.' },
       { head: 'Waar', text: 'bij een gedane training in het logboek en in de vraag erna op Vandaag.' },
-      { head: 'Zelf plakken', text: 'ASCEND schrijft niet naar Strava. Daar is een server voor nodig.' },
+      { head: 'Zelf plakken', text: 'Niets gaat vanzelf naar Strava. Daar is een server voor nodig.' },
     ],
   },
   datavelden: {
     title: 'Datavelden voor je horloge',
-    lead: 'ASCEND tekent per soort training welke datapagina\'s je op je horloge zet. Er verandert niets aan je planning.',
+    lead: 'Per soort training staat welke datapagina\'s je op je horloge zet. Er verandert niets aan je planning.',
     points: [
       { head: 'Zelf kiezen', text: 'tik een veld aan en kies een ander. Het advies zelf blijft staan.' },
-      { head: 'Zelf instellen', text: 'ASCEND stuurt niets naar je horloge.' },
+      { head: 'Zelf instellen', text: 'Er gaat niets naar je horloge.' },
       { head: 'Bij een training', text: 'onder Horloge op het trainingsscherm staan ze als tekst.' },
     ],
   },

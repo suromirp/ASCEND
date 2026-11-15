@@ -104,7 +104,7 @@ export function StorageSheet({ onChanged, onClose }: { onChanged: () => void; on
     >
       {status === 'not_protected' && (
         <>
-          <p className="st-hint" style={{ marginLeft: 0 }}>Zet ASCEND op je beginscherm (in Safari: Deel, Zet op beginscherm) en maak regelmatig een back-up.</p>
+          <p className="st-hint" style={{ marginLeft: 0 }}>Zet de app op je beginscherm (in Safari: Deel, Zet op beginscherm) en maak regelmatig een back-up.</p>
           <div className="st-btns">
             <button type="button" className="st-btn" onClick={() => void requestPersistentStorage().then((s) => { setStatus(s); onChanged(); })}>Opnieuw vragen</button>
           </div>
@@ -202,7 +202,7 @@ export function SnapshotsSheet({ onChanged, onClose }: { onChanged: () => void; 
 
   return (
     <Sheet eyebrow="Gegevens en back-up" title="Kopieën van voor een import" line="Zet er een terug om een import ongedaan te maken." onClose={onClose}>
-      {snapshots && snapshots.length === 0 && <p className="st-hint" style={{ marginLeft: 0 }}>Nog geen kopieën. Vlak voor elke import bewaart ASCEND je gegevens.</p>}
+      {snapshots && snapshots.length === 0 && <p className="st-hint" style={{ marginLeft: 0 }}>Nog geen kopieën. Vlak voor elke import worden je gegevens bewaard.</p>}
       {snapshots && snapshots.length > 0 && (
         <SettingsList>
           {snapshots.map((s) => {
@@ -266,7 +266,7 @@ export function VersionSheet({ onClose }: { onClose: () => void }) {
 // Startniveau zelf invullen: meestal niet nodig, ASCEND vraagt zelf wat nog ontbreekt.
 export function BaselineSheet({ onClose }: { onClose: () => void }) {
   return (
-    <Sheet eyebrow="Gegevens en back-up" title="Startniveau" line="Meestal niet nodig. ASCEND vraagt het zelf." onClose={onClose}>
+    <Sheet eyebrow="Gegevens en back-up" title="Startniveau" line="Meestal niet nodig. De vraag komt vanzelf." onClose={onClose}>
       <BaselineEvidenceCard />
     </Sheet>
   );
@@ -294,7 +294,7 @@ export function RebuildSheet({ onClose }: { onClose: () => void }) {
           {busy ? 'Bezig' : 'Nu berekenen'}
         </button>
       </div>
-      {done && <p className="st-hint" style={{ marginLeft: 0 }} role="status">ASCEND heeft opnieuw gekeken. Nieuwe adviezen verschijnen zodra er iets is.</p>}
+      {done && <p className="st-hint" style={{ marginLeft: 0 }} role="status">Opnieuw gekeken. Nieuwe adviezen verschijnen zodra er iets is.</p>}
     </Sheet>
   );
 }

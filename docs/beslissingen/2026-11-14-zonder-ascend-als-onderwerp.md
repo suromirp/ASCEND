@@ -54,3 +54,15 @@ Plafond na ronde 2: 11 (was 12). De elf: de kaart Vervallen op Vandaag, Gegevens
 ## Aanvulling, ronde 2 na Pathfinder (15 november)
 
 Twee zinnen in `weekValidator.ts` die de telling niet zag ("dan ASCEND graag ziet", "een harde training van ASCEND") zijn herschreven. "Je planning houdt er rekening mee" las als personificatie: bij een vrije periode of tocht staat nu "Voorstellen houden er rekening mee". Bij inhalen en de rustdag is het voorstel weer het onderwerp, of "je" ("Je haalt hoogstens één training in"). Plafond: 11, ongewijzigd; geen van deze zinnen staat in de tekstkaart.
+
+## Aanvulling, ronde 3 (15 november)
+
+Instellingen en de rest van de app: de uitleg achter de i (`settingsDefs/uitleg/`), de verklaringen, keuzes en voorwaarden in `settingsDefs/`, `settingsSummary`, de groepspagina's en bladen in `components/settings/`, de Garmin- en MacroFactor-pagina's, Forge, opslag en back-up, de koppelingen (`integrations/`), de overige engine-teksten en componenten, en de kaart Vervallen (`missedTraining.ts`). Ongeveer 440 zinnen herschreven, het feit voorop en zonder onderwerp, elk feit gelijk. Wat de planning verandert zegt nog steeds "als voorstel" of "na Akkoord". Geen we-vorm; "de app" staat hoogstens als lijdend voorwerp of plaats ("Chrome wekt de app", "in de Android-app").
+
+Twee titels zijn hernoemd: "Wat ASCEND doet" heet "Wat er gebeurt", en "ASCEND naast MacroFactor" heet "Voorstel naast MacroFactor" (definitie, uitleg en advies gelijk). De keuze "Wat ASCEND weet" bij Mogelijke oorzaak heet "Wat bekend is". De zoekwoorden volgen de nieuwe tekst, dus "ascend" vindt minder instellingen dan eerst.
+
+Blijven staan: de toestemmingen van de telefoon ("Wat je telefoon ASCEND toestaat"), de map Documents > ASCEND, het merk en ASCEND als plaats of bezit ("in ASCEND", "van ASCEND", "de site van ASCEND", "ASCEND-tabbladen"), de keuze "Zones van ASCEND" en het voorvoegsel ASCEND voor je horloge.
+
+De foto van de instellingen is bewust opnieuw gemaakt: alleen tekst en de zoekindex die daaruit volgt veranderden. De tests die op de oude tekst toetsten zijn bijgewerkt.
+
+Plafond na ronde 3: 0 (was 11). Over alle tekst in `src/` buiten tests en opmerkingen telt de toets ook 0 (was 428).

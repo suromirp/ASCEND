@@ -37,9 +37,9 @@ const MESSAGES: Record<HealthConnectErrorKind, string> = {
   web: 'Health Connect werkt alleen in de Android-app van ASCEND.',
   'not-installed': 'Health Connect staat niet op deze telefoon. Installeer het uit de Play Store en zet het daarna hier aan.',
   'needs-update': 'Health Connect moet eerst worden bijgewerkt in de Play Store.',
-  denied: 'ASCEND mag Health Connect niet meer lezen. Zet het uit en weer aan om het opnieuw te vragen, of sta het toe in Health Connect zelf.',
-  timeout: 'Health Connect gaf niet op tijd antwoord. ASCEND probeert het straks opnieuw.',
-  failed: 'Ophalen uit Health Connect lukte niet. ASCEND probeert het straks opnieuw.',
+  denied: 'Geen toegang meer tot Health Connect. Zet het uit en weer aan om het opnieuw te vragen, of sta het toe in Health Connect zelf.',
+  timeout: 'Health Connect gaf niet op tijd antwoord. Straks volgt een nieuwe poging.',
+  failed: 'Ophalen uit Health Connect lukte niet. Straks volgt een nieuwe poging.',
 };
 
 export class HealthConnectError extends Error {

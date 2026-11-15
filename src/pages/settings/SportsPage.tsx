@@ -100,7 +100,7 @@ export function SportsPage() {
         </button>
         <h1 className="st-title">Sporten</h1>
       </SkyBand>
-      <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }}>Kies per sport hoe ASCEND ermee omgaat. Sporten die je doet tellen mee voor je benen en je week.</p>
+      <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }}>Kies per sport wat ermee gebeurt. Sporten die je doet tellen mee voor je benen en je week.</p>
       {plan.note && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{plan.note}</p>}
       <div className="mt-4 flex flex-col gap-3">
         {cards.map((c) => (
@@ -195,7 +195,7 @@ function SportRoleSheet({ sport, plan, startFixed = false, onClose }: { sport: A
     close();
     const handling = { ...current, [sport]: { role: 'fixed' as const, fixed: slots } };
     const days = slots.map((s) => dayName(s.day)).join(' en ');
-    void plan.changeSetting(`${def.label} vast op ${days}`, { sportHandling: handling }, `${def.label} staat vast op ${days}. ASCEND plant de rest eromheen.`, { alwaysAsk: true });
+    void plan.changeSetting(`${def.label} vast op ${days}`, { sportHandling: handling }, `${def.label} staat vast op ${days}. De rest van je planning komt eromheen.`, { alwaysAsk: true });
   }
 
   return (
@@ -203,12 +203,12 @@ function SportRoleSheet({ sport, plan, startFixed = false, onClose }: { sport: A
       {(close) => (
         <>
           <ChoiceList<SportRole>
-            label={`Hoe ASCEND met ${def.label.toLowerCase()} omgaat`}
+            label={`Wat er met ${def.label.toLowerCase()} gebeurt`}
             options={choices.map((r) => ({ value: r, label: ROLE_LABEL[r], note: ROLE_NOTE[r] }))}
             value={fixedStep ? 'fixed' : card.role ?? ('' as SportRole)}
             onPick={(r) => pick(r, close)}
           />
-          {!def.plannable && !fixedStep && <p className="st-hint" style={{ marginLeft: 0 }}>ASCEND kan dit nog niet voor je plannen. Een vaste dag of meetellen kan wel.</p>}
+          {!def.plannable && !fixedStep && <p className="st-hint" style={{ marginLeft: 0 }}>Dit is nog niet te plannen. Een vaste dag of meetellen kan wel.</p>}
           {fixedStep && (
             <div style={{ marginTop: 20 }}>
               <FixedDaysStep initial={current[sport]?.fixed ?? []} busy={plan.busy} onSubmit={(slots) => saveFixed(slots, close)} />
@@ -224,7 +224,7 @@ function SportRoleSheet({ sport, plan, startFixed = false, onClose }: { sport: A
                 options={[{ value: 0, label: 'Auto' }, ...[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n}×` }))]}
                 onChange={(n) => void plan.setFrequency(planned, n === 0 ? undefined : n)}
               />
-              <p className="st-hint" style={{ marginLeft: 0 }}>{perWeek ? `ASCEND houdt ${perWeek}× aan en kiest zelf de dagen.` : 'Je weekschema bepaalt hoe vaak.'}</p>
+              <p className="st-hint" style={{ marginLeft: 0 }}>{perWeek ? `${perWeek}× per week. De dagen worden voor je gekozen.` : 'Je weekschema bepaalt hoe vaak.'}</p>
             </>
           )}
         </>

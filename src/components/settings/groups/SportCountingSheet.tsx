@@ -17,7 +17,7 @@ export function SportCountingSheet({ facts, plan, onClose }: { facts: SettingsFa
   const current = resolveSportCounting(settings.sportCounting).rest;
   return (
     <>
-      <BundleSheet eyebrow="Planning" title="Hoe sporten meetellen" line="Zwemmen, padel en voetbal: wat ASCEND je vraagt." onClose={onClose}>
+      <BundleSheet eyebrow="Planning" title="Hoe sporten meetellen" line="Zwemmen, padel en voetbal: welke vragen je krijgt." onClose={onClose}>
         <SummaryRow id="sport-vragen" title="Vragen bij een nieuwe sport" facts={facts} onChange={(on) => void updateSettings({ sportCounting: { ...settings.sportCounting, askNew: on } })} />
         <SummaryRow id="sport-zwaarte" title="Vragen hoe zwaar het was" facts={facts} onChange={(on) => void updateSettings({ sportCounting: { ...settings.sportCounting, askFelt: on } })} />
         <SummaryRow id="sport-rust" title="Rust na een zware sport" facts={facts} onClick={() => setRest(true)} />

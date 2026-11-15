@@ -443,7 +443,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   }
   for (const s of toRemove) {
     if (!removedNow.has(s.id) || s.status === 'skipped') continue;
-    ownLines.push(`${byTemplate.get(s.templateId) ?? 'Training'} op ${dayNL(s.scheduledDate)} vervalt (na de dag van je hoofddoel plant ASCEND niets meer)`);
+    ownLines.push(`${byTemplate.get(s.templateId) ?? 'Training'} op ${dayNL(s.scheduledDate)} vervalt (na de dag van je hoofddoel staat er niets meer gepland)`);
     ownIds.push(s.id);
   }
   // A skipped row of the system that goes is not news on its own, but undo of

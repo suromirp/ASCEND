@@ -30,7 +30,7 @@ function useProfile() {
 export function BarsSheet({ onClose }: { onClose: () => void }) {
   const { profile, save } = useProfile();
   return (
-    <Sheet eyebrow="Je sportschool" title="Stangen" line="Het gewicht van de lege stang. ASCEND pakt de zwaarste die past." onClose={onClose}>
+    <Sheet eyebrow="Je sportschool" title="Stangen" line="Het gewicht van de lege stang. Gerekend met de zwaarste die past." onClose={onClose}>
       <WeightPicker kind="bars" list={profile.barsKg} onChange={(list) => save({ barsKg: list })} />
       <div className="st-box" style={{ marginTop: 16 }}>
         <div className="k">Aangetikt</div>
@@ -166,7 +166,7 @@ export function ProgramSheet({ onClose }: { onClose: () => void }) {
   if (!program) {
     return (
       <Sheet eyebrow="Forge" title="Programma" line="Nu volgen je krachttrainingen het programma van ASCEND." onClose={onClose}>
-        <p className="st-hint" style={{ marginLeft: 0 }}>Staat er een programma in je MacroFactor-export, dan stelt ASCEND voor je krachttrainingen ermee te vullen.</p>
+        <p className="st-hint" style={{ marginLeft: 0 }}>Staat er een programma in je MacroFactor-export, dan komt er een voorstel om je krachttrainingen ermee te vullen.</p>
         <div className="st-btns col">
           <button type="button" className="st-btn" onClick={() => navigate('/koppelen/macrofactor')}>MacroFactor inlezen</button>
         </div>

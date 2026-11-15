@@ -110,7 +110,7 @@ export function ForgePage() {
       <PageHeader
         eyebrow="Stand"
         title="Forge"
-        line="Je krachttraining: vooruitgang per oefening en wat ASCEND de volgende keer voorstelt."
+        line="Je krachttraining: vooruitgang per oefening en het voorstel voor de volgende keer."
         fallback="/stand"
       />
 
@@ -118,7 +118,7 @@ export function ForgePage() {
         <Card className="flex flex-col gap-3">
           <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Kracht meerekenen staat uit</p>
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            Zet je het aan, dan rekent ASCEND stil mee met de krachttrainingen die je uit MacroFactor inleest. Je planning verandert er niet door.
+            Zet je het aan, dan tellen de krachttrainingen die je uit MacroFactor inleest stil mee. Je planning verandert er niet door.
           </p>
           <PrimaryButton onClick={() => void updateSettings({ strengthModel: { ...settings.strengthModel, enabled: true } })}>Aanzetten</PrimaryButton>
           <SecondaryButton onClick={() => navigate(forgeSettings.to, { state: forgeSettings.state })}>Naar de instellingen</SecondaryButton>
@@ -129,7 +129,7 @@ export function ForgePage() {
         <Card className="flex flex-col gap-3">
           <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Nog geen krachttrainingen</p>
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            Lees een export van MacroFactor in. Dan staan hier je oefeningen, je vooruitgang en wat ASCEND de volgende keer voorstelt. Voor elke set heeft ASCEND de herhalingen in reserve (RIR) nodig; die staan in de export.
+            Lees een export van MacroFactor in. Dan staan hier je oefeningen, je vooruitgang en het voorstel voor de volgende keer. Elke set heeft de herhalingen in reserve (RIR) nodig; die staan in de export.
           </p>
           <PrimaryButton onClick={() => navigate('/koppelen/macrofactor')}>MacroFactor inlezen</PrimaryButton>
         </Card>
@@ -140,7 +140,7 @@ export function ForgePage() {
       {model && model.views.length > 0 && (
         <>
           <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            ASCEND telt stil mee. Getallen zijn rekengetallen om je eigen trainingen te vergelijken, geen maximum dat je moet halen. Het verschil staat tegenover {weeks[0]} en {weeks[1]} weken geleden.
+            Telt stil mee. Getallen zijn rekengetallen om je eigen trainingen te vergelijken, geen maximum dat je moet halen. Het verschil staat tegenover {weeks[0]} en {weeks[1]} weken geleden.
           </p>
 
           {showOneRm && shown.some((v) => !isRepsBased(v)) && (
@@ -257,7 +257,7 @@ function ComparisonSection({ rows, from }: { rows: ComparisonRow[]; from: string
         <InfoButton onClick={() => setInfo((v) => !v)} label={info ? 'Uitleg over raak sluiten' : 'Uitleg over raak'} />
       </div>
       {empty && (
-        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Nog te weinig om iets te zeggen. Er zijn trainingen nodig met herhalingen in reserve, waarvoor ASCEND vooraf iets kon voorstellen.</p>
+        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Nog te weinig om iets te zeggen. Er zijn trainingen nodig met herhalingen in reserve en vooraf een voorstel.</p>
       )}
       {all.macrofactor && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{all.macrofactor}</p>}
       {sinceMacroFactor && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sinceMacroFactor}</p>}
@@ -266,7 +266,7 @@ function ComparisonSection({ rows, from }: { rows: ComparisonRow[]; from: string
       {near && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{near}</p>}
       {info && (
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Raak is binnen het herhalingenbereik met de herhalingen in reserve die de training vraagt. Voor ASCEND is het een schatting achteraf, uit de beste set van die dag, behalve in Forge als je het voorgestelde gewicht pakte.
+          Raak is binnen het herhalingenbereik met de herhalingen in reserve die de training vraagt. Hier is het een schatting achteraf, uit de beste set van die dag, behalve in Forge als je het voorgestelde gewicht pakte.
         </p>
       )}
       {rows.some((r) => r.check) && <TextButton onClick={() => setOpen(true)} className="self-start" icon="verder">Per training bekijken</TextButton>}

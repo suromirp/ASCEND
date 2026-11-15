@@ -18,7 +18,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     lead: 'Houd je je sets bij in ASCEND of in MacroFactor?',
     points: [
       { head: 'In ASCEND', text: 'je vult ze in tijdens je training, met de rusttimer en voorstellen per set.' },
-      { head: 'In MacroFactor', text: 'ASCEND leest ze uit je export en het workoutscherm is om mee te kijken.' },
+      { head: 'In MacroFactor', text: 'ze komen uit je export en het workoutscherm is om mee te kijken.' },
     ],
   },
   'forge-volgorde': {
@@ -43,7 +43,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     title: 'Geschatte 1RM',
     lead: 'Per oefening staat op Forge je geschatte 1RM, met een kleine trend door de tijd.',
     points: [
-      { head: 'Een schatting', text: 'uit je laatste sets, geen test. Het is hetzelfde getal waar ASCEND mee rekent.' },
+      { head: 'Een schatting', text: 'uit je laatste sets, geen test. Het is hetzelfde getal waarmee gerekend wordt.' },
       { head: 'Uit', text: 'dan laat Forge alleen het werkgewicht zien, zonder schakelaar. Je voorstel voor de volgende keer blijft staan.' },
     ],
   },
@@ -68,10 +68,10 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
   },
   'forge-1rm-macrofactor': {
     title: 'MacroFactor-1RM erbij',
-    lead: 'MacroFactor schat ook een 1RM. ASCEND zet die naast die van jezelf, zonder ze te mengen.',
+    lead: 'MacroFactor schat ook een 1RM. Die staat naast die van jezelf, zonder ze te mengen.',
     points: [
       { head: 'Waar het vandaan komt', text: 'uit het blad "Exercises - 1-RM" van de volledige export. Lees de export opnieuw in voor nieuwe dagen.' },
-      { head: 'Twee getallen', text: 'ze kunnen verschillen, want MacroFactor en ASCEND rekenen niet hetzelfde. Gebruik ze voor de richting, niet als maximum dat je moet halen.' },
+      { head: 'Twee getallen', text: 'ze kunnen verschillen, want MacroFactor rekent anders. Gebruik ze voor de richting, niet als maximum dat je moet halen.' },
       { head: 'Uit', text: 'dan staat er alleen de schatting van ASCEND. Wat je ingelezen hebt blijft bewaard.' },
     ],
   },
@@ -107,7 +107,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     title: 'Plaatjes bij oefeningen',
     lead: 'Naast een oefening in Forge staat een klein kaartje met de spieren die werken. Tik erop en je ziet de beweging in drie stappen, de spieren op het lichaam en wat je moet doen, waar je op let en wat vaak misgaat.',
     points: [
-      { head: 'Spierkaart en tekening', text: 'het advies. De tekeningen komen van Workout Guide en zijn van Everkinetic en Bryl Lim, CC BY-SA 4.0; die van de calisthenicsladders heeft ASCEND zelf getekend, onder dezelfde licentie. Ze worden geladen als je een oefening opent, en op de achtergrond voor de oefeningen van je eigen trainingen. Zonder netwerk zie je dan alleen het spierkaartje.' },
+      { head: 'Spierkaart en tekening', text: 'het advies. De tekeningen komen van Workout Guide en zijn van Everkinetic en Bryl Lim, CC BY-SA 4.0; die van de calisthenicsladders zijn eigen tekeningen van ASCEND, onder dezelfde licentie. Ze worden geladen als je een oefening opent, en op de achtergrond voor de oefeningen van je eigen trainingen. Zonder netwerk zie je dan alleen het spierkaartje.' },
       { head: 'Alleen spierkaart', text: 'de spieren en de uitleg, zonder tekening. Er wordt niets geladen.' },
       { head: 'Uit', text: 'geen kaartje bij een oefening. Het menu van een oefening houdt de uitleg.' },
       { head: 'Een andere variant', text: 'staat er een tekening van bijna dezelfde oefening, dan zegt een regel eronder wat anders is.' },
@@ -161,7 +161,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     title: 'Sportschool',
     lead: 'Train je in twee sportscholen, kies dan hier waar je nu bent.',
     points: [
-      { head: 'Wat erbij hoort', text: 'de stangen, schijven en dumbbells, de gewichten per toestel en wat ASCEND leert over de gewichten die je gebruikte.' },
+      { head: 'Wat erbij hoort', text: 'de stangen, schijven en dumbbells, de gewichten per toestel en wat bekend is over de gewichten die je gebruikte.' },
       { head: 'Je log', text: 'een nieuwe krachttraining onthoudt in welke sportschool hij was. Oudere trainingen hebben dat niet en tellen overal mee.' },
       { head: 'MacroFactor', text: 'eindigt de naam van een workout op " @ " en de naam van een sportschool, dan hoort hij daarbij.' },
     ],
@@ -178,7 +178,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     title: 'Dumbbells in je log',
     lead: 'Sommigen loggen bij een duwoefening het totaal van twee dumbbells, anderen het gewicht per dumbbell.',
     points: [
-      { head: 'Vanzelf herkennen', text: 'staat in het logboek van een oefening een gewicht dat zwaarder is dan je zwaarste dumbbell, dan leest ASCEND die oefening als totaal. Log je ook bij lichtere oefeningen het totaal, kies dan Totaal van twee.' },
+      { head: 'Vanzelf herkennen', text: 'staat in het logboek van een oefening een gewicht dat zwaarder is dan je zwaarste dumbbell, dan telt die oefening als totaal. Log je ook bij lichtere oefeningen het totaal, kies dan Totaal van twee.' },
       { head: 'Totaal', text: 'de gewichten zijn de sommen van twee gelijke dumbbells uit je rek, en het gewicht staat erbij als "60 kg (2 x 30)".' },
       { head: 'Eén dumbbell', text: 'een oefening met één dumbbell, zoals de goblet squat, wordt nooit verdubbeld.' },
     ],
@@ -205,19 +205,19 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
   },
   tussengewichten: {
     title: 'Tussengewichten',
-    lead: 'Heb je een los plaatje of een magneet dat je bij het blok van een toestel legt, vul het dan een keer in. ASCEND telt het bij elk gewicht van het blok op.',
+    lead: 'Heb je een los plaatje of een magneet dat je bij het blok van een toestel legt, vul het dan een keer in. Het telt op bij elk gewicht van het blok.',
     points: [
       { head: 'Voorbeeld', text: 'het blok gaat in stappen van 5 kg en je hebt een los gewicht van 2,3 kg. Dan kan het toestel 65, 67,3, 70, 72,3 en zo verder. Forge laat zien waar zo\'n gewicht uit bestaat, bijvoorbeeld 70 + 2,3.' },
       { head: 'Hele sportschool', text: 'wat je hier invult geldt voor alle kabels en toestellen met een gewichtstapel in deze sportschool.' },
       { head: 'Per toestel', text: 'een toestel kan een eigen tussengewicht hebben, of geen terwijl de sportschool er wel een heeft. Dat kies je bij het toestel, ook in het menu van de oefening in een training.' },
-      { head: 'Meer dan één', text: 'je kunt er hoogstens drie invullen, bijvoorbeeld 1,25 en 2,5. ASCEND gebruikt ze alleen of samen, elk hoogstens één keer.' },
+      { head: 'Meer dan één', text: 'je kunt er hoogstens drie invullen, bijvoorbeeld 1,25 en 2,5. Ze tellen alleen of samen, elk hoogstens één keer.' },
     ],
   },
   trainingsduur: {
     title: 'Trainingsduur',
-    lead: 'ASCEND leert hoe lang een krachttraining duurt uit de echte duur van je trainingen.',
+    lead: 'Hoe lang een krachttraining duurt, volgt uit de echte duur van je trainingen.',
     points: [
-      { head: 'Na drie trainingen', text: 'rekent ASCEND met wat je meestal nodig hebt.' },
+      { head: 'Na drie trainingen', text: 'geldt wat je meestal nodig hebt.' },
       { head: 'Eerder', text: 'helpt een eigen schatting, onder Geavanceerd.' },
     ],
   },
@@ -236,7 +236,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     title: 'Rekenmodel',
     lead: 'Zeven keuzes over hoe Forge rekent. Het advies past bij de meeste mensen, dus je hoeft hier niets te doen.',
     points: [
-      { head: 'Staat er Advies', text: 'dan staat alles hier zoals ASCEND het zelf kiest. Pas je iets aan, dan staat er hoeveel keuzes anders staan.' },
+      { head: 'Staat er Advies', text: 'dan staat alles hier op het advies. Pas je iets aan, dan staat er hoeveel keuzes anders staan.' },
       { head: 'Terugzetten', text: 'kan per keuze, of met Terug naar het advies bovenaan Instellingen.' },
       { head: 'Alleen voorstellen', text: 'het model verandert nooit stil je planning of je trainingen. Het stelt gewichten voor, jij beslist.' },
     ],
@@ -269,7 +269,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     title: 'Vermoeidheid per set',
     lead: 'Elke werkset kost de volgende een beetje kracht. Hoeveel verschilt per oefening.',
     points: [
-      { head: 'Leren per oefening', text: 'ASCEND kijkt in je eigen sets hoeveel geschatte kracht je van set tot set verliest en rekent daarmee voor de latere sets, de verwachte herhalingen en het bijsturen. Met weinig sets blijft het dicht bij 3%.' },
+      { head: 'Leren per oefening', text: 'Je eigen sets laten zien hoeveel geschatte kracht je van set tot set verliest; daarmee wordt gerekend voor de latere sets, de verwachte herhalingen en het bijsturen. Met weinig sets blijft het dicht bij 3%.' },
       { head: 'Vast 3%', text: 'elke oefening krijgt dezelfde daling, wat je ook deed.' },
       { head: 'Waarom', text: 'hoeveel herhalingen je van set tot set verliest hangt af van de oefening, het gewicht en de rust (matig bewijs).' },
     ],
@@ -297,11 +297,11 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
   },
   'forge-leren': {
     title: 'Gewichten van toestellen',
-    lead: 'Bij een toestel of kabel met een gewichtstapel bepaal je hoe streng ASCEND is met de gewichten die het voorstelt.',
+    lead: 'Bij een toestel of kabel met een gewichtstapel bepaal je hoe streng de voorgestelde gewichten zijn.',
     points: [
       { head: 'Geleerd en geschat', text: 'het onthoudt de gewichten die je op dat toestel pakte, ook bij opwarmen. Boven en onder wat je gebruikte telt de stap die je op het toestel twee keer zag, anders de stap uit je sportschool. Een grote kloof ertussen wordt opgevuld. Zo kan er een gewicht tussen zitten dat het toestel niet heeft.' },
-      { head: 'Alleen wat je gebruikte', text: 'ASCEND stelt nooit een gewicht voor dat je er nog niet pakte. Vraagt je kracht om zwaarder, dan blijft het gewicht staan en gaan de herhalingen omhoog. Haal je de bovenkant met genoeg over, dan kies je zelf het eerstvolgende gewicht op het toestel. Zonder gebruikte gewichten op dat toestel gelden de stappen van je profiel.' },
-      { head: 'Stappen van je profiel', text: 'ASCEND rondt af op de stap die je bij Kabels en toestellen instelde.' },
+      { head: 'Alleen wat je gebruikte', text: 'Nooit een gewicht dat je er nog niet pakte. Vraagt je kracht om zwaarder, dan blijft het gewicht staan en gaan de herhalingen omhoog. Haal je de bovenkant met genoeg over, dan kies je zelf het eerstvolgende gewicht op het toestel. Zonder gebruikte gewichten op dat toestel gelden de stappen van je profiel.' },
+      { head: 'Stappen van je profiel', text: 'Afgerond op de stap die je bij Kabels en toestellen instelde.' },
       { head: 'Eigen lijst', text: 'vulde je de gewichten van een toestel zelf in (Gewichten per toestel), dan gelden precies die, in elke keuze hierboven.' },
     ],
   },
@@ -364,7 +364,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     points: [
       { head: 'Als hint', text: 'het veld is leeg en het doel staat gedimd in beeld. Vul je niets in, dan wordt het doel bewaard met een merkje dat je het niet zelf invulde.' },
       { head: 'Met het doel', text: 'het doel staat er al als waarde, zoals voorheen. Raak je de set niet aan, dan krijgt hij hetzelfde merkje.' },
-      { head: 'Waarom', text: 'ASCEND rekent met een aangenomen RIR als zwakke aanname en weet zo welke sets gemeten zijn. De rekenregels veranderen niet.' },
+      { head: 'Waarom', text: 'Een aangenomen RIR telt als zwakke aanname, zodat zichtbaar blijft welke sets gemeten zijn. De rekenregels veranderen niet.' },
     ],
   },
   'forge-rir-snel': {
@@ -457,17 +457,17 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     ],
   },
   'bundel-toets': {
-    title: 'ASCEND naast MacroFactor',
+    title: 'Voorstel naast MacroFactor',
     lead: 'Onderaan Forge staat hoe vaak een voorstel raak was: binnen het herhalingenbereik, met de herhalingen in reserve die de training vraagt.',
     points: [
-      { head: 'Dezelfde toets', text: 'wat je deed en wat ASCEND voorstelde worden voor dezelfde set aan dezelfde dag gehouden, met dezelfde maat. Of de gewichten gelijk zijn zegt niets.' },
-      { head: 'Een schatting', text: 'voor ASCEND is raak achteraf een schatting uit de beste set van die dag. Pakte je in Forge het voorgestelde gewicht, dan is het gewoon wat er gebeurde.' },
+      { head: 'Dezelfde toets', text: 'wat je deed en het voorstel worden voor dezelfde set aan dezelfde dag gehouden, met dezelfde maat. Of de gewichten gelijk zijn zegt niets.' },
+      { head: 'Een schatting', text: 'raak achteraf is een schatting uit de beste set van die dag. Pakte je in Forge het voorgestelde gewicht, dan is het gewoon wat er gebeurde.' },
       { head: 'Uit', text: 'het blok staat dan niet op Forge. De stand zie je hier, onder de schakelaar.' },
     ],
   },
   'forge-sinds': {
     title: 'Stil meten sinds',
-    lead: 'De dag waarop ASCEND begon om stil mee te rekenen. Wat daarna kwam, staat apart naast alles.',
+    lead: 'De dag waarop het stille meerekenen begon. Wat daarna kwam, staat apart naast alles.',
     points: [
       { head: 'Standaard', text: '24 oktober 2026, de dag dat het MacroFactor-programma half af was.' },
       { head: 'Waarom', text: 'trainingen van voor het inlezen van je programma zijn met de huidige template en instellingen achteraf herberekend, en zeggen minder.' },
@@ -475,13 +475,13 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
   },
   'forge-bergspieren': {
     title: 'Spieren voor de berg',
-    lead: 'Bergop en bergaf met een rugzak vragen veel van je kuiten, je scheenspier en je bilspieren, en juist die slaat een gewoon krachtschema vaak over. Bij een bergdoel let ASCEND daar rustig op.',
+    lead: 'Bergop en bergaf met een rugzak vragen veel van je kuiten, je scheenspier en je bilspieren, en juist die slaat een gewoon krachtschema vaak over. Bij een bergdoel krijgen ze rustig aandacht.',
     points: [
       { head: 'De melding', text: 'krijgt een van die spieren de laatste vier weken gemiddeld minder dan 4 harde sets per week, dan staat dat één keer in de weekterugblik, met een voorstel voor één oefening. Een rustweek en een week met vakantie, een tocht of zonder sportschool tellen niet mee.' },
       { head: 'In Forge', text: 'hetzelfde voorstel staat ook rustig bovenaan de training waar de oefening bij zou komen, zolang je nog geen set afvinkte.' },
       { head: 'Pas na Akkoord', text: 'de oefening komt als laatste oefening in je krachttraining met het meeste beenwerk, vanaf de volgende keer. In het blad van de oefening haal je hem weer weg. Liever niet laat die spier acht weken met rust.' },
       { head: 'Bij Ruilen', text: 'is de keuze verder gelijk, dan staat een oefening voor zo’n spier voorop, met een korte reden. Forge ruilt nooit zelf.' },
-      { head: 'Wat telt', text: 'werksets met hoogstens 4 herhalingen over, ook zonder RIR. Een oefening die ASCEND niet kent telt niet; dat staat er dan eerlijk bij.' },
+      { head: 'Wat telt', text: 'werksets met hoogstens 4 herhalingen over, ook zonder RIR. Een onbekende oefening telt niet; dat staat er dan eerlijk bij.' },
       { head: 'Uit', text: 'geen melding, in de weekterugblik noch in Forge, en de gewone volgorde bij Ruilen.' },
     ],
   },

@@ -204,7 +204,7 @@ async function runRound(options: HealthSyncOptions): Promise<HealthSyncResult> {
   try {
     state = await getHealthConnectState();
   } catch {
-    return { status: 'error', kind: 'failed', message: 'ASCEND kan de stand van Health Connect niet lezen.' };
+    return { status: 'error', kind: 'failed', message: 'De stand van Health Connect is niet te lezen.' };
   }
   if (!state.enabled) return { status: 'off' };
   if (!port.inApp) return { status: 'web' };

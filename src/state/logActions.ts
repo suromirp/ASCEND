@@ -125,7 +125,7 @@ export function useLogActions(deps: {
         title: 'Bijgewerkt met je horloge',
         summary: n === 1 ? outcome.lines[0] : `${n} trainingen kregen de cijfers van je horloge`,
         lines: outcome.lines,
-        why: 'Garmin is leidend: voor een training die je zelf invulde nam ASCEND de lengte, afstand, hartslag en hoogtemeters van je horloge over. Wat jij zelf invulde, zoals gevoel, inspanning en pijn, bleef staan. Je eigen cijfers zijn bewaard; met Ongedaan maken, of later via Terugzetten bij Garmin koppelen, komen ze terug.',
+        why: 'Garmin is leidend: voor een training die je zelf invulde komen de lengte, afstand, hartslag en hoogtemeters nu van je horloge. Wat jij zelf invulde, zoals gevoel, inspanning en pijn, bleef staan. Je eigen cijfers zijn bewaard; met Ongedaan maken, of later via Terugzetten bij Garmin koppelen, komen ze terug.',
         before: [],
         addedIds: [],
         written: [],

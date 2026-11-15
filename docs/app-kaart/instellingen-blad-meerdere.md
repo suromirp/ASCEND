@@ -7,7 +7,7 @@ Planning
 [knop: Sluiten]
 Als je tijd per dag het toelaat.
 [label: Twee trainingen per dag]
-[knop: AutomatischAdviesASCEND beslist zelf op je tijd per dag]
+[knop: AutomatischAdviesHangt af van je tijd per dag]
 [knop: JaZoveel mogelijk samen als de tijd het toelaat]
 [knop: Alleen als het moetAlleen als er anders echt geen plek is]
 [knop: NeeNooit meer dan één training per dag]

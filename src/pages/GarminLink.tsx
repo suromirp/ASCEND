@@ -112,7 +112,7 @@ export function GarminLinkPage() {
     setNotice(null);
     try {
       const result = await syncWatchHistory({ force: true });
-      if (result.status === 'ok') setNotice({ tone: 'ok', text: `ASCEND haalde ${result.count} ${result.count === 1 ? 'activiteit' : 'activiteiten'} op vanaf ${formatDateNL(result.from)}.` });
+      if (result.status === 'ok') setNotice({ tone: 'ok', text: `${result.count} ${result.count === 1 ? 'activiteit' : 'activiteiten'} opgehaald vanaf ${formatDateNL(result.from)}.` });
       else if (result.status === 'nothing') setNotice({ tone: 'ok', text: 'Je hebt geen trainingen met de hand ingevuld, dus er valt niets gelijk te trekken.' });
       else if (result.status === 'error') setNotice({ tone: 'error', text: result.message });
       else setNotice({ tone: 'error', text: 'Er is geen koppeling met intervals.icu, of je trainingen staan uit.' });
@@ -149,14 +149,14 @@ export function GarminLinkPage() {
     if (result.status === 'error') return { tone: 'error', text: result.message };
     if (result.status === 'ok') {
       const activities = watch && !watch.use.activities
-        ? 'Verbinding werkt. Je trainingen staan uit, dus die haalt ASCEND niet op.'
-        : `Verbinding werkt. In de laatste 7 dagen vond ASCEND ${result.count} ${result.count === 1 ? 'activiteit' : 'activiteiten'}.`;
+        ? 'Verbinding werkt. Je trainingen staan uit, dus die worden niet opgehaald.'
+        : `Verbinding werkt. ${result.count} ${result.count === 1 ? 'activiteit' : 'activiteiten'} in de laatste 7 dagen.`;
       if (!result.wellness) return { tone: 'ok', text: activities };
       return {
         tone: 'ok',
         text: result.wellness.days > 0
           ? `${activities} Ook gevonden: slaap en hartslag van ${result.wellness.days} ${result.wellness.days === 1 ? 'dag' : 'dagen'}${result.wellness.today ? ', ook van vandaag' : ''}.`
-          : `${activities} Slaap, rusthartslag en HRV vond ASCEND niet. Zet in intervals.icu de wellness-synchronisatie met Garmin aan (zie hieronder).`,
+          : `${activities} Geen slaap, rusthartslag of HRV gevonden. Zet in intervals.icu de wellness-synchronisatie met Garmin aan (zie hieronder).`,
       };
     }
     return { tone: 'ok', text: 'Verbinding werkt.' };
@@ -229,7 +229,7 @@ export function GarminLinkPage() {
         <Step n={2}>Koppel daar je Garmin. Vanaf dan komt elke training na het synchroniseren vanzelf op intervals.icu te staan.</Step>
         <Step n={3}>Open de instellingen van intervals.icu, onder Developer Settings. Kopieer je athlete-id en je API-sleutel en plak ze hieronder.</Step>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Standaard leest ASCEND alleen. De sleutel blijft op deze telefoon en gaat niet mee in een back-up. Elke nieuwe training krijg je als voorstel op Vandaag. Alleen een training die onmiskenbaar bij je planning past, vinkt ASCEND zelf af (zie Vanzelf afvinken hieronder), en dan vraagt hij hoe het ging.
+          Standaard alleen lezen. De sleutel blijft op deze telefoon en gaat niet mee in een back-up. Elke nieuwe training krijg je als voorstel op Vandaag. Alleen een training die onmiskenbaar bij je planning past, wordt vanzelf afgevinkt (zie Vanzelf afvinken hieronder), en dan krijg je de vraag hoe het ging.
         </p>
       </Card>
 
@@ -306,9 +306,9 @@ export function GarminLinkPage() {
       )}
 
       <Card className="flex flex-col gap-4">
-        <Eyebrow>Wat ASCEND van je horloge gebruikt</Eyebrow>
+        <Eyebrow>Wat je horloge levert</Eyebrow>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Tik aan wat je wilt. Wat uit staat haalt ASCEND niet op, laat het niet zien en gebruikt het niet in de ochtendcheck of in een berekening. Dit blijft op deze telefoon en gaat niet mee in een back-up.
+          Tik aan wat je wilt. Wat uit staat wordt niet opgehaald, niet getoond en niet gebruikt in de ochtendcheck of in een berekening. Dit blijft op deze telefoon en gaat niet mee in een back-up.
         </p>
         <UseRow
           title="Trainingen"
@@ -318,21 +318,21 @@ export function GarminLinkPage() {
         />
         <UseRow
           title="Vanzelf afvinken"
-          text="Vinkt een training van je horloge zelf af. Alleen als het niet anders kan: dezelfde dag, één geplande training van dezelfde soort en ongeveer even lang. Daarna vraagt ASCEND hoe het ging, en met Klopt niet haal je de afvinking weer weg. Bij twijfel krijg je gewoon een voorstel. Een testloop en een wedstrijd vink je altijd zelf af."
+          text="Vinkt een training van je horloge zelf af. Alleen als het niet anders kan: dezelfde dag, één geplande training van dezelfde soort en ongeveer even lang. Daarna krijg je de vraag hoe het ging, en met Klopt niet haal je de afvinking weer weg. Bij twijfel krijg je gewoon een voorstel. Een testloop en een wedstrijd vink je altijd zelf af."
           checked={watch?.autoTick !== false && watch?.use.activities !== false}
           onChange={(on) => void changeAutoTick(on)}
           note={watch?.use.activities === false ? 'Werkt alleen als Trainingen aan staat.' : undefined}
         />
         <UseRow
           title="Garmin is leidend"
-          text="Vul je een training zelf in en komt hij ook van je horloge binnen, dan neemt ASCEND de gemeten cijfers van je horloge over: duur, afstand, hartslag en hoogtemeters. Wat je zelf invulde, zoals gevoel, inspanning, pijn en het gewicht van je rugzak, blijft staan. Je eigen cijfers worden bewaard en je kunt ze terugzetten. Vanzelf gebeurt dit voor trainingen van de laatste 7 dagen, nadat je Akkoord gaf op het eerste voorstel."
+          text="Vul je een training zelf in en komt hij ook van je horloge binnen, dan gelden de gemeten cijfers van je horloge: duur, afstand, hartslag en hoogtemeters. Wat je zelf invulde, zoals gevoel, inspanning, pijn en het gewicht van je rugzak, blijft staan. Je eigen cijfers worden bewaard en je kunt ze terugzetten. Vanzelf gebeurt dit voor trainingen van de laatste 7 dagen, nadat je Akkoord gaf op het eerste voorstel."
           checked={watch?.garminLeads !== false && watch?.use.activities !== false}
           onChange={(on) => void changeLeads(on)}
           note={watch?.use.activities === false ? 'Werkt alleen als Trainingen aan staat.' : undefined}
         />
         <UseRow
           title="Details van lopen en tochten"
-          text="ASCEND haalt per loop of tocht hartslag, tempo, hoogte en loopvorm op en bewaart alleen een korte samenvatting. Daarmee vergelijkt ASCEND je lopen eerlijk. Uit betekent: niet ophalen, niet tonen en niet meetellen."
+          text="Per loop of tocht komen hartslag, tempo, hoogte en loopvorm binnen; alleen een korte samenvatting blijft bewaard. Daarmee is je lopen eerlijk te vergelijken. Uit betekent: niet ophalen, niet tonen en niet meetellen."
           checked={watch?.use.details !== false && watch?.use.activities !== false}
           onChange={(on) => void changeUse('details', on)}
           note={watch?.use.activities === false ? 'Werkt alleen als Trainingen aan staat.' : undefined}
@@ -402,7 +402,7 @@ export function GarminLinkPage() {
         {connected && (
           <UseRow
             title="Gedane trainingen weghalen"
-            text="Een training die je hebt gedaan of voorbij liet gaan haalt ASCEND weer uit je intervals.icu-agenda. Je activiteit zelf blijft staan."
+            text="Een training die je hebt gedaan of voorbij liet gaan, gaat weer uit je intervals.icu-agenda. Je activiteit zelf blijft staan."
             checked={settings.watchRemoveDone !== false}
             onChange={(on) => void updateSettings({ watchRemoveDone: on })}
           />
@@ -414,7 +414,7 @@ export function GarminLinkPage() {
           onChange={(on) => void updateSettings({ showWatchStatus: on, showWatchStatusOnWeek: on })}
         />
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Gewicht komt nooit uit Garmin. Dat leest ASCEND uit MacroFactor.
+          Gewicht komt nooit uit Garmin. Dat komt uit MacroFactor.
         </p>
       </Card>
 
@@ -438,8 +438,8 @@ export function GarminLinkPage() {
           </p>
           <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
             {watch?.historyFetchedAt && watch.historyFrom
-              ? `Voor het gelijktrekken haalde ASCEND eenmalig ook de oudere trainingen op, vanaf ${formatDateNL(watch.historyFrom)}. Dat is hooguit ${HISTORY_MAX_DAYS} dagen terug; nieuwe voorstellen komen uit de laatste 7 dagen.`
-              : `Voor het gelijktrekken haalt ASCEND eenmalig ook de oudere trainingen op, vanaf je oudste training met de hand en hooguit ${HISTORY_MAX_DAYS} dagen terug.`}
+              ? `Voor het gelijktrekken kwamen eenmalig ook de oudere trainingen binnen, vanaf ${formatDateNL(watch.historyFrom)}. Dat is hooguit ${HISTORY_MAX_DAYS} dagen terug; nieuwe voorstellen komen uit de laatste 7 dagen.`
+              : `Voor het gelijktrekken komen eenmalig ook de oudere trainingen binnen, vanaf je oudste training met de hand en hooguit ${HISTORY_MAX_DAYS} dagen terug.`}
           </p>
           <div className="flex flex-wrap gap-3">
             {align.aligned.length > 0 && <SecondaryButton onClick={() => setShowAligned(true)} disabled={busy}>Bekijken en terugzetten</SecondaryButton>}
@@ -463,7 +463,7 @@ export function GarminLinkPage() {
           Open in intervals.icu de instellingen, kies de koppeling met Garmin Connect en zet het ophalen van wellnessgegevens aan. De namen kunnen daar iets afwijken. Zonder die schakelaar komt er van je horloge alleen training binnen, en werkt de ochtendcheck zoals altijd.
         </p>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          ASCEND vergelijkt rusthartslag en HRV met je eigen gemiddelde van de laatste 4 weken, niet met een norm. Je horloge schat deze waarden: het is een hint en geen oordeel.
+          Rusthartslag en HRV gaan naast je eigen gemiddelde van de laatste 4 weken, niet met een norm. Je horloge schat deze waarden: het is een hint en geen oordeel.
         </p>
       </Card>
 
@@ -549,7 +549,7 @@ function useWatchWorkoutControls(): WatchWorkoutControls {
             : { tone: 'ok', text: 'Aan. De trainingen van de komende 7 dagen worden naar intervals.icu gestuurd en daarna naar je horloge.' },
         );
       } else {
-        setNotice({ tone: 'ok', text: switched.removed > 0 ? 'Uit. De komende trainingen zijn weer uit je intervals.icu-agenda gehaald.' : 'Uit. ASCEND stuurt geen trainingen meer.' });
+        setNotice({ tone: 'ok', text: switched.removed > 0 ? 'Uit. De komende trainingen zijn weer uit je intervals.icu-agenda gehaald.' : 'Uit. Er gaan geen trainingen meer naar je horloge.' });
       }
     } finally {
       setBusy(false);
@@ -628,7 +628,7 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
       const result = await withTimeout(cleanUpWatchWorkouts(), WORK_TIMEOUT_MS);
       if (result.status === 'ok') {
         const n = result.removed;
-        const what = n === 0 ? 'Er stond niets van ASCEND in je intervals.icu-agenda.' : `${n} ${n === 1 ? 'training' : 'trainingen'} weggehaald uit je intervals.icu-agenda${result.strays > 0 ? `, waarvan ${result.strays} oude die ASCEND niet meer bijhield` : ''}.`;
+        const what = n === 0 ? 'Er stond niets van ASCEND in je intervals.icu-agenda.' : `${n} ${n === 1 ? 'training' : 'trainingen'} weggehaald uit je intervals.icu-agenda${result.strays > 0 ? `, waarvan ${result.strays} oude die niet meer bijgehouden werden` : ''}.`;
         setNotice({ tone: 'ok', text: state?.enabled ? `${what} De schakelaar staat aan: bij de volgende ronde komen de komende 7 dagen er weer in.` : what });
       } else {
         setNotice({ tone: 'error', text: result.status === 'error' ? result.message : 'Er is geen koppeling met intervals.icu.' });
@@ -649,7 +649,7 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
       const result = await withTimeout(resendWatchWorkouts(), WORK_TIMEOUT_MS);
       if (result.status === 'ok') {
         const n = result.sent;
-        setNotice({ tone: 'ok', text: `${n} ${n === 1 ? 'training' : 'trainingen'} opnieuw verstuurd${result.removed > n ? `. ${result.removed - n} oude haalde ASCEND weg` : ''}.` });
+        setNotice({ tone: 'ok', text: `${n} ${n === 1 ? 'training' : 'trainingen'} opnieuw verstuurd${result.removed > n ? `. ${result.removed - n} oude weggehaald` : ''}.` });
       } else if (result.status === 'error') {
         setNotice({ tone: 'error', text: result.message });
       } else {
@@ -671,14 +671,14 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
       </div>
       {showInfo && <WatchInfo />}
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Met de schakelaar hierboven zet ASCEND de trainingen van de komende 7 dagen in je intervals.icu-agenda, met je tempo's uit de testloop of je hartslagzones als doel. Verplaats of sla je er een over, dan volgt de agenda. Alleen wat ASCEND zelf heeft gestuurd wordt aangeraakt; je eigen trainingen in intervals.icu blijven met rust.
+        Met de schakelaar hierboven komen de trainingen van de komende 7 dagen in je intervals.icu-agenda, met je tempo's uit de testloop of je hartslagzones als doel. Verplaats of sla je er een over, dan volgt de agenda. Alleen wat van hieruit gestuurd is wordt aangeraakt; je eigen trainingen in intervals.icu blijven met rust.
       </p>
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         Kracht gaat niet mee: die staat in MacroFactor. Zet in intervals.icu bij je Garmin-koppeling aan dat geplande trainingen naar Garmin Connect gaan. Wil je tempodoelen op je horloge, vul dan in intervals.icu bij de instellingen voor hardlopen je drempeltempo in; zonder dat ziet je horloge de tempo's niet. Hartslagdoelen werken altijd.
       </p>
       {state?.enabled && (
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          ASCEND werkt het hooguit eens per 15 minuten bij, bij het openen van de app en na elke wijziging in je planning. Op het trainingsscherm zie je per training of het gelukt is.
+          Bijwerken gebeurt hooguit eens per 15 minuten, bij het openen van de app en na elke wijziging in je planning. Op het trainingsscherm zie je per training of het gelukt is.
         </p>
       )}
       {state?.lastError && !notice && <NoticeLine notice={{ tone: 'error', text: state.lastError }} />}
@@ -686,7 +686,7 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
       {confirmingRemove ? (
         <div className="flex flex-col gap-2">
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
-            Alle komende trainingen die ASCEND stuurde gaan uit je intervals.icu-agenda, ook oude van een test of een eerdere installatie. Je eigen trainingen blijven staan.
+            Alle komende trainingen van hieruit gaan uit je intervals.icu-agenda, ook oude van een test of een eerdere installatie. Je eigen trainingen blijven staan.
           </p>
           <div className="flex gap-3">
             <SecondaryButton onClick={() => setConfirmingRemove(false)} disabled={busy}>Annuleren</SecondaryButton>
@@ -714,16 +714,16 @@ function WatchInfo() {
   return (
     <div className="flex flex-col gap-3 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
       <InfoPoint title="Wat vanzelf gaat">
-        Staat de schakelaar aan, dan zet ASCEND de trainingen van de komende 7 dagen in je intervals.icu-agenda en werkt ze bij na elke wijziging in je planning. Wat je overslaat haalt ASCEND er altijd uit, en wat je hebt gedaan ook als Gedane trainingen weghalen aan staat. Daarna stuurt intervals.icu ze door naar Garmin Connect.
+        Staat de schakelaar aan, dan komen de trainingen van de komende 7 dagen in je intervals.icu-agenda en worden ze bijgewerkt na elke wijziging in je planning. Wat je overslaat gaat er altijd uit, en wat je hebt gedaan ook als Gedane trainingen weghalen aan staat. Daarna stuurt intervals.icu ze door naar Garmin Connect.
       </InfoPoint>
       <InfoPoint title="Zo herken je ze">
-        De naam begint met ASC (of ASCEND ·, of niets: dat kies je hierboven). In de beschrijving staat bovenaan voor welke dag ASCEND hem plande.
+        De naam begint met ASC, met ASCEND · of met niets: dat kies je hierboven. In de beschrijving staat bovenaan voor welke dag hij gepland is.
       </InfoPoint>
       <InfoPoint title="Opruimen">
-        Opnieuw versturen haalt alle komende ASCEND-trainingen weg en stuurt de komende 7 dagen opnieuw. Weghalen doet alleen het eerste. Beide zoeken ook oude trainingen van ASCEND in je agenda, bijvoorbeeld van een test. Alleen wat ASCEND stuurde gaat weg; je eigen trainingen en je activiteiten blijven staan.
+        Opnieuw versturen haalt alle komende ASCEND-trainingen weg en stuurt de komende 7 dagen opnieuw. Weghalen doet alleen het eerste. Beide zoeken ook oude trainingen van ASCEND in je agenda, bijvoorbeeld van een test. Alleen trainingen uit ASCEND gaan weg; je eigen trainingen en je activiteiten blijven staan.
       </InfoPoint>
       <InfoPoint title="En in Garmin Connect zelf">
-        ASCEND ziet de lijst Workouts in Garmin Connect niet en kan er niets uit wissen. Staat daar na het weghalen en synchroniseren nog iets van ASCEND, verwijder het dan in Garmin Connect. Of intervals.icu een weggehaalde training ook zelf uit Garmin Connect haalt, is niet zeker: op het forum van intervals.icu staat alleen dat het geplande trainingen die meer dan een dag oud zijn zelf opruimt. Kijk na het weghalen en synchroniseren even in Garmin Connect.
+        De lijst Workouts in Garmin Connect is van hieruit niet te zien of te wissen. Staat daar na het weghalen en synchroniseren nog iets van ASCEND, verwijder het dan in Garmin Connect. Of intervals.icu een weggehaalde training ook zelf uit Garmin Connect haalt, is niet zeker: op het forum van intervals.icu staat alleen dat het geplande trainingen die meer dan een dag oud zijn zelf opruimt. Kijk na het weghalen en synchroniseren even in Garmin Connect.
       </InfoPoint>
     </div>
   );

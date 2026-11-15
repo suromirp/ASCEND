@@ -7,7 +7,7 @@ import type { SettingsHelp } from '../../../data/settingsHelp';
 export const DOEL_UITLEG: Record<string, SettingsHelp> = {
   doelen: {
     title: 'Hoofddoel',
-    lead: 'Waar je naartoe werkt. ASCEND rekent je weken terug vanaf die datum.',
+    lead: 'Waar je naartoe werkt. Je weken tellen terug vanaf die datum.',
     points: [
       { head: 'Zonder doel', text: 'dan werk je in golven met een richting.' },
     ],
@@ -21,7 +21,7 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
   },
   richting: {
     title: 'Richting',
-    lead: 'Zonder doel plant ASCEND je weken naar een richting, in golven van vier weken. Een bergtocht en een rugzak komen pas met een tocht als doel.',
+    lead: 'Zonder doel volgen je weken een richting, in golven van vier weken. Een bergtocht en een rugzak komen pas met een tocht als doel.',
     points: [
       { head: 'Fit blijven', text: 'het advies. 150 minuten en 2 keer kracht, elke vierde week wat lichter.' },
       { head: 'Fitter of sterker worden', text: 'Fitter worden begint bij wat je de laatste vier weken deed en bouwt op. Bij Sterker worden staat kracht voorop.' },
@@ -30,7 +30,7 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
   },
   weekbudget: {
     title: 'Weekbudget',
-    lead: 'Zonder doel telt ASCEND je week tegen een budget in minuten en keren kracht.',
+    lead: 'Zonder doel telt je week tegen een budget in minuten en keren kracht.',
     points: [
       { head: 'Advies', text: '150 minuten en 2 keer kracht per week, de beweegrichtlijn. Rustig aan is 90 minuten en 1 keer kracht, Sterker worden 120 minuten en 3 keer kracht.' },
       { head: 'Wat telt', text: 'een matige minuut telt 1, een pittige 2. Een krachttraining telt als een keer, niet in de minuten. Minder dan de richtlijn mag.' },
@@ -64,7 +64,7 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
   },
   'na-hoofddoel': {
     title: 'Na je hoofddoel',
-    lead: 'Wat ASCEND plant als je doel voorbij is: niets (advies) of onderhoudsweken.',
+    lead: 'Je planning als je doel voorbij is: niets (advies) of onderhoudsweken.',
     points: [
       { head: 'Tijdens de tocht', text: 'verandert er nooit iets.' },
     ],
@@ -80,7 +80,7 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
   },
   'klaar-groei': {
     title: 'Groei bij het rekenen',
-    lead: 'Hoe snel je beter wordt, verschilt sterk tussen mensen. ASCEND rekent het gat naar je doel om in weken werk met één groeigetal.',
+    lead: 'Hoe snel je beter wordt, verschilt sterk tussen mensen. Het gat naar je doel wordt omgerekend in weken werk met één groeigetal.',
     points: [
       { head: 'Gemiddeld', text: 'het midden van de band, bij hardlopen 0,55% per week. Afgeleid uit meerdere onderzoeken, niet uit één studie.' },
       { head: 'Voorzichtig', text: 'de onderkant van de band, bij hardlopen 0,3% per week. Je doel vraagt dan meer weken en de meters staan lager.' },
@@ -89,7 +89,7 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
   },
   'klaar-marge': {
     title: 'Marge bij een tijdslimiet',
-    lead: 'Bij een dagtocht met een tijdslimiet of een trailrun met een cutoff telt ASCEND een marge onder die tijd.',
+    lead: 'Bij een dagtocht met een tijdslimiet of een trailrun met een cutoff geldt een marge onder die tijd.',
     points: [
       { head: '10%', text: 'het advies. Ruimte voor eten, pauzes en een tragere dag. Bij een limiet van 8 uur ligt de grens op 7:12.' },
       { head: '5% of geen', text: 'krapper. Kies dit alleen als je je dag goed kent.' },
@@ -98,9 +98,9 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
   },
   'doeltijd-voorstel': {
     title: 'Doeltijd aanpassen voorstellen',
-    lead: 'Je doel blijft je doel. Staat dit aan, dan mag ASCEND na een testloop één keer voorstellen om je doeltijd aan te passen.',
+    lead: 'Je doel blijft je doel. Staat dit aan, dan krijg je na een testloop één keer een voorstel om je doeltijd aan te passen.',
     points: [
-      { head: 'Liever niet', text: 'ASCEND vraagt er voor dit doel niet meer naar, tot je de doeltijd zelf verandert.' },
+      { head: 'Liever niet', text: 'Geen vraag meer voor dit doel, tot je de doeltijd zelf verandert.' },
       { head: 'Uit', text: 'er komt nooit een voorstel voor je doeltijd. De kaart blijft laten zien hoeveel er nog te winnen is.' },
       { head: 'Akkoord', text: 'verandert alleen je doeltijd, niets anders in je planning.' },
     ],
@@ -140,7 +140,7 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
   },
   'bundel-tochten': {
     title: 'Tochten',
-    lead: 'Wat ASCEND doet rond een tocht: op Vandaag tonen, water per etappe, rust erna en je schoenen.',
+    lead: 'Rond een tocht: op Vandaag tonen, water per etappe, rust erna en je schoenen.',
     points: [
       { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
     ],
@@ -159,7 +159,7 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
     lead: 'Hoe snel een zware beendag mag volgen op een bergtocht.',
     points: [
       { head: 'Soepel', text: 'een korte beendag mag al 48 uur na je tocht.' },
-      { head: 'Streng', text: 'ASCEND houdt altijd 72 uur.' },
+      { head: 'Streng', text: 'Altijd 72 uur.' },
       { head: 'Geldt voor', text: 'nieuwe en gewijzigde tochten. Een tocht die al staat, houdt zijn planning tot je hem wijzigt.' },
     ],
   },
@@ -169,14 +169,14 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
     points: [
       { head: 'Wat telt', text: 'een wandeling of loop met 100 meter dalen of meer, of een afdaaltraining zoals Trap af.' },
       { head: 'Na 21 dagen', text: 'één regel op Vandaag en een voorstel voor een korte trapsessie op een vrije dag. Is die er niet, dan na een herstelwandeling of een rustige loop op dezelfde dag.' },
-      { head: 'Voor een tocht', text: '7 tot 14 dagen voor vertrek vraagt ASCEND om nog één afdaling die je kent. In de laatste week niets nieuws meer.' },
-      { head: 'Zonder hoogtemeters', text: 'weet ASCEND niet of je afdaalde, en dat staat er dan bij.' },
+      { head: 'Voor een tocht', text: '7 tot 14 dagen voor vertrek komt de vraag om nog één afdaling die je kent. In de laatste week niets nieuws meer.' },
+      { head: 'Zonder hoogtemeters', text: 'is niet te zien of je afdaalde, en dat staat er dan bij.' },
       { head: 'Akkoord', text: 'pas dan staat de trapsessie in je week. Met Liever niet verandert er niets en blijft het drie weken stil.' },
     ],
   },
   bergschoenen: {
     title: 'Bergschoenen inlopen',
-    lead: 'Nieuwe schoenen horen niet op de eerste dag van de tocht te beginnen. ASCEND telt de kilometers vanaf de dag dat je ze draagt.',
+    lead: 'Nieuwe schoenen horen niet op de eerste dag van de tocht te beginnen. De kilometers tellen vanaf de dag dat je ze draagt.',
     points: [
       { head: 'Wat telt', text: 'wandelingen en tochten in je logboek. Hardlopen en kracht tellen niet mee.' },
       { head: 'Het doel', text: 'standaard 100 km en minstens 6 weken voor vertrek.' },

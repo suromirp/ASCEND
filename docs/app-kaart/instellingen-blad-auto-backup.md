@@ -5,7 +5,7 @@ Adres: `#/more/gegevens`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 Gegevens en back-up
 ### Automatische back-up
 [knop: Sluiten]
-Wanneer ASCEND vanzelf een back-up maakt.
+Wanneer er vanzelf een back-up komt.
 [label: Automatische back-up]
 [knop: WekelijksAdviesZondagavond vanaf 18:00]
 [knop: DagelijksElke avond vanaf 18:00]

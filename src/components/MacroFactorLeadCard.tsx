@@ -40,7 +40,7 @@ export function MacroFactorLeadCard() {
           <div>
             <p className="text-sm" style={{ color: 'var(--color-ink)' }}>MacroFactor is leidend voor kracht</p>
             <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              Voor een krachttraining die je al had vastgelegd nemen de cijfers van MacroFactor het over: duur, oefeningen, sets en herhalingen in reserve. Wat jij zelf invulde, zoals gevoel, inspanning, pijn en notities, blijft staan. Je eigen cijfers worden bewaard en je kunt ze terugzetten. Uit betekent: ASCEND vult alleen aan wat nog leeg is.
+              Voor een krachttraining die je al had vastgelegd nemen de cijfers van MacroFactor het over: duur, oefeningen, sets en herhalingen in reserve. Wat jij zelf invulde, zoals gevoel, inspanning, pijn en notities, blijft staan. Je eigen cijfers worden bewaard en je kunt ze terugzetten. Uit betekent: alleen wat nog leeg is, wordt aangevuld.
             </p>
           </div>
           <Toggle checked={state.leads} onChange={(on) => void setMacroFactorLeads(on)} label="MacroFactor is leidend voor kracht" />
@@ -82,7 +82,7 @@ function TakenSheet({ taken, templates, onClose }: { taken: SessionLog[]; templa
             ) : (
               <>
                 <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                  Bij elke training staan hieronder je eigen cijfers van toen. Met Terugzetten komen ze terug en is de training weer helemaal van jou. ASCEND biedt die training uit MacroFactor dan niet opnieuw aan.
+                  Bij elke training staan hieronder je eigen cijfers van toen. Met Terugzetten komen ze terug en is de training weer helemaal van jou. Die training uit MacroFactor komt dan niet opnieuw als aanbod.
                 </p>
                 <ul className="flex flex-col gap-2">
                   {taken.map((log) => (

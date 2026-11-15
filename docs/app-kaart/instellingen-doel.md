@@ -9,7 +9,7 @@ Doel
 [knop: Hoofddoel, Geen doel]
 Hoofddoel
 [knop: Uitleg: Hoofddoel]
-Een doel geeft ASCEND een einddatum
+Een doel geeft je planning een einddatum
 Geen doel
 [knop: Programma, Week 1 van 16]
 Programma

@@ -83,7 +83,7 @@ export function tooLightAdvice(inputs: AdviceInputs, templateById: Map<string, S
       ruleId: 'LIGHT-TWICE',
       title: `${name} voelde twee keer licht`,
       effect: 'Je hoeft niets te doen. Blijft je herstel goed, dan vraagt de weekplanning vanzelf iets meer zodra je doel dat nodig heeft.',
-      why: 'Deze training voelde twee keer op rij heel licht (zwaarte 3 of lager). ASCEND verzwaart alleen via de weekplanning, stap voor stap, nooit na één losse training.',
+      why: 'Deze training voelde twee keer op rij heel licht (zwaarte 3 of lager). Zwaarder wordt het alleen via de weekplanning, stap voor stap, nooit na één losse training.',
       priority: 1,
       relatedLogId: lastTwo[0].id,
     });
@@ -111,7 +111,7 @@ export function injuryAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
     effect: upcoming.length > 0
       ? `Zware beensessies de komende week: ${upcoming.join(', ')}. Kies de korte variant of sla over als het niet goed voelt.`
       : 'Er staan de komende week geen zware beensessies. Houd het zo tot het beter voelt.',
-    why: 'Je hebt een blessure aan been of voet genoteerd. ASCEND plant er niets zwaars bij. Jij bepaalt per training of het gaat.',
+    why: 'Je hebt een blessure aan been of voet genoteerd. Er komt niets zwaars bij in je planning. Jij bepaalt per training of het gaat.',
     priority: leg.severity === 'ernstig' ? 6 : 5,
   }];
 }
@@ -138,7 +138,7 @@ export function strengthAdvice(inputs: AdviceInputs, templateById: Map<string, S
     ruleId: 'STRENGTH-REGULARITY',
     title: `Kracht: ${done} van ${window.length} trainingen afgevinkt`,
     effect: 'Past het huidige krachtblok nog bij je week? Minder sessies die je echt doet is beter dan meer die je mist. Je kunt het blok aanpassen op de ASCEND-pagina.',
-    why: 'Twee of meer krachttrainingen zijn in de laatste 14 dagen niet afgevinkt. ASCEND kijkt bij kracht alleen naar regelmaat. Gewichten en progressie blijven in MacroFactor.',
+    why: 'Twee of meer krachttrainingen zijn in de laatste 14 dagen niet afgevinkt. Bij kracht telt hier alleen regelmaat. Gewichten en progressie blijven in MacroFactor.',
     priority: 2,
   }];
 }

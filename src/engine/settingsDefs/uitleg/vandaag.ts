@@ -38,7 +38,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
     title: 'Ochtendcheck',
     lead: 'Een korte vraag over je benen, energie en slaap, voor je training.',
     points: [
-      { head: 'Moe', text: 'dan kan ASCEND een rustiger dag voorstellen.' },
+      { head: 'Moe', text: 'dan kan er een rustiger dag als voorstel komen.' },
       { head: 'Pijn', text: 'een pijnplek van de laatste twee weken blijft altijd gevolgd, ook als dit uit staat.' },
       { head: 'Horloge', text: 'slaap en hartslag kun je erin laten meetellen bij Koppelingen.' },
     ],
@@ -115,11 +115,11 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
   },
   lichterbenen: {
     title: 'Lichter bij vermoeide benen',
-    lead: 'Na spierpijn of een zware loop stelt ASCEND een lichtere beendag of een dag later voor. Jij kiest.',
+    lead: 'Na spierpijn of een zware loop krijg je een lichtere beendag of een dag later als voorstel. Jij kiest.',
     points: [
       { head: 'Met een voorstel', text: 'een kaart op Vandaag bij een zware beendag met spierpijn, een harde loop eerder die dag of een hoge beenindex. Lichter, een dag later of Liever niet. Bij een harde loop van vandaag alleen een dag later.' },
       { head: 'Wat Lichter is', text: 'minder gewicht, zeker 3 herhalingen over en een set minder (niet bij Alleen gewicht), alleen bij oefeningen die je benen belasten. In MacroFactor kies je zelf lichter.' },
-      { head: 'Alleen een regel of uit', text: 'de regel zegt wat ASCEND ziet, zonder knoppen. Uit zet ook de regel bij het verplaatsen van een beendag uit.' },
+      { head: 'Alleen een regel of uit', text: 'de regel noemt wat er opvalt, zonder knoppen. Uit zet ook de regel bij het verplaatsen van een beendag uit.' },
     ],
   },
   'lichterbenen-hoe': {
@@ -133,7 +133,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
   },
   'korter-vandaag': {
     title: 'Minder tijd vandaag',
-    lead: 'Minder tijd vandaag? Kies in het menu van je missie 30, 45 of 60 minuten. ASCEND stelt dezelfde training korter voor.',
+    lead: 'Minder tijd vandaag? Kies in het menu van je missie 30, 45 of 60 minuten. Je krijgt dezelfde training korter als voorstel.',
     points: [
       { head: 'Kernsets', text: 'bij kracht alleen de kernoefeningen. Past de kern niet in je tijd, dan wordt het minder van alles. In Forge sla je de rest zelf over. Bij een tempoloop of intervallen worden inlopen en uitlopen korter.' },
       { head: 'Minder van alles', text: 'bij kracht een set minder per oefening. Bij een loop met blokken minder herhalingen in hetzelfde tempo.' },
@@ -142,7 +142,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
   },
   'bundel-meldingen': {
     title: 'Meldingen',
-    lead: 'Welke meldingen ASCEND op je telefoon mag geven, en wanneer.',
+    lead: 'Welke meldingen je op je telefoon krijgt, en wanneer.',
     points: [
       { head: 'In de browser', text: 'alleen de ochtendvraag, en Chrome kiest het precieze moment.' },
       { head: 'In de Android-app', text: 'ook het einde van je rust en de weekmelding, op tijd. Ze trillen zoals je Trillen hebt staan. Het einde van de rust volgt het signaal van Forge.' },
@@ -153,7 +153,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
     title: 'Ochtendvraag',
     lead: 'Een melding in de ochtend met de vraag hoe je je voelt. Tik erop en het blad staat open.',
     points: [
-      { head: 'Tijdstip', text: 'bij benadering. Chrome bepaalt wanneer ASCEND op de achtergrond wakker mag worden. De melding komt na de tijd die jij kiest, en niet na elven.' },
+      { head: 'Tijdstip', text: 'bij benadering. Chrome bepaalt het moment op de achtergrond. De melding komt na de tijd die jij kiest, en niet na elven.' },
       { head: 'Alleen geïnstalleerd', text: 'op Chrome voor Android, met ASCEND op je beginscherm. Kan het niet, dan krijg je de vraag als je de app opent.' },
       { head: 'Toestemming', text: 'je telefoon vraagt of ASCEND meldingen mag sturen. Er gaat niets naar een server.' },
     ],
@@ -185,7 +185,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
   },
   weerplaats: {
     title: 'Plaats voor het weer',
-    lead: 'ASCEND haalt het weer bij Open-Meteo, voor één plek.',
+    lead: 'Het weer komt van Open-Meteo, voor één plek.',
     points: [
       { head: 'Volgt je locatie', text: 'je plek, afgerond op ongeveer een kilometer, wordt bijgewerkt als je de app opent. Hoogstens eens per uur.' },
       { head: 'Vaste plaats', text: 'de plek die je koos blijft zoals ze is.' },
@@ -204,7 +204,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
     title: 'Beste moment tonen',
     lead: 'Is het weer eerder of later op de dag beter dan op je gewone uur, dan staat er onder het weer één regel, zoals "Beste moment: 16:00 tot 17:30, droog".',
     points: [
-      { head: 'Alleen als het echt scheelt', text: 'een klasse beter (slecht, let op, prima), of regen of wind die onder de drempel van ASCEND blijft.' },
+      { head: 'Alleen als het echt scheelt', text: 'een klasse beter (slecht, let op, prima), of regen of wind onder de drempel van ASCEND.' },
       { head: 'Altijd in het licht', text: 'tussen zonsopkomst en zonsondergang, en niet in het verleden.' },
     ],
   },
@@ -219,16 +219,16 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
   },
   lawinegevaar: {
     title: 'Lawinegevaar',
-    lead: 'Bij een tocht in de bergen of de sneeuw toont ASCEND het lawinegevaar uit het bulletin rond de plek van je tocht, van november tot en met mei (bij terrein sneeuw het hele jaar). Het advies is aan.',
+    lead: 'Bij een tocht in de bergen of de sneeuw zie je het lawinegevaar uit het bulletin rond de plek van je tocht, van november tot en met mei (bij terrein sneeuw het hele jaar). Het advies is aan.',
     points: [
       { head: 'Wat je ziet', text: 'een regel als: lawinegevaar aanzienlijk, 3 van 5, morgen rond Val d\'Isère. Op een dag van je tocht, of de dag ervoor als je tocht een eigen plek heeft.' },
       { head: 'Waar het vandaan komt', text: 'het open bulletin van de Europese lawinediensten (EAWS), voor de Alpen en de Pyreneeën. Alleen een datum en welke lawinedienst gaan naar buiten.' },
-      { head: 'Alleen informatie', text: 'ASCEND zegt niet of je moet gaan. Lees het hele bulletin bij de dienst van het land. Je planning verandert er niet door.' },
+      { head: 'Alleen informatie', text: 'Geen oordeel of je moet gaan. Lees het hele bulletin bij de dienst van het land. Je planning verandert er niet door.' },
     ],
   },
   'route-voorstel': {
     title: 'Route voorstellen',
-    lead: 'Bij een looptraining stelt ASCEND twee lussen voor die passen bij de afstand en de hoogtemeters. Het advies is aan, met Avontuurlijk bovenaan.',
+    lead: 'Bij een looptraining zie je twee lussen die passen bij de afstand en de hoogtemeters. Het advies is aan, met Avontuurlijk bovenaan.',
     points: [
       { head: 'Simpel', text: 'dezelfde helling op en af tot de hoogtemeters er zijn. Bij een vlakke training heen en terug over hetzelfde pad.' },
       { head: 'Avontuurlijk', text: 'één lange lus langs verschillende hellingen en onverharde paden, liefst zonder stukken twee keer.' },
@@ -240,7 +240,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
     title: 'Startpunt van je lus',
     lead: 'Waar een voorgestelde lus begint.',
     points: [
-      { head: 'Waar je nu bent', text: 'het advies. Bij elke zoektocht vraagt ASCEND één keer je plek, op 50 m nauwkeurig, en die gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Hij wordt niet als startpunt bewaard. Lukt het niet, dan zoekt ASCEND niet: één regel zegt waarom, en je kiest Opnieuw, Thuis (als je die hebt) of Andere plek. Nooit stil bij Thuis, dat kan ver weg liggen als je op reis bent. Boven de kaart kies je met Start bij, onder Andere plek, voor deze training ook Thuis of een andere bewaarde plek.' },
+      { head: 'Waar je nu bent', text: 'het advies. Bij elke zoektocht komt één keer de vraag om je plek, op 50 m nauwkeurig, en die gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Hij wordt niet als startpunt bewaard. Lukt het niet, dan wordt er niet gezocht: één regel zegt waarom, en je kiest Opnieuw, Thuis (als je die hebt) of Andere plek. Nooit stil bij Thuis, dat kan ver weg liggen als je op reis bent. Boven de kaart kies je met Start bij, onder Andere plek, voor deze training ook Thuis of een andere bewaarde plek.' },
       { head: 'Thuis', text: 'je kiest hieronder Gebruik waar ik nu ben, bij je deur, of je tikt een punt op de kaart bij Route voorstellen en kiest Bewaar als plek, Maak dit Thuis. Dat punt gaat naar de routeplanner en wordt op dit toestel bewaard; het gaat mee in je back-up. Start hier op de kaart geldt alleen voor die zoektocht en verandert Thuis niet. Wis startpunt haalt Thuis weg.' },
       { head: 'Ongeveer', text: 'je plaats, binnen een kilometer. De lus begint tot ongeveer 700 m van huis.' },
       { head: 'OpenStreetMap', text: 'heuvels en paden zoekt het om je plek van nu (op ongeveer 100 m), om Thuis, of bij Ongeveer om je afgeronde plek. De hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Wis startpunt haalt ook de bewaarde heuvels rond een precies punt weg.' },
@@ -267,10 +267,10 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
   },
   'route-kaart': {
     title: 'Ondergrond van de kaart',
-    lead: 'De kaart in Route voorstellen toont je lussen, je startpunt en je plek. Dit kiest wat eronder ligt. Rechtsboven op de kaart wissel je ook snel tussen de kaart en de luchtfoto; ASCEND onthoudt wat je het laatst koos.',
+    lead: 'De kaart in Route voorstellen toont je lussen, je startpunt en je plek. Dit kiest wat eronder ligt. Rechtsboven op de kaart wissel je ook snel tussen de kaart en de luchtfoto; wat je het laatst koos, blijft staan.',
     points: [
       { head: 'Donker en Licht', text: 'straten, paden en water van OpenFreeMap, in de kleuren van ASCEND of licht. Donker is het advies: daarop zie je paden en straten het best.' },
-      { head: 'Luchtfoto', text: `bos, akker, rots en water van boven. ${PHOTO_SOURCES_LINE} Over een grens of aan de kust neemt ASCEND EOX (10 m, waziger), zodat de foto nooit half wit is.` },
+      { head: 'Luchtfoto', text: `bos, akker, rots en water van boven. ${PHOTO_SOURCES_LINE} Over een grens of aan de kust komt de foto van EOX (10 m, waziger), zodat hij nooit half wit is.` },
       { head: 'Geen', text: 'alleen de lussen en je plek op een effen vlak. Er worden geen kaarttegels opgehaald en er staat geen schakelaar.' },
       { head: 'Valt het weg', text: `komt de luchtfoto niet binnen ${AERIAL_LIMIT_MS / 1000} seconden, dan laadt de kaart, met één regel; komt de kaart niet binnen ${MAP_SOURCE_LIMIT_MS / 1000} seconden, dan die van OpenStreetMap, en anders het effen vlak. Kaarttegels worden nooit vooraf opgehaald of bewaard. Luchtfototegels die je zag bewaart de app hoogstens ${AERIAL_CACHE.maxAgeDays} dagen, hoogstens ${AERIAL_CACHE.maxEntries} per bron.` },
     ],
@@ -279,8 +279,8 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
     title: 'Je kleding',
     lead: 'Na een buitentraining kun je tikken of je kleding goed zat.',
     points: [
-      { head: 'Dan', text: 'schuift ASCEND je voorkeur een graad op, daarna telkens een halve, hooguit vier graden per sport.' },
-      { head: 'Terug', text: 'met Terug naar de standaard begint ASCEND weer bij nul.' },
+      { head: 'Dan', text: 'schuift je voorkeur een graad op, daarna telkens een halve, hooguit vier graden per sport.' },
+      { head: 'Terug', text: 'met Terug naar de standaard begin je weer bij nul.' },
     ],
   },
   beweging: {
@@ -321,7 +321,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
   },
   loopweer: {
     title: 'Weer bij loopinzicht',
-    lead: 'Voor eerlijk vergelijken zoekt ASCEND het weer van die dag op bij Open-Meteo.',
+    lead: 'Voor eerlijk vergelijken komt het weer van die dag van Open-Meteo.',
     points: [
       { head: 'Wat gaat mee', text: 'alleen een plek afgerond op ongeveer een kilometer.' },
       { head: 'Uit', text: 'er gaat niets naar de weerdienst voor loopinzicht.' },
@@ -329,10 +329,10 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
   },
   borstband: {
     title: 'Hartslag van de borstband',
-    lead: 'Zonder borstband kan de hartslag van een andere bron komen, en dan vergelijkt ASCEND niet eerlijk.',
+    lead: 'Zonder borstband kan de hartslag van een andere bron komen, en dan is de vergelijking niet eerlijk.',
     points: [
       { head: 'Aan', text: 'elke loop telt als gemeten met de band.' },
-      { head: 'Uit', text: 'ASCEND vergelijkt geen lopen waarbij de bron kan zijn gewisseld.' },
+      { head: 'Uit', text: 'Geen vergelijking van lopen waarbij de bron kan zijn gewisseld.' },
     ],
   },
   'bundel-run-detail': {
@@ -371,11 +371,11 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
   },
   'zweet-vragen': {
     title: 'Zweetverlies vragen',
-    lead: 'Bij een loop, wandeling of tocht vraagt ASCEND je gewicht voor en na, zodat je je eigen zweettempo leert kennen.',
+    lead: 'Bij een loop, wandeling of tocht komt de vraag naar je gewicht voor en na, zodat je je eigen zweettempo leert kennen.',
     points: [
       { head: 'Vooraf', text: 'een regel op de missiekaart. Een gewicht uit MacroFactor van vandaag of gisteren staat er als voorstel en wordt nooit zonder tik overgenomen.' },
       { head: 'Na afloop', text: 'bij Hoe ging het en op het scherm Gedaan een rij voor je gewicht na. Achteraf invullen kan in het Logboek, ook met de schatting van je horloge.' },
-      { head: 'Uit', text: 'ASCEND vraagt niets. Je wegingen blijven bewaard.' },
+      { head: 'Uit', text: 'Geen vraag. Je wegingen blijven bewaard.' },
     ],
   },
   ochtendkaart: {
@@ -389,7 +389,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
   },
   'korte-nacht': {
     title: 'Vragen bij een korte nacht',
-    lead: 'Zag je horloge maar een deel van de nacht, dan vraagt ASCEND of dat klopt, in plaats van te denken dat je slecht sliep.',
+    lead: 'Zag je horloge maar een deel van de nacht, dan komt de vraag of dat klopt, in plaats van de aanname dat je slecht sliep.',
     points: [
       { head: 'Wanneer', text: 'minder dan 4 uur slaap, of minder dan de helft van jouw gemiddelde (na een week van je eigen nachten). Dat gebeurt als je horloge in de nacht van je pols gaat.' },
       { head: 'Niet goed gemeten', text: 'die nacht telt niet mee voor een voorstel en niet in jouw gemiddelden van slaap en HRV. Je rusthartslag blijft meetellen. Je kunt zelf zeggen hoe lang je ongeveer sliep. Ongedaan maken zet alles terug.' },

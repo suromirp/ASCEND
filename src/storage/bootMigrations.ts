@@ -130,7 +130,7 @@ export async function runBootMigrations(
         continue;
       }
       if (outcome === TIMED_OUT) {
-        console.warn(`Opstartstap ${step.id} niet afgerond; ASCEND opent zonder, volgende keer opnieuw.`);
+        console.warn(`Opstartstap ${step.id} niet afgerond; geopend zonder, volgende keer opnieuw.`);
         skipped.push(step.id);
         repairsStopped = true;
         pending = running.then(() => undefined);

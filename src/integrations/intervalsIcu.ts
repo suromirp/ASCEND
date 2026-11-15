@@ -59,8 +59,8 @@ const MESSAGES: Record<Exclude<IntervalsErrorKind, 'input'>, string> = {
   rate: 'intervals.icu vraagt even te wachten met opnieuw proberen. Probeer het over een paar minuten nog eens.',
   server: 'intervals.icu heeft op dit moment een storing. Probeer het later nog eens; je eigen gegevens in ASCEND zijn niet geraakt.',
   network: 'Geen verbinding met intervals.icu. Controleer je internet en probeer het later opnieuw.',
-  response: 'intervals.icu gaf een antwoord dat ASCEND niet begrijpt. Probeer het later nog eens.',
-  write: 'Met deze sleutel mag ASCEND geen trainingen in je agenda zetten. Maak in intervals.icu een nieuwe API-sleutel aan en plak hem opnieuw in ASCEND.',
+  response: 'intervals.icu gaf een onleesbaar antwoord. Probeer het later nog eens.',
+  write: 'Deze sleutel geeft geen recht om trainingen in je agenda te zetten. Maak in intervals.icu een nieuwe API-sleutel aan en plak hem opnieuw in ASCEND.',
   rejected: 'intervals.icu nam de training niet aan. Probeer het later nog eens; blijft het gebeuren, laat het dan weten.',
 };
 
