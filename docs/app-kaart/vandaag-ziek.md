@@ -12,11 +12,11 @@ Basisfase, week 1 van 4
 
 --- kaart 2 ---
 Ziek
-Verkouden, alleen boven de nek
+Neus of keel, zonder koorts
 Sinds za 31 oktober
 Zware trainingen zijn van je planning gehaald. Rustig wandelen of een rustige loop mag als je je goed voelt. Krijg je koorts of klachten op je borst? Meld dat.
 [knop: Ik ben weer beter]
-[knop: Toch koorts of klachten onder de nek?]
+[knop: Toch koorts of klachten op je borst?]
 
 --- kaart 3 ---
 Vandaag

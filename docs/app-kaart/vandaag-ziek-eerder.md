@@ -12,7 +12,7 @@ Basisfase, week 1 van 4
 
 --- kaart 2 ---
 Ziek
-Koorts of klachten onder de nek
+Koorts, ook als je verkouden bent
 Sinds do 29 oktober
 Rust. Je trainingen van vandaag en morgen zijn van je planning gehaald. Wat je mist, telt niet als gemist en hoef je niet in te halen.
 [knop: Ik ben weer beter]

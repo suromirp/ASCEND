@@ -14,7 +14,7 @@ Schermen op een eigen stand, met de stand in de naam:
 - vakantie (9 tot en met 13 november, zonder training): `vandaag-vakantie`, `week-vakantie` en `stand-vakantie`.
 - heuvel (de Lange duurloop van die week is Heuvelintervallen): `briefing-heuvel`, `briefing-loopband-helling` en `briefing-stairmaster`, de Briefing per manier (besluit `2026-11-12-briefing-per-manier.md`). Op de gewone stand ook `briefing-loopband`, de Lange duurloop op de loopband. Twee invarianten: het totaal bovenaan is het einde van de tijdlijn, en geen zin staat twee keer in één regel.
 - zonder-doel (geen doel, de richting Fit blijven): `vandaag-zonder-doel`, `week-zonder-doel`, `ascend-zonder-doel`, `stand-zonder-doel` en `stand-ritme-zonder-doel`.
-- ziek (verkouden boven de nek, sinds vandaag): `vandaag-ziek`, `week-ziek` en `stand-ziek`.
+- ziek (neus of keel, zonder koorts, sinds vandaag): `vandaag-ziek`, `week-ziek` en `stand-ziek`.
 - ziek-eerder (ziek sinds donderdag 29 oktober, Benen A op woensdag 28 ervoor en de testloop op donderdag 29 erin): `vandaag-ziek-eerder` en `week-ziek-eerder`. De invariant Vervallen tegen gemist leest deze stand.
 - herstel (alleen een losse Herstelwandeling van 56 minuten op 1 november, klok maandag 2 november): `logboek-herstel`. Invariant: de logboekkop zegt nooit niets als de lijst eronder een log heeft.
 - concept (Benen A van woensdag 28 oktober ligt als concept in Forge, drie sets afgevinkt): `vandaag-concept`, `week-concept` en `weekterugblik-concept`, elk na Niet nu op het blad Training niet afgerond. Invariant: de training van de pil heet in Week "loopt nog" en nergens gemist, niet onder Gemist in de weekterugblik en zonder vraag Niet gedaan? op Vandaag (besluit `2026-11-15-concept-loopt-nog.md`).
