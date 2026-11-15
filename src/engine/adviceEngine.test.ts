@@ -116,7 +116,11 @@ describe('MISSED-CATCH-UP', () => {
 
   it('never stacks: with every remaining day taken it proposes letting it go', () => {
     const full = ['2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04'].map((d, i) => ps(`f${i}`, 'upper', d));
-    const advice = computeAdvice(inputs({ plannedSessions: [ps('m', 'hike', '2026-09-29'), ...full], sameDayPairingPreference: 'never' }));
+    const plan = [ps('m', 'hike', '2026-09-29'), ...full];
+    // Vandaag staat nog een training open: het voorstel om de sleuteltraining te laten vallen wacht daarop
+    // (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md, aanvulling na Warden).
+    expect(computeAdvice(inputs({ plannedSessions: plan, sameDayPairingPreference: 'never' })).find((a) => a.id === 'missed:m')).toBeUndefined();
+    const advice = computeAdvice(inputs({ plannedSessions: plan, logs: [log('lf0', 'upper', '2026-09-30', { plannedSessionId: 'f0' })], sameDayPairingPreference: 'never' }));
     expect(advice.find((a) => a.id === 'missed:m')?.proposal?.changes[0].action).toBe('remove');
   });
 

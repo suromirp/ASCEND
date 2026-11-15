@@ -13,7 +13,7 @@ Adres: `#/week`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 Rustdag deze week
 Di 27 · je rustdag op maandag is bezet
 [knop: Benen A (zwaar)Wo 28·45 min· loopt nogLoopt nog]
-[knop: Testloop 5 kmDo 29·45 minGemist]
+[knop: Testloop 5 kmDo 29·45 min· gemistGemist]
 Vrij
 Vr 30 · niets gepland
 Vrij

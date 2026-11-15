@@ -10,13 +10,14 @@ describe('het ene ding in de tweede regel', () => {
 
   it('"aangepast" staat er altijd als er een regel is, ook naast een punt uit Let op (het getal op de rij)', () => {
     expect(rowExtra({ concern: 'op je rustdag', adjusted: true })).toEqual({ text: 'op je rustdag', warn: true, also: 'aangepast' });
-    expect(rowExtra({ missed: true, adjusted: true })?.text).toBe('aangepast');
+    // Gemist met een greep heeft geen teken rechts: gemist voorop, aangepast erbij (Warden, 15 november).
+    expect(rowExtra({ missed: true, adjusted: true })).toEqual({ text: 'gemist', warn: false, also: 'aangepast' });
   });
 
   it('daarna de rang: aangepast, verplaatst van, vaste afspraak, zware benen, het toegestane paar; stil, zonder kleur', () => {
-    expect(rowExtra({ catchNote: 'verplaatst van wo 28', legs: true })).toEqual({ text: 'verplaatst van wo 28', warn: false });
+    expect(rowExtra({ catchNote: 'verplaatst van wo 28', legs: true })).toEqual({ text: 'verplaatst van wo 28', warn: false, tail: 'wo 28' });
     expect(rowExtra({ adjusted: true, moved: true, fixed: true })).toEqual({ text: 'aangepast', warn: false });
-    expect(rowExtra({ moved: true, movedFrom: '2026-11-11', fixed: true })).toEqual({ text: 'verplaatst van wo 11', warn: false });
+    expect(rowExtra({ moved: true, movedFrom: '2026-11-11', fixed: true })).toEqual({ text: 'verplaatst van wo 11', warn: false, tail: 'wo 11' });
     expect(rowExtra({ moved: true })?.text).toBe('verplaatst');
     expect(rowExtra({ fixed: true, legs: true })?.text).toBe('vaste afspraak');
     expect(rowExtra({ legs: true, pairNote: 'p' })?.text).toBe('zware benen');

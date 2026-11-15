@@ -8,6 +8,8 @@ import type { Advice } from './adviceShared';
 import type { LeavePeriod } from '../models/leave';
 import { LEAVE_KIND_LABEL, describePeriodCompact } from './leave';
 import { hoursMinutes } from '../utils/hoursMinutes';
+import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
+import { deriveSessionStatus, type PauseContext } from './sessionStatus';
 
 // Het ene vak boven de dagen. Rang: Let op, dan een voorstel voor je rustdag, dan een voorstel voor een extra
 // training. Wat het vak niet krijgt wacht als rij "Voorstel" in de lijst onder de dagen, zodat er nooit twee
@@ -44,6 +46,17 @@ export function weekLoadRow(state: { rest: boolean; restSkipped: boolean; repeat
 export function weekSoFarRow(input: { current: boolean; done: number; total: number; doneMinutes: number }): ListRow {
   const count = `${input.done} van ${input.total} gedaan`;
   return { title: input.current ? 'Je week tot nu' : 'Je week', sub: input.doneMinutes > 0 ? `${count} · ${hoursMinutes(input.doneMinutes)} uur` : count };
+}
+
+// Hoeveel trainingen van deze week gemist zijn, voor de kaart "Je hebt n training gemist": precies de rijen die Week
+// gemist noemt (engine/sessionStatus.ts#deriveSessionStatus, stand 'missed'), dezelfde afleiding als de weekterugblik
+// en het inhaaladvies. Overgeslagen, vervallen, vandaag en een rustdag tellen niet
+// (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md).
+export function missedInWeek(sessions: readonly PlannedSession[], logs: SessionLog[], templateById: ReadonlyMap<string, Pick<SessionTemplate, 'id' | 'type'>>, pause: PauseContext): number {
+  return sessions.filter((s) => {
+    const t = templateById.get(s.templateId);
+    return !!t && t.type !== 'recovery' && deriveSessionStatus(s, logs, false, pause).status === 'missed';
+  }).length;
 }
 
 export const REPLAN_SUB = 'Zet de rest van je week terug naar het plan';

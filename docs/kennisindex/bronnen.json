@@ -3008,10 +3008,11 @@
     "planning",
     "week"
    ],
-   "kern": "Een vakantie, tocht of periode zonder sportschool die je zelf meldde, telt nooit als gemist. Geldt nog: een gemelde vakantie, tocht of periode telt nooit als gemist en er komt geen vraag of inhaaladvies over wat ervoor lag; de regel onder Vervallen noemt nu wat binnen de pauze stond.",
+   "kern": "Een vakantie, tocht of periode zonder sportschool die je zelf meldde, telt nooit als gemist. Geldt nog: een gemelde vakantie of tocht telt nooit als gemist en er komt geen vraag of inhaaladvies over wat ervoor lag; zonder sportschool vervalt alleen wat de sportschool nodig heeft (2026-11-15-week-telling-zonder-sportschool); de regel onder Vervallen noemt wat binnen de pauze stond.",
    "stand": "deels",
    "vervangenDoor": [
-    "docs/beslissingen/2026-11-15-vervallen-een-bron.md"
+    "docs/beslissingen/2026-11-15-vervallen-een-bron.md",
+    "docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md"
    ]
   },
   "docs/beslissingen/2026-11-14-verborgen-schermen.md": {
@@ -3118,6 +3119,14 @@
     "lopen-en-tests"
    ],
    "kern": "Een wandelworkout naar het horloge krijgt geen zonedoel maar een regel met vaste bpm uit je hardloopzones in de beschrijving, omdat intervals.icu voor wandelen geen eigen zones heeft.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Gemist heeft één afleiding voor Week, de kaart, de weekterugblik en het inhaaladvies: zonder sportschool vervalt alleen wat de sportschool nodig heeft, overgeslagen is geen gemist, en het inhalen leest dezelfde weekcontrole als Let op.",
    "stand": "geldt"
   },
   "docs/beslissingen/_sjabloon.md": {

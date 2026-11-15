@@ -1,16 +1,16 @@
-import type { PlannedSession, SessionLog } from '../models/training';
+import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { todayISO } from '../utils/dates';
 import type { LeavePeriod } from '../models/leave';
-import { isAwayDay } from './leave';
+import { isAwayFor } from './leave';
 import type { IllnessEpisode } from '../models/illness';
 import { isIllnessDay } from './illness';
 import { isTaperDay } from './raceWindow';
 
-// 'away': voorbij en niet gedaan op een dag van een vakantie, tocht of periode zonder sportschool die je meldde
-// (engine/leave.ts#isAwayDay), of op een dag dat je ziek gemeld was (engine/illness.ts#isIllnessDay). Heet
+// 'away': voorbij en niet gedaan op een dag van een vakantie of tocht die je meldde, of zonder sportschool als de
+// training de sportschool nodig heeft (engine/leave.ts#isAwayFor), of op een dag dat je ziek gemeld was (engine/illness.ts#isIllnessDay). Heet
 // Vervallen, nooit gemist. Een dag vóór de melding blijft gemist. Wat je op zo'n dag wel logde, is gedaan en telt
 // mee: dezelfde afleiding als de weekterugblik, de ring in Week en de reeks (engine/weekLogs.ts#leftOutOfCount,
-// engine/streak.ts) en als de kaart Vervallen op Vandaag (engine/missedTraining.ts#planMissed), via isPausedDay.
+// engine/streak.ts) en als de kaart Vervallen op Vandaag (engine/missedTraining.ts#planMissed), via isPausedFor.
 // Ook een training uit de afbouw voor een race, zodra de racedag er is (engine/raceWindow.ts#isTaperDay).
 // 'open': voorbij en niet gedaan, maar er ligt nog een concept van in Forge (een training die bleef liggen,
 // engine/forgeSession.ts#leftSession). Heet "loopt nog": niet gemist en niet gedaan, tot je hem afrondt (dan is er
@@ -45,14 +45,24 @@ function movedByYou(session: PlannedSession): boolean {
   return !!session.movedFromDate && session.movedFromDate !== session.scheduledDate && (session.status === 'moved' || !!session.lock);
 }
 
-export interface PauseContext {
-  leave?: LeavePeriod[];
+// De sjablonen, om te weten wat de sportschool nodig heeft (engine/leave.ts#isAwayFor).
+export type TemplateLookup = ReadonlyMap<string, Pick<SessionTemplate, 'id' | 'type'>> | readonly Pick<SessionTemplate, 'id' | 'type'>[];
+export function templateIn(templates: TemplateLookup | undefined, id: string): Pick<SessionTemplate, 'id' | 'type'> | undefined {
+  if (!templates) return undefined;
+  return 'get' in templates ? templates.get(id) : templates.find((t) => t.id === id);
+}
+
+interface PauseBase {
   illness?: IllnessEpisode[];
   // De dagen van de races in de planning (engine/raceWindow.ts#raceDatesOf).
   races?: readonly string[];
   // De geplande sessie waar nog een concept van in Forge ligt (openDraftId), of niets.
   openDraft?: string;
 }
+// Wie de periodes meegeeft, geeft ook de sjablonen mee: zonder sportschool telt alleen wat de sportschool nodig heeft
+// als weg (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md). Verplicht, zodat geen scherm stil een
+// andere telling maakt.
+export type PauseContext = PauseBase & ({ leave?: undefined; templates?: TemplateLookup } | { leave: LeavePeriod[] | undefined; templates: TemplateLookup });
 
 // De geplande sessie van het concept dat nu in Forge ligt, of niets. De ene plek die het concept leest: de wijzer en
 // het concept zelf komen uit utils/forgeSessionStore.ts#readSession (die geeft niets als het concept weg is). Een losse
@@ -72,11 +82,22 @@ export function isDraftOpen(session: Pick<PlannedSession, 'id' | 'scheduledDate'
   return !!openDraft && session.id === openDraft && session.status !== 'skipped' && session.scheduledDate < today;
 }
 
-// Een dag binnen een pauze die je meldde: ziek (tot en met de dag van beter melden, of tot vandaag) of weg, of een
-// dag uit de afbouw van een race die er al was. De ene toets voor Vervallen; wie een voorbije dag toont, geeft
-// { leave, illness, races } mee.
-export function isPausedDay(date: string, pause: PauseContext | undefined, today: string): boolean {
-  return (!!pause?.leave?.length && isAwayDay(date, pause.leave)) || isIllnessDay(date, pause?.illness, today) || isTaperDay(date, pause?.races, today);
+// Een training binnen een pauze die je meldde: ziek (tot en met de dag van beter melden, of tot vandaag), weg
+// (engine/leave.ts#isAwayFor: vakantie en tocht alles, zonder sportschool alleen wat de sportschool nodig heeft), of
+// uit de afbouw van een race die er al was. De ene toets voor Vervallen; wie een voorbije dag toont, geeft
+// { leave, templates, illness, races } mee.
+export function isPausedFor(session: Pick<PlannedSession, 'scheduledDate' | 'templateId'>, pause: PauseContext | undefined, today: string): boolean {
+  const date = session.scheduledDate;
+  return (!!pause?.leave?.length && isAwayFor(date, templateIn(pause.templates, session.templateId), pause.leave))
+    || isIllnessDay(date, pause?.illness, today) || isTaperDay(date, pause?.races, today);
+}
+
+// Gemist: voorbij (vandaag telt nog niet, ook niet als de dag bijna om is), zonder log, niet overgeslagen, niet in
+// een pauze en niet lopend in Forge. Dezelfde afleiding als de stand 'missed' hieronder; Week telt er de kaart
+// "Je hebt n training gemist" mee (engine/weekList.ts#missedInWeek).
+export function isMissedSession(session: PlannedSession, loggedIds: ReadonlySet<string | undefined>, today: string, pause?: PauseContext): boolean {
+  if (loggedIds.has(session.id) || session.status === 'skipped' || session.scheduledDate >= today) return false;
+  return !isDraftOpen(session, pause?.openDraft, today) && !isPausedFor(session, pause, today);
 }
 
 export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[], isRest = false, pause?: PauseContext): DisplaySessionState {
@@ -88,7 +109,7 @@ export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[],
   if (session.scheduledDate === todayISO()) return { status: 'today', wasMoved };
   if (isDraftOpen(session, pause?.openDraft, todayISO())) return { status: 'open', wasMoved };
   if (session.scheduledDate < todayISO()) {
-    return { status: isPausedDay(session.scheduledDate, pause, todayISO()) ? 'away' : 'missed', wasMoved };
+    return { status: isPausedFor(session, pause, todayISO()) ? 'away' : 'missed', wasMoved };
   }
   if (session.status === 'moved') return { status: 'moved', wasMoved: true };
   return { status: 'planned', wasMoved: false };

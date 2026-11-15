@@ -1,7 +1,7 @@
 // Maakt de nagemaakte standen voor de tekstkaart (docs/app-kaart/README.md) en laat elk één planningsronde
 // draaien op de vaste klok van de kaart, zodat een start daarna niets meer bijwerkt.
 //   node scripts/app-kaart/maak-standen.mjs            maakt alle standen opnieuw
-//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, ziek-eerder, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel, concept)
+//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, ziek-eerder, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel, concept, zonder-sportschool)
 // Alles is nagemaakt: de basis is state-kracht.json, de rest zijn kleine wijzigingen met verzonnen getallen.
 //
 // Waarom "settle": bij de eerste start na het laden van een stand vindt de planningsronde nog iets te
@@ -255,6 +255,17 @@ function metConcept(state) {
   ls.push({ name: key, value: JSON.stringify(concept) }, { name: 'ascend.forge.sessie', value: JSON.stringify(wijzer) });
 }
 
+// Zonder sportschool van dinsdag 27 tot en met vrijdag 30 oktober (besluit 2026-11-15-week-telling-zonder-sportschool.md):
+// een rustige duurloop op dinsdag die niet gedaan is (gemist), Benen A op woensdag (sportschool, vervallen), de testloop op
+// donderdag (gemist) en Bovenlichaam B op vrijdag overgeslagen. Voor de invariant: het getal op "Je hebt n training
+// gemist" is het aantal dagrijen die gemist zeggen. Alles nagemaakt.
+function zonderSportschool(state) {
+  meta(state, 'settings').value.leavePeriods = [{ id: 'leave_kaart_gym', kind: 'no_gym', startDate: '2026-10-27', endDate: '2026-10-30' }];
+  const overgeslagen = eigen('planned_kaart_gym_2', 'tpl_upper_b', '2026-10-30', 8);
+  overgeslagen.value.status = 'skipped';
+  winkel(state, 'plannedSessions').records.push(eigen('planned_kaart_gym_1', 'tpl_easy_run', '2026-10-27', 7), overgeslagen);
+}
+
 export const STANDEN = {
   kracht: () => {},
   horloge: metHorloge,
@@ -273,6 +284,7 @@ export const STANDEN = {
   herstel: metHerstel,
   tocht: metTocht,
   concept: metConcept,
+  'zonder-sportschool': zonderSportschool,
 };
 
 // --- één planningsronde op de vaste klok -------------------------------------------------------------

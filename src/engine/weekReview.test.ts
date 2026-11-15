@@ -73,8 +73,10 @@ describe('buildWeekReview', () => {
     const review = buildWeekReview({ weekStart: W, plannedSessions: planned, logs, templates, program, planChangeLog: [ascendRemoval], asOf: '2026-10-12' })!;
     expect(review.done).toBe(4);
     expect(review.planned).toBe(6);
-    expect(review.missed).toEqual(['Rustige duurloop', 'Heuvelintervallen']);
-    expect(review.advice[0]).not.toContain('Alles gedaan');
+    // Overgeslagen telt als gepland en niet gedaan, maar heet niet gemist: Week toont hem als overgeslagen
+    // (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md).
+    expect(review.missed).toEqual([]);
+    expect(review.advice.join(' ')).not.toContain('Alles gedaan');
   });
 
   it('reviews no week before week 1', () => {

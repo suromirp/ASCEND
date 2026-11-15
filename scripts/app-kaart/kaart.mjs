@@ -222,6 +222,10 @@ const SCHERMEN = {
   'vandaag-concept': { titel: 'Vandaag met een training die bleef liggen (Benen A)', pad: '#/', stand: 'concept', actie: (p) => tik(p, '[role=dialog] button:has-text("Niet nu")') },
   'week-concept': { titel: 'Week met een training die bleef liggen (Benen A)', pad: '#/week', stand: 'concept', actie: (p) => tik(p, '[role=dialog] button:has-text("Niet nu")') },
   'weekterugblik-concept': { titel: 'Je week tot nu met een training die bleef liggen', pad: '#/week', stand: 'concept', actie: async (p) => { await tik(p, '[role=dialog] button:has-text("Niet nu")'); await tik(p, 'button:has-text("Je week tot nu")'); } },
+  // Zonder sportschool (stand zonder-sportschool, besluit 2026-11-15-week-telling-zonder-sportschool.md): een gemiste loop,
+  // een vervallen sportschooltraining en een overgeslagen rij. De invariant leest de kaart, de dagrijen en de terugblik.
+  'week-zonder-sportschool': { titel: 'Week, zonder sportschool sinds dinsdag', pad: '#/week', stand: 'zonder-sportschool' },
+  'weekterugblik-zonder-sportschool': { titel: 'Je week tot nu, zonder sportschool sinds dinsdag', pad: '#/week', stand: 'zonder-sportschool', actie: (p) => tik(p, 'button:has-text("Je week tot nu")') },
   'ascend-vaardigheid': { titel: 'Ascend met een vaardigheid (Pull-Up)', pad: '#/ascend', stand: 'vaardigheid' },
   'ascend-algemeen': { titel: 'Ascend met Algemeen sterk met eigen gewicht', pad: '#/ascend', stand: 'algemeen' },
   // Het voorstel voor spieren voor de berg als eigen weergave in de weekterugblik (besluit 2026-11-12-je-week-tot-nu).

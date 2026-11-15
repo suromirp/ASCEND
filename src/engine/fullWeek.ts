@@ -30,7 +30,7 @@ import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
 import { isTaperDay, raceDatesOf } from './raceWindow';
 import { isDraftOpen } from './sessionStatus';
 import { isKeyFor, type KeyFocus } from './keySession';
-import { leaveDays } from './leave';
+import { isAwayFor, leaveDays } from './leave';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
 import { logSport, templateSport } from './sports';
 import { hasRole, isTestOrRace } from './templateRoles';
@@ -108,7 +108,9 @@ export function weekLoss(input: FullWeekInput): WeekLoss[] {
   const nameOf = (s: PlannedSession) => ctx.tpl(s)?.name ?? 'Training';
   // Een dag uit de afbouw van een race die er al was telt ook niet als verlies, zoals in Week (engine/raceWindow.ts).
   const races = raceDatesOf(input.sessions, input.templates);
-  const away = (d: string) => { const kind = ctx.days.get(d)?.kind; return kind === 'off' || kind === 'trek' || isIllnessDay(d, input.illnessEpisodes, today) || isTaperDay(d, races, today); };
+  // Weg: een vakantie- of tochtdag, of zonder sportschool wat de sportschool nodig heeft (engine/leave.ts#isAwayFor),
+  // dezelfde toets als gemist in Week.
+  const away = (d: string, t?: SessionTemplate) => isAwayFor(d, t, input.leave, ctx.days) || isIllnessDay(d, input.illnessEpisodes, today) || isTaperDay(d, races, today);
   const inWeek = (d: string) => d >= monday && d <= sunday;
   const usedDay = (d: string, except: string) => input.sessions.some((o) => o.id !== except && o.status !== 'skipped' && o.scheduledDate === d && ctx.trains(o))
     || input.logs.some((l) => l.completedDate === d && l.type !== 'recovery');
@@ -116,8 +118,8 @@ export function weekLoss(input: FullWeekInput): WeekLoss[] {
     const from = s.movedFromDate;
     if (!inWeek(s.scheduledDate) && !(from && inWeek(from))) continue;
     if (!ctx.trains(s) || s.amount?.change === 'left_out' || s.leave?.role === 'dropped' || input.removedByPlanIds?.has(s.id)) continue;
-    if (inWeek(s.scheduledDate) && s.scheduledDate < today && !away(s.scheduledDate) && !ctx.done(s) && !isDraftOpen(s, input.openDraft, today)) out.push({ date: s.scheduledDate, name: nameOf(s), how: 'missed' });
-    if (from && s.lock && s.status !== 'skipped' && inWeek(from) && from < today && s.scheduledDate > from && !away(from) && !usedDay(from, s.id)) out.push({ date: from, name: nameOf(s), how: 'moved' });
+    if (inWeek(s.scheduledDate) && s.scheduledDate < today && !away(s.scheduledDate, ctx.tpl(s)) && !ctx.done(s) && !isDraftOpen(s, input.openDraft, today)) out.push({ date: s.scheduledDate, name: nameOf(s), how: 'missed' });
+    if (from && s.lock && s.status !== 'skipped' && inWeek(from) && from < today && s.scheduledDate > from && !away(from, ctx.tpl(s)) && !usedDay(from, s.id)) out.push({ date: from, name: nameOf(s), how: 'moved' });
   }
   return out.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
 }

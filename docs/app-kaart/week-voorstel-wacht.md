@@ -20,7 +20,7 @@ Vrij
 Di 27 · niets gepland
 [knop: Benen A (zwaar)Wo 28·45 min· gemist]
 [knop: Verplaats of ruil Benen A (zwaar), nu op woensdag, gemist. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
-[knop: Testloop 5 kmDo 29·45 minGemist]
+[knop: Testloop 5 kmDo 29·45 min· gemistGemist]
 Vrij
 Vr 30 · niets gepland
 Vrij

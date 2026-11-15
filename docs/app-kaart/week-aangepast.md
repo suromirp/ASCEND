@@ -12,9 +12,9 @@ Adres: `#/week`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 [knop: Rustige duurloopMa 26·56 min·zonder planGedaan]
 Rustdag deze week
 Di 27 · je rustdag op maandag is bezet
-[knop: Benen A (zwaar)Wo 28·45 min· aangepast]
-[knop: Verplaats of ruil Benen A (zwaar), nu op woensdag, aangepast. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
-[knop: Testloop 5 kmDo 29·45 minGemist]
+[knop: Benen A (zwaar)Wo 28·45 min· gemist· aangepast]
+[knop: Verplaats of ruil Benen A (zwaar), nu op woensdag, gemist, aangepast. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
+[knop: Testloop 5 kmDo 29·45 min· gemistGemist]
 Vrij
 Vr 30 · niets gepland
 Vrij
