@@ -174,6 +174,12 @@ export function formNoteText(note: SaveNoteKind | undefined, loose: boolean): Sh
   return { text: FORM_SAVE_NOTE.already, warn: false };
 }
 
+// Staat links onderaan Sluiten in plaats van Horloge of Waarom deze training? Alleen na de grens: het opslaan loopt
+// nog (knop uit) en de zin is de wachtzin, niet mislukt. Sluiten is dan de uitweg die de zin noemt.
+export function loggerShowsClose(saving: boolean, note: ShownSaveNote | null): boolean {
+  return saving && !!note && !note.warn;
+}
+
 // Wat het oude trainingsscherm aanlevert om op te slaan (saveOnLogger). `mounted`: het scherm bestaat nog.
 // `showing`: het is in beeld, dus niet aan het sluiten (`onLeave` van useSheetClose). `busy` volgt de knop (uit
 // zolang er opgeslagen wordt, ook na de grens); `clearDraft` loopt ook als het scherm al weg is, want het concept
@@ -204,7 +210,8 @@ export async function saveOnLogger(logSession: LogSessionFn, input: LogSessionIn
     if (next.clearDraft) ui.clearDraft();
     if (outcome === 'failed') reportIfGone(ui.mounted() && ui.showing(), writeError, ui.report);
     if (!ui.mounted()) return;
-    ui.apply({ close: next.close, note: formNoteText(next.note, ui.loose) });
+    // Al aan het sluiten: useSheetClose sluit zelf, dus niet nog eens (Warden).
+    ui.apply({ close: next.close && ui.showing(), note: formNoteText(next.note, ui.loose) });
   };
   ui.busy(true);
   const outcome = await saveLogWithin(logSession, input, { limitMs: ui.limitMs, onLate: show, onWriteError: (err) => { writeError = err; } });
