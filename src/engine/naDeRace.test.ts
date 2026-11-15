@@ -207,7 +207,23 @@ describe('Warden ronde 2: elke stem, en een antwoord op de race klapt niets teru
     const sessions = [taperRest, upper, test, race, recRest, recEasy, recLong];
     const room = (list: PlannedSession[], asOf: string) => computeAdvice(adviceInputs({ plannedSessions: list, asOf })).filter((a) => a.ruleId === 'TEST-MAKE-ROOM');
     expect(room(sessions.filter((s) => s.id !== race.id), '2027-03-15').length).toBeGreaterThan(0);
-    for (const day of ['2027-03-15', '2027-03-17', '2027-03-21']) expect(room(sessions, day)).toEqual([]);
+    // De racedag zelf: de herstelweek begint pas morgen, alleen de afbouw houdt de test tegen.
+    for (const day of [RACE, '2027-03-15', '2027-03-17', '2027-03-21']) expect(room(sessions, day)).toEqual([]);
+  });
+
+  it('TEST-MAKE-ROOM: een testloop die in de herstelweek zelf gemist is, wordt niet ingehaald', () => {
+    const test = ps('tpl_test_run', '2027-03-16');
+    const sessions = [race, test, recEasy, recLong];
+    const room = (list: PlannedSession[], asOf: string) => computeAdvice(adviceInputs({ plannedSessions: list, asOf })).filter((a) => a.ruleId === 'TEST-MAKE-ROOM');
+    expect(room(sessions.filter((s) => s.id !== race.id), '2027-03-18').length).toBeGreaterThan(0);
+    expect(room(sessions, '2027-03-18')).toEqual([]);
+  });
+
+  it('Niet gedaan met het moment op de racedag zelf: de race telt', () => {
+    const sameDay = { ...race, status: 'skipped' as const, lock: { by: 'user' as const, at: '2027-03-14T20:30:00+01:00' } };
+    expect(raceDatesOf([sameDay], templates)).toEqual([RACE]);
+    const dayBefore = { ...race, status: 'skipped' as const, lock: { by: 'user' as const, at: '2027-03-13T20:30:00+01:00' } };
+    expect(raceDatesOf([dayBefore], templates)).toEqual([]);
   });
 
   it('Niet gedaan op de race zelf: de race blijft tellen, de afbouw blijft vervallen', () => {
@@ -279,6 +295,18 @@ describe('Warden ronde 2: TEST-RETRY na een race', () => {
     logs: [testLog, ...extraLogs], plannedSessions: sessions, templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic',
     respondedIds: new Set([`retest:${TEST_DAY}`]), retryRows: new Set(['retry']), asOf: '2026-10-05', restDay: 1,
   }).find((a) => a.id === `retest:${TEST_DAY}:opnieuw`);
+
+  it('de eerste vraag om een nieuwe testpoging: niet in de herstelweek na een race', () => {
+    const tempo = row('tempo', 'tpl_tempo_run', '2026-10-07');
+    const first = (sessions: PlannedSession[], extraLogs: SessionLog[] = []) => computeAdvice({
+      logs: [testLog, ...extraLogs], plannedSessions: sessions, templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic',
+      respondedIds: new Set(), asOf: '2026-10-05', restDay: 1,
+    }).find((a) => a.id === `retest:${TEST_DAY}`);
+    const plain = [tempo, ...base.filter((s) => s.id !== 'retry')];
+    expect(first(plain)).toBeDefined();
+    const r = row('race', 'tpl_race', '2026-10-03');
+    expect(first([...plain, r], [done(r)])).toBeUndefined();
+  });
 
   it('zonder race de vraag om een nieuwe dag', () => {
     expect(again(base)).toBeDefined();
