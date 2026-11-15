@@ -845,7 +845,7 @@ describe('rowSummary: route voorstellen', () => {
     expect(rowSummary('route-soort', facts()).value).toBe('Avontuurlijk');
     expect(rowSummary('route-grote-wegen', facts()).checked).toBe(true);
     expect(rowSummary('route-grote-wegen', withSettings({ routeAvoidBigRoads: false })).checked).toBe(false);
-    expect(rowSummary('bundel-weer', withSettings({ routeAvoidBigRoads: false })).value).toBe('12 van 13 aan');
+    expect(rowSummary('bundel-weer', withSettings({ routeAvoidBigRoads: false })).value).toBe('13 van 14 aan');
   });
 
   it('volgt de keuze, en een onbekende waarde is het advies', () => {
@@ -855,7 +855,7 @@ describe('rowSummary: route voorstellen', () => {
 
   it('uit: de rij zegt Uit en de keuze is weg', () => {
     expect(rowSummary('route-voorstel', withSettings({ routeProposal: false })).checked).toBe(false);
-    expect(rowSummary('bundel-weer', withSettings({ routeProposal: false })).value).toBe('12 van 13 aan');
+    expect(rowSummary('bundel-weer', withSettings({ routeProposal: false })).value).toBe('13 van 14 aan');
     expect(rowSummary('route-soort', withSettings({ routeProposal: false })).hidden).toBe(true);
   });
 });
@@ -1021,10 +1021,10 @@ describe('rowSummary: rijen met een blad', () => {
   });
 
   it('Weer en kleding, Inzicht na een training en Gebruik van je horloge', () => {
-    expect(rowSummary('bundel-weer', facts()).value).toBe('13 van 13 aan');
-    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('11 van 13 aan');
+    expect(rowSummary('bundel-weer', facts()).value).toBe('14 van 14 aan');
+    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('12 van 14 aan');
     // Weerwaarschuwingen en lawinegevaar tellen mee (docs/beslissingen/2026-11-09-gr5-waarschuwingen.md).
-    expect(rowSummary('bundel-weer', withSettings({ weatherWarnings: false, avalancheBulletin: false })).value).toBe('11 van 13 aan');
+    expect(rowSummary('bundel-weer', withSettings({ weatherWarnings: false, avalancheBulletin: false })).value).toBe('12 van 14 aan');
     expect(rowSummary('weeralarm', facts()).checked).toBe(true);
     expect(rowSummary('weeralarm', withSettings({ weatherWarnings: false })).checked).toBe(false);
     expect(rowSummary('lawinegevaar', withSettings({ avalancheBulletin: false })).checked).toBe(false);

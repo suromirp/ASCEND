@@ -136,7 +136,7 @@ export function TrainingBriefing({
   const [declined, setDeclined] = useState(false);
   const routeMap = homeView?.map.kind === 'route' ? homeView.map : undefined;
   const searchOn = !!routeMap && !declined && (routeMap.search === 'open' || tapped);
-  const model = useRouteSearch({ template, date, closing, enabled: searchOn });
+  const model = useRouteSearch({ template, date, closing, enabled: searchOn, sessionId: session?.id });
 
   // Het weer van de gekozen plek: alleen bij een route op de kaart en een plek verder dan 10 km van huis.
   const weatherTarget = placeWeatherTarget({ on: showPlaceWeather(settings.overviews) && !!routeMap && !declined, place: model.placeStart, home: model.homePoint, weatherHome: settings.homeLocation });

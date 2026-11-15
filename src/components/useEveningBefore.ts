@@ -13,6 +13,59 @@ import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { fuelOn } from '../engine/fuelOnTheGo';
 import { loadBodyKg } from '../engine/weightTrend';
 import { useTrainingPlaces } from './useTrainingPlaces';
+import { usePlaceWeather } from './usePlaceWeather';
+import { showPlaceWeather } from '../engine/overviewSettings';
+import { eveningPlaceTarget, type StartPlaceChoices } from '../engine/startPlaceChoice';
+import { routeShownFor } from '../engine/trainingPlace';
+import { peekStartPlaceChoices, readStartPlaceChoices, subscribeStartPlaceChoices } from '../storage/startPlaceChoice';
+import { getRouteStartPoint } from '../storage/routeStart';
+import type { RoutePoint } from '../models/route';
+import { addDays, toISODate } from '../utils/dates';
+import { withTimeout } from '../utils/withTimeout';
+
+// Hoe lang De avond ervoor wacht op de opslag voor de onthouden plek en Thuis; daarna het weer van huis.
+const READ_LIMIT_MS = 5_000;
+
+// De onthouden plekken van Start bij (storage/startPlaceChoice.ts) en de plek Thuis, en het weer van
+// die plek voor de training van morgen. Zolang iets leest of laadt: het weer van huis, zonder plaatsnaam.
+function useEveningPlaceWeather(now: Date): EveningInput['placeWeather'] {
+  const { plannedSessions, templateById, settings } = useAppData();
+  const trainingPlaces = useTrainingPlaces();
+  const [choices, setChoices] = useState<StartPlaceChoices | undefined>(() => peekStartPlaceChoices());
+  const [home, setHome] = useState<RoutePoint | null | undefined>();
+  useEffect(() => {
+    let alive = true;
+    const read = () => void withTimeout(readStartPlaceChoices(), READ_LIMIT_MS).then((m) => alive && setChoices(m), () => undefined);
+    read();
+    void withTimeout(getRouteStartPoint(), READ_LIMIT_MS).then((p) => alive && setHome(p ?? null), () => alive && setHome(null));
+    const stop = subscribeStartPlaceChoices(() => setChoices(peekStartPlaceChoices()));
+    return () => {
+      alive = false;
+      stop();
+    };
+  }, []);
+  const today = toISODate(now);
+  const tomorrow = addDays(today, 1);
+  const sessions = plannedSessions
+    .filter((s) => s.scheduledDate === tomorrow && s.status !== 'skipped')
+    .sort((a, b) => a.order - b.order)
+    .map((s) => ({ id: s.id, date: s.scheduledDate, routeShown: routeShownFor(templateById.get(s.templateId), trainingPlaces?.[s.id]) }));
+  const found = home === undefined ? undefined : eveningPlaceTarget({
+    placeWeatherOn: showPlaceWeather(settings.overviews),
+    rememberOn: settings.rememberStartPlace !== false,
+    routeOn: settings.routeProposal !== false,
+    sessions,
+    choices,
+    today,
+    home: home ?? undefined,
+    weatherHome: settings.homeLocation,
+  });
+  const state = usePlaceWeather(found?.target);
+  if (!found || !state || state.status === 'loading') return undefined;
+  return state.status === 'ok'
+    ? { sessionId: found.sessionId, name: found.target.name, state: 'shown', forecast: state.forecast }
+    : { sessionId: found.sessionId, name: found.target.name, state: 'failed' };
+}
 
 // De bronnen voor een moment: nu voor de kaart, het moment van de melding voor de melding.
 export function useEveningInput(now: Date): EveningInput {
@@ -20,7 +73,9 @@ export function useEveningInput(now: Date): EveningInput {
   const { statusOf, ready } = useWatchStatuses();
   const trainingPlaces = useTrainingPlaces();
   const easyPace = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy, [sessionLogs, settings]);
+  const placeWeather = useEveningPlaceWeather(now);
   return {
+    placeWeather,
     now,
     settings: resolveEveningBefore(settings),
     planned: plannedSessions,

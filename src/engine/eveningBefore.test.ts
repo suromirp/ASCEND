@@ -323,3 +323,22 @@ describe('elke tijd uit EVENING_TIMES', () => {
     });
   }
 });
+
+describe('De avond ervoor kent de plek uit de Briefing (I-37)', () => {
+  const there = makeForecast(TODAY, () => ({ tempC: -2, feelsC: -6 }), { sunrise: '07:52', sunset: '16:53' });
+  it('met het weer van de plek: de regel noemt de plek en leest het weer daar', () => {
+    const home = eveningBefore(input())!.lines[0];
+    const away = eveningBefore(input({ placeWeather: { sessionId: 'p1', name: 'Verwegdal', state: 'shown', forecast: there } }))!.lines[0];
+    expect(away.startsWith('In Verwegdal: ')).toBe(true);
+    expect(away).not.toBe(home);
+  });
+  it('de plek laadde niet: het feit voorop, dan het weer van thuis', () => {
+    const home = eveningBefore(input())!.lines[0];
+    const failed = eveningBefore(input({ placeWeather: { sessionId: 'p1', name: 'Verwegdal', state: 'failed' } }))!.lines[0];
+    expect(failed.startsWith('Weer in Verwegdal laadde niet. Thuis: ')).toBe(true);
+    expect(failed.toLowerCase()).toContain(home.toLowerCase());
+  });
+  it('een plek van een andere training verandert deze regel niet', () => {
+    expect(eveningBefore(input({ placeWeather: { sessionId: 'pX', name: 'Verwegdal', state: 'shown', forecast: there } }))).toEqual(eveningBefore(input()));
+  });
+});
