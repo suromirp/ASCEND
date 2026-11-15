@@ -6,6 +6,7 @@
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { logSport, templateSport } from './sports';
+import { sportOfLog } from './sportOfLog';
 import { isHandLog } from './activityImport';
 import { watchPlaceOf } from './watchWorkout';
 import { isTestOrRace } from './templateRoles';
@@ -48,7 +49,8 @@ export function sameLinkKind(log: SessionLog, logTemplate: SessionTemplate | und
 // Een looptraining met de StairMaster gekozen (engine/watchWorkout.ts#watchPlaceOf) doe je als wandelworkout: een
 // losse wandellog van een bron op dezelfde dag hoort dan bij die training. Alleen die dag en die keuze.
 export function fitsChosenWayLog(log: SessionLog, session: PlannedSession, template: SessionTemplate, places: Readonly<Record<string, string>> | undefined): boolean {
-  if (!places || log.completedDate !== session.scheduledDate || logSport(log) !== 'hiking' || log.countedSport || log.customSport) return false;
+  const counted = sportOfLog(log);
+  if (!places || log.completedDate !== session.scheduledDate || logSport(log) !== 'hiking' || counted.countedSport || counted.customSport) return false;
   return !!watchPlaceOf(template, places[session.id]);
 }
 

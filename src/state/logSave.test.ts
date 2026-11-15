@@ -549,7 +549,7 @@ describe('cardAfterSave: wat de kaart Van je horloge doet', () => {
     expect(cardAfterSave('slow', true).note).toBe('slow');
     expect(LOG_STILL_RUNNING_NOTE.startsWith('Opslaan duurt langer dan verwacht.')).toBe(true);
     expect(LOG_STILL_RUNNING_NOTE).not.toMatch(/probeer/i);
-    expect(LOG_STILL_RUNNING_NOTE).toMatch(/open de app opnieuw/);
+    expect(LOG_STILL_RUNNING_NOTE).toMatch(/open hem opnieuw/);
     expect(cardAfterSave('failed', true).closeSheet).toBe(false);
   });
 

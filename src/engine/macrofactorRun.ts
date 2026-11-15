@@ -65,8 +65,8 @@ export function runSummary(counts: RunCounts, leads: boolean): string {
 export function runStoppedMessage(done: number, total: number, reason: 'timeout' | 'error'): string {
   const cause = reason === 'timeout' ? 'het opslaan gaf te lang geen antwoord' : 'het opslaan lukte niet';
   const kept = done > 0 ? ` Wat al verwerkt is (${done} van ${total}), blijft bewaard.` : ' Er is niets veranderd.';
-  return `Gestopt: ${cause}.${kept} Tik nog een keer op de knop; wat al klaar is, wordt niet nog eens gedaan. Lukt het weer niet, sluit ASCEND dan helemaal af en open het opnieuw.`;
+  return `Gestopt: ${cause}.${kept} Tik nog een keer op de knop; wat al klaar is, wordt niet nog eens gedaan. Lukt het weer niet, sluit de app dan helemaal af en open hem opnieuw.`;
 }
 
 // Shown under the button when a step takes longer than normal.
-export const RUN_SLOW_NOTE = 'Dit duurt langer dan normaal. ASCEND werkt nog; je kunt het scherm gewoon laten staan.';
+export const RUN_SLOW_NOTE = 'Dit duurt langer dan normaal. Nog bezig; je kunt het scherm gewoon laten staan.';

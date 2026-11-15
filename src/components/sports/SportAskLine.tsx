@@ -160,7 +160,7 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
                   setFelt(w);
                   setTouched(true);
                 }}
-                note={touched ? 'Hoe zwaarder het voelde, hoe meer het meetelt voor je benen.' : `ASCEND kiest voor: ${FELT_LABEL[felt].toLowerCase()}. Tik als het anders was.`}
+                note={touched ? 'Hoe zwaarder het voelde, hoe meer het meetelt voor je benen.' : `Gekozen: ${FELT_LABEL[felt].toLowerCase()}. Tik als het anders was.`}
               />
             </div>
           )}
@@ -192,9 +192,9 @@ function dayText(iso: string): string {
 }
 
 const ROLE_TEXT: Partial<Record<SportRole, { label: string; note: string }>> = {
-  fixed: { label: 'Vaste dag', note: 'Jij kiest de dag. ASCEND plant de rest eromheen.' },
+  fixed: { label: 'Vaste dag', note: 'Jij kiest de dag. De rest wordt eromheen gepland.' },
   count: { label: 'Telt mee als ik het doe', note: 'Je plant het zelf. Wat je doet telt mee in je benen en je week.' },
-  off: { label: 'Negeren', note: 'ASCEND doet er niets mee. Je kunt het wel loggen.' },
+  off: { label: 'Negeren', note: 'Telt niet mee in je planning. Loggen kan wel.' },
 };
 
 function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose: () => void }) {
@@ -249,7 +249,7 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
             advice={ASK_ADVICE}
             onPick={setRole}
           />
-          <p className="st-hint" style={{ marginLeft: 0 }}>ASCEND kan dit nog niet voor je plannen. Een vaste dag of meetellen kan wel.</p>
+          <p className="st-hint" style={{ marginLeft: 0 }}>Dit is nog niet te plannen. Een vaste dag of meetellen kan wel.</p>
           {askFelt && (
             <div style={{ marginTop: 16 }}>
               <FeltChoice
@@ -258,7 +258,7 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
                   setFelt(w);
                   setTouched(true);
                 }}
-                note={touched ? 'Hoe zwaarder het voelde, hoe meer het meetelt voor je benen.' : `ASCEND kiest voor: ${FELT_LABEL[felt].toLowerCase()}. Tik als het anders was.`}
+                note={touched ? 'Hoe zwaarder het voelde, hoe meer het meetelt voor je benen.' : `Gekozen: ${FELT_LABEL[felt].toLowerCase()}. Tik als het anders was.`}
               />
             </div>
           )}
