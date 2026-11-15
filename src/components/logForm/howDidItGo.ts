@@ -47,7 +47,7 @@ export function footState({ alreadyDone, confirmLong }: { alreadyDone: boolean; 
 
 // Eén keer opslaan, met een grens in tijd. Na `limitMs` meldt `onSlow` dat het lang duurt; de uitkomst
 // is altijd die van het opslaan zelf. Ja van logSession betekent: het log staat er, ook als een stap erna faalde.
-export async function saveWithLimit(save: () => Promise<boolean>, onSlow: () => void, limitMs = SAVE_LIMIT_MS): Promise<boolean> {
+export async function saveWithLimit<T extends boolean | 'already'>(save: () => Promise<T>, onSlow: () => void, limitMs = SAVE_LIMIT_MS): Promise<T | false> {
   const timer = setTimeout(onSlow, limitMs);
   try {
     return await save();
@@ -58,22 +58,31 @@ export async function saveWithLimit(save: () => Promise<boolean>, onSlow: () => 
   }
 }
 
-export type SubmitResult = 'saved' | 'failed' | 'busy';
+export type SubmitResult = 'saved' | 'already' | 'failed' | 'busy';
 
 // Opslaan vanuit het blad: nooit twee tegelijk, één aanroep met het hele log. Gelukt: `onSaved` (concept
-// weg, blad dicht). Mislukt of een fout: `onFailed`, het blad blijft open met alles wat je invulde.
-export async function submitLog(deps: { busy: { current: boolean }; save: () => Promise<boolean>; onSlow: () => void; onSaved: () => void; onFailed: () => void; limitMs?: number }): Promise<SubmitResult> {
+// weg, blad dicht). Stond er al (`save` geeft 'already', het log staat er zeker): `onAlready`, de zin van al
+// gedaan en geen zin voor mislukt (I-32). Mislukt of een fout: `onFailed`, het blad blijft open met alles wat je
+// invulde.
+export async function submitLog(deps: { busy: { current: boolean }; save: () => Promise<boolean | 'already'>; onSlow: () => void; onSaved: () => void; onAlready?: () => void; onFailed: () => void; limitMs?: number }): Promise<SubmitResult> {
   if (deps.busy.current) return 'busy';
   deps.busy.current = true;
-  let ok: boolean;
+  let result: boolean | 'already';
   try {
-    ok = await saveWithLimit(deps.save, deps.onSlow, deps.limitMs);
+    result = await saveWithLimit(deps.save, deps.onSlow, deps.limitMs);
   } finally {
     deps.busy.current = false;
   }
-  if (ok) deps.onSaved();
-  else deps.onFailed();
-  return ok ? 'saved' : 'failed';
+  if (result === true) {
+    deps.onSaved();
+    return 'saved';
+  }
+  if (result === 'already' && deps.onAlready) {
+    deps.onAlready();
+    return 'already';
+  }
+  deps.onFailed();
+  return 'failed';
 }
 
 // Hoe het blad dichtgaat. Alleen Annuleren wist een ingevuld concept; een tik naast het blad, wegslepen,

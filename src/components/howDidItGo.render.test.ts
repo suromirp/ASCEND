@@ -198,6 +198,19 @@ describe('opslaan in het blad', () => {
     expect(loose).toContain(HOW_TEXT.failedLoose);
   });
 
+  it('stond er al: de zin van al gedaan en alleen Sluiten, geen zin voor mislukt (I-32)', async () => {
+    const onAlready = vi.fn();
+    const onFailed = vi.fn();
+    expect(await submitLog({ busy: { current: false }, save: async () => 'already' as const, onSlow: () => undefined, onSaved: () => undefined, onAlready, onFailed })).toBe('already');
+    expect(onAlready).toHaveBeenCalledOnce();
+    expect(onFailed).not.toHaveBeenCalled();
+    // Het blad zet dan de voet op al gedaan, ook voordat het logboek opnieuw gelezen is.
+    expect(footState({ alreadyDone: true, confirmLong: false })).toBe('already');
+    const html = renderToStaticMarkup(createElement(SheetFoot, { state: 'already', saving: false, slow: false, failed: false, rest: false, minutes: 40, onClose: () => undefined, onAdjust: () => undefined, onSave: () => undefined }));
+    expect(html).toContain(HOW_TEXT.already);
+    expect(html).not.toContain(HOW_TEXT.failed);
+  });
+
   it('gelukt: één aanroep met het hele log, daarna concept weg en blad dicht; een tweede tik tijdens het opslaan doet niets', async () => {
     const busy = { current: false };
     let resolve: (ok: boolean) => void = () => undefined;

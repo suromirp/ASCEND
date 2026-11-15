@@ -106,7 +106,7 @@ export function WatchSheet({
       </Sheet>
 
       {manualOpen && garmin && (
-        <Sheet eyebrow="Uitleg" title={WATCH_SHEET_TEXT.manual} onClose={() => setManualOpen(false)}>
+        <Sheet eyebrow={WATCH_SHEET_TEXT.title} title={WATCH_SHEET_TEXT.manual} onClose={() => setManualOpen(false)}>
           <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             Maak in Garmin Connect een nieuwe workout van het type {garmin.sport}, met deze stappen. Stuur hem naar je horloge en start hem als je begint.
           </p>

@@ -15,8 +15,7 @@ import { useMacroFactorLinked } from '../state/useMacroFactor';
 import { asksDoneOn } from './logForm/formRules';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, RpeField } from './logForm/LogFormParts';
 import { HowDidItGoSheet } from './HowDidItGoSheet';
-import { HOW_TEXT } from './logForm/howDidItGo';
-import { closeClearsDraft, failedNote, formAfterSave, reportIfGone, saveLogWithin, type LogSaveOutcome } from '../state/logSave';
+import { closeClearsDraft, saveOnLogger } from '../state/logSave';
 import { briefingEntry } from '../engine/briefing';
 import { NumberField } from './NumberField';
 import type { SessionTemplate, SessionVariant } from '../models/training';
@@ -87,7 +86,9 @@ function GeneralLogger({
 }) {
   const { logSession, reportStorageError, settings, strengthExternal, templates, plannedSessions, sessionLogs } = useAppData();
   const navigate = useNavigate();
-  const { closing, requestClose: closeSheet } = useSheetClose(onClose);
+  // Vanaf het begin van het sluiten leest niemand de zin onderaan nog (state/logSave.ts#saveOnLogger).
+  const leavingRef = useRef(false);
+  const { closing, requestClose: closeSheet } = useSheetClose(onClose, 200, undefined, () => { leavingRef.current = true; });
   const quickComplete = template.type === 'strength' && strengthExternal;
   // De toestand van het formulier en het concept (logForm/useLogForm.ts), gedeeld met het blad Hoe ging het?.
   const form = useLogForm({ template, plannedSessionId, scheduledDate, program, initialVariant, startAtForm, preview, quickComplete });
@@ -147,29 +148,23 @@ function GeneralLogger({
     }
     setConfirmLong(false);
     setSaveNote(null);
-    savingRef.current = true;
     setSaving(true);
-    // Het antwoord van logSession via state/logSave.ts#formAfterSave: het concept gaat alleen weg als het log er
-    // staat. Staat er geen log, dan blijft het scherm open met alles wat je invulde, en zegt een zin onderaan
-    // waarom. Na de grens in tijd loopt het opslaan nog: je ziet dat, en de knop blijft uit tot het klaar is,
-    // zodat een tweede tik nooit een tweede log maakt (zoals het blad Hoe ging het?). Terug en Annuleren werken.
-    let settled = false;
-    let writeError: unknown;
-    const show = (outcome: LogSaveOutcome) => {
-      if (settled) return;
-      settled = outcome !== 'slow';
-      const next = formAfterSave(outcome);
-      savingRef.current = next.buttonOff;
-      if (next.clearDraft) form.clearDraft();
-      // Weg terwijl het opsloeg en dan nee: niemand ziet de zin hier, dus de fout gaat naar de melding bovenin.
-      if (outcome === 'failed') reportIfGone(alive.current, writeError, reportStorageError);
-      if (!alive.current) return;
-      if (next.close) return onClose();
-      setSaving(next.buttonOff);
-      const text = next.note === 'failed' ? failedNote(plannedSessionId ? HOW_TEXT.failed : HOW_TEXT.failedLoose) : next.note ? HOW_TEXT[next.note] : undefined;
-      setSaveNote(text ? { text, warn: next.note === 'failed' } : null);
-    };
-    show(await saveLogWithin(logSession, input, { onLate: show, onWriteError: (err) => { writeError = err; } }));
+    // De uitkomst via state/logSave.ts#saveOnLogger: het concept gaat alleen weg als het log er staat. Staat er geen
+    // log, dan blijft het scherm open met alles wat je invulde, en zegt een zin onderaan waarom. Na de grens in tijd
+    // loopt het opslaan nog: je ziet dat, en de knop blijft uit tot het klaar is, zodat een tweede tik nooit een
+    // tweede log maakt. Links staat dan Sluiten; het concept blijft staan (closeClearsDraft).
+    await saveOnLogger(logSession, input, {
+      loose: !plannedSessionId,
+      mounted: () => alive.current,
+      showing: () => !leavingRef.current,
+      busy: (on) => { savingRef.current = on; if (alive.current) setSaving(on); },
+      clearDraft: form.clearDraft,
+      report: reportStorageError,
+      apply: ({ close, note }) => {
+        if (close) return onClose();
+        setSaveNote(note);
+      },
+    });
   }
 
   const brief = buildSessionBrief(template, scheduledDate ?? today, program, {
@@ -199,6 +194,8 @@ function GeneralLogger({
   const dateLabel = `${weekday.charAt(0).toUpperCase()}${weekday.slice(1).toLowerCase()} ${formatDateNL(scheduledDate ?? today)}`;
   // Eén doorlopend blok: geen profiel, wel de zone (zoals de missiekaart).
   const singleZone = conditioningSteps.length === 1 && !conditioningSteps[0].noTarget ? conditioningSteps[0].intensity : undefined;
+  // Na de grens in tijd: het opslaan loopt nog (alleen dan staat er een zin terwijl de knop uit is).
+  const slow = saving && !!saveNote && !saveNote.warn;
   const saveLabel = saving ? 'Opslaan…' : quickComplete ? 'Afvinken' : restChosen ? 'Rustdag afvinken' : 'Opslaan';
 
   function goToForm() {
@@ -467,20 +464,26 @@ function GeneralLogger({
           <p role="status" className="mx-auto max-w-md px-4 pt-3 text-xs leading-snug" style={{ color: saveNote.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{saveNote.text}</p>
         )}
         <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(var(--rand-onder), 12px)' }}>
-          {watchView.hasWatchSheet ? (
+          {slow ? (
+            // Na de grens: de uitweg die de zin noemt. Het concept blijft staan (closeClearsDraft).
+            <SecondaryButton onClick={requestClose} className="min-w-[112px] flex-none px-4">Sluiten</SecondaryButton>
+          ) : watchView.hasWatchSheet ? (
             <div className="flex flex-none" data-sheet-from=""><SecondaryButton onClick={() => setShowWatch(true)} className="min-w-[88px] flex-none px-4">Horloge</SecondaryButton></div>
           ) : guide ? (
-            <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Waarom deze training</SecondaryButton>
+            // Verdelen (I-9): de hoofdknop houdt zijn regel, deze neemt de rest en mag op 360 px in twee regels.
+            <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] leading-tight">Waarom deze training</SecondaryButton>
           ) : (
             <SecondaryButton onClick={requestClose} className="min-w-[112px] flex-none px-4">Annuleren</SecondaryButton>
           )}
-          {reachedForm || restChosen || quickComplete ? (
-            <PrimaryButton onClick={() => void handleSave()} disabled={saving || blocked}>{saveLabel}</PrimaryButton>
-          ) : (
-            <PrimaryButton onClick={goToForm}>
-              <span className="inline-flex items-center justify-center gap-2"><CheckGlyph size={18} />Gedaan, invullen</span>
-            </PrimaryButton>
-          )}
+          <div className="flex min-w-max flex-1">
+            {reachedForm || restChosen || quickComplete ? (
+              <PrimaryButton onClick={() => void handleSave()} disabled={saving || blocked}>{saveLabel}</PrimaryButton>
+            ) : (
+              <PrimaryButton onClick={goToForm}>
+                <span className="inline-flex items-center justify-center gap-2"><CheckGlyph size={18} />Gedaan, invullen</span>
+              </PrimaryButton>
+            )}
+          </div>
         </div>
         </>
         )}

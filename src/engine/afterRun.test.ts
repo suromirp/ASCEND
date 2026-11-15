@@ -182,3 +182,12 @@ describe('opslaan met een grens in tijd', () => {
     }
   });
 });
+
+describe('de uitleg van Vragen na je loop', () => {
+  it('noemt hoe lang de rij blijft staan, gelijk aan QUESTION_HOURS', async () => {
+    const { VANDAAG_UITLEG } = await import('./settingsDefs/uitleg/vandaag');
+    const { QUESTION_HOURS } = await import('./autoTick');
+    const points = VANDAAG_UITLEG['vragen-na-loop'].points?.map((p) => p.text).join(' ') ?? '';
+    expect(points).toContain(`${QUESTION_HOURS} uur`);
+  });
+});
