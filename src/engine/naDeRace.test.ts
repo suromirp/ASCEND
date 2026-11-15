@@ -188,10 +188,11 @@ describe('R: de afbouw telt niet als gemist', () => {
 
   it('elk scherm dat gemist toont, geeft de races mee', () => {
     expect(weekPage).toMatch(/raceDatesOf\(/);
-    expect(weekPage).toMatch(/illness: settings\.illnessEpisodes, races \}/);
-    expect(weekPlanner).toMatch(/illness: illnessEpisodes, races \}/);
-    expect(weekPlanner).toMatch(/illness: settings\.illnessEpisodes, races \}/);
-    expect(weekPage).toMatch(/loggedIds: new Set\(sessionLogs\.map\(\(l\) => l\.plannedSessionId\)\), races \}\)\);/);
+    // Na de races mag het concept van Forge volgen (openDraft, besluit 2026-11-15-concept-loopt-nog.md).
+    expect(weekPage).toMatch(/illness: settings\.illnessEpisodes, races(, openDraft: openDraftId)? \}/);
+    expect(weekPlanner).toMatch(/illness: illnessEpisodes, races(, openDraft: openDraftId)? \}/);
+    expect(weekPlanner).toMatch(/illness: settings\.illnessEpisodes, races(, openDraft: openDraftId)? \}/);
+    expect(weekPage).toMatch(/loggedIds: new Set\(sessionLogs\.map\(\(l\) => l\.plannedSessionId\)\), races(, openDraft: openDraftId)? \}\)\);/);
     expect(weekPlanner).toMatch(/races=\{races\}/);
     expect(standData).toMatch(/races: raceDatesOf\(/);
     expect(season).toMatch(/races: raceDatesOf\(/);

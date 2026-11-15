@@ -209,6 +209,8 @@ export interface RepeatWeekInputs {
   respondedIds: Set<string>;
   // Wat de sleuteltraining is (engine/keySession.ts). Zonder: de lange duurloop of de bergtocht.
   keyFocus?: KeyFocus;
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, niet gemist.
+  openDraft?: string;
 }
 
 function repeatWeekId(weekStart: string): string {
@@ -241,7 +243,7 @@ export function proposeRepeatWeek(inputs: RepeatWeekInputs): RepeatWeekProposal 
 
   const review = buildWeekReview({
     weekStart: previousWeek, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, program,
-    planChangeLog: inputs.planChangeLog ?? [], asOf: today, illnessEpisodes, leavePeriods: inputs.leavePeriods, keyFocus: inputs.keyFocus,
+    planChangeLog: inputs.planChangeLog ?? [], asOf: today, illnessEpisodes, leavePeriods: inputs.leavePeriods, openDraft: inputs.openDraft, keyFocus: inputs.keyFocus,
   });
   if (!review) return undefined;
   const verdict = judgeWeek(review);

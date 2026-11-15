@@ -44,6 +44,8 @@ interface CourseInputs {
   leavePeriods?: LeavePeriod[];
   // Wat de sleuteltraining is (engine/keySession.ts), zoals op Ascend. Zonder: de lange duurloop of de bergtocht.
   keyFocus?: KeyFocus;
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, niet gemist.
+  openDraft?: string;
 }
 
 const LOOKBACK_WEEKS = 4;
@@ -79,7 +81,7 @@ export interface Adherence {
 }
 
 type ReviewInputsLite = { heartRate: HeartRateSettings; intensityCounting: IntensityCounting };
-export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes' | 'leavePeriods' | 'keyFocus'> & Partial<Pick<ReviewInputsLite, 'heartRate' | 'intensityCounting'>>;
+export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes' | 'leavePeriods' | 'keyFocus' | 'openDraft'> & Partial<Pick<ReviewInputsLite, 'heartRate' | 'intensityCounting'>>;
 
 export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const { today, program, logs, templates, planChangeLog, illnessEpisodes } = inputs;
@@ -89,7 +91,7 @@ export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const thisMonday = mondayOfWeek(today);
   const reviews: WeekReview[] = [];
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
-    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, leavePeriods: inputs.leavePeriods, heartRate: inputs.heartRate, intensityCounting: inputs.intensityCounting, keyFocus: inputs.keyFocus });
+    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, leavePeriods: inputs.leavePeriods, openDraft: inputs.openDraft, heartRate: inputs.heartRate, intensityCounting: inputs.intensityCounting, keyFocus: inputs.keyFocus });
     if (review && review.planned > 0) reviews.push(review);
   }
   return {

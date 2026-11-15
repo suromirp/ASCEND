@@ -5,6 +5,7 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import { isSoreness } from './injuryKind';
 import { isIllnessDay } from './illness';
 import { isTaperDay, raceDatesOf } from './raceWindow';
+import { isDraftOpen } from './sessionStatus';
 import { dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL, legHeavyDayBefore, legSpacingDays } from './scheduler';
 import { addDays, daysBetween, mondayOfWeek, weekDates, formatWeekdayDateNL } from '../utils/dates';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
@@ -127,7 +128,9 @@ export function strengthAdvice(inputs: AdviceInputs, templateById: Map<string, S
   const window = inputs.plannedSessions.filter((s) => {
     const t = templateById.get(s.templateId);
     return t?.type === 'strength' && s.status !== 'skipped' && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 14
-      && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf) && !isTaperDay(s.scheduledDate, races, inputs.asOf);
+      && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf) && !isTaperDay(s.scheduledDate, races, inputs.asOf)
+      // Een krachttraining die nog loopt (een concept in Forge) is niet gemist en niet gedaan.
+      && !isDraftOpen(s, inputs.openDraft, inputs.asOf);
   });
   const done = window.filter((s) => isDone(s, inputs.logs, loggedIds)).length;
   const missed = window.length - done;

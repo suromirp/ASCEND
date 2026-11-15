@@ -70,6 +70,8 @@ export interface ExtraRunInputs {
   leave?: LeavePeriod[];
   // Wat de sleuteltraining is (engine/keySession.ts), zoals op Ascend. Zonder: de lange duurloop of de bergtocht.
   keyFocus?: KeyFocus;
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, niet gemist.
+  openDraft?: string;
   newId?: () => string;
 }
 
@@ -102,7 +104,7 @@ export function extraRunEarned(inputs: Omit<ExtraRunInputs, 'newId' | 'anchor' |
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
     // Bewust zonder leavePeriods: een week op vakantie telt hier als een week zonder training, dus na een pauze
     // komt er geen extra loop bij; eerst de rustiger instap (engine/reentry.ts). Deze telling staat nergens als verwijt.
-    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(firstLooked, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, keyFocus: inputs.keyFocus });
+    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(firstLooked, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, openDraft: inputs.openDraft, keyFocus: inputs.keyFocus });
     if (!review || review.planned === 0) continue;
     weeks++;
     done += review.done; planned += review.planned; keyDone += review.keyDone; keyPlanned += review.keyPlanned;
@@ -276,7 +278,7 @@ export function proposeExtraSession(inputs: ExtraAdviceInputs): ExtraProposal | 
     if (!date) continue;
     // Een week die al een training verloor en waar de rest vol is of er vol van wordt: geen extra erbij
     // (engine/fullWeek.ts, docs/beslissingen/2026-11-12-week-na-gemiste-dagen.md).
-    if (fullWithExtra({ today, sessions: plannedSessions, logs: inputs.logs, templates, leave: inputs.leave, keyFocus: inputs.keyFocus, illnessEpisodes: inputs.illnessEpisodes, check: { restDay, program } }, { templateId: template.id, date })) continue;
+    if (fullWithExtra({ today, sessions: plannedSessions, logs: inputs.logs, templates, leave: inputs.leave, keyFocus: inputs.keyFocus, illnessEpisodes: inputs.illnessEpisodes, openDraft: inputs.openDraft, check: { restDay, program } }, { templateId: template.id, date })) continue;
     return { id, weekStart, date, choice, earnedReason: verdict.reason };
   }
   return undefined;

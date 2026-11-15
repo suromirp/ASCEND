@@ -442,6 +442,29 @@ export const INVARIANTEN = [
       return uit;
     },
   },
+  {
+    // Een training die bleef liggen loopt nog (besluit 2026-11-15-concept-loopt-nog.md, engine/sessionStatus.ts#isDraftOpen):
+    // de training van de pil "niet afgerond" heet in Week "loopt nog" en nergens gemist, de weekterugblik noemt hem niet
+    // onder Gemist en Vandaag stelt er geen vraag Niet gedaan? over. Eerst vroeg Niet gedaan? naar een training die nog
+    // open lag (backlog Afbreker vervolg).
+    naam: 'Een training die nog loopt heet nergens gemist',
+    controleer: (k) => {
+      const uit = [];
+      const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pil = k('week-concept').match(/Training (.+?), niet afgerond/);
+      // Nooit stil leeg: zonder de pil van de stand concept toetst deze invariant niets.
+      if (!pil) return ['week-concept heeft geen pil "niet afgerond": de invariant toetst niets (stand concept ontbreekt of de pil is weg)'];
+      const naam = pil[1];
+      const rijen = k('week-concept').split('\n').filter((r) => new RegExp(`^\\[knop: ${esc(naam)}`).test(r));
+      if (!rijen.some((r) => /loopt nog/.test(r))) uit.push(`week-concept: geen rij van ${naam} met "loopt nog"`);
+      for (const r of rijen) if (/gemist/i.test(r)) uit.push(`week-concept noemt ${naam} gemist: ${r}`);
+      const gemist = k('weekterugblik-concept').match(/^Gemist\n(.+)$/m);
+      if (gemist && gemist[1].includes(naam)) uit.push(`weekterugblik-concept noemt ${naam} onder Gemist`);
+      const vandaag = k('vandaag-concept');
+      if (new RegExp(`Niet gedaan\\?[\\s\\S]{0,200}${esc(naam)}`).test(vandaag) || new RegExp(`${esc(naam)} van [a-z]+ \\d+ [a-z]+[\\s\\S]{0,80}Niet gedaan`).test(vandaag)) uit.push(`vandaag-concept vraagt Niet gedaan? over ${naam}`);
+      return uit;
+    },
+  },
 ];
 
 const SCHERMEN = [
@@ -450,6 +473,7 @@ const SCHERMEN = [
   'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek', 'vandaag-ziek-eerder', 'week-ziek-eerder',
   'ascend-algemeen', 'ascend-vaardigheid', 'weekterugblik-voorstel', 'stand-benen', 'stand-belasting', 'stand-ritme', 'stand-lopen', 'stand-invloed',
   'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek', 'week-aangepast', 'week-aangepast-blad', 'logboek-herstel',
+  'vandaag-concept', 'week-concept', 'weekterugblik-concept',
 ];
 
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {

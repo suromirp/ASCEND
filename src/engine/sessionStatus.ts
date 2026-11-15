@@ -12,7 +12,10 @@ import { isTaperDay } from './raceWindow';
 // mee: dezelfde afleiding als de weekterugblik, de ring in Week en de reeks (engine/weekLogs.ts#leftOutOfCount,
 // engine/streak.ts) en als de kaart Vervallen op Vandaag (engine/missedTraining.ts#planMissed), via isPausedDay.
 // Ook een training uit de afbouw voor een race, zodra de racedag er is (engine/raceWindow.ts#isTaperDay).
-export type DisplayStatus = 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' | 'rest' | 'away';
+// 'open': voorbij en niet gedaan, maar er ligt nog een concept van in Forge (een training die bleef liggen,
+// engine/forgeSession.ts#leftSession). Heet "loopt nog": niet gemist en niet gedaan, tot je hem afrondt (dan is er
+// een log) of verwijdert (dan geldt weer gewoon gemist). Zie isDraftOpen.
+export type DisplayStatus = 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' | 'rest' | 'away' | 'open';
 
 export interface DisplaySessionState {
   status: DisplayStatus;
@@ -47,6 +50,26 @@ export interface PauseContext {
   illness?: IllnessEpisode[];
   // De dagen van de races in de planning (engine/raceWindow.ts#raceDatesOf).
   races?: readonly string[];
+  // De geplande sessie waar nog een concept van in Forge ligt (openDraftId), of niets.
+  openDraft?: string;
+}
+
+// De geplande sessie van het concept dat nu in Forge ligt, of niets. De ene plek die het concept leest: de wijzer en
+// het concept zelf komen uit utils/forgeSessionStore.ts#readSession (die geeft niets als het concept weg is). Een losse
+// training (zonder plannedSessionId) hoort bij geen geplande sessie. Een sessie met een log is gedaan, ook als het
+// concept nog niet opgeruimd is.
+export function openDraftId(session: { pointer: { plannedSessionId?: string } } | undefined, logs: readonly Pick<SessionLog, 'plannedSessionId'>[]): string | undefined {
+  const id = session?.pointer.plannedSessionId;
+  if (!id) return undefined;
+  return logs.some((l) => l.plannedSessionId === id) ? undefined : id;
+}
+
+// Loopt deze voorbije training nog? Er ligt een concept van, hij staat niet op overgeslagen en de dag is voorbij
+// (vandaag is hij gewoon vandaag). Dan is hij niet gemist en niet gedaan: geen vraag Niet gedaan?, geen inhalen, niet
+// in de telling van Week, de weekterugblik en de reeks (engine/weekLogs.ts#leftOutOfCount,
+// engine/missedTraining.ts#planMissed). Wie een log heeft, is gedaan: de aanroeper toetst het log eerst.
+export function isDraftOpen(session: Pick<PlannedSession, 'id' | 'scheduledDate' | 'status'>, openDraft: string | undefined, today: string): boolean {
+  return !!openDraft && session.id === openDraft && session.status !== 'skipped' && session.scheduledDate < today;
 }
 
 // Een dag binnen een pauze die je meldde: ziek (tot en met de dag van beter melden, of tot vandaag) of weg, of een
@@ -63,6 +86,7 @@ export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[],
   if (isRest) return { status: 'rest', wasMoved };
   if (session.status === 'skipped') return { status: 'skipped', wasMoved };
   if (session.scheduledDate === todayISO()) return { status: 'today', wasMoved };
+  if (isDraftOpen(session, pause?.openDraft, todayISO())) return { status: 'open', wasMoved };
   if (session.scheduledDate < todayISO()) {
     return { status: isPausedDay(session.scheduledDate, pause, todayISO()) ? 'away' : 'missed', wasMoved };
   }

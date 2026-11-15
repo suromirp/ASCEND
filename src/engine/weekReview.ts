@@ -82,6 +82,9 @@ interface ReviewInputs {
   illnessEpisodes?: IllnessEpisode[];
   // Vakanties en tochten die je zelf meldde (engine/leave.ts#isAwayDay): wat daar open bleef, telt niet als gemist.
   leavePeriods?: LeavePeriod[];
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, niet
+  // gemist en niet gedaan.
+  openDraft?: string;
   weeklyChecks?: WeeklyHealthCheck[];
   heartRate?: HeartRateSettings;
   // Instelling "Intensiteit tellen" (engine/intensitySettings.ts): bij "plan" telt de hartslag niet.
@@ -125,7 +128,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // took out while rearranging the plan (a new strength block, the weekly
   // planning), days you were ill and days before the program started.
   // Een training uit de afbouw die na de race niet gedaan is, telt niet als gemist (engine/raceWindow.ts).
-  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate, { periods: inputs.leavePeriods, loggedIds, races: raceDatesOf(plannedSessions, byId) });
+  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate, { periods: inputs.leavePeriods, loggedIds, races: raceDatesOf(plannedSessions, byId), openDraft: inputs.openDraft });
   const countsAsTraining = (s: PlannedSession) => countsAsTrainingShared(s, byId.get(s.templateId), leftOut);
   // De oude rij van een gemiste training die je naar later zette telt niet: de nieuwe rij telt
   // (docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md).
