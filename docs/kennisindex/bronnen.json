@@ -2754,6 +2754,13 @@
    "kern": "Een voorbije geplande training waar nog een concept van in Forge ligt, heet \"loopt nog\".",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-15-hitte-bij-herhalingen.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "De hitteregel zegt trager, nooit lager; alleen vochtig onder 22 graden gevoel geeft 5 tot 10 seconden per km; bij intervallen en heuvelherhalingen geen tempoband of hartslag maar meer rust.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-15-hutten-of-tent-vraag.md": {
    "onderwerpen": [
     "doelen"

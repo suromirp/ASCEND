@@ -79,7 +79,9 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen, o
     ? bestMomentForTraining({ forecast: weather.forecast, template, logs: sessionLogs, date, durationMinutes, now })
     : undefined;
   // Warm of vochtig bij een loop: loop op hartslag, met een band voor het tempo (engine/heatPace.ts).
-  const heat = templateSport(template) === 'running' && signalOn(settings, 'heatPace') ? heatPace(w) : undefined;
+  const heat = templateSport(template) === 'running' && signalOn(settings, 'heatPace')
+    ? heatPace(w, template.baseStressProfile?.intensity === 'high' ? 'reps' : 'steady')
+    : undefined;
   // Een wandeling of tocht die na zonsondergang eindigt: bij volle of nieuwe maan één regel (engine/moon.ts).
   const moon = !quietMain && showMoonLine(settings.overviews) && templateSport(template) === 'hiking'
     ? eveningMoonNote(date, { endsAfterSunset: w.daylight?.endsAfterSunset === true, overnight: false })
