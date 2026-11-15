@@ -83,7 +83,7 @@ describe('TEST-RETRY opnieuw: de herkansing ging niet door', () => {
     expect(a.ruleId).toBe('TEST-RETRY');
     expect(a.title).toBe('Je herkansing van zo 4 oktober ging niet door');
     expect(a.lead).toBe('Je testloop van di 29 september had 2:16 stilstand, dus hij is iets te gunstig. De herkansing van zo 4 oktober ging niet door.');
-    expect(a.effect).toContain('Met Liever niet blijft alles staan, zonder nieuwe vraag tot je een nieuwe test logt.');
+    expect(a.effect).toContain('Met Liever niet blijft alles staan en krijg je er geen vraag meer over, tot je een nieuwe test logt.');
     expect(a.brief).toBe('Zo 4 okt: herkansing ging niet door');
     expect(`${a.title}${a.effect}${a.why}${a.lead}`).not.toMatch(/[\u2013\u2014]/);
     // De overgeslagen rij zelf komt terug op een nieuwe dag: geen nieuwe rij, geen historie herschreven.

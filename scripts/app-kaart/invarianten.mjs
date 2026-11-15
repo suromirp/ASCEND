@@ -19,6 +19,7 @@ const alle = (t, re) => [...t.matchAll(re)];
 // Herkennen zonder woordsoortenlijst, per regel van de kaart (ook labels en aria):
 //   - "ASCEND <werkwoord>": het woord erna is een persoonsvorm. Dat is een vast werkwoord uit WERKWOORDEN of een woord
 //     op -t dat geen bekend ander woord op -t is (niet, dat, met, ...): "ASCEND mag", "ASCEND plant".
+//     Ook de verleden tijd op -te of -de, behalve bijvoeglijke woorden (beste, volgende, ...): "ASCEND maakte".
 //   - "<werkwoord> ASCEND": inversie, dezelfde toets op het woord ervoor: "legt ASCEND", "zet ASCEND".
 //   - "<voegwoord> ASCEND": een bijzin met ASCEND als onderwerp: "die ASCEND", "dat ASCEND", "als ASCEND".
 // Uitzonderingen (tellen nooit mee): het merk ([link: ASCEND], "ASCEND, naar Vandaag", "Welkom bij ASCEND"), de map
@@ -31,7 +32,10 @@ export const PLAFOND_ASCEND_ONDERWERP = 3;
 const WERKWOORDEN = new Set(['kan', 'kon', 'mag', 'mocht', 'zal', 'zou', 'wil', 'wilde', 'moet', 'is', 'was', 'heeft', 'had', 'vond', 'deed', 'ging', 'zag', 'wist', 'nam', 'gaf', 'bleef', 'zet', 'weet', 'ziet', 'doet', 'gaat', 'staat', 'laat', 'houdt', 'vraagt', 'plant', 'kiest', 'leert', 'legt', 'zoekt', 'rekent', 'schat', 'bouwt', 'stelt']);
 const GEEN_WERKWOORD = new Set(['niet', 'dat', 'met', 'tot', 'het', 'wat', 'uit', 'ooit', 'net', 'want', 'licht', 'recht', 'echt', 'meest', 'best', 'eerst', 'laatst', 'vast', 'toest', 'altijd', 'pas']);
 const VOEGWOORDEN = new Set(['die', 'dat', 'wat', 'als', 'zodat', 'omdat', 'waarmee', 'waarin', 'waarop', 'waar', 'terwijl', 'tenzij', 'of', 'voordat', 'nadat', 'zodra']);
-const isWerkwoord = (w) => !!w && (WERKWOORDEN.has(w) || (/^[a-zë]{2,}t$/.test(w) && !GEEN_WERKWOORD.has(w)));
+// Verleden tijd op -te of -de ("zette ASCEND", "ASCEND maakte"), behalve bijvoeglijke woorden op -te/-de.
+const GEEN_VERLEDEN = new Set(['beste', 'eerste', 'laatste', 'grootste', 'volgende', 'vaste', 'goede', 'oude', 'grote', 'late', 'juiste', 'zelfde', 'rustige', 'gewenste', 'hele', 'derde', 'vierde', 'vijfde', 'zesde', 'zevende', 'achtste', 'echte', 'lichte', 'zware', 'harde', 'snelste', 'langste', 'nieuwe', 'andere', 'gemiddelde', 'geplande', 'gedane']);
+const isVerleden = (w) => /^[a-zë]{2,}(te|de)$/.test(w) && !GEEN_VERLEDEN.has(w);
+const isWerkwoord = (w) => !!w && (WERKWOORDEN.has(w) || (/^[a-zë]{2,}t$/.test(w) && !GEEN_WERKWOORD.has(w)) || isVerleden(w));
 export function ascendAlsOnderwerp(tekst) {
   const uit = [];
   for (const regel of tekst.split('\n')) {
@@ -45,6 +49,33 @@ export function ascendAlsOnderwerp(tekst) {
     }
   }
   return uit;
+}
+
+// Vaste zinnen voor de telling zelf: [zin, aantal]. controleer() draait ze eerst en faalt als er een niet klopt,
+// zodat een wijziging aan de herkenning niet stil iets gaat missen of te veel gaat tellen.
+//   node scripts/app-kaart/invarianten.mjs --zelftoets
+export const ZELFTOETS = [
+  ['Tot het eind plant ASCEND niets.', 1],
+  ['ASCEND mag je locatie niet gebruiken.', 1],
+  ['Daarom zette ASCEND hem op overgeslagen.', 1],
+  ['Die maakte ASCEND zelf.', 1],
+  ['ASCEND vond geen betere verdeling.', 1],
+  ['ASCEND maakte een kopie.', 1],
+  ['Kies een bestand dat ASCEND zelf heeft gemaakt.', 1],
+  ['Van de ruimte die ASCEND mag gebruiken', 1],
+  ['[link: ASCEND] (aria: ASCEND, naar Vandaag)', 0],
+  ['Welkom bij ASCEND', 0],
+  ['Aangepast door ASCEND', 0],
+  ['de map ASCEND in Documents is niet te bereiken', 0],
+  ['Interne opslag > Documents > ASCEND', 0],
+  ['week 4 van dit ASCEND-blok', 0],
+  ['ASCEND: duur, afstand en hoe zwaar het voelde.', 0],
+  ['Je gegevens in ASCEND zijn niet geraakt.', 0],
+  ['Gebruikte je ASCEND al eerder?', 0],
+  ['Geef ASCEND toestemming voor je locatie.', 0],
+];
+export function zelftoets() {
+  return ZELFTOETS.flatMap(([zin, n]) => { const g = ascendAlsOnderwerp(zin).length; return g === n ? [] : [`"${zin}": ${g} geteld, ${n} verwacht`]; });
 }
 
 export const INVARIANTEN = [
@@ -371,6 +402,8 @@ const SCHERMEN = [
 ];
 
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {
+  const fout = zelftoets();
+  if (fout.length) return fout.map((tekst) => ({ naam: 'Zelftoets ASCEND als onderwerp', tekst }));
   const cache = {};
   const k = (s) => (cache[s] ??= lees(map, s));
   // Elk scherm in de map, ook een dat (nog) niet in SCHERMEN staat. De README is geen scherm.
@@ -384,6 +417,7 @@ export function meld(schendingen) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if (process.argv.includes('--zelftoets')) { const f = zelftoets(); if (f.length) { console.log(f.join('\n')); process.exit(2); } console.log(`Zelftoets: ${ZELFTOETS.length} zinnen kloppen.`); process.exit(0); }
   const s = controleer(process.argv[2] ? resolve(process.argv[2]) : undefined);
   if (s.length) { meld(s); process.exit(2); }
   console.log('Invarianten: geen schendingen.');

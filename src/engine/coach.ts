@@ -145,7 +145,7 @@ function painReaction(log: SessionLog, history: SessionLog[]): string | undefine
     const which = joinNL(again.map((a) => a.toLowerCase()));
     return `${which.charAt(0).toUpperCase()}${which.slice(1)} deed de afgelopen twee weken vaker pijn. Meld het bij Lichaam, dan houdt je planning er rekening mee. Wordt het erger, laat een fysiotherapeut ernaar kijken.`;
   }
-  return `Pijn aan je ${where}. Trainen mag, zolang het morgenochtend niet erger is; de komende 2 weken geen verdere opbouw op die plek. Scherpe pijn of pijn die erger wordt is een reden om te stoppen.`;
+  return `Pijn aan je ${where}. Trainen mag, zolang het morgenochtend niet erger is; de komende 2 weken blijft de opbouw op die plek gelijk. Scherpe pijn of pijn die erger wordt is een reden om te stoppen.`;
 }
 
 // One reaction after ticking a training off, based on what you filled in. `fit`: je hartslagzones en rustige

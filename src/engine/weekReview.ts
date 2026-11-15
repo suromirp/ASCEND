@@ -227,7 +227,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
       // Geen namen: die staan al onder Gemist op de terugblik.
       `${missedNames.length === 1 ? 'Eén training' : `${missedNames.length} trainingen`} gemist. ` +
       (keyMissed
-        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week. Die gaat naar een vrije dag als dat past. De rest laat je los.`
+        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week. Die komt na Akkoord op een vrije dag, als dat past. De rest laat je los.`
         : 'Laat los wat je miste. Dubbel doen helpt niet. Volgende week volgt het plan.'),
     );
   }

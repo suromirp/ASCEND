@@ -27,7 +27,7 @@ export function weekHighlights(r: WeekReview): Highlight[] {
     out.push({
       tone: 'normal', icon: 'week',
       text: left + (r.keyMissedName
-        ? `De ${lower(r.keyMissedName)} is de belangrijkste van de week. Die gaat naar een vrije dag als dat past. De rest laat je los.`
+        ? `De ${lower(r.keyMissedName)} is de belangrijkste van de week. Die komt na Akkoord op een vrije dag, als dat past. De rest laat je los.`
         : 'Laat los wat je miste. Dubbel doen helpt niet.'),
     });
   }

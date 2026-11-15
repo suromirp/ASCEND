@@ -73,7 +73,7 @@ export function attentionLines(r: WeekReview): AttentionLine[] {
     out.push({
       key: 'missed', label: 'Gemist', warn: false,
       value: r.keyMissedName
-        ? `${names}. De ${lower(r.keyMissedName)} is de belangrijkste; die gaat naar een vrije dag als dat past.`
+        ? `${names}. De ${lower(r.keyMissedName)} is de belangrijkste; die komt na Akkoord op een vrije dag, als dat past.`
         : `${names}. Laat het los; dubbel doen helpt niet.`,
     });
   }

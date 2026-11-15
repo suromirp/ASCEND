@@ -123,7 +123,7 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
         : `${nameOf(l)} van ${formatWeekdayDateNL(l.scheduledDate)}${whose(l)} laat je ${mondayOfWeek(l.scheduledDate) === mondayOfWeek(today) ? 'deze' : 'die'} week gaan, zodat je benen ${weekdayLongNL(plan.found.scheduledDate).toLowerCase()} fris zijn.`),
     ];
     const extra = lines.length > 0 ? ` ${lines.join(' ')}` : '';
-    const effect = `${was} Met Akkoord wordt ${nameOf(plan.found)} op ${when} een testloop van 5 km.${extra} ${tip} Met Liever niet blijft alles staan, zonder nieuwe vraag voor deze test.`;
+    const effect = `${was} Met Akkoord wordt ${nameOf(plan.found)} op ${when} een testloop van 5 km.${extra} ${tip} Met Liever niet blijft alles staan en krijg je er voor deze test geen vraag meer over.`;
     const by = ['engine/adviceEngine.ts', 'TEST-RETRY'];
     const items: PlanChangeItem[] = [
       ...plan.moves.flatMap((m): PlanChangeItem[] => [
@@ -184,7 +184,7 @@ function retryAgainAdvice(inputs: AdviceInputs, templateById: Map<string, Sessio
       if (ways.length === 0) return [];
       return [{ ...a, effect: ways[0].effect, proposal: ways[0].proposal, options: ways.length > 1 ? ways : undefined }];
     });
-  const wrap = (effect: string) => `${lead} ${effect.replace(/^Doe hem /, 'Doe de nieuwe test ')} ${tip} Met Liever niet blijft alles staan, zonder nieuwe vraag tot je een nieuwe test logt.`;
+  const wrap = (effect: string) => `${lead} ${effect.replace(/^Doe hem /, 'Doe de nieuwe test ')} ${tip} Met Liever niet blijft alles staan en krijg je er geen vraag meer over, tot je een nieuwe test logt.`;
   return found.map((a) => ({
     ...a, lead, tip, priority: 2, relatedLogId: last.logId,
     brief: `${shortDay.charAt(0).toUpperCase()}${shortDay.slice(1)}: herkansing ging niet door`,
