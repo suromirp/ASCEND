@@ -45,11 +45,19 @@ export const MISSED_REPLAN_HINT = 'De rest van je week zet Week opnieuw plannen 
 // twee regels om op te letten, dan staat hij hier, zonder advies (Pathfinder, 15 november, I-40).
 export function weekRestLines(r: WeekReview, opts: { missedShown: boolean }): string[] {
   const out: string[] = [];
-  if (!opts.missedShown && r.missed.length > 0) out.push(`Gemist: ${joinNames(r.missed)}`);
-  if (r.skipped?.length) out.push(`Overgeslagen: ${joinNames(r.skipped)}`);
-  if (r.skippedOff?.length) out.push(`Overgeslagen: ${joinNames(r.skippedOff)}, telt niet mee`);
-  if (r.lapsed?.length) out.push(`Vervallen: ${joinNames(r.lapsed)}, telt niet mee`);
+  if (!opts.missedShown && r.missed.length > 0) out.push(`Gemist: ${joinNames(countedNames(r.missed))}`);
+  if (r.skipped?.length) out.push(`Overgeslagen: ${joinNames(countedNames(r.skipped))}`);
+  if (r.skippedOff?.length) out.push(`Overgeslagen: ${joinNames(countedNames(r.skippedOff))}, telt niet mee`);
+  if (r.lapsed?.length) out.push(`Vervallen: ${joinNames(countedNames(r.lapsed))}, telt niet mee`);
   return out;
+}
+
+// Dezelfde naam één keer, met hoe vaak: "Lange duurloop (2 keer)" in plaats van "Lange duurloop en Lange duurloop"
+// (een inhaal die zelf is overgeslagen, Warden 15 november). De volgorde is die van de eerste keer.
+export function countedNames(names: readonly string[]): string[] {
+  const count = new Map<string, number>();
+  for (const n of names) count.set(n, (count.get(n) ?? 0) + 1);
+  return [...count].map(([n, c]) => (c > 1 ? `${n} (${c} keer)` : n));
 }
 
 export interface AttentionLine { key: string; label: string; value: string; warn: boolean }

@@ -76,9 +76,10 @@ export interface WeekReview {
   next?: { title: string; note?: string; minutes: number; key?: string; label?: string; rest?: boolean };
   label?: string; // de naam van deze week, zoals bij next
   extraLogged?: number; // logs van deze week die niet bij een geplande training van deze week horen
-  // De week loopt en heeft een programma: dan staat in Week de rij Week opnieuw plannen (pages/Week.tsx, replanOn; die
-  // staat ook in een week zonder trainingen of in een toekomstige week, maar daar is niets gemist), en
-  // verwijst de regel Gemist ernaar (docs/beslissingen/2026-11-15-gemist-en-opnieuw-plannen.md).
+  // De week loopt en heeft een programma: dan staat in Week de rij Week opnieuw plannen (pages/Week.tsx, replanOn:
+  // programma, minstens één training, de week nog niet voorbij), en verwijst de regel Gemist ernaar
+  // (docs/beslissingen/2026-11-15-gemist-en-opnieuw-plannen.md). Gemist bestaat alleen met trainingen, dus de eis van
+  // minstens één training valt hier vanzelf weg; een toekomstige week loopt niet en heeft niets gemist.
   replan?: boolean;
   advice: string[];
   weeklyCheck?: WeeklyHealthCheck;

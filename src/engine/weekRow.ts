@@ -10,7 +10,7 @@
 // Puur: geen React, geen opslag.
 
 import type { PlannedSession, SessionLog } from '../models/training';
-import { weekdayShortNL } from '../utils/dates';
+import { daysBetween, formatWeekdayDayMonthNL, weekdayShortNL } from '../utils/dates';
 import { logDay } from './logDay';
 
 export interface RowFacts {
@@ -37,8 +37,9 @@ export interface RowFacts {
   pairNote?: string;
   // Gedaan: alleen nog "aangepast" en wat de training is, niet meer waar hij vandaan kwam.
   done?: boolean;
-  // Gedaan op een andere dag dan gepland: die dag (engine/weekRow.ts#doneOnOtherDay). De rij blijft op de geplande dag
-  // staan en zegt "gedaan vr 13" (Pathfinder, 15 november).
+  // Gedaan op een andere dag dan gepland: die dag als korte tekst, "vr 13" of verder weg "vr 6 nov"
+  // (engine/weekRow.ts#doneOnOtherDay). De rij blijft op de geplande dag staan en zegt "gedaan vr 13" (Pathfinder,
+  // 15 november).
   doneOn?: string;
 }
 
@@ -60,7 +61,7 @@ export function rowExtra(f: RowFacts): RowExtra | undefined {
   if (f.concern) return f.adjusted ? { text: f.concern, warn: true, also: 'aangepast' } : { text: f.concern, warn: true };
   // Gemist staat voorop en "aangepast" erbij, zodat elke rij die de kaart "Je hebt n training gemist" telt ook gemist
   // zegt (invariant op de tekstkaart, Warden 15 november).
-  const doneOn = f.done && f.doneOn ? dayShort(f.doneOn) : undefined;
+  const doneOn = f.done ? f.doneOn : undefined;
   if (f.adjusted && doneOn) return { text: `gedaan ${doneOn}`, warn: false, tail: doneOn, also: 'aangepast' };
   if (f.adjusted) return f.missed ? { text: 'gemist', warn: false, also: 'aangepast' } : { text: 'aangepast', warn: false };
   if (f.missed) return { text: 'gemist', warn: false };
@@ -76,11 +77,17 @@ export function rowExtra(f: RowFacts): RowExtra | undefined {
   return undefined;
 }
 
-// De dag waarop een geplande training gedaan is, als die anders is dan de geplande dag. Dezelfde dag als in de grafiek
-// en het logboek (engine/logDay.ts): een training uit MacroFactor over middernacht hoort bij zijn geplande dag en
-// krijgt dus niets. Alleen weergave: de log en de planning blijven zoals ze zijn.
+// Hoe ver een log van de geplande dag mag liggen voor alleen dag en getal: binnen zes dagen is "vr 13" eenduidig.
+export const DONE_ON_NEAR_DAYS = 6;
+
+// De dag waarop een geplande training gedaan is, als die anders is dan de geplande dag, als korte tekst: "vr 13", of
+// verder dan zes dagen weg (achteraf gekoppeld) met de maand, "vr 6 nov", zodat hij niet als dezelfde week leest
+// (Warden, 15 november). Dezelfde dag als in de grafiek en het logboek (engine/logDay.ts): een training uit MacroFactor
+// over middernacht hoort bij zijn geplande dag en krijgt dus niets. Alleen weergave: de log en de planning blijven zoals
+// ze zijn.
 export function doneOnOtherDay(session: Pick<PlannedSession, 'id' | 'scheduledDate'>, log: Pick<SessionLog, 'completedDate' | 'plannedSessionId' | 'source'> | undefined): string | undefined {
   if (!log) return undefined;
   const day = logDay(log, new Map([[session.id, session]]));
-  return day !== session.scheduledDate ? day : undefined;
+  if (day === session.scheduledDate) return undefined;
+  return Math.abs(daysBetween(session.scheduledDate, day)) > DONE_ON_NEAR_DAYS ? formatWeekdayDayMonthNL(day) : dayShort(day);
 }

@@ -7,7 +7,9 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 `docs/beslissingen/`.
 
 ## Inbox
-Hoogste code: I-48. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+Hoogste code: I-50. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+- [I-50] Week, log in een andere week (Warden Fable 15 november, bestond al, mag): staat het log van een training een week later dan gepland, dan zegt de geplande week "2 van 2 gedaan · 45 min" terwijl de minuten in de week van het log staan. Kiezen: de minuten mee naar de geplande week, of bij gedaan zeggen dat het in een andere week was. Vastgelegd in `src/engine/wardenWeekProef.test.ts`.
+- [I-49] Week, rij van voor de start van het programma (Warden Fable 15 november, bestond al, mag): Week noemt hem gemist en de kaart "Deze week n trainingen gemist" telt hem, de weekterugblik telt en noemt hem niet (`leftOutOfCount` met `programStart`). Gelijktrekken, advies: Week en de kaart volgen de terugblik. Vastgelegd in `src/engine/wardenWeekProef.test.ts`.
 - [I-40] Weekterugblik noemt alleen gemist (Pathfinder 15 november, later): overgeslagen en vervallen staan er niet in, terwijl "0 van 3" ze meetelt of weglaat. Eén regel "Overgeslagen: ..." en "Vervallen: ..." sluit de som. Klein.
 - [I-48] Ziek melden (eigenaar 15 november, "koortsig verkouden" koos boven de nek): de keuze heet "Verkouden, alleen boven de nek" en zegt pas in de tweede regel "geen koorts". Wie verkouden is met koorts kiest dan de verkeerde. Advies: de titel "Neus of keel, zonder koorts" en bij de andere "Koorts, ook als je verkouden bent". Klein, tekst in `engine/illness.ts`.
 - [I-47] Richting Sterker worden met kracht uit (Pathfinder 15 november, besluitpunt): de richting belooft "Kracht staat voorop" terwijl de planning lopen geeft. Kiezen: de richting verbergen bij kracht uit, of zeggen dat het lopen wordt. Geen tekstfix.

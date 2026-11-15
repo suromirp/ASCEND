@@ -479,7 +479,7 @@ export const INVARIANTEN = [
       for (const w of alleSchermen.filter((x) => x === 'week' || (x.startsWith('week-') && !x.endsWith('-blad')))) {
         const t = k(w);
         if (!/\[knop: Week opnieuw plannen/.test(t)) continue;
-        const kaart = t.match(/Je hebt\s(?:deze week\s)?(\d+)\straining(?:en)?\sgemist/);
+        const kaart = t.match(/(?:Je hebt\s|Deze week\s)(?:deze week\s)?(\d+)\straining(?:en)?\sgemist/);
         const n = kaart ? Number(kaart[1]) : 0;
         const gemist = rijen(t).filter(zegtGemist).length;
         if (gemist !== n) uit.push(`${w}: de kaart zegt ${n} gemist, ${gemist} dagrijen zeggen gemist`);
@@ -578,11 +578,11 @@ export const INVARIANTEN = [
       for (const s of alleSchermen) {
         const t = k(s);
         for (const r of t.split('\n')) if (/(?:^|\W)\d+ trainingen gemist:/.test(r)) uit.push(`${s}: een titel telt zelf gemist: ${r}`);
-        const kaart = t.match(/Je hebt[^\n\]]*gemist[^\n\]]*/);
+        const kaart = t.match(/\[knop: Week opnieuw plannen([^\n\]]*gemist[^\n\]]*)/);
         if (kaart) {
           kaarten++;
-          if (!/Je hebt deze week \d+ training(?:en)? gemist/.test(kaart[0])) uit.push(`${s}: de kaart zegt niet over welke week hij telt: ${kaart[0]}`);
-          if (!/niet dubbel/.test(kaart[0])) uit.push(`${s}: de kaart zegt niet dat je het niet dubbel doet: ${kaart[0]}`);
+          if (!/^Deze week \d+ training(?:en)? gemist/.test(kaart[1])) uit.push(`${s}: de kaart zegt niet over welke week hij telt: ${kaart[1]}`);
+          if (!/niet dubbel/i.test(kaart[1])) uit.push(`${s}: de kaart zegt niet dat je het niet dubbel doet: ${kaart[1]}`);
         }
         if (s.startsWith('weekterugblik') && /^### Je week tot nu$/m.test(t)) {
           const g = t.match(/^Gemist\n(.+)$/m);

@@ -8,7 +8,7 @@ import type { PlannedSession, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
 import { buildWeekReview, type WeekReview } from './weekReview';
-import { attentionLines, MISSED_REPLAN_HINT, weekCountLine, weekRestLines } from './weekGlance';
+import { attentionLines, countedNames, MISSED_REPLAN_HINT, weekCountLine, weekRestLines } from './weekGlance';
 import { missedInWeek, replanSub } from './weekList';
 import { deriveSessionStatus } from './sessionStatus';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
@@ -80,6 +80,11 @@ describe('I-40: de weekterugblik sluit de som', () => {
     expect(weekRestLines(r, { missedShown: true })).toEqual(['Overgeslagen: Rustige duurloop']);
   });
 
+  it('dezelfde naam één keer, met hoe vaak', () => {
+    expect(countedNames(['A', 'B', 'A'])).toEqual(['A (2 keer)', 'B']);
+    expect(countedNames(['A'])).toEqual(['A']);
+  });
+
   it('niets overgeslagen of vervallen: geen extra regel', () => {
     const r = buildWeekReview({ weekStart: W, plannedSessions: plan.slice(0, 2), logs, templates, program, planChangeLog: [], asOf: '2026-10-13' })!;
     expect(weekRestLines(r, { missedShown: true })).toEqual([]);
@@ -94,7 +99,7 @@ describe('I-42: gemist heeft één richting', () => {
     expect(missed.value).toBe(`Bovenlichaam B. Laat het los; dubbel doen helpt niet. ${MISSED_REPLAN_HINT}`);
     expect(missed.value).toContain('Week opnieuw plannen');
     // De kaart zegt hetzelfde: niet dubbel, de rest terug naar het plan.
-    expect(replanSub(1)).toMatch(/niet dubbel; zet de rest terug naar het plan\.$/);
+    expect(replanSub(1)).toMatch(/Niet dubbel doen; zet de rest terug\.$/);
   });
 
   it('een gemiste sleuteltraining houdt zijn eigen zin, en ook dan verwijst Gemist naar Week opnieuw plannen', () => {
@@ -133,6 +138,6 @@ describe('I-41: de kaart en het inhaaladvies tellen niet langs elkaar heen', () 
     vi.setSystemTime(new Date(`${asOf}T12:00:00`));
     const week = sessions.filter((s) => s.weekStartDate === '2026-10-12');
     expect(missedInWeek(week, [], byId, { leave: undefined, templates: byId })).toBe(0);
-    expect(replanSub(2)).toMatch(/^Je hebt deze week 2 trainingen gemist\./);
+    expect(replanSub(2)).toMatch(/^Deze week 2 trainingen gemist\./);
   });
 });

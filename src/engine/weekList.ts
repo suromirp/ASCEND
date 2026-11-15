@@ -60,13 +60,14 @@ export function missedInWeek(sessions: readonly PlannedSession[], logs: SessionL
 }
 
 export const REPLAN_SUB = 'Zet de rest van je week terug naar het plan';
-// Gemist in de lopende week: de rij komt direct onder de dagen en zegt waarom je hem nodig kunt hebben. Het getal gaat
+// Gemist in de lopende week: de rij komt direct onder de dagen en zegt waarom je hem nodig kunt hebben. Kort, zodat de
+// rij op 360 px boven de tabbalk blijft (Warden, 15 november); de titel Week opnieuw plannen zegt waarheen terug. Het getal gaat
 // over deze week ("deze week"), zodat het naast het inhaaladvies niet als een tweede telling leest (I-41). Eén richting
 // met de weekterugblik: wat je miste doe je niet dubbel, de rest gaat terug naar het plan
 // (docs/beslissingen/2026-11-15-gemist-en-opnieuw-plannen.md, I-42).
 export function replanSub(missed: number): string {
   return missed > 0
-    ? `Je hebt deze week ${missed} ${missed === 1 ? 'training' : 'trainingen'} gemist. Die doe je niet dubbel; zet de rest terug naar het plan.`
+    ? `Deze week ${missed} ${missed === 1 ? 'training' : 'trainingen'} gemist. Niet dubbel doen; zet de rest terug.`
     : REPLAN_SUB;
 }
 export const REPLAN_BUSY = 'Even rekenen…';

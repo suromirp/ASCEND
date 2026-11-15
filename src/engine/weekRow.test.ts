@@ -42,16 +42,21 @@ describe('gedaan op een andere dag', () => {
   const session = { id: 'p1', scheduledDate: '2026-11-12' };
 
   it('de rij zegt "gedaan vr 13", met de dag als vaste staart', () => {
-    expect(rowExtra({ done: true, doneOn: '2026-11-13', legs: true, fixed: true })).toEqual({ text: 'gedaan vr 13', warn: false, tail: 'vr 13' });
-    expect(rowExtra({ done: true, doneOn: '2026-11-13', adjusted: true })).toEqual({ text: 'gedaan vr 13', warn: false, tail: 'vr 13', also: 'aangepast' });
-    expect(rowExtra({ done: true, doneOn: '2026-11-13', concern: 'c' })?.warn).toBe(true);
+    expect(rowExtra({ done: true, doneOn: 'vr 13', legs: true, fixed: true })).toEqual({ text: 'gedaan vr 13', warn: false, tail: 'vr 13' });
+    expect(rowExtra({ done: true, doneOn: 'vr 13', adjusted: true })).toEqual({ text: 'gedaan vr 13', warn: false, tail: 'vr 13', also: 'aangepast' });
+    expect(rowExtra({ done: true, doneOn: 'vr 6 nov' })).toEqual({ text: 'gedaan vr 6 nov', warn: false, tail: 'vr 6 nov' });
+    expect(rowExtra({ done: true, doneOn: 'vr 13', concern: 'c' })?.warn).toBe(true);
     // Alleen als hij gedaan is: een open rij met een oude dag zegt niets over gedaan.
-    expect(rowExtra({ doneOn: '2026-11-13' })).toBeUndefined();
+    expect(rowExtra({ doneOn: 'vr 13' })).toBeUndefined();
   });
 
   it('dezelfde dag als in de grafiek: een log van een andere dag wel, dezelfde dag en MacroFactor over middernacht niet', () => {
-    expect(doneOnOtherDay(session, { completedDate: '2026-11-13', plannedSessionId: 'p1', source: 'manual' })).toBe('2026-11-13');
-    expect(doneOnOtherDay(session, { completedDate: '2026-11-10', plannedSessionId: 'p1', source: 'garmin' })).toBe('2026-11-10');
+    expect(doneOnOtherDay(session, { completedDate: '2026-11-13', plannedSessionId: 'p1', source: 'manual' })).toBe('vr 13');
+    expect(doneOnOtherDay(session, { completedDate: '2026-11-10', plannedSessionId: 'p1', source: 'garmin' })).toBe('di 10');
+    // Zes dagen weg nog zonder maand, zeven dagen en verder met: achteraf gekoppeld leest anders als dezelfde week.
+    expect(doneOnOtherDay(session, { completedDate: '2026-11-18', plannedSessionId: 'p1', source: 'manual' })).toBe('wo 18');
+    expect(doneOnOtherDay(session, { completedDate: '2026-11-19', plannedSessionId: 'p1', source: 'manual' })).toBe('do 19 nov');
+    expect(doneOnOtherDay(session, { completedDate: '2026-10-12', plannedSessionId: 'p1', source: 'manual' })).toBe('ma 12 okt');
     expect(doneOnOtherDay(session, { completedDate: '2026-11-12', plannedSessionId: 'p1', source: 'manual' })).toBeUndefined();
     expect(doneOnOtherDay(session, { completedDate: '2026-11-11', plannedSessionId: 'p1', source: 'macrofactor' })).toBeUndefined();
     expect(doneOnOtherDay(session, undefined)).toBeUndefined();
