@@ -30,7 +30,7 @@ export function StandSummary({ lines }: { lines: SummaryLine[] }) {
               </span>
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="text-sm font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{l.word}</span>
-                <span className="text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{l.fact}</span>
+                <span className="text-xs leading-snug tabular-nums text-pretty" style={{ color: 'var(--color-ink-dim)' }}>{l.fact}</span>
               </span>
               <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><ChevronGlyph /></span>
             </button>
