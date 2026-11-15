@@ -50,3 +50,7 @@ Week en Stand, met de bladen en engine-teksten die daar tekst leveren: WeekNotic
 De meeste herschreven zinnen staan in bladen of standen die de tekstkaart niet vastlegt, dus de kaart verandert op één regel na: Stand lopen ("staan je snelste stukken in training naast je test").
 
 Plafond na ronde 2: 11 (was 12). De elf: de kaart Vervallen op Vandaag, Gegevens, en negen op de instellingenschermen (ronde 3). Dezelfde toets over alle bestanden in `src/` buiten tests, opmerkingen meegeteld: 986 voor, 910 na.
+
+## Aanvulling, ronde 2 na Pathfinder (15 november)
+
+Twee zinnen in `weekValidator.ts` die de telling niet zag ("dan ASCEND graag ziet", "een harde training van ASCEND") zijn herschreven. "Je planning houdt er rekening mee" las als personificatie: bij een vrije periode of tocht staat nu "Voorstellen houden er rekening mee". Bij inhalen en de rustdag is het voorstel weer het onderwerp, of "je" ("Je haalt hoogstens één training in"). Plafond: 11, ongewijzigd; geen van deze zinnen staat in de tekstkaart.
