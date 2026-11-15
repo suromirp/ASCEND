@@ -109,13 +109,13 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
   },
   tpl_test_run: {
     styleLabel: 'test',
-    purpose: 'Een meetpunt: 5 km zo snel als je gelijkmatig volhoudt. Daarna weet ASCEND je echte tempo.',
+    purpose: 'Een meetpunt: 5 km zo snel als je gelijkmatig volhoudt. Daarna is je echte tempo bekend.',
     stopSignals: ['je scherpe pijn voelt: stoppen, de test kan een andere keer'],
     facts: 'test',
   },
   tpl_race: {
     styleLabel: 'wedstrijd',
-    purpose: 'Je tussendoel. Rustig starten, genieten, en daarna weet ASCEND je echte tempo.',
+    purpose: 'Je tussendoel. Rustig starten, genieten, en daarna is je echte tempo bekend.',
     stopSignals: ['je scherpe pijn voelt: stoppen is dan de slimste keuze'],
     facts: 'race',
   },

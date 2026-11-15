@@ -37,8 +37,8 @@ export function stepDistance(trainingKm: number, deltaKm: number, dir: 'longer' 
   const step = adjustStepKm(trainingKm);
   const next = Math.round((deltaKm + (dir === 'longer' ? step : -step)) * 10) / 10;
   const total = Math.round((trainingKm + next) * 10) / 10;
-  if (dir === 'shorter' && !(total >= MIN_LOOP_KM)) return { ok: false, line: `Korter dan ${formatNumberNL(MIN_LOOP_KM, 0)} km zoekt ASCEND geen lus.` };
-  if (dir === 'longer' && !(total <= maxLoopKm(trainingKm))) return { ok: false, line: `Langer dan ${kmText(maxLoopKm(trainingKm))} zoekt ASCEND bij deze training niet.` };
+  if (dir === 'shorter' && !(total >= MIN_LOOP_KM)) return { ok: false, line: `Korter dan ${formatNumberNL(MIN_LOOP_KM, 0)} km: geen lus.` };
+  if (dir === 'longer' && !(total <= maxLoopKm(trainingKm))) return { ok: false, line: `Langer dan ${kmText(maxLoopKm(trainingKm))}: niet bij deze training.` };
   return { ok: true, deltaKm: next };
 }
 

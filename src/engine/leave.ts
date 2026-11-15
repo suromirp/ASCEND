@@ -48,7 +48,7 @@ export const LEAVE_KIND_HINT: Record<LeaveKind, string> = {
   no_training: 'Geen training op deze dagen. Wat er stond, schuift naar een andere dag of vervalt.',
   trek: 'Een tocht van meerdere dagen met je rugzak. Elke dag is een wandeldag. De dag ervoor en erna blijft licht.',
   no_gym: 'Je bent weg en kunt lopen, maar er is geen sportschool. Lopen blijft, korter en rustiger. Kracht in de sportschool wordt een korte sessie met je eigen gewicht of vervalt.',
-  free_days: 'Je hebt extra tijd. Er gaat niets uit je planning. Past er een lange wandeling, dan stelt ASCEND die voor.',
+  free_days: 'Je hebt extra tijd. Er gaat niets uit je planning. Past er een lange wandeling, dan volgt een voorstel.',
 };
 
 const MAX_DAYS = 90;

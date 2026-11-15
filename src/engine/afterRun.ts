@@ -118,7 +118,7 @@ export const AFTER_RUN_TEXT = {
   trim: 'Inkorten',
   watchRpe: 'Zo stond het op je horloge.',
   info: [
-    'Dit deed ASCEND zelf: je horloge had precies één activiteit die bij de geplande training van die dag paste.',
+    'Vanzelf gekoppeld: je horloge had precies één activiteit die bij de geplande training van die dag paste.',
     'Klopt niet haalt de afvinking weer weg. Dan kies je zelf bij welke training dit hoort.',
   ],
   slow: 'Opslaan duurt lang. Je antwoord blijft staan.',

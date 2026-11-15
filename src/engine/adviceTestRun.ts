@@ -110,7 +110,7 @@ export function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, Se
       .filter((d) => !again || (!again.blocked(d) && !isIllnessDay(d, inputs.illnessEpisodes, today)));
   const ruleId = forced ? 'TEST-INFLUENCE' : again ? 'TEST-RETRY' : 'TEST-MAKE-ROOM';
   const by = ['engine/adviceEngine.ts', again ? 'TEST-RETRY' : 'TEST-MAKE-ROOM'];
-  const why = forced?.why ?? again?.why ?? 'De testloop van 5 km is het meetpunt voor je wedstrijdtempo: daarop stelt ASCEND je tempo af, en daaruit rekent hij je voorspelde tijd. Daarom hoort hij erin, ook als er een andere training voor moet wijken. Eerst een voorstel, pas na Akkoord verandert er iets.';
+  const why = forced?.why ?? again?.why ?? 'De testloop van 5 km is het meetpunt voor je wedstrijdtempo: daaruit volgen je tempo en je voorspelde tijd. Daarom hoort hij erin, ook als er een andere training voor moet wijken. Eerst een voorstel, pas na Akkoord verandert er iets.';
   const missedWord = lost.status === 'skipped' ? 'overgeslagen' : 'gemist';
   const title = forced ? forced.title : again ? again.title : onRestDay ? `Testloop van ${formatWeekdayDateNL(lost.scheduledDate)} staat op je rustdag` : notFresh ? `Testloop van ${formatWeekdayDateNL(lost.scheduledDate)}: je benen zijn dan nog niet fris` : `Testloop van ${formatWeekdayDateNL(lost.scheduledDate)} ${missedWord}`;
   const adviceId = forced?.id ?? again?.id ?? `testroom:${lost.id}`;
