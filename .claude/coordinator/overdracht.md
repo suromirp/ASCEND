@@ -4,6 +4,8 @@ Bijgewerkt: 15 november 2026, 11:20 Portugese tijd, door de coördinator session
 
 ## Vaste afspraken van nu
 
+- Zonder sportschool (eigenaar 15 november, "Ja advies"): alleen wat de sportschool nodig heeft vervalt; een loop of wandeling die je niet deed telt als gemist. Doorgegeven aan Sherpa Week.
+
 - Tijden aan de eigenaar in Portugese tijd (Europe/Lisbon) tot woensdag 18 november, daarna Amsterdamse tijd; nooit UTC.
 - Stijl Jarvis met "meneer"; vragen apart onderaan onder **Vraag aan u**, advies voorop, en wat er zonder antwoord gebeurt.
 - Niet op de eigenaar wachten: open vragen krijgen het advies als standaard; elke keuze en reflectie hier vastleggen.
