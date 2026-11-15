@@ -9,6 +9,7 @@ import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../model
 import { dayOrder } from './dayOrder';
 import { dayHasRoomFor, findHeavyConflicts, HEAVY_AXIS_LABEL, isHeavyBeforeTest, isTestOnly, sharedHeavyAxes, testRestHours, tooCloseBeforeTest, type ScheduleProposal } from './scheduler';
 import { keptDayReason, type KeptReason, type MoveContext } from './moveSuggestions';
+import { NO_GYM_ASK } from './noGymGuard';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { lockLevel } from './weekValidator';
 import { weekConcerns } from './weekConcerns';
@@ -39,7 +40,7 @@ export function dragEligibility(session: PlannedSession, template: SessionTempla
 
 // --- wat elke dag zegt -------------------------------------------------------------
 // swap: the day holds exactly one training that may move; letting go trades their days (engine/weekSwap.ts).
-type DayVerdictKind = 'origin' | 'free' | 'shared' | 'tight' | 'clash' | 'rest' | 'blocked' | 'swap';
+type DayVerdictKind = 'origin' | 'free' | 'shared' | 'tight' | 'clash' | 'rest' | 'nogym' | 'blocked' | 'swap';
 
 export interface DayVerdict {
   date: string;
@@ -77,7 +78,7 @@ export const dayTitle = (date: string) => `${capitalize(weekdayLongNL(date))} ${
 const fit = (...options: string[]) => options.find((o) => o.length <= CHIP_MAX) ?? options[options.length - 1].slice(0, CHIP_MAX);
 const joinNames = (names: string[]) => names.join(' en ');
 
-const BLOCKED_TEXT: Record<Exclude<KeptReason, 'rest'>, { chip: string; line: (day: string) => string }> = {
+const BLOCKED_TEXT: Record<Exclude<KeptReason, 'rest' | 'nogym'>, { chip: string; line: (day: string) => string }> = {
   off: { chip: 'Vakantie', line: (day) => `${day} is een vakantiedag.` },
   trek: { chip: 'Tochtdag', line: (day) => `${day} is een tochtdag.` },
   light: { chip: 'Lichte dag bij je tocht', line: (day) => `${day} blijft licht door je tocht, daar past geen zware training.` },
@@ -112,7 +113,7 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
       return { date, kind: 'blocked', droppable: false, tone: 'none', chip: 'Dag is voorbij', line: `${day} is al voorbij.`, ask: false };
     }
     const kept = keptDayReason(ctx.move, template, date, ctx.asOf);
-    if (kept && kept !== 'rest') {
+    if (kept && kept !== 'rest' && kept !== 'nogym') {
       const t = BLOCKED_TEXT[kept];
       return { date, kind: 'blocked', droppable: false, tone: 'none', chip: t.chip, line: t.line(day), ask: false };
     }
@@ -122,6 +123,10 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
     }
     const names = there.flatMap((s) => { const n = templateById.get(s.templateId)?.name; return n ? [n] : []; });
 
+    // Zonder sportschool: je mag, maar eerst de vraag; Week zegt het daarna in Let op (engine/noGymGuard.ts).
+    if (kept === 'nogym') {
+      return { date, kind: 'nogym', droppable: true, tone: 'warn', chip: 'Zonder sportschool', line: `${day}. ${NO_GYM_ASK} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: NO_GYM_ASK };
+    }
     if (kept === 'rest') {
       const reason = 'Dit is je rustdag. Een rustdag is er om te herstellen.';
       return { date, kind: 'rest', droppable: true, tone: 'warn', chip: 'Je rustdag', line: `${day}. Dit is je rustdag. Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: reason };
@@ -218,7 +223,9 @@ export const LEAVE_ASK_REASON = 'Deze training schoof opzij voor je vakantie. Ve
 // (a pair that belongs together on its own days, engine/weekValidator.ts). A clean move then asks first,
 // with "Toch hier" and "Annuleren" when that is the only reason; with another reason too (a rest day, a test)
 // the sentence comes first and the usual buttons stay. A cascade or clash keeps its own question.
-export interface DecideOptions { askAlways?: boolean | string; verdict?: DayVerdict; legsClose?: boolean }
+// `extraAsk`: een vraag van de dag zelf zonder verdict (een datum uit het actieblad op een dag zonder sportschool,
+// engine/noGymGuard.ts#noGymAsk).
+export interface DecideOptions { askAlways?: boolean | string; verdict?: DayVerdict; legsClose?: boolean; extraAsk?: string }
 
 export const LEGS_ASK = 'Twee zware beendagen achter elkaar. Toch hier?';
 const LEGS_CONFIRM = { yes: 'Toch hier', no: 'Annuleren' } as const;
@@ -237,6 +244,10 @@ export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {})
     resolved = false;
   }
   if (opts.askAlways) reasons.push(typeof opts.askAlways === 'string' ? opts.askAlways : TEST_ASK_REASON);
+  if (opts.extraAsk && !reasons.includes(opts.extraAsk)) {
+    reasons.push(opts.extraAsk);
+    resolved = false;
+  }
   const legs = !!opts.legsClose && clean;
   if (legs) {
     reasons.unshift(LEGS_ASK);

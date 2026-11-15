@@ -49,6 +49,7 @@ import type { ScheduleProposal } from '../engine/scheduler';
 import { catchUpEligibility, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { dragHandlesShown } from '../components/weekDragShown';
 import { decideMove, dragEligibility, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
+import { noGymAsk } from '../engine/noGymGuard';
 import { SWAP_STALE } from '../storage/weekSwap';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
@@ -423,7 +424,9 @@ export function WeekPage() {
             const sel = selected;
             const tpl = templateById.get(sel.templateId);
             const eligible = tpl ? dragEligibility(sel, tpl, { logged: !!selectedLog, today: todayISO() }) : undefined;
-            void moveTo(sel.id, date, eligible?.ok ? { askAlways: eligible.askAlways } : undefined);
+            // Een sportschooltraining naar een dag zonder sportschool: eerst de vraag (engine/noGymGuard.ts).
+            const extraAsk = noGymAsk(tpl, date, settings.leavePeriods);
+            void moveTo(sel.id, date, eligible?.ok ? { askAlways: eligible.askAlways, extraAsk } : extraAsk ? { extraAsk } : undefined);
             setSelected(null);
           }}
           swapOptions={swapOptionsFor(selected.id)}

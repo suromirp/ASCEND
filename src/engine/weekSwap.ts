@@ -8,6 +8,7 @@
 import type { PlanLock, PlannedSession, SessionTemplate } from '../models/training';
 import { dayHasRoomFor, findHeavyConflicts, isHeavyBeforeTest, isLegHeavyTemplate, isTestOnly, sharedHeavyAxes, testRestHours, tooCloseBeforeTest, type ScheduleProposal } from './scheduler';
 import { keptDayReason, type KeptReason } from './moveSuggestions';
+import { NO_GYM_ASK } from './noGymGuard';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { hasRole } from './templateRoles';
 import { weekConcerns } from './weekConcerns';
@@ -27,7 +28,7 @@ const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 const dayLower = (date: string) => `${weekdayLongNL(date)} ${formatDateNL(date)}`;
 const fit = (...options: string[]) => options.find((o) => o.length <= CHIP_MAX) ?? options[options.length - 1].slice(0, CHIP_MAX);
 
-const KEPT_LINE: Record<Exclude<KeptReason, 'rest'>, string> = {
+const KEPT_LINE: Record<Exclude<KeptReason, 'rest' | 'nogym'>, string> = {
   off: 'is een vakantiedag',
   trek: 'is een tochtdag',
   light: 'blijft licht door je tocht',
@@ -68,7 +69,7 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
   const rest = ctx.sessions.filter((s) => s.id !== a.id && s.id !== b.id && s.status !== 'skipped');
   for (const leg of legs) {
     const kept = keptDayReason(ctx.move, leg.t, leg.to, ctx.asOf);
-    if (kept && kept !== 'rest') return { ok: false, line: `${dayTitle(leg.to)} ${KEPT_LINE[kept]}.` };
+    if (kept && kept !== 'rest' && kept !== 'nogym') return { ok: false, line: `${dayTitle(leg.to)} ${KEPT_LINE[kept]}.` };
     if (rest.filter((s) => s.scheduledDate === leg.to).length >= 2) return { ok: false, line: `${dayTitle(leg.to)} zit vol.` };
   }
 
@@ -97,7 +98,10 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
     asks.push(`${leg.t.name} op ${dayLower(leg.to)} valt dicht op ${others.map((t) => t.name).join(' en ')}.${rule}`);
   }
   for (const leg of legs) {
-    if (keptDayReason(ctx.move, leg.t, leg.to, ctx.asOf) === 'rest') asks.push(`${dayTitle(leg.to)} is je rustdag.`);
+    const kept = keptDayReason(ctx.move, leg.t, leg.to, ctx.asOf);
+    if (kept === 'rest') asks.push(`${dayTitle(leg.to)} is je rustdag.`);
+    // Zonder sportschool: ruilen mag, met de vraag ervoor (engine/noGymGuard.ts).
+    if (kept === 'nogym') asks.push(`${leg.t.name} op ${dayLower(leg.to)}: ${NO_GYM_ASK.charAt(0).toLowerCase()}${NO_GYM_ASK.slice(1)}`);
   }
   // Past de tijd op de nieuwe dag?
   for (const leg of legs) {

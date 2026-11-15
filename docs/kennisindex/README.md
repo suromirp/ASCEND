@@ -48,13 +48,13 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/planning.md](../werkbriefjes/planning.md)
 - [architectuur/planning.md](../architectuur/planning.md): Het lange verhaal bij planning: hoofddoel en rollen, scheduler, wie een sessie mag aanraken, labels, eerst vragen, ziek, vrij, tochten en de rugzakladder.
-- Alles over dit onderwerp: [planning.md](planning.md) (57 besluiten die gelden, 13 deels ingehaald, 27 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [planning.md](planning.md) (58 besluiten die gelden, 13 deels ingehaald, 27 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Week
 
 - Werkbriefje: [werkbriefjes/week.md](../werkbriefjes/week.md)
 - [architectuur/week.md](../architectuur/week.md): Het lange verhaal bij de Week-tab: waarschuwingen, slepen en inhalen.
-- Alles over dit onderwerp: [week.md](week.md) (25 besluiten die gelden, 8 deels ingehaald, 4 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [week.md](week.md) (26 besluiten die gelden, 8 deels ingehaald, 4 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Lichaam en herstel
 

@@ -2,6 +2,7 @@
 // omdat hij computeAdvice opnieuw draait op een nagespeelde week om te zien of
 // er een nieuw probleem ontstaat; in een eigen bestand gaf dat een kringverwijzing.
 
+import { withoutGymOnNoGym } from './noGymGuard';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
@@ -579,5 +580,8 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     restDay: inputs.restDay ?? inputs.extraSession?.restDay, taken: takenDays, keyFocus: inputs.keyFocus,
     program: inputs.program, dailyTimeBudget: inputs.dailyTimeBudget, sameDayPairingPreference: inputs.sameDayPairingPreference,
   }).filter((a) => !inputs.respondedIds.has(a.id));
-  return [...rest, ...fullWeekNow, ...descent].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
+  // Het vangnet zonder sportschool: geen voorstel zet een sportschooltraining op een dag zonder sportschool
+  // (engine/noGymGuard.ts, docs/beslissingen/2026-11-15-zonder-sportschool-verplaatst.md).
+  return withoutGymOnNoGym([...rest, ...fullWeekNow, ...descent], inputs.plannedSessions, templateById, inputs.leave)
+    .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
 }
