@@ -84,11 +84,44 @@ describe('groupByWeek', () => {
 });
 
 describe('emptyMonthTitle', () => {
+  const geen = { minutes: 0, count: 0 };
   it('zegt "Geen trainingen in deze maand." als er alleen wegingen zijn', () => {
-    expect(emptyMonthTitle({ beforeFirst: false, weighings: 2 })).toBe('Geen trainingen in deze maand.');
+    expect(emptyMonthTitle({ beforeFirst: false, weighings: 2, recovery: geen, listLogs: 0 })).toBe('Geen trainingen in deze maand.');
   });
   it('zegt "Nog niets" zonder wegingen, en voor je eerste training dat je hier nog niet begon', () => {
-    expect(emptyMonthTitle({ beforeFirst: false, weighings: 0 })).toBe('Nog niets in deze maand.');
-    expect(emptyMonthTitle({ beforeFirst: true, weighings: 3 })).toBe('Hier begon je nog niet.');
+    expect(emptyMonthTitle({ beforeFirst: false, weighings: 0, recovery: geen, listLogs: 0 })).toBe('Nog niets in deze maand.');
+    expect(emptyMonthTitle({ beforeFirst: true, weighings: 3, recovery: geen, listLogs: 0 })).toBe('Hier begon je nog niet.');
+  });
+  it('noemt alleen herstel met de minuten, ook naast wegingen', () => {
+    expect(emptyMonthTitle({ beforeFirst: false, weighings: 0, recovery: { minutes: 56, count: 1 }, listLogs: 1 })).toBe('Alleen herstel in deze maand: 56 min.');
+    expect(emptyMonthTitle({ beforeFirst: false, weighings: 4, recovery: { minutes: 95, count: 2 }, listLogs: 2 })).toBe('Alleen herstel in deze maand: 1 uur 35 min.');
+  });
+  it('zegt nooit niets als de lijst een log heeft dat bij een andere maand telt', () => {
+    const t = emptyMonthTitle({ beforeFirst: false, weighings: 0, recovery: geen, listLogs: 1 });
+    expect(t).toBe('Wat hier staat telt bij de maand van de geplande training.');
+    expect(t).not.toMatch(/niets|geen trainingen/i);
+  });
+});
+
+describe('logboekkop met alleen herstel', () => {
+  const walk = log('w', '2026-11-03', 56, 'recovery');
+  it('zegt in de eerste dagen van de maand geen "nog niets" als er een herstelwandeling staat', () => {
+    const r = monthCompare({ anchor: '2026-11-01', today: '2026-11-05', logs: [walk], plannedById: none });
+    expect(r.nothingYet).toBe(false);
+    expect(r.totals.count).toBe(0);
+    expect(r.recovery).toEqual({ minutes: 56, count: 1 });
+    expect(emptyMonthTitle({ beforeFirst: false, weighings: 0, recovery: r.recovery, listLogs: 1 })).toBe('Alleen herstel in deze maand: 56 min.');
+  });
+  it('geeft de herstelminuten ook later in de maand en in een afgesloten maand', () => {
+    expect(monthCompare({ anchor: '2026-11-01', today: '2026-11-20', logs: [walk], plannedById: none }).recovery).toEqual({ minutes: 56, count: 1 });
+    expect(monthCompare({ anchor: '2026-11-01', today: '2026-12-20', logs: [walk], plannedById: none }).recovery).toEqual({ minutes: 56, count: 1 });
+  });
+  it('vergelijkt niet met een vorige maand met alleen herstel: de vergelijking vraagt een training', () => {
+    const r = monthCompare({ anchor: '2026-11-01', today: '2026-11-20', logs: [log('o', '2026-10-03', 40, 'recovery'), log('n', '2026-11-04', 30)], plannedById: none });
+    expect(r.vs).toBeUndefined();
+    expect(r.totals).toEqual({ minutes: 30, count: 1 });
+  });
+  it('blijft "nog niets" zeggen in een vroege maand zonder enig log', () => {
+    expect(monthCompare({ anchor: '2026-11-01', today: '2026-11-05', logs: [], plannedById: none })).toMatchObject({ nothingYet: true, recovery: { minutes: 0, count: 0 } });
   });
 });

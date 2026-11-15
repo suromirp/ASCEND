@@ -105,6 +105,10 @@ export function usePlanChangeActions(deps: {
     if (response === 'accepted' && item.noGoalWaves) {
       setRecentChange((prev) => (prev && prev.trigger === 'direction_changed' ? { ...prev, adviceId: item.id } : prev));
     }
+    // Rustiger instap (engine/reentry.ts): ongedaan maken brengt het voorstel terug.
+    if (response === 'accepted' && item.reentry) {
+      setRecentChange((prev) => (prev && prev.trigger === 'reentry_planned' ? { ...prev, adviceId: item.id } : prev));
+    }
     // A goal setting (rule GR5-PACK-TENT): only ever on Akkoord.
     if (response === 'accepted' && item.goalChange) {
       const goal = (await TrainingGoalsRepo.getAll()).find((g) => g.id === item.goalChange!.goalId);

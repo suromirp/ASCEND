@@ -12,6 +12,7 @@ import type { Ambition } from './ambitionLevels';
 import type { DurationScope } from './substitutions';
 import { effectiveAmbition } from './ambition';
 import { recoveryDurationAdjustments } from './illness';
+import { reentryAdjustments } from './reentry';
 import { learnedStrengthDurations } from './durationLearning';
 import { parseKindAmounts } from './kindAmount';
 
@@ -19,13 +20,15 @@ export interface DurationSettings {
   ambition?: Ambition;
   kindAmount?: unknown;
   illnessEpisodes?: IllnessEpisode[];
+  // Een rustiger instap na een pauze, met Akkoord bewaard (engine/reentry.ts).
+  reentryWeeks?: unknown;
   sessionDurationEstimates?: Record<string, number>;
 }
 
 export function durationScopeFor(settings: DurationSettings, logs: SessionLog[], templates: SessionTemplate[], program: Program | null | undefined, today: string): Required<Omit<DurationScope, 'hardSameDay' | 'longRunThenLegs' | 'testRest'>> {
   return {
     ambition: effectiveAmbition(settings.ambition, logs, new Map(templates.map((t) => [t.id, t])), program, today).effective,
-    durationAdjustments: recoveryDurationAdjustments(settings.illnessEpisodes),
+    durationAdjustments: [...recoveryDurationAdjustments(settings.illnessEpisodes), ...reentryAdjustments(settings.reentryWeeks)],
     learnedDurations: learnedStrengthDurations(templates, logs, settings.sessionDurationEstimates),
     kindAmounts: parseKindAmounts(settings.kindAmount).value ?? {},
   };

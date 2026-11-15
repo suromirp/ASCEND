@@ -55,8 +55,10 @@ const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, tran
 const DISC = 36;
 
 function SessionRow({
-  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote,
+  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote, leave,
 }: {
+  // Vakanties en tochten die je meldde: een voorbije training daar is nooit gemist (engine/sessionStatus.ts, 'away').
+  leave?: LeavePeriod[];
   session: PlannedSession;
   template: SessionTemplate;
   date: string;
@@ -82,19 +84,20 @@ function SessionRow({
   // Een gemiste training die je naar later sleepte: "verplaatst van wo 28" op de nieuwe rij.
   catchNote?: string;
 }) {
-  const restMode = useAppData().settings.restDayMode ?? 'rest';
+  const { restDayMode, illnessEpisodes } = useAppData().settings;
+  const restMode = restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
-  const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest);
+  const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest, { leave, illness: illnessEpisodes });
   // Een vaste afspraak van een sport (engine/fixedSports.ts) heeft de lengte die jij koos.
   // Gedaan: de duur van het log (engine/sessionStatus.ts#rowMinutes), niet die van het plan.
   const duration = rowMinutes(log, session.fixed && session.plannedMinutes ? session.plannedMinutes : resolveEffectiveFullDuration(template, session.scheduledDate, program));
-  const dim = status === 'skipped' || status === 'missed';
+  const dim = status === 'skipped' || status === 'missed' || status === 'away';
   const legs = !isRest && isLegHeavyTemplate(template);
   // Na de dag en de duur hoogstens één ding (engine/weekRow.ts#rowExtra). "aangepast" staat op precies de rijen
   // met een regel in Aangepast door ASCEND, ook als hij gedaan is (engine/changeLog.ts#weekAdjustments).
   // Een rustdag houdt "bewust herstel"; alleen een punt uit Let op en "aangepast" komen erbij.
   const extra = isRest ? rowExtra({ concern, adjusted }) : rowExtra({
-    concern, missed: status === 'missed' && !!handle, catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
+    concern, missed: status === 'missed' && !!handle, lapsed: status === 'away', catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
   });
   const note = extra && [extra.text, extra.also].filter(Boolean).join(', ');
   // Het streepje met de kleur van de zone alleen bij een training te voet of op de fiets, niet bij kracht.
@@ -340,7 +343,9 @@ export function WeekPlanner({
     const eligibility = dragEnabled && weekDrag && !onTrek ? dragEligibility(s, template, { logged: loggedIds.has(s.id), today }) : undefined;
     // Een gemiste training heeft ook een greep, als er in deze week nog een dag is om naartoe te slepen
     // (vandaag of later): loslaten haalt hem in (engine/catchUp.ts). Een andere week gaat via het blad.
-    const catchable = eligibility && !eligibility.ok && eligibility.reason === 'history' && days.some((d) => d >= today)
+    // Vervallen (een gemelde vakantie of ziekte) haal je niet in: geen greep.
+    const lapsedDay = deriveSessionStatus(s, logs, false, { leave, illness: settings.illnessEpisodes }).status === 'away';
+    const catchable = eligibility && !eligibility.ok && eligibility.reason === 'history' && !lapsedDay && days.some((d) => d >= today)
       && catchUpEligibility(s, template, { logged: loggedIds.has(s.id), today, caughtUp: caughtUp.has(s.id) }).ok;
     const ingehaald = caughtUp.get(s.id);
     const catchNote = catchUpNoteFor(s) ?? (ingehaald && s.status === 'skipped' ? caughtUpNoteFor(ingehaald) : undefined);
@@ -362,6 +367,7 @@ export function WeekPlanner({
         pairNote={pairNotes?.get(s.id)}
         handle={eligibility?.ok ? weekDrag!.handleFor(s, eligibility.askAlways) : catchable ? weekDrag!.handleFor(s, false) : undefined}
         catchNote={catchNote}
+        leave={leave}
         placeholder={pickedUp === s.id}
         ghost={extra.ghost}
       />

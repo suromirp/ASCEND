@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import type { SessionVariant } from '../../models/training';
-import { clearOpenRequest, readSession } from '../../utils/forgeSessionStore';
+import { clearOpenRequest, openRequestFinishes, readSession } from '../../utils/forgeSessionStore';
 import { ForgeWorkout } from './ForgeWorkout';
 
 // Opent het volle scherm van Forge op de lopende sessie, vanaf de pil of vanaf "Naar de training".
@@ -10,6 +10,8 @@ import { ForgeWorkout } from './ForgeWorkout';
 export default function ForgeSessionHost() {
   const { templates, program, loading } = useAppData();
   const [pointer] = useState(() => readSession()?.pointer);
+  // Afronden vanaf het blad van een training die bleef liggen: Forge opent meteen op Training afronden.
+  const [finish] = useState(openRequestFinishes);
   const template = pointer ? templates.find((t) => t.id === pointer.templateId) : undefined;
   useEffect(() => {
     // Geen training meer om te openen: het verzoek vervalt, maar niet zolang de gegevens nog laden.
@@ -24,6 +26,7 @@ export default function ForgeSessionHost() {
       scheduledDate={pointer.scheduledDate}
       program={program}
       initialVariant={(pointer.variant as SessionVariant | undefined) ?? 'full'}
+      startAtForm={finish}
       onClose={clearOpenRequest}
     />
   );

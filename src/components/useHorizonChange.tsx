@@ -45,6 +45,8 @@ export interface HorizonProposeOptions {
   alwaysAsk?: boolean;
   // The heading above the notes of the proposal, when they are not about what stays.
   notesTitle?: string;
+  // The heading above the lines with another length (default: the next two weeks).
+  extraTitle?: string;
 }
 
 export function useHorizonChange(): {
@@ -132,6 +134,7 @@ export function useHorizonChange(): {
       notes={pending.plan.notes}
       notesTitle={pending.options.notesTitle}
       extraLines={pending.plan.lengths}
+      extraTitle={pending.options.extraTitle}
       emptyText="Je planning verandert hier niet door."
       alternative={pending.both ? { label: 'Toch allebei', onClick: () => setPending({ plan: { ...pending.both!, notes: [BOTH_NOTE, ...pending.both!.notes] }, options: pending.options }) } : undefined}
       // Two weeks from the first change, not from today: a change far ahead still shows as real rows.

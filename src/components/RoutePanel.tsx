@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
 import type { RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { targetText } from '../engine/routeTarget';
-import { MIN_ASCENT_TARGET_M, failureLine, proposalFacts, proposalNotes, proposalTitle, type PlanOutcome } from '../engine/routePlanner';
+import { MIN_ASCENT_TARGET_M, climbStretch, failureLine, proposalFacts, proposalNotes, proposalTitle, type PlanOutcome } from '../engine/routePlanner';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import { SEND_LABEL, type RouteSendOutcome } from '../engine/routeSend';
 import { RouteSearching } from './RouteSearching';
@@ -43,7 +43,8 @@ const STYLE_LINE: Record<RouteStyle, string> = {
 // De hoofdknop voor de gekozen lus, direct onder de rijen. Titel en feiten staan alleen in de rij
 // (Pathfinder: dezelfde zin nooit twee keer). Onder de knop alleen de uitkomst van een tik; wat je in
 // Garmin Connect doet staat achter de i. Elke lus heeft zijn eigen uitkomst (`key` op de soort).
-export function ChosenLoop({ style, proposal, date, target, sender }: { style: RouteStyle; proposal: RouteProposal; date: string; target: RouteTarget; sender: FileSender | null }) {
+// `climbMarked`: de helling staat op de kaart gemarkeerd (geen stuk gekozen in Per stuk).
+export function ChosenLoop({ style, proposal, date, target, sender, climbMarked = true }: { style: RouteStyle; proposal: RouteProposal; date: string; target: RouteTarget; sender: FileSender | null; climbMarked?: boolean }) {
   // De laatste uitkomst van een van de twee knoppen; 'busy' zolang er een loopt (beide hebben een grens in tijd).
   const [done, setDone] = useState<{ send: RouteSendOutcome } | { file: RouteFileResult } | 'busy' | undefined>();
   const mounted = useRef(true);
@@ -69,7 +70,7 @@ export function ChosenLoop({ style, proposal, date, target, sender }: { style: R
 
   // Eén regel onder de knoppen: leeg tot je tikt, dan de uitkomst.
   const line = routeOutcomeLine(!!sender, done === 'busy' ? undefined : done);
-  const { info } = loopLines(proposal, target, proposalNotes(proposal, target));
+  const { info } = loopLines(proposal, target, proposalNotes(proposal, target, climbMarked));
 
   return (
     <div className="flex flex-col gap-1">
@@ -231,7 +232,8 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
   const pieceSig = pickedOutcome?.ok ? `${picked}|${model.pieces.length}|${pickedOutcome.proposal.points.length}|${pickedOutcome.proposal.points[0]?.lat}|${pickedOutcome.proposal.points[0]?.lon}` : '';
   const [pieceAt, setPieceAt] = useState<{ sig: string; index: number } | undefined>();
   const selected = pieceAt?.sig === pieceSig ? pieceAt.index : undefined;
-  const piecePoints = selected === undefined ? undefined : model.pieces[selected]?.points;
+  // Zonder gekozen stuk: bij herhalingen de helling zelf, gemarkeerd (de regel staat bij de lus).
+  const piecePoints = selected === undefined ? (pickedOutcome?.ok ? climbStretch(pickedOutcome.proposal) : undefined) : model.pieces[selected]?.points;
 
   if (stage === 'no-place' || lat === undefined || lon === undefined) {
     return <p className="text-sm leading-snug" style={dim}>{NO_PLACE_LINE}</p>;
@@ -258,7 +260,7 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
           </div>
         ) : null;
       case 'chosen':
-        return picked && pickedOutcome?.ok ? <ChosenLoop key={`chosen-${picked}`} style={picked} proposal={pickedOutcome.proposal} date={date} target={target} sender={sender} /> : null;
+        return picked && pickedOutcome?.ok ? <ChosenLoop key={`chosen-${picked}`} style={picked} proposal={pickedOutcome.proposal} date={date} target={target} sender={sender} climbMarked={selected === undefined} /> : null;
       case 'adjust':
         return picked && pickedOutcome?.ok ? <RouteAdjust key={p} model={model} selected={selected} onSelect={(i) => setPieceAt(i === undefined ? undefined : { sig: pieceSig, index: i })} motion={motion} /> : null;
       case 'loops':

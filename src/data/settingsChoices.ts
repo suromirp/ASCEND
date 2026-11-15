@@ -69,6 +69,18 @@ export const CHOICES = {
       { value: 'off', label: 'Niets doen', note: 'Hij blijft als gemist in je week staan' },
     ],
   }),
+  rustigerInstap: def({
+    group: 'Lichaam',
+    title: 'Rustiger instap na een pauze',
+    line: 'Na ziekte, een vakantie of twee weken weinig training.',
+    advice: 'three_quarters' as 'three_quarters' | 'half' | 'off',
+    help: 'rustigerInstap',
+    options: [
+      { value: 'three_quarters', label: 'Driekwart', note: 'Een voorstel: zeven dagen je trainingen driekwart van de gewone tijd', short: 'Driekwart' },
+      { value: 'half', label: 'De helft', note: 'Een voorstel: zeven dagen de helft van de gewone tijd', short: 'De helft' },
+      { value: 'off', label: 'Niet voorstellen', note: 'Na een pauze gaat je plan gewoon verder', short: 'Uit' },
+    ],
+  }),
   nietDoorgegaanDagen: def({
     group: 'Planning',
     title: 'Na hoeveel dagen',
@@ -634,6 +646,19 @@ export const CHOICES = {
       { value: 45, label: 'Na 45 minuten', note: 'Het advies', short: '45 minuten' },
       { value: 60, label: 'Na 60 minuten', short: '60 minuten' },
       { value: 90, label: 'Na 90 minuten', short: '90 minuten' },
+    ],
+  }),
+  forgeConcept: def({
+    group: 'Forge',
+    title: 'Training bewaren als concept na',
+    line: 'Hoe lang een training zonder handeling mag liggen voordat Forge hem als concept bewaart en vraagt wat je wilt.',
+    advice: 12 as 0 | 4 | 8 | 12,
+    help: 'forgeConcept',
+    options: [
+      { value: 0, label: 'Na middernacht', short: 'Na middernacht' },
+      { value: 4, label: 'Na 4 uur', short: '4 uur' },
+      { value: 8, label: 'Na 8 uur', short: '8 uur' },
+      { value: 12, label: 'Na 12 uur', note: 'Het advies', short: '12 uur' },
     ],
   }),
   plaatjes: def({

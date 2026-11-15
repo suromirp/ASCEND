@@ -484,6 +484,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'Forge vraagt niets en telt alles mee. Pauzeren kan altijd zelf in het menu van de training.' },
     ],
   },
+  forgeConcept: {
+    title: 'Training bewaren als concept na',
+    lead: 'Een training die je begon en vergat af te ronden, loopt niet dagen door. Na middernacht, of na deze grens zonder handeling, staat hij als concept klaar. Er gaat niets weg en je planning verandert niet.',
+    points: [
+      { head: 'Afronden', text: 'met de sets die je deed en de tijd tot je laatste handeling. Is het minder dan de helft, dan heet het eerlijk een korte training.' },
+      { head: 'Verder', text: 'de stille tijd wordt een pauze en je gaat door waar je was.' },
+      { head: 'Verwijderen', text: 'pas na een bevestiging. Je logboek verandert niet.' },
+      { head: 'Na 12 uur', text: 'het advies. Middernacht geldt altijd, met een uur stilte, zodat een late training gewoon doorloopt.' },
+    ],
+  },
   forgeVegen: {
     title: 'Vegen om te verwijderen',
     lead: 'In een training haal je een set weg door de rij naar links te vegen. Uit, dan beweegt de rij niet meer mee met je vinger.',
@@ -821,6 +831,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Hoe zeker', text: 'een vuistregel, geen meting. Het bewijs is matig.' },
     ],
   },
+  horlogeSoort: {
+    title: 'Soort van een loop toetsen',
+    lead: 'Je horloge noemt een activiteit een loop als je hem als loop startte. Tempo en hartslag tellen mee voordat hij wordt opgeslagen.',
+    points: [
+      { head: 'Wandeltempo', text: 'een loop van 10 min per km of trager wordt een wandeling. Bij Andere training sla je hem toch als loop op.' },
+      { head: 'Hard', text: 'een losse loop met een gemiddelde hartslag ruim boven zone 2 wordt een harde training (meestal de tempoloop), geen rustige duurloop. Zonder hartslag telt je tempo, zonder beide volgt geen oordeel.' },
+      { head: 'Altijd', text: 'te kort, te hard of in wandeltempo vinkt nooit vanzelf af en heet nooit "zoals gepland", ook als dit uit staat.' },
+    ],
+  },
   horlogeStil: {
     title: 'Melden als je horloge stilvalt',
     lead: 'Geeft intervals.icu niets meer door, dan zie je geen foutmelding: het ophalen lukt, er komt alleen niets mee. ASCEND meldt dat.',
@@ -873,6 +892,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Avontuurlijk', text: 'één lange lus langs verschillende hellingen en onverharde paden, liefst zonder stukken twee keer.' },
       { head: 'Naar je horloge', text: 'met Naar Garmin Connect kies je de app van je horloge en sla je de lus op als koers; anders download je het GPX-bestand.' },
       { head: 'Wat de deur uit gaat', text: `standaard je plek van nu, precies, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS), en op ongeveer 100 m naar OpenStreetMap voor heuvels en paden; de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Bij Startpunt van je lus kies je ook Thuis, of Ongeveer: dan gaat alleen je plek, afgerond op ongeveer een kilometer, de deur uit. Geen naam, geen adres. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. ${PHOTO_SOURCES_LINE} De route wordt niet bewaard.` },
+    ],
+  },
+  routeGroteWegen: {
+    title: 'Grote wegen mijden',
+    lead: 'Een voorgestelde lus mijdt grote wegen en knooppunten van snelwegen. Het advies is aan.',
+    points: [
+      { head: 'Aan', text: 'BRouter maakt een weg duurder naarmate hij dichter bij verkeerslawaai ligt; Valhalla kiest liever een voetpad dan de weg ernaast. Een lus kan daardoor iets langer omlopen.' },
+      { head: 'Uit', text: 'de routeplanner kiest de kortste goede weg, ook langs een drukke weg.' },
+      { head: 'Altijd', text: 'loopt er 300 m of meer langs een grote weg, dan zegt een regel bij de lus dat.' },
     ],
   },
   routeKaart: {
@@ -1115,9 +1143,18 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Training die niet doorging',
     lead: 'Wat ASCEND doet met een training die een paar dagen voorbij is zonder log. ASCEND verzint nooit een log.',
     points: [
-      { head: 'Vragen', text: 'één vraag op Vandaag, de oudste eerst. Niet gedaan zet hem op overgeslagen, Toch gedaan opent het gewone invullen, Niet nu laat hem rusten. Ouder dan twee weken vraagt ASCEND niet meer.' },
+      { head: 'Vragen', text: 'één vraag op Vandaag, de oudste eerst. Niet gedaan zet hem op overgeslagen, Toch gedaan opent het gewone invullen, Niet nu laat hem rusten. Ouder dan een week vraagt ASCEND niet meer, en op een racedag niet. Wat op een vakantie of tocht stond is nooit gemist; wat ervoor nog open stond vervalt bij een ziekmelding of vakantie, met één regel op Vandaag.' },
       { head: 'Zelf overslaan', text: 'ASCEND zet hem op overgeslagen en meldt het, met Ongedaan maken. Een test, een wedstrijd en wat je zelf vastzette krijgen toch de vraag.' },
       { head: 'Niets doen', text: 'hij blijft als gemist in je week staan.' },
+    ],
+  },
+  rustigerInstap: {
+    title: 'Rustiger instap na een pauze',
+    lead: 'Na ziekte en een vakantie, of na twee weken met weinig training, stelt ASCEND op de dag dat je terug bent een rustiger week voor.',
+    points: [
+      { head: 'Wanneer', text: 'op de eerste vier dagen terug, als je in de twee weken ervoor minder dan 40 procent van twee gewone weken deed. Niet terwijl je ziek bent of nog opbouwt na ziekte, niet met een test of wedstrijd in die week, en niet in de eerste twee weken van je plan.' },
+      { head: 'Wat er verandert', text: 'zeven dagen lang duren je trainingen driekwart (het advies) of de helft van de gewone tijd. Welke trainingen er staan, je fase en je doeldatum blijven zoals ze zijn.' },
+      { head: 'Alleen met Akkoord', text: 'eerst een voorstel met de trainingen die korter worden; pas na Akkoord verandert er iets, met Ongedaan maken. Uit: na een pauze gaat je plan gewoon verder.' },
     ],
   },
   weekVol: {

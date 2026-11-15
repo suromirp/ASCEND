@@ -15,6 +15,7 @@ import type { PlanChangeProposal, RecentPlanChange } from '../models/planChange'
 import { activeStrengthStrategy, strengthTrackedExternally } from '../engine/strengthProgram';
 import { todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
+import { bumpPlanRevision } from './planningSync';
 import { isMarathonGoal } from '../engine/mainGoal';
 import type { UndoRestore } from './appDataTypes';
 import type { Dispatch, SetStateAction } from 'react';
@@ -160,5 +161,27 @@ export function useGoalActions(deps: {
     await refresh();
   }, [refresh, setRecentChange]);
 
-  return { clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, strengthExternal, setStrengthExternal, updateSettings, showStatusOnlyChange };
+  // Een rustiger instap terugzetten (engine/reentry.ts), vanuit Aangepast door ASCEND in Week. Zoals Akkoord: de
+  // planning en de duurregisters lezen het opnieuw (refresh), en de uitkomst staat in de meldingsbalk, die blijft
+  // staan als het blad dichtgaat. Ongedaan maken in die melding zet de instap weer terug zoals hij was.
+  const undoReentry = useCallback(async (from: string): Promise<void> => {
+    const before = (await SettingsRepo.get()).reentryWeeks;
+    const next = await SettingsRepo.set({ reentryWeeks: (before ?? []).filter((w) => w.from !== from) });
+    setSettings(next);
+    bumpPlanRevision();
+    await refresh();
+    setRecentChange({
+      id: makeId('reentry-undo'),
+      trigger: 'reentry_planned',
+      title: 'Rustiger instap teruggezet',
+      lines: ['Je trainingen hebben weer hun gewone duur.'],
+      why: 'Je zette de rustiger instap terug in Aangepast door ASCEND.',
+      before: [],
+      addedIds: [],
+      settingsBefore: { reentryWeeks: before },
+      createdAt: new Date().toISOString(),
+    });
+  }, [refresh, setRecentChange, setSettings]);
+
+  return { clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, strengthExternal, setStrengthExternal, updateSettings, showStatusOnlyChange, undoReentry };
 }

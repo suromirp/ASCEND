@@ -5,12 +5,12 @@ import { progress, type WorkoutExercise } from '../../engine/forgeWorkout';
 import { isLegHeavyTemplate } from '../../engine/scheduler';
 import type { SessionTemplate } from '../../models/training';
 import type { PainReport } from '../../models/checkIn';
-import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../../utils/dates';
+import { addDays, formatDateNL, toISODate, todayISO, weekdayShortNL } from '../../utils/dates';
 import { TimeoutError, withTimeout } from '../../utils/withTimeout';
 import { NumberField } from '../NumberField';
 import { PainReportFields } from '../PainReportFields';
 import { PrimaryButton, SecondaryButton } from '../ui';
-import { finishDuration } from '../../engine/forgeSession';
+import { finishDayDefault, finishDuration } from '../../engine/forgeSession';
 import { durationTooShort, entryMinutes, SHORT_DURATION_TEXT } from '../../engine/inputLimits';
 import { ForgeSheet } from './parts';
 import { forgeFinishNote, type ForgeFinishNote } from './forgeFinishLog';
@@ -64,7 +64,11 @@ export function FinishSheet({
   const [pain, setPain] = useState<PainReport[]>([]);
   const [notes, setNotes] = useState('');
   const plannedInPast = !!plannedSessionId && !!scheduledDate && scheduledDate < today;
-  const [doneOn, setDoneOn] = useState(plannedInPast ? scheduledDate! : today);
+  // Een concept van gisteren afronden: de dag van je laatst afgevinkte set, ook bij een losse training.
+  const [doneOn, setDoneOn] = useState(() => {
+    const ticks = workout.flatMap((e) => e.rows.map((r) => r.doneAt)).filter((t): t is number => typeof t === 'number' && Number.isFinite(t));
+    return finishDayDefault({ today, plannedSessionId, scheduledDate, ...(ticks.length > 0 ? { lastTickAt: Math.max(...ticks) } : {}), dayOf: (ms) => toISODate(new Date(ms)) });
+  });
   const [saving, setSaving] = useState(false);
   const [outcome, setOutcome] = useState<ForgeFinishNote | null>(null);
   const busy = useRef(false);

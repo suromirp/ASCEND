@@ -162,11 +162,13 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
       {/* Datavelden voor je horloge: de pagina zelf staat bij een training (Je horloge), bij Je horloge instellen
           en sinds 14 november bij Gidsen (Datavelden bekijken). */}
       <SettingsSection
-        advancedTitles="Datavelden voor je horloge, Model"
+        advancedTitles="Datavelden voor je horloge, Model, Soort van een loop toetsen"
         advanced={
           <>
             <SummaryRow id="datavelden" title="Datavelden voor je horloge" facts={facts} info="datavelden" onChange={(on) => void updateSettings({ watchFieldsShown: on })} />
             <SummaryRow id="datavelden-model" title="Model" facts={facts} onClick={() => setSheet('datavelden-model')} />
+            {/* Een loop in wandeltempo wordt een wandeling, een harde losse loop een tempoloop (engine/activityFit.ts). */}
+            <SummaryRow id="horloge-soort" title="Soort van een loop toetsen" facts={facts} info="horlogeSoort" onChange={(on) => void updateSettings({ watchKindCheck: on })} />
           </>
         }
       >

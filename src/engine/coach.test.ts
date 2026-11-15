@@ -69,7 +69,9 @@ describe('coachReaction', () => {
     expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: Math.round(planned * 0.6) }), t('tpl_easy_run'), program)).not.toMatch(/Korter dan gepland|korte training/);
     // Onder de helft: een korte training (profielen 14 november, punt C).
     expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: Math.floor(planned * 0.5) - 1 }), t('tpl_easy_run'), program)).toBe('Een korte training. Dat telt ook.');
-    expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: 30, rpe: 3 }), t('tpl_easy_run'), program)).toBe('Gedaan zoals gepland. Zo bouw je op.');
+    expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: 30, rpe: 3, plannedSessionId: 'p' }), t('tpl_easy_run'), program)).toBe('Gedaan zoals gepland. Zo bouw je op.');
+    // Niet gepland: een extra training, nooit "zoals gepland" (profiel horloge, punt 2).
+    expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: 30, rpe: 3 }), t('tpl_easy_run'), program)).toBe('Opgeslagen als extra training.');
   });
 });
 

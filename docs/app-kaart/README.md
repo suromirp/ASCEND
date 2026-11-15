@@ -15,6 +15,7 @@ Schermen op een eigen stand, met de stand in de naam:
 - heuvel (de Lange duurloop van die week is Heuvelintervallen): `briefing-heuvel`, `briefing-loopband-helling` en `briefing-stairmaster`, de Briefing per manier (besluit `2026-11-12-briefing-per-manier.md`). Op de gewone stand ook `briefing-loopband`, de Lange duurloop op de loopband. Twee invarianten: het totaal bovenaan is het einde van de tijdlijn, en geen zin staat twee keer in één regel.
 - zonder-doel (geen doel, de richting Fit blijven): `vandaag-zonder-doel`, `week-zonder-doel`, `ascend-zonder-doel`, `stand-zonder-doel` en `stand-ritme-zonder-doel`.
 - ziek (verkouden boven de nek, sinds vandaag): `vandaag-ziek`, `week-ziek` en `stand-ziek`.
+- herstel (alleen een losse Herstelwandeling van 56 minuten op 1 november, klok maandag 2 november): `logboek-herstel`. Invariant: de logboekkop zegt nooit niets als de lijst eronder een log heeft.
 - vaardigheid (één vaardigheid, Pull-Up, met twee stappen gehaald): `ascend-vaardigheid`.
 - aangepast (twee nagemaakte, aangenomen voorstellen in deze week: de Lange duurloop van zaterdag naar zondag en Benen A lichter): `week-aangepast` (de rij Aangepast door ASCEND onder de dagen) en `week-aangepast-blad` (het blad erachter), met een invariant: het getal op de rij is het aantal regels in het blad en het aantal dagrijen met "aangepast".
 - voorstel (naast de wedstrijd een verzonnen huttentocht, het programma gestart op 28 september): `weekterugblik-voorstel`, de weergave Voorstel in de weekterugblik met het voorstel dat de engine zelf maakt.

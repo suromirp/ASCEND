@@ -51,7 +51,7 @@ Doeltijd 10 km: 45:00 vraagt meer dan je test laat zien
 [knop: Bekijk]
 
 --- kaart 7 ---
-Nog open
+Gemist
 Niet gedaan?
 Benen A (zwaar) van woensdag 28 oktober
 Je hebt hier nog niets voor gelogd. Ging hij niet door, dan zet ASCEND hem op overgeslagen; verder verandert er niets.

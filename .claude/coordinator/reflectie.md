@@ -9,6 +9,12 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 00:45 Portugal (15 november)
+- Goed: Afbreker op claude/nacht na alle poorten; horloge, routes en logboek in één proefmerge (scheelt drie keer tien minuten controles).
+- Fout van mij: aangenomen dat bouwers zich niet kunnen melden; twee deden het wel. Vangnet van een half uur blijft.
+- Gevonden: test met vaste datum viel na middernacht om (drie bouwers repareerden hem elk apart: conflict); voortaan zo'n fix meteen op claude/nacht en de bouwers melden.
+- Gevonden: tekstkaart ziet instellingenteksten niet; "ASCEND" als onderwerp glipte twee keer door. Stap 0 lost dat op.
+
 ## 22:40 Portugal (14 november)
 
 - Check-in: live vanavond: oude sportlogs, geen stille Thuis; vier bouwers (planner, horloge, routevorm, afbreker); nachtbranch claude/nacht, één livegang om 07:25.

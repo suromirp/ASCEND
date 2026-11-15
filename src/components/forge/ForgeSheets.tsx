@@ -70,7 +70,7 @@ interface ForgeSheetsProps {
   paused: boolean;
   togglePause: () => void;
   awayMs: number | undefined;
-  setAwayMs: (ms: number | undefined) => void;
+  dismissBreak: () => void;
   answerBreak: (counts: boolean) => void;
   later: (fn: () => void, ms: number) => void;
   dropDraft: () => void;
@@ -205,7 +205,7 @@ export function ForgeSheets(p: ForgeSheetsProps) {
 
       {sh.confirmDiscard && <DiscardSheet onDiscard={() => { p.dropDraft(); sh.setConfirmDiscard(false); onClose(); }} onClose={() => sh.setConfirmDiscard(false)} />}
 
-      {p.awayMs !== undefined && !readOnly && <AwaySheet awayMs={p.awayMs} onAnswer={p.answerBreak} onClose={() => p.setAwayMs(undefined)} />}
+      {p.awayMs !== undefined && !readOnly && <AwaySheet awayMs={p.awayMs} onAnswer={p.answerBreak} onClose={p.dismissBreak} />}
 
       {sh.showGuide && guide && (
         <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={date} dayLabel={guideDayLabel(template, date)} onClose={() => sh.setShowGuide(false)} />

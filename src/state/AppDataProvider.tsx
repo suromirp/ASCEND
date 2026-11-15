@@ -293,7 +293,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, []);
   const { linkMissedLog, restoreFromWatch, trimWatchActivity, undoTrimWatchActivity, restoreSourceUpdate, takeOverSourceNumbers, takeOverFromMacroFactor, restoreFromMacroFactor, setLogWorkout } = useWatchAndSourceActions({ setRecentChange, refresh });
   const { moveSession, suggestMoves, dragContextFor, dragVerdicts, applyProposal, proposeSkip, proposeBackOnPlan } = useMoveActions({ program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalEngineConfig, settings, templates, setRecentChange, refresh, sessionsForWeek, planChangeLog });
-  const { clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, strengthExternal, setStrengthExternal, updateSettings, showStatusOnlyChange } = useGoalActions({ trainingGoals, goalMilestones, settings, setSettings, setCelebration, setRecentChange, strengthProgramStrategies, setStrengthProgramStrategies, refresh });
+  const { clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, strengthExternal, setStrengthExternal, updateSettings, showStatusOnlyChange, undoReentry } = useGoalActions({ trainingGoals, goalMilestones, settings, setSettings, setCelebration, setRecentChange, strengthProgramStrategies, setStrengthProgramStrategies, refresh });
   const { saveInfluence, saveSweat, saveSweatPre, removeInfluence, clearInfluences, planIllness, applyIllness } = useNotesAndIllness({ plannedSessions, sessionLogs, setSettings, settings, templates, commitPlanChange, showStatusOnlyChange });
   const { updateGoalEngineConfig, planHorizonChangeImpl, applyHorizonPlanImpl, planWeekLoadChange, planGoalChange, planGoalRole, planGoalPriority, setGoalOrder, planMarathonGoal, activateGoal } = useHorizonActions({ setGoalEngineConfig, setRecentChange, setStorageNotice, refresh });
   const { toggleStretchRoutine, addInjury, resolveInjury, deleteInjury, addManualCapabilityEvidence, deleteCapabilityEvidence, proposeNoTimeTodayAction, applyNoTimeToday, planPreviewPass, leavePeriods, planLeave, applyLeave, saveLeaveNote, planRestDay, applyRestDay } = useBodyAndLeave({ program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, setSettings, templates, stretchCompletion, setStretchCompletion, setRecentChange, refresh, commitPlanChangeOutcome, commitPlanChange, sessionsForWeek, showStatusOnlyChange });
@@ -361,6 +361,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     unarchiveGoal,
     activateGoal,
     updateSettings,
+    undoReentry,
     updateGoalEngineConfig,
     planMarathonGoal,
     toggleStretchRoutine,
