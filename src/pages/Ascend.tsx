@@ -8,6 +8,7 @@ import { SkyBand } from '../components/SkyBand';
 import { TextButton } from '../components/TextButton';
 import { ImpactSheet } from '../components/ImpactSheet';
 import { TrekGoalsCard } from '../components/TrekGoals';
+import { strengthBlockRowLine } from '../engine/strengthTraining';
 import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { Sheet } from '../components/settings/Sheet';
 import { usePageState } from '../components/usePageState';
@@ -78,7 +79,9 @@ function AscentTabPlusButton({ onClick }: { onClick: () => void }) {
 }
 
 export function AscendPage() {
-  const { trainingGoals, goalMilestones, unarchiveGoal, planGoalChange, planGoalPriority, planHorizonChange, setGoalOrder, program, plannedSessions, settings, sessionLogs, templates } = useAppData();
+  const { trainingGoals, goalMilestones, unarchiveGoal, planGoalChange, planGoalPriority, planHorizonChange, setGoalOrder, program, plannedSessions, settings, sessionLogs, templates, strengthProgramStrategies, strengthExternal } = useAppData();
+  // De rij Krachtblok volgt kracht aan of uit (engine/strengthTraining.ts#strengthBlockRowLine).
+  const strengthLine = strengthBlockRowLine(settings, strengthProgramStrategies, strengthExternal);
   const navigate = useNavigate();
   const horizon = useHorizonChange();
   const direction = useDirectionChange();
@@ -287,7 +290,7 @@ export function AscendPage() {
       {(!emptyList || week) && <SecondaryButton onClick={() => startAdd()}>Doel toevoegen</SecondaryButton>}
 
       <Card className="flex flex-col p-0! overflow-hidden">
-        {([['treks', 'Tochten', 'Een tocht erbij? Er komen vrije dagen omheen.'], ['strength', 'Krachtblok', 'Hoe kracht in je week past']] as const).map(([id, title, line]) => (
+        {([['treks', 'Tochten', 'Een tocht erbij? Er komen vrije dagen omheen.'] as const, ...(strengthLine ? [['strength', 'Krachtblok', strengthLine] as const] : [])]).map(([id, title, line]) => (
           <button key={id} type="button" onClick={() => setExtra(id)} className="flex min-h-[56px] items-center justify-between gap-3 border-b px-4 py-2 text-left last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
             <span className="min-w-0">
               <span className="block text-base" style={{ color: 'var(--color-ink)' }}>{title}</span>

@@ -64,7 +64,7 @@ import { zoneBpm } from './heartRateZones';
 import { bootGoalKm } from './bootBreakIn';
 import { HR_FALLBACK_TEXT, resolveCalmRun, resolveWatchHr, resolveWatchHrMode, type IntervalsHrBasis } from './watchHeartRate';
 import { adviceDifferences } from './settingsDiff';
-import { settingBudget } from './weekBudget';
+import { budgetText, settingBudget } from './weekBudget';
 import { parseBeginnerStart } from './beginnerStart';
 import { resolveWaveSettings } from './waves';
 import { DIRECTIONS } from '../data/directions';
@@ -798,7 +798,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.askSweat !== false };
     case 'bundel-zonder-doel': {
       const w = settingBudget(s);
-      return { value: w.chosen ? DIRECTIONS[w.id].label : 'Nog geen richting', dim: !w.chosen, sub: w.id === 'improve' ? `Eigen weken, ${w.budget.strength}\u00d7 kracht` : `${w.budget.minutes} min, ${w.budget.strength}\u00d7 kracht` };
+      // Met krachttraining uit telt het budget geen kracht, net als de rij Weekbudget hieronder.
+      const on = strengthTrainingOn(s);
+      const sub = w.id === 'improve' ? (on ? `Eigen weken, ${w.budget.strength}\u00d7 kracht` : 'Eigen weken') : budgetText(w.budget, on);
+      return { value: w.chosen ? DIRECTIONS[w.id].label : 'Nog geen richting', dim: !w.chosen, sub };
     }
     case 'golven': {
       const w = resolveWaveSettings(s.waves);

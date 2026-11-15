@@ -3,6 +3,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { DIRECTIONS, GUIDELINE_MINUTES, GUIDELINE_STRENGTH, MINUTES_CEILING } from '../../../data/directions';
 import { belowGuideline, budgetFor, resolveWeekBudget, settingBudget, type WeekBudgetChoice } from '../../../engine/weekBudget';
 import { PrimaryButton, Stepper } from '../../ui';
+import { belowGuidelineLine, weekBudgetAdviceLine, weekBudgetFollowNote } from '../../../engine/weekBudgetText';
 import { strengthTrainingOn } from '../../../engine/strengthTraining';
 import { TextButton } from '../../TextButton';
 import { SettingsList, SettingsRow } from '../SettingsList';
@@ -87,15 +88,13 @@ export function WeekBudgetSheet({ onClose, onPropose }: { onClose: () => void; o
         </SettingsList>
       </div>
       <p className="st-hint" style={{ marginLeft: 0 }}>
-        {chosen ? `Advies bij ${label}: ${advice.minutes} min, ${advice.strength} keer kracht.` : `Advies: ${advice.minutes} min, ${advice.strength} keer kracht. De richtlijn is ${GUIDELINE_MINUTES} minuten en ${GUIDELINE_STRENGTH} keer kracht.`}
+        {weekBudgetAdviceLine({ chosen, label, minutes: advice.minutes, strength: advice.strength, guidelineMinutes: GUIDELINE_MINUTES, guidelineStrength: GUIDELINE_STRENGTH }, strengthOn)}
       </p>
-      {belowGuideline(budget) && (
-        <p className="st-hint" style={{ marginLeft: 0 }}>Dit is onder de richtlijn van {GUIDELINE_MINUTES} minuten en {GUIDELINE_STRENGTH} keer kracht. Dat mag een keuze zijn.</p>
+      {belowGuideline(budget, strengthOn) && (
+        <p className="st-hint" style={{ marginLeft: 0 }}>{belowGuidelineLine(strengthOn)}</p>
       )}
       <p className="st-hint" style={{ marginLeft: 0 }}>
-        {follows
-          ? 'Je plan volgt je richting, dus het budget bepaalt hoe lang je duurtrainingen zijn. Het aantal krachttrainingen dat in je week staat verandert hier niet door. De teller op de kaart volgt wel je keuze.'
-          : 'Het budget telt wat je deed. Zolang je geen richting koos, verandert je planning er niet van.'}
+        {weekBudgetFollowNote(follows, strengthOn)}
       </p>
       {changed && <TextButton onClick={() => save({ doubleHard: true })}>Terug naar het advies</TextButton>}
       {follows && (

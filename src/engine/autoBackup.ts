@@ -143,12 +143,18 @@ export class NameTakenError extends Error {
 }
 
 // Een mislukte back-up met de reden; de lagen in integrations/ en storage/ gooien hem.
+// `step` zegt bij 'write' welke stap het was (het tijdelijke bestand, de naam geven, nakijken, of geen
+// vrije naam meer). Alleen voor de zin op het scherm; hij wordt nergens bewaard.
+export type BackupWriteStep = 'temp' | 'rename' | 'verify' | 'names';
+
 export class AutoBackupError extends Error {
   readonly reason: AutoBackupFailureReason;
-  constructor(reason: AutoBackupFailureReason) {
-    super(`Automatische back-up mislukt: ${reason}`);
+  readonly step?: BackupWriteStep;
+  constructor(reason: AutoBackupFailureReason, step?: BackupWriteStep) {
+    super(`Automatische back-up mislukt: ${reason}${step ? ` (${step})` : ''}`);
     this.name = 'AutoBackupError';
     this.reason = reason;
+    if (step) this.step = step;
   }
 }
 

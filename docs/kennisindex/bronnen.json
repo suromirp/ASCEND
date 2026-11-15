@@ -3039,6 +3039,13 @@
    "kern": "In schermtekst is ASCEND nooit het onderwerp van een zin.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-15-backup-eerste-keer.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Een back-up in de Android-app is gelukt zodra het bestand heel onder zijn naam staat; een fout bij hernoemen of nakijken geeft nooit een tweede bestand met -2, en de zin noemt de stap die echt misging.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-15-beginner-tien-procent.md": {
    "onderwerpen": [
     "planning"

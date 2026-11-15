@@ -181,7 +181,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   {
     id: 'weekbudget', title: 'Weekbudget', page: 'doel',
     differs: (s) => { const c = resolveWeekBudget(s.weekBudget); return c.minutes !== undefined || c.strength !== undefined || !c.doubleHard; },
-    value: (s) => budgetText(settingBudget(s).budget),
+    value: (s) => budgetText(settingBudget(s).budget, strengthTrainingOn(s)),
     reset: () => ({ weekBudget: undefined }),
   },
   {

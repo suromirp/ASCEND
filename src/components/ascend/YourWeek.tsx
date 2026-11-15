@@ -17,7 +17,7 @@ import { jumpRoute } from '../settings/jump';
 // Een blad sluit eerst (200 ms) voordat de volgende pagina opent, zodat de terugknop twee lagen niet door elkaar haalt.
 const AFTER_SHEET_MS = 280;
 
-// De kaart: de ring met de minuten, de kracht en de plek in de golf. Een tik opent het blad.
+// De kaart: de ring met de minuten, de kracht (als die aan staat) en de plek in de golf. Een tik opent het blad.
 export function YourWeekCard({ week, onOpen }: { week: YourWeek; onOpen: () => void }) {
   return (
     <Card className="p-0!">
@@ -29,7 +29,7 @@ export function YourWeekCard({ week, onOpen }: { week: YourWeek; onOpen: () => v
         <div className="min-w-0">
           <Eyebrow>Je week</Eyebrow>
           <p className="text-base font-semibold tabular-nums" style={{ color: 'var(--color-ink)' }}>{week.minutesLine}</p>
-          <p className="text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{week.strengthLine}</p>
+          {week.strengthLine && <p className="text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{week.strengthLine}</p>}
           {week.waveLine && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{week.waveLine}</p>}
           <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{week.remainingLine}</p>
         </div>
@@ -69,7 +69,7 @@ export function YourWeekSheet({ week, onClose }: { week: YourWeek; onClose: () =
           </Ring>
           <div className="min-w-0">
             <p className="text-base font-semibold tabular-nums" style={{ color: 'var(--color-ink)' }}>{week.minutesLine}</p>
-            <p className="text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{week.strengthLine}</p>
+            {week.strengthLine && <p className="text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{week.strengthLine}</p>}
             <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{week.remainingLine}</p>
           </div>
         </div>
@@ -96,7 +96,7 @@ export function YourWeekSheet({ week, onClose }: { week: YourWeek; onClose: () =
 
         <div>
           <Eyebrow>Wat telt mee</Eyebrow>
-          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>{week.explain} Kracht telt apart, als keer. Een volledige krachttraining is een keer.</p>
+          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>{week.strengthExplain ? `${week.explain} ${week.strengthExplain}` : week.explain}</p>
           {week.belowLine && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{week.belowLine}</p>}
         </div>
 
