@@ -4,7 +4,7 @@
 // import nooit terugdraaien.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SessionLogsRepo, InjuryNotesRepo, PlanChangeProposalsRepo, GoalMilestoneProgressRepo, applyBackupWrites, wipeAllData } from './database';
+import { SessionLogsRepo, InjuryNotesRepo, PlanChangeProposalsRepo, GoalMilestoneProgressRepo, SettingsRepo, applyBackupWrites, wipeAllData } from './database';
 import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { buildImportPreview } from './backupPreview';
 import { createImportPlan, createPreImportSnapshot, applyImportPlan } from './backupApply';
@@ -29,10 +29,10 @@ function backupWith(payload: Record<string, unknown>) {
 
 // `beforeApply` runs between the preview (and its snapshot) and the writing: what the
 // device does while the owner reads the preview.
-async function importMerge(backup: ReturnType<typeof backupWith>, selections: Partial<Record<BackupDataCategory, CategoryAction>> = { training_history: 'merge' }, beforeApply?: () => void) {
+async function importMerge(backup: ReturnType<typeof backupWith>, selections: Partial<Record<BackupDataCategory, CategoryAction>> = { training_history: 'merge' }, beforeApply?: () => void | Promise<void>) {
   const preview = await buildImportPreview(backup, selections, 'keep_current_plan');
   const snapshot = await createPreImportSnapshot();
-  beforeApply?.();
+  await beforeApply?.();
   const plan = createImportPlan(backup, 'custom', selections, 'keep_current_plan', preview.diffByCategory.flatMap((d) => d.conflicts), snapshot.id);
   await applyImportPlan(backup, plan);
 }
@@ -157,6 +157,53 @@ describe('import schrijft alleen nieuwe of gewijzigde rijen', () => {
     const byId = new Map((await GoalMilestoneProgressRepo.getAll()).map((p) => [p.id, p]));
     expect(byId.get('p1')).toEqual(row);
     expect(byId.get('p2')?.milestoneId).toBe('m2');
+  });
+});
+
+describe('wat met het toestel samenvloeit, opnieuw bij het schrijven', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+
+  it('een weging tussen voorbeeld en Akkoord blijft staan bij het terugzetten van instellingen', async () => {
+    await SettingsRepo.set({ weightEntries: [{ date: '2026-08-01', kg: 80, source: 'manual' }] });
+    const backup = backupWith({ settings: { restDay: 3, weightEntries: [{ date: '2026-07-01', kg: 81, source: 'manual' }] } });
+    await importMerge(backup, { app_settings: 'replace' }, async () => {
+      // The read in applyImportPlan still sees the settings from before the new weighing.
+      const stale = await SettingsRepo.get();
+      await SettingsRepo.set({ weightEntries: [{ date: '2026-08-01', kg: 80, source: 'manual' }, { date: '2026-09-02', kg: 79, source: 'manual' }] });
+      vi.spyOn(SettingsRepo, 'get').mockResolvedValueOnce(stale);
+    });
+    vi.restoreAllMocks();
+    const s = await SettingsRepo.get();
+    expect(s.restDay).toBe(3);
+    expect((s.weightEntries ?? []).map((w) => w.date)).toEqual(['2026-07-01', '2026-08-01', '2026-09-02']);
+  });
+
+  it('geschiedenis met Vervangen uit een oud plan overschrijft nooit een log', async () => {
+    await SessionLogsRepo.put(log('l1'));
+    await importMerge(backupWith({ sessionLogs: [log('l1', { durationMinutes: 90 }), log('l2')] }), { training_history: 'replace' });
+    const byId = new Map((await SessionLogsRepo.getAll()).map((l) => [l.id, l]));
+    expect(byId.get('l1')).toEqual(log('l1'));
+    expect(byId.has('l2')).toBe(true);
+  });
+
+  it('een mijlpaalregel uit de back-up met een ander id geeft geen tweede regel', async () => {
+    const mine = { id: 'progress_g1_m1', goalId: 'g1', milestoneId: 'm1', clearedDate: '2026-08-01' };
+    await GoalMilestoneProgressRepo.put(mine);
+    const theirs = [
+      { id: 'progress_oud', goalId: 'g1', milestoneId: 'm1', clearedDate: '2026-07-01' },
+      { id: 'progress_a', goalId: 'g1', milestoneId: 'm2', clearedDate: '2026-07-02' },
+      { id: 'progress_b', goalId: 'g1', milestoneId: 'm2', clearedDate: '2026-07-03' },
+    ];
+    // A file of version 5 and up carries the goal engine; set it directly on the read file.
+    const backup = backupWith({});
+    backup.goalMilestoneProgress = theirs;
+    backup.present.objectives_and_milestones = true;
+    await importMerge(backup, { objectives_and_milestones: 'merge' });
+    const rows = await GoalMilestoneProgressRepo.getAll();
+    expect(rows.filter((r) => r.milestoneId === 'm1')).toEqual([mine]);
+    expect(rows.filter((r) => r.milestoneId === 'm2').map((r) => r.id)).toEqual(['progress_a']);
   });
 });
 
