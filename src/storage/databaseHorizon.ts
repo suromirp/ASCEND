@@ -155,7 +155,7 @@ async function syncPackMilestone(goals: TrainingGoal[], milestones: GoalMileston
   if (!goal) return;
   const update = packMilestoneUpdate(milestones, await GoalMilestoneProgressRepo.byGoal(goal.id), logs, goal.id, packWeightOf(goal.requirements) ?? TENT_PACK_KG);
   if (!update) return;
-  for (const row of update.keep) await GoalMilestoneProgressRepo.put(row);
+  for (const row of update.keep) await GoalMilestoneProgressRepo.addOnce(row);
   await GoalMilestonesRepo.put(update.milestone);
 }
 

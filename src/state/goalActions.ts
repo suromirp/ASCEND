@@ -8,7 +8,7 @@ import type { CelebrationEvent } from '../components/CompletionMoment';
 import { haptics } from '../utils/haptics';
 import { playMilestoneChime } from '../utils/sound';
 import { pickVictoryQuote } from '../utils/quotes';
-import { TrainingGoalsRepo, GoalMilestoneProgressRepo, StrengthProgramStrategiesRepo, SettingsRepo, type AppSettings } from '../storage/database';
+import { TrainingGoalsRepo, GoalMilestoneProgressRepo, StrengthProgramStrategiesRepo, SettingsRepo, milestoneProgressId, type AppSettings } from '../storage/database';
 import { withPackWeight } from '../engine/gr5Profile';
 import { orderForRestored } from '../engine/goalList';
 import type { PlanChangeProposal, RecentPlanChange } from '../models/planChange';
@@ -36,12 +36,17 @@ export function useGoalActions(deps: {
   const { trainingGoals, goalMilestones, settings, setSettings, setCelebration, setRecentChange, strengthProgramStrategies, setStrengthProgramStrategies, refresh } = deps;
   const clearMilestoneManually = useCallback(
     async (goalId: string, milestoneId: string) => {
-      await GoalMilestoneProgressRepo.put({
-        id: makeId('progress'),
+      // One line per milestone, also when a log cleared it at the same moment.
+      const added = await GoalMilestoneProgressRepo.addOnce({
+        id: milestoneProgressId(goalId, milestoneId),
         goalId,
         milestoneId,
         clearedDate: todayISO(),
       });
+      if (!added) {
+        await refresh();
+        return;
+      }
       const title = goalMilestones.find((m) => m.goalId === goalId && m.id === milestoneId)?.title;
       await refresh();
       haptics.success();

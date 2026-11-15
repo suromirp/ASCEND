@@ -66,7 +66,7 @@ export async function syncGr5MilestoneDefinitions(): Promise<void> {
   const milestones = migrated.map((m) => (m.id === PACK_MILESTONE_ID ? { ...m, ...packMilestone(packKg) } : m));
   // Eerst vastleggen wat je al behaald had, dan pas de eisen overschrijven.
   const [before, progress, logs] = await Promise.all([GoalMilestonesRepo.byGoal(goal.id), GoalMilestoneProgressRepo.byGoal(goal.id), SessionLogsRepo.getAll()]);
-  for (const row of keepClearedMilestones(before, milestones, progress, logs)) await GoalMilestoneProgressRepo.put(row);
+  for (const row of keepClearedMilestones(before, milestones, progress, logs)) await GoalMilestoneProgressRepo.addOnce(row);
   for (const m of milestones) await GoalMilestonesRepo.put(m);
   // Version 3: the default English name became Dutch. A name the user
   // chose themselves stays.

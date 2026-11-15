@@ -186,7 +186,16 @@ export interface GoalMilestoneProgressRepo {
   getAll(): Promise<GoalMilestoneProgress[]>;
   byGoal(goalId: string): Promise<GoalMilestoneProgress[]>;
   put(progress: GoalMilestoneProgress): Promise<unknown>;
+  // Writes the row only when the milestone has no row yet, looked up in the same
+  // transaction: two writers at once (two logs saved one after the other, a tap on
+  // Behaald) never give a milestone a second line. True when it was written.
+  addOnce(progress: GoalMilestoneProgress): Promise<boolean>;
   delete(id: string): Promise<void>;
+}
+
+// The fixed id of the line of a cleared milestone: the same milestone always gets the same id.
+export function milestoneProgressId(goalId: string, milestoneId: string): string {
+  return `progress_${goalId}_${milestoneId}`;
 }
 
 export const GoalMilestoneProgressRepo: GoalMilestoneProgressRepo = {
@@ -196,6 +205,15 @@ export const GoalMilestoneProgressRepo: GoalMilestoneProgressRepo = {
     return db.getAllFromIndex('goalMilestoneProgress', 'by-goal', goalId);
   },
   put: (progress: GoalMilestoneProgress) => put('goalMilestoneProgress', progress),
+  addOnce: async (progress: GoalMilestoneProgress) => {
+    const db = await getDB();
+    const tx = db.transaction('goalMilestoneProgress', 'readwrite');
+    const [sameId, ofGoal] = await Promise.all([tx.store.getKey(progress.id), tx.store.index('by-goal').getAll(progress.goalId)]);
+    const have = sameId !== undefined || ofGoal.some((p) => p.milestoneId === progress.milestoneId);
+    if (!have) await tx.store.put(progress);
+    await tx.done;
+    return !have;
+  },
   delete: (id: string) => del('goalMilestoneProgress', id),
 };
 
