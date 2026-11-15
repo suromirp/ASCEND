@@ -2,7 +2,7 @@
 // trainingen, logs en tempo's; geen echte data.
 (globalThis as unknown as { process: { env: Record<string, string> } }).process.env.TZ = 'Europe/Amsterdam';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { WORKOUTS } from '../data/workoutStructure';
@@ -18,7 +18,12 @@ import { missionCardView } from './missionCard';
 import { placeChoices, shortPlaceLabels } from './trainingPlace';
 import { addDays } from '../utils/dates';
 
+// Het programma begint op de maandag van vandaag (data/defaultProgram.ts); de verwachte minuten horen bij de week
+// waarin deze test is geschreven. Een vaste klok, anders wordt de test elke nieuwe week rood.
+vi.useFakeTimers({ toFake: ['Date'] });
+vi.setSystemTime(new Date('2026-11-12T12:00:00Z'));
 const { templates, program } = buildDefaultProgramData();
+vi.useRealTimers();
 const byId = (id: string) => templates.find((t) => t.id === id) as SessionTemplate;
 const HILLS = byId('tpl_hill_intervals');
 const DESCENT = byId('tpl_hills_descent');

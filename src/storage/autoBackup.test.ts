@@ -464,6 +464,30 @@ describe('de automatische back-up', () => {
     expect([...files.keys()]).toEqual([name('2026-11-02')]);
   });
 
+  it('een andere map gekozen na een time-out: een vreemd bestand met de naam van vandaag blijft staan, de back-up krijgt -2 (Warden B4)', async () => {
+    const a = fakeTarget();
+    a.target.write = () => new Promise(() => undefined);
+    expect(await runAutoBackupIfDue({ now: MONDAY, target: a.target, timeoutMs: 20 })).toBe('failed');
+    // Zoals chooseBackupFolder na het kiezen van een andere map.
+    await forgetAutoBackupFolder();
+    // De nieuwe map, bijvoorbeeld gedeeld met een ander toestel, heeft al een bestand met de naam van vandaag.
+    const b = fakeTarget({ foreign: [name('2026-11-02')], label: 'Een andere map' });
+    expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 2 * 3_600_000), target: b.target, verifyPauseMs: 0 })).toBe('saved');
+    expect([...b.files.keys()].sort()).toEqual([name('2026-11-02'), name('2026-11-02-2')].sort());
+    expect(b.files.get(name('2026-11-02'))).toBe('{}');
+    expect(b.overwritten).toEqual([]);
+  });
+
+  it('een onthouden naam geldt alleen in zijn eigen map, ook zonder een andere map te kiezen', async () => {
+    const a = fakeTarget();
+    a.target.write = () => new Promise(() => undefined);
+    expect(await runAutoBackupIfDue({ now: MONDAY, target: a.target, timeoutMs: 20 })).toBe('failed');
+    const b = fakeTarget({ foreign: [name('2026-11-02')], label: 'Een andere map' });
+    expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 2 * 3_600_000), target: b.target, verifyPauseMs: 0 })).toBe('saved');
+    expect(b.files.get(name('2026-11-02'))).toBe('{}');
+    expect(b.files.has(name('2026-11-02-2'))).toBe(true);
+  });
+
   it('bewaart bij een gelukte back-up welke trainingen erin staan, met hetzelfde tijdstip', async () => {
     await SessionLogsRepo.put({ id: 'log_a', plannedSessionId: 'ps_a', completedAt: new Date(2026, 10, 1, 9).toISOString() } as SessionLog);
     const { target } = fakeTarget();
