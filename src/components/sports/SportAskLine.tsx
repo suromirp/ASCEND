@@ -94,6 +94,8 @@ export function SportAskLine() {
 function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; onClose: () => void }) {
   const { settings, updateSettings, logSession, reportStorageError } = useAppData();
   const alive = useAlive();
+  // Vanaf het begin van het sluiten telt het blad niet meer als in beeld (I-32): een fout gaat dan bovenin.
+  const leaving = useRef(false);
   const counting = resolveSportCounting(settings.sportCounting);
   const [feel, setFeel] = useState<CustomFeel>(FEEL_ADVICE);
   const [role, setRole] = useState<'count' | 'off'>('count');
@@ -122,7 +124,7 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
       await saveLogThenChoice(logSession, input, () => {
         const current = parseCustomSports(settings.customSports).value ?? [];
         return updateSettings({ customSports: [...current.filter((c) => c.type !== sport.type), sport] });
-      }, SAVE_TIMEOUT_MS, (err, late) => reportIfGone(!late && alive.current, err, reportStorageError));
+      }, SAVE_TIMEOUT_MS, (err, late) => reportIfGone(!late && alive.current && !leaving.current, err, reportStorageError));
       close();
     } catch (err) {
       setError(thrownSaveNote(err));
@@ -132,7 +134,7 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
   }
 
   return (
-    <Sheet eyebrow="Sporten" title={question.label} line={`Je deed iets nieuws op ${dayText(day)}, ${durationLabel(question.activity.durationSec)}. Hoe telt dit?`} onClose={onClose}>
+    <Sheet eyebrow="Sporten" title={question.label} line={`Je deed iets nieuws op ${dayText(day)}, ${durationLabel(question.activity.durationSec)}. Hoe telt dit?`} onClose={onClose} onLeave={() => { leaving.current = true; }}>
       {(close) => (
         <>
           <p className="st-lab">Merk je dit vooral in je benen, in je armen en schouders, of in je hele lijf?</p>
@@ -200,6 +202,8 @@ const ROLE_TEXT: Partial<Record<SportRole, { label: string; note: string }>> = {
 function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose: () => void }) {
   const { settings, updateSettings, logSession, reportStorageError } = useAppData();
   const alive = useAlive();
+  // Vanaf het begin van het sluiten telt het blad niet meer als in beeld (I-32): een fout gaat dan bovenin.
+  const leaving = useRef(false);
   const navigate = useNavigate();
   const def = anySportDefinition(question.sport);
   const counting = resolveSportCounting(settings.sportCounting);
@@ -229,7 +233,7 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
       await saveLogThenChoice(logSession, input, () => {
         const current = parseSportHandling(settings.sportHandling).value ?? {};
         return updateSettings({ sportHandling: { ...current, [question.sport]: { role } } });
-      }, SAVE_TIMEOUT_MS, (err, late) => reportIfGone(!late && alive.current, err, reportStorageError));
+      }, SAVE_TIMEOUT_MS, (err, late) => reportIfGone(!late && alive.current && !leaving.current, err, reportStorageError));
       close();
     } catch (err) {
       setError(thrownSaveNote(err));
@@ -239,7 +243,7 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
   }
 
   return (
-    <Sheet eyebrow="Sporten" title={def.label} line={`Je deed ${def.label.toLowerCase()} op ${dayText(day)}, ${durationLabel(question.activity.durationSec)}. Hoe telt dit?`} onClose={onClose}>
+    <Sheet eyebrow="Sporten" title={def.label} line={`Je deed ${def.label.toLowerCase()} op ${dayText(day)}, ${durationLabel(question.activity.durationSec)}. Hoe telt dit?`} onClose={onClose} onLeave={() => { leaving.current = true; }}>
       {(close) => (
         <>
           <ChoiceList<SportRole>

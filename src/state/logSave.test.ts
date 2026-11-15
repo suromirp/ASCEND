@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PlannedSessionsRepo, SessionLogsRepo, wipeAllData } from '../storage/database';
 import { runLogSession, LogNotSaved, type LogSessionDeps, type LogSessionOpts } from './logSession';
-import { autoTickLog, cardAfterSave, closeClearsDraft, failedNote, formAfterSave, logWithOwnNotice, reportIfGone, resetFailedNotes, saveLogThenChoice, saveLogWithin, saveOnCard, settleWithOwnNotice, thrownSaveNote, ChoiceNotSaved, CHOICE_NOT_SAVED, ALREADY_LOGGED_NOTE, FORM_SAVE_NOTE, LOG_SAVE_NOTE, LOG_STILL_RUNNING_NOTE, type CardSaveUi, type LogSaveResult, type ShownSaveNote } from './logSave';
+import { autoTickLog, cardAfterSave, closeClearsDraft, failedNote, formAfterSave, logOrAlready, reportIfGone, resetFailedNotes, saveLogThenChoice, saveLogWithin, saveOnCard, saveOnLogger, formNoteText, loggerNote, loggerShowsClose, tickOff, STILL_RUNNING_HELP, type TickOffNotice, settleWithOwnNotice, thrownSaveNote, ChoiceNotSaved, CHOICE_NOT_SAVED, ALREADY_LOGGED_NOTE, FORM_SAVE_NOTE, LOG_SAVE_NOTE, LOG_STILL_RUNNING_NOTE, type CardSaveUi, type LoggerSaveUi, type LogSaveResult, type ShownSaveNote } from './logSave';
 import { forgeFinishNote } from '../components/forge/forgeFinishLog';
 import { HOW_TEXT } from '../components/logForm/howDidItGo';
 import { TimeoutError } from '../utils/withTimeout';
+import { describeWriteError, TICK_OFF_STILL_RUNNING } from '../storage/storageError';
 import type { LogSessionInput } from './appDataTypes';
 
 const loggerSrc = Object.values(import.meta.glob('../components/ExerciseLogger.tsx', { query: '?raw', import: 'default', eager: true }))[0] as string;
@@ -259,24 +260,24 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     expect(general).toHaveLength(1);
   });
 
-  it('saveLogWithin, autoTickLog, saveLogThenChoice en logWithOwnNotice: mislukt, en bovenin komt niets', async () => {
+  it('saveLogWithin, autoTickLog, saveLogThenChoice en logOrAlready: mislukt, en bovenin komt niets', async () => {
     vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
     const logSession = makeLogSession();
     expect(await saveLogWithin(logSession, fromWatch, own)).toBe('failed');
     expect(await autoTickLog(logSession, fromWatch, async () => undefined)).toBe('failed');
     await expect(saveLogThenChoice(logSession, fromWatch, async () => undefined, 8000, () => undefined)).rejects.toBeInstanceOf(LogNotSaved);
-    expect(await logWithOwnNotice(logSession, fromWatch, () => undefined)).toBe(false);
+    expect(await logOrAlready(logSession, fromWatch, () => undefined)).toBe(false);
     expect(general).toEqual([]);
   });
 
-  it('logWithOwnNotice zonder onWriteError houdt de melding bovenin niet tegen: een vergeten scherm is nooit stil', async () => {
+  it('logOrAlready zonder onWriteError houdt de melding bovenin niet tegen: een vergeten scherm is nooit stil', async () => {
     vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
-    expect(await logWithOwnNotice(makeLogSession(), fromWatch)).toBe(false);
+    expect(await logOrAlready(makeLogSession(), fromWatch)).toBe(false);
     expect(general).toHaveLength(1);
     // Met onWriteError krijgt het scherm de fout zelf en blijft het bovenin leeg.
     general = [];
     const got: unknown[] = [];
-    expect(await logWithOwnNotice(makeLogSession(), fromWatch, (err) => got.push(err))).toBe(false);
+    expect(await logOrAlready(makeLogSession(), fromWatch, (err) => got.push(err))).toBe(false);
     expect(general).toEqual([]);
     expect(got).toHaveLength(1);
   });
@@ -325,7 +326,7 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
       general = [];
       const fail = hangingPut();
       let writeError: unknown;
-      const run = logWithOwnNotice(makeLogSession(), { ...fromWatch, externalId: `x-${closed}` }, (err) => { writeError = err; });
+      const run = logOrAlready(makeLogSession(), { ...fromWatch, externalId: `x-${closed}` }, (err) => { writeError = err; });
       fail();
       expect(await run).toBe(false);
       // onFailed van het blad.
@@ -427,7 +428,7 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     expect(await saveLogWithin(logSession, { ...fromWatch, externalId: 'x2' }, own)).toBe('failed');
     expect(failedNote(LOG_SAVE_NOTE.failed)).toBe(LOG_SAVE_NOTE.failed);
     // De teller is van de app, niet van een scherm: de volgende fout, op een ander scherm (het blad), is de tweede.
-    expect(await logWithOwnNotice(logSession, { ...fromWatch, externalId: 'x3' }, () => undefined)).toBe(false);
+    expect(await logOrAlready(logSession, { ...fromWatch, externalId: 'x3' }, () => undefined)).toBe(false);
     expect(failedNote(FORM_SAVE_NOTE.failed)).not.toBe(FORM_SAVE_NOTE.failed);
     put.mockRestore();
   });
@@ -466,8 +467,13 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     for (const text of [LOG_SAVE_NOTE.slow, FORM_SAVE_NOTE.slow]) expect(text.startsWith('Opslaan duurt langer dan verwacht.')).toBe(true);
     expect(FORM_SAVE_NOTE.slow).not.toMatch(/probeer/i);
     // Een losse training: wat je kunt doen, zonder advies dat je invulling kost (het concept overleeft afsluiten niet).
-    expect(FORM_SAVE_NOTE.slowLoose).toBe(`${FORM_SAVE_NOTE.slow} Kijk in je logboek of hij er staat; staat hij er niet, probeer het dan nog eens.`);
-    expect(FORM_SAVE_NOTE.slowLoose).not.toMatch(/sluit ASCEND/);
+    // Met de uitweg (sluiten en opnieuw) en kort genoeg voor twee regels op 360 px (I-30).
+    expect(FORM_SAVE_NOTE.slowLoose.startsWith('Opslaan duurt langer dan verwacht.')).toBe(true);
+    expect(FORM_SAVE_NOTE.slowLoose).toMatch(/logboek/);
+    expect(FORM_SAVE_NOTE.slowLoose).toMatch(/Sluit en probeer opnieuw/);
+    expect(FORM_SAVE_NOTE.slowLoose).toMatch(/je invulling blijft bewaard/);
+    expect(FORM_SAVE_NOTE.slowLoose).not.toMatch(/ASCEND|de app/);
+    expect(FORM_SAVE_NOTE.slowLoose.length).toBeLessThanOrEqual(110);
     expect(HOW_TEXT.slowLoose).toBe(FORM_SAVE_NOTE.slowLoose);
     expect(howSrc).toMatch(/: loose \? HOW_TEXT\.slowLoose : HOW_TEXT\.slow\}/);
     expect(HOW_TEXT.slow).toBe(FORM_SAVE_NOTE.slow);
@@ -479,19 +485,19 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     expect(sportSrc).not.toContain('Dit lukte niet');
     expect(sportSrc.match(/setError\(thrownSaveNote\(err\)\)/g)).toHaveLength(2);
     expect(sportSrc.match(/error\.kind === 'failed' \? 'st-hint warn' : 'st-hint'/g)).toHaveLength(2);
-    expect(howSrc).toMatch(/save: \(\) => logWithOwnNotice\(logSession, input, /);
+    expect(howSrc).toMatch(/save: \(\) => logOrAlready\(logSession, input, /);
     // De zin wordt vastgelegd bij de uitkomst, niet gelezen in de render; en een blad dat al dicht is meldt bovenin.
     // Vanaf het begin van het sluiten (onLeave van useSheetClose) telt het blad niet meer als in beeld.
     expect(howSrc).toMatch(/reportIfGone\(!leavingRef\.current && !closedRef\.current && !goneRef\.current, writeError, reportStorageError\);\s*setFailedText\(failedNote\(/);
     expect(howSrc).toMatch(/\}, 200, canClose, \(\) => \{ leavingRef\.current = true; \}\);/);
     expect(howSrc.match(/failedNote\(/g)).toHaveLength(1);
-    expect(loggerSrc).toMatch(/if \(outcome === 'failed'\) reportIfGone\(alive\.current, writeError, reportStorageError\);\s*if \(!alive\.current\) return;/);
-    expect(sportSrc.match(/SAVE_TIMEOUT_MS, \(err, late\) => reportIfGone\(!late && alive\.current, err, reportStorageError\)\);/g)).toHaveLength(2);
+    // De sportvraag: vanaf het begin van het sluiten niet meer in beeld (I-32).
+    expect(sportSrc.match(/SAVE_TIMEOUT_MS, \(err, late\) => reportIfGone\(!late && alive\.current && !leaving\.current, err, reportStorageError\)\);/g)).toHaveLength(2);
+    expect(sportSrc.match(/onLeave=\{\(\) => \{ leaving\.current = true; \}\}/g)).toHaveLength(2);
     expect(sportSrc.match(/const alive = useAlive\(\);/g)).toHaveLength(2);
     expect(howSrc).toMatch(/goneRef\.current = true;/);
     // Vanzelf afvinken: het late antwoord haalt de activiteit uit de lijst van wat nog loopt.
     expect(watchSrc).toMatch(/\{ onLate: \(\) => lateOutstanding\.current\.delete\(activity\.externalId\) \}/);
-    expect(loggerSrc).toMatch(/failedNote\(plannedSessionId \? HOW_TEXT\.failed : HOW_TEXT\.failedLoose\)/);
   });
 });
 
@@ -560,19 +566,14 @@ describe('cardAfterSave: wat de kaart Van je horloge doet', () => {
 });
 
 describe('de schermen lezen het antwoord van logSession via state/logSave.ts', () => {
-  it('het oude trainingsscherm: geen kale logSession, de beslissing uit formAfterSave, weggaan via closeClearsDraft', () => {
+  it('het oude trainingsscherm: alleen via saveOnLogger; het gedrag staat hieronder in saveOnLogger', () => {
+    // De enige band met het scherm: hoe het opslaat en dat weggaan het concept alleen buiten het opslaan wist.
     expect(loggerSrc).not.toMatch(/await logSession\(/);
-    expect(loggerSrc).toMatch(/saveLogWithin\(logSession, input/);
-    expect(loggerSrc).toMatch(/formAfterSave\(outcome\)/);
+    expect(loggerSrc).toMatch(/await saveOnLogger\(logSession, input, \{/);
+    expect(loggerSrc).toMatch(/busy: \(on\) => \{ savingRef\.current = on;/);
+    expect(loggerSrc).toContain('const slow = loggerShowsClose(saving, saveNote);');
+    expect(loggerSrc).toMatch(/\{slow \? \(\s*\/\/[^\n]*\n\s*<SecondaryButton onClick=\{requestClose\}[^>]*>Sluiten</);
     expect(loggerSrc).toMatch(/if \(closeClearsDraft\(savingRef\.current\)\) form\.clearDraft\(\);/);
-    // Het concept wordt nergens anders gewist dan bij weggaan en bij een log dat er staat.
-    expect(loggerSrc.match(/form\.clearDraft\(\)/g)).toHaveLength(2);
-    expect(loggerSrc).toMatch(/if \(next\.clearDraft\) form\.clearDraft\(\);/);
-    expect(loggerSrc).toMatch(/setSaving\(next\.buttonOff\)/);
-    // Bezig staat aan voor het opslaan begint en volgt daarna de uitkomst: zonder deze twee regels wist
-    // Annuleren tijdens het opslaan het concept weer (Warden ronde 2).
-    expect(loggerSrc).toMatch(/savingRef\.current = true;\s*setSaving\(true\);[\s\S]*saveLogWithin\(logSession, input/);
-    expect(loggerSrc).toMatch(/savingRef\.current = next\.buttonOff;/);
   });
 
   it('de kaart Van je horloge en het blad van een training (MacroFactor): opslaan via saveOnCard, nooit kaal', () => {
@@ -795,5 +796,304 @@ describe('een losse training met een andere invulling terwijl de eerste hangt', 
     expect(general).toEqual([]);
     expect(formAfterSave('failed')).toMatchObject({ clearDraft: false, close: false, note: 'failed' });
     expect(failedNote(FORM_SAVE_NOTE.failedLoose)).toBe(FORM_SAVE_NOTE.failedLoose);
+  });
+});
+
+// Gedrag van Opslaan op het oude trainingsscherm (ExerciseLogger.tsx), zonder scherm: het scherm geeft alleen zijn
+// toestand door (LoggerSaveUi). Per pad wat je ziet (I-32, bronscans vervangen).
+describe('saveOnLogger: het oude trainingsscherm, per pad wat je ziet', () => {
+  const loose: LogSessionInput = { templateId: 'tpl_cycling', type: 'cardio', variant: 'full', durationMinutes: 45 };
+  function screen(over: Partial<LoggerSaveUi> = {}) {
+    const seen = { notes: [] as (ShownSaveNote | null)[], closed: 0, drafts: 0, busy: [] as boolean[], mounted: true, showing: true };
+    const ui: LoggerSaveUi = {
+      loose: false,
+      mounted: () => seen.mounted,
+      showing: () => seen.showing,
+      busy: (on) => { seen.busy.push(on); },
+      clearDraft: () => { seen.drafts += 1; },
+      report: (err) => general.push(err),
+      apply: (next) => { if (next.close) seen.closed += 1; else seen.notes.push(next.note); },
+      limitMs: 20,
+      ...over,
+    };
+    return { ui, seen };
+  }
+  function heldPut() {
+    const real = SessionLogsRepo.put.bind(SessionLogsRepo);
+    let go!: (fail?: Error) => void;
+    const hold = new Promise<Error | undefined>((resolve) => (go = resolve));
+    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => {
+      const fail = await hold;
+      if (fail) throw fail;
+      return real(log);
+    });
+    return go;
+  }
+  const settle = () => new Promise((r) => setTimeout(r, 60));
+
+  it('bezig staat aan voordat logSession begint: Annuleren tijdens het opslaan wist het concept dan niet', async () => {
+    const order: string[] = [];
+    const { ui } = screen({ busy: (on) => order.push(`busy ${on}`) });
+    await saveOnLogger(async () => { order.push('logSession'); return true; }, forPlanned, ui);
+    expect(order[0]).toBe('busy true');
+    expect(order.indexOf('busy true')).toBeLessThan(order.indexOf('logSession'));
+    expect(closeClearsDraft(true)).toBe(false);
+  });
+
+  it('gelukt: concept weg, scherm dicht, geen zin, een log', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const { ui, seen } = screen();
+    expect(await saveOnLogger(makeLogSession(), forPlanned, ui)).toBe('saved');
+    expect(seen).toMatchObject({ closed: 1, drafts: 1, notes: [] });
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+    expect(general).toEqual([]);
+  });
+
+  it('in beeld mislukt: de amber zin, concept blijft, knop weer aan, niets bovenin', async () => {
+    await PlannedSessionsRepo.put(planned);
+    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    const { ui, seen } = screen();
+    expect(await saveOnLogger(makeLogSession(), forPlanned, ui)).toBe('failed');
+    expect(seen.notes).toEqual([{ text: FORM_SAVE_NOTE.failed, warn: true }]);
+    expect(seen).toMatchObject({ closed: 0, drafts: 0 });
+    expect(seen.busy.at(-1)).toBe(false);
+    expect(general).toEqual([]);
+  });
+
+  it('een losse training die mislukt: eerst in je logboek kijken', async () => {
+    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    const { ui, seen } = screen({ loose: true });
+    expect(await saveOnLogger(makeLogSession(), loose, ui)).toBe('failed');
+    expect(seen.notes).toEqual([{ text: FORM_SAVE_NOTE.failedLoose, warn: true }]);
+  });
+
+  it('stond er al: de zin, niet amber, knop weer aan, concept blijft', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const logSession = makeLogSession();
+    await logSession(forPlanned);
+    const { ui, seen } = screen();
+    expect(await saveOnLogger(logSession, forPlanned, ui)).toBe('already');
+    expect(seen.notes).toEqual([{ text: ALREADY_LOGGED_NOTE, warn: false }]);
+    expect(seen).toMatchObject({ closed: 0, drafts: 0 });
+    expect(seen.busy.at(-1)).toBe(false);
+  });
+
+  it('een losse training na de grens: een wachtzin met uitweg, knop uit; landt hij later, dan dicht en concept weg', async () => {
+    const go = heldPut();
+    const { ui, seen } = screen({ loose: true });
+    expect(await saveOnLogger(makeLogSession(), loose, ui)).toBe('slow');
+    expect(seen.notes).toEqual([{ text: FORM_SAVE_NOTE.slowLoose, warn: false }]);
+    expect(FORM_SAVE_NOTE.slowLoose).toMatch(/Sluit en probeer opnieuw/);
+    expect(seen.busy.at(-1)).toBe(true);
+    expect(seen.drafts).toBe(0);
+    go();
+    await settle();
+    expect(seen).toMatchObject({ closed: 1, drafts: 1 });
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+  });
+
+  it('een geplande training na de grens: de korte wachtzin', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const go = heldPut();
+    const { ui, seen } = screen();
+    expect(await saveOnLogger(makeLogSession(), forPlanned, ui)).toBe('slow');
+    expect(seen.notes).toEqual([{ text: FORM_SAVE_NOTE.slow, warn: false }]);
+    go();
+    await settle();
+  });
+
+  it('weg na de grens en dan mislukt: de fout bovenin, het concept blijft, geen zin op een scherm dat er niet is', async () => {
+    const go = heldPut();
+    const { ui, seen } = screen({ loose: true });
+    await saveOnLogger(makeLogSession(), loose, ui);
+    seen.mounted = false;
+    go(new Error('kapot'));
+    await settle();
+    expect(general).toHaveLength(1);
+    expect(seen.notes).toHaveLength(1);
+    expect(seen.drafts).toBe(0);
+  });
+
+  it('aan het sluiten en dan mislukt: telt als weg, de fout gaat bovenin', async () => {
+    const go = heldPut();
+    const { ui, seen } = screen({ loose: true });
+    await saveOnLogger(makeLogSession(), loose, ui);
+    seen.showing = false;
+    go(new Error('kapot'));
+    await settle();
+    expect(general).toHaveLength(1);
+  });
+
+  it('formNoteText: zonder uitkomst geen zin; alleen mislukt is amber', () => {
+    expect(formNoteText(undefined, true)).toBeNull();
+    expect(formNoteText('slow', false)).toEqual({ text: FORM_SAVE_NOTE.slow, warn: false });
+    expect(formNoteText('failed', false)?.warn).toBe(true);
+    // Oud scherm, tweede tik terwijl de eerste loopt: nooit "sluit de app" (je invulling staat in sessionStorage).
+    const still = formNoteText('stillRunning', false);
+    expect(still).toEqual({ text: FORM_SAVE_NOTE.slowLoose, warn: false });
+    expect(still?.text).not.toMatch(/app/);
+  });
+});
+
+describe('logOrAlready: het blad Hoe ging het? onderscheidt stond er al van mislukt (I-32)', () => {
+  it('ja, stond er al, of mislukt', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const logSession = makeLogSession();
+    expect(await logOrAlready(logSession, forPlanned)).toBe(true);
+    expect(await logOrAlready(logSession, forPlanned)).toBe('already');
+    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    expect(await logOrAlready(logSession, { ...forPlanned, plannedSessionId: undefined, templateId: 'tpl_bike' }, () => undefined)).toBe(false);
+  });
+
+  it('nee zonder log is mislukt, nooit stond er al', async () => {
+    expect(await logOrAlready(async () => false, forPlanned, () => undefined)).toBe(false);
+  });
+});
+
+describe('tickOff: afvinken met één tik op Vandaag en Week (I-32)', () => {
+  function notice() {
+    const seen = { reported: [] as unknown[], withdrawn: [] as unknown[], refreshed: 0 };
+    const n: TickOffNotice = { report: (e) => seen.reported.push(e), withdraw: (e) => seen.withdrawn.push(e), refresh: () => { seen.refreshed += 1; } };
+    return { n, seen };
+  }
+  function heldPut() {
+    const real = SessionLogsRepo.put.bind(SessionLogsRepo);
+    let go!: (fail?: Error) => void;
+    const hold = new Promise<Error | undefined>((resolve) => (go = resolve));
+    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => { const fail = await hold; if (fail) throw fail; return real(log); });
+    return go;
+  }
+  const settle = () => new Promise((r) => setTimeout(r, 60));
+
+  it('gelukt: een log, niets bovenin', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const { n, seen } = notice();
+    expect(await tickOff(makeLogSession(), forPlanned, n)).toBe('saved');
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+    expect(seen.reported).toEqual([]);
+    expect(general).toEqual([]);
+  });
+
+  it('stond er al: geen tweede log, geen melding, het logboek wordt opnieuw gelezen', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const logSession = makeLogSession();
+    await logSession(forPlanned);
+    const { n, seen } = notice();
+    expect(await tickOff(logSession, forPlanned, n)).toBe('already');
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+    expect(seen).toMatchObject({ reported: [], refreshed: 1 });
+  });
+
+  it('mislukt: precies een melding bovenin, met de zin van de schrijffout', async () => {
+    await PlannedSessionsRepo.put(planned);
+    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    const { n, seen } = notice();
+    expect(await tickOff(makeLogSession(), forPlanned, n)).toBe('failed');
+    expect(seen.reported).toHaveLength(1);
+    expect(general).toEqual([]);
+    expect(describeWriteError(seen.reported[0])).not.toBe(TICK_OFF_STILL_RUNNING);
+  });
+
+  it('na de grens: langer dan verwacht; landt het toch, dan wordt die melding ingetrokken', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const go = heldPut();
+    const { n, seen } = notice();
+    expect(await tickOff(makeLogSession(), forPlanned, n, 10)).toBe('slow');
+    expect(seen.reported.map(describeWriteError)).toEqual([TICK_OFF_STILL_RUNNING]);
+    go();
+    await settle();
+    expect(seen.withdrawn.map(describeWriteError)).toEqual([TICK_OFF_STILL_RUNNING]);
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+  });
+
+  it('na de grens, laat nee: de schrijffout komt bovenin, niets ingetrokken', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const go = heldPut();
+    const { n, seen } = notice();
+    await tickOff(makeLogSession(), forPlanned, n, 10);
+    go(new Error('kapot'));
+    await settle();
+    expect(seen.reported).toHaveLength(2);
+    expect(describeWriteError(seen.reported[1])).not.toBe(TICK_OFF_STILL_RUNNING);
+    expect(seen.withdrawn).toEqual([]);
+  });
+
+  it('een tweede tik terwijl de eerste loopt: nooit stil, de zin dat het loopt (Warden M1)', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const go = heldPut();
+    const logSession = makeLogSession();
+    const first = notice();
+    expect(await tickOff(logSession, forPlanned, first.n, 10)).toBe('slow');
+    const second = notice();
+    expect(await tickOff(logSession, forPlanned, second.n, 10)).toBe('failed');
+    expect(second.seen.reported.map(describeWriteError)).toEqual([TICK_OFF_STILL_RUNNING]);
+    expect(general).toEqual([]);
+    go();
+    await settle();
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+  });
+
+  it('de zin raadt niet aan nog eens af te vinken: dezelfde uitweg als STILL_RUNNING_HELP', () => {
+    expect(TICK_OFF_STILL_RUNNING.endsWith(STILL_RUNNING_HELP)).toBe(true);
+    expect(TICK_OFF_STILL_RUNNING).not.toMatch(/nog eens af/);
+  });
+});
+
+describe('saveOnLogger: een tweede poging terwijl de eerste hangt (Warden M2)', () => {
+  function heldPut() {
+    const real = SessionLogsRepo.put.bind(SessionLogsRepo);
+    let go!: (fail?: Error) => void;
+    const hold = new Promise<Error | undefined>((resolve) => (go = resolve));
+    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => { const fail = await hold; if (fail) throw fail; return real(log); });
+    return go;
+  }
+  const ui = (notes: (ShownSaveNote | null)[], over: Partial<LoggerSaveUi> = {}): LoggerSaveUi => ({
+    loose: false, mounted: () => true, showing: () => true, busy: () => undefined, clearDraft: () => undefined,
+    report: (e) => general.push(e), apply: (next) => { if (!next.close) notes.push(next.note); }, limitMs: 20, ...over,
+  });
+
+  it('gepland, scherm opnieuw open: de zin dat het nog loopt, niet amber mislukt; een log', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const go = heldPut();
+    const logSession = makeLogSession();
+    expect(await saveOnLogger(logSession, forPlanned, ui([], { mounted: () => false }))).toBe('slow');
+    const notes: (ShownSaveNote | null)[] = [];
+    expect(await saveOnLogger(logSession, { ...forPlanned, durationMinutes: 50 }, ui(notes))).toBe('failed');
+    expect(notes).toEqual([{ text: FORM_SAVE_NOTE.slowLoose, warn: false }]);
+    go();
+    await new Promise((r) => setTimeout(r, 60));
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+    expect(general).toEqual([]);
+  });
+
+  it('loggerNote: alleen een geplande training zonder schrijffout is "loopt nog"', () => {
+    expect(loggerNote('failed', false, undefined)).toBe('stillRunning');
+    expect(loggerNote('failed', false, new Error('kapot'))).toBe('failed');
+    expect(loggerNote('failed', true, undefined)).toBe('failed');
+    expect(loggerNote('slow', false, undefined)).toBe('slow');
+    expect(loggerNote('saved', false, undefined)).toBeUndefined();
+  });
+});
+
+describe('loggerShowsClose: Sluiten onderaan het oude trainingsscherm', () => {
+  it('alleen na de grens, met de wachtzin', () => {
+    expect(loggerShowsClose(true, formNoteText('slow', true))).toBe(true);
+    expect(loggerShowsClose(true, formNoteText('slow', false))).toBe(true);
+    // Voor de grens: nog geen zin. Na een laat nee: knop weer aan, amber.
+    expect(loggerShowsClose(true, null)).toBe(false);
+    expect(loggerShowsClose(false, formNoteText('failed', true))).toBe(false);
+    expect(loggerShowsClose(false, formNoteText('already', false))).toBe(false);
+  });
+
+  it('aan het sluiten en dan gelukt: het concept gaat weg, maar het scherm sluit niet nog eens', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const closes: boolean[] = [];
+    let drafts = 0;
+    await saveOnLogger(makeLogSession(), forPlanned, {
+      loose: false, mounted: () => true, showing: () => false, busy: () => undefined,
+      clearDraft: () => { drafts += 1; }, report: () => undefined, apply: (next) => closes.push(next.close), limitMs: 1000,
+    });
+    expect(drafts).toBe(1);
+    expect(closes).toEqual([false]);
   });
 });

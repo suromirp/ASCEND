@@ -59,6 +59,8 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Kort', text: 'Beter, Normaal of Slechter, pijn en de zwaarte. Je gewicht na, inkorten en de tekst voor Strava staan achter Meer.' },
       { head: 'Alles', text: 'alles onder elkaar, zonder Meer.' },
       { head: 'Zwaarte', text: 'staat altijd in de eerste stap, met de waarde van je horloge als die er is. Zonder zwaarte telt je belasting de zwaarte van het plan.' },
+      // Gelijk aan engine/autoTick.ts#QUESTION_HOURS (afterRun.test.ts houdt ze samen).
+      { head: 'Hoe lang', text: 'de rij staat er 72 uur. Daarna verdwijnt hij; je training blijft in je logboek.' },
     ],
   },
   lijfvraag: {

@@ -18,6 +18,7 @@ export function Sheet({
   line,
   onClose,
   action,
+  onLeave,
   children,
 }: {
   eyebrow: string;
@@ -26,9 +27,11 @@ export function Sheet({
   onClose: () => void;
   // Een knop links van het kruisje (de drie puntjes van een doel), 44 bij 44 px.
   action?: ReactNode;
+  // Het blad begint te sluiten (utils/useSheetClose.ts): vanaf dan leest niemand een zin erop nog.
+  onLeave?: () => void;
   children: ReactNode | ((close: () => void) => ReactNode);
 }) {
-  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose, 200, undefined, onLeave);
   return (
     <Portal>
       <div

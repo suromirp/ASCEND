@@ -4179,6 +4179,13 @@
    ],
    "kern": "Een import schrijft alleen nieuwe of gewijzigde rijen; geschiedenis alleen als nieuwe rij in dezelfde transactie, een mijlpaal één regel met een vast id, alles wissen in één transactie.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-oud-trainingsscherm.md": {
+   "onderwerpen": [
+    "historie-en-logs"
+   ],
+   "kern": "Het oude trainingsscherm slaat op via `saveOnLogger`, met Sluiten en een wachtzin met uitweg na de grens; Vandaag en Week vinken af via `tickOff`.",
+   "stand": "geldt"
   }
  }
 }

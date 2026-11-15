@@ -319,6 +319,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     storageNotice,
     reportStorageError,
     dismissStorageNotice: () => setStorageNotice(null),
+    withdrawStorageNotice: (err: unknown) => { const text = describeWriteError(err); setStorageNotice((cur) => (cur === text ? null : cur)); },
     program,
     templates,
     plannedSessions,

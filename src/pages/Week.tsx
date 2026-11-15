@@ -15,6 +15,7 @@ import { WeekRidge } from '../components/WeekRidge';
 import { WeekReviewSheet } from '../components/WeekReview';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
+import { tickOff } from '../state/logSave';
 import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import { resolveVariantDuration } from '../engine/substitutions';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
@@ -61,7 +62,9 @@ const SWAP_FAILED = 'Beide trainingen staan nog op hun eigen dag.';
 const MOVE_FAILED = 'Kijk in je week wat er nu staat.';
 
 export function WeekPage() {
-  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt, proposeSwap, swapOptionsFor, showFailure, openDraftId } = useAppData();
+  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt, proposeSwap, swapOptionsFor, showFailure, openDraftId } = useAppData();
+  // Afvinken met één tik: grens in tijd en de melding bovenin (state/logSave.ts#tickOff).
+  const tickNotice = { report: reportStorageError, withdraw: withdrawStorageNotice, refresh };
   const keyFocus = useKeyFocus();
   // The chosen week and the year overview belong to this step in the history:
   // to a training and back, the page is as you left it.
@@ -161,7 +164,8 @@ export function WeekPage() {
 
   function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number, extra?: StrengthDoneExtra) {
     if (isQuickComplete(template)) {
-      logSession({
+      // Met een grens in tijd en een uitkomst bovenin (state/logSave.ts#tickOff).
+      void tickOff(logSession, {
         plannedSessionId: session.id,
         templateId: template.id,
         type: template.type,
@@ -172,7 +176,7 @@ export function WeekPage() {
         strengthRir: extra?.rir,
         // Ticked off afterwards: it happened on its own day.
         completedDate: session.scheduledDate < todayISO() ? session.scheduledDate : undefined,
-      });
+      }, tickNotice);
     } else {
       setLogging({ session, variant });
     }
@@ -389,7 +393,7 @@ export function WeekPage() {
           onOpenLog={selectedLog ? () => setOpenLog(selectedLog) : undefined}
           onDoneAsPlanned={!selectedLog && selected.scheduledDate <= todayISO() && canTickOffAsPlanned(templateById.get(selected.templateId)!, strengthExternal, settings.restDayMode)
             ? () => {
-                void logSession(asPlannedLog(selected, templateById.get(selected.templateId)!, program, todayISO()));
+                void tickOff(logSession, asPlannedLog(selected, templateById.get(selected.templateId)!, program, todayISO()), tickNotice);
                 setSelected(null);
               }
             : undefined}
