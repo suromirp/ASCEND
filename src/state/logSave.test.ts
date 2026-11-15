@@ -928,6 +928,10 @@ describe('saveOnLogger: het oude trainingsscherm, per pad wat je ziet', () => {
     expect(formNoteText(undefined, true)).toBeNull();
     expect(formNoteText('slow', false)).toEqual({ text: FORM_SAVE_NOTE.slow, warn: false });
     expect(formNoteText('failed', false)?.warn).toBe(true);
+    // Oud scherm, tweede tik terwijl de eerste loopt: nooit "sluit de app" (je invulling staat in sessionStorage).
+    const still = formNoteText('stillRunning', false);
+    expect(still).toEqual({ text: FORM_SAVE_NOTE.slowLoose, warn: false });
+    expect(still?.text).not.toMatch(/app/);
   });
 });
 
@@ -1055,7 +1059,7 @@ describe('saveOnLogger: een tweede poging terwijl de eerste hangt (Warden M2)', 
     expect(await saveOnLogger(logSession, forPlanned, ui([], { mounted: () => false }))).toBe('slow');
     const notes: (ShownSaveNote | null)[] = [];
     expect(await saveOnLogger(logSession, { ...forPlanned, durationMinutes: 50 }, ui(notes))).toBe('failed');
-    expect(notes).toEqual([{ text: LOG_STILL_RUNNING_NOTE, warn: false }]);
+    expect(notes).toEqual([{ text: FORM_SAVE_NOTE.slowLoose, warn: false }]);
     go();
     await new Promise((r) => setTimeout(r, 60));
     expect(await SessionLogsRepo.getAll()).toHaveLength(1);

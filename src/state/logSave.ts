@@ -171,7 +171,9 @@ export function formNoteText(note: SaveNoteKind | 'stillRunning' | undefined, lo
   if (!note) return null;
   if (note === 'failed') return { text: failedNote(loose ? FORM_SAVE_NOTE.failedLoose : FORM_SAVE_NOTE.failed), warn: true };
   if (note === 'slow') return { text: loose ? FORM_SAVE_NOTE.slowLoose : FORM_SAVE_NOTE.slow, warn: false };
-  if (note === 'stillRunning') return { text: LOG_STILL_RUNNING_NOTE, warn: false };
+  // Op dit scherm staat je invulling in sessionStorage: geen advies om de app af te sluiten (Pathfinder 15 november),
+  // dezelfde uitweg als bij een losse training.
+  if (note === 'stillRunning') return { text: FORM_SAVE_NOTE.slowLoose, warn: false };
   return { text: FORM_SAVE_NOTE.already, warn: false };
 }
 
