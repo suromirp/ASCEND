@@ -141,14 +141,14 @@ export function HistoryPage() {
             <button onClick={() => shiftMonth(1)} className="flex h-11 w-11 items-center justify-center" aria-label="Volgende maand" style={{ color: 'var(--color-on-light)' }}><Icon name="verder" size={24} /></button>
           </div>
         </div>
-        {compare.nothingYet ? (
+        {compare.nothingYet && monthLogs.length === 0 ? (
           <LightCard className="flex flex-col gap-1">
             <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Nog niets in {monthName}.</p>
             {todayName && <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Vandaag staat je {todayName.charAt(0).toLowerCase()}{todayName.slice(1)}.</p>}
           </LightCard>
         ) : trainingCount === 0 ? (
           <LightCard>
-            <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{emptyMonthTitle({ beforeFirst, weighings: weighings.length })}</p>
+            <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{emptyMonthTitle({ beforeFirst, weighings: weighings.length, recovery: compare.recovery, listLogs: monthLogs.length })}</p>
           </LightCard>
         ) : (
           <LightCard className="grid grid-cols-2 gap-4">

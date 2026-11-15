@@ -1,7 +1,7 @@
 // Maakt de nagemaakte standen voor de tekstkaart (docs/app-kaart/README.md) en laat elk één planningsronde
 // draaien op de vaste klok van de kaart, zodat een start daarna niets meer bijwerkt.
 //   node scripts/app-kaart/maak-standen.mjs            maakt alle standen opnieuw
-//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel)
+//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel)
 // Alles is nagemaakt: de basis is state-kracht.json, de rest zijn kleine wijzigingen met verzonnen getallen.
 //
 // Waarom "settle": bij de eerste start na het laden van een stand vindt de planningsronde nog iets te
@@ -196,6 +196,12 @@ function metHeuvel(state) {
   rij.templateId = 'tpl_hill_intervals';
 }
 
+// Alleen herstel in een maand: een losse Herstelwandeling van 56 minuten op zondag 1 november, verder niets in die
+// maand. De logboekkop noemt dan het herstel met de minuten en zegt nooit "niets" (engine/logbookMonth.ts).
+function metHerstel(state) {
+  winkel(state, 'sessionLogs').records.push({ value: { id: 'fake_herstel', templateId: 'tpl_herstel', type: 'recovery', completedDate: '2026-11-01', completedAt: '2026-11-01T10:00:00Z', variant: 'full', durationMinutes: 56, source: 'manual', outdoorData: { durationMinutes: 56, distanceKm: 4.8, source: 'manual' } } });
+}
+
 export const STANDEN = {
   kracht: () => {},
   horloge: metHorloge,
@@ -210,6 +216,7 @@ export const STANDEN = {
   'voorstel-wacht': metWachtendVoorstel,
   rustweek: metRustweek,
   heuvel: metHeuvel,
+  herstel: metHerstel,
 };
 
 // --- één planningsronde op de vaste klok -------------------------------------------------------------

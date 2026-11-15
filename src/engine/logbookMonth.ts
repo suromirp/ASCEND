@@ -6,7 +6,7 @@
 
 import type { SessionLog } from '../models/training';
 import { logsInRange, type PlannedById } from './logDay';
-import { addDays, monthBounds, parseISODate, shiftMonthAnchor, toISODate } from '../utils/dates';
+import { addDays, formatHoursMinutesNL, monthBounds, parseISODate, shiftMonthAnchor, toISODate } from '../utils/dates';
 
 // Vanaf deze dag van de lopende maand zegt een vergelijking iets.
 const COMPARE_FROM_DAY = 7;
@@ -16,9 +16,14 @@ export interface MonthTotals { minutes: number; count: number }
 export interface MonthCompare {
   // De vergelijking: tegen welke dagen, en het verschil. Afwezig als die niets zegt.
   vs?: { from: string; to: string; whole: boolean; minutes: number; count: number; diffMinutes: number; diffCount: number };
-  // De maand loopt, het is nog vroeg en er is nog niets gedaan: dan staat er "Nog niets in november".
+  // De maand loopt, het is nog vroeg en er staat nog geen enkel log in: dan staat er "Nog niets in november".
+  // Een herstelwandeling telt niet als training, maar is wel iets: dan is het nooit "nog niets".
   nothingYet: boolean;
   totals: MonthTotals;
+  // De logs van type herstel in deze maand. Die tellen niet in `totals.count` (Trainingen) en niet in de
+  // vergelijking (die vraagt een training vorige maand); hun minuten zitten wel in `totals.minutes`, net als in
+  // Getraind op het scherm.
+  recovery: MonthTotals;
 }
 
 const totalsOf = (logs: SessionLog[]): MonthTotals => {
@@ -26,33 +31,46 @@ const totalsOf = (logs: SessionLog[]): MonthTotals => {
   return { minutes: Math.round(logs.reduce((n, l) => n + l.durationMinutes, 0)), count: trainings.length };
 };
 
+const recoveryOf = (logs: SessionLog[]): MonthTotals => {
+  const rest = logs.filter((l) => l.type === 'recovery');
+  return { minutes: Math.round(rest.reduce((n, l) => n + l.durationMinutes, 0)), count: rest.length };
+};
+
 export function monthCompare(input: { anchor: string; today: string; logs: SessionLog[]; plannedById: PlannedById }): MonthCompare {
   const { anchor, today, logs, plannedById } = input;
   const { start, end } = monthBounds(anchor);
-  const totals = totalsOf(logsInRange(logs, plannedById, start, end));
+  const inMonth = logsInRange(logs, plannedById, start, end);
+  const totals = totalsOf(inMonth);
+  const recovery = recoveryOf(inMonth);
   const prev = monthBounds(shiftMonthAnchor(anchor, -1));
   const current = today >= start && today <= end;
   const future = start > today;
 
-  if (future) return { nothingYet: false, totals };
+  if (future) return { nothingYet: false, totals, recovery };
   if (current) {
     const dayOfMonth = parseISODate(today).getDate();
-    const nothingYet = dayOfMonth < COMPARE_FROM_DAY && totals.count === 0;
-    if (dayOfMonth < COMPARE_FROM_DAY) return { nothingYet, totals };
+    const nothingYet = dayOfMonth < COMPARE_FROM_DAY && inMonth.length === 0;
+    if (dayOfMonth < COMPARE_FROM_DAY) return { nothingYet, totals, recovery };
     // Dezelfde dagen van vorige maand; een kortere maand loopt tot zijn laatste dag.
     const lastDay = parseISODate(prev.end).getDate();
     const to = toISODate(new Date(parseISODate(prev.start).getFullYear(), parseISODate(prev.start).getMonth(), Math.min(dayOfMonth, lastDay)));
     const before = totalsOf(logsInRange(logs, plannedById, prev.start, to));
-    if (before.count === 0) return { nothingYet: false, totals };
-    return { nothingYet: false, totals, vs: { from: prev.start, to, whole: false, ...before, diffMinutes: totals.minutes - before.minutes, diffCount: totals.count - before.count } };
+    if (before.count === 0) return { nothingYet: false, totals, recovery };
+    return { nothingYet: false, totals, recovery, vs: { from: prev.start, to, whole: false, ...before, diffMinutes: totals.minutes - before.minutes, diffCount: totals.count - before.count } };
   }
   const before = totalsOf(logsInRange(logs, plannedById, prev.start, prev.end));
-  if (before.count === 0) return { nothingYet: false, totals };
-  return { nothingYet: false, totals, vs: { from: prev.start, to: prev.end, whole: true, ...before, diffMinutes: totals.minutes - before.minutes, diffCount: totals.count - before.count } };
+  if (before.count === 0) return { nothingYet: false, totals, recovery };
+  return { nothingYet: false, totals, recovery, vs: { from: prev.start, to: prev.end, whole: true, ...before, diffMinutes: totals.minutes - before.minutes, diffCount: totals.count - before.count } };
 }
 
-// De kop van een maand zonder trainingen: voor je eerste training, met alleen wegingen, of helemaal leeg.
-export function emptyMonthTitle(input: { beforeFirst: boolean; weighings: number }): string {
+// De kop van een maand zonder trainingen: voor je eerste training, met alleen herstel, met alleen wegingen, of
+// helemaal leeg. De kop zegt nooit "niets" of "geen trainingen" als de lijst eronder een log heeft
+// (`listLogs`: de logs van de lijst, op de datum van het bestand). Herstel telt niet als training, dus noemt de kop
+// het apart met de minuten. Een log dat in de lijst staat maar bij de maand van zijn geplande training telt
+// (een MacroFactor-training na middernacht, engine/logDay.ts) krijgt een eigen zin.
+export function emptyMonthTitle(input: { beforeFirst: boolean; weighings: number; recovery: MonthTotals; listLogs: number }): string {
+  if (input.recovery.count > 0) return `Alleen herstel in deze maand: ${formatHoursMinutesNL(input.recovery.minutes)}.`;
+  if (input.listLogs > 0) return 'Wat hier staat telt bij de maand van de geplande training.';
   if (input.beforeFirst) return 'Hier begon je nog niet.';
   return input.weighings > 0 ? 'Geen trainingen in deze maand.' : 'Nog niets in deze maand.';
 }
