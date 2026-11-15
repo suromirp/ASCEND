@@ -96,3 +96,59 @@ describe('een voetbalwedstrijd op zaterdag', () => {
     expect(sportDoneLine('swimming', '2026-11-04', '2026-11-09')).toBe('Je zwom op woensdag.');
   });
 });
+
+// Backlog M2: een log uit Losse training van voor 14 november noemt zijn sport alleen in het templateId
+// (engine/sportOfLog.ts). De weekcheck leest het nu als die sport, net als een nieuw log; het log zelf blijft
+// zoals het is. Nagemaakte data.
+describe('een oud log zonder countedSport', () => {
+  const oldLog = (templateId: string, date: string, minutes: number, rpe?: number): SessionLog => ({
+    id: `old-${templateId}-${date}`, templateId, type: 'cardio', completedDate: date, completedAt: `${date}T20:30:00Z`,
+    variant: 'custom', durationMinutes: minutes, rpe, source: 'manual',
+  });
+  const strip = ({ countedSport: _c, ...rest }: SessionLog): SessionLog => rest;
+  const tennis = { customSports: [{ id: 'custom_tennis', label: 'Tennis', type: 'Tennis', feel: 'legs', role: 'count' }] };
+
+  it('padel wordt een sportdag voor de check en een melding over benen tussen sporten', () => {
+    const log = oldLog('sport_padel', THU, 90, 5);
+    const byId = new Map(counting().map((t) => [t.id, t]));
+    expect(sportLogDays([log], byId, FRI).sessions.map((s) => s.scheduledDate)).toEqual([THU]);
+    const found = validateWeeks(input([log])).filter((f) => f.rule === 'LEG-SPACING');
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatchObject({ subjectId: 'legs', fromSport: true });
+    const concern = weekConcerns(input([log]), MON).find((c) => c.rule === 'LEG-SPACING')!;
+    expect(concern.headline).toBe('Je speelde gisteren padel. Benen B staat er vlak na.');
+    expect(log).not.toHaveProperty('countedSport');
+  });
+
+  it('telt precies zoals hetzelfde log met countedSport, ook voor een test', () => {
+    const test: PlannedSession = { id: 'test', templateId: 'tpl_test_run', scheduledDate: FRI, weekStartDate: MON, status: 'planned', order: 0 };
+    for (const log of [sportLog('padel', THU, 90, 7), sportLog('football', '2026-11-04', 90, 7), sportLog('swimming', THU, 60, 7)]) {
+      expect(validateWeeks(input([strip(log)]))).toEqual(validateWeeks(input([log])));
+      expect(weekConcerns(input([strip(log)]), MON)).toEqual(weekConcerns(input([log]), MON));
+      const withTest = input([strip(log)], { sessions: [test] });
+      expect(validateWeeks(withTest)).toEqual(validateWeeks({ ...withTest, logs: [log] }));
+    }
+  });
+
+  it('een uur zwemmen blijft zonder melding en telt niet als hardlopen', () => {
+    const swim = oldLog('sport_swimming', THU, 60, 7);
+    expect(sportLogDays([swim], new Map(counting().map((t) => [t.id, t])), FRI).sessions).toEqual([]);
+    expect(validateWeeks(input([swim])).filter((f) => f.rule === 'LEG-SPACING')).toEqual([]);
+  });
+
+  it('een eigen sport telt zoals een nieuw log van die sport; met Negeren niets', () => {
+    const old = oldLog('sport_custom_tennis', THU, 90, 7);
+    const fresh: SessionLog = { ...old, customSport: 'custom_tennis' };
+    const withTennis = counting(tennis);
+    expect(validateWeeks(input([old], { templates: withTennis }))).toEqual(validateWeeks(input([fresh], { templates: withTennis })));
+    expect(weekConcerns(input([old], { templates: withTennis }), MON)).toEqual(weekConcerns(input([fresh], { templates: withTennis }), MON));
+    const padelOff = withCountingSports(templates, { sportHandling: { padel: { role: 'off' } } });
+    expect(validateWeeks(input([oldLog('sport_padel', THU, 90, 7)], { templates: padelOff })).filter((f) => f.rule === 'LEG-SPACING')).toEqual([]);
+  });
+
+  it('een gewoon log met een ander templateId blijft zoals het was', () => {
+    const run = oldLog('tpl_easy_run', THU, 40, 4);
+    const byId = new Map(counting().map((t) => [t.id, t]));
+    expect(sportLogDays([run], byId, FRI).sessions).toEqual([]);
+  });
+});

@@ -23,6 +23,7 @@ import { FATIGUE_THRESHOLDS } from './legFatigue';
 import { leaveDays, lightDays } from './leave';
 import { crowdsOwnNext } from './leaveSpacing';
 import { templateSport } from './sports';
+import { sportOfLog } from './sportOfLog';
 import { hasRole, idHasRole, idIsTestOrRace, isTestOrRace } from './templateRoles';
 
 // --- who may touch a session ------------------------------------------------------
@@ -416,7 +417,7 @@ function lastHeavyBefore(test: PlannedSession, near: PlannedSession[], input: Ch
     .filter((o) => o.scheduledDate >= input.today || logged.has(o.id) || isSportLogSession(o.id))
     .map((o) => ({ date: o.scheduledDate, templateId: o.templateId, session: o }));
   const fromLogs = input.logs
-    .filter((l) => (!l.plannedSessionId || !sessionIds.has(l.plannedSessionId)) && !l.countedSport && tooCloseBeforeTest(l.completedDate, test.scheduledDate) && heavy(l.templateId))
+    .filter((l) => (!l.plannedSessionId || !sessionIds.has(l.plannedSessionId)) && !sportOfLog(l).countedSport && tooCloseBeforeTest(l.completedDate, test.scheduledDate) && heavy(l.templateId))
     .map((l) => ({ date: l.completedDate, templateId: l.templateId, session: undefined }));
   return [...fromPlan, ...fromLogs].sort((a, b) => b.date.localeCompare(a.date) || Number(!a.session) - Number(!b.session))[0];
 }
