@@ -108,6 +108,7 @@ const everything: AppSettings = {
   resumeMinutes: 0,
   watchRemoveDone: false,
   watchPlaceWorkout: false,
+  watchWalkBpm: false,
   showWatchStatus: false,
   showWatchStatusOnWeek: false,
   watchNamePrefix: 'none',

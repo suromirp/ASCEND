@@ -13,6 +13,7 @@
 // Zoeken gebeurt bij het openen (vandaag en morgen, instelling Lus zoeken) of na een tik, en stopt
 // zodra je van Buiten weggaat of het scherm sluit. Plant niets.
 
+import { walkHrFromSettings } from '../engine/walkHeartRate';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PlannedSession, SessionTemplate } from '../models/training';
@@ -118,7 +119,7 @@ export function TrainingBriefing({
   // Het plan zoals het naar je horloge gaat; de stappen op het scherm volgen de gekozen manier (`plan` hieronder).
   const workout = buildWorkoutPlan(template, date, program);
   // Het blad Je horloge: met de StairMaster gekozen de wandelworkout, met de stapnamen van de manier.
-  const watchManual = watchManualFor(template, workout, stored, settings.watchPlaceWorkout);
+  const watchManual = watchManualFor(template, workout, stored, settings.watchPlaceWorkout, walkHrFromSettings(settings));
   const watchView = useWatchSheet({ template, garmin: watchManual, session, hasZonesNote: !!guide?.garminNote });
   const input = useBriefingInput({ template, session, date, program, storedPlace: stored });
   // Met het weer van huis; de plek van Start bij is pas bekend na de regie van de route hieronder.

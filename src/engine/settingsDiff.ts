@@ -403,6 +403,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   // Koppelingen
   flag('horloge-gedaan-weghalen', 'Gedane trainingen weghalen', 'koppelingen', 'watchRemoveDone'),
   flag('horloge-eigen-workout', 'Eigen workout bij een andere manier', 'koppelingen', 'watchPlaceWorkout'),
+  flag('horloge-wandel-hartslag', 'Hartslag bij wandelen', 'koppelingen', 'watchWalkBpm'),
   {
     id: 'horloge-status', title: 'Status van het versturen', page: 'koppelingen',
     differs: (s) => s.showWatchStatus === false || s.showWatchStatusOnWeek === false,

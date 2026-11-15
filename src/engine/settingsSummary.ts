@@ -1101,6 +1101,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveCalmRun({ calmRun: s.watchCalmRun }) };
     case 'horloge-eigen-workout':
       return { checked: s.watchPlaceWorkout !== false };
+    case 'horloge-wandel-hartslag':
+      return { checked: s.watchWalkBpm !== false };
     case 'horloge-gedaan-weghalen':
       return { checked: s.watchRemoveDone !== false };
     case 'horloge-status':
