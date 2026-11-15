@@ -46,3 +46,7 @@ Niets. Het vult `2026-11-12-stairmaster-horloge.md` aan: daar stonden zonenamen 
 ## Terugdraaien
 
 De instelling Hartslag bij wandelen uitzetten. In de code: `walkHrFromSettings` in `src/engine/walkHeartRate.ts` altijd `undefined` laten geven.
+
+## Aanvulling na de doorloop (coördinator, 15 november)
+
+Bij alleen korte stevige blokken (8 keer 1 minuut traplopen) heeft een blok geen eigen slagen. Dan zei de regel "Hartslag onder 130 bpm." en las hij als een plafond voor de hele training. Nu zegt hij in dat geval "Tussen de blokken onder 130 bpm." Met een stevig blok van minstens twee minuten blijft de regel zoals hierboven.

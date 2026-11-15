@@ -39,7 +39,7 @@ describe('de slagen uit je hardloopzones', () => {
   });
   it('een stevig blok van minstens twee minuten krijgt van tot; korter niet (de hartslag loopt achter)', () => {
     expect(walkBpm(planOf([step('work', 4, 180), step('recover', 2, 120)]), HR)).toEqual({ top: 151, hard: [163, 187] });
-    expect(walkBpm(planOf([step('work', 4, 60), step('recover', 2, 120)]), HR)).toEqual({ top: 151 });
+    expect(walkBpm(planOf([step('work', 4, 60), step('recover', 2, 120)]), HR)).toEqual({ top: 151, shortHard: true });
     expect(walkBpm(planOf([step('work', 3, 300)]), HR)).toEqual({ hard: [151, 163] });
   });
   it('zonder drempel met een maximale hartslag: de zones op maximale hartslag', () => {
@@ -55,6 +55,7 @@ describe('de slagen uit je hardloopzones', () => {
   it('de tekst: droog, zonder gedachtestreepje en zonder ASCEND', () => {
     expect(walkBpmText({ top: 151 })).toBe('Hartslag onder 151 bpm.');
     expect(walkBpmText({ top: 151, hard: [163, 187] })).toBe('Hartslag onder 151 bpm. Stevige blokken 163 tot 187 bpm.');
+    expect(walkBpmText({ top: 138, shortHard: true })).toBe('Tussen de blokken onder 138 bpm.');
     expect(walkBpmText({ hard: [151, 163] })).toBe('Hartslag 151 tot 163 bpm.');
     expect(walkBpmBriefing({ top: 151 })).toBe('Hartslag onder 151 bpm, uit je hardloopzones.');
     for (const t of [walkBpmText({ top: 151, hard: [163, 187] }), walkBpmBriefing({ top: 151, hard: [163, 187] })]) expect(t).not.toMatch(/[\u2013\u2014]|ASCEND/);
@@ -71,7 +72,7 @@ describe('de wandelworkout naar je horloge', () => {
   it('de StairMaster: de bpm boven de stappen, geen zone op een stap (het herstel is zone 1, dus tot 138)', () => {
     const w = buildWatchWorkout(session('tpl_hill_intervals'), HILLS, program, PACES, { places: STAIR, walkHr: HR })!;
     expect(w.type).toBe('Walk');
-    expect(w.description).toContain('Traplopen, StairMaster. Op gevoel en hartslag, geen tempo. De stevige blokken: RPE 8-9. Hartslag onder 138 bpm.');
+    expect(w.description).toContain('Traplopen, StairMaster. Op gevoel en hartslag, geen tempo. De stevige blokken: RPE 8-9. Tussen de blokken onder 138 bpm.');
     expect(w.description).not.toMatch(/\bHR\b|LTHR|Pace/);
   });
   it('elke wandeltraining en de StairMaster: nooit een zone, en met een hartslag een bpm-regel', () => {
@@ -84,7 +85,7 @@ describe('de wandelworkout naar je horloge', () => {
           if (!w || (w.type !== 'Walk' && w.type !== 'Hike')) continue;
           walking++;
           expect(w.description, `${t.id}`).not.toMatch(/\bHR\b|LTHR/);
-          expect(w.description, `${t.id}`).toMatch(/Hartslag (onder )?\d+/);
+          expect(w.description, `${t.id}`).toMatch(/(Hartslag|Tussen de blokken) (onder )?\d+/);
         }
       }
     }
@@ -114,7 +115,7 @@ describe('de wandelworkout naar je horloge', () => {
   });
   it('het blad Je horloge zegt dezelfde bpm', () => {
     const plan = buildWorkoutPlan(HILLS, today, program);
-    expect(watchManualFor(HILLS, plan, 'stairmaster_intervals', undefined, HR)?.note).toBe('Op gevoel en hartslag, geen tempo. De stevige blokken: RPE 8-9. Hartslag onder 138 bpm.');
+    expect(watchManualFor(HILLS, plan, 'stairmaster_intervals', undefined, HR)?.note).toBe('Op gevoel en hartslag, geen tempo. De stevige blokken: RPE 8-9. Tussen de blokken onder 138 bpm.');
     expect(watchManualFor(HILLS, plan, 'stairmaster_intervals')?.note).toBe('Op gevoel en hartslag, geen tempo. De stevige blokken: RPE 8-9.');
     const ruck = tpl('tpl_ruck_walk');
     expect(watchManualFor(ruck, buildWorkoutPlan(ruck, today, program), undefined, undefined, HR)?.note).toBe('Hartslag onder 151 bpm.');
@@ -142,7 +143,7 @@ describe('de Briefing zegt welke bpm', () => {
   const row = (template: SessionTemplate, over: Partial<BriefingInput> = {}) => briefing(input(template, over))!.rows.find((r) => r.id === 'watch')!;
 
   it('de StairMaster gekozen: de regel van het horloge met de bpm erachter', () => {
-    expect(row(HILLS, { storedPlace: 'stairmaster_intervals', walkHr: HR, watchStatus: { kind: 'sent', wants: 'Walk', wrote: 'Walk' } }).line).toBe('Er staat een wandelworkout op. Start hem bij Wandelen. Hartslag onder 138 bpm, uit je hardloopzones.');
+    expect(row(HILLS, { storedPlace: 'stairmaster_intervals', walkHr: HR, watchStatus: { kind: 'sent', wants: 'Walk', wrote: 'Walk' } }).line).toBe('Er staat een wandelworkout op. Start hem bij Wandelen. Tussen de blokken onder 138 bpm, uit je hardloopzones.');
   });
   it('een wandeltraining: ook de bpm', () => {
     expect(row(tpl('tpl_ruck_walk'), { walkHr: HR, watchStatus: { kind: 'pending' } }).line).toContain('Hartslag onder 151 bpm, uit je hardloopzones.');
