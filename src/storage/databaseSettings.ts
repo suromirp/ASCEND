@@ -286,6 +286,13 @@ export interface AppSettings {
   // De beginnersstart zonder doel (engine/beginnerStart.ts): 'auto' (advies, uit je logs), 'ja' of
   // 'nee'. Absent = auto. Optional and additive; cleaned on import (migrations.ts#migrateWaveSettings).
   beginnerStart?: 'auto' | 'ja' | 'nee';
+  // Krachttraining (engine/strengthTraining.ts): absent = aan, het advies; `false` = geen krachttraining in je
+  // planning. Alleen met Akkoord bewaard. Optional and additive; cleaned on import (backupClean.ts).
+  strengthTraining?: false;
+  // Wat je bij de start koos voor een instelling met een advies (engine/firstPlan.ts): zolang de instelling
+  // daarop staat is het jouw keuze, geen afwijking van het advies (engine/settingsDiff.ts#fromStart, backlog Q).
+  // Een nieuwe start vervangt het. Optional and additive; cleaned on import (migrationsPlanning.ts#migrateStartChoices).
+  startChoices?: { beginnerStart?: 'ja' | 'nee' };
   // De instelling Golven zonder doel (engine/waves.ts#resolveWaveSettings): de lengte (3, 4 of 6
   // weken; absent = 4) en of de laatste week lichter is (absent = ja). Optional and additive.
   waves?: { length?: 3 | 6; lightWeek?: false; review?: false; weeksForStep?: number };

@@ -424,8 +424,10 @@ export async function applyHorizonPlanNow(plan: HorizonPlan, deps: HorizonDeps =
     }
     // The registers follow the stored settings again, now with the change.
     if (deps.prime) await deps.prime();
-    // A direction changes the program itself (Program.direction, the waves), also when no row moves.
-    if (diff.items.length > 0 || input.startItems?.length || input.program || input.trigger === 'direction_changed' || input.trigger === 'wave_review') {
+    // A direction changes the program itself (Program.direction, the waves), also when no row moves. So does a
+    // setting that only changes lengths through the phases (the beginnersstart, engine/beginnerStart.ts): the
+    // preview saw the new phases, so the run lays them out now and not at the next opening (Q, 15 november).
+    if (diff.items.length > 0 || plan.lengths.length > 0 || input.startItems?.length || input.program || input.trigger === 'direction_changed' || input.trigger === 'wave_review') {
       for (let i = 0; i < ROUNDS; i++) {
         const r = await sync({ releaseAnchors: true });
         if (r.added + r.swapped + r.removed === 0) break;

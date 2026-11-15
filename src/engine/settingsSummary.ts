@@ -29,7 +29,8 @@ import { resolveMapGround } from './routeMap';
 import { resolveRouteSearch } from './routeSearchSetting';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
-import { countDifferences } from './settingsDiff';
+import { ADVICE_SPECS, countDifferences, fromStart } from './settingsDiff';
+import { strengthTrainingOn } from './strengthTraining';
 import { shelterShort, SHELTER_ADVICE, type TrekShelter } from './trekShelter';
 import { resolveOverviews } from './overviewSettings';
 import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
@@ -806,8 +807,12 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       const w = resolveWaveSettings(s.waves);
       return w.review ? { value: 'Aan', sub: `Stap omhoog bij ${w.weeksForStep} van ${w.length} weken` } : { value: 'Uit', dim: true };
     }
+    case 'krachttraining':
+      // Uit is een keuze met een waarschuwing (engine/strengthTraining.ts): zeg wat je week dan heeft.
+      return strengthTrainingOn(s) ? { checked: true } : { checked: false, sub: 'Alleen lopen en rust' };
     case 'beginnersstart':
-      return { value: choiceShort('beginnersstart', parseBeginnerStart(s.beginnerStart)) };
+      // Je antwoord bij de start is jouw keuze, geen afwijking van het advies (engine/settingsDiff.ts#fromStart).
+      return { value: choiceShort('beginnersstart', parseBeginnerStart(s.beginnerStart)), ...(fromStart(s, 'beginnerStart') ? { sub: 'Je antwoord bij de start' } : {}) };
     case 'richting': {
       const w = settingBudget(s);
       return w.chosen ? { value: DIRECTIONS[w.id].label } : { value: 'Nog niet gekozen', dim: true, sub: 'Advies: Fit blijven' };
@@ -815,7 +820,9 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'weekbudget': {
       const w = settingBudget(s);
       // De waarde blijft kort (met de InfoButton past ze op 360 px); de kracht staat op de regel eronder.
-      return { value: w.id === 'improve' ? 'Eigen weken' : `${w.budget.minutes} min`, sub: `${w.budget.strength}\u00d7 kracht, ${w.chosen ? DIRECTIONS[w.id].label : 'advies Fit blijven'}` };
+      // Met krachttraining uit telt het budget geen kracht (engine/strengthTraining.ts).
+      const strength = strengthTrainingOn(s) ? `${w.budget.strength}\u00d7 kracht` : 'Zonder kracht';
+      return { value: w.id === 'improve' ? 'Eigen weken' : `${w.budget.minutes} min`, sub: `${strength}, ${w.chosen ? DIRECTIONS[w.id].label : 'advies Fit blijven'}` };
     }
     case 'klaar-weging':
       return { value: choiceShort('klaarWeging', resolveReadinessWeighting(s.readinessWeighting)) };
@@ -1307,6 +1314,17 @@ export function searchValue(rowId: string, f: SettingsFacts): { text: string; di
   const r = rowSummary(rowId, f);
   if (r.checked !== undefined) return { text: r.checked ? 'Aan' : 'Uit', dim: !r.checked };
   return { text: r.value ?? '', dim: !!r.dim };
+}
+
+// De waarde bij een zoekresultaat: altijd die van de instelling zelf, nooit die van de rij waarin haar blad
+// opent (Lookout 14 en 15 november: "Slapen onderweg" toonde "Geen andere" van Tochten, Kledingadvies
+// "10 van 11 aan"). Eerst de eigen samenvatting, dan de waarde uit Aangepaste instellingen; heeft de instelling
+// geen eigen waarde, dan geen waarde.
+export function searchResultValue(settingId: string, f: SettingsFacts): { text: string; dim: boolean } {
+  const own = searchValue(settingId, f);
+  if (own.text) return own;
+  const spec = ADVICE_SPECS.find((a) => a.id === settingId);
+  return spec ? { text: spec.value(f.settings), dim: false } : own;
 }
 
 

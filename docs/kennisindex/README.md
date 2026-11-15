@@ -8,7 +8,7 @@ De bron is `docs/kennisindex/bronnen.json`: per document het onderwerp, de kern 
 "Vervangt" van een besluit komen uit het besluit zelf. Een nieuw document in `docs/` krijgt een regel in
 `bronnen.json`, daarna `npm run kennisindex`; de test `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 524 documenten: 393 gelden, 2 vervangen, 3 verouderd, 126 achtergrond.
+Stand van de 525 documenten: 394 gelden, 2 vervangen, 3 verouderd, 126 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; achtergrond is onderzoek, een ontwerp of een verslag waar een besluit
@@ -44,7 +44,7 @@ op steunt; vervangen en verouderd staan onderaan elk onderwerp en lees je alleen
 
 - Werkbriefje: [werkbriefjes/planning.md](../werkbriefjes/planning.md)
 - [architectuur/planning.md](../architectuur/planning.md): Het lange verhaal bij planning: hoofddoel en rollen, scheduler, wie een sessie mag aanraken, labels, eerst vragen, ziek, vrij, tochten en de rugzakladder.
-- Alles over dit onderwerp: [planning.md](planning.md) (68 besluiten die gelden, 27 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [planning.md](planning.md) (69 besluiten die gelden, 27 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Week
 
@@ -70,7 +70,7 @@ op steunt; vervangen en verouderd staan onderaan elk onderwerp en lees je alleen
 - [architectuur/bediening-en-beweging.md](../architectuur/bediening-en-beweging.md): Het lange verhaal bij bediening: terugknop, scrollen, hervatten en de ontwerpregels voor logo, tabbalk, lucht, instellingen en overgangen.
 - [architectuur/ontwerp-en-tokens.md](../architectuur/ontwerp-en-tokens.md): Het volledige ontwerp: Zee en berg, knoppen en tikdoelen, stem, beweging en alle tokens, woordelijk verhuisd uit CLAUDE.md.
 - [visie/stemgids-concept.md](../visie/stemgids-concept.md): De stemgids: de regels voor alle teksten van de app, goedgekeurd op 9 november 2026 en vastgelegd in `docs/beslissingen/2026-11-09-stem-van-ascend.md`.
-- Alles over dit onderwerp: [bediening-en-beweging.md](bediening-en-beweging.md) (51 besluiten die gelden, 22 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
+- Alles over dit onderwerp: [bediening-en-beweging.md](bediening-en-beweging.md) (52 besluiten die gelden, 22 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
 
 ## Werkwijze
 

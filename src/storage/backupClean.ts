@@ -15,7 +15,7 @@ import { cleanMorningNotice } from '../engine/morningNotice';
 import { cleanWeekNoticeTime } from '../engine/deviceNotices';
 import { cleanEveningTime } from '../engine/eveningBefore';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateSportCounting, migrateKindAmount, migrateCustomSports, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateTestJudgments, migrateZoneAnswers, migrateWeeklyHealthCheck, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings } from './migrations';
+import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateStartChoices, migrateSportHandling, migrateSportCounting, migrateKindAmount, migrateCustomSports, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateTestJudgments, migrateZoneAnswers, migrateWeeklyHealthCheck, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings } from './migrations';
 import { normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { validCatchUp } from '../engine/catchUp';
@@ -484,6 +484,18 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     const clean = migrateSportCounting(s.sportCounting);
     delete s.sportCounting;
     if (clean.value) s.sportCounting = clean.value;
+    skipped.n += clean.skipped;
+  }
+  // Krachttraining: only `false` (off) is stored; anything else is the advice (on).
+  if ('strengthTraining' in s && s.strengthTraining !== false) {
+    delete s.strengthTraining;
+    skipped.n++;
+  }
+  // The answers from the start that set a setting with an advice: known keys and values only.
+  if ('startChoices' in s) {
+    const clean = migrateStartChoices(s.startChoices);
+    delete s.startChoices;
+    if (clean.value) s.startChoices = clean.value;
     skipped.n += clean.skipped;
   }
   // Zonder doel: the choices around waves; known values stay.
