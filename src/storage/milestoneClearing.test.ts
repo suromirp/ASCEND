@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { wipeAllData, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, SessionLogsRepo } from './database';
-import { recordClearedMilestones } from './milestoneClearing';
+import { wipeAllData, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, SessionLogsRepo, milestoneProgressId } from './database';
+import { recordClearedMilestones, recordClearedMilestonesDetailed } from './milestoneClearing';
 import type { SessionLog } from '../models/training';
 
 const goal = {
@@ -50,5 +50,36 @@ describe('recordClearedMilestones', () => {
     await save(log('a', '2026-10-20', 6));
     expect(await save(log('b', '2026-10-21', 11))).toBe('Tien kilometer');
     expect((await GoalMilestoneProgressRepo.getAll()).map((r) => r.milestoneId).sort()).toEqual(['m1', 'm2']);
+  });
+
+  it('twee schrijvers tegelijk geven één regel en één keer een titel (vast id)', async () => {
+    const a = log('a', '2026-10-20', 6);
+    await SessionLogsRepo.put(a);
+    // Two writers for the same log (vanzelf afvinken and a save on a screen) read the
+    // ladder before either wrote: the second must write nothing.
+    const titles = await Promise.all([recordClearedMilestonesDetailed(a), recordClearedMilestonesDetailed(a)]);
+    const rows = await GoalMilestoneProgressRepo.getAll();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].id).toBe(milestoneProgressId('g1', 'm1'));
+    expect(titles.filter((t) => t.title === 'Vijf kilometer')).toHaveLength(1);
+    // Only the writer that wrote the line names it (watchAlign takes exactly those away again).
+    expect(titles.flatMap((t) => t.progressIds)).toEqual([rows[0].id]);
+  });
+
+  it('schrijft geen tweede regel naast een oude regel met een ander id', async () => {
+    await GoalMilestoneProgressRepo.put({ id: 'progress_oud', goalId: 'g1', milestoneId: 'm1', clearedDate: '2026-10-01' });
+    expect(await GoalMilestoneProgressRepo.addOnce({ id: milestoneProgressId('g1', 'm1'), goalId: 'g1', milestoneId: 'm1', clearedDate: '2026-10-20' })).toBe(false);
+    expect(await GoalMilestoneProgressRepo.getAll()).toEqual([{ id: 'progress_oud', goalId: 'g1', milestoneId: 'm1', clearedDate: '2026-10-01' }]);
+  });
+
+  it('deleteIfFromLog wist alleen een regel van dat log, nooit een met de hand of van een ander log', async () => {
+    const id = milestoneProgressId('g1', 'm1');
+    await GoalMilestoneProgressRepo.put({ id, goalId: 'g1', milestoneId: 'm1', clearedDate: '2026-10-01' });
+    await GoalMilestoneProgressRepo.put({ id: 'p2', goalId: 'g1', milestoneId: 'm2', clearedDate: '2026-10-02', sourceSessionLogId: 'a' });
+    expect(await GoalMilestoneProgressRepo.deleteIfFromLog(id, 'a')).toBe(false);
+    expect(await GoalMilestoneProgressRepo.deleteIfFromLog('p2', 'b')).toBe(false);
+    expect(await GoalMilestoneProgressRepo.deleteIfFromLog('p2', 'a')).toBe(true);
+    expect(await GoalMilestoneProgressRepo.deleteIfFromLog('weg', 'a')).toBe(false);
+    expect((await GoalMilestoneProgressRepo.getAll()).map((r) => r.id)).toEqual([id]);
   });
 });

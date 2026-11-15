@@ -4171,6 +4171,14 @@
    ],
    "kern": "Werkbriefje: de Week-tab met waarschuwingen, slepen, ruilen, verplaatsen van een gemiste training, vakanties en de weekterugblik.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-import-alleen-nieuw.md": {
+   "onderwerpen": [
+    "historie-en-logs",
+    "koppelingen-en-data"
+   ],
+   "kern": "Een import schrijft alleen nieuwe of gewijzigde rijen; geschiedenis alleen als nieuwe rij in dezelfde transactie, een mijlpaal één regel met een vast id, alles wissen in één transactie.",
+   "stand": "geldt"
   }
  }
 }

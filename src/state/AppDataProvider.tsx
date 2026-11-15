@@ -88,6 +88,7 @@ import { useAdviceAndWeek } from './adviceAndWeek';
 import { snapshotWritten } from '../storage/undoPlanChange';
 import { refreshWritten } from '../engine/undoGuard';
 import { onHealthWeightChange } from '../storage/healthConnect';
+import { createLatestRunner } from './latestGate';
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -130,6 +131,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // Volgnummer van de laatste rememberMissed en hoeveel schrijfacties nog lopen: een lezing in loadState die
   // begon voor een antwoord, of terwijl het nog geschreven wordt, mag dat antwoord niet overschrijven.
   const missedSeq = useRef(0);
+  // Volgnummer van loadState: alleen de laatst gestarte lezing zet haar uitkomst neer.
+  const loadRunner = useRef(createLatestRunner());
   const missedWriting = useRef(0);
   const [debriefLogId, setDebriefLogId] = useState<string | null>(null);
   const [storageNotice, setStorageNotice] = useState<string | null>(null);
@@ -147,7 +150,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // reload from storage keeps a stale window from writing back old state
   // over a change made elsewhere.
   // Reads everything from storage and shows it. No planning sync here.
-  const loadState = useCallback(async () => {
+  // Only the newest read shows (state/latestGate.ts): an older one that finishes later stops,
+  // and returns once the newest has shown its result.
+  const loadState = useCallback(() => loadRunner.current.run(async (stillLatest) => {
     const missedSeqAtRead = missedSeq.current;
     const [programs, tpls, planned, storedLogs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs, proposals, responses, missedRaw] = await Promise.all([
       ProgramsRepo.getAll(),
@@ -168,6 +173,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses'),
       MetaRepo.get<unknown>(MISSED_MEMORY_KEY).catch(() => undefined),
     ]);
+    if (!stillLatest()) return;
     // A strength workout that stayed open for days reads as its estimate (engine/logDuration.ts).
     const logs = withPlausibleDurations(storedLogs, tpls);
     setProgram(programs[0] ?? null);
@@ -175,6 +181,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // Een Liever niet op TARGET-TIME met het oude id gaat eenmalig over op het id met de doeltijd.
     const carried = carryTargetTimeAnswers(responses ?? {}, goals.map((g) => ({ id: g.id, updatedAt: g.updatedAt, targetMinutes: goalDetailsOf(g).targetMinutes })));
     if (carried) await MetaRepo.set('adviceResponses', carried);
+    if (!stillLatest()) return;
     setAdviceResponses(carried ?? responses ?? {});
     if (missedSeq.current === missedSeqAtRead && missedWriting.current === 0) setMissedMemory(resolveMissedMemory(missedRaw));
     setTemplates(tpls);
@@ -230,7 +237,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         return ids.length === 0 ? prev : { ...prev, written: refreshWritten(prev.written, syncTouched, ids) };
       });
     }
-  }, []);
+  }), []);
 
   // What you change shows at once; the planning sync runs after it, in its own
   // queue, and what it changed is read once more. A sync that hangs can never

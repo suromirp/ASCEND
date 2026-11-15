@@ -11,7 +11,13 @@ import { BackupMessageError } from './backupMessage';
 import { clearForgeSessions } from '../utils/forgeSessionStore';
 import { buildBackupEnvelope } from './backupExport';
 import { normalizeBackupToCurrentModel } from './backupNormalize';
-import { defaultActionsForMode, type ResolvedListCategory } from './backupMerge';
+import { defaultActionsForMode, mergeSettingsHistory, type ResolvedListCategory } from './backupMerge';
+import { DEFAULT_SETTINGS, type AppSettings } from './databaseSettings';
+import { SKILL_GOALS_KEY } from './skillGoals';
+import { SAVED_ROUTES_KEY } from './places';
+import { readSavedRouteList, routesOfPlaces } from './migrationsPlaces';
+import { readSkillGoalStore } from './migrationsSkill';
+import { mergeSkillStores } from '../engine/skillGoal';
 import { loadCurrentData, computeDiff } from './backupPreview';
 
 // --- plan & apply ---------------------------------------------------------
@@ -83,8 +89,18 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   const { resolved, effective } = computeDiff(current, backup, plan.categorySelections, plan.planPolicy);
 
   const touches = (a: CategoryAction) => a !== 'keep_current' && a !== 'ignore';
-  const listWrite = <T,>(action: CategoryAction, r: ResolvedListCategory<T> | undefined) =>
-    r && touches(action) ? { clear: action === 'replace', puts: r.final } : undefined;
+  // A replace clears the store and writes the whole list; a merge only writes the rows
+  // that are new or that the file changes, never the device's own rows back from the
+  // copy read above (something may have changed them since).
+  const listWrite = <T,>(action: CategoryAction, r: ResolvedListCategory<T> | undefined) => {
+    if (!r || !touches(action)) return undefined;
+    if (action === 'replace') return { clear: true, puts: r.final };
+    return r.writes.length > 0 ? { clear: false, puts: r.writes } : undefined;
+  };
+  // History only grows: only rows that are new, and only when the store still lacks
+  // them at the moment of writing (databaseBackupWrites.ts, onlyNew).
+  const historyWrite = <T,>(r: ResolvedListCategory<T> | undefined) =>
+    r && r.writes.length > 0 ? { clear: false, onlyNew: true, puts: r.writes } : undefined;
 
   const programAction = effective.program_and_templates;
   const historyAction = effective.training_history;
@@ -115,6 +131,27 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
     morningPuts = filterRecovery(backup.mornings.filter((m) => !have.has(m.id)), (await getWatchState()).use);
   }
 
+  // What merges with the device (the history lists in settings, the skill goals, the routes
+  // that stay with the places) is merged again with what is stored at the moment of writing,
+  // inside the transaction: a weighing, an illness or a route saved between the preview and
+  // Akkoord is not lost. A plain value from the file is written as it is.
+  const settingsWrite = resolved.settings && effective.app_settings === 'replace' && backup.settings
+    ? (stored: unknown): AppSettings => {
+      const now: AppSettings = { ...DEFAULT_SETTINGS, ...(stored as Partial<AppSettings> | undefined) };
+      return { ...now, ...mergeSettingsHistory(now, backup.settings) };
+    }
+    : resolved.settings;
+  const metaWrites: Record<string, unknown> = { ...resolved.meta, ...restoredMeta };
+  if (SKILL_GOALS_KEY in metaWrites && backup.skillGoals) {
+    const incoming = backup.skillGoals;
+    const replace = goalsAction === 'replace';
+    metaWrites[SKILL_GOALS_KEY] = (stored: unknown) => mergeSkillStores(readSkillGoalStore(stored), incoming, replace);
+  }
+  if (SAVED_ROUTES_KEY in metaWrites && backup.places && !backup.savedRoutes) {
+    const places = backup.places;
+    metaWrites[SAVED_ROUTES_KEY] = (stored: unknown) => routesOfPlaces(readSavedRouteList(stored), places);
+  }
+
   try {
     await applyBackupWrites({
       programs: touches(programAction) && resolved.program ? { clear: true, puts: [resolved.program] } : undefined,
@@ -122,18 +159,18 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
       strengthProgramStrategies: listWrite(programAction, resolved.strengthProgramStrategies),
       plannedSessions: touches(effective.planned_schedule) ? { clear: true, puts: resolved.plannedSessions.final } : undefined,
       // Never cleared: logs, milestone progress and audit trails only grow.
-      sessionLogs: touches(historyAction) ? { clear: false, puts: resolved.sessionLogs.final } : undefined,
-      planChangeProposals: touches(historyAction) && resolved.planChangeProposals ? { clear: false, puts: resolved.planChangeProposals.final } : undefined,
-      strengthProgramRecommendations: touches(historyAction) && resolved.strengthProgramRecommendations ? { clear: false, puts: resolved.strengthProgramRecommendations.final } : undefined,
-      activityStreams: streamPuts.length > 0 ? { clear: false, puts: streamPuts } : undefined,
-      recoveryMetrics: morningPuts.length > 0 ? { clear: false, puts: morningPuts } : undefined,
+      sessionLogs: touches(historyAction) ? historyWrite(resolved.sessionLogs) : undefined,
+      planChangeProposals: touches(historyAction) ? historyWrite(resolved.planChangeProposals) : undefined,
+      strengthProgramRecommendations: touches(historyAction) ? historyWrite(resolved.strengthProgramRecommendations) : undefined,
+      activityStreams: streamPuts.length > 0 ? { clear: false, onlyNew: true, puts: streamPuts } : undefined,
+      recoveryMetrics: morningPuts.length > 0 ? { clear: false, onlyNew: true, puts: morningPuts } : undefined,
       trainingGoals: listWrite(goalsAction, resolved.trainingGoals),
       goalMilestones: listWrite(goalsAction, resolved.goalMilestones),
-      goalMilestoneProgress: touches(goalsAction) ? { clear: false, puts: resolved.goalMilestoneProgress.final } : undefined,
+      goalMilestoneProgress: touches(goalsAction) ? historyWrite(resolved.goalMilestoneProgress) : undefined,
       capabilityEvidence: listWrite(effective.capability_evidence, resolved.capabilityEvidence),
       injuryNotes: listWrite(effective.injuries, resolved.injuryNotes),
-      settings: resolved.settings,
-      meta: Object.keys({ ...resolved.meta, ...restoredMeta }).length > 0 ? { ...resolved.meta, ...restoredMeta } : undefined,
+      settings: settingsWrite,
+      meta: Object.keys(metaWrites).length > 0 ? metaWrites : undefined,
     });
   } catch (err) {
     const detail = err instanceof Error ? ` (${err.message})` : '';

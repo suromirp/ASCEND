@@ -54,6 +54,7 @@ import { getModality } from '../data/modalities';
 import { placeBrief } from '../data/placeBrief';
 import type { HeartRateSettings } from './heartRateZones';
 import { walkBpm, walkBpmText } from './walkHeartRate';
+import { stringHashKey } from '../utils/stringHash';
 
 export const WATCH_EXTERNAL_PREFIX = 'ascend:';
 // intervals.icu sends about the next 7 days to the watch, so that is as far
@@ -279,11 +280,10 @@ function sportOf(template: SessionTemplate): WatchSport | undefined {
   return undefined;
 }
 
-// A small stable hash (djb2): only to see whether something changed.
+// A small stable hash (djb2): only to see whether something changed. The same numbers as
+// before, so a workout already on the watch is not sent again.
 function fingerprintOf(text: string): string {
-  let h = 5381;
-  for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
-  return (h >>> 0).toString(36);
+  return stringHashKey(text, { multiplier: 33, seed: 5381 });
 }
 
 // One planned session as a watch workout, or undefined when it is not sent

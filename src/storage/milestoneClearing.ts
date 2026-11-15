@@ -8,10 +8,9 @@
 // ladder and write it twice. And a milestone that already has a line never
 // gets a second one.
 
-import { GoalMilestoneProgressRepo, GoalMilestonesRepo, SessionLogsRepo, TrainingGoalsRepo } from './database';
+import { GoalMilestoneProgressRepo, GoalMilestonesRepo, SessionLogsRepo, TrainingGoalsRepo, milestoneProgressId } from './database';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
 import type { SessionLog } from '../models/training';
-import { makeId } from '../utils/id';
 
 export interface ClearedMilestones {
   // The title of the milestone this log cleared (the last one when several
@@ -53,16 +52,19 @@ export async function recordClearedMilestonesDetailed(log: SessionLog, previous?
     if (!current || written.has(current.definition.id)) continue;
     if (!requirementAutoSatisfied(current.definition.requirement, [log])) continue;
     if (previous && requirementAutoSatisfied(current.definition.requirement, [previous])) continue;
-    const id = makeId('progress');
-    progressIds.push(id);
-    await GoalMilestoneProgressRepo.put({
+    // A fixed id and a check in the same transaction: a second writer that read the
+    // ladder before this line landed writes nothing (no second line, no second title).
+    const id = milestoneProgressId(goal.id, current.definition.id);
+    written.add(current.definition.id);
+    const added = await GoalMilestoneProgressRepo.addOnce({
       id,
       goalId: goal.id,
       milestoneId: current.definition.id,
       clearedDate: log.completedDate,
       sourceSessionLogId: log.id,
     });
-    written.add(current.definition.id);
+    if (!added) continue;
+    progressIds.push(id);
     clearedTitle = current.definition.title;
   }
   return { title: clearedTitle, progressIds };

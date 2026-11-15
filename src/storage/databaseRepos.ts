@@ -186,7 +186,20 @@ export interface GoalMilestoneProgressRepo {
   getAll(): Promise<GoalMilestoneProgress[]>;
   byGoal(goalId: string): Promise<GoalMilestoneProgress[]>;
   put(progress: GoalMilestoneProgress): Promise<unknown>;
+  // Writes the row only when the milestone has no row yet, looked up in the same
+  // transaction: two writers at once (two logs saved one after the other, a tap on
+  // Behaald) never give a milestone a second line. True when it was written.
+  addOnce(progress: GoalMilestoneProgress): Promise<boolean>;
+  // Removes the line only when that log cleared it (sourceSessionLogId), looked up in the
+  // same transaction. The fixed id belongs to the milestone, not to the log: a line with that
+  // id can be one you made by hand, or one another log wrote. True when it was removed.
+  deleteIfFromLog(id: string, logId: string): Promise<boolean>;
   delete(id: string): Promise<void>;
+}
+
+// The fixed id of the line of a cleared milestone: the same milestone always gets the same id.
+export function milestoneProgressId(goalId: string, milestoneId: string): string {
+  return `progress_${goalId}_${milestoneId}`;
 }
 
 export const GoalMilestoneProgressRepo: GoalMilestoneProgressRepo = {
@@ -196,6 +209,24 @@ export const GoalMilestoneProgressRepo: GoalMilestoneProgressRepo = {
     return db.getAllFromIndex('goalMilestoneProgress', 'by-goal', goalId);
   },
   put: (progress: GoalMilestoneProgress) => put('goalMilestoneProgress', progress),
+  addOnce: async (progress: GoalMilestoneProgress) => {
+    const db = await getDB();
+    const tx = db.transaction('goalMilestoneProgress', 'readwrite');
+    const [sameId, ofGoal] = await Promise.all([tx.store.getKey(progress.id), tx.store.index('by-goal').getAll(progress.goalId)]);
+    const have = sameId !== undefined || ofGoal.some((p) => p.milestoneId === progress.milestoneId);
+    if (!have) await tx.store.put(progress);
+    await tx.done;
+    return !have;
+  },
+  deleteIfFromLog: async (id: string, logId: string) => {
+    const db = await getDB();
+    const tx = db.transaction('goalMilestoneProgress', 'readwrite');
+    const row = await tx.store.get(id);
+    const ours = row?.sourceSessionLogId === logId;
+    if (ours) await tx.store.delete(id);
+    await tx.done;
+    return ours;
+  },
   delete: (id: string) => del('goalMilestoneProgress', id),
 };
 
@@ -230,9 +261,8 @@ export const GoalEngineConfigRepo: GoalEngineConfigRepo = {
     return { ...DEFAULT_GOAL_ENGINE_CONFIG, ...stored };
   },
   set: async (patch: Partial<GoalEngineConfig>) => {
-    const next = { ...(await GoalEngineConfigRepo.get()), ...patch, updatedAt: new Date().toISOString() };
-    await MetaRepo.set('goalEngineConfig', next);
-    return next;
+    const updatedAt = new Date().toISOString();
+    return MetaRepo.update<GoalEngineConfig>('goalEngineConfig', (stored) => ({ ...DEFAULT_GOAL_ENGINE_CONFIG, ...stored, ...patch, updatedAt }));
   },
 };
 
@@ -362,6 +392,16 @@ export const MetaRepo = {
   delete: async (key: string) => {
     const db = await getDB();
     return db.delete('meta', key);
+  },
+  // Read and write in one transaction: two changes at once (a toggle and a sync, two
+  // windows) each build on the other instead of the last one writing back an old copy.
+  // `change` must be synchronous: an await outside the transaction would close it.
+  update: async <T,>(key: string, change: (stored: T | undefined) => T): Promise<T> => {
+    const db = await getDB();
+    const tx = db.transaction('meta', 'readwrite');
+    const next = change((await tx.store.get(key)) as T | undefined);
+    await Promise.all([tx.store.put(next, key), tx.done]);
+    return next;
   },
 };
 

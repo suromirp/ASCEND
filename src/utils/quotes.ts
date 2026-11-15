@@ -1,6 +1,7 @@
 import { QUOTE_LIBRARY, type Quote } from '../data/quoteLibrary';
 import { AUTHOR_WIKIPEDIA } from '../data/quoteAuthors';
 import { QUOTE_NL } from '../data/quoteTranslations';
+import { stringHash } from './stringHash';
 
 // "Victory-tier" — milestones cleared on the Ascent Ladder draw from this
 // narrower, more triumphant slice instead of the full library.
@@ -37,7 +38,7 @@ export function dailyQuote(dateIso: string, language?: 'en' | 'nl'): Quote {
   const base = DAILY_POOL.length > 0 ? DAILY_POOL : QUOTE_LIBRARY;
   const english = language === 'en' ? base.filter(isEnglishQuote) : base;
   const pool = english.length > 0 ? english : base;
-  const hash = Array.from(dateIso).reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 0);
+  const hash = stringHash(dateIso);
   return pool[hash % pool.length];
 }
 

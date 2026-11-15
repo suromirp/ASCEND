@@ -12,7 +12,7 @@ import type { ActivityStreams } from '../models/activityStreams';
 import { BOOT_MIGRATIONS_KEY } from '../engine/bootWatch';
 import type { AppSettings } from './databaseSettings';
 import { getDB } from './databaseSchema';
-import { withDerivedWeek, clearStore } from './databaseRepos';
+import { withDerivedWeek } from './databaseRepos';
 
 // --- atomic multi-store backup writes -----------------------------------
 
@@ -32,6 +32,12 @@ import { withDerivedWeek, clearStore } from './databaseRepos';
 export interface BackupStoreWrite<T> {
   clear: boolean;
   puts: T[];
+  // Only rows whose key the store does not have yet, looked up inside this
+  // transaction: for history (logs, milestone progress, audit trails, series,
+  // mornings), which a backup only ever adds to. What the device wrote since
+  // the preview read it (a trim, a link afterwards, a resolved proposal) is
+  // never overwritten by the copy in the file.
+  onlyNew?: boolean;
 }
 
 export interface BackupWriteSet {
@@ -51,10 +57,16 @@ export interface BackupWriteSet {
   activityStreams?: BackupStoreWrite<ActivityStreams>;
   // The mornings that came with a backup (only those the device does not have yet).
   recoveryMetrics?: BackupStoreWrite<RecoveryMetric>;
-  settings?: AppSettings;
-  // Other meta keys (goalEngineConfig, adviceResponses), written as-is.
+  // A value is written as it is; a function gets what is stored at the moment of writing,
+  // read in this transaction, and returns what to write. An import passes a function for
+  // whatever it merges with the device (the history lists in settings, the skill goals,
+  // routes): something saved between the preview and Akkoord then stays.
+  settings?: AppSettings | MetaChange<AppSettings>;
+  // Other meta keys (goalEngineConfig, adviceResponses), a value or a function as above.
   meta?: Record<string, unknown>;
 }
+
+export type MetaChange<T> = (stored: unknown) => T;
 
 export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
   const db = await getDB();
@@ -70,52 +82,111 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
 
   const tx = db.transaction(storeNames, 'readwrite');
   const ops: Promise<unknown>[] = [];
+  // All or nothing: a put that throws (a value that cannot be stored) must not
+  // leave the writes queued before it to commit on their own.
+  const abort = () => {
+    try {
+      tx.abort();
+    } catch {
+      // Al afgebroken of al klaar.
+    }
+  };
 
-  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes', 'planChangeProposals', 'strengthProgramStrategies', 'strengthProgramRecommendations', 'activityStreams', 'recoveryMetrics'] as const) {
-    const write = writes[key];
-    if (!write) continue;
-    const store = tx.objectStore(key);
-    if (write.clear) ops.push(store.clear());
-    for (const value of write.puts) ops.push(store.put((key === 'plannedSessions' ? withDerivedWeek(value as PlannedSession) : value) as never));
+  try {
+    for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes', 'planChangeProposals', 'strengthProgramStrategies', 'strengthProgramRecommendations', 'activityStreams', 'recoveryMetrics'] as const) {
+      const write = writes[key];
+      if (!write) continue;
+      const store = tx.objectStore(key);
+      if (write.clear) ops.push(store.clear());
+      const keyPath = store.keyPath as string;
+      // Two rows with one key in the same write: with onlyNew both would read "not there yet"
+      // and the last would win; history keeps the first.
+      const seenKeys = new Set<unknown>();
+      for (const raw of write.puts) {
+        if (!write.clear && write.onlyNew) {
+          const k = (raw as unknown as Record<string, unknown>)[keyPath];
+          if (k !== undefined && seenKeys.has(k)) continue;
+          seenKeys.add(k);
+        }
+        const value = (key === 'plannedSessions' ? withDerivedWeek(raw as PlannedSession) : raw) as never;
+        if (!write.clear && write.onlyNew && key === 'goalMilestoneProgress') {
+          // One line per milestone: also not next to a line with another id (storage/milestoneClearing.ts).
+          const row = value as GoalMilestoneProgress;
+          const progress = tx.objectStore('goalMilestoneProgress');
+          ops.push(Promise.all([progress.getKey(row.id), progress.index('by-goal').getAll(row.goalId)])
+            .then(([have, ofGoal]) => (have === undefined && !ofGoal.some((p) => p.milestoneId === row.milestoneId) ? progress.put(row) : undefined)));
+        } else if (!write.clear && write.onlyNew) {
+          const id = (value as Record<string, string>)[keyPath];
+          ops.push(store.getKey(id).then((have) => (have === undefined ? store.put(value) : undefined)));
+        } else {
+          ops.push(store.put(value));
+        }
+      }
+    }
+
+    const metaStore = tx.objectStore('meta');
+    // A function reads the stored value inside this transaction and writes what it returns.
+    const writeMeta = <T,>(key: string, value: T | MetaChange<T>, also?: (written: T) => Promise<unknown> | undefined) => {
+      if (typeof value !== 'function') {
+        ops.push(metaStore.put(value, key));
+        const extra = also?.(value);
+        if (extra) ops.push(extra);
+        return;
+      }
+      ops.push(metaStore.get(key).then((stored) => {
+        const next = (value as MetaChange<T>)(stored);
+        return Promise.all([metaStore.put(next, key), also?.(next)]);
+      }));
+    };
+    if (writes.settings) {
+      // The plan in the backup was laid out for its own rest day: restored
+      // together, that rest day is already applied, so the sync doesn't lay
+      // the week out again (docs/onderzoek/Planning op een lijn.md, conflict 16).
+      writeMeta<AppSettings>('settings', writes.settings, (settings) => (writes.plannedSessions?.clear ? metaStore.put(settings.restDay ?? 1, 'appliedRestDay') : undefined));
+    }
+    for (const [key, value] of Object.entries(writes.meta ?? {})) writeMeta(key, value);
+    ops.push(tx.objectStore('meta').delete(BOOT_MIGRATIONS_KEY));
+  } catch (err) {
+    abort();
+    await Promise.allSettled([...ops, tx.done]);
+    throw err;
   }
 
-  if (writes.settings) {
-    ops.push(tx.objectStore('meta').put(writes.settings, 'settings'));
-    // The plan in the backup was laid out for its own rest day: restored
-    // together, that rest day is already applied, so the sync doesn't lay
-    // the week out again (docs/onderzoek/Planning op een lijn.md, conflict 16).
-    if (writes.plannedSessions?.clear) ops.push(tx.objectStore('meta').put(writes.settings.restDay ?? 1, 'appliedRestDay'));
+  try {
+    await Promise.all([...ops, tx.done]);
+  } catch (err) {
+    abort();
+    await tx.done.catch(() => undefined);
+    throw err;
   }
-  for (const [key, value] of Object.entries(writes.meta ?? {})) {
-    ops.push(tx.objectStore('meta').put(value, key));
-  }
-  ops.push(tx.objectStore('meta').delete(BOOT_MIGRATIONS_KEY));
-
-  await Promise.all([...ops, tx.done]);
 }
 
+// Every store in one transaction: all of it is gone, or (on a failure halfway) none
+// of it. Taken from the database itself, so a new store can never be forgotten here.
+// `meta` is written in the same transaction after the clear (flags for the next start).
+export async function clearAllStores(meta: Record<string, unknown> = {}): Promise<void> {
+  const db = await getDB();
+  const names = [...db.objectStoreNames];
+  const tx = db.transaction(names, 'readwrite');
+  const ops: Promise<unknown>[] = [];
+  try {
+    for (const name of names) ops.push(tx.objectStore(name).clear());
+    for (const [key, value] of Object.entries(meta)) ops.push(tx.objectStore('meta').put(value, key));
+    await Promise.all([...ops, tx.done]);
+  } catch (err) {
+    // A put that cannot be stored must not let the clears commit on their own.
+    try {
+      tx.abort();
+    } catch {
+      // Al afgebroken of al klaar.
+    }
+    await Promise.allSettled([...ops, tx.done]);
+    throw err;
+  }
+}
+
+// Everything, the pre-import copies included: the same wipe as "Alles verwijderen"
+// (databaseSeed.ts#resetToDemoData), without putting the start back.
 export async function wipeAllData(): Promise<void> {
-  await Promise.all([
-    clearStore('programs'),
-    clearStore('sessionTemplates'),
-    clearStore('plannedSessions'),
-    clearStore('sessionLogs'),
-    clearStore('objectives'),
-    clearStore('milestoneProgress'),
-    clearStore('recoveryMetrics'),
-    clearStore('bodyMetrics'),
-    clearStore('nutritionMetrics'),
-    clearStore('injuryNotes'),
-    clearStore('trainingGoals'),
-    clearStore('goalMilestones'),
-    clearStore('goalMilestoneProgress'),
-    clearStore('trainingPrescriptions'),
-    clearStore('capabilityEvidence'),
-    clearStore('planChangeProposals'),
-    clearStore('strengthProgramStrategies'),
-    clearStore('strengthProgramRecommendations'),
-    clearStore('weeklyPrescriptions'),
-    clearStore('activityStreams'),
-    clearStore('meta'),
-  ]);
+  await clearAllStores();
 }

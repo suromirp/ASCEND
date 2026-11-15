@@ -10,18 +10,12 @@ import type { RecoveryMetric } from '../models/metrics';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { derivedFactEntries } from './influence';
 import { isLegHeavyTemplate } from './scheduler';
+import { stringHashKey } from '../utils/stringHash';
 
-// A simple 32 bit hash over strings; enough to tell one content from another.
-function hashOf(parts: Iterable<string | number | undefined>): string {
-  let h = 5381;
-  let n = 0;
-  for (const p of parts) {
-    const text = String(p);
-    for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) | 0;
-    h = ((h * 33) ^ 124) | 0;
-    n++;
-  }
-  return `${n}:${(h >>> 0).toString(36)}`;
+// A simple 32 bit hash over strings; enough to tell one content from another. Only in memory,
+// so it may differ from the xor variant it replaced (utils/stringHash.ts); it is not stored.
+function hashOf(parts: (string | number | undefined)[]): string {
+  return `${parts.length}:${stringHashKey(parts.map((p) => `${String(p)}|`).join(''), { multiplier: 33, seed: 5381 })}`;
 }
 
 export interface FactsCacheInput {

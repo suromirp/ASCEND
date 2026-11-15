@@ -171,7 +171,7 @@ export function computeDiff(
   const goalMilestonesResolved = resolveListCategory(goalsAction, backup.goalMilestones, current.goalMilestones, true);
   // Milestone progress is a record of what was actually cleared — append-
   // only like the logs, so even a goal 'replace' only ever merges it.
-  const goalMilestoneProgressResolved = resolveListCategory(goalsAction === 'replace' ? 'merge' : goalsAction, backup.goalMilestoneProgress, current.goalMilestoneProgress, false);
+  const goalMilestoneProgressResolved = resolveListCategory(goalsAction === 'replace' ? 'merge' : goalsAction, oneLinePerMilestone(backup.goalMilestoneProgress, current.goalMilestoneProgress), current.goalMilestoneProgress, false);
   diffByCategory.push(entry('objectives_and_milestones', [trainingGoalsResolved, goalMilestonesResolved, goalMilestoneProgressResolved]));
 
   // Manual CapabilityEvidence rows are user-authored answers, not
@@ -331,4 +331,20 @@ export async function buildImportPreview(
 export function logsNotInBackup(current: readonly { id: string }[], inBackup: readonly { id: string }[]): number {
   const ids = new Set(inBackup.map((l) => l.id));
   return current.filter((l) => !ids.has(l.id)).length;
+}
+
+// A milestone has one line (storage/milestoneClearing.ts): a line in the file for a milestone
+// the device already has a line for under another id is left out, and of two lines in the file
+// for the same milestone only the first counts. The preview then counts what is written; the
+// store checks again inside the write (databaseBackupWrites.ts).
+export function oneLinePerMilestone(incoming: GoalMilestoneProgress[], current: GoalMilestoneProgress[]): GoalMilestoneProgress[] {
+  const onDevice = new Map(current.map((p) => [`${p.goalId}|${p.milestoneId}`, p.id]));
+  const seen = new Set<string>();
+  return incoming.filter((p) => {
+    const key = `${p.goalId}|${p.milestoneId}`;
+    const mine = onDevice.get(key);
+    if ((mine !== undefined && mine !== p.id) || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
