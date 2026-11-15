@@ -184,7 +184,7 @@ export function buildConsecutiveRestFixProposal(
     changes: items,
     alternatives: [],
     consequences: 'Verwisselt één van de rustdagen met de dichtstbijzijnde andere sessie, verder verandert er niets.',
-    explanation: 'ASCEND controleert je actuele planning op patronen die waarschijnlijk niet bewust zo zijn ingepland.',
+    explanation: 'Je actuele planning wordt gecontroleerd op patronen die waarschijnlijk niet bewust zo zijn ingepland.',
     createdAt: new Date().toISOString(),
   };
 }

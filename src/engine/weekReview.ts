@@ -227,7 +227,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
       // Geen namen: die staan al onder Gemist op de terugblik.
       `${missedNames.length === 1 ? 'Eén training' : `${missedNames.length} trainingen`} gemist. ` +
       (keyMissed
-        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week. Die verplaatst ASCEND naar een vrije dag als dat past. De rest laat je los.`
+        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week. Die gaat naar een vrije dag als dat past. De rest laat je los.`
         : 'Laat los wat je miste. Dubbel doen helpt niet. Volgende week volgt het plan.'),
     );
   }
@@ -238,10 +238,10 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     .map((s) => s.templateId));
   const repeated = [...new Set(missedSessions.map((s) => s.templateId))].find((id) => prevMissed.has(id));
   if (repeated) {
-    advice.push(`${byId.get(repeated)?.name} viel twee weken op rij weg. Past een andere dag beter? Verplaats hem in Week, dan houdt ASCEND er rekening mee.`);
+    advice.push(`${byId.get(repeated)?.name} viel twee weken op rij weg. Past een andere dag beter? Verplaats hem in Week, dan houdt je planning er rekening mee.`);
   }
   if ([...painCount.values()].some((n) => n >= 2) && advice.length < 3) {
-    advice.push('Dezelfde plek deed deze week meer dan eens pijn. Meld het bij Lichaam, dan houdt ASCEND er rekening mee, en bouw volgende week niet verder op.');
+    advice.push('Dezelfde plek deed deze week meer dan eens pijn. Meld het bij Lichaam, dan houdt je planning er rekening mee, en bouw volgende week niet verder op.');
   }
   // The weekly question (OSTRC-style): what the answer means for next week.
   if (weeklyCheck && weeklyCheck.trouble !== 'geen') {
@@ -249,10 +249,10 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     if (weeklyCheck.trouble === 'niet_kunnen' || weeklyCheck.severity === 'ernstig') {
       advice.unshift(`Je kon door klachten${where} niet trainen. Bouw volgende week niet verder op, meld het bij Lichaam en laat het bekijken als het niet binnen 2 tot 3 weken beter wordt.`);
     } else if (weeklyCheck.trouble === 'minder') {
-      advice.unshift(`Klachten${where} hielden je deze week af en toe af. Volgende week houdt ASCEND op die plek de omvang gelijk, zonder extra opbouw.`);
+      advice.unshift(`Klachten${where} hielden je deze week af en toe af. Volgende week blijft de omvang op die plek gelijk, zonder extra opbouw.`);
     } else if (weeklyCheck.severity === 'matig') {
       // Een melding op de kaart "Hoe voelt je lijf?": je kon trainen, de pijn hindert wel.
-      advice.unshift(`Je meldde matige pijn${where}. Volgende week houdt ASCEND op die plek de omvang gelijk, zonder extra opbouw.`);
+      advice.unshift(`Je meldde matige pijn${where}. Volgende week blijft de omvang op die plek gelijk, zonder extra opbouw.`);
     } else {
       advice.push(`Een lichte klacht${where}, zonder dat je minder kon trainen. Let erop; zakt hij niet, meld het dan weer volgende week.`);
     }
@@ -261,7 +261,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   if (heavier >= 2) {
     advice.push('Twee of meer trainingen voelden zwaarder dan gepland. Voelt het volgende week weer zo? Kies de korte versie of houd de minuten gelijk. Slaap en eten kunnen helpen.');
   } else if (lighter >= 2 && advice.length < 3) {
-    advice.push('Een paar trainingen voelden lichter dan gepland. Dat kan een teken zijn dat je sterker wordt. ASCEND bouwt rustig verder.');
+    advice.push('Een paar trainingen voelden lichter dan gepland. Dat kan een teken zijn dat je sterker wordt. De opbouw gaat rustig verder.');
   }
   // De rustweek uit het programma (isRestWeekAt via weekNameAt), niet uit een woord in een notitie.
   if (next?.rest && advice.length < 3) {

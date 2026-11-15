@@ -3,7 +3,7 @@
 // `controleer(k, schermen)`. `k(scherm)` geeft de tekst van een scherm; de functie geeft een lijst
 // met schendingen terug (tekst), leeg als alles klopt.
 //   node scripts/app-kaart/invarianten.mjs [map]    (standaard docs/app-kaart)
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,6 +11,41 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 const lees = (map, scherm) => { const p = join(map, scherm + '.md'); return existsSync(p) ? readFileSync(p, 'utf8') : ''; };
 const alle = (t, re) => [...t.matchAll(re)];
+
+// ASCEND als onderwerp van een zin (besluit 2026-11-14-zonder-ascend-als-onderwerp.md). Schermtekst zet het droge feit
+// voorop, zonder onderwerp. Deze telling mag alleen dalen: stijgt hij boven het plafond, dan faalt de vergelijking.
+// Daalt hij, verlaag dan het plafond naar het nieuwe getal (de melding zegt welk).
+//
+// Herkennen zonder woordsoortenlijst, per regel van de kaart (ook labels en aria):
+//   - "ASCEND <werkwoord>": het woord erna is een persoonsvorm. Dat is een vast werkwoord uit WERKWOORDEN of een woord
+//     op -t dat geen bekend ander woord op -t is (niet, dat, met, ...): "ASCEND mag", "ASCEND plant".
+//   - "<werkwoord> ASCEND": inversie, dezelfde toets op het woord ervoor: "legt ASCEND", "zet ASCEND".
+//   - "<voegwoord> ASCEND": een bijzin met ASCEND als onderwerp: "die ASCEND", "dat ASCEND", "als ASCEND".
+// Uitzonderingen (tellen nooit mee): het merk ([link: ASCEND], "ASCEND, naar Vandaag", "Welkom bij ASCEND"), de map
+// ASCEND voor back-ups ("map ASCEND", "Documents > ASCEND", "Documenten/ASCEND"), samenstellingen ("ASCEND-blok"),
+// "door ASCEND" en "van ASCEND" (geen onderwerp), en toestemmingen van de telefoon (een regel met "toestemming").
+// "Het" als verwijzing naar de app telt niet mee: dat is zonder zinsbouw niet te scheiden van "het regent" of
+// "het lukt", en een valse telling zou het plafond onbetrouwbaar maken.
+// De telling loopt over elk scherm in de map, dus nieuwe schermen (zoals de instellingenschermen) tellen vanzelf mee.
+export const PLAFOND_ASCEND_ONDERWERP = 3;
+const WERKWOORDEN = new Set(['kan', 'kon', 'mag', 'mocht', 'zal', 'zou', 'wil', 'wilde', 'moet', 'is', 'was', 'heeft', 'had', 'vond', 'deed', 'ging', 'zag', 'wist', 'nam', 'gaf', 'bleef', 'zet', 'weet', 'ziet', 'doet', 'gaat', 'staat', 'laat', 'houdt', 'vraagt', 'plant', 'kiest', 'leert', 'legt', 'zoekt', 'rekent', 'schat', 'bouwt', 'stelt']);
+const GEEN_WERKWOORD = new Set(['niet', 'dat', 'met', 'tot', 'het', 'wat', 'uit', 'ooit', 'net', 'want', 'licht', 'recht', 'echt', 'meest', 'best', 'eerst', 'laatst', 'vast', 'toest', 'altijd', 'pas']);
+const VOEGWOORDEN = new Set(['die', 'dat', 'wat', 'als', 'zodat', 'omdat', 'waarmee', 'waarin', 'waarop', 'waar', 'terwijl', 'tenzij', 'of', 'voordat', 'nadat', 'zodra']);
+const isWerkwoord = (w) => !!w && (WERKWOORDEN.has(w) || (/^[a-zë]{2,}t$/.test(w) && !GEEN_WERKWOORD.has(w)));
+export function ascendAlsOnderwerp(tekst) {
+  const uit = [];
+  for (const regel of tekst.split('\n')) {
+    if (/toestemming/i.test(regel)) continue;
+    for (const m of regel.matchAll(/(?:^|[^\w-])(\p{L}+)?\s*\bASCEND\b(?![-\/])(?:\s+(\p{L}+))?/gu)) {
+      const ervoor = (m[1] ?? '').toLowerCase(), erna = (m[2] ?? '').toLowerCase();
+      if (/\[link: ASCEND\]|ASCEND, naar Vandaag/.test(regel) && !erna) continue;
+      if (['door', 'van', 'bij', 'map', 'naar'].includes(ervoor) && !isWerkwoord(erna)) continue;
+      if (/(Documents|Documenten|Interne opslag)\s*[>/]\s*ASCEND/.test(regel)) continue;
+      if (isWerkwoord(erna) || isWerkwoord(ervoor) || VOEGWOORDEN.has(ervoor)) uit.push(regel.trim());
+    }
+  }
+  return uit;
+}
 
 export const INVARIANTEN = [
   {
@@ -315,6 +350,16 @@ export const INVARIANTEN = [
       return uit;
     },
   },
+  {
+    // Zie PLAFOND_ASCEND_ONDERWERP hierboven. Loopt over alle schermen in de map, niet alleen over SCHERMEN.
+    naam: 'ASCEND als onderwerp: niet boven het plafond',
+    controleer: (k, schermen, alleSchermen = schermen) => {
+      const plekken = alleSchermen.flatMap((s) => ascendAlsOnderwerp(k(s)).map((r) => `${s}: "${r}"`));
+      if (plekken.length > PLAFOND_ASCEND_ONDERWERP) return [`${plekken.length} plekken, het plafond is ${PLAFOND_ASCEND_ONDERWERP}: ${plekken.join('; ')}`];
+      if (plekken.length < PLAFOND_ASCEND_ONDERWERP) console.log(`ASCEND als onderwerp: ${plekken.length} plekken, onder het plafond van ${PLAFOND_ASCEND_ONDERWERP}. Verlaag PLAFOND_ASCEND_ONDERWERP in scripts/app-kaart/invarianten.mjs.`);
+      return [];
+    },
+  },
 ];
 
 const SCHERMEN = [
@@ -328,7 +373,9 @@ const SCHERMEN = [
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {
   const cache = {};
   const k = (s) => (cache[s] ??= lees(map, s));
-  return INVARIANTEN.flatMap((i) => i.controleer(k, SCHERMEN).map((tekst) => ({ naam: i.naam, tekst })));
+  // Elk scherm in de map, ook een dat (nog) niet in SCHERMEN staat. De README is geen scherm.
+  const alleSchermen = existsSync(map) ? readdirSync(map).filter((f) => f.endsWith('.md') && f !== 'README.md').map((f) => f.slice(0, -3)).sort() : [];
+  return INVARIANTEN.flatMap((i) => i.controleer(k, SCHERMEN, alleSchermen).map((tekst) => ({ naam: i.naam, tekst })));
 }
 
 export function meld(schendingen) {

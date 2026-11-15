@@ -66,14 +66,14 @@ export function attentionLines(r: WeekReview): AttentionLine[] {
   const checkArea = r.weeklyCheck?.area?.toLowerCase();
   const pain = r.pain.filter((p) => !checkArea || !p.startsWith(checkArea));
   if (pain.length > 0) {
-    out.push({ key: 'pain', label: 'Pijn', value: `${capital(joinNames(pain))}. Meld het bij Lichaam, dan houdt ASCEND er rekening mee.`, warn: true });
+    out.push({ key: 'pain', label: 'Pijn', value: `${capital(joinNames(pain))}. Meld het bij Lichaam, dan houdt je planning er rekening mee.`, warn: true });
   }
   if (r.missed.length > 0) {
     const names = joinNames(r.missed);
     out.push({
       key: 'missed', label: 'Gemist', warn: false,
       value: r.keyMissedName
-        ? `${names}. De ${lower(r.keyMissedName)} is de belangrijkste; ASCEND verplaatst hem naar een vrije dag als dat past.`
+        ? `${names}. De ${lower(r.keyMissedName)} is de belangrijkste; die gaat naar een vrije dag als dat past.`
         : `${names}. Laat het los; dubbel doen helpt niet.`,
     });
   }

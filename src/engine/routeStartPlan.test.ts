@@ -49,11 +49,11 @@ describe('locatie lukt niet: nooit stil terug op Thuis (eigenaar 14 november, op
     expect(planStart({ mode: 'here', home, place: tap, found: fail('timeout') })).toMatchObject({ kind: 'place', point: tap });
   });
   it('de regel: de reden kort, dan de vraag', () => {
-    expect(askStartLine('denied', true)).toBe('ASCEND mag je locatie niet gebruiken. Probeer het opnieuw, of kies hierboven Andere plek of Thuis.');
+    expect(askStartLine('denied', true)).toBe('Geen toegang tot je locatie. Probeer het opnieuw, of kies hierboven Andere plek of Thuis.');
     expect(askStartLine('timeout', false)).toBe('Je locatie kwam niet op tijd. Probeer het opnieuw, of kies hierboven Andere plek.');
   });
   it('te grof (meer dan 50 m) heeft een eigen reden', () => {
-    expect(startFailureReason('coarse')).toBe('ASCEND krijgt je precieze plek niet.');
+    expect(startFailureReason('coarse')).toBe('Je precieze plek is niet beschikbaar.');
   });
 });
 

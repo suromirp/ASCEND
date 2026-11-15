@@ -101,7 +101,7 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
     ? `${dayLabel}: ${(last.stoppedSec ?? 0) > 60 ? stoppedTime(last.stoppedSec ?? 0) : `${last.stops} keer`} stilgestaan`
     : `${dayName} trager dan je vorige, wacht op je antwoord`;
   const tip = stops ? 'Kies een route zonder stoplichten en zet auto-pauze uit.' : 'Zorg dat je die dag uitgerust aan de start staat.';
-  const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een test met veel stilstaan of een dag die niet klopte geeft een tempo dat niet helemaal van jou is. Eén nieuwe poging op de plek van je eerstvolgende harde loop kost geen extra belasting: je traint niet meer, alleen anders. ASCEND zoekt de dag die het minst verandert. Staat er een zware beendag of de lange duurloop in de weg, dan schuift die mee naar een dag waar hij past, in hetzelfde voorstel. Wat jij zelf vastzette, schuift of laat ASCEND alleen gaan met jouw Akkoord, met de naam erbij. Eerst een voorstel, pas na Akkoord verandert er iets.';
+  const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een test met veel stilstaan of een dag die niet klopte geeft een tempo dat niet helemaal van jou is. Eén nieuwe poging op de plek van je eerstvolgende harde loop kost geen extra belasting: je traint niet meer, alleen anders. De keuze valt op de dag die het minst verandert. Staat er een zware beendag of de lange duurloop in de weg, dan schuift die mee naar een dag waar hij past, in hetzelfde voorstel. Wat jij zelf vastzette, schuift of vervalt alleen met jouw Akkoord, met de naam erbij. Eerst een voorstel, pas na Akkoord verandert er iets.';
   const nameOf = (x: PlannedSession) => templateById.get(x.templateId)?.name ?? 'Training';
   const isStrength = (x: PlannedSession) => templateById.get(x.templateId)?.type === 'strength';
   // A session you locked is named as yours; one an earlier proposal moved is said as such.
@@ -123,7 +123,7 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
         : `${nameOf(l)} van ${formatWeekdayDateNL(l.scheduledDate)}${whose(l)} laat je ${mondayOfWeek(l.scheduledDate) === mondayOfWeek(today) ? 'deze' : 'die'} week gaan, zodat je benen ${weekdayLongNL(plan.found.scheduledDate).toLowerCase()} fris zijn.`),
     ];
     const extra = lines.length > 0 ? ` ${lines.join(' ')}` : '';
-    const effect = `${was} Met Akkoord wordt ${nameOf(plan.found)} op ${when} een testloop van 5 km.${extra} ${tip} Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar voor deze test.`;
+    const effect = `${was} Met Akkoord wordt ${nameOf(plan.found)} op ${when} een testloop van 5 km.${extra} ${tip} Met Liever niet blijft alles staan, zonder nieuwe vraag voor deze test.`;
     const by = ['engine/adviceEngine.ts', 'TEST-RETRY'];
     const items: PlanChangeItem[] = [
       ...plan.moves.flatMap((m): PlanChangeItem[] => [
@@ -172,7 +172,7 @@ function retryAgainAdvice(inputs: AdviceInputs, templateById: Map<string, Sessio
     : `Je testloop van ${formatWeekdayDateNL(last.date)} was duidelijk trager dan je vorige en wacht nog op je antwoord, dus hij telt nog niet mee.`;
   const lead = `${was} De herkansing van ${when} ging niet door.`;
   const tip = stops ? 'Kies een route zonder stoplichten en zet auto-pauze uit.' : 'Zorg dat je die dag uitgerust aan de start staat.';
-  const why = `De testloop is het meetpunt voor je tempo's en je voorspelde tijd. Een herkansing die niet doorging is geen herkansing die gedaan is, daarom vraagt ASCEND het nog één keer. Hij zoekt een dag met frisse benen, minstens ${testRestHours()} uur na een zware loop- of beendag, buiten je vakanties en tochten. Wat jij zelf vastzette, blijft staan. Eerst een voorstel, pas na Akkoord verandert er iets.`;
+  const why = `De testloop is het meetpunt voor je tempo's en je voorspelde tijd. Een herkansing die niet doorging is geen herkansing die gedaan is, daarom nog één keer de vraag. De nieuwe dag heeft frisse benen: minstens ${testRestHours()} uur na een zware loop- of beendag, buiten je vakanties en tochten. Wat jij zelf vastzette, blijft staan. Eerst een voorstel, pas na Akkoord verandert er iets.`;
   const yours = (s: PlannedSession) => lockLevel(s, loggedIds, today) === 1;
   const easeId = legEaseCardSession({ mode: inputs.legEase, today, plannedSessions: inputs.plannedSessions, templates: inputs.templates, logs: inputs.logs, injuries: inputs.injuries, checkIns: inputs.checkIns })?.id;
   const taken = (s: PlannedSession) => usedIds.has(s.id) || s.id === easeId;
@@ -184,7 +184,7 @@ function retryAgainAdvice(inputs: AdviceInputs, templateById: Map<string, Sessio
       if (ways.length === 0) return [];
       return [{ ...a, effect: ways[0].effect, proposal: ways[0].proposal, options: ways.length > 1 ? ways : undefined }];
     });
-  const wrap = (effect: string) => `${lead} ${effect.replace(/^Doe hem /, 'Doe de nieuwe test ')} ${tip} Met Liever niet blijft alles staan en vraagt ASCEND er niet meer naar, tot je een nieuwe test logt.`;
+  const wrap = (effect: string) => `${lead} ${effect.replace(/^Doe hem /, 'Doe de nieuwe test ')} ${tip} Met Liever niet blijft alles staan, zonder nieuwe vraag tot je een nieuwe test logt.`;
   return found.map((a) => ({
     ...a, lead, tip, priority: 2, relatedLogId: last.logId,
     brief: `${shortDay.charAt(0).toUpperCase()}${shortDay.slice(1)}: herkansing ging niet door`,

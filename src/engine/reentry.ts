@@ -175,7 +175,7 @@ export function reentryEffect(p: ReentryProposal): string {
   return `De afgelopen twee weken deed je ${count(p.done)}${CAUSE_TEXT[p.cause]}. Een gewone week heeft er ${p.usual}. Voorstel: tot en met ${formatWeekdayDateNL(p.week.until)} duren je trainingen ${share(p.week.factor)} van de gewone tijd. Welke trainingen er staan, je fase en je doeldatum blijven zoals ze zijn. Met Liever niet blijft alles staan.`;
 }
 
-export const REENTRY_WHY = 'Na een pauze zakt je conditie wat terug. Meteen een volle week oppakken geeft de grootste kans op een blessure; de eerste week op de helft tot driekwart geeft je lijf tijd om weer te wennen, net als Weer opbouwen na ziekte. ASCEND kort alleen de duur, en alleen deze zeven dagen. Het blok een week verschuiven raakt de afbouw of je doeldatum, en het doel blijft het doel, dus dat doet ASCEND niet zelf. Driekwart of de helft kies je in Instellingen, Lichaam.';
+export const REENTRY_WHY = 'Na een pauze zakt je conditie wat terug. Meteen een volle week oppakken geeft de grootste kans op een blessure; de eerste week op de helft tot driekwart geeft je lijf tijd om weer te wennen, net als Weer opbouwen na ziekte. Alleen de duur gaat omlaag, en alleen deze zeven dagen. Het blok een week verschuiven raakt de afbouw of je doeldatum, en het doel blijft het doel, dus dat gebeurt niet vanzelf. Driekwart of de helft kies je in Instellingen, Lichaam.';
 
 // De regel in het voorstel van de planningsronde.
 export function reentryNote(week: ReentryWeek): string {

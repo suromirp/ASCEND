@@ -16,7 +16,7 @@ export function FreshStartCard({ state, quiet = false }: { state: FreshStartStat
     <Card className="flex flex-col gap-2">
       <Eyebrow>Nieuw begonnen</Eyebrow>
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-        ASCEND is op deze telefoon leeg begonnen. Gebruikte je de app al eerder? Zet dan je back-up terug, dan komen je
+        Leeg begonnen op deze telefoon. Gebruikte je de app al eerder? Zet dan je back-up terug, dan komen je
         trainingen, doel en instellingen terug.
       </p>
       <div className="mt-1 flex flex-wrap gap-3">

@@ -135,7 +135,7 @@ function painReaction(log: SessionLog, history: SessionLog[]): string | undefine
   }
   const significant = significantPain(log);
   if (significant.length === 0) {
-    return `Een beetje pijn aan je ${joinNL(reports.map((r) => r.area.toLowerCase()))}. Tot 2 op 10 mag, als het morgenochtend weer weg is. ASCEND vraagt het je morgen.`;
+    return `Een beetje pijn aan je ${joinNL(reports.map((r) => r.area.toLowerCase()))}. Tot 2 op 10 mag, als het morgenochtend weer weg is. Morgen volgt de vraag hoe het gaat.`;
   }
   const areas = significant.map((r) => r.area);
   const since = addDays(log.completedDate, -PAIN_WINDOW_DAYS);
@@ -143,9 +143,9 @@ function painReaction(log: SessionLog, history: SessionLog[]): string | undefine
   const where = joinNL(areas.map((a) => a.toLowerCase()));
   if (again.length > 0) {
     const which = joinNL(again.map((a) => a.toLowerCase()));
-    return `${which.charAt(0).toUpperCase()}${which.slice(1)} deed de afgelopen twee weken vaker pijn. Meld het bij Lichaam, dan houdt ASCEND er rekening mee. Wordt het erger, laat een fysiotherapeut ernaar kijken.`;
+    return `${which.charAt(0).toUpperCase()}${which.slice(1)} deed de afgelopen twee weken vaker pijn. Meld het bij Lichaam, dan houdt je planning er rekening mee. Wordt het erger, laat een fysiotherapeut ernaar kijken.`;
   }
-  return `Pijn aan je ${where}. Trainen mag, zolang het morgenochtend niet erger is; de komende 2 weken bouwt ASCEND op die plek niet verder op. Scherpe pijn of pijn die erger wordt is een reden om te stoppen.`;
+  return `Pijn aan je ${where}. Trainen mag, zolang het morgenochtend niet erger is; de komende 2 weken geen verdere opbouw op die plek. Scherpe pijn of pijn die erger wordt is een reden om te stoppen.`;
 }
 
 // One reaction after ticking a training off, based on what you filled in. `fit`: je hartslagzones en rustige

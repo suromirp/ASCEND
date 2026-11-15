@@ -58,7 +58,7 @@ export function needsFirstPlan(facts: Pick<StartFacts, 'programs' | 'plannedSess
 export function restoreSafetyLines(deviceEmpty: boolean): string[] {
   if (deviceEmpty) return ['Er staat nog niets op deze telefoon. Alles uit je back-up komt erbij.'];
   return [
-    'Vlak voor het importeren bewaart ASCEND een kopie van je huidige gegevens. Daarmee kun je de import ongedaan maken.',
+    'Vlak voor het importeren wordt een kopie van je huidige gegevens bewaard. Daarmee kun je de import ongedaan maken.',
     'Trainingen worden bij importeren nooit verwijderd.',
   ];
 }

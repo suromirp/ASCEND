@@ -27,7 +27,7 @@ const proposal = (points: RoutePoint[], over: Partial<RouteProposal> = {}): Rout
 
 describe('Langer en Korter', () => {
   it('een lus die bij Korter onder 1 km komt: niet zoeken, één regel waarom', () => {
-    expect(stepDistance(1.4, 0, 'shorter')).toEqual({ ok: false, line: `Korter dan ${MIN_LOOP_KM} km zoekt ASCEND geen lus.` });
+    expect(stepDistance(1.4, 0, 'shorter')).toEqual({ ok: false, line: `Korter dan ${MIN_LOOP_KM} km: geen lus.` });
     // 1,5 km min een halve is precies 1 km: dat mag; nog een keer niet.
     const once = stepDistance(1.5, 0, 'shorter');
     expect(once).toEqual({ ok: true, deltaKm: -0.5 });
@@ -38,7 +38,7 @@ describe('Langer en Korter', () => {
     expect(stepDistance(10, 0, 'longer')).toEqual({ ok: true, deltaKm: 1 });
     expect(stepDistance(10, 0, 'shorter')).toEqual({ ok: true, deltaKm: -1 });
     expect(maxLoopKm(10)).toBe(15);
-    expect(stepDistance(10, 5, 'longer')).toEqual({ ok: false, line: 'Langer dan 15 km zoekt ASCEND bij deze training niet.' });
+    expect(stepDistance(10, 5, 'longer')).toEqual({ ok: false, line: 'Langer dan 15 km: niet bij deze training.' });
     // Een korte training mag 2 km langer.
     expect(maxLoopKm(2)).toBe(4);
   });

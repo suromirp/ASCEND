@@ -40,7 +40,7 @@ export function SweatAfterRow({ sweat, showHeading = true }: { sweat: SweatAfter
       {sweat.result && <p role="status" className="text-sm" style={{ color: 'var(--color-ink)' }}>{sweat.result}</p>}
       {!sweat.result && sweat.hasNumbers && (
         <p role="status" className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Hier kan ASCEND nog geen zweetverlies van maken. Het kan ook later in het Logboek, bij de training.
+          Hier is nog geen zweetverlies uit te rekenen. Het kan ook later in het Logboek, bij de training.
         </p>
       )}
       {sweat.note && <p role="status" className="text-xs" style={{ color: 'var(--color-warning)' }}>{sweat.note}</p>}

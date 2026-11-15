@@ -136,7 +136,7 @@ export function AlignedSheet({ aligned, templates, onClose }: { aligned: Session
       ) : (
         <>
           <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            Bij elke training staan hieronder je eigen cijfers van toen. Met Terugzetten komen ze terug en is de training weer helemaal van jou. ASCEND trekt hem dan niet opnieuw gelijk.
+            Bij elke training staan hieronder je eigen cijfers van toen. Met Terugzetten komen ze terug en is de training weer helemaal van jou. Hij wordt dan niet opnieuw gelijkgetrokken.
           </p>
           <ul className="flex flex-col gap-2">
             {aligned.map((log) => (

@@ -18,7 +18,7 @@ const lower = (name: string) => (/^[A-Z][a-z]/.test(name) ? name.charAt(0).toLow
 export function weekHighlights(r: WeekReview): Highlight[] {
   const out: Highlight[] = [];
   if (r.pain.length > 0) {
-    out.push({ tone: 'warning', icon: 'lichaam', text: `Pijn deze week: ${r.pain.join(', ')}. Meld het bij Lichaam, dan houdt ASCEND er rekening mee.` });
+    out.push({ tone: 'warning', icon: 'lichaam', text: `Pijn deze week: ${r.pain.join(', ')}. Meld het bij Lichaam, dan houdt je planning er rekening mee.` });
   }
   // Wat vandaag nog kan staat nooit als gemist (buildWeekReview telt alleen wat voor vandaag lag).
   if (r.missed.length > 0) {
@@ -27,7 +27,7 @@ export function weekHighlights(r: WeekReview): Highlight[] {
     out.push({
       tone: 'normal', icon: 'week',
       text: left + (r.keyMissedName
-        ? `De ${lower(r.keyMissedName)} is de belangrijkste van de week. Die verplaatst ASCEND naar een vrije dag als dat past. De rest laat je los.`
+        ? `De ${lower(r.keyMissedName)} is de belangrijkste van de week. Die gaat naar een vrije dag als dat past. De rest laat je los.`
         : 'Laat los wat je miste. Dubbel doen helpt niet.'),
     });
   }
