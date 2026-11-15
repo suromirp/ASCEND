@@ -133,7 +133,7 @@ zeg je ("geen instelling nodig: geen keuze voor de gebruiker").
    een koppeling die kapot of verlopen is, een oude back-up zonder het nieuwe veld (migratie of defensief lezen),
    Rustig en Uit bij Beweging. Noem welke niet gelden en waarom.
 5. **Mag niet bewegen**: `planGolden.test.ts`, historie, de scheduler, en wat het briefje onder Nooit noemt.
-6. **Instelling**: welke, met het advies als standaard, in settingsIndex, settingsLayout, settingsSummary en de groep.
+6. **Instelling**: welke, met het advies als standaard, als verklaring in engine/settingsDefs/<groep>.ts, in settingsSummary en de groep.
 7. **Opleveren**: begin met een blok **Bewijs**: wat je zelf zag (screenshots op 412 px als er een scherm verandert, de verschillen van de tekstkaart, bij planning de echte voorbeeldweek per dag). Daarna kort, Nederlands, per eis gedaan of waarom niet; elke eigen keuze buiten de opdracht; de uitslag
    van tsc, lint, de gerichte tests en de volle set; wat niet gecontroleerd is; de branch.
 
