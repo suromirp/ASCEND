@@ -24,8 +24,8 @@ export function SeasonOverview({ onSelectWeek }: { onSelectWeek: (weekStart: str
   const { program, plannedSessions, sessionLogs, templates, trainingGoals, goalMilestones, planChangeLog, settings } = useAppData();
   const today = todayISO();
   const phases = useMemo(
-    () => (program ? buildSeasonPlan(program, plannedSessions, sessionLogs, templates, today, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program.startDate)) : []),
-    [program, plannedSessions, sessionLogs, templates, today, planChangeLog, settings.illnessEpisodes],
+    () => (program ? buildSeasonPlan(program, plannedSessions, sessionLogs, templates, today, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)) })) : []),
+    [program, plannedSessions, sessionLogs, templates, today, planChangeLog, settings.illnessEpisodes, settings.leavePeriods],
   );
   const [open, setOpen] = useState<string | undefined>(() => phases.find((p) => p.current)?.id);
   if (!program || phases.length === 0) return null;

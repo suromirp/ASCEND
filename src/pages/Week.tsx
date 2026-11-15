@@ -126,8 +126,8 @@ export function WeekPage() {
       previous: dayLoads({ weekStart: addDays(weekStart, -7), plannedSessions, logs: sessionLogs, templates, today, minutesOf }),
     };
   }, [weekStart, plannedSessions, sessionLogs, templates, today, program]);
-  const progress = weekProgress(sessions, sessionLogs, templateById, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate));
-  const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings), keyFocus }) : null;
+  const progress = weekProgress(sessions, sessionLogs, templateById, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)) }));
+  const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings), keyFocus }) : null;
   const heading = weekHeading(position);
   // Een week zonder trainingen zegt dat in de lucht; de rijen over je week zijn er dan niet.
   const trainings = sessions.filter((s) => templateById.get(s.templateId)?.type !== 'recovery').length;
@@ -138,12 +138,12 @@ export function WeekPage() {
   // onder de dagen, met hoeveel er gemist is. De oude rij van een inhaal telt niet: die is overgeslagen.
   const missed = current ? sessions.filter((s) => {
     const t = templateById.get(s.templateId);
-    return !!t && t.type !== 'recovery' && deriveSessionStatus(s, sessionLogs, false).status === 'missed';
+    return !!t && t.type !== 'recovery' && deriveSessionStatus(s, sessionLogs, false, { leave: leavePeriods, illness: settings.illnessEpisodes }).status === 'missed';
   }).length : 0;
   const replanOn = !!program && trainings > 0 && addDays(weekStart, 6) >= today;
   const replanRow = replanOn && <WeekReplanRow key={weekStart} weekStart={weekStart} sub={replanSub(missed)} />;
   // Aangepast door ASCEND: één uitkomst voor de rij, het blad en het woord op de dagrij (engine/changeLog.ts).
-  const adjustments = useMemo(() => weekAdjustments(planChangeLog, plannedSessions, templates, weekStart, today), [planChangeLog, plannedSessions, templates, weekStart, today]);
+  const adjustments = useMemo(() => weekAdjustments(planChangeLog, plannedSessions, templates, weekStart, today, settings.reentryWeeks), [planChangeLog, plannedSessions, templates, weekStart, today, settings.reentryWeeks]);
   const adjustedIds = useMemo(() => adjustedIdsOf(adjustments), [adjustments]);
 
   // A completed session is still selectable — SessionActionSheet shows an

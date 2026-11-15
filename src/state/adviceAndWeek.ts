@@ -1,5 +1,6 @@
 // Advies, het weer, de widget, de weekmelding, slepen en ruilen, en het voorstel na wat er speelde.
 
+import { resolveReentry } from '../engine/reentry';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getTrainingPlaces, onTrainingPlaceChange, peekTrainingPlaces } from '../storage/trainingPlace';
 import { resolveGrowthChoice } from '../data/goalGrowth';
@@ -165,6 +166,8 @@ export function useAdviceAndWeek(deps: {
         // Eerst koppelen, dan inhalen (engine/missedTraining.ts#linkCandidates).
         missedLink: { on: settings.missedLink !== false, declined: missedMemory?.declined ?? [], declinedOn: missedMemory?.declinedOn, places },
         leave: settings.leavePeriods,
+        // Rustiger instap na een pauze (engine/reentry.ts).
+        reentry: { choice: resolveReentry(settings.reentry), weeks: settings.reentryWeeks },
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
         // De herkansingen die TEST-RETRY neerzette: ging er een niet door, dan vraagt hij het nog één keer.
         retryRows: retryTestRows(planChangeLog),
@@ -176,7 +179,7 @@ export function useAdviceAndWeek(deps: {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, places, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction],
+    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, places, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction, settings.reentry, settings.reentryWeeks],
   );
 
   // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).

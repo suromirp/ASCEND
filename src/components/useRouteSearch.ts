@@ -177,6 +177,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     };
   }, []);
   const first = resolveRouteStyle(settings.routeStyle);
+  // Grote wegen mijden in de aanvraag aan de routeplanner (standaard aan).
+  const avoidBigRoads = settings.routeAvoidBigRoads !== false;
   const trainingTarget = routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy });
 
   useEffect(() => {
@@ -289,13 +291,13 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     };
     const terrainPoint = terrainLat !== undefined && terrainLon !== undefined ? { lat: terrainLat, lon: terrainLon } : undefined;
     // findRoutes heeft zelf een grens in tijd en gooit nooit: "Lussen zoeken" blijft nooit staan.
-    void findRoutes({ lat, lon }, { distanceKm, ascentM }, { signal: stop.signal, onStep, terrainAt: terrainPoint, ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
+    void findRoutes({ lat, lon }, { distanceKm, ascentM }, { signal: stop.signal, onStep, terrainAt: terrainPoint, avoidBigRoads, ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
       if (!stop.signal.aborted) dispatch({ type: 'answer', key, answer: result, currentKey: keyNow.current });
     });
     // Sluit het paneel of begint een nieuwe zoektocht, dan gaat er voor deze geen aanroep meer de deur uit.
     return () => stop.abort();
     // De sleutel bevat het punt; de afhankelijkheden zijn dezelfde getallen.
-  }, [closing, enabled, asked, ready, searchNeeded, lat, lon, exactLat, exactLon, terrainLat, terrainLon, distanceKm, ascentM, avoid, key]);
+  }, [closing, enabled, asked, ready, searchNeeded, lat, lon, exactLat, exactLon, terrainLat, terrainLon, distanceKm, ascentM, avoid, avoidBigRoads, key]);
 
   // Start hier: het getikte punt geldt voor deze zoektocht en wordt niet bewaard; Thuis verschuift niet.
   async function startOnMap(from: { tap: RoutePoint }): Promise<StartAnswer> {

@@ -76,7 +76,7 @@ describe('Simpel: dezelfde helling op en af', () => {
     expect(metersBetween(p.points[0], p.points[p.points.length - 1])).toBeLessThan(1);
     expect(proposalTitle(p)).toBe('6 × de helling op en af');
     expect(proposalFacts(p)).toBe('8 km · 300 hoogtemeters');
-    expect(proposalNotes(p, { distanceKm: 9, ascentM: 300 })).toEqual(['De helling: 50 m omhoog over 500 m.', 'Op dezelfde helling kan je horloge naar het verkeerde stuk springen.', '8 km, korter dan de 9 km van je training.']);
+    expect(proposalNotes(p, { distanceKm: 9, ascentM: 300 })).toEqual(['Gemarkeerd op de kaart: hier 6 keer op, 50 m omhoog over 500 m.', 'Op dezelfde helling kan je horloge naar het verkeerde stuk springen.', '8 km, korter dan de 9 km van je training.']);
   });
 
   it('een punt zonder hoogte telt nergens mee, ook niet als laag', () => {

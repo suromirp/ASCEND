@@ -57,7 +57,7 @@ function checkLine(r: WeekReview): AttentionLine | null {
 }
 
 // Hoogstens twee regels, de zorg eerst: een klacht uit de lijfvraag, pijn uit je logs (zonder de plek die de
-// lijfvraag al noemt), een training die bleef liggen, en trainingen die zwaarder of lichter voelden. Zonder iets
+// lijfvraag al noemt), een gemiste training, en trainingen die zwaarder of lichter voelden. Zonder iets
 // om op te letten is de lijst leeg: geen vervangende zin.
 export function attentionLines(r: WeekReview): AttentionLine[] {
   const out: AttentionLine[] = [];
@@ -71,7 +71,7 @@ export function attentionLines(r: WeekReview): AttentionLine[] {
   if (r.missed.length > 0) {
     const names = joinNames(r.missed);
     out.push({
-      key: 'missed', label: 'Bleef liggen', warn: false,
+      key: 'missed', label: 'Gemist', warn: false,
       value: r.keyMissedName
         ? `${names}. De ${lower(r.keyMissedName)} is de belangrijkste; ASCEND verplaatst hem naar een vrije dag als dat past.`
         : `${names}. Laat het los; dubbel doen helpt niet.`,

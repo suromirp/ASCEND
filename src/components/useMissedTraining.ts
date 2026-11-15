@@ -25,7 +25,7 @@ export function useMissedTraining() {
     [advice],
   );
   const plan = useMemo(
-    () => (memory ? planMissed({ plannedSessions, logs: sessionLogs, templates, today, settings: missedSettings, memory, busy: busyIds, illnessEpisodes: settings.illnessEpisodes, places }) : undefined),
+    () => (memory ? planMissed({ plannedSessions, logs: sessionLogs, templates, today, settings: missedSettings, memory, busy: busyIds, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, places }) : undefined),
     // missedSettings komt uit settings.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [memory, plannedSessions, sessionLogs, templates, today, settings, busyIds, places],
@@ -51,7 +51,10 @@ export function useMissedTraining() {
     return () => clearTimeout(timer);
   }, [autoIds, skipMissed, rememberMissed]);
 
-  return { item: plan?.item, missedSettings };
+  // Eén plek voor gemist: staat het inhaaladvies (MISSED-CATCH-UP) op Vandaag, dan wacht de vraag Niet gedaan? tot
+  // dat beantwoord is. Anders twee kaarten met twee woorden voor hetzelfde (profielendoorloop GR5 9).
+  const catchUpShown = advice.some((a) => a.ruleId === 'MISSED-CATCH-UP');
+  return { item: catchUpShown ? undefined : plan?.item, lapsed: catchUpShown ? undefined : plan?.lapsed, missedSettings };
 }
 
 export type MissedTrainingState = ReturnType<typeof useMissedTraining>;

@@ -16,6 +16,8 @@ export interface RowFacts {
   concern?: string;
   // Gemist: rechts staat dan de greep (of het teken), in de regel het woord.
   missed?: boolean;
+  // Vervallen: voorbij en niet gedaan op een dag van een gemelde vakantie of ziekte (engine/sessionStatus.ts, 'away').
+  lapsed?: boolean;
   // Een inhaal: "verplaatst van wo 28" op de nieuwe rij (engine/catchUp.ts).
   catchNote?: string;
   // Een regel in Aangepast door ASCEND (engine/changeLog.ts#weekAdjustments).
@@ -43,6 +45,7 @@ export function rowExtra(f: RowFacts): RowExtra | undefined {
   if (f.concern) return f.adjusted ? { text: f.concern, warn: true, also: 'aangepast' } : { text: f.concern, warn: true };
   if (f.adjusted) return { text: 'aangepast', warn: false };
   if (f.missed) return { text: 'gemist', warn: false };
+  if (f.lapsed) return { text: 'vervallen', warn: false };
   if (!f.done && f.catchNote) return { text: f.catchNote, warn: false };
   if (!f.done && f.moved) return { text: f.movedFrom ? `verplaatst van ${dayShort(f.movedFrom)}` : 'verplaatst', warn: false };
   if (f.fixed) return { text: 'vaste afspraak', warn: false };

@@ -3,6 +3,7 @@
 // with one button for "weer beter"; after that a short card while you
 // build back up.
 
+import { activeReentry, reentryTodayLine } from '../engine/reentry';
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { activeIllness, recoveryRamp, type IllnessChange, type IllnessPlan, ILLNESS_GUIDANCE, ILLNESS_HINT, ILLNESS_LABEL } from '../engine/illness';
@@ -84,6 +85,7 @@ export function IllnessStatusCard({ quiet = false }: { quiet?: boolean }) {
   const { request, sheet, busy, error } = useIllnessProposal();
   const active = activeIllness(settings.illnessEpisodes);
   const ramp = recoveryRamp(settings.illnessEpisodes, todayISO());
+  const reentry = activeReentry(settings.reentryWeeks, todayISO());
 
   if (active) {
     return (
@@ -130,6 +132,18 @@ export function IllnessStatusCard({ quiet = false }: { quiet?: boolean }) {
             : `Rustig opbouwen na ziekte. Trainingen zijn korter en rustiger, ongeveer de helft tot driekwart van normaal. Zware trainingen mogen weer vanaf ${day(ramp.heavyFrom)}.`}
         </p>
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Gemiste trainingen hoef je niet in te halen.</p>
+      </Card>
+      </>
+    );
+  }
+  // Rustiger instap na een pauze, met Akkoord (engine/reentry.ts): alleen uitleg, geen vraag.
+  if (reentry) {
+    return (
+      <>
+      {sheet}
+      <Card className="flex flex-col gap-1.5">
+        <Eyebrow>Rustiger instap</Eyebrow>
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{reentryTodayLine(reentry)}</p>
       </Card>
       </>
     );

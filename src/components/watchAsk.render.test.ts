@@ -20,6 +20,9 @@ const { WatchAskSheet } = await import('./WatchAskSheet');
 const { templates } = buildDefaultProgramData();
 const tpl = (id: string) => templates.find((t) => t.id === id)!;
 const TODAY = '2026-11-14';
+// Vaste klok: "vandaag" in de feitenregel hangt af van de echte datum (15 november viel de test na middernacht om).
+vi.useFakeTimers({ toFake: ['Date'] });
+vi.setSystemTime(new Date(`${TODAY}T12:00:00`));
 
 function log(extra: Partial<SessionLog> = {}): SessionLog {
   return { id: 'l1', templateId: 'tpl_long_run', type: 'cardio', completedDate: TODAY, completedAt: `${TODAY}T08:10:00.000Z`, variant: 'custom', durationMinutes: 76, source: 'garmin', externalId: 'test:1', plannedSessionId: 'p1', ...extra };

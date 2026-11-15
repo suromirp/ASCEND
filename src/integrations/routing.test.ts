@@ -14,7 +14,7 @@ const text = (body: string, status = 200) => new Response(body, { status });
 describe('BRouter', () => {
   it('vraagt met lengte eerst, vijf decimalen en het wandelprofiel; geen naam', () => {
     const url = brouterUrl([A, B, A]);
-    expect(url).toBe(`https://brouter.de/brouter?lonlats=5.65,52.12|5.66123,52.13123|5.65,52.12&profile=${BROUTER_PROFILE}&alternativeidx=0&format=geojson`);
+    expect(url).toBe(`https://brouter.de/brouter?lonlats=5.65,52.12|5.66123,52.13123|5.65,52.12&profile=${BROUTER_PROFILE}&profile:consider_noise=1&alternativeidx=0&format=geojson`);
   });
 
   it('leest de punten met hoogte', () => {
@@ -52,7 +52,7 @@ describe('Valhalla', () => {
     const url = valhallaUrl([A, B]);
     const body = JSON.parse(decodeURIComponent(url.split('?json=')[1]));
     expect(url.startsWith('https://valhalla1.openstreetmap.de/route?json=')).toBe(true);
-    expect(body).toEqual({ locations: [{ lat: 52.12, lon: 5.65 }, { lat: 52.13123, lon: 5.66123 }], costing: 'pedestrian', directions_type: 'none', elevation_interval: 30 });
+    expect(body).toEqual({ locations: [{ lat: 52.12, lon: 5.65 }, { lat: 52.13123, lon: 5.66123 }], costing: 'pedestrian', costing_options: { pedestrian: { walkway_factor: 0.8 } }, directions_type: 'none', elevation_interval: 30 });
   });
 
   it('leest een gecodeerde lijn met zes decimalen', () => {

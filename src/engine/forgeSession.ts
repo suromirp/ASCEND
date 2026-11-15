@@ -3,6 +3,8 @@
 // concept van de training (startedAt, pauses, lastActionAt), dus sluiten, herladen en een volgende dag
 // veranderen niets. Pure functies; een concept zonder pauses werkt gewoon.
 
+import { addDays, formatWeekdayDayMonthNL, toISODate, todayISO } from '../utils/dates';
+
 export interface Pause {
   from: number;
   // Een open pauze heeft geen einde.
@@ -113,6 +115,128 @@ export function formatAway(ms: number): string {
   const minutes = Math.max(1, Math.round(ms / 60_000));
   if (minutes < 90) return minutes === 1 ? '1 minuut' : `${minutes} minuten`;
   return `${Math.round(minutes / 60)} uur`;
+}
+
+// --- Een training die bleef liggen (profiel afbreker, 14 november, backlog N) -------------------------------
+//
+// Een sessie die je vergat loopt niet dagen door: na middernacht (met een uur stilte) of na een vaste grens
+// zonder handeling, of als de geplande sessie in je planning overgeslagen is, is hij een concept. Er gaat dan
+// niets weg en er verandert niets aan de planning: de klok staat stil op je laatste handeling, en de pil en het
+// blad vragen wat je wilt (Afronden met wat je deed, Verder of Verwijderen). Alleen een keuze van jou beëindigt hem.
+
+// De instelling "Training bewaren als concept na", in uren zonder handeling; 0 is: alleen na middernacht.
+export const LEFT_AFTER_OPTIONS = [0, 4, 8, 12] as const;
+export type LeftAfter = (typeof LEFT_AFTER_OPTIONS)[number];
+const DEFAULT_LEFT_AFTER: LeftAfter = 12;
+
+export function resolveLeftAfter(raw: { forgeLeftAfter?: unknown } | undefined | null): LeftAfter {
+  return LEFT_AFTER_OPTIONS.find((h) => h === raw?.forgeLeftAfter) ?? DEFAULT_LEFT_AFTER;
+}
+
+// Na middernacht pas na een uur stilte: een late training die over middernacht doorloopt, blijft lopen.
+export const NIGHT_QUIET_MIN = 60;
+
+// Overgeslagen in je planning en zo lang stil: dan een concept. Kort genoeg om meteen te zien, lang genoeg voor Verder.
+export const SKIPPED_QUIET_MIN = 10;
+
+export type LeftReason = 'nacht' | 'grens' | 'overgeslagen';
+
+export interface LeftSession {
+  reason: LeftReason;
+  // Je laatste handeling: de klok van het concept staat hier stil.
+  lastActionAt: number;
+}
+
+// Is deze sessie blijven liggen? `dayOf` geeft de dag van een moment in je eigen tijdzone (utils/dates.ts#toISODate),
+// zodat middernacht en de zomertijd kloppen; de stilte zelf is gewoon verstreken tijd in milliseconden.
+export function leftSession(
+  s: SessionClock,
+  now: number,
+  o: { afterHours: LeftAfter; dayOf: (ms: number) => string; skipped?: boolean },
+): LeftSession | undefined {
+  const last = lastActionOf(s);
+  const quiet = now - last;
+  // Overgeslagen: pas na tien minuten stilte, zodat Verder (dat de stilte parkeert) echt verder gaat.
+  if (o.skipped && quiet >= SKIPPED_QUIET_MIN * 60_000) return { reason: 'overgeslagen', lastActionAt: last };
+  if (o.afterHours > 0 && quiet >= o.afterHours * 3_600_000) return { reason: 'grens', lastActionAt: last };
+  if (quiet >= NIGHT_QUIET_MIN * 60_000 && o.dayOf(now) > o.dayOf(last)) return { reason: 'nacht', lastActionAt: last };
+  return undefined;
+}
+
+// De actieve tijd van een concept: tot je laatste handeling, nooit de uren erna.
+export function leftActiveSeconds(s: SessionClock): number {
+  return activeSeconds(s, lastActionOf(s));
+}
+
+// Verder of Afronden met een concept: de stilte vanaf je laatste handeling wordt een pauze, zodat de klok en de
+// duur van het log alleen de tijd tellen dat je echt trainde. Zelfde regel als "Nee, als pauze".
+export const parkLeft = breakAsPause;
+
+// "3 sets", "1 set", "geen sets": voor de zinnen van het blad.
+export function setsPhrase(n: number): string {
+  if (n <= 0) return 'geen sets';
+  return n === 1 ? '1 set' : `${n} sets`;
+}
+
+// "42 min", "1 uur 35 min", "2 uur": de tijd die je trainde, voor de zinnen van het blad.
+export function minutesPhrase(seconds: number): string {
+  const total = Math.max(0, Math.round(seconds / 60));
+  if (total < 60) return `${total} min`;
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return m === 0 ? `${h} uur` : `${h} uur ${m} min`;
+}
+
+// De zinnen van het blad bij een training die bleef liggen of nog loopt. `when` is "gisteren om 22:41" en zo,
+// in je eigen tijdzone gemaakt door de aanroeper. Het droge feit eerst, dan wat er gebeurt als je niets kiest.
+export function leftSessionLines(o: { name: string; doneSets: number; activeSec: number; when: string; reason?: LeftReason }): { fact: string; note: string; discard: string } {
+  const sets = setsPhrase(o.doneSets);
+  const fact = `${o.name}: ${sets} afgevinkt, ${minutesPhrase(o.activeSec)} getraind. Je laatste handeling was ${o.when}.`;
+  const note =
+    o.reason === 'overgeslagen'
+      ? 'In je planning staat hij als overgeslagen. Je sets staan als concept klaar; er gaat niets weg tot je kiest.'
+      : o.reason
+        ? 'Hij staat als concept klaar; er gaat niets weg tot je kiest.'
+        : 'Er loopt één training tegelijk.';
+  const discard = `${o.doneSets > 0 ? `${sets[0].toUpperCase()}${sets.slice(1)} en ${minutesPhrase(o.activeSec)}` : 'Deze training'} van ${o.when.replace(/ om .*/, '')} ${o.doneSets > 0 ? 'gaan' : 'gaat'} weg. Je logboek en je planning veranderen niet.`;
+  return { fact, note, discard };
+}
+
+// "vandaag om 08:10", "gisteren om 22:41", "di 17 nov om 22:41": in je eigen tijdzone.
+export function whenPhrase(ms: number, today = todayISO()): string {
+  const d = new Date(ms);
+  const day = toISODate(d);
+  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  const label = day === today ? 'vandaag' : day === addDays(today, -1) ? 'gisteren' : formatWeekdayDayMonthNL(day);
+  return `${label} om ${time}`;
+}
+
+// Het blad van een concept of een lopende training, als die elders al afgerond of verwijderd is.
+export const SESSION_GONE_TEXT = 'Deze training is er niet meer. Hij is ergens anders afgerond of verwijderd; je logboek laat zien wat er bewaard is.';
+
+// Verwijderen in het blad van een concept gaat in twee tikken: de eerste toont de bevestiging met Annuleren, pas de
+// tweede (in die bevestiging) verwijdert. Het blad roept voor beide knoppen deze ene stap aan.
+export type DiscardStep = 'kiezen' | 'bevestigen';
+export function discardTap(step: DiscardStep): { step: DiscardStep; discard: boolean } {
+  return step === 'bevestigen' ? { step, discard: true } : { step: 'bevestigen', discard: false };
+}
+
+// De dag die Afronden voorstelt bij Gedaan op: een geplande training van een eerdere dag krijgt die dag; een losse
+// training de dag van je laatst afgevinkte set als die eerder was (een concept van gisteren), binnen de 60 dagen
+// van het veld. Anders vandaag. Zo komt een beendag op de dag dat je hem deed (de 48-uursregel leest die dag).
+export function finishDayDefault(o: { today: string; plannedSessionId?: string; scheduledDate?: string; lastTickAt?: number; dayOf: (ms: number) => string }): string {
+  if (o.plannedSessionId) return o.scheduledDate && o.scheduledDate < o.today ? o.scheduledDate : o.today;
+  if (o.lastTickAt === undefined) return o.today;
+  const day = o.dayOf(o.lastTickAt);
+  return day < o.today && day >= addDays(o.today, -60) ? day : o.today;
+}
+
+// De vraag Lange onderbreking: bij een echte terugkomst altijd (als de stilte de drempel haalt), op de minuut-tik
+// alleen als je het blad niet al sloot zonder antwoord voor deze zelfde stilte. Een gesloten blad komt dus niet
+// binnen een minuut terug; pas na een nieuwe handeling of een echte terugkomst.
+export function askBreakNow(o: { gapMs: number | undefined; source: 'tik' | 'terug'; lastActionAt: number; dismissedFor?: number }): boolean {
+  if (o.gapMs === undefined) return false;
+  return o.source === 'terug' || o.dismissedFor !== o.lastActionAt;
 }
 
 // De duur die Afronden voorstelt: de actieve tijd, tenzij de klok onwaarschijnlijk lang liep (een vergeten

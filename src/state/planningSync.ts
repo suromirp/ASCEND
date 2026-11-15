@@ -152,6 +152,8 @@ export async function horizonKey(): Promise<string> {
       // Free days, holidays and treks (engine/leave.ts): what the planning reads,
       // never the note, so a new note starts no planning run.
       leaveKey(settings.leavePeriods),
+      // Een rustiger instap na een pauze (engine/reentry.ts): andere lengtes, dus de ronde opnieuw.
+      settings.reentryWeeks,
       // Soft or strict rest after a bergtocht: switching it plans again at once.
       settings.trekLegRest,
       // Let go or shift a training that moves for a holiday (engine/leaveSpacing.ts).

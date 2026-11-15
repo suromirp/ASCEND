@@ -185,6 +185,12 @@ export function mergeSettingsHistory(current: AppSettings, incoming: Partial<App
     for (const e of current.illnessEpisodes ?? []) byId.set(e.id, e);
     merged.illnessEpisodes = [...byId.values()].sort((a, b) => a.startDate.localeCompare(b.startDate));
   }
+  // Rustiger instap: samengevoegd per begindag, die van dit toestel gaat voor.
+  if (incoming.reentryWeeks || current.reentryWeeks) {
+    const byFrom = new Map((incoming.reentryWeeks ?? []).map((w) => [w.from, w]));
+    for (const w of current.reentryWeeks ?? []) byFrom.set(w.from, w);
+    merged.reentryWeeks = [...byFrom.values()].sort((a, b) => a.from.localeCompare(b.from));
+  }
   // Free days, holidays and treks: planned sessions on the device carry a
   // marker of the period that moved them, so a period is never dropped by a
   // settings restore (it could no longer be removed to put them back).

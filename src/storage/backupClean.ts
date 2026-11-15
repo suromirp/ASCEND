@@ -1,6 +1,7 @@
 // Back-up inlezen: elk record nakijken en de instellingen opschonen voordat iets
 // de opslag bereikt.
 
+import { isReentryWeek } from '../engine/reentry';
 import { cleanCardOrder } from '../engine/cardOrder';
 import type { PlannedSession } from '../models/training';
 import type { WeeklyHealthCheck } from '../models/checkIn';
@@ -18,7 +19,7 @@ import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, mi
 import { normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { validCatchUp } from '../engine/catchUp';
-import { BREAK_ASK_OPTIONS } from '../engine/forgeSession';
+import { BREAK_ASK_OPTIONS, LEFT_AFTER_OPTIONS } from '../engine/forgeSession';
 import { TIME_CAP_OPTIONS } from '../engine/forgeTimeCap';
 import { isRecord } from '../utils/guards';
 import { cleanWatchFieldStore } from '../engine/watchFields';
@@ -62,6 +63,8 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   const lists: [string, (v: unknown) => boolean][] = [
     ['weightEntries', (e) => isRecord(e) && isDate(e.date) && typeof e.kg === 'number' && Number.isFinite(e.kg) && (e.basis === undefined || e.basis === 'trend' || e.basis === 'scale') && (e.scaleKg === undefined || (typeof e.scaleKg === 'number' && Number.isFinite(e.scaleKg)))],
     ['illnessEpisodes', (e) => hasId(e) && isDate(e.startDate) && typeof e.kind === 'string'],
+    // Rustiger instap na een pauze (engine/reentry.ts): een beschadigde rij valt weg, de rest blijft.
+    ['reentryWeeks', isReentryWeek],
     ['morningCheckIns', (e) => isRecord(e) && isDate(e.date)],
     ['weeklyHealthChecks', (e) => isRecord(e) && isDate(e.weekStart) && typeof e.trouble === 'string'],
     ['weeklyIntentions', isWeeklyIntention],
@@ -234,7 +237,7 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   // Snelknoppen tonen bestaat niet meer (docs/beslissingen/2026-11-02-forge-herinrichting.md): een oude
   // waarde wordt stil genegeerd, het is geen fout in het bestand.
   delete s.forgeQuickButtons;
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'watchPlaceWorkout', 'stravaText', 'watchFieldsShown', 'routeProposal', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'fullWeekAsk', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'eveningBefore', 'eveningNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'tempoStablePieces', 'fuelOnTheGo', 'raceDay'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'watchPlaceWorkout', 'stravaText', 'watchFieldsShown', 'routeProposal', 'routeAvoidBigRoads', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'fullWeekAsk', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'watchKindCheck', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'eveningBefore', 'eveningNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'tempoStablePieces', 'fuelOnTheGo', 'raceDay'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -296,6 +299,10 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   }
   if ('forgeLongBreak' in s && !(BREAK_ASK_OPTIONS as readonly number[]).includes(s.forgeLongBreak as number)) {
     delete s.forgeLongBreak;
+    skipped.n++;
+  }
+  if ('forgeLeftAfter' in s && !(LEFT_AFTER_OPTIONS as readonly number[]).includes(s.forgeLeftAfter as number)) {
+    delete s.forgeLeftAfter;
     skipped.n++;
   }
   // Hoogstens per krachttraining (engine/forgeTimeCap.ts): een van de vaste keuzes, of niet daar.
