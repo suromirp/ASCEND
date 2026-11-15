@@ -12,7 +12,8 @@ import { derivedFactEntries } from './influence';
 import { isLegHeavyTemplate } from './scheduler';
 import { stringHashKey } from '../utils/stringHash';
 
-// A simple 32 bit hash over strings; enough to tell one content from another (only in memory).
+// A simple 32 bit hash over strings; enough to tell one content from another. Only in memory,
+// so it may differ from the xor variant it replaced (utils/stringHash.ts); it is not stored.
 function hashOf(parts: (string | number | undefined)[]): string {
   return `${parts.length}:${stringHashKey(parts.map((p) => `${String(p)}|`).join(''), { multiplier: 33, seed: 5381 })}`;
 }

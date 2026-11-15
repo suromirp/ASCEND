@@ -18,7 +18,6 @@ import { SAVED_ROUTES_KEY } from './places';
 import { readSavedRouteList, routesOfPlaces } from './migrationsPlaces';
 import { readSkillGoalStore } from './migrationsSkill';
 import { mergeSkillStores } from '../engine/skillGoal';
-import type { GoalMilestoneProgress } from '../models/goals';
 import { loadCurrentData, computeDiff } from './backupPreview';
 
 // --- plan & apply ---------------------------------------------------------
@@ -167,7 +166,7 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
       recoveryMetrics: morningPuts.length > 0 ? { clear: false, onlyNew: true, puts: morningPuts } : undefined,
       trainingGoals: listWrite(goalsAction, resolved.trainingGoals),
       goalMilestones: listWrite(goalsAction, resolved.goalMilestones),
-      goalMilestoneProgress: touches(goalsAction) ? historyWrite(oneLinePerMilestone(resolved.goalMilestoneProgress)) : undefined,
+      goalMilestoneProgress: touches(goalsAction) ? historyWrite(resolved.goalMilestoneProgress) : undefined,
       capabilityEvidence: listWrite(effective.capability_evidence, resolved.capabilityEvidence),
       injuryNotes: listWrite(effective.injuries, resolved.injuryNotes),
       settings: settingsWrite,
@@ -179,17 +178,4 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   }
   // De geplande sessies zijn vervangen: een lopende training hoort bij de oude planning (wijzer en concepten mee).
   if (touches(effective.planned_schedule) || touches(programAction)) clearForgeSessions();
-}
-
-// A milestone has one line: of two lines in the file for the same milestone only the first
-// is written (the store checks the device's own lines inside the transaction).
-function oneLinePerMilestone(r: ResolvedListCategory<GoalMilestoneProgress>): ResolvedListCategory<GoalMilestoneProgress> {
-  const seen = new Set<string>();
-  const writes = r.writes.filter((p) => {
-    const key = `${p.goalId}|${p.milestoneId}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-  return { ...r, writes };
 }

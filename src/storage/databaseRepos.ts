@@ -190,6 +190,10 @@ export interface GoalMilestoneProgressRepo {
   // transaction: two writers at once (two logs saved one after the other, a tap on
   // Behaald) never give a milestone a second line. True when it was written.
   addOnce(progress: GoalMilestoneProgress): Promise<boolean>;
+  // Removes the line only when that log cleared it (sourceSessionLogId), looked up in the
+  // same transaction. The fixed id belongs to the milestone, not to the log: a line with that
+  // id can be one you made by hand, or one another log wrote. True when it was removed.
+  deleteIfFromLog(id: string, logId: string): Promise<boolean>;
   delete(id: string): Promise<void>;
 }
 
@@ -213,6 +217,15 @@ export const GoalMilestoneProgressRepo: GoalMilestoneProgressRepo = {
     if (!have) await tx.store.put(progress);
     await tx.done;
     return !have;
+  },
+  deleteIfFromLog: async (id: string, logId: string) => {
+    const db = await getDB();
+    const tx = db.transaction('goalMilestoneProgress', 'readwrite');
+    const row = await tx.store.get(id);
+    const ours = row?.sourceSessionLogId === logId;
+    if (ours) await tx.store.delete(id);
+    await tx.done;
+    return ours;
   },
   delete: (id: string) => del('goalMilestoneProgress', id),
 };

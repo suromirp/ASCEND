@@ -73,7 +73,8 @@ export function restoreStrengthTakeovers(logIds: string[]): Promise<number> {
       const log = (await SessionLogsRepo.getAll()).find((l) => l.id === id);
       const strength = log?.manualMeasured?.strength;
       if (!log || !strength) continue;
-      for (const progressId of log.manualMeasured?.clearedProgressIds ?? []) await GoalMilestoneProgressRepo.delete(progressId);
+      // Only the lines this log cleared: the fixed id is the milestone's (a line made by hand stays).
+      for (const progressId of log.manualMeasured?.clearedProgressIds ?? []) await GoalMilestoneProgressRepo.deleteIfFromLog(progressId, log.id);
       workoutIds.push(strength.workoutId);
       await SessionLogsRepo.put(restoreManual(log));
       restored++;
