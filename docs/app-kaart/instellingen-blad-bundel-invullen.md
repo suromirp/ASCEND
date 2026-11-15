@@ -45,9 +45,10 @@ Band bij optrekken en dip
 [knop: Stap voorstellen]
 Stap voorstellen
 [knop: Uitleg: Stap voorstellen]
-[knop: IJkset voorstellen]
-IJkset voorstellen
-[knop: Uitleg: IJkset voorstellen]
+[knop: IJkset, Vragen]
+IJkset
+[knop: Uitleg: IJkset]
+Vragen
 [knop: Calisthenics per training, Alles kracht]
 Calisthenics per training
 [knop: Uitleg: Calisthenics per training]
