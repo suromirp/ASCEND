@@ -4,6 +4,9 @@ Bijgewerkt: 15 november 2026, 11:20 Portugese tijd, door de coördinator session
 
 ## Vaste afspraken van nu
 
+- Eigenaar 15 november 12:15: "ik vertrouw erop dat jij weet wat de beste aanpak is": zelf beslissen met het advies, keuzes hier vastleggen.
+- Backlog bijhouden (eigenaar 12:18, "hoe blijft dit up to date?"): Sherpa Backlog session_01LnDpSj5qWPZmyX97SijVCU (`claude/backlog-bijhouden`): eenmalig opruimen, codes [I-n], `npm run backlog:bij` na elke squash, test. Tot dan: voor elke start eerst in de code en git log kijken of het al gebouwd is.
+
 - Zonder sportschool (eigenaar 15 november, "Ja advies"): alleen wat de sportschool nodig heeft vervalt; een loop of wandeling die je niet deed telt als gemist. Doorgegeven aan Sherpa Week.
 
 - Tijden aan de eigenaar in Portugese tijd (Europe/Lisbon) tot woensdag 18 november, daarna Amsterdamse tijd; nooit UTC.
