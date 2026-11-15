@@ -41,3 +41,11 @@ Niets. Vult `2026-10-26-advies-anders.md` aan: wat de planning raakt gaat bij te
 ## Terugdraaien
 
 Punt 1: `alwaysAsk` weghalen in `useAdviceReset`. Punt 2: in `SettingsOverview` weer `searchValue(placement.row, ...)` (niet doen). Punt 3: `fromStart` uit `plain` in `settingsDiff.ts`; het veld `startChoices` kan blijven staan. Punt 4: de rij op Sporten weghalen; wie kracht uit had, zet hem eerst weer aan, anders blijft `strengthTraining: false` gelden.
+
+## Aanvulling (15 november, na Pathfinder)
+
+Open punten 1 en 2 zijn dichtgezet, het besluit hierboven blijft staan.
+
+- Wie bij de start Geen krachttraining koos, houdt de instelling op Aan en een eigen week zonder krachtdag. Gekozen: de rij zegt eerlijk wat er is, "Je week heeft geen krachtdag" (`engine/settingsSummary.ts`, tak `krachttraining`). Niet gekozen: het startantwoord de instelling laten zetten, want dat zou Alles terug naar het advies en het voorstel bij Aan zetten veranderen voor een kleine winst.
+- Bij kracht uit verdwijnt de stepper Keer kracht per week uit het weekbudget; er staat één regel voor in de plaats ("Krachttraining staat uit, dus het budget telt geen kracht").
+- De uitleg van Sporten zegt dat kracht altijd eerst een voorstel is, en de kop boven de rij heet Naast je sporten.

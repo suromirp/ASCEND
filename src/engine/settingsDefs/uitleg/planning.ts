@@ -40,7 +40,7 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
   },
   sporten: {
     title: 'Sporten',
-    lead: 'Per sport kies je wat ermee gebeurt. Verandert een keuze je planning, dan gaat dat zoals je bij Wijzigingen koos.',
+    lead: 'Per sport kies je wat ermee gebeurt. Verandert een keuze je planning, dan gaat dat zoals je bij Wijzigingen koos. Kracht is altijd eerst een voorstel.',
     points: [
       { head: 'Plan dit voor mij', text: 'Het komt in je week, op dagen die bij je benen passen. Alleen voor hardlopen, wandelen en fietsen.' },
       { head: 'Telt mee als ik het doe', text: 'je plant het zelf. Wat je doet telt mee voor je benen en je week.' },

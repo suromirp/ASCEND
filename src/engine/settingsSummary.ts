@@ -31,6 +31,7 @@ import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { ADVICE_SPECS, countDifferences, fromStart } from './settingsDiff';
 import { strengthTrainingOn } from './strengthTraining';
+import { isStrengthTemplateId } from './weekShape';
 import { shelterShort, SHELTER_ADVICE, type TrekShelter } from './trekShelter';
 import { resolveOverviews } from './overviewSettings';
 import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
@@ -809,7 +810,14 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     }
     case 'krachttraining':
       // Uit is een keuze met een waarschuwing (engine/strengthTraining.ts): zeg wat je week dan heeft.
-      return strengthTrainingOn(s) ? { checked: true } : { checked: false, sub: 'Alleen lopen en rust' };
+      if (!strengthTrainingOn(s)) return { checked: false, sub: 'Alleen lopen en rust' };
+      // Wie bij de start Geen krachttraining koos, heeft een eigen week zonder krachtdag: aan zetten brengt dan
+      // niets terug. Zeg eerlijk wat er is (besluit 2026-11-15-instellingen-terugzetten-en-kracht.md, Aanvulling).
+      {
+        const shape = parseWeekShape(s.weekShape);
+        if (shape && !Object.keys(shape.days).some(isStrengthTemplateId)) return { checked: true, sub: 'Je week heeft geen krachtdag' };
+      }
+      return { checked: true };
     case 'beginnersstart':
       // Je antwoord bij de start is jouw keuze, geen afwijking van het advies (engine/settingsDiff.ts#fromStart).
       return { value: choiceShort('beginnersstart', parseBeginnerStart(s.beginnerStart)), ...(fromStart(s, 'beginnerStart') ? { sub: 'Je antwoord bij de start' } : {}) };

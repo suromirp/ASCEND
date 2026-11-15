@@ -3,6 +3,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { DIRECTIONS, GUIDELINE_MINUTES, GUIDELINE_STRENGTH, MINUTES_CEILING } from '../../../data/directions';
 import { belowGuideline, budgetFor, resolveWeekBudget, settingBudget, type WeekBudgetChoice } from '../../../engine/weekBudget';
 import { PrimaryButton, Stepper } from '../../ui';
+import { strengthTrainingOn } from '../../../engine/strengthTraining';
 import { TextButton } from '../../TextButton';
 import { SettingsList, SettingsRow } from '../SettingsList';
 import { Sheet } from '../Sheet';
@@ -30,6 +31,8 @@ export function WeekBudgetSheet({ onClose, onPropose }: { onClose: () => void; o
   const advice = budgetFor(id);
   const budget = budgetFor(id, { choice });
   const label = DIRECTIONS[id].label;
+  // Met krachttraining uit telt het budget geen kracht (engine/strengthTraining.ts): dan verdwijnt de stepper.
+  const strengthOn = strengthTrainingOn(settings);
 
   function toStored(next: WeekBudgetChoice): AppSettings['weekBudget'] {
     const kept: NonNullable<AppSettings['weekBudget']> = {
@@ -65,16 +68,20 @@ export function WeekBudgetSheet({ onClose, onPropose }: { onClose: () => void; o
           onInc={() => save({ ...choice, minutes: Math.min(MINUTES_CEILING, budget.minutes + MINUTE_STEP), strength: budget.strength })}
         />
         )}
-        <Stepper
-          label="Keer kracht per week"
-          display={<span className="font-sans tabular-nums">{budget.strength} keer</span>}
-          decLabel="Minder keer kracht"
-          incLabel="Meer keer kracht"
-          decDisabled={budget.strength <= (id === 'stronger' ? 2 : 1)}
-          incDisabled={budget.strength >= MAX_STRENGTH}
-          onDec={() => save({ ...choice, minutes: budget.minutes, strength: budget.strength - 1 })}
-          onInc={() => save({ ...choice, minutes: budget.minutes, strength: budget.strength + 1 })}
-        />
+        {strengthOn ? (
+          <Stepper
+            label="Keer kracht per week"
+            display={<span className="font-sans tabular-nums">{budget.strength} keer</span>}
+            decLabel="Minder keer kracht"
+            incLabel="Meer keer kracht"
+            decDisabled={budget.strength <= (id === 'stronger' ? 2 : 1)}
+            incDisabled={budget.strength >= MAX_STRENGTH}
+            onDec={() => save({ ...choice, minutes: budget.minutes, strength: budget.strength - 1 })}
+            onInc={() => save({ ...choice, minutes: budget.minutes, strength: budget.strength + 1 })}
+          />
+        ) : (
+          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Krachttraining staat uit, dus het budget telt geen kracht. Je zet het aan bij Sporten.</p>
+        )}
         <SettingsList>
           <SettingsRow id="weekbudget-dubbel" title="Pittige minuten tellen dubbel" kind="toggle" checked={choice.doubleHard} onChange={(on) => save({ ...choice, doubleHard: on, minutes: budget.minutes, strength: budget.strength })} />
         </SettingsList>

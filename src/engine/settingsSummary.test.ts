@@ -4,6 +4,7 @@ import { durationNote, groupSummary, rowSummary, searchValue, SUB_MAX_LENGTH, ty
 import { adviceDifferences } from './settingsDiff';
 import { PAGE_ROWS, SETTINGS_PAGES, allRowIds } from '../data/settingsLayout';
 import { DEFAULT_WATCH_USE } from './watchUse';
+import { WEEK_SHAPE_CARDIO, WEEK_SHAPE_STRENGTH } from './sports';
 import { settingsHelp } from '../data/settingsHelp';
 
 const TODAY = '2026-10-22';
@@ -1253,5 +1254,21 @@ describe('searchResultValue: de eigen waarde in het zoekveld (backlog Q)', () =>
     expect(searchResultValue('slapen-onderweg', f).text).toBe(rowSummary('slapen-onderweg', f).value);
     expect(searchResultValue('kledingadvies', f)).toEqual({ text: 'Uit', dim: true });
     expect(searchResultValue('vragen-na-loop', f).text).toBe(rowSummary('vragen-na-loop', f).value);
+  });
+
+  describe('krachttraining', () => {
+    const row = (settings: object) => rowSummary('krachttraining', facts({ settings: { ...facts().settings, ...settings } as never }));
+    it('aan, met een week met krachtdagen: niets erbij', () => {
+      expect(row({ strengthTraining: true })).toEqual({ checked: true });
+    });
+    it('aan, maar de eigen week uit de start heeft geen krachtdag: zegt het eerlijk', () => {
+      expect(row({ weekShape: { days: { [WEEK_SHAPE_CARDIO[0]]: 2, [WEEK_SHAPE_CARDIO[1]]: 6 } } })).toEqual({ checked: true, sub: 'Je week heeft geen krachtdag' });
+    });
+    it('aan, met een week waar kracht in staat: niets erbij', () => {
+      expect(row({ weekShape: { days: { [WEEK_SHAPE_CARDIO[0]]: 2, [WEEK_SHAPE_STRENGTH[0]]: 3 } } })).toEqual({ checked: true });
+    });
+    it('uit: alleen lopen en rust', () => {
+      expect(row({ strengthTraining: false })).toEqual({ checked: false, sub: 'Alleen lopen en rust' });
+    });
   });
 });

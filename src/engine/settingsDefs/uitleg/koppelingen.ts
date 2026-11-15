@@ -101,7 +101,7 @@ export const KOPPELINGEN_UITLEG: Record<string, SettingsHelp> = {
     lead: 'Een wandelworkout krijgt geen zone maar vaste slagen per minuut uit je hardloopzones, boven de stappen en in de Briefing.',
     points: [
       { head: 'Waarom', text: 'intervals.icu kent alleen Fietsen, Hardlopen, Zwemmen en Andere. Wandelen valt onder Andere, en daar staan geen zones.' },
-      { head: 'Rustig', text: 'alleen een bovengrens, het einde van zone 2. Wandelend onder zone 1 zakken is goed.' },
+      { head: 'Rustig', text: 'alleen een bovengrens, het einde van de hoogste rustige zone (zone 2, of zone 1 tussen korte stevige blokken). Wandelend lager zakken is goed. Je zones staan op het blad Je horloge.' },
       { head: 'Let op', text: 'het is tekst, geen hartslagdoel: je horloge piept er niet op.' },
       { head: 'Uit', text: 'geen getallen, je wandelt op gevoel zoals voorheen.' },
     ],
