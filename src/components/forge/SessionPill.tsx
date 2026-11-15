@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { activeMinutes, activeSeconds, formatSessionClock, isPaused, pillSlot, sessionIdentity, setsPhrase } from '../../engine/forgeSession';
+import { activeMinutes, activeSeconds, formatSessionClock, isPaused, nextPillLast, pillSlot, sessionIdentity, setsPhrase } from '../../engine/forgeSession';
 import { promptKey, requestOpenSession, wasPrompted, type SessionState } from '../../utils/forgeSessionStore';
 import { Icon } from '../icons';
 import { Pictogram } from '../pictograms';
@@ -33,8 +33,8 @@ export function SessionPillSlot({ session }: { session: SessionState | undefined
   // Met het blad open blijft dit de training waarvoor het openging: een andere training komt pas na het sluiten.
   const [last, setLast] = useState(session);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const sameTraining = !!session && !!last && sessionIdentity(session) === sessionIdentity(last);
-  if (session && session !== last && (!sheetOpen || !last || sameTraining)) setLast(session);
+  const keep = nextPillLast({ live: session, last, sheetOpen, keyOf: sessionIdentity });
+  if (keep !== last) setLast(keep);
   const slot = pillSlot({ live: session, last: last ?? session, sheetOpen, keyOf: sessionIdentity });
   if (!slot) return null;
   return <SessionPill key={sessionIdentity(slot.session)} session={slot.session} gone={slot.gone} onSheet={setSheetOpen} />;

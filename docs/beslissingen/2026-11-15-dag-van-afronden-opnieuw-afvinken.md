@@ -11,6 +11,8 @@ Afronden in Forge stelt de dag voor van het laatste echte werk in de training, n
 
 Warden (15 november, I-45): gepland maandag 16 en maandag gedaan; woensdag 18 voor het afronden een set uit en weer aan gezet. De voorgestelde dag werd woensdag, en bij een beendag telde de rust dan twee dagen te laat. Het was zichtbaar, maar de standaard hoort te kloppen.
 
+Wat het kost: vink je een set per ongeluk af en meteen weer uit, en doe je hem dagen later echt, dan telt hij op de eerste keer. Dat raakt de dag alleen als je die latere dag niets anders voor het eerst afvinkt; de knoppen bij Gedaan op laten de dag dan zien en kiezen. `SetLog.at` blijft het moment van de laatste keer afvinken; geen lezer in de engine maakt daar een dag van (15 november nagezocht), de dag komt uit `completedDate`. Een oefening met alleen uitgezette sets houdt `firstDoneAt` bij een nieuw plan (`engine/forgeInput.ts#touchedInDraft`).
+
 ## Alternatieven
 
 Laten zoals het was en het in het besluit noemen: de standaard blijft dan bij een gewone handeling verkeerd. De klok van de sessie (pauzes, laatste handeling) als grens: een tik is zelf een handeling, dus de klok ziet het verschil tussen opnieuw afvinken en nieuw werk niet. Het moment van de eerste keer ook in het log zetten (`SetLog.at`): niet nodig voor de dag, en het log zegt dan iets anders dan wat je deed; `SetLog.at` blijft het moment van afvinken.
