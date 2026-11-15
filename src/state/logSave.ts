@@ -4,6 +4,7 @@
 import type { LogSessionInput } from './appDataTypes';
 import { LogNotSaved, settleLogOutcome } from './logSession';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
+import { TickOffStillRunning } from '../storage/storageError';
 
 type LogSessionFn = (input: LogSessionInput, opts?: { onWriteError?: (err: unknown) => void }) => Promise<boolean>;
 
@@ -46,9 +47,11 @@ export const FORM_SAVE_NOTE = {
   failed: `${FAILED} Je invulling staat er nog; probeer het opnieuw.`,
   failedLoose: `${FAILED} Kijk eerst in je logboek of hij er toch staat; je invulling staat er nog.`,
   slow: `${SLOW} Je invulling blijft staan.`,
-  // Een losse training op het blad Hoe ging het?. Geen advies om de app af te sluiten: het concept staat in
-  // sessionStorage (utils/loggerDraft.ts) en overleeft dat niet. Het blad sluiten en opnieuw openen houdt het wel.
-  slowLoose: `${SLOW} Je invulling blijft staan. Kijk in je logboek of hij er staat; staat hij er niet, probeer het dan nog eens.`,
+  // Een losse training, op het blad Hoe ging het? en het oude trainingsscherm. De knop blijft uit, dus de zin noemt
+  // de uitweg: sluiten en opnieuw proberen (een tweede poging wacht op de eerste, besluit 2026-11-14-opslaan-rest.md).
+  // Geen advies om de app af te sluiten: het concept staat in sessionStorage (utils/loggerDraft.ts) en overleeft dat
+  // niet. Sluiten en opnieuw openen houdt het wel. Kort genoeg voor twee regels op 360 px (I-30).
+  slowLoose: `${SLOW} Niet in je logboek? Sluit en probeer opnieuw; je invulling blijft bewaard.`,
   already: ALREADY_LOGGED_NOTE,
 } as const;
 
@@ -127,16 +130,16 @@ export function resetFailedNotes(): void {
   lastWriteError = undefined;
 }
 
-// Het blad Hoe ging het? leest ja of nee zelf (logForm/howDidItGo.ts#submitLog) en toont zijn eigen zin: ook
-// daar geen melding bovenin, en dezelfde teller. `onWriteError`: de fout, voor reportIfGone. Zonder `onWriteError`
-// gaat de fout gewoon bovenin, zoals bij settleWithOwnNotice: wie het vergeet is nooit stil.
-export async function logWithOwnNotice(logSession: LogSessionFn, input: LogSessionInput, onWriteError?: OnWriteError): Promise<boolean> {
-  let writeError: unknown;
-  const saved = await logSession(input, onWriteError ? { onWriteError: (err) => { writeError = err ?? new Error('Opslaan lukte niet.'); } } : undefined);
-  failedInARow = saved ? 0 : failedInARow + 1;
-  lastWriteError = saved ? undefined : writeError;
-  if (!saved && writeError !== undefined) onWriteError?.(writeError);
-  return saved;
+// Het blad Hoe ging het? leest ja, stond er al of mislukt zelf (logForm/howDidItGo.ts#submitLog) en toont zijn
+// eigen zin: ook daar geen melding bovenin, en dezelfde teller. Zonder grens (die zet submitLog). "Nee" is pas
+// "stond er al" als het log er echt staat (settleLogOutcome); anders mislukt. `onWriteError`: de fout, voor
+// reportIfGone. Zonder `onWriteError` gaat de fout gewoon bovenin: wie het vergeet is nooit stil.
+export async function logOrAlready(logSession: LogSessionFn, input: LogSessionInput, onWriteError?: OnWriteError): Promise<boolean | 'already'> {
+  try {
+    return (await settleWithOwnNotice(logSession, input, onWriteError)) ? true : 'already';
+  } catch {
+    return false;
+  }
 }
 
 // Wat het oude trainingsscherm doet bij welke uitkomst. Het concept gaat alleen weg en het scherm sluit alleen
@@ -160,6 +163,53 @@ export function formAfterSave(outcome: LogSaveOutcome): FormAfterSave {
 // alsnog, dan wist die uitkomst het concept zelf.
 export function closeClearsDraft(saving: boolean): boolean {
   return !saving;
+}
+
+// De zin onderaan het oude trainingsscherm bij een uitkomst van formAfterSave. `loose`: een losse training, zonder
+// geplande training die een tweede log tegenhoudt. Alleen mislukt is amber.
+export function formNoteText(note: SaveNoteKind | undefined, loose: boolean): ShownSaveNote | null {
+  if (!note) return null;
+  if (note === 'failed') return { text: failedNote(loose ? FORM_SAVE_NOTE.failedLoose : FORM_SAVE_NOTE.failed), warn: true };
+  if (note === 'slow') return { text: loose ? FORM_SAVE_NOTE.slowLoose : FORM_SAVE_NOTE.slow, warn: false };
+  return { text: FORM_SAVE_NOTE.already, warn: false };
+}
+
+// Wat het oude trainingsscherm aanlevert om op te slaan (saveOnLogger). `mounted`: het scherm bestaat nog.
+// `showing`: het is in beeld, dus niet aan het sluiten (`onLeave` van useSheetClose). `busy` volgt de knop (uit
+// zolang er opgeslagen wordt, ook na de grens); `clearDraft` loopt ook als het scherm al weg is, want het concept
+// staat los van het scherm. `apply` alleen zolang het scherm bestaat.
+export interface LoggerSaveUi {
+  loose: boolean;
+  mounted: () => boolean;
+  showing: () => boolean;
+  busy: (on: boolean) => void;
+  clearDraft: () => void;
+  report: OnWriteError;
+  apply: (next: { close: boolean; note: ShownSaveNote | null }) => void;
+  limitMs?: number;
+}
+
+// Opslaan op het oude trainingsscherm (ExerciseLogger.tsx): een poging, elke uitkomst hoogstens een keer op het
+// scherm, ook de late. Het concept gaat alleen weg en het scherm sluit alleen als het log er staat. Na de grens
+// blijft de knop uit tot het opslaan klaar is. Een schrijffout die niemand ziet (scherm weg of aan het sluiten)
+// gaat naar de melding bovenin.
+export async function saveOnLogger(logSession: LogSessionFn, input: LogSessionInput, ui: LoggerSaveUi): Promise<LogSaveOutcome> {
+  let settled = false;
+  let writeError: unknown;
+  const show = (outcome: LogSaveOutcome) => {
+    if (settled) return;
+    settled = outcome !== 'slow';
+    const next = formAfterSave(outcome);
+    ui.busy(next.buttonOff);
+    if (next.clearDraft) ui.clearDraft();
+    if (outcome === 'failed') reportIfGone(ui.mounted() && ui.showing(), writeError, ui.report);
+    if (!ui.mounted()) return;
+    ui.apply({ close: next.close, note: formNoteText(next.note, ui.loose) });
+  };
+  ui.busy(true);
+  const outcome = await saveLogWithin(logSession, input, { limitMs: ui.limitMs, onLate: show, onWriteError: (err) => { writeError = err; } });
+  show(outcome);
+  return outcome;
 }
 
 // Wat de kaart Van je horloge doet bij welke uitkomst. Het blad Andere training gaat alleen dicht als het log
@@ -249,6 +299,16 @@ export async function saveOnCard(logSession: LogSessionFn, input: LogSessionInpu
   };
   const outcome = await saveLogWithin(logSession, input, { limitMs: ui.limitMs, onLate: (result) => show(result, true), onWriteError: (err) => { writeError = err; } });
   show(outcome);
+  return outcome;
+}
+
+// Afvinken met één tik op Vandaag en Week: een rustdag, een krachttraining die je in MacroFactor bijhoudt en Gedaan
+// zoals gepland (I-32). Er is geen concept en geen blad, dus niets om weg te gooien of te sluiten. Wel een zichtbare
+// uitkomst met een grens in tijd: een schrijffout meldt logSession zelf bovenin (geen `onWriteError`), stond er al
+// is goed, en na de grens zegt de melding bovenin dat het langer duurt. Een laat nee meldt logSession ook zelf.
+export async function tickOff(logSession: LogSessionFn, input: LogSessionInput, report: OnWriteError, limitMs?: number): Promise<LogSaveOutcome> {
+  const outcome = await saveLogWithin(logSession, input, { limitMs });
+  if (outcome === 'slow') report(new TickOffStillRunning());
   return outcome;
 }
 

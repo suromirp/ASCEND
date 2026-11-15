@@ -39,10 +39,22 @@ export class LogStoredFollowUpFailed extends Error {
   }
 }
 
+// Afvinken met één tik (Vandaag en Week, state/logSave.ts#tickOff) duurt langer dan de grens. Er is geen blad
+// om een zin op te zetten, dus zegt de melding bovenin het. Het log kan nog landen: geen "mislukt".
+export const TICK_OFF_STILL_RUNNING = 'Afvinken duurt langer dan verwacht. Kijk zo in je logboek of hij er staat; zo niet, vink hem dan nog eens af.';
+
+export class TickOffStillRunning extends Error {
+  constructor() {
+    super('Afvinken loopt nog na de grens in tijd.');
+    this.name = 'TickOffStillRunning';
+  }
+}
+
 // Tijdens het gebruik: een opslaan dat niet lukte (de melding bovenin).
 export function describeWriteError(err: unknown): string {
   const name = errorName(err);
   if (name === 'LogStoredFollowUpFailed') return LOG_STORED_FOLLOW_UP_FAILED;
+  if (name === 'TickOffStillRunning') return TICK_OFF_STILL_RUNNING;
   if (name === 'QuotaExceededError') return 'Opslaan lukt niet: de opslag op deze telefoon is vol. Maak een back-up en ruim ruimte op.';
   if (name === 'AbortError') return ABORTED_WHILE_SAVING;
   return 'Opslaan is niet gelukt. Probeer het opnieuw; lukt het niet, maak dan een back-up via Instellingen, Gegevens en back-up.';

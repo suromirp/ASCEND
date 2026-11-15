@@ -73,9 +73,9 @@ describe('uitlegblad van een training', () => {
 
 // Het blad Je horloge (docs/visie/Ontwerp Info-blad.md, spoor 1).
 describe('blad Je horloge', () => {
-  it('gaat door Sheet (useSheetClose, sheetRef, SheetGrip), ook het onderblad Zelf nabouwen met de eyebrow Uitleg', () => {
+  it('gaat door Sheet (useSheetClose, sheetRef, SheetGrip), ook het onderblad Zelf nabouwen met de eyebrow Je horloge', () => {
     expect((watchSheet.match(/<Sheet /g) ?? []).length).toBe(2);
-    expect(watchSheet).toContain('<Sheet eyebrow="Uitleg"');
+    expect(watchSheet).toContain('<Sheet eyebrow={WATCH_SHEET_TEXT.title}');
     expect(watchSheet).toContain("from './settings/Sheet'");
   });
 
@@ -106,17 +106,10 @@ describe('blad Je horloge', () => {
     expect(watchSheet).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgba?\(/);
   });
 
-  it('het trainingsscherm: knop Horloge, Uitleg achter de i, geen knop Info meer', () => {
-    expect(logger).toContain('>Horloge</SecondaryButton>');
-    expect(logger).toContain('label="Waarom deze training"');
-    expect(logger).not.toContain('>Info</SecondaryButton>');
-    // Naar een pagina sluit het trainingsscherm zonder het concept weg te gooien.
+  // De knop Horloge, de i en het groeien uit de knop: gerenderd getest in exerciseLogger.render.test.ts.
+  it('het trainingsscherm: naar een pagina sluit het zonder het concept weg te gooien', () => {
     expect(logger).toContain('onLeave={closeSheet}');
     expect(logger).not.toContain('onLeave={requestClose}');
-  });
-
-  it('de knop Horloge laat het blad uit zich groeien', () => {
-    expect(logger).toMatch(/data-sheet-from=""><SecondaryButton onClick=\{\(\) => setShowWatch\(true\)\}/);
   });
 
   // Spoor 2: dezelfde rij in Week en op Vandaag, die hetzelfde blad opent.

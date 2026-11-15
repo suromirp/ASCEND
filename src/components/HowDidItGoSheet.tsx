@@ -27,7 +27,7 @@ import { blocksSave } from './logForm/manualLog';
 import type { EnabledSports } from '../engine/sports';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, PlaceChoice, RpeField, VariantField } from './logForm/LogFormParts';
 import { chosenPlaceLabel, placeLabel, SheetMode, showsPlace } from './logForm/formRules';
-import { failedNote, logWithOwnNotice, reportIfGone } from '../state/logSave';
+import { failedNote, logOrAlready, reportIfGone } from '../state/logSave';
 import { alreadyLogged, clearsDraft, footState, HOW_TEXT, submitLog, type CloseWay, type FootState } from './logForm/howDidItGo';
 
 export function HowDidItGoSheet({
@@ -86,7 +86,9 @@ export function HowDidItGoSheet({
   const [failedText, setFailedText] = useState<string>();
   const [otherOpen, setOtherOpen] = useState(false);
   // Al gedaan (je horloge vinkte af terwijl het blad openstond): niets opslaan, geen tweede log.
-  const alreadyDone = !saving && alreadyLogged(plannedSessionId, sessionLogs);
+  // Ook als Opslaan net hoorde dat hij er al stond, voordat het logboek opnieuw gelezen is (`alreadyNow`).
+  const [alreadyNow, setAlreadyNow] = useState(false);
+  const alreadyDone = !saving && (alreadyNow || alreadyLogged(plannedSessionId, sessionLogs));
   const foot = footState({ alreadyDone, confirmLong });
   const { shape, values } = form;
   // Onder 1 minuut is geen training: Opslaan uit, de zin staat onder het veld Duur (punt B).
@@ -107,9 +109,11 @@ export function HowDidItGoSheet({
     await submitLog({
       busy: savingRef,
       // De zin onderaan zegt het zelf: geen melding bovenin erbij (state/logSave.ts).
-      save: () => logWithOwnNotice(logSession, input, (err) => { writeError = err; }),
+      save: () => logOrAlready(logSession, input, (err) => { writeError = err; }),
       onSlow: () => { slowRef.current = true; setSlow(true); },
       onSaved: () => { form.clearDraft(); onSaved?.(); finish(); },
+      // Stond er al (het log staat er zeker): meteen de zin van al gedaan, niet die van mislukt (I-32).
+      onAlready: () => setAlreadyNow(true),
       // Mislukt: het blad blijft open met alles wat je invulde en het concept.
       // Is het blad al dicht (na de grens mag dat), dan ziet niemand de zin: de fout gaat naar de melding bovenin.
       onFailed: () => {
