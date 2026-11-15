@@ -38,6 +38,7 @@ Bijgewerkt: 15 november 2026, 18:40 Portugese tijd, door de coördinator session
 - IJkset (I-65, session_01LnDpSntCPZexgHzbzLTnkJ, `claude/ijkset-automatisch`): eigenaar 22:00 "mag van mij automatisch"; instelling met Vragen (advies), Automatisch erbij, Uit, en nooit bij ziek, zonder sportschool of vakantie. Na live: vragen of ik zijn stand op Automatisch zet (of hij doet het zelf).
 - Back-up van de eigenaar: 15 november 22:03, in de scratchpad van session_01LnDpSjEhK5wS8sN1rH1p5c onder backup/b.json (chmod 600, alleen python -I). Ook bruikbaar voor I-63 maandag als hij dan nog vers genoeg is.
 - Onderhoudsronde maandag (I-66): eigenaar 22:10 wil weten hoeveel van de engine dubbel of dood is; meten en in gewone taal melden.
+- Eén regel voor uitzonderingen (I-67, eigenaar 22:15): Cartographer op Fable session_01LnDpSnkK8EkH2zPBm6eVbx maakt inventaris en ontwerp (`claude/een-regel-uitzonderingen`). Bouwen pas na I-64 en I-65 op main, met een verse bouwer op Opus high en Warden op Fable.
 - Back-up kleiner (I-63): eigenaar 22:05 "maandag is prima": op het bouwmoment van maandag, met vooraf een verse back-up van hem.
 - Wachter: eigenaar 21:20 "Nee" op laten staan. Zelf aanmaken blijft geweigerd (Undermining Oversight); hem gevraagd de taak zelf op deze chat te zetten en "staat" te zeggen. Dan trig_01CDpj9NsMnvoumE9kVDUPt3 uitzetten en session_01LnDpSnngzUAioWQ5b8xBWH archiveren.
 - Alle bouwers van vanavond gearchiveerd, en alle worktrees in de scratchpad opgeruimd.
