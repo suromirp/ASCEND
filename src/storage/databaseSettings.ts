@@ -175,6 +175,8 @@ export interface AppSettings {
   // The button "Route voorstellen" on a running session (engine/routePlanner.ts).
   // Absent = on. Optional and additive, so no migration step.
   routeProposal?: boolean;
+  // Grote wegen mijden bij Route voorstellen; afwezig is aan (besluit 2026-11-14-routes-vorm.md).
+  routeAvoidBigRoads?: boolean;
   // Which loop comes first in the route proposal: one long loop past different
   // hills ('adventure', absent = adventure) or the same hill up and down ('simple').
   routeStyle?: 'simple' | 'adventure';

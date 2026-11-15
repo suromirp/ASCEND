@@ -122,6 +122,7 @@ const everything: AppSettings = {
   watchFieldsShown: false,
   stravaTextParts: 'title',
   routeProposal: false,
+  routeAvoidBigRoads: false,
   routeStyle: 'simple',
   routeStart: 'exact',
   routeMapBase: 'none',

@@ -189,6 +189,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="route-start" title="Startpunt van je lus" facts={facts} onClick={() => setInner('route-start')} />
           <SummaryRow id="je-plekken" title="Je plekken" facts={facts} onClick={() => { close(); navigate(PLACES_ROUTE); }} />
           <SummaryRow id="route-zoeken" title="Lus zoeken" facts={facts} info="routeZoeken" onClick={() => setInner('route-zoeken')} />
+          <SummaryRow id="route-grote-wegen" title="Grote wegen mijden" facts={facts} info="routeGroteWegen" onChange={(on) => void updateSettings({ routeAvoidBigRoads: on })} />
           <SummaryRow id="route-kaart" title="Ondergrond van de kaart" facts={facts} info="routeKaart" onClick={() => setInner('route-kaart')} />
           <SummaryRow id="maanstand" title="Maanstand bij een avondtocht" facts={facts} onChange={(on) => set({ moonLine: on })} />
           <SummaryRow id="weerruil" title="Ruilen bij slecht weer" facts={facts} onChange={(on) => set({ weatherSwap: on })} />
