@@ -27,7 +27,7 @@ import {
   type AutoBackupFailureReason,
   type BackupWhere,
 } from '../engine/autoBackup';
-import { APP_BACKUP_LABEL, appBackupFolder, verifySettled, type AutoBackupTarget } from '../integrations/backupFolder';
+import { APP_BACKUP_LABEL, appBackupFolder, verifySettled, type AutoBackupTarget, type Written } from '../integrations/backupFolder';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { buildBackupEnvelope } from './backupExport';
 import { toISODate } from '../utils/dates';
@@ -258,6 +258,7 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
   if (access === 'denied') return fail('permission');
 
   let name: string | undefined;
+  let written: Written | void = undefined;
   let where: BackupWhere;
   let own: string[];
   let by: string | undefined;
@@ -279,7 +280,7 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
       const candidate = autoBackupFileName(day, n);
       if (!own.includes(candidate) && !halfWritten.has(candidate) && (await target.exists(candidate))) continue;
       try {
-        await withTimeout(target.write(candidate, text, attemptId), timeoutMs);
+        written = await withTimeout(target.write(candidate, text, attemptId), timeoutMs);
         name = candidate;
       } catch (err) {
         if (err instanceof NameTakenError && ++taken < MAX_TAKEN) continue;
@@ -293,11 +294,16 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
     if (seen !== 'ok') {
       // Kapot: geen half bestand laten staan. Niet te lezen, of weghalen lukt niet: de naam onthouden,
       // zodat de volgende poging hem vervangt in plaats van er een volgnummer naast te zetten.
-      const gone = seen === 'broken' && (await withTimeout(target.remove(name), 5_000).then(() => true, () => false));
+      // Verving deze poging het eigen bestand van vandaag, dan komt dat bij kapot terug.
+      const made = name;
+      const undo = () => (written ? written.undo() : target.remove(made));
+      const gone = seen === 'broken' && (await withTimeout(undo(), 5_000).then(() => true, () => false));
       if (gone) halfWritten.delete(name);
       else halfWritten.add(name);
       throw new AutoBackupError('write', 'verify');
     }
+    if (written) await withTimeout(written.keep(), 5_000).catch(() => undefined);
+    await withTimeout(Promise.resolve(target.tidy?.(name)), 5_000).catch(() => undefined);
   } catch (err) {
     if (err instanceof AutoBackupError) return fail(err.reason);
     if (err instanceof TimeoutError) return fail('timeout');

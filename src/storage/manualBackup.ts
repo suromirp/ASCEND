@@ -8,7 +8,7 @@
 import { AutoBackupError, NameTakenError } from '../engine/autoBackup';
 import { failedBackupText, manualBackupName, type BackupOutcome } from '../engine/manualBackup';
 import type { BackupFileAdapter } from './backupTypes';
-import { verifySettled, type AppBackupFolder } from '../integrations/backupFolder';
+import { verifySettled, type AppBackupFolder, type Written } from '../integrations/backupFolder';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
 const MANUAL_BACKUP_LIMIT_MS = 20_000;
@@ -80,8 +80,9 @@ async function write(folder: AppBackupFolder, text: string, now: Date, abort: { 
     // Een bezette naam krijgt een volgnummer, behalve het eigen halve bestand van een mislukte poging.
     const mine = own.has(name);
     if (!mine && (await folder.exists(name))) continue;
+    let written: Written | void;
     try {
-      await folder.write(name, text, attemptId, { neverReplace: !mine });
+      written = await folder.write(name, text, attemptId, { neverReplace: !mine });
     } catch (err) {
       if (err instanceof NameTakenError) continue;
       // Bleef er na een mislukte naam toch iets van deze poging staan, dan mag de volgende het vervangen.
@@ -100,11 +101,15 @@ async function write(folder: AppBackupFolder, text: string, now: Date, abort: { 
       throw new AutoBackupError('write', 'verify');
     }
     if (seen === 'broken') {
-      const gone = await folder.remove(name).then(() => true, () => false);
-      if (gone && !(await folder.exists(name).catch(() => true))) own.delete(name);
-      else own.add(name);
+      // Verving deze poging een eerder eigen bestand, dan komt dat terug: een kapot nieuw bestand kost
+      // nooit een back-up die er al stond.
+      await (written ? written.undo() : folder.remove(name)).catch(() => undefined);
+      if (await folder.exists(name).catch(() => true)) own.add(name);
+      else own.delete(name);
       throw new AutoBackupError('write', 'verify');
     }
+    if (written) await written.keep().catch(() => undefined);
+    await folder.tidy?.(name).catch(() => undefined);
     own.delete(name);
     return { name };
   }

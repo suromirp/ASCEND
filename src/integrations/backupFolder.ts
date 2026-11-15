@@ -19,6 +19,14 @@ export const APP_BACKUP_LABEL = 'Interne opslag > Documents > ASCEND';
 export type FolderAccess = 'ready' | 'needs-tap' | 'denied';
 export type Verified = 'ok' | 'broken' | 'unknown';
 
+// Het bestand staat onder zijn naam, maar is nog niet nagekeken.
+export interface Written {
+  // Nagekeken en goed: het bestand dat opzij ging mag weg.
+  keep(): Promise<void>;
+  // Nagekeken en kapot: het nieuwe bestand gaat weg en het bestand dat opzij ging komt terug.
+  undo(): Promise<void>;
+}
+
 // Waar een automatische back-up naartoe kan: de map van de app of de vaste map van de browser.
 export interface AutoBackupTarget {
   platform: 'app' | 'browser';
@@ -32,7 +40,11 @@ export interface AutoBackupTarget {
   // poging, zodat tijdelijke bestanden van een afgebroken poging een nieuwe nooit raken. Gooit een
   // AutoBackupError, of een NameTakenError als de naam toch bezet blijkt.
   // Met `neverReplace` wordt een bestaande naam nooit vervangen (NameTakenError).
-  write(name: string, text: string, attemptId: string, opts?: { neverReplace?: boolean }): Promise<void>;
+  // Geeft, als de map dat kan, terug hoe het af te maken is: een eigen bestand dat opzij ging blijft staan
+  // tot het nieuwe is nagekeken (`keep`), en komt terug als het nieuwe kapot is (`undo`).
+  write(name: string, text: string, attemptId: string, opts?: { neverReplace?: boolean }): Promise<void | Written>;
+  // Na een gelukte back-up: eigen resten van eerdere pogingen op deze naam (`.tmp`, `.old`) weghalen.
+  tidy?(name: string): Promise<void>;
   // Staat het bestand er heel (zoveel bytes, en in de app een back-up die te lezen is)?
   // 'ok': heel. 'broken': gelezen, maar de grootte of de inhoud klopt niet. 'unknown': kijken of lezen
   // lukte niet, dus het kan de hele back-up zijn; dat is nooit een reden om het bestand weg te halen.
@@ -79,6 +91,7 @@ function asBackupError(err: unknown, step: BackupWriteStep): AutoBackupError {
 }
 
 const RENAME_PAUSE_MS = 250;
+const STAT_PAUSE_MS = 300;
 const pause = (ms: number) => (ms > 0 ? new Promise<void>((r) => setTimeout(r, ms)) : Promise.resolve());
 
 // Hoe vaak en hoe lang nakijken wacht op een bestand dat er net staat.
@@ -124,7 +137,8 @@ async function holdsSettled(fs: TempFs, name: string, text: string): Promise<Hel
 
 // Eerst een tijdelijk bestand met de id van de poging, dan hernoemen: een half bestand krijgt nooit de
 // echte naam. Staat er al een eigen bestand met die naam (de opslag kijkt na dat het van ASCEND is), dan
-// gaat dat eerst opzij naar `.old` en pas na een gelukte rename weg; mislukt de rename, dan komt het terug.
+// gaat dat eerst opzij naar `.old`; mislukt de rename, dan komt het terug. Na een gelukte rename blijft `.old`
+// staan tot de aanroeper het nieuwe bestand heeft nagekeken (`keep` of `undo`).
 //
 // Let op hoe de plugin hernoemt (ionfilesystem `renameFile`): hij gooit het doel eerst weg, hernoemt dan,
 // en valt bij een mislukking terug op kopiëren en het tijdelijke bestand weghalen. Dus: of een naam vrij is
@@ -135,7 +149,7 @@ async function holdsSettled(fs: TempFs, name: string, text: string): Promise<Hel
 // bezet door een bestand dat de app niet ziet (NameTakenError).
 // Met `neverReplace` (Back-up maken met de hand) gaat een bestaand bestand nooit opzij: een bestaande naam
 // geeft meteen een NameTakenError en er wordt niets geschreven.
-export async function writeThroughTemp(fs: TempFs, name: string, text: string, attemptId: string, opts: { neverReplace?: boolean } = {}): Promise<void> {
+export async function writeThroughTemp(fs: TempFs, name: string, text: string, attemptId: string, opts: { neverReplace?: boolean } = {}): Promise<Written> {
   const taken = () => fs.exists(name).catch(() => true);
   if (opts.neverReplace && (await taken())) throw new NameTakenError(name);
   const tmp = `${name}.${attemptId}.tmp`;
@@ -195,7 +209,18 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
     console.warn('Back-up: de naam lukte niet, het volgende volgnummer', failure);
     throw new NameTakenError(name);
   }
-  if (moved) await fs.remove(old).catch(() => undefined);
+  // Het oude bestand gaat pas weg als het nieuwe is nagekeken: anders kan een kapot nieuw bestand een goede
+  // back-up kosten. De aanroeper kiest na het nakijken.
+  return {
+    keep: async () => {
+      if (moved) await fs.remove(old).catch(() => undefined);
+    },
+    undo: async () => {
+      await fs.remove(name).catch(() => undefined);
+      // rename gooit het doel eerst weg: alleen terugzetten als de naam zeker leeg is.
+      if (moved && !(await fs.exists(name).catch(() => true))) await fs.rename(old, name).catch(() => undefined);
+    },
+  };
 }
 
 function androidFolder(): AppBackupFolder {
@@ -209,14 +234,19 @@ function androidFolder(): AppBackupFolder {
   const missing = (err: unknown) => err instanceof Error && err.message.toLowerCase().includes('does not exist');
 
   // Alleen "bestaat niet" telt als vrij. Elke andere fout telt als bezet: de plugin gooit bij hernoemen het
-  // doel eerst weg, dus een haperende blik mag nooit een bestaand bestand vrij verklaren.
+  // doel eerst weg, dus een haperende blik mag nooit een bestaand bestand vrij verklaren. Hapert de blik,
+  // dan na een korte pauze nog één keer: anders krijgt een back-up in een lege map een volgnummer.
   const exists = async (name: string) => {
     const fs = await load();
-    try {
-      await fs.Filesystem.stat({ path: path(name), directory: fs.Directory.Documents });
-      return true;
-    } catch (err) {
-      return !missing(err);
+    for (let look = 0; ; look++) {
+      try {
+        await fs.Filesystem.stat({ path: path(name), directory: fs.Directory.Documents });
+        return true;
+      } catch (err) {
+        if (missing(err)) return false;
+        if (look > 0) return true;
+        await pause(STAT_PAUSE_MS);
+      }
     }
   };
 
@@ -242,7 +272,7 @@ function androidFolder(): AppBackupFolder {
         throw new AutoBackupError('folder');
       });
       const dir = fs.Directory.Documents;
-      await writeThroughTemp({
+      return writeThroughTemp({
         exists,
         writeFile: async (n, data) => {
           await fs.Filesystem.writeFile({ path: path(n), data, directory: dir, encoding: fs.Encoding.UTF8, recursive: true });
@@ -281,6 +311,16 @@ function androidFolder(): AppBackupFolder {
         return typeof parsed.backupSchemaVersion === 'number' ? 'ok' : 'broken';
       } catch {
         return 'broken';
+      }
+    },
+    async tidy(name) {
+      const fs = await load();
+      const dir = fs.Directory.Documents;
+      const listed = await fs.Filesystem.readdir({ path: APP_BACKUP_DIR, directory: dir });
+      for (const file of listed.files) {
+        // Alleen resten van pogingen op precies deze naam: <naam>.<poging>.tmp of .old.
+        if (!file.name.startsWith(`${name}.`) || !/\.(tmp|old)$/.test(file.name)) continue;
+        await fs.Filesystem.deleteFile({ path: path(file.name), directory: dir }).catch(() => undefined);
       }
     },
     async remove(name) {

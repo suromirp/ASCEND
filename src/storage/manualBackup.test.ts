@@ -105,6 +105,10 @@ vi.mock('@capacitor/filesystem', async () => {
         mem.files.set(to, mem.files.get(from)!);
         mem.files.delete(from);
       },
+      readdir: (o) => {
+        const dir = `${(o as { path: string }).path}/`;
+        return { files: [...mem.files.keys()].filter((k) => k.startsWith(dir)).map((k) => ({ name: k.slice(dir.length) })) };
+      },
       deleteFile: (o) => {
         const p = (o as { path: string }).path;
         if (mem.deleteFails && p.endsWith('.json')) throw new Error('delete failed');
@@ -330,7 +334,7 @@ describe('de eerste tik na het openen', () => {
 
   it('stat hapert op een naam waar een echt ander bestand staat: bezet, dus een volgnummer en het andere blijft heel', async () => {
     mem.files.set(`ASCEND/${NAME}`, 'een eerdere back-up');
-    mem.statErrors = 1;
+    mem.statErrors = 2;
     expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: N2 });
     expect(mem.files.get(`ASCEND/${NAME}`)).toBe('een eerdere back-up');
     expect(mem.files.get(`ASCEND/${N2}`)).toBe(TEXT);
@@ -359,6 +363,51 @@ describe('de eerste tik na het openen', () => {
     await expect(saveManualBackup(folder, TEXT, fast)).rejects.toMatchObject({ reason: 'write', step: 'verify' });
     spy.mockRestore();
     expect(mem.files.get(`ASCEND/${NAME}`)).toBe(TEXT);
+  });
+
+  it('een goede back-up gaat nooit verloren aan een kapotte opvolger: het eerdere bestand komt terug', async () => {
+    // Tik 1: heel geschreven, teruglezen faalt drie keer; het bestand blijft.
+    mem.readErrors = 3;
+    await expect(saveManualBackup(appBackupFolder()!, TEXT, fast)).rejects.toMatchObject({ step: 'verify' });
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe(TEXT);
+    // Tik 2 in dezelfde minuut mag het vervangen, maar het nieuwe bestand komt afgekapt aan.
+    const original = mem.files.set.bind(mem.files);
+    mem.files.set = (k, v) => original(k, k.endsWith('.tmp') ? v.slice(0, 5) : v);
+    await expect(saveManualBackup(appBackupFolder()!, TEXT.replace('{}', '{"later":true}'), fast)).rejects.toMatchObject({ step: 'verify' });
+    mem.files.set = original;
+    // De hele back-up van tik 1 staat er weer, en verder niets.
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe(TEXT);
+  });
+
+  it('stat blijft haperen op een naam waar een echt ander bestand staat: het wordt nooit overschreven', async () => {
+    mem.files.set(`ASCEND/${NAME}`, 'een eerdere back-up');
+    mem.statErrors = 999;
+    await expect(saveManualBackup(appBackupFolder()!, TEXT, fast)).rejects.toMatchObject({ reason: 'write', step: 'names' });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe('een eerdere back-up');
+  });
+
+  it('stat hapert drie keer op rij bij een echt ander bestand: bezet, een volgnummer, en het andere blijft heel', async () => {
+    mem.files.set(`ASCEND/${NAME}`, 'een eerdere back-up');
+    mem.statErrors = 3; // beide blikken op de eerste naam, en de eerste blik op de tweede
+    expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: N2 });
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe('een eerdere back-up');
+  });
+
+  it('stat hapert een keer op een lege map: na een tweede blik gewoon de eerste naam, geen volgnummer', async () => {
+    mem.statErrors = 1;
+    expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: NAME });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+  });
+
+  it('na een gelukte back-up gaan eigen resten van die naam weg, en verder niets', async () => {
+    mem.files.set(`ASCEND/${NAME}.oud1.tmp`, 'half');
+    mem.files.set(`ASCEND/${NAME}.oud1.old`, 'opzij');
+    mem.files.set('ASCEND/notities.txt', 'van jou');
+    mem.files.set('ASCEND/ascend-2026-11-01-09u00.ascend-backup.json.x.old', 'andere naam');
+    expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: NAME });
+    expect(names().sort()).toEqual(['ASCEND/ascend-2026-11-01-09u00.ascend-backup.json.x.old', `ASCEND/${NAME}`, 'ASCEND/notities.txt'].sort());
   });
 
   it('het tijdelijke bestand lukt niet: de zin over ruimte, en er blijft niets achter', async () => {

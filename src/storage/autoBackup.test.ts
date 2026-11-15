@@ -314,6 +314,29 @@ describe('de automatische back-up', () => {
     expect([...files.keys()]).toEqual([name('2026-11-02')]);
   });
 
+  it('de eigen back-up van vandaag gaat nooit verloren aan een kapotte opvolger: hij komt terug', async () => {
+    const today = name('2026-11-02');
+    await MetaRepo.set('autoBackupState', { files: [today], filesIn: 'In Interne opslag > Documents > ASCEND', filesBy: INSTALL });
+    const files = new Map<string, string>([[today, 'de goede van vanochtend']]);
+    const { target } = fakeTarget();
+    // Een map die schrijft zoals de app-map: het oude bestand staat opzij tot er is nagekeken.
+    target.exists = async (n) => files.has(n);
+    target.write = async (n, text) => {
+      const before = files.get(n);
+      files.set(n, text.slice(0, 10));
+      return {
+        keep: async () => undefined,
+        undo: async () => {
+          if (before === undefined) files.delete(n);
+          else files.set(n, before);
+        },
+      };
+    };
+    target.verify = async (n, bytes) => (new TextEncoder().encode(files.get(n) ?? '').length === bytes ? 'ok' : 'broken');
+    expect(await runAutoBackupIfDue({ now: MONDAY, target, verifyPauseMs: 0 })).toBe('failed');
+    expect([...files]).toEqual([[today, 'de goede van vanochtend']]);
+  });
+
   it('een fout na een gelukt bestand maakt de back-up niet mislukt', async () => {
     const { target } = fakeTarget();
     const outcome = await runAutoBackupIfDue({ now: MONDAY, target, onSaved: () => Promise.reject(new Error('app-staat weg')) });

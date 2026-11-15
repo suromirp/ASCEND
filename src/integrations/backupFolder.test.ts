@@ -40,11 +40,11 @@ describe('schrijven via een tijdelijk bestand', () => {
     expect([...files]).toEqual([[NAME, 'nieuw']]);
   });
 
-  it('een eigen bestand van vandaag gaat eerst opzij en pas na een gelukte rename weg', async () => {
+  it('een eigen bestand van vandaag gaat eerst opzij en pas na een gelukte rename en keep weg', async () => {
     const { fs, files } = memoryFs({ [NAME]: 'oud' });
     const renames: string[] = [];
     const spy: TempFs = { ...fs, rename: async (from, to) => { renames.push(`${from} > ${to}`); await fs.rename(from, to); } };
-    await writeThroughTemp(spy, NAME, 'nieuw', 'p1');
+    await (await writeThroughTemp(spy, NAME, 'nieuw', 'p1')).keep();
     expect(renames).toEqual([`${NAME} > ${NAME}.p1.old`, `${NAME}.p1.tmp > ${NAME}`]);
     expect([...files]).toEqual([[NAME, 'nieuw']]);
   });
@@ -220,6 +220,27 @@ describe('schrijven via een tijdelijk bestand', () => {
     };
     await expect(writeThroughTemp(racing, NAME, 'nieuw', 'p1', { neverReplace: true })).rejects.toBeInstanceOf(NameTakenError);
     expect([...files]).toEqual([[NAME, 'van een ander']]);
+  });
+  it('het oude bestand gaat pas weg na keep: tot dan staat het opzij', async () => {
+    const { fs, files } = memoryFs({ [NAME]: 'oud' });
+    const written = await writeThroughTemp(fs, NAME, 'nieuw', 'p1');
+    expect(Object.fromEntries(files)).toEqual({ [NAME]: 'nieuw', [`${NAME}.p1.old`]: 'oud' });
+    await written.keep();
+    expect([...files]).toEqual([[NAME, 'nieuw']]);
+  });
+
+  it('undo: het nieuwe bestand is kapot, dus het gaat weg en het oude komt terug', async () => {
+    const { fs, files } = memoryFs({ [NAME]: 'oud' });
+    const written = await writeThroughTemp(fs, NAME, 'nieuw', 'p1');
+    await written.undo();
+    expect([...files]).toEqual([[NAME, 'oud']]);
+  });
+
+  it('undo op een vrije naam haalt alleen het nieuwe bestand weg', async () => {
+    const { fs, files } = memoryFs();
+    const written = await writeThroughTemp(fs, NAME, 'nieuw', 'p1', { neverReplace: true });
+    await written.undo();
+    expect(files.size).toBe(0);
   });
 });
 
