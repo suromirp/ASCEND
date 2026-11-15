@@ -15,7 +15,7 @@
 
 import { walkHrFromSettings } from '../engine/walkHeartRate';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { RouteStyle } from '../models/route';
@@ -56,6 +56,8 @@ import { usePlaceWeather } from './usePlaceWeather';
 import type { WeatherForecast } from '../models/weather';
 import { briefingWeather, placeWeatherTarget } from '../engine/placeWeather';
 import { weatherPageLink } from '../engine/weatherPageLink';
+import type { BriefingOrigin } from '../engine/briefingReturn';
+import { markBriefingReturn } from '../utils/briefingReturn';
 import { showPlaceWeather } from '../engine/overviewSettings';
 import { useMotionMode } from './motion';
 import { RouteMap } from './RouteMap';
@@ -85,6 +87,7 @@ export function TrainingBriefing({
   onClose,
   onManual,
   onLeave,
+  origin,
 }: {
   template: SessionTemplate;
   session?: PlannedSession;
@@ -95,9 +98,12 @@ export function TrainingBriefing({
   onManual?: () => void;
   // Sluit de lagen onder dit scherm (het blad in Week) voordat een vak naar een pagina gaat.
   onLeave?: () => void;
+  // Welke laag deze Briefing opende: dan brengt Terug vanaf een pagina je weer hier (engine/briefingReturn.ts).
+  origin?: BriefingOrigin;
 }) {
   const { settings } = useAppData();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const motion = useMotionMode();
   const { closing, requestClose } = useSheetClose(onClose);
   const today = todayISO();
@@ -152,6 +158,8 @@ export function TrainingBriefing({
 
   // Naar een pagina: eerst alle lagen dicht, dan de pagina.
   function toPage(to: string, state?: unknown) {
+    // Terug vanaf de pagina opent deze Briefing weer op de pagina eronder.
+    if (origin) markBriefingReturn({ origin, templateId: template.id, date, sessionId: session?.id, path: pathname });
     onLeave?.();
     requestClose();
     navigate(to, state === undefined ? undefined : { state });

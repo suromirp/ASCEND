@@ -43,6 +43,7 @@ import { WeatherWarningCard } from '../components/WeatherWarningCard';
 import { useWeatherWarnings } from '../components/useWeatherWarnings';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { SessionActionSheet } from '../components/SessionActionSheet';
+import { useBriefingReturn } from '../utils/briefingReturn';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { StandSummaryCard } from '../components/StandSummaryCard';
 import { MorningCheckInCard } from '../components/MorningCheckInCard';
@@ -131,6 +132,17 @@ function TodayContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const [actionSheetSession, setActionSheetSession] = useState<PlannedSession | null>(null);
+  // Terug vanaf een pagina die je uit de Briefing van een blad opende: het blad opent weer met de Briefing
+  // erover (engine/briefingReturn.ts). Alleen voor dit ene blad.
+  const [briefingFor, setBriefingFor] = useState<string | null>(null);
+  useBriefingReturn('sheet', (m) => {
+    const back = plannedSessions.find((s) => s.id === m.sessionId);
+    if (!back) return;
+    setBriefingFor(back.id);
+    setActionSheetSession(back);
+  });
+  // Gaat het blad dicht, dan is het op: een latere tik op dezelfde training opent geen Briefing.
+  if (briefingFor && actionSheetSession?.id !== briefingFor) setBriefingFor(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
   // "Minder tijd vandaag": het voorstel met wat er verandert (engine/shorterToday.ts).
   const [shorter, setShorter] = useState<{ advice: Advice; lines: string[] } | null>(null);
@@ -672,6 +684,7 @@ function TodayContent() {
       {actionSheetSession && actionSheetTemplate && (
         <SessionActionSheet
           session={actionSheetSession}
+          openBriefing={briefingFor === actionSheetSession.id}
           template={actionSheetTemplate}
           program={program}
           quickComplete={isQuickComplete(actionSheetTemplate)}
