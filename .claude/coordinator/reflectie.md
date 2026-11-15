@@ -9,6 +9,12 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 15 november 16:40 (Wachter, Portugese tijd)
+- Check-in: 49eca57 live (Week, Afbreker, hitte), deploy en Android groen. Back-up, Beginner en Weekbudget elk een herstelronde na Warden of Pathfinder.
+- Beter: melding van de eigenaar (hitte) binnen het uur gebouwd, nagekeken en live, samen met wat al klaarstond.
+- Slechter: Beginner is aan ronde 4; elke herstel opent een overgang tussen takken. Bij de volgende planner-opdracht vooraf de overgangen laten opsommen.
+- Gereedschap: Warden als subagent op Sonnet voor een kleine fix kost seconden en ving test en wedstrijd.
+
 ## 15 november 15:40 (Wachter, Portugese tijd)
 - Check-in: Week en Afbreker door Warden en Pathfinder, Lookout loopt; Weekbudget niet af (kracht op drie plekken), eigen Sherpa; Back-up en Beginner in herstel na Warden op Fable.
 - Beter: Wardens in een eigen sessie met herstel.md op een branch: geen context bij mij, uitslag in één git show.

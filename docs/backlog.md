@@ -7,8 +7,10 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 `docs/beslissingen/`.
 
 ## Inbox
-Hoogste code: I-45. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+Hoogste code: I-47. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
 - [I-40] Weekterugblik noemt alleen gemist (Pathfinder 15 november, later): overgeslagen en vervallen staan er niet in, terwijl "0 van 3" ze meetelt of weglaat. Eén regel "Overgeslagen: ..." en "Vervallen: ..." sluit de som. Klein.
+- [I-47] Richting Sterker worden met kracht uit (Pathfinder 15 november, besluitpunt): de richting belooft "Kracht staat voorop" terwijl de planning lopen geeft. Kiezen: de richting verbergen bij kracht uit, of zeggen dat het lopen wordt. Geen tekstfix.
+- [I-46] Vaste notitie en uitleg bij de rij Weekbudget zeggen "2 keer kracht", ook met kracht uit (`settingsDefs/doel.ts` regel 181, `settingsDefs/uitleg/doel.ts`); vraagt een notitie die van een instelling afhangt.
 - [I-45] Forge Afronden (Warden, mag): een set opnieuw afvinken verzet de voorgestelde dag naar later; het keuzeblad van de pil heeft geen `key` (`SessionPill.tsx` regel 114); `doneAt` alleen van afgevinkte rijen lezen. Uitslag `warden/afbreker-herstel`.
 - [I-44] Forge Afronden (Pathfinder, mag): de dagknoppen in `FinishSheet.tsx` gebruiken eigen opmaak; maak er `Chip` van zoals `DoneOnRow`. Plus een tekstkaartstand `forge-afronden-gisteren`.
 - [I-43] Week (Pathfinder, mag): een training op een andere dag gedaan dan gepland telt in Week op de geplande dag; de rij zegt nergens "gedaan vr 13". Eén regel als de dagen verschillen.

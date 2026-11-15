@@ -31,10 +31,10 @@ Bijgewerkt: 15 november 2026, 14:20 Portugese tijd, door de coördinator session
 
 ## Lopend (16:20)
 
-- Live 49eca57 (16:20): Week telling (I-1), Afbreker (I-4), hitteregel (melding eigenaar 15:37, besluit 2026-11-15-hitte-bij-herhalingen), kennisindex ronde 2. Deploy en Android nog nakijken.
-- Weekbudget (I-39) ronde 2 klaar (3f3bb08): Lookout session_01LnDpSkdgxjM61k9cG1nQ7p (`lookout/weekbudget`) en Pathfinder session_01LnDpSnrKnCEtgsmdvmX3KN (`pathfinder/weekbudget`). Warden is gedaan door de bouwer zelf op Sonnet; geen planner of opslag. Rest naar backlog: notitie in settingsDefs, Sterker worden met kracht uit.
-- Back-up: herstel 40679346; Warden Fable ronde 2 session_01LnDpSj4LDkgBj7FgZGcSrm (`warden/backup-herstel-2`). Daarna main en de toesteltest voor de eigenaar.
-- Beginner: herstel 52a45dee; Warden Fable ronde 3 session_01LnDpSiLqNk2UfWhBp7SySD (`warden/beginner-herstel-3`). Daarna Lookout en Pathfinder, dan stap 3.
+- Live 49eca57 (16:20): Week telling (I-1), Afbreker (I-4), hitteregel (melding eigenaar 15:37, besluit 2026-11-15-hitte-bij-herhalingen), kennisindex ronde 2. Deploy en Android groen.
+- Weekbudget (I-39): Pathfinder wil de rij Krachtblok op Ascend weg bij kracht uit (voor main); herstel 16:44 naar de bouwer. Lookout groen (afdrukken bekeken). Was: ronde 2 klaar (3f3bb08): Lookout session_01LnDpSkdgxjM61k9cG1nQ7p (`lookout/weekbudget`) en Pathfinder session_01LnDpSnrKnCEtgsmdvmX3KN (`pathfinder/weekbudget`). Warden is gedaan door de bouwer zelf op Sonnet; geen planner of opslag. Rest naar backlog: notitie in settingsDefs, Sterker worden met kracht uit.
+- Back-up: Warden ronde 2 niet akkoord om Moet 5 (automatisch vergeet de naam als weghalen mislukt); herstel ronde 3 om 16:44 naar de bouwer, daarna blik op de diff. Was: herstel 40679346; Warden Fable ronde 2 session_01LnDpSj4LDkgBj7FgZGcSrm (`warden/backup-herstel-2`). Daarna main en de toesteltest voor de eigenaar.
+- Beginner: Warden ronde 3 niet akkoord (sprong 35 naar 50 bij het eerste eigen log na een start zonder logs; eerste voorstel leest opgeslagen keuze niet); herstel ronde 4 om 16:44. Was: herstel 52a45dee; Warden Fable ronde 3 session_01LnDpSiLqNk2UfWhBp7SySD (`warden/beginner-herstel-3`). Daarna Lookout en Pathfinder, dan stap 3.
 - Squash geeft andere geschiedenis dan nacht: een branch vanaf main mergen in een proef geeft add/add-conflicten; cherry-pick dan de commits.
 - Bouwrij daarna: I-40, I-41 (Week, later), D één plan (I-14, nakijken of het nog open is), I-23 M, I-8 Routes op reis. MacroFactor eruit na deze week. Woensdag 18 november: rustiger instap van de planner op de terugkomst van de eigenaar nakijken.
 
