@@ -7,7 +7,7 @@ Uitslag: groen op 360, 390 en 412, geen moet-punten.
 
 - Briefing van Lange duurloop, Start bij, Andere plek, Bergpad: de weerrij zegt "In Bergpad: 15 graden", er gaat een aanroep voor die plek uit. Groen.
 - Weerrij tikken: pagina Weer, "Weer in Bergpad, de plek uit je Briefing", 15 graden, dezelfde graden als de Briefing. Groen.
-- Nu verversen: aanroepen voor Bergpad 1 naar 2 (de plek wordt mee ververst), knop toont Verversen tijdens het wachten, daarna "Weer bijgewerkt". Groen.
+- Nu verversen: aanroepen voor Bergpad 1 naar 2 (de plek wordt mee ververst), daarna "Weer bijgewerkt". De wachttoestand van de knop (Verversen…) was niet te zien: de mock antwoordt meteen. Groen.
 - Terug vanaf Weer: de Briefing van Lange duurloop staat open, met Bergpad. Groen.
 - De avond ervoor (14 november 20:30): "In Bergpad: 14 graden, droog" (het uur van de training, 09:00). Groen.
 - Plek Bergpad gewist in Instellingen, Je plekken: De avond ervoor noemt hem niet meer en toont het weer van huis (8 graden). Groen.
@@ -17,6 +17,6 @@ Uitslag: groen op 360, 390 en 412, geen moet-punten.
 
 Let op, geen moet: in de Briefing van vandaag na 09:00 toont de weerrij het weer van het uur nu en De avond ervoor het uur van de training (15 tegenover 14 graden in de mock). Dat volgt uit het ontwerp, maar valt op als je ze naast elkaar legt.
 
-Niet gecontroleerd: echte weerdienst en echte routes, een echt toestel, de avondmelding zelf (alleen in de Android-app; alleen de kaart op Vandaag bekeken), de standaardtekst van de melding.
+Niet gecontroleerd: de wachttoestand van Nu verversen en Plaats wissen bij een trage weerdienst, echte weerdienst en echte routes, een echt toestel, de avondmelding zelf (alleen in de Android-app; alleen de kaart op Vandaag bekeken), de standaardtekst van de melding.
 
 Afdrukken: lookout-weer-afdrukken/ (a = Briefing, b = Weer, c = terug, d = De avond ervoor, e = plek gewist, f = instelling).
