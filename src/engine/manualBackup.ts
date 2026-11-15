@@ -2,7 +2,7 @@
 // storage/manualBackup.ts. In de Android-app komt het bestand in Documenten/ASCEND, op dezelfde veilige
 // weg als de automatische back-up; in de browser blijft het een download.
 
-import type { AutoBackupFailureReason } from './autoBackup';
+import type { AutoBackupFailureReason, BackupWriteStep } from './autoBackup';
 import { longDate } from './settingsSummary';
 import { localDateOf, localTimeOf } from '../utils/dates';
 
@@ -37,8 +37,17 @@ const REASON_TEXT: Record<AutoBackupFailureReason, string> = {
   timeout: 'het duurde te lang. Kijk in de map of hij er toch staat',
 };
 
-export function failedBackupText(reason: AutoBackupFailureReason | 'unknown'): string {
-  return `Opslaan lukte niet: ${reason === 'unknown' ? 'er ging iets mis. Probeer het nog eens' : REASON_TEXT[reason]}.`;
+// Bij 'write' de stap die het echt was: alleen het tijdelijke bestand zelf kan aan ruimte liggen.
+const STEP_TEXT: Record<BackupWriteStep, string> = {
+  temp: REASON_TEXT.write,
+  rename: 'het bestand kon zijn naam niet krijgen. Probeer het nog eens',
+  verify: 'het bestand is geschreven, maar teruglezen lukte niet. Probeer het nog eens',
+  names: 'er staan al te veel back-ups van deze minuut in de map. Probeer het over een minuut nog eens',
+};
+
+export function failedBackupText(reason: AutoBackupFailureReason | 'unknown', step?: BackupWriteStep): string {
+  const why = reason === 'unknown' ? 'er ging iets mis. Probeer het nog eens' : reason === 'write' && step ? STEP_TEXT[step] : REASON_TEXT[reason];
+  return `Opslaan lukte niet: ${why}.`;
 }
 
 // Wanneer de laatste automatische back-up in de map lukte, of dat hij nog niet draaide.
