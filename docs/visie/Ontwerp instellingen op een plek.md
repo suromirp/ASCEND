@@ -222,3 +222,7 @@ Tot stap 5 klaar is, komt er naast de verklaring nog één `<SummaryRow id="..."
 - De titels gelijktrekken tijdens het verhuizen. Dat is een verandering van tekst en dus een ander werk; de foto maakt de 33, 23, 6 en 1 verschillen wel zichtbaar, zodat het later in één keer kan.
 - De verklaringen overtypen in plaats van genereren. Bij 282 instellingen met trefwoorden en uitleg is een tikfout bijna zeker, en de pariteitstest vangt die pas achteraf.
 - Stap 5 doen voordat stap 4 af is. Dan verhuizen titels en gedrag tegelijk en wijst een verschil in de foto niet meer één oorzaak aan.
+
+## Aanvulling na stap 1 (15 november)
+
+- `parts.ts` en `summaryParts.ts` zijn nog niet gemaakt: ze verhuizen in stap 2 en stap 4, waar ze voor het eerst nodig zijn, zodat stap 1 `settingsLayout.ts` en `settingsSummary.ts` niet raakte terwijl andere bouwers daar werkten. Erbij kwam `settingsDefs/derive.ts`, dat de oude vormen uit de verklaringen afleidt (nu alleen voor de pariteitstest), en `settingsDefs/order.ts` omdat de volgorde van groep en bestand 586 van 1929 zoekopdrachten veranderde.
