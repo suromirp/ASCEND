@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { RouteFn, RoutePoint } from '../models/route';
 import { cleanSettings } from './backupClean';
-import { findRoutes } from './routeProposal';
+import { findRoutes, searchBudget, PROPOSAL_LIMIT_MS } from './routeProposal';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { routeTarget } from '../engine/routeTarget';
 import { searchTarget } from '../engine/routeAdjust';
@@ -128,6 +128,30 @@ describe('findRoutes', () => {
     expect(await findRoutes(place, target, { route, terrain, offline: () => true })).toEqual({ kind: 'offline' });
     const never: RouteFn = () => new Promise(() => undefined);
     expect(await findRoutes(place, target, { route: never, terrain, offline: () => false, limitMs: 30 })).toEqual({ kind: 'timeout' });
+  });
+
+  it('de grens verdeeld: heuvels en paden hoogstens 10 s, de routeplanner tot een seconde voor de grens', () => {
+    expect(searchBudget(PROPOSAL_LIMIT_MS)).toEqual({ terrainMs: 10_000, cacheMs: 2_000, routesUntilMs: 29_000 });
+  });
+
+  it('zwak bereik: een trage kaart houdt de routeplanner niet op, en wat er bewaard lag telt', async () => {
+    const hills: NearbyTerrain = { source: 'osm', fetchedAt: '2026-11-01T08:00:00.000Z', place: { name: '', lat: 52.12, lon: 5.65 }, radiusM: 3000, features: [{ kind: 'hill', lat: 52.13, lon: 5.66, distanceM: 1300, heightM: 24 }] };
+    const steps: string[] = [];
+    const slowMap = vi.fn(() => new Promise<NearbyTerrain | undefined>(() => undefined));
+    const found = await findRoutes(place, { distanceKm: 10.5, ascentM: 300 }, { route: straight, terrain: slowMap, cachedTerrain: async () => hills, offline: () => false, limitMs: 300, onStep: (s) => steps.push(s) });
+    expect(steps).toEqual(['terrain', 'routes']);
+    expect(found.kind === 'plans' && found.plans.found?.hills).toBe(1);
+  });
+
+  it('zwak bereik: is de tijd op, dan blijft de lus die er al was, in plaats van niets', async () => {
+    let calls = 0;
+    // De eerste aanvraag antwoordt meteen, daarna hangt elke aanvraag.
+    const route: RouteFn = (w, o) => (calls++ === 0 ? straight(w, o) : new Promise(() => undefined));
+    const found = await findRoutes(place, target, { route, terrain: async () => undefined, offline: () => false, limitMs: 200 });
+    expect(found.kind).toBe('plans');
+    if (found.kind !== 'plans') return;
+    expect(found.plans.adventure.ok).toBe(true);
+    expect(found.plans.simple.ok ? 'ok' : found.plans.simple.reason).toBe('timeout');
   });
 
   it('valt het netwerk halverwege weg, dan is dat de uitkomst', async () => {

@@ -354,7 +354,8 @@ describe('Na de review', () => {
     expect(failureLine('simple', { ok: false, reason: 'nothing' }, false)).toBe('Geen helling gevonden die bij je training past.');
     expect(failureLine('simple', { ok: false, reason: 'nothing' }, true)).toBe('Geen pad gevonden vanaf je plek.');
     expect(failureLine('adventure', { ok: false, reason: 'unmapped' }, false)).toBe('Geen lus gevonden vanaf je plek.');
-    expect(failureLine('adventure', { ok: false, reason: 'timeout' }, false)).toBe('De routeplanner antwoordde niet.');
+    expect(failureLine('adventure', { ok: false, reason: 'timeout' }, false)).toBe('De routeplanner antwoordde niet op tijd.');
+    expect(failureLine('adventure', { ok: false, reason: 'error' }, false)).toBe('De routeplanner antwoordde niet.');
   });
 
   it('een lus die niet past omdat hij te lang is zegt dat ook: dezelfde grens als de planner', () => {
