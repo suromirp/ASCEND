@@ -24,7 +24,7 @@ Za 31 · niets gepland
 
 --- kaart 2 ---
 [label: Wat nu wacht]
-[knop: Week opnieuw plannenJe hebt deze week 1 training gemist. Die doe je niet dubbel; zet de rest terug naar het plan.]
+[knop: Week opnieuw plannenDeze week 1 training gemist. Niet dubbel doen; zet de rest terug.]
 
 --- kaart 3 ---
 Belasting per dag

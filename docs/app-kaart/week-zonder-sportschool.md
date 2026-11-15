@@ -27,7 +27,7 @@ Za 31 · je rustdag op maandag is bezet
 
 --- kaart 3 ---
 [label: Wat nu wacht]
-[knop: Week opnieuw plannenJe hebt deze week 2 trainingen gemist. Die doe je niet dubbel; zet de rest terug naar het plan.]
+[knop: Week opnieuw plannenDeze week 2 trainingen gemist. Niet dubbel doen; zet de rest terug.]
 
 --- kaart 4 ---
 Belasting per dag
