@@ -47,7 +47,7 @@ function withRoles(templates: SessionTemplate[]): SessionTemplate[] {
 
 // Wandelen en dribbelen (de beginnersstart): dezelfde uitleg en belasting voor de korte en de lange.
 const WALK_JOG_NOTES =
-  'Begin met een paar minuten wandelen. Dan om de beurt dribbelen en wandelen. Dribbelen is heel rustig hardlopen: je kunt er hele zinnen bij praten. Een extra wandelstuk mag altijd, dat hoort bij het plan. Elke week dribbel je iets meer.';
+  'Begin met een paar minuten wandelen. Dan om de beurt dribbelen en wandelen. Dribbelen is heel rustig hardlopen: je kunt er hele zinnen bij praten. Een extra wandelstuk mag altijd, dat hoort bij het plan.';
 const WALK_JOG_STRESS: SessionTemplate['baseStressProfile'] = { lowerBodyLoad: 'light', impact: 'light', eccentricLoad: 'none', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'light' };
 
 function buildTemplates(): SessionTemplate[] {

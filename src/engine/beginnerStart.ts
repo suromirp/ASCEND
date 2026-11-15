@@ -57,7 +57,7 @@ export function buildConsentPatch(settings: { beginnerBuild?: unknown }): { begi
 }
 
 // De zin voor het voorstel bij heel licht: wat er in de start op de plek van je lopen staat.
-export const WALK_JOG_LINE = 'In die weken wandel en dribbel je om de beurt, op de plek van de rustige en de lange duurloop. Elke week dribbel je iets meer.';
+export const WALK_JOG_LINE = 'In die weken wandel en dribbel je om de beurt, op de plek van de rustige en de lange duurloop.';
 
 // De start beslaat hele golven: bij golven van drie of zes weken zijn het er zes.
 export function beginnerWeeksFor(waveLength: number): number {

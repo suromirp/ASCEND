@@ -816,7 +816,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'opbouw-start':
       // Zonder keuze gewoon tot je Akkoord (engine/beginnerStart.ts#resolveBeginnerBuild).
       return s.beginnerBuild === undefined
-        ? { value: 'Nog niet gekozen', dim: true, sub: 'Advies: Heel licht' }
+        ? { value: 'Nog niet gekozen', dim: true, sub: 'Nu: Gewoon, tot je Akkoord geeft' }
         : { value: choiceShort('opbouwStart', resolveBeginnerBuild(s.beginnerBuild)) };
     case 'richting': {
       const w = settingBudget(s);

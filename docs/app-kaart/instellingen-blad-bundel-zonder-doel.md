@@ -24,3 +24,8 @@ Met een lichte week
 Beginnersstart
 [knop: Uitleg: Beginnersstart]
 Automatisch
+[knop: Opbouw van de start, Nog niet gekozen]
+Opbouw van de start
+[knop: Uitleg: Opbouw van de start]
+Nu: Gewoon, tot je Akkoord geeft
+Nog niet gekozen
