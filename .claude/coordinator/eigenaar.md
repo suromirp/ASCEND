@@ -30,6 +30,10 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Net live
 
+### 15 november 20:00
+- Beginnersstart heel licht: de eerste weken wandel en dribbel je om de beurt op de plek van de rustige en de lange duurloop; dat komt eerst als voorstel met Akkoord. Instelling Opbouw van de start in Doel en tochten.
+- Routes op reis: een trage kaart of routeplanner stopt de zoektocht niet meer; wat er al gevonden is blijft staan.
+
 ### 15 november 17:45
 - Back-up maken lukt de eerste keer; een leesfout haalt nooit meer een goed bestand weg en er komt geen -2 meer bij een lege map.
 - Kracht uit: Je week, Weekbudget en Zonder doel noemen alleen nog minuten; de rij Krachtblok verdwijnt zonder blok.

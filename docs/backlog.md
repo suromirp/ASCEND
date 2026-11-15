@@ -19,7 +19,6 @@ Hoogste code: I-49. Een nieuw punt krijgt het volgende nummer (zet het getal hie
 - [I-42] Week (Pathfinder, mag): de kaart "Je hebt n trainingen gemist. Zet de rest terug naar het plan" en de terugblik "Laat het los; dubbel doen helpt niet" zeggen bij dezelfde trainingen het tegenovergestelde; één richting kiezen.
 - [I-41] Inhaaladvies en kaart tellen anders (Pathfinder 15 november, later): de titel van het advies telt de laatste drie dagen, de kaart in Week de hele week; dat kan twee getallen naast elkaar geven. Gelijk trekken of zeggen waarover het gaat. Klein, planner.
 
-- [I-8] Routes op reis ((1) en (2) live 14 november, 19f4f22; (3) open) (eigenaar 14 november, in het buitenland, twee schermafdrukken): (1) moet: lukt de precieze plek niet, dan zegt de app "De lus begint bij Thuis" en zoekt een lus bij Thuis, ook als je ver weg bent; nooit stil terugvallen op een Thuis die ver weg kan zijn: vraag "Je plek lukte niet. Opnieuw, Thuis of Andere plek?" zonder te zoeken; (2) moet: de time-out zegt niet welke stap het was en niet of je offline bent; zeg de stap (plek, heuvels en paden, lussen) en bij `navigator.onLine === false` "Je hebt geen verbinding"; (3) nagaan: de routeplanners antwoorden vanaf hier in Portugal binnen een seconde (BRouter, Valhalla, 14 november), dus waarschijnlijk zwak bereik met meerdere aanvragen na elkaar binnen de grens van 30 s; overweeg minder aanvragen of de grens per stap. Opus, Warden Fable (zelfde bestanden als Route-kaart vervolg: na die branch).
 - [I-9] Klein deel 2, rest (Pathfinder en Warden 14 november, mag): op het oude trainingsscherm (`ExerciseLogger.tsx:443` en `:465`) is "Waarom deze training" naast "Gedaan, invullen" op 360 px waarschijnlijk te breed (op 412 past het net); bekijken en zo nodig de knoppen laten verdelen; het onderblad Zelf nabouwen in Je horloge heeft nog eyebrow "Uitleg" (`WatchSheet.tsx:109`), advies "Je horloge"; de scan in `infoBlad.scan.test.ts` zoekt het einde van het blok met `indexOf(')}')`, een ankertekst is steviger. Klein.
 - [I-10] Profielendoorloop 14 november (verslagen in `docs/profielen/2026-11-14-*.md` op de branches `claude/profiel-*`; vier van vijf binnen, ziek-vakantie loopt). Moet, gegroepeerd, in volgorde van bouwen:
   - [I-14] D. Eén plan: het eerste voorstel noemt een herstelwandeling die daarna nergens staat en 2 keer kracht bij 1 in het plan (beginner 1, GR5 7); Vandaag, Week en de weekbalk noemen verschillende trainingen (hardloper 1); het voorstel Deze week nog een keer? noemt 60, 55 en 50 min voor dezelfde loop (GR5 5); na een zware test "je benen zijn dan fris" naast "rustig houden" (hardloper 2). Planner, Opus met Warden op Fable; eerst naspelen. (nakijken)
@@ -82,6 +81,7 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-8] Routes op reis (15 november, 09c716d)
 - [I-39] Weekbudget bij kracht uit (15 november, 8cce377)
 - [I-4] Afbreker randgevallen (15 november, 49eca57)
 - [I-1] Week telt anders dan hij toont (15 november, 49eca57)
