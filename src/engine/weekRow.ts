@@ -1,6 +1,6 @@
 // ASCEND: het ene ding in de tweede regel van een dagrij in Week (docs/visie/Ontwerp Week minimaal.md,
 // hoofdstuk 5). Na de dag en de duur staat hoogstens één ding, in deze rang: een punt uit Let op, "aangepast",
-// "gemist" (alleen met een greep rechts, die dan het teken Gemist vervangt), "vervallen", "loopt nog", "overgeslagen", "verplaatst van wo 11", "vaste
+// "gemist" (altijd, ook naast het teken Gemist als er geen greep is), "vervallen", "loopt nog", "overgeslagen", "verplaatst van wo 11", "vaste
 // afspraak", "zware benen", de stille tekst van een toegestaan paar. Eén uitzondering: "aangepast" staat er altijd
 // als de training een regel heeft in Aangepast door ASCEND, ook naast een punt uit Let op (`also`), zodat het getal
 // op de rij gelijk blijft aan de dagrijen met het woord (invariant week-aangepast op de tekstkaart). Wat afvalt staat in het actieblad van de training.
@@ -14,7 +14,7 @@ import { weekdayShortNL } from '../utils/dates';
 export interface RowFacts {
   // De korte tekst van een melding (engine/weekConcerns.ts#rowNotes).
   concern?: string;
-  // Gemist: rechts staat dan de greep (of het teken), in de regel het woord.
+  // Gemist: in de regel altijd het woord, rechts de greep of het teken (Pathfinder, 15 november).
   missed?: boolean;
   // Vervallen: voorbij en niet gedaan op een dag van een gemelde vakantie of ziekte, of in de afbouw voor een race die
   // er al was (engine/sessionStatus.ts, 'away').
@@ -53,8 +53,8 @@ const dayTail = (text: string): { tail?: string } => { const m = text.match(/ ([
 
 export function rowExtra(f: RowFacts): RowExtra | undefined {
   if (f.concern) return f.adjusted ? { text: f.concern, warn: true, also: 'aangepast' } : { text: f.concern, warn: true };
-  // Gemist met een greep heeft geen teken rechts: dan staat "gemist" voorop en "aangepast" erbij, zodat elke rij die de
-  // kaart "Je hebt n training gemist" telt ook gemist zegt (invariant op de tekstkaart, Warden 15 november).
+  // Gemist staat voorop en "aangepast" erbij, zodat elke rij die de kaart "Je hebt n training gemist" telt ook gemist
+  // zegt (invariant op de tekstkaart, Warden 15 november).
   if (f.adjusted) return f.missed ? { text: 'gemist', warn: false, also: 'aangepast' } : { text: 'aangepast', warn: false };
   if (f.missed) return { text: 'gemist', warn: false };
   if (f.lapsed) return { text: 'vervallen', warn: false };

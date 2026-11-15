@@ -20,6 +20,7 @@ import { weekLoss } from './fullWeek';
 import { planMissed, MISSED_ADVICE } from './missedTraining';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import weekIcons from '../components/WeekIcons.tsx?raw';
+import weekPlanner from '../components/WeekPlanner.tsx?raw';
 
 const { templates, program: base } = buildDefaultProgramData();
 const program = { ...base, startDate: '2026-10-05' };
@@ -153,6 +154,18 @@ describe('de voorbeeldweek van de eigenaar (zondag 15 november 10:40)', () => {
     expectAdvice(ps('left15', 'tpl_easy_run', today, { order: 2, amount: { kind: 'easy', change: 'left_out' } }));
     // Een gewone loop vandaag is wel open: dan wacht het voorstel.
     expect(catchUp(adviceInputs({ plannedSessions: [...plan, ps('run15', 'tpl_easy_run', today, { order: 2 })], logs: done, leave, asOf: today }))).toEqual([]);
+  });
+
+  it('Pathfinder: een gemiste rij zegt altijd gemist, met of zonder greep, zoals overgeslagen en vervallen', () => {
+    // De rij krijgt het woord los van de greep; het teken rechts blijft waar er geen greep is.
+    expect(weekPlanner).toMatch(/missed: status === 'missed', lapsed: status === 'away'/);
+    expect(weekPlanner).not.toMatch(/missed: status === 'missed' && !!handle/);
+    expect(rowExtra({ missed: true })?.text).toBe('gemist');
+    expect(rowExtra({ skipped: true })?.text).toBe('overgeslagen');
+    expect(rowExtra({ lapsed: true })?.text).toBe('vervallen');
+    // Naast "aangepast" blijft het woord van de stand staan en wijkt "aangepast" (shrink-0 tegen truncate).
+    expect(rowExtra({ missed: true, adjusted: true })).toEqual({ text: 'gemist', warn: false, also: 'aangepast' });
+    expect(weekPlanner).toMatch(/extra\.also \? \(\s*\/\/[^\n]*\n\s*<span className="shrink-0">· \{extra\.text\}<\/span>/);
   });
 
   it('punt 5: de dag in "verplaatst van do 12" wordt nooit afgekapt', () => {

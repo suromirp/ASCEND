@@ -100,7 +100,7 @@ function SessionRow({
   // met een regel in Aangepast door ASCEND, ook als hij gedaan is (engine/changeLog.ts#weekAdjustments).
   // Een rustdag houdt "bewust herstel"; alleen een punt uit Let op en "aangepast" komen erbij.
   const extra = isRest ? rowExtra({ concern, adjusted }) : rowExtra({
-    concern, missed: status === 'missed' && !!handle, lapsed: status === 'away', open: status === 'open', skipped: status === 'skipped', catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
+    concern, missed: status === 'missed', lapsed: status === 'away', open: status === 'open', skipped: status === 'skipped', catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
   });
   const note = extra && [extra.text, extra.also].filter(Boolean).join(', ');
   // Het streepje met de kleur van de zone alleen bij een training te voet of op de fiets, niet bij kracht.
@@ -160,10 +160,13 @@ function SessionRow({
                   <span className="truncate">· {extra.text.slice(0, -extra.tail.length).trimEnd()}</span>
                   <span className="shrink-0">{extra.tail}</span>
                 </>
+              ) : extra.also ? (
+                // Het woord van de stand ("gemist") blijft altijd staan; is de regel te lang, dan wijkt "aangepast".
+                <span className="shrink-0">· {extra.text}</span>
               ) : (
                 <span className="truncate">· {extra.text}</span>
               )}
-              {extra.also && <span>· {extra.also}</span>}
+              {extra.also && <span className={extra.warn ? undefined : 'min-w-0 truncate'}>· {extra.also}</span>}
             </span>
           )}
         </span>
