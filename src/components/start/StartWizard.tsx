@@ -136,6 +136,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                   label={title.shelter}
                   options={SHELTER_OPTIONS.map((o) => ({ value: o.id, label: o.label, note: o.note }))}
                   value={answers.shelter ?? SHELTER_ADVICE}
+                  advice={SHELTER_ADVICE}
                   onPick={(shelter) => set({ shelter })}
                 />
                 <SheetButtons>
