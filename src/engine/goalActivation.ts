@@ -127,7 +127,7 @@ export function computeGoalActivationPlan(inputs: GoalActivationInputs): GoalAct
     committedWeekChanges,
     forecastChanges,
     consequences: feasibility.status === 'insufficient_data'
-      ? 'Dit doel wordt geactiveerd zonder schemawijzigingen; concrete voorstellen volgen als er genoeg over je bekend is.'
+      ? 'Dit doel gaat in zonder schemawijzigingen; concrete voorstellen volgen als er genoeg over je bekend is.'
       : 'Bestaande sessies die al bijdragen blijven ongewijzigd; latere aanpassingen verschijnen als voorstel zodra dat nodig is.',
     computedAt: new Date().toISOString(),
     inputStateHash: computeInputStateHash({ goalDraft, allEvidence, plannedSessions }),

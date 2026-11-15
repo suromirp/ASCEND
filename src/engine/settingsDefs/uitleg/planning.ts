@@ -166,7 +166,7 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
   },
   'vakantie-schuiven': {
     title: 'Rond een vakantie schuiven',
-    lead: 'Hoe je weken rond een vakantie ingedeeld worden.',
+    lead: 'Hoe je weken rond een vakantie eruitzien.',
     points: [
       { head: 'Flink', text: 'Alle werkbare dagen van de weken rond je vakantie tellen mee, ook over de weekgrens. De indeling met genoeg rust tussen zware beendagen en zo min mogelijk dubbele dagen wint. Wat niet past, vervalt met één zin erbij.' },
       { head: 'Weinig', text: 'een training schuift alleen naar de dichtstbijzijnde dag van zijn eigen week die past, of vervalt.' },
@@ -175,7 +175,7 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
   },
   'bundel-niet-doorgegaan': {
     title: 'Training die niet doorging',
-    lead: 'Wat er gebeurt met een training die een paar dagen voorbij is zonder log. Een log wordt nooit verzonnen.',
+    lead: 'Wat er gebeurt met een training die een paar dagen voorbij is zonder log. Er komt nooit een verzonnen log.',
     points: [
       { head: 'Vragen', text: 'één vraag op Vandaag, de oudste eerst. Niet gedaan zet hem op overgeslagen, Toch gedaan opent het gewone invullen, Niet nu laat hem rusten. Ouder dan een week komt er geen vraag meer, en op een racedag niet. Wat op een vakantie of tocht stond is nooit gemist; wat ervoor nog open stond vervalt bij een ziekmelding of vakantie, met één regel op Vandaag.' },
       { head: 'Zelf overslaan', text: 'Hij gaat op overgeslagen, met een melding en Ongedaan maken. Een test, een wedstrijd en wat je zelf vastzette krijgen toch de vraag.' },

@@ -43,7 +43,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     title: 'Geschatte 1RM',
     lead: 'Per oefening staat op Forge je geschatte 1RM, met een kleine trend door de tijd.',
     points: [
-      { head: 'Een schatting', text: 'uit je laatste sets, geen test. Het is hetzelfde getal waarmee gerekend wordt.' },
+      { head: 'Een schatting', text: 'uit je laatste sets, geen test. Forge rekent met precies dit getal.' },
       { head: 'Uit', text: 'dan laat Forge alleen het werkgewicht zien, zonder schakelaar. Je voorstel voor de volgende keer blijft staan.' },
     ],
   },
@@ -269,7 +269,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     title: 'Vermoeidheid per set',
     lead: 'Elke werkset kost de volgende een beetje kracht. Hoeveel verschilt per oefening.',
     points: [
-      { head: 'Leren per oefening', text: 'Je eigen sets laten zien hoeveel geschatte kracht je van set tot set verliest; daarmee wordt gerekend voor de latere sets, de verwachte herhalingen en het bijsturen. Met weinig sets blijft het dicht bij 3%.' },
+      { head: 'Leren per oefening', text: 'Je eigen sets laten zien hoeveel geschatte kracht je van set tot set verliest; daarmee rekent Forge de latere sets, de verwachte herhalingen en het bijsturen. Met weinig sets blijft het dicht bij 3%.' },
       { head: 'Vast 3%', text: 'elke oefening krijgt dezelfde daling, wat je ook deed.' },
       { head: 'Waarom', text: 'hoeveel herhalingen je van set tot set verliest hangt af van de oefening, het gewicht en de rust (matig bewijs).' },
     ],
@@ -460,7 +460,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     title: 'Voorstel naast MacroFactor',
     lead: 'Onderaan Forge staat hoe vaak een voorstel raak was: binnen het herhalingenbereik, met de herhalingen in reserve die de training vraagt.',
     points: [
-      { head: 'Dezelfde toets', text: 'wat je deed en het voorstel worden voor dezelfde set aan dezelfde dag gehouden, met dezelfde maat. Of de gewichten gelijk zijn zegt niets.' },
+      { head: 'Dezelfde toets', text: 'wat je deed en het voorstel krijgen voor dezelfde set op dezelfde dag dezelfde maat. Of de gewichten gelijk zijn zegt niets.' },
       { head: 'Een schatting', text: 'raak achteraf is een schatting uit de beste set van die dag. Pakte je in Forge het voorgestelde gewicht, dan is het gewoon wat er gebeurde.' },
       { head: 'Uit', text: 'het blok staat dan niet op Forge. De stand zie je hier, onder de schakelaar.' },
     ],

@@ -149,7 +149,7 @@ export function GarminLinkPage() {
     if (result.status === 'error') return { tone: 'error', text: result.message };
     if (result.status === 'ok') {
       const activities = watch && !watch.use.activities
-        ? 'Verbinding werkt. Je trainingen staan uit, dus die worden niet opgehaald.'
+        ? 'Verbinding werkt. Je trainingen staan uit, dus die blijven liggen.'
         : `Verbinding werkt. ${result.count} ${result.count === 1 ? 'activiteit' : 'activiteiten'} in de laatste 7 dagen.`;
       if (!result.wellness) return { tone: 'ok', text: activities };
       return {

@@ -97,7 +97,7 @@ export function useMorningBackupOff() {
         <>
           <p className="st-lead">
             {asking.linked
-              ? `${n === 1 ? 'De ochtend van langer dan 400 dagen geleden verdwijnt' : `De ${n} ochtenden van langer dan 400 dagen geleden verdwijnen`} bij de volgende keer ophalen. De recente worden gewoon opnieuw opgehaald.`
+              ? `${n === 1 ? 'De ochtend van langer dan 400 dagen geleden verdwijnt' : `De ${n} ochtenden van langer dan 400 dagen geleden verdwijnen`} bij de volgende keer ophalen. De recente komen gewoon opnieuw binnen.`
               : `Het gaat om ${mornings(n)} met je slaap, rusthartslag en HRV. Er is geen koppeling met je horloge die ze opnieuw kan ophalen, dus daarna staan ze alleen nog in een back-up die je al maakte.`}{' '}
             Wat speelde er, vroeg ziek zien en de ochtendregel kunnen je ochtenden dan niet meer vergelijken.
           </p>
