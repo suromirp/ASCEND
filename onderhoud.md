@@ -42,7 +42,7 @@ Niet gelezen: alles rond routes en kaart, het horloge, de instellingenpagina's, 
 
 7. Mag. 113 exports worden alleen door tests gebruikt, bijvoorbeeld `predictRace` (`src/engine/racePrediction.ts`), `computeReadinessTrend` (`src/engine/readiness.ts`), `detectContestedSlots` (`src/engine/goalArbiter.ts`), `muscleVolumeForWeek` (`src/engine/muscleVolume.ts`) en `sunTimes` (`src/engine/sun.ts`). Een deel is bewust (hulpjes voor tests), een deel is code die de app niet meer aanroept maar wel getest blijft. Voorstel: één ronde Scout om de lijst te splitsen in bewust en dood; daarna pas weghalen.
 
-8. Mag. Tekstregel: `src/data/modalities.ts:375` heeft `durationHint: '–'` (een gedachtestreepje als waarde), en de placeholders in `.claude/skills/werkkaart/index.html` gebruiken er ook een. Beide ouder of buiten de app; in de broncode van deze week is geen nieuw gedachtestreepje bijgekomen buiten tests.
+8. Mag. Tekstregel: `src/data/modalities.ts:375` heeft bij `durationHint` een gedachtestreepje (U+2013) als waarde, en de placeholders in `.claude/skills/werkkaart/index.html` gebruiken er ook een. Beide ouder of buiten de app; in de broncode van deze week is geen nieuw gedachtestreepje bijgekomen buiten tests.
 
 9. Mag. Eén open notitie: `src/engine/mainGoal.ts:31` (het marathondoel wordt op naam herkend). Staat er al langer; hoort als punt in de backlog of weg.
 
