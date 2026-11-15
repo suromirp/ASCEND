@@ -69,6 +69,22 @@ describe('de rem na de beginnersstart', () => {
     expect(withOwn).toBe(resolveEffectiveFullDuration(longRun, sunday(5), program));
   });
 
+  it('na de start groeit een korte sessie altijd, ook van 20 minuten (110% van 20 is afgerond weer 20)', () => {
+    setRecentSessionMaxima(recentSessionMaxima(logged([20, 20, 20, 20], 'tpl_walk_jog', 4), asOf));
+    expect(resolveEffectiveFullDuration(easyRun, thursday(5), program)).toBe(25);
+    // Vanaf 25 minuten is dat dezelfde stap als 110% op 5 minuten.
+    for (const m of [25, 30, 35, 40, 45]) expect(Math.max(step(m), m + 5), `${m}`).toBe(step(m));
+  });
+
+  it('de week erna: groeien vanaf je eerste eigen loop, niet terug naar de bodem van Wennen', () => {
+    const logs = [...logged(longs, 'tpl_walk_jog_long', 7), { templateId: 'tpl_long_run', completedDate: sunday(5), durationMinutes: 50 }];
+    setRecentSessionMaxima(recentSessionMaxima(logs, day(6, 1)));
+    expect(resolveEffectiveFullDuration(longRun, sunday(6), program)).toBe(step(50));
+    // Zo ook met een korte start: van 35 naar 40, niet naar 50.
+    setRecentSessionMaxima(recentSessionMaxima([...logged([30, 30, 30, 30], 'tpl_walk_jog_long', 7), { templateId: 'tpl_long_run', completedDate: sunday(5), durationMinutes: 35 }], day(6, 1)));
+    expect(resolveEffectiveFullDuration(longRun, sunday(6), program)).toBe(40);
+  });
+
   it('wandelen en dribbelen telt niet mee voor een andere training', () => {
     const max = recentSessionMaxima(logged(longs, 'tpl_walk_jog_long', 7), asOf);
     expect(max.fromStart).toEqual({ tpl_long_run: 45 });

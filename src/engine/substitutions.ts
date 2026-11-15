@@ -190,8 +190,9 @@ export function resolveEffectiveFullDuration(
   const own = recentMaxima.minutesByTemplate[template.id];
   const start = recentMaxima.fromStart?.[template.id];
   const longest = Math.max(own ?? 0, start ?? 0) || undefined;
-  // Na de beginnersstart: de maat is wat je in de start deed, zonder de bodem van de eerste week hieronder.
-  const afterStart = start !== undefined && start >= (own ?? 0);
+  // Na de beginnersstart, zolang de start in de laatste 30 dagen ligt: geen bodem van de eerste week hieronder. Ook
+  // niet als je eigen eerste loop na de start langer was, anders springt de week erna naar die bodem (35 naar 50).
+  const afterStart = start !== undefined;
   // Hoeveel per soort: 15 procent korter of langer, rounded to 5 minutes. A session without a build-up
   // (strength) is held to 110% of its longest in 30 days here; one with a build-up by the cap below.
   const kind = fixed ? undefined : trainingKindOf(template);
@@ -203,7 +204,11 @@ export function resolveEffectiveFullDuration(
     const floor = afterStart ? 0 : (target.phaseSteps.find((s) => s.weekInPhase === 1) ?? target.step).targetMinutes;
     // Only the setting "Sneller dan het onderzoek" (Program.runBuild.spikeLimit) lifts the 110% of the long run.
     const limit = template.id === LONG_RUN_ID ? readRunBuild(program?.runBuild)?.spikeLimit ?? SESSION_SPIKE_LIMIT : SESSION_SPIKE_LIMIT;
-    const cap = Math.max(floor, Math.round((longest * limit) / 5) * 5);
+    const grown = Math.round((longest * limit) / 5) * 5;
+    // Na de start minstens 5 minuten erbij: 110% van 20 is op 5 minuten afgerond weer 20, en dan groeit hij nooit.
+    // Op zo'n kleine basis zeggen de minuten meer dan het percentage (docs/onderzoek/Wandelen en dribbelen voor
+    // beginners.md, punt 6). Vanaf 25 minuten is dat dezelfde stap als 110%.
+    const cap = Math.max(floor, afterStart ? Math.max(grown, Math.round(longest / 5) * 5 + 5) : grown);
     base = Math.min(base, cap);
   }
   // The first week after a race: the long run is at most half the race.
