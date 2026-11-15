@@ -44,6 +44,11 @@ function withRoles(templates: SessionTemplate[]): SessionTemplate[] {
   });
 }
 
+// Wandelen en dribbelen (de beginnersstart): dezelfde uitleg en belasting voor de korte en de lange.
+const WALK_JOG_NOTES =
+  'Om de beurt een paar minuten dribbelen en wandelen. Dribbelen is heel rustig hardlopen: je kunt er hele zinnen bij praten. Wordt het zwaar, wandel dan langer. Elke week dribbel je iets meer.';
+const WALK_JOG_STRESS: SessionTemplate['baseStressProfile'] = { lowerBodyLoad: 'light', impact: 'light', eccentricLoad: 'none', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'light' };
+
 function buildTemplates(): SessionTemplate[] {
   return withRoles([
     {
@@ -477,6 +482,37 @@ function buildTemplates(): SessionTemplate[] {
         { weekInPhase: 3, targetMinutes: 25, note: 'Herstel' },
         { weekInPhase: 4, targetMinutes: 20, note: 'Rustweek' },
       ],
+    },
+    // De beginnersstart (engine/programLayout.ts BEGINNER_SWAPS, docs/visie/Ontwerp beginner heel licht.md):
+    // wandelen en dribbelen op de plek van de Rustige en de Lange duurloop. Twee sjablonen met dezelfde
+    // inhoud, zodat elk de plek van zijn eigen loop houdt (SLOT_OF) en terug kan als de start voorbij is.
+    // Geen vaste dag en geen weekopbouw: alleen de wissel zet ze neer; de minuten per week komen in stap 3
+    // uit data/beginnerLadder.ts. Licht voor de benen, geen zware beendag.
+    {
+      id: 'tpl_walk_jog',
+      name: 'Wandelen en dribbelen',
+      type: 'cardio',
+      sport: 'running',
+      focus: 'Wennen aan lopen',
+      durationVariants: { full: 20, short: 15 },
+      cardioTarget: { zone: 'Rustig, praten kan' },
+      notes: WALK_JOG_NOTES,
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: WALK_JOG_STRESS,
+    },
+    {
+      id: 'tpl_walk_jog_long',
+      name: 'Lang wandelen en dribbelen',
+      type: 'cardio',
+      sport: 'running',
+      focus: 'Je langste training van de week, rustig',
+      durationVariants: { full: 30, short: 20 },
+      cardioTarget: { zone: 'Rustig, praten kan' },
+      notes: WALK_JOG_NOTES,
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: WALK_JOG_STRESS,
     },
     // Zonder sportschool (engine/noGym.ts): een korte sessie met je eigen gewicht op de plek van
     // een krachttraining in de sportschool. Geen vaste dag: alleen een periode zet hem neer.

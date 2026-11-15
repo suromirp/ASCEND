@@ -78,7 +78,8 @@ describe('een richting kiezen zonder doel', () => {
   });
 
   it('Fit blijven bij Akkoord: drie gelijke weken en een lichtere vierde', async () => {
-    const plan = await computeHorizonPlan(input('maintain'));
+    // Zonder beginnersstart: die wisselt de rustige en de lange duurloop, dan verandert er wel een rij.
+    const plan = await computeHorizonPlan(input('maintain', { beginnerStart: 'nee' }));
     // Alleen andere lengtes: geen rij verandert, de lengtes staan in het voorstel.
     expect(plan.lengths.length).toBeGreaterThan(0);
     expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(plan)).status);
@@ -125,6 +126,37 @@ describe('een richting kiezen zonder doel', () => {
     expect(first).not.toContain('tpl_hill_intervals');
     expect(first).toContain('tpl_recovery_run');
     expect(later).toContain('tpl_hill_intervals');
+  });
+
+  it('beginnersstart: wandelen en dribbelen op de plek van de rustige en de lange duurloop, bij elke richting', async () => {
+    for (const id of ['maintain', 'improve', 'stronger', 'easy'] as const) {
+      const plan = await computeHorizonPlan(input(id));
+      // De wissel staat in het voorstel: niets verandert stil.
+      if (id === 'maintain') expect(plan.proposal.changes.some((c) => c.templateId?.startsWith('tpl_walk_jog') || c.newSessionDraft?.templateId.startsWith('tpl_walk_jog'))).toBe(true);
+      expect(['applied', 'unchanged'], id).toContain((await applyHorizonPlanNow(plan)).status);
+      const sessions = await open();
+      const first = sessions.filter((s) => s.scheduledDate < addDays(TODAY, 28)).map((s) => s.templateId);
+      const later = sessions.filter((s) => s.scheduledDate >= addDays(TODAY, 28)).map((s) => s.templateId);
+      expect(first, id).not.toContain('tpl_easy_run');
+      expect(first, id).not.toContain('tpl_long_run');
+      expect(first, id).toContain('tpl_walk_jog_long');
+      expect(later.filter((x) => x.startsWith('tpl_walk_jog')), id).toEqual([]);
+      expect(later, id).toContain('tpl_long_run');
+    }
+  });
+
+  it('beginnersstart met golven van drie weken: zes weken wandelen en dribbelen, daarna de gewone lopen', async () => {
+    expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('improve', { waves: { length: 3 } })))).status);
+    const sessions = await open();
+    const first = sessions.filter((s) => s.scheduledDate < addDays(TODAY, 42)).map((s) => s.templateId);
+    expect(first).not.toContain('tpl_easy_run');
+    expect(first).not.toContain('tpl_long_run');
+    expect(sessions.filter((s) => s.scheduledDate >= addDays(TODAY, 42) && s.templateId.startsWith('tpl_walk_jog'))).toEqual([]);
+  });
+
+  it('beginnersstart op Nee: geen wandelen en dribbelen', async () => {
+    expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain', { beginnerStart: 'nee' })))).status);
+    expect((await open()).filter((s) => s.templateId.startsWith('tpl_walk_jog'))).toEqual([]);
   });
 
   it('Sterker worden bij Akkoord: geen heuvelloop, rustige duur', async () => {

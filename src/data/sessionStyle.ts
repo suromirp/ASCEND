@@ -89,6 +89,18 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
     stopSignals: ['je benen zwaar of pijnlijk zijn: wandel of stop, dat is ook herstel'],
     facts: 'steady',
   },
+  tpl_walk_jog: {
+    styleLabel: 'wandelen en dribbelen',
+    purpose: 'Rustig wennen aan lopen: om de beurt dribbelen en wandelen.',
+    stopSignals: ['je niet meer hele zinnen kunt praten: wandel langer', 'je scherpe pijn voelt in een knie, scheen of voet'],
+    facts: 'steady',
+  },
+  tpl_walk_jog_long: {
+    styleLabel: 'wandelen en dribbelen',
+    purpose: 'Je langste training van de week, rustig: om de beurt dribbelen en wandelen.',
+    stopSignals: ['je niet meer hele zinnen kunt praten: wandel langer', 'je scherpe pijn voelt in een knie, scheen of voet'],
+    facts: 'steady',
+  },
   tpl_ruck_walk: {
     styleLabel: 'rugzak',
     purpose: 'Uren onderweg en een rugzak dragen, met veel minder klap voor je benen dan een loop.',

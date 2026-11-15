@@ -84,6 +84,8 @@ const STEADY_TITLE: Record<string, string> = {
   tpl_easy_run: 'Zone 2 · rustige duurloop',
   tpl_hill_easy: 'Zone 2 · rustige heuvelloop',
   tpl_recovery_run: 'Herstelloop · heel rustig',
+  tpl_walk_jog: 'Wandelen en dribbelen · rustig',
+  tpl_walk_jog_long: 'Lang wandelen en dribbelen · rustig',
   tpl_herstel: 'Herstelwandeling · rustig',
 };
 

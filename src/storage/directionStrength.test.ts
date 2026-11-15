@@ -132,6 +132,8 @@ describe('een richting verandert het aantal keer kracht', () => {
   });
 
   it('laat kracht weg in een week waar een verschoven lange duurloop of een zware beendag het te dichtbij maakt', async () => {
+    // Een lange duurloop in week 4: zonder beginnersstart, die zet daar wandelen en dribbelen.
+    await SettingsRepo.set({ beginnerStart: 'nee' });
     await down();
     const up0 = await build(3);
     const lowerDay = up0.reshape.shape.days.tpl_lower_a;
@@ -176,6 +178,8 @@ describe('een richting verandert het aantal keer kracht', () => {
   });
 
   it('zet Benen A niet de dag na een lange duurloop, ook niet als de maandag vrij is', async () => {
+    // Een lange duurloop in week 4: zonder beginnersstart, die zet daar wandelen en dribbelen.
+    await SettingsRepo.set({ beginnerStart: 'nee' });
     await down();
     const up0 = await build(3);
     const lowerDay = up0.reshape.shape.days.tpl_lower_a;

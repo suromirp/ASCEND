@@ -68,6 +68,27 @@ const GARMIN_ELEVATION_FIELDS: GuideSource = { label: 'Garmin, gegevensvelden To
 const GARMIN_RECOVERY_TIME: GuideSource = { label: 'Garmin, Recovery Time', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-73BCE454-042E-420D-96A4-9DBA46626CD4.html' };
 const GARMIN_STRAP_PRIORITY: GuideSource = { label: 'Garmin, borstband vs. polssensor', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-F5BF67CE-C94E-4842-AE96-A7A05C85B732.html' };
 const PUBMED_RUNNING_ECONOMY: GuideSource = { label: 'PubMed, krachttraining en running economy', url: 'https://pubmed.ncbi.nlm.nih.gov/38165636/' };
+
+// Beginnende lopers: ongeveer acht keer zoveel blessures per uur (docs/onderzoek/Doelsoorten duur.md, regel 51).
+const PMC_NOVICE_INJURY: GuideSource = { label: 'PMC, blessures bij beginnende lopers', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC11336318/' };
+// Wandelen en dribbelen in de beginnersstart: de korte en de lange hebben dezelfde uitleg.
+const WALK_JOG_GUIDE: TrainingDayGuide = {
+  subtitle: 'Hardlopen · Wandelen en dribbelen',
+  registration: 'ASCEND: duur en hoe het voelde. Meer hoeft niet.',
+  sections: [
+    {
+      heading: 'Waarom',
+      body: 'Wie net begint met lopen raakt per uur veel vaker geblesseerd dan wie al loopt. Om de beurt dribbelen en wandelen geeft je pezen en botten de tijd om te wennen. Elke week dribbel je iets meer.',
+    },
+    {
+      heading: 'Zo doe je het',
+      items: ['Een paar minuten dribbelen, dan een paar minuten wandelen, en weer opnieuw.', 'Dribbelen is heel rustig hardlopen: je kunt er hele zinnen bij praten.'],
+      note: 'Wordt het zwaar, wandel dan langer. Scherpe pijn in een knie, scheen of voet? Stop en wandel naar huis.',
+    },
+  ],
+  gear: ['hardloopschoenen'],
+  sources: [PMC_NOVICE_INJURY],
+};
 const PELOTON_HILL_REPEATS: GuideSource = { label: 'Peloton, hill repeats techniek en opbouw', url: 'https://www.onepeloton.com/blog/hill-repeats' };
 const OUTSIDE_INCLINE_TREADMILL: GuideSource = { label: 'Outside, incline-intervallen op de treadmill', url: 'https://run.outsideonline.com/training/treadmill-workout-incline/' };
 const TRAINIINGPEAKS_TREADMILL_INTERVAL: GuideSource = { label: 'TrainingPeaks, treadmill interval workout voor snelheid', url: 'https://www.trainingpeaks.com/blog/the-ultimate-interval-treadmill-session-to-improve-speed-and-beat-boredom/' };
@@ -196,6 +217,9 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     gear: ['Garmin met borstband', 'hardloopschoenen'],
     sources: [PUBMED_INTENSITY_DISTRIBUTION, PUBMED_TALK_TEST],
   },
+
+  tpl_walk_jog: WALK_JOG_GUIDE,
+  tpl_walk_jog_long: WALK_JOG_GUIDE,
 
   tpl_recovery_run: {
     subtitle: 'Hardlopen · Herstel',

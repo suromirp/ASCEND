@@ -434,6 +434,8 @@ export const MODALITIES_BY_TEMPLATE: Record<string, ModalityDefinition[]> = {
   tpl_fartlek: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
   tpl_progression_run: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
   tpl_recovery_run: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
+  tpl_walk_jog: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
+  tpl_walk_jog_long: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
   tpl_ruck_walk: FRIDAY_MODALITIES.filter((m) => m.key === 'loaded_hike' || m.key === 'outdoor_stairs' || m.key === 'incline_treadmill')
     .map((m) => (m.key === 'loaded_hike' ? { ...m, label: 'Buiten met rugzak', role: 'PRIMARY' as const, locked: undefined, durationHint: undefined, how: 'Stevig doorwandelen met de rugzak van deze week (deze winter rond 5 tot 6 kilo), heuvels of trappen als dat kan.' } : { ...m, role: 'EQUIVALENT' as const })),
   tpl_strides_run: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
