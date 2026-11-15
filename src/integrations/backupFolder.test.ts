@@ -236,6 +236,20 @@ describe('schrijven via een tijdelijk bestand', () => {
     expect([...files]).toEqual([[NAME, 'oud']]);
   });
 
+  it('undo: weghalen van het kapotte bestand lukt niet, en toch komt het oude terug onder de naam', async () => {
+    const { fs, files } = memoryFs({ [NAME]: 'oud' });
+    const stuck: TempFs = {
+      ...fs,
+      remove: async (n) => {
+        if (n === NAME) throw new Error('delete failed');
+        await fs.remove(n);
+      },
+    };
+    const written = await writeThroughTemp(stuck, NAME, 'nieuw', 'p1');
+    await written.undo();
+    expect([...files]).toEqual([[NAME, 'oud']]);
+  });
+
   it('undo op een vrije naam haalt alleen het nieuwe bestand weg', async () => {
     const { fs, files } = memoryFs();
     const written = await writeThroughTemp(fs, NAME, 'nieuw', 'p1', { neverReplace: true });

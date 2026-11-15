@@ -296,10 +296,12 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
       // zodat de volgende poging hem vervangt in plaats van er een volgnummer naast te zetten.
       // Verving deze poging het eigen bestand van vandaag, dan komt dat bij kapot terug.
       const made = name;
-      const undo = () => (written ? written.undo() : target.remove(made));
-      const gone = seen === 'broken' && (await withTimeout(undo(), 5_000).then(() => true, () => false));
-      if (gone) halfWritten.delete(name);
-      else halfWritten.add(name);
+      if (seen === 'broken') await withTimeout(written ? written.undo() : target.remove(made), 5_000).catch(() => undefined);
+      // Niet afgaan op "undo is afgelopen": kijken wat er nu onder de naam staat. Staat er nog iets (het
+      // kapotte bestand wilde niet weg, het was niet te lezen, of het eigen bestand kwam terug), dan
+      // onthouden; twijfel telt als "staat er nog".
+      if (await withTimeout(target.exists(made), 5_000).catch(() => true)) halfWritten.add(made);
+      else halfWritten.delete(made);
       throw new AutoBackupError('write', 'verify');
     }
     if (written) await withTimeout(written.keep(), 5_000).catch(() => undefined);

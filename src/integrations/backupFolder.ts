@@ -217,8 +217,9 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
     },
     undo: async () => {
       await fs.remove(name).catch(() => undefined);
-      // rename gooit het doel eerst weg: alleen terugzetten als de naam zeker leeg is.
-      if (moved && !(await fs.exists(name).catch(() => true))) await fs.rename(old, name).catch(() => undefined);
+      // Wat er nu onder de naam staat is gelezen en kapot, of weg. Het oude bestand komt dus altijd terug,
+      // ook als weghalen niet lukte: rename gooit het doel zelf weg.
+      if (moved) await fs.rename(old, name).catch(() => undefined);
     },
   };
 }
@@ -319,7 +320,7 @@ function androidFolder(): AppBackupFolder {
       const listed = await fs.Filesystem.readdir({ path: APP_BACKUP_DIR, directory: dir });
       for (const file of listed.files) {
         // Alleen resten van pogingen op precies deze naam: <naam>.<poging>.tmp of .old.
-        if (!file.name.startsWith(`${name}.`) || !/\.(tmp|old)$/.test(file.name)) continue;
+        if (!file.name.startsWith(`${name}.`) || !/^\.[a-z0-9]+\.(tmp|old)$/.test(file.name.slice(name.length))) continue;
         await fs.Filesystem.deleteFile({ path: path(file.name), directory: dir }).catch(() => undefined);
       }
     },

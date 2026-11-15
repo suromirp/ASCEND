@@ -337,6 +337,26 @@ describe('de automatische back-up', () => {
     expect([...files]).toEqual([[today, 'de goede van vanochtend']]);
   });
 
+  it('een map met undo waar weghalen mislukt: de naam wordt onthouden en de volgende poging vervangt het kapotte bestand, zonder volgnummer', async () => {
+    const today = name('2026-11-02');
+    const files = new Map<string, string>();
+    let cut = true;
+    const { target } = fakeTarget();
+    target.exists = async (n) => files.has(n);
+    target.write = async (n, text) => {
+      files.set(n, cut ? text.slice(0, 10) : text);
+      // undo gooit nooit, ook niet als het kapotte bestand niet weg wil.
+      return { keep: async () => undefined, undo: async () => undefined };
+    };
+    target.verify = async (n, bytes) => (new TextEncoder().encode(files.get(n) ?? '').length === bytes ? 'ok' : 'broken');
+    expect(await runAutoBackupIfDue({ now: MONDAY, target, verifyPauseMs: 0 })).toBe('failed');
+    expect([...files.keys()]).toEqual([today]);
+    cut = false;
+    expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 2 * 3_600_000), target, verifyPauseMs: 0 })).toBe('saved');
+    expect([...files.keys()]).toEqual([today]);
+    expect(files.get(today)!.length).toBeGreaterThan(10);
+  });
+
   it('een fout na een gelukt bestand maakt de back-up niet mislukt', async () => {
     const { target } = fakeTarget();
     const outcome = await runAutoBackupIfDue({ now: MONDAY, target, onSaved: () => Promise.reject(new Error('app-staat weg')) });
