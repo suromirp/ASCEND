@@ -90,6 +90,18 @@ export const INVARIANTEN = [
     controleer: (k) => alle(k('logboek'), /^.*(?:\b\d+ van \d+\b|\bGemist\b).*$/gm).map((m) => `logboek: "${m[0].trim()}"`),
   },
   {
+    // De kop van het Logboek (kaart 1) zegt nooit "niets" of "geen trainingen" als de lijst eronder een log heeft
+    // (engine/logbookMonth.ts#emptyMonthTitle). Een log in de lijst is een knop met dag, maand en naam: "[knop: 1novHerstelwandeling...]".
+    naam: 'De logboekkop zegt nooit niets als de lijst eronder een log heeft',
+    controleer: (k, schermen) => schermen.filter((s) => /^logboek(-|$)/.test(s)).flatMap((s) => {
+      const t = k(s);
+      const kop = (t.split(/^--- kaart 1 ---$/m)[1] ?? '').split(/^--- kaart \d+ ---$/m)[0];
+      const logs = alle(t, /^\[knop: \d{1,2}(?:jan|feb|mrt|apr|mei|jun|jul|aug|sep|okt|nov|dec)\S.*\]$/gm).length;
+      if (logs === 0) return [];
+      return alle(kop, /^.*(?:\bniets\b|\bgeen trainingen\b).*$/gim).map((m) => `${s}: de kop zegt "${m[0].trim()}" bij ${logs} ${logs === 1 ? 'log' : 'logs'} in de lijst`);
+    }),
+  },
+  {
     naam: 'Weeknummer en fase gelijk op Vandaag, Week en Stand',
     controleer: (k) => {
       const uit = [];
@@ -310,7 +322,7 @@ const SCHERMEN = [
   'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'vandaag-avond', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
   'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek',
   'ascend-algemeen', 'ascend-vaardigheid', 'weekterugblik-voorstel', 'stand-benen', 'stand-belasting', 'stand-ritme', 'stand-lopen', 'stand-invloed',
-  'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek', 'week-aangepast', 'week-aangepast-blad',
+  'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek', 'week-aangepast', 'week-aangepast-blad', 'logboek-herstel',
 ];
 
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {

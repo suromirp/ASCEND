@@ -138,6 +138,8 @@ const SCHERMEN = {
   'stand-invloed': { titel: 'Stand: Wat speelde er', pad: '#/stand/invloed' },
   ascend: { titel: 'Ascend', pad: '#/ascend' },
   logboek: { titel: 'Logboek', pad: '#/history' },
+  // Een maand met alleen een Herstelwandeling (stand herstel, maandag 2 november): de kop noemt het herstel met de minuten.
+  'logboek-herstel': { titel: 'Logboek met alleen herstel in de maand', pad: '#/history', stand: 'herstel', klok: '2026-11-02T08:00:00+01:00' },
   instellingen: { titel: 'Instellingen (overzicht)', pad: '#/more' },
   weekterugblik: { titel: 'Je week tot nu (blad in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Je week tot nu")') },
   jaaroverzicht: { titel: 'Jaaroverzicht (in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Jaaroverzicht")') },
