@@ -65,10 +65,10 @@ describe('computeCurrentStreak', () => {
       id: `p-${trigger}`, trigger, issue: 'i', alternatives: [], consequences: '', explanation: '', createdAt: '', resolution: 'accepted',
       changes: [{ plannedSessionId: 'x', action: 'remove', fromDate: '2026-10-20', reason: 'r', generatedBy: [] }],
     });
-    const byPlan = leftOutOfCount(planned, [proposal('plan_check')], undefined, '2026-10-22');
+    const byPlan = leftOutOfCount(planned, [proposal('plan_check')], undefined, '2026-10-22', undefined, { periods: undefined, loggedIds: new Set() });
     expect(computeCurrentStreak(planned, logs, { templateById, leftOut: byPlan })).toBe(2);
     // Sloeg je hem zelf over, dan breekt hij de reeks wel.
-    const byYou = leftOutOfCount(planned, [proposal('session_skipped')], undefined, '2026-10-22');
+    const byYou = leftOutOfCount(planned, [proposal('session_skipped')], undefined, '2026-10-22', undefined, { periods: undefined, loggedIds: new Set() });
     expect(computeCurrentStreak(planned, logs, { templateById, leftOut: byYou })).toBe(1);
   });
 

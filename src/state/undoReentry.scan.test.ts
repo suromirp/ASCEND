@@ -15,7 +15,11 @@ describe('Ongedaan maken van de rustiger instap', () => {
     expect(body).toContain('title: REENTRY_UNDONE_TITLE');
     // Het terugzetten staat zelf in het logboek; de melding draagt het id van die regel (storage/reentryUndo.ts).
     expect(body).toContain('await undoReentryNow(from)');
-    expect(body).toContain('id: record?.id');
+    expect(body).toContain('id: record.id');
+    // Al weg (dubbele tik): geen melding met een los id.
+    expect(body).toContain('if (!record) return;');
+    expect(body.indexOf('if (!record) return;')).toBeLessThan(body.indexOf('setRecentChange('));
+    expect(body).not.toContain("makeId('reentry-undo')");
   });
   it('het blad gebruikt die actie, niet een losse instelling', () => {
     const sheet = weekAdjustments;

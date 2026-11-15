@@ -118,8 +118,8 @@ describe('proposalsToSummarize', () => {
 
   it('een training die ASCEND zelf weghaalde telt na het samenvatten nog steeds niet als gemist', () => {
     const sessions = [{ id: 'ps-weg', scheduledDate: '2026-05-06', status: 'skipped' as const }];
-    const before = leftOutOfCount(sessions, [proposal('a')], undefined, '2026-10-31');
-    const after = leftOutOfCount(sessions, [summarizeProposal(proposal('a'), NOW)], undefined, '2026-10-31');
+    const before = leftOutOfCount(sessions, [proposal('a')], undefined, '2026-10-31', undefined, { periods: undefined, loggedIds: new Set() });
+    const after = leftOutOfCount(sessions, [summarizeProposal(proposal('a'), NOW)], undefined, '2026-10-31', undefined, { periods: undefined, loggedIds: new Set() });
     expect(before('ps-weg')).toBe(true);
     expect(after('ps-weg')).toBe(true);
   });

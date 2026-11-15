@@ -19,7 +19,7 @@ import { buildWeekReview } from './weekReview';
 import { leftOutOfCount } from './weekLogs';
 import { MISSED_ADVICE, planMissed, lapsedLine, type MissedInput } from './missedTraining';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
-import { proposeReentry, reentryAdjustments, reentryEffect, resolveReentry, type ReentryInputs } from './reentry';
+import { proposeReentry, reentryAdjustments, reentryEffect, reentryUndoneRecord, resolveReentry, type ReentryInputs } from './reentry';
 import { durationScopeFor } from './durationScope';
 import { resolveEffectiveFullDuration, withDurationScope } from './substitutions';
 import { cleanSettings } from '../storage/backupClean';
@@ -545,8 +545,8 @@ describe('ziek vanaf 13 november: Vandaag en Week zeggen hetzelfde', () => {
     const sun = ps('tpl_mountain_hike', '2026-11-15');
     expect(deriveSessionStatus(hills, [], false, { illness: ended }).status).toBe('away');
     expect(deriveSessionStatus(sun, [], false, { illness: ended }).status).toBe('missed');
-    expect(leftOutOfCount([hills, sun], [], ended, '2026-11-17')(hills.id)).toBe(true);
-    expect(leftOutOfCount([hills, sun], [], ended, '2026-11-17')(sun.id)).toBe(false);
+    expect(leftOutOfCount([hills, sun], [], ended, '2026-11-17', undefined, { periods: undefined, loggedIds: new Set() })(hills.id)).toBe(true);
+    expect(leftOutOfCount([hills, sun], [], ended, '2026-11-17', undefined, { periods: undefined, loggedIds: new Set() })(sun.id)).toBe(false);
   });
 });
 
@@ -598,5 +598,40 @@ describe('elke aanroeper die een voorbije dag toont geeft de pauze mee', () => {
       for (const c of calls) expect(c).toMatch(/illness:/);
       for (const c of calls) expect(c).toMatch(/leave/);
     }
+  });
+});
+
+// Randen van Warden (15 november, tweede ronde).
+describe('randen van de kaart Vervallen en de instap', () => {
+  const hills = ps('tpl_hill_intervals', '2026-11-14');
+  const legs = ps('tpl_lower_a', '2026-11-13');
+
+  it('ziek gemeld op 13, beter op 14, vandaag 15: geen kaart, de pauze loopt niet meer', () => {
+    const ended: IllnessEpisode[] = [{ id: 'z', kind: 'below_neck', startDate: '2026-11-13', endDate: '2026-11-14' }];
+    const plan = planMissed(missedInput({ plannedSessions: [legs, hills], illnessEpisodes: ended, today: '2026-11-15' }));
+    expect(plan.lapsed).toBeUndefined();
+  });
+
+  it('beter gemeld op vandaag zelf: de dagen binnen de ziekte staan nog op de kaart', () => {
+    const better: IllnessEpisode[] = [{ id: 'z', kind: 'below_neck', startDate: '2026-11-13', endDate: '2026-11-15' }];
+    const plan = planMissed(missedInput({ plannedSessions: [legs, hills], illnessEpisodes: better, today: '2026-11-15' }));
+    expect(plan.lapsed?.kind).toBe('ill');
+    expect(plan.lapsed?.sessions.map((m) => m.session.id)).toEqual([legs.id, hills.id]);
+  });
+
+  it('instap terugzetten en weer ongedaan maken: de rij houdt het tijdstip van het oorspronkelijke Akkoord', () => {
+    const sessions = week('2026-12-07');
+    const w = { from: '2026-12-07', until: '2026-12-13', factor: 0.75 };
+    const akkoord = '2026-12-06T09:00:00.000Z';
+    const proposal = { id: 'p-r', trigger: 'reentry_planned' as const, issue: 'Rustiger instap', changes: [], alternatives: [], consequences: 'x', explanation: 'x', createdAt: akkoord, resolvedAt: akkoord, resolution: 'accepted' as const };
+    // Teruggezet en meteen ongedaan gemaakt, nog voor de eerste dag van de instap.
+    const undone = reentryUndoneRecord('r-undo', w, '2026-12-06T19:00:00.000Z');
+    const revert = { ...undone, id: 'r-revert', issue: 'Ongedaan gemaakt: Rustiger instap teruggezet', resolution: 'rejected' as const, revertsProposalId: undone.id, createdAt: '2026-12-06T19:01:00.000Z', resolvedAt: '2026-12-06T19:01:00.000Z' };
+    const rows = weekAdjustments([proposal, undone, revert], sessions, templates, '2026-12-07', '2026-12-08', [w]);
+    expect(rows.length).toBe(5);
+    expect(rows.every((r) => r.at === akkoord)).toBe(true);
+    // Ook als het ongedaan maken het terugzetten niet zou vinden (een los id), telt het terugzetten nooit als Akkoord.
+    const loose = { ...revert, revertsProposalId: 'reentry-undo-los' };
+    expect(weekAdjustments([proposal, undone, loose], sessions, templates, '2026-12-07', '2026-12-08', [w]).every((r) => r.at === akkoord)).toBe(true);
   });
 });

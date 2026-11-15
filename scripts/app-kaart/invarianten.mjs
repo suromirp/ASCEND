@@ -315,6 +315,31 @@ export const INVARIANTEN = [
       return uit;
     },
   },
+  {
+    // Vervallen heeft één bron (besluit 2026-11-15-vervallen-een-bron.md, engine/sessionStatus.ts#isPausedDay): wat de
+    // kaart Vervallen op een vandaag-scherm noemt, heet op het week-scherm van dezelfde stand nergens gemist. Ziek vanaf
+    // 13 november noemde de kaart eerst ook de dagen ervoor, terwijl Week die terecht gemist noemde (Warden, 15 november).
+    naam: 'Vervallen op Vandaag heet in Week van dezelfde stand nergens gemist',
+    controleer: (k, schermen) => {
+      const uit = [];
+      const kort = { maandag: 'Ma', dinsdag: 'Di', woensdag: 'Wo', donderdag: 'Do', vrijdag: 'Vr', zaterdag: 'Za', zondag: 'Zo' };
+      const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      for (const v of schermen.filter((x) => x === 'vandaag' || x.startsWith('vandaag-'))) {
+        const w = v === 'vandaag' ? 'week' : `week-${v.slice('vandaag-'.length)}`;
+        if (!schermen.includes(w)) continue;
+        const regel = k(v).match(/^(.+) (?:vervalt|vervallen): je meldde .*$/m);
+        if (!regel) continue;
+        const week = k(w);
+        const items = alle(regel[1], /(?:^|, | en )(.+?) van (maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag) (\d{1,2}) [a-z]+/g);
+        if (items.length === 0) uit.push(`${v}: de kaart Vervallen noemt geen training die te lezen is`);
+        for (const [, naam, dag, nr] of items) {
+          const rij = new RegExp(`^\\[knop: ${esc(naam)}${kort[dag]} ${nr}·.*gemist.*\\]$`, 'im');
+          if (rij.test(week)) uit.push(`${v} noemt ${naam} van ${dag} ${nr} vervallen, ${w} noemt hem gemist`);
+        }
+      }
+      return uit;
+    },
+  },
 ];
 
 const SCHERMEN = [
