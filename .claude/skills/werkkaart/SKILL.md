@@ -7,6 +7,10 @@ description: Houdt de Werkkaart van ASCEND bij, het dashboard voor de eigenaar (
 
 Waarom (eigenaar, 14 november): een dashboard dat vanzelf bijwerkt, niet vergeten wordt en niet op de achtergrond valt, als graaf zoals Graphify. Het dashboard leest één bestand, `werkkaart.json`. Live uit GitHub lezen kan niet: GitHub is geen connector van zijn account, alleen een tool van de sessie. Dus werkt de coördinator het bestand bij. Staat het bijgewerkt meer dan drie uur stil, dan kleurt de tegel Bijgewerkt amber.
 
+## Wat de eigenaar wil zien (15 november)
+
+"Niet overzichtelijk wat de vragen concreet aan mij zijn, wat er concreet aan de hand is en waar iets stuk loopt of juist goed gaat." Daarom bovenaan, in twee seconden te lezen: Vraag aan u, Stuk of vast, Loopt goed, Net live, in gewone taal. Daaronder een stroom (Inbox, Bouwen, Controle, Live) en een echte Graphify-kaart van de app (onderwerpen uit de werkbriefjes, lijnen uit de imports, oplichtend waar een bouwer werkt). "Mooi dynamisch, dat wie kijkt denkt wauw": beweging die iets betekent, stil bij reduced motion; duidelijkheid gaat voor. De bron voor vragen, stuk en net live is `.claude/coordinator/eigenaar.md`, bijgehouden door de coördinator.
+
 ## Wie het doet (eigenaar 15 november: blijvend, los van de coördinator)
 
 Een eigen sessie "Werkkaart ASCEND (elk uur)" op Sonnet doet het elk uur op :20 (taak "Werkkaart ASCEND elk uur"). De coördinator werkt hem daarnaast bij na elke push naar main. De Wachter controleert alleen of hij vers is (niet ouder dan 90 minuten) en grijpt in als de eigen taak faalt. Bij de coördinator-wissel blijft de werkkaart-sessie gewoon lopen.
