@@ -271,7 +271,7 @@ describe('een rugzaktraining', () => {
     if (view?.map.kind !== 'route') return;
     // 75 minuten zonder hoogtemeters: 5 km op de wandelnorm, en zoeken bij het openen zoals een loop.
     expect(view.map.target).toMatchObject({ distanceKm: 5, ascentM: 0, minutes: 75 });
-    expect(view.map.line).toBe('5 km');
+    expect(view.map.line).toBe('1 uur 15, ongeveer 5 km');
     expect(view.map.search).toBe('open');
   });
   it('met de rugzak op je eigen klimtempo rekent de Briefing met je lichaamsgewicht, net als het blad Route', () => {
@@ -284,8 +284,8 @@ describe('een rugzaktraining', () => {
     if (withBody?.kind !== 'route' || without?.kind !== 'route') throw new Error('geen lus');
     expect(withBody.target).toStrictEqual(routeTarget({ template: heavy, date: TODAY, program: null, logs, bodyKg: 75 }));
     expect(withBody.target.distanceKm).toBeLessThan(without.target.distanceKm);
-    expect(withBody.line).toBe('8 km');
-    expect(without.line).toBe('8,5 km');
+    expect(withBody.line).toBe('3 uur, ongeveer 8 km');
+    expect(without.line).toBe('3 uur, ongeveer 8,5 km');
   });
   it('een tocht boven 3 uur zoekt niet vanzelf bij het openen, tot en met 3 uur wel', () => {
     const at = (minutes: number) => briefing(input({ template: { ...MOUNTAIN, durationVariants: { full: minutes } }, session: plan('tpl_mountain_hike') }))?.map;
