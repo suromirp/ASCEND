@@ -10,7 +10,8 @@ describe('het ene ding in de tweede regel', () => {
 
   it('"aangepast" staat er altijd als er een regel is, ook naast een punt uit Let op (het getal op de rij)', () => {
     expect(rowExtra({ concern: 'op je rustdag', adjusted: true })).toEqual({ text: 'op je rustdag', warn: true, also: 'aangepast' });
-    expect(rowExtra({ missed: true, adjusted: true })?.text).toBe('aangepast');
+    // Gemist met een greep heeft geen teken rechts: gemist voorop, aangepast erbij (Warden, 15 november).
+    expect(rowExtra({ missed: true, adjusted: true })).toEqual({ text: 'gemist', warn: false, also: 'aangepast' });
   });
 
   it('daarna de rang: aangepast, verplaatst van, vaste afspraak, zware benen, het toegestane paar; stil, zonder kleur', () => {

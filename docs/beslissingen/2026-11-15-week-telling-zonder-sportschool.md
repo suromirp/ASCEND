@@ -14,6 +14,14 @@ Gemist heeft één afleiding voor de rijen in Week, de kaart "Je hebt n training
 - Het inhaaladvies leest dezelfde weekcontrole als Let op (`engine/hardRunApart.ts#weekAccepts`, ook over de weekgrens): nooit een voorstel dat Week daarna zelf afkeurt. "Vandaag deed je geen training" alleen als er vandaag niets meer open staat; staat er vandaag een training, dan is morgen geen rustdag om op te vullen. De week van een inhaal heeft een naam: "deze week", "volgende week" of "de week van 23 november".
 - In "verplaatst van do 12" wordt de dag nooit afgekapt; is de regel te lang, dan wijkt het woord ervoor.
 
+## Aanvulling na Warden (15 november)
+
+- Is de sleuteltraining niet in te halen ("Lange duurloop vervalt"), dan wacht dat voorstel tot de training van vandaag gedaan of overgeslagen is, of tot de dag om is. Om 10:40 met Heuvelintervallen nog open las het als opgeven, en wordt die training overgeslagen, dan kan de lange loop vandaag nog (`engine/adviceWeek.ts#missedAdvice`). Een inhaal die wel kan, komt meteen; zonder gemiste sleuteltraining vervalt alles hoe dan ook en komt het voorstel ook meteen.
+- De rustdagruil (REST-SWAP) leest een dag zonder sportschool niet meer als weg: zoals het inhalen kan hij dan gewoon (`engine/leave.ts#isPauseDay`).
+- Een gemiste rij met een greep en "aangepast" zei nergens gemist, terwijl de kaart hem telde. Nu staat "gemist" voorop en "aangepast" erbij (`engine/weekRow.ts`). De tekstkaart bewaakt het: het getal op "Je hebt n training gemist" is het aantal dagrijen die gemist zeggen (stand zonder-sportschool).
+- De volle week telt een sportschooltraining die je van een dag zonder sportschool wegzette niet als verlies (`engine/fullWeek.ts#weekLoss`).
+- Alleen de rustiger instap en "Deze week nog een keer?" lezen een week zonder sportschool nog als weg (`engine/leave.ts#isAwayDay`); een toets in `src/engine/weekTelling.test.ts` houdt dat zo.
+
 ## Reden
 
 Melding van de eigenaar, zondag 15 november 10:40, met een periode Zonder sportschool van za 14 tot en met wo 18 november. Week toonde rode kruisen op vrijdag (twee, overgeslagen) en op zondag (Eigen gewicht, zelf overgeslagen), maar de kaart zei "Je hebt 1 training gemist": die ene was de lange duurloop van zaterdag, juist de rij zonder kruis. Diezelfde lange loop kreeg amber "1 dag voor Heuvelintervallen" terwijl hij niet gedaan was, en het advies zette hem op maandag direct na de heuvelintervallen ("want vandaag deed je geen training" om 10:40, met Heuvelintervallen nog gepland). Nagespeeld met nagemaakte gegevens op de versie van voor 14 november: precies die kaart en die zin. Op de versie van daarna stond de lange loop grijs als vervallen en zei de kaart niets: een loop zonder sportschool viel helemaal uit beeld.

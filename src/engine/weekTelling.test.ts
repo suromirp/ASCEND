@@ -16,6 +16,7 @@ import { rowNotes, weekConcerns } from './weekConcerns';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import { weekWord } from './adviceWeek';
 import { weekAccepts } from './hardRunApart';
+import { weekLoss } from './fullWeek';
 import { planMissed, MISSED_ADVICE } from './missedTraining';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import weekIcons from '../components/WeekIcons.tsx?raw';
@@ -119,8 +120,21 @@ describe('de voorbeeldweek van de eigenaar (zondag 15 november 10:40)', () => {
     expect(text).not.toMatch(/vandaag deed je geen training/);
     expect(text).not.toMatch(/in plaats van je rustdag/);
     expect(advice.flatMap((a) => a.proposal?.changes ?? []).some((c) => c.toDate === '2026-11-16')).toBe(false);
-    // Eén afleiding: het advies gaat over dezelfde training die Week gemist noemt.
-    expect(advice[0]?.title).toBe('Lange duurloop van za 14 november gemist');
+  });
+
+  it('punt 6 (Warden): "Lange duurloop vervalt" wacht tot de training van vandaag gedaan of overgeslagen is, of de dag om is', () => {
+    at(today);
+    // Zondag 10:40, Heuvelintervallen nog open: nog geen voorstel.
+    expect(catchUp(adviceInputs({ plannedSessions: plan, logs, leave, asOf: today }))).toEqual([]);
+    // Heuvelintervallen gedaan: nu het voorstel, over dezelfde training die Week gemist noemt.
+    const hills = plan.find((s) => s.id === 'hi6')!;
+    const after = catchUp(adviceInputs({ plannedSessions: plan, logs: [...logs, log(hills, 45)], leave, asOf: today }));
+    expect(after[0]?.title).toBe('Lange duurloop van za 14 november gemist');
+    expect(after[0]?.effect).toBe('Lange duurloop vervalt. De rest van je week blijft zoals gepland.');
+    // Maandag (de zondag is om), Heuvelintervallen gedaan: vervalt, niet op de rustdag direct na de heuvels.
+    at('2026-11-16');
+    const monday = catchUp(adviceInputs({ plannedSessions: plan, logs: [...logs, log(hills, 45)], leave, asOf: '2026-11-16' }));
+    expect(monday[0]?.effect).toBe('Lange duurloop vervalt. De rest van je week blijft zoals gepland.');
   });
 
   it('punt 5: de dag in "verplaatst van do 12" wordt nooit afgekapt', () => {
@@ -244,6 +258,35 @@ describe('randgevallen', () => {
     expect(rowNotes(weekConcerns({ sessions: swapped, logs, templates, today, restDay: 1, program, leave }, '2026-11-09')).get('hi6')).toBeUndefined();
     const text = catchUp(adviceInputs({ plannedSessions: swapped, logs, leave, asOf: today })).map((a) => a.effect).join(' ');
     expect(text).not.toMatch(/vandaag deed je geen training|in plaats van je rustdag/);
+  });
+
+  it('volle week (Warden 2): een sportschooltraining die je van een dag zonder sportschool wegzette is geen verlies, een loop wel', () => {
+    at('2026-11-20');
+    const leave: LeavePeriod[] = [{ id: 'g', kind: 'no_gym', startDate: '2026-11-16', endDate: '2026-11-18' }];
+    const lock = { by: 'user' as const, at: '2026-11-15T20:00:00+01:00' };
+    const gym = ps('gym', 'tpl_upper_a', '2026-11-21', { status: 'moved', movedFromDate: '2026-11-17', lock });
+    const run = ps('run', 'tpl_easy_run', '2026-11-22', { status: 'moved', movedFromDate: '2026-11-18', lock });
+    const losses = weekLoss({ today: '2026-11-20', sessions: [gym, run], logs: [], templates, leave });
+    expect(losses.map((l) => `${l.name}:${l.how}`)).toEqual(['Rustige duurloop:moved']);
+  });
+
+  it('REST-SWAP (Warden 5): op een dag zonder sportschool kan de rustdag schuiven, op een vakantiedag niet', () => {
+    at('2026-11-16');
+    const plan = [ps('rest', 'tpl_herstel', '2026-11-16'), ps('run', 'tpl_easy_run', '2026-11-17')];
+    const swap = (kind: LeavePeriod['kind']) => computeAdvice(adviceInputs({ plannedSessions: plan, asOf: '2026-11-16', leave: [{ id: 'p', kind, startDate: '2026-11-14', endDate: '2026-11-18' }] })).filter((a) => a.ruleId === 'REST-SWAP');
+    expect(swap('no_gym')).toHaveLength(1);
+    expect(swap('no_training')).toEqual([]);
+  });
+
+  it('bewaking (Warden 4): isAwayDay (de dag als geheel weg, ook zonder sportschool) leest niemand voor gemist', () => {
+    // Gemist gaat door isAwayFor of isPauseDay. isAwayDay is alleen voor de dag als geheel: de rustiger instap en
+    // "Deze week nog een keer?" (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md).
+    const sources = import.meta.glob<string>('./*.ts', { query: '?raw', import: 'default', eager: true });
+    const users = Object.entries(sources)
+      .filter(([f]) => !f.endsWith('.test.ts') && f !== './leave.ts')
+      .filter(([, src]) => /import\s*\{[^}]*\bisAwayDay\b[^}]*\}\s*from '\.\/leave'/.test(src))
+      .map(([f]) => f.slice(2));
+    expect(users.sort()).toEqual(['reentry.ts', 'repeatWeek.ts']);
   });
 
   it('punt 8: de week heeft een naam', () => {

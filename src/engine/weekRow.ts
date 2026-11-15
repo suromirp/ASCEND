@@ -53,7 +53,9 @@ const dayTail = (text: string): { tail?: string } => { const m = text.match(/ ([
 
 export function rowExtra(f: RowFacts): RowExtra | undefined {
   if (f.concern) return f.adjusted ? { text: f.concern, warn: true, also: 'aangepast' } : { text: f.concern, warn: true };
-  if (f.adjusted) return { text: 'aangepast', warn: false };
+  // Gemist met een greep heeft geen teken rechts: dan staat "gemist" voorop en "aangepast" erbij, zodat elke rij die de
+  // kaart "Je hebt n training gemist" telt ook gemist zegt (invariant op de tekstkaart, Warden 15 november).
+  if (f.adjusted) return f.missed ? { text: 'gemist', warn: false, also: 'aangepast' } : { text: 'aangepast', warn: false };
   if (f.missed) return { text: 'gemist', warn: false };
   if (f.lapsed) return { text: 'vervallen', warn: false };
   if (f.open) return { text: 'loopt nog', warn: false };

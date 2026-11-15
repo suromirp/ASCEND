@@ -11,7 +11,7 @@ import { isTemplatePlannable } from './sports';
 import { addDays, daysBetween, formatDateNL, formatWeekdayDateNL, mondayOfWeek } from '../utils/dates';
 import { proposeExtraSession } from './extraRun';
 import { lastDeclinedOn, linkCandidates, pauseSince } from './missedTraining';
-import { isAwayDay, isAwayFor, isPauseDay } from './leave';
+import { isAwayFor, isPauseDay } from './leave';
 import { type AdviceInputs, type Advice, isDone, inProgram, isKeySession, findCatchUpDate, findRestDayToUse, keyCatchUpShort, raceWeekGuard, recoveryWeekGuard, type AdviceOption, catchUpDates, moveOptions, proposal } from './adviceShared';
 import { TEST_RUN_ID } from './adviceTestRun';
 import { isTaperDay, raceDatesOf } from './raceWindow';
@@ -109,6 +109,13 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
       if (notChosen) otherKeys.push(template.name);
     }
   }
+  // De sleuteltraining is niet in te halen en vandaag staat nog een training open: dan wacht het voorstel tot die
+  // training gedaan of overgeslagen is of de dag om is. "Vervalt" om 10:40 leest als opgeven, en wordt de training van
+  // vandaag overgeslagen, dan kan de sleuteltraining vandaag nog (aanvulling op
+  // docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md, Warden). Zonder sleuteltraining vervalt alles hoe
+  // dan ook: dat voorstel komt meteen.
+  const openToday = inputs.plannedSessions.some((s) => s.scheduledDate === inputs.asOf && s.status !== 'skipped' && !loggedIds.has(s.id) && templateById.get(s.templateId)?.type !== 'recovery');
+  if (caughtUp.length === 0 && chosen && openToday) return [];
   const names = missed.map((m) => m.template.name);
   // Een naam met "en" erin ("Heuvelsprints en afdalen") maakt een opsomming met "en" onleesbaar; dan alleen komma's.
   const list = (xs: string[]) => (xs.length === 1 ? xs[0] : xs.some((x) => / en /.test(x)) ? xs.join(', ') : `${xs.slice(0, -1).join(', ')} en ${xs.at(-1)}`);
@@ -147,7 +154,8 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
 // already uses this rest day for a catch-up.
 export function restSwapAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
-  if (raceWeekGuard(inputs) || isAwayDay(inputs.asOf, inputs.leave)) return [];
+  // Weg (vakantie, tocht): geen ruil. Zonder sportschool loop je door, dus de ruil kan (Warden, 15 november).
+  if (raceWeekGuard(inputs) || isPauseDay(inputs.asOf, inputs.leave)) return [];
   const today = inputs.asOf;
   const yesterday = addDays(today, -1);
   const tomorrow = addDays(today, 1);

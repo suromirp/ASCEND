@@ -119,7 +119,7 @@ export function weekLoss(input: FullWeekInput): WeekLoss[] {
     if (!inWeek(s.scheduledDate) && !(from && inWeek(from))) continue;
     if (!ctx.trains(s) || s.amount?.change === 'left_out' || s.leave?.role === 'dropped' || input.removedByPlanIds?.has(s.id)) continue;
     if (inWeek(s.scheduledDate) && s.scheduledDate < today && !away(s.scheduledDate, ctx.tpl(s)) && !ctx.done(s) && !isDraftOpen(s, input.openDraft, today)) out.push({ date: s.scheduledDate, name: nameOf(s), how: 'missed' });
-    if (from && s.lock && s.status !== 'skipped' && inWeek(from) && from < today && s.scheduledDate > from && !away(from) && !usedDay(from, s.id)) out.push({ date: from, name: nameOf(s), how: 'moved' });
+    if (from && s.lock && s.status !== 'skipped' && inWeek(from) && from < today && s.scheduledDate > from && !away(from, ctx.tpl(s)) && !usedDay(from, s.id)) out.push({ date: from, name: nameOf(s), how: 'moved' });
   }
   return out.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
 }
