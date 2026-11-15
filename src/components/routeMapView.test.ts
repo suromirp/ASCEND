@@ -457,3 +457,42 @@ describe('Groter: draaien en een stuk', () => {
     expect((t.map().data['ascend-piece'] as { features: unknown[] }).features).toHaveLength(0);
   });
 });
+
+describe('de kaart zonder lus: alleen een midden (I-61, je plek lukte niet)', () => {
+  function bare(center?: { lat: number; lon: number }) {
+    FakeMap.made = [];
+    const c = clock();
+    const deps: MapViewDeps = { load: () => Promise.resolve(lib), colors: () => readMapColors((t) => t), online: () => true, webgl: () => true, motion: () => 'off', setTimer: c.setTimer, clearTimer: c.clearTimer, fetchStyle: async () => OFM_STYLE };
+    const taps: unknown[] = [];
+    const view = createRouteMapView({} as HTMLElement, 'dark', { routes: [], chosen: undefined, dots: {}, ...(center ? { center } : {}) }, { onState: () => undefined, onRouteTap: () => undefined, onMapTap: (p) => taps.push(p) }, deps);
+    return { view, taps, map: () => FakeMap.made[0] };
+  }
+
+  it('het midden zet de camera, zonder ring of stip: het is geen startpunt', async () => {
+    const t = bare(A);
+    await flush();
+    const m = t.map();
+    expect(m.options.center).toEqual([A.lon, A.lat]);
+    expect(m.options.zoom).toBe(14);
+    t.view.update({ routes: [], chosen: undefined, dots: {}, center: A });
+    expect((m.data['ascend-dots'] as { features: unknown[] }).features).toEqual([]);
+    t.view.fitAll();
+    expect(m.eases.at(-1)).toMatchObject({ center: [A.lon, A.lat], zoom: 14 });
+  });
+
+  it('een tik zet de ring; dan telt het midden niet meer voor Alles in beeld', async () => {
+    const t = bare(A);
+    await flush();
+    const m = t.map();
+    t.view.update({ routes: [], chosen: undefined, dots: { pick: B }, center: A });
+    expect((m.data['ascend-dots'] as { features: unknown[] }).features).toHaveLength(1);
+    t.view.fitAll();
+    expect(m.eases.at(-1)).toMatchObject({ center: [B.lon, B.lat], zoom: 15 });
+  });
+
+  it('zonder iets: een overzicht', async () => {
+    const t = bare();
+    await flush();
+    expect(t.map().options).toMatchObject({ center: [0, 0], zoom: 1 });
+  });
+});

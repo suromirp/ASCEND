@@ -7,13 +7,23 @@ import { createImportPlan, createPreImportSnapshot, applyImportPlan } from './ba
 import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import { cleanSettings } from './backupClean';
 import { clearRouteStartPoint, getRouteStartPoint, saveRouteStartPoint, locateStartHere, startFromMap } from './routeStart';
-import { resolveRouteStart, startFailureReason } from '../engine/routeStart';
-import { LocateError } from '../utils/geolocation';
+import { askStartLine, resolveRouteStart, startFailureReason } from '../engine/routeStart';
+import type { LocateFailure, Position2, WatchFn } from '../utils/geolocation';
 import { getNearbyTerrain, refreshNearbyTerrain } from './nearbyTerrain';
 
 // Nagemaakt punt, geen echte plek.
 const fake = { lat: 52.123456, lon: 5.654321 };
 const noAsk = async () => undefined;
+// Een toestel dat één plek geeft, een fout geeft of nooit antwoordt.
+const once = (pos: Position2): WatchFn => (onFix) => {
+  queueMicrotask(() => onFix(pos));
+  return () => undefined;
+};
+const fails = (reason: LocateFailure): WatchFn => (_onFix, onFail) => {
+  queueMicrotask(() => onFail(reason));
+  return () => undefined;
+};
+const silent: WatchFn = () => () => undefined;
 
 beforeEach(async () => {
   await wipeAllData();
@@ -110,19 +120,19 @@ describe('het eigen startpunt op het toestel', () => {
 
 describe('Gebruik waar ik nu ben', () => {
   it('bewaart een goede plek en geeft hem terug', async () => {
-    const out = await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 20 }) });
+    const out = await locateStartHere({ limitMs: 50, askPermission: noAsk, watch: once({ ...fake, accuracyM: 20 }) });
     expect(out).toEqual({ ok: true, point: { lat: 52.12346, lon: 5.65432 } });
     expect(await getRouteStartPoint()).toEqual({ lat: 52.12346, lon: 5.65432 });
   });
 
   it('geen toestemming: een reden en niets bewaard', async () => {
-    const out = await locateStartHere({ askPermission: noAsk, locate: async () => { throw new LocateError('denied'); } });
+    const out = await locateStartHere({ limitMs: 50, askPermission: noAsk, watch: fails('denied') });
     expect(out).toEqual({ ok: false, reason: 'denied' });
     expect(await getRouteStartPoint()).toBeUndefined();
   });
 
   it('geen antwoord binnen de tijdgrens: timeout, niets bewaard', async () => {
-    const out = await locateStartHere({ askPermission: noAsk, locate: () => new Promise(() => undefined), limitMs: 20 });
+    const out = await locateStartHere({ askPermission: noAsk, watch: silent, limitMs: 20 });
     expect(out).toEqual({ ok: false, reason: 'timeout' });
     expect(await getRouteStartPoint()).toBeUndefined();
   });
@@ -130,7 +140,7 @@ describe('Gebruik waar ik nu ben', () => {
   it('hangt het venster van Android, dan stopt het wachten na een eigen ruime grens', async () => {
     vi.useFakeTimers();
     try {
-      const pending = locateStartHere({ askPermission: () => new Promise(() => undefined), locate: async () => ({ ...fake, accuracyM: 5 }) });
+      const pending = locateStartHere({ limitMs: 50, askPermission: () => new Promise(() => undefined), watch: once({ ...fake, accuracyM: 5 }) });
       await vi.advanceTimersByTimeAsync(61_000);
       expect((await pending).ok).toBe(true);
     } finally {
@@ -139,42 +149,193 @@ describe('Gebruik waar ik nu ben', () => {
   });
 
   it('een ruwe plek telt niet als startpunt', async () => {
-    const out = await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 2000 }) });
-    expect(out).toEqual({ ok: false, reason: 'coarse' });
+    const out = await locateStartHere({ limitMs: 50, askPermission: noAsk, watch: once({ ...fake, accuracyM: 2000 }) });
+    expect(out).toMatchObject({ ok: false, reason: 'coarse' });
     expect(await getRouteStartPoint()).toBeUndefined();
   });
 
   it('een plek die een paar straten naast je deur kan liggen telt ook niet: de grens is 50 m', async () => {
-    expect(await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 51 }) })).toEqual({ ok: false, reason: 'coarse' });
+    expect(await locateStartHere({ limitMs: 50, askPermission: noAsk, watch: once({ ...fake, accuracyM: 51 }) })).toMatchObject({ ok: false, reason: 'coarse' });
     expect(await getRouteStartPoint()).toBeUndefined();
-    expect((await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 50 }) })).ok).toBe(true);
+    expect((await locateStartHere({ limitMs: 50, askPermission: noAsk, watch: once({ ...fake, accuracyM: 50 }) })).ok).toBe(true);
   });
 
   it('een browser zonder locatie en een kapot antwoord geven een reden', async () => {
-    expect(await locateStartHere({ askPermission: noAsk, locate: async () => { throw new LocateError('unsupported'); } })).toEqual({ ok: false, reason: 'unsupported' });
-    expect(await locateStartHere({ askPermission: noAsk, locate: async () => ({ lat: NaN, lon: 1, accuracyM: 5 }) })).toEqual({ ok: false, reason: 'unavailable' });
+    expect(await locateStartHere({ limitMs: 50, askPermission: noAsk, watch: fails('unsupported') })).toEqual({ ok: false, reason: 'unsupported' });
+    expect(await locateStartHere({ limitMs: 50, askPermission: noAsk, watch: once({ lat: NaN, lon: 1, accuracyM: 5 }) })).toEqual({ ok: false, reason: 'unavailable' });
   });
 
   it('een fout bij de toestemming is geen fout van de plek', async () => {
-    const out = await locateStartHere({ askPermission: async () => { throw new Error('plugin stuk'); }, locate: async () => ({ ...fake, accuracyM: 10 }) });
+    const out = await locateStartHere({ limitMs: 50, askPermission: async () => { throw new Error('plugin stuk'); }, watch: once({ ...fake, accuracyM: 10 }) });
     expect(out.ok).toBe(true);
   });
 });
 
 describe('Gebruik waar ik nu ben, strenger', () => {
   it('een plek zonder nauwkeurigheid telt als ruw', async () => {
-    expect(await locateStartHere({ askPermission: noAsk, locate: async () => fake })).toEqual({ ok: false, reason: 'coarse' });
+    expect(await locateStartHere({ limitMs: 50, askPermission: noAsk, watch: once(fake) })).toMatchObject({ ok: false, reason: 'coarse' });
   });
-  it('geen fijne toestemming in de app: ruw, zonder plekvraag', async () => {
-    const locate = vi.fn(async () => ({ ...fake, accuracyM: 5 }));
-    expect(await locateStartHere({ askPermission: async () => 'denied', locate })).toEqual({ ok: false, reason: 'coarse' });
-    expect(locate).not.toHaveBeenCalled();
+  it('geen toegang in de app: geweigerd, zonder plekvraag', async () => {
+    const watch = vi.fn(once({ ...fake, accuracyM: 5 }));
+    expect(await locateStartHere({ limitMs: 50, askPermission: async () => 'denied', watch })).toEqual({ ok: false, reason: 'denied' });
+    expect(watch).not.toHaveBeenCalled();
   });
   it('paneel dicht tijdens het bepalen: niets bewaard', async () => {
     const stop = new AbortController();
-    const out = await locateStartHere({ askPermission: noAsk, locate: async () => { stop.abort(); return { ...fake, accuracyM: 5 }; }, signal: stop.signal });
+    const out = await locateStartHere({ limitMs: 50, askPermission: noAsk, watch: (onFix) => { stop.abort(); queueMicrotask(() => onFix({ ...fake, accuracyM: 5 })); return () => undefined; }, signal: stop.signal });
     expect(out.ok).toBe(false);
     expect(await getRouteStartPoint()).toBeUndefined();
+  });
+});
+
+// Een toestel dat je plek volgt zoals Android binnen: eerst grof, later misschien scherper (I-61).
+function device() {
+  let fix: ((pos: Position2) => void) | undefined;
+  let fail: ((reason: LocateFailure) => void) | undefined;
+  const state = { started: 0, stopped: 0 };
+  const watch: WatchFn = (onFix, onFail) => {
+    state.started += 1;
+    fix = onFix;
+    fail = onFail;
+    return () => {
+      state.stopped += 1;
+    };
+  };
+  return { watch, state, fix: (accuracyM: number) => fix?.({ ...fake, accuracyM }), fail: (reason: LocateFailure) => fail?.(reason) };
+}
+
+describe('Waar je nu bent: volgen tot je plek scherp is (I-61)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    return () => vi.useRealTimers();
+  });
+
+  it('eerst grof, dan scherp binnen de grens: de scherpe plek telt en het volgen stopt', async () => {
+    const d = device();
+    const pending = locateStartHere({ persist: false, askPermission: noAsk, watch: d.watch });
+    await vi.advanceTimersByTimeAsync(0);
+    d.fix(1200);
+    await vi.advanceTimersByTimeAsync(3_000);
+    d.fix(400);
+    await vi.advanceTimersByTimeAsync(3_000);
+    d.fix(18);
+    expect(await pending).toEqual({ ok: true, point: { lat: 52.12346, lon: 5.65432 } });
+    expect(d.state).toEqual({ started: 1, stopped: 1 });
+  });
+
+  it('alleen grof tot de grens: coarse, met de regel over buiten of een raam, en het volgen stopt', async () => {
+    const d = device();
+    const pending = locateStartHere({ persist: false, askPermission: noAsk, watch: d.watch });
+    await vi.advanceTimersByTimeAsync(0);
+    d.fix(900);
+    await vi.advanceTimersByTimeAsync(14_000);
+    d.fix(120);
+    await vi.advanceTimersByTimeAsync(1_001);
+    const out = await pending;
+    expect(out).toMatchObject({ ok: false, reason: 'coarse' });
+    expect(askStartLine('coarse', false)).toBe('Je plek is nog niet scherp genoeg. Probeer het buiten of bij een raam opnieuw, of kies hierboven Andere plek.');
+    expect(d.state.stopped).toBe(1);
+  });
+
+  it('geen enkele plek tot de grens: timeout', async () => {
+    const d = device();
+    const pending = locateStartHere({ persist: false, askPermission: noAsk, watch: d.watch });
+    await vi.advanceTimersByTimeAsync(15_001);
+    expect(await pending).toEqual({ ok: false, reason: 'timeout' });
+    expect(d.state.stopped).toBe(1);
+  });
+
+  it('toegang geweigerd: denied, zonder te volgen', async () => {
+    const d = device();
+    expect(await locateStartHere({ persist: false, askPermission: async () => 'denied', watch: d.watch })).toEqual({ ok: false, reason: 'denied' });
+    expect(d.state.started).toBe(0);
+  });
+
+  it('geweigerd door het toestel tijdens het volgen: denied, en het volgen stopt', async () => {
+    const d = device();
+    const pending = locateStartHere({ persist: false, askPermission: noAsk, watch: d.watch });
+    await vi.advanceTimersByTimeAsync(0);
+    d.fail('denied');
+    expect(await pending).toEqual({ ok: false, reason: 'denied' });
+    expect(d.state.stopped).toBe(1);
+  });
+
+  it('alleen bij benadering toegestaan: approximate, meteen, met de zin over Precieze locatie', async () => {
+    const d = device();
+    expect(await locateStartHere({ persist: false, askPermission: async () => 'approximate', watch: d.watch })).toEqual({ ok: false, reason: 'approximate' });
+    expect(d.state.started).toBe(0);
+    expect(askStartLine('approximate', true)).toBe('Android geeft alleen je plek bij benadering. Zet Precieze locatie aan voor ASCEND in de instellingen van je telefoon. Probeer het opnieuw, of kies hierboven Andere plek of Thuis.');
+  });
+
+  it('de vraag om toegang gooit: geen coarse, de plek wordt gewoon geprobeerd', async () => {
+    const d = device();
+    const pending = locateStartHere({ persist: false, askPermission: async () => { throw new Error('plugin stuk'); }, watch: d.watch });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(d.state.started).toBe(1);
+    d.fix(12);
+    expect((await pending).ok).toBe(true);
+  });
+
+  it("'unknown' of 'prompt' na de vraag is geen weigering: de plek wordt geprobeerd", async () => {
+    for (const perm of ['unknown', 'prompt']) {
+      const d = device();
+      const pending = locateStartHere({ persist: false, askPermission: async () => perm, watch: d.watch });
+      await vi.advanceTimersByTimeAsync(0);
+      d.fix(12);
+      expect((await pending).ok).toBe(true);
+    }
+  });
+
+  it('Sluiten halverwege: het volgen stopt meteen en er telt niets meer', async () => {
+    const d = device();
+    const stop = new AbortController();
+    const pending = locateStartHere({ askPermission: noAsk, watch: d.watch, signal: stop.signal });
+    await vi.advanceTimersByTimeAsync(0);
+    d.fix(800);
+    await vi.advanceTimersByTimeAsync(4_000);
+    stop.abort();
+    expect(d.state.stopped).toBe(1);
+    d.fix(10);
+    expect((await pending).ok).toBe(false);
+    vi.useRealTimers();
+    expect(await getRouteStartPoint()).toBeUndefined();
+  });
+
+  it('een laat antwoord na de grens telt niet', async () => {
+    const d = device();
+    const pending = locateStartHere({ askPermission: noAsk, watch: d.watch });
+    await vi.advanceTimersByTimeAsync(0);
+    d.fix(300);
+    await vi.advanceTimersByTimeAsync(15_001);
+    d.fix(8);
+    expect(await pending).toMatchObject({ ok: false, reason: 'coarse' });
+    expect(d.state.stopped).toBe(1);
+    vi.useRealTimers();
+    expect(await getRouteStartPoint()).toBeUndefined();
+  });
+
+  it('een time-out van het toestel zelf stopt niet: de eigen grens beslist', async () => {
+    const d = device();
+    const pending = locateStartHere({ persist: false, askPermission: noAsk, watch: d.watch });
+    await vi.advanceTimersByTimeAsync(0);
+    d.fail('timeout');
+    await vi.advanceTimersByTimeAsync(2_000);
+    d.fix(30);
+    expect((await pending).ok).toBe(true);
+  });
+
+  it('niet beschikbaar na een grove plek: coarse, zonder grove plek: unavailable', async () => {
+    const a = device();
+    const first = locateStartHere({ persist: false, askPermission: noAsk, watch: a.watch });
+    await vi.advanceTimersByTimeAsync(0);
+    a.fix(700);
+    a.fail('unavailable');
+    expect(await first).toMatchObject({ ok: false, reason: 'coarse' });
+    const b = device();
+    const second = locateStartHere({ persist: false, askPermission: noAsk, watch: b.watch });
+    await vi.advanceTimersByTimeAsync(0);
+    b.fail('unavailable');
+    expect(await second).toEqual({ ok: false, reason: 'unavailable' });
   });
 });
 
@@ -199,20 +360,20 @@ describe('een startpunt van de kaart', () => {
   });
 
   it('Gebruik waar ik nu ben (instelling): een grove plek (800 m) telt niet en bewaart niets', async () => {
-    const r = await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 800 }) });
-    expect(r).toEqual({ ok: false, reason: 'coarse' });
-    expect(r.ok ? '' : startFailureReason(r.reason)).toBe('Je precieze plek is niet beschikbaar.');
+    const r = await locateStartHere({ limitMs: 50, askPermission: noAsk, watch: once({ ...fake, accuracyM: 800 }) });
+    expect(r).toMatchObject({ ok: false, reason: 'coarse' });
+    expect(r.ok ? '' : startFailureReason(r.reason)).toBe('Je plek is nog niet scherp genoeg. Probeer het buiten of bij een raam opnieuw.');
     expect(await getRouteStartPoint()).toBeUndefined();
   });
 
   it('Gebruik waar ik nu ben (instelling): een fijne plek wordt het startpunt', async () => {
-    const r = await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 8 }) });
+    const r = await locateStartHere({ limitMs: 50, askPermission: noAsk, watch: once({ ...fake, accuracyM: 8 }) });
     expect(r.ok).toBe(true);
     expect(await getRouteStartPoint()).toBeDefined();
   });
 
   it('fijne toestemming geweigerd in de app: geen startpunt', async () => {
-    expect(await locateStartHere({ askPermission: async () => 'denied', locate: async () => ({ ...fake, accuracyM: 8 }) })).toEqual({ ok: false, reason: 'coarse' });
+    expect(await locateStartHere({ limitMs: 50, askPermission: async () => 'denied', watch: once({ ...fake, accuracyM: 8 }) })).toEqual({ ok: false, reason: 'denied' });
   });
 
   it('een kapot punt of een gesloten paneel bewaart niets', async () => {
@@ -237,19 +398,19 @@ describe('Ondergrond van de kaart in een back-up', () => {
 describe('Waar je nu bent: de plek van nu wordt niet bewaard', () => {
   it('een goede plek komt terug zonder het vaste punt te raken', async () => {
     await saveRouteStartPoint(fake);
-    const out = await locateStartHere({ persist: false, askPermission: noAsk, locate: async () => ({ lat: 52.2, lon: 5.2, accuracyM: 10 }) });
+    const out = await locateStartHere({ limitMs: 50, persist: false, askPermission: noAsk, watch: once({ lat: 52.2, lon: 5.2, accuracyM: 10 }) });
     expect(out).toEqual({ ok: true, point: { lat: 52.2, lon: 5.2 } });
     expect(await getRouteStartPoint()).toEqual({ lat: 52.12346, lon: 5.65432 });
   });
 
   it('een plek ruwer dan 50 m telt niet, ook niet bij Waar je nu bent', async () => {
-    const out = await locateStartHere({ persist: false, askPermission: noAsk, locate: async () => ({ lat: 52.2, lon: 5.2, accuracyM: 51 }) });
-    expect(out).toEqual({ ok: false, reason: 'coarse' });
+    const out = await locateStartHere({ limitMs: 50, persist: false, askPermission: noAsk, watch: once({ lat: 52.2, lon: 5.2, accuracyM: 51 }) });
+    expect(out).toMatchObject({ ok: false, reason: 'coarse' });
     expect(await getRouteStartPoint()).toBeUndefined();
   });
 
   it('locatie geweigerd: een reden', async () => {
-    const out = await locateStartHere({ persist: false, askPermission: noAsk, locate: async () => { throw new LocateError('denied'); } });
+    const out = await locateStartHere({ limitMs: 50, persist: false, askPermission: noAsk, watch: fails('denied') });
     expect(out).toEqual({ ok: false, reason: 'denied' });
   });
 });

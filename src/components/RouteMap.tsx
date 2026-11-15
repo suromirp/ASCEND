@@ -68,11 +68,13 @@ function PhotoSwitch({ value, onPick }: { value: MapPhoto; onPick: (v: MapPhoto)
 // Bij Bewaar als plek: wat er gebeurt, in één zin (engine/routeMap.ts).
 export { MAKE_HOME_MOVE, MAKE_HOME_NEW };
 
-export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep, onOpen, piece, onBigger, full = false }: {
+export function RouteMap({ routes, chosen, start, center, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep, onOpen, piece, onBigger, full = false }: {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
-  // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is).
-  start: RoutePoint;
+  // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is). Zonder start: de kaart zonder lus.
+  start?: RoutePoint;
+  // Alleen het midden van de kaart als er geen start is (je plek lukte niet); nooit een ring of startpunt.
+  center?: RoutePoint;
   base: MapBase;
   onChoose: (style: RouteStyle) => void;
   // Start hier (een getikt punt), alleen voor deze zoektocht; heeft zelf een grens in tijd.
@@ -121,9 +123,9 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   const [fullCredit, setFullCredit] = useState(false);
   const alive = useRef(true);
   // Wat de kaart nodig heeft, ook binnen de callbacks van de kaart zelf.
-  const latest = useRef({ routes, chosen, dots: { start, me, pick }, piece, motion, onChoose, photo });
+  const latest = useRef({ routes, chosen, dots: { start, me, pick }, piece, center, motion, onChoose, photo });
   useEffect(() => {
-    latest.current = { routes, chosen, dots: { start, me, pick }, piece, motion, onChoose, photo };
+    latest.current = { routes, chosen, dots: { start, me, pick }, piece, center, motion, onChoose, photo };
   });
   // De keuze geldt meteen op het scherm; het bewaren (onPhoto) volgt, en lukt dat niet, dan wisselt hij toch.
   const [picked, setPicked] = useState<MapPhoto>(photo);
@@ -168,8 +170,8 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   }, [base]);
 
   useEffect(() => {
-    view.current?.update({ routes, chosen, dots: { start, me, pick }, piece });
-  }, [routes, chosen, start, me, pick, piece]);
+    view.current?.update({ routes, chosen, dots: { start, me, pick }, piece, center });
+  }, [routes, chosen, start, me, pick, piece, center]);
 
   // De vergrote kaart: draait de telefoon (of verandert het vak anders van maat), dan rekent de kaart
   // opnieuw en staat de lus weer in beeld, ook terug naar staand.
@@ -197,7 +199,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   }, [showPhoto]);
 
   // Nieuwe lussen of een nieuw startpunt: alles in beeld, één keer.
-  const fitKey = `${routes.map((r) => `${r.style}:${r.points.length}`).join(',')}|${start.lat}|${start.lon}`;
+  const fitKey = `${routes.map((r) => `${r.style}:${r.points.length}`).join(',')}|${start?.lat}|${start?.lon}|${start ? '' : `${center?.lat}|${center?.lon}`}`;
   const ready = state.kind === 'ready';
   useEffect(() => {
     if (ready) view.current?.fitAll();

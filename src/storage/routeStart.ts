@@ -14,7 +14,7 @@ import { homeOf, placePoint } from '../engine/places';
 import type { PlaceSource } from '../models/place';
 import { MAX_START_ACCURACY_M, roundExact, validStartPoint, type StartFailure } from '../engine/routeStart';
 import type { RoutePoint } from '../models/route';
-import { locateMe, LocateError, type Position2 } from '../utils/geolocation';
+import { watchFine, type Position2, type WatchFn } from '../utils/geolocation';
 import { withTimeout } from '../utils/withTimeout';
 import { requestFineAppLocationPermission } from '../integrations/geolocation';
 
@@ -55,14 +55,16 @@ export async function clearRouteStartPoint(): Promise<boolean> {
   return (await getRouteStartPoint()) === undefined;
 }
 
-export type StartLocation = { ok: true; point: RoutePoint } | { ok: false; reason: StartFailure };
+// `rough`: de laatste grove plek van het volgen, alleen in het geheugen; het midden van de kaart zonder lus.
+export type StartLocation = { ok: true; point: RoutePoint } | { ok: false; reason: StartFailure; rough?: RoutePoint };
 
 export interface UseMyPlaceDeps {
-  locate?: () => Promise<Position2>;
+  // Volgt je plek; standaard het toestel (utils/geolocation.ts#watchFine).
+  watch?: WatchFn;
   // Geeft undefined in de browser; in de app de uitkomst van het venster van Android.
   askPermission?: () => Promise<unknown>;
   limitMs?: number;
-  // Sluit het paneel, dan wordt er niets meer bewaard.
+  // Sluit het paneel, dan stopt het volgen en wordt er niets meer bewaard.
   signal?: AbortSignal;
   // false: alleen de plek van nu (Waar je nu bent); het vaste punt blijft zoals het is.
   persist?: boolean;
@@ -70,27 +72,76 @@ export interface UseMyPlaceDeps {
 
 const PERMISSION_LIMIT_MS = 60_000;
 
-// Gebruik waar ik nu ben, en Waar je nu bent bij elke zoektocht (met `persist: false`): één keer de
-// plek van het toestel, fijn, met een grens in tijd. Het venster
-// van Android heeft een eigen ruime grens; de 15 seconden gelden voor de plek zelf. Slaat het punt
-// op bij een goede plek. Een ruwe plek, of een plek zonder nauwkeurigheid, telt niet.
+type Followed = { ok: true; pos: Position2 } | { ok: false; reason: StartFailure; rough?: RoutePoint };
+
+// Volgt je plek tot hij scherp is (hoogstens 50 m) en neemt de eerste goede. Binnen is de eerste plek vaak
+// grof (wifi of zendmast) en wordt hij in een paar seconden scherper; daarom niet de eerste plek afkeuren.
+// Stopt altijd: bij een goede plek, bij de grens, bij Sluiten en bij een fout. Na de grens met alleen
+// grove plekken: `coarse`; zonder enige plek: `timeout`. Een plek na de grens telt niet.
+function followUntilSharp(watch: WatchFn, limitMs: number, signal?: AbortSignal): Promise<Followed> {
+  return new Promise<Followed>((resolve) => {
+    let done = false;
+    let rough: RoutePoint | undefined;
+    let stop: (() => void) | undefined;
+    const onAbort = () => finish({ ok: false, reason: 'timeout' });
+    const timer = setTimeout(() => finish(rough ? { ok: false, reason: 'coarse', rough } : { ok: false, reason: 'timeout' }), limitMs);
+    function finish(out: Followed) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', onAbort);
+      stop?.();
+      resolve(out);
+    }
+    if (signal?.aborted) {
+      finish({ ok: false, reason: 'timeout' });
+      return;
+    }
+    signal?.addEventListener('abort', onAbort, { once: true });
+    try {
+      stop = watch(
+        (pos) => {
+          if (done) return;
+          if (pos.accuracyM !== undefined && pos.accuracyM <= MAX_START_ACCURACY_M) finish({ ok: true, pos });
+          else rough = validStartPoint(pos) ?? rough;
+        },
+        (reason) => {
+          // Een time-out van het toestel zelf: de eigen grens beslist. Een andere fout stopt meteen;
+          // was er al een grove plek, dan is dat de reden die je verder helpt.
+          if (reason === 'timeout') return;
+          finish(rough && reason === 'unavailable' ? { ok: false, reason: 'coarse', rough } : { ok: false, reason });
+        },
+      );
+    } catch {
+      finish({ ok: false, reason: 'unavailable' });
+    }
+    // Een fout of plek die al kwam tijdens watch(): de stop bestond toen nog niet.
+    if (done) stop?.();
+  });
+}
+
+// Gebruik waar ik nu ben, en Waar je nu bent bij elke zoektocht (met `persist: false`): de fijne plek van
+// het toestel, gevolgd tot hij scherp is, met een grens in tijd. Het venster van Android heeft een eigen
+// ruime grens; de 15 seconden gelden voor de plek zelf. Slaat het punt op bij een goede plek. Toegang
+// geweigerd: `denied`; alleen bij benadering toegestaan: `approximate`, zonder te wachten. Een vraag om
+// toegang die zelf faalt, telt niet als weigering: dan probeert de app de plek gewoon.
 export async function locateStartHere(deps: UseMyPlaceDeps = {}): Promise<StartLocation> {
   try {
     const perm = await withTimeout((deps.askPermission ?? requestFineAppLocationPermission)(), PERMISSION_LIMIT_MS).catch(() => undefined);
-    if (perm !== undefined && perm !== 'granted') return { ok: false, reason: 'coarse' };
-    const locate = deps.locate ?? (() => locateMe({ timeoutMs: 10_000, maximumAge: 30_000, precise: true, fine: true }));
-    const found = await withTimeout(locate(), deps.limitMs ?? START_LOCATE_LIMIT_MS);
-    if (found.accuracyM === undefined || found.accuracyM > MAX_START_ACCURACY_M) return { ok: false, reason: 'coarse' };
-    const point = validStartPoint(found);
+    if (perm === 'denied') return { ok: false, reason: 'denied' };
+    if (perm === 'approximate') return { ok: false, reason: 'approximate' };
+    const watch = deps.watch ?? watchFine({ timeoutMs: deps.limitMs ?? START_LOCATE_LIMIT_MS });
+    const found = await followUntilSharp(watch, deps.limitMs ?? START_LOCATE_LIMIT_MS, deps.signal);
+    if (!found.ok) return found;
+    const point = validStartPoint(found.pos);
     if (!point) return { ok: false, reason: 'unavailable' };
     if (deps.signal?.aborted) return { ok: false, reason: 'timeout' };
     if (deps.persist === false) return { ok: true, point: roundExact(point) };
     const saved = await saveRouteStartPoint(point);
     if (!saved) return { ok: false, reason: 'unavailable' };
     return { ok: true, point: roundExact(point) };
-  } catch (err) {
-    const reason = err instanceof LocateError ? err.reason : 'timeout';
-    return { ok: false, reason };
+  } catch {
+    return { ok: false, reason: 'timeout' };
   }
 }
 

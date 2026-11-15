@@ -47,19 +47,32 @@ export function chooseStart(mode: RouteStartMode, saved: unknown): StartChoice {
   return point ? { kind: 'exact', point } : { kind: 'needs-point' };
 }
 
-export type StartFailure = 'denied' | 'unavailable' | 'timeout' | 'unsupported' | 'coarse';
+// `coarse`: na de grens alleen een grove plek (binnen, wifi of zendmast). `approximate`: Android gaf ASCEND
+// alleen je plek bij benadering; dan wordt er niet gewacht, want scherper komt hij nooit (besluit
+// 2026-11-15-waar-je-nu-bent-scherp.md).
+export type StartFailure = 'denied' | 'unavailable' | 'timeout' | 'unsupported' | 'coarse' | 'approximate';
 
-export function startFailureReason(reason: StartFailure): string {
+// Het droge feit, één zin.
+function failureFact(reason: StartFailure): string {
   switch (reason) {
     case 'denied':
       return 'Geen toegang tot je locatie.';
     case 'timeout':
       return 'Je locatie kwam niet op tijd.';
     case 'coarse':
-      return 'Je precieze plek is niet beschikbaar.';
+      return 'Je plek is nog niet scherp genoeg.';
+    case 'approximate':
+      return 'Android geeft alleen je plek bij benadering. Zet Precieze locatie aan voor ASCEND in de instellingen van je telefoon.';
     default:
       return 'Je locatie is nu niet beschikbaar.';
   }
+}
+
+// Hoe opnieuw: een grove plek wordt binnen zelden scherper, buiten of bij een raam wel.
+const retryHint = (reason: StartFailure): string => (reason === 'coarse' ? 'Probeer het buiten of bij een raam opnieuw' : 'Probeer het opnieuw');
+
+export function startFailureReason(reason: StartFailure): string {
+  return reason === 'coarse' ? `${failureFact(reason)} ${retryHint(reason)}.` : failureFact(reason);
 }
 
 // Je plek lukte niet: nooit stil terug op Thuis of op Ongeveer (eigenaar 14 november, op reis: "Hij moet
@@ -67,7 +80,11 @@ export function startFailureReason(reason: StartFailure): string {
 // waarom, en jij kiest: Opnieuw in het vak, of Thuis of Andere plek in de chips erboven (besluit
 // 2026-11-14-geen-stille-thuis.md). Thuis alleen als die er is.
 export const askStartLine = (reason: StartFailure, homeOffered: boolean): string =>
-  `${startFailureReason(reason)} Probeer het opnieuw, of kies hierboven ${homeOffered ? 'Andere plek of Thuis' : 'Andere plek'}.`;
+  `${failureFact(reason)} ${retryHint(reason)}, of kies hierboven ${homeOffered ? 'Andere plek of Thuis' : 'Andere plek'}.`;
+
+// Thuis kon niet gelezen worden en je plek lukte niet: dezelfde regel, zonder Thuis.
+export const askStartLineHomeUnread = (reason: StartFailure): string =>
+  `${failureFact(reason)} Thuis kon niet gelezen worden. ${retryHint(reason)}, of kies hierboven Andere plek.`;
 
 // De regel bovenaan het paneel Route voorstellen.
 // Alleen nog als bewaker in de tests: deze zin komt na een mislukte plek nooit meer voor (geen stille Thuis).
@@ -141,7 +158,7 @@ function planUnread(i: StartPlanInput): StartPlan {
   if (i.mode === 'approx') return { kind: 'approx', chip: 'here', line: START_LINE_APPROX };
   if (!i.found) return { kind: 'locate', chip: 'here', line: START_LINE_HOME_UNREAD };
   if (i.found.ok) return { kind: 'here', chip: 'here', point: i.found.point, line: START_LINE_HOME_UNREAD };
-  return { kind: 'ask', chip: 'here', line: `${startFailureReason(i.found.reason)} Thuis kon niet gelezen worden. Probeer het opnieuw, of kies hierboven Andere plek.`, reason: i.found.reason, homeOffered: false };
+  return { kind: 'ask', chip: 'here', line: askStartLineHomeUnread(i.found.reason), reason: i.found.reason, homeOffered: false };
 }
 
 // Of er gezocht mag worden: er is een startpunt. Niet zolang je plek nog bepaald wordt, en niet bij de
@@ -181,3 +198,25 @@ export const locateNow = (kind: StartPlan['kind'] | undefined, askedFor: number 
 // Of een antwoord op de vraag om je plek nog telt: alleen voor de poging die hem stelde. Een laat
 // antwoord van een oude poging overschrijft het nieuwe nooit.
 export const locateAnswerCounts = (askedFor: number | undefined, answerFor: number): boolean => askedFor === answerFor;
+
+// ---------- De kaart zonder lus (eigenaar 15 november: "soms wil je gewoon een startpunt selecteren") ----------
+// Lukt je plek niet, dan staat de kaart er toch, zonder lussen: een tik zet de ring en Start hier zoekt vanaf
+// dat punt (storage/routeStart.ts#startFromMap). Het midden van de kaart is nooit een startpunt: geen ring,
+// geen zoektocht, nooit stil Thuis (besluit 2026-11-14-geen-stille-thuis.md). Volgorde: de laatste grove plek
+// van het toestel van deze poging (op drie decimalen), dan Thuis, dan je plaats voor het weer (afgerond op
+// twee decimalen, zoals Ongeveer);
+// zonder iets een overzicht met een regel.
+export const ASK_MAP_HINT = 'Tik op de kaart waar je wilt beginnen.';
+export const ASK_MAP_OVERVIEW = 'Tik op de kaart waar je wilt beginnen, of kies hierboven Andere plek.';
+
+export type AskMapCenter = { kind: 'device' | 'home' | 'town'; point: RoutePoint; line: string } | { kind: 'overview'; line: string };
+
+export function askMapCenter(i: { rough?: unknown; home?: unknown; town?: unknown }): AskMapCenter {
+  const rough = validStartPoint(i.rough);
+  if (rough) return { kind: 'device', point: roundHere(rough), line: ASK_MAP_HINT };
+  const home = validStartPoint(i.home);
+  if (home) return { kind: 'home', point: home, line: ASK_MAP_HINT };
+  const town = validStartPoint(i.town);
+  if (town) return { kind: 'town', point: { lat: Math.round(town.lat * 100) / 100, lon: Math.round(town.lon * 100) / 100 }, line: ASK_MAP_HINT };
+  return { kind: 'overview', line: ASK_MAP_OVERVIEW };
+}

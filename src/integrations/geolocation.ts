@@ -23,20 +23,59 @@ function errorCode(err: unknown): 1 | 2 | 3 {
   return 2;
 }
 
-// Past op Pick<Geolocation, 'getCurrentPosition'>, zodat locateMe voor beide dezelfde weg neemt.
-const appGeolocation: Pick<Geolocation, 'getCurrentPosition'> = {
+const toPositionError = (err: unknown) => ({ code: errorCode(err), message: String((err as Error | undefined)?.message ?? '') }) as unknown as GeolocationPositionError;
+
+// Een volgende plek: de plugin geeft zijn eigen id pas later (een belofte), de browser meteen een getal.
+// Daarom een eigen getal per volgen, zodat stoppen ook werkt voordat de plugin antwoordde.
+let nextWatch = 1;
+const appWatches = new Map<number, Promise<string | undefined>>();
+
+// Past op de vorm van de browser, zodat locateMe en watchFine voor beide dezelfde weg nemen.
+const appGeolocation: Pick<Geolocation, 'getCurrentPosition' | 'watchPosition' | 'clearWatch'> = {
   getCurrentPosition(success: Callback[0], failure?: Callback[1], options?: Callback[2]) {
     void load()
       .then((m) => m.Geolocation.getCurrentPosition({ enableHighAccuracy: options?.enableHighAccuracy === true, timeout: options?.timeout, maximumAge: options?.maximumAge }))
       .then(
         (pos) => success({ coords: pos.coords, timestamp: pos.timestamp } as unknown as GeolocationPosition),
-        (err) => failure?.({ code: errorCode(err), message: String((err as Error | undefined)?.message ?? '') } as unknown as GeolocationPositionError),
+        (err) => failure?.(toPositionError(err)),
       );
+  },
+  // Elke seconde een nieuwe plek (de plugin wacht anders 5 s): binnen de grens van 15 s telt elke fix.
+  watchPosition(success: Callback[0], failure?: Callback[1], options?: Callback[2]): number {
+    const handle = nextWatch++;
+    const id = load()
+      .then((m) =>
+        m.Geolocation.watchPosition(
+          { enableHighAccuracy: options?.enableHighAccuracy === true, timeout: options?.timeout, maximumAge: options?.maximumAge, interval: 1000, minimumUpdateInterval: 1000 },
+          (pos, err) => {
+            // Na stoppen telt niets meer.
+            if (!appWatches.has(handle)) return;
+            if (pos) success({ coords: pos.coords, timestamp: pos.timestamp } as unknown as GeolocationPosition);
+            else failure?.(toPositionError(err));
+          },
+        ),
+      )
+      .then(
+        (cid) => cid,
+        (err) => {
+          if (appWatches.has(handle)) failure?.(toPositionError(err));
+          return undefined;
+        },
+      );
+    appWatches.set(handle, id);
+    return handle;
+  },
+  clearWatch(handle: number) {
+    const id = appWatches.get(handle);
+    appWatches.delete(handle);
+    void id
+      ?.then((cid) => (cid === undefined ? undefined : load().then((m) => m.Geolocation.clearWatch({ id: cid }))))
+      .catch(() => undefined);
   },
 };
 
 // Undefined in de browser: daar gebruikt locateMe zelf navigator.geolocation.
-export function appGeolocationOrUndefined(): Pick<Geolocation, 'getCurrentPosition'> | undefined {
+export function appGeolocationOrUndefined(): Pick<Geolocation, 'getCurrentPosition' | 'watchPosition' | 'clearWatch'> | undefined {
   return isApp() ? appGeolocation : undefined;
 }
 
@@ -65,14 +104,23 @@ export async function requestAppLocationPermission(): Promise<LocationPermission
   }
 }
 
+// Wat Android zegt na de vraag om je fijne plek. `approximate`: je koos "Bij benadering", dan geeft de
+// telefoon alleen een ruwe plek en wordt die nooit scherp genoeg voor een startpunt.
+export type FineLocationAccess = LocationPermission | 'approximate';
+
+// `location` is bij de plugin alleen granted met precieze toegang; alleen `coarseLocation` granted
+// betekent: bij benadering. Een vraag die gooit of 'prompt' geeft is geen weigering: dan probeert de
+// app de plek gewoon, en zegt Android zelf of het mag.
+export const fineAccessOf = (status: { location?: string; coarseLocation?: string }): FineLocationAccess =>
+  status.location === 'granted' ? 'granted' : status.coarseLocation === 'granted' ? 'approximate' : status.location === 'denied' ? 'denied' : mapState(status.location);
+
 // Voor een startpunt van een lus (Waar je nu bent of Vast punt) is een ruwe plek te grof: dan vraagt de
 // app de fijne plek, alleen na een tik van de gebruiker (Route voorstellen of Gebruik waar ik nu ben). Het manifest heeft beide rechten
-// al. Kiest de gebruiker "ongeveer", dan geeft de telefoon een ruwe plek en zegt ASCEND dat.
-export async function requestFineAppLocationPermission(): Promise<LocationPermission | undefined> {
+// al. Kiest de gebruiker "ongeveer", dan zegt ASCEND dat (besluit 2026-11-15-waar-je-nu-bent-scherp.md).
+export async function requestFineAppLocationPermission(): Promise<FineLocationAccess | undefined> {
   if (!isApp()) return undefined;
   try {
-    const status = await (await load()).Geolocation.requestPermissions({ permissions: ['location'] });
-    return mapState(status.location);
+    return fineAccessOf(await (await load()).Geolocation.requestPermissions({ permissions: ['location'] }));
   } catch {
     return 'unknown';
   }

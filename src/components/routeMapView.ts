@@ -52,6 +52,8 @@ export interface MapViewData {
   dots: Partial<Record<MapDot, RoutePoint>>;
   // Het stuk dat in de lijst Per stuk gekozen is.
   piece?: RoutePoint[];
+  // Het midden zonder lus en zonder start (je plek lukte niet): alleen voor de camera, geen ring, geen startpunt.
+  center?: RoutePoint;
 }
 
 export interface MapViewDeps {
@@ -99,6 +101,8 @@ export const FIT_PADDING = { top: 60, bottom: 36, left: 36, right: 60 };
 export const QUIET_FIT_PADDING = { top: 24, bottom: 40, left: 24, right: 24 };
 const FIT_MAX_ZOOM = 16;
 const POINT_ZOOM = 15;
+// Alleen een midden (de kaart zonder lus): wat ruimer, zodat je de buurt ziet om een start te tikken.
+const CENTER_ZOOM = 14;
 
 export function createRouteMapView(container: HTMLElement, base: MapBase, data: MapViewData, events: MapViewEvents, deps: MapViewDeps, photo = false): RouteMapView {
   const setTimer = deps.setTimer ?? ((fn, ms) => setTimeout(fn, ms));
@@ -118,7 +122,11 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
   let photoFailed = false;
 
   const overlay = () => ({ routes: routeFeatures(latest.routes, latest.chosen), dots: dotFeatures(latest.dots), piece: pieceFeatures(latest.piece) });
-  const allPoints = () => [...latest.routes.flatMap((r) => r.points), ...Object.values(latest.dots).filter((p): p is RoutePoint => !!p)];
+  const allPoints = () => {
+    const points = [...latest.routes.flatMap((r) => r.points), ...Object.values(latest.dots).filter((p): p is RoutePoint => !!p)];
+    return points.length === 0 && latest.center ? [latest.center] : points;
+  };
+  const onlyCenter = () => latest.routes.length === 0 && !Object.values(latest.dots).some(Boolean) && !!latest.center;
   const report = (state: MapViewState) => {
     if (!destroyed) events.onState(state);
   };
@@ -193,7 +201,7 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
     if (!b) return;
     const duration = animate ? cameraDuration(deps.motion()) : 0;
     try {
-      if (b[0][0] === b[1][0] && b[0][1] === b[1][1]) map.easeTo({ center: b[0], zoom: POINT_ZOOM, duration });
+      if (b[0][0] === b[1][0] && b[0][1] === b[1][1]) map.easeTo({ center: b[0], zoom: onlyCenter() ? CENTER_ZOOM : POINT_ZOOM, duration });
       else map.fitBounds(b, { padding: deps.padding ?? FIT_PADDING, maxZoom: FIT_MAX_ZOOM, duration });
     } catch {
       // Een kaart zonder maat (nog niet in beeld): de volgende tik op Alles in beeld probeert het.
@@ -227,7 +235,7 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
         container,
         style: plainStyle(colors, overlay()),
         center,
-        zoom: b ? 13 : 1,
+        zoom: b ? (onlyCenter() ? CENTER_ZOOM : 13) : 1,
         attributionControl: false,
         dragRotate: false,
         touchPitch: false,
