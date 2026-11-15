@@ -117,6 +117,14 @@ describe('proposeRepeatWeek', () => {
     expect(p.impact!.thisWeek.to.minutes).toBe(progressionTarget(longRun, program, '2026-11-08')!.minutes);
   });
 
+  it('een week die deels vakantie was en verder tegenviel: geen herhaling, de rustiger instap gaat erover', () => {
+    expect(proposeRepeatWeek(inputs())).toBeDefined();
+    const leavePeriods = [{ id: 'v', kind: 'no_gym' as const, startDate: '2026-11-03', endDate: '2026-11-04' }];
+    expect(proposeRepeatWeek(inputs({ leavePeriods }))).toBeUndefined();
+    // Vrije dagen zijn geen pauze: dan wel.
+    expect(proposeRepeatWeek(inputs({ leavePeriods: [{ ...leavePeriods[0], kind: 'free_days' as const }] }))).toBeDefined();
+  });
+
   it('in week 2 the heaviest week of the wave is named too', () => {
     const p = proposeRepeatWeek(inputs({ today: W2, logs: [logOf(W1, 'tpl_upper_a')] }))!;
     expect(p.weekStart).toBe(W2);
@@ -129,7 +137,7 @@ describe('proposeRepeatWeek', () => {
     const logs = [logOf(W2, 'tpl_upper_a'), logOf(W2, 'tpl_easy_run'), logOf(W2, 'tpl_hill_intervals')];
     const p = proposeRepeatWeek(inputs({ logs }))!;
     expect(p.verdict).toMatchObject({ fewDone: false, keyMissed: true });
-    expect(shortfallSentence(p)).toBe('Vorige week bleef de lange duurloop liggen, de belangrijkste training van de week.');
+    expect(shortfallSentence(p)).toBe('Vorige week miste je de lange duurloop, de belangrijkste training van de week.');
   });
 
   it('not after a normal week, or one with the key session done', () => {

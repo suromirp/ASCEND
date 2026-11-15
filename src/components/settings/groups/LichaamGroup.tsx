@@ -8,6 +8,7 @@ import { OorzaakSheet, VastgelegdSheet } from './WatSpeeldeErSheets';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveIntensityCounting } from '../../../engine/intensitySettings';
+import { resolveReentry } from '../../../engine/reentry';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
 
@@ -40,6 +41,9 @@ export function LichaamGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         <SummaryRow id="intensiteit" title="Intensiteit tellen" facts={facts} info="intensiteit" onClick={() => setSheet('intensiteit')} />
         <SummaryRow id="tempo-stukken" title="Tempo uit stabiele stukken" facts={facts} info="tempoStukken" onChange={(on) => void updateSettings({ tempoStablePieces: on })} />
       </SettingsSection>
+      <SettingsSection title="Na een pauze">
+        <SummaryRow id="rustiger-instap" title="Rustiger instap na een pauze" facts={facts} info="rustigerInstap" onClick={() => setSheet('rustiger-instap')} />
+      </SettingsSection>
       <SettingsSection title="Onderweg">
         <SummaryRow id="eten-onderweg" title="Eten onderweg" facts={facts} info="etenOnderweg" onChange={(on) => void updateSettings({ fuelOnTheGo: on })} />
       </SettingsSection>
@@ -47,6 +51,7 @@ export function LichaamGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {sheet === 'hartslag' && <HeartRateSheet onClose={close} />}
       {sheet === 'intensiteit' && <ChoiceFromDef def={CHOICES.intensiteit} value={resolveIntensityCounting(settings)} onPick={(v) => void updateSettings({ intensityCounting: v })} onClose={close} />}
       {sheet === 'figuur' && <FigureSheet onClose={close} />}
+      {sheet === 'rustiger-instap' && <ChoiceFromDef def={CHOICES.rustigerInstap} value={resolveReentry(settings.reentry)} onPick={(v) => void updateSettings({ reentry: v })} onClose={close} />}
       {sheet === 'bundel-wat' && (
         <BundleSheet eyebrow="Lichaam" title="Wat speelde er" line="Je eigen aantekeningen bij een training of een dag." onClose={close}>
           <SummaryRow id="wat-teken" title="Training wijkt af" facts={facts} info="wat-teken" onChange={(on) => void updateSettings({ influenceSign: on })} />

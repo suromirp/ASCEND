@@ -27,6 +27,7 @@ import type { PlannedById } from './logDay';
 import { countsAsTraining as countsAsTrainingShared, leftOutOfCount, weekDoneMinutes, weekLogsOf } from './weekLogs';
 import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
+import type { LeavePeriod } from '../models/leave';
 import { weekKeySession, type KeyFocus } from './keySession';
 import { kgLabel } from '../utils/kg';
 import type { HeartRateSettings } from './heartRateZones';
@@ -52,11 +53,11 @@ export interface WeekReview {
   avgRpe?: number;
   // Minuten rustig en hard (engine/weekEffort.ts), in plaats van een gemiddelde zwaarte.
   effort: EffortMinutes;
-  // De week loopt nog (asOf valt erin): dan is het "je week tot nu" en blijft wat vandaag nog staat niet liggen.
+  // De week loopt nog (asOf valt erin): dan is het "je week tot nu" en is wat vandaag nog staat niet gemist.
   running: boolean;
   // Hoeveel trainingen er vandaag nog open staan, alleen als de week nog loopt.
   todayLeft: number;
-  keyMissedName?: string; // de sleuteltraining die nog open blijft liggen
+  keyMissedName?: string; // de sleuteltraining die gemist is en nog open staat
   checkAdvice?: string; // de zin uit je wekelijkse lijfvraag
   // `label`: de naam van de week ("Opbouw, week 4 van 18", "Rustweek", de golf), uit engine/weekLabel.ts#weekNameAt;
   // `rest`: volgens het programma een rustweek die je niet doortraint.
@@ -78,6 +79,8 @@ interface ReviewInputs {
   planChangeLog: PlanChangeProposal[];
   asOf: string;
   illnessEpisodes?: IllnessEpisode[];
+  // Vakanties en tochten die je zelf meldde (engine/leave.ts#isAwayDay): wat daar open bleef, telt niet als gemist.
+  leavePeriods?: LeavePeriod[];
   weeklyChecks?: WeeklyHealthCheck[];
   heartRate?: HeartRateSettings;
   // Instelling "Intensiteit tellen" (engine/intensitySettings.ts): bij "plan" telt de hartslag niet.
@@ -120,7 +123,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // while two trainings were skipped). Not counted: sessions ASCEND itself
   // took out while rearranging the plan (a new strength block, the weekly
   // planning), days you were ill and days before the program started.
-  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate);
+  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate, { periods: inputs.leavePeriods, loggedIds });
   const countsAsTraining = (s: PlannedSession) => countsAsTrainingShared(s, byId.get(s.templateId), leftOut);
   // De oude rij van een gemiste training die je naar later zette telt niet: de nieuwe rij telt
   // (docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md).
@@ -221,11 +224,11 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     // was already let go.
     const keyMissed = keyMissedSession;
     advice.push(
-      // Geen namen: die staan al onder "Blijven liggen" op de terugblik.
-      `${missedNames.length === 1 ? 'Eén training is' : `${missedNames.length} trainingen zijn`} blijven liggen. ` +
+      // Geen namen: die staan al onder Gemist op de terugblik.
+      `${missedNames.length === 1 ? 'Eén training' : `${missedNames.length} trainingen`} gemist. ` +
       (keyMissed
         ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week. Die verplaatst ASCEND naar een vrije dag als dat past. De rest laat je los.`
-        : 'Laat los wat blijft liggen. Dubbel doen helpt niet. Volgende week volgt het plan.'),
+        : 'Laat los wat je miste. Dubbel doen helpt niet. Volgende week volgt het plan.'),
     );
   }
   // The same training missing two weeks in a row: a pattern, not bad luck.

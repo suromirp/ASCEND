@@ -23,7 +23,7 @@ import { type AdviceInputs, type Advice, MAX_OPTIONS, proposal, leavesNextHardFr
 import { TEST_RUN_ID, testRunAdvice } from './adviceTestRun';
 import { missedAdvice, skippedKeyAdvice, restSwapAdvice, restPullAdvice, extraSessionAdvice } from './adviceWeek';
 import { tooHardAdvice, tooLightAdvice, injuryAdvice, strengthAdvice, spacingAdvice } from './adviceLoad';
-import { restWeekSkipAdvice, repeatWeekAdvice, tentPackAdvice, targetTimeAdvice } from './adviceBlock';
+import { restWeekSkipAdvice, repeatWeekAdvice, reentryAdvice, tentPackAdvice, targetTimeAdvice } from './adviceBlock';
 import { morningAdvice } from './adviceMorning';
 import { descentAdvice } from './descentClock';
 import { fullWeekAdvice, resolveFullWeekAsk } from './fullWeek';
@@ -504,6 +504,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const extraSession = extraSessionAdvice(inputs, templateById);
   const restWeekSkip = restWeekSkipAdvice(inputs);
   const repeatWeek = repeatWeekAdvice(inputs);
+  const reentry = reentryAdvice(inputs);
   const tentPack = tentPackAdvice(inputs);
   const targetTime = targetTimeAdvice(inputs);
   const weather = weatherAdvice(inputs, templateById);
@@ -541,6 +542,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...extraSession,
     ...restWeekSkip,
     ...repeatWeek,
+    ...reentry,
     ...tentPack,
     ...targetTime,
     ...retry,

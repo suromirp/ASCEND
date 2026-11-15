@@ -58,16 +58,16 @@ export function useStandData() {
   // The same count as the coach on Ascend (engine/onCourse.ts#recentAdherence): the last
   // four finished weeks, what you skipped counts as not done. Deze week komt er als stipjes bij.
   const adherence = useMemo(
-    () => recentAdherence({ today, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes, keyFocus }),
-    [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, keyFocus],
+    () => recentAdherence({ today, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, keyFocus }),
+    [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, keyFocus],
   );
   const thisWeek = useMemo(() => {
     const planned = plannedSessions.filter((s) => !s.fixed);
-    return buildWeekReview({ plannedById: plannedByIdOf(planned), weekStart: mondayOfWeek(today), plannedSessions: planned, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, heartRate: settings.heartRate, intensityCounting: counting, keyFocus });
-  }, [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.heartRate, counting, keyFocus]);
+    return buildWeekReview({ plannedById: plannedByIdOf(planned), weekStart: mondayOfWeek(today), plannedSessions: planned, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, heartRate: settings.heartRate, intensityCounting: counting, keyFocus });
+  }, [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, settings.heartRate, counting, keyFocus]);
   const streak = useMemo(
-    () => computeCurrentStreak(plannedSessions, sessionLogs, { templateById, programStart: program?.startDate, illnessEpisodes: settings.illnessEpisodes, leftOut: leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate) }),
-    [plannedSessions, sessionLogs, templateById, program?.startDate, settings.illnessEpisodes, planChangeLog, today],
+    () => computeCurrentStreak(plannedSessions, sessionLogs, { templateById, programStart: program?.startDate, illnessEpisodes: settings.illnessEpisodes, leftOut: leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)) }) }),
+    [plannedSessions, sessionLogs, templateById, program?.startDate, settings.illnessEpisodes, settings.leavePeriods, planChangeLog, today],
   );
   const rhythm = useMemo(() => buildRhythm({ adherence, thisWeek, streak }), [adherence, thisWeek, streak]);
   // The main goal is behind you: nothing planned any more (engine/programLayout.ts#planEndDay).

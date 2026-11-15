@@ -100,6 +100,8 @@ export function extraRunEarned(inputs: Omit<ExtraRunInputs, 'newId' | 'anchor' |
   const firstLooked = weekStart > mondayOfWeek(today) ? mondayOfWeek(today) : weekStart;
   let done = 0, planned = 0, keyDone = 0, keyPlanned = 0, weeks = 0;
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
+    // Bewust zonder leavePeriods: een week op vakantie telt hier als een week zonder training, dus na een pauze
+    // komt er geen extra loop bij; eerst de rustiger instap (engine/reentry.ts). Deze telling staat nergens als verwijt.
     const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(firstLooked, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, keyFocus: inputs.keyFocus });
     if (!review || review.planned === 0) continue;
     weeks++;

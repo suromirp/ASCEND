@@ -223,6 +223,8 @@ export interface AppData {
   // is still running after the queue's minute is 'pending'.
   activateGoal: (plan: GoalActivationPlan, horizon?: HorizonPlan) => Promise<GoalActivationResult>;
   updateSettings: (patch: Partial<AppSettings>) => Promise<AppSettings>;
+  // Zet een rustiger instap terug (engine/reentry.ts), ververst de planning en laat een melding met Ongedaan maken staan.
+  undoReentry: (from: string) => Promise<void>;
   // Time-budget scheduling redesign (Fase 4) — the Settings UI's only write
   // path onto TrainingAvailability/TrainingStrategyProfile. A top-level
   // patch key (e.g. `availability`) replaces that whole sub-object

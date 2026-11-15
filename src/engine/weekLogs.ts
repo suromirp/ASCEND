@@ -17,6 +17,8 @@ import { addDays } from '../utils/dates';
 import type { IllnessEpisode } from '../models/illness';
 import type { PlanChangeProposal } from '../models/planChange';
 import { isIllnessDay } from './illness';
+import { isAwayDay, leaveDays } from './leave';
+import type { LeavePeriod } from '../models/leave';
 import { logDay, type PlannedById } from './logDay';
 
 type TemplateTypes = Map<string, Pick<SessionTemplate, 'type'>>;
@@ -66,6 +68,9 @@ export function leftOutOfCount(
   illnessEpisodes: IllnessEpisode[] | undefined,
   asOf: string,
   programStart?: string,
+  // Een vakantie, tocht of periode zonder sportschool die je zelf meldde (engine/leave.ts#isAwayDay): wat daar
+  // stond en niet gedaan is, telt niet als gemist. Wat je er wel deed, telt gewoon mee als gedaan.
+  away?: { periods: LeavePeriod[] | undefined; loggedIds: ReadonlySet<string | undefined> },
 ): (id: string) => boolean {
   const removedBy = new Map<string, string>();
   for (const p of planChangeLog) {
@@ -78,11 +83,13 @@ export function leftOutOfCount(
   // als de weekterugblik.
   const movedOn = new Set<string>();
   for (const s of plannedSessions) if (s.catchUp?.fromId && s.status !== 'skipped') movedOn.add(s.catchUp.fromId);
+  const awayDays = away?.periods?.length ? leaveDays(away.periods) : undefined;
   return (id) => {
     const s = byId.get(id);
     if (!s) return false;
     if (programStart && s.scheduledDate < programStart) return true;
     if (illnessEpisodes && isIllnessDay(s.scheduledDate, illnessEpisodes, asOf)) return true;
+    if (awayDays && !away!.loggedIds.has(s.id) && isAwayDay(s.scheduledDate, away!.periods, awayDays)) return true;
     if (s.status !== 'skipped') return false;
     if (movedOn.has(id)) return true;
     const trigger = removedBy.get(id);
