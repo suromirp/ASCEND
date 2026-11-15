@@ -135,7 +135,7 @@ export function zone2Explanation(chart: Zone2Chart, statement: AerobicTrend['sta
   // Wat het getal is.
   if (o.pieces) {
     out.push(
-      `Het getal is je tempo per km bij ${hrWords}${o.zones && o.referenceHr > 0 ? ', het midden van je zone 2' : ''}. Het komt uit stabiele stukken van je buitenlopen: minstens ${R.minPieceSec / 60} minuten met een vaste hartslag en een vast tempo, op vrijwel vlak terrein, en nooit uit de eerste ${R.startAfterSec / 60} minuten van een loop. Een stuk een paar slagen hoger of lager wordt omgerekend naar die ene hartslag.`,
+      `Het getal is je tempo per km bij ${hrWords}${o.zones && o.referenceHr > 0 ? ', het midden van je zone 2' : ''}. Het getal komt uit stabiele stukken van je buitenlopen: minstens ${R.minPieceSec / 60} minuten met een vaste hartslag en een vast tempo, op vrijwel vlak terrein, en nooit uit de eerste ${R.startAfterSec / 60} minuten van een loop. Een stuk een paar slagen hoger of lager telt mee, omgerekend naar die ene hartslag.`,
     );
   } else {
     out.push(`Het getal is je tempo per km bij ${hrWords}. Tempo uit stabiele stukken staat uit, dus elke vlakke rustige of lange duurloop telt met de gemiddelde hartslag van de hele loop.`);

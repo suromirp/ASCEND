@@ -264,9 +264,9 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
 
 function explain(mode: 'add' | 'remove', period: LeavePeriod, count: number, changed = false): string {
   if (count === 0) {
-    if (changed) return period.kind === 'trek' ? 'De tocht is bijgewerkt en je planning houdt er rekening mee.' : 'De periode is bijgewerkt en je planning houdt er rekening mee.';
+    if (changed) return period.kind === 'trek' ? 'De tocht is bijgewerkt. Voorstellen houden er rekening mee.' : 'De periode is bijgewerkt. Voorstellen houden er rekening mee.';
     return mode === 'add'
-      ? 'De periode is bewaard en je planning houdt er rekening mee.'
+      ? 'De periode is bewaard. Voorstellen houden er rekening mee.'
       : 'De periode is verwijderd.';
   }
   if (mode === 'remove') return 'Wat de periode verschoof of liet vervallen, staat weer op zijn plek.';

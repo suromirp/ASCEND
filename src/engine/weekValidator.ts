@@ -440,7 +440,7 @@ export interface Repair {
   reason?: string;
 }
 
-const SOFT_REST_REASON = 'Iets eerder dan ASCEND graag ziet na je tocht, daarom de korte versie.';
+const SOFT_REST_REASON = 'Iets eerder dan gewenst na je tocht, daarom de korte versie.';
 
 // Why a leg day next to a tocht is let go: concrete, so it is clear it is not a mistake.
 function legAndTrekReason(afterTrek: boolean): string {
@@ -595,7 +595,7 @@ export function repairWeeks(input: CheckInput): RepairResult {
       if (t.type === 'strength' || templateSport(t) !== 'running' || !byId.has(EASY_ID)) continue;
       sessions = sessions.map((s) => (s.id === subject.id ? { ...s, templateId: EASY_ID } : s));
       const outside = byId.get(sessions.find((s) => s.id === next.sessionIds[0])?.templateId ?? '')?.name ?? 'je vaste afspraak';
-      repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, reason: `met ${outside.toLowerCase()} deze week past er een harde training van ASCEND minder, daarom een rustige loop` });
+      repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, reason: `met ${outside.toLowerCase()} deze week past er een harde training minder, daarom een rustige loop` });
       continue;
     }
     if (next.rule === 'ONE-LONG') {
