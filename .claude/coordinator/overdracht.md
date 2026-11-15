@@ -31,7 +31,8 @@ Bijgewerkt: 15 november 2026, 14:20 Portugese tijd, door de coördinator session
 
 ## Lopend (15:30)
 
-- Proef 2b8e2b8 op `proef/drie`: nacht plus Week telling (I-1), Afbreker (I-4, Warden Fable akkoord, briefjes bijgewerkt) en Weekbudget (I-39). tsc, lint, 730 testbestanden, build en kennisindex groen. Tekstkaart loopt bij mij. Lookout (Sonnet) session_01LnDpSjCg2dZkdQ6tWahpzK pusht afdrukken op `lookout/drie`; Pathfinder (Sonnet) session_01LnDpSn8hkHJPMkY8thgzJC pusht `pathfinder/drie`. Daarna afdrukken zelf bekijken, main via squash, backlog:bij, pushmelding.
+- Naar main gaan Week telling (I-1) en Afbreker (I-4): proef `proef/drie`, de commit vóór de merge van weekbudget (`proef/drie^1`). Pathfinder akkoord (`pathfinder/drie`), Lookout session_01LnDpSjCg2dZkdQ6tWahpzK loopt (afdrukken op `lookout/drie`); tekstkaart draait in een worktree in de scratchpad.
+- Weekbudget (I-39) niet af volgens Pathfinder: Sherpa ronde 2 session_01LnDpSkBcoMA95iogevFZjV (Opus) op `claude/weekbudget-kracht`.
 - Conflict bij elke merge zit in docs/kennisindex: bronnen.json met de hand, de .md met `--ours` en opnieuw `npm run kennisindex`. Een hook draait alle tests bij elke `git commit`: commit apart, niet in een lange keten.
 - Back-up eerste keer: Warden Fable geen blokkerend, wel Moet 1 tot 4 (o.a. stat-fout op lege map geeft -2: waarschijnlijk het symptoom van de eigenaar). Herstel naar de bouwer session_01LnDpSnNF5icymXAJ1Rc6xC (15:14); keuze: één keer opnieuw kijken na 300 ms. Daarna korte blik op de diff, geen volle review.
 - Beginner heel licht: Warden Fable niet akkoord (horlogelog in wandeltempo telt niet; eerste Akkoord noemt de beginnersstart niet; geen rem zonder log). Herstel naar session_01LnDpSk5RjwPEFvrRzyLnjW (15:14). Daarna weer een Warden op Fable.
