@@ -1,0 +1,3802 @@
+{
+ "uitleg": "Een regel per document in docs/ (behalve docs/app-kaart/, docs/kennisindex/ en afbeeldingen). stand is geldt, vervangen (met door), verouderd (met waarom) of achtergrond. Na een wijziging: npm run kennisindex.",
+ "onderwerpen": [
+  "forge",
+  "koppelingen-en-data",
+  "lopen-en-tests",
+  "doelen",
+  "planning",
+  "week",
+  "lichaam-en-herstel",
+  "historie-en-logs",
+  "bediening-en-beweging",
+  "werkwijze",
+  "algemeen"
+ ],
+ "documenten": {
+  "docs/android-sleutel.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "De Android-app wordt altijd met dezelfde sleutel ondertekend, anders kan een nieuwe versie niet over de oude heen; hier staat hoe de workflow dat doet.",
+   "stand": "geldt"
+  },
+  "docs/architectuur/bediening-en-beweging.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Het lange verhaal bij bediening: terugknop, scrollen, hervatten en de ontwerpregels voor logo, tabbalk, lucht, instellingen en overgangen.",
+   "stand": "geldt"
+  },
+  "docs/architectuur/doelen.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Het lange verhaal bij doelen: de Ascend-tab, klaar voor je doel, de GR5-voortgang en een race met doeltijd.",
+   "stand": "geldt"
+  },
+  "docs/architectuur/forge.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Het lange verhaal bij Forge: Je stand en volgorde, sessie, verloop, spotter, plaatjes, het blad Oefening en spieren voor de berg.",
+   "stand": "geldt"
+  },
+  "docs/architectuur/historie-en-logs.md": {
+   "onderwerpen": [
+    "historie-en-logs"
+   ],
+   "kern": "De volledige regel dat historie nooit herschreven wordt, met de uitzonderingen op verzoek van de eigenaar en het append-only patroon.",
+   "stand": "geldt"
+  },
+  "docs/architectuur/koppelingen-en-data.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Wat ASCEND van Garmin leert (intensiteit, zweet, bergschoenen) en de tekst voor Strava.",
+   "stand": "geldt"
+  },
+  "docs/architectuur/lichaam-en-herstel.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Het lange verhaal bij lichaam: het figuur, hoe voelt je lijf, een zware beendag op vermoeide benen, een korte nacht en wat speelde er.",
+   "stand": "geldt"
+  },
+  "docs/architectuur/lopen-en-tests.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Het lange verhaal bij lopen: hartslag op het horloge, run in detail en de testloop met de tempo's.",
+   "stand": "geldt"
+  },
+  "docs/architectuur/onderwerpen.md": {
+   "onderwerpen": [
+    "algemeen"
+   ],
+   "kern": "De oorspronkelijke lijst van onderwerpen met hun harde regels, woordelijk verhuisd uit CLAUDE.md.",
+   "stand": "geldt"
+  },
+  "docs/architectuur/ontwerp-en-tokens.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Het volledige ontwerp: Zee en berg, knoppen en tikdoelen, stem, beweging en alle tokens, woordelijk verhuisd uit CLAUDE.md.",
+   "stand": "geldt"
+  },
+  "docs/architectuur/planning.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Het lange verhaal bij planning: hoofddoel en rollen, scheduler, wie een sessie mag aanraken, labels, eerst vragen, ziek, vrij, tochten en de rugzakladder.",
+   "stand": "geldt"
+  },
+  "docs/architectuur/week.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Het lange verhaal bij de Week-tab: waarschuwingen, slepen en inhalen.",
+   "stand": "geldt"
+  },
+  "docs/audit/1 Bugjacht.md": {
+   "onderwerpen": [
+    "algemeen"
+   ],
+   "kern": "QA-rapport van 3 oktober 2026 met de bugs die toen in Chromium op 390 en 360 px zijn gevonden.",
+   "stand": "achtergrond"
+  },
+  "docs/audit/2 Verbeteringen.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "UX- en productreview van 3 oktober 2026, doorlopen als gebruiker met een GR5-doel.",
+   "stand": "achtergrond"
+  },
+  "docs/audit/3 Simulatie trainingsplan.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Simulatie van 3 oktober 2026 waarin de echte engine een heel traject van programmastart tot de GR5 draait.",
+   "stand": "achtergrond"
+  },
+  "docs/audit/4 Dataveiligheid.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "historie-en-logs"
+   ],
+   "kern": "Audit van 3 oktober 2026 van opslag, export en import op commit d8e19d3, met nagespeelde gevallen.",
+   "stand": "achtergrond"
+  },
+  "docs/audit/5 Tekst offline toegankelijkheid.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Controle van 3 oktober 2026 van teksten, offline gedrag en toegankelijkheid op commit d8e19d3.",
+   "stand": "achtergrond"
+  },
+  "docs/audit/6 Trainingsscherm en infoscherm.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Controle van 5 oktober 2026 van het oude trainingsscherm en infoscherm.",
+   "stand": "verouderd",
+   "waarom": "Het trainingsscherm en het infoscherm zijn sindsdien opnieuw gebouwd (`docs/beslissingen/2026-11-12-trainingsscherm-en-ontwerpregels.md`)."
+  },
+  "docs/backlog.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Het open werk van ASCEND: de Inbox met wat de eigenaar meldt en de bouwrij, bijgehouden door de coördinator.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-21-werkwijze.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Claude werkt aan ASCEND met een vaste set specialisten, vaste werkinstructies en een besluitenlogboek in de repo.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-actieblad-van-een-training.md": {
+   "onderwerpen": [
+    "week",
+    "bediening-en-beweging"
+   ],
+   "kern": "Het blad dat opent als je op een geplande training tikt, toont eerst wat het is (dag, naam, soort en minuten), één gouden knop voor de keuze die bij de dag past en daaronder de andere keuzes als rijen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-alles-instelbaar.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Elke keuze die ASCEND voor de gebruiker maakt, kan de gebruiker in de instellingen veranderen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-back-up-v5.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Versie 5 van de back-up bevat het etappeplan (routePlan), de afspraak met thuis (soloPlan) en de vrije periodes (settings.leavePeriods).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-een-kwaliteitstraining-bij-drie-loopjes.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "In het wedstrijdblok krijgt een week met minder dan vier loopjes één kwaliteitstraining (de belangrijkste van die fase); de andere wordt een rustige loop.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-eerste-voorschriften-zonder-melding.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Als er nog geen enkel week- of trainingsvoorschrift is opgeslagen (een verse installatie, of net een back-up teruggezet), vult de weekplanning de inhoud van de trainingen in zonder melding en zonder regel in het wijzigingslogboek.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-forge-kracht-meerekenen.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "ASCEND rekent mee met de krachttrainingen die uit MacroFactor binnenkomen, volgens de regels KR-1 tot KR-8 van `docs/onderzoek/Kracht loggen en progressie.md` (`src/engine/strengthModel.ts`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-forge-opwarmen.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De slimme opwarming van Forge neemt de herhalingen per set nooit toe: elke opwarmset heeft evenveel of minder herhalingen dan de set ervoor, terwijl het gewicht oploopt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-forge-workoutscherm.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Een krachttraining opent een eigen workoutscherm (`src/components/forge/ForgeWorkout.tsx`, regels in `src/engine/forgeWorkout.ts`) met de opbouw en werking van MacroFactor Workouts, in de stijl van ASCEND.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-garmin-is-leidend.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "historie-en-logs"
+   ],
+   "kern": "Een training die je met de hand invulde (bron \"manual\", zonder externalId) en waarvoor een passende activiteit van je horloge bestaat, neemt de gemeten cijfers van het horloge over: duur, afstand, gemiddelde en hoogste hartslag, stijging, daling en cadans.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-gewicht-uit-macrofactor.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Het lichaamsgewicht komt nooit uit Garmin maar uit een MacroFactor-export, via Delen met ASCEND of Kies bestand.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-gr5-voortgang-een-percentage.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "De voortgang naar de GR5 heet overal \"Klaar voor de GR5\" en is één percentage: het gemiddelde van vier meters (rugzak, langste dag, stijging en daling, dagen achter elkaar), elk begrensd op 100%, steeds met de zin eronder waaruit het bestaat.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-herkenbaar-en-opruimen-horloge.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Een training die ASCEND naar intervals.icu en zo naar Garmin stuurt, heet standaard \"ASC\" plus de naam (\"ASC Heuvels op en af\"), met in de beschrijving voor welke dag ASCEND hem plande; Lang (\"ASCEND ·\") en Geen zijn ook te kiezen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-heuveltocht-is-bergtocht.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Het terrein van een tocht kiest de wandeling per tochtdag: vlak de rugzakwandeling (`tpl_ruck_walk`), heuvels, bergen en sneeuw de bergtocht (`tpl_mountain_hike`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-horlogestatus-bij-een-training.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Op het trainingsscherm staat één regel die zegt of de training naar het horloge is gestuurd, met een knop Nu versturen of Opnieuw.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-instellingen-in-groepen.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Meer (`/more`) wordt een overzicht met de stand bovenaan en acht groepen eronder, elk op een eigen pagina (`/more/:groep`): Planning, Doel en tochten, Forge, Lichaam, Vandaag en meldingen, Koppelingen, Gegevens en back-up, Gidsen en kennis.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-intervals-icu.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Trainingen van het Garmin-horloge komen binnen via intervals.icu, met de eigen sleutel van de eigenaar.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-kledingadvies-bij-het-weer.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "ASCEND toont bij een buitentraining onder de weerregel hooguit vier korte regels over wat je aantrekt (romp en benen, handen en hoofd, buitenlaag en voeten, zon of donker), plus bij een tocht één zin over de rugzak.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-kracht-per-set.md": {
+   "onderwerpen": [
+    "forge",
+    "historie-en-logs"
+   ],
+   "kern": "ASCEND bewaart bij een krachttraining elke set apart in `SessionLog.strengthData`: de herhalingen, het gewicht, de herhalingen in reserve (RIR) en of het een opwarmset is of een werkset.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-kwaliteitspoort.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Niets gaat naar main voordat het door vier poorten is: de vier controles, een review door Warden, een doorloop door Lookout op 360 en 390 px en een screenshot dat de coördinator zelf bekijkt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-lege-velden-aanvullen.md": {
+   "onderwerpen": [
+    "historie-en-logs",
+    "koppelingen-en-data"
+   ],
+   "kern": "Een import (MacroFactor, het horloge) mag in een bestaande SessionLog alleen velden vullen die leeg zijn, en alleen na een tik van de eigenaar.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-loopinzicht.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Van elke loop en tocht bewaart ASCEND een compact profiel van 48 stukjes als merkloos veld `detail` op de log en vergelijkt daarmee met eerdere trainingen van dezelfde soort.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-macrofactor-leidend-voor-kracht.md": {
+   "onderwerpen": [
+    "historie-en-logs",
+    "koppelingen-en-data",
+    "forge"
+   ],
+   "kern": "Zoals Garmin leidend is voor duurtrainingen (`2026-10-22-garmin-is-leidend.md`), is MacroFactor leidend voor kracht.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-macrofactor-verwerken-als-ronde.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Alles verwerken loopt als één ronde buiten de kaart (`storage/macrofactorRun.ts`) met voortgang op de knop, een grens van 45 seconden per stap en een eerlijke uitkomst.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-na-het-hoofddoel-als-voorstel.md": {
+   "onderwerpen": [
+    "planning",
+    "doelen"
+   ],
+   "kern": "De keuze Na je hoofddoel wordt direct opgeslagen zolang het doel nog voor je ligt; ligt het achter je, dan komt eerst een voorstel met Akkoord.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-na-het-hoofddoel.md": {
+   "onderwerpen": [
+    "planning",
+    "doelen"
+   ],
+   "kern": "Het plan eindigt op de dag van je hoofddoel, ook als die dag gekomen is.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-ochtendcheck-uit-horloge.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel",
+    "koppelingen-en-data"
+   ],
+   "kern": "ASCEND haalt via intervals.icu per dag slaapduur, slaapscore, rusthartslag en HRV op en toont die bovenaan de ochtendcheck.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-oefeningnamen-engels.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Oefeningen heten in ASCEND zoals in de sportschool en in MacroFactor, in het Engels (\"Barbell Bench Press\", \"Leg Press\").",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-openen-wacht-niet-op-de-planning.md": {
+   "onderwerpen": [
+    "planning",
+    "algemeen"
+   ],
+   "kern": "De app opent na de migraties en het lezen van de gegevens, en rekent de planning daarna op de achtergrond door.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-opslag-vrij-bij-wegleggen.md": {
+   "onderwerpen": [
+    "algemeen"
+   ],
+   "kern": "Een ASCEND die uit beeld gaat (visibilitychange naar hidden) of bevroren wordt, begint geen nieuwe transacties in IndexedDB; wie de opslag nodig heeft, wacht tot de app weer in beeld is.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-programma-uit-macrofactor.md": {
+   "onderwerpen": [
+    "forge",
+    "koppelingen-en-data"
+   ],
+   "kern": "Staat er in een MacroFactor-export een trainingsprogramma, dan stelt ASCEND voor de krachtsjablonen ermee te vullen, met Akkoord.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-rir-aanvullen.md": {
+   "onderwerpen": [
+    "historie-en-logs",
+    "forge",
+    "koppelingen-en-data"
+   ],
+   "kern": "Een log die eerder uit MacroFactor kwam, heeft nog geen RIR en geen opwarmsets per set.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-rustdag-als-voorstel.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Een andere rustdag kiezen in Instellingen laat eerst een voorstel zien, zoals bij vrije dagen en tochten: wat er verschuift, ook deze en volgende week, gemaakt met dezelfde planningsronde als na Akkoord.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-steen-en-contour.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De visuele richting \"steen en contour\" wordt de vaste stijl van ASCEND.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-terugknop-en-hervatten.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De terugknop van Android doet in ASCEND wat je verwacht: hij sluit eerst wat over de pagina ligt, brengt je daarna precies naar de vorige pagina en laat je terugkomen op dezelfde hoogte en met dezelfde keuzes.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-terugzetten-zonder-slot.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Eén regel voor terugzetten: een voorstel dat een sessie terugbrengt naar hoe ze vanzelf stond (een tocht die terugverhuist of weggaat, of een tochtmerk dat wordt gewist) zet geen slot en geen vaste minuten.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-toch-doen.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Het blad van een overgeslagen training heeft een knop \"Toch doen\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-toch-openen.md": {
+   "onderwerpen": [
+    "algemeen"
+   ],
+   "kern": "Houdt een ander ASCEND-venster het openingsslot langer dan tien seconden vast, dan staat er naast Opnieuw proberen ook Toch openen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-tochtdag-gaat-mee-weg.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Een wandeldag die een tocht of periode zelf op je planning zette, verdwijnt van de planning als je die tocht wijzigt of verwijdert.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-tochten-als-doel.md": {
+   "onderwerpen": [
+    "planning",
+    "doelen"
+   ],
+   "kern": "Naast het hoofddoel maak je zelf tochten aan; een tocht is een tochtperiode (`leavePeriods`, soort `trek`) met de gegevens van de tocht erop.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-trainingen-naar-horloge.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "ASCEND zet de geplande trainingen van de komende 7 dagen in de intervals.icu-agenda van de eigenaar, als gestructureerde workout, zodat intervals.icu ze naar Garmin Connect en het horloge stuurt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-vanzelf-afvinken.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "historie-en-logs"
+   ],
+   "kern": "Als je horloge (via intervals.icu) precies één activiteit heeft die onmiskenbaar bij de geplande training van die dag past, slaat ASCEND die zelf op als log van die training.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-vanzelf-bijwerken.md": {
+   "onderwerpen": [
+    "algemeen"
+   ],
+   "kern": "De app installeert een nieuwe versie zelf: bij een koude start, of als hij langer dan 30 minuten op de achtergrond was.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-wat-ascend-van-je-horloge-gebruikt.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Op het koppelscherm staat één kaart, \"Wat ASCEND van je horloge gebruikt\", met per soort een schakelaar: trainingen, vanzelf afvinken, slaap, rusthartslag, HRV en (alleen met een koppeling) trainingen naar je horloge sturen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-week-herhalen-binnen-de-golf.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Bij \"Deze week nog een keer\" krijgt de week de belasting van de week ervoor en lopen de weken erna in dezelfde golf één stap achter.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-weer-open-meteo.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "ASCEND haalt het weer op bij Open-Meteo, met alleen een plaats als locatie, en toont bij een buitentraining één rustige regel (\"14 graden, droog, licht tot 18.12\").",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-weer-volgt-je-locatie.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "De Weer-pagina begint met \"Gebruik mijn locatie\"; zoeken op plaatsnaam is de tweede weg.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-22-zware-beendag-na-tocht.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Een zware beendag binnen 72 uur na een bergtocht krijgt van de weekcontrole een andere dag of de korte versie, in een vaste volgorde.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-23-bereik-uit-het-plan.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Op het workoutscherm komen het herhalingsbereik en de herhalingen over (RIR) van een oefening uit het sjabloon (bijvoorbeeld \"6-8\", met de RPE als die er staat) of, bij een programma uit MacroFactor, uit de eerste normale set van het programma.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-23-echte-oefeningen-in-het-standaardprogramma.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De krachttrainingen van het standaardprogramma noemen echte oefeningen uit de lijst van ASCEND (`src/data/exercises.ts`), in het Engels, in plaats van spiergroepen of keuzes als \"Biceps\", \"Row\" of \"Squat / Leg press\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-23-forge-soepel.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Het krachtscherm van Forge voelt nu als MacroFactor Workouts, niet alleen alsof.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-23-krachtduur-die-niet-kan.md": {
+   "onderwerpen": [
+    "forge",
+    "historie-en-logs"
+   ],
+   "kern": "Een krachtlog langer dan 240 minuten telt bij het lezen als de geschatte duur van die training.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-23-ochtendkaart-en-melding.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "In de ochtend staat bovenaan Vandaag, boven de missiekaart, een eigen kaart met de vraag \"Goedemorgen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-23-oefeningen-bij-de-start.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De ingebouwde krachttrainingen (Bovenlichaam A en B, Benen A en B) worden bij elke start gelijkgezet met het standaardprogramma (`storage/database.ts#ensureDefaultTemplates`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-23-oefeningnamen-zoals-macrofactor.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "ASCEND noemt een oefening zoals MacroFactor hem noemt, in het Engels en zo specifiek als daar (\"Bent-Over Underhand Grip Barbell Row\", \"45° Incline Barbell Press\", \"Pin-Loaded Machine Chest Press\").",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-23-opwarmen-per-spiergroep.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Forge houdt per training bij welke spieren al warm zijn en kiest daarmee hoeveel opwarmsets een oefening krijgt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-23-oude-oefeningnamen-blijven-in-de-historie.md": {
+   "onderwerpen": [
+    "historie-en-logs",
+    "forge"
+   ],
+   "kern": "Logs die nog een oude naam van het standaardprogramma dragen (\"Biceps\", \"Squat / Leg press\") blijven zoals ze zijn.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-23-planning-nooit-stil.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Een andere doeldatum, een gearchiveerd doel, een nieuw doel uit de wizard en de instellingen die de planningsronde zelf lezen (De lange zondag, de lengte van de fases, Ambitie, Rust na een bergtocht, een sport aan of uit) worden pas bewaard na Akkoord.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-23-wijzigingen-doet-wat-het-zegt.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Elke wijziging die ASCEND uit zichzelf wil doen (een instelling, de weekprescriptie) gaat langs één regel: `engine/changeImpact.ts#askBeforeApplying`.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-1rm-uit-macrofactor.md": {
+   "onderwerpen": [
+    "forge",
+    "koppelingen-en-data"
+   ],
+   "kern": "ASCEND leest de 1RM per oefening uit de MacroFactor-export en zet de laatste meting op Forge naast de eigen schatting, met een schakelaar tussen 1RM en Werkgewicht.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-activiteit-inkorten.md": {
+   "onderwerpen": [
+    "historie-en-logs"
+   ],
+   "kern": "Een training die van je horloge kwam (de log heeft het id van een activiteit van intervals.icu en getallen in `cardioData` of `outdoorData`) kan in het logblad worden ingekort, zoals in Garmin en Strava: een stuk aan het begin en/of aan het eind gaat eruit.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-beste-moment-buiten.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Is het weer op het uur waarop je gewoonlijk traint slechter dan in een blok eerder of later op dezelfde dag, dan staat er onder de weerregel één rustige regel in gedempte inkt: \"Beste moment: 16 tot 17.30 uur, droog\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-beweging.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "ASCEND beweegt kort en rustig: tussen 150 en 400 ms (een ring die vol loopt tot 700 ms), ease-out, nooit stuiterend, met CSS en een paar kleine hooks, zonder bibliotheek.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-forge-vergelijken-en-zoeken.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Forge zet per oefening het getal van nu naast dat van 4 weken geleden, 8 weken geleden en het beste ooit, met het verschil als kleine regel (\"+2,5 kg\").",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-geschatte-1rm-op-forge.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Forge laat per oefening de geschatte 1RM zien: het getal van nu, de verandering over vier weken en een lijn over alle trainingen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-kleding-zelf-bijstellen.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Je kunt wat ASCEND over je kleding leerde ook zelf bijstellen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-kracht-stil-toetsen.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De eigenaar maakt eerst zijn MacroFactor-programma af (week 4 van 8 op 24 oktober 2026).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-lichaam-als-figuur.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "De lijst \"Waar zit het?\" (rekken) en de losse pagina Blessures worden één scherm met een menselijk figuur, voor- en achterkant, in de stijl \"lijn met spieren\" (ontwerp B): een rustig lijnfiguur zoals de iconen, met dunne spierlijnen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-losse-training-op-week.md": {
+   "onderwerpen": [
+    "week",
+    "historie-en-logs"
+   ],
+   "kern": "Een log zonder geplande training (een losse training, bijvoorbeeld een Garmin-activiteit die je als losse training bewaarde) staat op Week op zijn dag, als gedane rij met dezelfde vormgeving als een gedane geplande training en het kleine label \"zonder plan\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-lucht-halverwege.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Op lange pagina's staat hoogstens één vlak lucht (`SkyPanel` in `src/components/SkyBand.tsx`) om de donkerte te breken, en de kop van Ascend toont alleen de naam van het doel, de datum en het aftellen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-nachtlucht.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De lichte lucht bovenaan een tab (SkyBand, LightCard, `.on-light`) heeft een donkere variant.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-namen-en-strava-tekst.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Vier trainingen krijgen een naam die zegt wat je gaat doen, en ASCEND zet bij een gedane training een korte beschrijving klaar die je zelf in Strava plakt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-ochtend-begint-om.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "De ochtendkaart en de vraag hoe je je voelt (de regel Gevoel in Je dag) verschijnen pas vanaf het begin van de ochtend, standaard 5 uur, en niet meteen na middernacht.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-ochtend-een-tik.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Op de ochtendkaart is één tik op hoe je benen voelen het antwoord.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-ochtend-terugdraaien.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Na één tik op de ochtendkaart blijft de kaart klein staan met wat je koos (\"Benen fris.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-ontwerpadvies-kop-en-weekstrook.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De tabkoppen krijgen pictogrammen zonder cirkels en de weekstrook krijgt sporticonen in plaats van staafjes.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-opruimen-oude-pagina-s.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De Trainingsgids (`/gids`) en de Garmin-gids (`/garmin`) zijn geen eigen pagina's meer.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-pictogrammen-in-stijl-c.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De sporten, de rustdag en het lichaam krijgen pictogrammen in stijl C, \"kleine illustraties\": drie tinten van één kleur, een lichte achtergrondvorm, een middentint en de volle hoofdvorm (`src/components/pictograms.tsx`, `Pictogram` met `name` en `size`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-rustweek-via-voorstel.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Doortrainen, Rustweek terugzetten, Deze week nog een keer en Herhaling terugzetten veranderen de planning niet meer stil.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-stijlresten.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Een kleine actie is geen onderstreepte tekstlink meer maar een `TextButton` (mint, zinsletters, minstens 44 bij 44 px, geen onderstreping), of een `SecondaryButton` waar de knop naast de hoofdknop staat.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-thema-zee-en-berg.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "ASCEND krijgt het palet \"C3 definitief, licht bovenin, kop a\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-trainingsscherm-duursport.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "lopen-en-tests"
+   ],
+   "kern": "Het scherm van een duurtraining begint met de lucht en de titel, dan de grote getallen, het verloop als één balk in zonekleuren, de stappen en de plek.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-trillen-bij-het-rustgeluid.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Het trillen als de rust om is heeft het ritme van het gekozen geluid, in plaats van één vast patroon.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-24-uitleg-later-in-de-week.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Het blad van een training van morgen of later heeft een rij \"Hoe je het doet\", boven \"Vandaag al doen\" en \"Overslaan\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-bergschoenen-inlopen.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Bij de taak \"Kies je schoenen en begin met inlopen\" in de Reisplanner leg je vast sinds welke datum je je nieuwe bergschoenen draagt, met eventueel een naam (standaard \"Bergschoenen\").",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-bijsturen-in-forge.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Haalt een werkset de onderkant van het bereik niet, dan stelt Forge een lichter gewicht voor de open sets voor; de RIR is gemeten en niet vooraf ingevuld.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-correcties-uit-intervals.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "historie-en-logs"
+   ],
+   "kern": "Corrigeert de eigenaar een activiteit in intervals.icu (een stuk eraf, de hoogtemeters of de afstand aangepast), dan neemt de log in ASCEND die gemeten getallen over, als de log aan die activiteit gekoppeld is.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Een nieuwe installatie plant niets: ze zet alleen de sjablonen klaar en vraagt eerst wat je wilt, het eerste plan komt als voorstel.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-feiten-tellen-vanzelf.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Wat ASCEND zelf weet hoeft niet bevestigd te worden: een zware beendag (uit het logboek), warm (uit het weer bij de log), kort geslapen (van het horloge, niet bij een nacht die je \"Niet goed gemeten\" noemde) en ziek (uit de ziekmelding).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-hartslag-op-het-horloge.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "lopen-en-tests"
+   ],
+   "kern": "Bij een hartslagdoel stuurt ASCEND standaard de slagen van zijn eigen zones naar het horloge, als percentage van de drempel (of maximale hartslag) die intervals.icu zelf voor hardlopen heeft.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-intensiteit-gemeten.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "De kaart Intensiteit op Je stand telt minuten in plaats van trainingen, en telt ze naar de hartslag uit het profiel op de log: rustig is zone 1 en 2, middel zone 3, hard zone 4 en hoger.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-korte-nacht-vragen.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Zag het horloge minder dan 4 uur slaap, of minder dan de helft van je eigen gemiddelde (vanaf 7 dagen), dan geeft de ochtendcheck geen let op en vult hij geen slaapantwoord vooraf in, maar vraagt hij: \"Je horloge zag maar 3 u 10 slaap.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-kracht-eigen-regels.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Het eigen krachtmodel (`engine/strengthModel.ts`) verandert op vijf punten.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-logo-ring-en-pad.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Het logo van ASCEND is richting 1 \"Ring en pad\", in de kleurvariant \"lucht\": een lichte ring, een lichte kam met drie toppen die precies op de ring eindigt, een groenblauwe berg die overloopt in marine, een rustig S-pad en een stip op de top in mint.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-macrofactor-workouts-tijdelijk.md": {
+   "onderwerpen": [
+    "forge",
+    "koppelingen-en-data"
+   ],
+   "kern": "Het inlezen van MacroFactor Workouts (programma, trainingen, 1RM) is een tijdelijke brug.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-openingsscherm-terug.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Het openingsscherm krijgt zijn oude opbouw terug, getekend met het logo \"Ring en pad\" en de tokens `--color-logo-*`.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-vetpercentage-uit-macrofactor.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "lichaam-en-herstel"
+   ],
+   "kern": "ASCEND leest in de MacroFactor-export de kolom \"Fat Percent\" mee, per datum naast het gewicht, en toont onder het lichaamsgewicht (Instellingen, Lichaam, Lichaamsgewicht) het vetpercentage als trend, met de vetvrije massa.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-wat-speelde-er-aanvulling.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Vijf aanscherpingen van Wat speelde er na de review, waaronder dat Lijkt op een reden bij naam mag noemen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-wat-speelde-er.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Je kunt in het logboek vastleggen wat er speelde bij een training of op een dag: alcohol (met hoeveel glazen: 1 à 2, 3 tot 5 of 6 of meer), wiet, ziek, kort geslapen, laat gegeten, cafeïne, stress of iets anders in je eigen woord.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-25-zweet-en-water.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Je kunt bij een loop, wandeling of tocht je gewicht voor en na invullen, met wat je dronk en plaste.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-advies-anders.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De grote kaart \"Anders dan het advies\" bovenaan het overzicht van Instellingen is weg.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-ascend-tab-als-doelen.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "De Ascend-tab laat zien wat je wilt bereiken en hoe ver je staat.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-ascend-tab-gebouwd.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "De tab uit `2026-10-26-ascend-tab-als-doelen.md` staat er.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-doelsoorten-als-gegevens.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Een doel heeft een soort (`TrainingGoal.kind`), de ingevulde gegevens (`details`) en een belangrijkheid (`priority`: top, voortop of verkenning).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-doorvoeren-en-raak-dichtbij.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Eén: pas je in Forge het gewicht of de herhalingen van een werkset aan, dan nemen de latere open werksets die precies hetzelfde waren de nieuwe waarde over.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-gewichten-per-toestel.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Je kunt de echte gewichten van een kabel of toestel met een gewichtstapel zelf invullen, per sportschool, en wat ASCEND leert over gebruikte gewichten is voortaan per sportschool.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-groei-lange-loop.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "De lange loop naar een hardloopwedstrijd groeit geleidelijk en zo snel als de gekozen stand toelaat.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-grove-stap-voor-afronden.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Bij een grove stap kiest de eerste set het gewicht met de kleinste verwachte misser in herhalingen (`2026-10-26-kracht-vermoeidheid-en-grove-stap.md`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-hoe-voelt-je-lijf.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "De wekelijkse vraag naar klachten in het blad van de weekterugblik (vier chips, een plekkeuze en een ernststrook) is vervangen door een kleine kaart op Vandaag, \"Hoe voelt je lijf?\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-instellingen-opruimen.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Een rij in Instellingen is een beslissing die een gewoon mens neemt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-kracht-en-berg-voor-iedereen.md": {
+   "onderwerpen": [
+    "doelen",
+    "algemeen"
+   ],
+   "kern": "ASCEND draait niet meer om één tocht: het is klimmen naar wat jij wilt bereiken, welk doel dat ook is.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-kracht-vermoeidheid-en-grove-stap.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De daling van kracht van set tot set wordt per oefening geleerd, een grove stap kiest het gewicht met de kleinste misser, en een lichter gewicht krijgt een zin erbij.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-planning-met-labels-review.md": {
+   "onderwerpen": [
+    "planning",
+    "doelen"
+   ],
+   "kern": "`2026-10-26-planning-met-labels.md` blijft zoals het was.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-planning-met-labels.md": {
+   "onderwerpen": [
+    "planning",
+    "doelen"
+   ],
+   "kern": "De planning gebruikt het label van een doel (Top, Voortop, Verkenning) en de soort van het doel, uit `data/goalKinds.ts`.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-rustdag-als-hangmat.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Het pictogram `rust` in `src/components/pictograms.tsx` is een hangmat tussen twee palen met iemand erin, in stijl C: de palen licht, het touw in de middentint, de hangmat en het hoofd vol.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-stille-tip-bij-toestelgewichten.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Vraagt Forge om de gewichten van een toestel in te vullen (`2026-10-26-gewichten-per-toestel.md`) en zijn de ingevulde gewichten nog steeds te zwaar voor het bereik, dan komt er geen nieuwe vraag.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-stille-tip-te-grote-stap.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Na het invullen van de gewichten van een toestel kan het eerstvolgende lichtere gewicht ver boven het bereik uitkomen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-26-twee-dumbbells-met-lichaamsgewicht.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Bij een dumbbell-oefening met lichaamsgewicht in de last telt het deel van het lichaamsgewicht plus het gewicht van beide dumbbells.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-groei-tot-de-wedstrijdpiek.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "De wekelijkse groei van hoogstens 10% geldt tot de piek van de wedstrijd (10 km 75 minuten, halve marathon 120, marathon 180), niet tot de piek van het programma.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-redenen-bij-naam.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Nieuwe instelling \"Voorbeelden bij naam noemen\" (`AppSettings.influenceNames`, groep Lichaam, in het blad Wat speelde er).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-run-in-detail-gegevens-aanvulling.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Aanscherpingen van Run in detail na de review, waaronder de regel over de verdeling van het tempo in beeld.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-run-in-detail-gegevens.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "ASCEND bewaart per loop of tocht de volledige reeksen van het horloge op het toestel, in een eigen opslag (`activityStreams`, sleutel `logId`, databaseversie 9).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-snelste-5km-achteraf.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Bij het openen van de app leest ASCEND op de achtergrond de snelste 5 km van elke testloop van de laatste 60 dagen die er nog geen heeft, één voor één en met een tijdsgrens.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag-aanvulling.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Drie aanscherpingen na de review, waaronder dat MORNING-CHECK dezelfde keuze maakt als de kaart Benen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Op de dag van een zware beendag doet ASCEND bij spierpijn, een harde loop eerder die dag of een hoge beenindex één voorstel: Lichter of een dag later.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-stem-van-ascend.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "ASCEND praat als een trainer die je kent (stem C, \"Coach naast je\"), met stem A (\"Droog en vast\") waar duidelijkheid voorgaat: een getal of datum, een waarschuwing en de precieze uitleg van wat een label of voorstel met je planning doet.",
+   "stand": "vervangen",
+   "door": "docs/beslissingen/2026-11-09-stem-van-ascend.md"
+  },
+  "docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop-aanvulling.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Een testloop die al meetelt blijft tellen tot jij Akkoord geeft op de nieuwe lezing zonder stilstand.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "De snelste 5 km van een testloop telt bewegende tijd.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-stipje-bij-aangepast.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Een instelling die je zelf anders koos dan het advies krijgt geen label \"aangepast\" meer, maar een klein stipje voor de waarde, in mint gedempt (`AdjustedTag` in `src/components/ui.tsx`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-testloop-lezen-aanvulling.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "De beste 5 km van een testloop verandert je tempo's nooit stil: hij telt pas mee als hij geen tempo verandert, als de test net binnenkomt, of nadat je Akkoord hebt gegeven op de getallen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-testloop-lezen.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Een testloop telt met het snelste aaneengesloten stuk van 5 km uit de serie van het horloge, en met de hele log als die serie er niet is.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-ziek-als-voorstel.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Ziek melden, van soort veranderen en \"Ik ben weer beter\" passen je planning niet meer stil aan.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-zonder-doel-stap-1.md": {
+   "onderwerpen": [
+    "planning",
+    "doelen"
+   ],
+   "kern": "De eerste drie bouwstappen van Zonder doel staan er: een meting, de pure functies voor richting en weekbudget, en Je week; de planning verandert nog niet.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-27-zweet-bij-afronden.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Zweetverlies vul je niet meer alleen achteraf in het Logboek in.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-adviesblad-compact.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Een advies met een voorstel toont in het blad de titel, één feitregel en de wijzigingen als lijst, in plaats van een alinea.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-forge-en-volgorde.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Forge krijgt een vaste, duidelijke plek: een ingangskaart bovenaan een eigen blok Kracht op Je stand, met Krachtprogressie en Trainingsverdeling eronder.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-forge-logboek.md": {
+   "onderwerpen": [
+    "forge",
+    "historie-en-logs"
+   ],
+   "kern": "Forge houdt per training een verloop bij, zoals het Event Log van MacroFactor: per moment welke set van wat naar wat ging en waardoor (Forge stuurde bij, doorgevoerd, jij paste het aan, onder het bereik, past niet, zonder spotter).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-klaar-voor-je-doel-logisch-aanvulling.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "De regel onder het getal, het blad van het doel en het voorstel TARGET-TIME gebruiken dezelfde rekening als de snelheidsmeter: gemiddelde groei van 0,55% per week, geteld vanaf vandaag (`racePaces.ts#raceOutlook`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-klaar-voor-je-doel-logisch-afwerking.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "De kernregel van de eigenaar blijft de maat: het getal, de meters, de regel onder het getal, \"Hier is nog het meeste te winnen\" en het voorstel spreken elkaar nooit tegen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-klaar-voor-je-doel-logisch-voorwaarden.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Klaar voor je doel rekent kracht per niveau als weken werk en kent een tijdslimiet en cutoff per doel.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-klaar-voor-je-doel-logisch.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "De snelheidsmeter van een hardloopwedstrijd met doeltijd rekent het gat tussen je verwachte tijd en je doeltijd om in weken werk bij gemiddelde groei (W), en vult zich als 10 / (10 + W): 50% bij tien weken werk, 25% bij dertig.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid-aanvulling.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Haalbaarheid staat op de kaart als droog feit en de gebruiker beslist zelf over zijn doeltijd.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Bij een wedstrijd met een doeltijd is Snelheid de hoofdmeter van Klaar voor je doel en weegt hij het zwaarst.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-klaar-voor-je-doel-vervolg.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Vier losse einden van het logische model zijn dicht, waaronder dat het hoofddoel niet meer altijd als de GR5 rekent.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-nieuwe-testpoging-herstel.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "planning"
+   ],
+   "kern": "Herstel na de review van de nieuwe testpoging; waar dit iets anders zegt dan de twee eerdere besluiten, geldt dit.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-nieuwe-testpoging-ruimte.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "planning"
+   ],
+   "kern": "Een nieuwe testpoging maakt ruimte: de harde loop, de lange duurloop en een zware beendag in die week schuiven of worden korter.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-nieuwe-testpoging-rustdag.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "planning"
+   ],
+   "kern": "Bij het ruimte maken voor een nieuwe testpoging blijft de rustdag van de week een dag zonder training.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-nieuwe-testpoging-verschuiven.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "planning"
+   ],
+   "kern": "Voor een nieuwe testpoging verschuift ASCEND een training eerst en laat hem pas vervallen als verschuiven niet kan.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-nieuwe-testpoging.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "planning"
+   ],
+   "kern": "Had je laatste testloop veel stilstand, dan stelt ASCEND een nieuwe poging voor, met Akkoord (regel TEST-RETRY in `engine/adviceEngine.ts`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen-aanvulling.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De tekeningen spelen in de volgorde van de beweging: stap 1 is de beginhouding, stap 2 het midden, stap 3 de eindstand.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen-kaartje.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Het kleine kaartje van 44 bij 44 px (`ExerciseArtButton`: in de kop van een oefening, in de rijen van de lijst en in het ruilblad) toont voortaan het middelste beeld van de tekening, in plaats van het spierkaartje.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Elke oefening in Forge krijgt een kaartje van 44 bij 44 px met de spieren die werken, en een blad met de beweging in drie stappen (tekeningen van Workout Guide, CC BY-SA 4.0), het spierkaartje, Doen, Let op en Vaak fout, en de naamsvermelding.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-slepen-in-week.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Een training in Week verplaats je met het greepje rechts in de rij naar een andere dag van dezelfde week.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-stilstaan-inhaalsprong.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Bij stilstand in een testloop is de referentie het tempo vlak voor de stop, zodat een inhaalsprong na de stop niet meetelt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-tussengewichten.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Een los tussengewicht (een plaatje of magneet van bijvoorbeeld 2,3 kg dat je bij elk gewicht van het blok kunt leggen) is vrij in te stellen: voor de hele sportschool, voor alle kabels en toestellen met een gewichtstapel, en per toestel als overschrijving.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-vloeiende-overgangen-aanvulling.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Trillen gaat over de korte tikken (`tap`, `success`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-vloeiende-overgangen-uitgroei.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De rest van onderdeel 1 van `docs/visie/Vloeiende overgangen.md`, bovenop `2026-10-28-vloeiende-overgangen.md` en de aanvulling daarop.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-vloeiende-overgangen.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Eerste ronde van het ontwerp `docs/visie/Vloeiende overgangen.md`: de instelling Trillen (standaard aan) met een poort in de tik, een tik bij Akkoord, en bladen die je omlaag kunt slepen om te sluiten.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-voorstel-eindstand.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "De voorvertoning van een voorstel is de uitkomst: ze draait dezelfde planningsronde als na Akkoord en toetst die zelf.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-waarschuwingen-in-week.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Week zegt in woorden wat er in de week niet klopt: een kaart \"Let op\" bovenaan, onder de lucht, en een korte tekst in de rij van elke betrokken training.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-zonder-spotter-aanvulling.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Bij raak telt Zonder spotter per log: de sportschool van dat log beslist, en alleen voor logs vanaf 28 oktober 2026.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-28-zonder-spotter.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Bij een stangoefening waar falen gevaarlijk is (bankdrukken en schuin bankdrukken met een stang, squat met een stang) schrijft Forge minstens 1 herhaling in reserve voor, in het doel en in de hint.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-29-dag-van-een-training.md": {
+   "onderwerpen": [
+    "historie-en-logs",
+    "koppelingen-en-data"
+   ],
+   "kern": "Een log uit MacroFactor (`source === 'macrofactor'`) telt bij het weergeven op de dag van zijn geplande training als die precies de dag NA `completedDate` is (`engine/logDay.ts#logDay`): de training begon voor middernacht en was erna klaar.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-29-forge-als-sessie.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Een gestarte krachttraining in Forge blijft open tot Afronden of Verwijderen, zoals een workout in MacroFactor.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-29-gemiste-training-inhalen.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Een gemiste training van deze of de vorige week kun je inhalen, in het actieblad en met de greep in Week.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-29-gewichten-als-bereik.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De gewichten van een kabel of toestel met een gewichtsblok kun je ook invullen als bereik (begin, eind en stap), zoals MacroFactor het doet, naast de lijst.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-29-mf-training-te-lang.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "forge"
+   ],
+   "kern": "Een nieuwe training uit het MacroFactor-bestand die alleen om de duur \"te lang\" staat (meer dan 300 minuten, `LONGEST_PLAUSIBLE_WORKOUT_MIN`) krijgt in zijn rij de rustige actie \"Duur aanpassen\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-29-oefeningen-opzij-vegen.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "In een Forge-training staat standaard een oefening per scherm.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-29-snelknoppen-in-forge-aanvulling.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De rij snelknoppen is Ruilen, Opwarmset en Notitie.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-29-snelknoppen-in-forge.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Onder de naam van elke oefening in een Forge-training staat een rij van vier kleine knoppen: Ruilen, Opwarmset, Set erbij en Notitie.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-29-spierpijn-waar.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "In de ochtendcheck gaat \"Spierpijn\" en \"Flinke spierpijn\" nog steeds over je benen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-29-tekeningen-in-beeld.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De tekeningen van de oefeningen van een geopende training en van de keuzes in het ruilblad worden opgehaald zodra ze in beeld komen, een voor een.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-app-kaart.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Data en teksten controleren we met de tekstkaart in `docs/app-kaart/` (`npm run kaart:vergelijk`), niet met screenshots.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-data-lange-termijn.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Besliste voorstellen worden na 3 maanden samengevat, je kiest welke reeksen in de back-up gaan en de app toont hoeveel ruimte hij gebruikt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-kansen-stap-0.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Eerst het vangnet: ASCEND merkt op wanneer er van je horloge niets meer binnenkomt terwijl de koppeling werkt, de ochtendgetallen gaan mee in de back-up, en het activiteitenverzoek bij intervals.icu vraagt alleen de velden die ASCEND leest.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-ochtendkaart-vernieuwd.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "De ochtendkaart toont na je antwoord één regel met wat het voor vandaag doet (`engine/morningCard.ts#morningConsequence`, alleen tekst, plant niets) en klapt daarna in tot één rij met Wijzigen en Ongedaan maken.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-richting-en-weekbudget.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Zonder doel werkt ASCEND met een richting en een weekbudget.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-sporten-gegevens-en-omrekening.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Zwemmen, padel en voetbal staan als gegevens in `data/sports.ts`, in een eigen lijst `COUNTED_SPORTS`: sporten die kunnen meetellen maar die ASCEND niet plant (`plannable: false`, rollen Vaste dag, Telt mee en Negeren).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-sporten-rol-en-belasting.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Elke sport krijgt één bron voor hoe ASCEND ermee omgaat: `AppSettings.sportHandling`, met per sport een rol (\"Plan dit voor mij\", \"Vaste dag\", \"Telt mee als ik het doe\", \"Negeren\") en bij een vaste dag de afspraken (dag, minuten, zwaarte).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-testdag-in-week.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "TEST-DAY (iets zwaars op de dag van een test of wedstrijd) is nu ook een melding onder \"Let op\" in Week, met een voorstel via `engine/weekFixProposal.ts`.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-zonder-doel-beginnersstart.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Wie zonder doel een richting kiest en in de acht weken ervoor gemiddeld minder dan twee keer per week sportte, of zelf Ja kiest, begint rustig: de eerste vier weken van de richting zijn de fase \"Rustig beginnen\", zonder harde training.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-zonder-doel-golven-na-akkoord.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Wie al een plan had dat niet in golven loopt en nu geen doel heeft, houdt dat plan zoals het is tot hij Akkoord geeft op één voorstel: \"Plannen zonder doel: neutrale golven\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-zonder-doel-minuten-in-de-planning.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Met een gekozen richting en geen doel krijgt elke duurtraining in een golf haar gewone lengte (de opbouwweek van haar schema) maal één factor per week van de golf.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-zonder-doel-stap-4.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Zonder doel plant ASCEND in neutrale golven van vier weken (fase \"Golven\", `engine/programLayout.ts#layoutWaves`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-zonder-doel-startvragen.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "De eerste vraag van een nieuwe installatie is \"Wat wil je?\" met vijf keuzes in vaste volgorde: Fit blijven, Fitter worden, Sterker worden, Rustig aan, en Een tocht of wedstrijd.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-zonder-doel-sterker-worden-en-golven.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Sterker worden plant zonder doel rustige duur: de heuvelloop van de zaterdag wordt een herstelloop, zodat je benen fris zijn voor de krachtdagen en het aandeel pittig binnen de 0 tot 10% blijft.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-10-31-zonder-doel-terugblik-na-een-golf.md": {
+   "onderwerpen": [
+    "planning",
+    "doelen"
+   ],
+   "kern": "Na elke golf staat er op de Ascend-tab, zonder doel, een kaart \"Golf klaar\" met een oordeel (Goede golf, Een rustige golf, Een zware golf), twee feiten en de vraag \"Wat nu?\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-01-android-app.md": {
+   "onderwerpen": [
+    "algemeen"
+   ],
+   "kern": "ASCEND krijgt een Android-app: dezelfde Vite-build als de website, ingepakt met Capacitor 8 en gebundeld in de app, zodat hij altijd offline werkt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-01-citaat-engels-en-fysioregel.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Het citaat onderaan Vandaag staat standaard in het Engels, instelbaar met Engels, Nederlands en Uit (`quoteLanguage`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-01-kansen-middelgroot.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "doelen"
+   ],
+   "kern": "ASCEND rekent je eigen klimtempo met rugzak uit je tochten, laat een GR5-etappe en een gewone dag van je hoofddoel zien als band van uren op dat tempo, en legt je snelste stuk in gewone loopjes naast je test.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-01-niet-doorgegaan.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Een geplande training die een paar dagen voorbij is zonder log (advies: 2 dagen, instelbaar op 1, 2 of 3) krijgt één korte vraag op Vandaag: \"Niet gedaan?\" met Niet gedaan (de rij gaat op overgeslagen, een status), Toch gedaan (het gewone invullen) en Niet nu.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-01-ochtenden-archief.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel",
+    "koppelingen-en-data"
+   ],
+   "kern": "De opgehaalde ochtenden (datum, rusthartslag, HRV, slaapduur en slaapscore) zijn een archief en geen gewone cache.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-01-ochtendkaart-na-antwoord.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Na een antwoord krijgt de ochtendkaart zijn eigen korte hoogte in plaats van die van de vraag.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-01-rustdag-na-rust.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "De rustdag wordt niet terug voorgesteld als de twee dagen ervoor geen belasting hadden, en inhalen van een gemiste test of sleuteltraining gaat voor.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-01-rustdag-terug.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Liet een voorstel de rij Herstel op je vaste rustdag vervallen en is die dag later weer leeg, dan stelt ASCEND voor hem terug te zetten.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-01-vakantie-bijwerken.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Een tik op een vrije periode, vakantie of tocht in Week opent een blad waarin je de eerste en laatste dag, de soort en de notitie bijwerkt; Verwijderen staat in hetzelfde blad.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-01-vandaag-volgorde.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De kaarten op Vandaag hebben één vaste rangorde (`engine/todayCards.ts`), met hoogstens één kaart boven de missie.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Tussen zware beenkracht (Benen A, Benen B, Forge voor de benen) en de lange duurloop houdt de planner 48 uur, in beide volgordes.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-automatische-backup.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "ASCEND maakt vanzelf een back-up: wekelijks op zondagavond (het advies), dagelijks of uit, met de instelling Automatische back-up in Gegevens en back-up.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-backup-maken-android.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "In de Android-app schrijft \"Back-up maken\" het bestand zelf naar Interne opslag > Documents > ASCEND, op dezelfde veilige weg als de automatische back-up, en toont daarna altijd een uitkomst.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-forge-herinrichting.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De rij snelknoppen onder de naam van een oefening (Ruilen, Opwarmset, Notitie) is weg, met de instelling Snelknoppen tonen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-gegevens-herinrichting.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "historie-en-logs"
+   ],
+   "kern": "Stand, de weekterugblik en het Logboek zijn opnieuw ingericht volgens `docs/visie/Ontwerprapport gegevens.md`, met voor elke open vraag uit hoofdstuk 8 de aanbevolen keuze.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-health-connect.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "In de Android-app leest ASCEND trainingen (met hun afstand), slaap, rusthartslag en HRV uit Health Connect, achter de bestaande `DataSourceAdapter` en met `source: 'health-connect'`.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-instellingen-eerlijk-laden.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De feiten van Instellingen laden per bron, elk met een eigen grens van 2 tot 4 seconden (`utils/loadParts.ts`, `components/settings/factsLoader.ts`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-instellingen-ronde3.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Geavanceerd is een eigen pagina in Instellingen en tijden hebben overal één notatie.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-instellingen-waarden.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De waarden in de rijen van Instellingen zeggen wat er staat.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-lange-duurloop-vervalt.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "Moet de lange duurloop wijken voor een nieuwe testpoging (TEST-RETRY) en heeft de week waar hij heen zou schuiven al een eigen lange duurloop, dan vervalt hij in plaats van te schuiven.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-locatie.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "ASCEND krijgt de instelling Je locatie, standaard uit, bij Toestemmingen in Gegevens en back-up.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-ochtendkaart-compact.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Heeft de ochtendkaart een voorstel van je beenindex, dan is de vraag één compacte kaart: het kopje \"Hoe voelen je benen?\" met het horlogepictogram, de horlogegetallen met hun woord, en één rij met \"Klopt: fris\" (of het voorstel) en een tweede knop.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-rand-onderaan.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Eén variabele, `--rand-onder`, voor de ruimte onder de inhoud.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-rpe-bij-een-testloop.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Vijf kleine verbeteringen voor de belasting van een testloop, waaronder een geplande RPE van 10 voor een test of wedstrijd in de beenindex.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-ruilen-zoals-verplaatsen.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Een ruil die vraagt, heeft in het blad dezelfde opbouw als een verplaatsing.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-rust-voor-een-test.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "Een test of testloop staat minstens 72 uur na de laatste zware loop- of beendag: een zware beendag, de lange duurloop, heuvels of intervallen die zwaar zijn voor de benen, een bergtocht.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-rustdag-deze-week.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Staat er een training op je vaste rustdag, dan heet in Week de eerste vrije dag van die week \"Rustdag deze week\", met de reden eronder (\"je rustdag op maandag is bezet\").",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-snelkoppelingen-en-widget.md": {
+   "onderwerpen": [
+    "algemeen"
+   ],
+   "kern": "De Android-app krijgt vier snelkoppelingen onder het icoon (Vandaag, Week, Logboek, Training afvinken, gelijk aan de PWA) en een kleine widget Vandaag.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-spierindex-klein.md": {
+   "onderwerpen": [
+    "forge",
+    "lichaam-en-herstel"
+   ],
+   "kern": "De spierindex bestaat alleen in zijn kleinste vorm: één melding in de weekreview als bij een bergdoel een bergspier vier weken onder de ondergrens zit.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-sporten-die-meetellen.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Zwemmen, padel, voetbal, yoga en een sport van jezelf kunnen meetellen voor je benen en je week.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-testloop-en-zware-benen.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "week"
+   ],
+   "kern": "Een herkansing van de testloop die je oversloeg of liet liggen, telt niet als gedaan: ASCEND stelt nog één keer een test voor (regel TEST-RETRY, id `retest:<datum van de test>:opnieuw`), met Akkoord en Liever niet.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-trainingen-wisselen.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Twee trainingen van dezelfde week kun je van dag laten ruilen: in het actieblad met de keuze \"Ruilen\", en bij het slepen door een training los te laten op een dag waar precies één training staat die mag bewegen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-tweede-lange-duurloop.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Twee zware beendagen achter elkaar (LEG-SPACING) in Week krijgen dezelfde laatste keuze als TEST-DAY: alleen als verplaatsen niets oplevert, biedt het voorstel aan om een training van jou (niveau 1) te laten gaan.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-vandaag-en-ongedaan.md": {
+   "onderwerpen": [
+    "planning",
+    "bediening-en-beweging"
+   ],
+   "kern": "Ongedaan maken in de melding (`ChangeNotice`) zet een wijziging alleen terug als elke training die ze raakte nog precies is wat de wijziging schreef, wat ze weghaalde nog weg is, en niets ervan intussen gelogd werd.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-week-en-vandaag-hulp.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Vier kleine hulpmiddelen in Week en Vandaag, elk zonder stille wijziging van je planning, waaronder Waarom staat dit hier.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-week-opnieuw-plannen.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Onder de week in Week staat \"Week opnieuw plannen\", alleen voor de getoonde week als die vandaag of later nog dagen heeft.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-widget-beter.md": {
+   "onderwerpen": [
+    "algemeen"
+   ],
+   "kern": "De widget Vandaag krijgt links een rond sportpictogram, rechts de tekst, en een regel over morgen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-02-zonder-doel-je-week.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Zonder doel staat de kaart Je week op Je stand en volgt de kracht de gekozen richting.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-03-forge-na-de-eerste-vergelijking.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Na de eerste training die de eigenaar naast MacroFactor in Forge deed (Benen A, 3 november) veranderen vijf dingen in Forge.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-03-forge-rekent-mee.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Forge rekent tijdens en tussen trainingen mee, op drie plekken, met één instelling \"Forge rekent mee\" (standaard aan, onder Rekenmodel in de groep Forge): 1.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-03-forge-tijdsgrens.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Een krachttraining in Forge duurt hoogstens 60 minuten en een beendag hoogstens 75 (het advies, instelling \"Hoogstens per krachttraining\" onder Forge, Geavanceerd: Uit, 45, 60, 75 of 90 per soort, `AppSettings.forgeCapStrength` en `forgeCapLegs`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-03-testloop-in-detail.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Bij een testloop met een herkend teststuk gaan het oordeel, de verdeling en de hartslag in Run in detail over de 5 km van het teststuk.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-04-gewicht-uit-health-connect.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "lichaam-en-herstel"
+   ],
+   "kern": "In de Android-app leest ASCEND je gewicht en vetpercentage uit Health Connect, bij dezelfde ronde als je trainingen en ochtenden, alleen lezen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Zet je een gemiste training naar vandaag of later (slepen of het blad), dan ziet dat eruit als een gewone verplaatsing.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-08-buiten-klein.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Bij een training buiten staan twee kleine regels: regen in het komende uur en de maanstand, alleen tekst.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-08-forge-afvinken-doel.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Een werkset die je afvinkt zonder zelf een RIR te kiezen, telt met de RIR van het doel als hij ging zoals gevraagd (\"bevestigd\").",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-08-forge-tijdsgrens-en-bergspieren.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De tijdsgrens haalde inderdaad een set bijwerk weg.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-08-heuvels-osm.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Bij een heuveltraining en bij trap- of bergconditie staat één regel (\"Op 1,2 km een helling van 60 m\") met een link naar openstreetmap.org.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-08-tempo-zone-2-en-afstand.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "`aerobicTrend` rekent met het vlakke tempo per km (`gapSecKm`) zodra een loop een passende run in detail heeft en meer dan 15 m per km stijgt, tot 30 m per km.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-08-testweek-frisse-benen-en-ruimte.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "In de week voor een test of wedstrijd kiest de planner één oplossing die \"frisse benen voor de test\" en \"genoeg ruimte tussen zware dagen\" allebei haalt, en houdt die vast.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-afstandszin-zonder-testloop.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Zonder testloop toont Vandaag bij een rustige of lange loop toch een afstandszin, uit het echte tempo van de laatste lange of rustige lopen (zelfde bron als Tempo bij zone 2, `engine/recentRunPace.ts`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-calisthenics-algemeen.md": {
+   "onderwerpen": [
+    "forge",
+    "doelen"
+   ],
+   "kern": "Het doel Calisthenics begint met een keuze: Algemeen sterk met eigen gewicht (het advies en de standaard) of Eén vaardigheid.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-calisthenics-forge-rij.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Een oefening op een ladder krijgt in Forge een regel met de stap en de toets, en een tik naar de stap ervoor of erna, alleen op het scherm (F4b).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-calisthenics-ontwerp.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Calisthenics komt in ASCEND als ladders: per bewegingspatroon een lijst stappen, elke stap een eigen oefening met een eigen id.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-calisthenics-planner.md": {
+   "onderwerpen": [
+    "forge",
+    "planning"
+   ],
+   "kern": "Per krachttraining in de sportschool kies je kracht (met gewicht, het advies), calisthenics (met je eigen gewicht, op je ladders) of samen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-calisthenics-stapvoorstel.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Haal je de toets van een ladderstap, of drie keer de onderkant niet, dan komt een voorstel met Akkoord voor de volgende of de lichtere stap.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-calisthenics-vaardigheidsdoel.md": {
+   "onderwerpen": [
+    "forge",
+    "doelen"
+   ],
+   "kern": "Er komt een doelsoort Vaardigheid: een doelstap op een van de drie ladders (push-up, optrekken, dip), met een mijlpaal `skillStep` per ladderstap tot en met de doelstap.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-datavelden-horloge.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "ASCEND tekent per soort training (Zone 2, Heuvels, Intervallen, Lange duurloop, Tocht met rugzak) welke datapagina's je op je horloge zet, met één zin waarom.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-forge-echte-vervangers.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Het ruilblad in Forge toont twee groepen: \"Doet hetzelfde\" (dezelfde beweging, met een korte reden, de eerste is aanbevolen) en daaronder \"Zelfde spier, anders\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-forge-review-afvinken.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De Forge-punten uit de review van het bouwmoment van 9 november zijn afgehandeld: zes gebouwd, één bestond al, en vier bewust blijven liggen met de reden hieronder.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-forge-toestelstanden.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Een kabel of toestel met gewichtsblok krijgt per sportschool standen: de gewichten die je er gebruikte.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-forge-vermoeidheid-tussen-oefeningen.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Forge telt de harde werksets die eerder in de training voor dezelfde spieren staan en maakt bij meer dan normaal de eerste set van de latere oefening iets lichter.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-gewicht-bij-eigen-gewicht.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel",
+    "forge"
+   ],
+   "kern": "Forge (eigen gewicht, optrekhulp, dips), het rugzakaandeel en de beenindex rekenen met je gewichtstrend, niet met je laatste weging.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-gewicht-buiten-instellingen.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Op Je stand staat een kleine kaart Gewicht: de trend groot (of de laatste weging als er geen trend is), de laatste weging met datum klein en een rustige lijn van de laatste zes weken, één punt per week.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-gewichtstrend.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Bij Lichaamsgewicht staat je gewicht als trend: een gewogen gemiddelde van je wegingen van de laatste 14 dagen, met de laatste weging erbij (\"Trend 78,4 kg, laatste weging 79,1 kg\").",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-gr5-waarschuwingen.md": {
+   "onderwerpen": [
+    "doelen",
+    "koppelingen-en-data"
+   ],
+   "kern": "Op de dag van een tocht of lange training buiten en de dag ervoor staat bovenaan Vandaag een regel bij onweer, zware wind of hitte, en in de bergen het lawinegevaar.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-heuvels-osm-zonder-sportschool.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "planning"
+   ],
+   "kern": "Op een dag van een periode zonder sportschool met Heuvels in de buurt aan krijgt elke loop dezelfde regel als een heuveltraining: \"Op 800 m een helling van 40 m\", met de link naar OpenStreetMap (`engine/nearbyTerrain.ts#terrainWishOn`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-hoe-goed-kent-forge-je.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Forge meet zich aan je eigen trainingen en toont dat in het blok \"Hoe goed kent Forge je\" op de Forge-pagina: voorspelling, bijsturen en sterker worden, over de laatste 4 weken (`engine/forgeCalibration.ts#calibrate`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-icoon-zonder-gewicht.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Kracht zonder gewicht krijgt het pictogram `eigengewicht` (een figuur in een push-up) in plaats van de halter.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-ijkset.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Eens per vier weken stelt Forge een extra set voor bij één hoofdoefening, zo ver als netjes gaat (nog één over als doel).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-overzicht-gewicht.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Een tik op de kaart Gewicht op Je stand opent een eigen overzicht Gewicht, niet meer het blad Lichaamsgewicht uit Instellingen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-planner-rond-vakantie.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Rond een vakantie zonder training zoekt de planner de beste indeling over alle werkbare dagen van de weken eromheen, ook over de weekgrens (`engine/leaveAround.ts`, een stap in `engine/planPass.ts` tussen de vrije-dagenblokken en de weekcontrole).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-planner-vakantie-beenkracht-voorrang.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "In de indeling rond een vakantie (`engine/leaveAround.ts`) krijgt een beendag (Benen A, een krachttraining met zware benen) voorrang als in een week niet allebei passen: de beendag en heuvels of intervallen, met 48 uur rust en rust voor de lange duurloop.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-planner-vakantie-lange-duurloop.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "In de indeling rond een vakantie (`engine/leaveAround.ts`) telt een tweede lange duurloop in dezelfde week, of binnen vijf dagen van de vorige, als een harde fout, even zwaar als een bevinding van de weekcontrole.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-rond-zonder-sportschool.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "De indeling rond een vakantie (`engine/leaveAround.ts`, besluiten van 9 november over de planner rond een vakantie, de lange duurloop en beenkracht) geldt ook rond een periode Zonder sportschool.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-routeplanner.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Bij een looptraining staat de knop Route voorstellen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-startpunt-lus.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Een voorgestelde lus kan bij de deur van de eigenaar beginnen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-stem-van-ascend.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De stemgids in `docs/visie/stemgids-concept.md` is goedgekeurd door de eigenaar (9 november) en is vanaf nu de stem van de hele app.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-strava-tekst-soort-training.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "De tekst voor Strava is een titel die zegt wat voor training het was, met hooguit één regel waarom en daaronder een lege regel voor je eigen tekst.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-teksten-lichaam-en-instellingen.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Stap 3 van de stemgids is gedaan voor Lichaam en voor Instellingen (R9).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-tempo-grafiek.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "De kaart Tempo bij zone 2 in Je stand krijgt een i.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-tempo-stabiele-stukken.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Tempo bij zone 2 rekent niet meer met één gemiddelde per geplande rustige loop, maar met de stabiele, vlakke stukken van elke buitenloop (stap 1 tot 4 van het bouwvoorstel in `docs/onderzoek/Tempo bij zone 2, stabiele stukken.md`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-uitleg-batch-3-en-4.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Veertig oefeningen krijgen uitleg in twee lagen, in de vorm van de proef en batch 1 en 2.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-uitleg-bij-oefeningen.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Een oefening kan een uitleg in twee lagen krijgen: In het kort (drie regels, altijd zichtbaar) en Lees verder (achter een tik, hoogstens 130 woorden).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-uitleg-eccentric-squat.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De uitleg bij `eccentric-squat` beschrijft langzaam zakken en opstaan op twee benen, zonder schuin vlak.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-voorschrift-volgt-planningsronde.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Het weekvoorschrift houdt alleen de toevoegingen en verplaatsingen die de planningsronde daarna laat staan.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-week-band.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "In de weeklijst staat een periode (Zonder sportschool, Vakantie, Tocht, Vrije dagen) als één band boven de eerste dag die in die week valt, niet meer als kaart per dag.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-week-paneel.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Een periode (vakantie, zonder sportschool, tocht, vrije dagen) staat in de weeklijst als een eigen afgerond paneel met een lichte ijsblauwe tint (`--color-period-tint`, rand `--color-period-edge`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-weghaling-met-toevoeging.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "In een week zonder vrije dag haalt de weekindeling een training weg en zet de nieuwe op die dag (`src/engine/weekReconciliation.ts`, de terugval).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-zonder-sportschool-beter.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Vier verbeteringen aan de periode Zonder sportschool: Gewoon maakt loopjes niet korter en Heuvels in de buurt plant een heuveltraining.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-zonder-sportschool-heuvelloop.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Staat er in een periode Zonder sportschool met Heuvels in de buurt geen heuveltraining, dan voegt het voorstel één Rustige heuvelloop toe.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-09-zonder-sportschool.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Naast Vakantie zonder training, Tocht met rugzak en Vrije dagen is er een vierde soort periode: Zonder sportschool (`no_gym`, `engine/noGym.ts`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-10-beendagen-afstand-tekst.md": {
+   "onderwerpen": [
+    "week",
+    "lichaam-en-herstel"
+   ],
+   "kern": "De melding in Week over twee zware beendagen rekent het aantal dagen ertussen met dezelfde som als de controle zelf.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-10-kaartje-route-bron.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Het paneel Route voorstellen krijgt een kaartje dat ASCEND zelf tekent als SVG, zonder kaarttegels: beide lussen op één schaal en het startpunt als stip.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-10-route-naar-garmin-connect.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Onder elke voorgestelde lus staat de knop Naar Garmin Connect, naast GPX downloaden.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-10-route-uitleg.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Na het zoeken zegt het paneel Route voorstellen in één regel wat er op de kaart lag: hoeveel hellingen in de buurt en de hoogste.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-10-week-melding-na-keuze.md": {
+   "onderwerpen": [
+    "week",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Koos je Benen fris en blijft een zware beendag staan, dan zegt de melding in Week dat jij dat koos en is het voorstel een gewone tekstknop.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-afdaalklok.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel",
+    "doelen"
+   ],
+   "kern": "ASCEND houdt bij hoeveel dagen geleden je laatste afdaling was, op je echte logs.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-alleen-staand.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "ASCEND staat altijd rechtop: in de Android-app (`android:screenOrientation=\"portrait\"` op MainActivity) en als geïnstalleerde web-app (`orientation: 'portrait'` in het manifest van vite-plugin-pwa).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-avond-ervoor.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Vanaf 20:00 (instelbaar) staat op Vandaag een rustige kaart De avond ervoor met de training van morgen en hoogstens vier regels om klaar te leggen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-briefing-sporen-1-3-4.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "lopen-en-tests"
+   ],
+   "kern": "Spoor 1, 3 en 4 uit hoofdstuk 7 van `docs/visie/Ontwerp Route en trainingsscherm.md`, binnen `2026-11-11-briefing.md`. - Spoor 1: `engine/routeTarget.ts#wantsRouteAt` zegt of er bij een training en een keuze een route hoort.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-briefing-sporen-5-6.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "lopen-en-tests"
+   ],
+   "kern": "De Briefing (`src/components/TrainingBriefing.tsx`) staat er als scherm, vanuit Week (de rij Briefing op de plek van Hoe je het doet) en vanuit Vandaag (de mint knop Briefing als je horloge de training afvinkt).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-briefing.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "lopen-en-tests"
+   ],
+   "kern": "Voor een loop of wandeling buiten komt een nieuw scherm vooraf, de Briefing (richting 2 van `docs/visie/Ontwerp Route en trainingsscherm.md`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-enkel-evenwicht.md": {
+   "onderwerpen": [
+    "forge",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Spieren voor de berg krijgt een vierde rij: enkel en evenwicht.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-eten-onderweg.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Vanaf 90 minuten lopen of wandelen, en per dag op een tocht of etappe, zegt ASCEND hoeveel koolhydraten je ongeveer meeneemt en wat dat is in gels, bananen, krentenbollen of dadels.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-forge-kern-zichtbaar.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Elke oefening in Forge toont zijn rol: Kern, Bijwerk of Extra.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-forge-verloop.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Het blad Verloop van de training toont per oefening een regel per set: het eindresultaat (gewicht, herhalingen, RIR) en alle redenen in een zin.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-gr5-uit-osm.md": {
+   "onderwerpen": [
+    "doelen",
+    "koppelingen-en-data"
+   ],
+   "kern": "Begin, eind en een vereenvoudigd spoor van alle 36 GR5-etappes komen uit OpenStreetMap, met hoogte uit EU-DEM 25 m.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-info-blad-horloge-spoor-2.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Het blad Je horloge is nu ook te openen met de rij \"Je horloge\" in het blad van een training in Week (in Andere keuzes, direct na Hoe je het doet) en in het menu achter de drie puntjes op Vandaag (tweede rij, na Meer over deze training).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-info-blad-horloge.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Het trainingsscherm krijgt onderaan de knop Horloge in plaats van Info.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-locatie-en-kaart.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "De eigenaar wil een duidelijke kaart bij Route voorstellen: waar je nu bent, je route en de andere routes die kunnen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-luchtfoto.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Op de kaart in de Briefing en het blad Route staat rechtsboven een schakelaar Kaart of Luchtfoto.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-pathfinder.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Er komt een zesde rol, Pathfinder (`.claude/agents/pathfinder.md`, skill `pathfinder`), die de app als geheel bewaakt vanuit de gebruiker.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-plekken-antwoorden.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "De vijf vragen uit `docs/visie/Ontwerp Plekken en routes.md`: 1.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-plekken-en-routes.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "ASCEND krijgt een lijst eigen plekken (Plekken).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-plekken-engine.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "De pure functies voor plekken en bewaarde routes staan in `src/engine/places.ts`, met tests.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-plekken-opslag.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Plekken en bewaarde routes zijn een opgeslagen vorm: twee sleutels in de meta-opslag (`places` en `savedRoutes`), twee optionele velden in de back-up, en Vast punt is de plek Thuis geworden.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-route-kaart-2.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Startpunt van je lus krijgt een derde keuze, Waar je nu bent, en die is de nieuwe standaard voor wie nooit zelf koos.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-route-kaart.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Het paneel Route voorstellen krijgt een kaart met MapLibre GL JS 6.17.0 op de stijl Dark van OpenFreeMap, overgeschilderd met de tokens.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-route-start.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Boven de kaart en de zoekstand van Route (in de Briefing en het blad Route) staat een rij Start bij met chips: Waar je nu bent (het advies) en Thuis als die er is.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-route-verfijnen.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Route voorstellen kiest betere lussen en zegt het in één regel als een lus de hoogtemeters van de training niet haalt of te kort is.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-rusttimer-geluiden.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De rustbel van Forge heeft tien klanken in vijf groepen, een volume met piekgrens en een vooraankondiging.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-11-sleuteltraining.md": {
+   "onderwerpen": [
+    "planning",
+    "doelen"
+   ],
+   "kern": "De sleuteltraining heeft één definitie, per soort doel of per richting zonder doel, als pure functie in `src/engine/keySession.ts`.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-andere-plek-photon.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Het zoekveld van Andere plek vraagt eerst Open-Meteo, zoals nu.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-andere-plek.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "In de rij Start bij (Briefing en blad Route) staat een chip Andere plek.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-briefing-per-manier.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "lopen-en-tests"
+   ],
+   "kern": "De Briefing zegt per manier van trainen wat klopt: feiten, stopregels en stappen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-dubbel-log.md": {
+   "onderwerpen": [
+    "historie-en-logs"
+   ],
+   "kern": "`logSession` zegt ja zodra het log in de opslag staat.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-hoe-ging-het.md": {
+   "onderwerpen": [
+    "historie-en-logs",
+    "bediening-en-beweging"
+   ],
+   "kern": "Zelf invullen voor een training te voet (`engine/briefing.ts#briefingEntry`: hardlopen en wandelen) is het blad Hoe ging het? in twee stappen (`src/components/HowDidItGoSheet.tsx`), zoals spoor 5 van `docs/visie/Ontwerp trainingsscherm minimaal.md` vraagt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-hoogtemeters-stap-1.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "historie-en-logs"
+   ],
+   "kern": "Geplande en gelopen hoogtemeters worden geteld door één pure functie, `engine/elevation.ts#climbAndDescent`, met echte hysterese en een drempel per bron.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-hoogtemeters-teller-op-log.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "historie-en-logs"
+   ],
+   "kern": "Een nieuw log draagt op `detail` en op `runDetail` een optioneel veld `counter: 2`: de stijging is geteld met de teller van `engine/elevation.ts`.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-je-dag.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Je dag op Vandaag wordt het lijstje van wat je vandaag naast je training zelf nog doet, volgens `docs/visie/Ontwerp Je dag.md`.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-je-week-tot-nu.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Het blad Je week tot nu wordt gebouwd volgens `docs/visie/Ontwerp Je week tot nu.md`: drie blokken (de week, waar je op let, volgende week) en daaronder één lijst.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-missiekaart.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Spoor 10 van `docs/visie/Ontwerp trainingsscherm minimaal.md` voor Vandaag, binnen regel 1, 5 en 6.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-route-blok.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Het blok met de route in de Briefing (een loop te voet, onder de hartkaart) heeft nog drie dingen: Start bij met twee chips, een stille kaart met één lijn, en de regel met de gekozen lus en Groter.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-stairmaster-horloge.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Kies je in de Briefing een manier die wandelen is, zoals de StairMaster, dan gaat er een wandelworkout naar je horloge.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-stand-minimaal.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Stand bestaat uit drie regels (Benen, Belasting, Ritme) met elk een eigen scherm, één grafiek en één lijst.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-stand-opschonen.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Het tweede stuk van Stand minimaal: de schermen Benen, Belasting en Ritme zijn opgeschoond, zonder dubbele kop.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-trainingsscherm-en-ontwerpregels.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Het ontwerp `docs/visie/Ontwerp trainingsscherm minimaal.md` wordt gebouwd in de sporen van hoofdstuk 7, en de acht regels van hoofdstuk 6 gelden voor alle nieuwe en herziene schermen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-trainingsscherm-sporen-1-4.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Sporen 1 tot 4 van het minimale trainingsscherm zijn gebouwd; hier staan de keuzes van de bouwer waar het ontwerp iets open liet.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-week-minimaal.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "De tab Week en het blad van een training worden gebouwd volgens `docs/visie/Ontwerp Week minimaal.md`.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-week-na-gemiste-dagen.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Valt er in je week een training weg en is de rest van de week daarna te vol, dan doet ASCEND één voorstel met een advies welke training vervalt, de reden in één zin en een tweede keuze (regel WEEK-FULL, `src/engine/fullWeek.ts`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-weekplan-niet-opnieuw-voorstellen.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Het weekvoorschrift zet een training alleen neer als de planningsronde hem zelf heeft bevestigd, en stelt niet opnieuw voor wat al eens is aangenomen en er nu toch niet staat.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-weer-op-de-plek.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Kies je in de Briefing bij Start bij een bewaarde of gezochte plek die verder dan 10 km van huis ligt, dan toont de rij Weer de voorspelling van die plek, met de naam ervoor (\"In <plek>: 2 graden, ...\").",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-12-zone2-kaart.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "De kaart Tempo bij zone 2 op Je stand tekent een stip per week, sneller boven, met \"sneller\" en \"trager\" naast de grafiek.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-13-kleding-en-wind.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "De weerzin noemt de wind vanaf 15 km/u (\"11 graden, voelt als 8, wind 20 km/u\") en toont de gevoelstemperatuur dan al bij 2 graden kouder, niet pas bij 4.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-13-weer-van-de-plek-pagina.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Tik je in de Briefing op de rij Weer terwijl die het weer van een gekozen plek volgt, dan krijgt de pagina Weer die plek, de training en de dag mee.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-bergspieren-zonder-vakantieweek.md": {
+   "onderwerpen": [
+    "forge",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Een week met vakantie (`no_training`), een tocht (`trek`) of zonder sportschool (`no_gym`) telt ook voor kuiten, scheenspier en bilspieren niet mee in het gemiddelde van Spieren voor de berg, net als een rustweek en net als al bij enkel en evenwicht.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-geen-stille-thuis.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Lukt Waar je nu bent niet (geweigerd, niet beschikbaar, niet op tijd, te grof of niet ondersteund), dan valt de lus nooit meer stil terug op Thuis of op Ongeveer, en er wordt niet gezocht.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-hoe-ging-het-horloge.md": {
+   "onderwerpen": [
+    "historie-en-logs",
+    "koppelingen-en-data"
+   ],
+   "kern": "De kaart Van je horloge die op Vandaag vroeg hoe een afgevinkte training ging (`WatchAskCard`) is weg.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-hoogtemeters-na-stap-1.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "historie-en-logs"
+   ],
+   "kern": "De regels die na stap 1 het merk van de teller nog niet lazen, lezen het nu, via één plek: `engine/elevation.ts` (`counterMark`, `climbLimitFor`, `sameCounter`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-horloge-toetsen.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "historie-en-logs"
+   ],
+   "kern": "Een activiteit van je horloge wordt getoetst voordat de app hem vanzelf afvinkt, aan een training koppelt of \"zoals gepland\" noemt (`src/engine/activityFit.ts`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-info-blad-a.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "De eigenaar gaf op 14 november akkoord op alle vijf adviezen onder \"Vragen voor de eigenaar\" in `docs/visie/Ontwerp Info-blad.md`.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-keuzes-avond.md": {
+   "onderwerpen": [
+    "doelen",
+    "planning"
+   ],
+   "kern": "GR5 en meerdaagse tochten: de startvragen vragen hutten, tent of beide; de doelkop, de paklijst, de Reisplanner en de rugzakladder volgen die keuze.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-nee-van-logsession.md": {
+   "onderwerpen": [
+    "historie-en-logs"
+   ],
+   "kern": "Een scherm leest het antwoord van `logSession` niet meer kaal, maar via `src/state/logSave.ts`.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-opslaan-rest.md": {
+   "onderwerpen": [
+    "historie-en-logs"
+   ],
+   "kern": "Dezelfde losse training is dezelfde training (`templateId`) op dezelfde dag, zolang de eerste opslag nog loopt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-opstarten-en-intervals-grens.md": {
+   "onderwerpen": [
+    "algemeen",
+    "koppelingen-en-data"
+   ],
+   "kern": "De tijdgrens van 15 seconden op een aanroep naar intervals.icu loopt nu door tot en met het lezen van het antwoord, bij lezen en bij schrijven.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-opwarmset-later.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Een opwarmset later in de training, op een beweging die al warm is (de leg press na squat en deadlift), blijft in Forge zichtbaar maar gedempt, met één zin waarom: \"Je benen zijn warm van de Barbell Back Squat.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-profielen-klein.md": {
+   "onderwerpen": [
+    "historie-en-logs"
+   ],
+   "kern": "Een gedane training toont overal de duur van het log in hele minuten (`engine/sessionStatus.ts#loggedMinutes`, `rowMinutes`); een log zonder bruikbare duur toont geen getal, ook niet het plan.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-racedag-10km.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "In de laatste week voor een 10 km-doel (de race zelf meegeteld) staat één rij Racedag op Vandaag, direct onder de missie, en dezelfde rij in het blad van het doel op Ascend.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-racedag-plek-en-weer.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "De rij Racedag staat op Vandaag onder de ochtendvraag en de kaarten onder de missie, niet direct onder de missie.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-route-kaart-vervolg.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "In het blad Route (bereikbaar via Groter in de Briefing en via Route voorstellen op Vandaag, Week en het trainingsscherm) komt onder de hoofdknop een blok Bijsturen met Andere kant op, Langer, Korter en, na een bijsturing, Zoals je training.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-routes-vorm.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "ASCEND telt de doodlopende stukken van elke voorgestelde lus in de meetkunde zelf (`engine/routeGeometry.ts#deadEnds`): een tak van minstens 80 m die je in en weer uit loopt, waar geen ander deel van de route voorbij gaat.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-sleuteltraining-terugkijken.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Het inhalen en de rustdag gebruiken beide de sleuteltraining en kijken bewust verschillend ver terug.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-training-blijven-liggen.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Een begonnen, niet afgeronde training in Forge loopt niet dagen door.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-uv-en-hoogte-aanvulling.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "De UV-zin volgt het kledingadvies, zodat ze elkaar niet herhalen of tegenspreken.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-uv-en-hoogte-buiten.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Bij een training buiten staat in de rij Weer van de Briefing (en op de pagina Weer, onder de weerregel) de UV-index vanaf 3, met wat je doet, en de hoogte van je plek vanaf 1000 m.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-uv-rij-alleen-getal.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "In de rij Weer van de Briefing staat bij UV 3 of hoger alleen \"UV 8\", met een vaste spatie (U+00A0) zodat het nooit over twee regels breekt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-vakantie-en-ziek-niet-gemist.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Een vakantie, tocht of periode zonder sportschool die je zelf meldde, telt nooit als gemist.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-verborgen-schermen.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De Kennisbank belooft geen les meer op Vandaag; de kaart \"Deze week\" blijft op de Kennisbank zelf.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-voorstel-begrijpelijk.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Het voorstel van Spieren voor de berg toont één korte laag per regel: de oefening, de training, de dosis, waarom, wat onzeker is en wat Akkoord doet.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-14-zonder-ascend-als-onderwerp.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "In schermtekst is ASCEND nooit het onderwerp van een zin.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-beginner-tien-procent.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "De lange sessie van een beginner groeit hoogstens 10% per stap: 30, 35, 40 en 45 minuten in de vier weken van de start, daarna door met de bestaande grens.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-concept-loopt-nog.md": {
+   "onderwerpen": [
+    "forge",
+    "week"
+   ],
+   "kern": "Een voorbije geplande training waar nog een concept van in Forge ligt, heet \"loopt nog\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-hutten-of-tent-vraag.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Een tocht op hutten zonder vastgelegde eigen keuze krijgt op de Reisplanner en de Paklijst één keer de vraag \"Je tocht staat op hutten.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-instellingen-op-een-plek.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Elke instelling heeft één verklaring in `src/engine/settingsDefs/<groep>.ts`, één bestand per groep van Instellingen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-logboekkop-herstel.md": {
+   "onderwerpen": [
+    "historie-en-logs"
+   ],
+   "kern": "De kop bovenaan het Logboek zegt nooit \"niets\" of \"geen trainingen\" als er in die maand een log staat.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-na-de-race.md": {
+   "onderwerpen": [
+    "planning",
+    "doelen"
+   ],
+   "kern": "Een training uit de afbouw voor een race (de zeven dagen ervoor) die niet gedaan is, vervalt zodra de racedag er is.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-oude-sportlogs-in-de-weekcheck.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "De weekcheck leest de sport van een log via `engine/sportOfLog.ts#sportOfLog`, ook voor een log uit Losse training van voor 14 november dat zijn sport alleen in het templateId noemt (`sport_padel`, `sport_custom_tennis`).",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-routes-wandelen-standaardkeuzes.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Lussen voor wandelen en rugzaktraining zijn gebouwd met het advies als standaard; de lus mikt op de hoogtemeters die in de duur passen.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-vervallen-een-bron.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Vervallen betekent overal hetzelfde: een voorbije training zonder log op een dag binnen een gemelde ziekte (tot en met de dag van beter melden) of vakantie, tocht of periode zonder sportschool.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/_sjabloon.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Het sjabloon voor een nieuw besluit: besluit, reden, alternatieven, bron, vervangt en terugdraaien.",
+   "stand": "geldt"
+  },
+  "docs/onderhoud/2026-10-29-exports.txt": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Ruwe lijst van 29 oktober 2026 met ongebruikte exports per bestand en regel.",
+   "stand": "verouderd",
+   "waarom": "De meting van 2 november (`docs/onderhoud/2026-11-02-exports.md`) heeft deze lijst niet gebruikt en is nieuwer."
+  },
+  "docs/onderhoud/2026-10-29.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "De nulmeting van 29 oktober 2026 voor de wekelijkse onderhoudsronde, alleen gelezen.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/2026-10-31.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Verslag van 31 oktober 2026: opruimen zonder dat de gebruiker iets ziet, onder meer de oude kleurnaam `--color-stone`.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/2026-11-01-aanpak-backlog.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Het plan van 1 november 2026 om de hele backlog zelfstandig in rondes op te pakken.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/2026-11-02-exports.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Opruiming van ongebruikte exports met knip op 2 november 2026: van 646 naar 57.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/2026-11-02-sneller.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Wat op 2 november 2026 meetbaar sneller is gemaakt, met de meting voor en na.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/2026-11-06-kosten-voor-maandag.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Wat de coördinator na 6 november anders doet om de kosten te drukken.",
+   "stand": "verouderd",
+   "waarom": "Eenmalige aanwijzing voor de sessie na 6 november; de vaste regels staan in de skill `werkverdeling`."
+  },
+  "docs/onderhoud/2026-11-11-backlog-opnieuw.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Verslag van 11 november 2026: de backlog is opnieuw opgebouwd tegen wat live staat op main.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/2026-11-11-pathfinder-route-start.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "werkwijze"
+   ],
+   "kern": "Pathfinder vooraf op 11 november 2026 over de start van een lus en het laden van Route voorstellen.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/2026-11-12-pathfinder-totaalplaatje-ui.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "werkwijze"
+   ],
+   "kern": "Inventaris van Pathfinder op 12 november 2026 voor de ontwerper, na de vraag om een rustiger UI.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/2026-11-12-pathfinder-verborgen-schermen.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "werkwijze"
+   ],
+   "kern": "Pathfinder op 12 november 2026 over verborgen pagina's en wat anders kan; opgevolgd in `docs/beslissingen/2026-11-14-verborgen-schermen.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/reflectie-2026-11-01.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Terugblik per ronde op de backlogavond van 1 november 2026.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/ASCEND voor iedereen.md": {
+   "onderwerpen": [
+    "planning",
+    "doelen"
+   ],
+   "kern": "Hoe ASCEND werkt voor iedereen: met of zonder doel, eigen sporten, een hoeveelheid per soort training en sporten die eerlijk meetellen.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Aanvullend onderzoek GR5 voorbereiding.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel",
+    "doelen"
+   ],
+   "kern": "Regels voor afdalen, herstel (slaap, alcohol, ziekte, tekort) en doelkeuze met vier programmatypes, als aanvulling op de trainingsopbouw.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Afbeeldingen bij oefeningen.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Welke vrije bronnen voor plaatjes bij oefeningen bruikbaar zijn in een openbare repo en offline, met de dekking en een advies.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Alcohol en herstel.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Hoeveel alcohol het herstel en de ochtendgetallen echt verschuift en hoe weinig de app ermee hoeft te doen.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Andere manieren om belasting te plannen.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Overzicht van andere methoden om belasting te plannen en te tonen, met wat ASCEND al kan berekenen en een aanbeveling in volgorde.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Android-app.md": {
+   "onderwerpen": [
+    "algemeen"
+   ],
+   "kern": "Of een Android-schil zin heeft: routes, updates zonder steeds een APK, Health Connect, kosten en gevaren.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Avontuurlijke plekken uit OpenStreetMap.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Welke kenmerken uit OpenStreetMap een avontuurlijke plek maken en hoe je er via Overpass een startpunt en hoogtemeters bij vindt.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Betrouwbaarheid beenvermoeidheid-index.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Hoe betrouwbaar de beenindex is en hoeveel elke invoer hem beweegt, uit literatuur en een gevoeligheidsanalyse.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Bronnen bij de uitleg van oefeningen, batch 1.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Waar de uitleg van twintig oefeningen uit het demoprogramma en de Dip op rust; geen bron is nagelezen.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Bronnen bij de uitleg van oefeningen, batch 2.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Per aanwijzing bij acht oefeningen of hij klopt, onzeker is of te toetsen, met de gelezen bron.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Bronnen bij de uitleg van oefeningen, batch 3.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Waar de uitleg van twintig oefeningen uit batch 3 op rust en waar twijfel is.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Bronnen bij de uitleg van oefeningen, batch 4.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Waar de uitleg van twintig oefeningen uit batch 4 op rust en waar twijfel is.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Bronnen bij de uitleg van oefeningen.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Waar de techniek in de proef met vijf uitlegteksten op rust, met wat later is getoetst.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Calisthenics in apps en wetenschap.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Hoe andere apps calisthenics opbouwen, wat de wetenschap zegt over vooruitgang zonder kilo's en een ontwerpvoorstel met ladders.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Cannabis en training.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Wat THC doet met training, slaap, rusthartslag en HRV bij een recreatieve sporter in het algemeen, met een voorstel voor de app.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Datavelden voor je horloge.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Welke indelingen en velden de Forerunner 255 kent, hoe je ze instelt en welk veld groot hoort per soort training.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Dode code 2026-10-28.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Welke ongebruikte componenten en engine-bestanden op 28 oktober 2026 zijn verwijderd en wat bewust bleef.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Doelsoorten berg en buiten.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Wat de engine per berg- en buitendoel nodig heeft: minimale eisen, opbouwduur, fasen, afbouw, meters en herstel.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Doelsoorten duur.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Wat de engine per duurdoel nodig heeft: hardloopwedstrijd, trailrun, fietstocht en triathlon.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Echte vervangers bij ruilen in Forge.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Hoe apps en literatuur een echte vervanger van een oefening kiezen, met een klein model voor het ruilblad.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Garmin koers vooraf klaarzetten.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Of een koers dagen op het horloge blijft staan en aan een workout kan hangen; uit handleidingen, niet op een toestel geprobeerd.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Hoogtemeters met precisie.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "koppelingen-en-data"
+   ],
+   "kern": "Hoe precies hoogtemeters uit BRouter, Valhalla en andere bronnen zijn, hoe je telt en ijkt, met een advies in acht punten.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Horloge, server en weegschaal.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Vier uitbreidingen bekeken: kracht op de Garmin, een Galaxy Watch-app, een eigen kleine server en openScale voor gewicht.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Kaartbron voor Route voorstellen.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Advies om de kaart te bouwen met MapLibre GL JS en de vectortegels van OpenFreeMap, zonder sleutel of account.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Kaartje bij Route voorstellen.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Afweging voor een kaartje bij de lussen: zelf tekenen als SVG of tegels laden, met wat tegels verraden.",
+   "stand": "vervangen",
+   "door": "docs/onderzoek/Kaartbron voor Route voorstellen.md"
+  },
+  "docs/onderzoek/Kansen 11 november training.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Wat een goede coach nog zou doen, vanuit trainingswetenschap en data: vijf kansen met het meeste profijt en een langere lijst.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Kansen met gegevens.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Wat ASCEND al binnenhaalt bij intervals.icu, MacroFactor en Open-Meteo maar niet gebruikt, met een top 10 en bouwvolgorde.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Klaar voor je doel logisch per doel.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Waarom 77% bij een onhaalbare doeltijd onlogisch is en hoe het percentage per doelsoort logisch wordt.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Kleding bij het weer.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Wat bevestigd is over kleding bij het weer en een voorstel voor engine-regels met voorbeelden.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Kracht loggen en progressie.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Hoe MacroFactor Workouts werkt, de wetenschap erachter en de regels KR-1 tot KR-10 waar het krachtmodel op rust.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Lange duurloop en een zware beendag.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Hoeveel tijd er tussen een lange duurloop en zware beenkracht hoort, in beide volgordes: 48 uur.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Lichaamsgewicht in de last bij beenoefeningen.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Of het krachtmodel bij beenoefeningen een deel van het lichaamsgewicht in de last moet meetellen.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Loopgegevens en vooruitgang.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Wat je na een loop uit de reeksen van intervals.icu kunt berekenen en hoe je trainingen eerlijk vergelijkt.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Luchtfoto op de kaart.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Welke luchtfotobronnen zonder sleutel bruikbaar zijn per gebied (PDOK, IGN, Sentinel-2) en wat dat offline betekent.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Meerdaagse tochten plannen.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Stappenplan voor het plannen van een meerdaagse tocht en welk gereedschap naast Komoot helpt.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Meerdere doelen en prioriteit.md": {
+   "onderwerpen": [
+    "doelen",
+    "planning"
+   ],
+   "kern": "Wat coaches, apps en wetenschap doen met labels voor doelen en hoe de engine botsingen in een vaste volgorde oplost.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Noodhulp via satelliet.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Welke manieren er zijn om op de GR5 via satelliet hulp te roepen, van goedkoop naar duur, met een aanbeveling.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Opbouw hardlopen.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "Onderbouwing van de loopopbouw: de 10%-regel geldt per loop, de lange loop groeit per blok en de week via een extra training.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Pijn spierpijn en vermoeidheid melden.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Het verschil tussen pijn, spierpijn en moe, wat ASCEND moet vragen en hoe de planning per signaal reageert.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Planning op een lijn.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Hoe de planningssystemen op elkaar inwerken, waar ze elkaar tegenspreken en een voorstel voor één vaste volgorde met een weekcontrole.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Ponytail en Graphify.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Proef van 13 november 2026 met twee hulpmiddelen voor agents; niets ervan staat in main.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Programma, fasen en weekindeling 2026-11-11.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Wat de code doet met de totale duur van een programma, de fasen, de weekindeling en de start, met een advies op volgorde.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/RIR en RPE in krachtapps.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Hoe krachtapps RIR en RPE vragen, hoe goed mensen schatten, vermoeidheid tussen oefeningen en afvinken als de RIR van het doel.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/RPE bij een testloop.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Of ASCEND de belasting van een korte maximale testloop te streng telt, met vijf kleine verbeteringen.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Routeplanner voor een training.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Bronnen voor een routeplanner: BRouter en een tweede bron, de hoogte in Nederland, een koers op de Forerunner 255 en naamsvermelding.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Run in detail.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Wat er per kilometer en per ronde uit de reeksen te halen is, met het advies de volledige reeksen op het toestel te bewaren.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Spierbelasting en beenvermoeidheid.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "De onderbouwing van de beenindex: herstel per soort training, volgorde, het herhaalde-inspanningseffect en het voorstel voor de index.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Spierindex opzet.md": {
+   "onderwerpen": [
+    "forge",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Een opzet voor een spierindex in drie stappen: controle op je training, slimmer vervangen en later meer.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Tempo bij zone 2, stabiele stukken.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Wat een stabiel stuk is en hoe helling, warmte en hartslagdrift meetellen bij het tempo in zone 2.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Trainingsopbouw voor GR5 en hardlopen.md": {
+   "onderwerpen": [
+    "planning",
+    "doelen"
+   ],
+   "kern": "De basis onder het plan: een brede aerobe basis met zware kracht, waarop hoogtemeters, rugzakgewicht en dagen achter elkaar stap voor stap groeien.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Trainingsvormen en varianten.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "Welke trainingen kloppen en wat ontbreekt: gericht afdalen voor de GR5 en snelheid boven de drempel voor de 10 km.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Tussendoel hardloopwedstrijd.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "Onderbouwing van het blok van 8 weken voor een hardloopwedstrijd voor het hoofddoel: tempoloop, testloop en wedstrijdweek.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Uitleg bij oefeningen en open bronnen.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Welke open bronnen voor oefeningen ASCEND mag gebruiken en hoe een korte Nederlandse uitleg per oefening eruitziet.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Volgorde van twee trainingen.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Welke van twee trainingen op één dag je eerst doet en hoeveel tijd ertussen hoort.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Wandelen en dribbelen voor beginners.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "De ladder van wandelen en dribbelen voor een beginner klopt in week 1 tot 3 met de onderzochte schema's, week 4 niet; het advies is week 4 op 4 om 2 te zetten.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Warming up voor krachttraining.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "De beste korte warming-up is een paar opwarmsets van de eerste oefening, met één zwaardere set op ongeveer 80% van het werkgewicht.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Werkwijze autonome agents.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Hoe teams die vooral met AI bouwen zonder mens opleveren, met de lessen voor ASCEND en wat altijd een mens nodig heeft.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/Zweetverlies en water.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "De rekenregels voor je eigen zweetverlies en het water per GR5-etappe, met de twee bronnen.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/notities/Aanvullend onderzoek GR5 voorbereiding/afdalen_kracht.md": {
+   "onderwerpen": [
+    "planning",
+    "forge"
+   ],
+   "kern": "Werknotities (Engels) over voorbereiding op afdalen en de keuze van krachtoefeningen voor een trektocht.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/notities/Aanvullend onderzoek GR5 voorbereiding/fietsen_crosstraining.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Werknotities over fietsen als vervangende training: wat overdraagt naar lopen en wandelen en hoe je fietstijd omrekent.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/notities/Aanvullend onderzoek GR5 voorbereiding/herstel_leefstijl.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Werknotities (Engels) over slaap, voeding, alcohol, ziekte, gemiste training en cafeïne bij gecombineerd trainen.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/notities/Aanvullend onderzoek GR5 voorbereiding/kracht_programma.md": {
+   "onderwerpen": [
+    "planning",
+    "forge"
+   ],
+   "kern": "Werknotities (Engels) over het programmatype Kracht: frequentie per spiergroep, split, cardio en deloads.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/notities/Aanvullend onderzoek GR5 voorbereiding/marathon.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "Werknotities (Engels) over een marathon naast de GR5: weekvolume, tijdpad, sleuteltrainingen, taper en blessurerisico.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/notities/Aanvullend onderzoek GR5 voorbereiding/tocht_specifiek.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Werknotities (Engels) over de GR5 zelf: hoogte, hitte en drinken, eten, voeten, stokken, dagen achter elkaar en de rugzak.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/notities/Trainingsopbouw voor GR5 en hardlopen/capaciteiten_bergtocht.md": {
+   "onderwerpen": [
+    "planning",
+    "doelen"
+   ],
+   "kern": "Werknotities over welke fysieke capaciteiten een meerdaagse bergtocht met rugzak vraagt en welke training ze ontwikkelt.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/notities/Trainingsopbouw voor GR5 en hardlopen/progressie_periodisering.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Werknotities (Engels) over progressie en periodisering: welke variabele groeit, hoe snel, intensiteitsverdeling en deloads.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/notities/Trainingsopbouw voor GR5 en hardlopen/risicos_interferentie.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Werknotities (Engels) over risico's: loopblessures, afdalen, rugzak, te snelle opbouw en interferentie tussen kracht en duur.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/notities/Trainingsopbouw voor GR5 en hardlopen/signalen_autoregulatie.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Werknotities (Engels) over signalen om door te gaan, vast te houden of terug te schakelen: sessie-RPE, hartslag, HRV en slaap.",
+   "stand": "achtergrond"
+  },
+  "docs/onderzoek/notities/Trainingsopbouw voor GR5 en hardlopen/voorbeeldprogressies.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Werknotities (Engels) met voorbeeldprogressies voor de fasen Opbouw, Bergcapaciteit en Expeditieklaar.",
+   "stand": "achtergrond"
+  },
+  "docs/ontwerp/datavelden-horloge.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Ontwerpvoorstel voor de pagina Datavelden voor je horloge; het onderzoek corrigeert twee aannames, het besluit is `docs/beslissingen/2026-11-09-datavelden-horloge.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/ontwerp/uitlegblad-training.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Ontwerpvoorstel van 10 november 2026 voor het onderste deel van het uitlegblad van een training.",
+   "stand": "achtergrond"
+  },
+  "docs/teksten/alle-teksten.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Alle teksten van de app plat onder elkaar, gemaakt uit de tekstkaart met de klok op 31 oktober 2026, als stap 1 van het herschrijven.",
+   "stand": "achtergrond"
+  },
+  "docs/teksten/verschil-lichaam.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Elk verschil in de tekstkaart na het herschrijven van Lichaam volgens de stemgids, met de reden.",
+   "stand": "achtergrond"
+  },
+  "docs/teksten/verschil-r7-stand.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Elk verschil in de tekstkaart na het herschrijven van de tab Stand volgens de stemgids, met de reden.",
+   "stand": "achtergrond"
+  },
+  "docs/teksten/verschil-r8-logboek.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "historie-en-logs"
+   ],
+   "kern": "Elk verschil in de tekstkaart na het herschrijven van het Logboek en Run in detail, met de reden.",
+   "stand": "achtergrond"
+  },
+  "docs/teksten/verschil-r9-instellingen.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Verslag van het herschrijven van Instellingen en de uitleg achter de i; de tekstkaart zag daar geen verschil.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ascend-tab als doelen.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Ontwerpvoorstel van 26 oktober 2026 voor de Ascend-tab als plek van je doelen; besloten in `docs/beslissingen/2026-10-26-ascend-tab-als-doelen.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Data zonder handwerk.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Hoe data van Garmin en MacroFactor zonder overtypen binnenkomt, met intervals.icu als tussenstation; de regel over gewicht met de hand is vervallen.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Forge logboek en spotter.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Kort ontwerp voor het verloop van een training en de regel zonder spotter; gebouwd, de besluiten zijn van 28 oktober 2026.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Forge vinden en kaarten ordenen.md": {
+   "onderwerpen": [
+    "forge",
+    "bediening-en-beweging"
+   ],
+   "kern": "Ontwerp voor een vaste plek voor Forge op Je stand en het slepen van kaarten; besloten in `docs/beslissingen/2026-10-28-forge-en-volgorde.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/GR5-reis en coaching.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Visie van 21 oktober 2026 op de GR5 alleen en grotendeels met tent, en hoe de app daarheen en eroverheen brengt.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Kansen 11 november app.md": {
+   "onderwerpen": [
+    "algemeen"
+   ],
+   "kern": "Wat de app op 11 november 2026 nog mist, bekeken vanuit ontwerp, naast wat al in de backlog stond.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Kracht en berg in één plan.md": {
+   "onderwerpen": [
+    "doelen",
+    "algemeen"
+   ],
+   "kern": "Wat ASCEND is als de GR5 niet meer de kern is en waarmee het zich onderscheidt; besloten in `docs/beslissingen/2026-10-26-kracht-en-berg-voor-iedereen.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Los van MacroFactor.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Het doel van de eigenaar van 9 november 2026: Forge maakt MacroFactor Workouts overbodig, de voedingsapp blijft.",
+   "stand": "geldt"
+  },
+  "docs/visie/Ochtendkaart vernieuwd.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Ontwerpvoorstel voor de vernieuwde ochtendkaart; besloten in `docs/beslissingen/2026-10-31-ochtendkaart-vernieuwd.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp Info-blad.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Ontwerpvoorstel van 11 november 2026 voor het blad Je horloge in plaats van het infomenu; besloten in de besluiten over het info-blad.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp Je dag.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Ontwerpvoorstel van 12 november 2026 voor Je dag op Vandaag; besloten in `docs/beslissingen/2026-11-12-je-dag.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp Je week tot nu.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Ontwerpvoorstel van 12 november 2026 voor het blad Je week tot nu; besloten in `docs/beslissingen/2026-11-12-je-week-tot-nu.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp Plekken en routes.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Ontwerpvoorstel van 11 november 2026 voor eigen plekken en bewaarde routes; besloten in `docs/beslissingen/2026-11-11-plekken-en-routes.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp Route en trainingsscherm.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "koppelingen-en-data"
+   ],
+   "kern": "Ontwerpvoorstel van 11 november 2026 voor Route en het scherm vooraf; de Briefing is besloten in `docs/beslissingen/2026-11-11-briefing.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp Stand minimaal.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Ontwerpvoorstel van 12 november 2026 voor Stand in drie regels; besloten in `docs/beslissingen/2026-11-12-stand-minimaal.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp Week minimaal.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Ontwerpvoorstel van 12 november 2026 voor de tab Week; besloten in `docs/beslissingen/2026-11-12-week-minimaal.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp beginner heel licht.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Ontwerpvoorstel van 15 november 2026 voor een beginner die heel licht begint; besloten in `docs/beslissingen/2026-11-15-beginner-tien-procent.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp en gebruik.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Strenge blik van 21 oktober 2026 op hoe de app eruitziet en voelt, van voor de stijl Zee en berg.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp instellingen op een plek.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Technisch ontwerp van 14 november 2026 voor één verklaring per instelling; besloten in `docs/beslissingen/2026-11-15-instellingen-op-een-plek.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp routes wandelen en rugzak.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Ontwerpvoorstel van 15 november 2026 voor lussen bij wandelen en rugzaktraining; stap 1 en 2 besloten in `docs/beslissingen/2026-11-15-routes-wandelen-standaardkeuzes.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp trainingsscherm minimaal.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Ontwerpvoorstel van 12 november 2026 voor één scherm vooraf met acht ontwerpregels; besloten in `docs/beslissingen/2026-11-12-trainingsscherm-en-ontwerpregels.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerprapport Forge.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Ontwerpvoorstel van 1 november 2026 voor een logischer Forge; besloten in `docs/beslissingen/2026-11-02-forge-herinrichting.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerprapport gegevens.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "historie-en-logs"
+   ],
+   "kern": "Ontwerpvoorstel van 1 november 2026 voor rustiger gegevens op Stand, Logboek en de weekterugblik; besloten in `docs/beslissingen/2026-11-02-gegevens-herinrichting.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerprapport instellingen.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Ontwerpvoorstel van 1 november 2026 voor Instellingen; de rondes daarna staan in de besluiten over instellingen van 2 november.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Pictogrammen zwemmen padel voetbal.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Ontwerp voor de pictogrammen van zwemmen, padel en voetbal in stijl C, bouwstap 1 van Sporten die meetellen.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Run in detail.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Ontwerp van 27 oktober 2026 voor het scherm Run in detail; besloten in `docs/beslissingen/2026-10-27-run-in-detail-gegevens.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Slepen in Week.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Ontwerp voor het slepen van een training in Week; besloten in `docs/beslissingen/2026-10-28-slepen-in-week.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Spierpijn en een zware beendag.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Ontwerp voor wat de app doet bij spierpijn op een zware beendag; besloten in `docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Sporten die meetellen.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Ontwerp van 27 oktober 2026 voor sporten die meetellen in belasting en beenindex, met een rol per sport; besloten in de besluiten over sporten.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Techniek en kwaliteit.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Meting van 21 oktober 2026 van techniek en kwaliteit op commit 66641e4.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Toestelstanden in Forge.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Ontwerp voor standen per toestel in Forge; besloten in `docs/beslissingen/2026-11-09-forge-toestelstanden.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Trainingswetenschap.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Visierapport van 21 oktober 2026 over de stap van nette planner naar slimme coach, bekeken vanuit de engine.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Visuele upgrade en nieuwe ideeën.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Ochtendrapport van 22 oktober 2026 met voorstellen voor een rustiger beeld en nieuwe mogelijkheden, van voor Zee en berg.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Vloeiende overgangen.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Ontwerp voor overgangen, trillen en bladen die je vindt; besloten in `docs/beslissingen/2026-10-28-vloeiende-overgangen.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Waarschuwingen in Week.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Ontwerp voor waarschuwingen in woorden in Week; besloten in `docs/beslissingen/2026-10-28-waarschuwingen-in-week.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Werkwijze met Claude.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Voorstel van oktober 2026 voor de werkwijze met specialisten; de punten over een verplichte PR en merge zijn vervangen door `docs/beslissingen/2026-10-21-werkwijze.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Zonder doel.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Ontwerp van 27 oktober 2026 voor trainen zonder doel: richting, weekbudget, golven en terugblik; samengevat in `docs/beslissingen/2026-10-31-richting-en-weekbudget.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/stemgids-concept.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "De stemgids: de regels voor alle teksten van de app, goedgekeurd op 9 november 2026 en vastgelegd in `docs/beslissingen/2026-11-09-stem-van-ascend.md`.",
+   "stand": "geldt"
+  },
+  "docs/werkbriefjes/README.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Wat een werkbriefje is, de vaste vorm en hoe het wordt bijgehouden.",
+   "stand": "geldt"
+  },
+  "docs/werkbriefjes/bediening-en-beweging.md": {
+   "onderwerpen": [
+    "bediening-en-beweging"
+   ],
+   "kern": "Werkbriefje: terugknop en bladen, scrollen en hervatten, tabbalk en lucht, instellingen, haptiek, overgangen en de Android-schil.",
+   "stand": "geldt"
+  },
+  "docs/werkbriefjes/doelen.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "Werkbriefje: de Ascend-tab, labels, conflicten, klaar voor je doel, de GR5-voortgang, een race met doeltijd en Je week zonder doel.",
+   "stand": "geldt"
+  },
+  "docs/werkbriefjes/forge.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Werkbriefje: de sessie met klok en concept, het voorschrift per oefening, bijsturen, het verloop, de spotter en de plaatjes.",
+   "stand": "geldt"
+  },
+  "docs/werkbriefjes/historie-en-logs.md": {
+   "onderwerpen": [
+    "historie-en-logs"
+   ],
+   "kern": "Werkbriefje: historie wordt nooit herschreven, de vijf uitzonderingen en het append-only patroon.",
+   "stand": "geldt"
+  },
+  "docs/werkbriefjes/koppelingen-en-data.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Werkbriefje: intervals.icu, MacroFactor, Health Connect, weer, locatie, de Android-schil en wat ASCEND uit die data leert.",
+   "stand": "geldt"
+  },
+  "docs/werkbriefjes/lichaam-en-herstel.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Werkbriefje: het lichaamsfiguur, hoe voelt je lijf, een zware beendag op vermoeide benen, een korte nacht en wat speelde er.",
+   "stand": "geldt"
+  },
+  "docs/werkbriefjes/lopen-en-tests.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Werkbriefje: hartslag op het horloge, run in detail, de testloop met de tempo's, de rust voor een test en de RPE bij een test.",
+   "stand": "geldt"
+  },
+  "docs/werkbriefjes/planning.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Werkbriefje: hoofddoel, rollen, scheduler, de planningsronde, vrije dagen, tochten en zonder doel.",
+   "stand": "geldt"
+  },
+  "docs/werkbriefjes/week.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Werkbriefje: de Week-tab met waarschuwingen, slepen, ruilen, verplaatsen van een gemiste training, vakanties en de weekterugblik.",
+   "stand": "geldt"
+  }
+ }
+}
