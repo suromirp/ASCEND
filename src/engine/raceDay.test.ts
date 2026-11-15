@@ -95,7 +95,7 @@ describe('het blad voor de race', () => {
     const v = raceDayView({ moment: raceDayMoment([goal({ target: 50 })], '2027-03-17')!, expectedMinutes: 51.5, forecast });
     expect(v.sheet.line).toBe('Over 3 dagen, zaterdag 20 maart');
     expect(v.sheet.sections.map((s) => s.label)).toEqual(['Start', 'Weer thuis rond 10:00', 'Inlopen', 'Tempo per km']);
-    expect(v.sheet.sections[0].lines).toEqual(['10 km. ASCEND rekent met een start om 10:00.']);
+    expect(v.sheet.sections[0].lines).toEqual(['10 km. Gerekend met een start om 10:00.']);
     expect(v.sheet.sections[1].lines[0]).toMatch(/^8 graden/);
     expect(v.sheet.sections[2].lines).toEqual([
       '10 tot 15 minuten rustig joggen.',
@@ -238,11 +238,11 @@ describe('het weer en het startuur', () => {
     const tpl = { id: 'tpl_race', name: 'Wedstrijd', type: 'cardio', roles: ['race'] } as unknown as SessionTemplate;
     const base: RaceDayAppInput = { on: true, goals: [goal({ target: 50 })], today: '2027-03-17', logs: [], planned, templates: [tpl], forecast, weatherPlace: true, expectedMinutes: () => 51.5 };
     // Zaterdag zonder eigen logs: het weekenduur van usualStartHour, hetzelfde als de Briefing.
-    expect(raceDayForApp(base)!.sheet.sections[0].lines[0]).toBe('10 km. ASCEND rekent met een start om 10:00.');
-    expect(raceDayForApp({ ...base, planned: [] })!.sheet.sections[0].lines[0]).toBe(`10 km. ASCEND rekent met een start om ${String(RACE_START_HOUR).padStart(2, '0')}:00.`);
+    expect(raceDayForApp(base)!.sheet.sections[0].lines[0]).toBe('10 km. Gerekend met een start om 10:00.');
+    expect(raceDayForApp({ ...base, planned: [] })!.sheet.sections[0].lines[0]).toBe(`10 km. Gerekend met een start om ${String(RACE_START_HOUR).padStart(2, '0')}:00.`);
     const morningRuns = [1, 2, 3].map((i) => log({ id: `r${i}`, templateId: 'tpl_easy_run', plannedSessionId: undefined, sport: 'running', completedDate: `2027-03-0${i * 2 + 1}`, completedAt: new Date(2027, 2, i * 2 + 1, 8, 45).toISOString(), durationMinutes: 45 }));
     const v = raceDayForApp({ ...base, logs: morningRuns })!;
-    expect(v.sheet.sections[0].lines[0]).toBe('10 km. ASCEND rekent met een start om 08:00.');
+    expect(v.sheet.sections[0].lines[0]).toBe('10 km. Gerekend met een start om 08:00.');
     expect(v.sheet.sections[2].lines[2]).toBe('Begin rond 07:35, klaar 5 tot 10 minuten voor de start.');
   });
 });

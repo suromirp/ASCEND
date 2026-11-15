@@ -114,7 +114,7 @@ describe('de tekst', () => {
     const text = influenceMoveSummary(cause, { restingHr: 58, diff: 8 }, '2026-10-30');
     expect(text).toContain('Je legde vast: alcohol, 3 tot 5 glazen.');
     expect(text).toContain('Vanochtend is je rusthartslag 58, 8 boven je gemiddelde.');
-    expect(text).toContain('ASCEND rekent je tempo\'s uit de uitkomst van deze test.');
+    expect(text).toContain('Je tempo\'s komen uit de uitkomst van deze test.');
     expect(text).toContain('vr 30');
   });
 

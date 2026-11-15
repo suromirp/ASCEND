@@ -169,7 +169,7 @@ export const RACE_DAY_TEXT = {
   reviewEyebrow: 'Terugblik',
   reviewLabel: 'Je race',
   rowLine: 'Weer, inlopen en je tempo',
-  start: (km: string, hour: number) => `${km} km. ASCEND rekent met een start om ${hhmm(hour * 60)}.`,
+  start: (km: string, hour: number) => `${km} km. Gerekend met een start om ${hhmm(hour * 60)}.`,
   noForecast: 'Geen weer: de voorspelling laadde niet.',
   noPlace: 'Geen weer: er is nog geen plaats voor het weer gekozen.',
   notYet: 'Het weer volgt zodra de voorspelling zo ver reikt.',

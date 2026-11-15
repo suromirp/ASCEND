@@ -445,9 +445,9 @@ function TodayContent() {
     <QuietDayCard
       title={mainTiming?.state === 'underway' ? `${mainGoal!.name}, dag ${mainTiming.day} van ${mainTiming.days}` : mainTiming?.state === 'past' ? 'Je hoofddoel ligt achter je' : onHoliday ? 'Vakantie' : allTodayDone ? 'Vandaag geen training' : 'Rust of vrije dag'}
       body={mainTiming?.state === 'underway'
-        ? 'De tocht is je training. Tot het eind plant ASCEND niets.'
+        ? 'De tocht is je training. Tot het eind staat er niets anders gepland.'
         : mainTiming?.state === 'past'
-          ? 'Na je hoofddoel plant ASCEND niets meer. Kies een nieuw doel bij Ascend.'
+          ? 'Na je hoofddoel staat er niets meer gepland. Kies een nieuw doel bij Ascend.'
         : onHoliday
         ? 'Vrij vandaag. Er staat niets op de planning.'
         : allTodayDone

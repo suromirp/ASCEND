@@ -136,7 +136,7 @@ export function influenceMoveSummary(cause: InfluenceMoveCause, morning?: Mornin
       ? 'Een rustig tempo kost na wiet vaak meer hartslag.'
       : 'Een test na zo\'n avond valt vaak trager uit.',
   );
-  parts.push(`ASCEND rekent je tempo's uit de uitkomst van deze test.${targetDate ? ` Op ${short(targetDate)} zegt de uitkomst meer over je.` : ''}`);
+  parts.push(`Je tempo's komen uit de uitkomst van deze test.${targetDate ? ` Op ${short(targetDate)} zegt de uitkomst meer over je.` : ''}`);
   return parts.join(' ');
 }
 
@@ -161,7 +161,7 @@ export function influenceMove(inputs: AdviceInputs, cause: InfluenceMoveCause | 
     sessionId: cause.session.id,
     id,
     title: `${TEST_NAME} verschuiven`,
-    why: 'De testloop is het meetpunt voor je tempo: ASCEND stelt je tempo\'s af op de uitkomst. Eerst een voorstel, pas na Akkoord verandert er iets.',
+    why: 'De testloop is het meetpunt voor je tempo: je tempo\'s volgen uit de uitkomst. Eerst een voorstel, pas na Akkoord verandert er iets.',
   });
   if (!advice?.proposal) return undefined;
   const single = !advice.options || advice.options.length <= 1;

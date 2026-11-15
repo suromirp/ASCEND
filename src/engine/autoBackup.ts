@@ -158,7 +158,7 @@ export function autoBackupFailureText(reason: AutoBackupFailureReason, platform:
   switch (reason) {
     case 'permission':
       return platform === 'app'
-        ? `${lead}: ASCEND mag niet in de map schrijven. Geef toegang bij Vaste map, of maak de back-up nu zelf.`
+        ? `${lead}: geen toegang tot de map. Geef toegang bij Vaste map, of maak de back-up nu zelf.`
         : `${lead}: je browser geeft de map niet meer vrij. Kies hem opnieuw bij Vaste map, of maak de back-up nu zelf.`;
     case 'folder':
       return platform === 'app'
@@ -167,6 +167,6 @@ export function autoBackupFailureText(reason: AutoBackupFailureReason, platform:
     case 'write':
       return `${lead}: het bestand kon niet worden opgeslagen. Kijk of er nog ruimte is, of maak de back-up nu zelf.`;
     case 'timeout':
-      return `${lead}: het duurde te lang. ASCEND probeert het de volgende keer opnieuw, of maak de back-up nu zelf.`;
+      return `${lead}: het duurde te lang. De volgende keer opnieuw, of maak de back-up nu zelf.`;
   }
 }
