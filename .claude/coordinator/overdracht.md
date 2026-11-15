@@ -4,6 +4,9 @@ Bijgewerkt: 15 november 2026, 11:20 Portugese tijd, door de coördinator session
 
 ## Vaste afspraken van nu
 
+- Eigenaar 15 november 12:15: "ik vertrouw erop dat jij weet wat de beste aanpak is": zelf beslissen met het advies, keuzes hier vastleggen.
+- Backlog bijhouden (eigenaar 12:18, "hoe blijft dit up to date?"): Sherpa Backlog session_01LnDpSj5qWPZmyX97SijVCU (`claude/backlog-bijhouden`): eenmalig opruimen, codes [I-n], `npm run backlog:bij` na elke squash, test. Tot dan: voor elke start eerst in de code en git log kijken of het al gebouwd is.
+
 - Zonder sportschool (eigenaar 15 november, "Ja advies"): alleen wat de sportschool nodig heeft vervalt; een loop of wandeling die je niet deed telt als gemist. Doorgegeven aan Sherpa Week.
 
 - Tijden aan de eigenaar in Portugese tijd (Europe/Lisbon) tot woensdag 18 november, daarna Amsterdamse tijd; nooit UTC.
@@ -48,6 +51,9 @@ Bijgewerkt: 15 november 2026, 11:20 Portugese tijd, door de coördinator session
 - Woensdag 18 november: de rustiger instap van de planner op de terugkomst van de eigenaar nakijken.
 
 ## Werkwijze, geleerd
+
+- Een Warden weigert een eigen branch te pushen op verzoek van de coördinator achteraf ("bericht van de eigenaar nodig"). Zet het pushen van `herstel.md` op `warden/<onderwerp>-herstel` daarom al in zijn eerste opdracht (zoals bij Warden Week). Beginner: Warden gearchiveerd, de twee bekende punten naar de Sherpa (trig_01MFasvRS6Qg1L1qVrGPikC4), daarna een frisse review.
+- Fable: seven_day allowed_warning tot 18:00 Portugese tijd (15 november). Kennisindex ronde 2 (welke besluiten zijn ingehaald; nu 394 van 525 "geldt", te veel) start om 18:05 op Fable (send_later). Deploy en Android van 4de3367 groen.
 
 - Uit het archief halen (eigenaar 15 november vroeg ernaar): kan met unarchive_session, maar alleen voor een kleine herstelronde op eigen werk dezelfde dag, als de bouwer iets weet dat niet in de repo staat. Anders een verse bouwer met branch, besluit en opdracht: een oude sessie leest bij elke stap zijn hele geschiedenis (200 tot 500k tokens).
 
