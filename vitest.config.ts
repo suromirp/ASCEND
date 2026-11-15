@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     // De kennisindex (docs/kennisindex/) heeft zijn test naast zijn script, buiten src/.
-    include: ['src/**/*.test.ts', 'scripts/kennisindex/*.test.mjs'],
+    include: ['src/**/*.test.ts', 'scripts/kennisindex/*.test.mjs', 'scripts/backlog/*.test.mjs'],
     setupFiles: ['./src/test/setup.ts'],
     // The storage tests boot the whole app several times over a fake
     // IndexedDB (bootReplay, leaveSync, repeatWeek); 5 s is too tight when

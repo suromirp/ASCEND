@@ -114,6 +114,7 @@ schermen anders zijn en controleert de invarianten (getallen die overal gelijk m
   briefje hier gelden. Dan hoeft hij niet zelf te zoeken.
 - Het doel en de controleerbare criteria, de bestanden als richtpunt, wat niet mag bewegen
   (`planGolden.test.ts`, scheduler, historie).
+- De code van het Inboxpunt (`I-<n>`, uit `docs/backlog.md`): de helper zet `Klaar: I-<n>` (meer codes op één regel mag) in zijn commit. Controleer voor de start met `git log origin/main --grep "I-<n>"` of het punt al gebouwd is.
 - Wat de helper oplevert: kort, Nederlands, per punt gedaan of waarom niet, de uitslag van de
   controles en wat niet gecontroleerd is.
 - Tokens en duur weet een helper zelf niet: de coördinator haalt ze uit de melding na afloop
