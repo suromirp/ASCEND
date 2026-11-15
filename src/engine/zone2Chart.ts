@@ -10,7 +10,7 @@
 // Puur: geen React, geen IndexedDB. Plant niets.
 
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
-import { bandPhrase, formatPace, trendHeadline, WEEKS, type AerobicTrend, type Zone2Measurement } from './aerobicTrend';
+import { bandPhrase, firstRulePhrase, formatPace, trendHeadline, WEEKS, type AerobicTrend, type Zone2Measurement } from './aerobicTrend';
 import { ZONE2_RULES as R } from './zone2Rules';
 
 export interface Zone2ChartDot {
@@ -150,7 +150,7 @@ export function zone2Explanation(chart: Zone2Chart, statement: AerobicTrend['sta
   const carried = o.pieces && chart.pieces > 0 ? `${runs} met samen ${plural(chart.pieces, 'stuk', 'stukken')}` : runs;
   const whole = o.pieces && chart.wholeRuns > 0 ? ` ${chart.wholeRuns === 1 ? 'Eén loop telt' : `${chart.wholeRuns} lopen tellen`} met de hele loop, omdat er geen reeks van de loop is of hij op de loopband was.` : '';
   const oneMeasurement = o.pieces && chart.pieces > chart.runs ? ' Stukken uit dezelfde loop tellen samen als één meting, want ze delen dezelfde dag, slaap en weer.' : '';
-  const need = `Voor een uitspraak over sneller of trager zijn minstens ${R.firstRuns} lopen nodig, verspreid over minstens ${R.firstSpanDays / 7} weken en ${R.firstWeeks} verschillende weken.`;
+  const need = `Voor een uitspraak over sneller of trager zijn minstens ${R.firstRuns} lopen nodig, ${firstRulePhrase()}.`;
   if (chart.state === 'leeg') {
     out.push(`Er is nog geen loop die meetelt in de laatste ${R.lineWeeks} weken. Daarom staat er nog niets over je tempo. ${need}`);
   } else if (chart.state === 'eerste-schatting') {

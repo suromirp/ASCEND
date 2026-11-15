@@ -1313,7 +1313,7 @@ export const FORGE: SettingDef[] = [
         advice: 'twijfel',
         help: 'forgeRirSnel',
         options: [
-          { value: 'twijfel', label: 'Als het anders ging', note: 'Het advies. Na een zware set, minder herhalingen dan gevraagd, ruim boven het bereik of een zwaarder gewicht', short: 'Als het anders ging' },
+          { value: 'twijfel', label: 'Als het anders ging', note: 'Het advies. Na een zware set, minder herhalingen dan gevraagd, ruim boven het bereik of een zwaarder gewicht', short: 'Bij afwijking' },
           { value: 'vaker', label: 'Vaker vragen', note: 'Ook na je eerste en je laatste werkset, ook als alles volgens schema ging', short: 'Vaker vragen' },
           { value: 'uit', label: 'Uit', note: 'Afvinken geeft altijd het doel', short: 'Uit' },
         ],

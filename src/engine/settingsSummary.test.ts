@@ -174,7 +174,7 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-scherm', facts()).checked).toBe(true);
     // Besluit 2026-11-11-forge-kern-zichtbaar: schijven per set standaard uit, Hoeveel over alleen als het anders ging.
     expect(rowSummary('forge-schijven', facts()).checked).toBe(false);
-    expect(rowSummary('forge-rir-snel', facts()).value).toBe('Als het anders ging');
+    expect(rowSummary('forge-rir-snel', facts()).value).toBe('Bij afwijking');
     expect(rowSummary('forge-rir-snel', facts({ settings: { ...facts().settings, strengthModel: { quickRir: false } } }))).toMatchObject({ value: 'Uit', dim: true });
     expect(rowSummary('forge-rir-snel', facts({ settings: { ...facts().settings, strengthModel: { quickRirMode: 'vaker' } } })).value).toBe('Vaker vragen');
     expect(rowSummary('forge-1rm', facts()).checked).toBe(true);
