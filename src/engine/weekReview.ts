@@ -35,6 +35,7 @@ import type { IntensityCounting } from './intensitySettings';
 import { effortMinutes, type EffortMinutes } from './weekEffort';
 import { caughtUpMap } from './catchUp';
 import { raceDatesOf } from './raceWindow';
+import { isPausedFor } from './sessionStatus';
 
 export interface WeekReview {
   weekStart: string;
@@ -44,6 +45,12 @@ export interface WeekReview {
   minutes: number;
   perSport: string[]; // "Hardlopen: 18,4 km, 320 m D+"
   missed: string[]; // template names
+  // Overgeslagen: telt mee als gepland en niet gedaan, maar heet niet gemist (dezelfde rijen als Week, die
+  // "overgeslagen" zeggen). Vervallen: voorbij en niet gedaan in een pauze (ziek, weg, zonder sportschool wat de
+  // sportschool nodig heeft, de afbouw na een race), telt niet mee. Samen met gedaan en gemist sluit zo de som
+  // (Pathfinder, 15 november, I-40).
+  skipped?: string[];
+  lapsed?: string[];
   missedTemplateIds: string[];
   keyPlanned: number; // 1 als de week een sleuteltraining heeft (engine/keySession.ts#weekKeySession), anders 0
   keyDone: number; // 1 als die gedaan is
@@ -65,6 +72,9 @@ export interface WeekReview {
   next?: { title: string; note?: string; minutes: number; key?: string; label?: string; rest?: boolean };
   label?: string; // de naam van deze week, zoals bij next
   extraLogged?: number; // logs van deze week die niet bij een geplande training van deze week horen
+  // De week loopt en heeft een programma: dan staat in Week de rij Week opnieuw plannen (pages/Week.tsx, replanOn), en
+  // verwijst de regel Gemist ernaar (docs/beslissingen/2026-11-15-gemist-en-opnieuw-plannen.md).
+  replan?: boolean;
   advice: string[];
   weeklyCheck?: WeeklyHealthCheck;
 }
@@ -150,6 +160,17 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // haalt, zit al niet in `trainings`.
   const missedSessions = trainings.filter((s) => !loggedIds.has(s.id) && s.status !== 'skipped' && s.scheduledDate < asOf).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
   const minutes = weekDoneMinutes(logs, byId, weekStart, inputs.plannedById);
+  const nameOf = (s: PlannedSession) => byId.get(s.templateId)?.name ?? 'een training';
+  const byDay = (a: PlannedSession, b: PlannedSession) => a.scheduledDate.localeCompare(b.scheduledDate);
+  // Overgeslagen en meegeteld: de rest van "van n" naast gedaan, gemist en wat nog komt.
+  const skippedSessions = trainings.filter((s) => s.status === 'skipped' && !loggedIds.has(s.id)).sort(byDay);
+  // Vervallen: de rijen die Week "vervallen" noemt (engine/sessionStatus.ts, 'away'). Wat een periode liet vallen staat
+  // niet in Week (de band zegt het), een rustdag is geen training, en voor de start van het programma telt niets.
+  const races = raceDatesOf(plannedSessions, byId);
+  const pause = { leave: inputs.leavePeriods, templates: byId, illness: illnessEpisodes, races, openDraft: inputs.openDraft };
+  const lapsedSessions = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd && s.scheduledDate < asOf
+    && !isRest(s) && !loggedIds.has(s.id) && s.status !== 'skipped' && s.leave?.role !== 'dropped'
+    && (!program || s.scheduledDate >= program.startDate) && isPausedFor(s, pause, asOf)).sort(byDay);
 
   // Per sport: kilometers and climbing, from what was logged.
   const sportTotals = new Map<Sport, { km: number; dplus: number }>();
@@ -289,6 +310,9 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     minutes,
     perSport,
     missed: missedNames,
+    skipped: skippedSessions.map(nameOf),
+    lapsed: lapsedSessions.map(nameOf),
+    replan: running && !!program,
     missedTemplateIds: missedSessions.map((s) => s.templateId),
     keyPlanned: weekKey ? 1 : 0,
     keyDone: weekKey && loggedIds.has(weekKey.id) ? 1 : 0,

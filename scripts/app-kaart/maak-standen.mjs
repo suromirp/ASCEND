@@ -258,12 +258,14 @@ function metConcept(state) {
 // Zonder sportschool van dinsdag 27 tot en met vrijdag 30 oktober (besluit 2026-11-15-week-telling-zonder-sportschool.md):
 // een rustige duurloop op dinsdag die niet gedaan is (gemist), Benen A op woensdag (sportschool, vervallen), de testloop op
 // donderdag (gemist) en Bovenlichaam B op vrijdag overgeslagen. Voor de invariant: het getal op "Je hebt n training
-// gemist" is het aantal dagrijen die gemist zeggen. Alles nagemaakt.
+// gemist" is het aantal dagrijen die gemist zeggen. Bovenlichaam A van maandag deed je pas op dinsdag: de rij blijft op
+// maandag en zegt "gedaan di 27" (I-43). Alles nagemaakt.
 function zonderSportschool(state) {
   meta(state, 'settings').value.leavePeriods = [{ id: 'leave_kaart_gym', kind: 'no_gym', startDate: '2026-10-27', endDate: '2026-10-30' }];
   const overgeslagen = eigen('planned_kaart_gym_2', 'tpl_upper_b', '2026-10-30', 8);
   overgeslagen.value.status = 'skipped';
-  winkel(state, 'plannedSessions').records.push(eigen('planned_kaart_gym_1', 'tpl_easy_run', '2026-10-27', 7), overgeslagen);
+  winkel(state, 'plannedSessions').records.push(eigen('planned_kaart_gym_1', 'tpl_easy_run', '2026-10-27', 7), overgeslagen, eigen('planned_kaart_gym_3', 'tpl_upper_a', '2026-10-26', 9));
+  winkel(state, 'sessionLogs').records.push({ value: { id: 'fake_kaart_gym_3', plannedSessionId: 'planned_kaart_gym_3', templateId: 'tpl_upper_a', type: 'strength', completedDate: '2026-10-27', completedAt: '2026-10-27T18:30:00Z', variant: 'full', durationMinutes: 50, source: 'manual' } });
 }
 
 export const STANDEN = {

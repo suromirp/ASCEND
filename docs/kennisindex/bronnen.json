@@ -3135,6 +3135,13 @@
    "kern": "Een wandelworkout naar het horloge krijgt geen zonedoel maar een regel met vaste bpm uit je hardloopzones in de beschrijving, omdat intervals.icu voor wandelen geen eigen zones heeft.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-15-gemist-en-opnieuw-plannen.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Week en de weekterugblik zeggen over gemist hetzelfde: wat je miste doe je niet dubbel, de rest gaat terug naar het plan met Week opnieuw plannen; de terugblik sluit de som met Overgeslagen en Vervallen, het inhaaladvies noemt dagen in plaats van een eigen aantal, en een rij zegt \"gedaan di 27\" als de dag van het log anders is.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md": {
    "onderwerpen": [
     "planning",

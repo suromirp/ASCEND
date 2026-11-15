@@ -479,7 +479,7 @@ export const INVARIANTEN = [
       for (const w of alleSchermen.filter((x) => x === 'week' || (x.startsWith('week-') && !x.endsWith('-blad')))) {
         const t = k(w);
         if (!/\[knop: Week opnieuw plannen/.test(t)) continue;
-        const kaart = t.match(/Je hebt\s(\d+)\straining(?:en)?\sgemist/);
+        const kaart = t.match(/Je hebt\s(?:deze week\s)?(\d+)\straining(?:en)?\sgemist/);
         const n = kaart ? Number(kaart[1]) : 0;
         const gemist = rijen(t).filter(zegtGemist).length;
         if (gemist !== n) uit.push(`${w}: de kaart zegt ${n} gemist, ${gemist} dagrijen zeggen gemist`);
@@ -497,6 +497,74 @@ export const INVARIANTEN = [
       const gemisteNamen = r.filter(zegtGemist).map((x) => x.match(dagRij)[1]);
       if (namen.length !== gemisteNamen.length) uit.push(`weekterugblik-zonder-sportschool noemt ${namen.length} onder Gemist, Week ${gemisteNamen.length}`);
       for (const nm of namen) if (!gemisteNamen.includes(nm)) uit.push(`weekterugblik-zonder-sportschool noemt ${nm} gemist, Week niet`);
+      return uit;
+    },
+  },
+  {
+    // De weekterugblik sluit de som (I-40, Pathfinder 15 november): naast Gemist noemt hij Overgeslagen (telt mee in
+    // "van n") en Vervallen (telt niet mee), met dezelfde trainingen als de rijen in Week die dat woord zeggen. Eerst
+    // noemde hij alleen gemist, terwijl de telling overgeslagen meetelde.
+    naam: 'De weekterugblik noemt overgeslagen en vervallen zoals Week',
+    controleer: (k) => {
+      const uit = [];
+      const dagRij = /^\[knop: (?!Verplaats of ruil)(.+?)(?:Vandaag|(?:Ma|Di|Wo|Do|Vr|Za|Zo) \d{1,2})·.*\]$/;
+      const rijen = k('week-zonder-sportschool').split('\n').filter((r) => dagRij.test(r));
+      const blik = k('weekterugblik-zonder-sportschool');
+      for (const [woord, regel] of [['overgeslagen', /^Overgeslagen: (.+)$/m], ['vervallen', /^Vervallen: (.+), telt niet mee$/m]]) {
+        const inWeek = rijen.filter((r) => new RegExp(`· ${woord}`).test(r)).map((r) => r.match(dagRij)[1]);
+        const m = blik.match(regel);
+        // Nooit stil leeg: de stand heeft van elk minstens één rij.
+        if (inWeek.length === 0) { uit.push(`week-zonder-sportschool heeft geen rij die ${woord} zegt: de invariant toetst niets`); continue; }
+        if (!m) { uit.push(`weekterugblik-zonder-sportschool noemt ${woord} niet, Week wel (${inWeek.join(', ')})`); continue; }
+        for (const nm of inWeek) if (!m[1].includes(nm)) uit.push(`weekterugblik-zonder-sportschool noemt ${nm} niet onder ${woord}, Week wel`);
+      }
+      return uit;
+    },
+  },
+  {
+    // De kaart in Week en het inhaaladvies tellen niet langs elkaar heen (I-41): de kaart zegt "deze week", het advies
+    // noemt de dagen en geen eigen aantal ("Gemist sinds vr 13 november: ..."). Eerst telde de titel drie dagen terug
+    // en de kaart de hele week, twee getallen naast elkaar. Gemist heeft één richting (I-42): de kaart zegt dat je het
+    // niet dubbel doet, en de terugblik van een lopende week verwijst naar Week opnieuw plannen
+    // (docs/beslissingen/2026-11-15-gemist-en-opnieuw-plannen.md).
+    naam: 'Gemist: één telling per scherm en één richting',
+    controleer: (k, schermen, alleSchermen = schermen) => {
+      const uit = [];
+      let kaarten = 0;
+      for (const s of alleSchermen) {
+        const t = k(s);
+        for (const r of t.split('\n')) if (/(?:^|\W)\d+ trainingen gemist:/.test(r)) uit.push(`${s}: een titel telt zelf gemist: ${r}`);
+        const kaart = t.match(/Je hebt[^\n\]]*gemist[^\n\]]*/);
+        if (kaart) {
+          kaarten++;
+          if (!/Je hebt deze week \d+ trainingen? gemist/.test(kaart[0])) uit.push(`${s}: de kaart zegt niet over welke week hij telt: ${kaart[0]}`);
+          if (!/niet dubbel/.test(kaart[0])) uit.push(`${s}: de kaart zegt niet dat je het niet dubbel doet: ${kaart[0]}`);
+        }
+        if (s.startsWith('weekterugblik') && /^### Je week tot nu$/m.test(t)) {
+          const g = t.match(/^Gemist\n(.+)$/m);
+          if (g && !/Week opnieuw plannen/.test(g[1])) uit.push(`${s}: Gemist in een lopende week verwijst niet naar Week opnieuw plannen: ${g[1]}`);
+        }
+      }
+      if (kaarten === 0) uit.push('geen scherm met de kaart Je hebt n training gemist: de invariant toetst niets (stand zonder-sportschool)');
+      return uit;
+    },
+  },
+  {
+    // Een training op een andere dag gedaan dan gepland staat in Week op de geplande dag en zegt waar hij gedaan is
+    // (I-43): "gedaan di 27", nooit de eigen dag van de rij.
+    naam: 'Gedaan op een andere dag noemt die dag, nooit de eigen dag',
+    controleer: (k, schermen, alleSchermen = schermen) => {
+      const uit = [];
+      let gezien = 0;
+      for (const s of alleSchermen.filter((x) => x === 'week' || x.startsWith('week-'))) {
+        for (const r of k(s).split('\n')) {
+          const m = r.match(/^\[knop: .+?((?:Ma|Di|Wo|Do|Vr|Za|Zo) \d{1,2})·.*· gedaan ([a-z]{2} \d{1,2})/);
+          if (!m) continue;
+          gezien++;
+          if (m[1].toLowerCase() === m[2]) uit.push(`${s}: een rij zegt gedaan op zijn eigen dag: ${r}`);
+        }
+      }
+      if (gezien === 0) uit.push('geen enkele rij "gedaan <dag>" in Week: de invariant toetst niets (stand zonder-sportschool)');
       return uit;
     },
   },

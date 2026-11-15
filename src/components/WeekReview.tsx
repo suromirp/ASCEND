@@ -6,7 +6,7 @@ import { useAppData } from '../state/AppDataContext';
 import { buildWeekReview, type WeekReview } from '../engine/weekReview';
 import { weekReviewCardShown } from '../engine/overviewSettings';
 import { weekHighlights } from '../engine/weekHighlights';
-import { attentionLines, nextWeekLine, sportLines, weekCountLine } from '../engine/weekGlance';
+import { attentionLines, nextWeekLine, sportLines, weekCountLine, weekRestLines } from '../engine/weekGlance';
 import { looseLogsOfWeek, weekLogsOf } from '../engine/weekLogs';
 import { intentionForWeek } from '../engine/weeklyQuestion';
 import { addDays, formatDateNL, formatHoursMinutesNL, formatShortDayNL, todayISO } from '../utils/dates';
@@ -114,6 +114,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
   const muscle = useMountainMuscleProposal({ active: reviewShowsMuscleProposal(review.weekStart, today) });
   const intention = intentionForWeek(settings.weeklyIntentions, review.weekStart);
   const attention = attentionLines(review);
+  const restLines = weekRestLines(review, { missedShown: attention.some((a) => a.key === 'missed') });
   const next = review.next ? nextWeekLine(review.next) : null;
   const weekEnd = addDays(review.weekStart, 6);
   const weekSessions = plannedSessions.filter((s) => s.scheduledDate >= review.weekStart && s.scheduledDate <= weekEnd);
@@ -149,7 +150,10 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
               <>
                 <div className="mt-4 flex flex-col gap-3">
                   <WeekStrip plain loose={looseLogsOfWeek(sessionLogs, plannedSessions, review.weekStart)} weekStart={review.weekStart} sessions={weekSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
-                  <p className="font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{weekCountLine(review)}</p>
+                  <div>
+                    <p className="font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{weekCountLine(review)}</p>
+                    {restLines.map((line) => <p key={line} className="mt-0.5 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>)}
+                  </div>
                 </div>
 
                 {attention.length > 0 && (

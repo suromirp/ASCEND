@@ -127,7 +127,10 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
   const names = missed.map((m) => m.template.name);
   // Een naam met "en" erin ("Heuvelsprints en afdalen") maakt een opsomming met "en" onleesbaar; dan alleen komma's.
   const list = (xs: string[]) => (xs.length === 1 ? xs[0] : xs.some((x) => / en /.test(x)) ? xs.join(', ') : `${xs.slice(0, -1).join(', ')} en ${xs.at(-1)}`);
-  const title = missed.length === 1 ? `${names[0]} van ${formatWeekdayDateNL(missed[0].s.scheduledDate)} gemist` : `${missed.length} trainingen gemist: ${list(names)}`;
+  // De titel zegt over welke dagen hij gaat en noemt geen eigen aantal: het advies kijkt drie dagen terug (ook over de
+  // weekgrens), de kaart in Week telt deze week. Twee getallen naast elkaar lazen als twee tellingen (Pathfinder,
+  // 15 november, I-41).
+  const title = missed.length === 1 ? `${names[0]} van ${formatWeekdayDateNL(missed[0].s.scheduledDate)} gemist` : `Gemist sinds ${formatWeekdayDateNL(missed[0].s.scheduledDate)}: ${list(names)}`;
   const effect = [
     caughtUp.length > 0 ? `${caughtUp.join('; ')}.` : '',
     dropped.length > 0 ? `${list(dropped)} ${dropped.length === 1 ? 'vervalt' : 'vervallen'}. De rest van je week blijft zoals gepland.` : '',
