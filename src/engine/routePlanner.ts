@@ -569,6 +569,11 @@ export function terrainFound(terrain: NearbyTerrain | undefined): TerrainFound |
 
 export const NO_PATH_AT_START = 'Bij je startpunt ligt geen pad of weg die de routeplanner kent. Kies een startpunt aan een weg.';
 
+// Wat de training aan hoogtemeters vraagt, voor elke zin. Bij een wandeltraining kan dat meer zijn dan
+// waar de planner op mikt (`ascentM`, wat in de duur past; engine/hikeTarget.ts): een zin noemt nooit het
+// ingekorte getal als wat de training vraagt.
+export const askedAscent = (target: RouteTarget): number => target.askedAscentM ?? target.ascentM;
+
 // Beide lussen, de avontuurlijke eerst (zijn lijn is de reserve voor Simpel). Gooit nooit: elke
 // uitkomst is een lus of een reden.
 export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<RoutePlans> {
@@ -578,7 +583,8 @@ export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<R
     if (!o.ok) return o;
     const notice = ascentNotice(o.proposal, input.target, found);
     // Vraagt de training hoogtemeters, dan weet de lus dat: zijn getal staat er dan altijd bij.
-    const asks = input.target.ascentM >= MIN_ASCENT_TARGET_M ? { targetAscentM: input.target.ascentM } : {};
+    const asked = askedAscent(input.target);
+    const asks = asked >= MIN_ASCENT_TARGET_M ? { targetAscentM: asked } : {};
     return notice || asks.targetAscentM !== undefined ? { ok: true, proposal: { ...o.proposal, ...asks, ...(notice ? { notice } : {}) } } : o;
   };
   const adventure = await safe(proposeAdventure(input, route));
@@ -673,9 +679,10 @@ function noHillLine(found: TerrainFound): string {
 // de feiten van de lus. Zonder hoogtemeters in de training, of bij een lus die ze haalt: geen
 // melding. "Dichtbij" en niet "binnen 3 km": alleen de dichtstbijzijnde heuvels krijgen een hoogte.
 export function ascentNotice(p: Pick<RouteProposal, 'ascentM'>, target: RouteTarget, found?: TerrainFound): string | undefined {
-  if (target.ascentM < MIN_ASCENT_TARGET_M || p.ascentM >= target.ascentM * SHORT_ASCENT) return undefined;
+  const asked = askedAscent(target);
+  if (asked < MIN_ASCENT_TARGET_M || p.ascentM >= asked * SHORT_ASCENT) return undefined;
   const m = (v: number) => `${formatNumberNL(round10(v), 0)} m`;
-  const loop = `Deze lus stijgt ${m(p.ascentM)}; de training vraagt ${m(target.ascentM)}.`;
+  const loop = `Deze lus stijgt ${m(p.ascentM)}; de training vraagt ${m(asked)}.`;
   if (!found) return loop;
   if (found.hills > 0 && found.tallestM !== undefined) return `De hoogste helling dichtbij ligt ${formatNumberNL(Math.round(found.tallestM), 0)} m boven je plek. ${loop}`;
   return `${noHillLine(found)} ${loop}`;

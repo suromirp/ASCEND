@@ -4,6 +4,7 @@
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { isSoreness } from './injuryKind';
 import { isIllnessDay } from './illness';
+import { isTaperDay, raceDatesOf } from './raceWindow';
 import { dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL, legHeavyDayBefore, legSpacingDays } from './scheduler';
 import { addDays, daysBetween, mondayOfWeek, weekDates, formatWeekdayDateNL } from '../utils/dates';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
@@ -121,10 +122,12 @@ export function injuryAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
 // loads and progression stay in MacroFactor. Effect: a hint.
 export function strengthAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  // Kracht uit de afbouw van een race die er al was, telt niet als gemist (engine/raceWindow.ts).
+  const races = raceDatesOf(inputs.plannedSessions, templateById);
   const window = inputs.plannedSessions.filter((s) => {
     const t = templateById.get(s.templateId);
     return t?.type === 'strength' && s.status !== 'skipped' && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 14
-      && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf);
+      && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf) && !isTaperDay(s.scheduledDate, races, inputs.asOf);
   });
   const done = window.filter((s) => isDone(s, inputs.logs, loggedIds)).length;
   const missed = window.length - done;

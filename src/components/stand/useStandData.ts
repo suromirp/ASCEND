@@ -14,6 +14,7 @@ import { fatigueWord, legFatigueOn } from '../../engine/legFatigue';
 import { restWeekState } from '../../engine/restWeek';
 import { computeCurrentStreak } from '../../engine/streak';
 import { leftOutOfCount } from '../../engine/weekLogs';
+import { raceDatesOf } from '../../engine/raceWindow';
 import { goalTiming, typicalDayValue } from '../../engine/goalRoute';
 import { mainGoal } from '../../engine/mainGoal';
 import { mondayOfWeek } from '../../utils/dates';
@@ -66,7 +67,7 @@ export function useStandData() {
     return buildWeekReview({ plannedById: plannedByIdOf(planned), weekStart: mondayOfWeek(today), plannedSessions: planned, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, heartRate: settings.heartRate, intensityCounting: counting, keyFocus });
   }, [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, settings.heartRate, counting, keyFocus]);
   const streak = useMemo(
-    () => computeCurrentStreak(plannedSessions, sessionLogs, { templateById, programStart: program?.startDate, illnessEpisodes: settings.illnessEpisodes, leftOut: leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)) }) }),
+    () => computeCurrentStreak(plannedSessions, sessionLogs, { templateById, programStart: program?.startDate, illnessEpisodes: settings.illnessEpisodes, leftOut: leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)), races: raceDatesOf(plannedSessions, templateById) }) }),
     [plannedSessions, sessionLogs, templateById, program?.startDate, settings.illnessEpisodes, settings.leavePeriods, planChangeLog, today],
   );
   const rhythm = useMemo(() => buildRhythm({ adherence, thisWeek, streak }), [adherence, thisWeek, streak]);

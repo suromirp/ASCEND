@@ -10,7 +10,7 @@ import { resolveSky } from '../skySettings';
 import { resolveLegEase } from '../legEaseSettings';
 import { resolveStrengthSettings } from '../strengthSettings';
 import { resolveWatchHrMode } from '../watchHeartRate';
-import type { Blocker } from './types';
+import type { Blocker, ChoiceDef } from './types';
 
 const strength = (s: AppSettings) => resolveStrengthSettings(s.strengthModel);
 
@@ -58,3 +58,8 @@ export const B = {
   skyAuto: { ok: (s) => resolveSky(s).sky === 'auto', reason: 'Zichtbaar zodra Lucht bovenaan op Automatisch staat', parent: 'lucht' },
   folder: { ok: (_s, c) => c.folderSupported, reason: 'Zichtbaar zodra je browser een vaste map kan onthouden of ASCEND als Android-app draait', parent: 'backup' },
 } satisfies Record<string, Blocker>;
+
+// Een keuze met haar eigen typen (de waarden van de opties), zodat CHOICES.<sleutel> smal getypeerd blijft.
+export function def<T extends string | number>(d: ChoiceDef<T>): ChoiceDef<T> {
+  return d;
+}

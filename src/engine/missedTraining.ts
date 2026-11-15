@@ -23,6 +23,7 @@ import { isHandLog } from './activityImport';
 import { fitsChosenWayLog, isLooseSourceLog, sameLinkKind, templateKind } from './looseLog';
 import { daysBetween, formatDateNL, weekdayLongNL } from '../utils/dates';
 import { isPausedDay } from './sessionStatus';
+import { isTaperDay, raceDatesOf } from './raceWindow';
 
 type MissedChoice = 'ask' | 'auto' | 'off';
 type MissedDays = 1 | 2 | 3;
@@ -231,6 +232,10 @@ export function planMissed(input: MissedInput): MissedPlan {
     .filter((m) => age(m.session) >= 1 && age(m.session) <= MISSED_MAX_AGE_DAYS)
     .filter((m) => !isIllnessDay(m.session.scheduledDate, illnessEpisodes, today) && !isAwayDay(m.session.scheduledDate, leavePeriods, awayDays))
     .sort((a, b) => a.session.scheduledDate.localeCompare(b.session.scheduledDate) || a.session.order - b.session.order || a.session.id.localeCompare(b.session.id));
+  // Een training uit de afbouw voor een race die er al was, vervalt: geen vraag en niets vanzelf (engine/raceWindow.ts).
+  // Een log van je horloge die erbij hoort mag nog gekoppeld worden.
+  const races = raceDatesOf(input.plannedSessions, templateById);
+  const taperIds = new Set(recent.filter((m) => isTaperDay(m.session.scheduledDate, races, today)).map((m) => m.session.id));
   // Wat voor een ziekmelding of vakantie nog open stond, krijgt geen vraag meer; het blijft gemist.
   const beforePauseIds = new Set(recent.filter((m) => !!pauseSince(m.session.scheduledDate, today, illnessEpisodes, leavePeriods)).map((m) => m.session.id));
   // De kaart Vervallen noemt alleen wat Week Vervallen noemt: voorbij, zonder log en binnen de pauze
@@ -257,7 +262,7 @@ export function planMissed(input: MissedInput): MissedPlan {
 
   // Met een log die erbij kan horen komt geen vraag en niets vanzelf: eerst het koppelvoorstel.
   // Wat een vakantie of tocht neerzette, verplaatste of liet gaan (`leave`) gaat via zijn eigen weg: geen vraag en niets vanzelf.
-  const due = open.filter((m) => !links.has(m.session.id) && !beforePauseIds.has(m.session.id) && age(m.session) >= settings.days && !memory.auto.includes(m.session.id) && !m.session.leave);
+  const due = open.filter((m) => !links.has(m.session.id) && !beforePauseIds.has(m.session.id) && !taperIds.has(m.session.id) && age(m.session) >= settings.days && !memory.auto.includes(m.session.id) && !m.session.leave);
   const autoSkip = settings.choice === 'auto' ? due.filter(freeToSkip) : [];
   const autoIds = new Set(autoSkip.map((m) => m.session.id));
   const asks = settings.choice === 'off' ? [] : due.filter((m) => !autoIds.has(m.session.id) && !memory.notNow.includes(m.session.id));

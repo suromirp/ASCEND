@@ -1,9 +1,11 @@
 // ASCEND: wat een looptraining van een route vraagt (afstand en hoogtemeters), en de keuzes van de
 // instelling Route voorstellen. De afstand komt uit de training zelf, of uit de duur en je tempo
 // (het echte tempo van je laatste lopen, anders het tempo uit je test, anders een rustig
-// standaardtempo). Pure: geen React, geen IndexedDB. Het verandert de planning nooit.
+// standaardtempo). Een wandeltraining is een duur, geen afstand: die gaat door engine/hikeTarget.ts
+// (docs/visie/Ontwerp routes wandelen en rugzak.md). Pure: geen React, geen IndexedDB. Het verandert
+// de planning nooit.
 
-import type { SessionLog, SessionTemplate } from '../models/training';
+import type { SessionLog, SessionTemplate, TemplateRole } from '../models/training';
 import type { Program } from '../models/program';
 import type { RoutePoint, RouteStyle, RouteTarget } from '../models/route';
 import type { PaceRange } from './racePaces';
@@ -11,7 +13,13 @@ import { progressionTarget } from './programLayout';
 import { recentRunPace } from './recentRunPace';
 import { templateSport } from './sports';
 import { hasRole } from './templateRoles';
-import { getModality, modalitySport } from '../data/modalities';
+import { climbPace, type ClimbPaceState } from './climbPace';
+import { walkRates, walkTarget } from './hikeTarget';
+import { askedAscent } from './routePlanner';
+import { leaveDays } from './leave';
+import type { LeavePeriod } from '../models/leave';
+import { defaultRolesOf } from '../data/templateRoles';
+import { getModalities, getModality, modalitySport } from '../data/modalities';
 
 // Zonder eigen lopen en zonder test: 6:30 per kilometer, een rustig tempo.
 export const DEFAULT_PACE_SEC_KM = 390;
@@ -22,8 +30,46 @@ export const MAX_ROUTE_KM = 40;
 
 export const resolveRouteStyle = (raw: unknown): RouteStyle => (raw === 'simple' ? 'simple' : 'adventure');
 
-// Een route is er voor elke looptraining uit je planning, niet voor kracht of een andere sport.
-export const wantsRoute = (template: SessionTemplate | undefined): boolean => !!template && template.type !== 'strength' && templateSport(template) === 'running';
+// Een opgeslagen sjabloon van voor een rol kent hem nog niet: dan ook de rollen van zijn id (zoals
+// engine/trainingKind.ts).
+const carries = (t: SessionTemplate, role: TemplateRole) => hasRole(t, role) || defaultRolesOf(t.id).includes(role);
+
+// Een wandeltraining die een lus krijgt: een tocht, wandeldag, rugzakwandeling of klimtraining te voet
+// ('walk'), of een herstelwandeling ('recovery', alleen na een tik). Trap af (rol descent) is een plek,
+// geen lus. Een herstel is een wandeling als hij de keuze Herstelwandeling kent, dezelfde regel als
+// engine/trainingPlace.ts#defaultPlace. De soort komt uit het sjabloon, nooit uit een tempo.
+export type WalkKind = 'walk' | 'recovery';
+export function walkKind(template: SessionTemplate | undefined): WalkKind | undefined {
+  if (!template || template.type === 'strength') return undefined;
+  if (template.type === 'recovery') return getModalities(template.id)?.some((m) => m.key === 'recovery_walk') ? 'recovery' : undefined;
+  if (templateSport(template) !== 'hiking' || carries(template, 'descent')) return undefined;
+  return 'walk';
+}
+
+// Een route is er voor elke looptraining en elke wandeltraining uit je planning (walkKind), niet voor
+// kracht of een andere sport.
+export const wantsRoute = (template: SessionTemplate | undefined): boolean =>
+  !!template && template.type !== 'strength' && (templateSport(template) === 'running' || walkKind(template) !== undefined);
+
+// Een wandeling langer dan dit zoekt nooit vanzelf: de heuvels komen uit een cache van 3 km rond je plek,
+// en voor een lus boven ongeveer 12 km is dat krap (ontwerp hoofdstuk 5). Na een tik wel.
+export const AUTO_SEARCH_MAX_WALK_MIN = 180;
+
+// Mag de Briefing bij het openen zelf een lus zoeken, als de instelling Lus zoeken dat zegt? Een
+// herstelwandeling krijgt een lus alleen na een tik (advies, vraag 3 aan de eigenaar), tenzij de keuze
+// Route bij wandelen (stap 5, nog zonder rij) 'withRecovery' is. Afwezig of onbekend: het advies.
+// Een wandeling boven AUTO_SEARCH_MAX_WALK_MIN (`target.minutes`) zoekt alleen na een tik.
+export function searchesOnOpen(template: SessionTemplate | undefined, target?: Pick<RouteTarget, 'minutes'>, walkRoute?: unknown): boolean {
+  const kind = walkKind(template);
+  if (kind === 'recovery' && walkRoute !== 'withRecovery') return false;
+  if (kind && target?.minutes !== undefined && !(target.minutes <= AUTO_SEARCH_MAX_WALK_MIN)) return false;
+  return true;
+}
+
+// Een dag van een tocht in je planning (Vrij en weg, soort trek) krijgt geen lus: je loopt je etappe.
+export function isTrekDay(periods: LeavePeriod[] | undefined, date: string): boolean {
+  return leaveDays(periods).get(date)?.kind === 'trek';
+}
 
 // Hoort er een route bij deze training op deze plek (Waar train je?)? Alleen buiten en te voet: op de
 // loopband, binnen of op de fiets is een looplus zinloos (eigenaar, 11 november). Zonder keuze, of met
@@ -44,9 +90,27 @@ export interface RouteTargetInput {
   logs?: SessionLog[];
   // Het tempo uit je test voor deze training, als dat er is.
   testPace?: PaceRange;
+  // Wandelen: je lichaamsgewicht (weightTrend.ts#loadBodyKg), voor de rugzak op je eigen klimtempo;
+  // afwezig: de tijd wordt niet omgerekend.
+  bodyKg?: number;
+  // Wandelen: je klimtempo; afwezig rekent het uit `logs`.
+  climb?: ClimbPaceState;
+  // Wandelen, de keuzes die in stap 5 instelbaar worden (afwezig of onbekend: het advies):
+  // Wandeltempo voor routes ('own' of 'norm', hikeTarget.ts#resolveWalkPace) en Als duur en
+  // hoogtemeters botsen ('duration' of 'ascent', hikeTarget.ts#resolveWalkClash).
+  walkPace?: unknown;
+  walkClash?: unknown;
 }
 
-export function routeTarget({ template, date, program, logs = [], testPace }: RouteTargetInput): RouteTarget {
+const clampKm = (km: number) => Math.min(MAX_ROUTE_KM, Math.max(MIN_ROUTE_KM, Math.round(km * 2) / 2));
+// Een wandeling heeft geen ondergrens van 2 km: bij duur eerst zou een korte wandeling anders te lang
+// worden. Wel nooit korter dan de kortste lus van Korter (routeAdjust.ts#MIN_LOOP_KM, 1 km).
+export const MIN_WALK_KM = 1;
+const clampWalkKm = (km: number) => Math.min(MAX_ROUTE_KM, Math.max(MIN_WALK_KM, Math.round(km * 2) / 2));
+
+export function routeTarget(input: RouteTargetInput): RouteTarget {
+  if (walkKind(input.template)) return walkRouteTarget(input);
+  const { template, date, program, logs = [], testPace } = input;
   const step = progressionTarget(template, program, date);
   const minutes = step?.minutes ?? template.durationVariants.full;
   const fixedKm = template.cardioTarget?.targetDistanceKm ?? template.outdoorTarget?.targetDistanceKm;
@@ -54,10 +118,32 @@ export function routeTarget({ template, date, program, logs = [], testPace }: Ro
   const range = recent ?? testPace;
   const pace = range && range.fast > 0 && range.slow > 0 ? (range.fast + range.slow) / 2 : DEFAULT_PACE_SEC_KM;
   const rawKm = fixedKm ?? (minutes * 60) / pace;
-  const distanceKm = Math.min(MAX_ROUTE_KM, Math.max(MIN_ROUTE_KM, Math.round(rawKm * 2) / 2));
+  const distanceKm = clampKm(rawKm);
   const asked = step?.step.elevationGainM ?? template.outdoorTarget?.targetElevationM;
   const ascentM = asked ?? (hasRole(template, 'hills') ? Math.round((minutes * HILL_ASCENT_PER_MIN) / 10) * 10 : 0);
   return { distanceKm, ascentM: Math.max(0, ascentM) };
+}
+
+// Een wandeltraining: de duur, de hoogtemeters en de rugzak uit de stap van de week (of het sjabloon),
+// naar een afstand en de hoogtemeters die in de duur passen (hikeTarget.ts#walkTarget). De duur is
+// leidend; een afstand op het sjabloon telt hier niet. `ascentM` is waar de planner op mikt,
+// `askedAscentM` wat de training vraagt.
+function walkRouteTarget({ template, date, program, logs = [], bodyKg, climb, walkPace, walkClash }: RouteTargetInput): RouteTarget {
+  const step = progressionTarget(template, program, date);
+  const minutes = step?.minutes ?? template.durationVariants.full;
+  const asked = step?.step.elevationGainM ?? template.outdoorTarget?.targetElevationM;
+  const pack = step?.step.backpackKg ?? template.outdoorTarget?.backpackWeightKg;
+  const packKg = typeof pack === 'number' && Number.isFinite(pack) && pack > 0 ? pack : undefined;
+  const rates = walkRates(climb ?? climbPace(logs, date), { packKg, bodyKg, pace: walkPace });
+  const t = walkTarget(minutes, asked, rates, walkClash);
+  const askedAscentM = t.askedAscentM;
+  return {
+    distanceKm: clampWalkKm(t.distanceKm),
+    ascentM: t.ascentM,
+    minutes: t.minutes,
+    ...(packKg !== undefined ? { packKg } : {}),
+    ...(askedAscentM > 0 ? { askedAscentM } : {}),
+  };
 }
 
 // Het startpunt dat de deur uit gaat: afgerond op twee decimalen (ongeveer een kilometer), zoals de
@@ -66,7 +152,9 @@ export function roundStart(place: { lat: number; lon: number }): RoutePoint {
   return { lat: Math.round(place.lat * 100) / 100, lon: Math.round(place.lon * 100) / 100 };
 }
 
+// De hoogtemeters die de training vraagt (routePlanner.ts#askedAscent), niet het getal dat in de duur past.
 export function targetText(target: RouteTarget): string {
   const km = `${String(target.distanceKm).replace('.', ',')} km`;
-  return target.ascentM >= 20 ? `${km}, ${Math.round(target.ascentM / 10) * 10} hoogtemeters` : km;
+  const asked = askedAscent(target);
+  return asked >= 20 ? `${km}, ${Math.round(asked / 10) * 10} hoogtemeters` : km;
 }

@@ -184,7 +184,12 @@ describe('Zelf overslaan', () => {
   it('een test of wedstrijd nooit vanzelf: die krijgt de vraag', () => {
     const plan = planMissed(input({ plannedSessions: [planned('test', 'tpl_test_run', '2026-10-24'), planned('race', 'tpl_race', '2026-10-25')], settings: auto }));
     expect(plan.autoSkip).toEqual([]);
-    expect(plan.item).toMatchObject({ kind: 'ask', session: { id: 'test' } });
+    // De test ligt in de afbouw van de wedstrijd van de dag erna: die vervalt (backlog R, engine/raceWindow.ts),
+    // dus de vraag gaat over de wedstrijd. Zonder wedstrijd krijgt de test de vraag.
+    expect(plan.item).toMatchObject({ kind: 'ask', session: { id: 'race' } });
+    const alone = planMissed(input({ plannedSessions: [planned('test', 'tpl_test_run', '2026-10-24')], settings: auto }));
+    expect(alone.autoSkip).toEqual([]);
+    expect(alone.item).toMatchObject({ kind: 'ask', session: { id: 'test' } });
   });
 
   it('een test herkend via de rol, ook onder een ander id', () => {

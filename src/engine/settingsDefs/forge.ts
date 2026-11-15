@@ -1,12 +1,310 @@
 // ASCEND: de instellingen van de groep Forge (docs/visie/Ontwerp instellingen op een plek.md).
 //
-// Stap 1: alleen de teksten en de plek, één keer gegenereerd uit de exports van 14 november en daarna met de
-// hand bijgewerkt. De bron blijft data/settingsIndex.ts, settingsLayout.ts, settingsHelp.ts en
-// settingsChoices.ts tot stap 2 en 3; settingsDefs.parity.test.ts bewaakt dat de teksten gelijk zijn. De volgorde
-// is die van de pagina: een rij, met daaronder wat in haar blad staat.
+// Elke instelling van deze groep staat hier één keer: titel, zin en trefwoorden voor het zoekveld, de plek op de
+// pagina, de voorwaarden en de keuze; de uitleg achter de i staat in uitleg/forge.ts. De volgorde is die van de
+// pagina: een rij, met daaronder wat in haar blad staat. Samenvatting en advies volgen in stap 4.
 
-import { B } from './parts';
+import type { RestSound, RestVolume } from '../restSounds';
+import { B, def } from './parts';
 import type { SettingDef } from './types';
+
+// De keuzes van deze groep, onder hun oude sleutel in CHOICES (data/settingsChoices.ts leest ze hier).
+export const FORGE_CHOICES = {
+  kracht: def({
+    group: 'Forge',
+    title: 'Sets en gewichten',
+    line: 'Waar je je krachttraining bijhoudt.',
+    advice: 'ascend' as 'ascend' | 'macrofactor',
+    options: [
+      { value: 'ascend', label: 'In ASCEND', note: 'Invullen na je training', short: 'In ASCEND' },
+      { value: 'macrofactor', label: 'In MacroFactor', note: 'Hier één tik om af te vinken', short: 'In MacroFactor' },
+    ],
+  }),
+  volgorde: def({
+    group: 'Forge',
+    title: 'Eerst ophogen',
+    line: 'Wat zwaarder wordt als het goed gaat.',
+    advice: 'weight_first' as 'weight_first' | 'reps_first',
+    options: [
+      { value: 'weight_first', label: 'Gewicht', note: 'Een stap zwaarder zodra het kan' },
+      { value: 'reps_first', label: 'Herhalingen', note: 'Eerst de bovenkant van je bereik' },
+    ],
+  }),
+  werksets: def({
+    group: 'Forge',
+    title: 'Werksets',
+    line: 'Door vermoeidheid til je per set iets minder.',
+    advice: 'descending' as 'descending' | 'equal',
+    options: [
+      { value: 'descending', label: 'Dalend', note: 'Elke set een tikje lichter' },
+      { value: 'equal', label: 'Gelijk', note: 'Alle sets hetzelfde gewicht' },
+    ],
+  }),
+  opwarmen: def({
+    group: 'Forge',
+    title: 'Opwarmen',
+    line: 'Volledig bij de eerste zware oefening, daarna één set of niets.',
+    advice: 'smart' as 'smart' | 'scheme' | 'off',
+    options: [
+      { value: 'smart', label: 'Slim', note: 'Uit je geschatte kracht en je schijven' },
+      { value: 'scheme', label: 'Schema', note: '40, 60 en 80% van je werkgewicht' },
+      { value: 'off', label: 'Uit', note: 'Geen opwarmsets' },
+    ],
+  }),
+  opwarmbereik: def({
+    group: 'Forge',
+    title: 'Opwarmen per',
+    line: 'Wie de volle opbouw krijgt.',
+    advice: 'group' as 'group' | 'exercise',
+    options: [
+      { value: 'group', label: 'Per spiergroep', note: 'Volle opbouw bij de eerste zware oefening van benen of bovenlichaam, daarna één set', short: 'Per spiergroep' },
+      { value: 'exercise', label: 'Per oefening', note: 'Elke samengestelde oefening de volle opbouw', short: 'Per oefening' },
+    ],
+  }),
+  doorvoeren: def({
+    group: 'Forge',
+    title: 'Wijzigingen doorvoeren',
+    line: 'Wat er met de latere sets gebeurt als je een set aanpast.',
+    advice: 'equal' as 'equal' | 'shift' | 'off',
+    help: 'forgeDoorvoeren',
+    options: [
+      { value: 'equal', label: 'Gelijke sets', note: 'Latere sets die precies hetzelfde waren nemen de nieuwe waarde over', short: 'Gelijke sets' },
+      { value: 'shift', label: 'Zelfde verschil', note: 'Het gewicht van de sets erna schuift evenveel mee', short: 'Zelfde verschil' },
+      { value: 'off', label: 'Uit', note: 'Elke set pas je zelf aan', short: 'Uit' },
+    ],
+  }),
+  rirVooraf: def({
+    group: 'Forge',
+    title: 'RIR vooraf invullen',
+    line: 'Wat er in het RIR-veld van een werkset staat voor je iets invult.',
+    advice: 'hint' as 'hint' | 'target',
+    help: 'forgeRirVooraf',
+    options: [
+      { value: 'hint', label: 'Als hint', note: 'Het veld is leeg, het doel staat gedimd in beeld', short: 'Als hint' },
+      { value: 'target', label: 'Met het doel', note: 'Het doel staat er al in, je past het aan als het anders was', short: 'Met het doel' },
+    ],
+  }),
+  rirSnel: def({
+    group: 'Forge',
+    title: 'Hoeveel over na een set',
+    line: 'Wanneer Forge na het afvinken vraagt hoeveel je over had.',
+    advice: 'twijfel' as 'twijfel' | 'vaker' | 'uit',
+    help: 'forgeRirSnel',
+    options: [
+      { value: 'twijfel', label: 'Als het anders ging', note: 'Het advies. Na een zware set, minder herhalingen dan gevraagd, ruim boven het bereik of een zwaarder gewicht', short: 'Als het anders ging' },
+      { value: 'vaker', label: 'Vaker vragen', note: 'Ook na je eerste en je laatste werkset, ook als alles volgens schema ging', short: 'Vaker vragen' },
+      { value: 'uit', label: 'Uit', note: 'Afvinken geeft altijd het doel', short: 'Uit' },
+    ],
+  }),
+  schatting: def({
+    group: 'Forge',
+    title: 'Sets die meetellen',
+    line: 'Hoe meer herhalingen, hoe ruwer de schatting.',
+    advice: 20 as 12 | 15 | 20,
+    options: [
+      { value: 12, label: 'Tot 12', note: 'Het strengst', short: 'Tot 12' },
+      { value: 15, label: 'Tot 15', note: 'Ertussenin', short: 'Tot 15' },
+      { value: 20, label: 'Tot 20', note: 'Ook hoge bereiken tellen mee', short: 'Tot 20' },
+    ],
+  }),
+  forgeWeergave: def({
+    group: 'Forge',
+    title: 'Forge toont',
+    line: 'Wat de kaart van een oefening laat zien. Op de kaart zelf kun je ook wisselen.',
+    advice: 'one_rm' as 'one_rm' | 'work_weight',
+    options: [
+      { value: 'one_rm', label: '1RM', note: 'Je geschatte 1RM, met die van MacroFactor ernaast', short: '1RM' },
+      { value: 'work_weight', label: 'Werkgewicht', note: 'Wat je bij je herhalingen aankunt', short: 'Werkgewicht' },
+    ],
+  }),
+  forgeVergelijken: def({
+    group: 'Forge',
+    title: 'Vergelijken met',
+    line: 'Met welke momenten Forge het getal van nu naast elkaar zet.',
+    advice: '4_8' as '4_8' | '2_4' | '8_12' | '12_26',
+    options: [
+      { value: '4_8', label: '4 en 8 weken', note: 'Een maand en twee maanden terug', short: '4 en 8 weken' },
+      { value: '2_4', label: '2 en 4 weken', note: 'Dichterbij, voor wie vaak traint', short: '2 en 4 weken' },
+      { value: '8_12', label: '8 en 12 weken', note: 'Rustiger, een blok van een kwartaal', short: '8 en 12 weken' },
+      { value: '12_26', label: '12 en 26 weken', note: 'Het lange werk, tot een half jaar terug', short: '12 en 26 weken' },
+    ],
+  }),
+  forgeLeren: def({
+    group: 'Forge',
+    title: 'Gewichten van toestellen',
+    line: 'Welke gewichten ASCEND op een toestel of kabel voorstelt.',
+    advice: 'learned' as 'learned' | 'used_only' | 'profile',
+    help: 'forgeLeren',
+    options: [
+      { value: 'learned', label: 'Geleerd en geschat', note: 'Wat je gebruikte, met de gaten en het stuk erboven aangevuld', short: 'Geleerd' },
+      { value: 'used_only', label: 'Alleen wat je gebruikte', note: 'Nooit een gewicht dat je er nog niet pakte', short: 'Alleen gebruikt' },
+      { value: 'profile', label: 'Stappen van je profiel', note: 'De stap die je bij Kabels en toestellen instelde', short: 'Profiel' },
+    ],
+  }),
+  dumbbellLog: def({
+    group: 'Forge',
+    title: 'Dumbbells in je log',
+    line: 'Of het gewicht dat je logt één dumbbell is of het totaal van twee.',
+    advice: 'auto' as 'auto' | 'each' | 'total',
+    help: 'forgeDumbbells',
+    options: [
+      { value: 'auto', label: 'Vanzelf herkennen', note: 'Per oefening, aan de gewichten in je logboek', short: 'Vanzelf' },
+      { value: 'each', label: 'Per dumbbell', note: 'Het gewicht is die ene dumbbell', short: 'Per dumbbell' },
+      { value: 'total', label: 'Totaal van twee', note: 'Het gewicht is beide dumbbells samen', short: 'Totaal van twee' },
+    ],
+  }),
+  vermoeidheid: def({
+    group: 'Forge',
+    title: 'Vermoeidheid per set',
+    line: 'Hoeveel kracht elke werkset de volgende kost.',
+    advice: 'learned' as 'learned' | 'fixed',
+    help: 'forgeVermoeidheid',
+    options: [
+      { value: 'learned', label: 'Leren per oefening', note: 'Uit je eigen sets, met 3% als start', short: 'Leren' },
+      { value: 'fixed', label: 'Vast 3%', note: 'Voor elke oefening hetzelfde', short: 'Vast 3%' },
+    ],
+  }),
+  forgeVolgorde: def({
+    group: 'Forge',
+    title: 'Volgorde van de oefeningen',
+    line: 'Hoe de lijst op Forge gesorteerd staat.',
+    advice: 'most' as 'most' | 'recent' | 'name',
+    options: [
+      { value: 'most', label: 'Meest getraind', note: 'De oefeningen die je het vaakst deed eerst', short: 'Meest getraind' },
+      { value: 'recent', label: 'Laatst getraind', note: 'Wat je het laatst deed bovenaan', short: 'Laatst getraind' },
+      { value: 'name', label: 'Op naam', note: 'Van A tot Z', short: 'Op naam' },
+    ],
+  }),
+  restsignaal: def({
+    group: 'Forge',
+    title: 'Signaal als de rust om is',
+    line: 'Een korte toon mengt met je muziek; trillen voel je ook in je zak.',
+    advice: 'sound_vibrate' as 'sound_vibrate' | 'vibrate' | 'sound' | 'off',
+    options: [
+      { value: 'sound_vibrate', label: 'Geluid en trillen', short: 'Geluid en trillen' },
+      { value: 'vibrate', label: 'Alleen trillen', note: 'Met het ritme van je gekozen geluid', short: 'Trillen' },
+      { value: 'sound', label: 'Alleen geluid', short: 'Geluid' },
+      { value: 'off', label: 'Niets', note: 'Je kijkt zelf op de balk onderaan', short: 'Niets' },
+    ],
+  }),
+  rustgeluid: def({
+    group: 'Forge',
+    title: 'Geluid na de rust',
+    line: 'Tik op Luister om te horen. Trillen volgt het ritme.',
+    advice: 'clearbell' as RestSound,
+    options: [
+      { value: 'pickaxe', label: 'Pickel op rots', note: 'Eén droge metalen klik', short: 'Pickel op rots' },
+      { value: 'cornu', label: 'Cornu', note: 'Een korte roep op de bronzen hoorn', short: 'Cornu' },
+      { value: 'vikinghorn', label: 'Vikinghoorn', note: 'Eén lage, ruwe roep die rustig uitklinkt', short: 'Vikinghoorn' },
+      { value: 'drum', label: 'Trommel', note: 'Drie trage, zware slagen', short: 'Trommel' },
+      { value: 'bianzhong', label: 'Bronzen klokken', note: 'Drie klokken in de vijftoonsladder', short: 'Bronzen klokken' },
+      { value: 'hyoshigi', label: 'Hyōshigi', note: 'Twee houten klappers', short: 'Hyōshigi' },
+      { value: 'templebell', label: 'Tempelbel', note: 'Eén diepe slag met lange uitklank', short: 'Tempelbel' },
+      { value: 'clearbell', label: 'Heldere bel', note: 'Twee korte hoge slagen die door muziek snijden', short: 'Heldere bel' },
+      { value: 'lyre', label: 'Lier', note: 'Eén aangeslagen snaar', short: 'Lier' },
+    ],
+  }),
+  rustvolume: def({
+    group: 'Forge',
+    title: 'Volume van de rustbel',
+    line: 'Zacht, Normaal of Duidelijk, onder dezelfde piek. In de Android-app gaat je muziek even zachter.',
+    advice: 'normal' as RestVolume,
+    options: [
+      { value: 'soft', label: 'Zacht', note: 'Voor stille muziek of zonder koptelefoon', short: 'Zacht' },
+      { value: 'normal', label: 'Normaal', note: 'Hoorbaar door muziek, niet schel', short: 'Normaal' },
+      { value: 'clear', label: 'Duidelijk', note: 'Voller, voor harde muziek; de piek blijft gelijk', short: 'Duidelijk' },
+    ],
+  }),
+  forgeOefeningen: def({
+    group: 'Forge',
+    title: 'Oefeningen in een training',
+    line: 'Hoe de oefeningen in een training staan.',
+    advice: 'scherm' as 'scherm' | 'lijst',
+    help: 'forgeOefeningen',
+    options: [
+      { value: 'scherm', label: 'Een per scherm', note: 'Opzij vegen van oefening naar oefening, met kaartjes bovenaan', short: 'Een per scherm' },
+      { value: 'lijst', label: 'Onder elkaar', note: 'Alle oefeningen op een pagina, naar beneden scrollen', short: 'Onder elkaar' },
+    ],
+  }),
+  forgeVerloop: def({
+    group: 'Forge',
+    title: 'Verloop toont',
+    line: 'Wat het blad Verloop van de training laat zien.',
+    advice: 'wijzigingen' as 'wijzigingen' | 'alle',
+    help: 'forgeVerloop',
+    options: [
+      { value: 'wijzigingen', label: 'Alleen wijzigingen', note: 'Alleen de sets waar iets mee gebeurde, met de reden', short: 'Alleen wijzigingen' },
+      { value: 'alle', label: 'Alle sets', note: 'Ook de sets volgens schema, met de zwaarste set erbij', short: 'Alle sets' },
+    ],
+  }),
+  grensKracht: def({
+    group: 'Forge',
+    title: 'Gewone krachttraining',
+    line: 'Hoogstens zo lang, voor een krachttraining die geen beendag is.',
+    advice: 0 as 0 | 45 | 60 | 75 | 90,
+    help: 'forgeTijdsgrens',
+    options: [
+      { value: 0, label: 'Tonen, niet inkorten', note: 'Het advies. De hele training staat er; is de kern af, dan zegt een regel na 60 minuten wat nog open staat', short: 'Niet inkorten' },
+      { value: 45, label: '45 minuten', short: '45 min' },
+      { value: 60, label: '60 minuten', short: '60 min' },
+      { value: 75, label: '75 minuten', short: '75 min' },
+      { value: 90, label: '90 minuten', short: '90 min' },
+    ],
+  }),
+  grensBeen: def({
+    group: 'Forge',
+    title: 'Beendag',
+    line: 'Hoogstens zo lang, voor een zware beendag.',
+    advice: 0 as 0 | 45 | 60 | 75 | 90,
+    help: 'forgeTijdsgrens',
+    options: [
+      { value: 0, label: 'Tonen, niet inkorten', note: 'Het advies. De hele training staat er; is de kern af, dan zegt een regel na 75 minuten wat nog open staat', short: 'Niet inkorten' },
+      { value: 45, label: '45 minuten', short: '45 min' },
+      { value: 60, label: '60 minuten', short: '60 min' },
+      { value: 75, label: '75 minuten', short: '75 min' },
+      { value: 90, label: '90 minuten', short: '90 min' },
+    ],
+  }),
+  forgeOnderbreking: def({
+    group: 'Forge',
+    title: 'Lange onderbreking vragen na',
+    line: 'Hoe lang je weg mag zijn voordat Forge vraagt of die tijd meetelt.',
+    advice: 45 as 0 | 30 | 45 | 60 | 90,
+    help: 'forgeOnderbreking',
+    options: [
+      { value: 0, label: 'Uit', note: 'Forge vraagt niets, de klok loopt door', short: 'Uit' },
+      { value: 30, label: 'Na 30 minuten', short: '30 minuten' },
+      { value: 45, label: 'Na 45 minuten', note: 'Het advies', short: '45 minuten' },
+      { value: 60, label: 'Na 60 minuten', short: '60 minuten' },
+      { value: 90, label: 'Na 90 minuten', short: '90 minuten' },
+    ],
+  }),
+  forgeConcept: def({
+    group: 'Forge',
+    title: 'Training bewaren als concept na',
+    line: 'Hoe lang een training zonder handeling mag liggen voordat Forge hem als concept bewaart en vraagt wat je wilt.',
+    advice: 12 as 0 | 4 | 8 | 12,
+    help: 'forgeConcept',
+    options: [
+      { value: 0, label: 'Na middernacht', short: 'Na middernacht' },
+      { value: 4, label: 'Na 4 uur', short: '4 uur' },
+      { value: 8, label: 'Na 8 uur', short: '8 uur' },
+      { value: 12, label: 'Na 12 uur', note: 'Het advies', short: '12 uur' },
+    ],
+  }),
+  plaatjes: def({
+    group: 'Forge',
+    title: 'Plaatjes bij oefeningen',
+    line: 'Wat je ziet als je op het kaartje bij een oefening tikt.',
+    advice: 'beide' as 'beide' | 'spierkaart' | 'uit',
+    help: 'plaatjes',
+    options: [
+      { value: 'beide', label: 'Spierkaart en tekening', note: 'Welke spieren werken en hoe de beweging gaat', short: 'Kaart en tekening' },
+      { value: 'spierkaart', label: 'Alleen spierkaart', note: 'Geen tekeningen, dus ook niets om te laden', short: 'Alleen spierkaart' },
+      { value: 'uit', label: 'Uit', note: 'Geen kaartje bij een oefening', short: 'Uit' },
+    ],
+  }),
+} as const;
 
 export const FORGE: SettingDef[] = [
   {
@@ -19,14 +317,7 @@ export const FORGE: SettingDef[] = [
     note: 'ASCEND rekent stil mee met je krachttrainingen uit MacroFactor en stelt voor wat je de volgende keer kunt doen.',
     keywords: ['forge', 'kracht', 'gym', 'sets', 'gewicht', 'progressie', 'voorstel', 'rir', 'macrofactor'],
     route: '/forge',
-    help: {
-      title: 'Kracht meerekenen',
-      lead: 'Forge rekent met je krachttrainingen en stelt per oefening voor wat je de volgende keer doet. Uit: je ziet alleen wat je deed.',
-      points: [
-        { head: 'Je krijgt', text: 'per oefening een voorstel voor de volgende keer.' },
-        { head: 'Je planning', text: 'verandert er niet door.' },
-      ],
-    },
+    help: true,
   },
   {
     id: 'kracht',
@@ -36,28 +327,9 @@ export const FORGE: SettingDef[] = [
     rowTitle: 'Sets en gewichten',
     note: 'Of je sets en gewichten in ASCEND of in MacroFactor bijhoudt, en hoe lang een training duurt.',
     keywords: ['kracht', 'gym', 'sets', 'herhalingen', 'reps', 'macrofactor', 'duur', 'fitness'],
-    help: {
-      title: 'Waar je sets bijhoudt',
-      lead: 'Houd je je sets bij in ASCEND of in MacroFactor?',
-      points: [
-        { head: 'In ASCEND', text: 'je vult ze in tijdens je training, met de rusttimer en voorstellen per set.' },
-        { head: 'In MacroFactor', text: 'ASCEND leest ze uit je export en het workoutscherm is om mee te kijken.' },
-      ],
-    },
+    help: true,
     helpKey: 'krachtBijhouden',
-    choice: {
-      key: 'kracht',
-      def: {
-        group: 'Forge',
-        title: 'Sets en gewichten',
-        line: 'Waar je je krachttraining bijhoudt.',
-        advice: 'ascend',
-        options: [
-          { value: 'ascend', label: 'In ASCEND', note: 'Invullen na je training', short: 'In ASCEND' },
-          { value: 'macrofactor', label: 'In MacroFactor', note: 'Hier één tik om af te vinken', short: 'In MacroFactor' },
-        ],
-      },
-    },
+    choice: { key: 'kracht', def: FORGE_CHOICES.kracht },
   },
   {
     id: 'forge-programma',
@@ -77,27 +349,9 @@ export const FORGE: SettingDef[] = [
     adviceTitle: 'Eerst ophogen',
     note: 'Wat ASCEND eerst ophoogt als het goed gaat in je krachttraining.',
     keywords: ['forge', 'kracht', 'progressie', 'dubbele progressie', 'zwaarder', 'herhalingen', 'gewicht'],
-    help: {
-      title: 'Wat eerst omhoog',
-      lead: 'Gaat een oefening goed, dan verhoogt Forge eerst dit. Het andere volgt als het bovenaan je bereik zit.',
-      points: [
-        { head: 'Alleen voorstellen', text: 'Forge stelt voor, jij beslist.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeVolgorde',
-    choice: {
-      key: 'volgorde',
-      def: {
-        group: 'Forge',
-        title: 'Eerst ophogen',
-        line: 'Wat zwaarder wordt als het goed gaat.',
-        advice: 'weight_first',
-        options: [
-          { value: 'weight_first', label: 'Gewicht', note: 'Een stap zwaarder zodra het kan' },
-          { value: 'reps_first', label: 'Herhalingen', note: 'Eerst de bovenkant van je bereik' },
-        ],
-      },
-    },
+    choice: { key: 'volgorde', def: FORGE_CHOICES.volgorde },
     showWhen: [B.forge],
   },
   {
@@ -109,32 +363,9 @@ export const FORGE: SettingDef[] = [
     adviceTitle: 'Opwarmen',
     note: 'Volledig bij je eerste zware oefening per lichaamsdeel, daarna één aanloopset of niets. Slim, vast schema of uit.',
     keywords: ['forge', 'kracht', 'opwarmen', 'opwarmset', 'warming-up', 'schema', 'slim'],
-    help: {
-      title: 'Opwarmen',
-      lead: 'Opwarmsets komen vooral voor je eerste zware oefening van een lichaamsdeel, daarna zijn de spieren warm.',
-      points: [
-        { head: 'Eerste oefening', text: 'de volle opbouw, ongeveer 50% voor 8 en 80% voor 3 tot 4 van je werkgewicht. Slim rekent het uit je geschatte kracht, Schema vaste percentages.' },
-        { head: 'Daarna', text: 'één aanloopset van 65 tot 70% voor 4 of 5 als de spieren al warm zijn, bijvoorbeeld een leg press na squats. Een oefening met één gewricht op warme spieren krijgt niets.' },
-        { head: 'Nooit', text: 'bij lichte gewichten, curls, schouderheffingen, beencurls, kuiten, romp en oefeningen met vooral je eigen gewicht.' },
-        { head: 'Per spiergroep of per oefening', text: 'standaard krijgt alleen de eerste zware oefening van benen of bovenlichaam de volle opbouw. Kies je Per oefening, dan krijgt elke samengestelde oefening de volle opbouw. De rust na de opwarming staat vast op 90 of 60 seconden.' },
-        { head: 'Geen gewicht bekend', text: 'dan staan er lege opwarmrijen die zich vullen zodra je bij de eerste set een gewicht invult.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeOpwarmen',
-    choice: {
-      key: 'opwarmen',
-      def: {
-        group: 'Forge',
-        title: 'Opwarmen',
-        line: 'Volledig bij de eerste zware oefening, daarna één set of niets.',
-        advice: 'smart',
-        options: [
-          { value: 'smart', label: 'Slim', note: 'Uit je geschatte kracht en je schijven' },
-          { value: 'scheme', label: 'Schema', note: '40, 60 en 80% van je werkgewicht' },
-          { value: 'off', label: 'Uit', note: 'Geen opwarmsets' },
-        ],
-      },
-    },
+    choice: { key: 'opwarmen', def: FORGE_CHOICES.opwarmen },
     showWhen: [B.forge],
   },
   {
@@ -146,19 +377,7 @@ export const FORGE: SettingDef[] = [
     adviceTitle: 'Opwarmen per',
     note: 'Volle opbouw alleen bij de eerste zware oefening van een lichaamsdeel, of bij elke samengestelde oefening.',
     keywords: ['forge', 'kracht', 'opwarmen', 'opwarmset', 'spiergroep', 'oefening', 'lichaamsdeel'],
-    choice: {
-      key: 'opwarmbereik',
-      def: {
-        group: 'Forge',
-        title: 'Opwarmen per',
-        line: 'Wie de volle opbouw krijgt.',
-        advice: 'group',
-        options: [
-          { value: 'group', label: 'Per spiergroep', note: 'Volle opbouw bij de eerste zware oefening van benen of bovenlichaam, daarna één set', short: 'Per spiergroep' },
-          { value: 'exercise', label: 'Per oefening', note: 'Elke samengestelde oefening de volle opbouw', short: 'Per oefening' },
-        ],
-      },
-    },
+    choice: { key: 'opwarmbereik', def: FORGE_CHOICES.opwarmbereik },
     showWhen: [B.forge],
   },
   {
@@ -177,14 +396,7 @@ export const FORGE: SettingDef[] = [
     title: 'Geschatte 1RM tonen',
     note: 'Op de Forge-pagina staat per oefening je geschatte 1RM met een trend. Uit: Forge laat alleen het werkgewicht zien.',
     keywords: ['forge', '1rm', 'one rep max', 'maximum', 'geschatte kracht', 'trend', 'grafiek', 'kracht', 'weergave op forge'],
-    help: {
-      title: 'Geschatte 1RM',
-      lead: 'Per oefening staat op Forge je geschatte 1RM, met een kleine trend door de tijd.',
-      points: [
-        { head: 'Een schatting', text: 'uit je laatste sets, geen test. Het is hetzelfde getal waar ASCEND mee rekent.' },
-        { head: 'Uit', text: 'dan laat Forge alleen het werkgewicht zien, zonder schakelaar. Je voorstel voor de volgende keer blijft staan.' },
-      ],
-    },
+    help: true,
     helpKey: 'forge1rm',
     showWhen: [B.forge],
   },
@@ -195,16 +407,7 @@ export const FORGE: SettingDef[] = [
     title: 'Hoe goed kent Forge je',
     note: 'Een blok op de Forge-pagina dat laat zien of Forge je goed inschat, gemeten aan je eigen trainingen van de laatste vier weken: voorspelling, bijsturen en sterker worden. Het verandert je plan nooit.',
     keywords: ['forge', 'kent', 'kalibratie', 'voorspelling', 'raak', 'bijgestuurd', 'sterker', 'nauwkeurig', 'hoe goed', 'macrofactor', 'eigen trainingen'],
-    help: {
-      title: 'Hoe goed kent Forge je',
-      lead: 'Een blok op de Forge-pagina dat laat zien of Forge je goed inschat, gemeten aan je eigen trainingen van de laatste vier weken. MacroFactor is hier geen scheidsrechter.',
-      points: [
-        { head: 'Voorspelling', text: 'hoeveel sets binnen één herhaling lagen van wat Forge verwachtte. Dat telt alleen als je het voorgestelde gewicht pakte en zelf invulde hoeveel je over had.' },
-        { head: 'Bijgestuurd', text: 'hoe vaak je het gewicht (of afgevinkte herhalingen) zelf veranderde voor je afvinkte.' },
-        { head: 'Sterker', text: 'of je geschatte maximum op je hoofdoefeningen over zes tot acht weken stijgt, gelijk blijft of daalt.' },
-        { head: 'Alleen kijken', text: 'het blok verandert je plan en je logs nooit. Met te weinig sets staat er "nog te weinig data".' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeKentJe',
     showWhen: [B.forge],
   },
@@ -217,29 +420,9 @@ export const FORGE: SettingDef[] = [
     adviceTitle: 'Forge toont',
     note: 'Wat de kaart van een oefening laat zien: je geschatte 1RM of het gewicht dat je bij je herhalingen aankunt. Op de kaart zelf kun je ook wisselen.',
     keywords: ['forge', '1rm', 'werkgewicht', 'gewicht', 'lijn', 'kaart', 'kracht', 'wisselen', 'weergave', 'weergave op forge'],
-    help: {
-      title: 'Forge toont',
-      lead: 'Elke oefening op Forge heeft twee kanten: je geschatte 1RM en het werkgewicht.',
-      points: [
-        { head: '1RM', text: 'het getal van nu, de verandering over vier weken en een lijn door de tijd. Staat er een 1RM uit MacroFactor, dan staat die ernaast.' },
-        { head: 'Werkgewicht', text: 'het gewicht dat je volgens de schatting aankunt bij het aantal herhalingen van die oefening, met de lijn van eerder.' },
-        { head: 'Eén keuze', text: 'voor alle kaarten. Tik je op een kaart op de andere kant, dan verandert dit ook.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeWeergave',
-    choice: {
-      key: 'forgeWeergave',
-      def: {
-        group: 'Forge',
-        title: 'Forge toont',
-        line: 'Wat de kaart van een oefening laat zien. Op de kaart zelf kun je ook wisselen.',
-        advice: 'one_rm',
-        options: [
-          { value: 'one_rm', label: '1RM', note: 'Je geschatte 1RM, met die van MacroFactor ernaast', short: '1RM' },
-          { value: 'work_weight', label: 'Werkgewicht', note: 'Wat je bij je herhalingen aankunt', short: 'Werkgewicht' },
-        ],
-      },
-    },
+    choice: { key: 'forgeWeergave', def: FORGE_CHOICES.forgeWeergave },
     showWhen: [B.forge, B.oneRm],
   },
   {
@@ -250,15 +433,7 @@ export const FORGE: SettingDef[] = [
     rowTitle: 'MacroFactor-1RM erbij',
     note: 'Bij de geschatte 1RM staat de 1RM uit je MacroFactor-export, met de datum. Uit: alleen de schatting van ASCEND.',
     keywords: ['forge', '1rm', 'macrofactor', 'one rep max', 'maximum', 'schatting', 'vergelijken', 'kracht', 'weergave op forge'],
-    help: {
-      title: 'MacroFactor-1RM erbij',
-      lead: 'MacroFactor schat ook een 1RM. ASCEND zet die naast die van jezelf, zonder ze te mengen.',
-      points: [
-        { head: 'Waar het vandaan komt', text: 'uit het blad "Exercises - 1-RM" van de volledige export. Lees de export opnieuw in voor nieuwe dagen.' },
-        { head: 'Twee getallen', text: 'ze kunnen verschillen, want MacroFactor en ASCEND rekenen niet hetzelfde. Gebruik ze voor de richting, niet als maximum dat je moet halen.' },
-        { head: 'Uit', text: 'dan staat er alleen de schatting van ASCEND. Wat je ingelezen hebt blijft bewaard.' },
-      ],
-    },
+    help: true,
     helpKey: 'forge1rmMacrofactor',
     showWhen: [B.forge, B.oneRm, B.mf],
   },
@@ -269,32 +444,9 @@ export const FORGE: SettingDef[] = [
     title: 'Vergelijken met',
     note: 'Met welke momenten Forge het getal van nu naast elkaar zet. Standaard 4 en 8 weken geleden.',
     keywords: ['forge', 'vergelijken', 'verschil', 'weken geleden', 'vorige', 'eerder', '1rm', 'kracht', 'vooruitgang', 'weergave op forge'],
-    help: {
-      title: 'Vergelijken met',
-      lead: 'Tik je op een oefening, dan zie je je geschatte 1RM van nu naast die van een paar weken terug. Zo zie je of je sterker wordt.',
-      points: [
-        { head: 'Een voorbeeld', text: 'je bankdrukken staat nu op 80 kg. Vier weken geleden was dat 77,5 kg, acht weken geleden 75 kg. Dan staat er +2,5 en +5 bij. Het beste ooit staat er altijd naast.' },
-        { head: '4 en 8 weken', text: 'het advies: een maand en twee maanden terug.' },
-        { head: 'Andere momenten', text: 'kies 2 en 4 weken als je vaak traint, of 12 en 26 weken voor het lange werk.' },
-        { head: 'Geen oordeel', text: 'het verschil is een kleine regel. Gelijk of lager is geen mislukking, een hogere 1RM is niet het enige doel.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeVergelijken',
-    choice: {
-      key: 'forgeVergelijken',
-      def: {
-        group: 'Forge',
-        title: 'Vergelijken met',
-        line: 'Met welke momenten Forge het getal van nu naast elkaar zet.',
-        advice: '4_8',
-        options: [
-          { value: '4_8', label: '4 en 8 weken', note: 'Een maand en twee maanden terug', short: '4 en 8 weken' },
-          { value: '2_4', label: '2 en 4 weken', note: 'Dichterbij, voor wie vaak traint', short: '2 en 4 weken' },
-          { value: '8_12', label: '8 en 12 weken', note: 'Rustiger, een blok van een kwartaal', short: '8 en 12 weken' },
-          { value: '12_26', label: '12 en 26 weken', note: 'Het lange werk, tot een half jaar terug', short: '12 en 26 weken' },
-        ],
-      },
-    },
+    choice: { key: 'forgeVergelijken', def: FORGE_CHOICES.forgeVergelijken },
     showWhen: [B.forge],
   },
   {
@@ -304,15 +456,7 @@ export const FORGE: SettingDef[] = [
     title: 'Wat er verder veranderde',
     note: 'Naast het getal staan herhalingen bij hetzelfde gewicht, het zwaarste gewicht en het volume per training.',
     keywords: ['forge', 'herhalingen', 'volume', 'vooruitgang', 'verschil', 'kracht', 'weergave op forge'],
-    help: {
-      title: 'Wat er verder veranderde',
-      lead: 'Vooruitgang is niet altijd een hogere 1RM. Forge laat ook de rest zien.',
-      points: [
-        { head: 'Herhalingen', text: 'meer herhalingen bij hetzelfde gewicht als eerder.' },
-        { head: 'Zwaarste gewicht', text: 'het zwaarste gewicht van je beste set.' },
-        { head: 'Volume', text: 'gewicht maal herhalingen over de werksets van een training. Opwarmsets tellen niet mee.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeExtras',
     showWhen: [B.forge],
   },
@@ -323,15 +467,7 @@ export const FORGE: SettingDef[] = [
     title: 'Lijntjes in de lijst',
     note: 'Een klein lijntje per oefening met het verloop, en de grafiek als je een oefening openklapt.',
     keywords: ['forge', 'grafiek', 'lijn', 'verloop', 'trend', 'kracht', '1rm', 'weergave op forge'],
-    help: {
-      title: 'Lijntjes in de lijst',
-      lead: 'Een klein lijntje naast elke oefening laat in één oogopslag zien hoe het de laatste trainingen ging.',
-      points: [
-        { head: 'Het lijntje', text: 'de laatste tien trainingen, met hetzelfde getal als rechts in de rij. Het puntje is je laatste training.' },
-        { head: 'Openklappen', text: 'klap je een oefening open, dan staat de hele grafiek erboven.' },
-        { head: 'Uit', text: 'alleen de getallen, de grafiek staat dan nog in de geschiedenis.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeLijntjes',
     showWhen: [B.forge],
   },
@@ -342,20 +478,7 @@ export const FORGE: SettingDef[] = [
     title: 'Volgorde van de oefeningen',
     note: 'Hoe de lijst op Forge gesorteerd staat: meest getraind, laatst getraind of op naam.',
     keywords: ['forge', 'sorteren', 'volgorde', 'lijst', 'oefeningen', 'naam', 'laatst', 'weergave op forge'],
-    choice: {
-      key: 'forgeVolgorde',
-      def: {
-        group: 'Forge',
-        title: 'Volgorde van de oefeningen',
-        line: 'Hoe de lijst op Forge gesorteerd staat.',
-        advice: 'most',
-        options: [
-          { value: 'most', label: 'Meest getraind', note: 'De oefeningen die je het vaakst deed eerst', short: 'Meest getraind' },
-          { value: 'recent', label: 'Laatst getraind', note: 'Wat je het laatst deed bovenaan', short: 'Laatst getraind' },
-          { value: 'name', label: 'Op naam', note: 'Van A tot Z', short: 'Op naam' },
-        ],
-      },
-    },
+    choice: { key: 'forgeVolgorde', def: FORGE_CHOICES.forgeVolgorde },
     showWhen: [B.forge],
   },
   {
@@ -365,32 +488,9 @@ export const FORGE: SettingDef[] = [
     title: 'Plaatjes bij oefeningen',
     note: 'Een kaartje bij elke oefening in Forge met de spieren en de beweging in drie stappen. Spierkaart en tekening, alleen de spierkaart of uit.',
     keywords: ['plaatjes', 'afbeeldingen', 'tekening', 'tekeningen', 'spierkaart', 'spieren', 'oefening', 'uitleg', 'beweging', 'forge', 'kracht', 'foto', 'illustratie', 'workout guide', 'everkinetic'],
-    help: {
-      title: 'Plaatjes bij oefeningen',
-      lead: 'Naast een oefening in Forge staat een klein kaartje met de spieren die werken. Tik erop en je ziet de beweging in drie stappen, de spieren op het lichaam en wat je moet doen, waar je op let en wat vaak misgaat.',
-      points: [
-        { head: 'Spierkaart en tekening', text: 'het advies. De tekeningen komen van Workout Guide en zijn van Everkinetic en Bryl Lim, CC BY-SA 4.0; die van de calisthenicsladders heeft ASCEND zelf getekend, onder dezelfde licentie. Ze worden geladen als je een oefening opent, en op de achtergrond voor de oefeningen van je eigen trainingen. Zonder netwerk zie je dan alleen het spierkaartje.' },
-        { head: 'Alleen spierkaart', text: 'de spieren en de uitleg, zonder tekening. Er wordt niets geladen.' },
-        { head: 'Uit', text: 'geen kaartje bij een oefening. Het menu van een oefening houdt de uitleg.' },
-        { head: 'Een andere variant', text: 'staat er een tekening van bijna dezelfde oefening, dan zegt een regel eronder wat anders is.' },
-      ],
-    },
+    help: true,
     helpKey: 'plaatjes',
-    choice: {
-      key: 'plaatjes',
-      def: {
-        group: 'Forge',
-        title: 'Plaatjes bij oefeningen',
-        line: 'Wat je ziet als je op het kaartje bij een oefening tikt.',
-        advice: 'beide',
-        help: 'plaatjes',
-        options: [
-          { value: 'beide', label: 'Spierkaart en tekening', note: 'Welke spieren werken en hoe de beweging gaat', short: 'Kaart en tekening' },
-          { value: 'spierkaart', label: 'Alleen spierkaart', note: 'Geen tekeningen, dus ook niets om te laden', short: 'Alleen spierkaart' },
-          { value: 'uit', label: 'Uit', note: 'Geen kaartje bij een oefening', short: 'Uit' },
-        ],
-      },
-    },
+    choice: { key: 'plaatjes', def: FORGE_CHOICES.plaatjes },
   },
   {
     id: 'forge-uitleg-open',
@@ -399,15 +499,7 @@ export const FORGE: SettingDef[] = [
     title: 'Uitleg standaard uitgeklapt',
     note: 'In het blad van een oefening staat Lees verder dan al open. Uit: eerst alleen de drie regels van In het kort.',
     keywords: ['uitleg', 'uitgeklapt', 'lees verder', 'in het kort', 'oefening', 'techniek', 'beginstand', 'tempo', 'fouten', 'forge', 'kracht', 'weergave op forge'],
-    help: {
-      title: 'Uitleg standaard uitgeklapt',
-      lead: 'In het blad van een oefening staat eerst In het kort, drie regels. Hier kies je of Lees verder ook al open staat.',
-      points: [
-        { head: 'Uit', text: 'het advies. Je ziet de drie regels en tikt op Lees verder als je meer wilt weten.' },
-        { head: 'Aan', text: 'de beginstand, de beweging, het tempo en de veelgemaakte fouten staan meteen open. Je kunt ze nog steeds dichtklappen.' },
-        { head: 'Niet elke oefening', text: 'heeft al een uitleg. Zonder uitleg zie je de oude drie regels.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeUitlegOpen',
   },
   {
@@ -417,13 +509,7 @@ export const FORGE: SettingDef[] = [
     title: 'Rusttimer',
     search: false,
     sheet: { eyebrow: 'Forge', title: 'Rusttimer', line: 'Na elke werkset en na je laatste opwarmset.' },
-    help: {
-      title: 'Rusttimer',
-      lead: 'Na elke werkset en je laatste opwarmset start de rust, met een tijd per oefening.',
-      points: [
-        { head: 'Signaal', text: 'of en hoe de rusttimer je laat weten dat de rust om is, kies je in het blad.' },
-      ],
-    },
+    help: true,
     helpKey: 'bundelRusttimer',
     showWhen: [B.inApp],
   },
@@ -443,21 +529,7 @@ export const FORGE: SettingDef[] = [
     title: 'Signaal als de rust om is',
     note: 'Geluid en trillen, alleen een van de twee, of niets.',
     keywords: ['forge', 'rust', 'timer', 'geluid', 'trillen', 'piep', 'ping', 'melding', 'rusttimer'],
-    choice: {
-      key: 'restsignaal',
-      def: {
-        group: 'Forge',
-        title: 'Signaal als de rust om is',
-        line: 'Een korte toon mengt met je muziek; trillen voel je ook in je zak.',
-        advice: 'sound_vibrate',
-        options: [
-          { value: 'sound_vibrate', label: 'Geluid en trillen', short: 'Geluid en trillen' },
-          { value: 'vibrate', label: 'Alleen trillen', note: 'Met het ritme van je gekozen geluid', short: 'Trillen' },
-          { value: 'sound', label: 'Alleen geluid', short: 'Geluid' },
-          { value: 'off', label: 'Niets', note: 'Je kijkt zelf op de balk onderaan', short: 'Niets' },
-        ],
-      },
-    },
+    choice: { key: 'restsignaal', def: FORGE_CHOICES.restsignaal },
     showWhen: [B.inApp, B.restAuto],
   },
   {
@@ -467,26 +539,7 @@ export const FORGE: SettingDef[] = [
     title: 'Geluid na de rust',
     note: 'Negen klanken: pickel, cornu, vikinghoorn, trommel, bronzen klokken, hyōshigi, tempelbel, heldere bel of lier. Het trillen volgt zijn ritme.',
     keywords: ['forge', 'rust', 'timer', 'geluid', 'toon', 'bel', 'pickel', 'cornu', 'hoorn', 'vikinghoorn', 'trommel', 'klokken', 'hyoshigi', 'tempelbel', 'gong', 'lier', 'trillen', 'ritme', 'rusttimer', 'luister'],
-    choice: {
-      key: 'rustgeluid',
-      def: {
-        group: 'Forge',
-        title: 'Geluid na de rust',
-        line: 'Tik op Luister om te horen. Trillen volgt het ritme.',
-        advice: 'clearbell',
-        options: [
-          { value: 'pickaxe', label: 'Pickel op rots', note: 'Eén droge metalen klik', short: 'Pickel op rots' },
-          { value: 'cornu', label: 'Cornu', note: 'Een korte roep op de bronzen hoorn', short: 'Cornu' },
-          { value: 'vikinghorn', label: 'Vikinghoorn', note: 'Eén lage, ruwe roep die rustig uitklinkt', short: 'Vikinghoorn' },
-          { value: 'drum', label: 'Trommel', note: 'Drie trage, zware slagen', short: 'Trommel' },
-          { value: 'bianzhong', label: 'Bronzen klokken', note: 'Drie klokken in de vijftoonsladder', short: 'Bronzen klokken' },
-          { value: 'hyoshigi', label: 'Hyōshigi', note: 'Twee houten klappers', short: 'Hyōshigi' },
-          { value: 'templebell', label: 'Tempelbel', note: 'Eén diepe slag met lange uitklank', short: 'Tempelbel' },
-          { value: 'clearbell', label: 'Heldere bel', note: 'Twee korte hoge slagen die door muziek snijden', short: 'Heldere bel' },
-          { value: 'lyre', label: 'Lier', note: 'Eén aangeslagen snaar', short: 'Lier' },
-        ],
-      },
-    },
+    choice: { key: 'rustgeluid', def: FORGE_CHOICES.rustgeluid },
     showWhen: [B.inApp, B.restAuto, B.restAlert],
   },
   {
@@ -496,20 +549,7 @@ export const FORGE: SettingDef[] = [
     title: 'Volume van de rustbel',
     note: 'Zacht, normaal of duidelijk, altijd onder dezelfde piek. In de Android-app gaat je muziek even zachter.',
     keywords: ['forge', 'rust', 'volume', 'hard', 'zacht', 'luid', 'koptelefoon', 'muziek', 'oordopjes', 'rustbel', 'rusttimer'],
-    choice: {
-      key: 'rustvolume',
-      def: {
-        group: 'Forge',
-        title: 'Volume van de rustbel',
-        line: 'Zacht, Normaal of Duidelijk, onder dezelfde piek. In de Android-app gaat je muziek even zachter.',
-        advice: 'normal',
-        options: [
-          { value: 'soft', label: 'Zacht', note: 'Voor stille muziek of zonder koptelefoon', short: 'Zacht' },
-          { value: 'normal', label: 'Normaal', note: 'Hoorbaar door muziek, niet schel', short: 'Normaal' },
-          { value: 'clear', label: 'Duidelijk', note: 'Voller, voor harde muziek; de piek blijft gelijk', short: 'Duidelijk' },
-        ],
-      },
-    },
+    choice: { key: 'rustvolume', def: FORGE_CHOICES.rustvolume },
     showWhen: [B.inApp, B.restAuto, B.restAlert],
   },
   {
@@ -537,13 +577,7 @@ export const FORGE: SettingDef[] = [
     title: 'Scherm aan tijdens je training',
     note: 'Het scherm blijft aan zolang het workoutscherm open is.',
     keywords: ['forge', 'scherm', 'aan', 'wake lock', 'slaapstand', 'display', 'sportschool'],
-    help: {
-      title: 'Scherm aan tijdens je training',
-      lead: 'Je scherm blijft aan zolang je training open is, ook als je alleen meekijkt.',
-      points: [
-        { head: 'Uit', text: 'dan volgt je scherm de instelling van je telefoon.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeScherm',
   },
   {
@@ -553,16 +587,7 @@ export const FORGE: SettingDef[] = [
     title: 'Bijsturen in de training',
     note: 'Was een set zwaarder dan bedoeld, dan stelt Forge een lichter gewicht voor de volgende sets voor. Jij beslist.',
     keywords: ['forge', 'kracht', 'bijsturen', 'lichter', 'gewicht', 'te zwaar', 'workout', 'voorstel'],
-    help: {
-      title: 'Bijsturen in de training',
-      lead: 'Was een set zwaarder dan bedoeld, dan stelt Forge voor de volgende sets een lichter gewicht voor.',
-      points: [
-        { head: 'Wanneer', text: 'als je een werkset afvinkt met minder herhalingen en RIR samen dan de onderkant van het bereik plus het RIR dat gevraagd was. Vulde je de RIR niet zelf in, dan beslissen de herhalingen.' },
-        { head: 'Zo rekent het', text: 'uit die set schat Forge je kracht van vandaag, iets minder voor elke volgende set, en kiest het zwaarste gewicht van je sportschool waarbij je de onderkant nog haalt.' },
-        { head: 'Jij beslist', text: 'met Lichter komt het gewicht in de sets die nog open staan en die je niet zelf aanpaste. Met Liever niet blijft alles zoals het was.' },
-        { head: 'Past er niets', text: 'dan is er geen voorstel, in plaats van een gewicht dat veel te veel herhalingen geeft.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeBijsturen',
     showWhen: [B.forge, B.inApp],
   },
@@ -573,17 +598,7 @@ export const FORGE: SettingDef[] = [
     title: 'Zonder spotter',
     note: 'Bij bankdrukken of squatten met een stang schrijft Forge minstens 1 herhaling in reserve voor, zodat je niet tot falen gaat zonder spotter. 0 invullen kan altijd.',
     keywords: ['forge', 'kracht', 'spotter', 'falen', 'tot het uiterste', 'veilig', 'veiligheid', 'bankdrukken', 'squat', 'stang', 'reserve', 'rir', 'alleen trainen'],
-    help: {
-      title: 'Zonder spotter',
-      lead: 'Een stang op je borst of je schouders kan je klem zetten als je tot het uiterste gaat. Daarom schrijft Forge hier minstens 1 herhaling in reserve voor.',
-      points: [
-        { head: 'Welke oefeningen', text: 'bankdrukken en schuin bankdrukken met een stang, en squatten met de stang op je rug of voor je. Toestellen, kabels en dumbbells niet.' },
-        { head: 'Wat je ziet', text: 'het doel en de hint bij de set zijn minstens 1 over, met één klein teken bij de eerste set. Een tik op het teken legt het uit.' },
-        { head: 'Nooit een slot', text: 'je kunt altijd 0 invullen als het zo ging. Het wordt bewaard zoals je het deed, en het teken verdwijnt dan.' },
-        { head: 'Veiligheidsarmen', text: 'heeft je sportschool veiligheidsarmen of een rek met vangers, zet dat dan aan bij Je sportschool. Dan mag het 0 zijn.' },
-        { head: 'Raak', text: 'een bewuste 1 waar MacroFactor 0 voorschreef telt niet als misser voor ASCEND.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeSpotter',
     showWhen: [B.forge, B.inApp],
   },
@@ -594,15 +609,7 @@ export const FORGE: SettingDef[] = [
     title: 'Je sportschool',
     search: false,
     sheet: { eyebrow: 'Forge', title: 'Je sportschool', line: 'Wat er in je sportschool ligt. Forge stelt alleen gewichten voor die kunnen.' },
-    help: {
-      title: 'Sportschool',
-      lead: 'Train je in twee sportscholen, kies dan hier waar je nu bent.',
-      points: [
-        { head: 'Wat erbij hoort', text: 'de stangen, schijven en dumbbells, de gewichten per toestel en wat ASCEND leert over de gewichten die je gebruikte.' },
-        { head: 'Je log', text: 'een nieuwe krachttraining onthoudt in welke sportschool hij was. Oudere trainingen hebben dat niet en tellen overal mee.' },
-        { head: 'MacroFactor', text: 'eindigt de naam van een workout op " @ " en de naam van een sportschool, dan hoort hij daarbij.' },
-      ],
-    },
+    help: true,
     helpKey: 'gymProfiel',
   },
   {
@@ -621,14 +628,7 @@ export const FORGE: SettingDef[] = [
     title: 'Veiligheidsarmen',
     note: 'Heeft je sportschool veiligheidsarmen of een rek met vangers, dan mag je gerust tot het uiterste. Forge schrijft dan geen extra reserve voor.',
     keywords: ['forge', 'sportschool', 'veiligheidsarmen', 'vangers', 'rek', 'safety', 'spotter', 'falen', 'squat rack', 'power rack', 'mijn sportschool'],
-    help: {
-      title: 'Veiligheidsarmen',
-      lead: 'Zijn er in deze sportschool veiligheidsarmen of een rek met vangers, dan kun je een stang laten zakken als het niet lukt.',
-      points: [
-        { head: 'Dan mag het 0 zijn', text: 'Forge schrijft bij een stangoefening dan geen extra reserve voor, ook niet met Zonder spotter aan.' },
-        { head: 'Per sportschool', text: 'dit hoort bij de sportschool die je koos. In een andere sportschool zonder rek staat het weer uit.' },
-      ],
-    },
+    help: true,
     showWhen: [B.forge, B.inApp],
   },
   {
@@ -662,31 +662,9 @@ export const FORGE: SettingDef[] = [
     title: 'Dumbbells in je log',
     note: 'Of je het gewicht van één dumbbell logt of het totaal van twee. Standaard herkent ASCEND het per oefening.',
     keywords: ['forge', 'dumbbell', 'totaal', 'twee', 'per dumbbell', 'halters', 'gewicht', 'log', 'mijn sportschool'],
-    help: {
-      title: 'Dumbbells in je log',
-      lead: 'Sommigen loggen bij een duwoefening het totaal van twee dumbbells, anderen het gewicht per dumbbell.',
-      points: [
-        { head: 'Vanzelf herkennen', text: 'staat in het logboek van een oefening een gewicht dat zwaarder is dan je zwaarste dumbbell, dan leest ASCEND die oefening als totaal. Log je ook bij lichtere oefeningen het totaal, kies dan Totaal van twee.' },
-        { head: 'Totaal', text: 'de gewichten zijn de sommen van twee gelijke dumbbells uit je rek, en het gewicht staat erbij als "60 kg (2 x 30)".' },
-        { head: 'Eén dumbbell', text: 'een oefening met één dumbbell, zoals de goblet squat, wordt nooit verdubbeld.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeDumbbells',
-    choice: {
-      key: 'dumbbellLog',
-      def: {
-        group: 'Forge',
-        title: 'Dumbbells in je log',
-        line: 'Of het gewicht dat je logt één dumbbell is of het totaal van twee.',
-        advice: 'auto',
-        help: 'forgeDumbbells',
-        options: [
-          { value: 'auto', label: 'Vanzelf herkennen', note: 'Per oefening, aan de gewichten in je logboek', short: 'Vanzelf' },
-          { value: 'each', label: 'Per dumbbell', note: 'Het gewicht is die ene dumbbell', short: 'Per dumbbell' },
-          { value: 'total', label: 'Totaal van twee', note: 'Het gewicht is beide dumbbells samen', short: 'Totaal van twee' },
-        ],
-      },
-    },
+    choice: { key: 'dumbbellLog', def: FORGE_CHOICES.dumbbellLog },
     showWhen: [B.forge],
   },
   {
@@ -704,17 +682,7 @@ export const FORGE: SettingDef[] = [
     title: 'Standen per toestel',
     note: 'De gewichten die een kabel of toestel in deze sportschool heeft. Forge onthoudt wat je intikt; hier pas je het aan.',
     keywords: ['sportschool', 'toestel', 'kabel', 'stack', 'gewichtstapel', 'pin', 'gewichten', 'standen', 'stand', 'invullen', 'lijst', 'forge', 'leg press', 'mijn sportschool'],
-    help: {
-      title: 'Standen per toestel',
-      lead: 'Een stand is een gewicht dat een kabel of toestel in jouw sportschool heeft. Forge onthoudt ze zelf; hier zie je ze en pas je ze aan.',
-      points: [
-        { head: 'Weghalen', text: 'tik op een stand om hem door te strepen, bijvoorbeeld een typefout. Een weggehaalde stand komt niet vanzelf terug. Tik nog eens om hem terug te zetten.' },
-        { head: 'Veel tegelijk', text: 'heeft het blok vaste stappen, dan vul je ze in één keer in als lijst of als bereik, bijvoorbeeld 4,5 tot 113 per 7.' },
-        { head: 'Alleen deze standen', text: 'dan stelt Forge nooit een gewicht voor dat je niet zelf intikte. Anders schat Forge ook tussen en boven je standen.' },
-        { head: 'Per sportschool', text: 'dezelfde kabel heeft in een andere sportschool andere standen, dus ze horen bij de sportschool die je koos.' },
-        { head: 'Alles wissen', text: 'met Standen wissen begint het toestel weer leeg. Wat je al trainde blijft in je logboek staan.' },
-      ],
-    },
+    help: true,
   },
   {
     id: 'standen-onthouden',
@@ -723,15 +691,7 @@ export const FORGE: SettingDef[] = [
     title: 'Standen onthouden',
     note: 'Forge onthoudt de gewichten die je op een toestel intikt.',
     keywords: ['standen', 'stand', 'onthouden', 'toestel', 'kabel', 'gewicht', 'minder', 'meer', 'springen', 'forge', 'leren', 'automatisch', 'sportschool'],
-    help: {
-      title: 'Standen onthouden',
-      lead: 'Forge onthoudt de gewichten die je op een kabel of toestel met blok afvinkt. Minder en Meer springen dan van stand naar stand.',
-      points: [
-        { head: 'Zonder vraag', text: 'na het afvinken staat er een regel met Terugdraaien. Dat haalt alleen die stand weg, niet je set.' },
-        { head: 'Eerste keer', text: 'bij een toestel dat Forge nog niet kent neemt het de gewichten over uit je eerdere trainingen in deze sportschool. Een oude typefout streep je weg bij Standen per toestel.' },
-        { head: 'Uit', text: 'dan komen er geen standen bij en leest Forge niets in. Wat er al staat blijft werken, en zonder standen gaan Minder en Meer met de stap uit je sportschool.' },
-      ],
-    },
+    help: true,
     helpKey: 'standenOnthouden',
   },
   {
@@ -741,16 +701,7 @@ export const FORGE: SettingDef[] = [
     title: 'Tussengewichten',
     note: 'Een los plaatje of magneet dat je bij elk gewicht van het blok optelt, voor de hele sportschool of per toestel.',
     keywords: ['sportschool', 'toestel', 'kabel', 'stack', 'gewichtstapel', 'plaatje', 'magneet', 'tussengewicht', 'add-on', 'los gewicht', 'halve schijf', 'forge', 'mijn sportschool'],
-    help: {
-      title: 'Tussengewichten',
-      lead: 'Heb je een los plaatje of een magneet dat je bij het blok van een toestel legt, vul het dan een keer in. ASCEND telt het bij elk gewicht van het blok op.',
-      points: [
-        { head: 'Voorbeeld', text: 'het blok gaat in stappen van 5 kg en je hebt een los gewicht van 2,3 kg. Dan kan het toestel 65, 67,3, 70, 72,3 en zo verder. Forge laat zien waar zo\'n gewicht uit bestaat, bijvoorbeeld 70 + 2,3.' },
-        { head: 'Hele sportschool', text: 'wat je hier invult geldt voor alle kabels en toestellen met een gewichtstapel in deze sportschool.' },
-        { head: 'Per toestel', text: 'een toestel kan een eigen tussengewicht hebben, of geen terwijl de sportschool er wel een heeft. Dat kies je bij het toestel, ook in het menu van de oefening in een training.' },
-        { head: 'Meer dan één', text: 'je kunt er hoogstens drie invullen, bijvoorbeeld 1,25 en 2,5. ASCEND gebruikt ze alleen of samen, elk hoogstens één keer.' },
-      ],
-    },
+    help: true,
   },
   {
     id: 'sportschool',
@@ -767,14 +718,7 @@ export const FORGE: SettingDef[] = [
     title: 'Trainingsduur',
     note: 'Hoe lang een krachttraining duurt, geleerd uit je trainingen.',
     keywords: ['duur', 'minuten', 'hoe lang', 'kracht', 'schatten', 'leren'],
-    help: {
-      title: 'Trainingsduur',
-      lead: 'ASCEND leert hoe lang een krachttraining duurt uit de echte duur van je trainingen.',
-      points: [
-        { head: 'Na drie trainingen', text: 'rekent ASCEND met wat je meestal nodig hebt.' },
-        { head: 'Eerder', text: 'helpt een eigen schatting, onder Geavanceerd.' },
-      ],
-    },
+    help: true,
     showWhen: [B.trainings],
   },
   {
@@ -785,17 +729,7 @@ export const FORGE: SettingDef[] = [
     note: 'Het advies is tonen, niet inkorten: de hele training staat er met kern, bijwerk en extra. Met een grens haalt Forge eerst sets bijwerk weg.',
     keywords: ['tijdsgrens', 'kern', 'extra', 'niet inkorten', 'tonen', 'uitlopen', 'grens', 'hoogstens', 'maximaal', 'max', 'duur', 'minuten', 'hoe lang', 'korter', 'inkorten', 'bijwerk', 'kracht', 'beendag', 'forge', '60 minuten', '75 minuten'],
     sheet: { eyebrow: 'Forge', title: 'Hoogstens per krachttraining', line: 'Het advies: de hele training tonen, met kern, bijwerk en extra. Met een grens gaat eerst bijwerk weg.' },
-    help: {
-      title: 'Hoogstens per krachttraining',
-      lead: 'Het advies is Tonen, niet inkorten: de hele training staat er, en bij elke oefening staat of het kern, bijwerk of extra is. Kies je een grens, dan haalt Forge eerst sets bijwerk weg.',
-      points: [
-        { head: 'Tonen', text: 'zit je over de 60 minuten (een beendag 75) en is de kern af, dan staat onder de klok dat wat nog komt bijwerk of extra is. Stoppen kan; een keertje niet is geen probleem. Pauzes tellen niet mee.' },
-        { head: 'Afronden', text: 'met bijwerk of extra open telt de training gewoon als gedaan, nooit als gemist.' },
-        { head: 'Een grens', text: 'met 45, 60, 75 of 90 minuten rekent Forge met de tijd per set uit je eigen trainingen. Eerst gaat een set van de extra oefeningen, dan van het bijwerk, tot elke oefening er nog twee heeft. Pas daarna een hele oefening. De kernsets blijven altijd staan, en bij de oefening staat wat wegviel.' },
-        { head: 'Je planning', text: 'en je logboek blijven zoals ze zijn; het gaat alleen om wat Forge vandaag klaarzet.' },
-        { head: 'Beendag', text: 'een training die je benen zwaar belast, zoals de planner die ook leest.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeTijdsgrens',
     showWhen: [B.inApp],
   },
@@ -806,23 +740,7 @@ export const FORGE: SettingDef[] = [
     title: 'Gewone krachttraining',
     note: 'Hoogstens zoveel minuten voor een krachttraining die geen beendag is. Het advies is tonen, niet inkorten.',
     keywords: ['tijdsgrens', 'hoogstens', 'kracht', 'bovenlichaam', 'minuten', 'duur', 'inkorten', 'forge'],
-    choice: {
-      key: 'grensKracht',
-      def: {
-        group: 'Forge',
-        title: 'Gewone krachttraining',
-        line: 'Hoogstens zo lang, voor een krachttraining die geen beendag is.',
-        advice: 0,
-        help: 'forgeTijdsgrens',
-        options: [
-          { value: 0, label: 'Tonen, niet inkorten', note: 'Het advies. De hele training staat er; is de kern af, dan zegt een regel na 60 minuten wat nog open staat', short: 'Niet inkorten' },
-          { value: 45, label: '45 minuten', short: '45 min' },
-          { value: 60, label: '60 minuten', short: '60 min' },
-          { value: 75, label: '75 minuten', short: '75 min' },
-          { value: 90, label: '90 minuten', short: '90 min' },
-        ],
-      },
-    },
+    choice: { key: 'grensKracht', def: FORGE_CHOICES.grensKracht },
     showWhen: [B.inApp],
   },
   {
@@ -832,23 +750,7 @@ export const FORGE: SettingDef[] = [
     title: 'Beendag',
     note: 'Hoogstens zoveel minuten voor een zware beendag. Het advies is tonen, niet inkorten.',
     keywords: ['tijdsgrens', 'hoogstens', 'beendag', 'benen', 'onderlichaam', 'minuten', 'duur', 'inkorten', 'forge'],
-    choice: {
-      key: 'grensBeen',
-      def: {
-        group: 'Forge',
-        title: 'Beendag',
-        line: 'Hoogstens zo lang, voor een zware beendag.',
-        advice: 0,
-        help: 'forgeTijdsgrens',
-        options: [
-          { value: 0, label: 'Tonen, niet inkorten', note: 'Het advies. De hele training staat er; is de kern af, dan zegt een regel na 75 minuten wat nog open staat', short: 'Niet inkorten' },
-          { value: 45, label: '45 minuten', short: '45 min' },
-          { value: 60, label: '60 minuten', short: '60 min' },
-          { value: 75, label: '75 minuten', short: '75 min' },
-          { value: 90, label: '90 minuten', short: '90 min' },
-        ],
-      },
-    },
+    choice: { key: 'grensBeen', def: FORGE_CHOICES.grensBeen },
     showWhen: [B.inApp],
   },
   {
@@ -858,15 +760,7 @@ export const FORGE: SettingDef[] = [
     title: 'Rekenmodel',
     search: false,
     sheet: { eyebrow: 'Forge', title: 'Rekenmodel', line: 'Hoe Forge rekent. Het advies is meestal goed.' },
-    help: {
-      title: 'Rekenmodel',
-      lead: 'Zeven keuzes over hoe Forge rekent. Het advies past bij de meeste mensen, dus je hoeft hier niets te doen.',
-      points: [
-        { head: 'Staat er Advies', text: 'dan staat alles hier zoals ASCEND het zelf kiest. Pas je iets aan, dan staat er hoeveel keuzes anders staan.' },
-        { head: 'Terugzetten', text: 'kan per keuze, of met Terug naar het advies bovenaan Instellingen.' },
-        { head: 'Alleen voorstellen', text: 'het model verandert nooit stil je planning of je trainingen. Het stelt gewichten voor, jij beslist.' },
-      ],
-    },
+    help: true,
     helpKey: 'bundelRekenmodel',
     showWhen: [B.forge],
   },
@@ -877,18 +771,7 @@ export const FORGE: SettingDef[] = [
     title: 'Forge rekent mee',
     note: 'Forge schat je herhalingen bij een ander gewicht, stelt na een set de volgende bij en zet na de bovenkant van het bereik de volgende keer een stap zwaarder klaar.',
     keywords: ['forge', 'kracht', 'rekent mee', 'meerekenen', 'herhalingen', 'schatten', 'zwaarder', 'ophogen', 'automatisch', 'volgende set', 'rekenmodel'],
-    help: {
-      title: 'Forge rekent mee',
-      lead: 'Forge rekent tijdens je training met je mee, met dezelfde rekenregel als het voorschrift: je geschatte kracht en de RIR die gevraagd is.',
-      points: [
-        { head: 'Een ander gewicht', text: 'vul je zelf een ander gewicht in, dan zet Forge in het vak Herh. wat je daarbij waarschijnlijk haalt. Herhalingen die je zelf invulde blijven staan.' },
-        { head: 'Na een set', text: 'deed je meer of minder dan gevraagd, of was er meer of minder over, dan stelt Forge de volgende open set bij. Zo nodig ook het gewicht, met de gewichten van je sportschool, zodat je in het bereik blijft.' },
-        { head: 'De volgende keer', text: 'haalde je de bovenkant van het bereik met het gevraagde RIR, dan staat de kleinste stap zwaarder al klaar. Vulde je je RIR niet in, dan pas bij 3 of meer boven de bovenkant (10 bij 7+). Met Terugzetten bij de oefening ga je in één tik terug.' },
-        { head: 'Na een topset', text: 'ging je topset anders dan gevraagd en weet Forge hoeveel je over had, dan volgen de terugsets erna samen je kracht van die dag.' },
-        { head: 'Jouw getallen', text: 'wat Forge zo invult ziet eruit als elk ander voorstel. Wat je zelf typt blijft van jou, en wat je al deed verandert nooit.' },
-        { head: 'Uit', text: 'dan blijven de vakken staan zoals Forge ze voorstelde, en gaat het gewicht pas omhoog als je geschatte kracht dat vraagt.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeRekentMee',
     showWhen: [B.forge],
   },
@@ -899,18 +782,7 @@ export const FORGE: SettingDef[] = [
     title: 'Afvinken telt als het doel',
     note: 'Vink je een set af zonder te kiezen, dan telt het doel als wat je over had, behalve bij twijfel.',
     keywords: ['forge', 'kracht', 'afvinken', 'rir', 'over', 'reserve', 'doel', 'aangenomen', 'bevestigd', 'hoeveel over', 'rekenmodel'],
-    help: {
-      title: 'Afvinken telt als het doel',
-      lead: 'Vink je een set af zonder te kiezen, dan telt het doel als wat je over had, behalve bij twijfel.',
-      points: [
-        { head: 'Wanneer het telt', text: 'je deed minstens de herhalingen die Forge vroeg, met minstens het gewicht van het voorschrift, en de set erna viel niet 2 of meer tekort.' },
-        { head: 'Je geschatte kracht', text: 'precies wat gevraagd was houdt je kracht vast. Meer herhalingen tellen voor de helft mee.' },
-        { head: 'Een stap zwaarder', text: 'pas als al je werksets de bovenkant van het bereik halen, of je topset twee keer achter elkaar.' },
-        { head: 'Bij twijfel', text: 'vraagt Forge na de set hoeveel je over had: minder dan gevraagd, 2 of meer boven het bereik, de eerste set op een zwaarder gewicht, en je eerste drie trainingen van een oefening.' },
-        { head: 'Oudere trainingen', text: 'tellen ook mee, met de onderkant van het bereik als gevraagd aantal. Je log zelf verandert niet.' },
-        { head: 'Uit', text: 'dan telt een set zonder eigen RIR zoals voorheen, en vraagt Forge alleen na de eerste, een zware en de laatste set.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeAfvinkenDoel',
     showWhen: [B.forge],
   },
@@ -923,19 +795,7 @@ export const FORGE: SettingDef[] = [
     adviceTitle: 'Werksets',
     note: 'Of elke volgende set een tikje lichter is door vermoeidheid, of alle sets gelijk.',
     keywords: ['forge', 'kracht', 'sets', 'vermoeidheid', 'dalend', 'gelijk', 'gewicht per set', 'rekenmodel'],
-    choice: {
-      key: 'werksets',
-      def: {
-        group: 'Forge',
-        title: 'Werksets',
-        line: 'Door vermoeidheid til je per set iets minder.',
-        advice: 'descending',
-        options: [
-          { value: 'descending', label: 'Dalend', note: 'Elke set een tikje lichter' },
-          { value: 'equal', label: 'Gelijk', note: 'Alle sets hetzelfde gewicht' },
-        ],
-      },
-    },
+    choice: { key: 'werksets', def: FORGE_CHOICES.werksets },
     showWhen: [B.forge],
   },
   {
@@ -945,30 +805,9 @@ export const FORGE: SettingDef[] = [
     title: 'Vermoeidheid per set',
     note: 'Hoeveel kracht elke werkset de volgende kost: per oefening geleerd uit je eigen sets, of vast 3%.',
     keywords: ['forge', 'kracht', 'vermoeidheid', 'sets', 'leren', 'daling', 'herhalingen', 'later', 'rekenmodel'],
-    help: {
-      title: 'Vermoeidheid per set',
-      lead: 'Elke werkset kost de volgende een beetje kracht. Hoeveel verschilt per oefening.',
-      points: [
-        { head: 'Leren per oefening', text: 'ASCEND kijkt in je eigen sets hoeveel geschatte kracht je van set tot set verliest en rekent daarmee voor de latere sets, de verwachte herhalingen en het bijsturen. Met weinig sets blijft het dicht bij 3%.' },
-        { head: 'Vast 3%', text: 'elke oefening krijgt dezelfde daling, wat je ook deed.' },
-        { head: 'Waarom', text: 'hoeveel herhalingen je van set tot set verliest hangt af van de oefening, het gewicht en de rust (matig bewijs).' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeVermoeidheid',
-    choice: {
-      key: 'vermoeidheid',
-      def: {
-        group: 'Forge',
-        title: 'Vermoeidheid per set',
-        line: 'Hoeveel kracht elke werkset de volgende kost.',
-        advice: 'learned',
-        help: 'forgeVermoeidheid',
-        options: [
-          { value: 'learned', label: 'Leren per oefening', note: 'Uit je eigen sets, met 3% als start', short: 'Leren' },
-          { value: 'fixed', label: 'Vast 3%', note: 'Voor elke oefening hetzelfde', short: 'Vast 3%' },
-        ],
-      },
-    },
+    choice: { key: 'vermoeidheid', def: FORGE_CHOICES.vermoeidheid },
     showWhen: [B.forge],
   },
   {
@@ -978,17 +817,7 @@ export const FORGE: SettingDef[] = [
     title: 'Vermoeidheid tussen oefeningen',
     note: 'Staan er meer harde sets voor dezelfde spieren voor een oefening dan je normaal deed, dan begint de eerste set iets lichter.',
     keywords: ['forge', 'kracht', 'vermoeidheid', 'tussen oefeningen', 'volgorde', 'voorvermoeidheid', 'spieren', 'eerste set', 'lichter', 'rekenmodel'],
-    help: {
-      title: 'Vermoeidheid tussen oefeningen',
-      lead: 'Staan er meer harde sets voor dezelfde spieren voor een oefening dan je normaal deed, dan begint de eerste set iets lichter.',
-      points: [
-        { head: 'Wat telt', text: 'werksets met 3 of minder over, die je zelf invulde of afvinkte zoals gevraagd. Een gedeelde hoofdspier telt een hele set, een hulpspier een halve.' },
-        { head: 'Alleen het verschil', text: 'je gewone volgorde zit al in je geschatte kracht. Pas als er meer voor staat dan normaal, gaat de eerste set omlaag: eerst in herhalingen, anders een stap lichter.' },
-        { head: 'Hoeveel', text: 'ongeveer 2% kracht per harde set meer, nooit meer dan 10%. Met Vermoeidheid per set op Geleerd leert Forge het per oefening uit je eigen trainingen, vanaf zes keer.' },
-        { head: 'Wat je zelf doet', text: 'blijft van jou. Het gaat alleen om het voorschrift, en je log verandert niet.' },
-        { head: 'Uit', text: 'dan telt alleen de vermoeidheid binnen een oefening, zoals voorheen.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeTussenOefeningen',
     showWhen: [B.forge],
   },
@@ -999,16 +828,7 @@ export const FORGE: SettingDef[] = [
     title: 'Na een pauze lichter beginnen',
     note: 'Na meer dan vier weken zonder krachttraining begint het voorstel met 5% minder kracht.',
     keywords: ['forge', 'pauze', 'vakantie', 'ziek', 'lichter', 'herstarten', 'kracht', 'gewicht', 'rekenmodel'],
-    help: {
-      title: 'Na een pauze lichter beginnen',
-      lead: 'Na meer dan vier weken zonder krachttraining begint het voorstel iets lichter.',
-      points: [
-        { head: 'Waarom', text: 'tot ongeveer vier weken verlies je weinig kracht, daarna meer (matig bewijs).' },
-        { head: 'Alleen een echte pauze', text: 'rustte alleen deze oefening terwijl je wel krachttraining deed, dan begint hij op je laatste niveau.' },
-        { head: 'Hoeveel', text: 'het voorstel rekent met 5% minder kracht en kijkt na die training opnieuw.' },
-        { head: 'Uit', text: 'dan begint het voorstel ook na een lange pauze op je laatste niveau.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgePauze',
     showWhen: [B.forge],
   },
@@ -1028,20 +848,7 @@ export const FORGE: SettingDef[] = [
     title: 'Sets die meetellen',
     note: 'Tot hoeveel herhalingen een set meetelt voor de schatting van je kracht. Standaard 20, het strengst is 12.',
     keywords: ['forge', 'kracht', 'schatting', 'geschatte kracht', 'e1rm', 'maximum', 'herhalingen', 'rekenmodel'],
-    choice: {
-      key: 'schatting',
-      def: {
-        group: 'Forge',
-        title: 'Sets die meetellen',
-        line: 'Hoe meer herhalingen, hoe ruwer de schatting.',
-        advice: 20,
-        options: [
-          { value: 12, label: 'Tot 12', note: 'Het strengst', short: 'Tot 12' },
-          { value: 15, label: 'Tot 15', note: 'Ertussenin', short: 'Tot 15' },
-          { value: 20, label: 'Tot 20', note: 'Ook hoge bereiken tellen mee', short: 'Tot 20' },
-        ],
-      },
-    },
+    choice: { key: 'schatting', def: FORGE_CHOICES.schatting },
     showWhen: [B.forge],
   },
   {
@@ -1051,32 +858,9 @@ export const FORGE: SettingDef[] = [
     title: 'Gewichten van toestellen',
     note: 'Hoe streng ASCEND is met de gewichten op een toestel of kabel: geleerd en geschat, alleen wat je gebruikte, of de stappen van je profiel.',
     keywords: ['forge', 'toestel', 'kabel', 'gewichtstapel', 'pin', 'afronden', 'leren', 'gewicht', 'leg press', 'alleen gebruikt', 'geschat', 'rekenmodel'],
-    help: {
-      title: 'Gewichten van toestellen',
-      lead: 'Bij een toestel of kabel met een gewichtstapel bepaal je hoe streng ASCEND is met de gewichten die het voorstelt.',
-      points: [
-        { head: 'Geleerd en geschat', text: 'het onthoudt de gewichten die je op dat toestel pakte, ook bij opwarmen. Boven en onder wat je gebruikte telt de stap die je op het toestel twee keer zag, anders de stap uit je sportschool. Een grote kloof ertussen wordt opgevuld. Zo kan er een gewicht tussen zitten dat het toestel niet heeft.' },
-        { head: 'Alleen wat je gebruikte', text: 'ASCEND stelt nooit een gewicht voor dat je er nog niet pakte. Vraagt je kracht om zwaarder, dan blijft het gewicht staan en gaan de herhalingen omhoog. Haal je de bovenkant met genoeg over, dan kies je zelf het eerstvolgende gewicht op het toestel. Zonder gebruikte gewichten op dat toestel gelden de stappen van je profiel.' },
-        { head: 'Stappen van je profiel', text: 'ASCEND rondt af op de stap die je bij Kabels en toestellen instelde.' },
-        { head: 'Eigen lijst', text: 'vulde je de gewichten van een toestel zelf in (Gewichten per toestel), dan gelden precies die, in elke keuze hierboven.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeLeren',
-    choice: {
-      key: 'forgeLeren',
-      def: {
-        group: 'Forge',
-        title: 'Gewichten van toestellen',
-        line: 'Welke gewichten ASCEND op een toestel of kabel voorstelt.',
-        advice: 'learned',
-        help: 'forgeLeren',
-        options: [
-          { value: 'learned', label: 'Geleerd en geschat', note: 'Wat je gebruikte, met de gaten en het stuk erboven aangevuld', short: 'Geleerd' },
-          { value: 'used_only', label: 'Alleen wat je gebruikte', note: 'Nooit een gewicht dat je er nog niet pakte', short: 'Alleen gebruikt' },
-          { value: 'profile', label: 'Stappen van je profiel', note: 'De stap die je bij Kabels en toestellen instelde', short: 'Profiel' },
-        ],
-      },
-    },
+    choice: { key: 'forgeLeren', def: FORGE_CHOICES.forgeLeren },
     showWhen: [B.forge],
   },
   {
@@ -1086,14 +870,7 @@ export const FORGE: SettingDef[] = [
     title: 'Bij het invullen',
     search: false,
     sheet: { eyebrow: 'Forge', title: 'Bij het invullen', line: 'Wat het workoutscherm voor je doet.' },
-    help: {
-      title: 'Bij het invullen',
-      lead: 'Drie keuzes over wat het workoutscherm voor je doet terwijl je sets invult.',
-      points: [
-        { head: 'Alleen met sets in ASCEND', text: 'houd je sets in MacroFactor bij, dan is het workoutscherm alleen om mee te kijken en doen deze keuzes niets. Ze verdwijnen dan uit beeld.' },
-        { head: 'Terugzetten', text: 'kan per keuze, of met Terug naar het advies bovenaan Instellingen.' },
-      ],
-    },
+    help: true,
     helpKey: 'bundelInvullen',
     showWhen: [B.inApp],
   },
@@ -1104,30 +881,9 @@ export const FORGE: SettingDef[] = [
     title: 'Oefeningen in een training',
     note: 'Een oefening per scherm, opzij vegen van oefening naar oefening met kaartjes bovenaan, of alles onder elkaar.',
     keywords: ['oefeningen', 'vegen', 'swipen', 'opzij', 'per scherm', 'pagina', 'onder elkaar', 'lijst', 'scrollen', 'strook', 'kaartjes', 'macrofactor', 'forge', 'kracht', 'workout', 'training'],
-    help: {
-      title: 'Oefeningen in een training',
-      lead: 'Een oefening per scherm: je veegt opzij naar de volgende oefening, zoals in MacroFactor, en bovenaan staat een strook met een kaartje per oefening.',
-      points: [
-        { head: 'Een per scherm', text: 'het advies. Tik op een kaartje in de strook om naar die oefening te springen; een afgeronde oefening heeft een vinkje. Naar beneden scrollen kan binnen een oefening gewoon.' },
-        { head: 'Een set verwijderen', text: 'veeg op het nummer of het voorschrift van de set naar links, zoals altijd. Elders op het scherm wisselt vegen van oefening.' },
-        { head: 'Onder elkaar', text: 'alle oefeningen op een pagina, zoals eerst. Je kunt dit ook in het menu van de training zelf zetten.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeOefeningen',
-    choice: {
-      key: 'forgeOefeningen',
-      def: {
-        group: 'Forge',
-        title: 'Oefeningen in een training',
-        line: 'Hoe de oefeningen in een training staan.',
-        advice: 'scherm',
-        help: 'forgeOefeningen',
-        options: [
-          { value: 'scherm', label: 'Een per scherm', note: 'Opzij vegen van oefening naar oefening, met kaartjes bovenaan', short: 'Een per scherm' },
-          { value: 'lijst', label: 'Onder elkaar', note: 'Alle oefeningen op een pagina, naar beneden scrollen', short: 'Onder elkaar' },
-        ],
-      },
-    },
+    choice: { key: 'forgeOefeningen', def: FORGE_CHOICES.forgeOefeningen },
     showWhen: [B.inApp],
   },
   {
@@ -1137,30 +893,9 @@ export const FORGE: SettingDef[] = [
     title: 'Verloop toont',
     note: 'Het verloop van een training met alleen de sets met een wijziging, of alle sets met de zwaarste set erbij.',
     keywords: ['verloop', 'wijzigingen', 'alle sets', 'zwaarste set', 'logboek', 'redenen', 'rir', 'forge', 'kracht', 'training'],
-    help: {
-      title: 'Verloop toont',
-      lead: 'Het blad Verloop van de training zet per set een regel: het gewicht, de herhalingen en je RIR zoals de set uiteindelijk is, met alle redenen in een zin.',
-      points: [
-        { head: 'Alleen wijzigingen', text: 'het advies. Alleen de sets waar jij of Forge iets aan veranderde, of die onder het bereik bleven.' },
-        { head: 'Alle sets', text: 'ook de sets volgens schema, met de zwaarste set per oefening. Een gedempt bolletje is een RIR die je niet zelf koos.' },
-        { head: 'In het blad', text: 'je kunt ook wisselen in het blad zelf; die keuze blijft staan.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeVerloop',
-    choice: {
-      key: 'forgeVerloop',
-      def: {
-        group: 'Forge',
-        title: 'Verloop toont',
-        line: 'Wat het blad Verloop van de training laat zien.',
-        advice: 'wijzigingen',
-        help: 'forgeVerloop',
-        options: [
-          { value: 'wijzigingen', label: 'Alleen wijzigingen', note: 'Alleen de sets waar iets mee gebeurde, met de reden', short: 'Alleen wijzigingen' },
-          { value: 'alle', label: 'Alle sets', note: 'Ook de sets volgens schema, met de zwaarste set erbij', short: 'Alle sets' },
-        ],
-      },
-    },
+    choice: { key: 'forgeVerloop', def: FORGE_CHOICES.forgeVerloop },
     showWhen: [B.inApp],
   },
   {
@@ -1170,33 +905,9 @@ export const FORGE: SettingDef[] = [
     title: 'Lange onderbreking vragen na',
     note: 'Kom je terug in een lopende training na een lange stilte, dan vraagt Forge of die tijd meetelt. Uit, 30, 45, 60 of 90 minuten.',
     keywords: ['onderbreking', 'pauze', 'pauzeren', 'klok', 'duur', 'lang weg', 'sessie', 'lopende training', 'verder', 'forge', 'kracht', 'workout', 'training', 'bij het invullen'],
-    help: {
-      title: 'Lange onderbreking vragen na',
-      lead: 'Een training in Forge blijft open tot je afrondt of verwijdert, ook als je de app sluit. Kom je terug na een lange stilte, dan vraagt Forge eenmaal of die tijd meetelt.',
-      points: [
-        { head: 'Nee, als pauze', text: 'het advies. De tijd vanaf je laatste handeling tot nu wordt een pauze, en de duur van de training blijft eerlijk.' },
-        { head: 'Ja, telt mee', text: 'de klok loopt door alsof je er was, bijvoorbeeld bij een lange rust tussen twee blokken.' },
-        { head: 'Uit', text: 'Forge vraagt niets en telt alles mee. Pauzeren kan altijd zelf in het menu van de training.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeOnderbreking',
-    choice: {
-      key: 'forgeOnderbreking',
-      def: {
-        group: 'Forge',
-        title: 'Lange onderbreking vragen na',
-        line: 'Hoe lang je weg mag zijn voordat Forge vraagt of die tijd meetelt.',
-        advice: 45,
-        help: 'forgeOnderbreking',
-        options: [
-          { value: 0, label: 'Uit', note: 'Forge vraagt niets, de klok loopt door', short: 'Uit' },
-          { value: 30, label: 'Na 30 minuten', short: '30 minuten' },
-          { value: 45, label: 'Na 45 minuten', note: 'Het advies', short: '45 minuten' },
-          { value: 60, label: 'Na 60 minuten', short: '60 minuten' },
-          { value: 90, label: 'Na 90 minuten', short: '90 minuten' },
-        ],
-      },
-    },
+    choice: { key: 'forgeOnderbreking', def: FORGE_CHOICES.forgeOnderbreking },
     showWhen: [B.inApp],
   },
   {
@@ -1206,33 +917,9 @@ export const FORGE: SettingDef[] = [
     title: 'Training bewaren als concept na',
     note: 'Een training die je vergat af te ronden wordt na middernacht of na deze grens een concept: Afronden, Verder of Verwijderen. Alleen middernacht, 4, 8 of 12 uur.',
     keywords: ['niet afgerond', 'concept', 'vergeten', 'afbreken', 'afgebroken', 'blijven liggen', 'lopende training', 'middernacht', 'verwijderen', 'weggooien', 'verder', 'afronden', 'forge', 'kracht', 'training', 'bij het invullen'],
-    help: {
-      title: 'Training bewaren als concept na',
-      lead: 'Een training die je begon en vergat af te ronden, loopt niet dagen door. Na middernacht, of na deze grens zonder handeling, staat hij als concept klaar. Er gaat niets weg en je planning verandert niet.',
-      points: [
-        { head: 'Afronden', text: 'met de sets die je deed en de tijd tot je laatste handeling. Is het minder dan de helft, dan heet het eerlijk een korte training.' },
-        { head: 'Verder', text: 'de stille tijd wordt een pauze en je gaat door waar je was.' },
-        { head: 'Verwijderen', text: 'pas na een bevestiging. Je logboek verandert niet.' },
-        { head: 'Na 12 uur', text: 'het advies. Middernacht geldt altijd, met een uur stilte, zodat een late training gewoon doorloopt.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeConcept',
-    choice: {
-      key: 'forgeConcept',
-      def: {
-        group: 'Forge',
-        title: 'Training bewaren als concept na',
-        line: 'Hoe lang een training zonder handeling mag liggen voordat Forge hem als concept bewaart en vraagt wat je wilt.',
-        advice: 12,
-        help: 'forgeConcept',
-        options: [
-          { value: 0, label: 'Na middernacht', short: 'Na middernacht' },
-          { value: 4, label: 'Na 4 uur', short: '4 uur' },
-          { value: 8, label: 'Na 8 uur', short: '8 uur' },
-          { value: 12, label: 'Na 12 uur', note: 'Het advies', short: '12 uur' },
-        ],
-      },
-    },
+    choice: { key: 'forgeConcept', def: FORGE_CHOICES.forgeConcept },
     showWhen: [B.inApp],
   },
   {
@@ -1242,14 +929,7 @@ export const FORGE: SettingDef[] = [
     title: 'Vegen om te verwijderen',
     note: 'Een set naar links vegen om hem te verwijderen. Uit laat de rij stil staan; verwijderen kan dan via het menu van de set.',
     keywords: ['vegen', 'swipen', 'veeg', 'verwijderen', 'set', 'weghalen', 'wissen', 'forge', 'kracht', 'workout', 'training'],
-    help: {
-      title: 'Vegen om te verwijderen',
-      lead: 'In een training haal je een set weg door de rij naar links te vegen. Uit, dan beweegt de rij niet meer mee met je vinger.',
-      points: [
-        { head: 'Uit', text: 'een set verwijderen kan nog altijd: houd de rij ingedrukt en kies Set verwijderen.' },
-        { head: 'Aan', text: 'een korte veeg laat een rode knop zien, een lange veeg verwijdert meteen. Je kunt het direct terugdraaien.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeVegen',
     showWhen: [B.inApp],
   },
@@ -1260,30 +940,9 @@ export const FORGE: SettingDef[] = [
     title: 'RIR vooraf invullen',
     note: 'Het RIR-veld van een werkset is leeg met het doel als hint, of staat al op het doel. Een set die je niet aanraakte, krijgt een merkje.',
     keywords: ['forge', 'kracht', 'rir', 'herhalingen in reserve', 'hint', 'doel', 'invullen', 'workout', 'bij het invullen'],
-    help: {
-      title: 'RIR vooraf invullen',
-      lead: 'Herhalingen in reserve (RIR) zijn alleen iets waard als jij ze zelf zei.',
-      points: [
-        { head: 'Als hint', text: 'het veld is leeg en het doel staat gedimd in beeld. Vul je niets in, dan wordt het doel bewaard met een merkje dat je het niet zelf invulde.' },
-        { head: 'Met het doel', text: 'het doel staat er al als waarde, zoals voorheen. Raak je de set niet aan, dan krijgt hij hetzelfde merkje.' },
-        { head: 'Waarom', text: 'ASCEND rekent met een aangenomen RIR als zwakke aanname en weet zo welke sets gemeten zijn. De rekenregels veranderen niet.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeRirVooraf',
-    choice: {
-      key: 'rirVooraf',
-      def: {
-        group: 'Forge',
-        title: 'RIR vooraf invullen',
-        line: 'Wat er in het RIR-veld van een werkset staat voor je iets invult.',
-        advice: 'hint',
-        help: 'forgeRirVooraf',
-        options: [
-          { value: 'hint', label: 'Als hint', note: 'Het veld is leeg, het doel staat gedimd in beeld', short: 'Als hint' },
-          { value: 'target', label: 'Met het doel', note: 'Het doel staat er al in, je past het aan als het anders was', short: 'Met het doel' },
-        ],
-      },
-    },
+    choice: { key: 'rirVooraf', def: FORGE_CHOICES.rirVooraf },
     showWhen: [B.inApp],
   },
   {
@@ -1293,32 +952,9 @@ export const FORGE: SettingDef[] = [
     title: 'Hoeveel over na een set',
     note: 'Alleen als het anders ging vraagt Forge in de rij hoeveel je over had: 0, 1, 2 of 3+. Met Vaker vragen ook na je eerste en laatste set.',
     keywords: ['forge', 'rir', 'vaker vragen', 'laatste set', 'eerste set', 'grijs', 'over', 'reserve', 'hoeveel over', 'topset', 'snel', 'bij het invullen'],
-    help: {
-      title: 'Hoeveel over na een set',
-      lead: 'Afvinken geeft het doel als RIR. Alleen als het anders ging vraagt Forge in de rij hoeveel je nog over had: 0, 1, 2 of 3+.',
-      points: [
-        { head: 'Als het anders ging', text: 'het advies: na een zware set (0 of 1 over, of tot falen), minder herhalingen dan gevraagd, ruim boven het bereik, de eerste set op een zwaarder gewicht en in je eerste drie trainingen van een oefening. Staat Afvinken telt als het doel uit, dan ook bij de eerste set die de bovenkant haalt, zodat de stap zwaarder kan komen.' },
-        { head: 'Vaker vragen', text: 'ook na je eerste en je laatste werkset, ook als alles volgens schema ging, en verder alles wat het advies vraagt.' },
-        { head: 'Eén tik', text: 'je kiest in de rij zelf, zonder blad. Het doel staat gedempt voorgekozen; kies je niets, dan blijft het staan als aangenomen RIR.' },
-        { head: 'Waarom', text: 'van een RIR die je zelf kiest leert Forge hoe snel je moe wordt, en hij telt voor de stap zwaarder en voor klaar voor je doel. Een aangenomen RIR telt alleen als het doel mee in je geschatte kracht.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeRirSnel',
-    choice: {
-      key: 'rirSnel',
-      def: {
-        group: 'Forge',
-        title: 'Hoeveel over na een set',
-        line: 'Wanneer Forge na het afvinken vraagt hoeveel je over had.',
-        advice: 'twijfel',
-        help: 'forgeRirSnel',
-        options: [
-          { value: 'twijfel', label: 'Als het anders ging', note: 'Het advies. Na een zware set, minder herhalingen dan gevraagd, ruim boven het bereik of een zwaarder gewicht', short: 'Als het anders ging' },
-          { value: 'vaker', label: 'Vaker vragen', note: 'Ook na je eerste en je laatste werkset, ook als alles volgens schema ging', short: 'Vaker vragen' },
-          { value: 'uit', label: 'Uit', note: 'Afvinken geeft altijd het doel', short: 'Uit' },
-        ],
-      },
-    },
+    choice: { key: 'rirSnel', def: FORGE_CHOICES.rirSnel },
     showWhen: [B.inApp],
   },
   {
@@ -1328,15 +964,7 @@ export const FORGE: SettingDef[] = [
     title: 'Stappen bij calisthenics',
     note: 'Forge toont bij een oefening op een ladder de stap, de toets en een tik naar een lichtere of zwaardere stap.',
     keywords: ['forge', 'calisthenics', 'ladder', 'stap', 'toets', 'houding', 'seconden', 'push-up', 'optrekken', 'dip', 'bij het invullen'],
-    help: {
-      title: 'Stappen bij calisthenics',
-      lead: 'Forge toont bij een oefening op een ladder de stap, de toets en een tik naar een lichtere of zwaardere stap.',
-      points: [
-        { head: 'De toets', text: 'drie sets op de bovenkant met nette vorm, bijvoorbeeld 3 keer 8. Haal je dat, dan kan de volgende stap.' },
-        { head: 'Stap lichter of zwaarder', text: 'wisselt de oefening alleen in deze training, zoals Ruilen. Je planning en je training blijven zoals ze zijn.' },
-        { head: 'Uit', text: 'geen regels en geen tik. Seconden voor een houding blijven werken.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeStappen',
     showWhen: [B.inApp],
   },
@@ -1347,14 +975,7 @@ export const FORGE: SettingDef[] = [
     title: 'Ging het netjes?',
     note: 'Na een set op een ladderstap vraagt Forge of je vorm netjes was. Een Nee telt die set niet voor de stap.',
     keywords: ['forge', 'calisthenics', 'ladder', 'netjes', 'vorm', 'toets', 'stap', 'bij het invullen'],
-    help: {
-      title: 'Ging het netjes?',
-      lead: 'Na een set op een ladderstap vraagt Forge of je vorm netjes was. Een Nee telt die set niet voor de stap.',
-      points: [
-        { head: 'Wanneer', text: 'alleen als de set de onderkant haalt: 5 herhalingen of 10 seconden. Eronder verandert het antwoord niets.' },
-        { head: 'Niets kiezen', text: 'dan blijft het onbekend, en dat telt als netjes. Achteraf wijzigen kan door de set lang in te drukken.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeNetjes',
     showWhen: [B.inApp, B.ladderRow],
   },
@@ -1365,14 +986,7 @@ export const FORGE: SettingDef[] = [
     title: 'Band bij optrekken en dip',
     note: 'Je kiest de band die je gebruikt. Een set met band telt niet voor de stap.',
     keywords: ['forge', 'calisthenics', 'band', 'elastiek', 'hulp', 'optrekken', 'pull-up', 'dip', 'ladder', 'stap', 'bij het invullen'],
-    help: {
-      title: 'Band bij optrekken en dip',
-      lead: 'Bij Pull-Up en Dip kies je de band die je gebruikt: geen, licht, middel of zwaar.',
-      points: [
-        { head: 'Telt niet voor de stap', text: 'met hulp haal je de stap nog niet. Je werkt door tot je de onderkant zonder band haalt.' },
-        { head: 'Je vorige keer', text: 'Forge zet de band van je vorige keer klaar. Een keuze geldt voor de open sets.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeBand',
     showWhen: [B.inApp, B.ladderRow],
   },
@@ -1383,15 +997,7 @@ export const FORGE: SettingDef[] = [
     title: 'Stap voorstellen',
     note: 'Haal je de toets van een ladderstap, of drie trainingen de onderkant niet, dan stelt Forge voor om de oefening in je training op de volgende of lichtere stap te zetten. Pas na Akkoord verandert er iets.',
     keywords: ['forge', 'calisthenics', 'ladder', 'stap', 'voorstel', 'toets', 'volgende stap', 'lichtere stap', 'push-up', 'optrekken', 'dip', 'akkoord', 'bij het invullen'],
-    help: {
-      title: 'Stap voorstellen',
-      lead: 'Haal je de toets van een ladderstap, dan stelt Forge de volgende stap voor. Haal je drie trainingen achter elkaar de onderkant niet, dan de lichtere stap.',
-      points: [
-        { head: 'Akkoord', text: 'de oefening in je training wordt de nieuwe stap, vanaf je volgende training. Sets en herhalingen blijven.' },
-        { head: 'Liever niet', text: 'dan blijft je plan zoals het is en komt dit voorstel niet terug. Een voorstel voor een andere stap wel.' },
-        { head: 'Terug', text: 'Ongedaan maken op de kaart, of later in het blad van de oefening.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeStapVoorstel',
     showWhen: [B.inApp],
   },
@@ -1402,15 +1008,7 @@ export const FORGE: SettingDef[] = [
     title: 'IJkset voorstellen',
     note: 'Eens per vier weken stelt Forge een set erbij voor bij één hoofdoefening, zo ver als netjes gaat, om je gevoel voor hoeveel je over hebt te ijken. Niet in een week met een tocht of test. Pas na Akkoord komt er een set bij.',
     keywords: ['forge', 'ijkset', 'ijken', 'rir', 'hoeveel over', 'topset', 'extra set', 'set erbij', 'vier weken', 'voorstel', 'akkoord', 'bij het invullen'],
-    help: {
-      title: 'IJkset voorstellen',
-      lead: 'Een schatting van wat je over hebt is alleen goed als je hem af en toe controleert. Eens per vier weken stelt Forge daarom één set erbij voor.',
-      points: [
-        { head: 'Wat', text: 'bij één hoofdoefening een set erbij, zo ver als netjes gaat. Daarna kies je zoals altijd hoeveel je over had.' },
-        { head: 'Wanneer', text: 'niet in een week met een tocht of test, en hooguit eens per vier weken.' },
-        { head: 'Akkoord', text: 'pas dan komt de set erbij. Met Niet nu blijft je training zoals hij was en vraagt Forge het de volgende keer opnieuw.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeIJkset',
     showWhen: [B.inApp],
   },
@@ -1421,15 +1019,7 @@ export const FORGE: SettingDef[] = [
     title: 'Calisthenics per training',
     note: 'Per krachttraining kracht met gewicht, calisthenics met je eigen gewicht, of samen. Eerst een voorstel, pas na Akkoord verandert er iets.',
     keywords: ['forge', 'calisthenics', 'eigen gewicht', 'soort', 'training', 'kracht', 'samen', 'ladder', 'push-up', 'optrekken', 'dip', 'handstand', 'bovenlichaam', 'akkoord'],
-    help: {
-      title: 'Calisthenics per training',
-      lead: 'Per krachttraining kies je kracht met gewicht, calisthenics met je eigen gewicht, of samen.',
-      points: [
-        { head: 'Calisthenics', text: 'duwen, optrekken en schouderdrukken gaan op hun ladder, op de stap waar je staat; elke ladder hoogstens één keer. Wat overblijft en je benen blijven met gewicht.' },
-        { head: 'Samen', text: 'van de plekken die een ladder kunnen worden blijft de eerste helft met gewicht, de rest gaat op een ladder.' },
-        { head: 'Akkoord', text: 'eerst een voorstel; je ziet het de volgende keer dat je de training opent. Je planning en je dagen blijven.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeSoort',
     showWhen: [B.inApp],
   },
@@ -1440,31 +1030,9 @@ export const FORGE: SettingDef[] = [
     title: 'Wijzigingen doorvoeren',
     note: 'Pas je het gewicht of de herhalingen van een set aan, dan volgen de latere sets: gelijke sets, met hetzelfde verschil, of niet.',
     keywords: ['forge', 'kracht', 'doorvoeren', 'doorgeven', 'overnemen', 'gewicht', 'herhalingen', 'sets', 'workout', 'invoer', 'bij het invullen'],
-    help: {
-      title: 'Wijzigingen doorvoeren',
-      lead: 'Pas je het gewicht of de herhalingen van een set aan, dan kunnen de latere sets meegaan.',
-      points: [
-        { head: 'Gelijke sets', text: 'sets met hetzelfde gewicht en dezelfde herhalingen als deze set voor je wijziging nemen de nieuwe waarde over. Gewicht en herhalingen apart.' },
-        { head: 'Zelfde verschil', text: 'ga je 2,5 kg omhoog, dan gaan de sets erna ook 2,5 kg omhoog. De herhalingen blijven.' },
-        { head: 'Wat blijft staan', text: 'gedane sets, opwarmsets en sets die je zelf aanpaste. De RIR volgt nooit, die voel je per set.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeDoorvoeren',
-    choice: {
-      key: 'doorvoeren',
-      def: {
-        group: 'Forge',
-        title: 'Wijzigingen doorvoeren',
-        line: 'Wat er met de latere sets gebeurt als je een set aanpast.',
-        advice: 'equal',
-        help: 'forgeDoorvoeren',
-        options: [
-          { value: 'equal', label: 'Gelijke sets', note: 'Latere sets die precies hetzelfde waren nemen de nieuwe waarde over', short: 'Gelijke sets' },
-          { value: 'shift', label: 'Zelfde verschil', note: 'Het gewicht van de sets erna schuift evenveel mee', short: 'Zelfde verschil' },
-          { value: 'off', label: 'Uit', note: 'Elke set pas je zelf aan', short: 'Uit' },
-        ],
-      },
-    },
+    choice: { key: 'doorvoeren', def: FORGE_CHOICES.doorvoeren },
     showWhen: [B.inApp],
   },
   {
@@ -1474,15 +1042,7 @@ export const FORGE: SettingDef[] = [
     title: 'Schijven bij de set tonen',
     note: 'Onder elke werkset met een stang een kleine regel met de schijven per kant. Standaard uit; het cijferblok toont ze altijd.',
     keywords: ['forge', 'schijven', 'stang', 'per kant', 'calculator', 'sets', 'workout', 'bij het invullen'],
-    help: {
-      title: 'Schijven bij de set',
-      lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt. Standaard uit: het cijferblok toont ze als je het gewicht intikt.',
-      points: [
-        { head: 'Altijd', text: 'past een gewicht niet precies met je schijven, dan staat dat onder de set, ook met deze instelling uit.' },
-        { head: 'Tik erop', text: 'dan opent het invoerpaneel met de stang erbij getekend.' },
-        { head: 'Je sportschool', text: 'de schijven en stangen komen uit je sportschoolprofiel.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeSchijven',
     showWhen: [B.inApp],
   },
@@ -1493,15 +1053,7 @@ export const FORGE: SettingDef[] = [
     title: 'Opwarmset later dempen',
     note: 'Een opwarmset op een beweging die al warm is staat gedempt, met één zin waarom. Afvinken of laten liggen, laten liggen telt niet als gemist.',
     keywords: ['forge', 'kracht', 'opwarmen', 'opwarmset', 'aanloopset', 'warm', 'later', 'dempen', 'overslaan', 'leg press'],
-    help: {
-      title: 'Opwarmset later dempen',
-      lead: 'Een opwarmset op een beweging die al warm is, zoals de leg press na de squat, is vaak niet nodig.',
-      points: [
-        { head: 'Aan', text: 'de set blijft staan, gedempt, met één zin waarom. Afvinken telt als opwarmset; laten liggen telt niet als gemist.' },
-        { head: 'Gewoon', text: 'bij een nieuwe spiergroep of een nieuwe beweging, en bij de stappen naar een zware topset.' },
-        { head: 'Uit', text: 'elke opwarmset staat er zoals altijd.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeOpwarmsetLater',
     showWhen: [B.inApp],
   },
@@ -1512,15 +1064,7 @@ export const FORGE: SettingDef[] = [
     title: 'Toets tegen MacroFactor',
     search: false,
     sheet: { eyebrow: 'Forge', title: 'Toets tegen MacroFactor', line: 'ASCEND meet stil mee. Jij beslist wat je ziet.' },
-    help: {
-      title: 'ASCEND naast MacroFactor',
-      lead: 'Onderaan Forge staat hoe vaak een voorstel raak was: binnen het herhalingenbereik, met de herhalingen in reserve die de training vraagt.',
-      points: [
-        { head: 'Dezelfde toets', text: 'wat je deed en wat ASCEND voorstelde worden voor dezelfde set aan dezelfde dag gehouden, met dezelfde maat. Of de gewichten gelijk zijn zegt niets.' },
-        { head: 'Een schatting', text: 'voor ASCEND is raak achteraf een schatting uit de beste set van die dag. Pakte je in Forge het voorgestelde gewicht, dan is het gewoon wat er gebeurde.' },
-        { head: 'Uit', text: 'het blok staat dan niet op Forge. De stand zie je hier, onder de schakelaar.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeNaast',
     showWhen: [B.forge, B.mf],
   },
@@ -1541,14 +1085,7 @@ export const FORGE: SettingDef[] = [
     title: 'Stil meten sinds',
     note: 'De dag vanaf wanneer ASCEND stil meetelt of een voorstel raak was. Eerder staat apart, als "alles".',
     keywords: ['forge', 'raak', 'sinds', 'datum', 'startdatum', 'meten', 'macrofactor', 'voorstel', 'kracht', 'toets tegen macrofactor'],
-    help: {
-      title: 'Stil meten sinds',
-      lead: 'De dag waarop ASCEND begon om stil mee te rekenen. Wat daarna kwam, staat apart naast alles.',
-      points: [
-        { head: 'Standaard', text: '24 oktober 2026, de dag dat het MacroFactor-programma half af was.' },
-        { head: 'Waarom', text: 'trainingen van voor het inlezen van je programma zijn met de huidige template en instellingen achteraf herberekend, en zeggen minder.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeSinds',
     showWhen: [B.forge, B.mf],
   },
@@ -1560,18 +1097,7 @@ export const FORGE: SettingDef[] = [
     note: 'Bij een bergdoel zegt de weekterugblik het als kuiten, scheenspier of bilspieren vier weken weinig harde sets kregen, of je enkels en je evenwicht bijna niets, met een voorstel voor één oefening. Het voorstel staat ook rustig bovenaan de training waar de oefening bij zou komen, zolang je nog geen set afvinkte. Bij Ruilen staat zo’n oefening voorop als de keuze verder gelijk is.',
     keywords: ['spieren', 'spierindex', 'kuiten', 'kuit', 'tibialis', 'scheen', 'bilspieren', 'billen', 'berg', 'bergdoel', 'tocht', 'sets', 'ruilen', 'weekterugblik', 'forge', 'kracht'],
     sheet: { eyebrow: 'Forge', title: 'Spieren voor de berg', line: 'Bij een bergdoel. Een oefening komt er alleen bij na Akkoord.' },
-    help: {
-      title: 'Spieren voor de berg',
-      lead: 'Bergop en bergaf met een rugzak vragen veel van je kuiten, je scheenspier en je bilspieren, en juist die slaat een gewoon krachtschema vaak over. Bij een bergdoel let ASCEND daar rustig op.',
-      points: [
-        { head: 'De melding', text: 'krijgt een van die spieren de laatste vier weken gemiddeld minder dan 4 harde sets per week, dan staat dat één keer in de weekterugblik, met een voorstel voor één oefening. Een rustweek en een week met vakantie, een tocht of zonder sportschool tellen niet mee.' },
-        { head: 'In Forge', text: 'hetzelfde voorstel staat ook rustig bovenaan de training waar de oefening bij zou komen, zolang je nog geen set afvinkte.' },
-        { head: 'Pas na Akkoord', text: 'de oefening komt als laatste oefening in je krachttraining met het meeste beenwerk, vanaf de volgende keer. In het blad van de oefening haal je hem weer weg. Liever niet laat die spier acht weken met rust.' },
-        { head: 'Bij Ruilen', text: 'is de keuze verder gelijk, dan staat een oefening voor zo’n spier voorop, met een korte reden. Forge ruilt nooit zelf.' },
-        { head: 'Wat telt', text: 'werksets met hoogstens 4 herhalingen over, ook zonder RIR. Een oefening die ASCEND niet kent telt niet; dat staat er dan eerlijk bij.' },
-        { head: 'Uit', text: 'geen melding, in de weekterugblik noch in Forge, en de gewone volgorde bij Ruilen.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeBergspieren',
     showWhen: [B.forge],
   },
@@ -1594,17 +1120,7 @@ export const FORGE: SettingDef[] = [
     title: 'Enkel en evenwicht',
     note: 'Bij een bergdoel ook een voorstel voor een evenwichtsoefening als je die vier weken bijna niet deed. Evenwichtstraining verlaagt verzwikkingen met ongeveer een derde. Het advies is aan.',
     keywords: ['enkel', 'enkels', 'evenwicht', 'balans', 'verzwikken', 'verstuiken', 'één been', 'op één been staan', 'star excursion', 'proprioceptie', 'berg', 'forge'],
-    help: {
-      title: 'Enkel en evenwicht',
-      lead: 'Bij bergwandelaars die vallen is de enkel de vaakst getroffen plek. Evenwichtstraining verlaagde in zeven studies het aantal verzwikkingen met ongeveer een derde, het duidelijkst bij wie al eens verzwikte.',
-      points: [
-        { head: 'De melding', text: 'deed je de laatste vier weken gemiddeld minder dan 2 sets per week met een evenwichtsoefening (lunges en split squats tellen hier niet), dan staat dat in de weekterugblik, na de spieren, met een voorstel: op één been staan in je training met het meeste beenwerk.' },
-        { head: 'Zwaarder', text: 'in de uitleg van de oefening: eerst met je ogen dicht, dan op een kussen, of reiken op één been. Forge neemt je beste tijd van de vorige keer over.' },
-        { head: 'Telt niet mee', text: 'een rustweek, en een week met vakantie, een tocht of zonder sportschool: dan train je niet in Forge, en zo komt er na je vakantie niet meteen een melding.' },
-        { head: 'Pijn aan je enkel of voet', text: 'staat er in Lichaam een open klacht, dan geen voorstel. Een enkel na een verzwikking oefen je met een fysiotherapeut.' },
-        { head: 'Uit', text: 'alleen de drie spieren. Liever niet bij de melding laat het acht weken met rust.' },
-      ],
-    },
+    help: true,
     helpKey: 'forgeEnkel',
     showWhen: [B.forge, B.mountain],
   },
