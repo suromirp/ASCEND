@@ -258,13 +258,14 @@ export function effectiveActivity(activity: ExternalActivity, fit: ImportFit | u
 }
 
 // Waar een harde losse loop onder komt: een looptraining die hard is (matig of hoog), geen test of wedstrijd en
-// geen eigen sport. Eerst een training met blokken (rol `blocks`: Tempoloop, Intervallen), dan matig voor hoog,
+// geen eigen sport, en geen heuvel- of afdaaltraining (rol `hills` of `descent`): een vlakke loop wordt nooit
+// heuvelintervallen. Eerst een training met blokken (rol `blocks`: Tempoloop, Intervallen), dan matig voor hoog,
 // dan het id. Nooit de plek in de lijst: templates uit de opslag staan in sleutelvolgorde (Warden, 14 november).
 const HARD_INTENSITY_RANK: Record<string, number> = { moderate: 0, high: 1 };
 export function hardRunTemplate(templates: SessionTemplate[]): SessionTemplate | undefined {
   const rank = (t: SessionTemplate) => [hasRole(t, 'blocks') ? 0 : 1, HARD_INTENSITY_RANK[t.baseStressProfile?.intensity ?? ''] ?? 9] as const;
   return templates
-    .filter((t) => templateSport(t) === 'running' && (rank(t)[1] < 9) && !isTestOrRace(t) && !t.customSport && !countedSportOfTemplate(t))
+    .filter((t) => templateSport(t) === 'running' && (rank(t)[1] < 9) && !hasRole(t, 'hills') && !hasRole(t, 'descent') && !isTestOrRace(t) && !t.customSport && !countedSportOfTemplate(t))
     .sort((a, b) => rank(a)[0] - rank(b)[0] || rank(a)[1] - rank(b)[1] || a.id.localeCompare(b.id))[0];
 }
 

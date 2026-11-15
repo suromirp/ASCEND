@@ -166,13 +166,18 @@ export type FitIssue =
   | { kind: 'other-fits'; name: string }
   | { kind: 'walk-match'; pace: number };
 
+// "een tempoloop", maar een meervoud zonder lidwoord en met zijn eigen naam: "Intervallen", "Heuvelsprints".
+export function withArticle(name: string): string {
+  return /(en|s)$/i.test(name.trim()) ? name : `een ${name.toLowerCase()}`;
+}
+
 // Eén regel per kaart, in de volgorde van gewicht: de soort, dan de duur, dan hoe hard.
 export function fitIssueText(issue: FitIssue): string {
   switch (issue.kind) {
     case 'walk':
-      return `Wandeltempo, ${paceText(issue.pace)} per km: dit wordt een ${issue.as.toLowerCase()}. Was het een loop? Kies dan Andere training.`;
+      return `Wandeltempo, ${paceText(issue.pace)} per km: dit wordt ${withArticle(issue.as)}. Was het een loop? Kies dan Andere training.`;
     case 'hard-loose':
-      return `Harder dan rustig: ${hardText(issue.judgment)}. Dit wordt een ${issue.as.toLowerCase()}.`;
+      return `Harder dan rustig: ${hardText(issue.judgment)}. Dit wordt ${withArticle(issue.as)}.`;
     case 'short':
       return `Kort voor ${issue.name.toLowerCase()}: ${issue.minutes} van ${issue.planned} min. Hoort hij er niet bij, kies dan Andere training.`;
     case 'hard':

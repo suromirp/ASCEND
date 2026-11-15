@@ -358,3 +358,23 @@ describe('isEasyRun zonder plan valt terug op het profiel', () => {
     expect(coachReaction(log, byId('tpl_long_run'), null, [], FIT)).toBe('Harder dan gepland: gemiddeld 165 bpm, zone 2 gaat tot 151. Een rustige training loop je in zone 2.');
   });
 });
+
+describe('laatste ronde: hardRunTemplate', () => {
+  it('bij twee gelijkwaardige templates beslist het id, in beide volgordes', async () => {
+    const { hardRunTemplate } = await import('./activityImport');
+    const copy = { ...byId('tpl_tempo_run'), id: 'tpl_a_tempo_copy', name: 'Tempoloop kopie' };
+    const pool = [byId('tpl_tempo_run'), copy];
+    expect(hardRunTemplate(pool)?.id).toBe('tpl_a_tempo_copy');
+    expect(hardRunTemplate([...pool].reverse())?.id).toBe('tpl_a_tempo_copy');
+  });
+
+  it('zonder Tempoloop en Progressieve duurloop: Intervallen, nooit een heuveltraining, zin zonder lidwoord', async () => {
+    const { hardRunTemplate } = await import('./activityImport');
+    const pool = templates.filter((t) => t.id !== 'tpl_tempo_run' && t.id !== 'tpl_progression_run');
+    const chosen = hardRunTemplate(pool);
+    expect(chosen?.id).toBe('tpl_intervals');
+    expect(hardRunTemplate(pool.filter((t) => t.id !== 'tpl_intervals'))?.id).not.toMatch(/hill|descent|stairs/);
+    const hard = act('hi', { durationSec: 44 * 60, distanceM: 10000, avgHeartRate: 172 });
+    expect(proposeImport(hard, [], pool, [], undefined, undefined, FIT)!.fitNote).toBe(`Harder dan rustig: gemiddeld 172 bpm, zone 2 gaat tot 151. Dit wordt ${chosen!.name}.`);
+  });
+});
