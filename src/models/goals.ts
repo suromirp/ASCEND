@@ -78,6 +78,10 @@ export interface GoalDetails {
   // Waar je slaapt: hutten, tent of beide (engine/trekShelter.ts). 'both' kwam op 15 november
   // bij; een oud doel heeft 'hut' of 'tent' en blijft zo.
   shelter?: TrekShelter;
+  // Alleen true als jij de keuze zelf maakte (de start, Doel aanpassen, Slapen onderweg). Een doel
+  // dat de migratie op hutten zette heeft het niet: dan vraagt de app het één keer
+  // (engine/trekShelter.ts#needsShelterCheck). Optioneel.
+  shelterChosen?: true;
   highestPointM?: number;
   sleepingPointM?: number;
   expectedMinutes?: number; // verwachte tijd van de doeldag of de wedstrijd

@@ -31,8 +31,8 @@ describe('the example list', () => {
   });
 
   it('is what you get until you change it', () => {
-    expect(resolvePackItems(undefined)).toBe(DEFAULT_PACK_ITEMS);
-    expect(resolvePackItems({ v: 1, items: [] })).toEqual([]);
+    expect(resolvePackItems(undefined, 'tent')).toBe(DEFAULT_PACK_ITEMS);
+    expect(resolvePackItems({ v: 1, items: [] }, 'hut')).toEqual([]);
   });
 });
 

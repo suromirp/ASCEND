@@ -53,7 +53,7 @@ describe('de doelkop volgt de keuze', () => {
   it('een andere keuze zet soort en keuze samen', () => {
     const next = withShelter(trek({ kind: 'trek_hut', details: { shelter: 'hut', packKg: 12 } }), 'both', '2026-11-17T08:00:00Z');
     expect(next.kind).toBe('trek_tent');
-    expect(next.details).toEqual({ shelter: 'both', packKg: 12 });
+    expect(next.details).toEqual({ shelter: 'both', packKg: 12, shelterChosen: true });
   });
 });
 
@@ -91,6 +91,6 @@ describe('de paklijst', () => {
     expect(packListNote('tent', '2027-03-15')).not.toContain('augustus');
     expect(packListNote('hut', '2027-08-01')).toContain('van hut naar hut');
     expect(packListNote('both', undefined)).toContain('ook op de dagen dat je in een hut slaapt');
-    for (const s of ['tent', 'hut', 'both'] as const) expect(packListNote(s, '2027-03-15')).not.toMatch(/[–—]/);
+    for (const s of ['tent', 'hut', 'both'] as const) expect(packListNote(s, '2027-03-15')).not.toMatch(/[\u2013\u2014]/);
   });
 });

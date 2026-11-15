@@ -19,7 +19,7 @@ export function useShelterChange(): { choose: (shelter: TrekShelter) => Promise<
       () => planHorizonChange({
         title: `Slapen onderweg: ${shelterShort(shelter).toLowerCase()}`,
         why: 'Volgt je keuze voor slapen onderweg.',
-        explanation: 'Hutten of tent verandert je rugzak en je opbouw. Eerst een voorstel, pas na Akkoord verandert er iets. De paklijst en de Reisplanner volgen je keuze.',
+        explanation: 'Hutten of tent verandert de soort van je tocht en daarmee de afbouw. De paklijst en de Reisplanner volgen je keuze. Je rugzakgewicht blijft wat bij je doel staat. Eerst een voorstel, pas na Akkoord verandert er iets.',
         trigger: 'goal_changed',
         goals: [next],
       }),

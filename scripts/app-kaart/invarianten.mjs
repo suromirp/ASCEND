@@ -80,6 +80,27 @@ export function zelftoets() {
 
 export const INVARIANTEN = [
   {
+    // Backlogpunt G (Lookout profiel GR5, 14 november): bij een late start staan taken waarvan de tijd voorbij is samen
+    // onder Nu regelen, nooit onder een maand die al voorbij is. De klok van de kaart staat in de kop van elk scherm.
+    naam: 'Reisplanner: geen maand die al voorbij is als kop, voorbije taken onder Nu regelen',
+    controleer: (k, _schermen, alleSchermen) => {
+      const uit = [];
+      const MAANDEN = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+      for (const s of alleSchermen.filter((x) => x === 'reis' || x.startsWith('reis-'))) {
+        const t = k(s);
+        const klok = t.match(/Klok: (\d+) (\w+) (\d{4})/);
+        if (!klok) continue;
+        const nu = Number(klok[3]) * 12 + MAANDEN.indexOf(klok[2]);
+        for (const m of alle(t, new RegExp(`^(${MAANDEN.join('|')}) (\\d{4})$`, 'gm'))) {
+          if (Number(m[2]) * 12 + MAANDEN.indexOf(m[1]) < nu) uit.push(`${s}: de kop "${m[0]}" ligt voor de klok`);
+        }
+        if (/was aan de beurt tot/.test(t) && !/^Nu regelen$/m.test(t)) uit.push(`${s}: een voorbije taak zonder de kop Nu regelen`);
+        if (/nog open\]/.test(t)) uit.push(`${s}: een taak zegt nog open in plaats van wanneer hij aan de beurt was`);
+      }
+      return uit;
+    },
+  },
+  {
     // Aangepast door ASCEND (besluit 2026-11-12-week-minimaal): één uitkomst. Het getal op de rij onder de dagen is het
     // aantal dagrijen met "aangepast", en het aantal regels in het blad erachter. Geen rij is nul.
     naam: 'Aangepast door ASCEND: getal op de rij, regels in het blad en dagrijen met het woord gelijk',

@@ -184,7 +184,7 @@ function trekGoal(answers: StartAnswers, now: string): { goal: TrainingGoal; mil
   const objective = { ...buildObjective(), ...(answers.goalDate ? { targetDate: answers.goalDate } : {}) };
   const { goal, milestones } = migrateGr5ObjectiveData(objective, []);
   const shelter = answers.shelter ?? SHELTER_ADVICE;
-  return { goal: { ...goal, kind: kindForShelter(shelter), details: { ...(goal.details ?? {}), shelter }, createdAt: now, updatedAt: now }, milestones };
+  return { goal: { ...goal, kind: kindForShelter(shelter), details: { ...(goal.details ?? {}), shelter, shelterChosen: true }, createdAt: now, updatedAt: now }, milestones };
 }
 
 const SHELTER_LINE: Record<TrekShelter, string> = { tent: 'met tent', hut: 'in hutten', both: 'in hutten en met tent' };

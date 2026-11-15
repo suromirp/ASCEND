@@ -97,3 +97,13 @@ describe('hutten, tent of beide', () => {
     }
   });
 });
+
+describe('een doeldatum die voorbij is', () => {
+  it('geen taak van de week, en alles wat open bleef staat bij Nu regelen zonder te crashen', () => {
+    const list = tasksForShelter(JOURNEY_TASKS, 'tent');
+    expect(pickJourneyTask(list, undefined, '2027-03-20', '2027-03-15')).toBeUndefined();
+    const groups = journeyTimeline(list, undefined, '2027-03-20', '2027-03-15');
+    expect(groups[0].catchUp).toBe(true);
+    expect(groups.flatMap((g) => g.tasks)).toHaveLength(list.length);
+  });
+});

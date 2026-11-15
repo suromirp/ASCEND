@@ -147,6 +147,33 @@ function metVoorstel(state) {
   for (const r of winkel(state, 'programs').records) if (r.value) r.value.startDate = '2026-09-28';
 }
 
+// Een meerdaagse tocht als hoofddoel, van voor de soorten: de migratie zette hem op hutten (geen tentnacht in het
+// etappeplan) zonder eigen keuze. Start 15 maart 2027, dus op de klok van de kaart (31 oktober) zijn de vroege taken
+// van de Reisplanner al voorbij: Nu regelen, en de vraag "Je tocht staat op hutten. Klopt dat?" (backlogpunt G).
+function metTocht(state) {
+  const doelen = winkel(state, 'trainingGoals');
+  const basis = doelen.records[0];
+  doelen.records = [{
+    ...basis,
+    ...(basis && 'key' in basis ? { key: 'goal_kaart_trek' } : {}),
+    value: {
+      id: 'goal_kaart_trek', name: 'Lange tocht', status: 'active', targetDate: '2027-03-15', kind: 'trek_hut', priority: 'top', execution: 'stages',
+      details: { shelter: 'hut', homeDaysInRow: 2, distanceKm: 600 },
+      requirements: [{ id: 'req_kaart_trek', kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: 600, unit: 'km' }, discipline: 'hiking' }],
+      createdAt: '2026-05-01T08:00:00.000Z', updatedAt: '2026-05-01T08:00:00.000Z',
+    },
+  }];
+  // De ladder maakt hem het hoofddoel (engine/mainGoal.ts): de eerste drie treden van de Ascent Ladder.
+  const treden = [
+    ['40 min rustig: hardlopen of stevig wandelen', { kind: 'duration', activityType: ['cardio', 'hiking'], minMinutes: 40 }],
+    ['60 min bergconditie volhouden', { kind: 'duration', activityType: 'hiking', minMinutes: 60 }],
+    ['15 km wandeling', { kind: 'distance', minKm: 15 }],
+  ];
+  winkel(state, 'goalMilestones').records = treden.map(([title, requirement], i) => ({
+    value: { id: `ms_kaart_trek_${i + 1}`, goalId: 'goal_kaart_trek', order: i + 1, title, requirement },
+  }));
+}
+
 // Aangepast door ASCEND (docs/beslissingen/2026-11-12-week-minimaal.md): twee nagemaakte, aangenomen voorstellen in
 // deze week. Een voorstel van de weekcontrole zette de Lange duurloop van zaterdag naar zondag (na een snel Akkoord, dus het blad zegt alleen de datum); een voorstel na een gemiste
 // training maakte Benen A lichter, na jouw Akkoord. De rijen dragen het slot van hun voorstel, zoals na Akkoord.
@@ -217,6 +244,7 @@ export const STANDEN = {
   rustweek: metRustweek,
   heuvel: metHeuvel,
   herstel: metHerstel,
+  tocht: metTocht,
 };
 
 // --- één planningsronde op de vaste klok -------------------------------------------------------------

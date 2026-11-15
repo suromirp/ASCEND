@@ -9,7 +9,7 @@ import { DEFAULT_PACK_ITEMS, HUT_PACK_ITEMS, PACK_GROUPS, type PackGroup, type P
 import { formatNumberNL } from '../utils/number';
 import { isRecord } from '../utils/guards';
 import { kgLabel } from '../utils/kg';
-import { SHELTER_ADVICE, type TrekShelter } from './trekShelter';
+import type { TrekShelter } from '../models/goals';
 
 // What is stored (AppSettings.packList). Absent means: the example list.
 // `v` is the shape's own version, for a later migration.
@@ -29,7 +29,7 @@ const REFERENCE_WATER_LITERS = 2;
 
 // Zonder eigen lijst het voorbeeld dat bij waar je slaapt hoort: van hut naar hut zonder tent en
 // kookspullen, met tent (ook bij beide) de opzet met tent.
-export function resolvePackItems(stored: PackListState | undefined, shelter: TrekShelter = SHELTER_ADVICE): PackItem[] {
+export function resolvePackItems(stored: PackListState | undefined, shelter: TrekShelter): PackItem[] {
   if (stored) return stored.items;
   return shelter === 'hut' ? HUT_PACK_ITEMS : DEFAULT_PACK_ITEMS;
 }

@@ -122,8 +122,9 @@ describe('van antwoorden naar een doel', () => {
     expect(isRaceGoal(g)).toBe(false);
   });
 
-  it('een tocht zonder keuze is een tocht met hutten', () => {
-    expect(buildGoalDraft({ ...base, tile: 'trek', details: { days: 5 }, date: '2027-07-10', name: 'Tocht', priority: 'top' }).kind).toBe('trek_hut');
+  // Warden (15 november): zonder keuze geldt het advies, tent.
+  it('een tocht zonder keuze is een tocht met tent, het advies', () => {
+    expect(buildGoalDraft({ ...base, tile: 'trek', details: { days: 5 }, date: '2027-07-10', name: 'Tocht', priority: 'top' }).kind).toBe('trek_tent');
   });
 
   it('een trailrun is geen wedstrijdblok: de eisen zijn geen hardlopen', () => {

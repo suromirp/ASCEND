@@ -1,3 +1,4 @@
+import { SHELTER_CHOICE_OPTIONS } from './shelterOptions';
 import { DEFAULT_WATCH_MODEL_ID, WATCH_MODELS } from './watchModels';
 import type { RestSound, RestVolume } from '../engine/restSounds';
 // ASCEND: de keuzes in de instellingen, op één plek. Een keuze heeft een titel, één
@@ -456,11 +457,7 @@ export const CHOICES = {
     line: 'Waar je slaapt op je meerdaagse tocht. Een andere keuze is eerst een voorstel.',
     advice: 'tent' as 'tent' | 'hut' | 'both',
     help: 'slapenOnderweg',
-    options: [
-      { value: 'tent', label: 'Met tent', note: 'Tent, slaapzak en kookspullen, een zwaardere rugzak' },
-      { value: 'hut', label: 'In hutten', note: 'Van hut naar hut, een lichtere rugzak' },
-      { value: 'both', label: 'Hutten en tent', note: 'Soms een hut, de tent gaat altijd mee' },
-    ],
+    options: SHELTER_CHOICE_OPTIONS,
   }),
   rustNaTocht: def({
     group: 'Doel en tochten',

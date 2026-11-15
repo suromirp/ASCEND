@@ -47,7 +47,7 @@ export function defaultDetails(id: AddTileId): GoalDetails {
 }
 
 export function kindOfTile(id: AddTileId, details?: GoalDetails): GoalKindId {
-  return id === 'trek' ? kindForShelter(details?.shelter ?? 'hut') : id;
+  return id === 'trek' ? kindForShelter(details?.shelter ?? SHELTER_ADVICE) : id;
 }
 
 // Een vraag van stap 2.
@@ -179,7 +179,8 @@ export function buildGoalDraft(input: DraftInput): TrainingGoal {
   if (details.variant === 'eigen') delete details.variant;
   // Een cutoff hoort bij een ultra: bij een korte trail valt hij weg.
   if (kind === 'trail' && details.variant !== 'ultra') delete details.cutoffMinutes;
-  if (kind === 'trek_hut' || kind === 'trek_tent') details.shelter = shelterForKind(kind, details.shelter);
+  // Het formulier vraagt Slapen altijd bij een tocht: dit is je eigen keuze (engine/trekShelter.ts#needsShelterCheck).
+  if (kind === 'trek_hut' || kind === 'trek_tent') { details.shelter = shelterForKind(kind, details.shelter); details.shelterChosen = true; }
   let requirements: GoalRequirement[] = requirementsFromDetails(kind, details).map((r) => ({ ...r, ...(DISCIPLINE[kind] ? { discipline: DISCIPLINE[kind] } : {}) }));
   if (kind === 'run_race') {
     const reqs: GoalRequirement[] = [];
@@ -284,7 +285,8 @@ export function applyGoalEdit(goal: TrainingGoal, input: EditInput): TrainingGoa
   if (details.variant === 'eigen') delete details.variant;
   // Een cutoff hoort bij een ultra: gaat de trail naar kort, dan valt hij weg (ook als het formulier hem nog had).
   if (kind === 'trail' && details.variant !== 'ultra') delete details.cutoffMinutes;
-  if (kind === 'trek_hut' || kind === 'trek_tent') details.shelter = shelterForKind(kind, details.shelter);
+  // Het formulier vraagt Slapen altijd bij een tocht: dit is je eigen keuze (engine/trekShelter.ts#needsShelterCheck).
+  if (kind === 'trek_hut' || kind === 'trek_tent') { details.shelter = shelterForKind(kind, details.shelter); details.shelterChosen = true; }
   const multi = kind === 'trek_hut' || kind === 'trek_tent';
   let requirements = [...goal.requirements];
   for (const f of REQ_FIELDS) {

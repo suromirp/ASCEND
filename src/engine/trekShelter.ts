@@ -10,6 +10,7 @@
 
 import type { GoalKindId, TrainingGoal, TrekShelter } from '../models/goals';
 import { GOAL_KINDS } from '../data/goalKinds';
+import { SHELTER_OPTIONS } from '../data/shelterOptions';
 import { effectiveGoalKind, isTrekKind } from './journeyAccess';
 import { listedGoals } from './goalList';
 
@@ -17,11 +18,7 @@ export type { TrekShelter };
 
 export const SHELTER_ADVICE: TrekShelter = 'tent';
 
-export const SHELTER_OPTIONS: { id: TrekShelter; label: string; note: string }[] = [
-  { id: 'tent', label: 'Met tent', note: 'Advies. Je draagt tent, slaapzak en kookspullen, en traint met een zwaardere rugzak.' },
-  { id: 'hut', label: 'In hutten', note: 'Van hut naar hut, met een lichtere rugzak zonder tent en kookspullen.' },
-  { id: 'both', label: 'Hutten en tent', note: 'Soms een hut, soms de tent. Je draagt de tent altijd mee.' },
-];
+export { SHELTER_OPTIONS };
 
 const SHELTER_LABEL: Record<TrekShelter, string> = {
   tent: 'Meerdaagse tocht met tent',
@@ -106,5 +103,42 @@ export function journeyShelter(goals: readonly TrainingGoal[], ladderGoalIds: Re
 // niets op: het gaat als voorstel met Akkoord door planHorizonChange, want de soort verandert de
 // opbouw (afbouw, dagen achter elkaar, rugzak).
 export function withShelter(goal: TrainingGoal, shelter: TrekShelter, now: string): TrainingGoal {
-  return { ...goal, kind: kindForShelter(shelter), details: { ...(goal.details ?? {}), shelter }, updatedAt: now };
+  return { ...goal, kind: kindForShelter(shelter), details: { ...(goal.details ?? {}), shelter, shelterChosen: true }, updatedAt: now };
 }
+
+// --- Een doel dat de migratie op hutten zette ---------------------------------------------
+// Een hoofddoel van voor de soorten werd trek_hut met shelter 'hut' als het etappeplan geen nacht in
+// tent of bivak had (storage/migrationsGoals.ts). Sinds de keuze de paklijst en de Reisplanner bepaalt,
+// zou zo iemand stil de tent en de tenttaken kwijtraken. Het doel blijft het doel: de app vraagt het
+// één keer, met Klopt, Tent of Beide; Tent en Beide gaan als voorstel met Akkoord.
+
+export function readShelterAsked(raw: unknown): string[] {
+  return Array.isArray(raw) ? raw.filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 200) : [];
+}
+
+export function withShelterAsked(raw: unknown, goalId: string): string[] {
+  const list = readShelterAsked(raw);
+  return list.includes(goalId) ? list : [...list, goalId];
+}
+
+// Vraagt de app het bij dit doel? Alleen bij hutten zonder eigen keuze, en nog niet gevraagd.
+export function needsShelterCheck(goal: TrainingGoal, isMain: boolean, asked: unknown): boolean {
+  if (shelterOfGoal(goal, isMain) !== 'hut') return false;
+  if (goal.details?.shelterChosen === true) return false;
+  return !readShelterAsked(asked).includes(goal.id);
+}
+
+// Het doel van de tochtschermen als de vraag daar hoort, anders niets.
+export function shelterCheckGoal(goals: readonly TrainingGoal[], ladderGoalIds: ReadonlySet<string>, today: string, asked: unknown): TrainingGoal | undefined {
+  const pick = journeyTrekGoal(goals, ladderGoalIds, today);
+  return pick && needsShelterCheck(pick.goal, pick.isMain, asked) ? pick.goal : undefined;
+}
+
+export const SHELTER_CHECK = {
+  eyebrow: 'Slapen onderweg',
+  question: 'Je tocht staat op hutten. Klopt dat?',
+  line: 'De paklijst en de Reisplanner volgen die keuze. Met tent komen de tent, de kookspullen en de taken voor bivak erbij.',
+  keep: 'Klopt',
+  tent: 'Tent',
+  both: 'Beide',
+} as const;

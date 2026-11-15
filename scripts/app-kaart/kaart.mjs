@@ -228,6 +228,11 @@ const SCHERMEN = {
   'week-voorstel-wacht': { titel: 'Week met Let op en een voorstel dat wacht', pad: '#/week', stand: 'voorstel-wacht' },
   'week-rustweek': { titel: 'Week in een rustweek', pad: '#/week', stand: 'rustweek' },
   'week-rustweek-blad': { titel: 'Blad Rustweek (Week)', pad: '#/week', stand: 'rustweek', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Rustweek")') },
+  // Een tocht als hoofddoel die de migratie op hutten zette, start 15 maart 2027 (stand tocht, backlogpunt G): de
+  // Reisplanner met Nu regelen en de vraag over hutten, de Paklijst van hut naar hut, en de doelkop op Ascend.
+  'reis-tocht': { titel: 'Reisplanner bij een late start, tocht op hutten (stand tocht)', pad: '#/reis', stand: 'tocht' },
+  'paklijst-tocht': { titel: 'Paklijst, tocht op hutten met vertrek in maart (stand tocht)', pad: '#/reis/paklijst', stand: 'tocht' },
+  'ascend-tocht': { titel: 'Ascend met een tocht op hutten (stand tocht)', pad: '#/ascend', stand: 'tocht' },
   ...INSTELLINGEN,
 };
 

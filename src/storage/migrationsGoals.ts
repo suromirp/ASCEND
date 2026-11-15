@@ -28,6 +28,7 @@ export function readGoalDetails(raw: unknown): GoalDetails | undefined {
   const out: GoalDetails = {};
   if (typeof r.variant === 'string' && r.variant.length > 0 && r.variant.length <= 40) out.variant = r.variant;
   if (r.shelter === 'hut' || r.shelter === 'tent' || r.shelter === 'both') out.shelter = r.shelter;
+  if (r.shelterChosen === true) out.shelterChosen = true;
   for (const key of DETAIL_NUMBERS) {
     const x = r[key];
     if (typeof x === 'number' && Number.isFinite(x) && x > 0) out[key] = x;
@@ -176,7 +177,7 @@ export function readAcceptedConflicts(raw: unknown): string[] | undefined {
 // Velden van de gegevens die deze versie niet kent (uit een nieuwere back-up): ongemoeid laten.
 function unknownDetailFields(raw: unknown): Record<string, unknown> | undefined {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
-  const known = new Set<string>(['variant', 'shelter', 'strengthTargets', ...DETAIL_NUMBERS]);
+  const known = new Set<string>(['variant', 'shelter', 'shelterChosen', 'strengthTargets', ...DETAIL_NUMBERS]);
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(raw)) if (!known.has(k)) out[k] = v;
   return Object.keys(out).length > 0 ? out : undefined;

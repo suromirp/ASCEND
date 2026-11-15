@@ -19,13 +19,14 @@ import { MIN_BREAKIN_WEEKS, type BootBreakInStatus } from '../engine/bootBreakIn
 import { heatAcclimationLine } from '../engine/heatAcclimation';
 import { signalOn } from '../engine/signalSettings';
 import { useAppData } from '../state/AppDataContext';
+import { ShelterCheck } from '../components/reis/ShelterCheck';
 
 function rowMeta(row: TimelineTask, boots?: BootBreakInStatus): string {
   if (row.task.id === 'schoenen' && boots && (boots.kind === 'busy' || boots.kind === 'late') && row.status !== 'done') return boots.kind === 'late' ? `te laat voor ${MIN_BREAKIN_WEEKS} weken` : boots.line;
   if (row.status === 'done' && row.derived) return row.derived.toLowerCase();
   if (row.status === 'done') return row.doneOn ? `gedaan op ${formatDayMonthNL(row.doneOn)}` : 'gedaan';
   if (row.status === 'later') return `vanaf ${formatDayMonthNL(row.opensOn)}`;
-  if (row.status === 'lapsed') return `gepland tot ${formatDayMonthNL(row.closesOn)}`;
+  if (row.status === 'lapsed') return `was aan de beurt tot ${formatDayMonthNL(row.closesOn)}`;
   return `tot en met ${formatDayMonthNL(row.closesOn)}`;
 }
 
@@ -75,6 +76,7 @@ export function JourneyPage() {
         </Card>
       ) : (
         <>
+          <ShelterCheck />
           <Card className="flex flex-col gap-2" texture>
             <div className="flex items-baseline justify-between">
               <Eyebrow>Je voorbereiding</Eyebrow>

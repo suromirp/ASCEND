@@ -7,6 +7,7 @@
 
 import { B } from './parts';
 import type { SettingDef } from './types';
+import { SHELTER_CHOICE_OPTIONS } from '../../data/shelterOptions';
 
 export const DOEL: SettingDef[] = [
   {
@@ -431,10 +432,10 @@ export const DOEL: SettingDef[] = [
       title: 'Slapen onderweg',
       lead: 'Waar je slaapt op je meerdaagse tocht: in hutten, met tent, of beide.',
       points: [
-        { head: 'Met tent', text: 'het advies. Wie klaar is voor een tent, is ook klaar voor hutten. Je rugzak wordt zwaarder en de Reisplanner neemt de taken voor tent, brander en bivak mee.' },
-        { head: 'In hutten', text: 'een lichtere rugzak. De paklijst laat tent en kookspullen weg en de Reisplanner vraagt je hutten te reserveren.' },
-        { head: 'Beide', text: 'je draagt de tent altijd mee, dus de rugzak is die van een tent. De Reisplanner heeft de taken van allebei.' },
-        { head: 'Je planning', text: 'een andere keuze verandert je doel. Eerst een voorstel, pas na Akkoord verandert er iets.' },
+        { head: 'Met tent', text: 'het advies. Wie klaar is voor een tent, is ook klaar voor hutten. De paklijst heeft tent, slaapzak en kookspullen, de Reisplanner de taken voor tent, brander en bivak.' },
+        { head: 'In hutten', text: 'de paklijst laat tent en kookspullen weg en de Reisplanner vraagt je hutten te reserveren.' },
+        { head: 'Beide', text: 'je draagt de tent altijd mee, dus de paklijst is die van een tent. De Reisplanner heeft de taken van allebei.' },
+        { head: 'Je planning', text: 'een andere keuze verandert de soort van je tocht en daarmee de afbouw. Je rugzakgewicht blijft wat bij je doel staat. Eerst een voorstel, pas na Akkoord verandert er iets.' },
       ],
     },
     helpKey: 'slapenOnderweg',
@@ -446,11 +447,7 @@ export const DOEL: SettingDef[] = [
         line: 'Waar je slaapt op je meerdaagse tocht. Een andere keuze is eerst een voorstel.',
         advice: 'tent',
         help: 'slapenOnderweg',
-        options: [
-          { value: 'tent', label: 'Met tent', note: 'Tent, slaapzak en kookspullen, een zwaardere rugzak' },
-          { value: 'hut', label: 'In hutten', note: 'Van hut naar hut, een lichtere rugzak' },
-          { value: 'both', label: 'Hutten en tent', note: 'Soms een hut, de tent gaat altijd mee' },
-        ],
+        options: SHELTER_CHOICE_OPTIONS,
       },
     },
   },
