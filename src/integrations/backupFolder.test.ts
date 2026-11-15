@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { verifySettled, writeThroughTemp, type Held, type TempFs } from './backupFolder';
+import { isAttemptRest, newAttemptId, verifySettled, writeThroughTemp, type Held, type TempFs } from './backupFolder';
 import { AutoBackupError, NameTakenError } from '../engine/autoBackup';
 
 const NAME = 'ascend-2026-11-02.ascend-backup.json';
@@ -280,5 +280,23 @@ describe('nakijken geeft niet te vroeg op', () => {
     expect(await verifySettled({ verify: async () => 'broken' }, NAME, 5, { pauseMs: 0 })).toBe('broken');
     expect(await verifySettled({ verify: async () => false }, NAME, 5, { pauseMs: 0 })).toBe('broken');
     expect(await verifySettled({ verify: async () => 'unknown' }, NAME, 5, { pauseMs: 0 })).toBe('unknown');
+  });
+});
+
+describe('resten van een poging', () => {
+  it('alleen een id met het vaste begin telt als rest; een eigen woord van tien tekens niet', () => {
+    const id = newAttemptId(new Date(2026, 10, 15, 20));
+    expect(isAttemptRest(`${NAME}.${id}.tmp`, NAME)).toBe(true);
+    expect(isAttemptRest(`${NAME}.${id}.old`, NAME)).toBe(true);
+    for (const yours of ['mijnkopie1', 'zondagavond2', 'kopie', 'mi0abc12x9k3', 'ascpoging']) {
+      expect(isAttemptRest(`${NAME}.${yours}.old`, NAME)).toBe(false);
+    }
+    // Een rest op een andere naam valt er niet onder.
+    expect(isAttemptRest(`ascend-2026-11-01.ascend-backup.json.${id}.tmp`, NAME)).toBe(false);
+  });
+
+  it('twee pogingen krijgen een ander id', () => {
+    const now = new Date(2026, 10, 15, 20);
+    expect(newAttemptId(now)).not.toBe(newAttemptId(now));
   });
 });

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { MetaRepo, PlannedSessionsRepo, SettingsRepo, wipeAllData } from './database';
+import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
 import { forgetHalfWritten, forgetAutoBackupFolder, getAutoBackupStatus, noteBackupMade, readAutoBackupState, runAutoBackupIfDue } from './autoBackup';
 import { CURRENT_BACKUP_SCHEMA_VERSION } from './backupTypes';
 import { buildBackupEnvelope } from './backupExport';
@@ -7,7 +7,7 @@ import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { migrateAutoBackupSettings } from './migrations';
 import { AutoBackupError, NameTakenError, type AutoBackupFailureReason } from '../engine/autoBackup';
 import type { AutoBackupTarget, FolderAccess } from '../integrations/backupFolder';
-import type { PlannedSession } from '../models/training';
+import type { PlannedSession, SessionLog } from '../models/training';
 
 // Nagemaakte gegevens: één geplande training, zodat er iets te bewaren is. 2 november 2026 is een maandag.
 const session: PlannedSession = { id: 'ps_a', templateId: 'tpl_easy_run', scheduledDate: '2026-11-03', weekStartDate: '2026-11-02', status: 'planned', order: 0 };
@@ -416,6 +416,68 @@ describe('de automatische back-up', () => {
     expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 4 * 3_600_000), target, verifyPauseMs: 0 })).toBe('saved');
     expect(files.get(today)).toBe('van jou');
     expect([...files.keys()]).toEqual([today, 'ascend-2026-11-02-2.ascend-backup.json']);
+  });
+
+  it('een laat antwoord na de tijdsgrens: het bestand is van de app, de volgende poging vervangt het zonder volgnummer', async () => {
+    const { target, files, removed, overwritten } = fakeTarget();
+    const write = target.write;
+    let slow = true;
+    target.write = (n, text, id) => (slow ? new Promise((resolve) => setTimeout(() => resolve(write(n, text, id)), 60)) : write(n, text, id));
+    expect(await runAutoBackupIfDue({ now: MONDAY, target, timeoutMs: 20, verifyPauseMs: 0 })).toBe('failed');
+    expect((await readAutoBackupState()).failure?.reason).toBe('timeout');
+    // De telefoon antwoordt alsnog: het bestand staat er, in geen lijst.
+    await new Promise((r) => setTimeout(r, 100));
+    expect([...files.keys()]).toEqual([name('2026-11-02')]);
+    slow = false;
+    expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 2 * 3_600_000), target, verifyPauseMs: 0 })).toBe('saved');
+    expect([...files.keys()]).toEqual([name('2026-11-02')]);
+    expect(overwritten).toEqual([name('2026-11-02')]);
+    // Een time-out haalt nooit een bestand weg; het staat nu in de eigen lijst en wordt later opgeruimd.
+    expect(removed).toEqual([]);
+    expect((await readAutoBackupState()).files).toEqual([name('2026-11-02')]);
+  });
+
+  it('de hele poging is opgegeven en het bestand landt toch: de volgende poging vervangt het zonder volgnummer', async () => {
+    const { target, files, removed } = fakeTarget();
+    const write = target.write;
+    let slow = true;
+    target.write = (n, text, id) => (slow ? new Promise((resolve) => setTimeout(() => resolve(write(n, text, id)), 60)) : write(n, text, id));
+    expect(await runAutoBackupIfDue({ now: MONDAY, target, attemptMs: 20, verifyPauseMs: 0 })).toBe('failed');
+    await new Promise((r) => setTimeout(r, 120));
+    expect([...files.keys()]).toEqual([name('2026-11-02')]);
+    // De opgegeven poging werkt niets bij: Laatste back-up blijft leeg.
+    expect((await SettingsRepo.get()).lastExportedAt).toBeUndefined();
+    slow = false;
+    expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 2 * 3_600_000), target, verifyPauseMs: 0 })).toBe('saved');
+    expect([...files.keys()]).toEqual([name('2026-11-02')]);
+    expect(removed).toEqual([]);
+  });
+
+  it('een tweede poging na een time-out zonder laat antwoord: gewoon de eerste naam', async () => {
+    const { target, files } = fakeTarget();
+    const write = target.write;
+    let hang = true;
+    target.write = (n, text, id) => (hang ? new Promise(() => undefined) : write(n, text, id));
+    expect(await runAutoBackupIfDue({ now: MONDAY, target, timeoutMs: 20 })).toBe('failed');
+    hang = false;
+    expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 2 * 3_600_000), target, verifyPauseMs: 0 })).toBe('saved');
+    expect([...files.keys()]).toEqual([name('2026-11-02')]);
+  });
+
+  it('bewaart bij een gelukte back-up welke trainingen erin staan, met hetzelfde tijdstip', async () => {
+    await SessionLogsRepo.put({ id: 'log_a', plannedSessionId: 'ps_a', completedAt: new Date(2026, 10, 1, 9).toISOString() } as SessionLog);
+    const { target } = fakeTarget();
+    expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('saved');
+    const settings = await SettingsRepo.get();
+    expect(settings.lastBackupLogs).toEqual({ at: MONDAY.toISOString(), ids: ['log_a'] });
+    expect(settings.lastExportedAt).toBe(MONDAY.toISOString());
+  });
+
+  it('via de app-staat krijgt onSaved het tijdstip en de ids', async () => {
+    await SessionLogsRepo.put({ id: 'log_a', plannedSessionId: 'ps_a', completedAt: new Date(2026, 10, 1, 9).toISOString() } as SessionLog);
+    const seen: unknown[] = [];
+    expect(await runAutoBackupIfDue({ now: MONDAY, target: fakeTarget().target, onSaved: (at, ids) => seen.push(at, ids) })).toBe('saved');
+    expect(seen).toEqual([MONDAY.toISOString(), ['log_a']]);
   });
 
   it('een fout na een gelukt bestand maakt de back-up niet mislukt', async () => {

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { runAutoBackupIfDue } from '../storage/autoBackup';
+import { backupMadeSettings } from '../engine/backupSince';
 
 // De automatische back-up (storage/autoBackup.ts): zodra de app klaar is en elke keer dat je
 // terugkomt in de app kijkt dit of het moment voorbij is. In de Android-app schrijft de opslag het
@@ -17,7 +18,7 @@ export function AutoBackupHost({ ready }: { ready: boolean }) {
 
   useEffect(() => {
     if (!ready) return;
-    const run = () => void runAutoBackupIfDue({ onSaved: (at) => save.current({ lastExportedAt: at }) }).catch(() => undefined);
+    const run = () => void runAutoBackupIfDue({ onSaved: (at, logIds) => save.current(backupMadeSettings(at, logIds)) }).catch(() => undefined);
     const onVisible = () => {
       if (document.visibilityState === 'visible') run();
     };
