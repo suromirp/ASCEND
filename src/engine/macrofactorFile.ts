@@ -101,8 +101,8 @@ function headingsOf(rows: Cell[][]): string {
 function unknownLayoutMessage(tables: SheetTable[]): string {
   const sheets = tables.map((t, i) => `${t.name || `Blad ${i + 1}`} (${headingsOf(t.rows)})`).join('; ');
   return (
-    'Geen bekend werkblad in dit bestand. Er ontbreekt een blad met gewicht (datum met trendgewicht en/of weegschaalgewicht) of een Workout Log (datum, training, oefening, gewicht, herhalingen). ' +
-    `Gevonden werkbladen en kolommen: ${sheets}. Geef deze kolomnamen door, dan kan het bestand alsnog werken.`
+    'Geen bekend werkblad in dit bestand. Het bestand moet een blad met gewicht (datum met trendgewicht en/of weegschaalgewicht) of een Workout Log (datum, training, oefening, gewicht, herhalingen) hebben. ' +
+    `Gevonden werkbladen en kolommen: ${sheets}. Geef deze kolomnamen door, dan kunnen ze herkend worden.`
   );
 }
 
