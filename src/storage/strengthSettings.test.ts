@@ -57,4 +57,17 @@ describe('Forge-instellingen en de back-up', () => {
       expect([resolved.restVolume, resolved.restPreTick, resolved.restNextExercise]).toEqual(['normal', false, true]);
     }
   });
+
+  it('IJkset: een oude back-up met aan leest als Vragen, met uit als Uit, en de nieuwe stand reist mee', async () => {
+    const read = async (strengthModel: Record<string, unknown>) => {
+      const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+      envelope.payload.settings.strengthModel = strengthModel;
+      return resolveStrengthSettings(normalizeBackupToCurrentModel(envelope).settings?.strengthModel);
+    };
+    expect(await read({ calibration: true })).toMatchObject({ calibration: true, calibrationMode: 'vragen' });
+    expect(await read({ calibration: false })).toMatchObject({ calibration: false, calibrationMode: 'uit' });
+    expect(await read({})).toMatchObject({ calibration: true, calibrationMode: 'vragen' });
+    expect(await read({ calibration: true, calibrationMode: 'automatisch' })).toMatchObject({ calibration: true, calibrationMode: 'automatisch' });
+    expect(await read({ calibrationMode: 'soms' })).toMatchObject({ calibrationMode: 'vragen' });
+  });
 });
