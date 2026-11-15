@@ -27,6 +27,15 @@ Bijgewerkt: 15 november 2026, 18:40 Portugese tijd, door de coördinator session
 - Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam] staat (trig_01SgRjhVtzejbpKaz26bmsAi).
 - 18:35: deploy en Android van 8cce377 groen. Lookout en Pathfinder Beginner heel licht en Pathfinder Routes op reis 3 lopen als helpers in de coördinator-chat.
 
+## Stand 19:15 (coördinator session_01LnDpSjEhK5wS8sN1rH1p5c)
+
+- Live: 09c716d Routes op reis 3 (I-8), cherry-pick op main na Pathfinder (main nog niet getoetst op deploy).
+- Beginner heel licht: Lookout groen, Pathfinder twee moet (tekst) door mij hersteld (c7b3af4 op de branch); cherry-pick op main in scratchpad wt-beg-main, controles lopen.
+- Ziek met koorts: Lookout groen, tekst-moet hersteld in wt-ziek-fix (nog niet gepusht), controles lopen.
+- Warden Fable loopt: Week samenhang, Oud trainingsscherm, Forge nawerk (herstel.md op warden/<onderwerp>-herstel).
+- Wachtrij Warden Fable: Weer van de plek (`claude/weer-plek-rest` 2fb65cc), Import alleen nieuw (`claude/import-alleen-nieuw`), Back-up mag (`claude/backup-mag` 3d910e3).
+- Bouwers met een oude basis: cherry-pick de eigen commits op origin/main, niet mergen (merge gaf 35 conflicten).
+
 ## Live vandaag
 
 - 4de3367 (12:20): Q instellingen terug met Akkoord, kracht uit, wandelen in vaste bpm, kennisindex. Deploy en Android groen.
