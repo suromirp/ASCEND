@@ -51,6 +51,14 @@ Bijgewerkt: 15 november 2026, 22:40 Portugese tijd. Coördinator sinds 22:35: se
 - Alle bouwers van vanavond gearchiveerd, en alle worktrees in de scratchpad opgeruimd.
 - Geleerd: (1) fire_trigger op de Werkkaart opent een lege chat zonder repo: extra ronde altijd met create_trigger op session_01LnDpSktfMxYFgMMgDhw8Do. (2) Bouwers met een oude basis: eigen commits cherry-picken op origin/main, nooit de boom squashen; conflicten in kennisindex met `npm run kennisindex`, bronnen.json als unie onder "documenten". (3) Bouwers maken eigen I-codes op een oude backlog: bij de squash de backlog van main houden; nacht = backlog van main plus backlog:bij. (4) Een korte hash vergelijken faalt bij 8 tekens: vergelijk op prefix. (5) `&` in een gewone Bash-aanroep sterft met de shell: lange controles met run_in_background. (6) Werk in /home/user/ascend altijd op de branch claude/nacht (git checkout -B claude/nacht origin/claude/nacht) en push met HEAD:claude/nacht: tussen 20:00 en 22:45 stond de map los en gingen vier updates verloren. (7) Een tijdtest (leavePlanAround) faalt als twee volle testrondes naast elkaar draaien.
 
+## Stand 23:45 (session_01LnDpSncLf13Bm9hk3D5VBF)
+
+- 22:50 tot 23:30 liep de vijfuurslimiet vol: helpers en bouwers I-62 en I-64 stopten. Om 23:41 alles weer aangezet.
+- I-61: Warden Fable NIET AKKOORD (`warden/waar-je-nu-bent-herstel`: blokkerend 1 late watch stopt nooit, moet 2, 3, 8, mag 5, 6). Herstel naar de bouwer om 23:44, plus push van zijn tikfix. Lookout I-61 heeft nooit iets gepusht (helper in de vorige chat, verloren): na het herstel opnieuw Lookout starten.
+- Back-up telling: Warden AKKOORD; bouwer bouwt Moet 1 (B4, halfWritten per map). Moet 2 (B2: lastExportedAt springt terug bij Terugzetten) en Mag 3 (B3: laat antwoord na tweede poging) worden nieuwe Inboxpunten. Daarna main zonder Lookout.
+- I-62 en I-64: om 23:44 gewekt om af te ronden.
+- I-65: Warden Fable, Lookout en Pathfinder hervat als helpers hier.
+
 ## Live vandaag
 
 - 4de3367 (12:20): Q instellingen terug met Akkoord, kracht uit, wandelen in vaste bpm, kennisindex. Deploy en Android groen.
