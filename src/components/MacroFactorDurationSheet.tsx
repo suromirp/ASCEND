@@ -81,7 +81,7 @@ export function MacroFactorDurationSheet({
                 onChange={setMinutes}
                 unit="min"
                 tall
-                helper={valid || minutes === undefined ? `ASCEND verwacht ${suggested} min voor deze training.` : `Kies een duur van 1 tot ${MAX_STRENGTH_MINUTES} minuten.`}
+                helper={valid || minutes === undefined ? `Verwacht: ${suggested} min voor deze training.` : `Kies een duur van 1 tot ${MAX_STRENGTH_MINUTES} minuten.`}
               />
             </div>
             <div className="mt-4 flex flex-col gap-3">

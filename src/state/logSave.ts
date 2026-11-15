@@ -37,7 +37,7 @@ export const LOG_SAVE_NOTE: Record<SaveNoteKind, string> = {
 
 // Opnieuw getikt terwijl een eerdere poging voor hetzelfde nog loopt. Nog eens tikken helpt dan niet: de eerste
 // houdt de training of activiteit vast tot ze antwoordt, en antwoordt ze nooit, dan tot de app opnieuw start.
-export const STILL_RUNNING_HELP = 'Kijk in je logboek of hij er staat. Staat hij er niet, sluit ASCEND dan af en open de app opnieuw.';
+export const STILL_RUNNING_HELP = 'Kijk in je logboek of hij er staat. Staat hij er niet, sluit de app dan af en open hem opnieuw.';
 export const LOG_STILL_RUNNING_NOTE = `${SLOW} ${STILL_RUNNING_HELP}`;
 
 // Een formulier met je eigen invulling. Na de grens blijft de knop uit, dus daar staat geen "probeer het nog eens".

@@ -219,7 +219,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
               )}
 
               {answer.unshown && (
-                <p className="mt-4 rounded-xl border p-3.5 text-sm leading-relaxed" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', color: 'var(--color-ink)' }}>Dit voorstel kan ASCEND nu niet goed laten zien. Er verandert niets; probeer het straks nog eens.</p>
+                <p className="mt-4 rounded-xl border p-3.5 text-sm leading-relaxed" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', color: 'var(--color-ink)' }}>Dit voorstel is nu niet goed te tonen. Er verandert niets; probeer het straks nog eens.</p>
               )}
 
               {answer.showEmpty && emptyText && (

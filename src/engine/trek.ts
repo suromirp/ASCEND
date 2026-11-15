@@ -37,7 +37,7 @@ export const TREK_IMPORTANCE_LABEL: Record<TrekImportance, string> = {
 export function trekImportanceHint(importance: TrekImportance, days: number): string {
   if (importance === 'training') return 'Geen afbouw. Alleen de dag ervoor en erna blijft licht. De tocht telt als training richting de GR5.';
   const n = trekLightDaysBefore(days, 'goal');
-  return `ASCEND houdt de ${n} dagen ervoor licht, zodat je fris vertrekt. De tocht telt ook als training richting de GR5.`;
+  return `De ${n} dagen ervoor blijven licht, zodat je fris vertrekt. De tocht telt ook als training richting de GR5.`;
 }
 
 export const MAX_TREK_DAYS = 30;

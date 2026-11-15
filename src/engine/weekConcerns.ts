@@ -18,6 +18,7 @@ import { isIntentionalBackToBack, legHeavyDayBefore, legSpacingDays, requiredSpa
 import { freeDaysOfWeek, validateWeeks, type CheckInput, type CheckRule, type Finding } from './weekValidator';
 import { intensityOfLog, isSportLogSession, restHoursFor, sportDoneLine, sportLogIdOf } from './sportDays';
 import { anySportDefinition } from '../data/sports';
+import { sportOfLog } from './sportOfLog';
 
 export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH', 'TEST-REST'];
 
@@ -102,9 +103,9 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
       case 'LEG-SPACING': {
         // Een sport die je deed en die meetelt (engine/sportDays.ts): het feit eerst, met de rust van die sport.
         const sportLog = f.fromSport ? input.logs.find((l) => l.id === sportLogIdOf(a) || l.id === sportLogIdOf(b)) : undefined;
-        if (sportLog?.countedSport) {
+        const sport = sportLog ? sportOfLog(sportLog).countedSport : undefined;
+        if (sportLog && sport) {
           const late = isSportLogSession(a) ? b : a;
-          const sport = sportLog.countedSport;
           const label = anySportDefinition(sport).label.toLowerCase();
           const base = input.templates.find((t) => t.id === sportLog.templateId);
           const hours = restHoursFor(sport, intensityOfLog(sportLog, sport), !!base?.restShort);

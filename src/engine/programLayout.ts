@@ -46,7 +46,7 @@ const PHASE_TEXT: Record<string, { name: string; description: string }> = {
   },
   [PHASE_OPBOUW]: {
     name: 'OPBOUW',
-    description: 'Je lopen bouwen echt op: de lange duurloop groeit elk blok ongeveer 10% tot rond de 2 uur, de rustige loop wordt langer, en als het goed gaat stelt ASCEND een extra training voor.',
+    description: 'Je lopen bouwen echt op: de lange duurloop groeit elk blok ongeveer 10% tot rond de 2 uur, de rustige loop wordt langer, en als het goed gaat volgt een voorstel voor een extra training.',
   },
   [PHASE_BERG]: {
     name: 'BERGCAPACITEIT',
@@ -125,14 +125,14 @@ export function afterMainGoalChange(
   const main = mainGoal(goals, withLadder);
   if (!main || goalTiming(main, today).state !== 'past') return { proposal: false, lines: [] };
   if (to === 'maintain') {
-    return { proposal: true, lines: ['Vanaf deze week plant ASCEND weer gewone onderhoudsweken, met je weekschema en je rustdag.', 'Je geschiedenis blijft zoals hij is.'] };
+    return { proposal: true, lines: ['Vanaf deze week weer gewone onderhoudsweken, met je weekschema en je rustdag.', 'Je geschiedenis blijft zoals hij is.'] };
   }
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const open = planned.filter((s) => s.scheduledDate >= today && s.status !== 'skipped' && !logged.has(s.id)).length;
   if (open === 0) return { proposal: false, lines: [] };
   return {
     proposal: true,
-    lines: [`${open} geplande ${open === 1 ? 'training gaat' : 'trainingen gaan'} van de planning. ASCEND plant niets meer tot je een nieuw doel kiest.`, 'Wat je al deed blijft staan.'],
+    lines: [`${open} geplande ${open === 1 ? 'training gaat' : 'trainingen gaan'} van de planning. Tot je een nieuw doel kiest, wordt er niets meer gepland.`, 'Wat je al deed blijft staan.'],
   };
 }
 

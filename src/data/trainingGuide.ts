@@ -158,7 +158,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'Waarom',
-        body: 'ASCEND kiest deze training als tempo je grootste tekort is voor een hardloopdoel. Korte harde stukken op ongeveer je 5 tot 10 km-tempo, sneller dan je tempoloop, zodat de twee iets anders trainen. Het grootste deel van je week blijft rustig, zoals het hoort.',
+        body: 'Gekozen als tempo je grootste tekort is voor een hardloopdoel. Korte harde stukken op ongeveer je 5 tot 10 km-tempo, sneller dan je tempoloop, zodat de twee iets anders trainen. Het grootste deel van je week blijft rustig, zoals het hoort.',
       },
       {
         heading: 'Zo doe je het',
@@ -181,7 +181,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'Waarom',
-        body: 'ASCEND kiest deze training als tempo je grootste tekort is, in de zwaarste week van een blok. Rustig beginnen en pas aan het eind steviger: je oefent tempo houden op benen die al moe zijn, zonder dat het een zware training wordt.',
+        body: 'Gekozen als tempo je grootste tekort is, in de zwaarste week van een blok. Rustig beginnen en pas aan het eind steviger: je oefent tempo houden op benen die al moe zijn, zonder dat het een zware training wordt.',
       },
       {
         heading: 'Zo doe je het',
@@ -203,7 +203,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'Waarom',
-        body: 'ASCEND kiest deze training in de week na je wedstrijd, minstens 48 uur erna. Eerlijk: er is geen bewijs dat een herstelloop je sneller laat herstellen dan rust. Het is rustig extra volume dat het ritme erin houdt. Rust, wandelen of fietsen is net zo goed.',
+        body: 'Gepland in de week na je wedstrijd, minstens 48 uur erna. Eerlijk: er is geen bewijs dat een herstelloop je sneller laat herstellen dan rust. Het is rustig extra volume dat het ritme erin houdt. Rust, wandelen of fietsen is net zo goed.',
       },
       {
         heading: 'Zo doe je het',
@@ -221,7 +221,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'Waarom',
-        body: 'ASCEND kiest deze training als lang onderweg zijn of een rugzak dragen je grootste tekort is voor de GR5. Wandelen met een rugzak bouwt uren op de been en draagkracht op, met veel minder klap voor je benen dan hardlopen. Onderzoek naar rugzaktraining vond het meeste effect als het gewicht stap voor stap omhoog gaat, naast conditie en kracht.',
+        body: 'Gekozen als lang onderweg zijn of een rugzak dragen je grootste tekort is voor de GR5. Wandelen met een rugzak bouwt uren op de been en draagkracht op, met veel minder klap voor je benen dan hardlopen. Onderzoek naar rugzaktraining vond het meeste effect als het gewicht stap voor stap omhoog gaat, naast conditie en kracht.',
       },
       {
         heading: 'Zo doe je het',
@@ -244,7 +244,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'Waarom',
-        body: 'In de Opbouw stelt ASCEND een extra loop voor als de weken ervoor goed gingen: bijna alles gedaan, geen pijn, niet steeds zwaarder dan gepland. Zo groeit je weekvolume, terwijl geen enkele loop meer dan 10% boven je langste van de afgelopen maand komt. Juist zo\'n sprong in één loop hing samen met meer blessures, het weektotaal niet.',
+        body: 'In de Opbouw volgt een voorstel voor een extra loop als de weken ervoor goed gingen: bijna alles gedaan, geen pijn, niet steeds zwaarder dan gepland. Zo groeit je weekvolume, terwijl geen enkele loop meer dan 10% boven je langste van de afgelopen maand komt. Juist zo\'n sprong in één loop hing samen met meer blessures, het weektotaal niet.',
       },
       {
         heading: 'Zo doe je het',
@@ -254,7 +254,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'Ontspannen schouders, snelle korte passen, niet sprinten.',
           'Ertussen wandelen of heel rustig joggen tot je weer op adem bent.',
         ],
-        note: 'Moe of stijf? Laat de versnellingen weg en loop alleen het rustige deel. Gaat het een paar weken minder, dan stelt ASCEND hem niet meer voor.',
+        note: 'Moe of stijf? Laat de versnellingen weg en loop alleen het rustige deel. Gaat het een paar weken minder, dan komt hij niet meer als voorstel.',
       },
     ],
     gear: ['Garmin met borstband', 'hardloopschoenen'],
@@ -290,7 +290,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'Waarom',
-        body: 'Een rustig loopje zegt niets over je wedstrijdtempo. Een 5 km op tijd wel: daaruit rekent ASCEND hoe haalbaar je doeltijd is, en de tweede test laat zien wat je tempolopen opleverden.',
+        body: 'Een rustig loopje zegt niets over je wedstrijdtempo. Een 5 km op tijd wel: daaruit volgt hoe haalbaar je doeltijd is, en de tweede test laat zien wat je tempolopen opleverden.',
       },
       {
         heading: 'Zo doe je het',
@@ -313,7 +313,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'De dagen ervoor',
-        body: 'ASCEND houdt de dagen voor de wedstrijd licht: geen heuvels of zware beentraining vlak ervoor. De dag erna is de lange duurloop kort.',
+        body: 'De dagen voor de wedstrijd blijven licht: geen heuvels of zware beentraining vlak ervoor. De dag erna is de lange duurloop kort.',
       },
       {
         heading: 'Op de dag',
@@ -426,7 +426,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
       {
         heading: 'Geschatte D+, geen GPS-meting',
-        body: 'Op een loopband ga je niet echt omhoog, dus de hoogtemeters van je Garmin kloppen daar niet. ASCEND schat D+ uit afstand × helling% (D+ ≈ afstand in meters × helling% ÷ 100), vul de helling in bij het loggen en ASCEND berekent en vult de schatting voor je in. Dit blijft een trainingsmaat, geen echte hoogtemeting.',
+        body: 'Op een loopband ga je niet echt omhoog, dus de hoogtemeters van je Garmin kloppen daar niet. D+ is daarom een schatting uit afstand × helling% (D+ ≈ afstand in meters × helling% ÷ 100). Vul de helling in bij het loggen, dan staat de schatting er vanzelf. Dit blijft een trainingsmaat, geen echte hoogtemeting.',
       },
       {
         heading: 'Optie B, buiten hiken',
@@ -535,7 +535,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
       {
         heading: 'Opbouw',
-        body: 'Rustig tempo (RPE 3-4/10). ASCEND bouwt de minuten voor je op en vraagt nooit meer dan 10% boven je langste loop van de afgelopen maand. Elke vierde week is een rustweek.',
+        body: 'Rustig tempo (RPE 3-4/10). De minuten bouwen op, nooit meer dan 10% boven je langste loop van de afgelopen maand. Elke vierde week is een rustweek.',
       },
       {
         heading: 'Wanneer te zwaar?',
