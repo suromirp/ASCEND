@@ -30,7 +30,11 @@ Bijgewerkt: 15 november 2026, 11:20 Portugese tijd, door de coördinator session
 - StairMaster en wandelen in bpm: Warden akkoord en zelf op claude/nacht gezet (e78388d). Nog Lookout en Pathfinder.
 - Kennisindex: op claude/nacht (4306d25). Elk nieuw document in docs/ heeft nu een regel in `docs/kennisindex/bronnen.json` nodig, anders faalt `scripts/kennisindex`; `npm run kennisindex` maakt de index opnieuw. Zet dat in elke bouwopdracht die een besluit schrijft.
 - Beginner heel licht stap 1 en 2 (`claude/beginner-licht`, Sherpa session_01LnDpSk5RjwPEFvrRzyLnjW, idle met een open vraag over de overgang na week 4, volgt het advies): Warden session_01LnDpSji7qMKisXbWFkVsdb (Fable), let op de veranderde planGolden-foto. Daarna stap 3.
-- Sessies klaar om te archiveren als hun werk op main staat: Warden Q session_01LnDpSnF2VW7VNi23FjvCWq, Warden StairMaster session_01LnDpSjor7juUUhHbCy49RP, Sherpa Kennisindex session_01LnDpSnpa7DrPY2CuNU1nQd.
+- Gearchiveerd 12:10 (eigenaar: "oude bouwer sessies archiveren"): twaalf afgeronde sessies, ook de coördinatoren van 12 en 14 november. Open blijven: Werkkaart-sessie, Sherpa beginner (herstel volgt), lopende bouwers.
+- Week: Sherpa klaar (dd92b19), Warden Week session_01LnDpSj4BZ8tUcTDLVp4ZkT (Fable); bij blokkerend schrijft hij `herstel.md` op `warden/week-herstel`.
+- Beginner: Warden wil herstel (rem na de start moet de langste sessie lezen; de Akkoord-wissel optioneel). Gevraagd als `herstel.md` op `warden/beginner-herstel` (trig_01Hs1bhNkoZZy84rJtr6ERM9), daarna naar Sherpa beginner.
+- Klein 15 november klaar (41f0901 op claude/klein-15-nov): proefmerge, Warden sonnet, Lookout.
+- Les: list_events heb ik niet; een Warden die niet akkoord is laat zijn herstel als bestand op een branch achter.
 
 - Back-up van de eigenaar (15 november 11:50, app fe704a3) staat in de scratchpad van deze sessie: `backup-eigenaar-1/b.json`, chmod 600. Naspelen Week: vr 13 beide skipped (geen gemist), za 14 Lange duurloop (type hiking) en zo 15 Heuvelintervallen geruild, za 14 afgeleid away; advies met leave leeg, zonder leave precies zijn tekst. Doorgegeven aan Sherpa Week (trig_014agsDwjutsHvizV1TUzx61).
 - Back-up eerste keer mislukt (schermafdruk 11:50, "het bestand kon niet worden geschreven", tweede poging lukt met -2 in de naam): Sherpa Back-up session_01LnDpSnNF5icymXAJ1Rc6xC (Fable, `claude/backup-eerste-keer`).
