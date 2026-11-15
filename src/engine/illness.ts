@@ -23,14 +23,14 @@ import { addDays, daysBetween, formatWeekdayDateNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 
 export const ILLNESS_LABEL: Record<IllnessKind, string> = {
-  above_neck: 'Verkouden, alleen boven de nek',
-  below_neck: 'Koorts of klachten onder de nek',
+  above_neck: 'Neus of keel, zonder koorts',
+  below_neck: 'Koorts, ook als je verkouden bent',
   stomach: 'Buikgriep',
 };
 
 export const ILLNESS_HINT: Record<IllnessKind, string> = {
-  above_neck: 'Neus of keel, geen koorts. Rustig bewegen mag als je je goed voelt, niets zwaars.',
-  below_neck: 'Koorts, spierpijn, hoesten of benauwd. Rust, niet trainen.',
+  above_neck: 'Rustig bewegen mag als je je goed voelt, niets zwaars.',
+  below_neck: 'Ook bij spierpijn, hoesten of benauwd. Rust, niet trainen.',
   stomach: 'Overgeven of diarree. Rust, drink genoeg, niet trainen.',
 };
 
