@@ -3072,7 +3072,7 @@
    "onderwerpen": [
     "forge"
    ],
-   "kern": "Een set die je uit en weer aan zet telt bij Afronden op de eerste keer afvinken: de voorgestelde dag volgt het laatste echte werk, niet de laatste tik.",
+   "kern": "Een set die je uit en weer aan zet telt bij Afronden op de eerste keer afvinken: de voorgestelde dag volgt het laatste echte werk, niet de laatste tik; het tijdstip van het nieuwe log hoort bij die dag (laatste set of 12:00), nooit nu.",
    "vultAan": [
     "docs/beslissingen/2026-11-15-dag-van-afronden.md"
    ],

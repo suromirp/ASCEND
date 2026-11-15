@@ -6,7 +6,7 @@ import { createElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { SessionTemplate } from '../../models/training';
 import { lastWorkMoment, tickAllRows, tickRow, toStrengthData, type WorkoutExercise } from '../../engine/forgeWorkout';
-import { finishDayChoices, finishDayDefault, nextPillLast, pillSlot, sessionIdentity } from '../../engine/forgeSession';
+import { finishCompletedAt, finishDayChoices, finishDayDefault, nextPillLast, pillSlot, sessionIdentity } from '../../engine/forgeSession';
 import { mergeDraft } from '../../engine/forgeInput';
 import { toISODate } from '../../utils/dates';
 import finishSrc from './FinishSheet.tsx?raw';
@@ -17,6 +17,7 @@ vi.mock('../motion', () => ({ useMotionMode: () => 'full' }));
 vi.mock('../../state/AppDataContext', () => ({ useAppData: () => ({ templates: [], settings: {} }) }));
 
 const { FinishSheet } = await import('./FinishSheet');
+const { forgeLogInput } = await import('./forgeFinishLog');
 
 const at = (iso: string) => Date.parse(iso);
 const dayOf = (ms: number) => toISODate(new Date(ms));
@@ -192,5 +193,51 @@ describe('I-45. Reviewer: de plek van de pil en het concept', () => {
     expect(merged[0].rows[0].firstDoneAt).toBe(mon);
     const again = tickRow(merged, 'a', 'r0', wed + 60_000).workout;
     expect(lastWorkMoment(again)).toBe(mon);
+  });
+});
+
+describe('Onderhoud 15 november: completedAt hoort bij de gekozen dag', () => {
+  const base = { template, variant: 'full' as const, readOnly: false, plannedSessionId: 'ps1', plannedStill: true, gymProfileId: 'g1', forgeLog: [] };
+  const extra = (doneOn: string) => ({ minutes: 50, pain: [], notes: '', doneOn });
+
+  it('beendag maandagavond, woensdagochtend afgerond op maandag: het tijdstip van de laatste set', () => {
+    let w = plan(2);
+    w = tickRow(w, 'a', 'r0', mon).workout;
+    w = tickRow(w, 'a', 'r1', mon + 600_000).workout;
+    const input = forgeLogInput({ ...base, extra: extra('2026-11-16'), workout: w, now: at('2026-11-18T07:00:00Z') });
+    expect(input.completedDate).toBe('2026-11-16');
+    expect(input.completedAt).toBe(new Date(mon + 600_000).toISOString());
+  });
+
+  it('een eerdere dag zonder set op die dag: 12:00 op die dag, niet nu', () => {
+    let w = plan(1);
+    w = tickRow(w, 'a', 'r0', wed).workout; // set op woensdag, gekozen maandag
+    const now = at('2026-11-18T20:00:00Z');
+    const input = forgeLogInput({ ...base, extra: extra('2026-11-16'), workout: w, now });
+    expect(input.completedAt).toBe(new Date('2026-11-16T12:00:00').toISOString());
+    expect(dayOf(Date.parse(input.completedAt!))).toBe('2026-11-16');
+  });
+
+  it('vandaag: het moment van opslaan, zoals altijd', () => {
+    const now = at('2026-11-18T20:00:00Z');
+    let w = plan(1);
+    w = tickRow(w, 'a', 'r0', now - 60_000).workout;
+    expect(forgeLogInput({ ...base, extra: extra('2026-11-18'), workout: w, now }).completedAt).toBe(new Date(now).toISOString());
+  });
+
+  it('nooit in de toekomst en nooit een dag naast completedDate, over vijf tijdzones en een week dagen', () => {
+    const now = at('2026-11-18T09:30:00Z');
+    for (let back = 0; back <= 7; back++) {
+      for (const tickBack of [undefined, 0, 1, 2, 3]) {
+        const today = dayOf(now);
+        const d = new Date(now);
+        d.setDate(d.getDate() - back);
+        const doneOn = toISODate(d);
+        const lastWorkAt = tickBack === undefined ? undefined : now - tickBack * 86_400_000 - 3_600_000;
+        const iso = finishCompletedAt({ doneOn, today, now, ...(lastWorkAt !== undefined ? { lastWorkAt } : {}), dayOf });
+        expect(Date.parse(iso)).toBeLessThanOrEqual(now);
+        expect(dayOf(Date.parse(iso))).toBe(doneOn);
+      }
+    }
   });
 });
