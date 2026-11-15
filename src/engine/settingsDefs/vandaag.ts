@@ -818,6 +818,24 @@ export const VANDAAG: SettingDef[] = [
     },
   },
   {
+    id: 'route-grote-wegen',
+    page: 'vandaag',
+    place: { in: 'bundel-weer' },
+    title: 'Grote wegen mijden',
+    note: 'Een voorgestelde lus mijdt grote wegen en knooppunten van snelwegen. Het advies is aan; loopt er toch een stuk langs, dan zegt een regel bij de lus dat.',
+    keywords: ['route', 'lus', 'grote weg', 'snelweg', 'verkeer', 'lawaai', 'drukte', 'rustig', 'brouter', 'valhalla'],
+    help: {
+      title: 'Grote wegen mijden',
+      lead: 'Een voorgestelde lus mijdt grote wegen en knooppunten van snelwegen. Het advies is aan.',
+      points: [
+        { head: 'Aan', text: 'BRouter maakt een weg duurder naarmate hij dichter bij verkeerslawaai ligt; Valhalla kiest liever een voetpad dan de weg ernaast. Een lus kan daardoor iets langer omlopen.' },
+        { head: 'Uit', text: 'de routeplanner kiest de kortste goede weg, ook langs een drukke weg.' },
+        { head: 'Altijd', text: 'loopt er 300 m of meer langs een grote weg, dan zegt een regel bij de lus dat.' },
+      ],
+    },
+    helpKey: 'routeGroteWegen',
+  },
+  {
     id: 'route-kaart',
     page: 'vandaag',
     place: { in: 'bundel-weer' },

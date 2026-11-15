@@ -16,6 +16,11 @@ import { ADVICE_ORDER, INDEX_ORDER } from './settingsDefs/order';
 const GROUP_FILES = import.meta.glob<string>('./settingsDefs/*.ts', { query: '?raw', import: 'default', eager: true });
 const PAGES_TSX = import.meta.glob<string>(['../components/settings/**/*.tsx', '../pages/settings/*.tsx'], { query: '?raw', import: 'default', eager: true });
 
+// Rijen waarvan de titel of de bladkop op de pagina een expressie is, zodat de test ze niet kan lezen, met de reden.
+const NIET_GELEZEN: Record<string, string> = {
+  'bundel-horloge-gebruik': 'titel en bladkop zijn usageTitle in KoppelingenGroup.tsx (met Health Connect: Gebruik van je gegevens)',
+};
+
 // Wat er bij een nieuwe instelling in de verklaring hoort, om over te nemen.
 function expected(id: string): string {
   const item = SETTINGS_INDEX.find((i) => i.id === id);
@@ -91,13 +96,17 @@ describe('de verklaringen tegenover de oude bestanden', () => {
   });
 
   it('de titel op de pagina en de kop van het blad, zoals de groepspagina ze schrijft', () => {
-    // Alleen een rij met een letterlijke id en titel; een titel als expressie (bundel-horloge-gebruik) leest de test niet.
+    // Alleen een rij met een letterlijke id en titel, en een blad met een letterlijke kop. Wat de test zo niet kan
+    // lezen staat in NIET_GELEZEN; elke andere rowTitle, bladkop of titel van een rij buiten de index moet gelezen zijn.
+    const readTitle = new Set<string>();
+    const readSheet = new Set<string>();
     for (const [file, text] of Object.entries(PAGES_TSX)) {
-      for (const m of text.matchAll(/<SummaryRow\b([^<]{0,800})/g)) {
+      for (const m of text.matchAll(/<(?:SummaryRow|SettingsRow|SettingsFieldRow)\b([^<]{0,800})/g)) {
         const id = /\bid="([^"]+)"/.exec(m[1])?.[1];
         const title = /\btitle="([^"]+)"/.exec(m[1])?.[1];
         if (!id || !title || !DEFS[id]) continue;
         expect(DEFS[id].rowTitle ?? DEFS[id].title, `${file}: rij ${id}`).toBe(title);
+        readTitle.add(id);
       }
       for (const m of text.matchAll(/===\s*'([^']+)'\s*&&\s*\(?\s*<BundleSheet\b([^<]{0,600})/g)) {
         const eyebrow = /\beyebrow="([^"]+)"/.exec(m[2])?.[1];
@@ -105,7 +114,18 @@ describe('de verklaringen tegenover de oude bestanden', () => {
         const line = /\bline="([^"]+)"/.exec(m[2])?.[1];
         if (!eyebrow || !title || !DEFS[m[1]]) continue;
         expect(DEFS[m[1]].sheet, `${file}: blad ${m[1]}`).toEqual({ eyebrow, title, ...(line ? { line } : {}) });
+        readSheet.add(m[1]);
       }
+    }
+    for (const d of ALL_DEFS) {
+      if (d.id in NIET_GELEZEN) continue;
+      if (d.rowTitle) expect(readTitle.has(d.id), `rowTitle van ${d.id} staat op geen pagina als letterlijke titel`).toBe(true);
+      if (d.search === false) expect(readTitle.has(d.id), `titel van ${d.id} (niet in de index) staat op geen pagina als letterlijke titel`).toBe(true);
+      if (d.sheet) expect(readSheet.has(d.id), `bladkop van ${d.id} staat op geen pagina als letterlijke kop`).toBe(true);
+    }
+    for (const id of Object.keys(NIET_GELEZEN)) {
+      expect(DEFS[id], `${id} in NIET_GELEZEN bestaat niet`).toBeDefined();
+      expect(readTitle.has(id) && (!DEFS[id].sheet || readSheet.has(id)), `${id} wordt nu wel gelezen: haal hem uit NIET_GELEZEN`).toBe(false);
     }
   });
 

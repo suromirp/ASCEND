@@ -506,4 +506,23 @@ export const KOPPELINGEN: SettingDef[] = [
       },
     },
   },
+  {
+    id: 'horloge-soort',
+    page: 'koppelingen',
+    place: { row: true, advanced: true },
+    title: 'Soort van een loop toetsen',
+    note: 'Een loop in wandeltempo wordt een wandeling, een harde losse loop een tempoloop.',
+    keywords: ['horloge', 'garmin', 'wandeling', 'wandeltempo', 'loop', 'hard', 'tempoloop', 'rustig', 'hartslag', 'soort', 'toetsen'],
+    route: '/koppelen/garmin',
+    help: {
+      title: 'Soort van een loop toetsen',
+      lead: 'Je horloge noemt een activiteit een loop als je hem als loop startte. Tempo en hartslag tellen mee voordat hij wordt opgeslagen.',
+      points: [
+        { head: 'Wandeltempo', text: 'een loop van 10 min per km of trager wordt een wandeling. Bij Andere training sla je hem toch als loop op.' },
+        { head: 'Hard', text: 'een losse loop met een gemiddelde hartslag ruim boven zone 2 wordt een harde training (meestal de tempoloop), geen rustige duurloop. Zonder hartslag telt je tempo, zonder beide volgt geen oordeel.' },
+        { head: 'Altijd', text: 'te kort, te hard of in wandeltempo vinkt nooit vanzelf af en heet nooit "zoals gepland", ook als dit uit staat.' },
+      ],
+    },
+    helpKey: 'horlogeSoort',
+  },
 ];

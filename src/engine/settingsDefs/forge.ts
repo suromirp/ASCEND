@@ -1157,6 +1157,41 @@ export const FORGE: SettingDef[] = [
     },
   },
   {
+    id: 'forge-concept',
+    page: 'forge',
+    place: { in: 'bundel-invullen' },
+    title: 'Training bewaren als concept na',
+    note: 'Een training die je vergat af te ronden wordt na middernacht of na deze grens een concept: Afronden, Verder of Verwijderen. Alleen middernacht, 4, 8 of 12 uur.',
+    keywords: ['niet afgerond', 'concept', 'vergeten', 'afbreken', 'afgebroken', 'blijven liggen', 'lopende training', 'middernacht', 'verwijderen', 'weggooien', 'verder', 'afronden', 'forge', 'kracht', 'training', 'bij het invullen'],
+    help: {
+      title: 'Training bewaren als concept na',
+      lead: 'Een training die je begon en vergat af te ronden, loopt niet dagen door. Na middernacht, of na deze grens zonder handeling, staat hij als concept klaar. Er gaat niets weg en je planning verandert niet.',
+      points: [
+        { head: 'Afronden', text: 'met de sets die je deed en de tijd tot je laatste handeling. Is het minder dan de helft, dan heet het eerlijk een korte training.' },
+        { head: 'Verder', text: 'de stille tijd wordt een pauze en je gaat door waar je was.' },
+        { head: 'Verwijderen', text: 'pas na een bevestiging. Je logboek verandert niet.' },
+        { head: 'Na 12 uur', text: 'het advies. Middernacht geldt altijd, met een uur stilte, zodat een late training gewoon doorloopt.' },
+      ],
+    },
+    helpKey: 'forgeConcept',
+    choice: {
+      key: 'forgeConcept',
+      def: {
+        group: 'Forge',
+        title: 'Training bewaren als concept na',
+        line: 'Hoe lang een training zonder handeling mag liggen voordat Forge hem als concept bewaart en vraagt wat je wilt.',
+        advice: 12,
+        help: 'forgeConcept',
+        options: [
+          { value: 0, label: 'Na middernacht', short: 'Na middernacht' },
+          { value: 4, label: 'Na 4 uur', short: '4 uur' },
+          { value: 8, label: 'Na 8 uur', short: '8 uur' },
+          { value: 12, label: 'Na 12 uur', note: 'Het advies', short: '12 uur' },
+        ],
+      },
+    },
+  },
+  {
     id: 'forge-vegen',
     page: 'forge',
     place: { in: 'bundel-invullen' },

@@ -648,4 +648,37 @@ export const LICHAAM: SettingDef[] = [
     },
     helpKey: 'etenOnderweg',
   },
+  {
+    id: 'rustiger-instap',
+    page: 'lichaam',
+    place: { row: true },
+    title: 'Rustiger instap na een pauze',
+    note: 'Na ziekte, een vakantie of twee weken weinig training stelt ASCEND zeven dagen korter trainen voor: driekwart, de helft of niet.',
+    keywords: ['pauze', 'vakantie', 'ziek', 'terug', 'instap', 'opbouwen', 'korter', 'rustiger', 'weinig training', 'hervatten', 'na de vakantie'],
+    help: {
+      title: 'Rustiger instap na een pauze',
+      lead: 'Na ziekte en een vakantie, of na twee weken met weinig training, stelt ASCEND op de dag dat je terug bent een rustiger week voor.',
+      points: [
+        { head: 'Wanneer', text: 'op de eerste vier dagen terug, als je in de twee weken ervoor minder dan 40 procent van twee gewone weken deed. Niet terwijl je ziek bent of nog opbouwt na ziekte, niet met een test of wedstrijd in die week, en niet in de eerste twee weken van je plan.' },
+        { head: 'Wat er verandert', text: 'zeven dagen lang duren je trainingen driekwart (het advies) of de helft van de gewone tijd. Welke trainingen er staan, je fase en je doeldatum blijven zoals ze zijn.' },
+        { head: 'Alleen met Akkoord', text: 'eerst een voorstel met de trainingen die korter worden; pas na Akkoord verandert er iets, met Ongedaan maken. Uit: na een pauze gaat je plan gewoon verder.' },
+      ],
+    },
+    helpKey: 'rustigerInstap',
+    choice: {
+      key: 'rustigerInstap',
+      def: {
+        group: 'Lichaam',
+        title: 'Rustiger instap na een pauze',
+        line: 'Na ziekte, een vakantie of twee weken weinig training.',
+        advice: 'three_quarters',
+        help: 'rustigerInstap',
+        options: [
+          { value: 'three_quarters', label: 'Driekwart', note: 'Een voorstel: zeven dagen je trainingen driekwart van de gewone tijd', short: 'Driekwart' },
+          { value: 'half', label: 'De helft', note: 'Een voorstel: zeven dagen de helft van de gewone tijd', short: 'De helft' },
+          { value: 'off', label: 'Niet voorstellen', note: 'Na een pauze gaat je plan gewoon verder', short: 'Uit' },
+        ],
+      },
+    },
+  },
 ];
