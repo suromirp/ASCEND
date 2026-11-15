@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { activeMinutes, activeSeconds, formatSessionClock, isPaused, pillSlot, setsPhrase } from '../../engine/forgeSession';
+import { activeMinutes, activeSeconds, formatSessionClock, isPaused, nextPillLast, pillSlot, sessionIdentity, setsPhrase } from '../../engine/forgeSession';
 import { promptKey, requestOpenSession, wasPrompted, type SessionState } from '../../utils/forgeSessionStore';
 import { Icon } from '../icons';
 import { Pictogram } from '../pictograms';
@@ -30,12 +30,14 @@ function useSecond(running: boolean): number {
 // plaats van stil te verdwijnen (Warden 15 november, I-4).
 export function SessionPillSlot({ session }: { session: SessionState | undefined }) {
   // De laatste live stand (de sessie is per stand dezelfde waarde, useLiveSession onthoudt hem).
+  // Met het blad open blijft dit de training waarvoor het openging: een andere training komt pas na het sluiten.
   const [last, setLast] = useState(session);
-  if (session && session !== last) setLast(session);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const slot = pillSlot({ live: session, last: session ?? last, sheetOpen });
+  const keep = nextPillLast({ live: session, last, sheetOpen, keyOf: sessionIdentity });
+  if (keep !== last) setLast(keep);
+  const slot = pillSlot({ live: session, last: last ?? session, sheetOpen, keyOf: sessionIdentity });
   if (!slot) return null;
-  return <SessionPill session={slot.session} gone={slot.gone} onSheet={setSheetOpen} />;
+  return <SessionPill key={sessionIdentity(slot.session)} session={slot.session} gone={slot.gone} onSheet={setSheetOpen} />;
 }
 
 export function SessionPill({ session, gone = false, onSheet }: { session: SessionState; gone?: boolean; onSheet?: (open: boolean) => void }) {
@@ -111,7 +113,7 @@ export function SessionPill({ session, gone = false, onSheet }: { session: Sessi
       </button>
     </div>
     )}
-    {choosing && <SessionChoiceSheet session={session} {...(left ? { left } : {})} vanished={gone} onClose={() => setChoosing(false)} />}
+    {choosing && <SessionChoiceSheet key={sessionIdentity(session)} session={session} {...(left ? { left } : {})} vanished={gone} onClose={() => setChoosing(false)} />}
     </>
   );
 }

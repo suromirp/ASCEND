@@ -12,7 +12,8 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
-- 2026-11-15 [De dag van een afgeronde training in Forge](../beslissingen/2026-11-15-dag-van-afronden.md): Afronden in Forge geeft het log de dag van je laatst afgevinkte set, ook bij een geplande training die je een dag eerder of later deed.
+- 2026-11-15 [De dag van een afgeronde training in Forge](../beslissingen/2026-11-15-dag-van-afronden.md): Afronden in Forge geeft het log de dag van je laatst afgevinkte set, ook bij een geplande training die je een dag eerder of later deed. Aangevuld door: 2026-11-15-dag-van-afronden-opnieuw-afvinken.
+- 2026-11-15 [Een set opnieuw afvinken verzet de dag van Afronden niet](../beslissingen/2026-11-15-dag-van-afronden-opnieuw-afvinken.md): Een set die je uit en weer aan zet telt bij Afronden op de eerste keer afvinken: de voorgestelde dag volgt het laatste echte werk, niet de laatste tik; het tijdstip van het nieuwe log hoort bij die dag (laatste set of 12:00), nooit nu.
 - 2026-11-15 [Een training die bleef liggen loopt nog](../beslissingen/2026-11-15-concept-loopt-nog.md): Een voorbije geplande training waar nog een concept van in Forge ligt, heet "loopt nog".
 - 2026-11-14 [Een training die bleef liggen](../beslissingen/2026-11-14-training-blijven-liggen.md): Een begonnen, niet afgeronde training in Forge loopt niet dagen door. Aangevuld door: 2026-11-15-concept-loopt-nog, 2026-11-15-dag-van-afronden.
 - 2026-11-14 [Opwarmset later in de training](../beslissingen/2026-11-14-opwarmset-later.md): Een opwarmset later in de training, op een beweging die al warm is (de leg press na squat en deadlift), blijft in Forge zichtbaar maar gedempt, met één zin waarom: "Je benen zijn warm van de Barbell Back Squat.

@@ -242,6 +242,18 @@ function tickDay(o: { today: string; lastTickAt?: number; dayOf: (ms: number) =>
   return day <= o.today && day >= addDays(o.today, -60) ? day : undefined;
 }
 
+// Het tijdstip (`completedAt`) van het nieuwe log bij de dag van Afronden (onderhoud 15 november): vandaag is het nu;
+// een eerdere dag krijgt het moment van je laatste echte werk op die dag (`lastWorkAt`, uit
+// engine/forgeWorkout.ts#lastWorkMomentOn), en 12:00 alleen zonder set op die dag. Nooit
+// later dan nu, en nooit een dag naast `completedDate` (die twee lopen niet uiteen). Alleen voor een nieuw log.
+export function finishCompletedAt(o: { doneOn: string; today: string; now: number; lastWorkAt?: number; dayOf: (ms: number) => string }): string {
+  if (o.doneOn >= o.today) return new Date(o.now).toISOString();
+  const work = o.lastWorkAt;
+  if (work !== undefined && Number.isFinite(work) && work <= o.now && o.dayOf(work) === o.doneOn) return new Date(work).toISOString();
+  const noon = new Date(`${o.doneOn}T12:00:00`).getTime();
+  return new Date(Number.isFinite(noon) ? Math.min(noon, o.now) : o.now).toISOString();
+}
+
 // De knoppen bij Gedaan op voor een geplande training: de geplande dag (als die niet na vandaag ligt), de dag van
 // je laatste set en vandaag, oud naar nieuw, zonder dubbele. Een enkele dag (alles vandaag) is geen keuze: leeg.
 export function finishDayChoices(o: { today: string; scheduledDate?: string; lastTickAt?: number; dayOf: (ms: number) => string }): string[] {
@@ -270,11 +282,28 @@ export function choiceSheetSeesGone(o: { stillThere: boolean; discarded: boolean
   return !o.stillThere && !o.discarded && !o.picked;
 }
 
+// Wie een sessie is: de training en het moment van starten (zoals de sleutel van OtherSessionRunning in ForgeWorkout).
+export function sessionIdentity(s: { pointer: { key: string }; startedAt: number }): string {
+  return `${s.pointer.key}\u0001${s.startedAt}`;
+}
+
+// De laatste stand die de plek van de pil onthoudt: de live sessie, behalve als het blad openstaat en er een andere
+// training loopt dan die waarvoor het openging; dan blijft de oude stand (pillSlot zegt dan weg). Een nieuwe stand van
+// dezelfde training neemt hij altijd over.
+export function nextPillLast<S>(o: { live: S | undefined; last: S | undefined; sheetOpen: boolean; keyOf: (s: S) => string }): S | undefined {
+  if (o.live === undefined || o.live === o.last) return o.last;
+  if (!o.sheetOpen || o.last === undefined || o.keyOf(o.live) === o.keyOf(o.last)) return o.live;
+  return o.last;
+}
+
 // De pil en zijn keuzeblad: verdwijnt de training terwijl het blad openstaat, dan blijft het blad staan met de
-// laatste stand (en zegt het zelf dat hij weg is); de pil zelf gaat weg. Zonder open blad: alleen de live sessie.
-export function pillSlot<S>(o: { live: S | undefined; last: S | undefined; sheetOpen: boolean }): { session: S; gone: boolean } | undefined {
+// laatste stand (en zegt het zelf dat hij weg is); de pil zelf gaat weg. Loopt er intussen een andere training
+// (in een ander tabblad A verwijderd en meteen B gestart), dan is A voor het open blad net zo goed weg: B komt nooit
+// in een blad dat voor A openging (Warden 15 november, I-45). Zonder open blad: alleen de live sessie.
+export function pillSlot<S>(o: { live: S | undefined; last: S | undefined; sheetOpen: boolean; keyOf: (s: S) => string }): { session: S; gone: boolean } | undefined {
+  const other = o.live !== undefined && o.last !== undefined && o.keyOf(o.live) !== o.keyOf(o.last);
+  if (o.sheetOpen && o.last !== undefined && (o.live === undefined || other)) return { session: o.last, gone: true };
   if (o.live !== undefined) return { session: o.live, gone: false };
-  if (o.sheetOpen && o.last !== undefined) return { session: o.last, gone: true };
   return undefined;
 }
 

@@ -1,7 +1,9 @@
 // Het log dat Afronden in Forge maakt: de sets, de zwaarste RIR van een beendag, het profiel en het verloop.
 // Alleen samenstellen; opslaan doet `logSession`, en een bestaand log wordt nooit beschreven.
 
-import { hardestLegRir, toStrengthData, type WorkoutExercise } from '../../engine/forgeWorkout';
+import { hardestLegRir, lastWorkMomentOn, toStrengthData, type WorkoutExercise } from '../../engine/forgeWorkout';
+import { finishCompletedAt } from '../../engine/forgeSession';
+import { toISODate } from '../../utils/dates';
 import { templateSport } from '../../engine/sports';
 import type { ForgeEvent } from '../../engine/forgeLog';
 import type { SessionTemplate, SessionVariant } from '../../models/training';
@@ -9,7 +11,7 @@ import type { LogSessionInput } from '../../state/AppDataContext';
 import type { FinishExtra } from './FinishSheet';
 import { failedNote, STILL_RUNNING_HELP } from '../../state/logSave';
 
-export function forgeLogInput({ template, variant, extra, workout, readOnly, plannedSessionId, plannedStill, gymProfileId, forgeLog }: {
+export function forgeLogInput({ template, variant, extra, workout, readOnly, plannedSessionId, plannedStill, gymProfileId, forgeLog, now = Date.now() }: {
   template: SessionTemplate;
   variant: SessionVariant;
   extra: FinishExtra;
@@ -20,12 +22,17 @@ export function forgeLogInput({ template, variant, extra, workout, readOnly, pla
   plannedStill: boolean;
   gymProfileId: string;
   forgeLog: ForgeEvent[];
+  // Alleen voor tests: het moment van opslaan.
+  now?: number;
 }): LogSessionInput {
+  const dayOf = (ms: number) => toISODate(new Date(ms));
   const strengthData = readOnly ? undefined : toStrengthData(workout);
   const rir = readOnly ? undefined : hardestLegRir(workout);
   return {
     plannedSessionId: plannedStill ? plannedSessionId : undefined,
     completedDate: extra.doneOn,
+    // Het tijdstip hoort bij de gekozen dag: een eerdere dag krijgt je laatste set op die dag, nooit nu.
+    completedAt: finishCompletedAt({ doneOn: extra.doneOn, today: toISODate(new Date(now)), now, lastWorkAt: lastWorkMomentOn(workout, extra.doneOn, dayOf), dayOf }),
     templateId: template.id,
     type: template.type,
     sport: templateSport(template),

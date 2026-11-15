@@ -81,7 +81,7 @@ const finish = (o: { workout: WorkoutExercise[]; plannedSessionId?: string; sche
     }),
   );
 const pressed = (html: string) => [...html.matchAll(/<button[^>]*aria-pressed="true"[^>]*>([^<]*)</g)].map((m) => m[1]);
-const dayButtons = (html: string) => [...html.matchAll(/<button[^>]*aria-pressed="(?:true|false)"[^>]*class="min-h-\[44px\] rounded-full[^>]*>([^<]*)</g)].map((m) => m[1]);
+const dayButtons = (html: string) => [...html.matchAll(/<button[^>]*aria-pressed="(?:true|false)"[^>]*class="st-chip[^"]*"[^>]*>([^<]*)</g)].map((m) => m[1]);
 
 describe('2. FinishSheet: de keuze van de laatste tik, gerenderd', () => {
   it('een losse training van gisteren: het veld Gedaan op staat op de dag van je laatste set', () => {
@@ -195,9 +195,10 @@ describe('4. Begrepen bij Er loopt nog een training: de gekozen training start',
 
 describe('5. De pil: verdwijnt de training terwijl het blad openstaat, dan zegt het blad dat', () => {
   it('pillSlot houdt het blad vast met de laatste stand, de pil zelf gaat weg', () => {
-    expect(pillSlot({ live: 'a', last: 'a', sheetOpen: false })).toEqual({ session: 'a', gone: false });
-    expect(pillSlot({ live: undefined, last: 'a', sheetOpen: true })).toEqual({ session: 'a', gone: true });
-    expect(pillSlot({ live: undefined, last: 'a', sheetOpen: false })).toBeUndefined();
+    const keyOf = (s: string) => s;
+    expect(pillSlot({ live: 'a', last: 'a', sheetOpen: false, keyOf })).toEqual({ session: 'a', gone: false });
+    expect(pillSlot({ live: undefined, last: 'a', sheetOpen: true, keyOf })).toEqual({ session: 'a', gone: true });
+    expect(pillSlot({ live: undefined, last: 'a', sheetOpen: false, keyOf })).toBeUndefined();
   });
 
   it('het blad zegt weg, behalve als het hem zelf verwijderde of al een keuze maakte', () => {
@@ -210,7 +211,7 @@ describe('5. De pil: verdwijnt de training terwijl het blad openstaat, dan zegt 
   it('App, pil en blad zijn zo verbonden: de plek, het luisteren naar de opslag en de zin', () => {
     expect(appSrc).toContain('<SessionPillSlot session={pill} />');
     expect(appSrc).not.toContain('{pill && <SessionPill ');
-    expect(pillSrc).toContain('pillSlot({ live: session, last: session ?? last, sheetOpen })');
+    expect(pillSrc).toContain('pillSlot({ live: session, last: last ?? session, sheetOpen, keyOf: sessionIdentity })');
     expect(pillSrc).toContain('vanished={gone}');
     expect(choiceSrc).toContain('subscribeSession(() => checkGone.current())');
     expect(choiceSrc).toMatch(/if \(vanished\) checkGone\.current\(\)/);
