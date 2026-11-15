@@ -52,6 +52,8 @@ describe('Je stand, de teksten van de onderdelen', () => {
     expect(out).toContain('Ritme Achter 5 van 8');
     expect(raw.match(/--color-warning/g)).toHaveLength(1);
     expect(raw).toContain('aria-label="Belasting: Zwaar, wordt 475, gewoonlijk 300, let op. Open Belasting."');
+    // Het feit breekt zonder weesregel: op 360 px stond "475" alleen op de tweede regel (Lookout 15 november).
+    expect(raw).toMatch(/text-pretty[^>]*>wordt 475, gewoonlijk 300</);
   });
 
   it('Intensiteit: elke regel van de legenda heeft een bolletje in de tint van zijn deel van de balk', () => {
