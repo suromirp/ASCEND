@@ -117,6 +117,9 @@ export interface AppData {
   // Wat dit toestel onthoudt van je antwoorden op die kaart (Niet nu, Liever niet, wat ASCEND zelf
   // oversloeg). Null tot het gelezen is. Het inhaaladvies leest hieruit welke koppelingen je afwees.
   missedMemory: ResolvedMissedMemory | null;
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId), of niets: die
+  // training loopt nog, is niet gemist en niet gedaan. Geef hem mee als `openDraft` naast leave, illness en races.
+  openDraftId?: string;
   rememberMissed: (change: (m: ResolvedMissedMemory) => MissedMemory) => void;
   // "Inkorten": a watch activity cut at the end and/or the beginning (the series
   // come from the sheet, in memory), and "Inkorten ongedaan maken". Both
@@ -223,6 +226,8 @@ export interface AppData {
   // is still running after the queue's minute is 'pending'.
   activateGoal: (plan: GoalActivationPlan, horizon?: HorizonPlan) => Promise<GoalActivationResult>;
   updateSettings: (patch: Partial<AppSettings>) => Promise<AppSettings>;
+  // Zet een rustiger instap terug (engine/reentry.ts), ververst de planning en laat een melding met Ongedaan maken staan.
+  undoReentry: (from: string) => Promise<void>;
   // Time-budget scheduling redesign (Fase 4) — the Settings UI's only write
   // path onto TrainingAvailability/TrainingStrategyProfile. A top-level
   // patch key (e.g. `availability`) replaces that whole sub-object

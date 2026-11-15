@@ -53,6 +53,8 @@ export interface RouteSearchDeps {
   terrainAt?: RoutePoint;
   // Stukken die de lus moet mijden (Vermijd dit stuk, engine/routeAdjust.ts).
   avoid?: AvoidArea[];
+  // Grote wegen mijden in de aanvraag (instelling Grote wegen mijden); afwezig is aan.
+  avoidBigRoads?: boolean;
 }
 
 export type RouteSearchStep = 'terrain' | 'routes';
@@ -67,7 +69,7 @@ export async function findRoutes(place: { lat: number; lon: number }, target: Ro
   // Na de tijdgrens of na sluiten stopt ook het werk erachter, niet alleen het wachten.
   let over = false;
   const stopped = () => over || deps.signal?.aborted === true;
-  const inner = deps.route ?? routeWithFallback([brouterRoute(), valhallaRoute()], undefined, stopped);
+  const inner = deps.route ?? routeWithFallback([brouterRoute({ quiet: deps.avoidBigRoads !== false }), valhallaRoute({ quiet: deps.avoidBigRoads !== false })], undefined, stopped);
   const route: RouteFn = (waypoints, options) => (stopped() ? Promise.resolve({ ok: false, reason: 'timeout' }) : inner(waypoints, options));
   const terrainOf = deps.terrain ?? ((p, exact) => refreshNearbyTerrain(p, { exact }).catch(() => getNearbyTerrain(p, exact)));
   const search = (async (): Promise<RouteSearch> => {

@@ -134,7 +134,7 @@ export function readMacroFactorWeightRows(rows: Cell[][], sheetName?: string): M
   const index = mapWeightColumns(header, weightHintFromName(sheetName));
   if (index.trend === undefined && index.scale === undefined) {
     throw new MacroFactorFormatError(
-      `Dit bestand heeft geen kolom met gewicht. ASCEND zoekt ${COLUMN_LABEL.scale} of ${COLUMN_LABEL.trend}. Kies in MacroFactor bij Granular Export ook het gewicht.`,
+      `Dit bestand heeft geen kolom met gewicht. Het bestand moet een kolom ${COLUMN_LABEL.scale} of ${COLUMN_LABEL.trend} hebben. Kies in MacroFactor bij Granular Export ook het gewicht.`,
       [COLUMN_LABEL.scale, COLUMN_LABEL.trend],
     );
   }

@@ -3,6 +3,7 @@ import { useAppData } from '../../state/AppDataContext';
 import { useHorizonChange } from '../useHorizonChange';
 import { ChoiceList, Sheet, SheetButtons } from '../settings/Sheet';
 import { TextButton } from '../TextButton';
+import { SHELTER_ADVICE, SHELTER_OPTIONS, type TrekShelter } from '../../engine/trekShelter';
 import { buildFirstPlan, defaultAnswers, isDirectionKind, kindOfExistingGoals, GOAL_OPTIONS, RACE_OPTIONS, STRONGER_ADVICE, STRONGER_SESSIONS, TARGET_OPTIONS, startDateProblem, startSteps, stepCounter, tapTooSoon, WEEKDAY_NAMES, WEEKDAY_SHORT, type StartAnswers, type StartRace, type StartStep } from '../../engine/firstPlan';
 import { adviceDays, maxDaysWithoutStrength, MAX_DAYS, MIN_DAYS, type StartGoalKind } from '../../engine/weekShape';
 import { addDays, todayISO } from '../../utils/dates';
@@ -65,6 +66,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
   const title: Record<StartStep, string> = {
     goal: 'Wat wil je?',
     target: 'Een tocht of een wedstrijd?',
+    shelter: 'Waar slaap je onderweg?',
     beginner: 'Ben je de laatste tijd weinig aan het sporten geweest?',
     race: 'Welke afstand?',
     date: answers.goal === 'trek' ? 'Wanneer begint je tocht?' : 'Wanneer is je wedstrijd?',
@@ -75,11 +77,12 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
   const line: Record<StartStep, string> = {
     goal: 'Kies wat het best past. Je kunt het later nog veranderen.',
     target: 'Met een datum reken ik terug vanaf die dag.',
+    shelter: 'Je rugzak, de paklijst en de taken in de Reisplanner volgen je keuze.',
     beginner: 'Dan begin je rustig: de eerste weken alleen makkelijk.',
     race: 'Je kiest er één. Een andere afstand kun je later bij je doelen zetten.',
-    date: 'Met een datum bouwt ASCEND naar die dag toe. Zonder datum plant ASCEND rustig door.',
+    date: 'Met een datum bouwt je plan naar die dag toe. Zonder datum loopt het rustig door.',
     days: advice.reason,
-    which: 'Tik de dagen aan waarop je kunt. Staan ze allemaal aan, dan kiest ASCEND zelf de beste.',
+    which: 'Tik de dagen aan waarop je kunt. Staan ze allemaal aan, dan worden de beste vanzelf gekozen.',
     strength: stronger ? 'Kracht staat voorop. Tussen zware beendagen houd ik 48 uur rust.' : 'Bovenlichaam en benen, ingepland tussen je andere trainingen.',
   };
 
@@ -119,6 +122,22 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                   options={TARGET_OPTIONS.map((o) => ({ value: o.id, label: o.label, note: o.note }))}
                   value={answers.goal === 'race' ? 'race' : 'trek'}
                   onPick={(goal) => onAnswers({ ...defaultAnswers(goal), race: answers.race, goalDate: answers.goalDate })}
+                />
+                <SheetButtons>
+                  <button type="button" className="st-btn" onClick={() => go(-1)}>Terug</button>
+                  <button type="button" className="st-btn gold" onClick={() => go(1)}>Volgende</button>
+                </SheetButtons>
+              </>
+            )}
+
+            {step === 'shelter' && (
+              <>
+                <ChoiceList<TrekShelter>
+                  label={title.shelter}
+                  options={SHELTER_OPTIONS.map((o) => ({ value: o.id, label: o.label, note: o.note }))}
+                  value={answers.shelter ?? SHELTER_ADVICE}
+                  advice={SHELTER_ADVICE}
+                  onPick={(shelter) => set({ shelter })}
                 />
                 <SheetButtons>
                   <button type="button" className="st-btn" onClick={() => go(-1)}>Terug</button>
@@ -219,7 +238,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                 <p className={`st-hint${tooFewDays ? ' warn' : ''}`} style={{ marginLeft: 0, marginRight: 0 }} role={tooFewDays ? 'alert' : undefined}>
                   {tooFewDays
                     ? `Je wilt ${answers.daysPerWeek} dagen trainen. Kies minstens ${needDays} dagen, of ga terug en kies minder.`
-                    : `${answers.allowedDays.length} van 7 dagen. ${answers.allowedDays.length === 7 ? 'ASCEND kiest de beste dagen.' : `Op ${answers.allowedDays.map((d) => WEEKDAY_NAMES[d - 1]).join(', ')}.`}`}
+                    : `${answers.allowedDays.length} van 7 dagen. ${answers.allowedDays.length === 7 ? 'De beste dagen worden vanzelf gekozen.' : `Op ${answers.allowedDays.map((d) => WEEKDAY_NAMES[d - 1]).join(', ')}.`}`}
                 </p>
                 <SheetButtons>
                   {index > 0 && <button type="button" className="st-btn" onClick={() => go(-1)}>Terug</button>}
@@ -243,7 +262,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                   label={title.strength}
                   options={[
                     { value: 'ja', label: 'Ja, met krachttraining' },
-                    { value: 'nee', label: 'Nee, zonder', note: `Dan plant ASCEND hoogstens ${maxDaysWithoutStrength()} trainingen per week: lopen en wandelen.` },
+                    { value: 'nee', label: 'Nee, zonder', note: `Dan hoogstens ${maxDaysWithoutStrength()} trainingen per week: lopen en wandelen.` },
                   ]}
                   value={answers.strength ? 'ja' : 'nee'}
                   advice="ja"

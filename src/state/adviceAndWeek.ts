@@ -1,5 +1,6 @@
 // Advies, het weer, de widget, de weekmelding, slepen en ruilen, en het voorstel na wat er speelde.
 
+import { resolveReentry } from '../engine/reentry';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getTrainingPlaces, onTrainingPlaceChange, peekTrainingPlaces } from '../storage/trainingPlace';
 import { resolveGrowthChoice } from '../data/goalGrowth';
@@ -54,13 +55,14 @@ export function useAdviceAndWeek(deps: {
   planChangeLog: PlanChangeProposal[];
   adviceResponses: Record<string, StoredResponse>;
   missedMemory: ResolvedMissedMemory | null;
+  openDraftId: string | undefined;
   plannerAdvice: Advice | null;
   templateById: Map<string, SessionTemplate>;
   goalOverviews: GoalOverview[];
   dragContextFor: (weekStart: string) => DragContext;
   updateSettings: (patch: Partial<AppSettings>) => Promise<AppSettings>;
 }) {
-  const { loading, program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, templates, planChangeLog, adviceResponses, missedMemory, plannerAdvice, templateById, goalOverviews, dragContextFor, updateSettings } = deps;
+  const { loading, program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, templates, planChangeLog, adviceResponses, missedMemory, openDraftId, plannerAdvice, templateById, goalOverviews, dragContextFor, updateSettings } = deps;
   // What the extra training of the week is chosen from (engine/extraRun.ts).
   const extraSessionContext = useMemo(() => {
     const today = todayISO();
@@ -164,7 +166,11 @@ export function useAdviceAndWeek(deps: {
         answeredOn: answeredDays(adviceResponses),
         // Eerst koppelen, dan inhalen (engine/missedTraining.ts#linkCandidates).
         missedLink: { on: settings.missedLink !== false, declined: missedMemory?.declined ?? [], declinedOn: missedMemory?.declinedOn, places },
+        // Een training die nog loopt (een concept in Forge) wordt niet ingehaald (engine/sessionStatus.ts#isDraftOpen).
+        openDraft: openDraftId,
         leave: settings.leavePeriods,
+        // Rustiger instap na een pauze (engine/reentry.ts).
+        reentry: { choice: resolveReentry(settings.reentry), weeks: settings.reentryWeeks },
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
         // De herkansingen die TEST-RETRY neerzette: ging er een niet door, dan vraagt hij het nog één keer.
         retryRows: retryTestRows(planChangeLog),
@@ -176,7 +182,7 @@ export function useAdviceAndWeek(deps: {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, places, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction],
+    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, openDraftId, places, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction, settings.reentry, settings.reentryWeeks],
   );
 
   // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).
@@ -220,13 +226,13 @@ export function useAdviceAndWeek(deps: {
     const id = fullWeekId(today);
     const status = adviceResponses[id]?.response === 'declined' ? 'declined' as const : fullWeekFollowed(planChangeLog, plannedSessions, today) ? 'accepted' as const : advice.some((a) => a.id === id && !!a.proposal) ? 'open' as const : undefined;
     const full = fullWeekConcern({
-      today, sessions: plannedSessions, logs: sessionLogs, templates, leave: settings.leavePeriods, illnessEpisodes: settings.illnessEpisodes,
+      today, sessions: plannedSessions, logs: sessionLogs, templates, leave: settings.leavePeriods, illnessEpisodes: settings.illnessEpisodes, openDraft: openDraftId,
       removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
       keyFocus: keyFocusOf(trainingGoals, goalMilestones, today, { direction: settings.direction }),
       check: { restDay: settings.restDay ?? 1, program, dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference },
     }, weekStart, status);
     return withPlainConcern(n, full);
-  }, [adviceResponses, advice, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, settings.direction, settings.restDay, trainingGoals, goalMilestones, program, goalEngineConfig]);
+  }, [adviceResponses, advice, plannedSessions, sessionLogs, templates, planChangeLog, openDraftId, settings.illnessEpisodes, settings.leavePeriods, settings.direction, settings.restDay, trainingGoals, goalMilestones, program, goalEngineConfig]);
   const weekNoticeState = useCallback((): NonNullable<typeof weekNoticeCache.current> => {
     const key = [weekCheckInput, advice, keptNotice, withFullWeek];
     if (!weekNoticeCache.current || weekNoticeCache.current.key.some((v, i) => v !== key[i])) weekNoticeCache.current = { key, quick: new Map(), full: new Map() };

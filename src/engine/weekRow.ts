@@ -1,6 +1,6 @@
 // ASCEND: het ene ding in de tweede regel van een dagrij in Week (docs/visie/Ontwerp Week minimaal.md,
 // hoofdstuk 5). Na de dag en de duur staat hoogstens één ding, in deze rang: een punt uit Let op, "aangepast",
-// "gemist" (alleen met een greep rechts, die dan het teken Gemist vervangt), "verplaatst van wo 11", "vaste
+// "gemist" (alleen met een greep rechts, die dan het teken Gemist vervangt), "vervallen", "loopt nog", "verplaatst van wo 11", "vaste
 // afspraak", "zware benen", de stille tekst van een toegestaan paar. Eén uitzondering: "aangepast" staat er altijd
 // als de training een regel heeft in Aangepast door ASCEND, ook naast een punt uit Let op (`also`), zodat het getal
 // op de rij gelijk blijft aan de dagrijen met het woord (invariant week-aangepast op de tekstkaart). Wat afvalt staat in het actieblad van de training.
@@ -16,6 +16,11 @@ export interface RowFacts {
   concern?: string;
   // Gemist: rechts staat dan de greep (of het teken), in de regel het woord.
   missed?: boolean;
+  // Vervallen: voorbij en niet gedaan op een dag van een gemelde vakantie of ziekte, of in de afbouw voor een race die
+  // er al was (engine/sessionStatus.ts, 'away').
+  lapsed?: boolean;
+  // Loopt nog: voorbij, niet gedaan, en er ligt nog een concept van in Forge (engine/sessionStatus.ts, 'open').
+  open?: boolean;
   // Een inhaal: "verplaatst van wo 28" op de nieuwe rij (engine/catchUp.ts).
   catchNote?: string;
   // Een regel in Aangepast door ASCEND (engine/changeLog.ts#weekAdjustments).
@@ -43,6 +48,8 @@ export function rowExtra(f: RowFacts): RowExtra | undefined {
   if (f.concern) return f.adjusted ? { text: f.concern, warn: true, also: 'aangepast' } : { text: f.concern, warn: true };
   if (f.adjusted) return { text: 'aangepast', warn: false };
   if (f.missed) return { text: 'gemist', warn: false };
+  if (f.lapsed) return { text: 'vervallen', warn: false };
+  if (f.open) return { text: 'loopt nog', warn: false };
   if (!f.done && f.catchNote) return { text: f.catchNote, warn: false };
   if (!f.done && f.moved) return { text: f.movedFrom ? `verplaatst van ${dayShort(f.movedFrom)}` : 'verplaatst', warn: false };
   if (f.fixed) return { text: 'vaste afspraak', warn: false };

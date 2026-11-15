@@ -70,6 +70,8 @@ export interface ExtraRunInputs {
   leave?: LeavePeriod[];
   // Wat de sleuteltraining is (engine/keySession.ts), zoals op Ascend. Zonder: de lange duurloop of de bergtocht.
   keyFocus?: KeyFocus;
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, niet gemist.
+  openDraft?: string;
   newId?: () => string;
 }
 
@@ -100,12 +102,14 @@ export function extraRunEarned(inputs: Omit<ExtraRunInputs, 'newId' | 'anchor' |
   const firstLooked = weekStart > mondayOfWeek(today) ? mondayOfWeek(today) : weekStart;
   let done = 0, planned = 0, keyDone = 0, keyPlanned = 0, weeks = 0;
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
-    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(firstLooked, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, keyFocus: inputs.keyFocus });
+    // Bewust zonder leavePeriods: een week op vakantie telt hier als een week zonder training, dus na een pauze
+    // komt er geen extra loop bij; eerst de rustiger instap (engine/reentry.ts). Deze telling staat nergens als verwijt.
+    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(firstLooked, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, openDraft: inputs.openDraft, keyFocus: inputs.keyFocus });
     if (!review || review.planned === 0) continue;
     weeks++;
     done += review.done; planned += review.planned; keyDone += review.keyDone; keyPlanned += review.keyPlanned;
   }
-  if (weeks < MIN_WEEKS) return { earned: false, reason: 'Na twee volle weken in je plan kijkt ASCEND of er een loop bij kan.' };
+  if (weeks < MIN_WEEKS) return { earned: false, reason: 'Na twee volle weken in je plan volgt de toets of er een loop bij kan.' };
   if (done / planned < MIN_DONE_SHARE) return { earned: false, reason: `De laatste weken deed je ${done} van de ${planned} trainingen. Bij 80% komt er een loop bij.` };
   if (keyPlanned > 0 && keyDone / keyPlanned < MIN_KEY_SHARE) return { earned: false, reason: 'De sleuteltraining viel de laatste weken een paar keer weg. Die gaat voor.' };
   return { earned: true, reason: `De laatste ${weeks} weken deed je ${done} van de ${planned} trainingen, zonder pijn.` };
@@ -274,7 +278,7 @@ export function proposeExtraSession(inputs: ExtraAdviceInputs): ExtraProposal | 
     if (!date) continue;
     // Een week die al een training verloor en waar de rest vol is of er vol van wordt: geen extra erbij
     // (engine/fullWeek.ts, docs/beslissingen/2026-11-12-week-na-gemiste-dagen.md).
-    if (fullWithExtra({ today, sessions: plannedSessions, logs: inputs.logs, templates, leave: inputs.leave, keyFocus: inputs.keyFocus, illnessEpisodes: inputs.illnessEpisodes, check: { restDay, program } }, { templateId: template.id, date })) continue;
+    if (fullWithExtra({ today, sessions: plannedSessions, logs: inputs.logs, templates, leave: inputs.leave, keyFocus: inputs.keyFocus, illnessEpisodes: inputs.illnessEpisodes, openDraft: inputs.openDraft, check: { restDay, program } }, { templateId: template.id, date })) continue;
     return { id, weekStart, date, choice, earnedReason: verdict.reason };
   }
   return undefined;

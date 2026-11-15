@@ -5,6 +5,7 @@ import type { ZoneAnswer } from '../models/zoneAnswer';
 import type { AboveMission } from '../engine/todayCards';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
+import type { ReentryChoice, ReentryWeek } from '../engine/reentry';
 import type { ExternalOneRm, WeightEntry } from '../models/metrics';
 import type { SweatEntry, SweatPre } from '../models/sweat';
 import type { MorningCheckIn, NightJudgment, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
@@ -121,6 +122,11 @@ export interface AppSettings {
   // a backup (backup schema 5, storage/migrations.ts#migrateLeavePeriods).
   // Added and removed only with Akkoord on the proposal that goes with it.
   leavePeriods?: LeavePeriod[];
+  // Rustiger instap na een pauze (engine/reentry.ts): het advies is driekwart. Optional, no migration.
+  reentry?: ReentryChoice;
+  // De rustiger instappen waarop je Akkoord gaf (engine/reentry.ts#ReentryWeek). Alleen via het voorstel
+  // geschreven; de duurregisters lezen ze. Optional and additive, so older settings and backups need no change.
+  reentryWeeks?: ReentryWeek[];
   // The next tocht (a trek you set up as a goal of your own, models/leave.ts
   // TrekDetails) on Vandaag. Absent = on. Optional and additive.
   showNextTrek?: boolean;
@@ -175,6 +181,8 @@ export interface AppSettings {
   // The button "Route voorstellen" on a running session (engine/routePlanner.ts).
   // Absent = on. Optional and additive, so no migration step.
   routeProposal?: boolean;
+  // Grote wegen mijden bij Route voorstellen; afwezig is aan (besluit 2026-11-14-routes-vorm.md).
+  routeAvoidBigRoads?: boolean;
   // Which loop comes first in the route proposal: one long loop past different
   // hills ('adventure', absent = adventure) or the same hill up and down ('simple').
   routeStyle?: 'simple' | 'adventure';
@@ -338,6 +346,10 @@ export interface AppSettings {
   // handeling zo lang geleden terwijl de klok liep, dan vraagt Forge of die tijd meetelt. In minuten; 0 is uit.
   // Afwezig is 45 (het advies). Optional and additive; read defensively, so no migration step is needed.
   forgeLongBreak?: 0 | 30 | 45 | 60 | 90;
+  // "Training bewaren als concept na" (engine/forgeSession.ts#leftSession): zoveel uur zonder handeling en een lopende
+  // training wordt een concept dat om een keuze vraagt; na middernacht altijd. 0 is alleen middernacht. Afwezig is
+  // 12 (het advies). Optional and additive; read defensively, so no migration step is needed.
+  forgeLeftAfter?: 0 | 4 | 8 | 12;
   // "Hoogstens per krachttraining" (engine/forgeTimeCap.ts): Forge kort een krachttraining in tot ongeveer zoveel
   // minuten, eerst het bijwerk. Gewone krachttraining (afwezig = 60, het advies) en beendag (afwezig = 75); 0 is uit.
   // Optional and additive; read defensively by resolveTimeCap, so no migration step is needed.
@@ -419,6 +431,9 @@ export interface AppSettings {
   // "Melden als je horloge stilvalt" (engine/sourceWatch.ts): one quiet line on Vandaag when
   // nothing comes in from the watch for three days while the link works. Absent = on.
   watchSilence?: boolean;
+  // "Soort van een loop toetsen" (engine/activityFit.ts): een loop in wandeltempo wordt een wandeling en
+  // een harde loop zonder geplande training een tempoloop, op de kaart Van je horloge. Absent = aan.
+  watchKindCheck?: boolean;
   // "Vroeg ziek zien" (engine/illnessSigns.ts): a question on Vandaag when resting heart rate and
   // HRV are off together for two mornings in a row. Absent = on. Optional and additive.
   illnessSigns?: boolean;
@@ -499,6 +514,9 @@ export interface AppSettings {
   // Paklijst with weights (engine/packList.ts). Absent means the example
   // list from data/packList.ts. Same rules as `journey`.
   packList?: PackListState;
+  // De doelen (id's) waarbij de vraag "Je tocht staat op hutten. Klopt dat?" al gesteld is
+  // (engine/trekShelter.ts#needsShelterCheck). Optioneel en alleen toevoegen; gelezen met readShelterAsked.
+  shelterAsked?: string[];
   // Days between weight reminders; 0 = never remind. Absent = 14.
   weightReminderDays?: number;
   // "Gewicht uit MacroFactor gebruiken" (engine/bodyWeight.ts#weightsInUse):

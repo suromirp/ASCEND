@@ -6,7 +6,7 @@ import { Icon } from '../icons';
 import { Eyebrow, Meter, Ring } from '../ui';
 import { TextButton } from '../TextButton';
 import { formatDateNL, formatShortDayNL } from '../../utils/dates';
-import { GOAL_KINDS } from '../../data/goalKinds';
+import { goalKindName } from '../../engine/trekShelter';
 import { changeLabel } from '../../engine/goalReadiness';
 import { labelLine } from '../../engine/goalList';
 import type { NextKeySession } from '../../engine/keySession';
@@ -63,7 +63,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
   const goal = item.goal;
   const kind = effectiveGoalKind(goal, item.isMain);
   const when = whenText(view);
-  const kindName = kind ? GOAL_KINDS[kind].label : undefined;
+  const kindName = goalKindName(goal, item.isMain);
   const percent = readiness?.percent;
   // Een wedstrijd met een doeltijd: de kaart is in één oogopslag te lezen, de rest staat in het blad.
   const raceCard = !!readiness?.race && readiness.race.status !== 'no-target';
@@ -175,7 +175,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
         <Gr5ReadinessSheet readiness={{ percent, meters: readiness.meters, weakest: readiness.weakest, sentence: readiness.sentence, weakestSentence: readiness.weakestSentence, change: readiness.change }} title="Klaar voor je doel" onClose={() => setMetersOpen(false)} />
       )}
       {timing.state === 'underway' && (
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Tijdens het doel plant ASCEND geen training. Het doel is je training.</p>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Tijdens het doel staat er geen training. Het doel is je training.</p>
       )}
     </div>
   );

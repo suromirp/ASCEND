@@ -18,6 +18,7 @@ function facts(over: Partial<SettingsFacts> = {}): SettingsFacts {
     position: { weekInProgram: 3, totalWeeks: 20, phaseName: 'Basis' },
     goal: { name: 'Voorbeeldtocht', date: '2027-07-01' },
     treks: 1,
+    trekGoal: true,
     vacations: 0,
     activeInjuries: 0,
     strengthExternal: false,

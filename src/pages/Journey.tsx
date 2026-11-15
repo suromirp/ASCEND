@@ -11,7 +11,6 @@ import { JourneyTaskSheet } from '../components/reis/JourneyTaskSheet';
 import { useJourney } from '../components/reis/useJourney';
 import { usePackList } from '../components/reis/usePackList';
 import { formatDayMonthNL } from '../utils/dates';
-import { JOURNEY_TASKS } from '../data/journeyTasks';
 import { journeyTimeline, journeyWeeksLeft, type TimelineTask } from '../engine/journey';
 import { baseWeightGrams, formatKg, packProgress } from '../engine/packList';
 import { formatDateNL, formatMonthNL, todayISO } from '../utils/dates';
@@ -20,27 +19,32 @@ import { MIN_BREAKIN_WEEKS, type BootBreakInStatus } from '../engine/bootBreakIn
 import { heatAcclimationLine } from '../engine/heatAcclimation';
 import { signalOn } from '../engine/signalSettings';
 import { useAppData } from '../state/AppDataContext';
+import { ShelterCheck } from '../components/reis/ShelterCheck';
 
 function rowMeta(row: TimelineTask, boots?: BootBreakInStatus): string {
   if (row.task.id === 'schoenen' && boots && (boots.kind === 'busy' || boots.kind === 'late') && row.status !== 'done') return boots.kind === 'late' ? `te laat voor ${MIN_BREAKIN_WEEKS} weken` : boots.line;
   if (row.status === 'done' && row.derived) return row.derived.toLowerCase();
   if (row.status === 'done') return row.doneOn ? `gedaan op ${formatDayMonthNL(row.doneOn)}` : 'gedaan';
   if (row.status === 'later') return `vanaf ${formatDayMonthNL(row.opensOn)}`;
-  if (row.status === 'lapsed') return 'nog open';
+  if (row.status === 'lapsed') return `was aan de beurt tot ${formatDayMonthNL(row.closesOn)}`;
   return `tot en met ${formatDayMonthNL(row.closesOn)}`;
 }
+
+// Taken waarvan de tijd al voorbij is (je begon later): samen bovenaan, niet onder maanden die al achter je liggen.
+const CATCH_UP_TITLE = 'Nu regelen';
+const CATCH_UP_LINE = 'Deze taken waren eerder aan de beurt. Ze staan in de volgorde waarin ze op elkaar bouwen.';
 
 export function JourneyPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { goalDate, state, derived, pick, progress, tick, untick, boots, setBoots } = useJourney();
+  const { goalDate, state, derived, pick, tasks, progress, tick, untick, boots, setBoots } = useJourney();
   const { items } = usePackList();
   const { settings } = useAppData();
   const today = todayISO();
   // In de laatste weken voor een vertrek in de zomer (engine/heatAcclimation.ts).
   const heatLine = heatAcclimationLine(goalDate, today, signalOn(settings, 'heatAcclimation'));
 
-  const timeline = goalDate ? journeyTimeline(JOURNEY_TASKS, state, today, goalDate, pick?.task.id, derived) : [];
+  const timeline = goalDate ? journeyTimeline(tasks, state, today, goalDate, pick?.task.id, derived) : [];
   // The open task lives in state, not in the address: the sheet takes one
   // step in the history (the back button closes it), and an address that is
   // rewritten under that step would leave a copy of this page behind. A link
@@ -72,6 +76,7 @@ export function JourneyPage() {
         </Card>
       ) : (
         <>
+          <ShelterCheck />
           <Card className="flex flex-col gap-2" texture>
             <div className="flex items-baseline justify-between">
               <Eyebrow>Je voorbereiding</Eyebrow>
@@ -99,8 +104,9 @@ export function JourneyPage() {
           </button>
 
           {timeline.map((group) => (
-            <section key={group.month} className="flex flex-col gap-1" aria-label={formatMonthNL(group.month)}>
-              <Eyebrow>{formatMonthNL(group.month)}</Eyebrow>
+            <section key={group.catchUp ? 'nu' : group.month} className="flex flex-col gap-1" aria-label={group.catchUp ? CATCH_UP_TITLE : formatMonthNL(group.month)}>
+              <Eyebrow>{group.catchUp ? CATCH_UP_TITLE : formatMonthNL(group.month)}</Eyebrow>
+              {group.catchUp && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{CATCH_UP_LINE}</p>}
               <Card className="flex flex-col !p-2">
                 {group.tasks.map((row) => (
                   <div

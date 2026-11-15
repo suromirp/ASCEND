@@ -71,7 +71,7 @@ export function diffHorizon(input: HorizonDiffInput): HorizonDiff {
       continue;
     }
     if (!a || a.status === 'skipped') {
-      const why = pastGoal(b.scheduledDate) ? 'Na de dag van je hoofddoel plant ASCEND niets meer.' : reason;
+      const why = pastGoal(b.scheduledDate) ? 'Na de dag van je hoofddoel staat er niets meer.' : reason;
       // Off the plan entirely, as the planning run does it; undo puts it back.
       items.push({ plannedSessionId: b.id, action: 'remove', restore: true, ...(a ? {} : { discard: true }), fromDate: b.scheduledDate, reason: why, generatedBy: SOURCE });
       counts.removed++;
@@ -108,13 +108,17 @@ export function diffHorizon(input: HorizonDiffInput): HorizonDiff {
 
 const n = (count: number, one: string, many: string) => (count === 1 ? `1 ${one}` : `${count} ${many}`);
 
+// De kop van een voorstel waarin geen training verandert. Het voorstelblad zet er dan geen tweede zin
+// met hetzelfde onder (components/useHorizonChange.tsx, Lookout 15 november).
+export const NO_PLAN_CHANGE = 'Je planning hoeft niet te veranderen.';
+
 function describeCounts(c: HorizonDiff['counts']): string {
   const parts: string[] = [];
   if (c.removed) parts.push(n(c.removed, 'training vervalt', 'trainingen vervallen'));
   if (c.changed) parts.push(n(c.changed, 'training wordt een andere training', 'trainingen worden een andere training'));
   if (c.moved) parts.push(n(c.moved, 'training verschuift of krijgt een andere lengte', 'trainingen verschuiven of krijgen een andere lengte'));
   if (c.added) parts.push(n(c.added, 'training komt erbij', 'trainingen komen erbij'));
-  if (parts.length === 0) return 'Je planning hoeft niet te veranderen.';
+  if (parts.length === 0) return NO_PLAN_CHANGE;
   const text = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} en ${parts[parts.length - 1]}`;
   return `${text.charAt(0).toUpperCase()}${text.slice(1)}. Wat je al deed en wat je zelf vastzette blijft staan.`;
 }

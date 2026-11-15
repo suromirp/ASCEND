@@ -20,7 +20,7 @@ export const SWAP_TEST = 'Een testloop ruil je alleen met Akkoord.';
 const SWAP_LEAVE = 'Deze training schoof opzij voor je vakantie. Ruil je hem, dan blijft hij op de nieuwe dag staan.';
 const SWAP_PLACED = 'Je periode zette deze training hier neer. Ruil je hem, dan blijft hij bij je periode horen: haal je die weg, dan gaat hij mee.';
 export const SWAP_LEGS = 'Twee zware beendagen achter elkaar.';
-const SWAP_ASK_TAIL = 'Als je loslaat, vraagt ASCEND eerst of je dat echt wilt.';
+const SWAP_ASK_TAIL = 'Als je loslaat, komt eerst de vraag of je dat echt wilt.';
 const CHIP_MAX = 28;
 const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 

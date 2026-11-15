@@ -1,3 +1,4 @@
+import { NO_PLAN_CHANGE } from '../engine/horizonChange';
 import { useState, type ReactNode } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { ProposalSheet } from './ProposalSheet';
@@ -45,6 +46,8 @@ export interface HorizonProposeOptions {
   alwaysAsk?: boolean;
   // The heading above the notes of the proposal, when they are not about what stays.
   notesTitle?: string;
+  // The heading above the lines with another length (default: the next two weeks).
+  extraTitle?: string;
 }
 
 export function useHorizonChange(): {
@@ -132,7 +135,9 @@ export function useHorizonChange(): {
       notes={pending.plan.notes}
       notesTitle={pending.options.notesTitle}
       extraLines={pending.plan.lengths}
-      emptyText="Je planning verandert hier niet door."
+      extraTitle={pending.options.extraTitle}
+      // Zegt de kop al dat er niets verandert, dan geen tweede zin die hetzelfde zegt.
+      emptyText={pending.plan.proposal.consequences === NO_PLAN_CHANGE ? undefined : 'Je planning verandert hier niet door.'}
       alternative={pending.both ? { label: 'Toch allebei', onClick: () => setPending({ plan: { ...pending.both!, notes: [BOTH_NOTE, ...pending.both!.notes] }, options: pending.options }) } : undefined}
       // Two weeks from the first change, not from today: a change far ahead still shows as real rows.
       listUntil={addDays(mondayOfWeek(firstChangeDate(pending.plan.proposal.changes) ?? todayISO()), 13)}

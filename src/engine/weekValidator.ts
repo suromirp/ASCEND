@@ -23,6 +23,7 @@ import { FATIGUE_THRESHOLDS } from './legFatigue';
 import { leaveDays, lightDays } from './leave';
 import { crowdsOwnNext } from './leaveSpacing';
 import { templateSport } from './sports';
+import { sportOfLog } from './sportOfLog';
 import { hasRole, idHasRole, idIsTestOrRace, isTestOrRace } from './templateRoles';
 
 // --- who may touch a session ------------------------------------------------------
@@ -416,7 +417,7 @@ function lastHeavyBefore(test: PlannedSession, near: PlannedSession[], input: Ch
     .filter((o) => o.scheduledDate >= input.today || logged.has(o.id) || isSportLogSession(o.id))
     .map((o) => ({ date: o.scheduledDate, templateId: o.templateId, session: o }));
   const fromLogs = input.logs
-    .filter((l) => (!l.plannedSessionId || !sessionIds.has(l.plannedSessionId)) && !l.countedSport && tooCloseBeforeTest(l.completedDate, test.scheduledDate) && heavy(l.templateId))
+    .filter((l) => (!l.plannedSessionId || !sessionIds.has(l.plannedSessionId)) && !sportOfLog(l).countedSport && tooCloseBeforeTest(l.completedDate, test.scheduledDate) && heavy(l.templateId))
     .map((l) => ({ date: l.completedDate, templateId: l.templateId, session: undefined }));
   return [...fromPlan, ...fromLogs].sort((a, b) => b.date.localeCompare(a.date) || Number(!a.session) - Number(!b.session))[0];
 }
@@ -439,13 +440,13 @@ export interface Repair {
   reason?: string;
 }
 
-const SOFT_REST_REASON = 'Iets eerder dan ASCEND graag ziet na je tocht, daarom de korte versie.';
+const SOFT_REST_REASON = 'Iets eerder dan gewenst na je tocht, daarom de korte versie.';
 
 // Why a leg day next to a tocht is let go: concrete, so it is clear it is not a mistake.
 function legAndTrekReason(afterTrek: boolean): string {
   return afterTrek
-    ? 'Te dicht na je tocht: na een bergtocht houdt ASCEND 72 uur tot de volgende zware beendag, en deze week is er geen dag voor.'
-    : 'Te dicht voor je tocht: tussen een zware beendag en je tocht houdt ASCEND 48 uur, en deze week is er geen dag voor.';
+    ? 'Te dicht na je tocht: na een bergtocht zit er 72 uur tot de volgende zware beendag, en deze week is er geen dag voor.'
+    : 'Te dicht voor je tocht: tussen een zware beendag en je tocht zit 48 uur, en deze week is er geen dag voor.';
 }
 
 export interface RepairResult {
@@ -594,7 +595,7 @@ export function repairWeeks(input: CheckInput): RepairResult {
       if (t.type === 'strength' || templateSport(t) !== 'running' || !byId.has(EASY_ID)) continue;
       sessions = sessions.map((s) => (s.id === subject.id ? { ...s, templateId: EASY_ID } : s));
       const outside = byId.get(sessions.find((s) => s.id === next.sessionIds[0])?.templateId ?? '')?.name ?? 'je vaste afspraak';
-      repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, reason: `met ${outside.toLowerCase()} deze week past er een harde training van ASCEND minder, daarom een rustige loop` });
+      repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, reason: `met ${outside.toLowerCase()} deze week past er een harde training minder, daarom een rustige loop` });
       continue;
     }
     if (next.rule === 'ONE-LONG') {

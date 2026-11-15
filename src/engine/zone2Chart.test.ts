@@ -38,7 +38,7 @@ describe('zone2Chart: wat de grafiek draagt', () => {
     expect(chart.line).toBeUndefined();
     expect(chart.ticks).toEqual([]);
     expect(text).toMatch(/nog geen loop die meetelt/);
-    expect(text).toMatch(/zegt ASCEND nog niets/);
+    expect(text).toMatch(/staat er nog niets over je tempo/);
     expect(text).not.toMatch(/sneller per km|langzamer per km/);
   });
 
@@ -51,7 +51,7 @@ describe('zone2Chart: wat de grafiek draagt', () => {
     expect(chart.fan).toBeUndefined();
     expect(chart).toMatchObject({ runs: 1, pieces: 1 });
     expect(text).toMatch(/Dit rust op één loop met samen één stuk/);
-    expect(text).toMatch(/minstens 8 lopen nodig, verspreid over minstens 4 weken en 3 verschillende weken/);
+    expect(text).toMatch(/minstens 8 lopen nodig, verspreid over minstens 4 weken, in minstens 3 daarvan/);
     expect(text).toMatch(/eerste schatting/);
     // Eén stuk is geen reden om over één meting per loop te beginnen.
     expect(text).not.toMatch(/Stukken uit dezelfde loop/);
@@ -116,7 +116,7 @@ describe('zone2Chart: wat de grafiek draagt', () => {
     expect(chart.line).toBeUndefined();
     expect(chart.fan).toBeUndefined();
     expect(chart.dots.length).toBeGreaterThan(0);
-    expect(text).toMatch(/zegt ASCEND niets over sneller of trager/);
+    expect(text).toMatch(/niets over sneller of trager/);
     expect(text).not.toMatch(/waarschijnlijk tussen twee grenzen/);
   });
 

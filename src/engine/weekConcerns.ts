@@ -18,6 +18,7 @@ import { isIntentionalBackToBack, legHeavyDayBefore, legSpacingDays, requiredSpa
 import { freeDaysOfWeek, validateWeeks, type CheckInput, type CheckRule, type Finding } from './weekValidator';
 import { intensityOfLog, isSportLogSession, restHoursFor, sportDoneLine, sportLogIdOf } from './sportDays';
 import { anySportDefinition } from '../data/sports';
+import { sportOfLog } from './sportOfLog';
 
 export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH', 'TEST-REST'];
 
@@ -79,8 +80,8 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
           fact: noneFree ? 'Op elke dag staat een training.' : `${nameOf(a)} staat op ${dayName(dateOf(a))}, je rustdag.`,
           title: noneFree ? 'Je week heeft geen rustdag' : 'Een training van je rustdag halen',
           why: level2
-            ? `Een rustdag is er om te herstellen. ${idHasRole(byId.get(a)?.templateId ?? '', 'race', input.templates) ? 'Je wedstrijd' : 'Je testloop'} schuift niet zonder jouw Akkoord, dus ASCEND vraagt het eerst.`
-            : 'Een rustdag is er om te herstellen. Je koos dit zelf of accepteerde het in een voorstel, dus ASCEND vraagt het eerst.',
+            ? `Een rustdag is er om te herstellen. ${idHasRole(byId.get(a)?.templateId ?? '', 'race', input.templates) ? 'Je wedstrijd' : 'Je testloop'} schuift niet zonder jouw Akkoord, dus eerst komt de vraag.`
+            : 'Een rustdag is er om te herstellen. Je koos dit zelf of accepteerde het in een voorstel, dus eerst komt de vraag.',
           notes: { [a]: 'op je rustdag' },
         };
       }
@@ -95,16 +96,16 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
           title: 'Een training van je vrije dag halen',
           why: test
             ? `Een testloop of wedstrijd schuift niet zonder jouw Akkoord. Je ziet hier alleen dat hij op een vrije dag staat.`
-            : 'Je bent die dag vrij of op tocht. Je koos dit zelf of accepteerde het in een voorstel, dus ASCEND vraagt het eerst.',
+            : 'Je bent die dag vrij of op tocht. Je koos dit zelf of accepteerde het in een voorstel, dus eerst komt de vraag.',
           notes: { [a]: 'op een vrije dag' },
         };
       }
       case 'LEG-SPACING': {
         // Een sport die je deed en die meetelt (engine/sportDays.ts): het feit eerst, met de rust van die sport.
         const sportLog = f.fromSport ? input.logs.find((l) => l.id === sportLogIdOf(a) || l.id === sportLogIdOf(b)) : undefined;
-        if (sportLog?.countedSport) {
+        const sport = sportLog ? sportOfLog(sportLog).countedSport : undefined;
+        if (sportLog && sport) {
           const late = isSportLogSession(a) ? b : a;
-          const sport = sportLog.countedSport;
           const label = anySportDefinition(sport).label.toLowerCase();
           const base = input.templates.find((t) => t.id === sportLog.templateId);
           const hours = restHoursFor(sport, intensityOfLog(sportLog, sport), !!base?.restShort);
@@ -112,7 +113,7 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
           return {
             key: `${f.rule}:${[...f.sessionIds].sort().join(',')}`, rule: f.rule, finding: f,
             headline: `${sportDoneLine(sport, sportLog.completedDate, input.today)} ${nameOf(late)} staat er vlak na.`,
-            fact: `${nameOf(late)} staat op ${dayName(dateOf(late))}, ${plural(gap, 'dag', 'dagen')} na je ${label}. ASCEND houdt liefst ${hours} uur tussen een zware sport en een zware beendag.`,
+            fact: `${nameOf(late)} staat op ${dayName(dateOf(late))}, ${plural(gap, 'dag', 'dagen')} na je ${label}. Liefst zit er ${hours} uur tussen een zware sport en een zware beendag.`,
             title: `${nameOf(late)} verder van je ${label}`,
             why: `Wat je ${label === 'zwemmen' ? 'zwom' : 'speelde'} telt mee voor je benen. Het kan helpen om een zware beendag niet vlak erna te zetten. Het bewijs voor recreanten is matig.`,
             notes: { [late]: `${plural(gap, 'dag', 'dagen')} na ${label}` },
@@ -134,7 +135,7 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
             headline: 'Twee zware beendagen achter elkaar.',
             fact: `${nameOf(early)} op ${dayName(dateOf(early))} en ${nameOf(late)} op ${dayName(dateOf(late))}, zonder dag ertussen. Liefst ${need === 2 ? 72 : 48} uur ertussen.`,
             title: 'Zware beendagen verder uit elkaar',
-            why: `Deze twee horen bewust bij elkaar, op hun eigen dagen. Op andere dagen houdt ASCEND liefst ${need === 2 ? 72 : 48} uur tussen zware beendagen. Jij zette ze zo neer, dus er verschuift niets zonder jouw Akkoord.`,
+            why: `Deze twee horen bewust bij elkaar, op hun eigen dagen. Op andere dagen zit er liefst ${need === 2 ? 72 : 48} uur tussen zware beendagen. Jij zette ze zo neer, dus er verschuift niets zonder jouw Akkoord.`,
             notes: { [early]: `${days} voor ${nameOf(late)}`, [late]: `${days} na ${nameOf(early)}` },
           };
         }
@@ -156,7 +157,7 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
             ? `Er zit ${betweenText} tussen, maar de training ertussen is ook zwaar voor je benen. Dat zijn drie zware beendagen achter elkaar.`
             : `Er zit ${betweenText} tussen, liefst ${plural(wanted, 'dag', 'dagen')} ertussen (${(wanted + 1) * 24} uur).${heavyId ? ` ${nameOf(heavyId)} was zwaarder dan normaal, daarom een dag extra.` : ''}`,
           title: 'Zware beendagen verder uit elkaar',
-          why: `Zware beendagen hebben tijd nodig om te herstellen. ASCEND houdt er liefst ${(wanted + 1) * 24} uur tussen.`,
+          why: `Zware beendagen hebben tijd nodig om te herstellen. Liefst zit er ${(wanted + 1) * 24} uur tussen.`,
           notes: { [early]: `${days} voor ${nameOf(late)}`, [late]: `${days} na ${nameOf(early)}` },
         };
       }
@@ -218,7 +219,7 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
           headline: `Je testloop staat ${rest.hours} uur na een zware dag.`,
           fact: `${heavyName} op ${dayName(rest.date)} en je testloop op ${dayName(dateOf(test))}. Liefst ${rest.limitHours} uur ertussen.`,
           title: 'Meer rust voor je testloop',
-          why: `Een test laat zien wat je kunt met frisse benen. ASCEND houdt liefst ${rest.limitHours} uur tussen een zware loop- of beendag en een test. Bij Rust voor een test kies je ook ${rest.limitHours === 72 ? '48' : '72'} uur. ${f.subjectId === test ? 'De zware dag is gedaan, dus alleen je testloop kan schuiven, niet zonder jouw Akkoord.' : 'Jij of een voorstel zette dit zo neer, dus er verschuift niets zonder jouw Akkoord.'}`,
+          why: `Een test laat zien wat je kunt met frisse benen. Liefst zit er ${rest.limitHours} uur tussen een zware loop- of beendag en een test. Bij Rust voor een test kies je ook ${rest.limitHours === 72 ? '48' : '72'} uur. ${f.subjectId === test ? 'De zware dag is gedaan, dus alleen je testloop kan schuiven, niet zonder jouw Akkoord.' : 'Jij of een voorstel zette dit zo neer, dus er verschuift niets zonder jouw Akkoord.'}`,
           notes: { ...(heavy ? { [heavy]: `${rest.hours} uur voor je testloop` } : {}), [test]: `${rest.hours} uur na ${heavyName}` },
         };
       }

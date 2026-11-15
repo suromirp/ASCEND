@@ -12,7 +12,7 @@ describe('een fout van de opslag in woorden', () => {
   });
 
   it('de tekst is kort en zegt wat je doet', () => {
-    expect(ABORTED_WHILE_SAVING).toBe('ASCEND werd weggelegd terwijl hij iets opsloeg. Probeer het opnieuw.');
+    expect(ABORTED_WHILE_SAVING).toBe('Weggelegd tijdens het opslaan. Probeer het opnieuw.');
   });
 
   it('volle opslag en geblokkeerde opslag houden hun eigen tekst', () => {
@@ -36,7 +36,7 @@ describe('het slot van het openen', () => {
   it('overgenomen door een ander venster: een eigen korte tekst, geen privévenster', () => {
     const err = new Error('stolen');
     err.name = 'BootLockStolen';
-    expect(describeStorageError(err)).toBe('ASCEND is in een ander venster geopend.');
+    expect(describeStorageError(err)).toBe('Al geopend in een ander venster.');
   });
 
   it('vastgehouden door een ander venster: de tekst met Toch openen', () => {

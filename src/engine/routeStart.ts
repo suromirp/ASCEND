@@ -52,11 +52,11 @@ export type StartFailure = 'denied' | 'unavailable' | 'timeout' | 'unsupported' 
 export function startFailureReason(reason: StartFailure): string {
   switch (reason) {
     case 'denied':
-      return 'ASCEND mag je locatie niet gebruiken.';
+      return 'Geen toegang tot je locatie.';
     case 'timeout':
       return 'Je locatie kwam niet op tijd.';
     case 'coarse':
-      return 'ASCEND krijgt je precieze plek niet.';
+      return 'Je precieze plek is niet beschikbaar.';
     default:
       return 'Je locatie is nu niet beschikbaar.';
   }

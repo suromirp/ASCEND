@@ -26,7 +26,7 @@ const TODAY = '2026-10-14';
 
 describe('x van y gedaan', () => {
   it('is op Week, in het Jaaroverzicht en in de weekterugblik hetzelfde getal', () => {
-    const leftOut = leftOutOfCount(sessions, [], undefined, TODAY);
+    const leftOut = leftOutOfCount(sessions, [], undefined, TODAY, undefined, { periods: undefined, loggedIds: new Set() });
     const week = weekProgress(sessions, logs, byId, leftOut);
     const review = buildWeekReview({ weekStart: MONDAY, plannedSessions: sessions, logs, templates, program, planChangeLog: [], asOf: TODAY })!;
     const season = buildSeasonPlan(program, sessions, logs, templates, TODAY, leftOut);
@@ -39,13 +39,13 @@ describe('x van y gedaan', () => {
   it('telt sessies van voor de start van het programma niet, zoals de reeks', () => {
     // Het programma begint woensdag: maandag en dinsdag zijn restjes van een eerdere planning.
     const start = addDays(MONDAY, 2);
-    const leftOut = leftOutOfCount(sessions, [], undefined, TODAY, start);
+    const leftOut = leftOutOfCount(sessions, [], undefined, TODAY, start, { periods: undefined, loggedIds: new Set() });
     expect(weekProgress(sessions, logs, byId, leftOut)).toEqual({ done: 1, total: 5 });
     const later = { ...program, startDate: start };
     const review = buildWeekReview({ weekStart: MONDAY, plannedSessions: sessions, logs, templates, program: later, planChangeLog: [], asOf: TODAY })!;
     expect({ done: review.done, total: review.planned }).toEqual({ done: 1, total: 5 });
     // Zonder programmastart telt alles zoals voorheen.
-    expect(weekProgress(sessions, logs, byId, leftOutOfCount(sessions, [], undefined, TODAY))).toEqual({ done: 2, total: 6 });
+    expect(weekProgress(sessions, logs, byId, leftOutOfCount(sessions, [], undefined, TODAY, undefined, { periods: undefined, loggedIds: new Set() }))).toEqual({ done: 2, total: 6 });
   });
 
   it('laat een gemiste training in het verleden niet als komend onder de fase staan', () => {

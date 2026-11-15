@@ -5,7 +5,10 @@
 // A task is up from the week it opens (weeks before the main goal) and fits
 // until the week it closes. Of the tasks that fit this week the one that
 // closes first comes first. What is not done by then stays open and comes
-// after the tasks that still fit: nothing here is ever "overdue".
+// after the tasks that still fit: nothing here is ever "overdue". On the
+// timeline such a task stands at the top under "Nu regelen", not under a month
+// that is already over (Lookout, profiel GR5, 14 november). A task that builds
+// on another (`after`) waits for it.
 //
 // The pick is kept for the week once you act on it (state.week), so ticking
 // it off does not make the card jump to the next task the same minute.
@@ -18,6 +21,7 @@ import { weighedCount, weighedDate } from './sweat';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { normalizeBoots, type BootBreakInStatus, type BootsState } from './bootBreakIn';
 import { isRecord } from '../utils/guards';
+import type { TrekShelter } from '../models/goals';
 
 // What is stored (AppSettings.journey). `v` is the shape's own version, so
 // a later change can migrate it without touching the backup schema.
@@ -79,8 +83,28 @@ export function pickJourneyTask(tasks: JourneyTask[], state: JourneyState | unde
   const lapsed = tasks.filter((t) => taskStatus(t, state, weeksLeft) === 'lapsed')
     // The one that closed most recently first.
     .sort((a, b) => a.window[1] - b.window[1] || a.id.localeCompare(b.id));
-  const task = open[0] ?? lapsed[0];
+  const first = open[0] ?? lapsed[0];
+  const task = first ? firstUndoneBefore(first, tasks, state) : undefined;
   return task ? { task, state: 'todo' } : undefined;
+}
+
+// A task that builds on another (`after`) waits for it: you cannot test a stove you have not
+// chosen yet. Follows the chain back to the first task in it that is still open.
+function firstUndoneBefore(task: JourneyTask, tasks: JourneyTask[], state: JourneyState | undefined): JourneyTask {
+  let current = task;
+  const seen = new Set<string>([task.id]);
+  while (current.after && !state?.done[current.after]) {
+    const before = tasks.find((t) => t.id === current.after);
+    if (!before || seen.has(before.id)) break;
+    seen.add(before.id);
+    current = before;
+  }
+  return current;
+}
+
+// The tasks that belong to where you sleep (engine/trekShelter.ts): huts, a tent or both.
+export function tasksForShelter(tasks: JourneyTask[], shelter: TrekShelter): JourneyTask[] {
+  return tasks.filter((t) => !t.shelters || t.shelters.includes(shelter));
 }
 
 // --- changes (each returns a new state; nothing is mutated) --------------------
@@ -159,8 +183,11 @@ export interface TimelineTask {
 }
 
 export interface TimelineGroup {
-  // First day of the month the tasks close in.
+  // First day of the month the tasks close in. Empty for the group "Nu regelen".
   month: string;
+  // The tasks whose window is over and that are still open: one group at the top, in the order
+  // they build on each other, instead of under months that are already behind you.
+  catchUp?: boolean;
   tasks: TimelineTask[];
 }
 
@@ -185,11 +212,13 @@ export function journeyTimeline(tasks: JourneyTask[], state: JourneyState | unde
     ...(derived?.[task.id] && state?.done[task.id] ? { derived: derived[task.id] } : {}),
   }));
   rows.sort((a, b) => a.closesOn.localeCompare(b.closesOn) || a.opensOn.localeCompare(b.opensOn) || a.task.id.localeCompare(b.task.id));
-  const groups: TimelineGroup[] = [];
+  const catchUp = rows.filter((r) => r.status === 'lapsed');
+  const groups: TimelineGroup[] = catchUp.length > 0 ? [{ month: '', catchUp: true, tasks: catchUp }] : [];
   for (const row of rows) {
+    if (row.status === 'lapsed') continue;
     const month = `${row.closesOn.slice(0, 7)}-01`;
     const last = groups[groups.length - 1];
-    if (last && last.month === month) last.tasks.push(row);
+    if (last && !last.catchUp && last.month === month) last.tasks.push(row);
     else groups.push({ month, tasks: [row] });
   }
   return groups;

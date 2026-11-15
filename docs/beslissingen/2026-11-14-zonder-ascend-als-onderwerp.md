@@ -26,3 +26,43 @@ Niets. Vult `2026-11-09-stem-van-ascend.md` aan.
 ## Uitvoering
 
 Drie rondes per gebied (Vandaag en de Briefing, dan Week en Stand, dan Instellingen en de rest), na de planner en de horloge-toets, met Pathfinder per ronde. Een invariant in de tekstkaart telt "ASCEND" gevolgd door een werkwoord in schermtekst en mag alleen dalen. Er verandert niets aan wat de app doet.
+
+## Aanvulling, ronde 1 (15 november)
+
+Vandaag en de Briefing, met de bladen die daar opengaan (de missie, coach, advieskaart, terugblik, start, back-up, sporten, route en race, logformulier, trainingsgids en de onderdelen van de Briefing). Ongeveer honderd zinnen herschreven: het feit voorop, zonder onderwerp, elk feit gelijk. "Hij" of "het" voor de app is in dezelfde zinnen meegenomen. Niet aangeraakt: instellingen (ronde 3), Week en Stand (ronde 2), de kaart Vervallen.
+
+De invariant staat in `scripts/app-kaart/invarianten.mjs` (`PLAFOND_ASCEND_ONDERWERP`, `ascendAlsOnderwerp`). Hij telt per regel "ASCEND" met een persoonsvorm erna of ervoor, of na een voegwoord ("die ASCEND"), en slaat het merk, de map ASCEND, samenstellingen, "door ASCEND" en toestemmingen over. "Het" voor de app telt niet mee: zonder zinsbouw niet betrouwbaar te scheiden van "het regent". De telling loopt over elk scherm in de kaart, dus de instellingenschermen tellen vanzelf mee zodra ze erin staan.
+
+Plafond na ronde 1: 3 op de tekstkaart (Gegevens, Stand lopen, en de kaart Vervallen op Vandaag, die nu door een andere bouwer wordt herschreven). Dezelfde toets over alle tekst in `src/` (niet in de kaart, ter vergelijking): 596 voor, 495 na.
+
+## Aanvulling, ronde 1 na Pathfinder (15 november)
+
+De telling herkent nu ook de verleden tijd op -te en -de ("zette ASCEND", "ASCEND maakte"), behalve bijvoeglijke woorden als "beste" en "volgende". Vaste zinnen in `ZELFTOETS` toetsen de herkenning zelf. Ze draaien bij elke controle, en een zin die niet klopt laat de vergelijking falen. Een training verplaatsen heet nu "komt na Akkoord op een vrije dag". Liever niet zegt overal "krijg je er geen vraag meer over", met de oorspronkelijke grens erbij (deze week, voor deze test, of tot je een nieuwe test logt), want die grens is een feit.
+
+Plafond na de merge van claude/nacht: 3, ongewijzigd. De instellingenschermen staan nog niet als eigen schermen in de kaart. De drie plekken zijn Gegevens (ronde 3), Stand lopen (ronde 2) en de kaart Vervallen op Vandaag ("zet ASCEND hem op overgeslagen"). Die laatste blijft staan tot claude/planner-ziek-vervolg op claude/nacht staat, samen met "zette ASCEND ze op overgeslagen" in `missedTraining.ts`. Over alle tekst in `src/` telt de ruimere toets nu 500. Het verschil met 495 komt van de verleden tijd die nu meetelt.
+
+Aanvulling 15 november (coördinator): na ronde 1 kwamen de instellingenschermen in de tekstkaart (Instellingen op één plek, stap 0). Die tellen negen plekken mee die ronde 3 nog moet herschrijven, plus "zet ASCEND hem op overgeslagen" op Vandaag en de twee bestaande op Gegevens en Stand. Het plafond staat daarom op 12; het mag alleen dalen.
+
+## Aanvulling, ronde 2 (15 november)
+
+Week en Stand, met de bladen en engine-teksten die daar tekst leveren: WeekNotice, de weekcontrole (`weekConcerns`, `weekValidator`, `scheduler`), slepen en ruilen (`weekDrag`, `weekSwap`), een volle week, inhalen (`adviceWeek`), de rustdag terug, vrije periodes en tochten (`LeavePeriods`, `leaveProposal`), de weekbelasting (`weekLoadPlan`), `weekShape`, `horizonChange` en de keuze Toch allebei (`goalConflicts`), GoalCard, Ritme, de afdaalklok, Benen, de indexcheck, Wat speelde er, Tempo bij zone 2, de looptrends en de tempocurve. Ongeveer 75 zinnen herschreven, het feit voorop en zonder onderwerp, elk feit gelijk. Wat de planning verandert zegt nog steeds "voorstel" of "na jouw akkoord". "Hij" voor de app is in dezelfde zinnen meegenomen. Niet aangeraakt: de keuzeteksten van wijzigingen doorvoeren (`changeImpact.ts`, instellingen, ronde 3), het activeren van een doel op de Ascend-tab (`goalActivation.ts`), Run in detail en de kaart Vervallen.
+
+De meeste herschreven zinnen staan in bladen of standen die de tekstkaart niet vastlegt, dus de kaart verandert op één regel na: Stand lopen ("staan je snelste stukken in training naast je test").
+
+Plafond na ronde 2: 11 (was 12). De elf: de kaart Vervallen op Vandaag, Gegevens, en negen op de instellingenschermen (ronde 3). Dezelfde toets over alle bestanden in `src/` buiten tests, opmerkingen meegeteld: 986 voor, 910 na.
+
+## Aanvulling, ronde 2 na Pathfinder (15 november)
+
+Twee zinnen in `weekValidator.ts` die de telling niet zag ("dan ASCEND graag ziet", "een harde training van ASCEND") zijn herschreven. "Je planning houdt er rekening mee" las als personificatie: bij een vrije periode of tocht staat nu "Voorstellen houden er rekening mee". Bij inhalen en de rustdag is het voorstel weer het onderwerp, of "je" ("Je haalt hoogstens één training in"). Plafond: 11, ongewijzigd; geen van deze zinnen staat in de tekstkaart.
+
+## Aanvulling, ronde 3 (15 november)
+
+Instellingen en de rest van de app: de uitleg achter de i (`settingsDefs/uitleg/`), de verklaringen, keuzes en voorwaarden in `settingsDefs/`, `settingsSummary`, de groepspagina's en bladen in `components/settings/`, de Garmin- en MacroFactor-pagina's, Forge, opslag en back-up, de koppelingen (`integrations/`), de overige engine-teksten en componenten, en de kaart Vervallen (`missedTraining.ts`). Ongeveer 440 zinnen herschreven, het feit voorop en zonder onderwerp, elk feit gelijk. Wat de planning verandert zegt nog steeds "als voorstel" of "na Akkoord". Geen we-vorm; "de app" staat hoogstens als lijdend voorwerp of plaats ("Chrome wekt de app", "in de Android-app").
+
+Twee titels zijn hernoemd: "Wat ASCEND doet" heet "Wat er gebeurt", en "ASCEND naast MacroFactor" heet "Voorstel naast MacroFactor" (definitie, uitleg en advies gelijk). De keuze "Wat ASCEND weet" bij Mogelijke oorzaak heet "Wat bekend is". De zoekwoorden volgen de nieuwe tekst, dus "ascend" vindt minder instellingen dan eerst.
+
+Blijven staan: de toestemmingen van de telefoon ("Wat je telefoon ASCEND toestaat"), de map Documents > ASCEND, het merk en ASCEND als plaats of bezit ("in ASCEND", "van ASCEND", "de site van ASCEND", "ASCEND-tabbladen"), de keuze "Zones van ASCEND" en het voorvoegsel ASCEND voor je horloge.
+
+De foto van de instellingen is bewust opnieuw gemaakt: alleen tekst en de zoekindex die daaruit volgt veranderden. De tests die op de oude tekst toetsten zijn bijgewerkt.
+
+Plafond na ronde 3: 0 (was 11). Over alle tekst in `src/` buiten tests en opmerkingen telt de toets ook 0 (was 428).

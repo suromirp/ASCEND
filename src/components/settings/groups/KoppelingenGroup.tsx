@@ -162,11 +162,13 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
       {/* Datavelden voor je horloge: de pagina zelf staat bij een training (Je horloge), bij Je horloge instellen
           en sinds 14 november bij Gidsen (Datavelden bekijken). */}
       <SettingsSection
-        advancedTitles="Datavelden voor je horloge, Model"
+        advancedTitles="Datavelden voor je horloge, Model, Soort van een loop toetsen"
         advanced={
           <>
             <SummaryRow id="datavelden" title="Datavelden voor je horloge" facts={facts} info="datavelden" onChange={(on) => void updateSettings({ watchFieldsShown: on })} />
             <SummaryRow id="datavelden-model" title="Model" facts={facts} onClick={() => setSheet('datavelden-model')} />
+            {/* Een loop in wandeltempo wordt een wandeling, een harde losse loop een tempoloop (engine/activityFit.ts). */}
+            <SummaryRow id="horloge-soort" title="Soort van een loop toetsen" facts={facts} info="horlogeSoort" onChange={(on) => void updateSettings({ watchKindCheck: on })} />
           </>
         }
       >
@@ -189,7 +191,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
       )}
 
       {sheet === 'bundel-horloge-gebruik' && (
-        <BundleSheet eyebrow="Koppelingen" title={usageTitle} line="Uit betekent: ASCEND haalt het niet meer op en bewaart het niet." onClose={() => setSheet(null)}>
+        <BundleSheet eyebrow="Koppelingen" title={usageTitle} line="Uit betekent: niet meer ophalen en niet bewaren." onClose={() => setSheet(null)}>
           <SummaryRow id="garmin-trainingen" title="Trainingen" facts={facts} onChange={(on) => void changeUse('activities', on)} />
           <SummaryRow id="horloge-details" title="Details van lopen" facts={facts} onChange={(on) => void changeUse('details', on)} />
           <SummaryRow id="slaap" title="Slaap" facts={facts} onChange={(on) => void changeUse('sleep', on)} />

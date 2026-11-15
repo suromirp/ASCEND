@@ -201,7 +201,7 @@ describe('een startpunt van de kaart', () => {
   it('Gebruik waar ik nu ben (instelling): een grove plek (800 m) telt niet en bewaart niets', async () => {
     const r = await locateStartHere({ askPermission: noAsk, locate: async () => ({ ...fake, accuracyM: 800 }) });
     expect(r).toEqual({ ok: false, reason: 'coarse' });
-    expect(r.ok ? '' : startFailureReason(r.reason)).toBe('ASCEND krijgt je precieze plek niet.');
+    expect(r.ok ? '' : startFailureReason(r.reason)).toBe('Je precieze plek is niet beschikbaar.');
     expect(await getRouteStartPoint()).toBeUndefined();
   });
 

@@ -76,7 +76,7 @@ describe('Simpel: dezelfde helling op en af', () => {
     expect(metersBetween(p.points[0], p.points[p.points.length - 1])).toBeLessThan(1);
     expect(proposalTitle(p)).toBe('6 × de helling op en af');
     expect(proposalFacts(p)).toBe('8 km · 300 hoogtemeters');
-    expect(proposalNotes(p, { distanceKm: 9, ascentM: 300 })).toEqual(['De helling: 50 m omhoog over 500 m.', 'Op dezelfde helling kan je horloge naar het verkeerde stuk springen.', '8 km, korter dan de 9 km van je training.']);
+    expect(proposalNotes(p, { distanceKm: 9, ascentM: 300 })).toEqual(['Gemarkeerd op de kaart: hier 6 keer op, 50 m omhoog over 500 m.', 'Op dezelfde helling kan je horloge naar het verkeerde stuk springen.', '8 km, korter dan de 9 km van je training.']);
   });
 
   it('een punt zonder hoogte telt nergens mee, ook niet als laag', () => {
@@ -249,6 +249,19 @@ describe('proposeRoutes', () => {
     const route: RouteFn = () => Promise.reject(new Error('stuk'));
     const plans = await proposeRoutes({ start: START, target: { distanceKm: 9, ascentM: 300 }, terrain: hills }, route);
     expect(plans).toEqual({ simple: { ok: false, reason: 'error' }, adventure: { ok: false, reason: 'error' }, found: { hills: 3, unknown: 0, lower: 0, tallestM: 50, radiusM: 3000 } });
+  });
+
+  it('een wandeltraining: de zin en het getal van de lus noemen wat de training vraagt, niet wat in de duur past', async () => {
+    // De bergtocht van 3 uur met 500 m: de planner mikt op 375 m (engine/hikeTarget.ts), de training vraagt 500.
+    const hike = { distanceKm: 8, ascentM: 375, minutes: 180, packKg: 6, askedAscentM: 500 };
+    expect(ascentNotice({ ascentM: 360 }, hike)).toBe('Deze lus stijgt 360 m; de training vraagt 500 m.');
+    expect(ascentNotice({ ascentM: 380 }, hike)).toBeUndefined();
+    // Zonder askedAscentM (een loop) zoals altijd.
+    expect(ascentNotice({ ascentM: 100 }, { distanceKm: 8, ascentM: 375 })).toBe('Deze lus stijgt 100 m; de training vraagt 380 m.');
+    const plans = await proposeRoutes({ start: START, target: hike, terrain: hills }, fakeRoute({ height: 50 }));
+    const made = [plans.simple, plans.adventure].filter((o) => o.ok);
+    expect(made.length).toBeGreaterThan(0);
+    for (const o of made) if (o.ok) expect(o.proposal.targetAscentM).toBe(500);
   });
 
   it('geen tekst met een gedachtestreepje', async () => {

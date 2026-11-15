@@ -30,6 +30,7 @@ import { resolveRouteSearch } from './routeSearchSetting';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { countDifferences } from './settingsDiff';
+import { shelterShort, SHELTER_ADVICE, type TrekShelter } from './trekShelter';
 import { resolveOverviews } from './overviewSettings';
 import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
 import { noticesBundleSummary, noticesNeed, permissionRows, permissionsSummary, resolveDeviceNotices, type DevicePermissions } from './deviceNotices';
@@ -74,7 +75,7 @@ import { storageUseText, type StorageEstimate } from './storageUse';
 import { swipeDeleteOn } from './forgeRows';
 import { resolveForgeLayout } from './forgeLayout';
 import { resolveForgeLogView } from './forgeLog';
-import { resolveBreakAsk } from './forgeSession';
+import { resolveBreakAsk, resolveLeftAfter } from './forgeSession';
 import { resolveTimeCap } from './forgeTimeCap';
 import { resolveSportCounting } from './sportRole';
 import { sportsRowSummary } from './sportsScreen';
@@ -82,6 +83,7 @@ import { isRowPending, isRowUnknown, type SettingsSource } from './settingsPendi
 import { kindAmountSummary, parseKindAmounts } from './kindAmount';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
+import { resolveReentry } from './reentry';
 import { capAboveMission, resolveAboveMission } from './todayCards';
 import { resolveDropOnTraining } from './dropOnTraining';
 import { resolveWeekAfterChoice } from './weekKept';
@@ -173,6 +175,8 @@ export interface SettingsFacts {
   // Kilometers die ASCEND telde sinds de bergschoenen; weg zolang er geen datum is vastgelegd.
   bootKm?: number;
   packKg?: number;
+  // Waar je slaapt op je tocht (engine/trekShelter.ts); weg als het niet berekend is.
+  shelter?: TrekShelter;
   // Of de browser een vaste map kan onthouden en of die gekozen is.
   folderSupported: boolean;
   folderChosen: boolean;
@@ -365,6 +369,7 @@ export function rowContext(f: SettingsFacts): RowContext {
     goal: f.goal !== null,
     program: f.position !== null,
     trek: f.treks > 0,
+    trekGoal: f.trekGoal === true,
     strengthInApp: !f.strengthExternal,
     strengthTrainings: f.strengthDurations.length > 0,
     longSundayVisible: f.longSundayVisible,
@@ -419,7 +424,7 @@ const waitingSummary = (base: RowSummary, value: string): RowSummary => ({ title
 
 const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
 const BUNDLE_MODEL = ['forge-rekent-mee', 'forge-afvinken-doel', 'forge-sets', 'forge-vermoeidheid', 'forge-tussen-oefeningen', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
-const BUNDLE_FILL = ['forge-onderbreking', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-ijkset', 'forge-doorvoeren', 'forge-schijven', 'forge-opwarmset-later'];
+const BUNDLE_FILL = ['forge-onderbreking', 'forge-concept', 'forge-rir-vooraf', 'forge-rir-snel', 'forge-stappen', 'forge-netjes', 'forge-band', 'forge-stapvoorstel', 'forge-ijkset', 'forge-doorvoeren', 'forge-schijven', 'forge-opwarmset-later'];
 const adviceOrCount = (ids: string[], s: AppSettings): RowSummary => {
   const n = countDifferences(ids, s);
   return n === 0 ? { value: 'Advies' } : { value: `${n} aangepast` };
@@ -476,7 +481,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'bundel-signalen':
       return { value: `${signalsOnCount(s)} van ${SIGNAL_KEYS.length} aan` };
     case 'bundel-weer':
-      return { value: `${countOn([o.weatherLine, o.bestMoment, o.placeWeather, s.weatherWarnings !== false, s.avalancheBulletin !== false, o.rainSoon, o.hillsNearby, s.routeProposal !== false, o.moonLine, o.uvAltitude, o.weatherSwap, o.clothingAdvice])} van 12 aan` };
+      return { value: `${countOn([o.weatherLine, o.bestMoment, o.placeWeather, s.weatherWarnings !== false, s.avalancheBulletin !== false, o.rainSoon, o.hillsNearby, s.routeProposal !== false, s.routeAvoidBigRoads !== false, o.moonLine, o.uvAltitude, o.weatherSwap, o.clothingAdvice])} van 13 aan` };
     case 'bundel-run-detail': {
       const d = resolveRunInsight(s.runInsight).detail;
       return d.show ? { value: 'Aan', sub: `Loopvorm: ${formSwitchesLine(d.form)}` } : { value: 'Uit', dim: true };
@@ -539,7 +544,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
 
     // Doel en tochten
     case 'doelen':
-      return f.goal ? { value: `${shortGoalName(f.goal.name)}, ${formatDayMonthNL(f.goal.date)}` } : { value: 'Geen doel', dim: true, sub: 'Een doel geeft ASCEND een einddatum' };
+      return f.goal ? { value: `${shortGoalName(f.goal.name)}, ${formatDayMonthNL(f.goal.date)}` } : { value: 'Geen doel', dim: true, sub: 'Een doel geeft je planning een einddatum' };
     case 'programma':
       return f.position
         ? { value: `Week ${f.position.weekInProgram} van ${f.position.totalWeeks}`, sub: f.goal ? `${capitalize(lower(f.position.phaseName))}, teruggerekend vanaf je doel` : capitalize(lower(f.position.phaseName)) }
@@ -552,6 +557,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.showSeasonStrip !== false };
     case 'vaardigheidsdoelen':
       return { checked: s.showSkillGoals !== false };
+    case 'slapen-onderweg':
+      return { value: shelterShort(f.shelter ?? SHELTER_ADVICE) };
     case 'volgende-tocht':
       return { checked: s.showNextTrek !== false };
     case 'water-per-etappe':
@@ -857,6 +864,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveSportCounting(s.sportCounting).askFelt };
     case 'sport-rust':
       return { value: choiceShort('sportRust', resolveSportCounting(s.sportCounting).rest) };
+    case 'rustiger-instap':
+      return { value: choiceShort('rustigerInstap', resolveReentry(s.reentry)) };
     case 'rustdag-terug':
       return { checked: s.restDayBack !== false };
     case 'week-vol':
@@ -892,6 +901,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('grensBeen', resolveTimeCap(s).legs) };
     case 'forge-onderbreking':
       return { value: choiceShort('forgeOnderbreking', resolveBreakAsk(s)), dim: resolveBreakAsk(s) === 0 };
+    case 'forge-concept':
+      return { value: choiceShort('forgeConcept', resolveLeftAfter(s)) };
     case 'forge-vegen':
       return { checked: swipeDeleteOn(s) };
     // Slepen in Week (engine/weekSwap.ts): "Ruilen" of "Samen", of uit.
@@ -911,7 +922,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'ochtendmelding': {
       const n = noticeState(f);
       if (n.support === 'unavailable') return { value: 'Niet mogelijk', dim: true, sub: 'Alleen als je de app opent' };
-      if (n.support === 'not_installed') return { value: 'Niet mogelijk', dim: true, sub: 'Zet ASCEND eerst op je beginscherm' };
+      if (n.support === 'not_installed') return { value: 'Niet mogelijk', dim: true, sub: 'Eerst op je beginscherm zetten' };
       return { checked: n.on, sub: n.support === 'blocked' ? 'Geblokkeerd in je telefoon' : undefined };
     }
     case 'bundel-meldingen':
@@ -987,6 +998,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('routeSoort', resolveRouteStyle(s.routeStyle)) };
     case 'route-start':
       return { value: choiceShort('routeStart', resolveRouteStart(s.routeStart)) };
+    case 'route-grote-wegen':
+      return { checked: s.routeAvoidBigRoads !== false };
     case 'route-zoeken':
       return { value: choiceShort('routeZoeken', resolveRouteSearch(s.routeSearch)) };
     case 'route-kaart':
@@ -1162,6 +1175,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.morningRule !== false };
     case 'horloge-stil':
       return { checked: s.watchSilence !== false };
+    case 'horloge-soort':
+      return { checked: s.watchKindCheck !== false };
     case 'ochtend-backup':
       return { checked: s.morningInBackup !== false, sub: s.morningInBackup !== false ? 'Ook je slaap en hartslag gaan mee' : undefined };
     case 'reeksen-bewaren':

@@ -249,7 +249,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     ],
     garminSport: 'Hardlopen',
     builds: [
-      { label: 'Je echte tempo', why: 'Daarop stemt ASCEND je doeltijd en je tempolopen af.' },
+      { label: 'Je echte tempo', why: 'Daarop zijn je doeltijd en je tempolopen afgestemd.' },
       { label: 'Vooruitgang', why: 'De tweede test laat zien wat de tempolopen opleverden.' },
     ],
   },
@@ -261,7 +261,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     ],
     garminSport: 'Hardlopen',
     builds: [
-      { label: 'Je tussendoel', why: 'Een meetpunt: daarna weet ASCEND je echte tempo.' },
+      { label: 'Je tussendoel', why: 'Een meetpunt: daarna is je echte tempo bekend.' },
     ],
   },
   tpl_bergconditie: {

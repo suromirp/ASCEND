@@ -55,7 +55,7 @@ export function noGoalWavesAdvice(plan: { held?: boolean }): Advice[] {
     ruleId: 'NO-GOAL-WAVES',
     title: NO_GOAL_WAVES_TITLE,
     brief: 'Je hebt nu geen doel. Je plan blijft zoals het is tot je kiest.',
-    effect: 'Je hebt geen doel, maar je plan bouwt nog op naar een bergtocht met rugzak. Voorstel: plan je weken voortaan in neutrale golven. Je bergtochten worden dan weer de lange loop. Met Liever niet blijft je plan zoals het is en vraagt ASCEND er niet meer naar; kies je later een richting op de Ascend-tab, dan kan het alsnog.',
+    effect: 'Je hebt geen doel, maar je plan bouwt nog op naar een bergtocht met rugzak. Voorstel: plan je weken voortaan in neutrale golven. Je bergtochten worden dan weer de lange loop. Met Liever niet blijft je plan zoals het is en krijg je er geen vraag meer over; kies je later een richting op de Ascend-tab, dan kan het alsnog.',
     why: 'Zonder doel is er geen tocht om naartoe te bouwen. Golven houden je fit met een vaste week en af en toe een lichtere, zonder rugzak en zonder bergtocht. Omdat dit je planning inhoudelijk verandert, gebeurt het alleen na jouw Akkoord.',
     priority: 2,
     noGoalWaves: true,

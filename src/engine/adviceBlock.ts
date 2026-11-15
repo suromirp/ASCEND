@@ -3,6 +3,7 @@
 
 import { proposeRestWeekSkip } from './restWeek';
 import { costSentence, proposeRepeatWeek, shortfallSentence } from './repeatWeek';
+import { proposeReentry, reentryEffect, REENTRY_ADVICE, REENTRY_TITLE, REENTRY_WHY } from './reentry';
 import { mondayOfWeek, formatWeekdayDateNL } from '../utils/dates';
 import { PACK_WEIGHT_EXPLANATION } from './gr5Profile';
 import { checkTargetTime, outlookSaid, outlookWeeksSaid, racePaces } from './racePaces';
@@ -35,20 +36,33 @@ export function restWeekSkipAdvice(inputs: AdviceInputs): Advice[] {
 export function repeatWeekAdvice(inputs: AdviceInputs): Advice[] {
   const found = proposeRepeatWeek({
     program: inputs.program, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates,
-    today: inputs.asOf, illnessEpisodes: inputs.illnessEpisodes, planChangeLog: inputs.extraSession?.planChangeLog,
+    today: inputs.asOf, illnessEpisodes: inputs.illnessEpisodes, leavePeriods: inputs.leave, planChangeLog: inputs.extraSession?.planChangeLog,
     // Races still ahead (their goals) and races already run (their session
     // or log): the week after a race is its own recovery, never a repeat.
     raceWeeks: [...new Set([
       ...(inputs.raceGoals ?? []).map((r) => r.raceWeek),
       ...inputs.plannedSessions.filter((s) => s.templateId === RACE_TEMPLATE_ID).map((s) => mondayOfWeek(s.scheduledDate)),
       ...inputs.logs.filter((l) => l.templateId === RACE_TEMPLATE_ID).map((l) => mondayOfWeek(l.completedDate)),
-    ])], respondedIds: inputs.respondedIds, keyFocus: inputs.keyFocus,
+    ])], respondedIds: inputs.respondedIds, keyFocus: inputs.keyFocus, openDraft: inputs.openDraft,
   });
   if (!found) return [];
   const title = 'Deze week nog een keer?';
-  const effect = `${shortfallSentence(found)} Voorstel: deze week houdt de belasting van vorige week, in plaats van een stap omhoog. ${costSentence(found.impact)} De rustweek, de golven daarna, de taper en je doeldatum blijven zoals ze waren. Met Liever niet blijft alles staan en vraagt ASCEND er deze week niet meer naar.`;
-  const why = 'Een week herhalen na een tegenvallende week werkt beter dan doorschuiven naar de zwaardere week: je bouwt pas verder als de belasting van vorige week er echt in zit. ASCEND remt alleen. Na een goede week bouwt het niet sneller, want vooruitgang laat je zien in je test, niet in extra minuten; bijsturen door te remmen geeft in studies vooral minder slechte uitkomsten (Nuuttila e.a. 2022). Het kost je doeldatum niets: alleen de zwaarste week van deze golf wordt lichter, de rustweek en alle golven daarna staan nog op de kalender. De 110%-regel houdt de stap daarna klein, want die meet tegen wat je echt liep. Was je ziek, dan geldt het terugkomschema en vraagt ASCEND dit niet. Je kunt het altijd terugzetten in Week.';
+  const effect = `${shortfallSentence(found)} Voorstel: deze week houdt de belasting van vorige week, in plaats van een stap omhoog. ${costSentence(found.impact)} De rustweek, de golven daarna, de taper en je doeldatum blijven zoals ze waren. Met Liever niet blijft alles staan en krijg je er deze week geen vraag meer over.`;
+  const why = 'Een week herhalen na een tegenvallende week werkt beter dan doorschuiven naar de zwaardere week: je bouwt pas verder als de belasting van vorige week er echt in zit. Alleen remmen, nooit versnellen: na een goede week gaat de opbouw niet sneller, want vooruitgang laat je zien in je test, niet in extra minuten; bijsturen door te remmen geeft in studies vooral minder slechte uitkomsten (Nuuttila e.a. 2022). Het kost je doeldatum niets: alleen de zwaarste week van deze golf wordt lichter, de rustweek en alle golven daarna staan nog op de kalender. De 110%-regel houdt de stap daarna klein, want die meet tegen wat je echt liep. Was je ziek, dan geldt het terugkomschema en komt deze vraag niet. Je kunt het altijd terugzetten in Week.';
   return [{ id: found.id, trigger: 'plan_update', ruleId: 'REPEAT-WEEK', title, effect, why, priority: 3, repeatWeek: found.weekStart }];
+}
+
+// Rule REENTRY: na een pauze (ziek en een vakantie, of twee weken weinig training) een rustiger instap
+// (engine/reentry.ts). Een voorstel: de duur van zeven dagen gaat pas omlaag na Akkoord op het voorstel van de
+// planningsronde. Wijkt niet voor andere adviezen; het raakt geen enkele rij, alleen de duur.
+export function reentryAdvice(inputs: AdviceInputs): Advice[] {
+  const found = proposeReentry({
+    program: inputs.program, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, today: inputs.asOf,
+    illnessEpisodes: inputs.illnessEpisodes, leavePeriods: inputs.leave, choice: inputs.reentry?.choice ?? REENTRY_ADVICE,
+    weeks: inputs.reentry?.weeks, respondedIds: inputs.respondedIds, raceGoals: inputs.raceGoals,
+  });
+  if (!found) return [];
+  return [{ id: found.id, trigger: 'plan_update', ruleId: 'REENTRY', title: REENTRY_TITLE, effect: reentryEffect(found), why: REENTRY_WHY, priority: 3, reentry: found.week }];
 }
 
 export function tentPackAdvice(inputs: AdviceInputs): Advice[] {
@@ -128,12 +142,12 @@ export function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
       : `Doeltijd ${distance} km: ${clockTarget} is ruim langzamer dan je test`;
     const lead = `${distance} km past nu bij ongeveer ${now}. Je testloop van ${formatWeekdayDateNL(paces.test.date)}: ${test}.${testStopsRemark(paces.test) ? ` ${testStopsRemark(paces.test)}` : ''}`;
     const effect = ambitious
-      ? `${lead} ${outlookText}. Voor ${clockTarget} heb je ongeveer ${said.need} ${said.need === 1 ? 'week' : 'weken'} nodig, er ${said.left === 1 ? 'is er' : 'zijn er'} ${said.left}. Voorstel: zet je doeltijd op ${check.suggested} minuten. Met Liever niet blijft ${clockTarget} staan en vraagt ASCEND hier niet meer naar.`
-      : `${lead} ${outlookText}. ${clockTarget} laat dus veel liggen. Voorstel: scherp je doeltijd aan naar ${check.suggested} minuten. Met Liever niet blijft ${clockTarget} staan en vraagt ASCEND hier niet meer naar.`;
+      ? `${lead} ${outlookText}. Voor ${clockTarget} heb je ongeveer ${said.need} ${said.need === 1 ? 'week' : 'weken'} nodig, er ${said.left === 1 ? 'is er' : 'zijn er'} ${said.left}. Voorstel: zet je doeltijd op ${check.suggested} minuten. Met Liever niet blijft ${clockTarget} staan en krijg je er geen vraag meer over.`
+      : `${lead} ${outlookText}. ${clockTarget} laat dus veel liggen. Voorstel: scherp je doeltijd aan naar ${check.suggested} minuten. Met Liever niet blijft ${clockTarget} staan en krijg je er geen vraag meer over.`;
     const growthWhy = inputs.goalGrowth === 'careful'
-      ? 'Jij koos in de instellingen voor voorzichtige groei: ASCEND rekent met de onderkant van een band van 0,3 tot 0,8% per week, 0,3% dus. Die band is afgeleid uit meerdere onderzoeken (onder andere Muñoz e.a. 2014 en Nuuttila e.a. 2022), niet uit één studie.'
-      : 'ASCEND rekent met 0,55% per week: het midden van een band van 0,3 tot 0,8% die uit meerdere onderzoeken is afgeleid (onder andere Muñoz e.a. 2014 en Nuuttila e.a. 2022), niet uit één studie.';
-    const why = `De testloop is het eerlijkste meetpunt dat ASCEND heeft. Uit de tijd rekent ASCEND je tempo op andere afstanden uit. Hoe snel iemand sneller wordt, verschilt sterk. ${growthWhy} Dat is doorgerekend tot je wedstrijd, met dezelfde rekening als de meter Snelheid op je doelkaart, met ruimte voor een test die op een warme of vermoeide dag viel. Eerst een voorstel, pas na Akkoord verandert er iets. Wil je jouw tijd houden, kies dan Liever niet. Dan vraagt ASCEND hier niet meer naar, tot je de doeltijd zelf verandert.`;
+      ? 'Jij koos in de instellingen voor voorzichtige groei: gerekend met de onderkant van een band van 0,3 tot 0,8% per week, 0,3% dus. Die band is afgeleid uit meerdere onderzoeken (onder andere Muñoz e.a. 2014 en Nuuttila e.a. 2022), niet uit één studie.'
+      : 'Gerekend met 0,55% per week: het midden van een band van 0,3 tot 0,8% die uit meerdere onderzoeken is afgeleid (onder andere Muñoz e.a. 2014 en Nuuttila e.a. 2022), niet uit één studie.';
+    const why = `De testloop is het eerlijkste meetpunt. Uit de tijd volgt je tempo op andere afstanden. Hoe snel iemand sneller wordt, verschilt sterk. ${growthWhy} Dat is doorgerekend tot je wedstrijd, met dezelfde rekening als de meter Snelheid op je doelkaart, met ruimte voor een test die op een warme of vermoeide dag viel. Eerst een voorstel, pas na Akkoord verandert er iets. Wil je jouw tijd houden, kies dan Liever niet. Dan krijg je er geen vraag meer over, tot je de doeltijd zelf verandert.`;
     out.push({
       id: `goaltime:${race.goalId}:${target}`, trigger: 'plan_update', ruleId: 'TARGET-TIME', title, effect, why, priority: 3,
       relatedLogId: paces.test.logId, goalTargetTime: { goalId: race.goalId, minutes: check.suggested },

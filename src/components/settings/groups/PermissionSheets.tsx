@@ -21,9 +21,9 @@ const WHERE: Record<Exclude<PermissionId, 'health'>, string> = {
 };
 
 const WHY: Record<PermissionId, string> = {
-  meldingen: 'Zodat ASCEND je de ochtendvraag, het einde van je rust en de weekmelding kan sturen.',
+  meldingen: 'Voor de ochtendvraag, het einde van je rust en de weekmelding.',
   wekker: 'Zodat je telefoon trilt als je rust voorbij is, op de seconde en ook met het scherm uit.',
-  health: 'Zet Health Connect aan bij Koppelingen. Dan vraagt Android welke gegevens ASCEND mag lezen.',
+  health: 'Zet Health Connect aan bij Koppelingen. Dan vraagt Android welke gegevens je vrijgeeft.',
 };
 
 async function ask(id: PermissionId): Promise<boolean> {
@@ -76,7 +76,7 @@ export function PermissionsSheet({ facts, onChanged, onStorage, onClose }: { fac
   const device = facts.device && facts.device !== 'unknown' ? facts.device : undefined;
   const rows = device ? permissionRows(device, noticesNeed(settings, device)) : [];
   return (
-    <Sheet eyebrow="Gegevens en back-up" title="Toestemmingen" line="Wat je telefoon ASCEND toestaat. Zonder een toestemming werkt alleen dat ene ding niet." onClose={onClose}>
+    <Sheet eyebrow="Gegevens en back-up" title="Toestemmingen" line="Wat je telefoon toestaat. Zonder een toestemming werkt alleen dat ene ding niet." onClose={onClose}>
       <SettingsList>
         {!device && <SettingsRow id="toestemming-laden" title="Meldingen" kind="static" value={facts.device === 'unknown' ? 'Onbekend' : 'Even kijken'} dim />}
         {rows.map((r) => (

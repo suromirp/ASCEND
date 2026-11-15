@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
-import {
+import { lapsedLine,
   askLine,
   autoSkipNotice,
   linkEyebrow,
@@ -80,13 +80,13 @@ describe('de vraag "Niet gedaan?" op Vandaag', () => {
     expect(planMissed(input({ plannedSessions: [planned('easy', 'tpl_easy_run', '2026-10-26')], logs: [log] })).item).toBeUndefined();
   });
 
-  it('vraagt niet naar een training van meer dan twee weken terug', () => {
-    expect(planMissed(input({ plannedSessions: [planned('old', 'tpl_easy_run', '2026-10-13')] })).item).toBeUndefined();
-    expect(planMissed(input({ plannedSessions: [planned('edge', 'tpl_easy_run', '2026-10-14')] })).item).toMatchObject({ session: { id: 'edge' } });
+  it('vraagt niet naar een training van meer dan een week terug: Nog open ouder dan zeven dagen verdwijnt vanzelf', () => {
+    expect(planMissed(input({ plannedSessions: [planned('old', 'tpl_easy_run', '2026-10-20')] })).item).toBeUndefined();
+    expect(planMissed(input({ plannedSessions: [planned('edge', 'tpl_easy_run', '2026-10-21')] })).item).toMatchObject({ session: { id: 'edge' } });
   });
 
   it('één vraag tegelijk, de oudste eerst', () => {
-    const plan = planMissed(input({ plannedSessions: [planned('b', 'tpl_upper_a', '2026-10-24'), planned('a', 'tpl_easy_run', '2026-10-20'), planned('c', 'tpl_long_run', '2026-10-25')] }));
+    const plan = planMissed(input({ plannedSessions: [planned('b', 'tpl_upper_a', '2026-10-24'), planned('a', 'tpl_easy_run', '2026-10-21'), planned('c', 'tpl_long_run', '2026-10-25')] }));
     expect(plan.item).toMatchObject({ kind: 'ask', session: { id: 'a' } });
   });
 
@@ -127,9 +127,18 @@ describe('ziek gemeld: de vragen wachten', () => {
   const ill = [{ id: 'ziek', kind: 'below_neck' as const, startDate: '2026-10-26' }];
   const before = planned('za', 'tpl_easy_run', '2026-10-24');
 
-  it('geen Niet gedaan? zolang je ziek bent, ook niet over een training van voor de ziekte', () => {
+  it('geen Niet gedaan? zolang je ziek bent; de regel Vervallen noemt alleen wat binnen de ziekte stond', () => {
     expect(planMissed(input({ plannedSessions: [before] })).item).toMatchObject({ kind: 'ask', session: { id: 'za' } });
-    expect(planMissed(input({ plannedSessions: [before], illnessEpisodes: ill }))).toEqual({ item: undefined, autoSkip: [] });
+    // Van voor de ziekte: geen vraag, en ook geen regel. Het blijft gemist, zoals in Week.
+    const plan = planMissed(input({ plannedSessions: [before], illnessEpisodes: ill }));
+    expect(plan.item).toBeUndefined();
+    expect(plan.autoSkip).toEqual([]);
+    expect(plan.lapsed).toBeUndefined();
+    // Op de eerste ziektedag: vervallen, zoals in Week.
+    const onIll = planned('ma', 'tpl_easy_run', '2026-10-26');
+    const withIll = planMissed(input({ plannedSessions: [before, onIll], illnessEpisodes: ill }));
+    expect(withIll.lapsed).toMatchObject({ kind: 'ill', sessions: [{ session: { id: 'ma' } }] });
+    expect(lapsedLine(withIll.lapsed!.kind, withIll.lapsed!.sessions)).toBe('Rustige duurloop van maandag 26 oktober vervalt: je meldde ziekte. Inhalen hoeft niet.');
   });
 
   it('geen koppelvoorstel zolang je ziek bent', () => {
@@ -143,20 +152,22 @@ describe('ziek gemeld: de vragen wachten', () => {
     expect(auto.autoSkip).toEqual([]);
   });
 
-  it('weer beter: de vraag en het koppelvoorstel komen terug', () => {
+  it('weer beter: de vervallen vraag komt niet terug, het koppelvoorstel wel', () => {
     const better = [{ ...ill[0], endDate: '2026-10-27' }];
-    expect(planMissed(input({ plannedSessions: [before], illnessEpisodes: better })).item).toMatchObject({ kind: 'ask', session: { id: 'za' } });
+    const plan = planMissed(input({ plannedSessions: [before], illnessEpisodes: better }));
+    expect(plan.item).toBeUndefined();
+    // De pauze loopt niet meer: de regel is al gezegd, nu niets meer.
+    expect(plan.lapsed).toBeUndefined();
     const logs = [watchRun('w1', '2026-10-25')];
     expect(planMissed(input({ plannedSessions: [before], logs, illnessEpisodes: better })).item).toMatchObject({ kind: 'link', session: { id: 'za' } });
   });
 
-  it('weer beter: de grens van 14 dagen telt vanaf de training, niet vanaf de dag dat je beter werd', () => {
-    // Een training van 13 en 15 dagen terug, ziek in de tussentijd en vandaag beter gemeld.
-    const sessions = [planned('oud', 'tpl_easy_run', '2026-10-13'), planned('net', 'tpl_upper_a', '2026-10-15')];
-    const episodes = [{ id: 'ziek', kind: 'below_neck' as const, startDate: '2026-10-16', endDate: TODAY }];
+  it('een training na de ziekte krijgt de vraag gewoon, binnen de week vanaf de training', () => {
+    const sessions = [planned('voor', 'tpl_easy_run', '2026-10-22'), planned('na', 'tpl_upper_a', '2026-10-26')];
+    const episodes = [{ id: 'ziek', kind: 'below_neck' as const, startDate: '2026-10-23', endDate: '2026-10-25' }];
     const plan = planMissed(input({ plannedSessions: sessions, illnessEpisodes: episodes }));
-    expect(plan.item).toMatchObject({ kind: 'ask', session: { id: 'net' } });
-    const later = planMissed(input({ plannedSessions: sessions, illnessEpisodes: episodes, today: '2026-10-30' }));
+    expect(plan.item).toMatchObject({ kind: 'ask', session: { id: 'na' } });
+    const later = planMissed(input({ plannedSessions: sessions, illnessEpisodes: episodes, today: '2026-11-03' }));
     expect(later.item).toBeUndefined();
   });
 });
@@ -173,7 +184,12 @@ describe('Zelf overslaan', () => {
   it('een test of wedstrijd nooit vanzelf: die krijgt de vraag', () => {
     const plan = planMissed(input({ plannedSessions: [planned('test', 'tpl_test_run', '2026-10-24'), planned('race', 'tpl_race', '2026-10-25')], settings: auto }));
     expect(plan.autoSkip).toEqual([]);
-    expect(plan.item).toMatchObject({ kind: 'ask', session: { id: 'test' } });
+    // De test ligt in de afbouw van de wedstrijd van de dag erna: die vervalt (backlog R, engine/raceWindow.ts),
+    // dus de vraag gaat over de wedstrijd. Zonder wedstrijd krijgt de test de vraag.
+    expect(plan.item).toMatchObject({ kind: 'ask', session: { id: 'race' } });
+    const alone = planMissed(input({ plannedSessions: [planned('test', 'tpl_test_run', '2026-10-24')], settings: auto }));
+    expect(alone.autoSkip).toEqual([]);
+    expect(alone.item).toMatchObject({ kind: 'ask', session: { id: 'test' } });
   });
 
   it('een test herkend via de rol, ook onder een ander id', () => {

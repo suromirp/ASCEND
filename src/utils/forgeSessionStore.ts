@@ -6,7 +6,7 @@
 // Een sessie eindigt met Afronden of Verwijderen, nooit door tijd. Hij begint bij de eerste echte handeling,
 // niet bij openen (dan wordt de wijzer pas geschreven).
 
-import { cleanPauses, type Pause } from '../engine/forgeSession';
+import { cleanPauses, parkLeft, type Pause } from '../engine/forgeSession';
 
 const POINTER_KEY = 'ascend.forge.sessie';
 const DRAFT_PREFIX = 'ascend.afvinkconcept.';
@@ -27,6 +27,8 @@ export interface SessionState {
   startedAt: number;
   pauses: Pause[];
   lastActionAt?: number;
+  // Afgevinkte werksets in het concept: voor de pil en het blad van een training die bleef liggen.
+  doneSets: number;
 }
 
 function read(key: string): string | null {
@@ -60,17 +62,31 @@ function parsePointer(raw: string | null): SessionPointer | undefined {
 function sessionFromDraftRaw(pointer: SessionPointer, raw: string | null): SessionState | undefined {
   if (!raw) return undefined;
   try {
-    const d = JSON.parse(raw) as { startedAt?: unknown; pauses?: unknown; lastActionAt?: unknown; exercises?: unknown } | null;
+    const d = JSON.parse(raw) as { startedAt?: unknown; pauses?: unknown; lastActionAt?: unknown; savedAt?: unknown; exercises?: unknown } | null;
     if (!d || typeof d !== 'object' || typeof d.startedAt !== 'number' || !Array.isArray(d.exercises)) return undefined;
+    // Het laatste moment van handelen: het bewaarde moment, anders het wegschrijven (een concept van voor dit veld).
+    const last = typeof d.lastActionAt === 'number' ? d.lastActionAt : typeof d.savedAt === 'number' ? d.savedAt : undefined;
     return {
       pointer,
       startedAt: d.startedAt,
       pauses: cleanPauses(d.pauses),
-      ...(typeof d.lastActionAt === 'number' ? { lastActionAt: d.lastActionAt } : {}),
+      ...(last !== undefined && Number.isFinite(last) ? { lastActionAt: last } : {}),
+      doneSets: countDoneWork(d.exercises),
     };
   } catch {
     return undefined;
   }
+}
+
+// Afgevinkte werksets, defensief gelezen (engine/forgeWorkout.ts#progress telt dezelfde rijen).
+function countDoneWork(exercises: unknown[]): number {
+  let n = 0;
+  for (const e of exercises) {
+    const rows = (e as { rows?: unknown } | null)?.rows;
+    if (!Array.isArray(rows)) continue;
+    for (const r of rows) if (r && typeof r === 'object' && (r as { kind?: unknown }).kind === 'work' && (r as { done?: unknown }).done === true) n++;
+  }
+  return n;
 }
 
 // Wat de pil nodig heeft: de wijzer en de klok, in een korte tekst die alleen verandert als een van die
@@ -145,6 +161,70 @@ export function clearSessionPointer(key: string): void {
     // niets te wissen
   }
   emit();
+}
+
+// Een training die bleef liggen gaat verder of wordt afgerond (engine/forgeSession.ts#parkLeft): de stilte vanaf
+// je laatste handeling wordt een pauze in het concept. De sets en het verloop blijven precies zoals ze waren.
+// Onwaar als er geen concept is om te bewaren; dan verandert er niets.
+export function parkSession(pointer: SessionPointer, now: number): boolean {
+  const raw = read(pointer.key);
+  if (!raw) return false;
+  try {
+    const d = JSON.parse(raw) as Record<string, unknown> | null;
+    if (!d || typeof d !== 'object' || typeof d.startedAt !== 'number' || !Array.isArray(d.exercises)) return false;
+    const last = typeof d.lastActionAt === 'number' ? d.lastActionAt : typeof d.savedAt === 'number' ? d.savedAt : undefined;
+    const next = parkLeft({ startedAt: d.startedAt, pauses: cleanPauses(d.pauses), ...(last !== undefined ? { lastActionAt: last } : {}) }, now);
+    localStorage.setItem(pointer.key, JSON.stringify({ ...d, pauses: next.pauses, lastActionAt: next.lastActionAt, savedAt: now }));
+  } catch {
+    return false;
+  }
+  emit();
+  return true;
+}
+
+// Verwijderen na Annuleren-bevestiging: het concept en de wijzer van déze sessie gaan weg. Je logboek verandert niet.
+export function discardSession(pointer: SessionPointer): void {
+  removeDraftKey(pointer.key);
+  clearSessionPointer(pointer.key);
+}
+
+// Mag een open Forge zijn concept nog wegschrijven? Niet als het al eens schreef en de wijzer nu ontbreekt of naar
+// een andere sessie wijst: dan is hij elders (een ander tabblad, het blad van een concept) weggegooid of afgerond,
+// en zou het terugschrijven een Verwijderen ongedaan maken (Warden, 14 november).
+export function mayWriteDraft(wroteBefore: boolean, key: string): boolean {
+  if (!wroteBefore) return true;
+  return readPointer()?.key === key;
+}
+
+// Het concept van een open Forge wegschrijven, met de wijzer erbij. Geeft terug of deze sessie nu de wijzer heeft:
+// die uitkomst (niet de poging) is de nieuwe stand van "schreef al". Loopt er een andere sessie, dan weigert de
+// wijzer en blijft "schreef al" onwaar, zodat het concept bij de volgende beurt gewoon weer bewaard wordt
+// (Warden, 14 november). Weggegooid of afgerond elders: dan schrijft het niets en blijft het zo.
+export function saveSessionDraft(pointer: SessionPointer, draft: unknown, wroteBefore: boolean): boolean {
+  if (!mayWriteDraft(wroteBefore, pointer.key)) return wroteBefore;
+  try {
+    localStorage.setItem(pointer.key, JSON.stringify(draft));
+  } catch {
+    // geen opslag: geen concept
+  }
+  return writeSessionPointer(pointer);
+}
+
+// Staat déze sessie (zelfde concept, zelfde begin) er nog? Niet als hij elders afgerond of verwijderd werd.
+export function sessionStillThere(pointerKey: string, startedAt: number): boolean {
+  const s = readSession();
+  return !!s && s.pointer.key === pointerKey && s.startedAt === startedAt;
+}
+
+// Het blad van een concept gaat per concept één keer vanzelf open, en nooit achter een ander keuzeblad dat er al
+// over gaat. De sleutel: sessie, begin en laatste handeling, zodat een volgende nacht weer telt.
+const prompted = new Set<string>();
+export const promptKey = (s: { pointer: { key: string }; startedAt: number }, lastActionAt: number | undefined) => `${s.pointer.key}\u0001${s.startedAt}\u0001${lastActionAt ?? ''}`;
+export function markPrompted(key: string): void {
+  prompted.add(key);
+}
+export function wasPrompted(key: string): boolean {
+  return prompted.has(key);
 }
 
 // Het concept is net weggeschreven of weggehaald.
@@ -237,19 +317,24 @@ export function subscribeForgeOpen(cb: () => void): () => void {
 
 // --- Open de sessie vanaf de pil (of vanaf "Naar de training"): het verzoek leest de host in App. ---------------------
 
+// Met `finish` opent Forge meteen op het blad Training afronden (Afronden vanaf een training die bleef liggen).
 let requested = false;
+let requestFinish = false;
 const requestListeners = new Set<() => void>();
 const fireRequest = () => requestListeners.forEach((l) => l());
 
-export function requestOpenSession(): void {
+export function requestOpenSession(mode?: 'finish'): void {
   requested = true;
+  requestFinish = mode === 'finish';
   fireRequest();
 }
 export function clearOpenRequest(): void {
   if (!requested) return;
   requested = false;
+  requestFinish = false;
   fireRequest();
 }
+export const openRequestFinishes = () => requestFinish;
 export const openRequestSnapshot = () => requested;
 export function subscribeOpenRequest(cb: () => void): () => void {
   requestListeners.add(cb);

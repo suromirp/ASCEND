@@ -29,7 +29,7 @@ export function StravaTextButton({ log, template }: { log: SessionLog; template:
   if (settings.stravaText === false) return null;
 
   const planned = log.plannedSessionId ? plannedSessions.find((s) => s.id === log.plannedSessionId) : undefined;
-  const text = stravaText({ log, template, planned, program, goalName: stravaGoalName(trainingGoals, goalMilestones) });
+  const text = stravaText({ log, template, planned, program, goalName: stravaGoalName(trainingGoals, goalMilestones), fit: { hr: settings.heartRate } });
   const withLine = resolveStravaTextParts(settings.stravaTextParts) === 'title-line' && text.line !== undefined;
 
   async function copy(parts: StravaTextParts) {

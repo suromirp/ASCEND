@@ -27,6 +27,8 @@ import { makeId } from '../utils/id';
 import { isDone } from './adviceShared';
 import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
+import { isTaperDay, raceDatesOf } from './raceWindow';
+import { isDraftOpen } from './sessionStatus';
 import { isKeyFor, type KeyFocus } from './keySession';
 import { leaveDays } from './leave';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
@@ -62,6 +64,8 @@ export interface FullWeekInput {
   illnessEpisodes?: IllnessEpisode[];
   // Rijen die een geaccepteerd voorstel van ASCEND liet vervallen: geen verlies van jou.
   removedByPlanIds?: ReadonlySet<string>;
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, geen verlies.
+  openDraft?: string;
   // Wat de weekcontrole verder nodig heeft (rustdag, tijd per dag, twee trainingen op een dag).
   check?: Partial<Omit<CheckInput, 'sessions' | 'logs' | 'templates' | 'today'>>;
 }
@@ -95,14 +99,16 @@ function contextOf(input: FullWeekInput) {
 // - naar later: een training die jij of een voorstel van een voorbije dag van deze week naar later zette,
 //   als die dag daarna leeg bleef (een ruil van twee dagen is geen verlies).
 // Geen verlies: een herstelwandeling, wat ASCEND zelf wegliet of verving (Minder, zonder sportschool, een
-// geaccepteerd voorstel), en een vakantie-, tocht- of ziektedag.
+// geaccepteerd voorstel), een vakantie-, tocht- of ziektedag, en een training die nog loopt (een concept in Forge).
 export function weekLoss(input: FullWeekInput): WeekLoss[] {
   const ctx = contextOf(input);
   const { monday, sunday } = ctx;
   const { today } = input;
   const out: WeekLoss[] = [];
   const nameOf = (s: PlannedSession) => ctx.tpl(s)?.name ?? 'Training';
-  const away = (d: string) => { const kind = ctx.days.get(d)?.kind; return kind === 'off' || kind === 'trek' || isIllnessDay(d, input.illnessEpisodes, today); };
+  // Een dag uit de afbouw van een race die er al was telt ook niet als verlies, zoals in Week (engine/raceWindow.ts).
+  const races = raceDatesOf(input.sessions, input.templates);
+  const away = (d: string) => { const kind = ctx.days.get(d)?.kind; return kind === 'off' || kind === 'trek' || isIllnessDay(d, input.illnessEpisodes, today) || isTaperDay(d, races, today); };
   const inWeek = (d: string) => d >= monday && d <= sunday;
   const usedDay = (d: string, except: string) => input.sessions.some((o) => o.id !== except && o.status !== 'skipped' && o.scheduledDate === d && ctx.trains(o))
     || input.logs.some((l) => l.completedDate === d && l.type !== 'recovery');
@@ -110,7 +116,7 @@ export function weekLoss(input: FullWeekInput): WeekLoss[] {
     const from = s.movedFromDate;
     if (!inWeek(s.scheduledDate) && !(from && inWeek(from))) continue;
     if (!ctx.trains(s) || s.amount?.change === 'left_out' || s.leave?.role === 'dropped' || input.removedByPlanIds?.has(s.id)) continue;
-    if (inWeek(s.scheduledDate) && s.scheduledDate < today && !away(s.scheduledDate) && !ctx.done(s)) out.push({ date: s.scheduledDate, name: nameOf(s), how: 'missed' });
+    if (inWeek(s.scheduledDate) && s.scheduledDate < today && !away(s.scheduledDate) && !ctx.done(s) && !isDraftOpen(s, input.openDraft, today)) out.push({ date: s.scheduledDate, name: nameOf(s), how: 'missed' });
     if (from && s.lock && s.status !== 'skipped' && inWeek(from) && from < today && s.scheduledDate > from && !away(from) && !usedDay(from, s.id)) out.push({ date: from, name: nameOf(s), how: 'moved' });
   }
   return out.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
@@ -286,7 +292,7 @@ function lostText(lost: WeekLoss[]): string {
   return days === 1 ? 'Je verloor deze week een dag.' : `Je verloor deze week ${days} dagen.`;
 }
 
-const WHY = 'ASCEND kijkt hiernaar zodra er in je week een training wegviel of naar later ging. Vol is: twee dagen met twee trainingen, twee trainingen meer dan er dagen over zijn, vier loopdagen op rij of drie zware dagen achter elkaar. Het advies kiest eerst de extra training die je via een voorstel kreeg, dan wat het minst telt. Een test, een wedstrijd, je sleuteltraining en wat je zelf neerzette staan nooit in het advies. Eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet vraagt ASCEND het deze week niet meer.';
+const WHY = 'Dit telt zodra er in je week een training wegviel of naar later ging. Vol is: twee dagen met twee trainingen, twee trainingen meer dan er dagen over zijn, vier loopdagen op rij of drie zware dagen achter elkaar. Het advies kiest eerst de extra training die je via een voorstel kreeg, dan wat het minst telt. Een test, een wedstrijd, je sleuteltraining en wat je zelf neerzette staan nooit in het advies. Eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet krijg je er deze week geen vraag meer over.';
 
 function dropProposal(c: Candidate, title: string, consequences: string): PlanChangeProposal {
   const item: PlanChangeItem = {
@@ -326,7 +332,7 @@ export function fullWeekAdvice(input: FullWeekAdviceInput): Advice[] {
   if (list.length === 0) {
     const own = candidates(input, ctx, isYours, taken).filter((c) => !c.session.fixed)[0];
     const tip = own ? ` Wil je lucht, dan ${own.tier === 3 ? `komt ${lower(own.template.name)} op ${formatWeekdayDateNL(own.session.scheduledDate)} als eerste in aanmerking` : `kost ${lower(own.template.name)} op ${formatWeekdayDateNL(own.session.scheduledDate)} je het minst`}. Overslaan doe je zelf in Week.` : ' Wil je lucht, dan sla je zelf een training over in Week.';
-    return [{ ...base, effect: `${lead} ASCEND raadt niets aan om te laten vallen: wat er nog staat zette je zelf neer, is je sleuteltraining of een test, of maakt je week niet rustiger als het vervalt.${tip}` }];
+    return [{ ...base, effect: `${lead} Geen advies om iets te laten vallen: wat er nog staat zette je zelf neer, is je sleuteltraining of een test, of maakt je week niet rustiger als het vervalt.${tip}` }];
   }
   // Hoogstens twee zinnen: wat vervalt en waarom, en wat er dan staat. Blijft de week ook dan vol, dan staat dat er.
   const afterOf = (c: Candidate) => (c.after.full ? `Ook dan is je week nog vol: ${shapeText(c.after)}.` : `Dan ${stands(c.after)} er nog ${shapeText(c.after)}.`);

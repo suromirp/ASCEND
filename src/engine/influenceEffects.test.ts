@@ -261,7 +261,7 @@ describe('lijkt op', () => {
     expect(r.group.key).toBe('alcohol:matig');
     expect(r.times).toBe(4);
     expect(r.otherTimes).toBeGreaterThanOrEqual(4);
-    expect(looksLikeText(r).line).toBe(`Uit 4 keer met die reden en ${r.otherTimes} keer zonder. Zeker weten doet ASCEND het niet.`);
+    expect(looksLikeText(r).line).toBe(`Uit 4 keer met die reden en ${r.otherTimes} keer zonder. Zeker is het niet.`);
   });
 
   it('zegt niets als de waarde bij je gewone ochtenden past', () => {
@@ -381,7 +381,7 @@ describe('lijkt op, de zinnen', () => {
   it('noemt de reden in kleine letters en het aantal keer, zonder percentage', () => {
     const t = looksLikeText({ group: groupOf({ reason: 'alcohol', amount: 'matig' }), measure: 'paceHr', times: 4, otherTimes: 6 });
     expect(t.title).toBe('Lijkt op je lopen bij alcohol, 3 tot 5 glazen');
-    expect(t.line).toBe('Uit 4 keer met die reden en 6 keer zonder. Zeker weten doet ASCEND het niet.');
+    expect(t.line).toBe('Uit 4 keer met die reden en 6 keer zonder. Zeker is het niet.');
     expect(`${t.title} ${t.line}`).not.toMatch(/%|waarschijnlijk/);
   });
 

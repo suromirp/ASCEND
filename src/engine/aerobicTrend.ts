@@ -368,7 +368,8 @@ export function zone2Criteria(trend: Pick<AerobicTrend, 'runs' | 'referenceHr'>,
 }
 
 // De drempel voor een uitspraak in woorden, uit zone2Rules: zo zegt elke tekst dezelfde regel als zone2Statement.
-export const firstRulePhrase = () => `verspreid over minstens ${R.firstSpanDays / 7} weken en ${R.firstWeeks} verschillende weken`;
+// Eén keer "weken": de lopen liggen over minstens 4 weken, in minstens 3 daarvan (zone2Rules).
+export const firstRulePhrase = () => `verspreid over minstens ${R.firstSpanDays / 7} weken, in minstens ${R.firstWeeks} daarvan`;
 
 const capital = (t: string) => `${t[0].toUpperCase()}${t.slice(1)}`;
 

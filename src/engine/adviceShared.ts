@@ -22,6 +22,10 @@ import type { RaceBlock } from './raceBlock';
 import type { WeatherForecast } from '../models/weather';
 import type { TestJudgment } from '../models/testJudgment';
 import type { LeavePeriod } from '../models/leave';
+import { isAwayDay } from './leave';
+import type { ReentryChoice, ReentryWeek } from './reentry';
+import { idHasRole } from './templateRoles';
+import { RACE_GUARD_DAYS, afterRaceGuard, raceDatesOf } from './raceWindow';
 import type { DescentClockContext } from './descentClock';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
@@ -63,6 +67,9 @@ export interface Advice {
   // Rule NO-GOAL-WAVES: Akkoord plant een bestaand plan zonder doel in neutrale golven
   // (engine/noGoalWaves.ts). Een programmawijziging: eerst het eigen voorstel met wat er verandert.
   noGoalWaves?: true;
+  // Rule REENTRY: Akkoord bewaart een rustiger instap na een pauze (engine/reentry.ts). Eerst het eigen voorstel
+  // van de planningsronde met de trainingen die korter worden.
+  reentry?: ReentryWeek;
 }
 
 export interface AdviceOption {
@@ -129,6 +136,9 @@ export interface AdviceInputs {
   // A missed training a loose watch or MacroFactor log may belong to gets the link proposal first, never
   // a catch-up (rule MISSED-CATCH-UP). Absent = on, nothing declined.
   missedLink?: { on: boolean; declined: readonly string[]; declinedOn?: Readonly<Record<string, string>>; places?: Readonly<Record<string, string>> };
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): die loopt nog en
+  // wordt niet ingehaald en niet losgelaten.
+  openDraft?: string;
   // Rows an accepted TEST-RETRY proposal made a test (`retryTestRows` of the stored proposals). A
   // retry that was skipped or missed is spoken for by TEST-RETRY once more, not by TEST-MAKE-ROOM.
   retryRows?: ReadonlySet<string>;
@@ -137,6 +147,8 @@ export interface AdviceInputs {
   keyFocus?: KeyFocus;
   // "Vragen als je week te vol wordt" (rule WEEK-FULL, engine/fullWeek.ts). Absent = on.
   fullWeekAsk?: boolean;
+  // "Rustiger instap na een pauze" (engine/reentry.ts, rule REENTRY) en wat al met Akkoord bewaard is. Absent = het advies.
+  reentry?: { choice: ReentryChoice; weeks?: unknown };
   // Internal: leave TEST-RETRY out, for the check of its own end state (it would otherwise call itself).
   noRetry?: boolean;
 }
@@ -160,6 +172,27 @@ export function proposal(issue: string, items: PlanChangeItem[], consequences: s
   return { id: makeId('planchange'), trigger: 'session_skipped', issue, changes: items, alternatives: [], consequences, explanation, createdAt: new Date().toISOString() };
 }
 
+// De week voor een race (de afbouw) en de racedag zelf: geen inhaaladvies, geen "doe vandaag in plaats van je
+// rustdag" (profielendoorloop hardloper 3 en 7). Een wedstrijd die gepland staat of een tussendoel met een
+// wedstrijddag binnen zeven dagen vanaf vandaag. De dagen rond een race staan in engine/raceWindow.ts.
+export { RACE_GUARD_DAYS };
+export function raceWeekGuard(inputs: Pick<AdviceInputs, 'asOf' | 'plannedSessions' | 'templates' | 'raceGoals'>): boolean {
+  const until = addDays(inputs.asOf, RACE_GUARD_DAYS);
+  const near = (d: string) => d >= inputs.asOf && d <= until;
+  const byId = new Map(inputs.templates.map((t) => [t.id, t]));
+  return inputs.plannedSessions.some((s) => s.status !== 'skipped' && near(s.scheduledDate) && idHasRole(s.templateId, 'race', byId))
+    || (inputs.raceGoals ?? []).some((r) => near(r.raceDate));
+}
+
+// De herstelweek na een race (de dag na tot en met zeven dagen na): niets inhalen, ook geen training uit de afbouw
+// (backlog R, engine/raceWindow.ts#afterRaceGuard). Naast raceWeekGuard, die alleen vooruit kijkt.
+export function recoveryWeekGuard(inputs: Pick<AdviceInputs, 'asOf' | 'plannedSessions' | 'templates'>): boolean {
+  return afterRaceGuard(inputs.asOf, raceDatesOf(inputs.plannedSessions, inputs.templates));
+}
+
+// A day you said you are away (engine/leave.ts#isAwayDay): never a day to catch up on.
+const awayOn = (date: string, inputs: Pick<AdviceInputs, 'leave'>) => !!inputs.leave?.length && isAwayDay(date, inputs.leave);
+
 // A free day for `session` from `fromDate` to the end of its week: room
 // under the user's time budget/pairing preference, and no second
 // leg-heavy session within 48 hours of it (the one hard scheduling rule).
@@ -175,6 +208,7 @@ export function findCatchUpDate(
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   for (const date of weekDates(session.weekStartDate)) {
     if (date < fromDate) continue;
+    if (awayOn(date, inputs)) continue;
     if (!dayHasRoomFor(date, template, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) continue;
     // Same 48-hour rule as everywhere else, for legs and upper body alike, also across the
     // week boundary (a Sunday catch-up before Monday's leg day); a session that was itself
@@ -227,7 +261,7 @@ export function findRestDayToUse(
   const isRest = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'recovery';
   for (const date of [inputs.asOf, addDays(inputs.asOf, 1)]) {
     const rest = inputs.plannedSessions.find((s) => s.scheduledDate === date && s.status !== 'skipped' && isRest(s) && !loggedIds.has(s.id));
-    if (!rest) continue;
+    if (!rest || awayOn(date, inputs)) continue;
     const dayBefore = addDays(date, -1);
     const trainedDayBefore = inputs.logs.some((l) => l.completedDate === dayBefore && templateById.get(l.templateId)?.type !== 'recovery');
     if (trainedDayBefore) continue;

@@ -252,7 +252,7 @@ const daysText = (n: number) => (n === 1 ? '1 dag' : `${n} dagen`);
 // ", na je rustige duurloop": de trapsessie komt achter de rustige training van die dag.
 const afterText = (slot: DescentSlot) => (slot.after ? `, na je ${slot.after.name.charAt(0).toLowerCase()}${slot.after.name.slice(1)}` : '');
 
-const WHY = 'Na een afdaling zijn je bovenbenen een paar weken beschermd tegen de spierschade van de volgende. In onderzoek was die bescherming er na drie en zes weken nog en na negen weken niet meer (Byrnes e.a. 1985). Vijf minuten bergaf was genoeg om het krachtverlies na een lange afdaling een week later te halveren (Maeo e.a. 2017). Drie weken is een veilige eigen grens. Een afdaling telt bij 100 meter dalen of meer in een wandeling of loop, of als de training zelf een afdaaltraining is. ASCEND kiest een vrije dag met 48 uur tot je zware beendagen en niet naast een harde loop. Is er geen vrije dag, dan komt de trapsessie na een herstelwandeling of een rustige loop op dezelfde dag; dat mag ook de dag na een zware beendag, nooit de dag ervoor. Zonder Akkoord verandert er niets.';
+const WHY = 'Na een afdaling zijn je bovenbenen een paar weken beschermd tegen de spierschade van de volgende. In onderzoek was die bescherming er na drie en zes weken nog en na negen weken niet meer (Byrnes e.a. 1985). Vijf minuten bergaf was genoeg om het krachtverlies na een lange afdaling een week later te halveren (Maeo e.a. 2017). Drie weken is een veilige eigen grens. Een afdaling telt bij 100 meter dalen of meer in een wandeling of loop, of als de training zelf een afdaaltraining is. Het voorstel kiest een vrije dag met 48 uur tot je zware beendagen en niet naast een harde loop. Is er geen vrije dag, dan komt de trapsessie na een herstelwandeling of een rustige loop op dezelfde dag; dat mag ook de dag na een zware beendag, nooit de dag ervoor. Zonder Akkoord verandert er niets.';
 const WHY_TAPER = 'Eén korte afdaling 7 tot 14 dagen voor vertrek houdt de bescherming van je bovenbenen vers voor de eerste dagen van je tocht (afgeleid uit Maeo e.a. 2017 en Byrnes e.a. 1985). In de laatste week doe je niets nieuws meer: een nieuwe prikkel geeft dan spierpijn op de tocht zelf. Bij bergwandelaars die vielen gebeurde drie kwart van de valpartijen bergaf (Faulhaber e.a. 2020). Zonder Akkoord verandert er niets.';
 
 function addProposal(title: string, day: string, template: SessionTemplate, reason: string, rule: string, why: string): PlanChangeProposal {
@@ -285,10 +285,10 @@ export function descentAdvice(input: DescentAdviceInput): Advice[] {
     return s.status !== 'skipped' && !logged.has(s.id) && s.scheduledDate >= from && s.scheduledDate <= until && !!t && hasRole(t, 'descent');
   });
   const minutes = template.durationVariants.full;
-  const lastText = clock.last ? `Je laatste afdaling was ${formatWeekdayDateNL(clock.last)}.` : 'ASCEND ziet nog geen afdaling in je logs.';
+  const lastText = clock.last ? `Je laatste afdaling was ${formatWeekdayDateNL(clock.last)}.` : 'Nog geen afdaling in je logs.';
   // Eerlijk over wat ASCEND niet weet: een wandeling zonder hoogtemeters kan een afdaling hebben gehad.
   const doubt = clock.unknown.length > 0
-    ? ` Je wandeling van ${formatWeekdayDateNL(clock.unknown.at(-1)!)} heeft geen hoogtemeters, dus of je daar afdaalde weet ASCEND niet.`
+    ? ` Je wandeling van ${formatWeekdayDateNL(clock.unknown.at(-1)!)} heeft geen hoogtemeters, dus of je daar afdaalde is niet bekend.`
     : '';
 
   // --- De afbouw voor een tocht -------------------------------------------------
@@ -324,7 +324,7 @@ export function descentAdvice(input: DescentAdviceInput): Advice[] {
     }
     const when = `${formatWeekdayDateNL(slot.day)}${afterText(slot)}`;
     const lead = `${fact} Doe op ${when}${slot.after ? ',' : ''} nog één afdaling die je kent.`;
-    const effect = `Met Akkoord staat ${template.name} (${minutes} minuten) op ${when}. Kies een trap of helling die je kent, en doe daarna niets nieuws meer voor je benen. Met Liever niet blijft je week zoals hij is en vraagt ASCEND er voor deze tocht niet meer naar.`;
+    const effect = `Met Akkoord staat ${template.name} (${minutes} minuten) op ${when}. Kies een trap of helling die je kent, en doe daarna niets nieuws meer voor je benen. Met Liever niet blijft je week zoals hij is en krijg je er voor deze tocht geen vraag meer over.`;
     const proposal = addProposal(title, slot.day, template, 'Eén bekende afdaling voor je tocht, zodat je benen beschermd zijn.', DESCENT_TAPER_RULE, WHY_TAPER);
     return [{ id, trigger: 'plan_update', ruleId: DESCENT_TAPER_RULE, title, effect, lead, brief: `Nog één afdaling voor ${trip.name}`, why: WHY_TAPER, priority: 2, proposal }];
   }
@@ -349,17 +349,17 @@ export function descentAdvice(input: DescentAdviceInput): Advice[] {
   if (plannedDescent(today, until)) return [];
   const title = clock.last ? `Al ${days} dagen geen afdaling` : 'Nog geen afdaling in je logs';
   const brief = clock.last ? `${days} dagen geen afdaling` : 'Nog geen afdaling gelogd';
-  const fact = clock.last ? `${lastText}${doubt}` : `ASCEND ziet in ${days} dagen geen afdaling in je logs.${doubt}`;
+  const fact = clock.last ? `${lastText}${doubt}` : `Geen afdaling in je logs in ${days} dagen.${doubt}`;
   const again = formatWeekdayDateNL(addDays(today, DECLINE_QUIET_DAYS));
   const slot = findDescentDay(input, addDays(today, 1), until, { tripGuard: true });
   if (!slot) {
     const lead = `${fact} De komende week is er geen dag die past.`;
-    const effect = `${lead} Neem in je volgende wandeling of loop een trap of helling mee naar beneden: tien minuten rustig dalen is genoeg. Na Begrepen vraagt ASCEND het op zijn vroegst op ${again} weer.`;
+    const effect = `${lead} Neem in je volgende wandeling of loop een trap of helling mee naar beneden: tien minuten rustig dalen is genoeg. Na Begrepen komt de vraag op zijn vroegst op ${again} terug.`;
     return [{ id, trigger: 'plan_update', ruleId: DESCENT_CLOCK_RULE, title, effect, lead, brief, why: WHY, priority: 2 }];
   }
   const when = `${formatWeekdayDateNL(slot.day)}${afterText(slot)}`;
   const lead = `${fact} Een korte trapsessie op ${when}${slot.after ? ',' : ''} houdt je benen beschermd.`;
-  const effect = `Met Akkoord staat ${template.name} (${minutes} minuten) op ${when}${slot.after ? '' : ', een vrije dag'}. Met Liever niet blijft je week zoals hij is en vraagt ASCEND het op zijn vroegst op ${again} weer.`;
+  const effect = `Met Akkoord staat ${template.name} (${minutes} minuten) op ${when}${slot.after ? '' : ', een vrije dag'}. Met Liever niet blijft je week zoals hij is en komt de vraag op zijn vroegst op ${again} terug.`;
   const proposal = addProposal(title, slot.day, template, 'Een korte afdaalprikkel: je laatste afdaling is drie weken of langer geleden.', DESCENT_CLOCK_RULE, WHY);
   return [{ id, trigger: 'plan_update', ruleId: DESCENT_CLOCK_RULE, title, effect, lead, brief, why: WHY, priority: 2, proposal }];
 }

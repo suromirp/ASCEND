@@ -2,7 +2,7 @@ import { effectiveGoalKind } from '../../engine/journeyAccess';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../state/AppDataContext';
-import { GOAL_KINDS } from '../../data/goalKinds';
+import { goalKindName } from '../../engine/trekShelter';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION } from '../../data/gr5Details';
 import { changeLabel } from '../../engine/goalReadiness';
 import { raceWeightSentence } from '../../engine/raceReadiness';
@@ -48,6 +48,7 @@ export function GoalSheet({
   const { item, readiness, timing } = view;
   const goal = item.goal;
   const kind = effectiveGoalKind(goal, item.isMain);
+  const kindName = goalKindName(goal, item.isMain);
   const when = whenText(view);
   const [ladderOpen, setLadderOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -67,7 +68,7 @@ export function GoalSheet({
 
   return (
     <>
-      <Sheet eyebrow={kind && GOAL_KINDS[kind].label !== goal.name ? GOAL_KINDS[kind].label : 'Doel'} title={goal.name || 'Naamloos doel'} line={line} action={(
+      <Sheet eyebrow={kindName && kindName !== goal.name ? kindName : 'Doel'} title={goal.name || 'Naamloos doel'} line={line} action={(
         <button type="button" onClick={onMenu} aria-label="Meer voor dit doel" className="flex h-11 w-11 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
           <Icon name="meer" size={24} />
         </button>

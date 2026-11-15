@@ -1,3 +1,4 @@
+import { activeReentry } from '../engine/reentry';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
@@ -444,9 +445,9 @@ function TodayContent() {
     <QuietDayCard
       title={mainTiming?.state === 'underway' ? `${mainGoal!.name}, dag ${mainTiming.day} van ${mainTiming.days}` : mainTiming?.state === 'past' ? 'Je hoofddoel ligt achter je' : onHoliday ? 'Vakantie' : allTodayDone ? 'Vandaag geen training' : 'Rust of vrije dag'}
       body={mainTiming?.state === 'underway'
-        ? 'De tocht is je training. Tot het eind plant ASCEND niets.'
+        ? 'De tocht is je training. Tot het eind staat er niets anders gepland.'
         : mainTiming?.state === 'past'
-          ? 'Na je hoofddoel plant ASCEND niets meer. Kies een nieuw doel bij Ascend.'
+          ? 'Na je hoofddoel staat er niets meer gepland. Kies een nieuw doel bij Ascend.'
         : onHoliday
         ? 'Vrij vandaag. Er staat niets op de planning.'
         : allTodayDone
@@ -464,9 +465,9 @@ function TodayContent() {
     ...(illnessSignState.shown ? (['illnessSign'] as const) : []),
     ...(weatherWarnings.shown ? (['weatherWarning'] as const) : []),
     ...(morningCardVisible ? (['morning'] as const) : []),
-    ...(!illness && recoveryRamp(settings.illnessEpisodes, today) ? (['ramp'] as const) : []),
+    ...(!illness && (recoveryRamp(settings.illnessEpisodes, today) || activeReentry(settings.reentryWeeks, today)) ? (['ramp'] as const) : []),
     ...(advice.length > 0 ? (['advice'] as const) : []),
-    ...(missed.item ? (['missed'] as const) : []),
+    ...(missed.item || missed.lapsed ? (['missed'] as const) : []),
     ...(freshStart.shown ? (['freshStart'] as const) : []),
     ...(showExportReminder ? (['backup'] as const) : []),
     ...(backupCard === 'due' ? (['backupDue'] as const) : []),

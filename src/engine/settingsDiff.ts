@@ -237,7 +237,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthFlag('forge-extras', 'Wat er verder veranderde', 'showExtras'),
   strengthFlag('forge-lijntjes', 'Lijntjes in de lijst', 'showTrendLines'),
   strengthChoice('forge-volgorde-lijst', 'Volgorde van de oefeningen', 'listSort', 'forgeVolgorde'),
-  strengthFlag('forge-naast', 'ASCEND naast MacroFactor', 'showComparison'),
+  strengthFlag('forge-naast', 'Voorstel naast MacroFactor', 'showComparison'),
 
   // Lichaam
   flag('vetpercentage', 'Vetpercentage tonen', 'lichaam', 'showBodyFat'),
@@ -272,6 +272,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('zweet-vragen', 'Zweetverlies vragen', 'vandaag', 'askSweat'),
   flag('twijfeltest', 'Twijfeltest eerst vragen', 'planning', 'askDoubtTest'),
   flag('nieuwe-test', 'Nieuwe test voorstellen bij stilstand', 'planning', 'newTestOnStops'),
+  choice('rustiger-instap', 'Rustiger instap na een pauze', 'lichaam', 'reentry', 'three_quarters', 'rustigerInstap'),
   flag('rustdag-terug', 'Rustdag terugzetten voorstellen', 'planning', 'restDayBack'),
   flag('week-vol', 'Vragen als je week te vol wordt', 'planning', 'fullWeekAsk'),
   choice('niet-doorgegaan', 'Training die niet doorging', 'planning', 'missedTraining', 'ask', 'nietDoorgegaan'),
@@ -296,6 +297,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('forge-oefeningen', 'Oefeningen in een training', 'forge', 'forgeLayout', 'scherm', 'forgeOefeningen'),
   choice('forge-verloop', 'Verloop toont', 'forge', 'forgeLogView', 'wijzigingen', 'forgeVerloop'),
   choice('forge-onderbreking', 'Lange onderbreking vragen na', 'forge', 'forgeLongBreak', 45, 'forgeOnderbreking'),
+  choice('forge-concept', 'Training bewaren als concept na', 'forge', 'forgeLeftAfter', 12, 'forgeConcept'),
   choice('forge-grens-kracht', 'Gewone krachttraining', 'forge', 'forgeCapStrength', 0, 'grensKracht'),
   choice('forge-grens-been', 'Beendag', 'forge', 'forgeCapLegs', 0, 'grensBeen'),
   flag('forge-vegen', 'Vegen om te verwijderen', 'forge', 'forgeSwipeDelete'),
@@ -333,6 +335,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('route-soort', 'Welke lus eerst', 'vandaag', 'routeStyle', 'adventure', 'routeSoort'),
   choice('route-start', 'Startpunt van je lus', 'vandaag', 'routeStart', 'here', 'routeStart'),
   choice('route-zoeken', 'Lus zoeken', 'vandaag', 'routeSearch', 'open', 'routeZoeken'),
+  flag('route-grote-wegen', 'Grote wegen mijden', 'vandaag', 'routeAvoidBigRoads'),
   {
     // Eén instelling in twee velden (engine/routeMap.ts#resolveMapGround).
     id: 'route-kaart', title: 'Ondergrond van de kaart', page: 'vandaag',
@@ -445,6 +448,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('etappetijd-eigen', 'Etappetijd op je eigen tempo', 'lichaam', 'stageOwnPace'),
   flag('klimtempo', 'Je klimtempo', 'lichaam', 'climbPace'),
   flag('horloge-stil', 'Melden als je horloge stilvalt', 'koppelingen', 'watchSilence'),
+  flag('horloge-soort', 'Soort van een loop toetsen', 'koppelingen', 'watchKindCheck'),
   flag('ochtend-backup', 'Ochtendgetallen in back-up', 'gegevens', 'morningInBackup'),
   {
     id: 'reeksen-backup', title: 'Reeksen in back-up', page: 'gegevens',

@@ -7,8 +7,11 @@
 
 import type { RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { formatNumberNL } from '../utils/number';
-import { proposalFacts, proposalTitle, tooShort } from './routePlanner';
+import { BIG_ROAD_LEAD, BIG_ROAD_NOTE_M, bigRoadLine, proposalFacts, proposalTitle, shortLine, tooShort } from './routePlanner';
 import { routeActionLine, type RouteFileLine, type RouteSendOutcome, type SendLine } from './routeSend';
+
+// Zoveel regels in amber hoogstens in één rij van een lus.
+export const MAX_WARN_LINES = 2;
 
 // De kaart en de zoekstand hebben dezelfde vaste hoogte, zodat er niets verspringt als de lussen er zijn.
 // Laag genoeg dat op 360 px (een scherm van 640 px hoog) de gekozen lus en de hoofdknop eronder nog in
@@ -111,10 +114,15 @@ export function loopLines(p: RouteProposal, target: RouteTarget, notes: string[]
   const warn: string[] = [];
   const info: string[] = [];
   for (const note of notes) {
-    if ((p.notice && note === p.notice) || (short && note.startsWith(short))) warn.push(note);
+    // Te kort, de melding van de lus en een stuk langs een grote weg zijn let op (amber), hoogstens
+    // MAX_WARN_LINES in een rij; wat overblijft staat bij de uitleg.
+    // De grote weg gaat voor: hij raakt je veiligheid en valt nooit weg.
+    const isWarn = (p.notice && note === p.notice) || (short && note.startsWith(short)) || note.startsWith(BIG_ROAD_LEAD);
+    if (isWarn) warn.push(note);
     else info.push(note);
   }
-  return { warn, info };
+  const ordered = [...warn.filter((n) => n.startsWith(BIG_ROAD_LEAD)), ...warn.filter((n) => !n.startsWith(BIG_ROAD_LEAD))];
+  return { warn: ordered.slice(0, MAX_WARN_LINES), info: [...ordered.slice(MAX_WARN_LINES), ...info] };
 }
 
 // Een andere lus kiezen: in Vol een overgang van 150 ms, in Rustig en Uit meteen op de eindstand.
@@ -147,6 +155,16 @@ export const footerRoom = (height: number | undefined): string => (height ? `${M
 // terug: 6 km · vrijwel vlak" of "Simpel, 3 × de helling op en af: ...". Simpel is altijd over hetzelfde
 // pad terug; Avontuurlijk is een lus (besluit 2026-11-12-route-blok.md).
 export function otherLoopLine(name: string, p: RouteProposal): string {
-  const shape = p.style === 'simple' ? ((p.repeats ?? 0) > 1 ? `${p.repeats} × de helling op en af` : 'heen en terug') : proposalTitle(p).replace(/^Eén/, 'één');
+  const title = proposalTitle(p);
+  const shape = p.style === 'simple'
+    ? ((p.repeats ?? 0) > 1 ? title : (p.deadEnds ?? 0) > 1 ? title.replace(/^Heen/, 'heen') : 'heen en terug')
+    : title.replace(/^Eén/, 'één').replace(/^Lus/, 'lus');
   return `${name}, ${shape}: ${proposalFacts(p)}`;
+}
+
+// De waarschuwing in de ingeklapte rij van de andere lus, in amber zoals bij de gekozen lus: een stuk
+// langs een grote weg (dat weet je voor je op Kies tikt), anders te kort voor de training. Anders niets.
+export function otherLoopWarn(p: RouteProposal, target: RouteTarget): string | undefined {
+  if ((p.bigRoadM ?? 0) >= BIG_ROAD_NOTE_M) return bigRoadLine(p.bigRoadM as number);
+  return tooShort(p, target) ? shortLine(p, target) : undefined;
 }

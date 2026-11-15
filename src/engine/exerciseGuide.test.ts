@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { SETTINGS_INDEX } from '../data/settingsIndex';
+import { SETTINGS_HELP } from '../data/settingsHelp';
+import { placementOf } from '../data/settingsLayout';
 import { EXERCISES, exerciseById } from '../data/exercises';
 import { EXERCISE_GUIDES } from '../data/exerciseGuides';
 import { SKILL_LADDERS } from '../data/skillLadders';
@@ -48,9 +51,10 @@ describe('de rij Uitleg standaard uitgeklapt', () => {
     expect(spec!.reset({ ...asBase, guideOpen: true })).toEqual({ guideOpen: undefined });
   });
   it('heeft een rij in zoeken, indeling en samenvatting', () => {
-    expect(src('../data/settingsIndex.ts')).toContain("id: 'forge-uitleg-open'");
-    expect(src('../data/settingsLayout.ts')).toContain("'forge-uitleg-open'");
-    expect(src('../data/settingsHelp.ts')).toContain('forgeUitlegOpen:');
+    // Sinds stap 2 van het ontwerp instellingen op een plek komen index en indeling uit engine/settingsDefs/.
+    expect(SETTINGS_INDEX.some((i) => i.id === 'forge-uitleg-open')).toBe(true);
+    expect(placementOf('forge-uitleg-open')).toEqual({ page: 'forge', row: 'bundel-weergave', sheet: true });
+    expect(SETTINGS_HELP.forgeUitlegOpen).toBeDefined();
   });
 });
 

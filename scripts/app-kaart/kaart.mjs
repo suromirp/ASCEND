@@ -126,6 +126,39 @@ async function openRunInDetail(page) {
   await page.waitForTimeout(1500);
 }
 
+// Een rij van Instellingen openen: links op de titel tikken, want rechts staat de InfoButton over de rij heen.
+async function rij(page, id) {
+  const l = page.locator(`[data-row="${id}"] .st-hit`).first();
+  if (!(await l.count())) throw new Error('niet gevonden: rij ' + id);
+  await l.scrollIntoViewIfNeeded();
+  await l.tap({ position: { x: 24, y: 18 } });
+  await page.waitForTimeout(1200);
+}
+
+// De instellingenschermen (docs/visie/Ontwerp instellingen op een plek.md, stap 0): elke groepspagina, elke pagina
+// Geavanceerd en elk blad van een rij met meer keuzes (MOVED met sheet in data/settingsLayout.ts). Gegevens staat
+// hierboven al als eigen scherm. Vier bladen zijn met geen nagemaakte stand te openen en staan er niet in:
+// bundel-tochten (geen hoofddoel of tocht), bundel-horloge-gebruik en bundel-horloge-sturen (Garmin niet gekoppeld)
+// en bundel-toets (geen MacroFactor-export).
+const GROEPEN = { planning: 'Planning', doel: 'Doel en tochten', forge: 'Forge', lichaam: 'Lichaam', vandaag: 'Vandaag en meldingen', koppelingen: 'Koppelingen', gegevens: 'Gegevens en back-up', gidsen: 'Gidsen en kennis' };
+const GEAVANCEERD = ['planning', 'forge', 'vandaag', 'koppelingen', 'gegevens'];
+const BLADEN = [
+  ['planning', 'bundel-dagen'], ['planning', 'meerdere'], ['planning', 'bundel-sporten-tellen'], ['planning', 'ambitie'], ['planning', 'bundel-testloop'], ['planning', 'bundel-weekmelding'],
+  ['planning/geavanceerd', 'bundel-niet-doorgegaan'], ['planning/geavanceerd', 'bundel-slepen'],
+  ['doel', 'bundel-zonder-doel', 'zonder-doel'], ['doel', 'bundel-ascend'],
+  ['forge', 'bundel-weergave'], ['forge', 'bundel-rusttimer'], ['forge', 'bundel-sportschool'],
+  ['forge/geavanceerd', 'forge-tijdsgrens'], ['forge/geavanceerd', 'bundel-rekenmodel'], ['forge/geavanceerd', 'bundel-invullen'], ['forge/geavanceerd', 'forge-bergspieren'],
+  ['lichaam', 'lichaamsgewicht'], ['lichaam', 'bundel-wat'], ['lichaam', 'bundel-signalen'],
+  ['vandaag', 'kaarten'], ['vandaag', 'lichterbenen'], ['vandaag', 'bundel-meldingen'], ['vandaag', 'weerplaats'], ['vandaag', 'bundel-weer'], ['vandaag', 'lucht'], ['vandaag', 'bundel-inzicht'], ['vandaag', 'bundel-run-detail'],
+  ['koppelingen', 'bundel-strava'],
+  ['gegevens', 'toestemmingen'], ['gegevens', 'auto-backup'],
+];
+const INSTELLINGEN = Object.fromEntries([
+  ...Object.entries(GROEPEN).filter(([g]) => g !== 'gegevens').map(([g, t]) => [`instellingen-${g}`, { titel: `Instellingen: ${t}`, pad: `#/more/${g}` }]),
+  ...GEAVANCEERD.map((g) => [`instellingen-${g}-geavanceerd`, { titel: `Instellingen: ${GROEPEN[g]}, Geavanceerd`, pad: `#/more/${g}/geavanceerd` }]),
+  ...BLADEN.map(([pad, id, stand]) => [`instellingen-blad-${id}`, { titel: `Instellingen: blad ${id} (${GROEPEN[pad.split('/')[0]]}${pad.includes('/') ? ', Geavanceerd' : ''}${stand ? `, stand ${stand}` : ''})`, pad: `#/more/${pad}`, ...(stand ? { stand } : {}), actie: (p) => rij(p, id) }]),
+]);
+
 const SCHERMEN = {
   vandaag: { titel: 'Vandaag', pad: '#/' },
   week: { titel: 'Week', pad: '#/week' },
@@ -138,6 +171,8 @@ const SCHERMEN = {
   'stand-invloed': { titel: 'Stand: Wat speelde er', pad: '#/stand/invloed' },
   ascend: { titel: 'Ascend', pad: '#/ascend' },
   logboek: { titel: 'Logboek', pad: '#/history' },
+  // Een maand met alleen een Herstelwandeling (stand herstel, maandag 2 november): de kop noemt het herstel met de minuten.
+  'logboek-herstel': { titel: 'Logboek met alleen herstel in de maand', pad: '#/history', stand: 'herstel', klok: '2026-11-02T08:00:00+01:00' },
   instellingen: { titel: 'Instellingen (overzicht)', pad: '#/more' },
   weekterugblik: { titel: 'Je week tot nu (blad in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Je week tot nu")') },
   jaaroverzicht: { titel: 'Jaaroverzicht (in Week)', pad: '#/week', actie: (p) => tik(p, 'button:has-text("Jaaroverzicht")') },
@@ -179,6 +214,14 @@ const SCHERMEN = {
   'stand-ziek': { titel: 'Stand, ziek gemeld', pad: '#/stand', stand: 'ziek' },
   'vandaag-ziek': { titel: 'Vandaag, ziek gemeld', pad: '#/', stand: 'ziek' },
   'week-ziek': { titel: 'Week, ziek gemeld', pad: '#/week', stand: 'ziek' },
+  'vandaag-ziek-eerder': { titel: 'Vandaag, ziek sinds twee dagen', pad: '#/', stand: 'ziek-eerder' },
+  'week-ziek-eerder': { titel: 'Week, ziek sinds twee dagen', pad: '#/week', stand: 'ziek-eerder' },
+  // Een training die bleef liggen (stand concept, besluit 2026-11-15-concept-loopt-nog.md): Benen A van woensdag ligt als
+  // concept in Forge. Het blad Training niet afgerond gaat bij het openen vanzelf open; Niet nu sluit het. De invariant
+  // leest de pil, de rij in Week en de weekterugblik.
+  'vandaag-concept': { titel: 'Vandaag met een training die bleef liggen (Benen A)', pad: '#/', stand: 'concept', actie: (p) => tik(p, '[role=dialog] button:has-text("Niet nu")') },
+  'week-concept': { titel: 'Week met een training die bleef liggen (Benen A)', pad: '#/week', stand: 'concept', actie: (p) => tik(p, '[role=dialog] button:has-text("Niet nu")') },
+  'weekterugblik-concept': { titel: 'Je week tot nu met een training die bleef liggen', pad: '#/week', stand: 'concept', actie: async (p) => { await tik(p, '[role=dialog] button:has-text("Niet nu")'); await tik(p, 'button:has-text("Je week tot nu")'); } },
   'ascend-vaardigheid': { titel: 'Ascend met een vaardigheid (Pull-Up)', pad: '#/ascend', stand: 'vaardigheid' },
   'ascend-algemeen': { titel: 'Ascend met Algemeen sterk met eigen gewicht', pad: '#/ascend', stand: 'algemeen' },
   // Het voorstel voor spieren voor de berg als eigen weergave in de weekterugblik (besluit 2026-11-12-je-week-tot-nu).
@@ -193,6 +236,12 @@ const SCHERMEN = {
   'week-voorstel-wacht': { titel: 'Week met Let op en een voorstel dat wacht', pad: '#/week', stand: 'voorstel-wacht' },
   'week-rustweek': { titel: 'Week in een rustweek', pad: '#/week', stand: 'rustweek' },
   'week-rustweek-blad': { titel: 'Blad Rustweek (Week)', pad: '#/week', stand: 'rustweek', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Rustweek")') },
+  // Een tocht als hoofddoel die de migratie op hutten zette, start 15 maart 2027 (stand tocht, backlogpunt G): de
+  // Reisplanner met Nu regelen en de vraag over hutten, de Paklijst van hut naar hut, en de doelkop op Ascend.
+  'reis-tocht': { titel: 'Reisplanner bij een late start, tocht op hutten (stand tocht)', pad: '#/reis', stand: 'tocht' },
+  'paklijst-tocht': { titel: 'Paklijst, tocht op hutten met vertrek in maart (stand tocht)', pad: '#/reis/paklijst', stand: 'tocht' },
+  'ascend-tocht': { titel: 'Ascend met een tocht op hutten (stand tocht)', pad: '#/ascend', stand: 'tocht' },
+  ...INSTELLINGEN,
 };
 
 // Van een regel van de kaart naar wat je op het scherm zoekt: de tekst van een knop, een kop, een kaart of gewone tekst.

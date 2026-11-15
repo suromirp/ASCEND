@@ -3,6 +3,8 @@ import { useAppData } from '../../state/AppDataContext';
 import type { PackItem } from '../../data/packList';
 import { normalizePackList, resolvePackItems } from '../../engine/packList';
 import { targetPackWeightKg } from '../../engine/demand';
+import { useTrekShelter } from './useTrekShelter';
+import type { TrekShelter } from '../../engine/trekShelter';
 
 // The packing list as the screens use it: the stored list (or the example),
 // a way to change it and the goal's pack weight when it has one.
@@ -10,12 +12,16 @@ export function usePackList(): {
   items: PackItem[];
   customised: boolean;
   goalKg: number | undefined;
+  // Waar je slaapt: bepaalt het voorbeeld en de regel eronder.
+  shelter: TrekShelter;
+  departure: string | undefined;
   change: (fn: (items: PackItem[]) => PackItem[]) => void;
   reset: () => void;
 } {
   const { settings, updateSettings, trainingGoals } = useAppData();
   const stored = useMemo(() => normalizePackList(settings.packList).state, [settings.packList]);
-  const items = resolvePackItems(stored);
+  const { shelter, departure } = useTrekShelter();
+  const items = resolvePackItems(stored, shelter);
   const goalKg = trainingGoals
     .filter((g) => g.status === 'active')
     .map((g) => targetPackWeightKg(g.requirements))
@@ -34,5 +40,5 @@ export function usePackList(): {
     void updateSettings({ packList: undefined });
   }, [updateSettings]);
 
-  return { items, customised: !!stored, goalKg, change, reset };
+  return { items, customised: !!stored, goalKg, shelter, departure, change, reset };
 }

@@ -133,7 +133,7 @@ zeg je ("geen instelling nodig: geen keuze voor de gebruiker").
    een koppeling die kapot of verlopen is, een oude back-up zonder het nieuwe veld (migratie of defensief lezen),
    Rustig en Uit bij Beweging. Noem welke niet gelden en waarom.
 5. **Mag niet bewegen**: `planGolden.test.ts`, historie, de scheduler, en wat het briefje onder Nooit noemt.
-6. **Instelling**: welke, met het advies als standaard, in settingsIndex, settingsLayout, settingsSummary en de groep.
+6. **Instelling**: welke, met het advies als standaard, als verklaring in engine/settingsDefs/<groep>.ts, in settingsSummary en de groep.
 7. **Opleveren**: begin met een blok **Bewijs**: wat je zelf zag (screenshots op 412 px als er een scherm verandert, de verschillen van de tekstkaart, bij planning de echte voorbeeldweek per dag). Daarna kort, Nederlands, per eis gedaan of waarom niet; elke eigen keuze buiten de opdracht; de uitslag
    van tsc, lint, de gerichte tests en de volle set; wat niet gecontroleerd is; de branch.
 
@@ -175,12 +175,20 @@ Gaat voor "Modellen per taak" hieronder, tot en met 15 november of tot de eigena
 - Wat de eigenaar in de coördinator-chat zelf zegt, gaat voor een doorgestuurd bericht van een andere chat.
 
 
+## Inspanning per soort werk (eigenaar 14 november: "Ja, zoals geadviseerd")
+
+- `effort: high` bij create_session voor bouwers aan planner, opslag, horloge en routes, en voor Warden als hij op Opus invalt.
+- Standaard (geen effort meegeven) voor schermen, tekst, Lookout en Pathfinder, en voor Warden op Fable.
+- De coördinator blijft op medium.
+- Meet het in het kostenlogboek: herstelrondes per bouwer met en zonder high. Dalen ze na een week niet, zet het terug en meld het de eigenaar.
+
 ## Bouwplekken vol houden (eigenaar 14 november: "Wrm ga je niet verder")
 
 Op 14 november liep een half uur maar één bouwer terwijl de coördinator wachtte op een review en een herstelronde. De eigenaar zag stilstand. Wachten op een helper is geen reden om niets te starten.
 
 - Elke beurt van de coördinator eindigt met dezelfde vraag: zijn alle drie de bouwplekken bezet? Zo niet, start meteen de volgende uit de Bouwrij of de Inbox die geen bestanden deelt met wat loopt (noem in de opdracht welke bestanden niet aangeraakt mogen worden). Een bouwer in review of herstelronde houdt zijn plek bezet, maar zijn bestanden zijn dan het enige wat geblokkeerd is.
 - Na elke start van een bouwer een send_later van 30 minuten: bouwers melden zich niet vanzelf (14 november: drie klare bouwers stonden een half uur stil).
+- Bouwers kunnen zich niet bij de coördinator melden (15 november: create_trigger naar een andere sessie lukt hun niet). Vraag in de opdracht dus geen melding, maar: "Zet in je laatste bericht de commit en de uitslag van de controles; de coördinator kijkt zelf." De coördinator kijkt elk half uur (Wachter op :40, Bouwers nakijken op :10).
 - Elke send_later voor een check-in noemt ook: "start bij een vrije plek de volgende die geen bestanden deelt".
 - Uitzondering alleen bij de Wachter-regels hierboven of als de eigenaar zegt te wachten. Een `allowed_warning` in rate_limit_info is geen reden om af te schalen (eigenaar 14 november: "Je hebt genoeg ruimte, je hoeft niet af te schalen"). Alleen Fable is krap: houd Fable voor het werk waar de tabel het vraagt, en meld het de eigenaar zodra Fable bijna vol is (of een Fable-sessie geweigerd wordt); hij heeft dan nog een reset.
 - Meld de eigenaar welke bouwers lopen en wanneer je weer kijkt; zeg het als een plek bewust leeg blijft, met de reden.

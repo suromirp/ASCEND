@@ -9,7 +9,7 @@
 
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { askLine, declinedKey, linkEyebrow, linkLine } from '../engine/missedTraining';
+import { askLine, declinedKey, lapsedLine, linkEyebrow, linkLine } from '../engine/missedTraining';
 import type { MissedTrainingState } from './useMissedTraining';
 import type { PlannedSession } from '../models/training';
 import { todayISO } from '../utils/dates';
@@ -25,7 +25,15 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
   const today = todayISO();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
-  const { item, missedSettings } = state;
+  const { item, lapsed, missedSettings } = state;
+  if (!item && lapsed) {
+    return (
+      <Card data-missed-lapsed="">
+        <Eyebrow>Vervallen</Eyebrow>
+        <p className="mt-1 text-base" style={{ color: 'var(--color-ink)' }}>{lapsedLine(lapsed.kind, lapsed.sessions)}</p>
+      </Card>
+    );
+  }
   if (!item) return null;
 
   const run = (action: () => Promise<boolean | number>) => {
@@ -56,10 +64,10 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
 
   return (
     <Card data-missed={item.session.id}>
-      <Eyebrow>Nog open</Eyebrow>
+      <Eyebrow>Gemist</Eyebrow>
       <p className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>Niet gedaan?</p>
       <p className="mt-1 text-base" style={{ color: 'var(--color-ink)' }}>{askLine(item.session, item.template)}</p>
-      <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je hebt hier nog niets voor gelogd. Ging hij niet door, dan zet ASCEND hem op overgeslagen; verder verandert er niets.</p>
+      <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je hebt hier nog niets voor gelogd. Ging hij niet door, dan komt hij op overgeslagen; verder verandert er niets.</p>
       <div className="mt-3 flex gap-2">
         <SecondaryButton disabled={busy} onClick={() => run(() => skipMissed([item.session.id], 'answer'))}>{busy ? 'Bezig…' : 'Niet gedaan'}</SecondaryButton>
         <SecondaryButton disabled={busy} onClick={() => onLogNow(item.session)}>Toch gedaan</SecondaryButton>
@@ -68,7 +76,7 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
         <TextButton tone="dim" disabled={busy} onClick={() => remember((m) => ({ ...m, notNow: [...m.notNow, item.session.id], notNowOn: today }))}>Niet nu</TextButton>
       </div>
       {note && <p className="mt-2 text-sm" role="status" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}
-      {missedSettings.choice === 'auto' && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Een test, een wedstrijd of iets wat je zelf vastzette slaat ASCEND nooit zelf over.</p>}
+      {missedSettings.choice === 'auto' && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Een test, een wedstrijd of iets wat je zelf vastzette gaat nooit vanzelf op overgeslagen.</p>}
     </Card>
   );
 }

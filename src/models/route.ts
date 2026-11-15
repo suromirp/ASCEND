@@ -8,6 +8,10 @@ export interface RoutePoint {
   lon: number;
   // Hoogte in meters boven zeeniveau; ontbreekt als de bron geen hoogte gaf.
   ele?: number;
+  // Dit punt ligt op een grote weg (de bron zegt welke weg; nu alleen BRouter). Een stap telt in
+  // engine/routeGeometry.ts#bigRoadMeters alleen als beide punten het hebben. Alleen in het geheugen: een
+  // bewaarde route en het GPX-bestand nemen alleen plek en hoogte mee.
+  bigRoad?: true;
 }
 
 export type RouteSource = 'brouter' | 'valhalla';
@@ -42,10 +46,18 @@ export type RouteFn = (waypoints: RoutePoint[], options?: RouteOptions) => Promi
 
 export type RouteStyle = 'simple' | 'adventure';
 
-// Wat de training vraagt.
+// Wat de training vraagt. Een looptraining: alleen afstand en hoogtemeters. Een wandeltraining
+// (engine/hikeTarget.ts) ook de duur, de rugzak en wat hij aan hoogtemeters vraagt; `ascentM` is dan wat
+// in de duur past. Een bewaarde route bewaart geen doel, dus deze velden vragen geen migratie.
 export interface RouteTarget {
   distanceKm: number;
   ascentM: number;
+  // De duur van een wandeltraining in minuten; afwezig: een looptraining.
+  minutes?: number;
+  // De rugzak in kilo's, als de training er een vraagt.
+  packKg?: number;
+  // De hoogtemeters die de training vraagt, als hij die vraagt (ook als ze niet in de duur passen).
+  askedAscentM?: number;
 }
 
 export interface RouteProposal {
@@ -67,6 +79,14 @@ export interface RouteProposal {
   // Wat de training aan hoogtemeters vraagt, als ze die vraagt. Dan staat het getal van de lus er
   // altijd bij, ook onder de grens van vrijwel vlak.
   targetAscentM?: number;
+  // Hoeveel doodlopende stukken de lus heeft (engine/routeGeometry.ts#deadEnds): een stuk dat je in en
+  // weer uit loopt. Heen en terug heeft er één; een echte lus geen.
+  deadEnds?: number;
+  // Meters langs een grote weg, als de bron dat zei en het er zijn.
+  bigRoadM?: number;
+  // Simpel met herhalingen: waar de helling ligt, in meters langs de lus (de eerste keer omhoog).
+  climbFromM?: number;
+  climbToM?: number;
   // Een melding bij deze lus: het droge feit en wat wel kan (bijvoorbeeld geen heuvels in de buurt).
   notice?: string;
 }

@@ -3,6 +3,7 @@
 // trail. Nothing new is stored for it; this only makes the existing record
 // readable (Aangepast door ASCEND in Week, "Volgende week verandert").
 
+import { REENTRY_UNDONE_TITLE, reentryAdjustments, reentryNote, type ReentryWeek } from './reentry';
 import type { PlanChangeItem, PlanChangeProposal, EngineEvent } from '../models/planChange';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { describeChanges } from './changeImpact';
@@ -37,6 +38,7 @@ const TRIGGER_LABEL: Record<EngineEvent, string> = {
   week_load_changed: 'Rustweek of herhaalde week',
   direction_changed: 'Je richting',
   wave_review: 'Na je golf',
+  reentry_planned: 'Rustiger instap',
 };
 
 export interface ChangeLogEntry {
@@ -58,7 +60,8 @@ export function buildChangeLog(proposals: PlanChangeProposal[], sessions: Planne
   const reverted = revertedIds(proposals);
   return proposals
     .filter((p) => p.resolvedAt && localDateOf(p.createdAt) >= sinceIso)
-    .filter((p) => p.changes.some((c) => c.action !== 'keep') || p.resolution === 'rejected')
+    // Een rustiger instap (engine/reentry.ts) verandert alleen lengtes, geen rij: die staat er toch, met zijn eigen regel.
+    .filter((p) => p.changes.some((c) => c.action !== 'keep') || p.resolution === 'rejected' || p.trigger === 'reentry_planned')
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map((p) => ({
       id: p.id,
@@ -66,7 +69,7 @@ export function buildChangeLog(proposals: PlanChangeProposal[], sessions: Planne
       label: TRIGGER_LABEL[p.trigger] ?? p.trigger,
       issue: p.issue,
       undone: p.resolution === 'rejected' || reverted.has(p.id),
-      lines: describeChanges(p.changes, sessions, templates),
+      lines: p.changes.length === 0 && p.trigger === 'reentry_planned' ? [p.consequences] : describeChanges(p.changes, sessions, templates),
       reasons: [...new Set(p.changes.map((c) => c.reason).filter((r): r is string => Boolean(r)))],
       explanation: p.explanation,
     }));
@@ -129,6 +132,8 @@ export interface WeekAdjustment {
   reason: string;
   at: string; // wanneer het besloten is
   how?: 'akkoord' | 'vanzelf'; // leeg als het log het niet zeker zegt
+  // Een rustiger instap (engine/reentry.ts): alleen de duur, voor de hele week terug te zetten met Ongedaan maken.
+  reentry?: ReentryWeek;
 }
 
 const dayShort = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))}`;
@@ -161,6 +166,9 @@ export function weekAdjustments(
   templates: SessionTemplate[],
   weekStart: string,
   asOf: string,
+  // De rustiger instappen waarop je Akkoord gaf (AppSettings.reentryWeeks): ze veranderen geen rij, alleen de duur,
+  // dus ze staan niet in de wijzigingen van een voorstel. Zonder: geen regel voor een instap.
+  reentryWeeks?: unknown,
 ): WeekAdjustment[] {
   const since = addDays(asOf, -ADJUST_WINDOW_DAYS);
   const weekEnd = addDays(weekStart, 6);
@@ -275,6 +283,27 @@ export function weekAdjustments(
         reason: c.reason || p.issue,
         at: p.resolvedAt ?? p.createdAt,
         how: howDecided(p),
+      });
+    }
+  }
+
+  // Rustiger instap: elke training in die zeven dagen wordt korter. Een andere regel van ASCEND voor dezelfde
+  // training gaat voor; de reden noemt de instap niet nog eens.
+  const reentryAt = (from: string) => accepted.filter((p) => p.trigger === 'reentry_planned' && p.issue !== REENTRY_UNDONE_TITLE).map((p) => p.resolvedAt ?? p.createdAt).filter((at) => localDateOf(at) <= from).at(-1);
+  for (const w of reentryAdjustments(reentryWeeks)) {
+    if (w.until < weekStart || w.from > weekEnd) continue;
+    for (const s of sessions) {
+      if (s.status === 'skipped' || s.scheduledDate < w.from || s.scheduledDate > w.until || latest.has(s.id)) continue;
+      if (templateById.get(s.templateId)?.type === 'recovery') continue;
+      latest.set(s.id, {
+        sessionId: s.id,
+        name: templateById.get(s.templateId)?.name ?? 'Training',
+        what: `korter op ${dayShort(s.scheduledDate)}`,
+        date: s.scheduledDate,
+        reason: reentryNote(w),
+        at: reentryAt(w.from) ?? `${w.from}T00:00:00`,
+        how: 'akkoord',
+        reentry: w,
       });
     }
   }

@@ -3,7 +3,7 @@
 // `controleer(k, schermen)`. `k(scherm)` geeft de tekst van een scherm; de functie geeft een lijst
 // met schendingen terug (tekst), leeg als alles klopt.
 //   node scripts/app-kaart/invarianten.mjs [map]    (standaard docs/app-kaart)
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -12,7 +12,94 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const lees = (map, scherm) => { const p = join(map, scherm + '.md'); return existsSync(p) ? readFileSync(p, 'utf8') : ''; };
 const alle = (t, re) => [...t.matchAll(re)];
 
+// ASCEND als onderwerp van een zin (besluit 2026-11-14-zonder-ascend-als-onderwerp.md). Schermtekst zet het droge feit
+// voorop, zonder onderwerp. Deze telling mag alleen dalen: stijgt hij boven het plafond, dan faalt de vergelijking.
+// Daalt hij, verlaag dan het plafond naar het nieuwe getal (de melding zegt welk).
+//
+// Herkennen zonder woordsoortenlijst, per regel van de kaart (ook labels en aria):
+//   - "ASCEND <werkwoord>": het woord erna is een persoonsvorm. Dat is een vast werkwoord uit WERKWOORDEN of een woord
+//     op -t dat geen bekend ander woord op -t is (niet, dat, met, ...): "ASCEND mag", "ASCEND plant".
+//     Ook de verleden tijd op -te of -de, behalve bijvoeglijke woorden (beste, volgende, ...): "ASCEND maakte".
+//   - "<werkwoord> ASCEND": inversie, dezelfde toets op het woord ervoor: "legt ASCEND", "zet ASCEND".
+//   - "<voegwoord> ASCEND": een bijzin met ASCEND als onderwerp: "die ASCEND", "dat ASCEND", "als ASCEND".
+// Uitzonderingen (tellen nooit mee): het merk ([link: ASCEND], "ASCEND, naar Vandaag", "Welkom bij ASCEND"), de map
+// ASCEND voor back-ups ("map ASCEND", "Documents > ASCEND", "Documenten/ASCEND"), samenstellingen ("ASCEND-blok"),
+// "door ASCEND" en "van ASCEND" (geen onderwerp), en toestemmingen van de telefoon (een regel met "toestemming").
+// "Het" als verwijzing naar de app telt niet mee: dat is zonder zinsbouw niet te scheiden van "het regent" of
+// "het lukt", en een valse telling zou het plafond onbetrouwbaar maken.
+// De telling loopt over elk scherm in de map, dus nieuwe schermen (zoals de instellingenschermen) tellen vanzelf mee.
+export const PLAFOND_ASCEND_ONDERWERP = 0;
+const WERKWOORDEN = new Set(['kan', 'kon', 'mag', 'mocht', 'zal', 'zou', 'wil', 'wilde', 'moet', 'is', 'was', 'heeft', 'had', 'vond', 'deed', 'ging', 'zag', 'wist', 'nam', 'gaf', 'bleef', 'zet', 'weet', 'ziet', 'doet', 'gaat', 'staat', 'laat', 'houdt', 'vraagt', 'plant', 'kiest', 'leert', 'legt', 'zoekt', 'rekent', 'schat', 'bouwt', 'stelt']);
+const GEEN_WERKWOORD = new Set(['niet', 'dat', 'met', 'tot', 'het', 'wat', 'uit', 'ooit', 'net', 'want', 'licht', 'recht', 'echt', 'meest', 'best', 'eerst', 'laatst', 'vast', 'toest', 'altijd', 'pas']);
+const VOEGWOORDEN = new Set(['die', 'dat', 'wat', 'als', 'zodat', 'omdat', 'waarmee', 'waarin', 'waarop', 'waar', 'terwijl', 'tenzij', 'of', 'voordat', 'nadat', 'zodra']);
+// Verleden tijd op -te of -de ("zette ASCEND", "ASCEND maakte"), behalve bijvoeglijke woorden op -te/-de.
+const GEEN_VERLEDEN = new Set(['beste', 'eerste', 'laatste', 'grootste', 'volgende', 'vaste', 'goede', 'oude', 'grote', 'late', 'juiste', 'zelfde', 'rustige', 'gewenste', 'hele', 'derde', 'vierde', 'vijfde', 'zesde', 'zevende', 'achtste', 'echte', 'lichte', 'zware', 'harde', 'snelste', 'langste', 'nieuwe', 'andere', 'gemiddelde', 'geplande', 'gedane']);
+const isVerleden = (w) => /^[a-zë]{2,}(te|de)$/.test(w) && !GEEN_VERLEDEN.has(w);
+const isWerkwoord = (w) => !!w && (WERKWOORDEN.has(w) || (/^[a-zë]{2,}t$/.test(w) && !GEEN_WERKWOORD.has(w)) || isVerleden(w));
+export function ascendAlsOnderwerp(tekst) {
+  const uit = [];
+  for (const regel of tekst.split('\n')) {
+    if (/toestemming/i.test(regel)) continue;
+    for (const m of regel.matchAll(/(?:^|[^\w-])(\p{L}+)?\s*\bASCEND\b(?![-/])(?:\s+(\p{L}+))?/gu)) {
+      const ervoor = (m[1] ?? '').toLowerCase(), erna = (m[2] ?? '').toLowerCase();
+      if (/\[link: ASCEND\]|ASCEND, naar Vandaag/.test(regel) && !erna) continue;
+      if (['door', 'van', 'bij', 'map', 'naar'].includes(ervoor) && !isWerkwoord(erna)) continue;
+      if (/(Documents|Documenten|Interne opslag)\s*[>/]\s*ASCEND/.test(regel)) continue;
+      if (isWerkwoord(erna) || isWerkwoord(ervoor) || VOEGWOORDEN.has(ervoor)) uit.push(regel.trim());
+    }
+  }
+  return uit;
+}
+
+// Vaste zinnen voor de telling zelf: [zin, aantal]. controleer() draait ze eerst en faalt als er een niet klopt,
+// zodat een wijziging aan de herkenning niet stil iets gaat missen of te veel gaat tellen.
+//   node scripts/app-kaart/invarianten.mjs --zelftoets
+export const ZELFTOETS = [
+  ['Tot het eind plant ASCEND niets.', 1],
+  ['ASCEND mag je locatie niet gebruiken.', 1],
+  ['Daarom zette ASCEND hem op overgeslagen.', 1],
+  ['Die maakte ASCEND zelf.', 1],
+  ['ASCEND vond geen betere verdeling.', 1],
+  ['ASCEND maakte een kopie.', 1],
+  ['Kies een bestand dat ASCEND zelf heeft gemaakt.', 1],
+  ['Van de ruimte die ASCEND mag gebruiken', 1],
+  ['[link: ASCEND] (aria: ASCEND, naar Vandaag)', 0],
+  ['Welkom bij ASCEND', 0],
+  ['Aangepast door ASCEND', 0],
+  ['de map ASCEND in Documents is niet te bereiken', 0],
+  ['Interne opslag > Documents > ASCEND', 0],
+  ['week 4 van dit ASCEND-blok', 0],
+  ['ASCEND: duur, afstand en hoe zwaar het voelde.', 0],
+  ['Je gegevens in ASCEND zijn niet geraakt.', 0],
+  ['Gebruikte je ASCEND al eerder?', 0],
+  ['Geef ASCEND toestemming voor je locatie.', 0],
+];
+export function zelftoets() {
+  return ZELFTOETS.flatMap(([zin, n]) => { const g = ascendAlsOnderwerp(zin).length; return g === n ? [] : [`"${zin}": ${g} geteld, ${n} verwacht`]; });
+}
+
 export const INVARIANTEN = [
+  {
+    // Backlogpunt G (Lookout profiel GR5, 14 november): bij een late start staan taken waarvan de tijd voorbij is samen
+    // onder Nu regelen, nooit onder een maand die al voorbij is. De klok van de kaart staat in de kop van elk scherm.
+    naam: 'Reisplanner: geen maand die al voorbij is als kop, voorbije taken onder Nu regelen',
+    controleer: (k, _schermen, alleSchermen) => {
+      const uit = [];
+      const MAANDEN = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+      for (const s of alleSchermen.filter((x) => x === 'reis' || x.startsWith('reis-'))) {
+        const t = k(s);
+        const klok = t.match(/Klok: (\d+) (\w+) (\d{4})/);
+        if (!klok) continue;
+        const nu = Number(klok[3]) * 12 + MAANDEN.indexOf(klok[2]);
+        for (const m of alle(t, new RegExp(`^(${MAANDEN.join('|')}) (\\d{4})$`, 'gm'))) {
+          if (Number(m[2]) * 12 + MAANDEN.indexOf(m[1]) < nu) uit.push(`${s}: de kop "${m[0]}" ligt voor de klok`);
+        }
+        if (/was aan de beurt tot/.test(t) && !/^Nu regelen$/m.test(t)) uit.push(`${s}: een voorbije taak zonder de kop Nu regelen`);
+        if (/nog open\]/.test(t)) uit.push(`${s}: een taak zegt nog open in plaats van wanneer hij aan de beurt was`);
+      }
+      return uit;
+    },
+  },
   {
     // Aangepast door ASCEND (besluit 2026-11-12-week-minimaal): één uitkomst. Het getal op de rij onder de dagen is het
     // aantal dagrijen met "aangepast", en het aantal regels in het blad erachter. Geen rij is nul.
@@ -88,6 +175,18 @@ export const INVARIANTEN = [
     // Het Logboek is wat je deed: geen noemer met wat gepland stond en geen "Gemist".
     naam: 'Logboek zonder noemer en zonder Gemist',
     controleer: (k) => alle(k('logboek'), /^.*(?:\b\d+ van \d+\b|\bGemist\b).*$/gm).map((m) => `logboek: "${m[0].trim()}"`),
+  },
+  {
+    // De kop van het Logboek (kaart 1) zegt nooit "niets" of "geen trainingen" als de lijst eronder een log heeft
+    // (engine/logbookMonth.ts#emptyMonthTitle). Een log in de lijst is een knop met dag, maand en naam: "[knop: 1novHerstelwandeling...]".
+    naam: 'De logboekkop zegt nooit niets als de lijst eronder een log heeft',
+    controleer: (k, schermen) => schermen.filter((s) => /^logboek(-|$)/.test(s)).flatMap((s) => {
+      const t = k(s);
+      const kop = (t.split(/^--- kaart 1 ---$/m)[1] ?? '').split(/^--- kaart \d+ ---$/m)[0];
+      const logs = alle(t, /^\[knop: \d{1,2}(?:jan|feb|mrt|apr|mei|jun|jul|aug|sep|okt|nov|dec)\S.*\]$/gm).length;
+      if (logs === 0) return [];
+      return alle(kop, /^.*(?:\bniets\b|\bgeen trainingen\b).*$/gim).map((m) => `${s}: de kop zegt "${m[0].trim()}" bij ${logs} ${logs === 1 ? 'log' : 'logs'} in de lijst`);
+    }),
   },
   {
     naam: 'Weeknummer en fase gelijk op Vandaag, Week en Stand',
@@ -303,20 +402,88 @@ export const INVARIANTEN = [
       return uit;
     },
   },
+  {
+    // Zie PLAFOND_ASCEND_ONDERWERP hierboven. Loopt over alle schermen in de map, niet alleen over SCHERMEN.
+    naam: 'ASCEND als onderwerp: niet boven het plafond',
+    controleer: (k, schermen, alleSchermen = schermen) => {
+      const plekken = alleSchermen.flatMap((s) => ascendAlsOnderwerp(k(s)).map((r) => `${s}: "${r}"`));
+      if (plekken.length > PLAFOND_ASCEND_ONDERWERP) return [`${plekken.length} plekken, het plafond is ${PLAFOND_ASCEND_ONDERWERP}: ${plekken.join('; ')}`];
+      if (plekken.length < PLAFOND_ASCEND_ONDERWERP) console.log(`ASCEND als onderwerp: ${plekken.length} plekken, onder het plafond van ${PLAFOND_ASCEND_ONDERWERP}. Verlaag PLAFOND_ASCEND_ONDERWERP in scripts/app-kaart/invarianten.mjs.`);
+      return [];
+    },
+  },
+  {
+    // Vervallen heeft één bron (besluit 2026-11-15-vervallen-een-bron.md, engine/sessionStatus.ts#isPausedDay): wat de
+    // kaart Vervallen op een vandaag-scherm noemt, heet op het week-scherm van dezelfde stand nergens gemist. Ziek vanaf
+    // 13 november noemde de kaart eerst ook de dagen ervoor, terwijl Week die terecht gemist noemde (Warden, 15 november).
+    naam: 'Vervallen op Vandaag heet in Week van dezelfde stand nergens gemist',
+    controleer: (k, schermen) => {
+      const uit = [];
+      let getoetst = 0;
+      const kort = { maandag: 'Ma', dinsdag: 'Di', woensdag: 'Wo', donderdag: 'Do', vrijdag: 'Vr', zaterdag: 'Za', zondag: 'Zo' };
+      const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      for (const v of schermen.filter((x) => x === 'vandaag' || x.startsWith('vandaag-'))) {
+        const w = v === 'vandaag' ? 'week' : `week-${v.slice('vandaag-'.length)}`;
+        if (!schermen.includes(w)) continue;
+        const regel = k(v).match(/^(.+) (?:vervalt|vervallen): je meldde .*$/m);
+        if (!regel) continue;
+        getoetst++;
+        const week = k(w);
+        const items = alle(regel[1], /(?:^|, | en )(.+?) van (maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag) (\d{1,2}) [a-z]+/g);
+        if (items.length === 0) uit.push(`${v}: de kaart Vervallen noemt geen training die te lezen is`);
+        for (const [, naam, dag, nr] of items) {
+          const rij = new RegExp(`^\\[knop: ${esc(naam)}${kort[dag]} ${nr}·.*gemist.*\\]$`, 'im');
+          if (rij.test(week)) uit.push(`${v} noemt ${naam} van ${dag} ${nr} vervallen, ${w} noemt hem gemist`);
+        }
+      }
+      // Nooit stil leeg: zonder een vandaag-scherm met een regel Vervallen toetst deze invariant niets. De stand
+      // ziek-eerder (ziek vanaf twee dagen terug, met trainingen ervoor en erin) levert die regel.
+      if (getoetst === 0) uit.push('geen enkel vandaag-scherm met een week-scherm erbij heeft een regel Vervallen: de invariant toetst niets (stand ziek-eerder ontbreekt of de kaart is weg)');
+      return uit;
+    },
+  },
+  {
+    // Een training die bleef liggen loopt nog (besluit 2026-11-15-concept-loopt-nog.md, engine/sessionStatus.ts#isDraftOpen):
+    // de training van de pil "niet afgerond" heet in Week "loopt nog" en nergens gemist, de weekterugblik noemt hem niet
+    // onder Gemist en Vandaag stelt er geen vraag Niet gedaan? over. Eerst vroeg Niet gedaan? naar een training die nog
+    // open lag (backlog Afbreker vervolg).
+    naam: 'Een training die nog loopt heet nergens gemist',
+    controleer: (k) => {
+      const uit = [];
+      const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pil = k('week-concept').match(/Training (.+?), niet afgerond/);
+      // Nooit stil leeg: zonder de pil van de stand concept toetst deze invariant niets.
+      if (!pil) return ['week-concept heeft geen pil "niet afgerond": de invariant toetst niets (stand concept ontbreekt of de pil is weg)'];
+      const naam = pil[1];
+      const rijen = k('week-concept').split('\n').filter((r) => new RegExp(`^\\[knop: ${esc(naam)}`).test(r));
+      if (!rijen.some((r) => /loopt nog/.test(r))) uit.push(`week-concept: geen rij van ${naam} met "loopt nog"`);
+      for (const r of rijen) if (/gemist/i.test(r)) uit.push(`week-concept noemt ${naam} gemist: ${r}`);
+      const gemist = k('weekterugblik-concept').match(/^Gemist\n(.+)$/m);
+      if (gemist && gemist[1].includes(naam)) uit.push(`weekterugblik-concept noemt ${naam} onder Gemist`);
+      const vandaag = k('vandaag-concept');
+      if (new RegExp(`Niet gedaan\\?[\\s\\S]{0,200}${esc(naam)}`).test(vandaag) || new RegExp(`${esc(naam)} van [a-z]+ \\d+ [a-z]+[\\s\\S]{0,80}Niet gedaan`).test(vandaag)) uit.push(`vandaag-concept vraagt Niet gedaan? over ${naam}`);
+      return uit;
+    },
+  },
 ];
 
 const SCHERMEN = [
   'vandaag', 'week', 'stand', 'ascend', 'logboek', 'instellingen', 'weekterugblik', 'jaaroverzicht', 'training-blad', 'briefing', 'briefing-heuvel', 'briefing-loopband-helling', 'briefing-stairmaster', 'briefing-loopband',
   'gegevens', 'lichaam', 'lichaam-plek', 'vandaag-horloge', 'vandaag-avond', 'run-in-detail', 'vandaag-vakantie', 'week-vakantie',
-  'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek',
+  'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek', 'vandaag-ziek-eerder', 'week-ziek-eerder',
   'ascend-algemeen', 'ascend-vaardigheid', 'weekterugblik-voorstel', 'stand-benen', 'stand-belasting', 'stand-ritme', 'stand-lopen', 'stand-invloed',
-  'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek', 'week-aangepast', 'week-aangepast-blad',
+  'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek', 'week-aangepast', 'week-aangepast-blad', 'logboek-herstel',
+  'vandaag-concept', 'week-concept', 'weekterugblik-concept',
 ];
 
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {
+  const fout = zelftoets();
+  if (fout.length) return fout.map((tekst) => ({ naam: 'Zelftoets ASCEND als onderwerp', tekst }));
   const cache = {};
   const k = (s) => (cache[s] ??= lees(map, s));
-  return INVARIANTEN.flatMap((i) => i.controleer(k, SCHERMEN).map((tekst) => ({ naam: i.naam, tekst })));
+  // Elk scherm in de map, ook een dat (nog) niet in SCHERMEN staat. De README is geen scherm.
+  const alleSchermen = existsSync(map) ? readdirSync(map).filter((f) => f.endsWith('.md') && f !== 'README.md').map((f) => f.slice(0, -3)).sort() : [];
+  return INVARIANTEN.flatMap((i) => i.controleer(k, SCHERMEN, alleSchermen).map((tekst) => ({ naam: i.naam, tekst })));
 }
 
 export function meld(schendingen) {
@@ -325,6 +492,7 @@ export function meld(schendingen) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if (process.argv.includes('--zelftoets')) { const f = zelftoets(); if (f.length) { console.log(f.join('\n')); process.exit(2); } console.log(`Zelftoets: ${ZELFTOETS.length} zinnen kloppen.`); process.exit(0); }
   const s = controleer(process.argv[2] ? resolve(process.argv[2]) : undefined);
   if (s.length) { meld(s); process.exit(2); }
   console.log('Invarianten: geen schendingen.');

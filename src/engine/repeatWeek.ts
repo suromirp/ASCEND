@@ -43,6 +43,8 @@ import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
+import type { LeavePeriod } from '../models/leave';
+import { awayPeriods, isAwayDay, leaveDays } from './leave';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { PHASE_TAPER, WAVE_LENGTH, progressionTarget } from './programLayout';
 import { phaseWaveLength } from '../models/program';
@@ -197,6 +199,8 @@ export interface RepeatWeekInputs {
   templates: SessionTemplate[];
   today: string;
   illnessEpisodes?: IllnessEpisode[];
+  // Een vakantie of tocht die je meldde: die week viel niet tegen, je was weg (engine/leave.ts#isAwayDay).
+  leavePeriods?: LeavePeriod[];
   planChangeLog?: PlanChangeProposal[];
   // Monday of the race week of every running race before the main goal. The
   // race block keeps its own taper: no repeat in the week before, during or
@@ -205,6 +209,8 @@ export interface RepeatWeekInputs {
   respondedIds: Set<string>;
   // Wat de sleuteltraining is (engine/keySession.ts). Zonder: de lange duurloop of de bergtocht.
   keyFocus?: KeyFocus;
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, niet gemist.
+  openDraft?: string;
 }
 
 function repeatWeekId(weekStart: string): string {
@@ -228,12 +234,16 @@ export function proposeRepeatWeek(inputs: RepeatWeekInputs): RepeatWeekProposal 
   // The week before was not a rest week and not an ill week; the way back
   // from an illness has its own schedule (engine/illness.ts).
   if (illBetween(illnessEpisodes, previousWeek, addDays(previousWeek, 6), today) || activeIllness(illnessEpisodes) || recoveryRamp(illnessEpisodes, today)) return undefined;
+  // Een week met een vakantie of tocht die je zelf meldde is geen tegenvallende week: geen "0 van 5" en geen
+  // herhaling. Na zo'n pauze stelt ASCEND een rustiger instap voor (engine/reentry.ts).
+  const awayDays = leaveDays(awayPeriods(inputs.leavePeriods));
+  if (Array.from({ length: 7 }, (_, i) => addDays(previousWeek, i)).some((d) => isAwayDay(d, inputs.leavePeriods, awayDays))) return undefined;
   // The race block has its own taper and short days around the race.
   if ((inputs.raceWeeks ?? []).some((w) => Math.abs(daysBetween(w, weekStart)) <= 7 || Math.abs(daysBetween(w, previousWeek)) <= 7)) return undefined;
 
   const review = buildWeekReview({
     weekStart: previousWeek, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, program,
-    planChangeLog: inputs.planChangeLog ?? [], asOf: today, illnessEpisodes, keyFocus: inputs.keyFocus,
+    planChangeLog: inputs.planChangeLog ?? [], asOf: today, illnessEpisodes, leavePeriods: inputs.leavePeriods, openDraft: inputs.openDraft, keyFocus: inputs.keyFocus,
   });
   if (!review) return undefined;
   const verdict = judgeWeek(review);
@@ -260,9 +270,9 @@ function describeLoad(l: LoadLine): string {
 export function shortfallSentence(p: RepeatWeekProposal): string {
   const counted = `${p.done} van de ${p.planned} trainingen`;
   const key = p.missedKey.length > 0 ? p.missedKey.map((n) => n.toLowerCase()).join(' en de ') : '';
-  if (p.verdict.fewDone && p.verdict.keyMissed) return `Vorige week deed je ${counted}, en de ${key} bleef liggen.`;
+  if (p.verdict.fewDone && p.verdict.keyMissed) return `Vorige week deed je ${counted}, en de ${key} heb je gemist.`;
   if (p.verdict.fewDone) return `Vorige week deed je ${counted}.`;
-  return `Vorige week bleef de ${key} liggen, de belangrijkste training van de week.`;
+  return `Vorige week miste je de ${key}, de belangrijkste training van de week.`;
 }
 
 // What the repeat costs, in the numbers of the key session.

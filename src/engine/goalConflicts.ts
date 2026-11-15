@@ -172,9 +172,9 @@ function suggestion(c: { resolution: ConflictResolution; goal: ConflictGoal; pri
     return `Voorstel: ${goal.name} wordt ${label(resolution.to)}${short}. Dan past het, en je opbouw naar het andere doel blijft zoals hij was.`;
   }
   if (priority === 'verkenning') {
-    return `${goal.name} doe je als training mee. ASCEND houdt de dagen eromheen licht.`;
+    return `${goal.name} doe je als training mee. De dagen eromheen blijven licht.`;
   }
-  return 'Een kortere afbouw of een lager label lost dit niet op. Kies je toch allebei, dan plant ASCEND zoals jij wilt en blijven de dagen eromheen licht. Voor allebei pieken lukt niet. De grenzen tussen zware beendagen blijven gelden.';
+  return 'Een kortere afbouw of een lager label lost dit niet op. Kies je toch allebei, dan staan ze zoals jij wilt in je planning en blijven de dagen eromheen licht. Voor allebei pieken lukt niet. De grenzen tussen zware beendagen blijven gelden.';
 }
 
 // Alle botsingen tussen de doelen op deze datum, nieuw en oud. Doelen in het verleden en doelen

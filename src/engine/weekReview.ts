@@ -27,12 +27,14 @@ import type { PlannedById } from './logDay';
 import { countsAsTraining as countsAsTrainingShared, leftOutOfCount, weekDoneMinutes, weekLogsOf } from './weekLogs';
 import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
+import type { LeavePeriod } from '../models/leave';
 import { weekKeySession, type KeyFocus } from './keySession';
 import { kgLabel } from '../utils/kg';
 import type { HeartRateSettings } from './heartRateZones';
 import type { IntensityCounting } from './intensitySettings';
 import { effortMinutes, type EffortMinutes } from './weekEffort';
 import { caughtUpMap } from './catchUp';
+import { raceDatesOf } from './raceWindow';
 
 export interface WeekReview {
   weekStart: string;
@@ -52,11 +54,11 @@ export interface WeekReview {
   avgRpe?: number;
   // Minuten rustig en hard (engine/weekEffort.ts), in plaats van een gemiddelde zwaarte.
   effort: EffortMinutes;
-  // De week loopt nog (asOf valt erin): dan is het "je week tot nu" en blijft wat vandaag nog staat niet liggen.
+  // De week loopt nog (asOf valt erin): dan is het "je week tot nu" en is wat vandaag nog staat niet gemist.
   running: boolean;
   // Hoeveel trainingen er vandaag nog open staan, alleen als de week nog loopt.
   todayLeft: number;
-  keyMissedName?: string; // de sleuteltraining die nog open blijft liggen
+  keyMissedName?: string; // de sleuteltraining die gemist is en nog open staat
   checkAdvice?: string; // de zin uit je wekelijkse lijfvraag
   // `label`: de naam van de week ("Opbouw, week 4 van 18", "Rustweek", de golf), uit engine/weekLabel.ts#weekNameAt;
   // `rest`: volgens het programma een rustweek die je niet doortraint.
@@ -78,6 +80,11 @@ interface ReviewInputs {
   planChangeLog: PlanChangeProposal[];
   asOf: string;
   illnessEpisodes?: IllnessEpisode[];
+  // Vakanties en tochten die je zelf meldde (engine/leave.ts#isAwayDay): wat daar open bleef, telt niet als gemist.
+  leavePeriods?: LeavePeriod[];
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, niet
+  // gemist en niet gedaan.
+  openDraft?: string;
   weeklyChecks?: WeeklyHealthCheck[];
   heartRate?: HeartRateSettings;
   // Instelling "Intensiteit tellen" (engine/intensitySettings.ts): bij "plan" telt de hartslag niet.
@@ -120,7 +127,8 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // while two trainings were skipped). Not counted: sessions ASCEND itself
   // took out while rearranging the plan (a new strength block, the weekly
   // planning), days you were ill and days before the program started.
-  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate);
+  // Een training uit de afbouw die na de race niet gedaan is, telt niet als gemist (engine/raceWindow.ts).
+  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate, { periods: inputs.leavePeriods, loggedIds, races: raceDatesOf(plannedSessions, byId), openDraft: inputs.openDraft });
   const countsAsTraining = (s: PlannedSession) => countsAsTrainingShared(s, byId.get(s.templateId), leftOut);
   // De oude rij van een gemiste training die je naar later zette telt niet: de nieuwe rij telt
   // (docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md).
@@ -211,7 +219,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     const trainingIds = new Set(trainings.map((s) => s.id));
     const short = weekLogs.filter((l) => {
       const t = byId.get(l.templateId);
-      return !!l.plannedSessionId && trainingIds.has(l.plannedSessionId) && !!t && isShortTraining(l, t, program);
+      return !!l.plannedSessionId && trainingIds.has(l.plannedSessionId) && !!t && isShortTraining(l, t, program, trainings.find((s) => s.id === l.plannedSessionId)?.plannedMinutes);
     }).length;
     advice.push(short === 0
       ? 'Alles gedaan wat gepland stond. Zo bouw je op.'
@@ -221,11 +229,11 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     // was already let go.
     const keyMissed = keyMissedSession;
     advice.push(
-      // Geen namen: die staan al onder "Blijven liggen" op de terugblik.
-      `${missedNames.length === 1 ? 'Eén training is' : `${missedNames.length} trainingen zijn`} blijven liggen. ` +
+      // Geen namen: die staan al onder Gemist op de terugblik.
+      `${missedNames.length === 1 ? 'Eén training' : `${missedNames.length} trainingen`} gemist. ` +
       (keyMissed
-        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week. Die verplaatst ASCEND naar een vrije dag als dat past. De rest laat je los.`
-        : 'Laat los wat blijft liggen. Dubbel doen helpt niet. Volgende week volgt het plan.'),
+        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week. Die komt na Akkoord op een vrije dag, als dat past. De rest laat je los.`
+        : 'Laat los wat je miste. Dubbel doen helpt niet. Volgende week volgt het plan.'),
     );
   }
   // The same training missing two weeks in a row: a pattern, not bad luck.
@@ -235,10 +243,10 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     .map((s) => s.templateId));
   const repeated = [...new Set(missedSessions.map((s) => s.templateId))].find((id) => prevMissed.has(id));
   if (repeated) {
-    advice.push(`${byId.get(repeated)?.name} viel twee weken op rij weg. Past een andere dag beter? Verplaats hem in Week, dan houdt ASCEND er rekening mee.`);
+    advice.push(`${byId.get(repeated)?.name} viel twee weken op rij weg. Past een andere dag beter? Verplaats hem in Week, dan houdt je planning er rekening mee.`);
   }
   if ([...painCount.values()].some((n) => n >= 2) && advice.length < 3) {
-    advice.push('Dezelfde plek deed deze week meer dan eens pijn. Meld het bij Lichaam, dan houdt ASCEND er rekening mee, en bouw volgende week niet verder op.');
+    advice.push('Dezelfde plek deed deze week meer dan eens pijn. Meld het bij Lichaam, dan houdt je planning er rekening mee, en bouw volgende week niet verder op.');
   }
   // The weekly question (OSTRC-style): what the answer means for next week.
   if (weeklyCheck && weeklyCheck.trouble !== 'geen') {
@@ -246,10 +254,10 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     if (weeklyCheck.trouble === 'niet_kunnen' || weeklyCheck.severity === 'ernstig') {
       advice.unshift(`Je kon door klachten${where} niet trainen. Bouw volgende week niet verder op, meld het bij Lichaam en laat het bekijken als het niet binnen 2 tot 3 weken beter wordt.`);
     } else if (weeklyCheck.trouble === 'minder') {
-      advice.unshift(`Klachten${where} hielden je deze week af en toe af. Volgende week houdt ASCEND op die plek de omvang gelijk, zonder extra opbouw.`);
+      advice.unshift(`Klachten${where} hielden je deze week af en toe af. Volgende week blijft de omvang op die plek gelijk, zonder extra opbouw.`);
     } else if (weeklyCheck.severity === 'matig') {
       // Een melding op de kaart "Hoe voelt je lijf?": je kon trainen, de pijn hindert wel.
-      advice.unshift(`Je meldde matige pijn${where}. Volgende week houdt ASCEND op die plek de omvang gelijk, zonder extra opbouw.`);
+      advice.unshift(`Je meldde matige pijn${where}. Volgende week blijft de omvang op die plek gelijk, zonder extra opbouw.`);
     } else {
       advice.push(`Een lichte klacht${where}, zonder dat je minder kon trainen. Let erop; zakt hij niet, meld het dan weer volgende week.`);
     }
@@ -258,7 +266,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   if (heavier >= 2) {
     advice.push('Twee of meer trainingen voelden zwaarder dan gepland. Voelt het volgende week weer zo? Kies de korte versie of houd de minuten gelijk. Slaap en eten kunnen helpen.');
   } else if (lighter >= 2 && advice.length < 3) {
-    advice.push('Een paar trainingen voelden lichter dan gepland. Dat kan een teken zijn dat je sterker wordt. ASCEND bouwt rustig verder.');
+    advice.push('Een paar trainingen voelden lichter dan gepland. Dat kan een teken zijn dat je sterker wordt. De opbouw gaat rustig verder.');
   }
   // De rustweek uit het programma (isRestWeekAt via weekNameAt), niet uit een woord in een notitie.
   if (next?.rest && advice.length < 3) {

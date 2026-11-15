@@ -48,7 +48,7 @@ export const LEAVE_KIND_HINT: Record<LeaveKind, string> = {
   no_training: 'Geen training op deze dagen. Wat er stond, schuift naar een andere dag of vervalt.',
   trek: 'Een tocht van meerdere dagen met je rugzak. Elke dag is een wandeldag. De dag ervoor en erna blijft licht.',
   no_gym: 'Je bent weg en kunt lopen, maar er is geen sportschool. Lopen blijft, korter en rustiger. Kracht in de sportschool wordt een korte sessie met je eigen gewicht of vervalt.',
-  free_days: 'Je hebt extra tijd. Er gaat niets uit je planning. Past er een lange wandeling, dan stelt ASCEND die voor.',
+  free_days: 'Je hebt extra tijd. Er gaat niets uit je planning. Past er een lange wandeling, dan volgt een voorstel.',
 };
 
 const MAX_DAYS = 90;
@@ -179,6 +179,19 @@ function lightDayTitle(side: 'before' | 'after', distance: number): string {
 export function isLeaveBlockedDay(periods: LeavePeriod[] | undefined, date: string): boolean {
   const kind = leaveDays(periods).get(date)?.kind;
   return kind === 'off' || kind === 'trek';
+}
+
+// A day you said you are away (a holiday, a tocht, away without a gym): what was planned there and not
+// done never counts as missed, is never caught up and asks no "Niet gedaan?" (docs/beslissingen/
+// 2026-11-14-vakantie-en-ziek-niet-gemist.md). Free days are time you have, not time away: they count as usual.
+export function isAwayDay(date: string, periods: LeavePeriod[] | undefined, days: Map<string, LeaveDay> = leaveDays(periods)): boolean {
+  const kind = days.get(date)?.kind;
+  return kind === 'off' || kind === 'trek' || kind === 'nogym';
+}
+
+// The away periods (no free days), in date order.
+export function awayPeriods(periods: LeavePeriod[] | undefined): LeavePeriod[] {
+  return sortPeriods((periods ?? []).filter((p) => p.kind !== 'free_days'));
 }
 
 // --- how it reads -----------------------------------------------------------------

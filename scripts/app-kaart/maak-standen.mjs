@@ -1,7 +1,7 @@
 // Maakt de nagemaakte standen voor de tekstkaart (docs/app-kaart/README.md) en laat elk één planningsronde
 // draaien op de vaste klok van de kaart, zodat een start daarna niets meer bijwerkt.
 //   node scripts/app-kaart/maak-standen.mjs            maakt alle standen opnieuw
-//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel)
+//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, ziek-eerder, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel, concept)
 // Alles is nagemaakt: de basis is state-kracht.json, de rest zijn kleine wijzigingen met verzonnen getallen.
 //
 // Waarom "settle": bij de eerste start na het laden van een stand vindt de planningsronde nog iets te
@@ -95,6 +95,14 @@ function ziek(state) {
   verwijderPlanning(state, (d) => d >= VANDAAG && d <= '2026-11-01');
 }
 
+// Ziek sinds twee dagen (donderdag 29 oktober), met een training vóór de melding (Benen A op woensdag 28, gemist) en
+// één binnen de ziekte (de testloop op donderdag 29, vervallen). Voor de invariant Vervallen tegen gemist
+// (scripts/app-kaart/invarianten.mjs): die vraagt een stand met dagen vóór de meldingsdag.
+function ziekEerder(state) {
+  const s = meta(state, 'settings').value;
+  s.illnessEpisodes = [{ id: 'ill_kaart_2', kind: 'below_neck', startDate: '2026-10-29' }];
+}
+
 // Eén vaardigheid (F4e): Pull-Up op de ladder Optrekken, met de eerste twee stappen gehaald.
 function metVaardigheid(state) {
   const goal = { id: 'skill_kaart_1', name: 'Pull-Up', ladderId: 'pull-up', targetStep: 4, createdAt: '2026-10-20T08:00:00.000Z', updatedAt: '2026-10-20T08:00:00.000Z' };
@@ -147,6 +155,33 @@ function metVoorstel(state) {
   for (const r of winkel(state, 'programs').records) if (r.value) r.value.startDate = '2026-09-28';
 }
 
+// Een meerdaagse tocht als hoofddoel, van voor de soorten: de migratie zette hem op hutten (geen tentnacht in het
+// etappeplan) zonder eigen keuze. Start 15 maart 2027, dus op de klok van de kaart (31 oktober) zijn de vroege taken
+// van de Reisplanner al voorbij: Nu regelen, en de vraag "Je tocht staat op hutten. Klopt dat?" (backlogpunt G).
+function metTocht(state) {
+  const doelen = winkel(state, 'trainingGoals');
+  const basis = doelen.records[0];
+  doelen.records = [{
+    ...basis,
+    ...(basis && 'key' in basis ? { key: 'goal_kaart_trek' } : {}),
+    value: {
+      id: 'goal_kaart_trek', name: 'Lange tocht', status: 'active', targetDate: '2027-03-15', kind: 'trek_hut', priority: 'top', execution: 'stages',
+      details: { shelter: 'hut', homeDaysInRow: 2, distanceKm: 600 },
+      requirements: [{ id: 'req_kaart_trek', kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: 600, unit: 'km' }, discipline: 'hiking' }],
+      createdAt: '2026-05-01T08:00:00.000Z', updatedAt: '2026-05-01T08:00:00.000Z',
+    },
+  }];
+  // De ladder maakt hem het hoofddoel (engine/mainGoal.ts): de eerste drie treden van de Ascent Ladder.
+  const treden = [
+    ['40 min rustig: hardlopen of stevig wandelen', { kind: 'duration', activityType: ['cardio', 'hiking'], minMinutes: 40 }],
+    ['60 min bergconditie volhouden', { kind: 'duration', activityType: 'hiking', minMinutes: 60 }],
+    ['15 km wandeling', { kind: 'distance', minKm: 15 }],
+  ];
+  winkel(state, 'goalMilestones').records = treden.map(([title, requirement], i) => ({
+    value: { id: `ms_kaart_trek_${i + 1}`, goalId: 'goal_kaart_trek', order: i + 1, title, requirement },
+  }));
+}
+
 // Aangepast door ASCEND (docs/beslissingen/2026-11-12-week-minimaal.md): twee nagemaakte, aangenomen voorstellen in
 // deze week. Een voorstel van de weekcontrole zette de Lange duurloop van zaterdag naar zondag (na een snel Akkoord, dus het blad zegt alleen de datum); een voorstel na een gemiste
 // training maakte Benen A lichter, na jouw Akkoord. De rijen dragen het slot van hun voorstel, zoals na Akkoord.
@@ -196,12 +231,37 @@ function metHeuvel(state) {
   rij.templateId = 'tpl_hill_intervals';
 }
 
+// Alleen herstel in een maand: een losse Herstelwandeling van 56 minuten op zondag 1 november, verder niets in die
+// maand. De logboekkop noemt dan het herstel met de minuten en zegt nooit "niets" (engine/logbookMonth.ts).
+function metHerstel(state) {
+  winkel(state, 'sessionLogs').records.push({ value: { id: 'fake_herstel', templateId: 'tpl_herstel', type: 'recovery', completedDate: '2026-11-01', completedAt: '2026-11-01T10:00:00Z', variant: 'full', durationMinutes: 56, source: 'manual', outdoorData: { durationMinutes: 56, distanceKm: 4.8, source: 'manual' } } });
+}
+
+// Een training die bleef liggen (besluit 2026-11-15-concept-loopt-nog.md): Benen A van woensdag 28 oktober is in Forge
+// begonnen en ligt als concept, drie werksets afgevinkt, laatste handeling die avond. De planner noemt hem "loopt nog",
+// niet gemist. Het concept staat in localStorage (utils/forgeSessionStore.ts), net als in de app.
+function metConcept(state) {
+  const id = 'planned_mvsb9yotvrxtjp6';
+  const key = `ascend.afvinkconcept.${id}:forge`;
+  const start = Date.parse('2026-10-28T19:30:00+01:00');
+  const rij = (rid, kind, done) => ({ id: rid, kind, done, weightKg: 60, reps: 8 });
+  const concept = {
+    v: 1, savedAt: start + 25 * 60_000, startedAt: start, lastActionAt: start + 25 * 60_000, pauses: [], column: 'target',
+    exercises: [{ slot: 'kaart_a', rows: [rij('w1', 'warmup', true), rij('r1', 'work', true), rij('r2', 'work', true), rij('r3', 'work', true), rij('r4', 'work', false)] }],
+    log: [],
+  };
+  const wijzer = { key, templateId: 'tpl_lower_a', name: 'Benen A', plannedSessionId: id, scheduledDate: '2026-10-28' };
+  const ls = state.origins[0].localStorage;
+  ls.push({ name: key, value: JSON.stringify(concept) }, { name: 'ascend.forge.sessie', value: JSON.stringify(wijzer) });
+}
+
 export const STANDEN = {
   kracht: () => {},
   horloge: metHorloge,
   vakantie: metVakantie,
   'zonder-doel': zonderDoel,
   ziek,
+  'ziek-eerder': ziekEerder,
   vaardigheid: metVaardigheid,
   algemeen: metAlgemeen,
   voorstel: metVoorstel,
@@ -210,6 +270,9 @@ export const STANDEN = {
   'voorstel-wacht': metWachtendVoorstel,
   rustweek: metRustweek,
   heuvel: metHeuvel,
+  herstel: metHerstel,
+  tocht: metTocht,
+  concept: metConcept,
 };
 
 // --- één planningsronde op de vaste klok -------------------------------------------------------------

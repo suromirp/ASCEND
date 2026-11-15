@@ -11,6 +11,7 @@ import { templateSport } from '../engine/sports';
 import { sunPlace } from '../engine/sun';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { fuelOn } from '../engine/fuelOnTheGo';
+import { loadBodyKg } from '../engine/weightTrend';
 import { useTrainingPlaces } from './useTrainingPlaces';
 
 // De bronnen voor een moment: nu voor de kaart, het moment van de melding voor de melding.
@@ -39,6 +40,7 @@ export function useEveningInput(now: Date): EveningInput {
     showWatchStatus: settings.showWatchStatus !== false,
     routeOn: settings.routeProposal !== false,
     easyPace,
+    bodyKg: loadBodyKg(settings),
     fuelOn: fuelOn(settings),
     trainingPlaces,
   };

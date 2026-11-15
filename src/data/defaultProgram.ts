@@ -238,7 +238,7 @@ function buildTemplates(): SessionTemplate[] {
       defaultDayOfWeek: 7,
       outdoorTarget: { targetElevationM: 300 },
       notes:
-        'De langste sessie van de week, op vermoeide benen na zaterdag, precies die specificiteit is het doel, niet een fout. Rustig tempo (RPE 3-4/10), De minuten bouwt ASCEND voor je op, nooit meer dan 10% boven je langste loop van de afgelopen maand. Buiten met D+ heeft de voorkeur boven een vlakke route, dit is de sessie die het meest direct naar de GR5 vertaalt.',
+        'De langste sessie van de week, op vermoeide benen na zaterdag, precies die specificiteit is het doel, niet een fout. Rustig tempo (RPE 3-4/10), De minuten bouwen vanzelf op, nooit meer dan 10% boven je langste loop van de afgelopen maand. Buiten met D+ heeft de voorkeur boven een vlakke route, dit is de sessie die het meest direct naar de GR5 vertaalt.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
       // Langste sessie, op al vermoeide benen, met echte D+/D− — cumulatief
@@ -558,7 +558,7 @@ function buildTemplates(): SessionTemplate[] {
       focus: 'Je tempo meten',
       durationVariants: { full: 45 },
       notes:
-        '10 minuten inlopen, dan 5 km zo snel als je gelijkmatig kunt volhouden, op een vlakke route. Uitlopen. Vul daarna alleen de 5 km in: afstand 5 en de tijd van de test, met de zwaarte die je voelde. Dan weet ASCEND je echte tempo.',
+        '10 minuten inlopen, dan 5 km zo snel als je gelijkmatig kunt volhouden, op een vlakke route. Uitlopen. Vul daarna alleen de 5 km in: afstand 5 en de tijd van de test, met de zwaarte die je voelde. Dan staat je echte tempo vast.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
       baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'moderate', eccentricLoad: 'light', intensity: 'high', upperBodyLoad: 'none', cardioLoad: 'heavy' },

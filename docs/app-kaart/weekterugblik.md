@@ -10,7 +10,7 @@ Basisfase, week 1 van 4
 0 gedaan · 1 losse training · 56 min
 
 --- kaart 2 ---
-Bleef liggen
+Gemist
 Benen A (zwaar) en Testloop 5 km. Laat het los; dubbel doen helpt niet.
 
 --- kaart 3 ---

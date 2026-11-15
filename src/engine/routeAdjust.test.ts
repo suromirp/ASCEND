@@ -7,7 +7,7 @@ import { proposeAdventure, proposeRoutes, proposeSimple } from './routePlanner';
 import {
   AVOID_MAX_M, MAX_AVOID, MIN_LOOP_KM, adjustFailLine, adjustSummary, avoidPiece, canReverse, crossesArea, isAdjusted, loopPieces, maxLoopKm, pieceLengthM, pieceLine,
   reverseProposal, settleAdjust, stepDistance, tooTiny, NO_ADJUST,
-} from './routeAdjust';
+  searchTarget } from './routeAdjust';
 
 // Alles nagemaakt: een startpunt dat nergens is.
 const START: RoutePoint = { lat: 52.1, lon: 5.9 };
@@ -27,7 +27,7 @@ const proposal = (points: RoutePoint[], over: Partial<RouteProposal> = {}): Rout
 
 describe('Langer en Korter', () => {
   it('een lus die bij Korter onder 1 km komt: niet zoeken, één regel waarom', () => {
-    expect(stepDistance(1.4, 0, 'shorter')).toEqual({ ok: false, line: `Korter dan ${MIN_LOOP_KM} km zoekt ASCEND geen lus.` });
+    expect(stepDistance(1.4, 0, 'shorter')).toEqual({ ok: false, line: `Korter dan ${MIN_LOOP_KM} km: geen lus.` });
     // 1,5 km min een halve is precies 1 km: dat mag; nog een keer niet.
     const once = stepDistance(1.5, 0, 'shorter');
     expect(once).toEqual({ ok: true, deltaKm: -0.5 });
@@ -38,7 +38,7 @@ describe('Langer en Korter', () => {
     expect(stepDistance(10, 0, 'longer')).toEqual({ ok: true, deltaKm: 1 });
     expect(stepDistance(10, 0, 'shorter')).toEqual({ ok: true, deltaKm: -1 });
     expect(maxLoopKm(10)).toBe(15);
-    expect(stepDistance(10, 5, 'longer')).toEqual({ ok: false, line: 'Langer dan 15 km zoekt ASCEND bij deze training niet.' });
+    expect(stepDistance(10, 5, 'longer')).toEqual({ ok: false, line: 'Langer dan 15 km: niet bij deze training.' });
     // Een korte training mag 2 km langer.
     expect(maxLoopKm(2)).toBe(4);
   });
@@ -184,5 +184,18 @@ describe('na het zoeken van een bijsturing', () => {
     expect(settleAdjust('avoid', 'adventure', plans(true, false))).toEqual({ keep: false, line: 'Om dit stuk ligt geen andere weg. De lus blijft zoals hij was.' });
     expect(settleAdjust('shorter', 'simple', { kind: 'offline' })).toEqual({ keep: false, line: 'Zonder netwerk kan de lus niet bijgestuurd worden. De lus blijft zoals hij was.' });
     expect(settleAdjust('longer', 'simple', { kind: 'timeout' }).keep).toBe(false);
+  });
+});
+
+describe('searchTarget: het doel van de zoektocht', () => {
+  const hike = { distanceKm: 8, ascentM: 375, minutes: 180, packKg: 6, askedAscentM: 500 };
+  it('zonder bijsturing het doel van de training zelf', () => {
+    expect(searchTarget(hike, 0)).toBe(hike);
+    expect(searchTarget(hike, Number.NaN)).toBe(hike);
+  });
+  it('Langer en Korter veranderen alleen de afstand; elk ander veld gaat mee', () => {
+    expect(searchTarget(hike, 1)).toStrictEqual({ ...hike, distanceKm: 9 });
+    expect(searchTarget(hike, -1.5)).toStrictEqual({ ...hike, distanceKm: 6.5 });
+    expect(searchTarget({ distanceKm: 6, ascentM: 0 }, 0.5)).toStrictEqual({ distanceKm: 6.5, ascentM: 0 });
   });
 });

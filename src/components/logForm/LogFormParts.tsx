@@ -172,7 +172,7 @@ export function LegsField({ form, template }: Part) {
   const legsAtStart = form.values.legsAtStart;
   return (
     <div>
-      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{quiet ? SHORT_TEXT.legs : 'Hoe voelden je benen bij het inlopen? (optioneel; zo leert ASCEND hoe goed de beenindex bij jou klopt)'}</p>
+      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{quiet ? SHORT_TEXT.legs : 'Hoe voelden je benen bij het inlopen? (optioneel; zo wordt de beenindex beter voor jou)'}</p>
       <div className="mt-2">
         <Segmented
           tall
@@ -223,7 +223,7 @@ export function ModalityFields({ form }: { form: LogForm }) {
       {fields.inclinePercent && (
         <>
           <Field label="Helling" unit="%" decimals={1} value={values.inclinePercent} onChange={form.setInclinePercent} />
-          <p className="-mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>ASCEND schat je hoogtemeters uit afstand en helling.</p>
+          <p className="-mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Je hoogtemeters zijn een schatting uit afstand en helling.</p>
         </>
       )}
       {fields.elevation && (

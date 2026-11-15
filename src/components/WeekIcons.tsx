@@ -21,6 +21,8 @@ const STATUS: Record<DisplayStatus, { color: string; label: string }> = {
   skipped: { color: 'var(--color-danger-text)', label: 'Overgeslagen' },
   missed: { color: 'var(--color-warning)', label: 'Gemist' },
   rest: { color: 'var(--color-ink-dim)', label: 'Rustdag' },
+  away: { color: 'var(--color-ink-dim)', label: 'Vervallen' },
+  open: { color: 'var(--color-status)', label: 'Loopt nog' },
 };
 
 export function WeekStatusIcon({ status }: { status: DisplayStatus }) {
@@ -35,6 +37,8 @@ export function WeekStatusIcon({ status }: { status: DisplayStatus }) {
         {status === 'skipped' && (<><circle cx="12" cy="12" r="8.5" /><path d="M9 9l6 6M15 9l-6 6" /></>)}
         {status === 'missed' && (<><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5.5" /><circle cx="12" cy="16.2" r=".4" fill="currentColor" /></>)}
         {status === 'rest' && <path d="M3 9.5c3 0 4.5 5 9 5s6-5 9-5" />}
+        {status === 'away' && (<><circle cx="12" cy="12" r="8.5" opacity=".45" /><path d="M8.5 12h7" /></>)}
+        {status === 'open' && (<><circle cx="12" cy="12" r="8.5" opacity=".45" /><path d="M12 3.5a8.5 8.5 0 0 1 8.5 8.5" /><path d="M12 8v4l2.5 1.5" /></>)}
       </Svg>
       <span className="sr-only">{s.label}</span>
     </span>

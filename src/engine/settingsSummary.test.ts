@@ -123,7 +123,7 @@ describe('rowSummary: doel en tochten', () => {
   it('zonder doel staat er geen doel en een uitnodiging', () => {
     const s = groupSummary('doel', facts({ goal: null, treks: 0 }));
     expect(s).toEqual({ value: 'Geen doel', dim: true, sub: 'Kies een doel om naartoe te plannen' });
-    expect(rowSummary('doelen', facts({ goal: null }))).toEqual({ value: 'Geen doel', dim: true, sub: 'Een doel geeft ASCEND een einddatum' });
+    expect(rowSummary('doelen', facts({ goal: null }))).toEqual({ value: 'Geen doel', dim: true, sub: 'Een doel geeft je planning een einddatum' });
   });
 
   it('de lange zondag is verborgen bij een bergdoel', () => {
@@ -174,7 +174,7 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-scherm', facts()).checked).toBe(true);
     // Besluit 2026-11-11-forge-kern-zichtbaar: schijven per set standaard uit, Hoeveel over alleen als het anders ging.
     expect(rowSummary('forge-schijven', facts()).checked).toBe(false);
-    expect(rowSummary('forge-rir-snel', facts()).value).toBe('Als het anders ging');
+    expect(rowSummary('forge-rir-snel', facts()).value).toBe('Bij afwijking');
     expect(rowSummary('forge-rir-snel', facts({ settings: { ...facts().settings, strengthModel: { quickRir: false } } }))).toMatchObject({ value: 'Uit', dim: true });
     expect(rowSummary('forge-rir-snel', facts({ settings: { ...facts().settings, strengthModel: { quickRirMode: 'vaker' } } })).value).toBe('Vaker vragen');
     expect(rowSummary('forge-1rm', facts()).checked).toBe(true);
@@ -282,7 +282,7 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('toestelgewichten', withForge({ activeProfileId: 'a', profiles: [profile] })).value).toBe('1 toestel');
   });
 
-  it('Toestellen leren staat aan met het label auto, en ASCEND naast MacroFactor staat uit en toont de stand', () => {
+  it('Toestellen leren staat aan met het label auto, en Voorstel naast MacroFactor staat uit en toont de stand', () => {
     const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
     expect(rowSummary('forge-leren', facts())).toEqual({ value: 'Geleerd', hidden: false });
     expect(rowSummary('forge-leren', withForge({ learnStacks: false })).value).toBe('Profiel');
@@ -450,7 +450,7 @@ describe('rowSummary: wat speelde er', () => {
     expect(rowSummary('wat-teken', withSettings({ influenceSign: false })).checked).toBe(false);
     expect(rowSummary('wat-overzicht', withSettings({ influenceOverview: false })).checked).toBe(false);
     expect(rowSummary('wat-test', withSettings({ influenceTestMove: false })).checked).toBe(false);
-    expect(rowSummary('wat-oorzaak', withSettings({ influenceCause: 'weet' })).value).toBe('Wat ASCEND weet');
+    expect(rowSummary('wat-oorzaak', withSettings({ influenceCause: 'weet' })).value).toBe('Wat bekend is');
     expect(rowSummary('wat-oorzaak', withSettings({ influenceCause: 'uit' })).value).toBe('Uit');
   });
 
@@ -842,6 +842,9 @@ describe('rowSummary: route voorstellen', () => {
   it('staat standaard aan, met Avontuurlijk bovenaan', () => {
     expect(rowSummary('route-voorstel', facts()).checked).toBe(true);
     expect(rowSummary('route-soort', facts()).value).toBe('Avontuurlijk');
+    expect(rowSummary('route-grote-wegen', facts()).checked).toBe(true);
+    expect(rowSummary('route-grote-wegen', withSettings({ routeAvoidBigRoads: false })).checked).toBe(false);
+    expect(rowSummary('bundel-weer', withSettings({ routeAvoidBigRoads: false })).value).toBe('12 van 13 aan');
   });
 
   it('volgt de keuze, en een onbekende waarde is het advies', () => {
@@ -851,7 +854,7 @@ describe('rowSummary: route voorstellen', () => {
 
   it('uit: de rij zegt Uit en de keuze is weg', () => {
     expect(rowSummary('route-voorstel', withSettings({ routeProposal: false })).checked).toBe(false);
-    expect(rowSummary('bundel-weer', withSettings({ routeProposal: false })).value).toBe('11 van 12 aan');
+    expect(rowSummary('bundel-weer', withSettings({ routeProposal: false })).value).toBe('12 van 13 aan');
     expect(rowSummary('route-soort', withSettings({ routeProposal: false })).hidden).toBe(true);
   });
 });
@@ -928,7 +931,7 @@ describe('rowSummary: de ochtendkaart en de ochtendmelding', () => {
     const nothing = rowSummary('ochtendmelding', facts({ settings: { ...facts().settings, ...on }, notice: { support: 'unavailable', granted: false } }));
     expect(nothing).toEqual({ value: 'Niet mogelijk', dim: true, sub: 'Alleen als je de app opent' });
     const browser = rowSummary('ochtendmelding', facts({ settings: { ...facts().settings, ...on }, notice: { support: 'not_installed', granted: false } }));
-    expect(browser.sub).toBe('Zet ASCEND eerst op je beginscherm');
+    expect(browser.sub).toBe('Eerst op je beginscherm zetten');
     expect(browser.checked).toBeUndefined();
     for (const r of [nothing, browser]) expect((r.sub ?? '').length).toBeLessThanOrEqual(SUB_MAX_LENGTH);
   });
@@ -1017,10 +1020,10 @@ describe('rowSummary: rijen met een blad', () => {
   });
 
   it('Weer en kleding, Inzicht na een training en Gebruik van je horloge', () => {
-    expect(rowSummary('bundel-weer', facts()).value).toBe('12 van 12 aan');
-    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('10 van 12 aan');
+    expect(rowSummary('bundel-weer', facts()).value).toBe('13 van 13 aan');
+    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('11 van 13 aan');
     // Weerwaarschuwingen en lawinegevaar tellen mee (docs/beslissingen/2026-11-09-gr5-waarschuwingen.md).
-    expect(rowSummary('bundel-weer', withSettings({ weatherWarnings: false, avalancheBulletin: false })).value).toBe('10 van 12 aan');
+    expect(rowSummary('bundel-weer', withSettings({ weatherWarnings: false, avalancheBulletin: false })).value).toBe('11 van 13 aan');
     expect(rowSummary('weeralarm', facts()).checked).toBe(true);
     expect(rowSummary('weeralarm', withSettings({ weatherWarnings: false })).checked).toBe(false);
     expect(rowSummary('lawinegevaar', withSettings({ avalancheBulletin: false })).checked).toBe(false);

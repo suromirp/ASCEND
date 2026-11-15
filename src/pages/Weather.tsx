@@ -256,7 +256,7 @@ function JudgementCard() {
   const { watch, bad } = weatherRuleRows();
   return (
     <Card className="flex flex-col gap-4">
-      <Eyebrow>Zo oordeelt ASCEND</Eyebrow>
+      <Eyebrow>Zo wordt het weer gewogen</Eyebrow>
       <Block tone="success" title="Prima" note="Als niets hieronder geldt." />
       <Block tone="warning" title="Let op" rows={watch} />
       <Block tone="danger" title="Slecht" rows={bad} />
@@ -265,7 +265,7 @@ function JudgementCard() {
           rows={[
             { label: 'Wanneer', text: `Je gewone trainingsuur (na minstens ${MIN_LOGS} trainingen van dezelfde soort), anders ${DEFAULT_WEEKDAY_HOUR}.00 op werkdagen en ${DEFAULT_WEEKEND_HOUR}.00 in het weekend. Een lange tocht telt helemaal mee.` },
             { label: 'Lampje', text: 'Eindig je na zonsondergang of begin je voor zonsopkomst, dan staat dat erbij.' },
-            { label: 'Ruilen', text: 'Bij slecht weer en een betere dag die week stelt ASCEND een ruil voor, altijd met jouw Akkoord.' },
+            { label: 'Ruilen', text: 'Bij slecht weer en een betere dag die week krijg je een ruil als voorstel, pas na Akkoord.' },
           ]}
         />
       </div>
