@@ -11,7 +11,7 @@ describe('wat je ziet na het aanzetten van Health Connect', () => {
 
   it('niet alles vrijgegeven: dat staat erbij', () => {
     expect(healthEnableNote({ status: 'on', granted: ['sleep'], sync: { status: 'ok', activities: 0, mornings: 3, weights: 0 } }).text).toBe(
-      'Health Connect staat aan. 3 ochtenden opgehaald. Je gaf niet alles vrij: trainingen, afstand, rusthartslag, HRV, gewicht en vetpercentage haalt ASCEND niet op.',
+      'Health Connect staat aan. 3 ochtenden opgehaald. Je gaf niet alles vrij: trainingen, afstand, rusthartslag, HRV, gewicht en vetpercentage blijft daarom weg.',
     );
   });
 

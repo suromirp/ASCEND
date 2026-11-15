@@ -63,6 +63,8 @@ export type GoalKindId = (typeof GOAL_KIND_IDS)[number];
 export const GOAL_PRIORITIES = ['top', 'voortop', 'verkenning'] as const;
 export type GoalPriority = (typeof GOAL_PRIORITIES)[number];
 
+export type TrekShelter = 'hut' | 'tent' | 'both';
+
 // Wat de gebruiker over zijn doel invulde. Alles is optioneel; welke velden bij een
 // soort horen staat in data/goalKinds.ts. Een veld dat niet klopt wordt bij het lezen
 // weggelaten (storage/migrations.ts#readGoalDetails).
@@ -73,7 +75,13 @@ export interface GoalDetails {
   lossM?: number; // D- totaal
   days?: number; // aantal dagen van een meerdaags doel
   packKg?: number; // rugzak
-  shelter?: 'hut' | 'tent';
+  // Waar je slaapt: hutten, tent of beide (engine/trekShelter.ts). 'both' kwam op 15 november
+  // bij; een oud doel heeft 'hut' of 'tent' en blijft zo.
+  shelter?: TrekShelter;
+  // Alleen true als jij de keuze zelf maakte (de start, Doel aanpassen, Slapen onderweg), vanaf 15
+  // november. Een doel op hutten zonder dit veld (door de migratie, of eerder zelf gekozen) krijgt de
+  // vraag één keer (engine/trekShelter.ts#needsShelterCheck). Optioneel.
+  shelterChosen?: true;
   highestPointM?: number;
   sleepingPointM?: number;
   expectedMinutes?: number; // verwachte tijd van de doeldag of de wedstrijd

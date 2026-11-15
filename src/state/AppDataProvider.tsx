@@ -1,7 +1,9 @@
 // De provider van de app: alle gegevens en acties in een context. De acties staan per onderwerp
 // in eigen hooks, die hier in vaste volgorde worden aangeroepen.
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { readSession, sessionSnapshot, subscribeSession } from '../utils/forgeSessionStore';
+import { openDraftId as openDraftIdOf } from '../engine/sessionStatus';
 import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
@@ -205,7 +207,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // Not on a fresh install: there is nothing of yours to put right yet.
     if (repaired && logs.length > 0) {
       const id = makeId('plancheck');
-      const why = 'Na elke wijziging controleert ASCEND je weken op vaste regels: je rustdag vrij, niet te veel op een dag, genoeg ruimte tussen zware dagen, frisse benen voor een test. Wat het systeem zelf plande, zet het dan recht. Wat jij zelf zette en je test of wedstrijd verschuift het nooit; daarvoor krijg je een voorstel.';
+      const why = 'Na elke wijziging gaan je weken langs vaste regels: je rustdag vrij, niet te veel op een dag, genoeg ruimte tussen zware dagen, frisse benen voor een test. Wat vanzelf gepland was, wordt dan rechtgezet. Wat jij zelf zette en je test of wedstrijd schuiven nooit; daarvoor krijg je een voorstel.';
       const now = new Date().toISOString();
       await PlanChangeProposalsRepo.put({ id, trigger: 'plan_check', issue: 'Weekcontrole', changes: [], alternatives: [], consequences: repaired.lines.join('; '), explanation: why, createdAt: now, resolvedAt: now, resolution: 'accepted' });
       setRecentChange((prev) => {
@@ -297,7 +299,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const { saveInfluence, saveSweat, saveSweatPre, removeInfluence, clearInfluences, planIllness, applyIllness } = useNotesAndIllness({ plannedSessions, sessionLogs, setSettings, settings, templates, commitPlanChange, showStatusOnlyChange });
   const { updateGoalEngineConfig, planHorizonChangeImpl, applyHorizonPlanImpl, planWeekLoadChange, planGoalChange, planGoalRole, planGoalPriority, setGoalOrder, planMarathonGoal, activateGoal } = useHorizonActions({ setGoalEngineConfig, setRecentChange, setStorageNotice, refresh });
   const { toggleStretchRoutine, addInjury, resolveInjury, deleteInjury, addManualCapabilityEvidence, deleteCapabilityEvidence, proposeNoTimeTodayAction, applyNoTimeToday, planPreviewPass, leavePeriods, planLeave, applyLeave, saveLeaveNote, planRestDay, applyRestDay } = useBodyAndLeave({ program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, setSettings, templates, stretchCompletion, setStretchCompletion, setRecentChange, refresh, commitPlanChangeOutcome, commitPlanChange, sessionsForWeek, showStatusOnlyChange });
-  const { weather, answeredAdviceIds, advice, weekNoticeFor, weekFixesFor, previewDrop, legsCloseAt, proposeSwap, swapOptionsFor, influenceMoveNow } = useAdviceAndWeek({ loading, program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, templates, planChangeLog, adviceResponses, missedMemory, plannerAdvice, templateById, goalOverviews, dragContextFor, updateSettings });
+  // Een training die bleef liggen (een concept in Forge): de planner ziet hem als "loopt nog", niet als gemist.
+  const sessionSnap = useSyncExternalStore(subscribeSession, sessionSnapshot);
+  const openDraftId = useMemo(() => openDraftIdOf(sessionSnap ? readSession() : undefined, sessionLogs), [sessionSnap, sessionLogs]);
+  const { weather, answeredAdviceIds, advice, weekNoticeFor, weekFixesFor, previewDrop, legsCloseAt, proposeSwap, swapOptionsFor, influenceMoveNow } = useAdviceAndWeek({ loading, program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, templates, planChangeLog, adviceResponses, missedMemory, openDraftId, plannerAdvice, templateById, goalOverviews, dragContextFor, updateSettings });
 
   const value: AppData = {
     loading,
@@ -333,6 +338,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     skipMissed,
     linkMissedLog,
     missedMemory,
+    openDraftId,
     rememberMissed,
     trimWatchActivity,
     undoTrimWatchActivity,

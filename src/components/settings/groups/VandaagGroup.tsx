@@ -162,7 +162,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         <BundleSheet
           eyebrow="Vandaag en meldingen"
           title="Meldingen"
-          line="Welke meldingen ASCEND op je telefoon mag geven, en wanneer."
+          line="Welke meldingen je op je telefoon krijgt, en wanneer."
           onClose={close}
           footer={facts.device && facts.device !== 'unknown' && facts.device.timed ? <PermissionAskButton device={facts.device} need={noticesNeed(settings, facts.device)} onDone={reload} /> : undefined}
         >

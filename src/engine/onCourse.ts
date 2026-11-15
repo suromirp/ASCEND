@@ -44,6 +44,8 @@ interface CourseInputs {
   leavePeriods?: LeavePeriod[];
   // Wat de sleuteltraining is (engine/keySession.ts), zoals op Ascend. Zonder: de lange duurloop of de bergtocht.
   keyFocus?: KeyFocus;
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, niet gemist.
+  openDraft?: string;
 }
 
 const LOOKBACK_WEEKS = 4;
@@ -52,7 +54,7 @@ const MIN_WEEKS = 2;
 // What the current phase is for, in one sentence.
 const PHASE_FOCUS: Record<string, string> = {
   phase_1: 'De basis: rustige kilometers en kracht, zodat je lijf de opbouw straks aankan.',
-  phase_2: 'Opbouw: je lopen worden elk blok langer, en als het goed gaat stelt ASCEND een extra training voor. Elke vierde week rust.',
+  phase_2: 'Opbouw: je lopen worden elk blok langer, en als het goed gaat volgt een voorstel voor een extra training. Elke vierde week rust.',
   phase_3: 'Bergcapaciteit: meer hoogtemeters in je lange training. Die telt nu het zwaarst.',
   phase_4: 'Expeditieklaar: twee lange dagen achter elkaar, zoals op een meerdaagse tocht.',
   phase_taper: 'Afbouwen: minder doen, fris aankomen. Extra trainen helpt nu niet meer.',
@@ -79,7 +81,7 @@ export interface Adherence {
 }
 
 type ReviewInputsLite = { heartRate: HeartRateSettings; intensityCounting: IntensityCounting };
-export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes' | 'leavePeriods' | 'keyFocus'> & Partial<Pick<ReviewInputsLite, 'heartRate' | 'intensityCounting'>>;
+export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes' | 'leavePeriods' | 'keyFocus' | 'openDraft'> & Partial<Pick<ReviewInputsLite, 'heartRate' | 'intensityCounting'>>;
 
 export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const { today, program, logs, templates, planChangeLog, illnessEpisodes } = inputs;
@@ -89,7 +91,7 @@ export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const thisMonday = mondayOfWeek(today);
   const reviews: WeekReview[] = [];
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
-    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, leavePeriods: inputs.leavePeriods, heartRate: inputs.heartRate, intensityCounting: inputs.intensityCounting, keyFocus: inputs.keyFocus });
+    const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, leavePeriods: inputs.leavePeriods, openDraft: inputs.openDraft, heartRate: inputs.heartRate, intensityCounting: inputs.intensityCounting, keyFocus: inputs.keyFocus });
     if (review && review.planned > 0) reviews.push(review);
   }
   return {

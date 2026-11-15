@@ -5,6 +5,7 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import { isSoreness } from './injuryKind';
 import { isIllnessDay } from './illness';
 import { isTaperDay, raceDatesOf } from './raceWindow';
+import { isDraftOpen } from './sessionStatus';
 import { dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL, legHeavyDayBefore, legSpacingDays } from './scheduler';
 import { addDays, daysBetween, mondayOfWeek, weekDates, formatWeekdayDateNL } from '../utils/dates';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
@@ -83,7 +84,7 @@ export function tooLightAdvice(inputs: AdviceInputs, templateById: Map<string, S
       ruleId: 'LIGHT-TWICE',
       title: `${name} voelde twee keer licht`,
       effect: 'Je hoeft niets te doen. Blijft je herstel goed, dan vraagt de weekplanning vanzelf iets meer zodra je doel dat nodig heeft.',
-      why: 'Deze training voelde twee keer op rij heel licht (zwaarte 3 of lager). ASCEND verzwaart alleen via de weekplanning, stap voor stap, nooit na één losse training.',
+      why: 'Deze training voelde twee keer op rij heel licht (zwaarte 3 of lager). Zwaarder wordt het alleen via de weekplanning, stap voor stap, nooit na één losse training.',
       priority: 1,
       relatedLogId: lastTwo[0].id,
     });
@@ -111,7 +112,7 @@ export function injuryAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
     effect: upcoming.length > 0
       ? `Zware beensessies de komende week: ${upcoming.join(', ')}. Kies de korte variant of sla over als het niet goed voelt.`
       : 'Er staan de komende week geen zware beensessies. Houd het zo tot het beter voelt.',
-    why: 'Je hebt een blessure aan been of voet genoteerd. ASCEND plant er niets zwaars bij. Jij bepaalt per training of het gaat.',
+    why: 'Je hebt een blessure aan been of voet genoteerd. Er komt niets zwaars bij in je planning. Jij bepaalt per training of het gaat.',
     priority: leg.severity === 'ernstig' ? 6 : 5,
   }];
 }
@@ -127,7 +128,9 @@ export function strengthAdvice(inputs: AdviceInputs, templateById: Map<string, S
   const window = inputs.plannedSessions.filter((s) => {
     const t = templateById.get(s.templateId);
     return t?.type === 'strength' && s.status !== 'skipped' && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 14
-      && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf) && !isTaperDay(s.scheduledDate, races, inputs.asOf);
+      && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf) && !isTaperDay(s.scheduledDate, races, inputs.asOf)
+      // Een krachttraining die nog loopt (een concept in Forge) is niet gemist en niet gedaan.
+      && !isDraftOpen(s, inputs.openDraft, inputs.asOf);
   });
   const done = window.filter((s) => isDone(s, inputs.logs, loggedIds)).length;
   const missed = window.length - done;
@@ -138,7 +141,7 @@ export function strengthAdvice(inputs: AdviceInputs, templateById: Map<string, S
     ruleId: 'STRENGTH-REGULARITY',
     title: `Kracht: ${done} van ${window.length} trainingen afgevinkt`,
     effect: 'Past het huidige krachtblok nog bij je week? Minder sessies die je echt doet is beter dan meer die je mist. Je kunt het blok aanpassen op de ASCEND-pagina.',
-    why: 'Twee of meer krachttrainingen zijn in de laatste 14 dagen niet afgevinkt. ASCEND kijkt bij kracht alleen naar regelmaat. Gewichten en progressie blijven in MacroFactor.',
+    why: 'Twee of meer krachttrainingen zijn in de laatste 14 dagen niet afgevinkt. Bij kracht telt hier alleen regelmaat. Gewichten en progressie blijven in MacroFactor.',
     priority: 2,
   }];
 }

@@ -104,7 +104,7 @@ export function usePlanSettingChange(): {
     return horizon.propose(
       () => planHorizonChange({
         title, why, trigger: 'availability_changed', settings: patch, ...(opts.notes?.length ? { notes: opts.notes } : {}),
-        explanation: 'Deze instelling bepaalt hoe ASCEND je weken plant. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
+        explanation: 'Deze instelling bepaalt hoe je weken eruitzien. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
       }),
       { eyebrow: 'Planning aanpassen', ask: opts.alwaysAsk ? 'always' : 'setting', declined: 'Je instelling en je planning blijven zoals ze waren.', ...(opts.alwaysAsk ? { alwaysAsk: true } : {}), ...(opts.onStored ? { onStored: opts.onStored } : {}) },
     );
@@ -138,7 +138,7 @@ export function usePlanSettingChange(): {
       () => planHorizonChange({
         title,
         why: start?.consequences ?? 'Volgt je sporten.',
-        explanation: start?.explanation ?? 'Je sporten bepalen wat ASCEND plant. Eerst een voorstel, pas na Akkoord verandert er iets.',
+        explanation: start?.explanation ?? 'Je sporten bepalen wat er in je planning komt. Eerst een voorstel, pas na Akkoord verandert er iets.',
         trigger: 'availability_changed',
         settings: { enabledSports: nextEnabled, ...extra },
         ...(start && start.changes.length > 0 ? { startItems: start.changes } : {}),

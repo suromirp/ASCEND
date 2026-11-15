@@ -30,6 +30,7 @@ import { resolveRouteSearch } from './routeSearchSetting';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { countDifferences } from './settingsDiff';
+import { shelterShort, SHELTER_ADVICE, type TrekShelter } from './trekShelter';
 import { resolveOverviews } from './overviewSettings';
 import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
 import { noticesBundleSummary, noticesNeed, permissionRows, permissionsSummary, resolveDeviceNotices, type DevicePermissions } from './deviceNotices';
@@ -174,6 +175,8 @@ export interface SettingsFacts {
   // Kilometers die ASCEND telde sinds de bergschoenen; weg zolang er geen datum is vastgelegd.
   bootKm?: number;
   packKg?: number;
+  // Waar je slaapt op je tocht (engine/trekShelter.ts); weg als het niet berekend is.
+  shelter?: TrekShelter;
   // Of de browser een vaste map kan onthouden en of die gekozen is.
   folderSupported: boolean;
   folderChosen: boolean;
@@ -366,6 +369,7 @@ export function rowContext(f: SettingsFacts): RowContext {
     goal: f.goal !== null,
     program: f.position !== null,
     trek: f.treks > 0,
+    trekGoal: f.trekGoal === true,
     strengthInApp: !f.strengthExternal,
     strengthTrainings: f.strengthDurations.length > 0,
     longSundayVisible: f.longSundayVisible,
@@ -540,7 +544,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
 
     // Doel en tochten
     case 'doelen':
-      return f.goal ? { value: `${shortGoalName(f.goal.name)}, ${formatDayMonthNL(f.goal.date)}` } : { value: 'Geen doel', dim: true, sub: 'Een doel geeft ASCEND een einddatum' };
+      return f.goal ? { value: `${shortGoalName(f.goal.name)}, ${formatDayMonthNL(f.goal.date)}` } : { value: 'Geen doel', dim: true, sub: 'Een doel geeft je planning een einddatum' };
     case 'programma':
       return f.position
         ? { value: `Week ${f.position.weekInProgram} van ${f.position.totalWeeks}`, sub: f.goal ? `${capitalize(lower(f.position.phaseName))}, teruggerekend vanaf je doel` : capitalize(lower(f.position.phaseName)) }
@@ -553,6 +557,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.showSeasonStrip !== false };
     case 'vaardigheidsdoelen':
       return { checked: s.showSkillGoals !== false };
+    case 'slapen-onderweg':
+      return { value: shelterShort(f.shelter ?? SHELTER_ADVICE) };
     case 'volgende-tocht':
       return { checked: s.showNextTrek !== false };
     case 'water-per-etappe':
@@ -916,7 +922,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'ochtendmelding': {
       const n = noticeState(f);
       if (n.support === 'unavailable') return { value: 'Niet mogelijk', dim: true, sub: 'Alleen als je de app opent' };
-      if (n.support === 'not_installed') return { value: 'Niet mogelijk', dim: true, sub: 'Zet ASCEND eerst op je beginscherm' };
+      if (n.support === 'not_installed') return { value: 'Niet mogelijk', dim: true, sub: 'Eerst op je beginscherm zetten' };
       return { checked: n.on, sub: n.support === 'blocked' ? 'Geblokkeerd in je telefoon' : undefined };
     }
     case 'bundel-meldingen':

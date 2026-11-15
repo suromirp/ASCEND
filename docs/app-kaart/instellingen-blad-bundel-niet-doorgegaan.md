@@ -6,9 +6,9 @@ Planning
 ### Training die niet doorging
 [knop: Sluiten]
 Een training die voorbij is zonder log.
-[knop: Wat ASCEND doet, Vragen]
-Wat ASCEND doet
-[knop: Uitleg: Wat ASCEND doet]
+[knop: Wat er gebeurt, Vragen]
+Wat er gebeurt
+[knop: Uitleg: Wat er gebeurt]
 Vragen
 [knop: Na hoeveel dagen, 2 dagen]
 Na hoeveel dagen

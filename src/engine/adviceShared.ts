@@ -136,6 +136,9 @@ export interface AdviceInputs {
   // A missed training a loose watch or MacroFactor log may belong to gets the link proposal first, never
   // a catch-up (rule MISSED-CATCH-UP). Absent = on, nothing declined.
   missedLink?: { on: boolean; declined: readonly string[]; declinedOn?: Readonly<Record<string, string>>; places?: Readonly<Record<string, string>> };
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): die loopt nog en
+  // wordt niet ingehaald en niet losgelaten.
+  openDraft?: string;
   // Rows an accepted TEST-RETRY proposal made a test (`retryTestRows` of the stored proposals). A
   // retry that was skipped or missed is spoken for by TEST-RETRY once more, not by TEST-MAKE-ROOM.
   retryRows?: ReadonlySet<string>;

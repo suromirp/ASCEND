@@ -514,6 +514,9 @@ export interface AppSettings {
   // Paklijst with weights (engine/packList.ts). Absent means the example
   // list from data/packList.ts. Same rules as `journey`.
   packList?: PackListState;
+  // De doelen (id's) waarbij de vraag "Je tocht staat op hutten. Klopt dat?" al gesteld is
+  // (engine/trekShelter.ts#needsShelterCheck). Optioneel en alleen toevoegen; gelezen met readShelterAsked.
+  shelterAsked?: string[];
   // Days between weight reminders; 0 = never remind. Absent = 14.
   weightReminderDays?: number;
   // "Gewicht uit MacroFactor gebruiken" (engine/bodyWeight.ts#weightsInUse):

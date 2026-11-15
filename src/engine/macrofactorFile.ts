@@ -101,8 +101,8 @@ function headingsOf(rows: Cell[][]): string {
 function unknownLayoutMessage(tables: SheetTable[]): string {
   const sheets = tables.map((t, i) => `${t.name || `Blad ${i + 1}`} (${headingsOf(t.rows)})`).join('; ');
   return (
-    'ASCEND herkent geen werkblad in dit bestand. ASCEND zoekt gewicht (datum met trendgewicht en/of weegschaalgewicht) of de Workout Log (datum, training, oefening, gewicht, herhalingen). ' +
-    `Gevonden werkbladen en kolommen: ${sheets}. Geef deze kolomnamen door, dan kan ASCEND ze leren herkennen.`
+    'Geen bekend werkblad in dit bestand. Het bestand moet een blad met gewicht (datum met trendgewicht en/of weegschaalgewicht) of een Workout Log (datum, training, oefening, gewicht, herhalingen) hebben. ' +
+    `Gevonden werkbladen en kolommen: ${sheets}. Geef deze kolomnamen door, dan kunnen ze herkend worden.`
   );
 }
 
@@ -126,9 +126,9 @@ const isFoodLog = (table: SheetTable) => {
   return header.some((h) => h.includes('food name')) || (header.some((h) => h.startsWith('calories')) && header.some((h) => h.startsWith('protein')));
 };
 const FOOD_LOG_MESSAGE =
-  'Dit is je Food Log (wat je at). Die gebruikt ASCEND niet. Kies in MacroFactor bij Granular Export onder Metrics & Analytics Weight Trend en Scale Weight voor je gewicht, of Export Workout Log voor je krachttrainingen.';
+  'Dit is je Food Log (wat je at). Die wordt niet gebruikt. Kies in MacroFactor bij Granular Export onder Metrics & Analytics Weight Trend en Scale Weight voor je gewicht, of Export Workout Log voor je krachttrainingen.';
 
-const NOTHING_USABLE_MESSAGE = 'ASCEND vindt in dit bestand geen gewicht en geen krachttrainingen. Kies de Workout Log, of Weight Trend en Scale Weight.';
+const NOTHING_USABLE_MESSAGE = 'Geen gewicht en geen krachttrainingen in dit bestand. Kies de Workout Log, of Weight Trend en Scale Weight.';
 
 export function readMacroFactorTables(input: SheetTable[]): MacroFactorContent {
   const tables = input.map(unwrapCsvInCells);
@@ -230,7 +230,7 @@ export function importSummary(input: ImportSummaryInput, formatDate: (iso: strin
     const kg = new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(w.kg);
     const what = w.basis === 'trend' ? 'trendgewicht' : 'weegschaal';
     const stored = w.added > 0 ? `${daysWord(w.added)} opgeslagen.` : 'stond al in ASCEND.';
-    const off = w.offInSettings ? ' Let op: Gewicht uit MacroFactor gebruiken staat uit, dus ASCEND rekent er nog niet mee.' : '';
+    const off = w.offInSettings ? ' Let op: Gewicht uit MacroFactor gebruiken staat uit, dus er wordt nog niet mee gerekend.' : '';
     lines.push(`Gewicht: ${kg} kg op ${formatDate(w.date)} (${what}), ${stored}${off}`);
     if (w.fatDays && w.fatDays > 0) lines.push(`Vetpercentage: ${w.fatDays === 1 ? '1 meting' : `${w.fatDays} metingen`} uit je weegschaal gelezen.`);
   } else {
@@ -253,6 +253,6 @@ export function importSummary(input: ImportSummaryInput, formatDate: (iso: strin
         : '1RM van MacroFactor: stond al in ASCEND.',
     );
   }
-  if (input.ignoredSheets > 0) lines.push('Voeding en andere gegevens laat ASCEND liggen.');
+  if (input.ignoredSheets > 0) lines.push('Voeding en andere gegevens blijven liggen.');
   return lines;
 }

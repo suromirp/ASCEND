@@ -5,7 +5,7 @@ Adres: `#/more/planning`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 Planning
 ### Testloop
 [knop: Sluiten]
-Hoe ASCEND een test leest en plant.
+Hoe een test telt en wanneer hij komt.
 [knop: Twijfeltest eerst vragen]
 Twijfeltest eerst vragen
 [knop: Uitleg: Twijfeltest eerst vragen]

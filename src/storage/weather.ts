@@ -103,7 +103,7 @@ async function run(place: WeatherPlace, options: WeatherSyncOptions): Promise<We
     state = await getWeatherState();
     if (!options.force && !isFetchDue(state, place, now)) return { status: 'too-soon' };
   } catch {
-    return { status: 'error', message: 'ASCEND kan het opgeslagen weer niet lezen.' };
+    return { status: 'error', message: 'Het opgeslagen weer is niet te lezen.' };
   }
   try {
     const forecast = await fetchForecast(place, { fetchImpl: options.fetchImpl, now });

@@ -12,15 +12,15 @@ describe('de kaarten', () => {
     const cards = sportCards({});
     expect(cards.map((c) => c.label)).toEqual(['Hardlopen', 'Wandelen', 'Fietsen', 'Zwemmen', 'Padel', 'Voetbal', 'Yoga']);
     expect(cards.map((c) => c.pill)).toEqual(['Gepland', 'Gepland', 'Telt mee', 'Nog niet gekozen', 'Nog niet gekozen', 'Nog niet gekozen', 'Nog niet gekozen']);
-    expect(cards[3].line).toBe('Zodra je dit doet, vraagt ASCEND hoe het telt.');
+    expect(cards[3].line).toBe('Zodra je dit doet, krijg je de vraag hoe het telt.');
   });
 
   it('de regel zegt wat de rol nu betekent', () => {
-    expect(sportCardLine('running', 'plan', { sportFrequency: { running: 3 } })).toBe('3 keer per week. ASCEND kiest de dagen.');
+    expect(sportCardLine('running', 'plan', { sportFrequency: { running: 3 } })).toBe('3 keer per week. De dagen worden voor je gekozen.');
     expect(sportCardLine('padel', 'count', {})).toBe('Je plant het zelf. Log je het, dan blijft de dag erna lichter.');
     expect(sportCardLine('swimming', 'count', {})).toBe('Je plant het zelf. Log je het, dan telt het mee in je week.');
     expect(sportCardLine('swimming', 'off', {})).toBe('Doet niet mee in je planning en je benen. Je kunt het wel loggen.');
-    expect(sportCardLine('cycling', 'count', {})).toBe('Telt mee voor je benen en je week. ASCEND plant het niet.');
+    expect(sportCardLine('cycling', 'count', {})).toBe('Telt mee voor je benen en je week. Komt niet in je planning.');
     const football = { sportHandling: { football: { role: 'fixed', fixed: [{ day: 2, minutes: 90, intensity: 'moderate' }, { day: 6, minutes: 90, intensity: 'high' }] } } };
     expect(sportCardLine('football', 'fixed', football)).toBe('Dinsdag en zaterdag. De zaterdag telt als zwaar: de 72 uur erna blijven je benen vrij van zware kracht.');
   });

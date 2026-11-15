@@ -237,7 +237,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthFlag('forge-extras', 'Wat er verder veranderde', 'showExtras'),
   strengthFlag('forge-lijntjes', 'Lijntjes in de lijst', 'showTrendLines'),
   strengthChoice('forge-volgorde-lijst', 'Volgorde van de oefeningen', 'listSort', 'forgeVolgorde'),
-  strengthFlag('forge-naast', 'ASCEND naast MacroFactor', 'showComparison'),
+  strengthFlag('forge-naast', 'Voorstel naast MacroFactor', 'showComparison'),
 
   // Lichaam
   flag('vetpercentage', 'Vetpercentage tonen', 'lichaam', 'showBodyFat'),

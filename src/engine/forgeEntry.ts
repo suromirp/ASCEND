@@ -3,7 +3,7 @@
 
 import { compareExercise, type ForgePoint } from './forgeHistory';
 
-export const FORGE_FALLBACK_LINE = 'Je krachttraining: vooruitgang per oefening en wat ASCEND de volgende keer voorstelt.';
+export const FORGE_FALLBACK_LINE = 'Je krachttraining: vooruitgang per oefening en het voorstel voor de volgende keer.';
 export const FORGE_OFF_LINE = 'Kracht meerekenen staat uit.';
 export const FORGE_NO_DATA_LINE = 'Nog geen krachttrainingen ingelezen uit MacroFactor.';
 // Zonder koppeling met MacroFactor (profielen 14 november, punt I): de sets komen uit Forge.

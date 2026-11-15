@@ -1,12 +1,127 @@
 // ASCEND: de instellingen van de groep Doel en tochten (docs/visie/Ontwerp instellingen op een plek.md).
 //
-// Stap 1: alleen de teksten en de plek, één keer gegenereerd uit de exports van 14 november en daarna met de
-// hand bijgewerkt. De bron blijft data/settingsIndex.ts, settingsLayout.ts, settingsHelp.ts en
-// settingsChoices.ts tot stap 2 en 3; settingsDefs.parity.test.ts bewaakt dat de teksten gelijk zijn. De volgorde
-// is die van de pagina: een rij, met daaronder wat in haar blad staat.
+// Elke instelling van deze groep staat hier één keer: titel, zin en trefwoorden voor het zoekveld, de plek op de
+// pagina, de voorwaarden en de keuze; de uitleg achter de i staat in uitleg/doel.ts. De volgorde is die van de
+// pagina: een rij, met daaronder wat in haar blad staat. Samenvatting en advies volgen in stap 4.
 
-import { B } from './parts';
+import { B, def } from './parts';
 import type { SettingDef } from './types';
+import { SHELTER_CHOICE_OPTIONS } from '../../data/shelterOptions';
+
+// De keuzes van deze groep, onder hun oude sleutel in CHOICES (data/settingsChoices.ts leest ze hier).
+export const DOEL_CHOICES = {
+  langeZondag: def({
+    group: 'Doel en tochten',
+    title: 'De lange zondag',
+    line: 'Vanaf de fase Bergcapaciteit.',
+    advice: 'hike' as 'hike' | 'run',
+    options: [
+      { value: 'hike', label: 'Bergtocht', note: 'Hoogtemeters en een rugzak die zwaarder wordt', short: 'Bergtocht' },
+      { value: 'run', label: 'Duurloop', note: 'Elke zondag hardlopen', short: 'Duurloop' },
+    ],
+  }),
+  klaarWeging: def({
+    group: 'Doel en tochten',
+    title: 'Weging bij een doeltijd',
+    line: 'Hoe zwaar snelheid meetelt bij een wedstrijd met een doeltijd.',
+    advice: 'speed' as 'speed' | 'equal',
+    help: 'klaarWeging',
+    options: [
+      { value: 'speed', label: 'Snelheid weegt het zwaarst', note: 'Snelheid 60%, langste loop en weekvolume 20% elk. Bij Sterker worden kracht 60% en harde sets 40%', short: 'Snelheid' },
+      { value: 'equal', label: 'Gelijk', note: 'Elke meter telt even zwaar mee', short: 'Gelijk' },
+    ],
+  }),
+  klaarGroei: def({
+    group: 'Doel en tochten',
+    title: 'Groei bij het rekenen',
+    line: 'Hoe snel je volgens ASCEND beter wordt, in de meters van Klaar voor je doel.',
+    advice: 'average' as 'average' | 'careful',
+    help: 'klaarGroei',
+    options: [
+      { value: 'average', label: 'Gemiddeld', note: 'Het midden van de band, bij hardlopen 0,55% per week', short: 'Gemiddeld' },
+      { value: 'careful', label: 'Voorzichtig', note: 'De onderkant van de band, bij hardlopen 0,3% per week', short: 'Voorzichtig' },
+    ],
+  }),
+  klaarMarge: def({
+    group: 'Doel en tochten',
+    title: 'Marge bij een tijdslimiet',
+    line: 'Hoeveel ruimte je houdt onder de limiet of cutoff.',
+    advice: 'ten' as 'ten' | 'five' | 'none',
+    help: 'klaarMarge',
+    options: [
+      { value: 'ten', label: '10%', note: 'Ruimte voor eten, pauzes en een tragere dag', short: '10%' },
+      { value: 'five', label: '5%', note: 'Krapper, voor wie strak plant', short: '5%' },
+      { value: 'none', label: 'Geen', note: 'De limiet zelf is de grens', short: 'Geen' },
+    ],
+  }),
+  beginnersstart: def({
+    group: 'Doel en tochten',
+    title: 'Beginnersstart',
+    line: 'De eerste vier weken van je richting, als je een tijd weinig sportte.',
+    advice: 'auto' as 'auto' | 'ja' | 'nee',
+    help: 'beginnersstart',
+    options: [
+      { value: 'auto', label: 'Automatisch', note: 'Rustig beginnen als je de acht weken ervoor minder dan twee keer per week sportte', short: 'Automatisch' },
+      { value: 'ja', label: 'Ja', note: 'Vier weken alleen makkelijk, de heuvelloop is een herstelloop', short: 'Ja' },
+      { value: 'nee', label: 'Nee', note: 'Meteen het gewone ritme van je richting', short: 'Nee' },
+    ],
+  }),
+  afdaalklok: def({
+    group: 'Doel en tochten',
+    title: 'Afdaalklok',
+    line: 'Na drie weken zonder afdaling: een korte trapsessie als voorstel.',
+    advice: 'advies' as 'advies' | 'altijd' | 'uit',
+    help: 'afdaalklok',
+    options: [
+      { value: 'advies', label: 'Bij een bergdoel', note: 'Alleen als je traint voor een tocht of trail met hoogtemeters', short: 'Bij een bergdoel' },
+      { value: 'altijd', label: 'Altijd', note: 'Bij elk doel, ook zonder bergen', short: 'Altijd' },
+      { value: 'uit', label: 'Uit', note: 'Geen regel en geen voorstel', short: 'Uit' },
+    ],
+  }),
+  // De opties staan in data/shelterOptions.ts: de start en Doel aanpassen lezen dezelfde teksten.
+  slapenOnderweg: def({
+    group: 'Doel en tochten',
+    title: 'Slapen onderweg',
+    line: 'Waar je slaapt op je meerdaagse tocht. Een andere keuze is eerst een voorstel.',
+    advice: 'tent' as 'tent' | 'hut' | 'both',
+    help: 'slapenOnderweg',
+    options: SHELTER_CHOICE_OPTIONS,
+  }),
+  rustNaTocht: def({
+    group: 'Doel en tochten',
+    title: 'Rust na een bergtocht',
+    line: 'Voor je benen, na een tocht met veel dalen.',
+    advice: 'soft' as 'soft' | 'strict',
+    help: 'rustNaTocht',
+    options: [
+      { value: 'soft', label: 'Soepel', note: 'Een korte beendag mag na 48 uur' },
+      { value: 'strict', label: 'Streng', note: 'Altijd 72 uur' },
+    ],
+  }),
+  bergschoenen: def({
+    group: 'Doel en tochten',
+    title: 'Bergschoenen inlopen',
+    line: 'Hoeveel kilometer wandelen en tochten je nieuwe schoenen nodig hebben.',
+    advice: 100 as 50 | 75 | 100 | 150,
+    help: 'bergschoenen',
+    options: [
+      { value: 50, label: '50 km', note: 'Voor schoenen die al bijna zitten' },
+      { value: 75, label: '75 km' },
+      { value: 100, label: '100 km', note: 'Samen met minstens 6 weken voor vertrek' },
+      { value: 150, label: '150 km', note: 'Meer dan het advies' },
+    ],
+  }),
+  naHoofddoel: def({
+    group: 'Doel en tochten',
+    title: 'Na je hoofddoel',
+    line: 'Tijdens de tocht komt er nooit iets in je planning.',
+    advice: 'stop' as 'stop' | 'maintain',
+    options: [
+      { value: 'stop', label: 'Niets meer plannen', note: 'Geen training tijdens en na de tocht', short: 'Niets meer' },
+      { value: 'maintain', label: 'Onderhoudsweken', note: 'Gewone weken na de laatste tochtdag', short: 'Onderhoud' },
+    ],
+  }),
+} as const;
 
 export const DOEL: SettingDef[] = [
   {
@@ -17,13 +132,7 @@ export const DOEL: SettingDef[] = [
     note: 'Je hoofddoel, je tochten en de stappen ertussen.',
     keywords: ['gr5', 'doel', 'tocht', 'wedstrijd', 'datum', 'mijlpaal', 'sneeuwhike', 'weekend', 'tussendoelen', 'doelen'],
     route: '/ascend/doelen',
-    help: {
-      title: 'Hoofddoel',
-      lead: 'Waar je naartoe werkt. ASCEND rekent je weken terug vanaf die datum.',
-      points: [
-        { head: 'Zonder doel', text: 'dan werk je in golven met een richting.' },
-      ],
-    },
+    help: true,
     helpKey: 'hoofddoel',
   },
   {
@@ -42,13 +151,7 @@ export const DOEL: SettingDef[] = [
     title: 'Programma',
     note: 'In welke week en fase je zit, en de lengte van de fases.',
     keywords: ['fase', 'week', 'opnieuw beginnen', 'schone start', 'opbouw', 'afbouwen', 'taper', 'fases'],
-    help: {
-      title: 'Programma',
-      lead: 'In welke week en fase je zit. Opnieuw beginnen bij week 1 kan in het blad.',
-      points: [
-        { head: 'Opnieuw bij week 1', text: 'kies je een schone start of alleen de weektelling, en vanaf welke week.' },
-      ],
-    },
+    help: true,
     showWhen: [B.goalOrProgram],
   },
   {
@@ -57,7 +160,7 @@ export const DOEL: SettingDef[] = [
     place: { row: true },
     title: 'Zonder doel',
     search: false,
-    sheet: { eyebrow: 'Doel en tochten', title: 'Zonder doel', line: 'Hoe ASCEND je weken plant en telt als je geen doel hebt.' },
+    sheet: { eyebrow: 'Doel en tochten', title: 'Zonder doel', line: 'Hoe je weken eruitzien en tellen als je geen doel hebt.' },
     showWhen: [B.noGoal],
   },
   {
@@ -67,15 +170,7 @@ export const DOEL: SettingDef[] = [
     title: 'Richting',
     note: 'Waar je week naartoe werkt als je geen doel hebt: Fit blijven, Fitter worden, Sterker worden of Rustig aan. Een andere richting is een voorstel met Akkoord.',
     keywords: ['richting', 'zonder doel', 'fit blijven', 'fitter worden', 'sterker worden', 'rustig aan', 'golf', 'golven', 'planning', 'doel'],
-    help: {
-      title: 'Richting',
-      lead: 'Zonder doel plant ASCEND je weken naar een richting, in golven van vier weken. Een bergtocht en een rugzak komen pas met een tocht als doel.',
-      points: [
-        { head: 'Fit blijven', text: 'het advies. 150 minuten en 2 keer kracht, elke vierde week wat lichter.' },
-        { head: 'Fitter of sterker worden', text: 'Fitter worden begint bij wat je de laatste vier weken deed en bouwt op. Bij Sterker worden staat kracht voorop.' },
-        { head: 'Rustig aan', text: '90 minuten en 1 keer kracht, nooit een harde training. Een andere richting is eerst een voorstel, pas na Akkoord verandert er iets.' },
-      ],
-    },
+    help: true,
     showWhen: [B.noGoal],
   },
   {
@@ -85,15 +180,7 @@ export const DOEL: SettingDef[] = [
     title: 'Weekbudget',
     note: 'Hoeveel minuten en hoeveel keer kracht een week vraagt als je geen doel hebt. Het advies is 150 minuten en 2 keer kracht.',
     keywords: ['week', 'minuten', 'budget', 'kracht', 'keer', 'richtlijn', '150', 'beweegrichtlijn', 'zonder doel', 'richting', 'fit blijven', 'fitter worden', 'sterker worden', 'rustig aan', 'pittig', 'dubbel'],
-    help: {
-      title: 'Weekbudget',
-      lead: 'Zonder doel telt ASCEND je week tegen een budget in minuten en keren kracht.',
-      points: [
-        { head: 'Advies', text: '150 minuten en 2 keer kracht per week, de beweegrichtlijn. Rustig aan is 90 minuten en 1 keer kracht, Sterker worden 120 minuten en 3 keer kracht.' },
-        { head: 'Wat telt', text: 'een matige minuut telt 1, een pittige 2. Een krachttraining telt als een keer, niet in de minuten. Minder dan de richtlijn mag.' },
-        { head: 'Planning', text: 'met een richting bepaalt het budget hoe lang je duurtrainingen zijn. Eerst een voorstel, pas na Akkoord verandert er iets.' },
-      ],
-    },
+    help: true,
     showWhen: [B.noGoal],
   },
   {
@@ -103,15 +190,7 @@ export const DOEL: SettingDef[] = [
     title: 'Golven',
     note: 'Zonder doel lopen je weken in golven. Kies de lengte (3, 4 of 6 weken, advies 4) en of de laatste week lichter is.',
     keywords: ['golf', 'golven', 'lichte week', 'rustweek', 'opbouw', 'weken', 'zonder doel', 'richting', 'deload'],
-    help: {
-      title: 'Golven',
-      lead: 'Zonder doel lopen je weken in golven: een paar weken opbouwen en dan een lichtere week. Bij een andere keuze verandert je planning zoals je bij Wijzigingen koos.',
-      points: [
-        { head: 'Vier weken', text: 'het advies. Drie weken opbouwen, de vierde 35% lichter bij dezelfde intensiteit. Drie of zes weken kan ook.' },
-        { head: 'Lichte week voorstellen', text: 'uit maakt elke week van de golf even zwaar. Dat kan, maar rust is waar je sterker van wordt.' },
-        { head: 'Terugblik na een golf', text: 'een kaart op Ascend na elke golf. Haalde je genoeg weken je minuten (advies 3 van 4), dan stelt Nog een golf een iets hoger budget voor.' },
-      ],
-    },
+    help: true,
     showWhen: [B.noGoal],
   },
   {
@@ -121,30 +200,8 @@ export const DOEL: SettingDef[] = [
     title: 'Beginnersstart',
     note: 'Sportte je een tijd weinig, dan zijn de eerste vier weken van je richting alleen makkelijk. Automatisch kijkt naar je laatste acht weken.',
     keywords: ['beginner', 'beginnen', 'rustig', 'start', 'nieuw', 'weinig gesport', 'heuvelloop', 'harde training', 'zonder doel', 'richting'],
-    help: {
-      title: 'Beginnersstart',
-      lead: 'Wie een tijd weinig sportte, begint zijn richting rustig. Dat loopt na vier weken vanzelf af.',
-      points: [
-        { head: 'Automatisch', text: 'het advies. Je begint rustig als je in de acht weken voor je richting gemiddeld minder dan twee keer per week sportte.' },
-        { head: 'Rustig beginnen', text: 'de eerste vier weken geen harde training. De heuvelloop is dan een herstelloop. Wat jij vastzette blijft staan.' },
-        { head: 'Je planning', text: 'je planning verandert zoals je bij Wijzigingen koos: eerst een voorstel, of meteen met een melding en ongedaan maken.' },
-      ],
-    },
-    choice: {
-      key: 'beginnersstart',
-      def: {
-        group: 'Doel en tochten',
-        title: 'Beginnersstart',
-        line: 'De eerste vier weken van je richting, als je een tijd weinig sportte.',
-        advice: 'auto',
-        help: 'beginnersstart',
-        options: [
-          { value: 'auto', label: 'Automatisch', note: 'Rustig beginnen als je de acht weken ervoor minder dan twee keer per week sportte', short: 'Automatisch' },
-          { value: 'ja', label: 'Ja', note: 'Vier weken alleen makkelijk, de heuvelloop is een herstelloop', short: 'Ja' },
-          { value: 'nee', label: 'Nee', note: 'Meteen het gewone ritme van je richting', short: 'Nee' },
-        ],
-      },
-    },
+    help: true,
+    choice: { key: 'beginnersstart', def: DOEL_CHOICES.beginnersstart },
     showWhen: [B.noGoal],
   },
   {
@@ -163,27 +220,9 @@ export const DOEL: SettingDef[] = [
     title: 'De lange zondag',
     note: 'Of je op zondag een bergtocht of een lange duurloop doet.',
     keywords: ['zondag', 'bergtocht', 'duurloop', 'wandeling', 'marathon'],
-    help: {
-      title: 'De lange zondag',
-      lead: 'Op zondag staat je langste training: een bergtocht of een lange duurloop. Een andere keuze laat eerst zien wat er verschuift.',
-      points: [
-        { head: 'Bergdoel', text: 'is je hoofddoel een bergtocht, dan staat deze keuze er niet.' },
-      ],
-    },
+    help: true,
     helpKey: 'langeZondag',
-    choice: {
-      key: 'langeZondag',
-      def: {
-        group: 'Doel en tochten',
-        title: 'De lange zondag',
-        line: 'Vanaf de fase Bergcapaciteit.',
-        advice: 'hike',
-        options: [
-          { value: 'hike', label: 'Bergtocht', note: 'Hoogtemeters en een rugzak die zwaarder wordt', short: 'Bergtocht' },
-          { value: 'run', label: 'Duurloop', note: 'Elke zondag hardlopen', short: 'Duurloop' },
-        ],
-      },
-    },
+    choice: { key: 'langeZondag', def: DOEL_CHOICES.langeZondag },
     showWhen: [B.longSunday],
   },
   {
@@ -191,29 +230,11 @@ export const DOEL: SettingDef[] = [
     page: 'doel',
     place: { row: true },
     title: 'Na je hoofddoel',
-    note: 'Of ASCEND na je hoofddoel niets meer plant (advies) of onderhoudsweken. Tijdens de tocht nooit.',
+    note: 'Na je hoofddoel niets meer plannen (advies) of onderhoudsweken. Tijdens de tocht nooit.',
     keywords: ['na de gr5', 'onderhoud', 'onderhoudsweken', 'daarna', 'na het doel', 'klaar', 'voorbij'],
-    help: {
-      title: 'Na je hoofddoel',
-      lead: 'Wat ASCEND plant als je doel voorbij is: niets (advies) of onderhoudsweken.',
-      points: [
-        { head: 'Tijdens de tocht', text: 'verandert er nooit iets.' },
-      ],
-    },
+    help: true,
     helpKey: 'naHoofddoel',
-    choice: {
-      key: 'naHoofddoel',
-      def: {
-        group: 'Doel en tochten',
-        title: 'Na je hoofddoel',
-        line: 'Tijdens de tocht plant ASCEND nooit.',
-        advice: 'stop',
-        options: [
-          { value: 'stop', label: 'Niets meer plannen', note: 'Geen training tijdens en na de tocht', short: 'Niets meer' },
-          { value: 'maintain', label: 'Onderhoudsweken', note: 'Gewone weken na de laatste tochtdag', short: 'Onderhoud' },
-        ],
-      },
-    },
+    choice: { key: 'naHoofddoel', def: DOEL_CHOICES.naHoofddoel },
     showWhen: [B.goal],
   },
   {
@@ -223,30 +244,9 @@ export const DOEL: SettingDef[] = [
     title: 'Weging bij een doeltijd',
     note: 'Of snelheid het zwaarst meetelt in je percentage bij een wedstrijd met een doeltijd, of dat alle meters gelijk wegen.',
     keywords: ['klaar voor je doel', 'percentage', 'snelheid', 'doeltijd', 'wedstrijd', 'hardlopen', 'weging', 'meters', 'verwachte tijd'],
-    help: {
-      title: 'Weging bij een doeltijd',
-      lead: 'Bij een wedstrijd met een doeltijd gaat het vooral over snelheid. Dit bepaalt hoe zwaar die meetelt in je percentage.',
-      points: [
-        { head: 'Snelheid weegt het zwaarst', text: 'het gat tussen je verwachte tijd en je doeltijd telt voor 60% mee. Je langste loop en je weekvolume tellen voor 20% elk.' },
-        { head: 'Gelijk', text: 'alle meters tellen even zwaar, zoals voor een doel zonder doeltijd. Sterker worden volgt dezelfde keuze, met 60% voor de krachtmeter en 40% voor je harde sets.' },
-        { head: 'Je verwachte tijd', text: 'komt uit je testloop die meetelt. Zonder testloop, of zolang je snelste 5 km op je Akkoord wacht, telt snelheid niet mee.' },
-      ],
-    },
+    help: true,
     helpKey: 'klaarWeging',
-    choice: {
-      key: 'klaarWeging',
-      def: {
-        group: 'Doel en tochten',
-        title: 'Weging bij een doeltijd',
-        line: 'Hoe zwaar snelheid meetelt bij een wedstrijd met een doeltijd.',
-        advice: 'speed',
-        help: 'klaarWeging',
-        options: [
-          { value: 'speed', label: 'Snelheid weegt het zwaarst', note: 'Snelheid 60%, langste loop en weekvolume 20% elk. Bij Sterker worden kracht 60% en harde sets 40%', short: 'Snelheid' },
-          { value: 'equal', label: 'Gelijk', note: 'Elke meter telt even zwaar mee', short: 'Gelijk' },
-        ],
-      },
-    },
+    choice: { key: 'klaarWeging', def: DOEL_CHOICES.klaarWeging },
     showWhen: [B.goal],
   },
   {
@@ -254,32 +254,11 @@ export const DOEL: SettingDef[] = [
     page: 'doel',
     place: { row: true },
     title: 'Groei bij het rekenen',
-    note: 'Of ASCEND bij Klaar voor je doel rekent met gemiddelde groei of met de voorzichtige onderkant van de band.',
+    note: 'Of Klaar voor je doel rekent met gemiddelde groei of met de voorzichtige onderkant van de band.',
     keywords: ['klaar voor je doel', 'groei', 'voorzichtig', 'gemiddeld', 'weken werk', 'tempo', 'percentage', 'snelheid', 'band'],
-    help: {
-      title: 'Groei bij het rekenen',
-      lead: 'Hoe snel je beter wordt, verschilt sterk tussen mensen. ASCEND rekent het gat naar je doel om in weken werk met één groeigetal.',
-      points: [
-        { head: 'Gemiddeld', text: 'het midden van de band, bij hardlopen 0,55% per week. Afgeleid uit meerdere onderzoeken, niet uit één studie.' },
-        { head: 'Voorzichtig', text: 'de onderkant van de band, bij hardlopen 0,3% per week. Je doel vraagt dan meer weken en de meters staan lager.' },
-        { head: 'Overal hetzelfde', text: 'het getal, de meters, de regel onder het getal en een voorstel voor je doeltijd gebruiken dezelfde groei.' },
-      ],
-    },
+    help: true,
     helpKey: 'klaarGroei',
-    choice: {
-      key: 'klaarGroei',
-      def: {
-        group: 'Doel en tochten',
-        title: 'Groei bij het rekenen',
-        line: 'Hoe snel je volgens ASCEND beter wordt, in de meters van Klaar voor je doel.',
-        advice: 'average',
-        help: 'klaarGroei',
-        options: [
-          { value: 'average', label: 'Gemiddeld', note: 'Het midden van de band, bij hardlopen 0,55% per week', short: 'Gemiddeld' },
-          { value: 'careful', label: 'Voorzichtig', note: 'De onderkant van de band, bij hardlopen 0,3% per week', short: 'Voorzichtig' },
-        ],
-      },
-    },
+    choice: { key: 'klaarGroei', def: DOEL_CHOICES.klaarGroei },
     showWhen: [B.goal],
   },
   {
@@ -289,31 +268,9 @@ export const DOEL: SettingDef[] = [
     title: 'Marge bij een tijdslimiet',
     note: 'Hoeveel ruimte onder een tijdslimiet of cutoff meetelt in de meter Tempo: 10%, 5% of geen.',
     keywords: ['klaar voor je doel', 'marge', 'tijdslimiet', 'cutoff', 'laatste lift', 'dagtocht', 'trail', 'ultra', 'tempo'],
-    help: {
-      title: 'Marge bij een tijdslimiet',
-      lead: 'Bij een dagtocht met een tijdslimiet of een trailrun met een cutoff telt ASCEND een marge onder die tijd.',
-      points: [
-        { head: '10%', text: 'het advies. Ruimte voor eten, pauzes en een tragere dag. Bij een limiet van 8 uur ligt de grens op 7:12.' },
-        { head: '5% of geen', text: 'krapper. Kies dit alleen als je je dag goed kent.' },
-        { head: 'Alleen de meter', text: 'je planning en je doel veranderen er niet door.' },
-      ],
-    },
+    help: true,
     helpKey: 'klaarMarge',
-    choice: {
-      key: 'klaarMarge',
-      def: {
-        group: 'Doel en tochten',
-        title: 'Marge bij een tijdslimiet',
-        line: 'Hoeveel ruimte onder de limiet of cutoff ASCEND je gunt.',
-        advice: 'ten',
-        help: 'klaarMarge',
-        options: [
-          { value: 'ten', label: '10%', note: 'Ruimte voor eten, pauzes en een tragere dag', short: '10%' },
-          { value: 'five', label: '5%', note: 'Krapper, voor wie strak plant', short: '5%' },
-          { value: 'none', label: 'Geen', note: 'De limiet zelf is de grens', short: 'Geen' },
-        ],
-      },
-    },
+    choice: { key: 'klaarMarge', def: DOEL_CHOICES.klaarMarge },
     showWhen: [B.goal],
   },
   {
@@ -321,17 +278,9 @@ export const DOEL: SettingDef[] = [
     page: 'doel',
     place: { row: true },
     title: 'Doeltijd aanpassen voorstellen',
-    note: 'Of ASCEND na een testloop een andere doeltijd voorstelt. Eén Liever niet geldt voor dat doel tot je de doeltijd zelf verandert.',
+    note: 'Of je na een testloop een andere doeltijd als voorstel krijgt. Eén Liever niet geldt voor dat doel tot je de doeltijd zelf verandert.',
     keywords: ['doeltijd', 'voorstel', 'testloop', 'wedstrijd', 'liever niet', 'ambitie', 'hardlopen', 'tijd'],
-    help: {
-      title: 'Doeltijd aanpassen voorstellen',
-      lead: 'Je doel blijft je doel. Staat dit aan, dan mag ASCEND na een testloop één keer voorstellen om je doeltijd aan te passen.',
-      points: [
-        { head: 'Liever niet', text: 'ASCEND vraagt er voor dit doel niet meer naar, tot je de doeltijd zelf verandert.' },
-        { head: 'Uit', text: 'er komt nooit een voorstel voor je doeltijd. De kaart blijft laten zien hoeveel er nog te winnen is.' },
-        { head: 'Akkoord', text: 'verandert alleen je doeltijd, niets anders in je planning.' },
-      ],
-    },
+    help: true,
     helpKey: 'doeltijdVoorstel',
   },
   {
@@ -341,13 +290,7 @@ export const DOEL: SettingDef[] = [
     title: 'Op de Ascend-tab',
     search: false,
     sheet: { eyebrow: 'Doel en tochten', title: 'Op de Ascend-tab', line: 'Wat Ascend naast je doelen laat zien.' },
-    help: {
-      title: 'Op de Ascend-tab',
-      lead: 'Wat Ascend naast je doelen laat zien: de seizoensstrook en je vaardigheden.',
-      points: [
-        { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
-      ],
-    },
+    help: true,
     helpKey: 'bundelAscend',
   },
   {
@@ -357,14 +300,7 @@ export const DOEL: SettingDef[] = [
     title: 'Seizoensstrook tonen',
     note: 'Of Ascend bovenaan je seizoen laat zien, met een vlag per doel.',
     keywords: ['seizoen', 'strook', 'tijdlijn', 'vlag', 'doelen', 'ascend', 'weken'],
-    help: {
-      title: 'Seizoensstrook tonen',
-      lead: 'Bovenaan Ascend staat je seizoen als een strook van nu tot je laatste doel, met een vlag per doel.',
-      points: [
-        { head: 'Wat je ziet', text: 'de weken tussen je doelen en de afbouw voor een doel als een donkerder stuk. Een Top heeft een gevulde vlag.' },
-        { head: 'Uit', text: 'de strook verdwijnt. Je doelen en je planning blijven precies zoals ze zijn.' },
-      ],
-    },
+    help: true,
   },
   {
     id: 'vaardigheidsdoelen',
@@ -373,15 +309,7 @@ export const DOEL: SettingDef[] = [
     title: 'Calisthenicsdoelen tonen',
     note: 'Of Ascend je calisthenicsdoelen laat zien: algemeen sterk met eigen gewicht en je vaardigheden.',
     keywords: ['vaardigheid', 'vaardigheidsdoelen', 'vaardigheidsdoel', 'calisthenics', 'algemeen', 'eigen gewicht', 'ladder', 'stap', 'pull-up', 'optrekken', 'push-up', 'dip', 'doelen', 'ascend'],
-    help: {
-      title: 'Calisthenicsdoelen tonen',
-      lead: 'Een vaardigheid is een stap op een ladder, zoals Pull-Up op de ladder Optrekken. Ascend toont de ladder als trap.',
-      points: [
-        { head: 'Wat je ziet', text: 'welke stappen je haalde, op welke stap je nu traint en de toets ervan. Een gehaalde stap blijft gehaald.' },
-        { head: 'Je planning', text: 'een vaardigheid plant niets en wordt nooit je hoofddoel.' },
-        { head: 'Uit', text: 'de kaarten en de keuze bij Doel toevoegen verdwijnen. Je vaardigheden en wat je haalde blijven bewaard.' },
-      ],
-    },
+    help: true,
   },
   {
     id: 'racedag',
@@ -390,15 +318,7 @@ export const DOEL: SettingDef[] = [
     title: 'Racedag-blad',
     note: 'In de laatste week voor een 10 km een rij naar het blad Racedag met weer, inlopen en je tempo, en de dag erna een korte terugblik.',
     keywords: ['racedag', 'race', 'wedstrijd', '10 km', 'inlopen', 'warming-up', 'tempo', 'doeltijd', 'terugblik', 'weer', 'kleding', 'hardlopen'],
-    help: {
-      title: 'Racedag-blad',
-      lead: 'In de laatste week voor een 10 km staat op Vandaag en bij je doel één rij naar het blad Racedag.',
-      points: [
-        { head: 'In het blad', text: 'de start, het weer thuis met wat je aantrekt, het inlopen en een tempo per km voor je doeltijd en je verwachte tijd.' },
-        { head: 'De dag erna', text: 'een korte terugblik met je tijd uit het log.' },
-        { head: 'Alleen tekst', text: 'je planning en je doel veranderen er niet door.' },
-      ],
-    },
+    help: true,
   },
   {
     id: 'bundel-tochten',
@@ -406,16 +326,24 @@ export const DOEL: SettingDef[] = [
     place: { row: true },
     title: 'Tochten',
     search: false,
-    sheet: { eyebrow: 'Doel en tochten', title: 'Tochten', line: 'Wat ASCEND doet rond een tocht.' },
-    help: {
-      title: 'Tochten',
-      lead: 'Wat ASCEND doet rond een tocht: op Vandaag tonen, water per etappe, rust erna en je schoenen.',
-      points: [
-        { head: 'Per onderdeel', text: 'elk onderdeel zet je apart aan of uit in het blad.' },
-      ],
-    },
+    sheet: { eyebrow: 'Doel en tochten', title: 'Tochten', line: 'Wat er gebeurt rond een tocht.' },
+    help: true,
     helpKey: 'bundelTochten',
     showWhen: [B.goalOrTrek],
+  },
+  {
+    id: 'slapen-onderweg',
+    page: 'doel',
+    place: { in: 'bundel-tochten' },
+    title: 'Slapen onderweg',
+    note: 'Hutten, tent of beide. De doelkop, de paklijst en de Reisplanner volgen je keuze.',
+    keywords: ['hut', 'hutten', 'tent', 'bivak', 'slapen', 'refuge', 'overnachten', 'gr5', 'tochten'],
+    showWhen: [B.trekGoal],
+    // De waarde staat op het doel (GoalDetails.shelter), niet in AppSettings: daarom niet in settingsDiff,
+    // net als Rugzakgewicht. Een andere keuze is een voorstel met Akkoord (components/settings/useShelterChange.tsx).
+    help: true,
+    helpKey: 'slapenOnderweg',
+    choice: { key: 'slapenOnderweg', def: DOEL_CHOICES.slapenOnderweg },
   },
   {
     id: 'volgende-tocht',
@@ -433,15 +361,7 @@ export const DOEL: SettingDef[] = [
     title: 'Water per etappe tonen',
     note: 'Of Etappes erbij zet hoeveel water je ongeveer kwijtraakt, uit je eigen zweettempo.',
     keywords: ['water', 'drinken', 'zweet', 'vocht', 'zweetverlies', 'etappe', 'gr5', 'hitte', 'wegen', 'tochten'],
-    help: {
-      title: 'Water per etappe tonen',
-      lead: 'Bij elke etappe staat ongeveer hoeveel je onderweg zweet, uit je zweettempo en de uren van de etappe.',
-      points: [
-        { head: 'Je tempo', text: 'komt uit je eigen wegingen voor en na een training. Zonder wegingen staat er een standaard, met de woorden nog niet gemeten.' },
-        { head: 'Geen advies', text: 'het is een richtlijn voor wat je kwijtraakt, geen medisch advies. Het gaat om niet te veel uitdrogen, niet om alles terug te drinken.' },
-        { head: 'Uit', text: 'de etappes tonen geen water. Je wegingen blijven bewaard.' },
-      ],
-    },
+    help: true,
     helpKey: 'waterPerEtappe',
     showWhen: [B.goalOrTrek],
   },
@@ -452,30 +372,9 @@ export const DOEL: SettingDef[] = [
     title: 'Rust na een bergtocht',
     note: 'Soepel: een korte beendag mag 48 uur na je tocht. Streng: altijd 72 uur. Geldt voor nieuwe en gewijzigde tochten.',
     keywords: ['tocht', 'bergtocht', 'rust', 'benen', 'beendag', '72 uur', '48 uur', 'soepel', 'streng', 'herstel', 'tochten'],
-    help: {
-      title: 'Rust na een bergtocht',
-      lead: 'Hoe snel een zware beendag mag volgen op een bergtocht.',
-      points: [
-        { head: 'Soepel', text: 'een korte beendag mag al 48 uur na je tocht.' },
-        { head: 'Streng', text: 'ASCEND houdt altijd 72 uur.' },
-        { head: 'Geldt voor', text: 'nieuwe en gewijzigde tochten. Een tocht die al staat, houdt zijn planning tot je hem wijzigt.' },
-      ],
-    },
+    help: true,
     helpKey: 'rustNaTocht',
-    choice: {
-      key: 'rustNaTocht',
-      def: {
-        group: 'Doel en tochten',
-        title: 'Rust na een bergtocht',
-        line: 'Voor je benen, na een tocht met veel dalen.',
-        advice: 'soft',
-        help: 'rustNaTocht',
-        options: [
-          { value: 'soft', label: 'Soepel', note: 'Een korte beendag mag na 48 uur' },
-          { value: 'strict', label: 'Streng', note: 'Altijd 72 uur' },
-        ],
-      },
-    },
+    choice: { key: 'rustNaTocht', def: DOEL_CHOICES.rustNaTocht },
     showWhen: [B.goalOrTrek],
   },
   {
@@ -483,34 +382,10 @@ export const DOEL: SettingDef[] = [
     page: 'doel',
     place: { in: 'bundel-tochten' },
     title: 'Afdaalklok',
-    note: 'Na 21 dagen zonder afdaling stelt ASCEND een korte trapsessie voor, en voor een bergtocht nog één bekende afdaling.',
+    note: 'Na 21 dagen zonder afdaling komt een korte trapsessie als voorstel, en voor een bergtocht nog één bekende afdaling.',
     keywords: ['afdalen', 'afdaling', 'dalen', 'bergaf', 'trap', 'trappen', 'trapsessie', 'spierpijn', 'bovenbenen', 'tocht', 'tochten', 'klok', '21 dagen'],
-    help: {
-      title: 'Afdaalklok',
-      lead: 'Na een afdaling zijn je bovenbenen een paar weken beschermd tegen de spierpijn van de volgende.',
-      points: [
-        { head: 'Wat telt', text: 'een wandeling of loop met 100 meter dalen of meer, of een afdaaltraining zoals Trap af.' },
-        { head: 'Na 21 dagen', text: 'één regel op Vandaag en een voorstel voor een korte trapsessie op een vrije dag. Is die er niet, dan na een herstelwandeling of een rustige loop op dezelfde dag.' },
-        { head: 'Voor een tocht', text: '7 tot 14 dagen voor vertrek vraagt ASCEND om nog één afdaling die je kent. In de laatste week niets nieuws meer.' },
-        { head: 'Zonder hoogtemeters', text: 'weet ASCEND niet of je afdaalde, en dat staat er dan bij.' },
-        { head: 'Akkoord', text: 'pas dan staat de trapsessie in je week. Met Liever niet verandert er niets en blijft het drie weken stil.' },
-      ],
-    },
-    choice: {
-      key: 'afdaalklok',
-      def: {
-        group: 'Doel en tochten',
-        title: 'Afdaalklok',
-        line: 'Na drie weken zonder afdaling stelt ASCEND een korte trapsessie voor.',
-        advice: 'advies',
-        help: 'afdaalklok',
-        options: [
-          { value: 'advies', label: 'Bij een bergdoel', note: 'Alleen als je traint voor een tocht of trail met hoogtemeters', short: 'Bij een bergdoel' },
-          { value: 'altijd', label: 'Altijd', note: 'Bij elk doel, ook zonder bergen', short: 'Altijd' },
-          { value: 'uit', label: 'Uit', note: 'Geen regel en geen voorstel', short: 'Uit' },
-        ],
-      },
-    },
+    help: true,
+    choice: { key: 'afdaalklok', def: DOEL_CHOICES.afdaalklok },
     showWhen: [B.goalOrTrek],
   },
   {
@@ -521,31 +396,8 @@ export const DOEL: SettingDef[] = [
     note: 'Hoeveel kilometer je nieuwe bergschoenen nodig hebben voor vertrek. De datum leg je vast bij de taak schoenen in de Reisplanner.',
     keywords: ['schoenen', 'bergschoenen', 'inlopen', 'blaren', 'wandelschoenen', 'kilometers', 'inloopkilometers', 'tochten'],
     route: '/reis',
-    help: {
-      title: 'Bergschoenen inlopen',
-      lead: 'Nieuwe schoenen horen niet op de eerste dag van de tocht te beginnen. ASCEND telt de kilometers vanaf de dag dat je ze draagt.',
-      points: [
-        { head: 'Wat telt', text: 'wandelingen en tochten in je logboek. Hardlopen en kracht tellen niet mee.' },
-        { head: 'Het doel', text: 'standaard 100 km en minstens 6 weken voor vertrek.' },
-        { head: 'Waar je het vastlegt', text: 'bij de taak "Kies je schoenen" in de Reisplanner.' },
-      ],
-    },
-    choice: {
-      key: 'bergschoenen',
-      def: {
-        group: 'Doel en tochten',
-        title: 'Bergschoenen inlopen',
-        line: 'Hoeveel kilometer wandelen en tochten je nieuwe schoenen nodig hebben.',
-        advice: 100,
-        help: 'bergschoenen',
-        options: [
-          { value: 50, label: '50 km', note: 'Voor schoenen die al bijna zitten' },
-          { value: 75, label: '75 km' },
-          { value: 100, label: '100 km', note: 'Samen met minstens 6 weken voor vertrek' },
-          { value: 150, label: '150 km', note: 'Meer dan het advies' },
-        ],
-      },
-    },
+    help: true,
+    choice: { key: 'bergschoenen', def: DOEL_CHOICES.bergschoenen },
     showWhen: [B.goalOrTrek],
   },
   {
@@ -555,14 +407,7 @@ export const DOEL: SettingDef[] = [
     title: 'Herinnering bij lange tochten',
     note: 'Een korte regel bij een lange wandeling of bergtocht zolang je schoenen niet ingelopen zijn.',
     keywords: ['schoenen', 'bergschoenen', 'inlopen', 'herinnering', 'regel', 'lange tocht', 'tochten'],
-    help: {
-      title: 'Herinnering bij lange tochten',
-      lead: 'Op een lange wandeling of bergtocht met rugzak staat een korte regel zolang je schoenen nog niet ingelopen zijn.',
-      points: [
-        { head: 'Alleen een regel', text: 'er verandert niets aan je planning.' },
-        { head: 'Pas zichtbaar', text: 'nadat je in de Reisplanner hebt vastgelegd sinds wanneer je ze draagt.' },
-      ],
-    },
+    help: true,
     helpKey: 'bergschoenenHerinnering',
     showWhen: [B.goalOrTrek],
   },
@@ -574,13 +419,7 @@ export const DOEL: SettingDef[] = [
     note: 'Dagen zonder training, een vakantie of een tocht, te vinden op Week.',
     keywords: ['vakantie', 'vrij', 'verlof', 'trek', 'reis', 'afwezig', 'weekend weg'],
     route: '/week',
-    help: {
-      title: 'Vrije dagen en vakanties',
-      lead: 'Dagen zonder training, een vakantie of een tocht. Je zet ze in Week.',
-      points: [
-        { head: 'Voorstel', text: 'eerst een voorstel, pas na Akkoord verandert er iets.' },
-      ],
-    },
+    help: true,
     helpKey: 'vrijeDagen',
   },
   {

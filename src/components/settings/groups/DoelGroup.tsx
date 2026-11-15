@@ -22,6 +22,8 @@ import { parseDirection } from '../../../engine/direction';
 import { parseBeginnerStart } from '../../../engine/beginnerStart';
 import { resolveDescentClock } from '../../../engine/descentClock';
 import { SummaryRow } from './SummaryRow';
+import { useShelterChange } from '../useShelterChange';
+import { SHELTER_ADVICE } from '../../../engine/trekShelter';
 import type { GroupProps } from './types';
 
 // Doel en tochten: waar je naartoe werkt, de tochten onderweg en wat je nog moet regelen.
@@ -39,6 +41,8 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
   // Een andere richting is een voorstel met Akkoord (docs/visie/Zonder doel.md, 3.5).
   const direction = useDirectionChange();
   const { program } = useAppData();
+  // Een andere keuze bij Slapen onderweg verandert het doel: eerst een voorstel met Akkoord.
+  const shelter = useShelterChange();
 
   function chooseAfterGoal(v: 'stop' | 'maintain') {
     const change = afterMainGoalChange(trainingGoals, goalMilestones, todayISO(), plannedSessions, sessionLogs, settings.afterMainGoal ?? 'stop', v);
@@ -55,7 +59,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
 
   return (
     <>
-      {(note || plan.note || direction.note) && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{note ?? plan.note ?? direction.note}</p>}
+      {(note || plan.note || direction.note || shelter.note) && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{note ?? plan.note ?? direction.note ?? shelter.note}</p>}
       <SettingsSection title="Doel">
         <SummaryRow id="doelen" title="Hoofddoel" facts={facts} info="hoofddoel" onClick={() => navigate('/ascend/doelen')} />
         <SummaryRow id="programma" title="Programma" facts={facts} info="programma" onClick={() => setSheet('programma')} />
@@ -75,7 +79,8 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       </SettingsSection>
 
       {sheet === 'bundel-tochten' && (
-        <BundleSheet eyebrow="Doel en tochten" title="Tochten" line="Wat ASCEND doet rond een tocht." onClose={close}>
+        <BundleSheet eyebrow="Doel en tochten" title="Tochten" line="Wat er gebeurt rond een tocht." onClose={close}>
+          <SummaryRow id="slapen-onderweg" title="Slapen onderweg" facts={facts} info="slapenOnderweg" onClick={() => setInner('slapen-onderweg')} />
           <SummaryRow id="volgende-tocht" title="Volgende tocht op Vandaag" facts={facts} onChange={(on) => void updateSettings({ showNextTrek: on })} />
           <SummaryRow id="water-per-etappe" title="Water per etappe tonen" facts={facts} info="waterPerEtappe" onChange={(on) => void updateSettings({ showStageWater: on })} />
           <SummaryRow id="rust-na-tocht" title="Rust na een bergtocht" facts={facts} info="rustNaTocht" onClick={() => setInner('rust-na-tocht')} />
@@ -94,7 +99,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'programma' && <ProgramSheet onClose={close} onRestart={() => setSheet('opnieuw')} />}
       {sheet === 'opnieuw' && <RestartSheet onClose={close} />}
       {sheet === 'bundel-zonder-doel' && (
-        <BundleSheet eyebrow="Doel en tochten" title="Zonder doel" line="Hoe ASCEND je weken plant en telt als je geen doel hebt." onClose={close}>
+        <BundleSheet eyebrow="Doel en tochten" title="Zonder doel" line="Hoe je weken eruitzien en tellen als je geen doel hebt." onClose={close}>
           <SummaryRow id="richting" title="Richting" facts={facts} info="richting" onClick={() => setInner('richting')} />
           <SummaryRow id="weekbudget" title="Weekbudget" facts={facts} info="weekbudget" onClick={() => setInner('weekbudget')} />
           <SummaryRow id="golven" title="Golven" facts={facts} info="golven" onClick={() => setInner('golven')} />
@@ -152,7 +157,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
               try {
                 await updateSettings({ afterMainGoal: v });
                 await refresh();
-                setNote(v === 'stop' ? 'Opgeslagen. Na je hoofddoel plant ASCEND niets meer.' : 'Opgeslagen. ASCEND plant weer onderhoudsweken.');
+                setNote(v === 'stop' ? 'Opgeslagen. Na je hoofddoel komt er niets meer in je planning.' : 'Opgeslagen. Na je hoofddoel komen weer onderhoudsweken.');
               } finally {
                 setAfterGoalBusy(false);
                 setAfterGoalPlan(null);
@@ -176,8 +181,12 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       {inner === 'rust-na-tocht' && (
         <ChoiceFromDef def={CHOICES.rustNaTocht} value={settings.trekLegRest ?? 'soft'} onPick={(v) => { if (v !== (settings.trekLegRest ?? 'soft')) { setNote(null); void plan.changeSetting(`Rust na een bergtocht: ${choiceShort('rustNaTocht', v)}`, { trekLegRest: v }, 'Volgt je keuze voor rust na een bergtocht.'); } }} onClose={closeInner} />
       )}
+      {inner === 'slapen-onderweg' && (
+        <ChoiceFromDef def={CHOICES.slapenOnderweg} value={facts.shelter ?? SHELTER_ADVICE} onPick={(v) => { if (v !== (facts.shelter ?? SHELTER_ADVICE)) { setNote(null); plan.clearNote(); void shelter.choose(v); } }} onClose={closeInner} />
+      )}
       {plan.impact}
       {direction.sheet}
+      {shelter.sheet}
     </>
   );
 }

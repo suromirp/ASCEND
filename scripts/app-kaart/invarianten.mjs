@@ -28,7 +28,7 @@ const alle = (t, re) => [...t.matchAll(re)];
 // "Het" als verwijzing naar de app telt niet mee: dat is zonder zinsbouw niet te scheiden van "het regent" of
 // "het lukt", en een valse telling zou het plafond onbetrouwbaar maken.
 // De telling loopt over elk scherm in de map, dus nieuwe schermen (zoals de instellingenschermen) tellen vanzelf mee.
-export const PLAFOND_ASCEND_ONDERWERP = 11;
+export const PLAFOND_ASCEND_ONDERWERP = 0;
 const WERKWOORDEN = new Set(['kan', 'kon', 'mag', 'mocht', 'zal', 'zou', 'wil', 'wilde', 'moet', 'is', 'was', 'heeft', 'had', 'vond', 'deed', 'ging', 'zag', 'wist', 'nam', 'gaf', 'bleef', 'zet', 'weet', 'ziet', 'doet', 'gaat', 'staat', 'laat', 'houdt', 'vraagt', 'plant', 'kiest', 'leert', 'legt', 'zoekt', 'rekent', 'schat', 'bouwt', 'stelt']);
 const GEEN_WERKWOORD = new Set(['niet', 'dat', 'met', 'tot', 'het', 'wat', 'uit', 'ooit', 'net', 'want', 'licht', 'recht', 'echt', 'meest', 'best', 'eerst', 'laatst', 'vast', 'toest', 'altijd', 'pas']);
 const VOEGWOORDEN = new Set(['die', 'dat', 'wat', 'als', 'zodat', 'omdat', 'waarmee', 'waarin', 'waarop', 'waar', 'terwijl', 'tenzij', 'of', 'voordat', 'nadat', 'zodra']);
@@ -79,6 +79,27 @@ export function zelftoets() {
 }
 
 export const INVARIANTEN = [
+  {
+    // Backlogpunt G (Lookout profiel GR5, 14 november): bij een late start staan taken waarvan de tijd voorbij is samen
+    // onder Nu regelen, nooit onder een maand die al voorbij is. De klok van de kaart staat in de kop van elk scherm.
+    naam: 'Reisplanner: geen maand die al voorbij is als kop, voorbije taken onder Nu regelen',
+    controleer: (k, _schermen, alleSchermen) => {
+      const uit = [];
+      const MAANDEN = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+      for (const s of alleSchermen.filter((x) => x === 'reis' || x.startsWith('reis-'))) {
+        const t = k(s);
+        const klok = t.match(/Klok: (\d+) (\w+) (\d{4})/);
+        if (!klok) continue;
+        const nu = Number(klok[3]) * 12 + MAANDEN.indexOf(klok[2]);
+        for (const m of alle(t, new RegExp(`^(${MAANDEN.join('|')}) (\\d{4})$`, 'gm'))) {
+          if (Number(m[2]) * 12 + MAANDEN.indexOf(m[1]) < nu) uit.push(`${s}: de kop "${m[0]}" ligt voor de klok`);
+        }
+        if (/was aan de beurt tot/.test(t) && !/^Nu regelen$/m.test(t)) uit.push(`${s}: een voorbije taak zonder de kop Nu regelen`);
+        if (/nog open\]/.test(t)) uit.push(`${s}: een taak zegt nog open in plaats van wanneer hij aan de beurt was`);
+      }
+      return uit;
+    },
+  },
   {
     // Aangepast door ASCEND (besluit 2026-11-12-week-minimaal): één uitkomst. Het getal op de rij onder de dagen is het
     // aantal dagrijen met "aangepast", en het aantal regels in het blad erachter. Geen rij is nul.
@@ -421,6 +442,29 @@ export const INVARIANTEN = [
       return uit;
     },
   },
+  {
+    // Een training die bleef liggen loopt nog (besluit 2026-11-15-concept-loopt-nog.md, engine/sessionStatus.ts#isDraftOpen):
+    // de training van de pil "niet afgerond" heet in Week "loopt nog" en nergens gemist, de weekterugblik noemt hem niet
+    // onder Gemist en Vandaag stelt er geen vraag Niet gedaan? over. Eerst vroeg Niet gedaan? naar een training die nog
+    // open lag (backlog Afbreker vervolg).
+    naam: 'Een training die nog loopt heet nergens gemist',
+    controleer: (k) => {
+      const uit = [];
+      const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pil = k('week-concept').match(/Training (.+?), niet afgerond/);
+      // Nooit stil leeg: zonder de pil van de stand concept toetst deze invariant niets.
+      if (!pil) return ['week-concept heeft geen pil "niet afgerond": de invariant toetst niets (stand concept ontbreekt of de pil is weg)'];
+      const naam = pil[1];
+      const rijen = k('week-concept').split('\n').filter((r) => new RegExp(`^\\[knop: ${esc(naam)}`).test(r));
+      if (!rijen.some((r) => /loopt nog/.test(r))) uit.push(`week-concept: geen rij van ${naam} met "loopt nog"`);
+      for (const r of rijen) if (/gemist/i.test(r)) uit.push(`week-concept noemt ${naam} gemist: ${r}`);
+      const gemist = k('weekterugblik-concept').match(/^Gemist\n(.+)$/m);
+      if (gemist && gemist[1].includes(naam)) uit.push(`weekterugblik-concept noemt ${naam} onder Gemist`);
+      const vandaag = k('vandaag-concept');
+      if (new RegExp(`Niet gedaan\\?[\\s\\S]{0,200}${esc(naam)}`).test(vandaag) || new RegExp(`${esc(naam)} van [a-z]+ \\d+ [a-z]+[\\s\\S]{0,80}Niet gedaan`).test(vandaag)) uit.push(`vandaag-concept vraagt Niet gedaan? over ${naam}`);
+      return uit;
+    },
+  },
 ];
 
 const SCHERMEN = [
@@ -429,6 +473,7 @@ const SCHERMEN = [
   'vandaag-zonder-doel', 'week-zonder-doel', 'ascend-zonder-doel', 'stand-zonder-doel', 'vandaag-ziek', 'week-ziek', 'vandaag-ziek-eerder', 'week-ziek-eerder',
   'ascend-algemeen', 'ascend-vaardigheid', 'weekterugblik-voorstel', 'stand-benen', 'stand-belasting', 'stand-ritme', 'stand-lopen', 'stand-invloed',
   'stand-ritme-zonder-doel', 'stand-vakantie', 'stand-ziek', 'week-aangepast', 'week-aangepast-blad', 'logboek-herstel',
+  'vandaag-concept', 'week-concept', 'weekterugblik-concept',
 ];
 
 export function controleer(map = join(ROOT, 'docs', 'app-kaart')) {

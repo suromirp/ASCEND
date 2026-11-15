@@ -136,7 +136,7 @@ export function useBoot(deps: {
       const splashMotion = resolveMotion({ motion: document.documentElement.dataset.motion });
       const minSplashDuration = new Promise((resolve) => setTimeout(resolve, SHOW_SPLASH ? splashMinimumMs(splashMotion) : 0));
       const stopBlockedNotice = onDatabaseBlocked(() =>
-        setBootError('ASCEND is in een ander venster nog open met een oudere versie. Sluit dat venster om de update af te ronden.'),
+        setBootError('Een ander venster heeft nog een oudere versie open. Sluit dat venster om de update af te ronden.'),
       );
       // First the data, then the app, and only then the planning run in the
       // background (engine/bootWatch.ts#runBoot): a run that does not finish

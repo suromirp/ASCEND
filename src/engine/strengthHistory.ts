@@ -368,11 +368,11 @@ export function accuracy(all: ComparisonRow[]): Accuracy {
   const rows = all.filter((r) => !r.eased);
   const total = rows.length;
   const within = rows.filter((r) => r.withinOneStep).length;
-  if (total === 0) return { total, within, sentence: 'Er is nog geen training waarvoor ASCEND vooraf iets had kunnen voorstellen. Daarvoor zijn minstens twee trainingen van dezelfde oefening nodig, met herhalingen in reserve.' };
+  if (total === 0) return { total, within, sentence: 'Er is nog geen training met een voorstel vooraf. Daarvoor zijn minstens twee trainingen van dezelfde oefening nodig, met herhalingen in reserve.' };
   if (total < MIN_COMPARISONS) {
-    return { total, within, sentence: `Nog te weinig om iets over te zeggen: pas ${total} keer kon ASCEND vooraf iets voorstellen. Vanaf ${MIN_COMPARISONS} keer staat hier hoe vaak het klopte.` };
+    return { total, within, sentence: `Nog te weinig om iets over te zeggen: pas ${total} keer was er vooraf een voorstel. Vanaf ${MIN_COMPARISONS} keer staat hier hoe vaak het klopte.` };
   }
-  return { total, within, sentence: `${within} van de ${total} keer zat ASCEND hooguit één stap naast het gewicht dat je pakte.` };
+  return { total, within, sentence: `${within} van de ${total} keer zat het voorstel hooguit één stap naast het gewicht dat je pakte.` };
 }
 
 // Why there is no estimate when the sets themselves are the reason: no reps in

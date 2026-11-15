@@ -26,7 +26,7 @@ export function ProgramOfferCard({ program, current, onOpen }: { program: MacroF
         </p>
       </div>
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        ASCEND kan je krachttrainingen vullen met de oefeningen, sets, herhalingen en RIR van dit programma, per week. Je planning en wat je al deed blijven zoals ze zijn.
+        Je krachttrainingen kunnen per week de oefeningen, sets, herhalingen en RIR van dit programma krijgen. Je planning en wat je al deed blijven zoals ze zijn.
         {current ? ` Het vervangt ${current.name}.` : ''}
       </p>
       <SecondaryButton onClick={onOpen}>Voorstel bekijken</SecondaryButton>

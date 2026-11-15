@@ -216,6 +216,12 @@ const SCHERMEN = {
   'week-ziek': { titel: 'Week, ziek gemeld', pad: '#/week', stand: 'ziek' },
   'vandaag-ziek-eerder': { titel: 'Vandaag, ziek sinds twee dagen', pad: '#/', stand: 'ziek-eerder' },
   'week-ziek-eerder': { titel: 'Week, ziek sinds twee dagen', pad: '#/week', stand: 'ziek-eerder' },
+  // Een training die bleef liggen (stand concept, besluit 2026-11-15-concept-loopt-nog.md): Benen A van woensdag ligt als
+  // concept in Forge. Het blad Training niet afgerond gaat bij het openen vanzelf open; Niet nu sluit het. De invariant
+  // leest de pil, de rij in Week en de weekterugblik.
+  'vandaag-concept': { titel: 'Vandaag met een training die bleef liggen (Benen A)', pad: '#/', stand: 'concept', actie: (p) => tik(p, '[role=dialog] button:has-text("Niet nu")') },
+  'week-concept': { titel: 'Week met een training die bleef liggen (Benen A)', pad: '#/week', stand: 'concept', actie: (p) => tik(p, '[role=dialog] button:has-text("Niet nu")') },
+  'weekterugblik-concept': { titel: 'Je week tot nu met een training die bleef liggen', pad: '#/week', stand: 'concept', actie: async (p) => { await tik(p, '[role=dialog] button:has-text("Niet nu")'); await tik(p, 'button:has-text("Je week tot nu")'); } },
   'ascend-vaardigheid': { titel: 'Ascend met een vaardigheid (Pull-Up)', pad: '#/ascend', stand: 'vaardigheid' },
   'ascend-algemeen': { titel: 'Ascend met Algemeen sterk met eigen gewicht', pad: '#/ascend', stand: 'algemeen' },
   // Het voorstel voor spieren voor de berg als eigen weergave in de weekterugblik (besluit 2026-11-12-je-week-tot-nu).
@@ -230,6 +236,11 @@ const SCHERMEN = {
   'week-voorstel-wacht': { titel: 'Week met Let op en een voorstel dat wacht', pad: '#/week', stand: 'voorstel-wacht' },
   'week-rustweek': { titel: 'Week in een rustweek', pad: '#/week', stand: 'rustweek' },
   'week-rustweek-blad': { titel: 'Blad Rustweek (Week)', pad: '#/week', stand: 'rustweek', actie: (p) => tik(p, 'button[data-sheet-from]:has-text("Rustweek")') },
+  // Een tocht als hoofddoel die de migratie op hutten zette, start 15 maart 2027 (stand tocht, backlogpunt G): de
+  // Reisplanner met Nu regelen en de vraag over hutten, de Paklijst van hut naar hut, en de doelkop op Ascend.
+  'reis-tocht': { titel: 'Reisplanner bij een late start, tocht op hutten (stand tocht)', pad: '#/reis', stand: 'tocht' },
+  'paklijst-tocht': { titel: 'Paklijst, tocht op hutten met vertrek in maart (stand tocht)', pad: '#/reis/paklijst', stand: 'tocht' },
+  'ascend-tocht': { titel: 'Ascend met een tocht op hutten (stand tocht)', pad: '#/ascend', stand: 'tocht' },
   ...INSTELLINGEN,
 };
 

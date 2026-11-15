@@ -29,10 +29,10 @@ Vegen om te verwijderen
 RIR vooraf invullen
 [knop: Uitleg: RIR vooraf invullen]
 Als hint
-[knop: Hoeveel over na een set, Als het anders ging]
+[knop: Hoeveel over na een set, Bij afwijking]
 Hoeveel over na een set
 [knop: Uitleg: Hoeveel over na een set]
-Als het anders ging
+Bij afwijking
 [knop: Stappen bij calisthenics]
 Stappen bij calisthenics
 [knop: Uitleg: Stappen bij calisthenics]

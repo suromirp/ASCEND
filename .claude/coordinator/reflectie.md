@@ -9,6 +9,11 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 09:05 Portugal (15 november)
+- Main fe704a3: 20 onderdelen uit de nacht, web en Android groen. Alle poorten liepen; Warden of Lookout hielden zes keer iets tegen dat de tests niet zagen.
+- Les: proefmerges bundelen scheelt tijd maar geeft conflicten in de foto en de standen; steeds de foto opnieuw maken en het verschil lezen.
+- Les: effort high voor de coördinator ving de meeste conflicten zelf op; het waard voor een nacht met acht sessies.
+
 ## 05:40 Portugal (15 november)
 - Op claude/nacht: afbreker, horloge, routes-vorm, logboek, planner (gemist, ziek, randen), M2, instellingen stap 0 tot 2, zonder ASCEND ronde 1 en 2. Lookout over de hele nacht: groen.
 - Tegengehouden door de poorten: routes wandelen (getal kwam niet aan in de app), G (eigenaar zou stil zijn tent verliezen), R (afbouw klapte om). Alle drie gevonden door Warden of Lookout, niet door de tests.

@@ -28,6 +28,7 @@ import { isDone } from './adviceShared';
 import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
 import { isTaperDay, raceDatesOf } from './raceWindow';
+import { isDraftOpen } from './sessionStatus';
 import { isKeyFor, type KeyFocus } from './keySession';
 import { leaveDays } from './leave';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
@@ -63,6 +64,8 @@ export interface FullWeekInput {
   illnessEpisodes?: IllnessEpisode[];
   // Rijen die een geaccepteerd voorstel van ASCEND liet vervallen: geen verlies van jou.
   removedByPlanIds?: ReadonlySet<string>;
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, geen verlies.
+  openDraft?: string;
   // Wat de weekcontrole verder nodig heeft (rustdag, tijd per dag, twee trainingen op een dag).
   check?: Partial<Omit<CheckInput, 'sessions' | 'logs' | 'templates' | 'today'>>;
 }
@@ -96,7 +99,7 @@ function contextOf(input: FullWeekInput) {
 // - naar later: een training die jij of een voorstel van een voorbije dag van deze week naar later zette,
 //   als die dag daarna leeg bleef (een ruil van twee dagen is geen verlies).
 // Geen verlies: een herstelwandeling, wat ASCEND zelf wegliet of verving (Minder, zonder sportschool, een
-// geaccepteerd voorstel), en een vakantie-, tocht- of ziektedag.
+// geaccepteerd voorstel), een vakantie-, tocht- of ziektedag, en een training die nog loopt (een concept in Forge).
 export function weekLoss(input: FullWeekInput): WeekLoss[] {
   const ctx = contextOf(input);
   const { monday, sunday } = ctx;
@@ -113,7 +116,7 @@ export function weekLoss(input: FullWeekInput): WeekLoss[] {
     const from = s.movedFromDate;
     if (!inWeek(s.scheduledDate) && !(from && inWeek(from))) continue;
     if (!ctx.trains(s) || s.amount?.change === 'left_out' || s.leave?.role === 'dropped' || input.removedByPlanIds?.has(s.id)) continue;
-    if (inWeek(s.scheduledDate) && s.scheduledDate < today && !away(s.scheduledDate) && !ctx.done(s)) out.push({ date: s.scheduledDate, name: nameOf(s), how: 'missed' });
+    if (inWeek(s.scheduledDate) && s.scheduledDate < today && !away(s.scheduledDate) && !ctx.done(s) && !isDraftOpen(s, input.openDraft, today)) out.push({ date: s.scheduledDate, name: nameOf(s), how: 'missed' });
     if (from && s.lock && s.status !== 'skipped' && inWeek(from) && from < today && s.scheduledDate > from && !away(from) && !usedDay(from, s.id)) out.push({ date: from, name: nameOf(s), how: 'moved' });
   }
   return out.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));

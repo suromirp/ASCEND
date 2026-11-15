@@ -62,7 +62,7 @@ const SWAP_FAILED = 'Beide trainingen staan nog op hun eigen dag.';
 const MOVE_FAILED = 'Kijk in je week wat er nu staat.';
 
 export function WeekPage() {
-  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt, proposeSwap, swapOptionsFor, showFailure } = useAppData();
+  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt, proposeSwap, swapOptionsFor, showFailure, openDraftId } = useAppData();
   const keyFocus = useKeyFocus();
   // The chosen week and the year overview belong to this step in the history:
   // to a training and back, the page is as you left it.
@@ -129,8 +129,8 @@ export function WeekPage() {
   }, [weekStart, plannedSessions, sessionLogs, templates, today, program]);
   // De races in de planning: een training uit de afbouw die na de race niet gedaan is, vervalt (engine/raceWindow.ts).
   const races = useMemo(() => raceDatesOf(plannedSessions, templateById), [plannedSessions, templateById]);
-  const progress = weekProgress(sessions, sessionLogs, templateById, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)), races }));
-  const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings), keyFocus }) : null;
+  const progress = weekProgress(sessions, sessionLogs, templateById, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)), races, openDraft: openDraftId }));
+  const review = weekStart <= today ? buildWeekReview({ weekStart, plannedById, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, openDraft: openDraftId, weeklyChecks: settings.weeklyHealthChecks, heartRate: settings.heartRate, intensityCounting: resolveIntensityCounting(settings), keyFocus }) : null;
   const heading = weekHeading(position);
   // Een week zonder trainingen zegt dat in de lucht; de rijen over je week zijn er dan niet.
   const trainings = sessions.filter((s) => templateById.get(s.templateId)?.type !== 'recovery').length;
@@ -141,7 +141,7 @@ export function WeekPage() {
   // onder de dagen, met hoeveel er gemist is. De oude rij van een inhaal telt niet: die is overgeslagen.
   const missed = current ? sessions.filter((s) => {
     const t = templateById.get(s.templateId);
-    return !!t && t.type !== 'recovery' && deriveSessionStatus(s, sessionLogs, false, { leave: leavePeriods, illness: settings.illnessEpisodes, races }).status === 'missed';
+    return !!t && t.type !== 'recovery' && deriveSessionStatus(s, sessionLogs, false, { leave: leavePeriods, illness: settings.illnessEpisodes, races, openDraft: openDraftId }).status === 'missed';
   }).length : 0;
   const replanOn = !!program && trainings > 0 && addDays(weekStart, 6) >= today;
   const replanRow = replanOn && <WeekReplanRow key={weekStart} weekStart={weekStart} sub={replanSub(missed)} />;
@@ -383,7 +383,7 @@ export function WeekPage() {
           session={selected}
           startStep={openOnMove ? 'move' : undefined}
           caughtUpOn={!selectedLog && caughtUp.has(selected.id) ? caughtUpNoteFor(caughtUp.get(selected.id)!) : undefined}
-          catchUp={!selectedLog && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id) }).ok}
+          catchUp={!selectedLog && selected.id !== openDraftId && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id) }).ok}
           template={templateById.get(selected.templateId)!}
           allowedPair={pairs.get(selected.id)}
           placeReason={selectedPlace}

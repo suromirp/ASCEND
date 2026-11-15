@@ -17,8 +17,10 @@ Schermen op een eigen stand, met de stand in de naam:
 - ziek (verkouden boven de nek, sinds vandaag): `vandaag-ziek`, `week-ziek` en `stand-ziek`.
 - ziek-eerder (ziek sinds donderdag 29 oktober, Benen A op woensdag 28 ervoor en de testloop op donderdag 29 erin): `vandaag-ziek-eerder` en `week-ziek-eerder`. De invariant Vervallen tegen gemist leest deze stand.
 - herstel (alleen een losse Herstelwandeling van 56 minuten op 1 november, klok maandag 2 november): `logboek-herstel`. Invariant: de logboekkop zegt nooit niets als de lijst eronder een log heeft.
+- concept (Benen A van woensdag 28 oktober ligt als concept in Forge, drie sets afgevinkt): `vandaag-concept`, `week-concept` en `weekterugblik-concept`, elk na Niet nu op het blad Training niet afgerond. Invariant: de training van de pil heet in Week "loopt nog" en nergens gemist, niet onder Gemist in de weekterugblik en zonder vraag Niet gedaan? op Vandaag (besluit `2026-11-15-concept-loopt-nog.md`).
 - vaardigheid (één vaardigheid, Pull-Up, met twee stappen gehaald): `ascend-vaardigheid`.
 - aangepast (twee nagemaakte, aangenomen voorstellen in deze week: de Lange duurloop van zaterdag naar zondag en Benen A lichter): `week-aangepast` (de rij Aangepast door ASCEND onder de dagen) en `week-aangepast-blad` (het blad erachter), met een invariant: het getal op de rij is het aantal regels in het blad en het aantal dagrijen met "aangepast".
+- tocht (een meerdaagse tocht als hoofddoel op 15 maart 2027, door de migratie op hutten gezet zonder eigen keuze, met drie treden van de ladder): `reis-tocht` (de Reisplanner met de vraag over hutten en Nu regelen), `paklijst-tocht` (de Paklijst van hut naar hut) en `ascend-tocht` (de doelkop). Invariant: de Reisplanner toont geen maand die voor de klok ligt, een voorbije taak staat onder Nu regelen en zegt wanneer hij aan de beurt was (backlogpunt G).
 - voorstel (naast de wedstrijd een verzonnen huttentocht, het programma gestart op 28 september): `weekterugblik-voorstel`, de weergave Voorstel in de weekterugblik met het voorstel dat de engine zelf maakt.
 
 ## De standen

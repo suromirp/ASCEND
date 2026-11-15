@@ -25,10 +25,10 @@ const ROLE_PILL: Record<SportRole, string> = { plan: 'Gepland', fixed: 'Vaste da
 const NOT_CHOSEN = 'Nog niet gekozen';
 
 export const ROLE_NOTE: Record<SportRole, string> = {
-  plan: 'ASCEND zet het in je week, op dagen die bij je benen passen.',
-  fixed: 'Jij kiest de dag. ASCEND plant de rest eromheen.',
+  plan: 'Komt in je week, op dagen die bij je benen passen.',
+  fixed: 'Jij kiest de dag. De rest komt eromheen.',
   count: 'Je plant het zelf. Wat je doet telt mee in je benen en je week.',
-  off: 'ASCEND doet er niets mee.',
+  off: 'Telt nergens mee.',
 };
 
 // De keuzes in het blad. Een sport die ASCEND plant kent geen Negeren: zijn logs zijn trainingen uit je
@@ -68,10 +68,10 @@ export interface SportCardInfo {
 // De regel onder de naam: het droge feit eerst.
 export function sportCardLine(sport: AnySportId, role: SportRole | undefined, settings: RoleSettings & { sportFrequency?: Partial<Record<string, number>> }): string {
   const def = anySportDefinition(sport);
-  if (role === undefined) return 'Zodra je dit doet, vraagt ASCEND hoe het telt.';
+  if (role === undefined) return 'Zodra je dit doet, krijg je de vraag hoe het telt.';
   if (role === 'plan') {
     const n = settings.sportFrequency?.[sport];
-    return n ? `${n === 1 ? 'Eén keer' : `${n} keer`} per week. ASCEND kiest de dagen.` : 'Je weekschema bepaalt hoe vaak. ASCEND kiest de dagen.';
+    return n ? `${n === 1 ? 'Eén keer' : `${n} keer`} per week. De dagen worden voor je gekozen.` : 'Je weekschema bepaalt hoe vaak. De dagen worden voor je gekozen.';
   }
   if (role === 'fixed') {
     const slots = parseSportHandling(settings.sportHandling).value?.[sport]?.fixed ?? [];
@@ -80,10 +80,10 @@ export function sportCardLine(sport: AnySportId, role: SportRole | undefined, se
     const days = capitalize(joinDays(slots.map((s) => s.day)));
     if (heavy.length > 0) return `${days}. De ${joinDays(heavy.map((s) => s.day))} telt als zwaar: de 72 uur erna blijven je benen vrij van zware kracht.`;
     if (slots.some((s) => slotRestHours(sport, s, settings) >= 48)) return `${days}. De dag erna blijft lichter voor je benen.`;
-    return `${days}. ASCEND plant de rest eromheen.`;
+    return `${days}. De rest komt eromheen.`;
   }
   if (role === 'count') {
-    if (def.plannable) return 'Telt mee voor je benen en je week. ASCEND plant het niet.';
+    if (def.plannable) return 'Telt mee voor je benen en je week. Komt niet in je planning.';
     return legRestHours(stressProfileOf(def)) > 0 ? 'Je plant het zelf. Log je het, dan blijft de dag erna lichter.' : 'Je plant het zelf. Log je het, dan telt het mee in je week.';
   }
   return 'Doet niet mee in je planning en je benen. Je kunt het wel loggen.';

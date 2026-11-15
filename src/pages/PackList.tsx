@@ -15,11 +15,13 @@ import {
 import { makeId } from '../utils/id';
 import { TextButton } from '../components/TextButton';
 import { kgLabel } from '../utils/kg';
+import { packListNote } from '../engine/trekShelter';
+import { ShelterCheck } from '../components/reis/ShelterCheck';
 
 type Editing = { kind: 'edit'; id: string } | { kind: 'add'; group: PackGroup } | null;
 
 export function PackListPage() {
-  const { items, customised, goalKg, change, reset } = usePackList();
+  const { items, customised, goalKg, shelter, departure, change, reset } = usePackList();
   const [editing, setEditing] = useState<Editing>(null);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -31,6 +33,7 @@ export function PackListPage() {
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
       <PageHeader eyebrow="Reis" title="Paklijst" line="Wat er in je rugzak gaat" fallback="/reis" />
+      <ShelterCheck />
 
       <Card className="flex flex-col gap-1" texture>
         <Eyebrow>Basisgewicht</Eyebrow>
@@ -44,7 +47,7 @@ export function PackListPage() {
       <Card className="flex flex-col gap-3">
         <Eyebrow>Vertrekgewicht</Eyebrow>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Wat je draagt als je uit een dorp vertrekt: je basisgewicht plus eten en water. ASCEND rekent met {kgLabel(FOOD_KG_PER_DAY)} droog eten per dag en 1 kg per liter water.
+          Wat je draagt als je uit een dorp vertrekt: je basisgewicht plus eten en water. Gerekend met {kgLabel(FOOD_KG_PER_DAY)} droog eten per dag en 1 kg per liter water.
         </p>
         <div role="table" aria-label="Vertrekgewicht per aantal dagen eten en liters water" className="flex flex-col">
           <div role="row" className="flex items-center border-b pb-1.5 text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
@@ -96,7 +99,7 @@ export function PackListPage() {
       <SecondaryButton onClick={() => setEditing({ kind: 'add', group: 'overig' })}>+ Onderdeel toevoegen</SecondaryButton>
 
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        De voorbeeldlijst is een solo bivakopzet voor augustus, licht maar comfortabel, met afgeronde gewichten van gangbare modellen. Pas de gewichten aan zodra je iets in huis hebt en weegt. Vink af wat je hebt.
+        {packListNote(shelter, departure)}
       </p>
 
       {customised && (
