@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
-import type { RouteAnswer, RouteFn, RoutePoint } from '../models/route';
+import type { RouteAnswer, RouteFn, RoutePoint, RouteProposal } from '../models/route';
 import { lineLength, metersBetween, offsetPoint } from './routeGeometry';
 import {
   CLOSE_ENOUGH, SHORT_LIMIT, ascentNotice, MAX_ROUTE_CALLS, MAX_VIAS, SUBSTITUTE_LINE, adventureVias, searchLines, terrainFound, climbOnLine, composeOutAndBack, composeSimple, cutAt, tallestClimbLine, proposalFacts, proposalNotes, proposalTitle,
-  proposeAdventure, proposeRoutes, proposeSimple, simpleCandidates,
+  proposeAdventure, proposeRoutes, proposeSimple, simpleCandidates, LONGER_WALK_LEAD, longerWalkLine, walkBasisLine, walkFitLine,
 } from './routePlanner';
+import { loopLines, otherLoopLine, otherLoopWarn } from './routeSheet';
 
 // Alles hier is nagemaakt: een startpunt dat nergens is en heuvels die niet bestaan.
 const START: RoutePoint = { lat: 52.1, lon: 5.9 };
@@ -352,5 +353,72 @@ describe('Wat er gevonden is', () => {
     const plans = await proposeRoutes({ start: START, target: hilly, terrain: terrain(feature('hill', 40, 1500, 24)) }, fakeRoute());
     const all = [...searchLines(plans, hilly), ...proposalNotes(loop(9600), hilly)].join(' ');
     expect(all).not.toMatch(/[\u2013\u2014]/);
+  });
+});
+
+// Routes voor wandelen, stap 3: de woorden (docs/visie/Ontwerp routes wandelen en rugzak.md, hoofdstuk 4).
+describe('de woorden van een wandeling', () => {
+  const norm = { flatKmh: 4, upMph: 300, downMph: 500, basis: 'norm' as const };
+  const hike = { distanceKm: 8, ascentM: 375, minutes: 180, packKg: 8, askedAscentM: 500, rates: norm };
+  const loop = (km: number, up: number, extra: Partial<RouteProposal> = {}): RouteProposal => ({ style: 'adventure', source: 'brouter', points: [], distanceM: km * 1000, ascentM: up, repeatedShare: 0, targetAscentM: 500, ...extra });
+
+  it('elke lus zegt zijn tijd op de wandelnorm; een loop niet', () => {
+    expect(proposalFacts(loop(8.4, 360), hike)).toBe('8,4 km · 360 hoogtemeters · ongeveer 3 uur 5');
+    expect(proposalFacts(loop(8.4, 360))).toBe('8,4 km · 360 hoogtemeters');
+    expect(proposalFacts(loop(8.4, 360), { distanceKm: 8, ascentM: 375 })).toBe('8,4 km · 360 hoogtemeters');
+    expect(otherLoopLine('Avontuurlijk', loop(8.4, 360), hike)).toBe('Avontuurlijk, één lus: 8,4 km · 360 hoogtemeters · ongeveer 3 uur 5');
+  });
+
+  it('een lus van 24,8 km bij een training van 180 minuten: langer dan je training, in amber', () => {
+    const p = loop(24.8, 0, { targetAscentM: undefined });
+    const target = { ...hike, askedAscentM: undefined, ascentM: 0 };
+    const notes = proposalNotes(p, target);
+    expect(notes).toContain('Deze lus duurt ongeveer 6 uur 10, langer dan de 3 uur van je training.');
+    expect(notes.some((n) => n.startsWith('Langer dan de'))).toBe(false);
+    expect(loopLines(p, target, notes).warn).toContain('Deze lus duurt ongeveer 6 uur 10, langer dan de 3 uur van je training.');
+    expect(otherLoopWarn(p, target)).toBe('Deze lus duurt ongeveer 6 uur 10, langer dan de 3 uur van je training.');
+    // Op de duur af (3 uur 5 bij 3 uur): geen regel.
+    expect(proposalNotes(loop(8.4, 360), hike).some((n) => n.startsWith(LONGER_WALK_LEAD))).toBe(false);
+  });
+
+  it('waar het getal op rust, letterlijk, op de norm en op je eigen klimtempo', () => {
+    expect(walkBasisLine(norm)).toBe('Gerekend op de wandelnorm: 4 km per uur, 300 m per uur omhoog en 500 omlaag. Zonder pauzes en zonder rugzak.');
+    expect(walkBasisLine({ flatKmh: 4, upMph: 452, downMph: 700, basis: 'own', packKg: 8 })).toBe('Op je eigen klimtempo: 450 m per uur omhoog, met 8 kg rugzak. Zonder pauzes.');
+    expect(walkBasisLine({ flatKmh: 4, upMph: 450, downMph: 700, basis: 'own' })).toBe('Op je eigen klimtempo: 450 m per uur omhoog. Zonder pauzes.');
+    // Gedempt bij de uitleg van de gekozen lus, nooit in amber.
+    const { warn, info } = loopLines(loop(8.4, 360), hike, proposalNotes(loop(8.4, 360), hike));
+    expect(info).toContain(walkBasisLine(norm));
+    expect(warn).not.toContain(walkBasisLine(norm));
+  });
+
+  it('past de gevraagde stijging niet in de duur, dan één gedempte regel', () => {
+    expect(walkFitLine(hike)).toBe('500 m op en af kost op de wandelnorm 2 uur 40. In 3 uur past 375 m.');
+    expect(walkFitLine({ ...hike, ascentM: 500 })).toBeUndefined();
+    expect(walkFitLine({ distanceKm: 8, ascentM: 375, askedAscentM: 500 })).toBeUndefined();
+    expect(walkFitLine({ ...hike, rates: { ...norm, basis: 'own', upMph: 450, downMph: 700 } })).toBe('500 m op en af kost op je eigen klimtempo 1 uur 50. In 3 uur past 375 m.');
+  });
+
+  it('geen helling dichtbij op een wandeling: ook waar je de meters wel haalt, en hoogstens twee amber regels', () => {
+    const none = { hills: 0, unknown: 0, lower: 0, radiusM: 3000 };
+    const notice = ascentNotice({ ascentM: 0 }, hike, none);
+    expect(notice).toBe(`Geen heuvels binnen 3 km. Deze lus stijgt 0 m; de training vraagt 500 m. ${SUBSTITUTE_LINE}`);
+    // Een loop zoals altijd: de vervanger staat in de regel onder de lussen.
+    expect(ascentNotice({ ascentM: 0 }, { distanceKm: 8, ascentM: 500 }, none)).toBe('Geen heuvels binnen 3 km. Deze lus stijgt 0 m; de training vraagt 500 m.');
+    // Te lang, de melding en een grote weg: nog steeds hoogstens twee in amber.
+    const p = loop(24.8, 0, { notice, bigRoadM: 900 });
+    const { warn } = loopLines(p, hike, proposalNotes(p, hike));
+    expect(warn.length).toBeLessThanOrEqual(2);
+    // searchLines zegt de vervanger niet nog eens.
+    const plans = { simple: { ok: true as const, proposal: loop(8, 0, { notice }) }, adventure: { ok: true as const, proposal: loop(8, 0, { notice }) }, found: none };
+    expect(searchLines(plans, hike)).toEqual([]);
+  });
+
+  it('geen gedachtestreepje en geen ASCEND als onderwerp', () => {
+    const all = [
+      proposalFacts(loop(8.4, 360), hike), walkBasisLine(norm), walkBasisLine({ ...norm, basis: 'own', packKg: 8 }), walkFitLine(hike) ?? '',
+      longerWalkLine(372, 180), ...proposalNotes(loop(24.8, 0), hike),
+    ].join(' ');
+    expect(all).not.toMatch(/[–—]/);
+    expect(all).not.toMatch(/ASCEND/);
   });
 });

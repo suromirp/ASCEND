@@ -8,11 +8,12 @@
 // Zie docs/beslissingen/2026-11-09-routeplanner.md.
 
 import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
-import type { AvoidArea, RouteAnswer, RouteFailure, RouteFn, RoutePoint, RouteProposal, RouteTarget, RoutedLine } from '../models/route';
+import type { AvoidArea, RouteAnswer, RouteFailure, RouteFn, RoutePoint, RouteProposal, RouteTarget, RoutedLine, WalkRates } from '../models/route';
 import { crossesAny, insideAny, tooTiny } from './routeAdjust';
 import { isNearlyFlat, modelThresholdM } from './elevation';
 import { ASCENT_DEAD_BAND_M, ascentOf, bearing, bigRoadMeters, cumulative, deadEnds, lineLength, metersBetween, offsetPoint, repeatedShare, withoutDeadEnds } from './routeGeometry';
 import { formatNumberNL } from '../utils/number';
+import { hikeMinutes, NORM_WALK_RATES, walkTimeText } from './hikeTarget';
 
 // Hoogstens zoveel aanroepen van de routeplanner per soort lus: de openbare dienst is van vrijwilligers.
 export const MAX_ROUTE_CALLS = 3;
@@ -623,11 +624,54 @@ export function proposalTitle(p: RouteProposal): string {
   return p.hills === 1 ? 'Eén lus langs een helling' : `Eén lus langs ${p.hills} hellingen`;
 }
 
-export function proposalFacts(p: RouteProposal): string {
+// De tijd van een lus bij een wandeltraining, op zijn echte afstand en stijging (een lus daalt evenveel als
+// hij stijgt), zonder pauzes (engine/hikeTarget.ts#hikeMinutes). Een looptraining: undefined.
+export function loopMinutes(p: Pick<RouteProposal, 'distanceM' | 'ascentM'>, target: RouteTarget | undefined): number | undefined {
+  if (target?.minutes === undefined) return undefined;
+  return hikeMinutes({ km: p.distanceM / 1000, up: p.ascentM, down: p.ascentM }, target.rates);
+}
+
+// "8,4 km · 360 hoogtemeters", en bij een wandeltraining de tijd erbij: "· ongeveer 3 uur 5".
+export function proposalFacts(p: RouteProposal, target?: RouteTarget): string {
   // Onder ongeveer 40 m weet niemand het op 20 m na: dan geen getal met schijnprecisie. Vraagt de
   // training hoogtemeters, dan staat het getal er altijd: een lus heet nooit vrijwel vlak naast een doel.
   const flat = p.targetAscentM === undefined && isNearlyFlat(p.ascentM);
-  return `${km(p.distanceM)} · ${flat ? 'vrijwel vlak' : `${formatNumberNL(round10(p.ascentM), 0)} hoogtemeters`}`;
+  const facts = `${km(p.distanceM)} · ${flat ? 'vrijwel vlak' : `${formatNumberNL(round10(p.ascentM), 0)} hoogtemeters`}`;
+  const minutes = loopMinutes(p, target);
+  return minutes === undefined ? facts : `${facts} · ongeveer ${walkTimeText(minutes)}`;
+}
+
+// routeSheet.ts#loopLines herkent de amber regel van een te lange wandeling aan dit begin: verander ze samen.
+export const LONGER_WALK_LEAD = 'Deze lus duurt ongeveer';
+// "Deze lus duurt ongeveer 3 uur 40, langer dan de 3 uur van je training." (ontwerp hoofdstuk 4)
+export const longerWalkLine = (loop: number, training: number): string => `${LONGER_WALK_LEAD} ${walkTimeText(loop)}, langer dan de ${walkTimeText(training)} van je training.`;
+
+// Een wandeling is te lang als zijn tijd meer dan CLOSE_ENOUGH boven de duur van de training ligt, ook op de
+// getallen die je ziet (op 5 minuten).
+export function walkTooLong(p: Pick<RouteProposal, 'distanceM' | 'ascentM'>, target: RouteTarget): boolean {
+  const loop = loopMinutes(p, target);
+  if (loop === undefined || target.minutes === undefined) return false;
+  return loop > target.minutes * (1 + CLOSE_ENOUGH) && walkTimeText(loop) !== walkTimeText(target.minutes);
+}
+
+// Waar het getal van een wandeling op rust, in één gedempte regel (ontwerp hoofdstuk 4).
+export function walkBasisLine(rates: WalkRates | undefined): string {
+  if (!rates || rates.basis === 'norm') {
+    return `Gerekend op de wandelnorm: ${formatNumberNL(NORM_WALK_RATES.flatKmh, 0)} km per uur, ${formatNumberNL(NORM_WALK_RATES.upMph, 0)} m per uur omhoog en ${formatNumberNL(NORM_WALK_RATES.downMph, 0)} omlaag. Zonder pauzes en zonder rugzak.`;
+  }
+  const up = `${formatNumberNL(round10(rates.upMph), 0)} m per uur omhoog`;
+  const pack = rates.packKg !== undefined ? `, met ${formatNumberNL(rates.packKg, 1)} kg rugzak` : '';
+  return `Op je eigen klimtempo: ${up}${pack}. Zonder pauzes.`;
+}
+
+// Past wat de training vraagt niet in de duur (duur eerst), dan één gedempte regel met wat het kost en wat
+// past: "500 m op en af kost op de wandelnorm 2 uur 40. In 3 uur past 375 m." Anders undefined.
+export function walkFitLine(target: RouteTarget): string | undefined {
+  const asked = askedAscent(target);
+  if (target.minutes === undefined || !(asked > target.ascentM) || asked < MIN_ASCENT_TARGET_M) return undefined;
+  const cost = hikeMinutes({ km: 0, up: asked, down: asked }, target.rates);
+  const on = target.rates?.basis === 'own' ? 'op je eigen klimtempo' : 'op de wandelnorm';
+  return `${formatNumberNL(asked, 0)} m op en af kost ${on} ${walkTimeText(cost)}. In ${walkTimeText(target.minutes)} past ${formatNumberNL(target.ascentM, 0)} m.`;
 }
 
 // De melding van een lus die meer dan SHORT_LIMIT korter is dan de training (routeSheet.ts#loopLines herkent hem).
@@ -654,12 +698,21 @@ export function proposalNotes(p: RouteProposal, target: RouteTarget, climbMarked
   const d = target.distanceKm * 1000;
   // Korter op de getallen die je ziet (op 100 m): 10,5 km tegen 10,5 km is niet korter.
   const shortBy = Math.round(d / 100) - Math.round(p.distanceM / 100);
+  const walk = target.minutes !== undefined;
   if (tooShort(p, target)) notes.push(shortLine(p, target));
+  // Een wandeling is een duur: te lang zegt de tijd, in amber (loopLines), niet de kilometers.
+  else if (walk && walkTooLong(p, target)) notes.push(longerWalkLine(loopMinutes(p, target) as number, target.minutes as number));
   else if (shortBy > 0) notes.push(`${km(shortBy * 100)} korter dan je training. Tot ${formatNumberNL(Math.round(SHORT_LIMIT * 100), 0)} procent korter is goed genoeg.`);
-  else if (p.distanceM > d * (1 + CLOSE_ENOUGH)) notes.push(`Langer dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
+  else if (!walk && p.distanceM > d * (1 + CLOSE_ENOUGH)) notes.push(`Langer dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
   if (p.notice) notes.push(p.notice);
   if ((p.bigRoadM ?? 0) >= BIG_ROAD_NOTE_M) notes.push(bigRoadLine(p.bigRoadM as number));
   if (p.style === 'adventure' && p.repeatedShare > 0.15) notes.push('Een deel loop je twee keer.');
+  // Een wandeling: waar de tijd op rust, en of de hoogtemeters in de duur passen (gedempt, bij de uitleg).
+  if (walk) {
+    const fit = walkFitLine(target);
+    if (fit) notes.push(fit);
+    notes.push(walkBasisLine(target.rates));
+  }
   return notes;
 }
 
@@ -685,7 +738,9 @@ export function ascentNotice(p: Pick<RouteProposal, 'ascentM'>, target: RouteTar
   const loop = `Deze lus stijgt ${m(p.ascentM)}; de training vraagt ${m(asked)}.`;
   if (!found) return loop;
   if (found.hills > 0 && found.tallestM !== undefined) return `De hoogste helling dichtbij ligt ${formatNumberNL(Math.round(found.tallestM), 0)} m boven je plek. ${loop}`;
-  return `${noHillLine(found)} ${loop}`;
+  // Een wandeling zonder helling dichtbij: ook waar je de meters wel haalt, in dezelfde regel (Pathfinder,
+  // 15 november), zodat het bij hoogstens twee amber regels blijft. searchLines zegt hem dan niet nog eens.
+  return target.minutes !== undefined ? `${noHillLine(found)} ${loop} ${SUBSTITUTE_LINE}` : `${noHillLine(found)} ${loop}`;
 }
 
 // De zin in het blok van een lus die er niet kwam. Zonder pad bij het startpunt zegt de regel
@@ -704,7 +759,8 @@ export const SUBSTITUTE_LINE = 'Hoogtemeters bergop haal je ook op een trap, een
 // docs/beslissingen/2026-11-10-route-uitleg.md.
 export function searchLines(plans: RoutePlans, target: RouteTarget): string[] {
   if (plans.notice) return [plans.notice];
-  if (target.ascentM < MIN_ASCENT_TARGET_M) return [];
+  const asked = askedAscent(target);
+  if (asked < MIN_ASCENT_TARGET_M) return [];
   const outcomes = [plans.simple, plans.adventure];
   const made = outcomes.flatMap((o) => (o.ok ? [o.proposal] : []));
   // Antwoordde de routeplanner niet (geen netwerk, te laat, een fout), dan blijft de rustige regel
@@ -719,6 +775,8 @@ export function searchLines(plans: RoutePlans, target: RouteTarget): string[] {
     else if (f.hills === 1) lines.push(tallest ? `Eén helling in de buurt op de kaart, ${tallest} boven je plek.` : 'Eén helling in de buurt op de kaart.');
     else lines.push(tallest ? `${f.hills} hellingen in de buurt op de kaart, de hoogste ${tallest} boven je plek.` : `${f.hills} hellingen in de buurt op de kaart.`);
   }
-  if (!made.some((p) => p.ascentM >= target.ascentM * SHORT_ASCENT)) lines.push(SUBSTITUTE_LINE);
+  // Wat de training vraagt, zoals de melding van de lus (askedAscent); staat de vervanger al in een melding,
+  // dan niet nog eens.
+  if (!made.some((p) => p.ascentM >= asked * SHORT_ASCENT) && !made.some((p) => p.notice?.includes(SUBSTITUTE_LINE))) lines.push(SUBSTITUTE_LINE);
   return lines;
 }
