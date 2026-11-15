@@ -29,6 +29,8 @@ export interface WalkBpm {
   top?: number;
   // Stevige blokken van minstens twee minuten: van tot.
   hard?: [number, number];
+  // Stevige blokken korter dan twee minuten, zonder eigen slagen: de bovengrens geldt dan alleen ertussen.
+  shortHard?: boolean;
 }
 
 // Instelling Hartslag bij wandelen (AppSettings.watchWalkBpm): afwezig is aan, het advies.
@@ -50,14 +52,18 @@ export function walkBpm(plan: Pick<WorkoutPlan, 'timeline'> | undefined, heartRa
   if (hard.length) {
     const range = stepBpm(hard.some((s) => s.intensity === 4) ? 4 : 3, heartRate, false);
     if (range) out.hard = range;
+  } else if (out.top !== undefined && steps.some((s) => s.intensity >= 3 && s.kind !== 'recover')) {
+    out.shortHard = true;
   }
   return out.top !== undefined || out.hard ? out : undefined;
 }
 
 // "Hartslag onder 152 bpm." en eventueel "Stevige blokken 160 tot 175 bpm.": de regel boven de stappen.
+// Met alleen korte stevige blokken (8 x 1 minuut traplopen) "Tussen de blokken onder 138 bpm.": anders leest de
+// bovengrens als een plafond voor de hele training.
 export function walkBpmText(bpm: WalkBpm): string {
   const parts: string[] = [];
-  if (bpm.top !== undefined) parts.push(`Hartslag onder ${bpm.top} bpm.`);
+  if (bpm.top !== undefined) parts.push(`${bpm.shortHard ? 'Tussen de blokken' : 'Hartslag'} onder ${bpm.top} bpm.`);
   if (bpm.hard) parts.push(`${bpm.top !== undefined ? 'Stevige blokken' : 'Hartslag'} ${bpm.hard[0]} tot ${bpm.hard[1]} bpm.`);
   return parts.join(' ');
 }

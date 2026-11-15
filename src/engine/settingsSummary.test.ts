@@ -1214,3 +1214,44 @@ describe('Volgorde van Je stand (Stand minimaal: regels en rijen)', () => {
     expect(value({ stand: ['benen', 'belasting', 'ritme', 'invloed', 'kracht', 'lopen'] })).toBe('Eigen volgorde');
   });
 });
+
+describe('searchResultValue: de eigen waarde in het zoekveld (backlog Q)', () => {
+  // Het zoekveld toonde bij een instelling in een blad de waarde van de rij eromheen (Lookout 14 en 15 november).
+  it('loopt alle instellingen langs: een instelling in een blad toont haar eigen waarde, nooit die van de rij', async () => {
+    const { SETTINGS_INDEX } = await import('../data/settingsIndex');
+    const { placementOf } = await import('../data/settingsLayout');
+    const { ADVICE_SPECS } = await import('./settingsDiff');
+    const { searchResultValue } = await import('./settingsSummary');
+    const f = facts({ shelter: 'hut', mainIsTrek: true, treks: 0, settings: { ...facts().settings, overviews: { clothingAdvice: false } } });
+    let inSheet = 0;
+    let withValue = 0;
+    const without: string[] = [];
+    for (const item of SETTINGS_INDEX) {
+      const p = placementOf(item.id);
+      if (!p || p.link || p.row === item.id) continue;
+      inSheet++;
+      const own = searchValue(item.id, f);
+      const spec = ADVICE_SPECS.find((a) => a.id === item.id);
+      const expected = own.text ? own.text : spec ? spec.value(f.settings) : '';
+      const got = searchResultValue(item.id, f).text;
+      expect(got, item.id).toBe(expected);
+      if (got) withValue++;
+      else without.push(item.id);
+    }
+    expect(inSheet).toBeGreaterThan(150);
+    // Bijna elke instelling heeft een eigen waarde; de rest toont geen waarde in plaats van een verkeerde.
+    expect(withValue).toBeGreaterThan(inSheet - 15);
+    expect(without.every((id) => !searchResultValue(id, f).text)).toBe(true);
+  });
+
+  it('de gevallen uit de melding: Slapen onderweg, Kledingadvies en Vragen na je loop', async () => {
+    const { searchResultValue } = await import('./settingsSummary');
+    const f = facts({ shelter: 'hut', mainIsTrek: true, treks: 0, settings: { ...facts().settings, overviews: { clothingAdvice: false }, afterRunQuestions: 'kort' as never } });
+    // De rij Tochten zegt "Geen andere"; de instelling zelf staat op Hutten.
+    expect(rowSummary('bundel-tochten', f).value).toBe('Geen andere');
+    expect(searchResultValue('slapen-onderweg', f).text).not.toBe('Geen andere');
+    expect(searchResultValue('slapen-onderweg', f).text).toBe(rowSummary('slapen-onderweg', f).value);
+    expect(searchResultValue('kledingadvies', f)).toEqual({ text: 'Uit', dim: true });
+    expect(searchResultValue('vragen-na-loop', f).text).toBe(rowSummary('vragen-na-loop', f).value);
+  });
+});

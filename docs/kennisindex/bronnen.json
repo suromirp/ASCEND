@@ -2775,6 +2775,14 @@
    "kern": "Elke instelling heeft één verklaring in `src/engine/settingsDefs/<groep>.ts`, één bestand per groep van Instellingen.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-15-instellingen-terugzetten-en-kracht.md": {
+   "onderwerpen": [
+    "bediening-en-beweging",
+    "planning"
+   ],
+   "kern": "Alles terug naar het advies gaat voor planninginstellingen altijd als voorstel met Akkoord; het zoekveld toont de waarde van de instelling zelf; een antwoord uit de start telt niet als afwijking; krachttraining kan uit op het scherm Sporten.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-15-logboekkop-herstel.md": {
    "onderwerpen": [
     "historie-en-logs"

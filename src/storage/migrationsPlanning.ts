@@ -120,6 +120,21 @@ export function migrateDirection(raw: { direction?: unknown; directionStart?: un
   return { value, skipped };
 }
 
+// De antwoorden uit de start (AppSettings.startChoices, engine/settingsDiff.ts#fromStart): alleen bekende
+// sleutels met een bekende waarde blijven over. Een oud bestand zonder dit veld importeert zoals het was; dan
+// telt een antwoord uit de start weer als aangepast, verder verandert er niets.
+export function migrateStartChoices(raw: unknown): { value?: { beginnerStart?: 'ja' | 'nee' }; skipped: number } {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { skipped: 1 };
+  const r = raw as Record<string, unknown>;
+  let skipped = 0;
+  const value: { beginnerStart?: 'ja' | 'nee' } = {};
+  for (const [key, v] of Object.entries(r)) {
+    if (key === 'beginnerStart' && (v === 'ja' || v === 'nee')) value.beginnerStart = v;
+    else skipped++;
+  }
+  return { value, skipped };
+}
+
 // Zonder doel, de keuzes rond golven (docs/beslissingen/2026-10-31-zonder-doel-beginnersstart.md):
 // alleen bekende waarden blijven over; wat ontbreekt is het advies. Een oud bestand zonder deze velden
 // importeert zoals het was, dus het schemanummer blijft staan.

@@ -107,6 +107,15 @@ export function SportsPage() {
           <SportCard key={c.sport} info={c} dots={sportWeekDots({ sport: c.sport, settings, weekStart, sessions: weekSessions, templates })} onOpen={() => setOpen(c.sport)} />
         ))}
       </div>
+      {/* Kracht uit mag, met een waarschuwing; altijd eerst een voorstel (usePlanSettingChange#toggleStrength). */}
+      <div className="mt-6">
+        <Eyebrow>Kracht</Eyebrow>
+        <div className="mt-2">
+          <SettingsList>
+            <SummaryRow id="krachttraining" title="Krachttraining" facts={facts} info="krachttraining" onChange={(on) => void plan.toggleStrength(on)} />
+          </SettingsList>
+        </div>
+      </div>
       {customs.length > 0 && (
         <div className="mt-6 flex flex-col gap-3">
           <Eyebrow>Je eigen sporten</Eyebrow>
