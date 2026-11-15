@@ -377,6 +377,10 @@ describe('de woorden van een wandeling', () => {
     expect(notes.some((n) => n.startsWith('Langer dan de'))).toBe(false);
     expect(loopLines(p, target, notes).warn).toContain('Deze lus duurt ongeveer 6 uur 10, langer dan de 3 uur van je training.');
     expect(otherLoopWarn(p, target)).toBe('Deze lus duurt ongeveer 6 uur 10, langer dan de 3 uur van je training.');
+    // De grens is 12 procent boven de duur: 13 km vlak (3 uur 15) nog niet, 13,6 km vlak (3 uur 25) wel.
+    const flat = { ...hike, askedAscentM: undefined, ascentM: 0 };
+    expect(proposalNotes(loop(13, 0, { targetAscentM: undefined }), flat).some((n) => n.startsWith(LONGER_WALK_LEAD))).toBe(false);
+    expect(proposalNotes(loop(13.6, 0, { targetAscentM: undefined }), flat)).toContain('Deze lus duurt ongeveer 3 uur 25, langer dan de 3 uur van je training.');
     // Op de duur af (3 uur 5 bij 3 uur): geen regel.
     expect(proposalNotes(loop(8.4, 360), hike).some((n) => n.startsWith(LONGER_WALK_LEAD))).toBe(false);
   });
@@ -418,7 +422,7 @@ describe('de woorden van een wandeling', () => {
       proposalFacts(loop(8.4, 360), hike), walkBasisLine(norm), walkBasisLine({ ...norm, basis: 'own', packKg: 8 }), walkFitLine(hike) ?? '',
       longerWalkLine(372, 180), ...proposalNotes(loop(24.8, 0), hike),
     ].join(' ');
-    expect(all).not.toMatch(/[–—]/);
+    expect(all).not.toMatch(/[\u2013\u2014]/);
     expect(all).not.toMatch(/ASCEND/);
   });
 });
