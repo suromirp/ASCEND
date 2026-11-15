@@ -83,8 +83,18 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   const { resolved, effective } = computeDiff(current, backup, plan.categorySelections, plan.planPolicy);
 
   const touches = (a: CategoryAction) => a !== 'keep_current' && a !== 'ignore';
-  const listWrite = <T,>(action: CategoryAction, r: ResolvedListCategory<T> | undefined) =>
-    r && touches(action) ? { clear: action === 'replace', puts: r.final } : undefined;
+  // A replace clears the store and writes the whole list; a merge only writes the rows
+  // that are new or that the file changes, never the device's own rows back from the
+  // copy read above (something may have changed them since).
+  const listWrite = <T,>(action: CategoryAction, r: ResolvedListCategory<T> | undefined) => {
+    if (!r || !touches(action)) return undefined;
+    if (action === 'replace') return { clear: true, puts: r.final };
+    return r.writes.length > 0 ? { clear: false, puts: r.writes } : undefined;
+  };
+  // History only grows: only rows that are new, and only when the store still lacks
+  // them at the moment of writing (databaseBackupWrites.ts, onlyNew).
+  const historyWrite = <T,>(r: ResolvedListCategory<T> | undefined) =>
+    r && r.writes.length > 0 ? { clear: false, onlyNew: true, puts: r.writes } : undefined;
 
   const programAction = effective.program_and_templates;
   const historyAction = effective.training_history;
@@ -122,14 +132,14 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
       strengthProgramStrategies: listWrite(programAction, resolved.strengthProgramStrategies),
       plannedSessions: touches(effective.planned_schedule) ? { clear: true, puts: resolved.plannedSessions.final } : undefined,
       // Never cleared: logs, milestone progress and audit trails only grow.
-      sessionLogs: touches(historyAction) ? { clear: false, puts: resolved.sessionLogs.final } : undefined,
-      planChangeProposals: touches(historyAction) && resolved.planChangeProposals ? { clear: false, puts: resolved.planChangeProposals.final } : undefined,
-      strengthProgramRecommendations: touches(historyAction) && resolved.strengthProgramRecommendations ? { clear: false, puts: resolved.strengthProgramRecommendations.final } : undefined,
-      activityStreams: streamPuts.length > 0 ? { clear: false, puts: streamPuts } : undefined,
-      recoveryMetrics: morningPuts.length > 0 ? { clear: false, puts: morningPuts } : undefined,
+      sessionLogs: touches(historyAction) ? historyWrite(resolved.sessionLogs) : undefined,
+      planChangeProposals: touches(historyAction) ? historyWrite(resolved.planChangeProposals) : undefined,
+      strengthProgramRecommendations: touches(historyAction) ? historyWrite(resolved.strengthProgramRecommendations) : undefined,
+      activityStreams: streamPuts.length > 0 ? { clear: false, onlyNew: true, puts: streamPuts } : undefined,
+      recoveryMetrics: morningPuts.length > 0 ? { clear: false, onlyNew: true, puts: morningPuts } : undefined,
       trainingGoals: listWrite(goalsAction, resolved.trainingGoals),
       goalMilestones: listWrite(goalsAction, resolved.goalMilestones),
-      goalMilestoneProgress: touches(goalsAction) ? { clear: false, puts: resolved.goalMilestoneProgress.final } : undefined,
+      goalMilestoneProgress: touches(goalsAction) ? historyWrite(resolved.goalMilestoneProgress) : undefined,
       capabilityEvidence: listWrite(effective.capability_evidence, resolved.capabilityEvidence),
       injuryNotes: listWrite(effective.injuries, resolved.injuryNotes),
       settings: resolved.settings,

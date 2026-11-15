@@ -32,6 +32,12 @@ import { withDerivedWeek, clearStore } from './databaseRepos';
 export interface BackupStoreWrite<T> {
   clear: boolean;
   puts: T[];
+  // Only rows whose key the store does not have yet, looked up inside this
+  // transaction: for history (logs, milestone progress, audit trails, series,
+  // mornings), which a backup only ever adds to. What the device wrote since
+  // the preview read it (a trim, a link afterwards, a resolved proposal) is
+  // never overwritten by the copy in the file.
+  onlyNew?: boolean;
 }
 
 export interface BackupWriteSet {
@@ -70,28 +76,58 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
 
   const tx = db.transaction(storeNames, 'readwrite');
   const ops: Promise<unknown>[] = [];
+  // All or nothing: a put that throws (a value that cannot be stored) must not
+  // leave the writes queued before it to commit on their own.
+  const abort = () => {
+    try {
+      tx.abort();
+    } catch {
+      // Al afgebroken of al klaar.
+    }
+  };
 
-  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes', 'planChangeProposals', 'strengthProgramStrategies', 'strengthProgramRecommendations', 'activityStreams', 'recoveryMetrics'] as const) {
-    const write = writes[key];
-    if (!write) continue;
-    const store = tx.objectStore(key);
-    if (write.clear) ops.push(store.clear());
-    for (const value of write.puts) ops.push(store.put((key === 'plannedSessions' ? withDerivedWeek(value as PlannedSession) : value) as never));
+  try {
+    for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes', 'planChangeProposals', 'strengthProgramStrategies', 'strengthProgramRecommendations', 'activityStreams', 'recoveryMetrics'] as const) {
+      const write = writes[key];
+      if (!write) continue;
+      const store = tx.objectStore(key);
+      if (write.clear) ops.push(store.clear());
+      const keyPath = store.keyPath as string;
+      for (const raw of write.puts) {
+        const value = (key === 'plannedSessions' ? withDerivedWeek(raw as PlannedSession) : raw) as never;
+        if (!write.clear && write.onlyNew) {
+          const id = (value as Record<string, string>)[keyPath];
+          ops.push(store.getKey(id).then((have) => (have === undefined ? store.put(value) : undefined)));
+        } else {
+          ops.push(store.put(value));
+        }
+      }
+    }
+
+    if (writes.settings) {
+      ops.push(tx.objectStore('meta').put(writes.settings, 'settings'));
+      // The plan in the backup was laid out for its own rest day: restored
+      // together, that rest day is already applied, so the sync doesn't lay
+      // the week out again (docs/onderzoek/Planning op een lijn.md, conflict 16).
+      if (writes.plannedSessions?.clear) ops.push(tx.objectStore('meta').put(writes.settings.restDay ?? 1, 'appliedRestDay'));
+    }
+    for (const [key, value] of Object.entries(writes.meta ?? {})) {
+      ops.push(tx.objectStore('meta').put(value, key));
+    }
+    ops.push(tx.objectStore('meta').delete(BOOT_MIGRATIONS_KEY));
+  } catch (err) {
+    abort();
+    await Promise.allSettled([...ops, tx.done]);
+    throw err;
   }
 
-  if (writes.settings) {
-    ops.push(tx.objectStore('meta').put(writes.settings, 'settings'));
-    // The plan in the backup was laid out for its own rest day: restored
-    // together, that rest day is already applied, so the sync doesn't lay
-    // the week out again (docs/onderzoek/Planning op een lijn.md, conflict 16).
-    if (writes.plannedSessions?.clear) ops.push(tx.objectStore('meta').put(writes.settings.restDay ?? 1, 'appliedRestDay'));
+  try {
+    await Promise.all([...ops, tx.done]);
+  } catch (err) {
+    abort();
+    await tx.done.catch(() => undefined);
+    throw err;
   }
-  for (const [key, value] of Object.entries(writes.meta ?? {})) {
-    ops.push(tx.objectStore('meta').put(value, key));
-  }
-  ops.push(tx.objectStore('meta').delete(BOOT_MIGRATIONS_KEY));
-
-  await Promise.all([...ops, tx.done]);
 }
 
 export async function wipeAllData(): Promise<void> {

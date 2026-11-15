@@ -73,6 +73,12 @@ export interface Keyed {
 
 export interface ResolvedListCategory<T> {
   final: T[];
+  // Only the rows a merge has to write: new ones, and with allowReplaceOverwrite
+  // the ones the file changes. A row the device already has as it is, or keeps
+  // because it differs (history), is never written back from the copy read for
+  // the preview: something may have changed it since (backupApply.ts).
+  // A 'replace' clears the store first, so it writes `final` instead.
+  writes: T[];
   toAdd: number;
   toReplace: number;
   toSkipDuplicate: number;
@@ -96,7 +102,7 @@ export function resolveListCategory<T extends Keyed>(
   allowReplaceOverwrite: boolean,
 ): ResolvedListCategory<T> {
   if (action === 'keep_current' || action === 'ignore') {
-    return { final: current, toAdd: 0, toReplace: 0, toSkipDuplicate: 0, toRemove: 0, conflicts: [] };
+    return { final: current, writes: [], toAdd: 0, toReplace: 0, toSkipDuplicate: 0, toRemove: 0, conflicts: [] };
   }
   const currentById = new Map(current.map((c) => [c.id, c]));
   if (action === 'replace') {
@@ -111,11 +117,12 @@ export function resolveListCategory<T extends Keyed>(
       else toReplace++;
     }
     const toRemove = current.filter((c) => !incomingIds.has(c.id)).length;
-    return { final: incoming, toAdd, toReplace, toSkipDuplicate, toRemove, conflicts: [] };
+    return { final: incoming, writes: incoming, toAdd, toReplace, toSkipDuplicate, toRemove, conflicts: [] };
   }
 
   // merge
   const final = [...current];
+  const writes: T[] = [];
   const indexById = new Map(current.map((c, i) => [c.id, i]));
   let toAdd = 0;
   let toReplace = 0;
@@ -126,6 +133,7 @@ export function resolveListCategory<T extends Keyed>(
     const existingIndex = indexById.get(inc.id);
     if (existingIndex === undefined) {
       final.push(inc);
+      writes.push(inc);
       toAdd++;
       continue;
     }
@@ -136,6 +144,7 @@ export function resolveListCategory<T extends Keyed>(
     }
     if (allowReplaceOverwrite) {
       final[existingIndex] = inc;
+      writes.push(inc);
       toReplace++;
     } else {
       conflicts.push({
@@ -145,7 +154,7 @@ export function resolveListCategory<T extends Keyed>(
     }
   }
 
-  return { final, toAdd, toReplace, toSkipDuplicate, toRemove: 0, conflicts };
+  return { final, writes, toAdd, toReplace, toSkipDuplicate, toRemove: 0, conflicts };
 }
 
 // Lists that live inside AppSettings but are history, not preferences:
