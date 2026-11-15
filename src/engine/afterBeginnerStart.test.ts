@@ -1,6 +1,7 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach } from 'vitest';
 import { layoutWaves, PHASE_GOLF, PHASE_GOLF_START, progressionTarget } from './programLayout';
-import { recentSessionMaxima, resolveEffectiveFullDuration, setRecentSessionMaxima, withDurationScope } from './substitutions';
+import { recentSessionMaxima, resolveEffectiveFullDuration, setRecentSessionMaxima, setStartBuild, withDurationScope } from './substitutions';
+import { durationScopeFor } from './durationScope';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { BEGINNER_LADDER } from '../data/beginnerLadder';
 import type { Program } from '../models/program';
@@ -31,7 +32,12 @@ const logged = (minutes: (number | null)[], templateId: string, weekday: number)
   minutes.flatMap((m, i) => (m === null ? [] : [{ templateId, completedDate: day(i + 1, weekday), durationMinutes: m }]));
 const step = (from: number) => Math.round((from * 1.1) / 5) * 5;
 
-afterEach(() => setRecentSessionMaxima({ asOf: '', minutesByTemplate: {} }));
+// Het register zoals de app hem zet voor een start op heel licht; ongezet is het Gewoon (Warden, mag 5).
+beforeEach(() => setStartBuild('licht'));
+afterEach(() => {
+  setRecentSessionMaxima({ asOf: '', minutesByTemplate: {} });
+  setStartBuild('gewoon');
+});
 
 describe('de rem na de beginnersstart', () => {
   it('het programma: vier weken start, week 5 is de eerste golf, en het plan zelf vraagt daar veel meer', () => {
@@ -91,14 +97,50 @@ describe('de rem na de beginnersstart', () => {
   });
 
   // Warden, 15 november, moet 4: een geval waar de bodem van Wennen het verschil maakt.
+  // Warden ronde 3, moet 3: een start van 30 naast een eigen loop van 35. Met de bodem zou het 50 zijn.
   it('naast de start telt de bodem van Wennen niet: een eigen loop van 35 wordt hoogstens 40, niet 50', () => {
     const floor = progressionTarget(longRun, program, sunday(5))!.phaseSteps.find((s) => s.weekInPhase === 1)!.targetMinutes;
-    expect(floor).toBeGreaterThan(40);
-    setRecentSessionMaxima(recentSessionMaxima([...logged(longs, 'tpl_walk_jog_long', 7), { templateId: 'tpl_long_run', completedDate: day(4, 3), durationMinutes: 35 }], asOf));
-    expect(resolveEffectiveFullDuration(longRun, sunday(5), program)).toBe(step(45));
-    // Zonder start (alleen die eigen loop van 35) houdt de bodem hem op zijn eerste stap.
+    expect(floor).toBe(50);
+    setRecentSessionMaxima(recentSessionMaxima([...logged([30, 30, 30, 30], 'tpl_walk_jog_long', 7), { templateId: 'tpl_long_run', completedDate: day(4, 3), durationMinutes: 35 }], asOf));
+    expect(resolveEffectiveFullDuration(longRun, sunday(5), program)).toBe(40);
+    // Een plan zonder start: dezelfde eigen loop van 35 houdt de bodem op zijn eerste stap.
+    const plain: Program = { ...program, phases: layoutWaves(START, START, 12, START, 0) };
     setRecentSessionMaxima(recentSessionMaxima([{ templateId: 'tpl_long_run', completedDate: day(4, 3), durationMinutes: 35 }], asOf));
-    expect(resolveEffectiveFullDuration(longRun, sunday(5), program)).toBe(floor);
+    expect(resolveEffectiveFullDuration(longRun, sunday(5), plain)).toBe(floor);
+  });
+
+  // Warden ronde 3, blokkerend 1: de start niet gelogd (of als wandeling), week 5 gedaan zoals gevraagd.
+  it('start zonder logs, eerste eigen loop in week 5: de week erna één stap, niet de bodem', () => {
+    const week5 = [{ templateId: 'tpl_long_run', completedDate: sunday(5), durationMinutes: 35 }, { templateId: 'tpl_easy_run', completedDate: thursday(5), durationMinutes: 25 }];
+    setRecentSessionMaxima(recentSessionMaxima(week5, day(6, 1)));
+    expect(resolveEffectiveFullDuration(longRun, sunday(6), program)).toBe(40);
+    expect(resolveEffectiveFullDuration(easyRun, thursday(6), program)).toBe(30);
+    // En de week daarna, met de loop van week 6 erbij: weer één stap.
+    setRecentSessionMaxima(recentSessionMaxima([...week5, { templateId: 'tpl_long_run', completedDate: sunday(6), durationMinutes: 40 }], day(7, 1)));
+    expect(resolveEffectiveFullDuration(longRun, sunday(7), program)).toBe(45);
+  });
+
+  // Warden ronde 3, mag 4: de instelling komt in het register.
+  it('de opbouw komt uit de instelling: zonder veld Gewoon, Heel licht alleen als hij gekozen is', () => {
+    expect(durationScopeFor({}, [], [], program, START).startBuild).toBe('gewoon');
+    expect(durationScopeFor({ beginnerBuild: 'licht' }, [], [], program, START).startBuild).toBe('licht');
+    expect(durationScopeFor({ beginnerBuild: 'zwaar' }, [], [], program, START).startBuild).toBe('gewoon');
+  });
+
+  // Warden ronde 3, mag 7.
+  it('de maat van het plan geldt alleen voor de twee lopen, ook bij Gewoon', () => {
+    // De heuvelloop vraagt in week 5 meer dan een stap boven zijn eigen lengte in de laatste startweek: een maat zou hem raken.
+    const hills = templates.find((t) => t.id === 'tpl_hill_intervals')!;
+    expect(progressionTarget(hills, program, day(5, 6))!.minutes).toBeGreaterThan(step(progressionTarget(hills, program, day(4, 6))!.minutes));
+    for (const build of ['licht', 'gewoon'] as const) {
+      expect(withDurationScope({ startBuild: build }, () => resolveEffectiveFullDuration(hills, day(5, 6), program))).toBe(progressionTarget(hills, program, day(5, 6))!.minutes);
+    }
+  });
+
+  it('een voorstel zet de opbouw daarna terug', () => {
+    setStartBuild('licht');
+    withDurationScope({ startBuild: 'gewoon' }, () => undefined);
+    expect(resolveEffectiveFullDuration(longRun, sunday(5), program)).toBe(35);
   });
 
   // Warden, mag 6: de 5 minuten erbij gelden alleen na de start, en het venster van 30 dagen telt op de dag.

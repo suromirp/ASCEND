@@ -6,7 +6,8 @@ import {
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonChangeInput } from './horizonPlan';
 import { buildFirstPlan, defaultAnswers, type StartAnswers } from '../engine/firstPlan';
 import { progressionTarget } from '../engine/programLayout';
-import { resolveEffectiveFullDuration } from '../engine/substitutions';
+import { resolveEffectiveFullDuration, withDurationScope } from '../engine/substitutions';
+import { resolveBeginnerBuild } from '../engine/beginnerStart';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import type { SessionLog } from '../models/training';
 import type { TrainingGoal } from '../models/goals';
@@ -28,10 +29,12 @@ async function capture(): Promise<string> {
   const rows = (await PlannedSessionsRepo.getAll())
     .filter((s) => s.scheduledDate >= from && s.scheduledDate <= until)
     .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.order - b.order || a.templateId.localeCompare(b.templateId));
+  // De opbouw van de start zoals bewaard (engine/substitutions.ts#setStartBuild); de andere registers blijven leeg.
+  const build = resolveBeginnerBuild((await SettingsRepo.get()).beginnerBuild);
   const lines = rows.map((s) => {
     const t = templates.get(s.templateId);
     const live = s.status !== 'skipped' && t;
-    const eff = live ? resolveEffectiveFullDuration(t, s.scheduledDate, program) : '-';
+    const eff = live ? withDurationScope({ startBuild: build }, () => resolveEffectiveFullDuration(t, s.scheduledDate, program)) : '-';
     const kg = live ? progressionTarget(t, program, s.scheduledDate)?.step.backpackKg ?? '-' : '-';
     return [s.scheduledDate, s.templateId, s.status, s.lock?.by ?? '-', s.plannedMinutes ?? '-', `eff=${eff}`, `kg=${kg}`, s.raceBlock ? 'race' : '', s.leave ? 'leave' : ''].join(' ').trim();
   });

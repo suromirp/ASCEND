@@ -206,9 +206,10 @@ export function kindOfExistingGoals(goals: TrainingGoal[], milestones: GoalMiles
 }
 
 // `existing`: goals are there already; none is made, and the week follows their kind.
-// `logs`: je logs, zodat het voorstel de beginnersstart noemt als Automatisch er een kiest (dezelfde toets als de
-// planning, storage/databaseHorizon.ts#patternContext). De wizard vraagt het niet als er al logs zijn (Warden, 15 november).
-export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate[], today: string, nowIso: string = new Date().toISOString(), existing?: { kind: StartGoalKind }, logs: readonly SessionLog[] = []): FirstPlanSetup {
+// `known`: je logs en je bewaarde keuze Beginnersstart, zodat het voorstel de beginnersstart noemt zoals de planning
+// hem kiest (dezelfde toets als storage/databaseHorizon.ts#patternContext). De wizard vraagt het niet als er al logs
+// zijn; zonder antwoord blijft je bewaarde keuze staan (Warden, 15 november).
+export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate[], today: string, nowIso: string = new Date().toISOString(), existing?: { kind: StartGoalKind }, known: { logs?: readonly SessionLog[]; beginnerStart?: unknown } = {}): FirstPlanSetup {
   if (existing) answers = { ...answers, goal: existing.kind };
   const direction = existing ? undefined : directionOfStart(answers.goal);
   // Een beginner begint met hoogstens vier dagen.
@@ -242,7 +243,7 @@ export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate
   const program: Program = { ...base, startDate, phases: layoutPhases(startDate, anchor, today, undefined, { free: !!direction, ...(direction ? { waveStart: startDate } : {}) }) };
   // Wordt dit een beginnersstart? Je antwoord, of zonder antwoord Automatisch met je logs.
   const beginnerAnswer = direction && answers.beginner !== undefined ? (answers.beginner ? 'ja' as const : 'nee' as const) : undefined;
-  const beginner = !!direction && isBeginnerStart(beginnerAnswer ?? 'auto', logs, startDate);
+  const beginner = !!direction && isBeginnerStart(beginnerAnswer ?? known.beginnerStart, known.logs ?? [], startDate);
 
   const strengthIds = week.kept.filter(isStrengthTemplateId);
   const strategy: StrengthProgramStrategy | null = answers.strength && strengthIds.length > 0

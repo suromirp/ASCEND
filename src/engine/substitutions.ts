@@ -116,9 +116,9 @@ export function recentSessionMaxima(
 }
 
 // De opbouw van de start (AppSettings.beginnerBuild, engine/beginnerStart.ts#resolveBeginnerBuild), voor de rem na de
-// start zonder logs: wat stond er in de laatste week van de start op de plek van deze loop. Ongezet (een pure test)
-// rekent als heel licht, zoals een nieuw plan; de app zet het uit je instelling, een voorstel uit het voorstel.
-let startBuild: 'licht' | 'gewoon' = 'licht';
+// start zonder logs: wat stond er in de laatste week van de start op de plek van deze loop. Ongezet is het Gewoon,
+// zoals de instelling zonder veld; de app zet het uit je instelling, een voorstel uit het voorstel.
+let startBuild: 'licht' | 'gewoon' = 'gewoon';
 export function setStartBuild(build: 'licht' | 'gewoon'): void {
   startBuild = build;
 }
@@ -240,21 +240,24 @@ export function resolveEffectiveFullDuration(
   const kind = fixed ? undefined : trainingKindOf(template);
   const amount = kind ? kindAmounts[kind] : undefined;
   if (amount) base = scaledMinutes(base, amount, !target && logged ? Math.round((logged * SESSION_SPIKE_LIMIT) / 5) * 5 : undefined);
+  // Only the setting "Sneller dan het onderzoek" (Program.runBuild.spikeLimit) lifts the 110% of the long run.
+  const limit = template.id === LONG_RUN_ID ? readRunBuild(program?.runBuild)?.spikeLimit ?? SESSION_SPIKE_LIMIT : SESSION_SPIKE_LIMIT;
+  // De maat van het plan na de beginnersstart (plannedAfterStart): de rem zonder log, en de bovengrens van de bodem
+  // hieronder naast een eigen log.
+  const planned = !fixed && target ? plannedAfterStart(template, scheduledDate, program, limit) : undefined;
   if (!fixed && target && longest && inWindow) {
     // Never below the first "Wennen" step: one short session must not pull
-    // the whole build down.
-    const floor = afterStart ? 0 : (target.phaseSteps.find((s) => s.weekInPhase === 1) ?? target.step).targetMinutes;
-    // Only the setting "Sneller dan het onderzoek" (Program.runBuild.spikeLimit) lifts the 110% of the long run.
-    const limit = template.id === LONG_RUN_ID ? readRunBuild(program?.runBuild)?.spikeLimit ?? SESSION_SPIKE_LIMIT : SESSION_SPIKE_LIMIT;
+    // the whole build down. Na de start nooit boven de maat van het plan: wie de start niet logde en in week 5 zijn
+    // eerste eigen loop deed, springt anders van 35 naar die bodem (Warden, 15 november).
+    const wennen = (target.phaseSteps.find((s) => s.weekInPhase === 1) ?? target.step).targetMinutes;
+    const floor = afterStart ? 0 : Math.min(wennen, planned ?? wennen);
     // Na de start minstens 5 minuten erbij: 110% van 20 is op 5 minuten afgerond weer 20, en dan groeit hij nooit.
     // Op zo'n kleine basis zeggen de minuten meer dan het percentage (docs/onderzoek/Wandelen en dribbelen voor
     // beginners.md, punt 6). Vanaf 25 minuten is dat dezelfde stap als 110%.
     const cap = Math.max(floor, afterStart ? afterStartStep(longest, limit) : Math.round((longest * limit) / 5) * 5);
     base = Math.min(base, cap);
-  } else if (!fixed && target) {
-    const limit = template.id === LONG_RUN_ID ? readRunBuild(program?.runBuild)?.spikeLimit ?? SESSION_SPIKE_LIMIT : SESSION_SPIKE_LIMIT;
-    const planned = plannedAfterStart(template, scheduledDate, program, limit);
-    if (planned !== undefined) base = Math.min(base, planned);
+  } else if (planned !== undefined) {
+    base = Math.min(base, planned);
   }
   // The first week after a race: the long run is at most half the race.
   if (!fixed && target && template.id === LONG_RUN_ID) {
