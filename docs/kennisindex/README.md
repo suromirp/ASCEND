@@ -8,7 +8,7 @@ De bron is `docs/kennisindex/bronnen.json`: per document het onderwerp, de kern 
 "Vervangt" van een besluit komen uit het besluit zelf. Een nieuw document in `docs/` krijgt een regel in
 `bronnen.json`, daarna `npm run kennisindex`; de test `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 526 documenten: 395 gelden, 2 vervangen, 3 verouderd, 126 achtergrond.
+Stand van de 527 documenten: 396 gelden, 2 vervangen, 3 verouderd, 126 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; achtergrond is onderzoek, een ontwerp of een verslag waar een besluit
