@@ -11,7 +11,7 @@ Basisfase, week 1 van 4
 
 --- kaart 2 ---
 Gemist
-Benen A (zwaar) en Testloop 5 km. Laat het los; dubbel doen helpt niet.
+Benen A (zwaar) en Testloop 5 km. Laat het los; dubbel doen helpt niet. De rest van je week zet Week opnieuw plannen terug naar het plan.
 
 --- kaart 3 ---
 Volgende week
