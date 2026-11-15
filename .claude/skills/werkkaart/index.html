@@ -175,6 +175,8 @@
   window.wk = window.wk || {};
   wk.beweeg = () => window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
   wk.rows = (id) => { const d = dash.data(id); return d.status === 'ok' && Array.isArray(d.data) ? d.data : null; };
+  // Het type geeft een lijst in een rij als JSON-tekst; lees beide
+  wk.lijst = (v) => { if (Array.isArray(v)) return v; if (typeof v === 'string' && v) { try { const x = JSON.parse(v); return Array.isArray(x) ? x : []; } catch (e) { return []; } } return []; };
   wk.brief = () => { const r = wk.rows('briefing'); return r && r[0] ? r[0] : null; };
   // Tot en met 17 november in Portugal, daarna thuis: tijden in die zone, nooit UTC.
   wk.zone = () => (Date.now() < Date.parse('2026-11-18T00:00:00Z') ? { tz: 'Europe/Lisbon', naam: 'Portugese tijd' } : { tz: 'Europe/Amsterdam', naam: 'Amsterdamse tijd' });
@@ -248,7 +250,7 @@
       return k;
     }).attr('class', (r) => 'wk-kaartje ' + (r.soort === 'amber' ? 'wk-amber' : 'wk-rood') + (wk.beweeg() ? ' wk-in' : ''))
       .call((k) => k.select('.wk-kaartje-r').text((r) => r.tekst))
-      .call((k) => k.select('.wk-kaartje-s').text((r) => (r.auto ? 'Vanzelf gezien' : 'Gemeld door de coördinator')));
+      .call((k) => k.select('.wk-kaartje-s').text((r) => (r.auto === true || r.auto === 'true' ? 'Vanzelf gezien' : 'Gemeld door de coördinator')));
   });
 
   // Loopt goed
@@ -342,13 +344,13 @@
       const w = Math.max(300, el.clientWidth || 600);
       const smal = w < 560;
       const h = smal ? 560 : 640;
-      const veranderd = new Set((bouw || []).filter((b) => b.stap === 'bouwen' || b.stap === 'controle').flatMap((b) => b.bestanden || []));
-      const kn = ow.map((o) => ({ ...o, soort: 'ow', r: 10 + Math.sqrt(o.bestanden || 1) * (smal ? 1.6 : 2.1), actief: (o.bouwers || []).length > 0, bouwt: (o.bouwers || []).some((b) => b.stap === 'bouwen') }));
+      const veranderd = new Set((bouw || []).filter((b) => b.stap === 'bouwen' || b.stap === 'controle').flatMap((b) => wk.lijst(b.bestanden)));
+      const kn = ow.map((o) => ({ ...o, bouwers: wk.lijst(o.bouwers), soort: 'ow', r: 10 + Math.sqrt(+o.bestanden || 1) * (smal ? 1.6 : 2.1), actief: wk.lijst(o.bouwers).length > 0, bouwt: wk.lijst(o.bouwers).some((b) => b.stap === 'bouwen') }));
       const byId = new Map(kn.map((n) => [n.id, n]));
       const bn = bes.filter((b) => byId.has(b.onderwerp)).map((b) => ({ id: 'f:' + b.pad, soort: 'bes', naam: b.naam, onderwerp: b.onderwerp, r: veranderd.has(b.pad) ? 3.6 : 2.2, veranderd: veranderd.has(b.pad) }));
-            const maxI = d3.max(lijnen, (l) => l.imports) || 1;
+            const maxI = d3.max(lijnen, (l) => +l.imports) || 1;
       const breed = d3.scaleSqrt().domain([1, maxI]).range([1, smal ? 7 : 10]);
-      const owLinks = lijnen.filter((l) => byId.has(l.van) && byId.has(l.naar)).map((l) => ({ source: l.van, target: l.naar, imports: l.imports, soort: 'ow' }));
+      const owLinks = lijnen.filter((l) => byId.has(l.van) && byId.has(l.naar)).map((l) => ({ source: l.van, target: l.naar, imports: +l.imports, soort: 'ow' }));
             const buren = new Map(kn.map((n) => [n.id, new Map()]));
       owLinks.forEach((l) => { buren.get(l.source).set(l.target, l.imports); buren.get(l.target).set(l.source, l.imports); });
 
