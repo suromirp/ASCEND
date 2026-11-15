@@ -7,7 +7,9 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 `docs/beslissingen/`.
 
 ## Inbox
-Hoogste code: I-39. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+Hoogste code: I-41. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+- [I-40] Weekterugblik noemt alleen gemist (Pathfinder 15 november, later): overgeslagen en vervallen staan er niet in, terwijl "0 van 3" ze meetelt of weglaat. Eén regel "Overgeslagen: ..." en "Vervallen: ..." sluit de som. Klein.
+- [I-41] Inhaaladvies en kaart tellen anders (Pathfinder 15 november, later): de titel van het advies telt de laatste drie dagen, de kaart in Week de hele week; dat kan twee getallen naast elkaar geven. Gelijk trekken of zeggen waarover het gaat. Klein, planner.
 - [I-39] Weekbudget bij kracht uit (Lookout 15 november, mag): het blad zegt nog "Advies bij Fit blijven: 150 min, 2 keer kracht." en "Het aantal krachttrainingen dat in je week staat verandert hier niet door", terwijl de regel erboven zegt dat het budget geen kracht telt. Bij kracht uit het advies zonder kracht en de zin over krachttrainingen weg. Klein, Sonnet.
 - [I-1] Week telt anders dan hij toont (eigenaar 15 november, schermafdruk): drie rode kruisen (vr 13 twee, zo 15 een) bij "Je hebt 1 training gemist"; za 14 lange duurloop voorbij zonder kruis en met sleepgreep; amber "1 dag na Lange duurloop" bij een lange loop die niet gedaan is; een kruis op vandaag; "verplaatst van do ..." afgekapt; het inhaaladvies zegt om 10:40 "vandaag deed je geen training" terwijl heuvelintervallen vandaag gepland staan, en zet de lange loop op de dag erna, tegen de eigen waarschuwing van Week in. Eerst naspelen met een verse back-up. Planner, Opus high, Warden Fable. Staat bovenaan in de overdracht.
 
