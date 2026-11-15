@@ -34,6 +34,7 @@ import type { HeartRateSettings } from './heartRateZones';
 import type { IntensityCounting } from './intensitySettings';
 import { effortMinutes, type EffortMinutes } from './weekEffort';
 import { caughtUpMap } from './catchUp';
+import { raceDatesOf } from './raceWindow';
 
 export interface WeekReview {
   weekStart: string;
@@ -123,7 +124,8 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // while two trainings were skipped). Not counted: sessions ASCEND itself
   // took out while rearranging the plan (a new strength block, the weekly
   // planning), days you were ill and days before the program started.
-  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate, { periods: inputs.leavePeriods, loggedIds });
+  // Een training uit de afbouw die na de race niet gedaan is, telt niet als gemist (engine/raceWindow.ts).
+  const leftOut = leftOutOfCount(plannedSessions, planChangeLog, illnessEpisodes, asOf, program?.startDate, { periods: inputs.leavePeriods, loggedIds, races: raceDatesOf(plannedSessions, byId) });
   const countsAsTraining = (s: PlannedSession) => countsAsTrainingShared(s, byId.get(s.templateId), leftOut);
   // De oude rij van een gemiste training die je naar later zette telt niet: de nieuwe rij telt
   // (docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md).

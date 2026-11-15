@@ -20,6 +20,7 @@ import { isIllnessDay } from './illness';
 import { isAwayDay, leaveDays } from './leave';
 import type { LeavePeriod } from '../models/leave';
 import { logDay, type PlannedById } from './logDay';
+import { isTaperDay } from './raceWindow';
 
 type TemplateTypes = Map<string, Pick<SessionTemplate, 'type'>>;
 
@@ -72,7 +73,9 @@ export function leftOutOfCount(
   // stond en niet gedaan is, telt niet als gemist. Wat je er wel deed, telt gewoon mee als gedaan; zo ook op een
   // zieke dag (`loggedIds` geldt voor beide, engine/sessionStatus.ts#isPausedDay). Verplicht: zonder loggedIds viel
   // een gelogde training op een zieke dag stil uit de telling (Warden, 15 november).
-  away: { periods: LeavePeriod[] | undefined; loggedIds: ReadonlySet<string | undefined> },
+  // `races`: de dagen van de races (engine/raceWindow.ts#raceDatesOf). Een training uit de afbouw die niet gedaan is,
+  // telt na de racedag niet als gemist (engine/raceWindow.ts#isTaperDay), net als een vakantiedag.
+  away: { periods: LeavePeriod[] | undefined; loggedIds: ReadonlySet<string | undefined>; races?: readonly string[] },
 ): (id: string) => boolean {
   const removedBy = new Map<string, string>();
   for (const p of planChangeLog) {
@@ -92,6 +95,7 @@ export function leftOutOfCount(
     if (programStart && s.scheduledDate < programStart) return true;
     if (illnessEpisodes && !away.loggedIds.has(s.id) && isIllnessDay(s.scheduledDate, illnessEpisodes, asOf)) return true;
     if (awayDays && !away.loggedIds.has(s.id) && isAwayDay(s.scheduledDate, away.periods, awayDays)) return true;
+    if (away.races?.length && !away.loggedIds.has(s.id) && isTaperDay(s.scheduledDate, away.races, asOf)) return true;
     if (s.status !== 'skipped') return false;
     if (movedOn.has(id)) return true;
     const trigger = removedBy.get(id);

@@ -25,6 +25,7 @@ import type { LeavePeriod } from '../models/leave';
 import { isAwayDay } from './leave';
 import type { ReentryChoice, ReentryWeek } from './reentry';
 import { idHasRole } from './templateRoles';
+import { RACE_GUARD_DAYS, afterRaceGuard, raceDatesOf } from './raceWindow';
 import type { DescentClockContext } from './descentClock';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
@@ -170,14 +171,20 @@ export function proposal(issue: string, items: PlanChangeItem[], consequences: s
 
 // De week voor een race (de afbouw) en de racedag zelf: geen inhaaladvies, geen "doe vandaag in plaats van je
 // rustdag" (profielendoorloop hardloper 3 en 7). Een wedstrijd die gepland staat of een tussendoel met een
-// wedstrijddag binnen zeven dagen vanaf vandaag.
-export const RACE_GUARD_DAYS = 7;
+// wedstrijddag binnen zeven dagen vanaf vandaag. De dagen rond een race staan in engine/raceWindow.ts.
+export { RACE_GUARD_DAYS };
 export function raceWeekGuard(inputs: Pick<AdviceInputs, 'asOf' | 'plannedSessions' | 'templates' | 'raceGoals'>): boolean {
   const until = addDays(inputs.asOf, RACE_GUARD_DAYS);
   const near = (d: string) => d >= inputs.asOf && d <= until;
   const byId = new Map(inputs.templates.map((t) => [t.id, t]));
   return inputs.plannedSessions.some((s) => s.status !== 'skipped' && near(s.scheduledDate) && idHasRole(s.templateId, 'race', byId))
     || (inputs.raceGoals ?? []).some((r) => near(r.raceDate));
+}
+
+// De herstelweek na een race (de dag na tot en met zeven dagen na): niets inhalen, ook geen training uit de afbouw
+// (backlog R, engine/raceWindow.ts#afterRaceGuard). Naast raceWeekGuard, die alleen vooruit kijkt.
+export function recoveryWeekGuard(inputs: Pick<AdviceInputs, 'asOf' | 'plannedSessions' | 'templates'>): boolean {
+  return afterRaceGuard(inputs.asOf, raceDatesOf(inputs.plannedSessions, inputs.templates));
 }
 
 // A day you said you are away (engine/leave.ts#isAwayDay): never a day to catch up on.

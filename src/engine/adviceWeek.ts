@@ -12,8 +12,9 @@ import { addDays, daysBetween, formatWeekdayDateNL } from '../utils/dates';
 import { proposeExtraSession } from './extraRun';
 import { lastDeclinedOn, linkCandidates, pauseSince } from './missedTraining';
 import { isAwayDay } from './leave';
-import { type AdviceInputs, type Advice, isDone, inProgram, isKeySession, findCatchUpDate, findRestDayToUse, keyCatchUpShort, raceWeekGuard, type AdviceOption, catchUpDates, moveOptions, proposal } from './adviceShared';
+import { type AdviceInputs, type Advice, isDone, inProgram, isKeySession, findCatchUpDate, findRestDayToUse, keyCatchUpShort, raceWeekGuard, recoveryWeekGuard, type AdviceOption, catchUpDates, moveOptions, proposal } from './adviceShared';
 import { TEST_RUN_ID } from './adviceTestRun';
+import { isTaperDay, raceDatesOf } from './raceWindow';
 
 // Een naam midden in een zin: "Tempoloop" wordt "tempoloop".
 const lower = (name: string) => `${name.charAt(0).toLowerCase()}${name.slice(1)}`;
@@ -26,8 +27,9 @@ const lower = (name: string) => `${name.charAt(0).toLowerCase()}${name.slice(1)}
 export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
   // Ill or building back up: nothing gets caught up (engine/illness.ts).
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
-  // De afbouw voor een race en de racedag: niets inhalen. Weg (vakantie, tocht): ook niet.
-  if (raceWeekGuard(inputs) || (inputs.leave?.length && isAwayDay(inputs.asOf, inputs.leave))) return [];
+  // De afbouw voor een race, de racedag en de herstelweek erna: niets inhalen. Weg (vakantie, tocht): ook niet.
+  if (raceWeekGuard(inputs) || recoveryWeekGuard(inputs) || (inputs.leave?.length && isAwayDay(inputs.asOf, inputs.leave))) return [];
+  const races = raceDatesOf(inputs.plannedSessions, templateById);
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   // First link, then catch up: a training a loose log may belong to gets the link proposal on Vandaag
   // (engine/missedTraining.ts), not a catch-up of something that was perhaps done.
@@ -39,7 +41,9 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
     (s) => s.templateId !== TEST_RUN_ID && s.status !== 'skipped' && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(windowFrom(s), inputs.asOf) <= 3
       && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf) && !linkable.has(s.id)
       // Een vakantie of tocht die je meldde is nooit gemist; wat ervoor open stond vervalt (engine/missedTraining.ts#pauseSince).
-      && !isAwayDay(s.scheduledDate, inputs.leave) && !pauseSince(s.scheduledDate, inputs.asOf, inputs.illnessEpisodes, inputs.leave),
+      && !isAwayDay(s.scheduledDate, inputs.leave) && !pauseSince(s.scheduledDate, inputs.asOf, inputs.illnessEpisodes, inputs.leave)
+      // Een training uit de afbouw voor een race die er al was vervalt, ook als het venster later begon (engine/raceWindow.ts).
+      && !isTaperDay(s.scheduledDate, races, inputs.asOf),
   );
   // One advice for everything missed, not one each (production feedback:
   // a stack of "gemist" cards). Only a key session (engine/keySession.ts:
@@ -167,7 +171,8 @@ export function restSwapAdvice(inputs: AdviceInputs, templateById: Map<string, S
 // straight away, the evening of the skip, not only the next morning.
 export function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
-  if (raceWeekGuard(inputs) || isAwayDay(inputs.asOf, inputs.leave)) return [];
+  // Ook de herstelweek na een race: een overgeslagen sleuteltraining wordt dan niet op een rustdag ingehaald.
+  if (raceWeekGuard(inputs) || recoveryWeekGuard(inputs) || isAwayDay(inputs.asOf, inputs.leave)) return [];
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const skipped = inputs.plannedSessions
     .filter((s) => s.status === 'skipped' && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program)

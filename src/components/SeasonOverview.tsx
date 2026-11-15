@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { leftOutOfCount } from '../engine/weekLogs';
+import { raceDatesOf } from '../engine/raceWindow';
 import { buildSeasonPlan, type SeasonPhase, type SeasonWeek } from '../engine/seasonPlan';
 import { programAnchorDate } from '../engine/programLayout';
 import { PHASE_COLOR } from '../data/phaseColors';
@@ -24,7 +25,7 @@ export function SeasonOverview({ onSelectWeek }: { onSelectWeek: (weekStart: str
   const { program, plannedSessions, sessionLogs, templates, trainingGoals, goalMilestones, planChangeLog, settings } = useAppData();
   const today = todayISO();
   const phases = useMemo(
-    () => (program ? buildSeasonPlan(program, plannedSessions, sessionLogs, templates, today, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)) })) : []),
+    () => (program ? buildSeasonPlan(program, plannedSessions, sessionLogs, templates, today, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)), races: raceDatesOf(plannedSessions, templates) })) : []),
     [program, plannedSessions, sessionLogs, templates, today, planChangeLog, settings.illnessEpisodes, settings.leavePeriods],
   );
   const [open, setOpen] = useState<string | undefined>(() => phases.find((p) => p.current)?.id);
