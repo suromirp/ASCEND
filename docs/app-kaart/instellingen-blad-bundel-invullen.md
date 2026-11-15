@@ -18,6 +18,10 @@ Alleen wijzigingen
 Lange onderbreking vragen na
 [knop: Uitleg: Lange onderbreking vragen na]
 45 minuten
+[knop: Training bewaren als concept na, 12 uur]
+Training bewaren als concept na
+[knop: Uitleg: Training bewaren als concept na]
+12 uur
 [knop: Vegen om te verwijderen]
 Vegen om te verwijderen
 [knop: Uitleg: Vegen om te verwijderen]

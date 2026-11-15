@@ -42,6 +42,11 @@ Naar je hartslag
 [knop: Tempo uit stabiele stukken]
 Tempo uit stabiele stukken
 [knop: Uitleg: Tempo uit stabiele stukken]
+Na een pauze
+[knop: Rustiger instap na een pauze, Driekwart]
+Rustiger instap na een pauze
+[knop: Uitleg: Rustiger instap na een pauze]
+Driekwart
 Onderweg
 [knop: Eten onderweg]
 Eten onderweg
