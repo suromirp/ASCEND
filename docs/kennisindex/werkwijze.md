@@ -11,12 +11,18 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 ## Besluiten die gelden
 
-Nieuwste eerst. Bij een besluit staat welk later besluit het deels vervangt of aanvult.
+Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
 - 2026-11-11 [Pathfinder: een poort voor samenhang en UX](../beslissingen/2026-11-11-pathfinder.md): Er komt een zesde rol, Pathfinder (`.claude/agents/pathfinder.md`, skill `pathfinder`), die de app als geheel bewaakt vanuit de gebruiker.
 - 2026-10-31 [Tekstkaart van de app als standaardcontrole](../beslissingen/2026-10-31-app-kaart.md): Data en teksten controleren we met de tekstkaart in `docs/app-kaart/` (`npm run kaart:vergelijk`), niet met screenshots.
 - 2026-10-22 [Kwaliteitspoort voor alles wat live gaat](../beslissingen/2026-10-22-kwaliteitspoort.md): Niets gaat naar main voordat het door vier poorten is: de vier controles, een review door Warden, een doorloop door Lookout op 360 en 390 px en een screenshot dat de coördinator zelf bekijkt. Aangevuld door: 2026-11-11-pathfinder.
 - 2026-10-21 [Werkwijze met Claude](../beslissingen/2026-10-21-werkwijze.md): Claude werkt aan ASCEND met een vaste set specialisten, vaste werkinstructies en een besluitenlogboek in de repo. Aangevuld door: 2026-10-22-kwaliteitspoort.
+
+## Deels ingehaald
+
+Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat; lees voor de rest het latere besluit.
+
+Geen.
 
 ## Onderzoek, ontwerpen en verslagen
 

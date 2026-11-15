@@ -9,7 +9,7 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 ## Besluiten die gelden
 
-Nieuwste eerst. Bij een besluit staat welk later besluit het deels vervangt of aanvult.
+Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
 - 2026-11-14 [Een fout bij het opstarten is geen hangen, en de grens van intervals.icu geldt tot het antwoord gelezen is](../beslissingen/2026-11-14-opstarten-en-intervals-grens.md): De tijdgrens van 15 seconden op een aanroep naar intervals.icu loopt nu door tot en met het lezen van het antwoord, bij lezen en bij schrijven.
 - 2026-11-02 [Widget beter: pictogram, morgen en nooit afgeknipt](../beslissingen/2026-11-02-widget-beter.md): De widget Vandaag krijgt links een rond sportpictogram, rechts de tekst, en een regel over morgen.
@@ -20,6 +20,12 @@ Nieuwste eerst. Bij een besluit staat welk later besluit het deels vervangt of a
 - 2026-10-22 [Toch openen neemt het openingsslot over](../beslissingen/2026-10-22-toch-openen.md): Houdt een ander ASCEND-venster het openingsslot langer dan tien seconden vast, dan staat er naast Opnieuw proberen ook Toch openen.
 - 2026-10-22 [Opslag vrij bij wegleggen](../beslissingen/2026-10-22-opslag-vrij-bij-wegleggen.md): Een ASCEND die uit beeld gaat (visibilitychange naar hidden) of bevroren wordt, begint geen nieuwe transacties in IndexedDB; wie de opslag nodig heeft, wacht tot de app weer in beeld is.
 - 2026-10-22 [Openen wacht niet op de planning](../beslissingen/2026-10-22-openen-wacht-niet-op-de-planning.md): De app opent na de migraties en het lezen van de gegevens, en rekent de planning daarna op de achtergrond door. Aangevuld door: 2026-10-22-opslag-vrij-bij-wegleggen, 2026-10-22-toch-openen.
+
+## Deels ingehaald
+
+Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat; lees voor de rest het latere besluit.
+
+Geen.
 
 ## Onderzoek, ontwerpen en verslagen
 
