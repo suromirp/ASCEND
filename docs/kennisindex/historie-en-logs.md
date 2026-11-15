@@ -1,0 +1,48 @@
+# Kennisindex: historie en logs
+
+Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md).
+
+## Begin hier
+
+- Werkbriefje: [werkbriefjes/historie-en-logs.md](../werkbriefjes/historie-en-logs.md)
+- [architectuur/historie-en-logs.md](../architectuur/historie-en-logs.md): De volledige regel dat historie nooit herschreven wordt, met de uitzonderingen op verzoek van de eigenaar en het append-only patroon.
+
+## Besluiten die gelden
+
+Nieuwste eerst. Bij een besluit staat welk later besluit het deels vervangt of aanvult.
+
+- 2026-11-15 [Logboekkop met alleen herstel](../beslissingen/2026-11-15-logboekkop-herstel.md): De kop bovenaan het Logboek zegt nooit "niets" of "geen trainingen" als er in die maand een log staat.
+- 2026-11-14 [Duur van het log, geen log onder een minuut, een korte training](../beslissingen/2026-11-14-profielen-klein.md): Een gedane training toont overal de duur van het log in hele minuten (`engine/sessionStatus.ts#loggedMinutes`, `rowMinutes`); een log zonder bruikbare duur toont geen getal, ook niet het plan. Status: aangenomen (coördinator, punten A, B, C, F, I en het startdeel van J uit de profielendoorloop).
+- 2026-11-14 [Opslaan, de rest: dezelfde losse training, in beeld, en één melding](../beslissingen/2026-11-14-opslaan-rest.md): Dezelfde losse training is dezelfde training (`templateId`) op dezelfde dag, zolang de eerste opslag nog loopt.
+- 2026-11-14 [Nee van logSession op elk scherm hetzelfde](../beslissingen/2026-11-14-nee-van-logsession.md): Een scherm leest het antwoord van `logSession` niet meer kaal, maar via `src/state/logSave.ts`. Aangevuld door: 2026-11-14-opslaan-rest.
+- 2026-11-14 [Een horlogelog wordt getoetst aan duur en intensiteit](../beslissingen/2026-11-14-horloge-toetsen.md): Een activiteit van je horloge wordt getoetst voordat de app hem vanzelf afvinkt, aan een training koppelt of "zoals gepland" noemt (`src/engine/activityFit.ts`).
+- 2026-11-14 [Hoogtemeters na stap 1: elke regel leest het merk](../beslissingen/2026-11-14-hoogtemeters-na-stap-1.md): De regels die na stap 1 het merk van de teller nog niet lazen, lezen het nu, via één plek: `engine/elevation.ts` (`counterMark`, `climbLimitFor`, `sameCounter`).
+- 2026-11-14 [Hoe ging het?, spoor 6: na je horloge een rij in Je dag en hetzelfde blad](../beslissingen/2026-11-14-hoe-ging-het-horloge.md): De kaart Van je horloge die op Vandaag vroeg hoe een afgevinkte training ging (`WatchAskCard`) is weg.
+- 2026-11-12 [Hoogtemeters: het merk van de teller op een log](../beslissingen/2026-11-12-hoogtemeters-teller-op-log.md): Een nieuw log draagt op `detail` en op `runDetail` een optioneel veld `counter: 2`: de stijging is geteld met de teller van `engine/elevation.ts`. Status: voorgesteld. Deels vervangen door: 2026-11-14-hoogtemeters-na-stap-1.
+- 2026-11-12 [Hoogtemeters stap 1: één teller voor plan en log](../beslissingen/2026-11-12-hoogtemeters-stap-1.md): Geplande en gelopen hoogtemeters worden geteld door één pure functie, `engine/elevation.ts#climbAndDescent`, met echte hysterese en een drempel per bron. Status: voorgesteld. Aangevuld door: 2026-11-12-hoogtemeters-teller-op-log.
+- 2026-11-12 [Hoe ging het?, spoor 5: zelf invullen voor lopen en wandelen als blad](../beslissingen/2026-11-12-hoe-ging-het.md): Zelf invullen voor een training te voet (`engine/briefing.ts#briefingEntry`: hardlopen en wandelen) is het blad Hoe ging het? in twee stappen (`src/components/HowDidItGoSheet.tsx`), zoals spoor 5 van `docs/visie/Ontwerp trainingsscherm minimaal.md` vraagt. Aangevuld door: 2026-11-12-dubbel-log, 2026-11-14-hoe-ging-het-horloge.
+- 2026-11-12 [Een log dat er staat is ja, ook als een stap erna faalt](../beslissingen/2026-11-12-dubbel-log.md): `logSession` zegt ja zodra het log in de opslag staat.
+- 2026-11-02 [Gegevens herinrichten: Stand, weekterugblik en Logboek](../beslissingen/2026-11-02-gegevens-herinrichting.md): Stand, de weekterugblik en het Logboek zijn opnieuw ingericht volgens `docs/visie/Ontwerprapport gegevens.md`, met voor elke open vraag uit hoofdstuk 8 de aanbevolen keuze.
+- 2026-10-29 [De dag van een training](../beslissingen/2026-10-29-dag-van-een-training.md): Een log uit MacroFactor (`source === 'macrofactor'`) telt bij het weergeven op de dag van zijn geplande training als die precies de dag NA `completedDate` is (`engine/logDay.ts#logDay`): de training begon voor middernacht en was erna klaar.
+- 2026-10-28 [Het verloop van een training in Forge](../beslissingen/2026-10-28-forge-logboek.md): Forge houdt per training een verloop bij, zoals het Event Log van MacroFactor: per moment welke set van wat naar wat ging en waardoor (Forge stuurde bij, doorgevoerd, jij paste het aan, onder het bereik, past niet, zonder spotter). Deels vervangen door: 2026-11-11-forge-verloop.
+- 2026-10-25 [Correcties uit intervals.icu volgen in de log](../beslissingen/2026-10-25-correcties-uit-intervals.md): Corrigeert de eigenaar een activiteit in intervals.icu (een stuk eraf, de hoogtemeters of de afstand aangepast), dan neemt de log in ASCEND die gemeten getallen over, als de log aan die activiteit gekoppeld is.
+- 2026-10-24 [Een losse training staat op Week](../beslissingen/2026-10-24-losse-training-op-week.md): Een log zonder geplande training (een losse training, bijvoorbeeld een Garmin-activiteit die je als losse training bewaarde) staat op Week op zijn dag, als gedane rij met dezelfde vormgeving als een gedane geplande training en het kleine label "zonder plan".
+- 2026-10-24 [Een activiteit van het horloge inkorten aan het begin en het eind](../beslissingen/2026-10-24-activiteit-inkorten.md): Een training die van je horloge kwam (de log heeft het id van een activiteit van intervals.icu en getallen in `cardioData` of `outdoorData`) kan in het logblad worden ingekort, zoals in Garmin en Strava: een stuk aan het begin en/of aan het eind gaat eruit.
+- 2026-10-23 [Oude oefeningnamen blijven in de historie](../beslissingen/2026-10-23-oude-oefeningnamen-blijven-in-de-historie.md): Logs die nog een oude naam van het standaardprogramma dragen ("Biceps", "Squat / Leg press") blijven zoals ze zijn. Aangevuld door: 2026-10-23-oefeningnamen-zoals-macrofactor.
+- 2026-10-23 [Een krachtduur die niet kan](../beslissingen/2026-10-23-krachtduur-die-niet-kan.md): Een krachtlog langer dan 240 minuten telt bij het lezen als de geschatte duur van die training. Aangevuld door: 2026-10-29-mf-training-te-lang.
+- 2026-10-22 [Vanzelf afvinken, met een vraag en een weg terug](../beslissingen/2026-10-22-vanzelf-afvinken.md): Als je horloge (via intervals.icu) precies één activiteit heeft die onmiskenbaar bij de geplande training van die dag past, slaat ASCEND die zelf op als log van die training. Aangevuld door: 2026-10-22-garmin-is-leidend.
+- 2026-10-22 [Herhalingen in reserve en opwarmsets aanvullen bij een log uit MacroFactor](../beslissingen/2026-10-22-rir-aanvullen.md): Een log die eerder uit MacroFactor kwam, heeft nog geen RIR en geen opwarmsets per set.
+- 2026-10-22 [MacroFactor is leidend voor kracht: een krachtlog neemt de cijfers van MacroFactor over](../beslissingen/2026-10-22-macrofactor-leidend-voor-kracht.md): Zoals Garmin leidend is voor duurtrainingen (`2026-10-22-garmin-is-leidend.md`), is MacroFactor leidend voor kracht. Aangevuld door: 2026-10-24-activiteit-inkorten.
+- 2026-10-22 [Een import mag lege velden van een bestaande log aanvullen](../beslissingen/2026-10-22-lege-velden-aanvullen.md): Een import (MacroFactor, het horloge) mag in een bestaande SessionLog alleen velden vullen die leeg zijn, en alleen na een tik van de eigenaar. Aangevuld door: 2026-10-22-garmin-is-leidend, 2026-10-22-rir-aanvullen.
+- 2026-10-22 [Kracht per set bewaren, met een eigen oefeningenlijst](../beslissingen/2026-10-22-kracht-per-set.md): ASCEND bewaart bij een krachttraining elke set apart in `SessionLog.strengthData`: de herhalingen, het gewicht, de herhalingen in reserve (RIR) en of het een opwarmset is of een werkset.
+- 2026-10-22 [Garmin is leidend: een log met de hand neemt de cijfers van het horloge over](../beslissingen/2026-10-22-garmin-is-leidend.md): Een training die je met de hand invulde (bron "manual", zonder externalId) en waarvoor een passende activiteit van je horloge bestaat, neemt de gemeten cijfers van het horloge over: duur, afstand, gemiddelde en hoogste hartslag, stijging, daling en cadans. Aangevuld door: 2026-10-22-macrofactor-leidend-voor-kracht, 2026-10-24-activiteit-inkorten, 2026-10-25-correcties-uit-intervals.
+
+## Onderzoek, ontwerpen en verslagen
+
+- [audit/4 Dataveiligheid.md](../audit/4%20Dataveiligheid.md): Audit van 3 oktober 2026 van opslag, export en import op commit d8e19d3, met nagespeelde gevallen.
+- [teksten/verschil-r8-logboek.md](../teksten/verschil-r8-logboek.md): Elk verschil in de tekstkaart na het herschrijven van het Logboek en Run in detail, met de reden.
+- [visie/Ontwerprapport gegevens.md](../visie/Ontwerprapport%20gegevens.md): Ontwerpvoorstel van 1 november 2026 voor rustiger gegevens op Stand, Logboek en de weekterugblik; besloten in `docs/beslissingen/2026-11-02-gegevens-herinrichting.md`.
+
+## Vervangen of verouderd
+
+Niets.

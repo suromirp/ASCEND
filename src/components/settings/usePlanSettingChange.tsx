@@ -2,7 +2,8 @@ import { useState, type ReactNode } from 'react';
 import { useAppData, type UndoRestore } from '../../state/AppDataContext';
 import { ImpactSheet } from '../ImpactSheet';
 import type { Weekday, DailyTimeBudget, TrainingStrategyProfile } from '../../models/goalEngineConfig';
-import type { PlanChangeProposal } from '../../models/planChange';
+import type { PlanChangeItem, PlanChangeProposal } from '../../models/planChange';
+import { isStrengthTemplate, STRENGTH_OFF_WARNING, strengthTrainingOn } from '../../engine/strengthTraining';
 import { classifyChangeImpact, describeChanges, needsConfirmation, type ChangeApplyMode } from '../../engine/changeImpact';
 import { computeScheduleFit, computeSportDisableProposal, computeSportEnableProposal } from '../../engine/scheduleFit';
 import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, templateSport, weeklyPatternTemplates, type Sport } from '../../engine/sports';
@@ -36,7 +37,13 @@ export function usePlanSettingChange(): {
   saveBudget: (next: Partial<Record<Weekday, DailyTimeBudget>>) => Promise<void>;
   // A setting the planning run reads: a proposal first, stored only with Akkoord.
   // `alwaysAsk`: always the proposal first (a fixed appointment), whatever Wijzigingen says.
-  changeSetting: (title: string, patch: Partial<AppSettings>, why: string, opts?: { alwaysAsk?: boolean; onStored?: () => void; notes?: string[] }) => Promise<void>;
+  // `declined`: what Liever niet means here, when it is more than this one setting (a reset of several).
+  // `startItems`: rows that change with it in the same Akkoord (krachttraining back on, in a reset).
+  changeSetting: (title: string, patch: Partial<AppSettings>, why: string, opts?: { alwaysAsk?: boolean; onStored?: () => void; notes?: string[]; notesTitle?: string; declined?: string; startItems?: PlanChangeItem[] }) => Promise<void>;
+  // Krachttraining aan of uit (engine/strengthTraining.ts): altijd eerst een voorstel, uit met de waarschuwing.
+  toggleStrength: (on: boolean) => Promise<void>;
+  // The rows krachttraining on or off changes: the strength trainings that go, or the ones that come back.
+  strengthItems: (on: boolean) => PlanChangeItem[];
   busy: boolean;
 } {
   const {
@@ -99,14 +106,15 @@ export function usePlanSettingChange(): {
     }).proposal;
   }
 
-  function changeSetting(title: string, patch: Partial<AppSettings>, why: string, opts: { alwaysAsk?: boolean; onStored?: () => void; notes?: string[] } = {}) {
+  function changeSetting(title: string, patch: Partial<AppSettings>, why: string, opts: { alwaysAsk?: boolean; onStored?: () => void; notes?: string[]; notesTitle?: string; declined?: string; startItems?: PlanChangeItem[] } = {}) {
     setNote(null);
     return horizon.propose(
       () => planHorizonChange({
         title, why, trigger: 'availability_changed', settings: patch, ...(opts.notes?.length ? { notes: opts.notes } : {}),
+        ...(opts.startItems?.length ? { startItems: opts.startItems } : {}),
         explanation: 'Deze instelling bepaalt hoe je weken eruitzien. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
       }),
-      { eyebrow: 'Planning aanpassen', ask: opts.alwaysAsk ? 'always' : 'setting', declined: 'Je instelling en je planning blijven zoals ze waren.', ...(opts.alwaysAsk ? { alwaysAsk: true } : {}), ...(opts.onStored ? { onStored: opts.onStored } : {}) },
+      { eyebrow: 'Planning aanpassen', ask: opts.alwaysAsk ? 'always' : 'setting', declined: opts.declined ?? 'Je instelling en je planning blijven zoals ze waren.', ...(opts.alwaysAsk ? { alwaysAsk: true } : {}), ...(opts.onStored ? { onStored: opts.onStored } : {}), ...(opts.notesTitle ? { notesTitle: opts.notesTitle } : {}) },
     );
   }
 
@@ -144,6 +152,44 @@ export function usePlanSettingChange(): {
         ...(start && start.changes.length > 0 ? { startItems: start.changes } : {}),
       }),
       { eyebrow: 'Planning aanpassen', ask: 'setting', declined: `${SPORT_LABEL[sport]} blijft ${on ? 'uit' : 'aan'} en je planning blijft zoals ze was.`, onStored },
+    );
+  }
+
+  function strengthItems(on: boolean): PlanChangeItem[] {
+    const isStrength = (x: { templateId: string }) => { const t = templateById.get(x.templateId); return !!t && isStrengthTemplate(t); };
+    if (!on) return computeSportDisableProposal(isStrength, 'Krachttraining', plannedSessions, sessionLogs, todayISO()).changes;
+    // Terug: de krachttrainingen van je week, op hun dag, waar je tijd het toelaat (zoals een sport die weer aan gaat).
+    const pattern = weeklyPatternTemplates(templates, { ...settings, enabledSports, strengthTraining: undefined }).filter(isStrengthTemplate);
+    if (pattern.length === 0) return [];
+    return computeSportEnableProposal(
+      pattern, 'Krachttraining', plannedSessions, templates, program,
+      goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, todayISO(),
+    ).proposal.changes;
+  }
+
+  // Kracht uit mag, met de waarschuwing in het voorstel (besluit 2026-11-14-keuzes-avond.md, punt 3). Altijd eerst
+  // het voorstel, wat je ook bij Wijzigingen koos; Liever niet laat instelling en planning zoals ze waren.
+  async function toggleStrength(on: boolean) {
+    if (on === strengthTrainingOn(settings)) return;
+    const items = strengthItems(on);
+    setNote(null);
+    await horizon.propose(
+      () => planHorizonChange({
+        title: on ? 'Krachttraining weer aangezet' : 'Krachttraining uitgezet',
+        why: on ? 'Krachttraining staat weer aan.' : 'Krachttraining staat uit.',
+        explanation: on
+          ? 'Je krachttrainingen komen terug in je week. Eerst een voorstel, pas na Akkoord verandert er iets.'
+          : 'Zonder krachttraining houdt je week lopen en rust. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed blijft staan.',
+        trigger: 'availability_changed',
+        settings: { strengthTraining: on ? undefined : false },
+        ...(items.length > 0 ? { startItems: items } : {}),
+        ...(on ? {} : { notes: [STRENGTH_OFF_WARNING] }),
+      }),
+      {
+        eyebrow: 'Planning aanpassen', ask: 'always', alwaysAsk: true,
+        declined: on ? 'Krachttraining blijft uit en je planning blijft zoals ze was.' : 'Krachttraining blijft aan en je planning blijft zoals ze was.',
+        ...(on ? {} : { notesTitle: 'Let op' }),
+      },
     );
   }
 
@@ -193,6 +239,6 @@ export function usePlanSettingChange(): {
     note: note ?? horizon.note,
     clearNote: () => { setNote(null); horizon.clearNote(); },
     impact: <>{impact}{horizon.sheet}</>,
-    toggleSport, setFrequency, setPairing, saveBudget, changeSetting, busy: horizon.busy,
+    toggleSport, setFrequency, setPairing, saveBudget, changeSetting, toggleStrength, strengthItems, busy: horizon.busy,
   };
 }

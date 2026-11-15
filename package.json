@@ -12,7 +12,9 @@
     "test": "vitest run",
     "kaart": "node scripts/app-kaart/kaart.mjs",
     "kaart:vergelijk": "node scripts/app-kaart/kaart.mjs --vergelijk",
-    "kaart:standen": "node scripts/app-kaart/maak-standen.mjs"
+    "kaart:standen": "node scripts/app-kaart/maak-standen.mjs",
+    "kennisindex": "node scripts/kennisindex/maak.mjs",
+    "kennisindex:vergelijk": "node scripts/kennisindex/maak.mjs --vergelijk"
   },
   "dependencies": {
     "@capacitor-community/keep-awake": "^8.0.1",

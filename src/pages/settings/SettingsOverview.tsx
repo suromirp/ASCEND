@@ -10,7 +10,7 @@ import { SETTINGS_INDEX } from '../../data/settingsIndex';
 import { SETTINGS_PAGES, placementOf, settingsPageRoute, settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
 import { searchSettings } from '../../engine/settingsSearch';
 import { settingAvailabilityOnPage } from '../../engine/settingsAvailability';
-import { groupSummary, searchValue } from '../../engine/settingsSummary';
+import { groupSummary, searchResultValue } from '../../engine/settingsSummary';
 import { backupSpoken, directionStatus, statusCells } from '../../engine/settingsStatus';
 import { visibleInSearch } from '../../engine/journeyAccess';
 
@@ -116,7 +116,8 @@ export function SettingsOverview() {
                     />
                   );
                 }
-                const value = searchValue(placement.row, facts);
+                // De eigen waarde, niet die van de rij waarin het blad opent (engine/settingsSummary.ts#searchResultValue).
+                const value = searchResultValue(item.id, facts);
                 return (
                   <SettingsRow
                     key={item.id}

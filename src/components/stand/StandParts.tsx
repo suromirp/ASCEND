@@ -13,7 +13,7 @@ export function StandRow({ label, value, onClick, sheet, trailing }: { label: st
   const inner = (
     <>
       <span className="w-[104px] shrink-0 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{label}</span>
-      <span className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{value}</span>
+      <span className="min-w-0 flex-1 text-sm leading-snug text-pretty" style={{ color: 'var(--color-ink)' }}>{value}</span>
     </>
   );
   return (

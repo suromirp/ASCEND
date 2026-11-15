@@ -19,7 +19,7 @@ import { SETTINGS_INDEX } from '../data/settingsIndex';
 import { PAGE_ROWS, SETTINGS_PAGES, SHOW_WHEN, allRowIds, isAdvancedRow, isRowShown, pageOfRow, placementOf } from '../data/settingsLayout';
 import { SETTINGS_HELP, settingsHelp } from '../data/settingsHelp';
 import { CHOICES, choiceShort, type ChoiceId } from '../data/settingsChoices';
-import { groupSummary, rowContext, rowSummary, searchValue, type SettingsFacts } from './settingsSummary';
+import { groupSummary, rowContext, rowSummary, searchResultValue, type SettingsFacts } from './settingsSummary';
 import { ADVICE_SPECS, adviceDifferences, countDifferences, differenceIdsOnPage, resetPatch } from './settingsDiff';
 import { adjustedRows, adviceTarget, rowAvailability, settingAvailabilityOnPage } from './settingsAvailability';
 import { normalizeSearch, searchSettings } from './settingsSearch';
@@ -119,6 +119,7 @@ const ALLES_ANDERS: AppSettings = {
   proposeTargetTime: false,
   weekBudget: { minutes: 105, strength: 3, doubleHard: false },
   beginnerStart: 'nee',
+  strengthTraining: false,
   waves: { length: 6, lightWeek: false },
   introSoundEnabled: false,
   motion: 'off',
@@ -250,7 +251,7 @@ const gekoppeld: SettingsFacts = {
 const OPSTELLINGEN: Record<string, SettingsFacts> = {
   vers,
   gekoppeld,
-  'zonder-doel': { ...vers, settings: { strengthTrackedExternally: true, introSoundEnabled: false }, noGoal: true, strengthExternal: true, weight: { kg: 70, source: 'manual', date: '2026-10-20' }, device: 'unknown', notice: { support: 'not_installed', granted: false } },
+  'zonder-doel': { ...vers, settings: { strengthTrackedExternally: true, introSoundEnabled: false, beginnerStart: 'nee', startChoices: { beginnerStart: 'nee' } }, noGoal: true, strengthExternal: true, weight: { kg: 70, source: 'manual', date: '2026-10-20' }, device: 'unknown', notice: { support: 'not_installed', granted: false } },
   laden: { ...gekoppeld, pending: ALLE_BRONNEN },
   onbekend: { ...gekoppeld, unknown: ALLE_BRONNEN, watchUnreadable: true, macroFactor: null },
   'alles-anders': { ...gekoppeld, settings: ALLES_ANDERS },
@@ -340,7 +341,8 @@ function photo(): string {
     const ctx = rowContext(f);
     sections[`rijen ${name}`] = Object.fromEntries(ALL_IDS.map((id) => [id, {
       summary: rowSummary(id, f),
-      search: searchValue(id, f),
+      // Wat het zoekveld toont (pages/settings/SettingsOverview.tsx): de eigen waarde, nooit die van de rij eromheen.
+      search: searchResultValue(id, f),
       shown: SHOW_WHEN[id] ? isRowShown(id, f.settings, ctx) : null,
       row: rowAvailability(id, f),
       onPage: settingAvailabilityOnPage(id, f),

@@ -1,0 +1,78 @@
+# Kennisindex: lichaam en herstel
+
+Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md).
+
+## Begin hier
+
+- Werkbriefje: [werkbriefjes/lichaam-en-herstel.md](../werkbriefjes/lichaam-en-herstel.md)
+- [architectuur/lichaam-en-herstel.md](../architectuur/lichaam-en-herstel.md): Het lange verhaal bij lichaam: het figuur, hoe voelt je lijf, een zware beendag op vermoeide benen, een korte nacht en wat speelde er.
+
+## Besluiten die gelden
+
+Nieuwste eerst. Bij een besluit staat welk later besluit het deels vervangt of aanvult.
+
+- 2026-11-14 [Spieren voor de berg: een week weg telt voor geen rij mee](../beslissingen/2026-11-14-bergspieren-zonder-vakantieweek.md): Een week met vakantie (`no_training`), een tocht (`trek`) of zonder sportschool (`no_gym`) telt ook voor kuiten, scheenspier en bilspieren niet mee in het gemiddelde van Spieren voor de berg, net als een rustweek en net als al bij enkel en evenwicht.
+- 2026-11-11 [Eten onderweg](../beslissingen/2026-11-11-eten-onderweg.md): Vanaf 90 minuten lopen of wandelen, en per dag op een tocht of etappe, zegt ASCEND hoeveel koolhydraten je ongeveer meeneemt en wat dat is in gels, bananen, krentenbollen of dadels.
+- 2026-11-11 [Enkel en evenwicht binnen Spieren voor de berg](../beslissingen/2026-11-11-enkel-evenwicht.md): Spieren voor de berg krijgt een vierde rij: enkel en evenwicht. Aangevuld door: 2026-11-14-bergspieren-zonder-vakantieweek, 2026-11-14-voorstel-begrijpelijk.
+- 2026-11-11 [De afdaalklok](../beslissingen/2026-11-11-afdaalklok.md): ASCEND houdt bij hoeveel dagen geleden je laatste afdaling was, op je echte logs.
+- 2026-11-10 [Week zegt dat jij koos om een beendag te laten staan](../beslissingen/2026-11-10-week-melding-na-keuze.md): Koos je Benen fris en blijft een zware beendag staan, dan zegt de melding in Week dat jij dat koos en is het voorstel een gewone tekstknop.
+- 2026-11-10 [De regel bij te dicht op elkaar vraagt wat de controle vraagt](../beslissingen/2026-11-10-beendagen-afstand-tekst.md): De melding in Week over twee zware beendagen rekent het aantal dagen ertussen met dezelfde som als de controle zelf.
+- 2026-11-09 [Overzicht Gewicht achter de kaart op Je stand](../beslissingen/2026-11-09-overzicht-gewicht.md): Een tik op de kaart Gewicht op Je stand opent een eigen overzicht Gewicht, niet meer het blad Lichaamsgewicht uit Instellingen.
+- 2026-11-09 [Gewichtstrend](../beslissingen/2026-11-09-gewichtstrend.md): Bij Lichaamsgewicht staat je gewicht als trend: een gewogen gemiddelde van je wegingen van de laatste 14 dagen, met de laatste weging erbij ("Trend 78,4 kg, laatste weging 79,1 kg"). Deels vervangen door: 2026-11-09-gewicht-bij-eigen-gewicht.
+- 2026-11-09 [Je gewicht ook buiten Instellingen zien](../beslissingen/2026-11-09-gewicht-buiten-instellingen.md): Op Je stand staat een kleine kaart Gewicht: de trend groot (of de laatste weging als er geen trend is), de laatste weging met datum klein en een rustige lijn van de laatste zes weken, één punt per week. Deels vervangen door: 2026-11-09-overzicht-gewicht.
+- 2026-11-09 [Gewicht bij eigen gewicht: de trend overal](../beslissingen/2026-11-09-gewicht-bij-eigen-gewicht.md): Forge (eigen gewicht, optrekhulp, dips), het rugzakaandeel en de beenindex rekenen met je gewichtstrend, niet met je laatste weging.
+- 2026-11-08 [Een testweek: frisse benen en ruimte tussen zware dagen samen](../beslissingen/2026-11-08-testweek-frisse-benen-en-ruimte.md): In de week voor een test of wedstrijd kiest de planner één oplossing die "frisse benen voor de test" en "genoeg ruimte tussen zware dagen" allebei haalt, en houdt die vast.
+- 2026-11-04 [Gewicht uit Health Connect](../beslissingen/2026-11-04-gewicht-uit-health-connect.md): In de Android-app leest ASCEND je gewicht en vetpercentage uit Health Connect, bij dezelfde ronde als je trainingen en ochtenden, alleen lezen. Aangevuld door: 2026-11-09-gewichtstrend.
+- 2026-11-02 [Spierindex in de kleinste vorm](../beslissingen/2026-11-02-spierindex-klein.md): De spierindex bestaat alleen in zijn kleinste vorm: één melding in de weekreview als bij een bergdoel een bergspier vier weken onder de ondergrens zit.
+- 2026-11-02 [Ochtendkaart compact bij een voorstel](../beslissingen/2026-11-02-ochtendkaart-compact.md): Heeft de ochtendkaart een voorstel van je beenindex, dan is de vraag één compacte kaart: het kopje "Hoe voelen je benen?" met het horlogepictogram, de horlogegetallen met hun woord, en één rij met "Klopt: fris" (of het voorstel) en een tweede knop.
+- 2026-11-02 [48 uur tussen zware beenkracht en de lange duurloop](../beslissingen/2026-11-02-48-uur-lange-duurloop.md): Tussen zware beenkracht (Benen A, Benen B, Forge voor de benen) en de lange duurloop houdt de planner 48 uur, in beide volgordes.
+- 2026-11-01 [Ochtendkaart na je antwoord](../beslissingen/2026-11-01-ochtendkaart-na-antwoord.md): Na een antwoord krijgt de ochtendkaart zijn eigen korte hoogte in plaats van die van de vraag.
+- 2026-11-01 [De ochtenden zijn een archief](../beslissingen/2026-11-01-ochtenden-archief.md): De opgehaalde ochtenden (datum, rusthartslag, HRV, slaapduur en slaapscore) zijn een archief en geen gewone cache.
+- 2026-10-31 [Ochtendkaart vernieuwd](../beslissingen/2026-10-31-ochtendkaart-vernieuwd.md): De ochtendkaart toont na je antwoord één regel met wat het voor vandaag doet (`engine/morningCard.ts#morningConsequence`, alleen tekst, plant niets) en klapt daarna in tot één rij met Wijzigen en Ongedaan maken. Deels vervangen door: 2026-11-01-ochtendkaart-na-antwoord. Aangevuld door: 2026-11-02-ochtendkaart-compact.
+- 2026-10-29 [Spierpijn alleen in je bovenlichaam](../beslissingen/2026-10-29-spierpijn-waar.md): In de ochtendcheck gaat "Spierpijn" en "Flinke spierpijn" nog steeds over je benen.
+- 2026-10-27 [Zweetverlies vragen bij het afronden en vooraf](../beslissingen/2026-10-27-zweet-bij-afronden.md): Zweetverlies vul je niet meer alleen achteraf in het Logboek in.
+- 2026-10-27 [Spierpijn en een zware beendag](../beslissingen/2026-10-27-spierpijn-en-zware-beendag.md): Op de dag van een zware beendag doet ASCEND bij spierpijn, een harde loop eerder die dag of een hoge beenindex één voorstel: Lichter of een dag later. Aangevuld door: 2026-10-29-spierpijn-waar.
+- 2026-10-27 [Spierpijn en een zware beendag, aanvulling na review](../beslissingen/2026-10-27-spierpijn-en-zware-beendag-aanvulling.md): Drie aanscherpingen na de review, waaronder dat MORNING-CHECK dezelfde keuze maakt als de kaart Benen.
+- 2026-10-27 [Voorbeelden bij naam noemen in Wat speelde er](../beslissingen/2026-10-27-redenen-bij-naam.md): Nieuwe instelling "Voorbeelden bij naam noemen" (`AppSettings.influenceNames`, groep Lichaam, in het blad Wat speelde er).
+- 2026-10-26 [Hoe voelt je lijf? in plaats van de wekelijkse klachtenvraag](../beslissingen/2026-10-26-hoe-voelt-je-lijf.md): De wekelijkse vraag naar klachten in het blad van de weekterugblik (vier chips, een plekkeuze en een ernststrook) is vervangen door een kleine kaart op Vandaag, "Hoe voelt je lijf?".
+- 2026-10-25 [Zweetverlies meten en water per etappe](../beslissingen/2026-10-25-zweet-en-water.md): Je kunt bij een loop, wandeling of tocht je gewicht voor en na invullen, met wat je dronk en plaste. Aangevuld door: 2026-10-27-zweet-bij-afronden.
+- 2026-10-25 [Wat speelde er](../beslissingen/2026-10-25-wat-speelde-er.md): Je kunt in het logboek vastleggen wat er speelde bij een training of op een dag: alcohol (met hoeveel glazen: 1 à 2, 3 tot 5 of 6 of meer), wiet, ziek, kort geslapen, laat gegeten, cafeïne, stress of iets anders in je eigen woord. Aangevuld door: 2026-10-25-feiten-tellen-vanzelf, 2026-10-25-wat-speelde-er-aanvulling.
+- 2026-10-25 [Wat speelde er, aanvulling na de review](../beslissingen/2026-10-25-wat-speelde-er-aanvulling.md): Vijf aanscherpingen van Wat speelde er na de review, waaronder dat Lijkt op een reden bij naam mag noemen.
+- 2026-10-25 [Vetpercentage uit MacroFactor](../beslissingen/2026-10-25-vetpercentage-uit-macrofactor.md): ASCEND leest in de MacroFactor-export de kolom "Fat Percent" mee, per datum naast het gewicht, en toont onder het lichaamsgewicht (Instellingen, Lichaam, Lichaamsgewicht) het vetpercentage als trend, met de vetvrije massa.
+- 2026-10-25 [Vragen bij een korte nacht](../beslissingen/2026-10-25-korte-nacht-vragen.md): Zag het horloge minder dan 4 uur slaap, of minder dan de helft van je eigen gemiddelde (vanaf 7 dagen), dan geeft de ochtendcheck geen let op en vult hij geen slaapantwoord vooraf in, maar vraagt hij: "Je horloge zag maar 3 u 10 slaap.
+- 2026-10-25 [Wat ASCEND zelf weet, telt vanzelf mee](../beslissingen/2026-10-25-feiten-tellen-vanzelf.md): Wat ASCEND zelf weet hoeft niet bevestigd te worden: een zware beendag (uit het logboek), warm (uit het weer bij de log), kort geslapen (van het horloge, niet bij een nacht die je "Niet goed gemeten" noemde) en ziek (uit de ziekmelding).
+- 2026-10-24 [Ochtendantwoord terugdraaien](../beslissingen/2026-10-24-ochtend-terugdraaien.md): Na één tik op de ochtendkaart blijft de kaart klein staan met wat je koos ("Benen fris.
+- 2026-10-24 [Ochtend: één tik op je benen](../beslissingen/2026-10-24-ochtend-een-tik.md): Op de ochtendkaart is één tik op hoe je benen voelen het antwoord. Deels vervangen door: 2026-10-24-ochtend-terugdraaien.
+- 2026-10-24 [De ochtend begint om 5 uur](../beslissingen/2026-10-24-ochtend-begint-om.md): De ochtendkaart en de vraag hoe je je voelt (de regel Gevoel in Je dag) verschijnen pas vanaf het begin van de ochtend, standaard 5 uur, en niet meteen na middernacht.
+- 2026-10-24 [Lichaam als figuur: rekken en klachten op één plek](../beslissingen/2026-10-24-lichaam-als-figuur.md): De lijst "Waar zit het?" (rekken) en de losse pagina Blessures worden één scherm met een menselijk figuur, voor- en achterkant, in de stijl "lijn met spieren" (ontwerp B): een rustig lijnfiguur zoals de iconen, met dunne spierlijnen. Status: aangenomen, nog te bouwen. Deels vervangen door: 2026-10-26-hoe-voelt-je-lijf.
+- 2026-10-23 [Ochtendkaart en ochtendmelding](../beslissingen/2026-10-23-ochtendkaart-en-melding.md): In de ochtend staat bovenaan Vandaag, boven de missiekaart, een eigen kaart met de vraag "Goedemorgen. Deels vervangen door: 2026-10-24-ochtend-begint-om, 2026-10-24-ochtend-een-tik, 2026-10-31-ochtendkaart-vernieuwd.
+- 2026-10-22 [Een zware beendag vlak na een tocht](../beslissingen/2026-10-22-zware-beendag-na-tocht.md): Een zware beendag binnen 72 uur na een bergtocht krijgt van de weekcontrole een andere dag of de korte versie, in een vaste volgorde. Aangevuld door: 2026-10-22-heuveltocht-is-bergtocht.
+- 2026-10-22 [Ochtendcheck vooraf ingevuld uit je horloge](../beslissingen/2026-10-22-ochtendcheck-uit-horloge.md): ASCEND haalt via intervals.icu per dag slaapduur, slaapscore, rusthartslag en HRV op en toont die bovenaan de ochtendcheck.
+- 2026-10-22 [Gewicht uit MacroFactor, niet uit Garmin](../beslissingen/2026-10-22-gewicht-uit-macrofactor.md): Het lichaamsgewicht komt nooit uit Garmin maar uit een MacroFactor-export, via Delen met ASCEND of Kies bestand.
+
+## Onderzoek, ontwerpen en verslagen
+
+- [onderzoek/Aanvullend onderzoek GR5 voorbereiding.md](../onderzoek/Aanvullend%20onderzoek%20GR5%20voorbereiding.md): Regels voor afdalen, herstel (slaap, alcohol, ziekte, tekort) en doelkeuze met vier programmatypes, als aanvulling op de trainingsopbouw.
+- [onderzoek/Alcohol en herstel.md](../onderzoek/Alcohol%20en%20herstel.md): Hoeveel alcohol het herstel en de ochtendgetallen echt verschuift en hoe weinig de app ermee hoeft te doen.
+- [onderzoek/Andere manieren om belasting te plannen.md](../onderzoek/Andere%20manieren%20om%20belasting%20te%20plannen.md): Overzicht van andere methoden om belasting te plannen en te tonen, met wat ASCEND al kan berekenen en een aanbeveling in volgorde.
+- [onderzoek/Betrouwbaarheid beenvermoeidheid-index.md](../onderzoek/Betrouwbaarheid%20beenvermoeidheid-index.md): Hoe betrouwbaar de beenindex is en hoeveel elke invoer hem beweegt, uit literatuur en een gevoeligheidsanalyse.
+- [onderzoek/Cannabis en training.md](../onderzoek/Cannabis%20en%20training.md): Wat THC doet met training, slaap, rusthartslag en HRV bij een recreatieve sporter in het algemeen, met een voorstel voor de app.
+- [onderzoek/Kansen 11 november training.md](../onderzoek/Kansen%2011%20november%20training.md): Wat een goede coach nog zou doen, vanuit trainingswetenschap en data: vijf kansen met het meeste profijt en een langere lijst.
+- [onderzoek/Lange duurloop en een zware beendag.md](../onderzoek/Lange%20duurloop%20en%20een%20zware%20beendag.md): Hoeveel tijd er tussen een lange duurloop en zware beenkracht hoort, in beide volgordes: 48 uur.
+- [onderzoek/Pijn spierpijn en vermoeidheid melden.md](../onderzoek/Pijn%20spierpijn%20en%20vermoeidheid%20melden.md): Het verschil tussen pijn, spierpijn en moe, wat ASCEND moet vragen en hoe de planning per signaal reageert.
+- [onderzoek/RPE bij een testloop.md](../onderzoek/RPE%20bij%20een%20testloop.md): Of ASCEND de belasting van een korte maximale testloop te streng telt, met vijf kleine verbeteringen.
+- [onderzoek/Spierbelasting en beenvermoeidheid.md](../onderzoek/Spierbelasting%20en%20beenvermoeidheid.md): De onderbouwing van de beenindex: herstel per soort training, volgorde, het herhaalde-inspanningseffect en het voorstel voor de index.
+- [onderzoek/Spierindex opzet.md](../onderzoek/Spierindex%20opzet.md): Een opzet voor een spierindex in drie stappen: controle op je training, slimmer vervangen en later meer.
+- [onderzoek/Volgorde van twee trainingen.md](../onderzoek/Volgorde%20van%20twee%20trainingen.md): Welke van twee trainingen op één dag je eerst doet en hoeveel tijd ertussen hoort.
+- [onderzoek/Zweetverlies en water.md](../onderzoek/Zweetverlies%20en%20water.md): De rekenregels voor je eigen zweetverlies en het water per GR5-etappe, met de twee bronnen.
+- [onderzoek/notities/Aanvullend onderzoek GR5 voorbereiding/herstel_leefstijl.md](../onderzoek/notities/Aanvullend%20onderzoek%20GR5%20voorbereiding/herstel_leefstijl.md): Werknotities (Engels) over slaap, voeding, alcohol, ziekte, gemiste training en cafeïne bij gecombineerd trainen.
+- [onderzoek/notities/Trainingsopbouw voor GR5 en hardlopen/risicos_interferentie.md](../onderzoek/notities/Trainingsopbouw%20voor%20GR5%20en%20hardlopen/risicos_interferentie.md): Werknotities (Engels) over risico's: loopblessures, afdalen, rugzak, te snelle opbouw en interferentie tussen kracht en duur.
+- [onderzoek/notities/Trainingsopbouw voor GR5 en hardlopen/signalen_autoregulatie.md](../onderzoek/notities/Trainingsopbouw%20voor%20GR5%20en%20hardlopen/signalen_autoregulatie.md): Werknotities (Engels) over signalen om door te gaan, vast te houden of terug te schakelen: sessie-RPE, hartslag, HRV en slaap.
+- [teksten/verschil-lichaam.md](../teksten/verschil-lichaam.md): Elk verschil in de tekstkaart na het herschrijven van Lichaam volgens de stemgids, met de reden.
+- [visie/Ochtendkaart vernieuwd.md](../visie/Ochtendkaart%20vernieuwd.md): Ontwerpvoorstel voor de vernieuwde ochtendkaart; besloten in `docs/beslissingen/2026-10-31-ochtendkaart-vernieuwd.md`.
+- [visie/Spierpijn en een zware beendag.md](../visie/Spierpijn%20en%20een%20zware%20beendag.md): Ontwerp voor wat de app doet bij spierpijn op een zware beendag; besloten in `docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag.md`.
+- [visie/Trainingswetenschap.md](../visie/Trainingswetenschap.md): Visierapport van 21 oktober 2026 over de stap van nette planner naar slimme coach, bekeken vanuit de engine.
+
+## Vervangen of verouderd
+
+Niets.
