@@ -7,10 +7,16 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 `docs/beslissingen/`.
 
 ## Inbox
-Hoogste code: I-49. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+Hoogste code: I-56. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+- [I-50] Back-up automatisch (Warden 15 november, moet): een laat antwoord na de tijdgrens geeft bij de volgende poging een -2 en het eerste bestand staat in geen lijst (`src/storage/autoBackup.ts:281-287`); bij een TimeoutError uit target.write de naam in halfWritten. Mee: keep en tidy een eigen grens van 5 s (`manualBackup.ts:111`), een late poging in dezelfde minuut geeft geen -2 (`manualBackup.ts:48-62`), een eigen woord van tien tekens telt niet als rest (`backupFolder.ts:97`). Valkuil: een tijdsgrens stopt de schrijfactie niet. Opslag, Warden op Fable.
+- [I-51] Opbouw van de start (Pathfinder 15 november, later): bij Beginnersstart Nee doet Heel licht niets; één zin "Telt alleen als je start rustig is." (`DoelGroup.tsx:106`). De zin "raakt per uur veel vaker geblesseerd" met het getal uit het onderzoek of weg (`settingsDefs/uitleg/doel.ts:62`, `trainingGuide.ts:81`). De regel over BEGINNER_SWAPS in het werkbriefje planning splitsen in Nooit en Valkuilen.
+- [I-52] Eerste week bij heel licht (Lookout 15 november): Herstelwandeling 45 min staat langer dan de lange wandeling van 30 min, en kracht 75 min past slecht bij "alleen makkelijk"; de wandelkaart op Vandaag heeft het etiket "Vandaag · Hardlopen". Hoort bij I-18 stap 3.
+- [I-53] Routes op reis (Pathfinder 15 november, later): zoekt hij zonder actuele kaart, zeg dat in één regel (`routeProposal.ts:135`); bij een time-out een snelle weg naar een andere plek naast Opnieuw.
+- [I-54] Twee tabbladen (Warden 15 november): dezelfde geplande training tegelijk opslaan of afvinken in twee tabbladen schrijft twee logs (`src/state/logSession.ts:92-127`, kijken en schrijven niet in één transactie). Opslag, Warden op Fable.
+- [I-55] Trainingen sinds je back-up (Warden 15 november): telt op completedAt; een log van gisteren afgerond na een back-up van vandaag telt niet mee (`Today.tsx:217`, `GegevensSheets.tsx:30`, `backupPreview.ts:307`). Tellen op ids uit de back-up. (Kan al door Forge nawerk zijn gedaan: eerst kijken.)
+- [I-56] Ziek gemeld-melding (Lookout 15 november, mag): "Ziek gemeld: koorts, ook als je verkouden…" wordt op 390 px afgekapt; korter label in de melding.
 - [I-40] Weekterugblik noemt alleen gemist (Pathfinder 15 november, later): overgeslagen en vervallen staan er niet in, terwijl "0 van 3" ze meetelt of weglaat. Eén regel "Overgeslagen: ..." en "Vervallen: ..." sluit de som. Klein.
 - [I-49] Windjack vanaf 20 km/u (Scout 15 november, `docs/onderzoek/Kleding en wind getoetst.md`): `CLOTHING_RULES.windKmh` van 25 naar 20; de opmerking bij `LINE_WIND_KMH` en de tests op 25 mee; als aanvulling bij het besluit van 13 november. Kanttekening: een tik "Te koud" op een winderige dag schuift de bonus ook voor windstille dagen. Klein.
-- [I-48] Ziek melden (eigenaar 15 november, "koortsig verkouden" koos boven de nek): de keuze heet "Verkouden, alleen boven de nek" en zegt pas in de tweede regel "geen koorts". Wie verkouden is met koorts kiest dan de verkeerde. Advies: de titel "Neus of keel, zonder koorts" en bij de andere "Koorts, ook als je verkouden bent". Klein, tekst in `engine/illness.ts`.
 - [I-47] Richting Sterker worden met kracht uit (Pathfinder 15 november, besluitpunt): de richting belooft "Kracht staat voorop" terwijl de planning lopen geeft. Kiezen: de richting verbergen bij kracht uit, of zeggen dat het lopen wordt. Geen tekstfix.
 - [I-46] Vaste notitie en uitleg bij de rij Weekbudget zeggen "2 keer kracht", ook met kracht uit (`settingsDefs/doel.ts` regel 181, `settingsDefs/uitleg/doel.ts`); vraagt een notitie die van een instelling afhangt.
 - [I-45] Forge Afronden (Warden, mag): een set opnieuw afvinken verzet de voorgestelde dag naar later; het keuzeblad van de pil heeft geen `key` (`SessionPill.tsx` regel 114); `doneAt` alleen van afgevinkte rijen lezen. Uitslag `warden/afbreker-herstel`.
@@ -81,6 +87,7 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-48] Ziek melden (15 november, 91a4419)
 - [I-8] Routes op reis (15 november, 09c716d)
 - [I-39] Weekbudget bij kracht uit (15 november, 8cce377)
 - [I-4] Afbreker randgevallen (15 november, 49eca57)

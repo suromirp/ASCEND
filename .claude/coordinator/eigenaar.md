@@ -30,6 +30,10 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Net live
 
+### 15 november 20:50
+- Ziek melden: de keuzes heten "Neus of keel, zonder koorts" en "Koorts, ook als je verkouden bent".
+- Back-up: opruimen raakt alleen bestanden van de app zelf.
+
 ### 15 november 20:00
 - Beginnersstart heel licht: de eerste weken wandel en dribbel je om de beurt op de plek van de rustige en de lange duurloop; dat komt eerst als voorstel met Akkoord. Instelling Opbouw van de start in Doel en tochten.
 - Routes op reis: een trage kaart of routeplanner stopt de zoektocht niet meer; wat er al gevonden is blijft staan.

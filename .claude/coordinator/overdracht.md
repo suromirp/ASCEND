@@ -27,14 +27,20 @@ Bijgewerkt: 15 november 2026, 18:40 Portugese tijd, door de coördinator session
 - Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam] staat (trig_01SgRjhVtzejbpKaz26bmsAi).
 - 18:35: deploy en Android van 8cce377 groen. Lookout en Pathfinder Beginner heel licht en Pathfinder Routes op reis 3 lopen als helpers in de coördinator-chat.
 
-## Stand 19:15 (coördinator session_01LnDpSjEhK5wS8sN1rH1p5c)
+## Stand 19:50 (coördinator session_01LnDpSjEhK5wS8sN1rH1p5c)
 
-- Live: 09c716d Routes op reis 3 (I-8), cherry-pick op main na Pathfinder (main nog niet getoetst op deploy).
-- Beginner heel licht: Lookout groen, Pathfinder twee moet (tekst) door mij hersteld (c7b3af4 op de branch); cherry-pick op main in scratchpad wt-beg-main, controles lopen.
-- Ziek met koorts: Lookout groen, tekst-moet hersteld in wt-ziek-fix (nog niet gepusht), controles lopen.
-- Warden Fable loopt: Week samenhang, Oud trainingsscherm, Forge nawerk (herstel.md op warden/<onderwerp>-herstel).
-- Wachtrij Warden Fable: Weer van de plek (`claude/weer-plek-rest` 2fb65cc), Import alleen nieuw (`claude/import-alleen-nieuw`), Back-up mag (`claude/backup-mag` 3d910e3).
-- Bouwers met een oude basis: cherry-pick de eigen commits op origin/main, niet mergen (merge gaf 35 conflicten).
+- Live vanavond: 09c716d Routes op reis 3 (I-8), 8af3e43 Beginner heel licht stap 1 en 2 (I-18 loopt door: stap 3), 91a4419 Ziek melden (I-48), e24d944 Back-up mag-punten. Deploy van deze vier nog nakijken.
+- Wacht op herstel van de bouwer, daarna cherry-pick op main en main (de bouwer meldt zich hier met create_trigger):
+  - Oud trainingsscherm (session_01LnDpSnt3xo2ApGNgFFNvxQ): M1 en M2 in logSave.ts, dan `claude/oud-trainingsscherm-main`. Daarna Lookout (trage opslag) en Pathfinder.
+  - Forge nawerk (session_01LnDpSmRtKRvbByZGmXjMaJ): twee moet, dan `claude/forge-nawerk-main`. Daarna Lookout (forge-afronden-gisteren, twee tabbladen).
+  - Week samenhang (session_01LnDpSk1qS9r2sGs2psx7dK): opnieuw op main, besluit rechtzetten, proeftests, dan `claude/week-samenhang-main`. Daarna Lookout (360 px, schermlezer "gedaan di 27") en Pathfinder.
+  - Weer van de plek (session_01LnDpSnTsArC7Mn2MPLRgzq): twee moet, dan `claude/weer-plek-main`. Daarna Lookout en Pathfinder.
+  - Import alleen nieuw (session_01LnDpSjqJSAJ7omGDnaWV7c): M1, dan `claude/import-main`. Geen Lookout.
+- Wachter: ook om 19:44 geweigerd (Undermining Oversight), na de vraag van de eigenaar om oude coördinators te archiveren. De vorige coördinator session_01LnDpSnngzUAioWQ5b8xBWH blijft dus staan als thuis van de Wachter; niet archiveren. Gevraagd aan de eigenaar.
+- Gearchiveerd 19:45 (eigenaar: "oude bouwers, coördinators en chats archiveren"): Onderhoud, Pathfinder totaal, Warden beginner 4, bouwers Beginner, Routes, Ziek, Back-up, en een losse Werkkaart-run.
+- Geleerd: fire_trigger op de Werkkaart opent een nieuwe chat zonder repo (de eigenaar zag "geen skill werkkaart"). Een extra ronde altijd met create_trigger op session_01LnDpSktfMxYFgMMgDhw8Do, run_once_at een paar minuten vooruit.
+- Geleerd: een bouwer met een oude basis nooit squashen; zijn eigen commits cherry-picken op origin/main. Een tijdtest (leavePlanAround "stays fast") faalt als twee volle testrondes naast elkaar draaien; los groen.
+- Nieuwe Inboxpunten I-50 tot I-56 uit de reviews.
 
 ## Live vandaag
 
