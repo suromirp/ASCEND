@@ -205,6 +205,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   // De plek die je eerder voor deze geplande training koos (instelling Gekozen plek onthouden): hij staat
   // er weer bij het openen, voordat er gezocht wordt (engine/startPlaceChoice.ts).
   const rememberOn = !!sessionId && settings.rememberStartPlace !== false;
+  // Een tik voordat de opslag antwoordde gaat voor: dan wordt er niets teruggezet.
+  const touched = useRef(false);
   useEffect(() => {
     let alive = true;
     const home = withTimeout(getRouteStartPoint(), CONSENT_LIMIT_MS).then((p) => p ?? null, () => 'unread' as const);
@@ -216,7 +218,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
       : Promise.resolve(undefined);
     void Promise.all([home, back]).then(([p, again]) => {
       if (!alive) return;
-      if (again) setStartPlace({ key: again.placeId ?? 'other', name: again.name, point: again.point, ...(again.found ? { found: again.found, saveId: makeId('place') } : {}) });
+      if (again && !touched.current) setStartPlace({ key: again.placeId ?? 'other', name: again.name, point: again.point, ...(again.found ? { found: again.found, saveId: makeId('place') } : {}) });
       // Trage of kapotte opslag: Thuis is onbekend, niet afwezig. De regel zegt dat; Maak dit Thuis staat er dan niet.
       setSaved(p);
     });
@@ -229,6 +231,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
 
   // Onthoud of wis de plek van deze training. Mislukt bewaren is niet erg: dan begint de lus de volgende keer zoals vroeger.
   function remember(choice: { name: string; lat: number; lon: number; placeId?: string; found?: FoundPlace } | undefined) {
+    touched.current = true;
     if (!rememberOn || !sessionId) return;
     void saveStartPlaceChoice(sessionId, choice ? { ...choice, date } : undefined);
   }

@@ -2808,10 +2808,11 @@
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Kies je in de Briefing bij Start bij een bewaarde of gezochte plek die verder dan 10 km van huis ligt, dan toont de rij Weer de voorspelling van die plek, met de naam ervoor (\"In <plek>: 2 graden, ...\"). Geldt nog: de rij Weer toont de voorspelling van een plek verder dan 10 km van huis; de pagina Weer krijgt die plek nu mee als je via de rij komt.",
+   "kern": "Kies je in de Briefing bij Start bij een bewaarde of gezochte plek die verder dan 10 km van huis ligt, dan toont de rij Weer de voorspelling van die plek, met de naam ervoor (\"In <plek>: 2 graden, ...\"). Geldt nog: de rij Weer toont de voorspelling van een plek verder dan 10 km van huis; de pagina Weer krijgt die plek nu mee als je via de rij komt; De avond ervoor volgt nu een onthouden plek.",
    "stand": "deels",
    "vervangenDoor": [
-    "docs/beslissingen/2026-11-13-weer-van-de-plek-pagina.md"
+    "docs/beslissingen/2026-11-13-weer-van-de-plek-pagina.md",
+    "docs/beslissingen/2026-11-15-avond-ervoor-kent-de-plek.md"
    ]
   },
   "docs/beslissingen/2026-11-12-zone2-kaart.md": {

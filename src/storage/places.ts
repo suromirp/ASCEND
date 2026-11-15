@@ -17,6 +17,7 @@ import { validStartPoint } from '../engine/routeStart';
 import type { Place, PlaceSource, SavedRoute } from '../models/place';
 import type { RoutePoint } from '../models/route';
 import { todayISO } from '../utils/dates';
+import { forgetPlaceChoices } from './startPlaceChoice';
 
 export const PLACES_KEY = 'places';
 export const SAVED_ROUTES_KEY = 'savedRoutes';
@@ -113,6 +114,14 @@ export function savePlace(place: Place, meta: PlacesMeta = metaRepo): Promise<bo
 // Een plek wissen wist zijn routes, in dezelfde transactie. Logs veranderen nooit. De vraag met het
 // aantal routes hoort bij het scherm dat dit aanroept.
 export function removePlace(id: string, meta: PlacesMeta = metaRepo): Promise<boolean> {
+  // Een onthouden keuze die naar deze plek wees gaat mee weg (storage/startPlaceChoice.ts).
+  return removeFromStore(id, meta).then(async (ok) => {
+    if (ok && meta === metaRepo) await forgetPlaceChoices(id);
+    return ok;
+  });
+}
+
+function removeFromStore(id: string, meta: PlacesMeta): Promise<boolean> {
   return update(meta, ({ places, routes }) => {
     const gone = places.find((p) => p.id === id);
     if (!gone) return 'same';
