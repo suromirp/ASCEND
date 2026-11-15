@@ -129,5 +129,8 @@ describe('terug tijdens een set', () => {
     // het sluiten en bij pagehide gebeurt, wat zonder DOM niet te mounten is.
     expect(draftSrc).toMatch(/return \(\) => \{[\s\S]*?flushDraft\(\);\s*\};\s*\}, \[flushDraft\]\)/);
     expect(draftSrc).toContain("window.addEventListener('pagehide', flushDraft)");
+    // De vlag volgt de uitkomst van het wegschrijven, nooit de poging (Warden 15 november).
+    expect(draftSrc).toMatch(/wrote\.current = saveSessionDraft\(/);
+    expect(draftSrc).not.toMatch(/wrote\.current = true/);
   });
 });

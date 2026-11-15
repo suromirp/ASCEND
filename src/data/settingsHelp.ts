@@ -485,7 +485,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     ],
   },
   forgeConcept: {
-    title: 'Niet afgerond, concept na',
+    title: 'Training bewaren als concept na',
     lead: 'Een training die je begon en vergat af te ronden, loopt niet dagen door. Na middernacht, of na deze grens zonder handeling, staat hij als concept klaar. Er gaat niets weg en je planning verandert niet.',
     points: [
       { head: 'Afronden', text: 'met de sets die je deed en de tijd tot je laatste handeling. Is het minder dan de helft, dan heet het eerlijk een korte training.' },

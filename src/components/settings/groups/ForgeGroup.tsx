@@ -131,7 +131,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-oefeningen" title="Oefeningen in een training" facts={facts} info="forgeOefeningen" onClick={() => setInner('forge-oefeningen')} />
           <SummaryRow id="forge-verloop" title="Verloop toont" facts={facts} info="forgeVerloop" onClick={() => setInner('forge-verloop')} />
           <SummaryRow id="forge-onderbreking" title="Lange onderbreking vragen na" facts={facts} info="forgeOnderbreking" onClick={() => setInner('forge-onderbreking')} />
-          <SummaryRow id="forge-concept" title="Niet afgerond, concept na" facts={facts} info="forgeConcept" onClick={() => setInner('forge-concept')} />
+          <SummaryRow id="forge-concept" title="Training bewaren als concept na" facts={facts} info="forgeConcept" onClick={() => setInner('forge-concept')} />
           <SummaryRow id="forge-vegen" title="Vegen om te verwijderen" facts={facts} info="forgeVegen" onChange={(on) => void updateSettings({ forgeSwipeDelete: on })} />
           <SummaryRow id="forge-rir-vooraf" title="RIR vooraf invullen" facts={facts} info="forgeRirVooraf" onClick={() => setInner('forge-rir-vooraf')} />
           <SummaryRow id="forge-rir-snel" title="Hoeveel over na een set" facts={facts} info="forgeRirSnel" onClick={() => setInner('forge-rir-snel')} />

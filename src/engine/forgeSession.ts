@@ -124,7 +124,7 @@ export function formatAway(ms: number): string {
 // niets weg en er verandert niets aan de planning: de klok staat stil op je laatste handeling, en de pil en het
 // blad vragen wat je wilt (Afronden met wat je deed, Verder of Verwijderen). Alleen een keuze van jou beëindigt hem.
 
-// De instelling "Niet afgerond, concept na", in uren zonder handeling; 0 is: alleen na middernacht.
+// De instelling "Training bewaren als concept na", in uren zonder handeling; 0 is: alleen na middernacht.
 export const LEFT_AFTER_OPTIONS = [0, 4, 8, 12] as const;
 export type LeftAfter = (typeof LEFT_AFTER_OPTIONS)[number];
 const DEFAULT_LEFT_AFTER: LeftAfter = 12;
