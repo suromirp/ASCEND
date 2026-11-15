@@ -91,7 +91,7 @@ function StagePositionCard({ startDate }: { startDate: string }) {
     <Card className="flex flex-col gap-1">
       <Eyebrow>Op je etappe, {day.from} naar {day.to}</Eyebrow>
       {shown.kind === 'busy' && <p className="text-sm" role="status" style={{ color: 'var(--color-ink-dim)' }}>Je plek wordt bepaald. Dit duurt hoogstens tien seconden.</p>}
-      {shown.kind === 'idle' && <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>ASCEND vraagt je plek pas als jij erom vraagt. Tik op Opnieuw bepalen om te zien hoever je nog moet.</p>}
+      {shown.kind === 'idle' && <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je plek wordt pas gevraagd als jij erom vraagt. Tik op Opnieuw bepalen om te zien hoever je nog moet.</p>}
       {shown.kind === 'ok' && position && (
         <>
           <p className="text-sm leading-relaxed tabular-nums" role="status" style={{ color: 'var(--color-ink)' }}>{stagePositionText(position)}</p>

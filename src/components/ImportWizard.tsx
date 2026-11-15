@@ -76,7 +76,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
         const backup = normalizeBackupToCurrentModel(parsed);
         setStep({ kind: 'mode', backup });
       } catch (err) {
-        setStep({ kind: 'error', message: backupErrorText(err, 'Dit back-upbestand is niet te lezen. Kies een bestand dat ASCEND zelf heeft gemaakt.') });
+        setStep({ kind: 'error', message: backupErrorText(err, 'Dit back-upbestand is niet te lezen. Kies een back-up die met deze app is gemaakt.') });
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
