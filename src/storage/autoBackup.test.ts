@@ -357,6 +357,67 @@ describe('de automatische back-up', () => {
     expect(files.get(today)!.length).toBeGreaterThan(10);
   });
 
+  it('na undo is niet te zien of het kapotte bestand weg is: twijfel telt als "staat er nog", dus geen volgnummer', async () => {
+    const today = name('2026-11-02');
+    const files = new Map<string, string>();
+    let cut = true;
+    let blind = false;
+    const { target } = fakeTarget();
+    target.exists = async (n) => {
+      if (blind) {
+        blind = false;
+        throw new Error('stat failed');
+      }
+      return files.has(n);
+    };
+    target.write = async (n, text) => {
+      files.set(n, cut ? text.slice(0, 10) : text);
+      return {
+        keep: async () => undefined,
+        undo: async () => {
+          blind = true;
+        },
+      };
+    };
+    target.verify = async (n, bytes) => (new TextEncoder().encode(files.get(n) ?? '').length === bytes ? 'ok' : 'broken');
+    expect(await runAutoBackupIfDue({ now: MONDAY, target, verifyPauseMs: 0 })).toBe('failed');
+    cut = false;
+    expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 2 * 3_600_000), target, verifyPauseMs: 0 })).toBe('saved');
+    expect([...files.keys()]).toEqual([today]);
+  });
+
+  it('het kapotte bestand ging echt weg: de naam is vergeten, en een vreemd bestand dat er later staat blijft heel', async () => {
+    const today = name('2026-11-02');
+    const files = new Map<string, string>();
+    let mode: 'unreadable' | 'cut' | 'fine' = 'unreadable';
+    const { target } = fakeTarget();
+    target.exists = async (n) => files.has(n);
+    target.write = async (n, text) => {
+      if (files.get(n) === 'van jou') throw new Error(`vreemd bestand overschreven: ${n}`);
+      files.set(n, mode === 'cut' ? text.slice(0, 10) : text);
+      return {
+        keep: async () => undefined,
+        undo: async () => {
+          files.delete(n);
+        },
+      };
+    };
+    target.verify = async (n, bytes) => (mode === 'unreadable' ? 'unknown' : new TextEncoder().encode(files.get(n) ?? '').length === bytes ? 'ok' : 'broken');
+    // Poging 1: niet te lezen, het bestand blijft en de naam wordt onthouden.
+    expect(await runAutoBackupIfDue({ now: MONDAY, target, verifyPauseMs: 0 })).toBe('failed');
+    expect([...files.keys()]).toEqual([today]);
+    // Poging 2 vervangt het, komt kapot aan en gaat echt weg: de naam is vergeten.
+    mode = 'cut';
+    expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 2 * 3_600_000), target, verifyPauseMs: 0 })).toBe('failed');
+    expect(files.size).toBe(0);
+    // Intussen zet iemand zelf een bestand onder die naam. Poging 3 laat het heel en neemt een volgnummer.
+    files.set(today, 'van jou');
+    mode = 'fine';
+    expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 4 * 3_600_000), target, verifyPauseMs: 0 })).toBe('saved');
+    expect(files.get(today)).toBe('van jou');
+    expect([...files.keys()]).toEqual([today, 'ascend-2026-11-02-2.ascend-backup.json']);
+  });
+
   it('een fout na een gelukt bestand maakt de back-up niet mislukt', async () => {
     const { target } = fakeTarget();
     const outcome = await runAutoBackupIfDue({ now: MONDAY, target, onSaved: () => Promise.reject(new Error('app-staat weg')) });
