@@ -105,7 +105,7 @@ export function WeatherPage() {
         weather.refresh(),
         briefingLink ? loadPlaceWeather(briefingLink.place, { force: true }) : Promise.resolve(undefined),
       ]);
-      if (there) setRefreshed((n) => n + 1);
+      if (there?.status === 'ok') setRefreshed((n) => n + 1);
       return weatherRefreshOutcome(briefingLink?.place.name, there?.status === 'ok', home.status === 'error' ? home.message : undefined);
     });
 

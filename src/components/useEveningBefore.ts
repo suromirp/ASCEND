@@ -28,12 +28,13 @@ const READ_LIMIT_MS = 5_000;
 
 // De onthouden plekken van Start bij (storage/startPlaceChoice.ts) en de plek Thuis, en het weer van
 // die plek voor de training van morgen. Zolang iets leest of laadt: het weer van huis, zonder plaatsnaam.
-function useEveningPlaceWeather(now: Date): EveningInput['placeWeather'] {
+function useEveningPlaceWeather(now: Date, enabled: boolean): EveningInput['placeWeather'] {
   const { plannedSessions, templateById, settings } = useAppData();
   const trainingPlaces = useTrainingPlaces();
   const [choices, setChoices] = useState<StartPlaceChoices | undefined>(() => peekStartPlaceChoices());
   const [home, setHome] = useState<RoutePoint | null | undefined>();
   useEffect(() => {
+    if (!enabled) return;
     let alive = true;
     const read = () => void withTimeout(readStartPlaceChoices(), READ_LIMIT_MS).then((m) => alive && setChoices(m), () => undefined);
     read();
@@ -43,14 +44,14 @@ function useEveningPlaceWeather(now: Date): EveningInput['placeWeather'] {
       alive = false;
       stop();
     };
-  }, []);
+  }, [enabled]);
   const today = toISODate(now);
   const tomorrow = addDays(today, 1);
   const sessions = plannedSessions
     .filter((s) => s.scheduledDate === tomorrow && s.status !== 'skipped')
     .sort((a, b) => a.order - b.order)
     .map((s) => ({ id: s.id, date: s.scheduledDate, routeShown: routeShownFor(templateById.get(s.templateId), trainingPlaces?.[s.id]) }));
-  const found = home === undefined ? undefined : eveningPlaceTarget({
+  const found = !enabled || home === undefined ? undefined : eveningPlaceTarget({
     placeWeatherOn: showPlaceWeather(settings.overviews),
     rememberOn: settings.rememberStartPlace !== false,
     routeOn: settings.routeProposal !== false,
@@ -68,12 +69,13 @@ function useEveningPlaceWeather(now: Date): EveningInput['placeWeather'] {
 }
 
 // De bronnen voor een moment: nu voor de kaart, het moment van de melding voor de melding.
-export function useEveningInput(now: Date): EveningInput {
+// `placeOn`: alleen dan wordt de onthouden plek gelezen en zijn weer opgehaald (de kaart of melding staat aan).
+export function useEveningInput(now: Date, placeOn = true): EveningInput {
   const { plannedSessions, sessionLogs, templateById, program, leavePeriods, settings, weather } = useAppData();
   const { statusOf, ready } = useWatchStatuses();
   const trainingPlaces = useTrainingPlaces();
   const easyPace = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy, [sessionLogs, settings]);
-  const placeWeather = useEveningPlaceWeather(now);
+  const placeWeather = useEveningPlaceWeather(now, placeOn && resolveEveningBefore(settings).on);
   return {
     placeWeather,
     now,
@@ -129,6 +131,6 @@ export function useEveningBefore(): EveningTrainingView | undefined {
 
 // Wat de melding van vanavond zegt, uitgerekend voor het moment van de melding.
 export function useEveningNoticeView(at: Date | undefined): EveningTrainingView | undefined {
-  const input = useEveningInput(at ?? new Date());
+  const input = useEveningInput(at ?? new Date(), !!at);
   return at && input.settings.on ? tomorrowPrep(input) : undefined;
 }

@@ -136,9 +136,7 @@ export function TodayMissionCard({
   const view = missionCardView({ briefingReach, briefingButton, quickComplete, inAppStrength });
   const [showBriefing, setShowBriefing] = useState(false);
   // Terug vanaf een pagina die je uit deze Briefing opende: de Briefing gaat weer open.
-  useBriefingReturn('mission', (m) => {
-    if (m.templateId === template.id && m.date === todayISO()) setShowBriefing(true);
-  });
+  useBriefingReturn('mission', () => setShowBriefing(true), (m) => m.templateId === template.id && m.date === todayISO());
   const [showManual, setShowManual] = useState(false);
   const garmin = buildWorkoutPlan(template, todayISO(), program)?.garmin;
   const watchView = useWatchSheet({ template, garmin, session, hasZonesNote: !!guide?.garminNote });

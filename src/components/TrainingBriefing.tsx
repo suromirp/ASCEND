@@ -103,7 +103,7 @@ export function TrainingBriefing({
 }) {
   const { settings } = useAppData();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, key: entry } = useLocation();
   const motion = useMotionMode();
   const { closing, requestClose } = useSheetClose(onClose);
   const today = todayISO();
@@ -159,7 +159,7 @@ export function TrainingBriefing({
   // Naar een pagina: eerst alle lagen dicht, dan de pagina.
   function toPage(to: string, state?: unknown) {
     // Terug vanaf de pagina opent deze Briefing weer op de pagina eronder.
-    if (origin) markBriefingReturn({ origin, templateId: template.id, date, sessionId: session?.id, path: pathname });
+    if (origin) markBriefingReturn({ origin, templateId: template.id, date, sessionId: session?.id, path: pathname, entry });
     onLeave?.();
     requestClose();
     navigate(to, state === undefined ? undefined : { state });

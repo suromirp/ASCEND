@@ -3,7 +3,7 @@ import { BRIEFING_RETURN_MS, briefingReturnFor, type BriefingReturn } from './br
 
 const AT = 1_000_000;
 const MARK: BriefingReturn = { origin: 'sheet', templateId: 'tpl-run', date: '2026-11-15', sessionId: 'ps-1', path: '/week', at: AT };
-const here = (over: Partial<Parameters<typeof briefingReturnFor>[1]> = {}) => ({ path: '/week', back: true, now: AT + 60_000, origin: 'sheet' as const, ...over });
+const here = (over: Partial<Parameters<typeof briefingReturnFor>[1]> = {}): Parameters<typeof briefingReturnFor>[1] => ({ path: '/week', back: true, now: AT + 60_000, origin: 'sheet', ...over });
 
 describe('briefingReturnFor: Terug vanaf de pagina opent de Briefing weer (I-37)', () => {
   it('terug op dezelfde pagina binnen een half uur: de Briefing gaat open', () => {
@@ -14,6 +14,7 @@ describe('briefingReturnFor: Terug vanaf de pagina opent de Briefing weer (I-37)
   });
   it('een andere pagina, te lang weg of een klok die terugsprong: niet openen', () => {
     expect(briefingReturnFor(MARK, here({ path: '/' })).open).toBeUndefined();
+    expect(briefingReturnFor({ ...MARK, entry: 'a' }, here({ entry: 'b' })).open).toBeUndefined();
     expect(briefingReturnFor(MARK, here({ now: AT + BRIEFING_RETURN_MS + 1 })).open).toBeUndefined();
     expect(briefingReturnFor(MARK, here({ now: AT - 1 })).open).toBeUndefined();
   });
@@ -28,3 +29,10 @@ describe('briefingReturnFor: Terug vanaf de pagina opent de Briefing weer (I-37)
   });
 });
 
+
+describe('briefingReturnFor: de juiste laag (Warden)', () => {
+  it('een andere training op dezelfde laag laat het merkteken liggen; dezelfde stap opent', () => {
+    expect(briefingReturnFor(MARK, here({ accepts: (m) => m.templateId === 'tpl-other' }))).toEqual({ open: undefined, keep: true });
+    expect(briefingReturnFor({ ...MARK, entry: 'k1' }, here({ entry: 'k1', accepts: () => true })).open?.entry).toBe('k1');
+  });
+});

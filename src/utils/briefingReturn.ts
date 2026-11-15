@@ -3,7 +3,7 @@
 
 import { useEffect } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
-import { briefingReturnFor, type BriefingOrigin, type BriefingReturn } from '../engine/briefingReturn';
+import { briefingReturnFor, type BriefingOrigin, type BriefingReturn, type ReturnHere } from '../engine/briefingReturn';
 
 let mark: BriefingReturn | undefined;
 
@@ -11,7 +11,7 @@ export function markBriefingReturn(next: Omit<BriefingReturn, 'at'>, now = Date.
   mark = { ...next, at: now };
 }
 
-export function takeBriefingReturn(here: { path: string; back: boolean; origin: BriefingOrigin }, now = Date.now()): BriefingReturn | undefined {
+export function takeBriefingReturn(here: Omit<ReturnHere, 'now'>, now = Date.now()): BriefingReturn | undefined {
   const { open, keep } = briefingReturnFor(mark, { ...here, now });
   if (!keep) mark = undefined;
   return open;
@@ -23,11 +23,12 @@ export function clearBriefingReturn(): void {
 }
 
 // Eén keer bij het openen van de pagina: opent de Briefing weer als Terug hier uitkwam.
-export function useBriefingReturn(origin: BriefingOrigin, open: (mark: BriefingReturn) => void): void {
-  const { pathname } = useLocation();
+// `accepts`: of het merkteken bij deze laag hoort; anders blijft het liggen voor een andere.
+export function useBriefingReturn(origin: BriefingOrigin, open: (mark: BriefingReturn) => void, accepts?: (mark: BriefingReturn) => boolean): void {
+  const { pathname, key } = useLocation();
   const back = useNavigationType() === 'POP';
   useEffect(() => {
-    const found = takeBriefingReturn({ path: pathname, back, origin });
+    const found = takeBriefingReturn({ path: pathname, entry: key, back, origin, accepts });
     if (found) open(found);
     // Alleen bij het openen van de pagina; `open` mag elke render nieuw zijn.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
