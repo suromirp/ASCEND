@@ -15,7 +15,9 @@ Bijgewerkt: 15 november 2026, 14:20 Portugese tijd, door de coördinator session
 - Backlog: elk Inboxpunt heeft een code [I-n]; een bouwer zet `Klaar: I-n` in zijn commit; voor een start eerst `git log origin/main --grep "I-n"` en in de code kijken of het al gebouwd is (vandaag twee keer oud werk in de Inbox).
 - Kennisindex: elk nieuw document in docs/ krijgt een regel in `docs/kennisindex/bronnen.json`, dan `npm run kennisindex`; na een proefmerge altijd `npm run kennisindex` opnieuw. Zet dat in elke bouwopdracht.
 - Een Warden pusht zijn herstel als `herstel.md` op `warden/<onderwerp>-herstel`: zet dat in zijn eerste opdracht (achteraf vragen weigert hij). Bouwers melden zich niet: kijk met get_session; list_sessions children werkt, de tag-filter niet. list_events heb je niet: laat bevindingen in een bestand of in de samenvatting landen.
-- Back-up van de eigenaar: stond alleen in de scratchpad van de vorige coördinator (11:50, app fe704a3). Voor nieuw naspelen: vraag een verse.
+- Back-up van de eigenaar: 15 november 16:29 (app b243965), in de scratchpad van session_01LnDpSnngzUAioWQ5b8xBWH onder backup/ (chmod 600, alleen lezen met python -I). Bestandsnaam eindigde weer op -2 (fix nog niet live). Een volgende coördinator vraagt een verse.
+- Eigenaar ziek sinds 15 november, boven de nek (staat in de app). Zijn bericht via de vorige chat (16:45, "advies over koorts") kwam hier niet aan; gevraagd wat hij schreef.
+- Opgeruimd 16:50: alle klaar zijnde sessies van vandaag gearchiveerd. Niet aanraken: Werkkaart, de drie bouwers, de vastgezette chat ASCEND, ECHO en Dual Ubuntu (geen ASCEND-werk).
 
 ## Taken
 
