@@ -32,7 +32,7 @@ import { progressionTarget } from './programLayout';
 import { templateSport } from './sports';
 import { sweatRateAt } from './sweat';
 import { litersText } from './stageWater';
-import { routeTarget, targetText } from './routeTarget';
+import { routeTarget, targetText, walkShortText } from './routeTarget';
 import { routeShownFor } from './trainingPlace';
 import { fuelEveningLine, fuelForTraining, fuelForTrekDay, trekEveningLine } from './fuelOnTheGo';
 
@@ -245,7 +245,8 @@ function trainingPrep(input: EveningInput, session: PlannedSession, template: Se
   // krijgt geen knop (besluit 2026-11-11-briefing.md); de rij Morgen in Je dag opent het blad met Briefing.
   if (input.routeOn && routeShownFor(template, input.trainingPlaces?.[session.id])) {
     const target = routeTarget({ template, date, program: input.program, logs: input.logs, testPace: input.easyPace, bodyKg: input.bodyKg });
-    lines.push(`Route ${targetText(target)}: je lus staat in de Briefing.`);
+    // Een wandeling zoals in de Briefing: "3 uur, ongeveer 8 km"; de rugzak staat al in een eigen regel.
+    lines.push(`Route ${walkShortText(target) ?? targetText(target)}: je lus staat in de Briefing.`);
   }
 
   return { label, lines };

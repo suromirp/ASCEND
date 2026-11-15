@@ -8,6 +8,7 @@ import { sportOfLog } from './sportOfLog';
 import { findModalityByKey, isCyclingModality, modalitySport } from '../data/modalities';
 import { SPORTS, SPORT_IDS, anySportDefinition, type SportId } from '../data/sports';
 import { capitalize } from '../utils/capitalize';
+import { strengthAllows } from './strengthTraining';
 
 export type Sport = SportId;
 export type EnabledSports = Record<Sport, boolean>;
@@ -153,13 +154,16 @@ export interface PatternSettings {
   enabledSports?: Partial<EnabledSports>;
   sportFrequency?: Partial<Record<Sport, number>>;
   weekShape?: WeekShape;
+  // Krachttraining uit (engine/strengthTraining.ts): dan geen krachttraining in het patroon.
+  strengthTraining?: unknown;
 }
 
 // The weekly pattern ASCEND builds a week from, shaped by the user's
-// settings: sports that are off drop out. A sport with a fixed number per
-// week is then brought to that number by engine/sportFrequency.ts.
+// settings: sports that are off drop out, and so does strength when you
+// switched it off. A sport with a fixed number per week is then brought to
+// that number by engine/sportFrequency.ts.
 export function weeklyPatternTemplates(templates: SessionTemplate[], settings: PatternSettings): SessionTemplate[] {
-  return applyWeekShape(templates.filter((t) => t.defaultDayOfWeek && isTemplatePlannable(t, settings.enabledSports)), settings.weekShape);
+  return applyWeekShape(templates.filter((t) => t.defaultDayOfWeek && isTemplatePlannable(t, settings.enabledSports) && strengthAllows(t, settings)), settings.weekShape);
 }
 
 // Sports the user pinned to a number per week — the automatic weekly

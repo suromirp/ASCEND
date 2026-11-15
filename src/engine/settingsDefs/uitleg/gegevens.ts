@@ -95,7 +95,7 @@ export const GEGEVENS_UITLEG: Record<string, SettingsHelp> = {
     lead: 'Hier staat wat jij anders instelde dan het advies.',
     points: [
       { head: 'Tikken', text: 'een regel opent de instelling zelf. Kies je het advies, dan staat het terug.' },
-      { head: 'Alles terugzetten', text: 'zet alles terug naar het advies. Raakt het je planning, dan verandert die zoals je bij Wijzigingen koos: eerst een voorstel, of meteen met een melding en ongedaan maken.' },
+      { head: 'Alles terugzetten', text: 'zet alles terug naar het advies. Raakt het je planning, dan zie je eerst een voorstel met Akkoord of Liever niet.' },
     ],
   },
   wissen: {

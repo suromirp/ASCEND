@@ -9,6 +9,19 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 15 november 12:45 (Wachter, Portugese tijd)
+- Check-in: Q, kracht uit, wandelen in bpm en kennisindex live (4de3367, deploy en Android groen). Week en beginner in herstel, back-up in review, backlog opgeruimd met codes.
+- Beter: naspelen met de echte back-up vond de oorzaak in een kwartier (advies zonder periode, oude versie op de telefoon).
+- Slechter: een bouwer gestart voor werk dat al gebouwd was; een Warden die zijn herstel niet wilde pushen.
+- Gereedschap: backlog:bij en de kennisindex-test vangen vergeten administratie.
+
+## 15 november 09:40 Portugal (Wachter)
+
+- Werkkaart vers (09:22, eigen uurtaak werkt). Bouwers: Q, StairMaster, Sherpa beginner licht stap 1 en 2 (Opus high), Scout dribbelen (Fable).
+- Routes wandelen stap 3: proefmerge, tsc, lint, vitest en build groen; kaart:vergelijk loopt; Warden (Sonnet) loopt.
+- H gestart op advies van de eigenaar (10% per stap), niet tot 12:00 gewacht. Les: een vraag met deadline beantwoord? Meteen starten.
+- Kosten coördinator sinds 14 november ochtend ongeveer $259; de wissel van 10:47 is daarom geen formaliteit.
+
 ## 09:05 Portugal (15 november)
 - Main fe704a3: 20 onderdelen uit de nacht, web en Android groen. Alle poorten liepen; Warden of Lookout hielden zes keer iets tegen dat de tests niet zagen.
 - Les: proefmerges bundelen scheelt tijd maar geeft conflicten in de foto en de standen; steeds de foto opnieuw maken en het verschil lezen.

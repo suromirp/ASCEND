@@ -13,6 +13,7 @@
 // Zoeken gebeurt bij het openen (vandaag en morgen, instelling Lus zoeken) of na een tik, en stopt
 // zodra je van Buiten weggaat of het scherm sluit. Plant niets.
 
+import { walkHrFromSettings } from '../engine/walkHeartRate';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PlannedSession, SessionTemplate } from '../models/training';
@@ -118,7 +119,7 @@ export function TrainingBriefing({
   // Het plan zoals het naar je horloge gaat; de stappen op het scherm volgen de gekozen manier (`plan` hieronder).
   const workout = buildWorkoutPlan(template, date, program);
   // Het blad Je horloge: met de StairMaster gekozen de wandelworkout, met de stapnamen van de manier.
-  const watchManual = watchManualFor(template, workout, stored, settings.watchPlaceWorkout);
+  const watchManual = watchManualFor(template, workout, stored, settings.watchPlaceWorkout, walkHrFromSettings(settings));
   const watchView = useWatchSheet({ template, garmin: watchManual, session, hasZonesNote: !!guide?.garminNote });
   const input = useBriefingInput({ template, session, date, program, storedPlace: stored });
   // Met het weer van huis; de plek van Start bij is pas bekend na de regie van de route hieronder.
@@ -507,7 +508,7 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
   }
   const other = order.find((s) => s !== picked && plans[s].ok);
   const otherOutcome = other ? plans[other] : undefined;
-  const otherWarn = otherOutcome?.ok ? otherLoopWarn(otherOutcome.proposal, target) : undefined;
+  const otherWarn = otherOutcome?.ok ? otherLoopWarn(otherOutcome.proposal, target, pickedOutcome?.ok ? pickedOutcome.proposal : undefined) : undefined;
   return (
     <div className="flex flex-col gap-2">
       {model.mapStartPoint && (
@@ -532,7 +533,7 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
         <div className="flex min-h-[44px] items-start justify-between gap-3">
           <div className="min-w-0">
             <Eyebrow tone="var(--color-ink-dim)">{STYLE_NAME[picked]}</Eyebrow>
-            <p className="text-sm tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalTitle(pickedOutcome.proposal)} · {proposalFacts(pickedOutcome.proposal)}</p>
+            <p className="text-sm tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalTitle(pickedOutcome.proposal)} · {proposalFacts(pickedOutcome.proposal, target)}</p>
             {loopLines(pickedOutcome.proposal, target, proposalNotes(pickedOutcome.proposal, target)).warn.map((note) => (
               <p key={note} className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{note}</p>
             ))}
@@ -544,7 +545,7 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
         // Direct onder de gekozen lus: Kies is 44 px hoog, de rij schuift 4 px op zodat er geen gat valt.
         <div className="-mt-1 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm tabular-nums leading-snug" style={dim}>{otherLoopLine(STYLE_NAME[other], otherOutcome.proposal)}</p>
+            <p className="text-sm tabular-nums leading-snug" style={dim}>{otherLoopLine(STYLE_NAME[other], otherOutcome.proposal, target)}</p>
             {otherWarn && <p className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{otherWarn}</p>}
           </div>
           <TextButton tone="dim" onClick={() => model.setChosen(other)}>Kies</TextButton>

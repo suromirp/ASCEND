@@ -10,6 +10,7 @@ import { getConnection } from '../storage/externalActivities';
 import { getWatchWorkoutState, WATCH_STATE_EVENT, type WatchWorkoutState } from '../storage/watchWorkouts';
 import { watchStatusFor, type WatchStatus } from '../engine/watchStatus';
 import { watchHrPlanFromSettings } from '../engine/watchHeartRate';
+import { walkHrFromSettings } from '../engine/walkHeartRate';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { todayISO } from '../utils/dates';
 import type { PlannedSession, SessionTemplate } from '../models/training';
@@ -75,6 +76,7 @@ export function useWatchStatuses(): { statusOf: (session: PlannedSession, templa
         hr: watchHrPlanFromSettings(settings, state.hrBasis),
         places,
         placeWorkout: settings.watchPlaceWorkout,
+        walkHr: walkHrFromSettings(settings),
         logged,
       });
     },

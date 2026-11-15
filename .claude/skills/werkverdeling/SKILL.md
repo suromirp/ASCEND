@@ -32,6 +32,7 @@ Tabellen staan hier omdat dit een werkinstructie is; in teksten voor de eigenaar
 
 ## Regels erbij
 
+- Elke helperopdracht noemt de kennisindex: lees eerst `docs/kennisindex/README.md` en het bestand van je onderwerp daar; een nieuw document krijgt een regel in `bronnen.json`.
 - Eisen vooraf: geef een bouwer altijd mee wat getoetst wordt (maten op 360 en 390 px, wat een gebaar
   precies doet, welke instelling, welke tests). Een ronde herstel kost meer dan een alinea extra uitleg.
 - Lookout en Warden mogen één helper zijn bij een kleine wijziging; bij planning of opslag apart.

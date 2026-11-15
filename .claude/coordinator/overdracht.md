@@ -1,76 +1,70 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 14 november 2026, ongeveer 13:00 Amsterdam, door de coördinator session_01LnDpSj1W4nzauWSf6spDy3 (diepte 1). Oudere overdrachten staan in de git-geschiedenis van dit bestand.
+Bijgewerkt: 15 november 2026, 11:20 Portugese tijd, door de coördinator session_01LnDpSkfdHZiUDTtrj7CB8T. Oudere versies staan in de git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
 
-## Eerst lezen (eigenaar 14 november)
+## Vaste afspraken van nu
 
-- Werkkaart blijvend (eigenaar 15 november, "jouw advies"): eigen sessie session_01LnDpSktfMxYFgMMgDhw8Do op Sonnet, taak trig_01JoRN6XzHJ17frpcWQAdEzB elk uur op :20. Coördinator werkt hem bij na elke push naar main. Wachter controleert alleen of hij vers is. Niet archiveren bij de wissel.
-- Werkkaart (eigenaar 15 november: "waarom update je de werkkaart niet meer?"): vannacht van 20:59 tot 10:21 Portugese tijd niet bijgewerkt, terwijl de Wachter het elk uur vraagt. Sinds 10:21 weer bij. Regel: bij elke Wachter-ronde eerst de werkkaart (skill werkkaart, stappen 1 tot 5), daarna pas het werk; tijden in Portugese tijd tot woensdag.
-- 15 november 08:46 Portugese tijd: claude/nacht op main als fe704a3 (squash), deploy en Android groen, pushmelding verstuurd. Nog niet op main: routes wandelen stap 3 (Warden loopt). Open voor de eigenaar: H keuze 1 (zonder antwoord om 12:00 het advies), de drie standaardkeuzes van routes wandelen (gebouwd met het advies), de grens in tijd voor een concept (nu geen grens). Coördinatorfouten vannacht: 5 (bouwers kunnen zich wel melden, planner een uur onopgemerkt, run_once_at in het verleden 4 keer, 10:00 in plaats van 09:00 in twee opdrachten, een regel van een werkbriefje overschreven en meteen hersteld).
-- Ochtendvraag H (ontwerp `docs/visie/Ontwerp beginner heel licht.md`, hoofdstuk 6): keuze 1 wijkt af van het besluit van de eigenaar ("gewoon plan in week 4"): advies lange sessie 30, 35, 40, 45 (10%-grens uit het onderzoek), belofte "elke week iets meer". Keuze 2 nieuw sjabloon Wandelen en dribbelen (advies). Keuze 3 gewone woorden voor iedereen met instelling Vaktaal (advies). H pas bouwen na antwoord op keuze 1; zonder antwoord om 12:00 het advies volgen.
-- Voor het ochtendoverzicht (Vraag aan u): drie keuzes uit het ontwerp Routes wandelen en rugzak, gebouwd met het advies als standaard (stap 1 en 2 lopen sinds 03:12): (1) duur eerst boven hoogtemeters, instelbaar; (2) de sportwetenschapper legt minuten en hoogtemeters van de wandelladder naast elkaar en doet een voorstel (ladder verandert alleen via Akkoord); (3) herstelwandeling krijgt alleen een lus na een tik. Plus: kort/hard/wandeltempo-regels van de horlogetoets altijd aan (advies: zo laten).
-- Coördinator-wissel verschoven van 04:47 naar 10:47 Portugese tijd (trig_016NjGn4ZxB5Gt7zdHv9dYAU), na het ochtendoverzicht: Wachter, ochtendtaak en por-taken hangen aan deze sessie, en een wissel midden in de nacht is de zwakste schakel in het doorgaan. Bij de wissel: Wachter en lopende send_laters naar de nieuwe sessie overzetten.
-- Eigenaar 15 november 00:05 Portugese tijd: "Niet op mij wachten om 9 uur, stuur een update en ga verder." Om 09:00 het overzicht sturen en meteen doorbouwen; open vragen krijgen het advies als standaard, elke keuze en reflectie hier vastleggen. Wie de ochtendtaak opnieuw aanmaakt, neemt dit mee in de prompt.
-- Back-up eerste keer opslaan mislukt: eigenaar stuurt 15 november een screenshot van de melding (en of het de eerste keer na openen van de app was). Daarna pas een helper starten; tot dan niet zelf gokken naar de oorzaak.
-- Eigenaar 14 november 23:58 Portugese tijd: "Probeer alles uit te voeren ook de instellingen, ik vertrouw op jou kunde." Volgorde vannacht: (1) planner, horloge, routes-vorm, afbreker naar claude/nacht; (2) Cartographer Instellingen op één plek (ontwerp, branch claude/instellingen-ontwerp, gestart 23:58) loopt parallel; (3) zodra planner, horloge en afbreker op claude/nacht staan (die raken de instellingsbestanden): de bouwer Instellingen op één plek in kleine stappen volgens het ontwerp, vanaf claude/nacht, Opus high, Warden Fable (of Opus high als Fable op is), met een vergelijkingstest dat geen tekst of gedrag verandert; (4) Zonder ASCEND ronde 1 en 2 parallel aan de instellingen, maar zonder de instellingsbestanden te raken (instellingsteksten in ronde 3, na de instellingen).
-- Inspanning coördinator (eigenaar 14 november 23:50 Portugese tijd): vannacht high, overdag advies medium. In het ochtendoverzicht: hoeveel fouten van de coördinator vannacht het aanwijzen waard waren (zelfde maat als 14 november: overgeslagen processtappen), dan kiest de eigenaar voor overdag.
-- Keuzes eigenaar 14 november 22:50 Portugese tijd: ochtendoverzicht om 09:00 Portugese tijd; terug uit Portugal vanaf woensdag 18 november (dan weer Amsterdamse tijd, en de rustiger instap van de planner op zijn terugkomst nakijken); MacroFactor eruit na deze week (opruimklus, oude logs blijven leesbaar); na de huidige rij eerst Routes voor wandelen en rugzak (GR5), dan de vaste ijktocht (keuze coördinator op zijn verzoek).
-- Nacht 14 op 15 november (eigenaar 22:35 Portugese tijd: "het mag ook allemaal op het eind tegelijk"): klare functies na de volle controles op de verzamelbranch `claude/nacht`, niet op main; nieuwe bouwers vanaf `claude/nacht`. Rond 09:00 Portugese tijd één squash van `claude/nacht` naar main, één deploy, één pushmelding met de lijst. 's Nachts geen pushmeldingen, behalve als main stuk is. De ochtendtaak (trig_01U6g4CkTvoXoZKkFc1bniuu, 09:00 Portugese tijd) vuurt in de sessie van de coördinator van 14 november; neemt een nieuwe coördinator het eerder over, verwijder die en maak hem opnieuw in de eigen sessie.
-- Nacht 14 op 15 november (eigenaar 22:20 Portugese tijd): "blijven gaan, maximaal, ook als de vijfuurslimiet op is". Bouwplekken vol, tot acht sessies tegelijk; bij een limiet niets forceren maar de Wachter en een send_later op resetsAt plus vijf minuten laten alles direct hervatten. Volgorde na planner en horloge: Zonder ASCEND (drie rondes), dan Instellingen op één plek, dan Q, M2, R, P. Fable alleen voor Warden op planner en historie; meld de eigenaar als Fable bijna vol is.
-- Tijd (eigenaar 14 november 20:35, op reis): zolang de eigenaar in Portugal is, alle tijden aan hem in Portugese tijd (Europe/Lisbon, een uur achter Amsterdam), tot hij zegt dat hij terug is. Nooit UTC.
-- Houd de drie bouwplekken vol: wachten op een review of herstelronde is geen reden om niets te starten. Elke beurt eindigt met: zijn alle drie bezet? Zo niet, start de volgende die geen bestanden deelt (skill werkverdeling, Bouwplekken vol houden).
+- Eigenaar 15 november 12:15: "ik vertrouw erop dat jij weet wat de beste aanpak is": zelf beslissen met het advies, keuzes hier vastleggen.
+- Backlog bijhouden (eigenaar 12:18, "hoe blijft dit up to date?"): Sherpa Backlog session_01LnDpSj5qWPZmyX97SijVCU (`claude/backlog-bijhouden`): eenmalig opruimen, codes [I-n], `npm run backlog:bij` na elke squash, test. Tot dan: voor elke start eerst in de code en git log kijken of het al gebouwd is.
 
-- Werkkaart (eigenaar 14 november): dashboard https://claude.ai/artifact/JAmcpeDaGBX24C22dqRFAp, vastgezet in zijn zijbalk. Bijwerken bij elke Wachter-ronde en na elke push naar main (skill werkkaart).
-- Wachter staat weer aan (eigenaar 14 november: "Zet weer aan"): trig_01BjCHkFvjvdSXwCF58by7Lm, elk uur op :40, op deze sessie. Bij de wissel verhuizen naar de nieuwe coördinator.
-- Stijl Jarvis: korte briefings, wat er gebeurt, waar de eigenaar concreet nodig is, de juiste vraag met advies (CLAUDE.md, vaste afspraken).
-- 14 november middag: de eigenaar vliegt en vertrouwt op zelfstandig doorwerken. Zelf beslissen met het advies, elke keuze en een korte reflectie hieronder onder Reflectie.
+- Zonder sportschool (eigenaar 15 november, "Ja advies"): alleen wat de sportschool nodig heeft vervalt; een loop of wandeling die je niet deed telt als gemist. Doorgegeven aan Sherpa Week.
 
-## Reflectie (coördinator, per dag aanvullen)
+- Tijden aan de eigenaar in Portugese tijd (Europe/Lisbon) tot woensdag 18 november, daarna Amsterdamse tijd; nooit UTC.
+- Stijl Jarvis met "meneer"; vragen apart onderaan onder **Vraag aan u**, advies voorop, en wat er zonder antwoord gebeurt.
+- Niet op de eigenaar wachten: open vragen krijgen het advies als standaard; elke keuze en reflectie hier vastleggen.
+- Elke afspraak meteen hier; elke verandering in vragen, stuk of live meteen in `eigenaar.md`.
+- Limiet (09:50): alle modellen 69 procent, reset 17:59; Fable 25 procent, reset 18:00. Fable tot 18:00 benutten (Warden, Scout, Cartographer, planner-bouwers). Bij een limiet: send_later op resetsAt plus vijf minuten.
+- Werkwijze overdag: klaar werk na de volle controles op `claude/nacht`; per onderwerp Lookout en Pathfinder (bij iets zichtbaars); dan main via squash (`git commit-tree HEAD^{tree} -p origin/main`), pushmelding, werkkaart.
+- Bouwplekken vol (drie bouwers, tot zes sessies). Bouwers en Wardens melden zich niet: kijk met get_session (de tag-filter van list_sessions werkt niet; gebruik de id's hieronder).
+- Inspanning coördinator overdag: medium.
+- Back-up van de eigenaar alleen in de scratchpad (chmod 600), alleen lezen, nooit in de repo.
 
-- 14 november: een half uur maar één bouwer terwijl ik op een review wachtte; de eigenaar zag stilstand. Nu de regel Bouwplekken vol houden. Goed: eigen blik op afdrukken ving de Engelse naam in Forge, die Warden en Pathfinder niet zagen.
+## Taken en wissel
 
-## Stand 14 november 16:40
+- Wachter (elk uur op :40): trig_01Y6Gb6hgELCGn9XV2EAkMny op deze sessie (eigenaar 11:50: "Zet wachter aan"; eerst geweigerd door de rechtencontrole, met zijn akkoord gelukt).
+- Bouwers nakijken (elk uur op :10): trig_011KHnGB7dsiNtt5r3VgdE4Q op deze sessie.
+- Werkkaart elk uur op :20: eigen sessie session_01LnDpSktfMxYFgMMgDhw8Do (trig_01JoRN6XzHJ17frpcWQAdEzB), niet aanraken, niet archiveren.
+- Wissel: send_later 16 november 04:47 Amsterdam (trig_01L3EV4HCeLhdnygvM2rh9bM).
 
-- Limiet: niet afschalen (eigenaar 14 november 17:00, met een schermafdruk: alle modellen 73 procent, Fable 83 procent, reset zondag 15 november 18:00 Amsterdam volgens zijn scherm). Bouwplekken vol; Fable alleen waar de tabel het vraagt; meld het de eigenaar zodra Fable bijna vol is, hij heeft dan nog een reset.
-- In review: Opwarmset later (claude/opwarmset-later, herstel na Warden), Trainingsscherm 5 en 6 (claude/trainingsscherm-5-6), Opslaan rest (claude/opslaan-rest). Na groen: Lookout (één ronde voor alle drie), squash, deploy nakijken, pushmelding, werkkaart.
-- Vandaag live: voorstel begrijpelijk, Wis startpunt, krachtblok Akkoord, Spieren voor de berg rest, Avond tests, Volle week, Info-blad A, Racedag 10 km.
-- Profielendoorloop: negen profielen gedaan op 14 november (verslagen op de branches claude/profiel-*), punten A tot P in de Inbox. Opdracht eigenaar 14 november: "Hij moet dus stoppen met automatisch thuis" (branch claude/geen-thuis bij Sherpa Route).
+## Lopend (15 november 11:20)
 
-## Vandaag (14 november)
+- EERST: melding Week van de eigenaar (10:40). Telling klopt niet met de kruisen; za 14 lange loop grijs zonder kruis (vermoedelijk: Zonder sportschool telt nu als nooit gemist, ook voor een loop, besluit 2026-11-14); waarschuwing naast een niet gedane lange loop; inhaaladvies zegt "vandaag deed je geen training" terwijl Heuvelintervallen vandaag staat, legt de lange loop direct na de heuvelintervallen en zegt vaag "die week". Sherpa Week session_01LnDpSihpwmNKme8Mudp1nF (Opus high, `claude/week-telling`), met nagemaakte data. Na hem: Warden op Fable. Zodra de eigenaar een back-up stuurt: skill naspelen en de uitkomst naar de Sherpa. De notitie bij zijn periode is privé.
+- Q instellingen (`claude/q-instellingen`): Warden akkoord, niet blokkerend. Proefmerge met nacht op `proef/q-kennis` (lokaal; conflict in de instellingenfoto opgelost door hem opnieuw te maken). Daarna Lookout en Pathfinder, samen met StairMaster.
+- StairMaster en wandelen in bpm: Warden akkoord en zelf op claude/nacht gezet (e78388d). Nog Lookout en Pathfinder.
+- Kennisindex: op claude/nacht (4306d25). Elk nieuw document in docs/ heeft nu een regel in `docs/kennisindex/bronnen.json` nodig, anders faalt `scripts/kennisindex`; `npm run kennisindex` maakt de index opnieuw. Zet dat in elke bouwopdracht die een besluit schrijft.
+- Beginner heel licht stap 1 en 2 (`claude/beginner-licht`, Sherpa session_01LnDpSk5RjwPEFvrRzyLnjW, idle met een open vraag over de overgang na week 4, volgt het advies): Warden session_01LnDpSji7qMKisXbWFkVsdb (Fable), let op de veranderde planGolden-foto. Daarna stap 3.
+- Gearchiveerd 12:10 (eigenaar: "oude bouwer sessies archiveren"): twaalf afgeronde sessies, ook de coördinatoren van 12 en 14 november. Open blijven: Werkkaart-sessie, Sherpa beginner (herstel volgt), lopende bouwers.
+- Week: Sherpa klaar (dd92b19), Warden Week session_01LnDpSj4BZ8tUcTDLVp4ZkT (Fable); bij blokkerend schrijft hij `herstel.md` op `warden/week-herstel`.
+- Beginner: Warden wil herstel (rem na de start moet de langste sessie lezen; de Akkoord-wissel optioneel). Gevraagd als `herstel.md` op `warden/beginner-herstel` (trig_01Hs1bhNkoZZy84rJtr6ERM9), daarna naar Sherpa beginner.
+- Klein 15 november klaar (41f0901 op claude/klein-15-nov): proefmerge, Warden sonnet, Lookout.
+- Les: list_events heb ik niet; een Warden die niet akkoord is laat zijn herstel als bestand op een branch achter.
 
-- Live: Voorstel begrijpelijk (887aa8b), backlog nagelopen en wekelijkse audit op fouten in de skill onderhoud (5fdcce8; eigenaar: "Ja, zet de audit in onderhoud"). Ponytail en Graphify niet installeren (advies aan de eigenaar gegeven, hij koos alleen de audit).
-- Lopend: Sherpa Klein 14 november (session_01LnDpSia85ogXyrmEQhUGfb, `claude/klein-14-nov`, herstelronde na Warden: wachtrij in nearbyTerrain, Akkoord in beide voorstellen van de wizard; Warden-agent te hervatten), Sherpa Spieren voor de berg rest (session_01LnDpSjCLgK2kJLBZyM8BYY, fable, `claude/spieren-berg-rest`), Sherpa Avond ervoor tests (session_01LnDpSmXbcTKCq9WwFkfTxU, sonnet, `claude/avond-ervoor-tests`).
-- Wissel: send_later 15 november 04:47 Amsterdam staat (trig_016NjGn4ZxB5Gt7zdHv9dYAU).
+- Back-up van de eigenaar (15 november 11:50, app fe704a3) staat in de scratchpad van deze sessie: `backup-eigenaar-1/b.json`, chmod 600. Naspelen Week: vr 13 beide skipped (geen gemist), za 14 Lange duurloop (type hiking) en zo 15 Heuvelintervallen geruild, za 14 afgeleid away; advies met leave leeg, zonder leave precies zijn tekst. Doorgegeven aan Sherpa Week (trig_014agsDwjutsHvizV1TUzx61).
+- Back-up eerste keer mislukt (schermafdruk 11:50, "het bestand kon niet worden geschreven", tweede poging lukt met -2 in de naam): Sherpa Back-up session_01LnDpSnNF5icymXAJ1Rc6xC (Fable, `claude/backup-eerste-keer`).
+- Sherpa Klein 15 november session_01LnDpSnF3VCAmFtp8CGzVEz (Opus medium, `claude/klein-15-nov`): Forge-tikdoelen en Logboek lege maand.
+- Q, StairMaster en Kennisindex: Lookout groen, Pathfinder akkoord, eigen blik: bpm-regel bij korte blokken werd "Tussen de blokken onder N bpm." (ddd0a35 op proef/q-kennis). Volle controles lopen, dan squash naar main.
 
-## Opdracht van de eigenaar
+## Bouwrij daarna
 
-- 13 november: "Start een nieuwe coördinator en ga verder met de backlog"; "Ja doe alles autonoom"; "Ga daarna verder met de backlog".
-- 13 november: proef Ponytail en Graphify ("Allebei"): klaar, verslag `docs/onderzoek/Ponytail en Graphify.md`. Advies: Ponytail alleen de audit als prompt in de onderhoudsronde; Graphify weg. Niets van beide geïnstalleerd in de repo; de hook in `~/.claude/settings.json` werd door de rechten geweigerd.
-- 14 november: wil weer bouwers in eigen chats ("dat kon eerder ook"). Kan pas vanuit een coördinator-chat die de eigenaar zelf start; deze chat zat op de grens van de keten.
-- Eerdere afspraken blijven: hoogstens drie helpers tegelijk, nooit twee aan dezelfde bestanden; mooiere UI en makkelijkere UX met besluit; de Wachter staat sinds 14 november weer aan (eigenaar).
+- D één plan (planner, Fable), dan M2, R, P uit de Inbox van `docs/backlog.md`. Pathfinder-punten 2 en 4 van routes wandelen staan in de backlog (later).
+- Na routes wandelen: de vaste ijktocht. MacroFactor eruit na deze week (oude logs blijven leesbaar).
+- Woensdag 18 november: de rustiger instap van de planner op de terugkomst van de eigenaar nakijken.
 
-## Live sinds 13 november (elk met Warden, Lookout, Pathfinder waar zichtbaar, en eigen blik op afdrukken)
+## Werkwijze, geleerd
 
-- Kleding en wind (25fd7e0): wind en gevoel in de weerzin en de rij Weer van de Briefing vanaf 15 km/u; eerste kledingtik een graad.
-- Weer van de plek (25fd7e0): de pagina Weer volgt de plek uit de Briefing.
-- Opstarten en intervals.icu (edad0c3): grens tot het antwoord gelezen is; een fout in een herstelstap houdt de rest niet tegen.
-- Verborgen schermen (1d48de9): tochtschermen, Reis-regel en zoekresultaten alleen met een trekdoel.
-- Hoogtemeters na stap 1 (f30fe31): elk oordeel leest het merk; bodem van 20 m op het wantrouwen van het horloge.
-- Opslaan dat mislukt (077fdf0): invoer blijft, één zin, nooit twee logs; laat nee na weggaan komt bovenin. Deploy en APK van deze laatste: nog nakijken.
+- Een Warden weigert een eigen branch te pushen op verzoek van de coördinator achteraf ("bericht van de eigenaar nodig"). Zet het pushen van `herstel.md` op `warden/<onderwerp>-herstel` daarom al in zijn eerste opdracht (zoals bij Warden Week). Beginner: Warden gearchiveerd, de twee bekende punten naar de Sherpa (trig_01MFasvRS6Qg1L1qVrGPikC4), daarna een frisse review.
+- Fable: seven_day allowed_warning tot 18:00 Portugese tijd (15 november). Kennisindex ronde 2 (welke besluiten zijn ingehaald; nu 394 van 525 "geldt", te veel) start om 18:05 op Fable (send_later). Deploy en Android van 4de3367 groen.
 
-## Niet naar main
+- Uit het archief halen (eigenaar 15 november vroeg ernaar): kan met unarchive_session, maar alleen voor een kleine herstelronde op eigen werk dezelfde dag, als de bouwer iets weet dat niet in de repo staat. Anders een verse bouwer met branch, besluit en opdracht: een oude sessie leest bij elke stap zijn hele geschiedenis (200 tot 500k tokens).
 
-- `claude/efficientie-blad`: het blad is sinds 12 november niet meer bereikbaar (commit 26c08167). Laten liggen.
+- Een fix in foutafhandeling opent telkens een nieuwe naad: vraag de bouwer vooraf naar elk pad (in beeld, weg, laat antwoord, tweede poging, automatisch).
+- Kijk voor je een bouwer start of het scherm uit de backlogregel nog bereikbaar is.
+- Een werkbriefje heeft hoogstens 45 regels (`src/werkbriefjes.scan.test.ts`).
+- Lookout-poorten botsen: noem een vrije poort.
+- Twee branches die elk een instelling toevoegen botsen in `src/engine/__snapshots__/instellingen-foto.json`: kies een kant en maak hem opnieuw met `npx vitest run -u src/engine/settingsFoto.test.ts`.
+- Draai `kaart:vergelijk` nooit midden in een merge-conflict (hing tien minuten).
 
-## Open, volgende stappen
+## Reflectie
 
-- Inbox van `docs/backlog.md` (staat bijgewerkt). Wat een back-up van de eigenaar vraagt (audit 13 november, bodem van 20 m naspelen) wacht tot hij er een in de scratchpad zet.
-- Bouwrij: Trainingsscherm spoor 5 tot 10, daarna Ascend en Logboek in dezelfde lijn (eerst Cartographer).
-
-## Werkwijze, geleerd vandaag
-
-- Een fix in foutafhandeling opent telkens een nieuwe naad (Opslaan: vijf rondes). Vraag de bouwer vooraf naar elk pad: in beeld, weg, laat antwoord, tweede poging, automatisch.
-- Kijk voor je een bouwer start of het scherm uit de backlogregel nog bereikbaar is (Efficiëntie-blad: 160k verspild).
-- Hervatten van dezelfde bouwer met SendMessage werkt ook na een herstart van de container.
-- Een werkbriefje heeft een grens van 45 regels (`src/werkbriefjes.scan.test.ts`); voeg een valkuil samen met een bestaande regel.
-- Lookout-poorten botsen; noem in de opdracht een vrije poort of "niet 5231, 5237, 5263".
+- 14 november: een half uur maar één bouwer terwijl ik op een review wachtte. Goed: eigen blik op afdrukken ving een Engelse naam die Warden en Pathfinder misten.
+- 15 november nacht: vijf coördinatorfouten (bouwers kunnen zich wel melden aangenomen, planner een uur onopgemerkt, run_once_at in het verleden, verkeerd uur in twee opdrachten, een regel van een werkbriefje overschreven). Overdag inspanning medium, tenzij de eigenaar anders kiest.

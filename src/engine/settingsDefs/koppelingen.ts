@@ -265,6 +265,18 @@ export const KOPPELINGEN: SettingDef[] = [
     showWhen: [B.garmin, B.send],
   },
   {
+    id: 'horloge-wandel-hartslag',
+    page: 'koppelingen',
+    place: { in: 'bundel-horloge-sturen' },
+    title: 'Hartslag bij wandelen',
+    note: 'Een wandelworkout krijgt vaste slagen per minuut uit je hardloopzones, want wandelen heeft in intervals.icu geen eigen zones.',
+    keywords: ['hartslag', 'bpm', 'wandelen', 'wandelworkout', 'stairmaster', 'traplopen', 'zones', 'andere', 'intervals.icu', 'horloge', 'trainingen naar je horloge'],
+    route: '/koppelen/garmin',
+    help: true,
+    helpKey: 'horlogeWandelHartslag',
+    showWhen: [B.garmin, B.send],
+  },
+  {
     id: 'horloge-gedaan-weghalen',
     page: 'koppelingen',
     place: { in: 'bundel-horloge-sturen' },

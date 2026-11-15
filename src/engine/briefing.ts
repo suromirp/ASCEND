@@ -25,13 +25,15 @@ import type { SweatEntry } from '../models/sweat';
 import type { RouteTarget } from '../models/route';
 import type { PaceRange, RacePaces } from './racePaces';
 import { paceRangeText, trainingPace } from './missionFacts';
-import { watchSportOf, type WatchSport } from './watchWorkout';
+import { watchSportFor, watchSportOf, type WatchSport } from './watchWorkout';
+import { walkBpm, walkBpmBriefing } from './walkHeartRate';
+import type { HeartRateSettings } from './heartRateZones';
 import type { WatchStatus } from './watchStatus';
 import { formatClockTime, goesOnWhen } from './watchStatus';
 import { watchSheet, type WatchSheetInput } from './watchSheet';
 import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
-import { isTrekDay, routeTarget, searchesOnOpen } from './routeTarget';
+import { isTrekDay, routeTarget, searchesOnOpen, walkShortText } from './routeTarget';
 import type { LeavePeriod } from '../models/leave';
 import { showSpotsFor } from './trainingSpots';
 import { uvShort } from './outdoorSun';
@@ -238,6 +240,11 @@ export interface BriefingInput {
   // Het blad Je horloge (zonder training en stand, die vult dit zelf in) en de stand van de training.
   watch: Omit<WatchSheetInput, 'template' | 'status' | 'statusText' | 'garmin'>;
   watchStatus?: WatchStatus;
+  // Instelling Hartslag bij wandelen (engine/walkHeartRate.ts): je hartslaginstellingen als hij aan staat, anders
+  // afwezig. Bij een wandelworkout zegt de rij Horloge dan welke bpm. Afwezig: geen regel.
+  walkHr?: HeartRateSettings;
+  // Instelling Eigen workout bij een andere manier (AppSettings.watchPlaceWorkout); afwezig is aan.
+  placeWorkout?: boolean;
   // Het weer; afwezig zonder netwerk of plaats.
   forecast?: WeatherForecast;
   // De gekozen plek ligt ver van huis (engine/placeWeather.ts): 'shown' als `forecast` het weer van die
@@ -501,11 +508,24 @@ function watchRow(input: BriefingInput, stand: BriefingStand, place: string | un
   // van de training.
   // De echte stand, ook als de instelling Horlogestatus tonen uit staat: anders zou de regel een workout verzwijgen.
   // Amber alleen als ASCEND een workout klaarzette (of gaat zetten); stel je zelf in, dan de gewone toon.
+  // Een wandelworkout heeft geen zones in intervals.icu: de vaste bpm uit je hardloopzones, als droog feit erachter.
+  const bpm = walkBpmLine(input, plan, place);
   const other = watchPlaceState(input.template, place, status, toISODate(input.now));
-  if (other) return { id: 'watch', label: BRIEFING_TEXT.watch, line: ticks ? `${other.line} ${ticks}.` : other.line, opens: true, ...(other.warn ? { tone: 'warn' as const } : {}) };
+  if (other) return { id: 'watch', label: BRIEFING_TEXT.watch, line: [other.line, bpm, ticks ? `${ticks}.` : undefined].filter(Boolean).join(' '), opens: true, ...(other.warn ? { tone: 'warn' as const } : {}) };
   const state = watchState(input, status, plan?.garmin !== undefined);
-  const line = ticks ? `${state.line}. ${ticks}.` : state.line;
+  const line = ticks || bpm ? [`${state.line}.`, bpm, ticks ? `${ticks}.` : undefined].filter(Boolean).join(' ') : state.line;
   return { id: 'watch', label: BRIEFING_TEXT.watch, line, opens: true, ...(state.warn ? { tone: 'warn' as const } : {}) };
+}
+
+// "Hartslag onder 152 bpm, uit je hardloopzones.": alleen bij een wandelworkout (de StairMaster of een
+// wandeltraining) met de instelling Hartslag bij wandelen aan en een drempel of maximale hartslag.
+function walkBpmLine(input: BriefingInput, plan: WorkoutPlan | undefined, place: string | undefined): string | undefined {
+  if (!input.walkHr) return undefined;
+  const sport = watchSportFor(input.template, place, input.placeWorkout);
+  if (sport !== 'Walk' && sport !== 'Hike') return undefined;
+  // De stapnamen van de manier veranderen de zwaarte niet: het plan van de training is genoeg.
+  const bpm = walkBpm(plan, input.walkHr);
+  return bpm ? walkBpmBriefing(bpm) : undefined;
 }
 
 // De stand waarin ASCEND een workout op je horloge al zette (staat) of nog gaat zetten (komt).
@@ -662,8 +682,9 @@ function stretchRow(template: SessionTemplate): BriefingRow | undefined {
 }
 
 // "12 km": de afstand van de lus die je zoekt, zoals engine/routeTarget.ts#targetText, zonder hoogtemeters.
+// Een wandeltraining: "3 uur, ongeveer 8 km" (routeTarget.ts#walkShortText); de duur is leidend.
 export function kmText(target: RouteTarget): string {
-  return `${String(target.distanceKm).replace('.', ',')} km`;
+  return walkShortText(target) ?? `${String(target.distanceKm).replace('.', ',')} km`;
 }
 
 // Eén zin, met de punt: de kop heeft geen Meer erachter (spoor 2).

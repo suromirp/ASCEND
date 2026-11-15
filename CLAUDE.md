@@ -4,6 +4,8 @@ ASCEND is a mobile-first personal training and adventure application.
 
 Guidance for Claude Code (and any other agent) working in this repository.
 
+Lees eerst `docs/kennisindex/README.md`: per onderwerp waar alles staat, welke besluiten gelden en wat verouderd is (`npm run kennisindex`).
+
 Werk je aan een onderwerp, lees dan eerst het werkbriefje in `docs/werkbriefjes/` (bestanden, wat nooit mag, valkuilen, tests; kort) en begin daar. Het lange verhaal met de redenen staat in `docs/architectuur/`. Een fout met echte data speel je eerst na met de skill `naspelen`.
 
 ## Core identity
@@ -71,6 +73,7 @@ Een regel per onderwerp: het werkbriefje (bestanden, Nooit, valkuilen, tests). D
 - Kansen met gegevens (`docs/beslissingen/2026-10-31-kansen-stap-0.md`, `docs/onderzoek/Kansen met gegevens.md`; `engine/sourceWatch.ts`, `engine/airQuality.ts`): elk signaal is instelbaar en verandert de planning nooit zelf.
 - Ochtendkaart (`docs/beslissingen/2026-10-31-ochtendkaart-vernieuwd.md`; `engine/morningCard.ts`, `components/MorningCard.tsx`): `morningConsequence` is alleen tekst en plant niets.
 - Tekstkaart (`docs/beslissingen/2026-10-31-app-kaart.md`; `npm run kaart`, `npm run kaart:vergelijk`, `docs/app-kaart/`): na elke wijziging draait de vergelijking met elk verschil verklaard; elke gevonden inconsistentie wordt een invariant.
+- Kennisindex (`docs/kennisindex/`; `npm run kennisindex`, `npm run kennisindex:vergelijk`): na elke wijziging in `docs/` krijgt een nieuw document een regel in `bronnen.json` en zegt de vergelijking "Geen verschil met docs/kennisindex/."
 - Open werk: `docs/backlog.md` (coördinator). Wat de eigenaar tussendoor meldt gaat in de Inbox daarvan en wordt gebouwd op het bouwmoment (maandag, woensdag, vrijdag; skill `bouwmoment`). Meteen alleen: iets dat nu stuk is, of een kleine fix die de coördinator zelf in een paar minuten doet, zonder helper. Wie welke helper op welk model krijgt: de skill `werkverdeling`.
 
 **Scheduling logic belongs in `/engine`.** Domeinlogica staat in `engine/`, niet in componenten, en de scheduler is deterministisch, zonder AI. Alles wat de planning van de gebruiker inhoudelijk verandert is een voorstel met Akkoord, nooit stil.
@@ -149,6 +152,7 @@ afspraken voor elke agent die in deze repo werkt.
 - Vaste afspraken met de eigenaar (uit eerdere gesprekken):
   - Berichten kort, in het Nederlands, als punten; een pushmelding als iets af of live is.
   - Stijl Jarvis (14 november): spreek als Jarvis, beheerst, beknopt en droog, met "meneer" waar het past; elke tijd aan de eigenaar in Amsterdamse tijd, nooit UTC; een korte briefing, eerst wat er gebeurt en wat de eigenaar concreet moet doen of beslissen, dan de juiste vraag met advies; geen uitleg die hij niet nodig heeft. Werkt hij niet mee (onderweg, vliegen), dan beslist de coördinator zelf met het advies en legt hij elke keuze en zijn reflectie vast in de overdracht.
+  - Overdracht bijhouden (15 november): elk besluit, elke wens en elke afspraak uit het gesprek komt meteen in `.claude/coordinator/overdracht.md` (vragen, stuk en live in `eigenaar.md`), in eigen woorden, kort en snel te lezen voor een volgende chat; verouderde regels eruit.
   - Vragen aan de eigenaar (14 november: "kan je dit voortaan duidelijker neerzetten"): een vraag staat nooit midden in een bericht. Hij staat apart onderaan onder de kop **Vraag aan u**, is op zichzelf te lezen zonder de rest, noemt de keuzes met het advies voorop, en zegt wat er gebeurt als hij niet antwoordt. Liefst met de knoppen van AskUserQuestion.
   - Main alleen via een squash (`git commit-tree HEAD^{tree} -p origin/main`); commit `f7e63c3` mag nooit
     op main komen; geen geschiedenis herschrijven zonder toestemming.
