@@ -263,7 +263,7 @@ export function extraSessionAdvice(inputs: AdviceInputs, templateById: Map<strin
   const found = proposeExtraSession({
     ...inputs.extraSession,
     today: inputs.asOf, program: inputs.program, plannedSessions: inputs.plannedSessions, logs: inputs.logs,
-    templates: inputs.templates, illnessEpisodes: inputs.illnessEpisodes, respondedIds: inputs.respondedIds, keyFocus: inputs.keyFocus,
+    templates: inputs.templates, illnessEpisodes: inputs.illnessEpisodes, respondedIds: inputs.respondedIds, keyFocus: inputs.keyFocus, openDraft: inputs.openDraft,
   });
   if (!found) return [];
   const template = templateById.get(found.choice.templateId)!;

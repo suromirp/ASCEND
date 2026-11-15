@@ -44,6 +44,8 @@ interface CourseInputs {
   leavePeriods?: LeavePeriod[];
   // Wat de sleuteltraining is (engine/keySession.ts), zoals op Ascend. Zonder: de lange duurloop of de bergtocht.
   keyFocus?: KeyFocus;
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, niet gemist.
+  openDraft?: string;
 }
 
 const LOOKBACK_WEEKS = 4;
@@ -79,7 +81,7 @@ export interface Adherence {
 }
 
 type ReviewInputsLite = { heartRate: HeartRateSettings; intensityCounting: IntensityCounting };
-export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes' | 'leavePeriods' | 'keyFocus'> & Partial<Pick<ReviewInputsLite, 'heartRate' | 'intensityCounting'>> & { openDraft?: string };
+export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes' | 'leavePeriods' | 'keyFocus' | 'openDraft'> & Partial<Pick<ReviewInputsLite, 'heartRate' | 'intensityCounting'>>;
 
 export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const { today, program, logs, templates, planChangeLog, illnessEpisodes } = inputs;

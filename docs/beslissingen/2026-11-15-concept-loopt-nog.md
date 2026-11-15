@@ -11,6 +11,12 @@ De status blijft afgeleid. Eén functie leest het concept: `engine/sessionStatus
 
 Een concept van vandaag verandert niets: die training is gewoon vandaag. Een overgeslagen training blijft overgeslagen. Een concept van een losse training (zonder plannedSessionId) raakt geen geplande training. In Week is er geen greep en geen Verplaatsen als inhaal voor een training die nog loopt.
 
+Herstelronde na Warden (15 november): ook de volle week (`engine/fullWeek.ts#weekLoss`, FULL-WEEK, `fullWithExtra` en het punt in Let op), de extra training (`extraRun.ts`), Deze week nog een keer (`repeatWeek.ts`) en de coach op Ascend (`assessOnCourse`) krijgen `openDraft`. Een training die nog loopt is daar geen verlies en geen tegenvallende week.
+
+Bewuste keuze van de coördinator: een concept dat dagen blijft liggen, houdt die ene training uit gemist tot je Afrondt of Verwijdert, ook na tien dagen. De amber pil Niet afgerond blijft al die tijd staan, dus de training is niet onzichtbaar. Een grens in tijd komt er nu niet; dat is een latere keuze voor de eigenaar, met een instelling.
+
+Een concept op een ziektedag of in de afbouw na een race heet ook "loopt nog", niet Vervallen: je begon eraan, dus dat is het feit.
+
 ## Reden
 
 Backlog Afbreker vervolg: na `2026-11-14-training-blijven-liggen.md` lag een begonnen training als concept met de pil Niet afgerond, terwijl Vandaag tegelijk "Niet gedaan?" vroeg en Week en de weekterugblik hem gemist noemden. Twee stemmen over dezelfde training. Met Zelf overslaan kon ASCEND hem zelfs op overgeslagen zetten terwijl je sets nog in het concept stonden.
