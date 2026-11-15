@@ -1,6 +1,6 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 15 november 2026, 18:35 Portugese tijd, door de coördinator session_01LnDpSnngzUAioWQ5b8xBWH (wissel om context 60 procent). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
+Bijgewerkt: 15 november 2026, 18:40 Portugese tijd, door de coördinator session_01LnDpSjEhK5wS8sN1rH1p5c (overgenomen van session_01LnDpSnngzUAioWQ5b8xBWH). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
 
 ## Vaste afspraken
 
@@ -21,10 +21,11 @@ Bijgewerkt: 15 november 2026, 18:35 Portugese tijd, door de coördinator session
 
 ## Taken
 
-- Bouwers nakijken elk uur op :10: trig_015XdDMzaV3mQ89aqdgLLHpo op deze sessie. De oude (trig_011KHnGB7dsiNtt5r3VgdE4Q) staat uit.
-- Wachter elk uur op :40: trig_01CDpj9NsMnvoumE9kVDUPt3 op deze sessie (eigenaar 15:36 "Ja"). De oude (trig_01Y6Gb6hgELCGn9XV2EAkMny) staat uit. Bij de volgende wissel: zelf verhuizen, niet meer vragen.
+- Bouwers nakijken elk uur op :10: trig_01E4NEQpURCEZGKYzpZGQizh op session_01LnDpSjEhK5wS8sN1rH1p5c. Oude trig_015XdDMzaV3mQ89aqdgLLHpo staat uit.
+- Wachter elk uur op :40: verhuizen werd 18:32 geweigerd door de automatische toestemmingscontrole. De oude trig_01CDpj9NsMnvoumE9kVDUPt3 blijft aan en wekt de vorige coördinator (session_01LnDpSnngzUAioWQ5b8xBWH); aan de eigenaar gemeld met zijn citaat van 15:36.
 - Werkkaart elk uur op :20: eigen sessie session_01LnDpSktfMxYFgMMgDhw8Do (trig_01JoRN6XzHJ17frpcWQAdEzB). Niet aanraken, niet archiveren.
-- Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam] staat (trig_01Eu5zZc9REdsU1VGyWCvjFe).
+- Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam] staat (trig_01SgRjhVtzejbpKaz26bmsAi).
+- 18:35: deploy en Android van 8cce377 groen. Lookout en Pathfinder Beginner heel licht en Pathfinder Routes op reis 3 lopen als helpers in de coördinator-chat.
 
 ## Live vandaag
 
