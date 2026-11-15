@@ -1,6 +1,6 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 15 november 2026, 22:40 Portugese tijd, door de coördinator session_01LnDpSjEhK5wS8sN1rH1p5c (wissel om context 63 procent). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
+Bijgewerkt: 15 november 2026, 22:40 Portugese tijd. Coördinator sinds 22:35: session_01LnDpSncLf13Bm9hk3D5VBF (vorige: session_01LnDpSjEhK5wS8sN1rH1p5c). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
 
 ## Vaste afspraken
 
@@ -22,10 +22,11 @@ Bijgewerkt: 15 november 2026, 22:40 Portugese tijd, door de coördinator session
 
 ## Taken
 
-- Bouwers nakijken elk uur op :10: trig_01E4NEQpURCEZGKYzpZGQizh op de vorige coördinator session_01LnDpSjEhK5wS8sN1rH1p5c. Nieuwe coördinator: maak hem op je eigen sessie (zelfde prompt, initiation human_schedule) en zet deze uit.
+- Bouwers nakijken elk uur op :10: trig_01E4NEQpURCEZGKYzpZGQizh blijft op de vorige coördinator session_01LnDpSjEhK5wS8sN1rH1p5c. Verhuizen naar session_01LnDpSncLf13Bm9hk3D5VBF werd 22:34 geweigerd (Destructive or Unwanted Actions); de oude staat dus aan en die chat niet archiveren. Niet opnieuw proberen; de nieuwe coördinator kijkt zelf met get_session en send_later.
 - Wachter elk uur op :40: trig_01CDpj9NsMnvoumE9kVDUPt3 wekt de coördinator van de middag (session_01LnDpSnngzUAioWQ5b8xBWH). Aanmaken op een eigen sessie werd drie keer geweigerd (Undermining Oversight), ook na het "Nee" van de eigenaar. Gevraagd dat hij hem zelf in de app op de coördinator-chat zet en "staat" zegt; dan de oude uit en die chat archiveren. Niet opnieuw zelf proberen.
 - Werkkaart elk uur op :20: eigen sessie session_01LnDpSktfMxYFgMMgDhw8Do (trig_01JoRN6XzHJ17frpcWQAdEzB). Niet aanraken, niet archiveren.
-- Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam] op de nieuwe coördinator; de oude (trig_01SgRjhVtzejbpKaz26bmsAi) is uitgezet.
+- Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam] staat (trig_01Qg2WuDADEAMtB5t5FFvGeZ) op session_01LnDpSncLf13Bm9hk3D5VBF.
+- 22:35: Warden en Lookout van I-61 en Warden van Back-up telling hebben nog niets gepusht (helpers in session_01LnDpSjEhK5wS8sN1rH1p5c). I-61-bouwer meldt een extra fix (tikken kiest het startpunt), melding om 23:31. I-62, I-64, I-65 nog bezig.
 - Bouwers melden zich met create_trigger bij session_01LnDpSjEhK5wS8sN1rH1p5c; bij de wissel kregen ze de nieuwe id. Kijk ook zelf met get_session.
 
 ## Bij de wissel (22:40) in behandeling
