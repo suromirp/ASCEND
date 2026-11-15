@@ -35,6 +35,10 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Net live
 
+### 15 november 10:43
+- Een wandellus zegt hoe lang hij duurt, en waarschuwt één keer in amber als hij duidelijk langer is dan je training.
+- De Werkkaart in de nieuwe vorm.
+
 ### 15 november 08:46
 - Een half afgemaakte Forge-training blijft als concept liggen (Afronden, Verder, Verwijderen) en heet "loopt nog", niet gemist.
 - Een horloge-log die niet past bij de planning geeft een vraag in plaats van stil mee te tellen.
