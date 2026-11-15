@@ -11,6 +11,8 @@
 // en Bewaar als plek bewaren een plek (besluiten 2026-11-11-route-start.md en 2026-11-12-andere-plek.md).
 // Een gekozen plek blijft wel per geplande training staan tot de dag voorbij is
 // (2026-11-15-avond-ervoor-kent-de-plek.md). Plant niets en bewaart geen lus.
+// `walk`: een wandeling die je zelf plant (Wandeling plannen op Vandaag, engine/walkPlan.ts#walkPlanTarget)
+// in plaats van een training; dezelfde zoektocht met dat doel, zonder geplande training en zonder plek per training.
 
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
@@ -132,7 +134,9 @@ export interface RouteSearchModel {
   pieces: LoopPiece[];
 }
 
-export function useRouteSearch({ template, date, closing = false, enabled = true, sessionId }: { template: SessionTemplate; date: string; closing?: boolean; enabled?: boolean; sessionId?: string }): RouteSearchModel {
+export type RouteSearchFor = { template: SessionTemplate; walk?: undefined } | { template?: undefined; walk: RouteTarget };
+
+export function useRouteSearch({ template, walk, date, closing = false, enabled = true, sessionId }: RouteSearchFor & { date: string; closing?: boolean; enabled?: boolean; sessionId?: string }): RouteSearchModel {
   const { settings, program, sessionLogs, updateSettings } = useAppData();
   const place = settings.homeLocation;
   const lat = place?.lat;
@@ -187,8 +191,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   // Een wandeltraining rekent met je lichaamsgewicht voor de rugzak op je eigen klimtempo (engine/hikeTarget.ts).
   // Eén keer per training, logs of instellingen: het klimtempo en de testtempo's lopen alle logs door.
   const trainingTarget = useMemo(
-    () => routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy, bodyKg: loadBodyKg(settings) }),
-    [template, date, program, sessionLogs, settings],
+    () => walk ?? routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy, bodyKg: loadBodyKg(settings) }),
+    [walk, template, date, program, sessionLogs, settings],
   );
 
   useEffect(() => {
@@ -449,7 +453,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     if (picked) dispatch({ type: 'reverse', base: adjustBase, style: picked });
   };
   const stepLength = (dir: 'longer' | 'shorter') => {
-    const next = stepDistance(trainingTarget.distanceKm, adjust.deltaKm, dir);
+    const next = stepDistance(trainingTarget.distanceKm, adjust.deltaKm, dir, trainingTarget.plannedWalk === true);
     if (!next.ok) return setAdjustFail(next.line);
     startAdjust({ ...adjust, deltaKm: next.deltaKm }, dir);
   };

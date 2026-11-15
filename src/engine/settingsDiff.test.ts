@@ -129,6 +129,7 @@ const everything: AppSettings = {
   routeAvoidBigRoads: false,
   rememberStartPlace: false,
   routeStyle: 'simple',
+  walkPlanKm: 8,
   routeStart: 'exact',
   routeMapBase: 'none',
   routeMapPhoto: 'photo',

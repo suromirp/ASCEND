@@ -4195,6 +4195,14 @@
    ],
    "kern": "Het oude trainingsscherm slaat op via `saveOnLogger`, met Sluiten en een wachtzin met uitweg na de grens; Vandaag en Week vinken af via `tickOff`.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-wandeling-plannen.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "historie-en-logs"
+   ],
+   "kern": "Wandeling plannen op Vandaag: een blad met afstand, hoogtewens en startpunt dat een route zoekt met de bestaande regie, zonder training, voorstel, log of opslag; Losse training in kopjes per sport, Wandelen bovenaan.",
+   "stand": "geldt"
   }
  }
 }

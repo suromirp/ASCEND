@@ -237,3 +237,20 @@ describe('een wandeltraining: het hele doel gaat mee tot de zin', () => {
     }
   });
 });
+
+describe('findRoutes met een wandeling zonder training (Wandeling plannen)', () => {
+  it('dezelfde ingang zoekt met een afstand en een hoogtewens; de training blijft gelijk', async () => {
+    const { walkPlanTarget } = await import('../engine/walkPlan');
+    const walk = walkPlanTarget({ km: 5, climb: 'none' });
+    const found = await findRoutes(place, walk, { route: straight, terrain: async () => undefined, offline: () => false });
+    expect(found.kind).toBe('plans');
+    if (found.kind !== 'plans') return;
+    const made = [found.plans.simple, found.plans.adventure].flatMap((o) => (o.ok ? [o.proposal] : []));
+    expect(made.length).toBeGreaterThan(0);
+    // De lus mikt op 5 km, niet op een duur.
+    for (const p of made) expect(Math.abs(p.distanceM - 5000)).toBeLessThan(2500);
+    // De ingang met een training is dezelfde als voorheen.
+    const training = await findRoutes(place, target, { route: straight, terrain: async () => undefined, offline: () => false });
+    expect(training.kind).toBe('plans');
+  });
+});

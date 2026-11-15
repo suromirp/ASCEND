@@ -6,6 +6,8 @@ import logger from './ExerciseLogger.tsx?raw';
 // De toestand en het concept van het formulier staan sinds Hoe ging het? in een gedeelde hook.
 import logForm from './logForm/useLogForm.ts?raw';
 import evening from './useEveningBefore.ts?raw';
+import today from '../pages/Today.tsx?raw';
+import walkSheet from './WalkPlanSheet.tsx?raw';
 
 // Route alleen buiten en te voet, op elke plek (Pathfinder, 11 november): Loopband gekozen geeft geen route
 // op Vandaag, in het blad achter de i, op het trainingsscherm of in De avond ervoor. Alle plekken lopen
@@ -18,10 +20,25 @@ describe('de route volgt de keuze Waar train je? overal', () => {
     // Zolang de keuzes niet gelezen zijn: geen route.
     expect(line).toContain('if (!places) return null;');
   });
-  it('Vandaag toont de route alleen via RouteProposalLine', () => {
+  // Bewust aangepast (15 november, docs/beslissingen/2026-11-15-wandeling-plannen.md): een route bij een
+  // training op Vandaag gaat nog steeds alleen via RouteProposalLine. Daarnaast is er een tweede ingang zonder
+  // training, Wandeling plannen (WalkPlanSheet): die kent geen training en dus geen keuze Waar train je?, en
+  // zoekt met dezelfde regie (useRouteSearch met `walk`). Vandaag zelf tekent nergens een eigen RoutePanel.
+  it('Vandaag toont een route bij een training alleen via RouteProposalLine, en zonder training alleen via Wandeling plannen', () => {
     expect(missionCard).toContain('<RouteProposalLine');
     expect(missionCard).not.toMatch(/wantsRoute(At)?\(/);
     expect(missionCard).not.toContain('<RoutePanel');
+    expect(today).not.toContain('<RoutePanel');
+    expect(today).not.toMatch(/useRouteSearch\(/);
+    expect(today).toContain('<WalkPlanSheet');
+  });
+  it('Wandeling plannen zoekt met de bestaande regie en plant of logt niets', () => {
+    expect(walkSheet).toMatch(/useRouteSearch\(\{ walk,/);
+    expect(walkSheet).toContain('<RoutePanelView');
+    expect(walkSheet).not.toMatch(/findRoutes|proposeRoutes/);
+    expect(walkSheet).not.toMatch(/plannedSession|PlannedSession|logSession|applyProposal|addSession/i);
+    // De afstand komt uit de instelling en wordt niet stil bewaard.
+    expect(walkSheet).not.toMatch(/updateSettings\(\{ walkPlanKm/);
   });
   // Bewust mee (14 november, docs/beslissingen/2026-11-14-info-blad-a.md): het blad achter de i (Waarom deze
   // training) toont geen route meer; die staat op het trainingsscherm en in de Briefing.

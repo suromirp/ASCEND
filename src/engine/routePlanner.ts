@@ -94,8 +94,16 @@ export function missScore(p: Pick<RouteProposal, 'distanceM' | 'ascentM'>, targe
   const d = target.distanceKm * 1000;
   const dist = d > 0 ? Math.abs(p.distanceM - d) / d : 0;
   const asc = target.ascentM >= MIN_ASCENT_TARGET_M ? Math.abs(p.ascentM - target.ascentM) / target.ascentM : 0;
-  return dist + asc;
+  // Vlak gekozen (Wandeling plannen): elke 20 m stijgen per kilometer weegt als een lus die de helft te lang is.
+  const flat = target.flat && target.distanceKm > 0 ? p.ascentM / target.distanceKm / FLAT_ASCENT_PER_KM : 0;
+  return dist + asc + flat;
 }
+
+// Bij Vlak: zoveel meter stijgen per kilometer telt als een afstand die een hele afstand mis zit (missScore).
+export const FLAT_ASCENT_PER_KM = 40;
+
+// "je training", of "je wandeling" bij een wandeling die je zelf plant (engine/walkPlan.ts).
+export const aimWord = (target: Pick<RouteTarget, 'plannedWalk'> | undefined): string => (target?.plannedWalk ? 'je wandeling' : 'je training');
 
 export const tooShort = (p: Pick<RouteProposal, 'distanceM'>, target: RouteTarget): boolean => p.distanceM < target.distanceKm * 1000 * (1 - SHORT_LIMIT);
 // De afstand past: niet meer dan SHORT_LIMIT korter en niet meer dan CLOSE_ENOUGH langer.
@@ -675,7 +683,7 @@ export function walkFitLine(target: RouteTarget): string | undefined {
 }
 
 // De melding van een lus die meer dan SHORT_LIMIT korter is dan de training (routeSheet.ts#loopLines herkent hem).
-export const shortLine = (p: Pick<RouteProposal, 'distanceM'>, target: RouteTarget): string => `${km(p.distanceM)}, korter dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`;
+export const shortLine = (p: Pick<RouteProposal, 'distanceM'>, target: RouteTarget): string => `${km(p.distanceM)}, korter dan de ${formatNumberNL(target.distanceKm, 1)} km van ${aimWord(target)}.`;
 
 // Vanaf zoveel meter langs een grote weg zegt de lus het erbij: de aanvraag mijdt ze al, dit is wat overblijft.
 export const BIG_ROAD_NOTE_M = 300;
@@ -702,8 +710,8 @@ export function proposalNotes(p: RouteProposal, target: RouteTarget, climbMarked
   if (tooShort(p, target)) notes.push(shortLine(p, target));
   // Een wandeling is een duur: te lang zegt de tijd, in amber (loopLines), niet de kilometers.
   else if (walk && walkTooLong(p, target)) notes.push(longerWalkLine(loopMinutes(p, target) as number, target.minutes as number));
-  else if (shortBy > 0) notes.push(`${km(shortBy * 100)} korter dan je training. Tot ${formatNumberNL(Math.round(SHORT_LIMIT * 100), 0)} procent korter is goed genoeg.`);
-  else if (!walk && p.distanceM > d * (1 + CLOSE_ENOUGH)) notes.push(`Langer dan de ${formatNumberNL(target.distanceKm, 1)} km van je training.`);
+  else if (shortBy > 0) notes.push(`${km(shortBy * 100)} korter dan ${aimWord(target)}. Tot ${formatNumberNL(Math.round(SHORT_LIMIT * 100), 0)} procent korter is goed genoeg.`);
+  else if (!walk && p.distanceM > d * (1 + CLOSE_ENOUGH)) notes.push(`Langer dan de ${formatNumberNL(target.distanceKm, 1)} km van ${aimWord(target)}.`);
   if (p.notice) notes.push(p.notice);
   if ((p.bigRoadM ?? 0) >= BIG_ROAD_NOTE_M) notes.push(bigRoadLine(p.bigRoadM as number));
   if (p.style === 'adventure' && p.repeatedShare > 0.15) notes.push('Een deel loop je twee keer.');
@@ -735,7 +743,7 @@ export function ascentNotice(p: Pick<RouteProposal, 'ascentM'>, target: RouteTar
   const asked = askedAscent(target);
   if (asked < MIN_ASCENT_TARGET_M || p.ascentM >= asked * SHORT_ASCENT) return undefined;
   const m = (v: number) => `${formatNumberNL(round10(v), 0)} m`;
-  const loop = `Deze lus stijgt ${m(p.ascentM)}; de training vraagt ${m(asked)}.`;
+  const loop = target.plannedWalk ? `Deze lus stijgt ${m(p.ascentM)}; je vroeg ${m(asked)}.` : `Deze lus stijgt ${m(p.ascentM)}; de training vraagt ${m(asked)}.`;
   if (!found) return loop;
   if (found.hills > 0 && found.tallestM !== undefined) return `De hoogste helling dichtbij ligt ${formatNumberNL(Math.round(found.tallestM), 0)} m boven je plek. ${loop}`;
   // Een wandeling zonder helling dichtbij: ook waar je de meters wel haalt, in dezelfde regel (Pathfinder,
@@ -745,9 +753,10 @@ export function ascentNotice(p: Pick<RouteProposal, 'ascentM'>, target: RouteTar
 
 // De zin in het blok van een lus die er niet kwam. Zonder pad bij het startpunt zegt de regel
 // bovenaan het al (NO_PATH_AT_START): dan hier geen zin over hellingen, want Simpel is niet gezocht.
-export function failureLine(style: RouteProposal['style'], outcome: Extract<PlanOutcome, { ok: false }>, flat: boolean): string {
+// `target`: alleen voor het woord (je training of je wandeling).
+export function failureLine(style: RouteProposal['style'], outcome: Extract<PlanOutcome, { ok: false }>, flat: boolean, target?: Pick<RouteTarget, 'plannedWalk'>): string {
   if (outcome.at === 'start') return 'Geen lus zonder pad bij je startpunt.';
-  if (outcome.reason === 'nothing' || outcome.reason === 'unmapped') return style === 'simple' ? (flat ? 'Geen pad gevonden vanaf je plek.' : 'Geen helling gevonden die bij je training past.') : 'Geen lus gevonden vanaf je plek.';
+  if (outcome.reason === 'nothing' || outcome.reason === 'unmapped') return style === 'simple' ? (flat ? 'Geen pad gevonden vanaf je plek.' : `Geen helling gevonden die bij ${aimWord(target)} past.`) : 'Geen lus gevonden vanaf je plek.';
   // Bij zwak bereik houdt de zoektocht vlak voor zijn grens op en toont wat er al is: deze lus kwam niet op tijd.
   if (outcome.reason === 'timeout') return 'De routeplanner antwoordde niet op tijd.';
   return 'De routeplanner antwoordde niet.';
@@ -779,6 +788,7 @@ export function searchLines(plans: RoutePlans, target: RouteTarget): string[] {
   }
   // Wat de training vraagt, zoals de melding van de lus (askedAscent); staat de vervanger al in een melding,
   // dan niet nog eens.
-  if (!made.some((p) => p.ascentM >= asked * SHORT_ASCENT) && !made.some((p) => p.notice?.includes(SUBSTITUTE_LINE))) lines.push(SUBSTITUTE_LINE);
+  // Bij een wandeling die je zelf plant geen trap of loopband: dat is advies voor een training.
+  if (!target.plannedWalk && !made.some((p) => p.ascentM >= asked * SHORT_ASCENT) && !made.some((p) => p.notice?.includes(SUBSTITUTE_LINE))) lines.push(SUBSTITUTE_LINE);
   return lines;
 }

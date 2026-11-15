@@ -11,6 +11,7 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
+- 2026-11-15 [Wandeling plannen zonder training](../beslissingen/2026-11-15-wandeling-plannen.md): Wandeling plannen op Vandaag: een blad met afstand, hoogtewens en startpunt dat een route zoekt met de bestaande regie, zonder training, voorstel, log of opslag; Losse training in kopjes per sport, Wandelen bovenaan.
 - 2026-11-15 [Het oude trainingsscherm: een uitweg bij wachten, en afvinken met een grens](../beslissingen/2026-11-15-oud-trainingsscherm.md): Het oude trainingsscherm slaat op via `saveOnLogger`, met Sluiten en een wachtzin met uitweg na de grens; Vandaag en Week vinken af via `tickOff`.
 - 2026-11-15 [Logboekkop met alleen herstel](../beslissingen/2026-11-15-logboekkop-herstel.md): De kop bovenaan het Logboek zegt nooit "niets" of "geen trainingen" als er in die maand een log staat.
 - 2026-11-15 [Een import schrijft alleen wat nieuw of gewijzigd is](../beslissingen/2026-11-15-import-alleen-nieuw.md): Een import schrijft alleen nieuwe of gewijzigde rijen; geschiedenis alleen als nieuwe rij in dezelfde transactie, een mijlpaal één regel met een vast id, alles wissen in één transactie.

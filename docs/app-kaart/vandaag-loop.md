@@ -42,6 +42,7 @@ Je dag
 [knop: BenenFris] (aria: Benen: Fris)
 [knop: MorgenRustdag, wandelen mag] (aria: Morgen: Rustdag, wandelen mag)
 [knop: Losse training]
+[knop: Wandeling plannen]
 
 --- kaart 6 ---
 Advies, planning

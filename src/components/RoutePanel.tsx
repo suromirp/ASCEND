@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
 import type { RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { targetText } from '../engine/routeTarget';
+import { walkPlanText } from '../engine/walkPlan';
 import { MIN_ASCENT_TARGET_M, climbStretch, failureLine, proposalFacts, proposalNotes, proposalTitle, type PlanOutcome } from '../engine/routePlanner';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import { SEND_LABEL, type RouteSendOutcome } from '../engine/routeSend';
@@ -125,7 +126,7 @@ export function LoopRow({ style, outcome, picked, onMap, target, motion, onChoos
       <div className="flex min-h-[56px] flex-col justify-center rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-card-border)' }}>
         <Eyebrow tone="var(--color-ink-dim)">{STYLE_NAME[style]}</Eyebrow>
         <p className="text-sm leading-snug" style={dim}>{STYLE_LINE[style]}</p>
-        <p className="text-sm leading-snug" style={dim}>{failureLine(style, outcome, target.ascentM < MIN_ASCENT_TARGET_M)}</p>
+        <p className="text-sm leading-snug" style={dim}>{failureLine(style, outcome, target.ascentM < MIN_ASCENT_TARGET_M, target)}</p>
       </div>
     );
   }
@@ -156,7 +157,7 @@ export function RouteFirstQuestion({ model, onDecline }: { model: RouteSearchMod
   const dim = { color: 'var(--color-ink-dim)' };
   return (
     <div className="flex flex-col">
-      <p className="text-sm leading-snug" style={dim}>Een lus zoeken voor deze training? Kies waar de lus begint. Er gaat geen naam of adres mee.</p>
+      <p className="text-sm leading-snug" style={dim}>Een lus zoeken voor deze {model.trainingTarget.plannedWalk ? 'wandeling' : 'training'}? Kies waar de lus begint. Er gaat geen naam of adres mee.</p>
       <TextButton onClick={() => void model.choose('here')}>Waar je nu bent</TextButton>
       <p className="text-xs leading-snug" style={dim}>
         Bij elke zoektocht wordt je plek één keer gevraagd. Die gaat precies naar de routeplanner (BRouter, anders Valhalla van FOSSGIS); heuvels en paden zoekt OpenStreetMap om je plek op ongeveer 100 m, en de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Je plek wordt niet als startpunt bewaard. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. {PHOTO_SOURCES_LINE}
@@ -222,7 +223,8 @@ export function RoutePanel({ template, date, onDecline, closing = false }: { tem
 
 // Wat het blad Route tekent bij een regie (useRouteSearch). Ook het blad achter Groter in de Briefing,
 // met de regie van de Briefing: dezelfde lus, geen tweede zoektocht.
-export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchModel; date: string; onDecline: () => void }) {
+// `startAbove`: de chips Start bij staan al boven het paneel (Wandeling plannen, WalkPlanSheet.tsx); niet nog eens.
+export function RoutePanelView({ model, date, onDecline, startAbove = false }: { model: RouteSearchModel; date: string; onDecline: () => void; startAbove?: boolean }) {
   const motion = useMotionMode();
   const dim = { color: 'var(--color-ink-dim)' };
   const { stage, lat, lon, target, plans, order, okStyles, picked, pickedOutcome, sender, parts, noMap } = model;
@@ -289,8 +291,8 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
     <div className="flex flex-col gap-3">
       {/* Waar de lus begint staat er in elke stand, ook bij zoeken, een fout of zonder kaart (Warden): de
           chips, en de regel alleen bij een terugval of afwijking. */}
-      <StartChips model={model} />
-      <p className="text-sm leading-snug" style={dim}>Je training: {targetText(model.trainingTarget)}.{model.startLine ? ` ${model.startLine}` : ''}</p>
+      {!startAbove && <StartChips model={model} />}
+      <p className="text-sm leading-snug" style={dim}>{model.trainingTarget.plannedWalk ? walkPlanText(model.trainingTarget) : `Je training: ${targetText(model.trainingTarget)}.`}{model.startLine ? ` ${model.startLine}` : ''}</p>
       {parts.map(part)}
       {/* Groter staat buiten de delen: een nieuwe zoektocht (Langer, een andere chip) sluit hem niet. */}
       {bigger && <RouteMapFull model={model} piece={piecePoints} onClose={() => setBigger(false)} />}

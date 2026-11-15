@@ -3,21 +3,16 @@
 // (Settings → Training → Sporten only limits planning, never logging).
 
 import type { SessionTemplate } from '../models/training';
-import { templateSport, SPORT_LABEL } from '../engine/sports';
+import { adHocGroups } from '../engine/adHocGroups';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
 import { Card, SecondaryButton, SheetGrip } from './ui';
 import { useSheetClose } from '../utils/useSheetClose';
 
-const TYPE_ORDER: Record<string, number> = { cardio: 1, hiking: 2, strength: 3, adventure: 4, recovery: 5 };
-
+// Kopjes per sport in een vaste volgorde, Wandelen bovenaan (engine/adHocGroups.ts).
 export function AdHocLogSheet({ templates, onPick, onClose }: { templates: SessionTemplate[]; onPick: (template: SessionTemplate) => void; onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
-  const sorted = [...templates].sort((a, b) => {
-    const ca = templateSport(a) === 'cycling' ? 0 : TYPE_ORDER[a.type] ?? 9;
-    const cb = templateSport(b) === 'cycling' ? 0 : TYPE_ORDER[b.type] ?? 9;
-    return ca - cb || a.name.localeCompare(b.name);
-  });
+  const groups = adHocGroups(templates);
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
@@ -26,10 +21,10 @@ export function AdHocLogSheet({ templates, onPick, onClose }: { templates: Sessi
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <SheetHeader eyebrow="Loggen" title="Losse training" onClose={requestClose} />
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Iets gedaan dat niet op de planning stond? Kies wat het was.</p>
-            <div className="flex flex-col gap-2">
-              {sorted.map((t) => {
-                const sport = templateSport(t);
-                return (
+            {groups.map((group) => (
+              <section key={group.key} aria-label={group.label} className="flex flex-col gap-2">
+                <h3 className="text-xs font-medium" style={{ color: 'var(--color-ink-dim)' }}>{group.label}</h3>
+                {group.templates.map((t) => (
                   <button
                     key={t.id}
                     onClick={() => onPick(t)}
@@ -37,11 +32,10 @@ export function AdHocLogSheet({ templates, onPick, onClose }: { templates: Sessi
                     style={{ borderColor: 'var(--color-card-border)' }}
                   >
                     <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{t.name}</span>
-                    {sport && <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{SPORT_LABEL[sport]}</span>}
                   </button>
-                );
-              })}
-            </div>
+                ))}
+              </section>
+            ))}
             <SecondaryButton onClick={requestClose}>Annuleren</SecondaryButton>
           </Card>
         </div>

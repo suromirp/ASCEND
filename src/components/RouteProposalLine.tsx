@@ -21,7 +21,7 @@ import { ADJUST_HINT, MAP_HINT, PICK_HINT } from '../engine/routeSheet';
 
 // Achter de i van het blad Route: hoe de kaart werkt en hoe een lus op je horloge komt. Stond eerder
 // onder de kaart en in een uitklap; niets is weg.
-function RouteInfoSheet({ onClose }: { onClose: () => void }) {
+export function RouteInfoSheet({ onClose }: { onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const dim = { color: 'var(--color-ink-dim)' };
   // Dezelfde weg als de hoofdknop: Naar Garmin Connect, of het bestand openen.

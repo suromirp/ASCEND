@@ -25,6 +25,7 @@ Je dag
 --- kaart 4 ---
 [knop: BenenFris] (aria: Benen: Fris)
 [knop: Losse training]
+[knop: Wandeling plannen]
 [knop: Niet fit?]
 
 --- kaart 5 ---
