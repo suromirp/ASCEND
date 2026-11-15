@@ -178,7 +178,7 @@ describe('withSwapVerdicts', () => {
     const c = ctx(week());
     const sat = withSwapVerdicts(c, 'lowerA', dayVerdicts(c, 'lowerA', MON)).find((x) => x.date === '2026-10-03')!;
     expect(sat).toMatchObject({ kind: 'swap', tone: 'warn', ask: true });
-    expect(sat.line).toContain('Als je loslaat, vraagt ASCEND eerst of je dat echt wilt.');
+    expect(sat.line).toContain('Als je loslaat, komt eerst de vraag of je dat echt wilt.');
   });
 
   it('twee trainingen op de dag: gewoon verplaatsen zoals eerst', () => {

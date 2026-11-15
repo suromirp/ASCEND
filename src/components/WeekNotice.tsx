@@ -106,7 +106,7 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{TAKEN_LINE}</p>
       )}
       {card.noFix && (
-        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>ASCEND vond deze week geen dag die beter past.</p>
+        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Deze week is er geen dag die beter past.</p>
       )}
 
       {sheetAdvice && <ProposalSheet advice={sheetAdvice} onClose={() => setProposalId(null)} />}

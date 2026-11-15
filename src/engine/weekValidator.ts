@@ -445,8 +445,8 @@ const SOFT_REST_REASON = 'Iets eerder dan ASCEND graag ziet na je tocht, daarom 
 // Why a leg day next to a tocht is let go: concrete, so it is clear it is not a mistake.
 function legAndTrekReason(afterTrek: boolean): string {
   return afterTrek
-    ? 'Te dicht na je tocht: na een bergtocht houdt ASCEND 72 uur tot de volgende zware beendag, en deze week is er geen dag voor.'
-    : 'Te dicht voor je tocht: tussen een zware beendag en je tocht houdt ASCEND 48 uur, en deze week is er geen dag voor.';
+    ? 'Te dicht na je tocht: na een bergtocht zit er 72 uur tot de volgende zware beendag, en deze week is er geen dag voor.'
+    : 'Te dicht voor je tocht: tussen een zware beendag en je tocht zit 48 uur, en deze week is er geen dag voor.';
 }
 
 export interface RepairResult {

@@ -222,7 +222,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     changes: items,
     alternatives: [],
     consequences: explain(mode, period, moving, !!replaces),
-    explanation: 'Een vrije periode verandert je planning nooit ongemerkt. ASCEND laat zien wat er verschuift, vervalt of erbij komt, en past het pas toe na jouw akkoord. Wat je zelf vastzette blijft op zijn dag; een geplande test of wedstrijd en alles wat al geweest is blijven zoals het is.',
+    explanation: 'Een vrije periode verandert je planning nooit ongemerkt. Eerst zie je wat er verschuift, vervalt of erbij komt; het gebeurt pas na jouw akkoord. Wat je zelf vastzette blijft op zijn dag; een geplande test of wedstrijd en alles wat al geweest is blijven zoals het is.',
     createdAt: new Date().toISOString(),
   };
   const notes = notesFor(result.remaining, inWindow, mode);
@@ -230,14 +230,14 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   if (mode === 'add' && period.kind === 'trek') {
     for (const s of result.sessions) {
       if (s.status === 'skipped' || !idIsTestOrRace(s.templateId, byId) || s.scheduledDate < addDays(period.startDate, -trekLightDaysBefore(dayCount(period), period.trek?.importance)) || s.scheduledDate > period.endDate) continue;
-      notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} valt bij je tocht. Die verplaatst ASCEND niet zomaar. Kies zelf een andere dag als je fris wilt vertrekken.`);
+      notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} valt bij je tocht. Die verschuift niet zomaar. Kies zelf een andere dag als je fris wilt vertrekken.`);
     }
   }
   // A test or race in a period without a gym stays where it is: say so.
   if (mode === 'add' && period.kind === 'no_gym') {
     for (const s of result.sessions) {
       if (s.status === 'skipped' || !idIsTestOrRace(s.templateId, byId) || s.scheduledDate < period.startDate || s.scheduledDate > period.endDate || s.scheduledDate < today) continue;
-      notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} valt in je periode zonder sportschool. Die verplaatst ASCEND niet zomaar. Kies zelf een andere dag als je hem thuis wilt lopen.`);
+      notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} valt in je periode zonder sportschool. Die verschuift niet zomaar. Kies zelf een andere dag als je hem thuis wilt lopen.`);
     }
     // What is fixed in place stays a gym session or a run as it is: say so, never silent (Warden punt 2).
     const light = resolveNoGym(period).amount === 'light';
@@ -264,9 +264,9 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
 
 function explain(mode: 'add' | 'remove', period: LeavePeriod, count: number, changed = false): string {
   if (count === 0) {
-    if (changed) return period.kind === 'trek' ? 'De tocht is bijgewerkt en ASCEND houdt er rekening mee.' : 'De periode is bijgewerkt en ASCEND houdt er rekening mee.';
+    if (changed) return period.kind === 'trek' ? 'De tocht is bijgewerkt en je planning houdt er rekening mee.' : 'De periode is bijgewerkt en je planning houdt er rekening mee.';
     return mode === 'add'
-      ? 'De periode is bewaard en ASCEND houdt er rekening mee.'
+      ? 'De periode is bewaard en je planning houdt er rekening mee.'
       : 'De periode is verwijderd.';
   }
   if (mode === 'remove') return 'Wat de periode verschoof of liet vervallen, staat weer op zijn plek.';
@@ -289,7 +289,7 @@ function notesFor(remaining: Finding[], inWindow: (date: string) => boolean, mod
   for (const f of remaining) {
     if ((f.rule !== 'LEAVE-OFF' && f.rule !== 'LEAVE-LIGHT' && f.rule !== 'LEG-SPACING') || !inWindow(f.date)) continue;
     if (f.level === 1) lines.push(`${f.message} Die heb je zelf vastgezet, dus die blijft staan.`);
-    else if (f.level === 2) lines.push(`${f.message} Een test of wedstrijd verplaatst ASCEND niet zomaar. Kies zelf een andere dag.`);
+    else if (f.level === 2) lines.push(`${f.message} Een test of wedstrijd verschuift niet zomaar. Kies zelf een andere dag.`);
     else lines.push(f.message);
   }
   return [...new Set(lines)];

@@ -287,7 +287,7 @@ describe('een zware beendag vlak na een tocht', () => {
     const change = planLeaveChange({ mode: 'add', period: trekWeekend, existing: [], sessions: base, logs: [], templates, today: TODAY, context: (p) => context(p, { trekRest: 'strict' }) });
     const item = change.proposal.changes.find((c) => c.plannedSessionId === legDay);
     expect(item?.action).toBe('remove');
-    expect(item?.reason).toBe('Te dicht na je tocht: na een bergtocht houdt ASCEND 72 uur tot de volgende zware beendag, en deze week is er geen dag voor.');
+    expect(item?.reason).toBe('Te dicht na je tocht: na een bergtocht zit er 72 uur tot de volgende zware beendag, en deze week is er geen dag voor.');
   });
 
   it('soepel (standaard): de korte versie blijft 48 uur na de tocht staan, met een zin die het uitlegt', () => {

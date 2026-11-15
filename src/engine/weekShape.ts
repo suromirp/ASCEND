@@ -169,7 +169,7 @@ export function chooseWeekShape(templates: SessionTemplate[], input: WeekShapeIn
 
   const possible = keptFor(input, MAX_DAYS, has).length;
   if (!input.strength && count > possible) {
-    notes.push(`Zonder krachttraining plant ASCEND hoogstens ${possible} trainingen per week.`);
+    notes.push(`Zonder krachttraining passen er hoogstens ${possible} trainingen per week.`);
   }
   count = Math.min(count, possible);
   if (allowed.length < count) {
@@ -181,7 +181,7 @@ export function chooseWeekShape(templates: SessionTemplate[], input: WeekShapeIn
   const weekdaysAllowed = allowed.filter((d) => d <= 5).length;
   const fits = allowed.length - weekdaysAllowed + (weekdaysAllowed === 5 ? 4 : weekdaysAllowed);
   if (count > fits) {
-    notes.push(`ASCEND houdt één doordeweekse dag vrij voor rust, dus het ${fits === 1 ? 'is' : 'zijn'} ${fits} ${fits === 1 ? 'training' : 'trainingen'} geworden.`);
+    notes.push(`Eén doordeweekse dag blijft vrij voor rust, dus het ${fits === 1 ? 'is' : 'zijn'} ${fits} ${fits === 1 ? 'training' : 'trainingen'} geworden.`);
     count = fits;
   }
 
@@ -218,7 +218,7 @@ export function chooseWeekShape(templates: SessionTemplate[], input: WeekShapeIn
   // The rest walk only on a day you can: on another day the planning would keep moving it as "not available".
   if (has('tpl_herstel') && allowed.includes(restDay)) days['tpl_herstel'] = restDay;
   const order = [...ids].sort((a, b) => days[a] - days[b]);
-  if (best.conflicts > 0) notes.push('Twee zware trainingen komen op deze dagen dicht bij elkaar. ASCEND let daar bij het plannen op, maar met meer dagen of een andere indeling gaat het soepeler.');
+  if (best.conflicts > 0) notes.push('Twee zware trainingen komen op deze dagen dicht bij elkaar. Daar wordt bij het plannen op gelet, maar met meer dagen of een andere indeling gaat het soepeler.');
   return { shape: { days, allowed }, restDay, kept: order, count, notes };
 }
 

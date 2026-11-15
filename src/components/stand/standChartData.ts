@@ -29,7 +29,7 @@ export function freshnessPoints(points: FreshnessPoint[], todayIdx: number): Cha
 export const LOAD_INFO = [
   'Belasting is minuten maal zwaarte, de 1 tot 10 die je na een training invult. 45 minuten op zwaarte 6 is 270 punten.',
   'Elke stip is een week en meer staat boven. Vol is gedaan, open is wat nog gepland staat.',
-  `Zodra er drie weken met training voor deze week zijn, staat er een dunne lijn gewoonlijk: je gemiddelde van de vier weken voor deze week. Ligt je week meer dan ${Math.round((LOAD_JUMP - 1) * 100)}% hoger, dan zegt ASCEND dat eronder.`,
+  `Zodra er drie weken met training voor deze week zijn, staat er een dunne lijn gewoonlijk: je gemiddelde van de vier weken voor deze week. Ligt je week meer dan ${Math.round((LOAD_JUMP - 1) * 100)}% hoger, dan staat dat eronder.`,
   'Schuif met je vinger over de grafiek of tik een week voor de telling van die week.',
 ];
 

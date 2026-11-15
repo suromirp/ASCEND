@@ -86,7 +86,7 @@ describe('hoogstens één inhaal per voorstel (Warden B1)', () => {
         expect(Math.abs(daysBetween(to, o.scheduledDate)) <= 1 && isHardRun(byId.get(o.templateId)!), `${o.templateId} op ${o.scheduledDate}`).toBe(false);
       }
       const advice = catchUp(inputs({ plannedSessions: planned, keyFocus: TEN_K }))!;
-      expect(advice.effect).toContain('hoogstens één');
+      expect(advice.effect).toContain('Hoogstens één');
     });
   }
 });

@@ -104,9 +104,9 @@ export function InfluenceEffectSheet({ groupKey, entries, own, effects, onClose 
             </div>
 
             <div className="mt-5 flex flex-col gap-1 border-t pt-4" style={{ borderColor: 'var(--color-card-border)' }}>
-              <Eyebrow>Hoe ASCEND rekent</Eyebrow>
+              <Eyebrow>Zo is het gerekend</Eyebrow>
               <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-                Je schommeling is je eigen bereik in de vier weken ervoor, met de middelste waarde. Zo maakt één uitschieter weinig uit. Andere ochtenden waar je zelf iets bij noteerde tellen er niet in mee. Wat ASCEND zelf weet, zoals een zware beendag, telt wel mee. Nachten en lopen die je niet liet meetellen staan er wel in, want daar gaat het om. Een paar keer is weinig. Zie het als een richting.
+                Je schommeling is je eigen bereik in de vier weken ervoor, met de middelste waarde. Zo maakt één uitschieter weinig uit. Andere ochtenden waar je zelf iets bij noteerde tellen er niet in mee. Wat al bekend is, zoals een zware beendag, telt wel mee. Nachten en lopen die je niet liet meetellen staan er wel in, want daar gaat het om. Een paar keer is weinig. Zie het als een richting.
               </p>
             </div>
 

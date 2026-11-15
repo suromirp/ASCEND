@@ -200,7 +200,7 @@ describe('DESCENT-CLOCK: na 21 dagen een regel en een voorstel', () => {
     expect(a.id).toBe('descent:2026-10-21');
     // De zin en het id rekenen met hetzelfde getal: vandaag plus 21 dagen is woensdag 2 december.
     expect(addDays(TODAY, DECLINE_QUIET_DAYS)).toBe('2026-12-02');
-    expect(a.effect).toContain('vraagt ASCEND het op zijn vroegst op wo 2 december weer');
+    expect(a.effect).toContain('komt de vraag op zijn vroegst op wo 2 december terug');
     const declined = { respondedIds: new Set([a.id]), answeredOn: { [a.id]: TODAY }, plannedSessions: [] as PlannedSession[] };
     expect(one(declined)).toBeUndefined();
     expect(one({ ...declined, today: '2026-12-01' })).toBeUndefined();
@@ -213,7 +213,7 @@ describe('DESCENT-CLOCK: na 21 dagen een regel en een voorstel', () => {
     // Dag 40 na 21 oktober is 30 november; het voorstel staat er dan nog onder het eerste id.
     const day40 = one({ today: '2026-11-30', plannedSessions: [] })!;
     expect(day40.id).toBe('descent:2026-10-21');
-    expect(day40.effect).toContain('op zijn vroegst op ma 21 december weer');
+    expect(day40.effect).toContain('op zijn vroegst op ma 21 december terug');
     const declined = { respondedIds: new Set([day40.id]), answeredOn: { [day40.id]: '2026-11-30' }, plannedSessions: [] as PlannedSession[] };
     for (const today of ['2026-12-02', '2026-12-10', '2026-12-20']) expect(one({ ...declined, today })).toBeUndefined();
     expect(one({ ...declined, today: '2026-12-21' })?.id).toBe('descent:2026-10-21:2026-12-21');
@@ -230,7 +230,7 @@ describe('DESCENT-CLOCK: na 21 dagen een regel en een voorstel', () => {
   it('Begrepen op de regel zonder voorstel belooft dezelfde termijn', () => {
     const a = one({ plannedSessions: week('tpl_tempo_run') })!;
     expect(a.proposal).toBeUndefined();
-    expect(a.effect).toContain('Na Begrepen vraagt ASCEND het op zijn vroegst op wo 2 december weer.');
+    expect(a.effect).toContain('Na Begrepen komt de vraag op zijn vroegst op wo 2 december terug.');
   });
 
   it('de planningsronde laat de trapsessie na Akkoord staan, ook twee keer achter elkaar', () => {
@@ -289,7 +289,7 @@ describe('vakantie, tocht en ziek in het venster', () => {
 describe('handlogs zonder hoogtemeters: eerlijk zeggen wat onbekend is', () => {
   it('noemt de wandeling waar ASCEND het niet van weet', () => {
     const a = one({ logs: [hike('2026-10-21', 150), handHike('2026-11-07')] })!;
-    expect(a.lead).toContain('Je wandeling van za 7 november heeft geen hoogtemeters, dus of je daar afdaalde weet ASCEND niet.');
+    expect(a.lead).toContain('Je wandeling van za 7 november heeft geen hoogtemeters, dus of je daar afdaalde is niet bekend.');
     expect(a.proposal).toBeDefined();
   });
 
@@ -297,7 +297,7 @@ describe('handlogs zonder hoogtemeters: eerlijk zeggen wat onbekend is', () => {
     const logs = [easyRun('2026-10-15'), handHike('2026-10-25')];
     const a = one({ logs })!;
     expect(a.title).toBe('Nog geen afdaling in je logs');
-    expect(a.lead).toContain('ASCEND ziet in 27 dagen geen afdaling in je logs.');
+    expect(a.lead).toContain('Geen afdaling in je logs in 27 dagen.');
     expect(a.lead).toContain('geen hoogtemeters');
     expect(a.lead).not.toContain('Je laatste afdaling');
     expect(a.id).toBe('descent:2026-10-15');

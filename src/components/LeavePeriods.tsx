@@ -137,8 +137,8 @@ export function LeavePeriodsRow({ openId, onOpenHandled }: { openId?: string | n
           emptyText={plan.mode === 'remove'
             ? 'Je planning hoeft niet te veranderen. Met Akkoord verwijder je de periode.'
             : plan.replaces
-              ? 'Je planning hoeft niet te veranderen. Met Akkoord bewaar je de nieuwe datums en houdt ASCEND er rekening mee.'
-              : 'Je planning hoeft niet te veranderen. Met Akkoord bewaar je de periode en houdt ASCEND er rekening mee.'}
+              ? 'Je planning hoeft niet te veranderen. Met Akkoord bewaar je de nieuwe datums en houdt je planning er rekening mee.'
+              : 'Je planning hoeft niet te veranderen. Met Akkoord bewaar je de periode en houdt je planning er rekening mee.'}
           onRespond={async (response) => {
             setStale(response === 'accepted' && (await applyLeave(plan)) === 'stale');
           }}

@@ -81,7 +81,7 @@ export function InfluenceBlock({
     <div>
       {facts.length > 0 && (
         <>
-          <p className="text-[13px] leading-[18px]" style={hint}>Dit weet ASCEND al</p>
+          <p className="text-[13px] leading-[18px]" style={hint}>Dit is al bekend</p>
           <ul className="mt-1 flex flex-col">
             {facts.map((f) => (
               <li key={f.reason} className="py-1.5">
