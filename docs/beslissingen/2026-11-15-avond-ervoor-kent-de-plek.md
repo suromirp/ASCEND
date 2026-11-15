@@ -36,8 +36,18 @@ De keuze geldt nog steeds voor één training en niet voor andere. Wat verandert
 
 ## Vervangt
 
+Deels `2026-11-12-weer-op-de-plek.md`: De avond ervoor blijft niet meer altijd thuis, de keuze van de plek wordt per geplande training wel bewaard, en de cache heeft een sleutel met zes plekken in plaats van één.
+
 Deels `2026-11-11-route-start.md`: de zin dat een tik op een plek niet bewaard wordt geldt niet meer voor een bewaarde of gezochte plek bij een geplande training. Voor Waar je nu bent, Thuis en Start hier blijft hij gelden.
 
 ## Terugdraaien
 
 Zet Gekozen plek onthouden uit: dan leest en schrijft de lus niets en kent De avond ervoor de plek niet. In code: haal `sessionId` weg bij `useRouteSearch` in `TrainingBriefing.tsx` en `placeWeather` uit `useEveningInput`. De sleutel `startPlaceChoices` mag blijven staan.
+
+## Aanvulling na Warden (15 november)
+
+- Het weer van een onthouden plek gaat uit zonder tik: bij het openen van de Briefing (ook met Lus zoeken op Na een tik of een dag later dan morgen), op Vandaag voor De avond ervoor en voor de avondmelding. Dat is een bewuste uitzondering op de regel dat een uitgaande aanroep achter een tik of de zoekinstelling staat: alleen het weer, op twee decimalen, zonder naam, hoogstens eens per uur per plek, voor een plek die je zelf koos. Wie dat niet wil zet Gekozen plek onthouden of Weer van de gekozen plek uit.
+- De avond ervoor leest de keuze samen met je plekken, net als de Briefing: een gewiste plek geeft geen weer en geen aanroep, een hernoemde zijn nieuwe naam. Een plek wissen wist ook de keuzes die ernaar wijzen. De instelling uitzetten wist alle onthouden plekken; Alles wissen ook het geheugen.
+- Een tik op een chip voordat de opslag antwoordde gaat voor: dan wordt er niets teruggezet.
+- Boven het plafond van zestig vallen de verste dagen af, niet de keuze van zojuist.
+- Vastgelegd, niet veranderd: een training die verplaatst wordt en terug naar de oude dag gaat, heeft de oude plek weer. Twee trainingen morgen met elk een verre plek: alleen de eerste krijgt het weer van zijn plek, de tweede leest het weer van huis. Terug naar de Briefing zoekt opnieuw als Lus zoeken op Bij openen staat; het antwoord zit dan meestal nog in het geheugen.

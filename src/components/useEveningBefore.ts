@@ -20,6 +20,8 @@ import { routeShownFor } from '../engine/trainingPlace';
 import { peekStartPlaceChoices, readStartPlaceChoices, subscribeStartPlaceChoices } from '../storage/startPlaceChoice';
 import { getRouteStartPoint } from '../storage/routeStart';
 import type { RoutePoint } from '../models/route';
+import type { Place } from '../models/place';
+import { readPlaceStore } from '../storage/places';
 import { addDays, toISODate } from '../utils/dates';
 import { withTimeout } from '../utils/withTimeout';
 
@@ -33,12 +35,15 @@ function useEveningPlaceWeather(now: Date, enabled: boolean): EveningInput['plac
   const trainingPlaces = useTrainingPlaces();
   const [choices, setChoices] = useState<StartPlaceChoices | undefined>(() => peekStartPlaceChoices());
   const [home, setHome] = useState<RoutePoint | null | undefined>();
+  // De bewaarde plekken: een gewiste plek geeft geen weer, een hernoemde zijn nieuwe naam. Niet gelezen: niets.
+  const [places, setPlaces] = useState<Place[] | undefined>();
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
     const read = () => void withTimeout(readStartPlaceChoices(), READ_LIMIT_MS).then((m) => alive && setChoices(m), () => undefined);
     read();
     void withTimeout(getRouteStartPoint(), READ_LIMIT_MS).then((p) => alive && setHome(p ?? null), () => alive && setHome(null));
+    void withTimeout(readPlaceStore(), READ_LIMIT_MS).then((r) => alive && r.ok && setPlaces(r.places), () => undefined);
     const stop = subscribeStartPlaceChoices(() => setChoices(peekStartPlaceChoices()));
     return () => {
       alive = false;
@@ -60,6 +65,7 @@ function useEveningPlaceWeather(now: Date, enabled: boolean): EveningInput['plac
     today,
     home: home ?? undefined,
     weatherHome: settings.homeLocation,
+    places,
   });
   const state = usePlaceWeather(found?.target);
   if (!found || !state || state.status === 'loading') return undefined;

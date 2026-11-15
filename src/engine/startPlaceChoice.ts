@@ -77,15 +77,21 @@ export function choiceFor(map: StartPlaceChoices, sessionId: string | undefined,
   return c && c.date === date && c.date >= today ? c : undefined;
 }
 
+// Een plek die gewist wordt: de keuzes die ernaar wijzen gaan mee weg.
+export function withoutPlace(map: StartPlaceChoices, placeId: string): StartPlaceChoices {
+  return Object.fromEntries(Object.entries(map).filter(([, c]) => c.placeId !== placeId));
+}
+
 // Zet of wist de keuze van één training; voorbije dagen en wat boven het plafond uitkomt gaan weg.
 export function withChoice(map: StartPlaceChoices, sessionId: string, choice: StartPlaceChoice | undefined, today: string): StartPlaceChoices {
   const next: StartPlaceChoices = { ...map };
   if (choice) next[sessionId] = choice;
   else delete next[sessionId];
   const from = addDays(today, -1);
+  // Boven het plafond gaan de verste dagen weg: de keuze van zojuist voor een training van morgen blijft.
   const kept = Object.entries(next)
     .filter(([, c]) => c.date >= from)
-    .sort((a, b) => b[1].date.localeCompare(a[1].date))
+    .sort((a, b) => a[1].date.localeCompare(b[1].date))
     .slice(0, MAX_ENTRIES);
   return Object.fromEntries(kept);
 }
@@ -115,15 +121,18 @@ export interface EveningPlaceInput {
   today: string;
   home?: unknown;
   weatherHome?: unknown;
+  // Je bewaarde plekken (storage/places.ts); undefined als de lijst niet gelezen kon worden. Dezelfde
+  // regel als de Briefing (restoredStart): een gewiste plek geeft niets, een hernoemde zijn nieuwe naam.
+  places?: readonly { id: string; name: string; lat: number; lon: number; home?: boolean }[];
 }
 
 export function eveningPlaceTarget(i: EveningPlaceInput): { sessionId: string; target: WeatherPlace } | undefined {
   if (!i.placeWeatherOn || !i.rememberOn || !i.routeOn || !i.choices) return undefined;
   for (const s of i.sessions) {
     if (!s.routeShown) continue;
-    const c = choiceFor(i.choices, s.id, s.date, i.today);
+    const c = restoredStart(choiceFor(i.choices, s.id, s.date, i.today), i.places);
     if (!c) continue;
-    const target = placeWeatherTarget({ on: true, place: { name: c.name, point: { lat: c.lat, lon: c.lon } }, home: i.home, weatherHome: i.weatherHome });
+    const target = placeWeatherTarget({ on: true, place: { name: c.name, point: c.point }, home: i.home, weatherHome: i.weatherHome });
     if (target) return { sessionId: s.id, target };
   }
   return undefined;

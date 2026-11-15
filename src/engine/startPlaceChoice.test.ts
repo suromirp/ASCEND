@@ -52,7 +52,7 @@ describe('restoredStart', () => {
 });
 
 describe('eveningPlaceTarget', () => {
-  const base = { placeWeatherOn: true, rememberOn: true, routeOn: true, sessions: [{ id: 's1', date: TOMORROW, routeShown: true }], choices: { s1: FAR }, today: TODAY, home: HOME };
+  const base = { placeWeatherOn: true, rememberOn: true, routeOn: true, sessions: [{ id: 's1', date: TOMORROW, routeShown: true }], choices: { s1: FAR }, today: TODAY, home: HOME, places: [{ id: 'pl-1', name: 'Verwegdal', lat: 50.72, lon: 4.1 }] };
   it('een verre plek voor morgen: het weer daar, op twee decimalen', () => {
     expect(eveningPlaceTarget(base)).toEqual({ sessionId: 's1', target: { name: 'Verwegdal', lat: 50.72, lon: 4.1 } });
   });
@@ -61,7 +61,8 @@ describe('eveningPlaceTarget', () => {
     expect(eveningPlaceTarget({ ...base, rememberOn: false })).toBeUndefined();
     expect(eveningPlaceTarget({ ...base, routeOn: false })).toBeUndefined();
     expect(eveningPlaceTarget({ ...base, sessions: [{ id: 's1', date: TOMORROW, routeShown: false }] })).toBeUndefined();
-    expect(eveningPlaceTarget({ ...base, choices: { s1: { ...FAR, lat: 50.02 } } })).toBeUndefined();
+    expect(eveningPlaceTarget({ ...base, choices: { s1: { ...FAR, lat: 50.02 } }, places: [{ id: 'pl-1', name: 'Dichtbij', lat: 50.02, lon: 4.1 }] })).toBeUndefined();
+    expect(eveningPlaceTarget({ ...base, places: [] })).toBeUndefined();
     expect(eveningPlaceTarget({ ...base, choices: undefined })).toBeUndefined();
   });
 });

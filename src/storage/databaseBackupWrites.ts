@@ -94,6 +94,13 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
   await Promise.all([...ops, tx.done]);
 }
 
+// Wie iets in het geheugen houdt van de opslag, hoort het als alles gewist is.
+const wipeListeners = new Set<() => void>();
+export function afterWipe(listener: () => void): () => void {
+  wipeListeners.add(listener);
+  return () => wipeListeners.delete(listener);
+}
+
 export async function wipeAllData(): Promise<void> {
   await Promise.all([
     clearStore('programs'),
@@ -118,4 +125,5 @@ export async function wipeAllData(): Promise<void> {
     clearStore('activityStreams'),
     clearStore('meta'),
   ]);
+  for (const l of wipeListeners) l();
 }
