@@ -33,7 +33,7 @@ import { formatClockTime, goesOnWhen } from './watchStatus';
 import { watchSheet, type WatchSheetInput } from './watchSheet';
 import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
-import { isTrekDay, routeTarget, searchesOnOpen } from './routeTarget';
+import { isTrekDay, routeTarget, searchesOnOpen, walkShortText } from './routeTarget';
 import type { LeavePeriod } from '../models/leave';
 import { showSpotsFor } from './trainingSpots';
 import { uvShort } from './outdoorSun';
@@ -682,8 +682,9 @@ function stretchRow(template: SessionTemplate): BriefingRow | undefined {
 }
 
 // "12 km": de afstand van de lus die je zoekt, zoals engine/routeTarget.ts#targetText, zonder hoogtemeters.
+// Een wandeltraining: "3 uur, ongeveer 8 km" (routeTarget.ts#walkShortText); de duur is leidend.
 export function kmText(target: RouteTarget): string {
-  return `${String(target.distanceKm).replace('.', ',')} km`;
+  return walkShortText(target) ?? `${String(target.distanceKm).replace('.', ',')} km`;
 }
 
 // Eén zin, met de punt: de kop heeft geen Meer erachter (spoor 2).

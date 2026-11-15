@@ -508,7 +508,7 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
   }
   const other = order.find((s) => s !== picked && plans[s].ok);
   const otherOutcome = other ? plans[other] : undefined;
-  const otherWarn = otherOutcome?.ok ? otherLoopWarn(otherOutcome.proposal, target) : undefined;
+  const otherWarn = otherOutcome?.ok ? otherLoopWarn(otherOutcome.proposal, target, pickedOutcome?.ok ? pickedOutcome.proposal : undefined) : undefined;
   return (
     <div className="flex flex-col gap-2">
       {model.mapStartPoint && (
@@ -533,7 +533,7 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
         <div className="flex min-h-[44px] items-start justify-between gap-3">
           <div className="min-w-0">
             <Eyebrow tone="var(--color-ink-dim)">{STYLE_NAME[picked]}</Eyebrow>
-            <p className="text-sm tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalTitle(pickedOutcome.proposal)} · {proposalFacts(pickedOutcome.proposal)}</p>
+            <p className="text-sm tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalTitle(pickedOutcome.proposal)} · {proposalFacts(pickedOutcome.proposal, target)}</p>
             {loopLines(pickedOutcome.proposal, target, proposalNotes(pickedOutcome.proposal, target)).warn.map((note) => (
               <p key={note} className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{note}</p>
             ))}
@@ -545,7 +545,7 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
         // Direct onder de gekozen lus: Kies is 44 px hoog, de rij schuift 4 px op zodat er geen gat valt.
         <div className="-mt-1 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm tabular-nums leading-snug" style={dim}>{otherLoopLine(STYLE_NAME[other], otherOutcome.proposal)}</p>
+            <p className="text-sm tabular-nums leading-snug" style={dim}>{otherLoopLine(STYLE_NAME[other], otherOutcome.proposal, target)}</p>
             {otherWarn && <p className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{otherWarn}</p>}
           </div>
           <TextButton tone="dim" onClick={() => model.setChosen(other)}>Kies</TextButton>

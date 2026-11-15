@@ -14,7 +14,7 @@ import { recentRunPace } from './recentRunPace';
 import { templateSport } from './sports';
 import { hasRole } from './templateRoles';
 import { climbPace, type ClimbPaceState } from './climbPace';
-import { walkRates, walkTarget } from './hikeTarget';
+import { walkRates, walkTarget, walkTimeText } from './hikeTarget';
 import { askedAscent } from './routePlanner';
 import { leaveDays } from './leave';
 import type { LeavePeriod } from '../models/leave';
@@ -141,6 +141,7 @@ function walkRouteTarget({ template, date, program, logs = [], bodyKg, climb, wa
     distanceKm: clampWalkKm(t.distanceKm),
     ascentM: t.ascentM,
     minutes: t.minutes,
+    rates,
     ...(packKg !== undefined ? { packKg } : {}),
     ...(askedAscentM > 0 ? { askedAscentM } : {}),
   };
@@ -152,9 +153,31 @@ export function roundStart(place: { lat: number; lon: number }): RoutePoint {
   return { lat: Math.round(place.lat * 100) / 100, lon: Math.round(place.lon * 100) / 100 };
 }
 
+const kmWord = (km: number) => `${String(km).replace('.', ',')} km`;
+
+// Een wandeltraining in het blad Route: "3 uur met 500 hoogtemeters en 8 kg rugzak" (ontwerp hoofdstuk 4).
+// Zonder hoogtemeters of rugzak valt dat deel weg.
+function walkTargetText(target: RouteTarget & { minutes: number }): string {
+  const asked = askedAscent(target);
+  const parts = [
+    ...(asked >= 20 ? [`${Math.round(asked / 10) * 10} hoogtemeters`] : []),
+    ...(target.packKg !== undefined && target.packKg > 0 ? [`${String(Math.round(target.packKg * 10) / 10).replace('.', ',')} kg rugzak`] : []),
+  ];
+  const time = walkTimeText(target.minutes);
+  return parts.length > 0 ? `${time} met ${parts.join(' en ')}` : time;
+}
+
+// Een wandeltraining in één korte regel, in de Briefing en De avond ervoor: "3 uur, ongeveer 8 km". De
+// hoogtemeters en de rugzak staan daar al in de hartkaart. Een looptraining: undefined.
+export function walkShortText(target: RouteTarget): string | undefined {
+  return target.minutes === undefined ? undefined : `${walkTimeText(target.minutes)}, ongeveer ${kmWord(target.distanceKm)}`;
+}
+
 // De hoogtemeters die de training vraagt (routePlanner.ts#askedAscent), niet het getal dat in de duur past.
+// Een wandeltraining zegt zijn duur (walkTargetText).
 export function targetText(target: RouteTarget): string {
-  const km = `${String(target.distanceKm).replace('.', ',')} km`;
+  if (target.minutes !== undefined) return walkTargetText({ ...target, minutes: target.minutes });
+  const km = kmWord(target.distanceKm);
   const asked = askedAscent(target);
   return asked >= 20 ? `${km}, ${Math.round(asked / 10) * 10} hoogtemeters` : km;
 }

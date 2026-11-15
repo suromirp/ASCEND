@@ -140,7 +140,7 @@ export function LoopRow({ style, outcome, picked, onMap, target, motion, onChoos
       <span className="min-w-0 flex-1">
         <span className="block"><Eyebrow as="span" tone="var(--color-ink-dim)">{onMap ? `${STYLE_NAME[style]} · ${picked ? 'doorgetrokken' : 'gestreept'}` : STYLE_NAME[style]}</Eyebrow></span>
         <span className="block text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalTitle(outcome.proposal)}</span>
-        <span className="block text-sm tabular-nums leading-snug" style={dim}>{proposalFacts(outcome.proposal)}</span>
+        <span className="block text-sm tabular-nums leading-snug" style={dim}>{proposalFacts(outcome.proposal, target)}</span>
         {loopLines(outcome.proposal, target, proposalNotes(outcome.proposal, target)).warn.map((note) => (
           <span key={note} className="block text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{note}</span>
         ))}
