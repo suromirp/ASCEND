@@ -10,6 +10,7 @@ import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { legRestHours, stressProfileOf, type SportIntensity } from './sportStress';
 import { anySportDefinition, type CountedSportId } from '../data/sports';
 import { sportTemplate } from './sportTemplate';
+import { sportOfLog } from './sportOfLog';
 
 const SPORT_LOG_PREFIX = 'sportlog:';
 // Hoe ver terug een gelogde sport meetelt voor de check: langer dan 72 uur doet hij er niet meer toe.
@@ -45,7 +46,8 @@ export function sportLogDays(logs: readonly SessionLog[], byId: ReadonlyMap<stri
   const sessions: PlannedSession[] = [];
   const templates = new Map<string, SessionTemplate>();
   for (const log of logs) {
-    const sport = log.countedSport;
+    // Ook een oud log uit Losse training dat zijn sport alleen in het templateId noemt (engine/sportOfLog.ts).
+    const sport = sportOfLog(log).countedSport;
     if (!sport || log.completedDate > today || daysBetween(log.completedDate, today) > LOOK_BACK_DAYS) continue;
     const base = byId.get(log.templateId);
     if (!base || base.countedSport !== sport) continue;
