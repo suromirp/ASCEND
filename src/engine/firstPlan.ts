@@ -12,7 +12,7 @@
 
 import type { Program } from '../models/program';
 import type { GoalMilestone, TrainingGoal } from '../models/goals';
-import type { SessionTemplate } from '../models/training';
+import type { SessionLog, SessionTemplate } from '../models/training';
 import type { StrengthProgramStrategy } from '../models/strengthProgram';
 import type { Weekday } from '../models/goalEngineConfig';
 import { buildObjective, buildProgram } from '../data/defaultProgram';
@@ -28,7 +28,7 @@ import type { WeekShape } from './sports';
 import { adviceDays, chooseWeekShape, isStrengthTemplateId, type StartGoalKind } from './weekShape';
 import { DIRECTIONS, type DirectionId } from '../data/directions';
 import { directionChangeLines } from './directionChange';
-import { beginnerStartLine, WALK_JOG_LINE } from './beginnerStart';
+import { beginnerStartLine, isBeginnerStart, WALK_JOG_LINE } from './beginnerStart';
 import { kindForShelter, SHELTER_ADVICE, type TrekShelter } from './trekShelter';
 
 export type StartRace = '5k' | '10k' | 'half' | 'full';
@@ -206,7 +206,9 @@ export function kindOfExistingGoals(goals: TrainingGoal[], milestones: GoalMiles
 }
 
 // `existing`: goals are there already; none is made, and the week follows their kind.
-export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate[], today: string, nowIso: string = new Date().toISOString(), existing?: { kind: StartGoalKind }): FirstPlanSetup {
+// `logs`: je logs, zodat het voorstel de beginnersstart noemt als Automatisch er een kiest (dezelfde toets als de
+// planning, storage/databaseHorizon.ts#patternContext). De wizard vraagt het niet als er al logs zijn (Warden, 15 november).
+export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate[], today: string, nowIso: string = new Date().toISOString(), existing?: { kind: StartGoalKind }, logs: readonly SessionLog[] = []): FirstPlanSetup {
   if (existing) answers = { ...answers, goal: existing.kind };
   const direction = existing ? undefined : directionOfStart(answers.goal);
   // Een beginner begint met hoogstens vier dagen.
@@ -238,6 +240,9 @@ export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate
   const anchor = !existing && answers.goal === 'trek' && answers.goalDate && answers.goalDate > today ? answers.goalDate : undefined;
   // Zonder doel (fit, geen bestaand doel) de neutrale golven, zoals de planningsronde het daarna ook doet.
   const program: Program = { ...base, startDate, phases: layoutPhases(startDate, anchor, today, undefined, { free: !!direction, ...(direction ? { waveStart: startDate } : {}) }) };
+  // Wordt dit een beginnersstart? Je antwoord, of zonder antwoord Automatisch met je logs.
+  const beginnerAnswer = direction && answers.beginner !== undefined ? (answers.beginner ? 'ja' as const : 'nee' as const) : undefined;
+  const beginner = !!direction && isBeginnerStart(beginnerAnswer ?? 'auto', logs, startDate);
 
   const strengthIds = week.kept.filter(isStrengthTemplateId);
   const strategy: StrengthProgramStrategy | null = answers.strength && strengthIds.length > 0
@@ -254,14 +259,13 @@ export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate
     `Rustdag: ${WEEKDAY_NAMES[week.restDay - 1]}.`,
     strategy ? 'Met krachttraining.' : 'Zonder krachttraining.',
     ...(beginnerCap ? [`Je begint met hoogstens ${BEGINNER_MAX_DAYS} dagen per week.`] : []),
-    ...(direction && direction !== 'easy' && answers.beginner === true ? [beginnerStartLine(startDate, startDate) ?? ''] : []),
+    ...(beginner && direction !== 'easy' ? [beginnerStartLine(startDate, startDate) ?? ''] : []),
     // Heel licht (het advies) hoort bij dit Akkoord: wandelen en dribbelen in de start (engine/beginnerStart.ts).
-    ...(direction && answers.beginner === true ? [WALK_JOG_LINE] : []),
+    ...(beginner ? [WALK_JOG_LINE] : []),
     ...(direction ? ['Je week bestaat uit kracht en lopen. Andere sporten die je doet tellen straks gewoon mee.'] : []),
     ...week.notes,
   ].filter(Boolean);
 
-  const beginnerAnswer = direction && answers.beginner !== undefined ? (answers.beginner ? 'ja' as const : 'nee' as const) : undefined;
   return {
     title: 'Zo ziet je eerste week eruit',
     program,

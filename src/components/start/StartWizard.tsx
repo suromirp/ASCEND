@@ -43,7 +43,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
   const advice = adviceDays(existing?.kind ?? answers.goal);
 
   async function makePlan(close: () => void, withAnswers: StartAnswers = answers) {
-    const setup = buildFirstPlan(withAnswers, templates, today, undefined, existing);
+    const setup = buildFirstPlan(withAnswers, templates, today, undefined, existing, sessionLogs);
     const { marathonRaceType, marathonTargetDate, ...settings } = setup.settings;
     await horizon.propose(
       () => planHorizonChange({

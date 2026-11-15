@@ -152,7 +152,8 @@ export function logSizeFits(log: SessionLog, template: SessionTemplate, plannedM
   if (template.type === 'strength' || log.type === 'strength') return true;
   const run = measuredOfLog(log);
   if (isShortFor(run.minutes, plannedMinutes)) return false;
-  if (templateSport(template) === 'running' && isEasyRun(template, log.completedDate, null) && isWalkLike(run)) return false;
+  // Wandelen en dribbelen (rol `start_only`) mag in wandeltempo.
+  if (templateSport(template) === 'running' && !hasRole(template, 'start_only') && isEasyRun(template, log.completedDate, null) && isWalkLike(run)) return false;
   return true;
 }
 

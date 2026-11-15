@@ -39,6 +39,10 @@ export interface BeginnerLadderWeek {
   walkJog: Sourced<WalkJog | null>;
 }
 
+// Wat de start nu plant voor wandelen en dribbelen, elke week (data/defaultProgram.ts, tpl_walk_jog en
+// tpl_walk_jog_long), onder de loop waarvan het de plek heeft. Stap 3 van het ontwerp zet hier de ladder.
+export const START_PLANNED_MINUTES: Readonly<Record<string, number>> = { tpl_easy_run: 20, tpl_long_run: 30 };
+
 // De werksets van Bovenlichaam A in het gewone plan (data/defaultProgram.ts): de ladder is daarop gemeten.
 export const REFERENCE_SETS = 23;
 

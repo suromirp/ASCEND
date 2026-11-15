@@ -1,4 +1,5 @@
 import type { Program } from '../models/program';
+import { START_PLANNED_MINUTES } from './beginnerLadder';
 import type { SessionTemplate, PlannedSession } from '../models/training';
 import type { Objective } from '../models/objectives';
 import { makeId } from '../utils/id';
@@ -494,7 +495,7 @@ function buildTemplates(): SessionTemplate[] {
       type: 'cardio',
       sport: 'running',
       focus: 'Wennen aan lopen',
-      durationVariants: { full: 20, short: 15 },
+      durationVariants: { full: START_PLANNED_MINUTES.tpl_easy_run, short: 15 },
       cardioTarget: { zone: 'Rustig, praten kan' },
       notes: WALK_JOG_NOTES,
       warmup: DYNAMIC_WARMUP,
@@ -507,7 +508,7 @@ function buildTemplates(): SessionTemplate[] {
       type: 'cardio',
       sport: 'running',
       focus: 'Je langste training van de week, rustig',
-      durationVariants: { full: 30, short: 20 },
+      durationVariants: { full: START_PLANNED_MINUTES.tpl_long_run, short: 20 },
       cardioTarget: { zone: 'Rustig, praten kan' },
       notes: WALK_JOG_NOTES,
       warmup: DYNAMIC_WARMUP,

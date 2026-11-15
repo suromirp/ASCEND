@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { layoutWaves, PHASE_GOLF, PHASE_GOLF_START } from './programLayout';
-import { recentSessionMaxima, resolveEffectiveFullDuration, setRecentSessionMaxima } from './substitutions';
+import { layoutWaves, PHASE_GOLF, PHASE_GOLF_START, progressionTarget } from './programLayout';
+import { recentSessionMaxima, resolveEffectiveFullDuration, setRecentSessionMaxima, withDurationScope } from './substitutions';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { BEGINNER_LADDER } from '../data/beginnerLadder';
 import type { Program } from '../models/program';
@@ -34,10 +34,33 @@ const step = (from: number) => Math.round((from * 1.1) / 5) * 5;
 afterEach(() => setRecentSessionMaxima({ asOf: '', minutesByTemplate: {} }));
 
 describe('de rem na de beginnersstart', () => {
-  it('het programma: vier weken start, week 5 is de eerste golf, en zonder rem springt de lange loop ver', () => {
+  it('het programma: vier weken start, week 5 is de eerste golf, en het plan zelf vraagt daar veel meer', () => {
     expect(resolveProgramWeek(program, sunday(4))?.phase.id).toBe(PHASE_GOLF_START);
     expect(resolveProgramWeek(program, sunday(5))?.phase.id).toBe(PHASE_GOLF);
-    expect(resolveEffectiveFullDuration(longRun, sunday(5), program)).toBeGreaterThan(step(longs[3]));
+    expect(progressionTarget(longRun, program, sunday(5))!.minutes).toBeGreaterThan(step(longs[3]));
+  });
+
+  // Warden, 15 november, moet 3: wie de start niet logde of oversloeg, springt niet naar het volle plan.
+  it('zonder logs: het plan van de laatste startweek is de maat, en daarna elke week een stap', () => {
+    // Heel licht: de start plant nu 20 en 30 minuten (data/beginnerLadder.ts#START_PLANNED_MINUTES).
+    const sundays = [5, 6, 7, 8].map((w) => resolveEffectiveFullDuration(longRun, sunday(w), program));
+    expect(sundays).toEqual([35, 40, 45, 50]);
+    expect([5, 6, 7].map((w) => resolveEffectiveFullDuration(easyRun, thursday(w), program))).toEqual([25, 30, 35]);
+    // Nooit meer dan het plan zelf, en op den duur het plan.
+    for (let w = 5; w <= 16; w++) expect(resolveEffectiveFullDuration(longRun, sunday(w), program)).toBeLessThanOrEqual(progressionTarget(longRun, program, sunday(w))!.minutes);
+    expect(resolveEffectiveFullDuration(longRun, sunday(16), program)).toBe(progressionTarget(longRun, program, sunday(16))!.minutes);
+    // In de start zelf en ervoor raakt het niets.
+    expect(resolveEffectiveFullDuration(longRun, sunday(4), program)).toBe(progressionTarget(longRun, program, sunday(4))!.minutes);
+  });
+
+  it('zonder logs bij Gewoon: de eigen lange duurloop van de laatste startweek is de maat', () => {
+    const last = progressionTarget(longRun, program, sunday(4))!.minutes;
+    expect(withDurationScope({ startBuild: 'gewoon' }, () => resolveEffectiveFullDuration(longRun, sunday(5), program))).toBe(step(last));
+  });
+
+  it('een plan zonder beginnersstart raakt de maat zonder logs niet', () => {
+    const plain: Program = { ...program, phases: layoutWaves(START, START, 12, START, 0) };
+    expect(resolveEffectiveFullDuration(longRun, sunday(5), plain)).toBe(progressionTarget(longRun, plain, sunday(5))!.minutes);
   });
 
   it('wie in week 4 op 45 minuten zat, loopt in week 5 hoogstens 50', () => {
@@ -61,12 +84,34 @@ describe('de rem na de beginnersstart', () => {
     expect(resolveEffectiveFullDuration(easyRun, thursday(5), program)).toBe(step(shorts[3]));
   });
 
-  it('een eigen langere lange duurloop telt zoals altijd, met de bodem van de eerste week', () => {
+  it('een eigen langere lange duurloop is de maat, ook naast de start', () => {
     const logs = [...logged(longs, 'tpl_walk_jog_long', 7), { templateId: 'tpl_long_run', completedDate: day(3, 3), durationMinutes: 80 }];
     setRecentSessionMaxima(recentSessionMaxima(logs, asOf));
-    const withOwn = resolveEffectiveFullDuration(longRun, sunday(5), program);
-    setRecentSessionMaxima(recentSessionMaxima([{ templateId: 'tpl_long_run', completedDate: day(3, 3), durationMinutes: 80 }], asOf));
-    expect(withOwn).toBe(resolveEffectiveFullDuration(longRun, sunday(5), program));
+    expect(resolveEffectiveFullDuration(longRun, sunday(5), program)).toBe(step(80));
+  });
+
+  // Warden, 15 november, moet 4: een geval waar de bodem van Wennen het verschil maakt.
+  it('naast de start telt de bodem van Wennen niet: een eigen loop van 35 wordt hoogstens 40, niet 50', () => {
+    const floor = progressionTarget(longRun, program, sunday(5))!.phaseSteps.find((s) => s.weekInPhase === 1)!.targetMinutes;
+    expect(floor).toBeGreaterThan(40);
+    setRecentSessionMaxima(recentSessionMaxima([...logged(longs, 'tpl_walk_jog_long', 7), { templateId: 'tpl_long_run', completedDate: day(4, 3), durationMinutes: 35 }], asOf));
+    expect(resolveEffectiveFullDuration(longRun, sunday(5), program)).toBe(step(45));
+    // Zonder start (alleen die eigen loop van 35) houdt de bodem hem op zijn eerste stap.
+    setRecentSessionMaxima(recentSessionMaxima([{ templateId: 'tpl_long_run', completedDate: day(4, 3), durationMinutes: 35 }], asOf));
+    expect(resolveEffectiveFullDuration(longRun, sunday(5), program)).toBe(floor);
+  });
+
+  // Warden, mag 6: de 5 minuten erbij gelden alleen na de start, en het venster van 30 dagen telt op de dag.
+  it('buiten de start blijft de rem 110%, ook bij een korte loop', () => {
+    const low = { ...easyRun, id: 'tpl_kort_test', weeklyProgression: [1, 2, 3, 4].map((w) => ({ weekInPhase: w, targetMinutes: 10 * w + 30 })) };
+    low.weeklyProgression[0] = { weekInPhase: 1, targetMinutes: 10 };
+    setRecentSessionMaxima(recentSessionMaxima([{ templateId: low.id, completedDate: day(4, 3), durationMinutes: 15 }], asOf));
+    expect(resolveEffectiveFullDuration(low, thursday(5), { ...program, phases: layoutWaves(START, START, 12, START, 0) })).toBe(15);
+  });
+
+  it('wandelen en dribbelen telt 30 dagen mee, niet een dag langer', () => {
+    expect(recentSessionMaxima([{ templateId: 'tpl_walk_jog_long', completedDate: addDays(asOf, -30), durationMinutes: 45 }], asOf).fromStart).toEqual({ tpl_long_run: 45 });
+    expect(recentSessionMaxima([{ templateId: 'tpl_walk_jog_long', completedDate: addDays(asOf, -31), durationMinutes: 45 }], asOf).fromStart).toBeUndefined();
   });
 
   it('na de start groeit een korte sessie altijd, ook van 20 minuten (110% van 20 is afgerond weer 20)', () => {
