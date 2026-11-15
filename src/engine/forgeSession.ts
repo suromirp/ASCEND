@@ -213,6 +213,8 @@ export function whenPhrase(ms: number, today = todayISO()): string {
 
 // Het blad van een concept of een lopende training, als die elders al afgerond of verwijderd is.
 export const SESSION_GONE_TEXT = 'Deze training is er niet meer. Hij is ergens anders afgerond of verwijderd; je logboek laat zien wat er bewaard is.';
+// Erachter als je net een andere training wilde starten: Begrepen start die (OtherSessionRunning.tsx).
+export const GONE_NEXT_TEXT = 'Na Begrepen start je nieuwe training.';
 
 // Verwijderen in het blad van een concept gaat in twee tikken: de eerste toont de bevestiging met Annuleren, pas de
 // tweede (in die bevestiging) verwijdert. Het blad roept voor beide knoppen deze ene stap aan.
@@ -221,14 +223,59 @@ export function discardTap(step: DiscardStep): { step: DiscardStep; discard: boo
   return step === 'bevestigen' ? { step, discard: true } : { step: 'bevestigen', discard: false };
 }
 
-// De dag die Afronden voorstelt bij Gedaan op: een geplande training van een eerdere dag krijgt die dag; een losse
-// training de dag van je laatst afgevinkte set als die eerder was (een concept van gisteren), binnen de 60 dagen
-// van het veld. Anders vandaag. Zo komt een beendag op de dag dat je hem deed (de 48-uursregel leest die dag).
+// De dag die Afronden voorstelt bij Gedaan op: de dag van je laatst afgevinkte set, ook bij een geplande training
+// die je een dag eerder of later deed (Warden 15 november, I-4), binnen de 60 dagen van het veld. De training zelf
+// blijft gekoppeld; alleen de dag van het nieuwe log volgt het werk. Zonder afgevinkte set: een geplande training
+// van een eerdere dag krijgt die dag, anders vandaag. Zo komt een beendag op de dag dat je hem deed (de
+// 48-uursregel leest die dag). Een bestaand log verandert hier nooit.
 export function finishDayDefault(o: { today: string; plannedSessionId?: string; scheduledDate?: string; lastTickAt?: number; dayOf: (ms: number) => string }): string {
+  const tick = tickDay(o);
+  if (tick !== undefined) return tick;
   if (o.plannedSessionId) return o.scheduledDate && o.scheduledDate < o.today ? o.scheduledDate : o.today;
-  if (o.lastTickAt === undefined) return o.today;
+  return o.today;
+}
+
+// De dag van je laatst afgevinkte set, als die binnen het veld valt (niet na vandaag, niet voor 60 dagen terug).
+function tickDay(o: { today: string; lastTickAt?: number; dayOf: (ms: number) => string }): string | undefined {
+  if (o.lastTickAt === undefined || !Number.isFinite(o.lastTickAt)) return undefined;
   const day = o.dayOf(o.lastTickAt);
-  return day < o.today && day >= addDays(o.today, -60) ? day : o.today;
+  return day <= o.today && day >= addDays(o.today, -60) ? day : undefined;
+}
+
+// De knoppen bij Gedaan op voor een geplande training: de geplande dag (als die niet na vandaag ligt), de dag van
+// je laatste set en vandaag, oud naar nieuw, zonder dubbele. Een enkele dag (alles vandaag) is geen keuze: leeg.
+export function finishDayChoices(o: { today: string; scheduledDate?: string; lastTickAt?: number; dayOf: (ms: number) => string }): string[] {
+  const days = [o.scheduledDate && o.scheduledDate <= o.today ? o.scheduledDate : undefined, tickDay(o), o.today].filter((d): d is string => !!d);
+  const unique = [...new Set(days)].sort();
+  return unique.length > 1 ? unique : [];
+}
+
+// Het blad Lange onderbreking gesloten zonder antwoord: onthoud voor welke stilte (de laatste handeling), zodat de
+// minuut-tik hem niet terugzet. Stond de vraag niet open, dan blijft wat er al onthouden was.
+export function rememberDismiss(o: { asking: boolean; lastActionAt: number; dismissedFor?: number }): number | undefined {
+  return o.asking ? o.lastActionAt : o.dismissedFor;
+}
+
+// Het keuzeblad sloot: wat nu? Na Verwijderen, of als de training elders al weg was (Begrepen), gaat een vervolg
+// (een nieuwe training starten) voor; anders sluit het blad, en opent Forge alleen na een keuze.
+export function afterChoiceClose(o: { discarded: boolean; gone: boolean; hasNext: boolean; choice: 'finish' | 'resume' | null }): 'next' | 'close' | 'open' {
+  if ((o.discarded || o.gone) && o.hasNext) return 'next';
+  if (o.discarded || o.gone || !o.choice) return 'close';
+  return 'open';
+}
+
+// De training verdween terwijl het keuzeblad openstond (een ander tabblad rondde hem af of verwijderde hem): het
+// blad zegt dat, tenzij dit blad hem zelf verwijderde of al een keuze maakte en aan het sluiten is.
+export function choiceSheetSeesGone(o: { stillThere: boolean; discarded: boolean; picked: boolean }): boolean {
+  return !o.stillThere && !o.discarded && !o.picked;
+}
+
+// De pil en zijn keuzeblad: verdwijnt de training terwijl het blad openstaat, dan blijft het blad staan met de
+// laatste stand (en zegt het zelf dat hij weg is); de pil zelf gaat weg. Zonder open blad: alleen de live sessie.
+export function pillSlot<S>(o: { live: S | undefined; last: S | undefined; sheetOpen: boolean }): { session: S; gone: boolean } | undefined {
+  if (o.live !== undefined) return { session: o.live, gone: false };
+  if (o.sheetOpen && o.last !== undefined) return { session: o.last, gone: true };
+  return undefined;
 }
 
 // De vraag Lange onderbreking: bij een echte terugkomst altijd (als de stilte de drempel haalt), op de minuut-tik
