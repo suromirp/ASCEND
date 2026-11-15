@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionLog, SessionTemplate } from '../models/training';
+import type { RouteTarget } from '../models/route';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { DEFAULT_PACE_SEC_KM, isTrekDay, resolveRouteStyle, roundStart, routeTarget, searchesOnOpen, targetText, walkKind, wantsRoute, wantsRouteAt } from './routeTarget';
+import { DEFAULT_PACE_SEC_KM, isTrekDay, walkShortText, resolveRouteStyle, roundStart, routeTarget, searchesOnOpen, targetText, walkKind, wantsRoute, wantsRouteAt } from './routeTarget';
 import { climbHikes } from './fixtures/climbLogs';
 import { progressionTarget } from './programLayout';
 import { recentRunPace } from './recentRunPace';
@@ -96,6 +97,8 @@ describe('wantsRouteAt: een route alleen buiten en te voet', () => {
 // ---- Routes voor wandelen, stap 2 (docs/visie/Ontwerp routes wandelen en rugzak.md) ------------------
 
 const { program } = buildDefaultProgramData();
+// Het doel zonder het tempo (rates, alleen in het geheugen; apart getoetst).
+const noRates = ({ rates: _rates, ...rest }: RouteTarget) => rest;
 
 // Het doel van een looptraining zoals het was voor de wandelroutes (15 november), letterlijk overgenomen:
 // geen enkel loopsjabloon mag een ander doel krijgen.
@@ -173,17 +176,17 @@ describe('wandelsjablonen per fase', () => {
   it('Basis en Opbouw: de getallen van het sjabloon; de bergtocht van 3 uur met 500 m wordt 375 m en 8 km', () => {
     for (const phase of ['phase_1', 'phase_2']) {
       expect(target(mountain, dayIn(phase, 1))).toMatchObject({ distanceKm: 8, ascentM: 375, askedAscentM: 500, minutes: 180 });
-      expect(target(recovery, dayIn(phase, 1))).toStrictEqual({ distanceKm: 3, ascentM: 0, minutes: 45 });
+      expect(noRates(target(recovery, dayIn(phase, 1)))).toStrictEqual({ distanceKm: 3, ascentM: 0, minutes: 45 });
     }
-    expect(target(ruck, dayIn('phase_1', 1))).toStrictEqual({ distanceKm: 4, ascentM: 0, minutes: 60, packKg: 5 });
-    expect(target(climb, dayIn('phase_1', 1))).toStrictEqual({ distanceKm: 2, ascentM: 90, minutes: 45, askedAscentM: 400 });
+    expect(noRates(target(ruck, dayIn('phase_1', 1)))).toStrictEqual({ distanceKm: 4, ascentM: 0, minutes: 60, packKg: 5 });
+    expect(noRates(target(climb, dayIn('phase_1', 1)))).toStrictEqual({ distanceKm: 2, ascentM: 90, minutes: 45, askedAscentM: 400 });
   });
 
   it('Bergcapaciteit en Expeditieklaar: de stap van de ladder, met de rugzak van de week', () => {
-    expect(target(mountain, dayIn('phase_3', 1))).toStrictEqual({ distanceKm: 5.5, ascentM: 250, minutes: 120, packKg: 11, askedAscentM: 400 });
-    expect(target(mountain, dayIn('phase_4', 1))).toStrictEqual({ distanceKm: 10.5, ascentM: 500, minutes: 240, packKg: 13, askedAscentM: 800 });
-    expect(target(dayOne, dayIn('phase_4', 1))).toStrictEqual({ distanceKm: 6.5, ascentM: 310, minutes: 150, packKg: 13, askedAscentM: 500 });
-    expect(target(ruck, dayIn('phase_4', 1))).toStrictEqual({ distanceKm: 5, ascentM: 0, minutes: 74, packKg: 13 });
+    expect(noRates(target(mountain, dayIn('phase_3', 1)))).toStrictEqual({ distanceKm: 5.5, ascentM: 250, minutes: 120, packKg: 11, askedAscentM: 400 });
+    expect(noRates(target(mountain, dayIn('phase_4', 1)))).toStrictEqual({ distanceKm: 10.5, ascentM: 500, minutes: 240, packKg: 13, askedAscentM: 800 });
+    expect(noRates(target(dayOne, dayIn('phase_4', 1)))).toStrictEqual({ distanceKm: 6.5, ascentM: 310, minutes: 150, packKg: 13, askedAscentM: 500 });
+    expect(noRates(target(ruck, dayIn('phase_4', 1)))).toStrictEqual({ distanceKm: 5, ascentM: 0, minutes: 74, packKg: 13 });
   });
 
   it('elke dag: de duur is die van de stap, en nooit meer hoogtemeters dan gevraagd', () => {
@@ -252,10 +255,17 @@ describe('wandelsjablonen per fase', () => {
     expect(routeTarget({ template: { ...easy, durationVariants: { full: 5 } }, date: dayIn('phase_1', 1) }).distanceKm).toBe(2);
   });
 
-  it('targetText noemt wat de training vraagt, niet wat in de duur past', () => {
+  it('targetText zegt de duur en wat de training vraagt, niet wat in de duur past', () => {
     const t = target(mountain, dayIn('phase_1', 1));
     expect(t.ascentM).toBe(375);
-    expect(targetText(t)).toBe('8 km, 500 hoogtemeters');
+    expect(targetText(t)).toBe('3 uur met 500 hoogtemeters en 6 kg rugzak');
+    expect(targetText({ ...t, packKg: undefined })).toBe('3 uur met 500 hoogtemeters');
+    expect(targetText(target(ruck, dayIn('phase_1', 1)))).toBe('1 uur met 5 kg rugzak');
+    expect(targetText(target(recovery, dayIn('phase_1', 1)))).toBe('45 minuten');
+    expect(walkShortText(t)).toBe('3 uur, ongeveer 8 km');
+    expect(walkShortText({ distanceKm: 8, ascentM: 0 })).toBeUndefined();
+    // Het tempo gaat mee: de wandelnorm zonder rugzak.
+    expect(t.rates).toMatchObject({ basis: 'norm', upMph: 300, downMph: 500, flatKmh: 4 });
   });
 
   it('de rugzak rekent door routeTarget heen, alleen met een eigen klimtempo en je lichaamsgewicht', () => {
@@ -265,8 +275,8 @@ describe('wandelsjablonen per fase', () => {
     const logs = climbHikes(2);
     const without = routeTarget({ template: heavy, date, logs });
     const withBody = routeTarget({ template: heavy, date, logs, bodyKg: 75 });
-    expect(without).toStrictEqual({ distanceKm: 8.5, ascentM: 500, minutes: 180, packKg: 14, askedAscentM: 500 });
-    expect(withBody).toStrictEqual({ distanceKm: 8, ascentM: 500, minutes: 180, packKg: 14, askedAscentM: 500 });
+    expect(noRates(without)).toStrictEqual({ distanceKm: 8.5, ascentM: 500, minutes: 180, packKg: 14, askedAscentM: 500 });
+    expect(noRates(withBody)).toStrictEqual({ distanceKm: 8, ascentM: 500, minutes: 180, packKg: 14, askedAscentM: 500 });
     expect(withBody.distanceKm).toBeLessThan(without.distanceKm);
     // Zonder eigen klimtempo doet het lichaamsgewicht niets: de wandelnorm rekent zonder rugzak.
     expect(routeTarget({ template: heavy, date, bodyKg: 75 })).toStrictEqual(routeTarget({ template: heavy, date }));

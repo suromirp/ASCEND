@@ -19,6 +19,7 @@
 // Puur: geen React, geen IndexedDB. Plant niets en verandert geen ladder.
 
 import { NORM_DOWN_MPH, NORM_UP_MPH, type ClimbPace, type ClimbPaceState, type HikeDay, type PackOptions } from './climbPace';
+import type { WalkRates } from '../models/route';
 
 // Vlak op de norm, ook op je eigen tempo (climbPace.ts rekent vlak ook met 4 km per uur).
 export const WALK_FLAT_KMH = 4;
@@ -39,16 +40,7 @@ export const resolveWalkPace = (raw: unknown): WalkPaceChoice => (raw === 'norm'
 export type WalkClashChoice = 'duration' | 'ascent';
 export const resolveWalkClash = (raw: unknown): WalkClashChoice => (raw === 'ascent' ? 'ascent' : 'duration');
 
-export interface WalkRates {
-  flatKmh: number;
-  upMph: number;
-  downMph: number;
-  // Waar het op rust: je eigen klimtempo of de wandelnorm.
-  basis: 'own' | 'norm';
-  // De rugzak die is meegerekend; alleen op je eigen tempo met een bekend gewicht op je klimmen en een
-  // bekend lichaamsgewicht. Afwezig: de tijd rekent zonder rugzak.
-  packKg?: number;
-}
+export type { WalkRates } from '../models/route';
 
 export const NORM_WALK_RATES: Readonly<WalkRates> = { flatKmh: WALK_FLAT_KMH, upMph: NORM_UP_MPH, downMph: NORM_DOWN_MPH, basis: 'norm' };
 
@@ -127,4 +119,14 @@ export function walkTarget(minutes: number, askedAscentM: number | undefined, ra
   const distanceKm = Math.round((Math.max(0, flatHours) * r.flatKmh) / DISTANCE_STEP_KM) * DISTANCE_STEP_KM;
   const loopMinutes = hikeMinutes({ km: distanceKm, up: ascentM, down: ascentM }, r);
   return { minutes: total, distanceKm, ascentM, askedAscentM: asked, maxAscentM, fits, loopMinutes };
+}
+
+// "45 minuten", "3 uur", "3 uur 5": een tijd zoals de zinnen van een wandeling hem zeggen, op 5 minuten.
+// Een tijd die geen getal is wordt nul, nooit NaN.
+export function walkTimeText(minutes: number): string {
+  const m = Math.round(nonNegative(minutes) / 5) * 5;
+  const h = Math.floor(m / 60);
+  const rest = m % 60;
+  if (h === 0) return `${m} minuten`;
+  return rest === 0 ? `${h} uur` : `${h} uur ${rest}`;
 }
