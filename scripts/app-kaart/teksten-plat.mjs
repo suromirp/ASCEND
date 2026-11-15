@@ -76,33 +76,37 @@ for (const f of bestanden) {
   delen.push(uit.join('\n'));
 }
 
-// Uitleg achter de i in de instellingen.
-const helpPad = path.join(ROOT, 'src', 'data', 'settingsHelp.ts');
-const helpRegels = fs.readFileSync(helpPad, 'utf8').split('\n');
-const helpUit = ['## Uitleg achter de i in de instellingen', '', 'Bron `src/data/settingsHelp.ts`. Per sleutel: titel, de zin vooraf en de punten. De Forge-uitleg staat hier niet (lijn Forge).', ''];
-let sleutel = null;
+// Uitleg achter de i in de instellingen: sinds stap 3 van docs/visie/Ontwerp instellingen op een plek.md per
+// groep in src/engine/settingsDefs/uitleg/<groep>.ts, op id van de verklaring.
+const uitlegMap = path.join(ROOT, 'src', 'engine', 'settingsDefs', 'uitleg');
+const helpUit = ['## Uitleg achter de i in de instellingen', '', 'Bron `src/engine/settingsDefs/uitleg/`, per groep, op id van de instelling. Per id: titel, de zin vooraf en de punten. De Forge-uitleg staat hier niet (lijn Forge).', ''];
 let overgeslagen = [];
-for (let i = 0; i < helpRegels.length; i++) {
-  const r = helpRegels[i];
-  const k = r.match(/^  (\w+): \{$/);
-  if (k) {
-    sleutel = k[1];
-    if (/^forge/.test(sleutel)) overgeslagen.push(sleutel);
-    else helpUit.push(`### ${sleutel} (src/data/settingsHelp.ts:${i + 1})`);
-    continue;
+for (const bestand of fs.readdirSync(uitlegMap).filter((f) => f.endsWith('.ts')).sort()) {
+  const bron = `src/engine/settingsDefs/uitleg/${bestand}`;
+  const helpRegels = fs.readFileSync(path.join(uitlegMap, bestand), 'utf8').split('\n');
+  let sleutel = null;
+  for (let i = 0; i < helpRegels.length; i++) {
+    const r = helpRegels[i];
+    const k = r.match(/^  '?([\w-]+)'?: \{$/);
+    if (k) {
+      sleutel = k[1];
+      if (/^forge/.test(sleutel) || bestand === 'forge.ts') overgeslagen.push(sleutel);
+      else helpUit.push(`### ${sleutel} (${bron}:${i + 1})`);
+      continue;
+    }
+    if (!sleutel || /^forge/.test(sleutel) || bestand === 'forge.ts') continue;
+    let m;
+    if ((m = r.match(/^\s+title: '(.*)',$/))) { helpUit.push(`- titel: ${m[1].replace(/\\'/g, "'")} (:${i + 1})`); totaal++; }
+    else if ((m = r.match(/^\s+lead: '(.*)',$/))) { helpUit.push(`- vooraf: ${m[1].replace(/\\'/g, "'")} (:${i + 1})`); totaal++; }
+    else if ((m = r.match(/head: '(.*?)', text: '(.*)' \},?$/))) { helpUit.push(`- ${m[1]}: ${m[2].replace(/\\'/g, "'")} (:${i + 1})`); totaal++; }
   }
-  if (!sleutel || /^forge/.test(sleutel)) continue;
-  let m;
-  if ((m = r.match(/^\s+title: '(.*)',$/))) { helpUit.push(`- titel: ${m[1].replace(/\\'/g, "'")} (:${i + 1})`); totaal++; }
-  else if ((m = r.match(/^\s+lead: '(.*)',$/))) { helpUit.push(`- vooraf: ${m[1].replace(/\\'/g, "'")} (:${i + 1})`); totaal++; }
-  else if ((m = r.match(/head: '(.*?)', text: '(.*)' \},?$/))) { helpUit.push(`- ${m[1]}: ${m[2].replace(/\\'/g, "'")} (:${i + 1})`); totaal++; }
 }
 if (overgeslagen.length) helpUit.push('', `Niet opgenomen (Forge): ${overgeslagen.join(', ')}.`);
 
 const kop = [
   '# Alle teksten van ASCEND, plat',
   '',
-  'Stap 1 van het herschrijven van alle teksten (`docs/backlog.md`, "Alle teksten van ASCEND herschrijven, en Engels erbij"). Gemaakt met `node scripts/app-kaart/teksten-plat.mjs` uit de tekstkaart (`docs/app-kaart/`, nagemaakte data, klok 31 oktober 2026) en `src/data/settingsHelp.ts`. Draai het opnieuw na een kaartwijziging.',
+  'Stap 1 van het herschrijven van alle teksten (`docs/backlog.md`, "Alle teksten van ASCEND herschrijven, en Engels erbij"). Gemaakt met `node scripts/app-kaart/teksten-plat.mjs` uit de tekstkaart (`docs/app-kaart/`, nagemaakte data, klok 31 oktober 2026) en `src/engine/settingsDefs/uitleg/`. Draai het opnieuw na een kaartwijziging.',
   '',
   'Lees het zo: per scherm de teksten in volgorde van de kaart, met tussen haakjes het bestand en de regel waar de tekst staat. Een `~` vooraan betekent dat alleen een deel van de tekst is gevonden (een getal of naam wordt ingevuld). "Niet gevonden" is een tekst die uit de engine komt of uit stukken is samengesteld. Een knop met meerdere teksten die aan elkaar staan is zo uit de kaart overgenomen. Een kop staat zonder voorvoegsel; knoppen, links, velden en labels hebben het soort ervoor; `aria` is de naam voor schermlezers.',
   '',

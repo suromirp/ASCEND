@@ -11,11 +11,12 @@
 // alleen Maak dit Thuis en Bewaar als plek bewaren iets (besluiten 2026-11-11-route-start.md en
 // 2026-11-12-andere-plek.md). Plant niets en bewaart geen lus.
 
-import { useEffect, useReducer, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
 import type { RoutePoint, RouteStyle, RouteTarget } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
+import { loadBodyKg } from '../engine/weightTrend';
 import { resolveRouteStyle, roundStart, routeTarget } from '../engine/routeTarget';
 import { searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
@@ -36,7 +37,7 @@ import { withTimeout } from '../utils/withTimeout';
 import { resolveMapBase, resolveMapPhoto, type MapBase, type MapPhoto, type MapRoute } from '../engine/routeMap';
 import { routeSheetParts, routeSheetStage, searchFailLine, type RouteSheetPart, type RouteSheetStage } from '../engine/routeSheet';
 import { INITIAL_SEARCH_STATE, answerFor, currentAdjust, failLineFor, needsSearch, pendingStale, searchKey, searchReducer } from '../engine/routeSearchState';
-import { adjustKey, adjustSummary, avoidPiece, canReverse, isAdjusted, loopPieces, reverseProposal, stepDistance, type AdjustAction, type LoopAdjust, type LoopPiece } from '../engine/routeAdjust';
+import { adjustKey, adjustSummary, avoidPiece, canReverse, isAdjusted, loopPieces, reverseProposal, searchTarget, stepDistance, type AdjustAction, type LoopAdjust, type LoopPiece } from '../engine/routeAdjust';
 
 const CONSENT_LIMIT_MS = 3000;
 export const SOURCE_NAME = { brouter: 'BRouter', valhalla: 'Valhalla' } as const;
@@ -179,7 +180,12 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const first = resolveRouteStyle(settings.routeStyle);
   // Grote wegen mijden in de aanvraag aan de routeplanner (standaard aan).
   const avoidBigRoads = settings.routeAvoidBigRoads !== false;
-  const trainingTarget = routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy });
+  // Een wandeltraining rekent met je lichaamsgewicht voor de rugzak op je eigen klimtempo (engine/hikeTarget.ts).
+  // Eén keer per training, logs of instellingen: het klimtempo en de testtempo's lopen alle logs door.
+  const trainingTarget = useMemo(
+    () => routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy, bodyKg: loadBodyKg(settings) }),
+    [template, date, program, sessionLogs, settings],
+  );
 
   useEffect(() => {
     let alive = true;
@@ -249,8 +255,14 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const adjust = currentAdjust(searchState, adjustBase);
   // Een bijsturing die nog zoekt bij een ander startpunt of een andere poging vervalt.
   if (pendingStale(searchState, adjustBase, attempt)) dispatch({ type: 'drop' });
-  const target: RouteTarget = adjust.deltaKm !== 0 ? { ...trainingTarget, distanceKm: Math.round((trainingTarget.distanceKm + adjust.deltaKm) * 10) / 10 } : trainingTarget;
-  const { distanceKm, ascentM } = target;
+  // Het hele doel, ook de duur en wat de training aan hoogtemeters vraagt: de zinnen van de planner lezen ze.
+  // Stabiel op de inhoud, met elk veld: een gelijk doel uit nieuwe logs breekt een lopende zoektocht nooit af,
+  // en een nieuw veld van het doel gaat vanzelf mee naar findRoutes.
+  const trainingSig = JSON.stringify(trainingTarget);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stableTraining = useMemo(() => trainingTarget, [trainingSig]);
+  const target: RouteTarget = useMemo(() => searchTarget(stableTraining, adjust.deltaKm), [stableTraining, adjust.deltaKm]);
+  const { ascentM } = target;
   const avoid = adjust.avoid;
 
   // Sluiten stopt ook een vraag om je plek die nog loopt: daarna gaat er niets meer uit.
@@ -291,13 +303,13 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     };
     const terrainPoint = terrainLat !== undefined && terrainLon !== undefined ? { lat: terrainLat, lon: terrainLon } : undefined;
     // findRoutes heeft zelf een grens in tijd en gooit nooit: "Lussen zoeken" blijft nooit staan.
-    void findRoutes({ lat, lon }, { distanceKm, ascentM }, { signal: stop.signal, onStep, terrainAt: terrainPoint, avoidBigRoads, ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
+    void findRoutes({ lat, lon }, target, { signal: stop.signal, onStep, terrainAt: terrainPoint, avoidBigRoads, ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
       if (!stop.signal.aborted) dispatch({ type: 'answer', key, answer: result, currentKey: keyNow.current });
     });
     // Sluit het paneel of begint een nieuwe zoektocht, dan gaat er voor deze geen aanroep meer de deur uit.
     return () => stop.abort();
     // De sleutel bevat het punt; de afhankelijkheden zijn dezelfde getallen.
-  }, [closing, enabled, asked, ready, searchNeeded, lat, lon, exactLat, exactLon, terrainLat, terrainLon, distanceKm, ascentM, avoid, avoidBigRoads, key]);
+  }, [closing, enabled, asked, ready, searchNeeded, lat, lon, exactLat, exactLon, terrainLat, terrainLon, target, avoid, avoidBigRoads, key]);
 
   // Start hier: het getikte punt geldt voor deze zoektocht en wordt niet bewaard; Thuis verschuift niet.
   async function startOnMap(from: { tap: RoutePoint }): Promise<StartAnswer> {

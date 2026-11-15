@@ -1,21 +1,23 @@
 // ASCEND: de verklaringen in settingsDefs/ (docs/visie/Ontwerp instellingen op een plek.md).
 //
-// Sinds stap 2 komen de index, de rijen, de plekken en de voorwaarden alleen nog uit de verklaringen; dat ze
-// niets veranderden bewijst de foto (settingsFoto.test.ts). Hier staat wat de vorm bewaakt, en tot stap 3 de
-// vergelijking van de uitleg en de keuzes met settingsHelp.ts en settingsChoices.ts, die nog de bron zijn: een
-// nieuwe uitleg of keuze komt daar en met dezelfde tekst in de verklaring.
+// Sinds stap 2 en 3 komen de index, de rijen, de plekken, de voorwaarden, de uitleg en de keuzes alleen nog uit
+// de verklaringen (de uitleg uit uitleg/<groep>.ts, de keuzes uit <GROEP>_CHOICES); dat ze niets veranderden
+// bewijst de foto (settingsFoto.test.ts). Hier staat wat de vorm bewaakt: dat alles één eigenaar heeft en dat
+// de verwijzingen kloppen. Het advies (settingsDiff.ts) en de titels op de pagina's zijn nog niet verhuisd.
 
 import { describe, expect, it } from 'vitest';
 import { SETTINGS_INDEX } from '../data/settingsIndex';
 import { placementOf } from '../data/settingsLayout';
-import { SETTINGS_HELP, settingsHelp } from '../data/settingsHelp';
+import { SETTINGS_HELP, UITLEG } from '../data/settingsHelp';
+import { hasSettingsHelp } from '../data/settingsHelpKeys';
 import { CHOICES } from '../data/settingsChoices';
 import { ADVICE_SPECS } from './settingsDiff';
 import { ALL_DEFS, DEFS, PAGE_ORDER } from './settingsDefs/index';
-import { deriveChoices, deriveHelp } from './settingsDefs/derive';
+import { deriveChoices, deriveHelpKeys } from './settingsDefs/derive';
 import { ADVICE_ORDER } from './settingsDefs/order';
 
 const GROUP_FILES = import.meta.glob<string>('./settingsDefs/*.ts', { query: '?raw', import: 'default', eager: true });
+const APP_SOURCES = import.meta.glob<string>(['../**/*.ts', '../**/*.tsx', '!../**/*.test.ts'], { query: '?raw', import: 'default', eager: true });
 const PAGES_TSX = import.meta.glob<string>(['../components/settings/**/*.tsx', '../pages/settings/*.tsx'], { query: '?raw', import: 'default', eager: true });
 
 // Rijen waarvan de titel of de bladkop op de pagina een expressie is, zodat de test ze niet kan lezen, met de reden.
@@ -61,27 +63,23 @@ describe('de vorm van de verklaringen', () => {
   });
 });
 
-describe('de verklaringen tegenover de uitleg, de keuzes en het advies van nu', () => {
-  it('de uitleg: elke sleutel één keer, met dezelfde tekst', () => {
-    const { help, neutral, doubles } = deriveHelp();
+describe('de verklaringen tegenover de uitleg, de keuzes, het advies en de pagina\'s', () => {
+  it('de uitleg: elke tekst hoort bij één verklaring met help: true, onder één sleutel', () => {
+    const { keys, doubles } = deriveHelpKeys();
     expect(doubles, 'twee verklaringen maken dezelfde sleutel').toEqual([]);
-    for (const key of Object.keys(SETTINGS_HELP)) expect(help[key], `uitleg ${key} hoort bij geen verklaring (help, helpKey)`).toEqual(SETTINGS_HELP[key]);
-    expect(Object.keys(help).filter((k) => !SETTINGS_HELP[k]), 'uitleg die in settingsHelp.ts niet bestaat').toEqual([]);
-    for (const key of Object.keys(SETTINGS_HELP)) {
-      const old = settingsHelp(key, false);
-      expect(neutral[key] ?? help[key], `uitleg zonder namen ${key}`).toEqual(old);
-    }
-    for (const d of ALL_DEFS) if (d.help && 'from' in d.help) {
-      const from = DEFS[d.help.from];
-      expect(from?.help && !('from' in from.help), `${d.id} leent uitleg van ${d.help.from}, die zelf geen uitleg heeft`).toBe(true);
-    }
+    for (const d of ALL_DEFS) if (d.help === true) expect(UITLEG[d.id], `${d.id} heeft help: true maar geen tekst in uitleg/${d.page}.ts`).toBeDefined();
+    for (const id of Object.keys(UITLEG)) expect(DEFS[id]?.help, `uitleg ${id} hoort bij geen verklaring met help: true`).toBe(true);
+    expect(Object.keys(SETTINGS_HELP).sort()).toEqual([...keys].sort());
+    for (const key of keys) expect(hasSettingsHelp(key), key).toBe(true);
+    for (const d of ALL_DEFS) if (d.help && d.help !== true) expect(DEFS[d.help.from]?.help, `${d.id} leent uitleg van ${d.help.from}, die zelf geen uitleg heeft`).toBe(true);
+    for (const [key, c] of Object.entries(CHOICES)) if (c.help) expect(hasSettingsHelp(c.help), `keuze ${key} wijst naar uitleg ${c.help} die niet bestaat`).toBe(true);
   });
 
-  it('de keuzes: elke keuze één keer, gelijk aan CHOICES', () => {
+  it('de keuzes: elke keuze hoort bij één verklaring, onder haar sleutel in CHOICES', () => {
     const { choices, doubles } = deriveChoices();
     expect(doubles, 'twee verklaringen maken dezelfde keuze').toEqual([]);
-    for (const [key, def] of Object.entries(CHOICES)) expect(choices[key], `keuze ${key} hoort bij geen verklaring`).toEqual(def);
-    expect(Object.keys(choices).filter((k) => !(k in CHOICES)), 'keuze die in settingsChoices.ts niet bestaat').toEqual([]);
+    for (const [key, def] of Object.entries(CHOICES)) expect(choices[key], `keuze ${key} hoort bij geen verklaring`).toBe(def);
+    expect(Object.keys(choices).filter((k) => !(k in CHOICES)), 'keuze die niet in CHOICES staat').toEqual([]);
   });
 
   it('de titel in Aangepaste instellingen en de groep van het advies', () => {
@@ -132,7 +130,15 @@ describe('de verklaringen tegenover de uitleg, de keuzes en het advies van nu', 
     const groups = Object.entries(GROUP_FILES).filter(([file]) => PAGE_ORDER.some((p) => file.endsWith(`/${p}.ts`)));
     expect(groups).toHaveLength(8);
     for (const [file, text] of groups) {
-      expect(text, file).not.toMatch(/from '[^']*(settingsSummary|settingsDiff|settingsLayout|settingsIndex)'/);
+      expect(text, file).not.toMatch(/from '[^']*(settingsSummary|settingsDiff|settingsLayout|settingsIndex|settingsChoices|uitleg\/\w+)'/);
+      expect(text, `${file} haalt de uitleg binnen, die niet bij de start mag laden`).not.toMatch(/^import (?!type)[^\n]*settingsHelp'/m);
     }
+  });
+
+  it('de uitleg laadt niet bij de start: alleen settingsHelpKeys.ts haalt settingsHelp.ts op, met import()', () => {
+    const static_ = Object.entries(APP_SOURCES)
+      .filter(([file, text]) => !file.endsWith('/data/settingsHelp.ts') && /^import (?!type)[^\n]*from '[^']*\/settingsHelp'/m.test(text))
+      .map(([file]) => file);
+    expect(static_, 'importeer de uitleg via data/settingsHelpKeys.ts').toEqual([]);
   });
 });

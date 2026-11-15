@@ -27,6 +27,7 @@ import { makeId } from '../utils/id';
 import { isDone } from './adviceShared';
 import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
+import { isTaperDay, raceDatesOf } from './raceWindow';
 import { isKeyFor, type KeyFocus } from './keySession';
 import { leaveDays } from './leave';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
@@ -102,7 +103,9 @@ export function weekLoss(input: FullWeekInput): WeekLoss[] {
   const { today } = input;
   const out: WeekLoss[] = [];
   const nameOf = (s: PlannedSession) => ctx.tpl(s)?.name ?? 'Training';
-  const away = (d: string) => { const kind = ctx.days.get(d)?.kind; return kind === 'off' || kind === 'trek' || isIllnessDay(d, input.illnessEpisodes, today); };
+  // Een dag uit de afbouw van een race die er al was telt ook niet als verlies, zoals in Week (engine/raceWindow.ts).
+  const races = raceDatesOf(input.sessions, input.templates);
+  const away = (d: string) => { const kind = ctx.days.get(d)?.kind; return kind === 'off' || kind === 'trek' || isIllnessDay(d, input.illnessEpisodes, today) || isTaperDay(d, races, today); };
   const inWeek = (d: string) => d >= monday && d <= sunday;
   const usedDay = (d: string, except: string) => input.sessions.some((o) => o.id !== except && o.status !== 'skipped' && o.scheduledDate === d && ctx.trains(o))
     || input.logs.some((l) => l.completedDate === d && l.type !== 'recovery');

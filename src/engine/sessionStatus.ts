@@ -4,12 +4,14 @@ import type { LeavePeriod } from '../models/leave';
 import { isAwayDay } from './leave';
 import type { IllnessEpisode } from '../models/illness';
 import { isIllnessDay } from './illness';
+import { isTaperDay } from './raceWindow';
 
 // 'away': voorbij en niet gedaan op een dag van een vakantie, tocht of periode zonder sportschool die je meldde
 // (engine/leave.ts#isAwayDay), of op een dag dat je ziek gemeld was (engine/illness.ts#isIllnessDay). Heet
 // Vervallen, nooit gemist. Een dag vóór de melding blijft gemist. Wat je op zo'n dag wel logde, is gedaan en telt
 // mee: dezelfde afleiding als de weekterugblik, de ring in Week en de reeks (engine/weekLogs.ts#leftOutOfCount,
 // engine/streak.ts) en als de kaart Vervallen op Vandaag (engine/missedTraining.ts#planMissed), via isPausedDay.
+// Ook een training uit de afbouw voor een race, zodra de racedag er is (engine/raceWindow.ts#isTaperDay).
 export type DisplayStatus = 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' | 'rest' | 'away';
 
 export interface DisplaySessionState {
@@ -43,12 +45,15 @@ function movedByYou(session: PlannedSession): boolean {
 export interface PauseContext {
   leave?: LeavePeriod[];
   illness?: IllnessEpisode[];
+  // De dagen van de races in de planning (engine/raceWindow.ts#raceDatesOf).
+  races?: readonly string[];
 }
 
-// Een dag binnen een pauze die je meldde: ziek (tot en met de dag van beter melden, of tot vandaag) of weg. De ene
-// toets voor Vervallen; wie een voorbije dag toont, geeft { leave, illness } mee.
+// Een dag binnen een pauze die je meldde: ziek (tot en met de dag van beter melden, of tot vandaag) of weg, of een
+// dag uit de afbouw van een race die er al was. De ene toets voor Vervallen; wie een voorbije dag toont, geeft
+// { leave, illness, races } mee.
 export function isPausedDay(date: string, pause: PauseContext | undefined, today: string): boolean {
-  return (!!pause?.leave?.length && isAwayDay(date, pause.leave)) || isIllnessDay(date, pause?.illness, today);
+  return (!!pause?.leave?.length && isAwayDay(date, pause.leave)) || isIllnessDay(date, pause?.illness, today) || isTaperDay(date, pause?.races, today);
 }
 
 export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[], isRest = false, pause?: PauseContext): DisplaySessionState {

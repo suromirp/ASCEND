@@ -16,7 +16,8 @@ export interface RowFacts {
   concern?: string;
   // Gemist: rechts staat dan de greep (of het teken), in de regel het woord.
   missed?: boolean;
-  // Vervallen: voorbij en niet gedaan op een dag van een gemelde vakantie of ziekte (engine/sessionStatus.ts, 'away').
+  // Vervallen: voorbij en niet gedaan op een dag van een gemelde vakantie of ziekte, of in de afbouw voor een race die
+  // er al was (engine/sessionStatus.ts, 'away').
   lapsed?: boolean;
   // Een inhaal: "verplaatst van wo 28" op de nieuwe rij (engine/catchUp.ts).
   catchNote?: string;

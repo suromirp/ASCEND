@@ -1,12 +1,11 @@
 // ASCEND: de oude vormen, afgeleid uit de verklaringen (docs/visie/Ontwerp instellingen op een plek.md,
 // hoofdstuk 2, "Hoe de oude vormen eruit volgen"). Sinds stap 2 lezen SETTINGS_INDEX (data/settingsIndex.ts) en
-// PAGE_ROWS, MOVED, LINKS en SHOW_WHEN (data/settingsLayout.ts) hier; de uitleg en de keuzes volgen in stap 3.
+// PAGE_ROWS, MOVED, LINKS en SHOW_WHEN (data/settingsLayout.ts) hier, sinds stap 3 ook de sleutels van de
+// uitleg (de tekst bouwt data/settingsHelp.ts uit uitleg/<groep>.ts).
 
 import type { PageRows, SettingPlacement, SettingsPageId } from '../../data/settingsLayout';
 import type { SettingsIndexItem } from '../../data/settingsIndex';
-import type { SettingsHelp } from '../../data/settingsHelp';
-import type { ChoiceDef } from '../../data/settingsChoices';
-import type { Blocker, SettingDef } from './types';
+import type { Blocker, ChoiceDef, SettingDef } from './types';
 import { ALL_DEFS, PAGE_ORDER } from './index';
 import { INDEX_ORDER } from './order';
 
@@ -74,7 +73,7 @@ export function derivePlacement(id: string, defs: readonly SettingDef[] = ALL_DE
 // De sleutel van de uitleg van een verklaring: de eigen sleutel, of die van de verklaring waar hij hem van leent.
 export function helpKeyOf(def: SettingDef, defs: readonly SettingDef[] = ALL_DEFS): string | undefined {
   if (!def.help) return undefined;
-  if ('from' in def.help) {
+  if (def.help !== true) {
     const from = def.help.from;
     const owner = defs.find((d) => d.id === from);
     return owner ? helpKeyOf(owner, defs) : undefined;
@@ -82,19 +81,19 @@ export function helpKeyOf(def: SettingDef, defs: readonly SettingDef[] = ALL_DEF
   return def.helpKey ?? def.id;
 }
 
-// Elke uitleg onder haar sleutel. Een sleutel die twee keer gemaakt wordt staat in `doubles`.
-export function deriveHelp(defs: readonly SettingDef[] = ALL_DEFS): { help: Record<string, SettingsHelp>; neutral: Record<string, SettingsHelp>; doubles: string[] } {
-  const help: Record<string, SettingsHelp> = {};
-  const neutral: Record<string, SettingsHelp> = {};
+// De sleutels die uitleg hebben (`helpKey ?? id` van elke verklaring met `help: true`). Licht: de tekst zelf
+// staat in uitleg/<groep>.ts en laadt pas in Instellingen (data/settingsHelpKeys.ts). Een sleutel die twee keer
+// gemaakt wordt staat in `doubles`.
+export function deriveHelpKeys(defs: readonly SettingDef[] = ALL_DEFS): { keys: string[]; doubles: string[] } {
+  const keys: string[] = [];
   const doubles: string[] = [];
   for (const d of defs) {
-    if (!d.help || 'from' in d.help) continue;
+    if (d.help !== true) continue;
     const key = d.helpKey ?? d.id;
-    if (help[key]) doubles.push(key);
-    help[key] = d.help;
-    if (d.neutralHelp) neutral[key] = d.neutralHelp;
+    if (keys.includes(key)) doubles.push(key);
+    else keys.push(key);
   }
-  return { help, neutral, doubles };
+  return { keys, doubles };
 }
 
 export function deriveChoices(defs: readonly SettingDef[] = ALL_DEFS): { choices: Record<string, ChoiceDef<string | number>>; doubles: string[] } {

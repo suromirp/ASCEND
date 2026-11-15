@@ -23,6 +23,7 @@ import type { LeavePeriod } from '../models/leave';
 import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, weekdayLongNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { isIllnessDay } from './illness';
+import { isTaperDay, raceDatesOf } from './raceWindow';
 import { leaveDays } from './leave';
 import { hasRole } from './templateRoles';
 import { isKeyFor, type KeyFocus } from './keySession';
@@ -96,12 +97,15 @@ function trainedOn(day: string, input: RestBackInput, byId: Map<string, SessionT
 function catchUpFits(date: string, rest: PlannedSession, input: RestBackInput, byId: Map<string, SessionTemplate>): boolean {
   const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter(Boolean));
   const caughtUp = caughtUpMap(input.plannedSessions);
+  const races = raceDatesOf(input.plannedSessions, byId);
   const around = input.plannedSessions.filter((o) => o.id !== rest.id && o.status !== 'skipped' && (o.scheduledDate >= input.today || logged.has(o.id)));
   return input.plannedSessions.some((m) => {
     const t = byId.get(m.templateId);
     if (!t || !(hasRole(t, 'test') || isKeyFor(t, input.keyFocus))) return false;
     if (m.scheduledDate >= date || m.scheduledDate < addDays(date, -7) || logged.has(m.id) || caughtUp.has(m.id) || m.leave || m.catchUp) return false;
     if (isIllnessDay(m.scheduledDate, input.illnessEpisodes, input.today)) return false;
+    // Uit de afbouw van een race die er al was: vervallen, niets in te halen (engine/raceWindow.ts).
+    if (isTaperDay(m.scheduledDate, races, input.today)) return false;
     const missed = m.status === 'skipped' ? m.lock?.by === 'user' : m.scheduledDate < input.today;
     if (!missed) return false;
     // Hetzelfde gedaan binnen twee dagen, zonder koppeling: niet gemist.
