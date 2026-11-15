@@ -4,6 +4,11 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
+### Een verse back-up voor het naspelen van Week
+- Keuzes: exporteer een back-up en zet hem in de chat van de coördinator (advies). Of: zonder back-up, dan raadt de bouwer met nagemaakte data.
+- Zonder antwoord: de bouwer begint met nagemaakte data.
+- Sinds: 15 november 10:40
+
 ### Routes wandelen: drie standaardkeuzes, gebouwd met het advies
 - Keuzes: zo laten (advies): duur gaat voor hoogtemeters, en dat is instelbaar; de wandelladder verandert alleen via Akkoord; een herstelwandeling krijgt pas een lus na een tik. Of: een van de drie anders.
 - Zonder antwoord: het blijft zoals het nu live staat.
@@ -26,7 +31,7 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Stuk of vast
 
-Niets.
+- Week telt anders dan hij toont: drie rode kruisen, maar "1 training gemist"; zaterdag zonder kruis; een waarschuwing over een lange loop die niet gedaan is. De volgende coördinator speelt het na zodra er een verse back-up is.
 
 ## Net live
 
