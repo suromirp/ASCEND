@@ -17,11 +17,11 @@ import { addDays } from '../utils/dates';
 import type { IllnessEpisode } from '../models/illness';
 import type { PlanChangeProposal } from '../models/planChange';
 import { isIllnessDay } from './illness';
-import { isAwayDay, leaveDays } from './leave';
+import { isAwayFor, leaveDays } from './leave';
 import type { LeavePeriod } from '../models/leave';
 import { logDay, type PlannedById } from './logDay';
 import { isTaperDay } from './raceWindow';
-import { isDraftOpen } from './sessionStatus';
+import { isDraftOpen, templateIn, type TemplateLookup } from './sessionStatus';
 
 type TemplateTypes = Map<string, Pick<SessionTemplate, 'type'>>;
 
@@ -65,20 +65,22 @@ export function looseLogsOfWeek(logs: SessionLog[], plannedSessions: Pick<Planne
 // planning), zoals de reeks. Wat jij overgeslagen hebt, of liet vallen na het
 // missen, telt wel mee.
 export function leftOutOfCount(
-  plannedSessions: readonly Pick<PlannedSession, 'id' | 'scheduledDate' | 'status' | 'catchUp'>[],
+  plannedSessions: readonly (Pick<PlannedSession, 'id' | 'scheduledDate' | 'status' | 'catchUp'> & Partial<Pick<PlannedSession, 'templateId' | 'leave'>>)[],
   planChangeLog: readonly PlanChangeProposal[],
   illnessEpisodes: IllnessEpisode[] | undefined,
   asOf: string,
   programStart: string | undefined,
-  // Een vakantie, tocht of periode zonder sportschool die je zelf meldde (engine/leave.ts#isAwayDay): wat daar
-  // stond en niet gedaan is, telt niet als gemist. Wat je er wel deed, telt gewoon mee als gedaan; zo ook op een
-  // zieke dag (`loggedIds` geldt voor beide, engine/sessionStatus.ts#isPausedDay). Verplicht: zonder loggedIds viel
+  // Een vakantie of tocht die je zelf meldde, of zonder sportschool wat de sportschool nodig heeft
+  // (engine/leave.ts#isAwayFor, met `templates`): wat daar stond en niet gedaan is, telt niet als gemist. Een loop of
+  // wandeling zonder sportschool telt gewoon (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md). Wat je er wel deed, telt gewoon mee als gedaan; zo ook op een
+  // zieke dag (`loggedIds` geldt voor beide, engine/sessionStatus.ts#isPausedFor). Verplicht: zonder loggedIds viel
   // een gelogde training op een zieke dag stil uit de telling (Warden, 15 november).
   // `races`: de dagen van de races (engine/raceWindow.ts#raceDatesOf). Een training uit de afbouw die niet gedaan is,
   // telt na de racedag niet als gemist (engine/raceWindow.ts#isTaperDay), net als een vakantiedag.
   // `openDraft`: de geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId). Een
   // voorbije training die nog loopt telt niet als gemist en niet als gedaan, tot hij afgerond of verwijderd is.
-  away: { periods: LeavePeriod[] | undefined; loggedIds: ReadonlySet<string | undefined>; races?: readonly string[]; openDraft?: string },
+  // Met periodes ook de sjablonen (verplicht), zodat zonder sportschool alleen telt wat de sportschool nodig heeft.
+  away: { loggedIds: ReadonlySet<string | undefined>; races?: readonly string[]; openDraft?: string } & ({ periods?: undefined; templates?: TemplateLookup } | { periods: LeavePeriod[] | undefined; templates: TemplateLookup }),
 ): (id: string) => boolean {
   const removedBy = new Map<string, string>();
   for (const p of planChangeLog) {
@@ -97,7 +99,9 @@ export function leftOutOfCount(
     if (!s) return false;
     if (programStart && s.scheduledDate < programStart) return true;
     if (illnessEpisodes && !away.loggedIds.has(s.id) && isIllnessDay(s.scheduledDate, illnessEpisodes, asOf)) return true;
-    if (awayDays && !away.loggedIds.has(s.id) && isAwayDay(s.scheduledDate, away.periods, awayDays)) return true;
+    if (awayDays && !away.loggedIds.has(s.id) && isAwayFor(s.scheduledDate, templateIn(away.templates, s.templateId ?? ''), away.periods, awayDays)) return true;
+    // Wat een periode liet vallen (de rest van de lopen bij Licht, een krachttraining zonder dag): telt niet.
+    if (s.status === 'skipped' && s.leave?.role === 'dropped') return true;
     if (away.races?.length && !away.loggedIds.has(s.id) && isTaperDay(s.scheduledDate, away.races, asOf)) return true;
     if (!away.loggedIds.has(s.id) && isDraftOpen(s, away.openDraft, asOf)) return true;
     if (s.status !== 'skipped') return false;

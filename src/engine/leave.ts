@@ -25,6 +25,8 @@
 import type { LeaveKind, LeavePeriod, TrekDetails } from '../models/leave';
 import { trekLightDaysBefore } from './trekTaper';
 import { isNoGymDetails, noGymLine } from './noGymDetails';
+import type { SessionTemplate } from '../models/training';
+import { isGymStrengthTemplate } from './templateRoles';
 import { addDays, daysBetween, formatWeekdayDateNL, formatWeekdayDayMonthNL } from '../utils/dates';
 
 export const LEAVE_KINDS: LeaveKind[] = ['no_training', 'no_gym', 'trek', 'free_days'];
@@ -181,12 +183,31 @@ export function isLeaveBlockedDay(periods: LeavePeriod[] | undefined, date: stri
   return kind === 'off' || kind === 'trek';
 }
 
-// A day you said you are away (a holiday, a tocht, away without a gym): what was planned there and not
-// done never counts as missed, is never caught up and asks no "Niet gedaan?" (docs/beslissingen/
-// 2026-11-14-vakantie-en-ziek-niet-gemist.md). Free days are time you have, not time away: they count as usual.
+// A day you said you are away (a holiday, a tocht, away without a gym). For the day as a whole: no rustiger instap
+// voorstel, no "Deze week nog een keer?" (engine/reentry.ts, engine/repeatWeek.ts). Whether a training on such a day
+// counts as missed is isAwayFor: away without a gym only lets go of what needs the gym. Free days are time you have,
+// not time away: they count as usual.
 export function isAwayDay(date: string, periods: LeavePeriod[] | undefined, days: Map<string, LeaveDay> = leaveDays(periods)): boolean {
   const kind = days.get(date)?.kind;
   return kind === 'off' || kind === 'trek' || kind === 'nogym';
+}
+
+// A holiday or a tocht: a pause from the plan. Nothing there counts as missed, nothing is caught up on it, and what
+// was still open before it falls away (engine/missedTraining.ts#pauseSince). Away without a gym is no pause: you run.
+export function isPauseDay(date: string, periods: LeavePeriod[] | undefined, days: Map<string, LeaveDay> = leaveDays(periods)): boolean {
+  const kind = days.get(date)?.kind;
+  return kind === 'off' || kind === 'trek';
+}
+
+// Een training op deze dag telt als weg, nooit als gemist (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md):
+// op een vakantie- of tochtdag alles; zonder sportschool alleen wat de sportschool nodig heeft
+// (engine/templateRoles.ts#isGymStrengthTemplate). Een loop, wandeling of Eigen gewicht in die periode telt gewoon.
+// De ene toets voor Week (de stand), de tellingen (engine/weekLogs.ts#leftOutOfCount), de weekterugblik, Niet gedaan?
+// en het inhaaladvies. Zonder sjabloon (onbekend) telt alleen een vakantie- of tochtdag als weg.
+export function isAwayFor(date: string, template: Pick<SessionTemplate, 'id' | 'type'> | undefined, periods: LeavePeriod[] | undefined, days: Map<string, LeaveDay> = leaveDays(periods)): boolean {
+  const kind = days.get(date)?.kind;
+  if (kind === 'off' || kind === 'trek') return true;
+  return kind === 'nogym' && !!template && isGymStrengthTemplate(template);
 }
 
 // The away periods (no free days), in date order.

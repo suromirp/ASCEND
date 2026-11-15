@@ -199,7 +199,11 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
   const leave = leaveContext(input, byId);
   const findings: Finding[] = [];
   const active = input.sessions.filter(open).filter((s) => !onlyWeeks || onlyWeeks.has(mondayOfWeek(s.scheduledDate)));
-  const all = [...input.sessions.filter((s) => s.status !== 'skipped'), ...sportDays];
+  // In Week (`reportYours`) draagt een voorbije training zonder log geen belasting: hij is niet gebeurd, dus geen "1 dag
+  // na Lange duurloop" naast een lange loop die niet gedaan is (eigenaar, 15 november; dezelfde opvatting als
+  // lastHeavyBefore en het inhalen). De planningsronde zelf leest de controle zonder die optie en blijft zoals hij was.
+  const happened = (s: PlannedSession) => !input.reportYours || s.scheduledDate >= input.today || logged.has(s.id);
+  const all = [...input.sessions.filter((s) => s.status !== 'skipped' && happened(s)), ...sportDays];
   const recentLogs = input.logs.filter((l) => daysBetween(l.completedDate, input.today) <= 56);
   // By date, so each rule looks at a few days instead of the whole plan.
   const index = (list: PlannedSession[]) => {

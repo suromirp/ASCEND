@@ -2,7 +2,10 @@
 // Gedeeld door het inhalen (engine/adviceWeek.ts via adviceShared.ts) en REST-BACK (engine/restDayBack.ts). Puur.
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
-import { addDays } from '../utils/dates';
+import { addDays, mondayOfWeek } from '../utils/dates';
+import type { Program } from '../models/program';
+import type { LeavePeriod } from '../models/leave';
+import { validateWeeks, type CheckInput, type CheckRule } from './weekValidator';
 import { isHardRun } from './scheduler';
 import { isTestOrRace } from './templateRoles';
 
@@ -30,4 +33,34 @@ export function hardRunApart(date: string, session: Pick<PlannedSession, 'id'>, 
     && (o.scheduledDate >= inputs.asOf || loggedIds.has(o.id)) && (() => { const t = templateById.get(o.templateId); return !!t && isHardRun(t); })());
   const loggedHard = inputs.logs.some((l) => near.has(l.completedDate) && l.plannedSessionId !== session.id && (() => { const t = templateById.get(l.templateId); return !!t && isHardRun(t); })());
   return !plannedHard && !loggedHard;
+}
+
+// Het inhalen leest dezelfde weekcontrole als Let op in Week (engine/weekConcerns.ts, met `reportYours`): na de
+// verplaatsing mag de week geen nieuw punt over deze training geven, ook niet over de weekgrens (een lange duurloop op
+// maandag na heuvelintervallen op zondag). Nooit een voorstel dat Week daarna zelf afkeurt
+// (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md). De rustdag die het voorstel opheft telt niet mee.
+export const CATCH_UP_CHECK_RULES: readonly CheckRule[] = ['LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH', 'TEST-REST'];
+
+export interface WeekAcceptInputs extends HardApartInputs {
+  templates: readonly SessionTemplate[];
+  program?: Program | null;
+  restDay?: number;
+  leave?: LeavePeriod[];
+  slotDays?: Map<string, number>;
+  dailyTimeBudget?: CheckInput['dailyTimeBudget'];
+  sameDayPairingPreference?: CheckInput['sameDayPairingPreference'];
+}
+
+export function weekAccepts(date: string, session: PlannedSession, inputs: WeekAcceptInputs, change: { plannedMinutes?: number; removeIds?: readonly string[] } = {}): boolean {
+  const remove = new Set(change.removeIds ?? []);
+  // Na Akkoord is de verplaatste training van jou (een slot), zoals elke verplaatsing uit een voorstel.
+  const moved: PlannedSession = { ...session, scheduledDate: date, weekStartDate: mondayOfWeek(date), status: 'moved', plannedMinutes: change.plannedMinutes ?? session.plannedMinutes };
+  const sessions = inputs.plannedSessions.filter((s) => !remove.has(s.id)).map((s) => (s.id === session.id ? moved : s));
+  const weeks = new Set([addDays(date, -1), date, addDays(date, 1)].map(mondayOfWeek));
+  const findings = validateWeeks({
+    sessions, logs: [...inputs.logs], templates: [...inputs.templates], today: inputs.asOf, restDay: inputs.restDay, program: inputs.program,
+    dailyTimeBudget: inputs.dailyTimeBudget, sameDayPairingPreference: inputs.sameDayPairingPreference, leave: inputs.leave, slotDays: inputs.slotDays,
+    reportYours: true, until: addDays(date, 3),
+  }, weeks);
+  return !findings.some((f) => CATCH_UP_CHECK_RULES.includes(f.rule) && f.sessionIds.includes(session.id));
 }
