@@ -64,6 +64,16 @@ describe('I-40: de weekterugblik sluit de som', () => {
     expect(weekRestLines(full, { missedShown: false })[0]).toBe('Gemist: Bovenlichaam B en Lange duurloop');
   });
 
+  it('overgeslagen in een pauze: Week zegt overgeslagen, de terugblik ook, met "telt niet mee"', () => {
+    const inPause = plan.map((s) => (s.id === 'la' ? { ...s, status: 'skipped' as const } : s));
+    const r = buildWeekReview({ weekStart: W, plannedSessions: inPause, logs, templates, program, planChangeLog: [], asOf: '2026-10-13', leavePeriods: leave })!;
+    expect(r.skipped).toEqual(['Rustige duurloop']);
+    expect(r.skippedOff).toEqual(['Benen A (zwaar)']);
+    expect(r.lapsed).toEqual([]);
+    expect(r.done + r.missed.length + (r.skipped?.length ?? 0)).toBe(r.planned);
+    expect(weekRestLines(r, { missedShown: true })).toEqual(['Overgeslagen: Rustige duurloop', 'Overgeslagen: Benen A (zwaar), telt niet mee']);
+  });
+
   it('een open concept in een pauze loopt nog: niet vervallen, zoals Week (Warden)', () => {
     const r = review('2026-10-13', { openDraft: 'la' });
     expect(r.lapsed).toEqual([]);

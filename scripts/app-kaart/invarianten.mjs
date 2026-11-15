@@ -510,9 +510,11 @@ export const INVARIANTEN = [
       const dagRij = /^\[knop: (?!Verplaats of ruil)(.+?)(?:Vandaag|(?:Ma|Di|Wo|Do|Vr|Za|Zo) \d{1,2})·.*\]$/;
       const rijen = k('week-zonder-sportschool').split('\n').filter((r) => dagRij.test(r));
       const blik = k('weekterugblik-zonder-sportschool');
-      for (const [woord, regel] of [['overgeslagen', /^Overgeslagen: (.+)$/m], ['vervallen', /^Vervallen: (.+), telt niet mee$/m]]) {
+      for (const [woord, regel] of [['overgeslagen', /^Overgeslagen: (.+)$/gm], ['vervallen', /^Vervallen: (.+), telt niet mee$/gm]]) {
         const inWeek = rijen.filter((r) => new RegExp(`· ${woord}`).test(r)).map((r) => r.match(dagRij)[1]);
-        const m = blik.match(regel);
+        // Overgeslagen kan twee regels zijn: wat meetelt en wat in een pauze lag ("..., telt niet mee").
+        const regels = [...blik.matchAll(regel)].map((x) => x[1]);
+        const m = regels.length ? [null, regels.join('; ')] : null;
         // Nooit stil leeg: de stand heeft van elk minstens één rij.
         if (inWeek.length === 0) { uit.push(`week-zonder-sportschool heeft geen rij die ${woord} zegt: de invariant toetst niets`); continue; }
         if (!m) { uit.push(`weekterugblik-zonder-sportschool noemt ${woord} niet, Week wel (${inWeek.join(', ')})`); continue; }
@@ -540,7 +542,7 @@ export const INVARIANTEN = [
         const kaart = t.match(/Je hebt[^\n\]]*gemist[^\n\]]*/);
         if (kaart) {
           kaarten++;
-          if (!/Je hebt deze week \d+ trainingen? gemist/.test(kaart[0])) uit.push(`${s}: de kaart zegt niet over welke week hij telt: ${kaart[0]}`);
+          if (!/Je hebt deze week \d+ training(?:en)? gemist/.test(kaart[0])) uit.push(`${s}: de kaart zegt niet over welke week hij telt: ${kaart[0]}`);
           if (!/niet dubbel/.test(kaart[0])) uit.push(`${s}: de kaart zegt niet dat je het niet dubbel doet: ${kaart[0]}`);
         }
         if (s.startsWith('weekterugblik') && /^### Je week tot nu$/m.test(t)) {
@@ -561,7 +563,7 @@ export const INVARIANTEN = [
       let gezien = 0;
       for (const s of alleSchermen.filter((x) => x === 'week' || x.startsWith('week-'))) {
         for (const r of k(s).split('\n')) {
-          const m = r.match(/^\[knop: .+?((?:Ma|Di|Wo|Do|Vr|Za|Zo) \d{1,2})·.*· gedaan ([a-z]{2} \d{1,2})/);
+          const m = r.match(/^\[knop: .+?((?:Ma|Di|Wo|Do|Vr|Za|Zo) \d{1,2})·.*· gedaan ?([a-z]{2} \d{1,2})/);
           if (!m) continue;
           gezien++;
           if (m[1].toLowerCase() === m[2]) uit.push(`${s}: een rij zegt gedaan op zijn eigen dag: ${r}`);

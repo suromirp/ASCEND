@@ -51,6 +51,9 @@ export interface WeekReview {
   // sportschool nodig heeft, de afbouw na een race), telt niet mee. Samen met gedaan en gemist sluit zo de som
   // (Pathfinder, 15 november, I-40).
   skipped?: string[];
+  // Overgeslagen en niet meegeteld: in een pauze, of door ASCEND weggehaald. Week zegt ook daar "overgeslagen"; de
+  // terugblik zegt erbij dat hij niet meetelt.
+  skippedOff?: string[];
   lapsed?: string[];
   missedTemplateIds: string[];
   keyPlanned: number; // 1 als de week een sleuteltraining heeft (engine/keySession.ts#weekKeySession), anders 0
@@ -166,6 +169,11 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   const byDay = (a: PlannedSession, b: PlannedSession) => a.scheduledDate.localeCompare(b.scheduledDate);
   // Overgeslagen en meegeteld: de rest van "van n" naast gedaan, gemist en wat nog komt.
   const skippedSessions = trainings.filter((s) => s.status === 'skipped' && !loggedIds.has(s.id)).sort(byDay);
+  // Overgeslagen en niet meegeteld: de andere overgeslagen rijen die Week toont. De oude rij van een inhaal verbergt Week.
+  const trainingIdSet = new Set(trainings.map((s) => s.id));
+  const skippedOffSessions = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd && s.status === 'skipped'
+    && !isRest(s) && !loggedIds.has(s.id) && s.leave?.role !== 'dropped' && !movedOn.has(s.id) && !trainingIdSet.has(s.id)
+    && (!program || s.scheduledDate >= program.startDate)).sort(byDay);
   // Vervallen: de rijen die Week "vervallen" noemt (engine/sessionStatus.ts, 'away'). Wat een periode liet vallen staat
   // niet in Week (de band zegt het), een rustdag is geen training, en voor de start van het programma telt niets.
   const races = raceDatesOf(plannedSessions, byId);
@@ -315,6 +323,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     perSport,
     missed: missedNames,
     skipped: skippedSessions.map(nameOf),
+    skippedOff: skippedOffSessions.map(nameOf),
     lapsed: lapsedSessions.map(nameOf),
     replan: running && !!program,
     missedTemplateIds: missedSessions.map((s) => s.templateId),

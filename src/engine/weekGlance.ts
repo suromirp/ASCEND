@@ -40,12 +40,14 @@ export function sportLines(r: WeekReview): string[] {
 export const MISSED_REPLAN_HINT = 'De rest van je week zet Week opnieuw plannen terug naar het plan.';
 
 // Wat naast gedaan en gemist nog in de week stond, zodat de som sluit: "Overgeslagen: Bovenlichaam B" (telt mee in
-// "van n") en "Vervallen: Benen A (zwaar), telt niet mee" (een pauze haalde hem uit de telling). Valt Gemist buiten de
+// "van n"; lag hij in een pauze of haalde ASCEND hem weg, dan met ", telt niet mee") en "Vervallen: Benen A (zwaar), telt
+// niet mee" (een pauze haalde hem uit de telling). Valt Gemist buiten de
 // twee regels om op te letten, dan staat hij hier, zonder advies (Pathfinder, 15 november, I-40).
 export function weekRestLines(r: WeekReview, opts: { missedShown: boolean }): string[] {
   const out: string[] = [];
   if (!opts.missedShown && r.missed.length > 0) out.push(`Gemist: ${joinNames(r.missed)}`);
   if (r.skipped?.length) out.push(`Overgeslagen: ${joinNames(r.skipped)}`);
+  if (r.skippedOff?.length) out.push(`Overgeslagen: ${joinNames(r.skippedOff)}, telt niet mee`);
   if (r.lapsed?.length) out.push(`Vervallen: ${joinNames(r.lapsed)}, telt niet mee`);
   return out;
 }
