@@ -3061,6 +3061,16 @@
    "kern": "Afronden in Forge geeft het log de dag van je laatst afgevinkte set, ook bij een geplande training die je een dag eerder of later deed.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-15-dag-van-afronden-opnieuw-afvinken.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Een set die je uit en weer aan zet telt bij Afronden op de eerste keer afvinken: de voorgestelde dag volgt het laatste echte werk, niet de laatste tik.",
+   "vultAan": [
+    "docs/beslissingen/2026-11-15-dag-van-afronden.md"
+   ],
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-15-hitte-bij-herhalingen.md": {
    "onderwerpen": [
     "lopen-en-tests"
