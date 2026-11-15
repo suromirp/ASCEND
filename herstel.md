@@ -69,5 +69,6 @@ Op de proefmerge van 9d8dcbe met `origin/claude/nacht` (geen conflict):
 - `npx vitest run`: groen, 727 bestanden, 10810 tests.
 - `npm run build`: groen.
 - `npm run kennisindex:vergelijk`: geen verschil.
+- `npm run kaart:vergelijk`: 100 schermen gelijk, geen verschil, geen schendingen van invarianten (747 s).
 
-Niet gecontroleerd: `npm run kaart:vergelijk` was na tien minuten niet klaar en is niet afgewacht (er verandert geen scherm, alleen de zin bij een mislukte back-up). Een echt toestel: waarom nakijken daar de eerste keer na het openen faalt is niet gemeten, zoals het besluit zelf ook zegt. Twee pogingen echt tegelijk op het bestandssysteem zijn in de proef niet nagebouwd; de proef draait de tikken na elkaar.
+Niet gecontroleerd: Een echt toestel: waarom nakijken daar de eerste keer na het openen faalt is niet gemeten, zoals het besluit zelf ook zegt. Twee pogingen echt tegelijk op het bestandssysteem zijn in de proef niet nagebouwd; de proef draait de tikken na elkaar.
