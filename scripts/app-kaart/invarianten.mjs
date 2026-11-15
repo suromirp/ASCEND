@@ -36,7 +36,7 @@ export function ascendAlsOnderwerp(tekst) {
   const uit = [];
   for (const regel of tekst.split('\n')) {
     if (/toestemming/i.test(regel)) continue;
-    for (const m of regel.matchAll(/(?:^|[^\w-])(\p{L}+)?\s*\bASCEND\b(?![-\/])(?:\s+(\p{L}+))?/gu)) {
+    for (const m of regel.matchAll(/(?:^|[^\w-])(\p{L}+)?\s*\bASCEND\b(?![-/])(?:\s+(\p{L}+))?/gu)) {
       const ervoor = (m[1] ?? '').toLowerCase(), erna = (m[2] ?? '').toLowerCase();
       if (/\[link: ASCEND\]|ASCEND, naar Vandaag/.test(regel) && !erna) continue;
       if (['door', 'van', 'bij', 'map', 'naar'].includes(ervoor) && !isWerkwoord(erna)) continue;
