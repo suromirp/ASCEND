@@ -11,12 +11,32 @@ describe('hitte en dauwpunt bij het tempo', () => {
   it('warm geeft een band van 10 tot 20 seconden en de raad om op hartslag te lopen', () => {
     const h = heatPace({ feelsC: 24, dewPointC: 12, bad: [] })!;
     expect(h.level).toBe('warm');
-    expect(h.text).toBe("Warm (voelt als 24 graden). Loop op hartslag: je tempo ligt dan zo'n 10 tot 20 seconden per km lager, en dat is goed.");
+    expect(h.text).toBe("Warm (voelt als 24 graden). Loop op hartslag: je tempo ligt dan zo'n 10 tot 20 seconden per km trager, en dat is goed.");
   });
 
   it('vochtig telt ook als het niet zo warm voelt, en noemt het dauwpunt', () => {
     const h = heatPace({ feelsC: 20, dewPointC: 17, bad: [] })!;
     expect(h.text.startsWith('Vochtig (voelt als 20 graden, dauwpunt 17).')).toBe(true);
+  });
+
+  it('alleen vochtig bij een koel gevoel geeft een kleinere band', () => {
+    const h = heatPace({ feelsC: 19, dewPointC: 17, bad: [] })!;
+    expect([h.slowerFrom, h.slowerTo]).toEqual([5, 10]);
+    expect(h.text).toContain('5 tot 10 seconden per km trager');
+    expect(heatPace({ feelsC: 23, dewPointC: 17, bad: [] })?.slowerTo).toBe(20);
+  });
+
+  it('bij herhalingen geen tempoband en geen hartslag, wel meer rust', () => {
+    const h = heatPace({ feelsC: 19, dewPointC: 17, bad: [] }, 'reps')!;
+    expect(h.text).toBe('Vochtig (voelt als 19 graden, dauwpunt 17). Herhalingen voelen zwaarder: neem wat meer rust ertussen en drink vooraf.');
+    expect(h.text).not.toMatch(/hartslag|seconden/);
+    expect(heatPace({ feelsC: 15, dewPointC: 9, bad: [] }, 'reps')).toBeUndefined();
+  });
+
+  it('zegt nooit dat je tempo lager ligt (dat leest als sneller)', () => {
+    for (const w of [{ feelsC: 24, dewPointC: 12 }, { feelsC: 19, dewPointC: 17 }, { feelsC: 29, dewPointC: 21 }]) {
+      expect(heatPace({ ...w, bad: [] })!.text).not.toContain('lager');
+    }
   });
 
   it('heet of benauwd geeft een bredere band', () => {
