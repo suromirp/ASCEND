@@ -11,6 +11,8 @@ import { BRIEFING_TEXT, ZONE_FACT, briefing, briefingEntry, briefingRowLine, doT
 import { drinkLine } from './eveningBefore';
 import { fuelForTraining, fuelShortText } from './fuelOnTheGo';
 import { routeTarget, targetText } from './routeTarget';
+import { climbHikes } from './fixtures/climbLogs';
+import { addDays } from '../utils/dates';
 
 const { templates } = buildDefaultProgramData();
 const byId = (id: string) => templates.find((t) => t.id === id) as SessionTemplate;
@@ -19,6 +21,7 @@ const TEST = byId('tpl_test_run');
 const RACE = byId('tpl_race');
 const RUCK = byId('tpl_ruck_walk');
 const LONG = byId('tpl_long_run');
+const MOUNTAIN = byId('tpl_mountain_hike');
 
 // Woensdag 11 november 2026, 08:00.
 const TODAY = '2026-11-11';
@@ -272,8 +275,27 @@ describe('een rugzaktraining', () => {
     expect(view.map.search).toBe('open');
   });
   it('met de rugzak op je eigen klimtempo rekent de Briefing met je lichaamsgewicht, net als het blad Route', () => {
-    const view = briefing(input({ template: RUCK, session: plan('tpl_ruck_walk'), bodyKg: 75 }));
-    expect(view?.map.kind === 'route' && view.map.target).toEqual(routeTarget({ template: RUCK, date: TODAY, program: null, logs: [], bodyKg: 75 }));
+    // Een eigen klimtempo gemeten met 2 kg, een tocht met 14 kg: met je lichaamsgewicht trager, dus een kortere lus.
+    const heavy = { ...MOUNTAIN, outdoorTarget: { targetElevationM: 500, backpackWeightKg: 14 } };
+    const logs = climbHikes(2);
+    const at = (bodyKg?: number) => briefing(input({ template: heavy, session: plan('tpl_mountain_hike'), logs, bodyKg }))?.map;
+    const withBody = at(75);
+    const without = at(undefined);
+    if (withBody?.kind !== 'route' || without?.kind !== 'route') throw new Error('geen lus');
+    expect(withBody.target).toStrictEqual(routeTarget({ template: heavy, date: TODAY, program: null, logs, bodyKg: 75 }));
+    expect(withBody.target.distanceKm).toBeLessThan(without.target.distanceKm);
+    expect(withBody.line).toBe('8 km');
+    expect(without.line).toBe('8,5 km');
+  });
+  it('een tocht boven 3 uur zoekt niet vanzelf bij het openen, tot en met 3 uur wel', () => {
+    const at = (minutes: number) => briefing(input({ template: { ...MOUNTAIN, durationVariants: { full: minutes } }, session: plan('tpl_mountain_hike') }))?.map;
+    expect(at(180)).toMatchObject({ kind: 'route', search: 'open' });
+    expect(at(181)).toMatchObject({ kind: 'route', search: 'tap' });
+  });
+  it('op een dag van een tocht in je planning geen lus: je loopt je etappe', () => {
+    const trek = [{ id: 'l1', kind: 'trek' as const, startDate: TODAY, endDate: addDays(TODAY, 3) }];
+    expect(briefing(input({ template: MOUNTAIN, session: plan('tpl_mountain_hike'), leavePeriods: trek }))?.map.kind).toBe('none');
+    expect(briefing(input({ template: MOUNTAIN, session: plan('tpl_mountain_hike'), leavePeriods: trek, date: addDays(TODAY, 4) }))?.map.kind).toBe('route');
   });
   it('op de loopband of de trap binnen geen lus', () => {
     expect(briefing(input({ template: RUCK, session: plan('tpl_ruck_walk'), storedPlace: 'incline_treadmill' }))?.map.kind).toBe('place');

@@ -31,7 +31,8 @@ import { formatClockTime, goesOnWhen } from './watchStatus';
 import { watchSheet, type WatchSheetInput } from './watchSheet';
 import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
-import { routeTarget, searchesOnOpen } from './routeTarget';
+import { isTrekDay, routeTarget, searchesOnOpen } from './routeTarget';
+import type { LeavePeriod } from '../models/leave';
 import { showSpotsFor } from './trainingSpots';
 import { uvShort } from './outdoorSun';
 import { placeChoices, placeHasRoute, placeIsOutdoor, resolvePlace, type PlaceChoice } from './trainingPlace';
@@ -228,6 +229,8 @@ export interface BriefingInput {
   // Instelling Route bij wandelen (stap 5, nog zonder rij), ongelezen; afwezig is het advies: een
   // herstelwandeling zoekt alleen na een tik (engine/routeTarget.ts#searchesOnOpen).
   walkRoute?: unknown;
+  // Vrij en weg: op een dag van een tocht geen lus (engine/routeTarget.ts#isTrekDay). Afwezig: geen.
+  leavePeriods?: LeavePeriod[];
   // De koppeling: afwezig zolang hij gelezen wordt. Dan de veilige kant: zelf invullen.
   watchLink?: { linked: boolean; autoTick: boolean; activities: boolean };
   // Wat de bronbewaking nodig heeft; afwezig is geen stilte.
@@ -468,11 +471,13 @@ function mapOf(
   today: string,
 ): BriefingMap {
   if (!outdoor && modality) return { kind: 'place' };
-  if (!input.routeOn) return { kind: 'none' };
+  if (!input.routeOn || isTrekDay(input.leavePeriods, input.date)) return { kind: 'none' };
   if (placeHasRoute(input.template, place)) {
     const target = routeTarget({ template: input.template, date: input.date, program: input.program, logs: input.logs, testPace: input.easyPace, bodyKg: input.bodyKg });
     const soon = input.date === today || input.date === addDays(today, 1);
-    const onOpen = soon && resolveRouteSearch(input.routeSearch) === 'open' && searchesOnOpen(input.template, input.walkRoute);
+    // Een herstelwandeling heeft nu geen Briefing (hasBriefing), dus die tak van searchesOnOpen is hier nog
+    // onbereikbaar; hij staat klaar voor de instelling Route bij wandelen (stap 5). De grens van 3 uur geldt wel.
+    const onOpen = soon && resolveRouteSearch(input.routeSearch) === 'open' && searchesOnOpen(input.template, target, input.walkRoute);
     // Alleen de kilometers: de hoogtemeters staan al in de hartkaart.
     return { kind: 'route', target, line: kmText(target), search: onOpen ? 'open' : 'tap' };
   }

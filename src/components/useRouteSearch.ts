@@ -11,7 +11,7 @@
 // alleen Maak dit Thuis en Bewaar als plek bewaren iets (besluiten 2026-11-11-route-start.md en
 // 2026-11-12-andere-plek.md). Plant niets en bewaart geen lus.
 
-import { useEffect, useReducer, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
 import type { RoutePoint, RouteStyle, RouteTarget } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
@@ -181,7 +181,11 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   // Grote wegen mijden in de aanvraag aan de routeplanner (standaard aan).
   const avoidBigRoads = settings.routeAvoidBigRoads !== false;
   // Een wandeltraining rekent met je lichaamsgewicht voor de rugzak op je eigen klimtempo (engine/hikeTarget.ts).
-  const trainingTarget = routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy, bodyKg: loadBodyKg(settings) });
+  // Eén keer per training, logs of instellingen: het klimtempo en de testtempo's lopen alle logs door.
+  const trainingTarget = useMemo(
+    () => routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy, bodyKg: loadBodyKg(settings) }),
+    [template, date, program, sessionLogs, settings],
+  );
 
   useEffect(() => {
     let alive = true;

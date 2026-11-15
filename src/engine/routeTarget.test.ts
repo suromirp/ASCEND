@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { DEFAULT_PACE_SEC_KM, resolveRouteStyle, roundStart, routeTarget, searchesOnOpen, targetText, walkKind, wantsRoute, wantsRouteAt } from './routeTarget';
+import { DEFAULT_PACE_SEC_KM, isTrekDay, resolveRouteStyle, roundStart, routeTarget, searchesOnOpen, targetText, walkKind, wantsRoute, wantsRouteAt } from './routeTarget';
+import { climbHikes } from './fixtures/climbLogs';
 import { progressionTarget } from './programLayout';
 import { recentRunPace } from './recentRunPace';
 import { templateSport } from './sports';
@@ -221,8 +222,55 @@ describe('wandelsjablonen per fase', () => {
 
   it('een herstelwandeling zoekt alleen na een tik; de rest zoals de instelling Lus zoeken zegt', () => {
     expect(searchesOnOpen(recovery)).toBe(false);
-    expect(searchesOnOpen(recovery, 'onzin')).toBe(false);
-    expect(searchesOnOpen(recovery, 'withRecovery')).toBe(true);
-    for (const t of [mountain, dayOne, ruck, climb, easy]) expect(searchesOnOpen(t)).toBe(true);
+    expect(searchesOnOpen(recovery, { minutes: 45 }, 'onzin')).toBe(false);
+    expect(searchesOnOpen(recovery, { minutes: 45 }, 'withRecovery')).toBe(true);
+    for (const t of [mountain, dayOne, ruck, climb, easy]) expect(searchesOnOpen(t, routeTarget({ template: t, date: dayIn('phase_1', 1), program }))).toBe(true);
+  });
+
+  it('een wandeling boven 3 uur zoekt niet vanzelf, tot en met 180 minuten wel; een loop kent die grens niet', () => {
+    expect(searchesOnOpen(mountain, { minutes: 180 })).toBe(true);
+    expect(searchesOnOpen(mountain, { minutes: 181 })).toBe(false);
+    expect(searchesOnOpen(mountain, { minutes: Number.NaN })).toBe(false);
+    expect(searchesOnOpen(mountain, target(mountain, dayIn('phase_4', 1)))).toBe(false);
+    expect(searchesOnOpen(easy, { minutes: 240 })).toBe(true);
+  });
+
+  it('een dag van een tocht in je planning is een tochtdag; de dagen eromheen niet', () => {
+    const trek = [{ id: 'l1', kind: 'trek' as const, startDate: '2027-06-10', endDate: '2027-06-14' }];
+    expect(isTrekDay(trek, '2027-06-10')).toBe(true);
+    expect(isTrekDay(trek, '2027-06-14')).toBe(true);
+    expect(isTrekDay(trek, '2027-06-15')).toBe(false);
+    expect(isTrekDay([{ ...trek[0], kind: 'free_days' }], '2027-06-12')).toBe(false);
+    expect(isTrekDay(undefined, '2027-06-12')).toBe(false);
+  });
+
+  it('een korte wandeling krijgt geen ondergrens van 2 km, wel van 1 km', () => {
+    const short = { ...recovery, durationVariants: { full: 20 } };
+    expect(routeTarget({ template: short, date: dayIn('phase_1', 1) }).distanceKm).toBe(1.5);
+    expect(routeTarget({ template: { ...recovery, durationVariants: { full: 5 } }, date: dayIn('phase_1', 1) }).distanceKm).toBe(1);
+    // Een loop houdt zijn ondergrens van 2 km.
+    expect(routeTarget({ template: { ...easy, durationVariants: { full: 5 } }, date: dayIn('phase_1', 1) }).distanceKm).toBe(2);
+  });
+
+  it('targetText noemt wat de training vraagt, niet wat in de duur past', () => {
+    const t = target(mountain, dayIn('phase_1', 1));
+    expect(t.ascentM).toBe(375);
+    expect(targetText(t)).toBe('8 km, 500 hoogtemeters');
+  });
+
+  it('de rugzak rekent door routeTarget heen, alleen met een eigen klimtempo en je lichaamsgewicht', () => {
+    // Gemeten met 2 kg op je klimmen; de training vraagt 14 kg.
+    const heavy = { ...mountain, outdoorTarget: { targetElevationM: 500, backpackWeightKg: 14 } };
+    const date = dayIn('phase_1', 1);
+    const logs = climbHikes(2);
+    const without = routeTarget({ template: heavy, date, logs });
+    const withBody = routeTarget({ template: heavy, date, logs, bodyKg: 75 });
+    expect(without).toStrictEqual({ distanceKm: 8.5, ascentM: 500, minutes: 180, packKg: 14, askedAscentM: 500 });
+    expect(withBody).toStrictEqual({ distanceKm: 8, ascentM: 500, minutes: 180, packKg: 14, askedAscentM: 500 });
+    expect(withBody.distanceKm).toBeLessThan(without.distanceKm);
+    // Zonder eigen klimtempo doet het lichaamsgewicht niets: de wandelnorm rekent zonder rugzak.
+    expect(routeTarget({ template: heavy, date, bodyKg: 75 })).toStrictEqual(routeTarget({ template: heavy, date }));
+    // Met de keuze wandelnorm ook niet.
+    expect(routeTarget({ template: heavy, date, logs, bodyKg: 75, walkPace: 'norm' })).toStrictEqual(routeTarget({ template: heavy, date }));
   });
 });

@@ -15,6 +15,9 @@ import { templateSport } from './sports';
 import { hasRole } from './templateRoles';
 import { climbPace, type ClimbPaceState } from './climbPace';
 import { walkRates, walkTarget } from './hikeTarget';
+import { askedAscent } from './routePlanner';
+import { leaveDays } from './leave';
+import type { LeavePeriod } from '../models/leave';
 import { defaultRolesOf } from '../data/templateRoles';
 import { getModalities, getModality, modalitySport } from '../data/modalities';
 
@@ -48,11 +51,24 @@ export function walkKind(template: SessionTemplate | undefined): WalkKind | unde
 export const wantsRoute = (template: SessionTemplate | undefined): boolean =>
   !!template && template.type !== 'strength' && (templateSport(template) === 'running' || walkKind(template) !== undefined);
 
+// Een wandeling langer dan dit zoekt nooit vanzelf: de heuvels komen uit een cache van 3 km rond je plek,
+// en voor een lus boven ongeveer 12 km is dat krap (ontwerp hoofdstuk 5). Na een tik wel.
+export const AUTO_SEARCH_MAX_WALK_MIN = 180;
+
 // Mag de Briefing bij het openen zelf een lus zoeken, als de instelling Lus zoeken dat zegt? Een
 // herstelwandeling krijgt een lus alleen na een tik (advies, vraag 3 aan de eigenaar), tenzij de keuze
 // Route bij wandelen (stap 5, nog zonder rij) 'withRecovery' is. Afwezig of onbekend: het advies.
-export function searchesOnOpen(template: SessionTemplate | undefined, walkRoute?: unknown): boolean {
-  return walkKind(template) !== 'recovery' || walkRoute === 'withRecovery';
+// Een wandeling boven AUTO_SEARCH_MAX_WALK_MIN (`target.minutes`) zoekt alleen na een tik.
+export function searchesOnOpen(template: SessionTemplate | undefined, target?: Pick<RouteTarget, 'minutes'>, walkRoute?: unknown): boolean {
+  const kind = walkKind(template);
+  if (kind === 'recovery' && walkRoute !== 'withRecovery') return false;
+  if (kind && target?.minutes !== undefined && !(target.minutes <= AUTO_SEARCH_MAX_WALK_MIN)) return false;
+  return true;
+}
+
+// Een dag van een tocht in je planning (Vrij en weg, soort trek) krijgt geen lus: je loopt je etappe.
+export function isTrekDay(periods: LeavePeriod[] | undefined, date: string): boolean {
+  return leaveDays(periods).get(date)?.kind === 'trek';
 }
 
 // Hoort er een route bij deze training op deze plek (Waar train je?)? Alleen buiten en te voet: op de
@@ -87,6 +103,10 @@ export interface RouteTargetInput {
 }
 
 const clampKm = (km: number) => Math.min(MAX_ROUTE_KM, Math.max(MIN_ROUTE_KM, Math.round(km * 2) / 2));
+// Een wandeling heeft geen ondergrens van 2 km: bij duur eerst zou een korte wandeling anders te lang
+// worden. Wel nooit korter dan de kortste lus van Korter (routeAdjust.ts#MIN_LOOP_KM, 1 km).
+export const MIN_WALK_KM = 1;
+const clampWalkKm = (km: number) => Math.min(MAX_ROUTE_KM, Math.max(MIN_WALK_KM, Math.round(km * 2) / 2));
 
 export function routeTarget(input: RouteTargetInput): RouteTarget {
   if (walkKind(input.template)) return walkRouteTarget(input);
@@ -118,7 +138,7 @@ function walkRouteTarget({ template, date, program, logs = [], bodyKg, climb, wa
   const t = walkTarget(minutes, asked, rates, walkClash);
   const askedAscentM = t.askedAscentM;
   return {
-    distanceKm: clampKm(t.distanceKm),
+    distanceKm: clampWalkKm(t.distanceKm),
     ascentM: t.ascentM,
     minutes: t.minutes,
     ...(packKg !== undefined ? { packKg } : {}),
@@ -132,7 +152,9 @@ export function roundStart(place: { lat: number; lon: number }): RoutePoint {
   return { lat: Math.round(place.lat * 100) / 100, lon: Math.round(place.lon * 100) / 100 };
 }
 
+// De hoogtemeters die de training vraagt (routePlanner.ts#askedAscent), niet het getal dat in de duur past.
 export function targetText(target: RouteTarget): string {
   const km = `${String(target.distanceKm).replace('.', ',')} km`;
-  return target.ascentM >= 20 ? `${km}, ${Math.round(target.ascentM / 10) * 10} hoogtemeters` : km;
+  const asked = askedAscent(target);
+  return asked >= 20 ? `${km}, ${Math.round(asked / 10) * 10} hoogtemeters` : km;
 }
