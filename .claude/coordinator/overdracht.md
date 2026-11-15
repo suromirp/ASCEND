@@ -1,6 +1,6 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 15 november 2026, 14:15 Portugese tijd, door de coördinator session_01LnDpSkfdHZiUDTtrj7CB8T (wissel op verzoek van de eigenaar, context 64 procent). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
+Bijgewerkt: 15 november 2026, 14:20 Portugese tijd, door de coördinator session_01LnDpSnngzUAioWQ5b8xBWH (overgenomen van session_01LnDpSkfdHZiUDTtrj7CB8T om 14:13). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
 
 ## Vaste afspraken
 
@@ -18,16 +18,20 @@ Bijgewerkt: 15 november 2026, 14:15 Portugese tijd, door de coördinator session
 
 ## Taken
 
-- Wachter elk uur op :40 (trig_01Y6Gb6hgELCGn9XV2EAkMny) en Bouwers nakijken elk uur op :10 (trig_011KHnGB7dsiNtt5r3VgdE4Q): naar de nieuwe sessie verhuizen (create_trigger met dezelfde prompt, initiation human_schedule; de Wachter werd eerst geweigerd en ging pas na "Zet wachter aan" van de eigenaar) en de oude uitzetten.
+- Bouwers nakijken elk uur op :10: trig_015XdDMzaV3mQ89aqdgLLHpo op deze sessie. De oude (trig_011KHnGB7dsiNtt5r3VgdE4Q) staat uit.
+- Wachter elk uur op :40: aanmaken op deze sessie weer geweigerd (14:13); gevraagd aan de eigenaar. De oude (trig_01Y6Gb6hgELCGn9XV2EAkMny) staat uit, zodat de vorige coördinator niet naast mij handelt. Tot dan dekt Bouwers nakijken het uur.
 - Werkkaart elk uur op :20: eigen sessie session_01LnDpSktfMxYFgMMgDhw8Do (trig_01JoRN6XzHJ17frpcWQAdEzB). Niet aanraken, niet archiveren.
-- Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam].
+- Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam] staat (trig_01Eu5zZc9REdsU1VGyWCvjFe).
 
 ## Live vandaag
 
 - 4de3367 (12:20): Q instellingen terug met Akkoord, kracht uit, wandelen in vaste bpm, kennisindex. Deploy en Android groen.
-- b2439653 (13:15): kracht en bpm netjes in Instellingen, weesregel Stand, backlog met codes en `npm run backlog:bij`. Deploy nog niet nagekeken.
+- b2439653 (13:15): kracht en bpm netjes in Instellingen, weesregel Stand, backlog met codes en `npm run backlog:bij`. Deploy en Android groen.
 
-## Lopend (14:15)
+## Lopend (14:20)
+
+- Wardens op Fable gestart om 14:14, elk pusht herstel.md op warden/<onderwerp>-herstel: Afbreker session_01LnDpSidQYFbuC9fh8bb9mt, Back-up session_01LnDpSktRyJ9tNDAW6X7ZhL, Beginner session_01LnDpSiJcwFr9G6m4KfgPCx (herstel 024d057 was al klaar).
+- Kennisindex ronde 2 klaar (3f21610), alleen kaart:vergelijk afgebroken: zelf nakijken.
 
 - Week telling (I-1), Sherpa session_01LnDpSihpwmNKme8Mudp1nF (`claude/week-telling`): Warden (Opus) en Pathfinder akkoord. Laatste ronde loopt: `openToday` in adviceWeek telt alleen wat Week open noemt (sportschooltraining in de periode houdt het voorstel niet tegen), "gemist" krimpt niet op 360 px, een gemiste rij heeft altijd het woord. Daarna: proefmerge, volle controles, Lookout op 360 en 412 px (week-aangepast en de stand zonder-sportschool), main. Eigen blik op de afdrukken.
 - Back-up eerste keer, Sherpa session_01LnDpSnNF5icymXAJ1Rc6xC (`claude/backup-eerste-keer`): tweede herstel loopt. Blokkerend was: `verify` na een gelukte rename haalt bij een leesfout de complete back-up weg (`manualBackup.ts`, `autoBackup.ts`, `backupFolder.ts`). Ook op main zit dat (manualBackup regel 43): waarschijnlijk de kern van de melding van de eigenaar. Na het herstel een frisse Warden op Fable (laat hem renameFile van ionfilesystem 1.1.1 nabouwen: het doel gaat eerst weg). Daarna main en de eigenaar een toesteltest geven: Gedwongen stoppen, openen, meteen Back-up maken, de zin letterlijk noteren, in Documents/ASCEND kijken welke bestanden er van die minuut staan, drie keer, één keer met twee snelle tikken, daarna het nieuwste bestand terugzetten.
