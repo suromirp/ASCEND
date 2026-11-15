@@ -5,6 +5,7 @@ import type { LeavePeriod } from '../models/leave';
 import { leaveLabelOn } from '../engine/leave';
 import { groupDaysByBand, leaveWeek, quietWordOn } from '../engine/leaveWeek';
 import { deriveSessionStatus, rowMinutes } from '../engine/sessionStatus';
+import { raceDatesOf } from '../engine/raceWindow';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { isLegHeavyTemplate } from '../engine/scheduler';
 import { REST_DAY_COPY } from '../data/restDayCopy';
@@ -55,10 +56,12 @@ const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, tran
 const DISC = 36;
 
 function SessionRow({
-  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote, leave,
+  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote, leave, races,
 }: {
   // Vakanties en tochten die je meldde: een voorbije training daar is nooit gemist (engine/sessionStatus.ts, 'away').
   leave?: LeavePeriod[];
+  // De dagen van de races: een training uit de afbouw die na de race niet gedaan is, vervalt (engine/raceWindow.ts).
+  races?: readonly string[];
   session: PlannedSession;
   template: SessionTemplate;
   date: string;
@@ -87,7 +90,7 @@ function SessionRow({
   const { restDayMode, illnessEpisodes } = useAppData().settings;
   const restMode = restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
-  const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest, { leave, illness: illnessEpisodes });
+  const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest, { leave, illness: illnessEpisodes, races });
   // Een vaste afspraak van een sport (engine/fixedSports.ts) heeft de lengte die jij koos.
   // Gedaan: de duur van het log (engine/sessionStatus.ts#rowMinutes), niet die van het plan.
   const duration = rowMinutes(log, session.fixed && session.plannedMinutes ? session.plannedMinutes : resolveEffectiveFullDuration(template, session.scheduledDate, program));
@@ -320,6 +323,7 @@ export function WeekPlanner({
   const { statusOf } = useWatchStatuses();
   const { settings, plannedSessions } = useAppData();
   const caughtUp = useMemo(() => caughtUpMap(plannedSessions), [plannedSessions]);
+  const races = useMemo(() => raceDatesOf(plannedSessions, templateById), [plannedSessions, templateById]);
   const showWatch = settings.showWatchStatusOnWeek !== false;
   // "Wat speelde er": the sign by a done run with a heart rate that stands out.
   const weekLogs = useMemo(() => {
@@ -343,8 +347,8 @@ export function WeekPlanner({
     const eligibility = dragEnabled && weekDrag && !onTrek ? dragEligibility(s, template, { logged: loggedIds.has(s.id), today }) : undefined;
     // Een gemiste training heeft ook een greep, als er in deze week nog een dag is om naartoe te slepen
     // (vandaag of later): loslaten haalt hem in (engine/catchUp.ts). Een andere week gaat via het blad.
-    // Vervallen (een gemelde vakantie of ziekte) haal je niet in: geen greep.
-    const lapsedDay = deriveSessionStatus(s, logs, false, { leave, illness: settings.illnessEpisodes }).status === 'away';
+    // Vervallen (een gemelde vakantie of ziekte, of de afbouw voor een race die er al was) haal je niet in: geen greep.
+    const lapsedDay = deriveSessionStatus(s, logs, false, { leave, illness: settings.illnessEpisodes, races }).status === 'away';
     const catchable = eligibility && !eligibility.ok && eligibility.reason === 'history' && !lapsedDay && days.some((d) => d >= today)
       && catchUpEligibility(s, template, { logged: loggedIds.has(s.id), today, caughtUp: caughtUp.has(s.id) }).ok;
     const ingehaald = caughtUp.get(s.id);
@@ -368,6 +372,7 @@ export function WeekPlanner({
         handle={eligibility?.ok ? weekDrag!.handleFor(s, eligibility.askAlways) : catchable ? weekDrag!.handleFor(s, false) : undefined}
         catchNote={catchNote}
         leave={leave}
+        races={races}
         placeholder={pickedUp === s.id}
         ghost={extra.ghost}
       />
