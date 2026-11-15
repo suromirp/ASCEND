@@ -58,6 +58,15 @@ const MACROFACTOR_BLOCK: StepSpec = {
   detail: 'Oefeningen, sets, gewicht en RIR volgens MacroFactor',
 };
 
+// Wandelen en dribbelen in de beginnersstart (data/beginnerLadder.ts): de verhouding per week komt in stap 3 van
+// het ontwerp; tot dan één blok om de beurt.
+const WALK_JOG_WORKOUT: WorkoutSpec = {
+  summary: () => 'Om de beurt dribbelen en wandelen, in je eigen rustige tempo.',
+  structure: [{ kind: 'run', label: 'Dribbelen en wandelen', rest: true, intensity: 1, detail: 'Om de beurt, hele zinnen kunnen praten' }],
+  garminSport: 'Hardlopen',
+  builds: [{ label: 'Wennen aan lopen', why: 'Je pezen, botten en spieren wennen stap voor stap aan de klap van lopen.' }],
+};
+
 export const WORKOUTS: Record<string, WorkoutSpec> = {
   tpl_upper_a: {
     summary: () => 'Krachttraining bovenlichaam: borst, rug, schouders en armen. De inhoud komt uit MacroFactor.',
@@ -189,6 +198,8 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     garminSport: 'Hardlopen',
     builds: [{ label: 'Herstel', why: 'Bloed door je benen zonder nieuwe belasting.' }],
   },
+  tpl_walk_jog: WALK_JOG_WORKOUT,
+  tpl_walk_jog_long: WALK_JOG_WORKOUT,
   tpl_ruck_walk: {
     summary: () => 'Stevig doorwandelen met de rugzak van deze week, heuvels of trappen als dat kan.',
     keyTag: 'Rugzak, stap voor stap zwaarder',

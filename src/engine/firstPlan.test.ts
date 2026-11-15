@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { buildFirstPlan, defaultAnswers, kindOfExistingGoals, startDateProblem, startSteps, stepCounter, tapTooSoon, GOAL_OPTIONS, STEP_TAP_GUARD_MS } from './firstPlan';
 import { adviceDays } from './weekShape';
+import { isBeginnerStart, WALK_JOG_LINE } from './beginnerStart';
+import type { SessionLog } from '../models/training';
+import { addDays } from '../utils/dates';
 
 const templates = buildDefaultProgramData().templates;
 const TODAY = '2026-11-02';
@@ -116,6 +119,27 @@ describe('de vijf keuzes van de eerste vraag (Zonder doel stap 8)', () => {
     expect(plan.settings.beginnerStart).toBe('ja');
     expect(plan.lines).toContain('Je begint met hoogstens 4 dagen per week.');
     expect(plan.lines.join(' ')).toMatch(/Je begint rustig/);
+  });
+
+  it('zonder antwoord kiest Automatisch met je logs, en het voorstel noemt wat de planning dan doet (Warden, 15 november)', () => {
+    // Nagemaakt: iemand die terugkomt na een pauze, één loop in de acht weken ervoor. De wizard vraagt dan niets.
+    const log = (id: string, date: string): SessionLog => ({ id, templateId: 'tpl_easy_run', type: 'cardio', completedDate: date, completedAt: `${date}T10:00:00.000Z`, variant: 'full', durationMinutes: 30, source: 'manual' });
+    const back = buildFirstPlan(defaultAnswers('fit'), templates, TODAY, NOW, undefined, { logs: [log('l1', '2026-10-10')] });
+    expect(back.lines).toContain(WALK_JOG_LINE);
+    expect(back.lines.join(' ')).toMatch(/Je begint rustig/);
+    // Wie de acht weken ervoor twee keer per week trainde: geen beginnersstart, dus ook geen zin erover.
+    const fit = Array.from({ length: 16 }, (_, i) => log(`f${i}`, addDays(TODAY, -3 - i * 3)));
+    const trained = buildFirstPlan(defaultAnswers('fit'), templates, TODAY, NOW, undefined, { logs: fit });
+    expect(trained.lines).not.toContain(WALK_JOG_LINE);
+    expect(trained.lines.join(' ')).not.toMatch(/Je begint rustig/);
+    // Een antwoord gaat voor: Nee noemt het niet, ook met weinig logs.
+    expect(buildFirstPlan({ ...defaultAnswers('fit'), beginner: false }, templates, TODAY, NOW, undefined, { logs: [log('l1', '2026-10-10')] }).lines).not.toContain(WALK_JOG_LINE);
+    // Een bewaarde keuze geldt zonder antwoord, zoals in de planning (Warden ronde 3, moet 2).
+    expect(buildFirstPlan(defaultAnswers('fit'), templates, TODAY, NOW, undefined, { logs: fit, beginnerStart: 'ja' }).lines).toContain(WALK_JOG_LINE);
+    expect(buildFirstPlan(defaultAnswers('fit'), templates, TODAY, NOW, undefined, { logs: [log('l1', '2026-10-10')], beginnerStart: 'nee' }).lines).not.toContain(WALK_JOG_LINE);
+    // Dezelfde toets als de planning.
+    expect(isBeginnerStart('auto', [log('l1', '2026-10-10')], TODAY)).toBe(true);
+    expect(isBeginnerStart('auto', fit, TODAY)).toBe(false);
   });
 
   it('een tocht of wedstrijd zet geen richting', () => {

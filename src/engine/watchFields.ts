@@ -153,6 +153,8 @@ const KIND_BY_TEMPLATE: Record<string, WatchKindId> = {
   tpl_easy_run: 'zone2',
   tpl_hill_easy: 'zone2',
   tpl_recovery_run: 'zone2',
+  tpl_walk_jog: 'zone2',
+  tpl_walk_jog_long: 'zone2',
   tpl_strides_run: 'zone2',
   tpl_hill_intervals: 'hills',
   tpl_hills_descent: 'hills',

@@ -11,7 +11,7 @@ import { planDirection } from '../engine/direction';
 import { withCountingSports } from '../engine/sportTemplate';
 import { parseKindAmounts } from '../engine/kindAmount';
 import { programDirection } from '../engine/directionPlan';
-import { BEGINNER_WEEKS, isBeginnerStart } from '../engine/beginnerStart';
+import { BEGINNER_WEEKS, isBeginnerStart, resolveBeginnerBuild } from '../engine/beginnerStart';
 import { resolveWaveSettings } from '../engine/waves';
 import { countOptions } from '../engine/yourWeek';
 import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, parseWeekShape, weeklyPatternTemplates } from '../engine/sports';
@@ -91,7 +91,8 @@ export async function patternContext(
   const logs = plan.direction ? (given?.logs ?? await SessionLogsRepo.getAll()) : [];
   // De beginnersstart (engine/beginnerStart.ts): vier weken zonder harde training vanaf de start van je richting.
   const beginner = !!plan.direction && isBeginnerStart(settings.beginnerStart, logs, plan.waveStart);
-  const freeSwaps = directionSwaps(plan.direction, beginner).filter((s) => { const to = byId.get(s.to); return !!to && isTemplatePlannable(to, enabledSports); });
+  // Wandelen en dribbelen alleen bij heel licht: zonder Akkoord blijft een lopende start zoals hij was.
+  const freeSwaps = directionSwaps(plan.direction, beginner, resolveBeginnerBuild(settings.beginnerBuild) === 'licht').filter((s) => { const to = byId.get(s.to); return !!to && isTemplatePlannable(to, enabledSports); });
   // De minuten van je richting over de week verdeeld (engine/directionPlan.ts): het weekbudget en wat
   // het patroon gewoon telt, met de wissels van de richting erin.
   const direction = plan.direction

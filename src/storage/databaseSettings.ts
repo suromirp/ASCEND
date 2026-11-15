@@ -286,6 +286,11 @@ export interface AppSettings {
   // De beginnersstart zonder doel (engine/beginnerStart.ts): 'auto' (advies, uit je logs), 'ja' of
   // 'nee'. Absent = auto. Optional and additive; cleaned on import (migrations.ts#migrateWaveSettings).
   beginnerStart?: 'auto' | 'ja' | 'nee';
+  // Opbouw van de start (engine/beginnerStart.ts#resolveBeginnerBuild): 'licht' (advies: wandelen en dribbelen in
+  // plaats van de rustige en de lange duurloop) of 'gewoon'. Absent = gewoon tot je Akkoord: een lopende start
+  // verandert niet stil. Het eerste voorstel en het kiezen van een richting zetten 'licht' in hun Akkoord.
+  // Optional and additive; cleaned on import (migrationsPlanning.ts#migrateWaveSettings).
+  beginnerBuild?: 'licht' | 'gewoon';
   // Krachttraining (engine/strengthTraining.ts): absent = aan, het advies; `false` = geen krachttraining in je
   // planning. Alleen met Akkoord bewaard. Optional and additive; cleaned on import (backupClean.ts).
   strengthTraining?: false;

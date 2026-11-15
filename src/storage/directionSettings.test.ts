@@ -37,6 +37,12 @@ describe('migrateWaveSettings', () => {
     expect(migrateWaveSettings({})).toEqual({ value: {}, skipped: 0 });
   });
 
+  it('houdt alleen een bekende opbouw van de start over; zonder veld blijft het zonder (gewoon tot Akkoord)', () => {
+    expect(migrateWaveSettings({ beginnerBuild: 'licht' })).toEqual({ value: { beginnerBuild: 'licht' }, skipped: 0 });
+    expect(migrateWaveSettings({ beginnerBuild: 'gewoon' })).toEqual({ value: { beginnerBuild: 'gewoon' }, skipped: 0 });
+    expect(migrateWaveSettings({ beginnerBuild: 'zwaar' })).toEqual({ value: {}, skipped: 1 });
+  });
+
   it('houdt alleen een bekende lengte en de lichte week over', () => {
     expect(migrateWaveSettings({ waves: { length: 6, lightWeek: false } })).toEqual({ value: { waves: { length: 6, lightWeek: false } }, skipped: 0 });
     expect(migrateWaveSettings({ waves: { length: 4 } })).toEqual({ value: {}, skipped: 0 });
@@ -83,6 +89,15 @@ describe('richting en weekbudget in de back-up', () => {
     const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
     envelope.payload.settings = { ...envelope.payload.settings, beginnerStart: 'soms' };
     expect(normalizeBackupToCurrentModel(envelope).settings?.beginnerStart).toBeUndefined();
+  });
+
+  it('de opbouw van de start reist mee, een onzinnige waarde niet, een oud bestand blijft zonder', async () => {
+    expect(normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope()))).settings?.beginnerBuild).toBeUndefined();
+    await SettingsRepo.set({ beginnerBuild: 'gewoon' });
+    expect(normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope()))).settings?.beginnerBuild).toBe('gewoon');
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    envelope.payload.settings = { ...envelope.payload.settings, beginnerBuild: 'zwaar' };
+    expect(normalizeBackupToCurrentModel(envelope).settings?.beginnerBuild).toBeUndefined();
   });
 
   it('het antwoord uit de start reist mee, een onbekende sleutel of waarde niet (backlog Q)', async () => {

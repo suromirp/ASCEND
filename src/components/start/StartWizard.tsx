@@ -20,7 +20,7 @@ const EXPLANATION = 'Je doel of richting, je dagen en je keuze voor krachttraini
 const DAY_LABELS = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
 
 export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAnswers; onAnswers: (next: StartAnswers) => void; onClose: () => void }) {
-  const { templates, planHorizonChange, trainingGoals, goalMilestones, sessionLogs } = useAppData();
+  const { templates, planHorizonChange, trainingGoals, goalMilestones, sessionLogs, settings: stored } = useAppData();
   const hasGoal = trainingGoals.some((g) => g.status !== 'archived');
   const existing = useMemo(() => (hasGoal ? { kind: kindOfExistingGoals(trainingGoals, goalMilestones) } : undefined), [hasGoal, trainingGoals, goalMilestones]);
   const horizon = useHorizonChange();
@@ -43,7 +43,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
   const advice = adviceDays(existing?.kind ?? answers.goal);
 
   async function makePlan(close: () => void, withAnswers: StartAnswers = answers) {
-    const setup = buildFirstPlan(withAnswers, templates, today, undefined, existing);
+    const setup = buildFirstPlan(withAnswers, templates, today, undefined, existing, { logs: sessionLogs, beginnerStart: stored.beginnerStart });
     const { marathonRaceType, marathonTargetDate, ...settings } = setup.settings;
     await horizon.propose(
       () => planHorizonChange({

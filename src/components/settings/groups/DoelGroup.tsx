@@ -19,7 +19,7 @@ import { WavesSheet } from './WavesSheet';
 import { DirectionSheet } from '../../ascend/YourWeek';
 import { useDirectionChange } from '../../ascend/useDirectionChange';
 import { parseDirection } from '../../../engine/direction';
-import { parseBeginnerStart } from '../../../engine/beginnerStart';
+import { parseBeginnerStart, resolveBeginnerBuild } from '../../../engine/beginnerStart';
 import { resolveDescentClock } from '../../../engine/descentClock';
 import { SummaryRow } from './SummaryRow';
 import { useShelterChange } from '../useShelterChange';
@@ -104,6 +104,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="weekbudget" title="Weekbudget" facts={facts} info="weekbudget" onClick={() => setInner('weekbudget')} />
           <SummaryRow id="golven" title="Golven" facts={facts} info="golven" onClick={() => setInner('golven')} />
           <SummaryRow id="beginnersstart" title="Beginnersstart" facts={facts} info="beginnersstart" onClick={() => setInner('beginnersstart')} />
+          <SummaryRow id="opbouw-start" title="Opbouw van de start" facts={facts} info="opbouw-start" onClick={() => setInner('opbouw-start')} />
         </BundleSheet>
       )}
       {inner === 'weekbudget' && <WeekBudgetSheet onClose={closeInner} onPropose={(weekBudget) => { setNote(null); plan.clearNote(); void direction.proposeBudget(weekBudget); }} />}
@@ -115,6 +116,15 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
           def={CHOICES.beginnersstart}
           value={parseBeginnerStart(settings.beginnerStart)}
           onPick={(v) => { if (v !== parseBeginnerStart(settings.beginnerStart)) { setNote(null); void plan.changeSetting(`Beginnersstart: ${choiceShort('beginnersstart', v)}`, { beginnerStart: v }, 'Volgt je keuze voor de beginnersstart.'); } }}
+          onClose={closeInner}
+        />
+      )}
+      {inner === 'opbouw-start' && (
+        <ChoiceFromDef
+          def={CHOICES.opbouwStart}
+          value={resolveBeginnerBuild(settings.beginnerBuild)}
+          // Altijd eerst het voorstel: een lopende start verandert alleen met Akkoord, Liever niet laat alles staan.
+          onPick={(v) => { if (v !== settings.beginnerBuild) { setNote(null); void plan.changeSetting(`Opbouw van de start: ${choiceShort('opbouwStart', v)}`, { beginnerBuild: v }, 'Volgt je keuze voor de opbouw van de start.', { alwaysAsk: true }); } }}
           onClose={closeInner}
         />
       )}

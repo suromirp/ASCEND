@@ -78,7 +78,8 @@ describe('een richting kiezen zonder doel', () => {
   });
 
   it('Fit blijven bij Akkoord: drie gelijke weken en een lichtere vierde', async () => {
-    const plan = await computeHorizonPlan(input('maintain'));
+    // Zonder beginnersstart: die wisselt de rustige en de lange duurloop, dan verandert er wel een rij.
+    const plan = await computeHorizonPlan(input('maintain', { beginnerStart: 'nee' }));
     // Alleen andere lengtes: geen rij verandert, de lengtes staan in het voorstel.
     expect(plan.lengths.length).toBeGreaterThan(0);
     expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(plan)).status);
@@ -125,6 +126,72 @@ describe('een richting kiezen zonder doel', () => {
     expect(first).not.toContain('tpl_hill_intervals');
     expect(first).toContain('tpl_recovery_run');
     expect(later).toContain('tpl_hill_intervals');
+  });
+
+  it('beginnersstart: wandelen en dribbelen op de plek van de rustige en de lange duurloop, bij elke richting', async () => {
+    for (const id of ['maintain', 'improve', 'stronger', 'easy'] as const) {
+      // Zoals het kiezen van een richting het stuurt: heel licht hoort bij dit Akkoord (engine/beginnerStart.ts#buildConsentPatch).
+      const plan = await computeHorizonPlan(input(id, { beginnerBuild: 'licht' }));
+      // De wissel staat in het voorstel: niets verandert stil.
+      if (id === 'maintain') expect(plan.proposal.changes.some((c) => c.templateId?.startsWith('tpl_walk_jog') || c.newSessionDraft?.templateId.startsWith('tpl_walk_jog'))).toBe(true);
+      expect(['applied', 'unchanged'], id).toContain((await applyHorizonPlanNow(plan)).status);
+      const sessions = await open();
+      const first = sessions.filter((s) => s.scheduledDate < addDays(TODAY, 28)).map((s) => s.templateId);
+      const later = sessions.filter((s) => s.scheduledDate >= addDays(TODAY, 28)).map((s) => s.templateId);
+      expect(first, id).not.toContain('tpl_easy_run');
+      expect(first, id).not.toContain('tpl_long_run');
+      expect(first, id).toContain('tpl_walk_jog_long');
+      expect(later.filter((x) => x.startsWith('tpl_walk_jog')), id).toEqual([]);
+      expect(later, id).toContain('tpl_long_run');
+    }
+  });
+
+  it('beginnersstart met golven van drie weken: zes weken wandelen en dribbelen, daarna de gewone lopen', async () => {
+    expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('improve', { waves: { length: 3 }, beginnerBuild: 'licht' })))).status);
+    const sessions = await open();
+    const first = sessions.filter((s) => s.scheduledDate < addDays(TODAY, 42)).map((s) => s.templateId);
+    expect(first).not.toContain('tpl_easy_run');
+    expect(first).not.toContain('tpl_long_run');
+    expect(sessions.filter((s) => s.scheduledDate >= addDays(TODAY, 42) && s.templateId.startsWith('tpl_walk_jog'))).toEqual([]);
+  });
+
+  it('een start die al liep zonder keuze voor de opbouw: geen wandelen en dribbelen, ook niet na een paar openingen', async () => {
+    expect((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain')))).status).toBe('applied');
+    expect((await SettingsRepo.get()).beginnerBuild).toBeUndefined();
+    await syncProgramHorizon();
+    await syncProgramHorizon();
+    const first = (await open()).filter((s) => s.scheduledDate < addDays(TODAY, 28)).map((s) => s.templateId);
+    expect(first.filter((x) => x.startsWith('tpl_walk_jog'))).toEqual([]);
+    expect(first).toContain('tpl_long_run');
+  });
+
+  it('Opbouw van de start: zonder antwoord en met Liever niet verandert er niets, met Akkoord wel', async () => {
+    expect((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain')))).status).toBe('applied');
+    const before = JSON.stringify((await PlannedSessionsRepo.getAll()).sort((a, b) => a.id.localeCompare(b.id)));
+    const change = { title: 'Opbouw van de start: Heel licht', why: 'Test.', explanation: 'Test.', trigger: 'availability_changed' as const, settings: { beginnerBuild: 'licht' as const } };
+    // Het voorstel laat de wissel zien.
+    const plan = await computeHorizonPlan(change);
+    expect(plan.proposal.changes.some((c) => c.templateId?.startsWith('tpl_walk_jog'))).toBe(true);
+    // Geen antwoord, of Liever niet (het voorstel gaat dicht zonder toepassen): niets opgeslagen, ook niet na openingen.
+    for (let i = 0; i < 2; i++) await syncProgramHorizon();
+    expect((await SettingsRepo.get()).beginnerBuild).toBeUndefined();
+    expect(JSON.stringify((await PlannedSessionsRepo.getAll()).sort((a, b) => a.id.localeCompare(b.id)))).toBe(before);
+    // Akkoord: wandelen en dribbelen in de start, daarna de gewone lopen.
+    expect((await applyHorizonPlanNow(await computeHorizonPlan(change))).status).toBe('applied');
+    expect((await SettingsRepo.get()).beginnerBuild).toBe('licht');
+    let first = (await open()).filter((s) => s.scheduledDate < addDays(TODAY, 28)).map((s) => s.templateId);
+    expect(first).toContain('tpl_walk_jog_long');
+    expect(first).not.toContain('tpl_long_run');
+    // Terug naar Gewoon gaat ook alleen met Akkoord, en zet de lopen terug.
+    expect((await applyHorizonPlanNow(await computeHorizonPlan({ ...change, settings: { beginnerBuild: 'gewoon' as const } }))).status).toBe('applied');
+    first = (await open()).filter((s) => s.scheduledDate < addDays(TODAY, 28)).map((s) => s.templateId);
+    expect(first.filter((x) => x.startsWith('tpl_walk_jog'))).toEqual([]);
+    expect(first).toContain('tpl_long_run');
+  });
+
+  it('beginnersstart op Nee: geen wandelen en dribbelen', async () => {
+    expect(['applied', 'unchanged']).toContain((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain', { beginnerStart: 'nee' })))).status);
+    expect((await open()).filter((s) => s.templateId.startsWith('tpl_walk_jog'))).toEqual([]);
   });
 
   it('Sterker worden bij Akkoord: geen heuvelloop, rustige duur', async () => {

@@ -25,7 +25,7 @@ import { chainTouch, type SyncTouch } from '../engine/undoGuard';
 import type { RecentPlanChange } from '../models/planChange';
 import { todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
-import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations, setFixedSessionMinutes, setAmbition, setKindAmounts, resolveVariantDuration } from '../engine/substitutions';
+import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations, setFixedSessionMinutes, setAmbition, setKindAmounts, setStartBuild, resolveVariantDuration } from '../engine/substitutions';
 import { durationScopeFor } from '../engine/durationScope';
 import { syncProgramHorizon, type ProgramHorizonResult } from '../storage/database';
 import { programAnchorDate } from '../engine/programLayout';
@@ -100,6 +100,7 @@ export function setPlanningRegisters(program: Program | null, tpls: SessionTempl
   setFixedSessionMinutes(planned);
   setAmbition(scope.ambition);
   setKindAmounts(scope.kindAmounts);
+  setStartBuild(scope.startBuild);
 }
 
 // Always as stored. A proposal's preview never sets these to values you did
@@ -166,6 +167,8 @@ export async function horizonKey(): Promise<string> {
       settings.afterMainGoal,
       // Je Akkoord op neutrale golven zonder doel (engine/noGoalWaves.ts).
       settings.noGoalWaves,
+      // Opbouw van de start (engine/beginnerStart.ts): wandelen en dribbelen in de start of niet.
+      settings.beginnerBuild,
       // The fourth run in Opbouw (engine/extraRun.ts) is off on Rustig.
       settings.ambition,
       // Tussendoelen (engine/raceBlock.ts) change the plan too. The rucksack

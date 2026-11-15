@@ -138,13 +138,19 @@ export function migrateStartChoices(raw: unknown): { value?: { beginnerStart?: '
 // Zonder doel, de keuzes rond golven (docs/beslissingen/2026-10-31-zonder-doel-beginnersstart.md):
 // alleen bekende waarden blijven over; wat ontbreekt is het advies. Een oud bestand zonder deze velden
 // importeert zoals het was, dus het schemanummer blijft staan.
-type WaveSettingsValue = { beginnerStart?: 'auto' | 'ja' | 'nee'; waves?: { length?: 3 | 6; lightWeek?: false; review?: false; weeksForStep?: number }; waveReviewDone?: string; noGoalWaves?: 'agreed' };
-export function migrateWaveSettings(raw: { beginnerStart?: unknown; waves?: unknown; waveReviewDone?: unknown; noGoalWaves?: unknown }): { value: WaveSettingsValue; skipped: number } {
+type WaveSettingsValue = { beginnerStart?: 'auto' | 'ja' | 'nee'; beginnerBuild?: 'licht' | 'gewoon'; waves?: { length?: 3 | 6; lightWeek?: false; review?: false; weeksForStep?: number }; waveReviewDone?: string; noGoalWaves?: 'agreed' };
+export function migrateWaveSettings(raw: { beginnerStart?: unknown; beginnerBuild?: unknown; waves?: unknown; waveReviewDone?: unknown; noGoalWaves?: unknown }): { value: WaveSettingsValue; skipped: number } {
   const value: WaveSettingsValue = {};
   let skipped = 0;
   if (raw.beginnerStart !== undefined) {
     const known = (['auto', 'ja', 'nee'] as const).find((c) => c === raw.beginnerStart);
     if (known) value.beginnerStart = known;
+    else skipped++;
+  }
+  // Opbouw van de start: alleen een bekende waarde blijft; zonder veld geldt Gewoon tot je Akkoord.
+  if (raw.beginnerBuild !== undefined) {
+    const known = (['licht', 'gewoon'] as const).find((c) => c === raw.beginnerBuild);
+    if (known) value.beginnerBuild = known;
     else skipped++;
   }
   if (raw.waves !== undefined) {

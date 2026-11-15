@@ -676,16 +676,29 @@ export const PATTERN_SWAPS: PatternSwap[] = [
 const CALM_SWAPS: PatternSwap[] = [
   { from: 'tpl_hill_intervals', to: 'tpl_recovery_run', phases: [PHASE_GOLF, PHASE_GOLF_START] },
 ];
-// De beginnersstart: dezelfde wissel, alleen in de eerste vier weken (regel NO-HARD-YET in het ontwerp).
+// De beginnersstart: dezelfde wissel, alleen in de eerste vier weken (regel NO-HARD-YET in het ontwerp), en
+// wandelen en dribbelen op de plek van de rustige en de lange duurloop (docs/visie/Ontwerp beginner heel licht.md,
+// stap 2). Twee sjablonen, zodat elk de plek van zijn eigen loop houdt en na de start precies die loop terugwordt.
 const BEGINNER_SWAPS: PatternSwap[] = [
   { from: 'tpl_hill_intervals', to: 'tpl_recovery_run', phases: [PHASE_GOLF_START] },
+  { from: 'tpl_easy_run', to: 'tpl_walk_jog', phases: [PHASE_GOLF_START] },
+  { from: 'tpl_long_run', to: 'tpl_walk_jog_long', phases: [PHASE_GOLF_START] },
 ];
+// Wat alleen de beginnersstart neerzet: buiten de start wordt het weer de loop waar het voor kwam.
+const BEGINNER_ONLY_SWAPS = BEGINNER_SWAPS.filter((s) => !CALM_SWAPS.some((c) => c.to === s.to));
+// Welke loop wandelen en dribbelen vervangt: de rem van 110% meet de eerste loop na de start aan wat je in de start
+// echt deed (engine/substitutions.ts#recentSessionMaxima).
+export const START_STAND_INS: Readonly<Record<string, string>> = Object.fromEntries(BEGINNER_ONLY_SWAPS.map((s) => [s.to, s.from]));
 
 // De wissels die een richting zonder doel vraagt.
-export function directionSwaps(direction: ProgramDirection | undefined, beginner = false): PatternSwap[] {
+// `light`: de opbouw van de start is heel licht (engine/beginnerStart.ts#resolveBeginnerBuild), alleen dan wandelen en
+// dribbelen; zonder Akkoord blijft een lopende start zoals hij was.
+export function directionSwaps(direction: ProgramDirection | undefined, beginner = false, light = false): PatternSwap[] {
+  const walkJog = beginner && light ? BEGINNER_ONLY_SWAPS : [];
   // Rustig aan nooit hard, Sterker worden rustige duur: de benen fris voor de krachtdagen.
-  if (direction?.id === 'easy' || direction?.id === 'stronger') return CALM_SWAPS;
-  return beginner ? BEGINNER_SWAPS : [];
+  // In de beginnersstart ook daar wandelen en dribbelen op de plek van de rustige en de lange duurloop.
+  if (direction?.id === 'easy' || direction?.id === 'stronger') return [...CALM_SWAPS, ...walkJog];
+  return beginner ? [...BEGINNER_SWAPS.filter((s) => !BEGINNER_ONLY_SWAPS.includes(s)), ...walkJog] : [];
 }
 
 // The pattern session whose place in the week a session fills: a tempo run
@@ -701,6 +714,8 @@ const SLOT_OF: Record<string, string> = {
   tpl_hills_descent: 'tpl_hill_intervals',
   tpl_hike_day_one: 'tpl_hill_intervals',
   tpl_mountain_hike: 'tpl_long_run',
+  tpl_walk_jog: 'tpl_easy_run',
+  tpl_walk_jog_long: 'tpl_long_run',
 };
 export function patternSlotOf(templateId: string): string {
   return SLOT_OF[templateId] ?? templateId;
@@ -752,7 +767,8 @@ export function templateForPhase(templateId: string, swaps: PatternSwap[], phase
   if (forward) return forward.to;
   // A hike in a week that no longer asks for one (goal moved, or the user
   // chose to keep the long run) goes back to the original session.
-  const back = PATTERN_SWAPS.find((s) => s.to === templateId) ?? (isWavePhase(phaseId) ? CALM_SWAPS.find((s) => s.to === templateId) : undefined);
+  // Wandelen en dribbelen staat alleen in de beginnersstart: elders, ook in een plan met een doel, de loop van zijn plek.
+  const back = PATTERN_SWAPS.find((s) => s.to === templateId) ?? (isWavePhase(phaseId) ? CALM_SWAPS.find((s) => s.to === templateId) : undefined) ?? BEGINNER_ONLY_SWAPS.find((s) => s.to === templateId);
   if (back && !swaps.some((s) => s.to === templateId && s.phases.includes(phaseId))) return back.from;
   return templateId;
 }

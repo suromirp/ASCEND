@@ -48,6 +48,8 @@ const WARMTH_BONUS_C: Record<ClothingKind, number> = {
 const KIND_BY_TEMPLATE: Record<string, ClothingKind> = {
   tpl_easy_run: 'easy_run',
   tpl_recovery_run: 'easy_run',
+  tpl_walk_jog: 'easy_run',
+  tpl_walk_jog_long: 'easy_run',
   tpl_strides_run: 'easy_run',
   tpl_long_run: 'long_run',
   tpl_tempo_run: 'tempo',

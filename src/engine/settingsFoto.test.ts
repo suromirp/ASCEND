@@ -119,6 +119,7 @@ const ALLES_ANDERS: AppSettings = {
   proposeTargetTime: false,
   weekBudget: { minutes: 105, strength: 3, doubleHard: false },
   beginnerStart: 'nee',
+  beginnerBuild: 'gewoon',
   strengthTraining: false,
   waves: { length: 6, lightWeek: false },
   introSoundEnabled: false,

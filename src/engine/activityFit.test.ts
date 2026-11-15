@@ -7,6 +7,7 @@ import { coachReaction, EXTRA_TRAINING_TEXT } from './coach';
 import { linkCandidates } from './missedTraining';
 import { hardEffort, isEasyRun, isWalkLike, isWalkPaced, logSizeFits, paceText, resolveWatchKindCheck } from './activityFit';
 import { SHORT_TRAINING_TEXT } from './shortTraining';
+import { recentSessionMaxima } from './substitutions';
 
 // Alles nagemaakt: stand, lopen en hartslag.
 const templates: SessionTemplate[] = buildDefaultProgramData().templates;
@@ -376,5 +377,42 @@ describe('laatste ronde: hardRunTemplate', () => {
     expect(hardRunTemplate(pool.filter((t) => t.id !== 'tpl_intervals'))?.id).not.toMatch(/hill|descent|stairs/);
     const hard = act('hi', { durationSec: 44 * 60, distanceM: 10000, avgHeartRate: 172 });
     expect(proposeImport(hard, [], pool, [], undefined, undefined, FIT)!.fitNote).toBe(`Harder dan rustig: gemiddeld 172 bpm, zone 2 gaat tot 151. Dit wordt ${chosen!.name}.`);
+  });
+});
+
+// Warden, 15 november: wandelen en dribbelen is gemiddeld rond 10:00 per km of trager. Een horlogeloop in dat tempo
+// op de dag van een geplande training met de rol start_only blijft een loop en hoort bij die training, anders
+// telt de rem na de start (engine/substitutions.ts#recentSessionMaxima) hem niet.
+describe('wandelen en dribbelen in wandeltempo', () => {
+  // 20 minuten, 1,9 km: 10:32 per km.
+  const slow = act('wj', { durationSec: 20 * 60, distanceM: 1900, avgHeartRate: 128 });
+
+  it('blijft een loop en past op het geplande wandelen en dribbelen, zonder regel over wandeltempo', () => {
+    const p = proposeImport(slow, [planned('wj', 'tpl_walk_jog')], templates, [], undefined, undefined, FIT)!;
+    expect(p.activity.kind).toBe('run');
+    expect(p.original).toBeUndefined();
+    expect(p.match?.session.id).toBe('wj');
+    expect(p.template?.id).toBe('tpl_walk_jog');
+    expect(p.fitNote).toBeUndefined();
+    // Ook de lange: 30 minuten, 2,9 km.
+    const long = proposeImport(act('wjl', { durationSec: 30 * 60, distanceM: 2900 }), [planned('wjl', 'tpl_walk_jog_long')], templates, [], undefined, undefined, FIT)!;
+    expect(long.template?.id).toBe('tpl_walk_jog_long');
+  });
+
+  it('het log telt voor de rem na de start', () => {
+    const p = proposeImport(slow, [planned('wj', 'tpl_walk_jog')], templates, [], undefined, undefined, FIT)!;
+    const max = recentSessionMaxima([{ templateId: p.template!.id, completedDate: DAY, durationMinutes: slow.durationSec / 60 }], DAY);
+    expect(max.fromStart).toEqual({ tpl_easy_run: 20 });
+  });
+
+  it('achteraf koppelen mag ook in wandeltempo, bij een rustige loop nog steeds niet', () => {
+    const log = watchLog('wj', { durationMinutes: 20, cardioData: { durationMinutes: 20, distanceKm: 1.9, source: 'garmin' } });
+    expect(logSizeFits(log, byId('tpl_walk_jog'), 20)).toBe(true);
+    expect(logSizeFits(log, byId('tpl_easy_run'), 20)).toBe(false);
+  });
+
+  it('zonder gepland wandelen en dribbelen blijft hetzelfde tempo een wandeling', () => {
+    expect(proposeImport(slow, [], templates, [], undefined, undefined, FIT)!.activity.kind).toBe('hike');
+    expect(proposeImport(slow, [planned('e', 'tpl_easy_run')], templates, [], undefined, undefined, FIT)!.activity.kind).toBe('hike');
   });
 });

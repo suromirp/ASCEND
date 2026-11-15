@@ -13,6 +13,7 @@ import {
   PATTERN_SWAPS,
 } from './programLayout';
 import { buildDefaultProgramData } from '../data/defaultProgram';
+import { rankCandidateTemplates } from './weeklyPrescriptionBuilder';
 import { addDays, resolveProgramWeek } from '../utils/dates';
 import { isLightWeekOf, type Program } from '../models/program';
 
@@ -126,6 +127,78 @@ describe('beginnersstart', () => {
     expect(templateForPhase('tpl_recovery_run', swaps, PHASE_GOLF, 3)).toBe('tpl_hill_intervals');
     // Een heuvelloop die jij vastzette blijft.
     expect(templateForPhase('tpl_hill_intervals', swaps, PHASE_GOLF_START, 1)).toBe('tpl_hill_intervals');
+  });
+});
+
+describe('beginnersstart: wandelen en dribbelen (docs/visie/Ontwerp beginner heel licht.md, stap 2)', () => {
+  const pattern = templates.filter((t) => t.defaultDayOfWeek);
+  const ids = (swaps: ReturnType<typeof directionSwaps>, phase: string) => patternForWeek(pattern, templates, swaps, phase).map((s) => `${s.dayOfWeek}:${s.template.id}`);
+  const directions = ['maintain', 'improve', 'stronger', 'easy'] as const;
+  const OTHER_PHASES = [PHASE_GOLF, 'phase_1', 'phase_2', 'phase_3', 'phase_4', 'phase_taper', 'phase_onderhoud'];
+
+  it('in de start geen Rustige of Lange duurloop meer, bij elke richting', () => {
+    for (const id of directions) {
+      const week = ids(directionSwaps({ id }, true, true), PHASE_GOLF_START);
+      expect(week.join(' '), id).not.toMatch(/tpl_easy_run|tpl_long_run/);
+      expect(week, id).toContain(`${tpl('tpl_easy_run').defaultDayOfWeek}:tpl_walk_jog`);
+      expect(week, id).toContain(`${tpl('tpl_long_run').defaultDayOfWeek}:tpl_walk_jog_long`);
+    }
+  });
+
+  it('buiten de start verandert er niets', () => {
+    for (const id of directions) {
+      for (const phase of OTHER_PHASES) expect(ids(directionSwaps({ id }, true, true), phase), `${id} ${phase}`).toEqual(ids(directionSwaps({ id }, false), phase));
+    }
+  });
+
+  it('na de start wordt het weer de loop van zijn plek; wat jij vastzette blijft', () => {
+    for (const id of directions) {
+      const swaps = directionSwaps({ id }, true, true);
+      expect(templateForPhase('tpl_easy_run', swaps, PHASE_GOLF_START, 3)).toBe('tpl_walk_jog');
+      expect(templateForPhase('tpl_long_run', swaps, PHASE_GOLF_START, 3)).toBe('tpl_walk_jog_long');
+      expect(templateForPhase('tpl_walk_jog', swaps, PHASE_GOLF_START, 3)).toBe('tpl_walk_jog');
+      expect(templateForPhase('tpl_walk_jog', swaps, PHASE_GOLF, 3)).toBe('tpl_easy_run');
+      expect(templateForPhase('tpl_walk_jog_long', swaps, PHASE_GOLF, 3)).toBe('tpl_long_run');
+      expect(templateForPhase('tpl_walk_jog', directionSwaps({ id }, false), PHASE_GOLF_START, 3)).toBe('tpl_easy_run');
+      expect(templateForPhase('tpl_walk_jog_long', swaps, PHASE_GOLF, 1)).toBe('tpl_walk_jog_long');
+    }
+    // Een plan met een doel kent geen wandelen en dribbelen.
+    expect(templateForPhase('tpl_walk_jog_long', PATTERN_SWAPS, 'phase_3', 3)).toBe('tpl_long_run');
+    expect(templateForPhase('tpl_walk_jog', PATTERN_SWAPS, 'phase_1', 3)).toBe('tpl_easy_run');
+  });
+
+  it('een plan met een doel wisselt nooit naar wandelen en dribbelen', () => {
+    expect(PATTERN_SWAPS.some((s) => s.to.startsWith('tpl_walk_jog'))).toBe(false);
+    for (const phase of ['phase_1', 'phase_2', 'phase_3', 'phase_4', 'phase_taper']) expect(ids(PATTERN_SWAPS, phase).join(' ')).not.toMatch(/tpl_walk_jog/);
+  });
+
+  it('zonder heel licht (geen Akkoord) blijft de start zoals hij was: alleen de heuvelloop wordt een herstelloop', () => {
+    for (const id of directions) {
+      const week = ids(directionSwaps({ id }, true, false), PHASE_GOLF_START).join(' ');
+      expect(week, id).not.toMatch(/tpl_walk_jog/);
+      expect(week, id).not.toMatch(/tpl_hill_intervals/);
+    }
+    // Een wandelen en dribbelen die er al stond gaat zonder heel licht terug naar zijn loop.
+    expect(templateForPhase('tpl_walk_jog_long', directionSwaps({ id: 'maintain' }, true, false), PHASE_GOLF_START, 3)).toBe('tpl_long_run');
+  });
+
+  it('nooit een kandidaat in het weekvoorschrift: alleen de wissel van de start zet het neer', () => {
+    const running = { dimension: 'endurance_duration', discipline: 'running' } as const;
+    const ids = rankCandidateTemplates(running, templates, new Set());
+    expect(ids).toContain('tpl_easy_run');
+    expect(ids.filter((x) => x.startsWith('tpl_walk_jog'))).toEqual([]);
+    expect(rankCandidateTemplates({ dimension: 'aerobic_engine' }, templates, new Set()).filter((x) => x.startsWith('tpl_walk_jog'))).toEqual([]);
+  });
+
+  it('licht voor de benen, geen vaste dag en in week 1 hoogstens 30 minuten', () => {
+    for (const id of ['tpl_walk_jog', 'tpl_walk_jog_long']) {
+      const t = tpl(id);
+      expect(t.defaultDayOfWeek).toBeUndefined();
+      expect(t.weeklyProgression).toBeUndefined();
+      expect(t.baseStressProfile?.lowerBodyLoad).toBe('light');
+      expect(t.durationVariants.full).toBeLessThanOrEqual(30);
+    }
+    expect(tpl('tpl_walk_jog').durationVariants.full).toBeLessThan(tpl('tpl_walk_jog_long').durationVariants.full);
   });
 });
 

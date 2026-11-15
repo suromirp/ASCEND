@@ -250,10 +250,12 @@ export function measuredOf(activity: ExternalActivity): MeasuredRun {
 // Een loop in wandeltempo is een wandeling, als de keuze Soort van een loop toetsen aan staat (standaard).
 // Alleen de soort verandert; wat het horloge mat blijft gelijk. Niet op een loopband, niet bij klimmen
 // (engine/activityFit.ts#isWalkLike) en niet als hij als loop past op een looptraining van die dag die geen
-// rustige loop is (`runMatch`: een heuveltraining met wandelend terug).
+// rustige loop is (`runMatch`: een heuveltraining met wandelend terug). Ook niet op wandelen en dribbelen van de
+// beginnersstart (rol `start_only`): dat is gemiddeld rond 10:00 per km of trager, en anders telt de rem na de start
+// (engine/substitutions.ts#recentSessionMaxima) het niet (Warden, 15 november).
 export function effectiveActivity(activity: ExternalActivity, fit: ImportFit | undefined, runMatch?: PlannedMatch): ExternalActivity {
   if (!fit || fit.kindCheck === false || activity.kind !== 'run' || activity.countedSport || activity.otherType) return activity;
-  if (runMatch && !isEasyRun(runMatch.template, runMatch.session.scheduledDate, fit.program)) return activity;
+  if (runMatch && (hasRole(runMatch.template, 'start_only') || !isEasyRun(runMatch.template, runMatch.session.scheduledDate, fit.program))) return activity;
   return isWalkLike(measuredOf(activity)) ? { ...activity, kind: 'hike' } : activity;
 }
 
@@ -285,7 +287,8 @@ function fitIssueOf(activity: ExternalActivity, original: ExternalActivity, matc
   const planned = plannedMinutes(match);
   if (isShortFor(minutes, planned)) return { kind: 'short', minutes, planned, name: match.template.name };
   // Een vlakke loop in wandeltempo die als loop bij een niet-rustige training bleef: zeg het, de keuze blijft bij jou.
-  if (activity.kind === 'run' && isWalkLike(measuredOf(activity))) return { kind: 'walk-match', pace: paceSecKm(measuredOf(activity)) ?? 0 };
+  // Wandelen en dribbelen mag in wandeltempo: dat is de bedoeling, geen regel.
+  if (activity.kind === 'run' && isWalkLike(measuredOf(activity)) && !hasRole(match.template, 'start_only')) return { kind: 'walk-match', pace: paceSecKm(measuredOf(activity)) ?? 0 };
   const hard = hardOnEasyMatch(activity, match, fit);
   if (hard) return { kind: 'hard', judgment: hard, name: match.template.name };
   return undefined;
