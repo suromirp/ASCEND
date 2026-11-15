@@ -1,17 +1,19 @@
-// ASCEND: de verklaringen in settingsDefs/ zeggen hetzelfde als de oude bestanden (docs/visie/Ontwerp
-// instellingen op een plek.md, stap 1). Tot stap 2 en 3 zijn de oude bestanden de bron: wie een instelling
-// toevoegt of een tekst verandert, doet dat daar en zet hetzelfde in src/engine/settingsDefs/<groep>.ts. Een
-// verklaring die ontbreekt staat in de foutmelding, klaar om over te nemen.
+// ASCEND: de verklaringen in settingsDefs/ (docs/visie/Ontwerp instellingen op een plek.md).
+//
+// Sinds stap 2 komen de index, de rijen, de plekken en de voorwaarden alleen nog uit de verklaringen; dat ze
+// niets veranderden bewijst de foto (settingsFoto.test.ts). Hier staat wat de vorm bewaakt, en tot stap 3 de
+// vergelijking van de uitleg en de keuzes met settingsHelp.ts en settingsChoices.ts, die nog de bron zijn: een
+// nieuwe uitleg of keuze komt daar en met dezelfde tekst in de verklaring.
 
 import { describe, expect, it } from 'vitest';
 import { SETTINGS_INDEX } from '../data/settingsIndex';
-import { PAGE_ROWS, SETTINGS_PAGES, allRowIds, placementOf } from '../data/settingsLayout';
+import { placementOf } from '../data/settingsLayout';
 import { SETTINGS_HELP, settingsHelp } from '../data/settingsHelp';
 import { CHOICES } from '../data/settingsChoices';
 import { ADVICE_SPECS } from './settingsDiff';
 import { ALL_DEFS, DEFS, PAGE_ORDER } from './settingsDefs/index';
-import { deriveChoices, deriveHelp, deriveIndex, derivePageRows, derivePlacement } from './settingsDefs/derive';
-import { ADVICE_ORDER, INDEX_ORDER } from './settingsDefs/order';
+import { deriveChoices, deriveHelp } from './settingsDefs/derive';
+import { ADVICE_ORDER } from './settingsDefs/order';
 
 const GROUP_FILES = import.meta.glob<string>('./settingsDefs/*.ts', { query: '?raw', import: 'default', eager: true });
 const PAGES_TSX = import.meta.glob<string>(['../components/settings/**/*.tsx', '../pages/settings/*.tsx'], { query: '?raw', import: 'default', eager: true });
@@ -21,48 +23,45 @@ const NIET_GELEZEN: Record<string, string> = {
   'bundel-horloge-gebruik': 'titel en bladkop zijn usageTitle in KoppelingenGroup.tsx (met Health Connect: Gebruik van je gegevens)',
 };
 
-// Wat er bij een nieuwe instelling in de verklaring hoort, om over te nemen.
-function expected(id: string): string {
-  const item = SETTINGS_INDEX.find((i) => i.id === id);
-  const p = placementOf(id);
-  const place = !p ? '?' : p.link ? '{ link: true }' : p.row !== id ? (p.sheet ? `{ in: '${p.row}' }` : `{ on: '${p.row}' }`) : '{ row: true }';
-  return `ontbreekt in settingsDefs/${item?.group ?? p?.page ?? '?'}.ts: { id: '${id}', page: '${item?.group ?? p?.page}', place: ${place}, title: ${JSON.stringify(item?.title ?? '')}${item ? `, note: ${JSON.stringify(item.note)}, keywords: ${JSON.stringify(item.keywords)}` : ', search: false'} }`;
-}
-
-describe('de verklaringen tegenover de oude bestanden', () => {
-  it('elke id staat er één keer, in het bestand van zijn groep', () => {
+describe('de vorm van de verklaringen', () => {
+  it('elke id staat er één keer, in het bestand van een groep', () => {
     expect(ALL_DEFS.length, 'dubbele id').toBe(Object.keys(DEFS).length);
     for (const d of ALL_DEFS) expect(PAGE_ORDER, d.id).toContain(d.page);
-    const rowIds = SETTINGS_PAGES.flatMap((p) => allRowIds(p.id));
-    for (const id of new Set([...SETTINGS_INDEX.map((i) => i.id), ...rowIds])) expect(DEFS[id], expected(id)).toBeDefined();
   });
 
-  it('de index: elke instelling met dezelfde titel, zin, groep, trefwoorden en route', () => {
-    const derived = new Map(deriveIndex().map((i) => [i.id, i]));
-    for (const item of SETTINGS_INDEX) expect(derived.get(item.id), expected(item.id)).toEqual(item);
-    expect([...derived.keys()].filter((id) => !SETTINGS_INDEX.some((i) => i.id === id)), 'in de verklaringen maar niet in de index').toEqual([]);
-  });
-
-  it('de index en het advies houden hun volgorde (order.ts)', () => {
-    const known = new Set(INDEX_ORDER);
-    expect(SETTINGS_INDEX.map((i) => i.id).filter((id) => known.has(id))).toEqual(deriveIndex().map((i) => i.id).filter((id) => known.has(id)));
-    const knownAdvice = new Set(ADVICE_ORDER);
-    expect(ADVICE_SPECS.map((s) => s.id).filter((id) => knownAdvice.has(id))).toEqual([...ADVICE_ORDER].filter((id) => ADVICE_SPECS.some((s) => s.id === id)));
-  });
-
-  it('de rijen per pagina, in dezelfde volgorde', () => {
-    expect(derivePageRows()).toEqual(PAGE_ROWS);
-  });
-
-  it('de plek van elke instelling en elke rij', () => {
-    const ids = new Set([...SETTINGS_INDEX.map((i) => i.id), ...SETTINGS_PAGES.flatMap((p) => allRowIds(p.id)), ...ALL_DEFS.map((d) => d.id)]);
-    for (const id of ids) expect(derivePlacement(id), id).toEqual(placementOf(id));
-    for (const d of ALL_DEFS) if ('in' in d.place || 'on' in d.place) {
-      const row = 'in' in d.place ? d.place.in : d.place.on;
-      expect(DEFS[row] && 'row' in DEFS[row].place, `${d.id}: ${row} is geen rij`).toBe(true);
+  it('een plek in of aan een rij wijst naar een rij die bestaat, en elke instelling heeft een plek', () => {
+    for (const d of ALL_DEFS) {
+      if ('in' in d.place || 'on' in d.place) {
+        const row = 'in' in d.place ? d.place.in : d.place.on;
+        expect(DEFS[row] && 'row' in DEFS[row].place, `${d.id}: ${row} is geen rij`).toBe(true);
+        expect(DEFS[row].page, `${d.id} staat in een rij van een andere groep`).toBe(d.page);
+      }
+      expect(placementOf(d.id), `${d.id} heeft geen plek`).toBeDefined();
     }
   });
 
+  it('een instelling in de index heeft een zin en trefwoorden; een rij erbuiten niet', () => {
+    for (const d of ALL_DEFS) {
+      if (d.search === false) expect(d.note === undefined && d.keywords === undefined, d.id).toBe(true);
+      else {
+        expect(d.note, `${d.id} zonder zin`).toBeTruthy();
+        expect(d.keywords?.length, `${d.id} zonder trefwoorden`).toBeGreaterThan(0);
+      }
+    }
+    expect(SETTINGS_INDEX.length).toBe(ALL_DEFS.filter((d) => d.search !== false).length);
+  });
+
+  it('een voorwaarde wijst naar een instelling die bestaat', () => {
+    for (const d of ALL_DEFS) for (const b of d.showWhen ?? []) expect(DEFS[b.parent], `${d.id}: ouder ${b.parent} bestaat niet`).toBeDefined();
+  });
+
+  it('het advies houdt zijn volgorde (order.ts)', () => {
+    const knownAdvice = new Set(ADVICE_ORDER);
+    expect(ADVICE_SPECS.map((s) => s.id).filter((id) => knownAdvice.has(id))).toEqual([...ADVICE_ORDER].filter((id) => ADVICE_SPECS.some((s) => s.id === id)));
+  });
+});
+
+describe('de verklaringen tegenover de uitleg, de keuzes en het advies van nu', () => {
   it('de uitleg: elke sleutel één keer, met dezelfde tekst', () => {
     const { help, neutral, doubles } = deriveHelp();
     expect(doubles, 'twee verklaringen maken dezelfde sleutel').toEqual([]);
@@ -88,7 +87,7 @@ describe('de verklaringen tegenover de oude bestanden', () => {
   it('de titel in Aangepaste instellingen en de groep van het advies', () => {
     for (const spec of ADVICE_SPECS) {
       const d = DEFS[spec.id];
-      expect(d, expected(spec.id)).toBeDefined();
+      expect(d, `advies ${spec.id} heeft geen verklaring`).toBeDefined();
       expect(d.adviceTitle ?? d.title, `adviceTitle van ${spec.id}`).toBe(spec.title);
       expect(d.page, `groep van ${spec.id}`).toBe(spec.page);
     }

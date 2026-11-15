@@ -7,6 +7,7 @@
 
 import { AERIAL_CACHE, PHOTO_SOURCES_LINE } from '../../integrations/aerialImagery';
 import { AERIAL_LIMIT_MS, MAP_SOURCE_LIMIT_MS } from '../routeMap';
+import { B } from './parts';
 import type { SettingDef } from './types';
 
 export const VANDAAG: SettingDef[] = [
@@ -116,6 +117,7 @@ export const VANDAAG: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.evening],
   },
   {
     id: 'ochtendcheck',
@@ -151,6 +153,7 @@ export const VANDAAG: SettingDef[] = [
       ],
     },
     helpKey: 'benenNaTest',
+    showWhen: [B.morning],
   },
   {
     id: 'vragen-na-loop',
@@ -403,6 +406,7 @@ export const VANDAAG: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.legEaseOffers],
   },
   {
     id: 'korter-vandaag',
@@ -497,6 +501,7 @@ export const VANDAAG: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.notice],
   },
   {
     id: 'rust-melding',
@@ -515,6 +520,7 @@ export const VANDAAG: SettingDef[] = [
       ],
     },
     helpKey: 'rustMelding',
+    showWhen: [B.timed],
   },
   {
     id: 'weekmelding',
@@ -531,6 +537,7 @@ export const VANDAAG: SettingDef[] = [
         { head: 'Geen week', text: 'stond er niets gepland en deed je niets, dan komt er geen melding.' },
       ],
     },
+    showWhen: [B.timed],
   },
   {
     id: 'weekmelding-tijd',
@@ -555,6 +562,7 @@ export const VANDAAG: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.timed, B.weekNotice],
   },
   {
     id: 'avond-melding',
@@ -572,6 +580,7 @@ export const VANDAAG: SettingDef[] = [
       ],
     },
     helpKey: 'avondMelding',
+    showWhen: [B.timed, B.evening],
   },
   {
     id: 'weerplaats',
@@ -650,6 +659,7 @@ export const VANDAAG: SettingDef[] = [
     title: 'Weer van de gekozen plek',
     note: 'Kies je in de Briefing bij Start bij een plek verder dan 10 km van huis, dan toont het weer-vak het weer daar.',
     keywords: ['weer', 'plek', 'plekken', 'start bij', 'ver', 'weg', 'briefing', 'kleding', 'voorspelling', 'plaats', 'weer en kleding'],
+    showWhen: [B.route],
   },
   {
     id: 'weeralarm',
@@ -741,6 +751,7 @@ export const VANDAAG: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.route],
   },
   {
     id: 'route-start',
@@ -816,6 +827,7 @@ export const VANDAAG: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.route],
   },
   {
     id: 'route-grote-wegen',
@@ -834,6 +846,7 @@ export const VANDAAG: SettingDef[] = [
       ],
     },
     helpKey: 'routeGroteWegen',
+    showWhen: [B.route],
   },
   {
     id: 'route-kaart',
@@ -869,6 +882,7 @@ export const VANDAAG: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.route],
   },
   {
     id: 'maanstand',
@@ -918,6 +932,7 @@ export const VANDAAG: SettingDef[] = [
       ],
     },
     helpKey: 'kleding',
+    showWhen: [B.clothing],
   },
   {
     id: 'beweging',
@@ -1024,6 +1039,7 @@ export const VANDAAG: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.skyAuto],
   },
   {
     id: 'bundel-inzicht',
@@ -1060,6 +1076,7 @@ export const VANDAAG: SettingDef[] = [
     adviceTitle: 'Efficiëntie',
     note: 'Hoe snel je liep bij dezelfde hartslag, vergeleken met je eigen rustige lopen.',
     keywords: ['loopinzicht', 'efficiëntie', 'hartslag', 'tempo', 'zone 2', 'sneller', 'hardlopen', 'inzicht na een training'],
+    showWhen: [B.insight],
   },
   {
     id: 'loop-langedagen',
@@ -1070,6 +1087,7 @@ export const VANDAAG: SettingDef[] = [
     adviceTitle: 'Lange dagen',
     note: 'Hoeveel je hartslag opliep bij gelijk tempo op een lange loop.',
     keywords: ['loopinzicht', 'drift', 'hartslagdrift', 'lange loop', 'ontkoppeling', 'uithouding', 'durability', 'inzicht na een training'],
+    showWhen: [B.insight],
   },
   {
     id: 'loop-berg',
@@ -1080,6 +1098,7 @@ export const VANDAAG: SettingDef[] = [
     adviceTitle: 'Bergop en bergaf',
     note: 'Je klimsnelheid bij dezelfde hartslag en feiten over je dalen, alleen bij een tocht met een klim of daling.',
     keywords: ['loopinzicht', 'klimmen', 'dalen', 'bergop', 'bergaf', 'klimsnelheid', 'tocht', 'hoogtemeters', 'inzicht na een training'],
+    showWhen: [B.insight],
   },
   {
     id: 'loop-vorm',
@@ -1090,6 +1109,7 @@ export const VANDAAG: SettingDef[] = [
     adviceTitle: 'Pas en vorm',
     note: 'Pas en vorm toont alleen iets als er echt wat verandert, bijvoorbeeld langer grondcontact aan het eind.',
     keywords: ['loopinzicht', 'loopdynamica', 'grondcontact', 'pas', 'cadans', 'vorm', 'borstband', 'hrm-pro', 'inzicht na een training'],
+    showWhen: [B.insight],
   },
   {
     id: 'loopweer',
@@ -1172,6 +1192,7 @@ export const VANDAAG: SettingDef[] = [
       ],
     },
     helpKey: 'runDetailPatronen',
+    showWhen: [B.runDetail],
   },
   {
     id: 'run-detail-advies',
@@ -1191,6 +1212,7 @@ export const VANDAAG: SettingDef[] = [
       ],
     },
     helpKey: 'runDetailAdvies',
+    showWhen: [B.runDetail],
   },
   {
     id: 'loopvorm-cadans',
@@ -1200,6 +1222,7 @@ export const VANDAAG: SettingDef[] = [
     rowTitle: 'Cadans',
     note: 'Of cadans in de kaart Loopvorm van Run in detail staat.',
     keywords: ['run in detail', 'loopvorm', 'loopdynamica', 'cadans'],
+    showWhen: [B.runDetail],
   },
   {
     id: 'loopvorm-grondcontact',
@@ -1209,6 +1232,7 @@ export const VANDAAG: SettingDef[] = [
     rowTitle: 'Grondcontact',
     note: 'Of grondcontact in de kaart Loopvorm van Run in detail staat.',
     keywords: ['run in detail', 'loopvorm', 'loopdynamica', 'grondcontact'],
+    showWhen: [B.runDetail],
   },
   {
     id: 'loopvorm-staplengte',
@@ -1218,6 +1242,7 @@ export const VANDAAG: SettingDef[] = [
     rowTitle: 'Staplengte',
     note: 'Of staplengte in de kaart Loopvorm van Run in detail staat.',
     keywords: ['run in detail', 'loopvorm', 'loopdynamica', 'staplengte'],
+    showWhen: [B.runDetail],
   },
   {
     id: 'loopvorm-oscillatie',
@@ -1227,6 +1252,7 @@ export const VANDAAG: SettingDef[] = [
     rowTitle: 'Op en neer',
     note: 'Of op en neer in de kaart Loopvorm van Run in detail staat.',
     keywords: ['run in detail', 'loopvorm', 'loopdynamica', 'op en neer'],
+    showWhen: [B.runDetail],
   },
   {
     id: 'loopvorm-balans',
@@ -1245,6 +1271,7 @@ export const VANDAAG: SettingDef[] = [
       ],
     },
     helpKey: 'runDetailLoopvorm',
+    showWhen: [B.runDetail],
   },
   {
     id: 'zweet-vragen',
@@ -1280,6 +1307,7 @@ export const VANDAAG: SettingDef[] = [
         { head: 'Wanneer', text: 'vanaf het uur bij Ochtend (standaard 5 uur) tot twaalven, of tot je invult of je training gelogd is. Staat de kaart uit, dan blijft de vraag een regel bij Je dag.' },
       ],
     },
+    showWhen: [B.morning],
   },
   {
     id: 'ochtend-vanaf',
@@ -1302,6 +1330,7 @@ export const VANDAAG: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.morning],
   },
   {
     id: 'korte-nacht',
@@ -1320,6 +1349,7 @@ export const VANDAAG: SettingDef[] = [
       ],
     },
     helpKey: 'korteNacht',
+    showWhen: [B.morning],
   },
   {
     id: 'weekterugblik-dag',
@@ -1343,6 +1373,7 @@ export const VANDAAG: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.review],
   },
   {
     id: 'terugknop',

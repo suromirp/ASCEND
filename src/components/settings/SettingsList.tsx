@@ -1,7 +1,7 @@
 import { useContext, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { settingsAdvancedRoute } from '../../data/settingsLayout';
-import { settingsAnchor } from '../../data/settingsIndex';
+import { settingsAnchor } from '../../data/settingsAnchor';
 import { haptics } from '../../utils/haptics';
 import { Icon } from '../icons';
 import { AdjustedTag, AutoTag, Eyebrow, InfoButton, ToggleVisual } from '../ui';

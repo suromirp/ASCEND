@@ -5,6 +5,7 @@
 // settingsChoices.ts tot stap 2 en 3; settingsDefs.parity.test.ts bewaakt dat de teksten gelijk zijn. De volgorde
 // is die van de pagina: een rij, met daaronder wat in haar blad staat.
 
+import { B } from './parts';
 import type { SettingDef } from './types';
 
 export const FORGE: SettingDef[] = [
@@ -65,6 +66,7 @@ export const FORGE: SettingDef[] = [
     title: 'Programma uit MacroFactor',
     note: 'Je krachttrainingen volgen het programma uit je MacroFactor-export, per week, of weer dat van ASCEND.',
     keywords: ['forge', 'programma', 'schema', 'macrofactor', 'oefeningen', 'sets', 'herhalingen', 'rir', 'loslaten', 'cycle', 'week'],
+    showWhen: [B.mf],
   },
   {
     id: 'forge-volgorde',
@@ -96,6 +98,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.forge],
   },
   {
     id: 'forge-opwarmen',
@@ -132,6 +135,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.forge],
   },
   {
     id: 'forge-opwarmbereik',
@@ -155,6 +159,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.forge],
   },
   {
     id: 'bundel-weergave',
@@ -163,6 +168,7 @@ export const FORGE: SettingDef[] = [
     title: 'Weergave op Forge',
     search: false,
     sheet: { eyebrow: 'Forge', title: 'Weergave op Forge', line: 'Wat de pagina Forge laat zien.' },
+    showWhen: [B.forge],
   },
   {
     id: 'forge-1rm',
@@ -180,6 +186,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forge1rm',
+    showWhen: [B.forge],
   },
   {
     id: 'forge-kent-je',
@@ -199,6 +206,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeKentJe',
+    showWhen: [B.forge],
   },
   {
     id: 'forge-weergave',
@@ -232,6 +240,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.forge, B.oneRm],
   },
   {
     id: 'forge-1rm-macrofactor',
@@ -251,6 +260,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forge1rmMacrofactor',
+    showWhen: [B.forge, B.oneRm, B.mf],
   },
   {
     id: 'forge-vergelijken',
@@ -285,6 +295,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.forge],
   },
   {
     id: 'forge-extras',
@@ -303,6 +314,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeExtras',
+    showWhen: [B.forge],
   },
   {
     id: 'forge-lijntjes',
@@ -321,6 +333,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeLijntjes',
+    showWhen: [B.forge],
   },
   {
     id: 'forge-volgorde-lijst',
@@ -343,6 +356,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.forge],
   },
   {
     id: 'forge-plaatjes',
@@ -411,6 +425,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'bundelRusttimer',
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-rust',
@@ -419,6 +434,7 @@ export const FORGE: SettingDef[] = [
     title: 'Rusttimer vanzelf',
     note: 'De rusttimer start na elke werkset en na je laatste opwarmset, met een tijd per oefening.',
     keywords: ['forge', 'kracht', 'rust', 'rusttijd', 'timer', 'pauze', 'sets', 'workout', 'rusttimer'],
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-signaal',
@@ -442,6 +458,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.inApp, B.restAuto],
   },
   {
     id: 'forge-geluid',
@@ -470,6 +487,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.inApp, B.restAuto, B.restAlert],
   },
   {
     id: 'forge-volume',
@@ -492,6 +510,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.inApp, B.restAuto, B.restAlert],
   },
   {
     id: 'forge-vooraf',
@@ -500,6 +519,7 @@ export const FORGE: SettingDef[] = [
     title: 'Vooraankondiging',
     note: 'Een zachte tik 10 seconden voor het einde van de rust.',
     keywords: ['forge', 'rust', 'tik', 'vooraf', 'aftellen', 'waarschuwing', '10 seconden', 'rusttimer'],
+    showWhen: [B.inApp, B.restAuto, B.restAlert],
   },
   {
     id: 'forge-oefening-klank',
@@ -508,6 +528,7 @@ export const FORGE: SettingDef[] = [
     title: 'Klank bij nieuwe oefening',
     note: 'Na de laatste set van een oefening klinkt de bel twee keer, de tweede lager.',
     keywords: ['forge', 'rust', 'oefening', 'klank', 'geluid', 'volgende', 'set', 'rusttimer'],
+    showWhen: [B.inApp, B.restAuto, B.restAlert],
   },
   {
     id: 'forge-scherm',
@@ -543,6 +564,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeBijsturen',
+    showWhen: [B.forge, B.inApp],
   },
   {
     id: 'forge-spotter',
@@ -563,6 +585,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeSpotter',
+    showWhen: [B.forge, B.inApp],
   },
   {
     id: 'bundel-sportschool',
@@ -606,6 +629,7 @@ export const FORGE: SettingDef[] = [
         { head: 'Per sportschool', text: 'dit hoort bij de sportschool die je koos. In een andere sportschool zonder rek staat het weer uit.' },
       ],
     },
+    showWhen: [B.forge, B.inApp],
   },
   {
     id: 'stangen',
@@ -663,6 +687,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.forge],
   },
   {
     id: 'kabels',
@@ -750,6 +775,7 @@ export const FORGE: SettingDef[] = [
         { head: 'Eerder', text: 'helpt een eigen schatting, onder Geavanceerd.' },
       ],
     },
+    showWhen: [B.trainings],
   },
   {
     id: 'forge-tijdsgrens',
@@ -771,6 +797,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeTijdsgrens',
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-grens-kracht',
@@ -796,6 +823,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-grens-been',
@@ -821,6 +849,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.inApp],
   },
   {
     id: 'bundel-rekenmodel',
@@ -839,6 +868,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'bundelRekenmodel',
+    showWhen: [B.forge],
   },
   {
     id: 'forge-rekent-mee',
@@ -860,6 +890,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeRekentMee',
+    showWhen: [B.forge],
   },
   {
     id: 'forge-afvinken-doel',
@@ -881,6 +912,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeAfvinkenDoel',
+    showWhen: [B.forge],
   },
   {
     id: 'forge-sets',
@@ -904,6 +936,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.forge],
   },
   {
     id: 'forge-vermoeidheid',
@@ -936,6 +969,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.forge],
   },
   {
     id: 'forge-tussen-oefeningen',
@@ -956,6 +990,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeTussenOefeningen',
+    showWhen: [B.forge],
   },
   {
     id: 'forge-pauze',
@@ -975,6 +1010,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgePauze',
+    showWhen: [B.forge],
   },
   {
     id: 'forge-bereik',
@@ -983,6 +1019,7 @@ export const FORGE: SettingDef[] = [
     title: 'Bereik verbreden',
     note: 'Een toestel met grote stappen mag tijdelijk meer herhalingen vragen zonder dat het plan verandert.',
     keywords: ['forge', 'kracht', 'bereik', 'herhalingen', 'stap', 'kabel', 'toestel', 'rekenmodel'],
+    showWhen: [B.forge],
   },
   {
     id: 'forge-schatting',
@@ -1005,6 +1042,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.forge],
   },
   {
     id: 'forge-leren',
@@ -1039,6 +1077,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.forge],
   },
   {
     id: 'bundel-invullen',
@@ -1056,6 +1095,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'bundelInvullen',
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-oefeningen',
@@ -1088,6 +1128,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-verloop',
@@ -1120,6 +1161,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-onderbreking',
@@ -1155,6 +1197,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-concept',
@@ -1190,6 +1233,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-vegen',
@@ -1207,6 +1251,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeVegen',
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-rir-vooraf',
@@ -1239,6 +1284,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-rir-snel',
@@ -1273,6 +1319,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-stappen',
@@ -1291,6 +1338,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeStappen',
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-netjes',
@@ -1308,6 +1356,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeNetjes',
+    showWhen: [B.inApp, B.ladderRow],
   },
   {
     id: 'forge-band',
@@ -1325,6 +1374,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeBand',
+    showWhen: [B.inApp, B.ladderRow],
   },
   {
     id: 'forge-stapvoorstel',
@@ -1343,6 +1393,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeStapVoorstel',
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-ijkset',
@@ -1361,6 +1412,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeIJkset',
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-soort',
@@ -1379,6 +1431,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeSoort',
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-doorvoeren',
@@ -1412,6 +1465,7 @@ export const FORGE: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-schijven',
@@ -1430,6 +1484,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeSchijven',
+    showWhen: [B.inApp],
   },
   {
     id: 'forge-opwarmset-later',
@@ -1448,6 +1503,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeOpwarmsetLater',
+    showWhen: [B.inApp],
   },
   {
     id: 'bundel-toets',
@@ -1466,6 +1522,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeNaast',
+    showWhen: [B.forge, B.mf],
   },
   {
     id: 'forge-naast',
@@ -1475,6 +1532,7 @@ export const FORGE: SettingDef[] = [
     note: 'Onderaan Forge staat hoe vaak het voorstel van ASCEND raak was, naast dat van MacroFactor. Uit: alleen hier te zien.',
     keywords: ['forge', 'raak', 'vergelijken', 'macrofactor', 'voorstel', 'toets', 'kracht', 'toets tegen macrofactor'],
     help: { from: 'bundel-toets' },
+    showWhen: [B.forge, B.mf],
   },
   {
     id: 'forge-sinds',
@@ -1492,6 +1550,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeSinds',
+    showWhen: [B.forge, B.mf],
   },
   {
     id: 'forge-bergspieren',
@@ -1514,6 +1573,7 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeBergspieren',
+    showWhen: [B.forge],
   },
   {
     id: 'forge-bergspieren-aan',
@@ -1525,6 +1585,7 @@ export const FORGE: SettingDef[] = [
     note: 'De melding en het voorstel voor kuiten, scheenspier, bilspieren en enkel en evenwicht aan of uit, en de volgorde bij Ruilen.',
     keywords: ['spieren', 'berg', 'bergdoel', 'aan', 'uit', 'melding', 'voorstel', 'forge'],
     help: { from: 'forge-bergspieren' },
+    showWhen: [B.forge],
   },
   {
     id: 'forge-enkel',
@@ -1545,5 +1606,6 @@ export const FORGE: SettingDef[] = [
       ],
     },
     helpKey: 'forgeEnkel',
+    showWhen: [B.forge, B.mountain],
   },
 ];

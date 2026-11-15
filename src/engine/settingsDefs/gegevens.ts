@@ -5,6 +5,7 @@
 // settingsChoices.ts tot stap 2 en 3; settingsDefs.parity.test.ts bewaakt dat de teksten gelijk zijn. De volgorde
 // is die van de pagina: een rij, met daaronder wat in haar blad staat.
 
+import { B } from './parts';
 import type { SettingDef } from './types';
 
 export const GEGEVENS: SettingDef[] = [
@@ -96,6 +97,7 @@ export const GEGEVENS: SettingDef[] = [
         { head: 'In de app', text: 'gaat de automatische back-up naar Interne opslag > Documents > ASCEND op je telefoon. Die map zie je in je bestandsbeheerder, en een app die mappen naar Google Drive kopieert kan hem meenemen.' },
       ],
     },
+    showWhen: [B.folder],
   },
   {
     id: 'toestemmingen',
@@ -297,6 +299,7 @@ export const GEGEVENS: SettingDef[] = [
       ],
     },
     helpKey: 'autoBijwerken',
+    showWhen: [B.liveUpdate],
   },
   {
     id: 'voorstellen-opruimen',
