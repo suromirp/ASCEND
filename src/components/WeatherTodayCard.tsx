@@ -26,7 +26,7 @@ import { addDays, todayISO, weekdayLongNL } from '../utils/dates';
 import { SettingsLinkRow } from './settings/SettingsLink';
 import { Card, Eyebrow } from './ui';
 import { usePlaceWeather } from './usePlaceWeather';
-import { weatherPageView, type WeatherPageLink } from '../engine/weatherPageLink';
+import { weatherCardMinutes, weatherPageView, type WeatherPageLink } from '../engine/weatherPageLink';
 import { capitalize } from '../utils/capitalize';
 
 const TONE = { prima: 'var(--color-ink)', let_op: 'var(--color-warning)', slecht: 'var(--color-danger-text)' } as const;
@@ -38,12 +38,13 @@ function dayLabel(date: string, today: string): string {
   return capitalize(weekdayLongNL(date));
 }
 
-export function WeatherTodayCard({ link: given }: { link?: WeatherPageLink }) {
+// `refreshed`: telt op na Nu verversen, zodat de kaart de net opgehaalde voorspelling van de plek leest.
+export function WeatherTodayCard({ link: given, refreshed = 0 }: { link?: WeatherPageLink; refreshed?: number }) {
   const { plannedSessions, sessionLogs, templateById, weather, settings, program } = useAppData();
   // De training uit de Briefing; bestaat die niet (meer), dan is er geen plek en toont de kaart thuis.
   const linked = given ? templateById.get(given.templateId) : undefined;
   const link = linked ? given : undefined;
-  const view = weatherPageView(link, usePlaceWeather(link?.place), weather.forecast);
+  const view = weatherPageView(link, usePlaceWeather(link?.place, refreshed), weather.forecast);
   const storedPlaces = useTrainingPlaces();
   if (!settings.homeLocation && !link) return null;
 
@@ -64,7 +65,8 @@ export function WeatherTodayCard({ link: given }: { link?: WeatherPageLink }) {
   }
 
   const { template, date } = next;
-  const durationMinutes = resolveEffectiveFullDuration(template, date, program);
+  // Dezelfde duur als de rij Weer in de Briefing: een aangepaste duur van de geplande training gaat voor.
+  const durationMinutes = weatherCardMinutes(link, 'session' in next ? next.session.plannedMinutes : undefined, resolveEffectiveFullDuration(template, date, program));
   const w = weatherForTraining({ forecast, template, logs: sessionLogs, date, durationMinutes, now });
   const clothingOn = showClothingAdvice(settings.overviews);
   const adjustC = adjustFor(settings.clothingAdjust, templateSport(template));

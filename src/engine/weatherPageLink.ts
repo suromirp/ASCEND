@@ -16,6 +16,9 @@ export interface WeatherPageLink {
   place: WeatherPlace;
   templateId: string;
   date: string;
+  // De duur waarmee de rij Weer rekent (een aangepaste duur van de geplande training gaat voor), zodat
+  // de pagina hetzelfde uur en dezelfde kop toont. Afwezig of kapot: de pagina rekent hem zelf uit.
+  minutes?: number;
 }
 
 // De vorm in de stap van de router. Eén sleutel, zodat andere gebruikers van `state` er niet mee botsen.
@@ -25,9 +28,22 @@ export interface WeatherPageState {
 
 // Wat de Briefing meegeeft. Geen plek gekozen (of een plek binnen 10 km van huis, of de instelling
 // uit: dan is er geen doel): er gaat niets mee en de pagina toont thuis.
-export function weatherPageLink(place: WeatherPlace | undefined, templateId: string, date: string): WeatherPageState | undefined {
+export function weatherPageLink(place: WeatherPlace | undefined, templateId: string, date: string, minutes?: number): WeatherPageState | undefined {
   if (!place) return undefined;
-  return { weatherPlace: { place: { name: place.name, lat: place.lat, lon: place.lon }, templateId, date } };
+  return { weatherPlace: { place: { name: place.name, lat: place.lat, lon: place.lon }, templateId, date, ...(validMinutes(minutes) ? { minutes } : {}) } };
+}
+
+// Een duur die een training kan zijn: een heel aantal minuten tussen 1 en een dag.
+function validMinutes(raw: unknown): raw is number {
+  return typeof raw === 'number' && Number.isInteger(raw) && raw > 0 && raw <= 24 * 60;
+}
+
+// De duur waarmee de weerkaart rekent: wat de Briefing meegaf, anders de geplande duur van de training
+// (een aangepaste duur gaat voor), anders de volle duur van het programma. Dezelfde volgorde als de rij
+// Weer in de Briefing (engine/briefing.ts), zodat de kop op beide plekken gelijk is.
+export function weatherCardMinutes(link: WeatherPageLink | undefined, plannedMinutes: number | undefined, fullMinutes: number): number {
+  if (link?.minutes !== undefined) return link.minutes;
+  return validMinutes(plannedMinutes) ? plannedMinutes : fullMinutes;
 }
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
@@ -48,6 +64,7 @@ export function readWeatherPageLink(raw: unknown, today: string): WeatherPageLin
     place: { name: typeof name === 'string' ? name.trim() : '', lat: round2(point.lat), lon: round2(point.lon) },
     templateId: link.templateId,
     date: link.date,
+    ...(validMinutes(link.minutes) ? { minutes: link.minutes } : {}),
   };
 }
 
@@ -58,6 +75,18 @@ export const weatherPageNote = {
   shown: (name: string): string => (name ? `Weer in ${name}, de plek uit je Briefing.` : 'Weer op je plek uit de Briefing.'),
   failed: (name: string, hasHome: boolean): string => `Weer ${where(name)} laadde niet.${hasHome ? ' Dit is het weer van thuis.' : ''}`,
 };
+
+// Wat Nu verversen zegt als de pagina ook het weer van de plek uit de Briefing toont: thuis en de plek
+// worden allebei ververst, en de uitkomst noemt wat niet lukte. `home`: de foutmelding van thuis, of
+// leeg als thuis lukte of er geen thuis is.
+export function weatherRefreshOutcome(name: string | undefined, placeOk: boolean, homeError: string | undefined): { tone: 'ok' | 'error'; text: string } {
+  if (name === undefined) return homeError ? { tone: 'error', text: homeError } : { tone: 'ok', text: 'Het weer is bijgewerkt.' };
+  const at = where(name);
+  if (placeOk && !homeError) return { tone: 'ok', text: `Het weer is bijgewerkt, thuis en ${at}.` };
+  if (placeOk) return { tone: 'error', text: `Het weer ${at} is bijgewerkt. Thuis lukte niet: ${homeError}` };
+  if (!homeError) return { tone: 'error', text: `Weer ${at} laadde niet. Het weer van thuis is bijgewerkt.` };
+  return { tone: 'error', text: `Weer ${at} laadde niet. ${homeError}` };
+}
 
 // Wat de kaart bovenaan de pagina leest.
 export interface WeatherPageView {

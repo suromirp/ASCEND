@@ -160,7 +160,7 @@ export function TrainingBriefing({
   function openRow(row: BriefingRow) {
     if (!row.opens) return;
     // De gekozen plek gaat mee: de pagina Weer toont dan hetzelfde weer als deze rij (engine/weatherPageLink.ts).
-    if (row.id === 'weather') toPage('/weer', weatherPageLink(weatherTarget, template.id, date));
+    if (row.id === 'weather') toPage('/weer', weatherPageLink(weatherTarget, template.id, date, minutes));
     else if (row.id === 'watch') { if (watchView.hasWatchSheet) setSheet('watch'); }
     // Waar kun je dit doen?: een pagina, dus eerst alle lagen dicht.
     else if (row.id === 'spots') toPage(spotsPageFor(template.id));
