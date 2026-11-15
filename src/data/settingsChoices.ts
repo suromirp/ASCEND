@@ -450,6 +450,18 @@ export const CHOICES = {
       { value: 'uit', label: 'Uit', note: 'Geen regel en geen voorstel', short: 'Uit' },
     ],
   }),
+  slapenOnderweg: def({
+    group: 'Doel en tochten',
+    title: 'Slapen onderweg',
+    line: 'Waar je slaapt op je meerdaagse tocht. Een andere keuze is eerst een voorstel.',
+    advice: 'tent' as 'tent' | 'hut' | 'both',
+    help: 'slapenOnderweg',
+    options: [
+      { value: 'tent', label: 'Met tent', note: 'Tent, slaapzak en kookspullen, een zwaardere rugzak' },
+      { value: 'hut', label: 'In hutten', note: 'Van hut naar hut, een lichtere rugzak' },
+      { value: 'both', label: 'Hutten en tent', note: 'Soms een hut, de tent gaat altijd mee' },
+    ],
+  }),
   rustNaTocht: def({
     group: 'Doel en tochten',
     title: 'Rust na een bergtocht',

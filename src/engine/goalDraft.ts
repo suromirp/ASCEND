@@ -13,6 +13,7 @@ import { requirementsFromDetails } from './goalReadiness';
 import type { PictogramName } from '../components/pictograms';
 import { MARATHON_GOAL_NAME } from './mainGoal';
 import { goalDetailsOf, goalKindOf } from './goalLabels';
+import { kindForShelter, shelterForKind, SHELTER_ADVICE, SHELTER_OPTIONS } from './trekShelter';
 
 // De tegels van stap 1. Een tocht met hut of tent is één tegel met een vraag.
 export type AddTileId = 'trek' | Exclude<GoalKindId, 'trek_hut' | 'trek_tent'>;
@@ -40,13 +41,13 @@ export const ADD_TILES: readonly AddTile[] = [
 
 export const RACE_KM: Record<string, number> = { '5k': 5, '10k': 10, half: 21.1, marathon: 42.2 };
 
-// Wat een nieuw doel van deze tegel al ingevuld heeft: een tocht slaapt standaard in hutten.
+// Wat een nieuw doel van deze tegel al ingevuld heeft: een tocht slaapt standaard volgens het advies (tent).
 export function defaultDetails(id: AddTileId): GoalDetails {
-  return id === 'trek' ? { shelter: 'hut' } : {};
+  return id === 'trek' ? { shelter: SHELTER_ADVICE } : {};
 }
 
 export function kindOfTile(id: AddTileId, details?: GoalDetails): GoalKindId {
-  return id === 'trek' ? (details?.shelter === 'tent' ? 'trek_tent' : 'trek_hut') : id;
+  return id === 'trek' ? kindForShelter(details?.shelter ?? 'hut') : id;
 }
 
 // Een vraag van stap 2.
@@ -89,7 +90,7 @@ export function questionsFor(id: AddTileId): Question[] {
       const choices = def.variants.map((v) => ({ value: v.id, label: v.label }));
       out.push({ ...spec, choices: id === 'run_race' ? [...choices, { value: 'eigen', label: 'Eigen afstand' }] : choices });
     }
-    else if (spec.key === 'shelter') out.push({ ...spec, label: 'Slapen', required: true, choices: [{ value: 'hut', label: 'In hutten' }, { value: 'tent', label: 'Met tent' }] });
+    else if (spec.key === 'shelter') out.push({ ...spec, label: 'Slapen', required: true, choices: SHELTER_OPTIONS.map((o) => ({ value: o.id, label: o.label })) });
     else out.push(spec);
   }
   return out.slice(0, MAX_QUESTIONS);
@@ -178,7 +179,7 @@ export function buildGoalDraft(input: DraftInput): TrainingGoal {
   if (details.variant === 'eigen') delete details.variant;
   // Een cutoff hoort bij een ultra: bij een korte trail valt hij weg.
   if (kind === 'trail' && details.variant !== 'ultra') delete details.cutoffMinutes;
-  if (kind === 'trek_hut' || kind === 'trek_tent') details.shelter = kind === 'trek_tent' ? 'tent' : 'hut';
+  if (kind === 'trek_hut' || kind === 'trek_tent') details.shelter = shelterForKind(kind, details.shelter);
   let requirements: GoalRequirement[] = requirementsFromDetails(kind, details).map((r) => ({ ...r, ...(DISCIPLINE[kind] ? { discipline: DISCIPLINE[kind] } : {}) }));
   if (kind === 'run_race') {
     const reqs: GoalRequirement[] = [];
@@ -252,7 +253,7 @@ export function detailsFromGoal(goal: TrainingGoal): GoalDetails {
     d.variant = match ?? (d.distanceKm !== undefined ? 'eigen' : undefined);
     if (d.variant === undefined) delete d.variant;
   }
-  if (kind === 'trek_hut' || kind === 'trek_tent') d.shelter = d.shelter ?? (kind === 'trek_tent' ? 'tent' : 'hut');
+  if (kind === 'trek_hut' || kind === 'trek_tent') d.shelter = shelterForKind(kind, d.shelter);
   return d;
 }
 
@@ -283,7 +284,7 @@ export function applyGoalEdit(goal: TrainingGoal, input: EditInput): TrainingGoa
   if (details.variant === 'eigen') delete details.variant;
   // Een cutoff hoort bij een ultra: gaat de trail naar kort, dan valt hij weg (ook als het formulier hem nog had).
   if (kind === 'trail' && details.variant !== 'ultra') delete details.cutoffMinutes;
-  if (kind === 'trek_hut' || kind === 'trek_tent') details.shelter = kind === 'trek_tent' ? 'tent' : 'hut';
+  if (kind === 'trek_hut' || kind === 'trek_tent') details.shelter = shelterForKind(kind, details.shelter);
   const multi = kind === 'trek_hut' || kind === 'trek_tent';
   let requirements = [...goal.requirements];
   for (const f of REQ_FIELDS) {

@@ -137,7 +137,7 @@ describe('goals that are already there', () => {
     expect(startSteps('trek', true)).toEqual(['days', 'which', 'strength']);
     expect(startSteps('fit')).toEqual(['goal', 'days', 'which', 'strength', 'beginner']);
     expect(startSteps('fit', false, true)).toEqual(['goal', 'days', 'which', 'strength']);
-    expect(startSteps('trek')).toEqual(['goal', 'target', 'date', 'days', 'which', 'strength']);
+    expect(startSteps('trek')).toEqual(['goal', 'target', 'shelter', 'date', 'days', 'which', 'strength']);
     expect(startSteps('race')).toEqual(['goal', 'target', 'race', 'date', 'days', 'which', 'strength']);
     const plan = buildFirstPlan(defaultAnswers('trek'), templates, TODAY, NOW, { kind: 'trek' });
     expect(plan.goals).toEqual([]);
@@ -174,5 +174,33 @@ describe('punt J: het vraagnummer verspringt niet en een dubbele tik slaat niets
   it('een tweede tik vlak na een nieuwe vraag telt niet', () => {
     expect(tapTooSoon(1000, 1000 + STEP_TAP_GUARD_MS - 1)).toBe(true);
     expect(tapTooSoon(1000, 1000 + STEP_TAP_GUARD_MS)).toBe(false);
+  });
+});
+
+// Backlogpunt G: de start vraagt hutten, tent of beide; het doel volgt dat antwoord, nooit stil hutten.
+describe('waar je slaapt op een tocht', () => {
+  const { templates } = buildDefaultProgramData();
+
+  it('een tocht vraagt het na tocht of wedstrijd, een wedstrijd en een richting niet', () => {
+    expect(startSteps('trek')).toEqual(['goal', 'target', 'shelter', 'date', 'days', 'which', 'strength']);
+    expect(startSteps('race')).not.toContain('shelter');
+    expect(startSteps('fit')).not.toContain('shelter');
+  });
+
+  it('zonder antwoord het advies: een tocht met tent', () => {
+    const plan = buildFirstPlan({ ...defaultAnswers('trek'), goalDate: '2027-03-15' }, templates, '2026-11-16', '2026-11-16T07:30:00Z');
+    expect(plan.goals[0].kind).toBe('trek_tent');
+    expect(plan.goals[0].details?.shelter).toBe('tent');
+    expect(plan.lines[0]).toBe('Doel: een meerdaagse tocht met rugzak op 15 maart 2027, met tent.');
+  });
+
+  it('hutten en beide komen op het doel', () => {
+    const hut = buildFirstPlan({ ...defaultAnswers('trek'), shelter: 'hut', goalDate: '2027-03-15' }, templates, '2026-11-16', '2026-11-16T07:30:00Z');
+    expect(hut.goals[0].kind).toBe('trek_hut');
+    expect(hut.goals[0].details?.shelter).toBe('hut');
+    const both = buildFirstPlan({ ...defaultAnswers('trek'), shelter: 'both', goalDate: '2027-03-15' }, templates, '2026-11-16', '2026-11-16T07:30:00Z');
+    expect(both.goals[0].kind).toBe('trek_tent');
+    expect(both.goals[0].details?.shelter).toBe('both');
+    expect(both.lines[0]).toContain('in hutten en met tent');
   });
 });

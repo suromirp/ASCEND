@@ -60,3 +60,15 @@ export const DEFAULT_PACK_ITEMS: PackItem[] = [
   item('zonnebrand', 'verzorging', 'Zonnebrand en lippenbalsem', 100),
   item('reparatie', 'verzorging', 'Reparatiesetje, mes, oordoppen, oogmasker, zakken', 270),
 ];
+
+// Van hut naar hut (engine/trekShelter.ts): geen tent, matje, kussen en kookspullen, een lakenzak in
+// plaats van de slaapzak en een kleinere rugzak. Het water filter je nog steeds onderweg.
+const HUT_DROPS = new Set(['tent', 'matje', 'kussen', 'kookset', 'gas']);
+const HUT_SWAPS: Record<string, PackItem> = {
+  slaapzak: item('lakenzak', 'slapen', 'Lakenzak voor de hut', 150),
+  rugzak: item('rugzak', 'slapen', 'Rugzak 40 tot 50 liter met heupband', 1100),
+};
+
+export const HUT_PACK_ITEMS: PackItem[] = DEFAULT_PACK_ITEMS
+  .filter((i) => !HUT_DROPS.has(i.id))
+  .map((i) => HUT_SWAPS[i.id] ?? i);

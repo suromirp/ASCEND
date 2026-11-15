@@ -27,7 +27,7 @@ export function readGoalDetails(raw: unknown): GoalDetails | undefined {
   // Altijd in dezelfde volgorde, zodat lezen een opgeslagen doel niet verandert.
   const out: GoalDetails = {};
   if (typeof r.variant === 'string' && r.variant.length > 0 && r.variant.length <= 40) out.variant = r.variant;
-  if (r.shelter === 'hut' || r.shelter === 'tent') out.shelter = r.shelter;
+  if (r.shelter === 'hut' || r.shelter === 'tent' || r.shelter === 'both') out.shelter = r.shelter;
   for (const key of DETAIL_NUMBERS) {
     const x = r[key];
     if (typeof x === 'number' && Number.isFinite(x) && x > 0) out[key] = x;

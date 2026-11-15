@@ -14,7 +14,7 @@ De Ascend-tab als doelen en hoe ver je bent: volgorde, labels, conflicten, klaar
 - `src/engine/racePaces.ts#raceOutlook` de ene berekening voor "past de doeltijd", ook voor TARGET-TIME; `src/engine/raceDay.ts#raceDayView` Racedag voor een 10 km: in de laatste week één rij op Vandaag en in het blad van het doel, het blad met start, weer thuis, inlopen en tempo, de dag erna een terugblik; alleen tekst, beoordeelt de doeltijd niet; de verwachte tijd uit `raceReadiness.ts#expectedRaceTime` (`docs/beslissingen/2026-11-14-racedag-10km.md`)
 - `src/engine/onCourse.ts#recentAdherence` dezelfde telling voor de coach en Ritme
 - `src/engine/yourWeek.ts#yourWeek` Je week zonder doel, één ring
-- `src/state/goalActions.ts` waar doelen worden geschreven
+- `src/engine/trekShelter.ts` hutten, tent of beide: één keuze op het doel (`GoalDetails.shelter`, soort `trek_tent` bij tent en beide), gevraagd in de start (advies tent) en in Instellingen bij Tochten (Slapen onderweg, een voorstel met Akkoord via `components/settings/useShelterChange.tsx`); de doelkop (`goalKindName`), de paklijst (`resolvePackItems`, `packListNote`) en de Reisplanner (`engine/journey.ts#tasksForShelter`) lezen haar, nooit de soort apart (`docs/beslissingen/2026-11-14-keuzes-avond.md`); `src/state/goalActions.ts` waar doelen worden geschreven
 - `src/engine/skillGoal.ts#clearedSkillSteps` een Vaardigheid uit de logs; opslag `src/storage/skillGoals.ts#recordSkillSteps` (één put, alleen toevoegen), trap `src/components/ascend/SkillGoalCard.tsx`; Algemeen sterk met eigen gewicht: `src/engine/goalReadinessFor.ts#generalReadinessFor`, de keuze `src/components/ascend/CalisthenicsChoiceSheet.tsx`, de kaart `src/components/ascend/GeneralStrengthCard.tsx`
 
 ## Nooit

@@ -6,10 +6,16 @@
 // "aan de beurt" from the week it opens and fits until the week it closes;
 // what is not done by then simply stays open, never overdue or red.
 // Which task is the one of this week is a pure function in
-// engine/journey.ts. The texts are for a solo trek with a tent.
+// engine/journey.ts. The texts are for a solo trek with a tent, unless a task
+// says it is for huts.
+//
+// Which tasks belong to huts, a tent or both is on the task (`shelters`):
+// engine/journey.ts#tasksForShelter picks them.
 //
 // Rules and prices change (bivouac rules especially): every task that
 // leans on one says "controleer" and carries a link.
+
+import type { TrekShelter } from '../models/goals';
 
 interface JourneyLink {
   label: string;
@@ -26,7 +32,14 @@ export interface JourneyTask {
   // Weeks before the main goal: [opens, closes]. opens >= closes >= 1.
   window: [number, number];
   link?: JourneyLink;
+  // Alleen bij deze keuzes van waar je slaapt (engine/trekShelter.ts). Leeg: bij elke keuze.
+  shelters?: TrekShelter[];
+  // Bouwt op deze taak: zolang die open staat komt deze niet als taak van de week naar voren.
+  after?: string;
 }
+
+const TENT: TrekShelter[] = ['tent', 'both'];
+const HUT: TrekShelter[] = ['hut', 'both'];
 
 export const JOURNEY_TASKS: JourneyTask[] = [
   {
@@ -35,6 +48,7 @@ export const JOURNEY_TASKS: JourneyTask[] = [
     why: 'Deze drie bepalen samen de helft van je basisgewicht. Richtgetallen voor augustus: een eenpersoons dubbelwandige tent van ongeveer 1.100 g (in de Vanoise en de Mercantour moet het een laag model zijn), een donzen slaapzak met comfort rond 0 °C van ongeveer 850 g, en een opblaasbaar matje met R-waarde 3 tot 4 van ongeveer 450 g. De R-waarde zegt hoe goed het matje van de koude grond isoleert.',
     window: [41, 35],
     link: { label: 'Je paklijst', to: '/reis/paklijst' },
+    shelters: TENT,
   },
   {
     id: 'besluit-dagen',
@@ -61,6 +75,8 @@ export const JOURNEY_TASKS: JourneyTask[] = [
     title: 'Koop je tent, slaapzak en matje',
     why: 'Koop ze deze winter, dan kun je ze in het voorjaar uitgebreid testen. Weeg alles bij thuiskomst: dat gewicht ga je invullen in je paklijst.',
     window: [36, 27],
+    shelters: TENT,
+    after: 'grote-drie-kiezen',
   },
   {
     id: 'rugzak-kiezen',
@@ -89,6 +105,7 @@ export const JOURNEY_TASKS: JourneyTask[] = [
     why: 'In de drie natuurreservaten van de Haute-Savoie reserveer je bivakplekken online. In het hart van de Vanoise mag je alleen bivakkeren bij bepaalde refuges en op reservering. Kijk in januari wanneer de reserveringen opengaan en noteer de data.',
     window: [30, 25],
     link: { label: 'Reserveringssite Haute-Savoie', url: 'https://bivouac.nature-haute-savoie.fr' },
+    shelters: TENT,
   },
   {
     id: 'schoenen',
@@ -109,6 +126,7 @@ export const JOURNEY_TASKS: JourneyTask[] = [
     title: 'Kies je brander, pan en waterfilter',
     why: 'Een brander met schroefdraad past op de meeste gascartouches. In kleine dorpen ligt soms alleen Campingaz met een eigen aansluiting, dus koop gas in de grote plaatsen. Richtgewicht: brander, pan en lepel samen ongeveer 235 g.',
     window: [28, 22],
+    shelters: TENT,
   },
   {
     id: 'slaapplan',
@@ -128,6 +146,8 @@ export const JOURNEY_TASKS: JourneyTask[] = [
     title: 'Test je brander en filter thuis',
     why: 'Kook één keer een maaltijd op je eigen brander en filter water uit de kraan of een beek. Je wilt niet pas in de bergen ontdekken dat een onderdeel ontbreekt.',
     window: [24, 17],
+    shelters: TENT,
+    after: 'kookset',
   },
   {
     id: 'satelliet-kiezen',
@@ -142,12 +162,14 @@ export const JOURNEY_TASKS: JourneyTask[] = [
     why: 'Zet je tent op, kook, slaap en pak de ochtend erna in. Het hoeft niet ver: het gaat erom wat je mist en wat niet werkt. Zoek een plek waar het mag.',
     window: [21, 14],
     link: { label: 'Trainingsplekken', to: '/plekken' },
+    shelters: TENT,
   },
   {
     id: 'satelliet-kopen',
     title: 'Koop je satellietcommunicator en test hem',
     why: 'Stuur een testbericht naar thuis, buiten, met vrij zicht op de lucht. Pas dan weet je dat de koppeling met je telefoon werkt en dat thuis het bericht ook echt ontvangt.',
     window: [19, 13],
+    after: 'satelliet-kiezen',
   },
   {
     id: 'vervoer-uitzoeken',
@@ -168,6 +190,7 @@ export const JOURNEY_TASKS: JourneyTask[] = [
     why: 'Twee dagen met 12 kg en zelf koken is de eerste echte test van je opzet. De Eifel heeft trekkingplekken met een composttoilet die je boekt voor 10 tot 15 euro per tent per nacht. Controleer de regels en prijzen voor je boekt.',
     window: [17, 11],
     link: { label: 'Trekkingplekken Eifel', url: 'https://www.eifel.info/en/book/trekking-sites' },
+    shelters: TENT,
   },
   {
     id: 'bivak-reserveren',
@@ -175,6 +198,16 @@ export const JOURNEY_TASKS: JourneyTask[] = [
     why: 'Doe het zodra het kan, want de plekken in de Vanoise (ongeveer 20) en bij de reservaten in de Haute-Savoie zijn beperkt. Een bivakplek bij een refuge kost een paar euro. Zorg voor een tweede plan op de nachten die niet lukken.',
     window: [15, 9],
     link: { label: 'Bivak in de Vanoise', url: 'https://www.ffrandonnee.fr/s-informer/actualites/le-bivouac-dans-le-c%C5%93ur-du-parc-national-de-la-vanoise' },
+    shelters: TENT,
+    after: 'reservering-data',
+  },
+  {
+    id: 'hutten-reserveren',
+    title: 'Reserveer je hutten',
+    why: 'In de drukke weken zitten refuges en gîtes vol. Reserveer de nachten die vastliggen een paar weken vooruit en houd voor de rest een tweede plan. De meeste refuges vragen een lakenzak en contant geld.',
+    window: [15, 6],
+    link: { label: 'Slapen: hutten, bivak en tent', to: '/kennis/slapen-hutten-bivak' },
+    shelters: HUT,
   },
   {
     id: 'trein-heen',
@@ -227,6 +260,7 @@ export const JOURNEY_TASKS: JourneyTask[] = [
     title: 'Zet het abonnement van je satellietcommunicator aan',
     why: 'Het abonnement is per maand opzegbaar, dus zet het pas aan voor de laatste testweken en de tocht. Reken op ongeveer 18 euro per maand plus eenmalig rond 50 euro activering.',
     window: [6, 2],
+    after: 'satelliet-kopen',
   },
   {
     id: 'regels-controle',
@@ -234,6 +268,7 @@ export const JOURNEY_TASKS: JourneyTask[] = [
     why: 'De bronnen spreken elkaar over de precieze periodes en uren tegen en regels veranderen. Kijk per gebied op de officiële site en noteer wat er geldt op de nachten die je hebt gepland.',
     window: [5, 2],
     link: { label: 'Bivak op de GTA', url: 'https://www.ffrandonnee.fr/s-informer/actualites/le-bivouac-sur-la-grande-traversee-des-alpes-gr-5-gta' },
+    shelters: TENT,
   },
   {
     id: 'weer-sneeuw',

@@ -15,11 +15,12 @@ import {
 import { makeId } from '../utils/id';
 import { TextButton } from '../components/TextButton';
 import { kgLabel } from '../utils/kg';
+import { packListNote } from '../engine/trekShelter';
 
 type Editing = { kind: 'edit'; id: string } | { kind: 'add'; group: PackGroup } | null;
 
 export function PackListPage() {
-  const { items, customised, goalKg, change, reset } = usePackList();
+  const { items, customised, goalKg, shelter, departure, change, reset } = usePackList();
   const [editing, setEditing] = useState<Editing>(null);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -96,7 +97,7 @@ export function PackListPage() {
       <SecondaryButton onClick={() => setEditing({ kind: 'add', group: 'overig' })}>+ Onderdeel toevoegen</SecondaryButton>
 
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        De voorbeeldlijst is een solo bivakopzet voor augustus, licht maar comfortabel, met afgeronde gewichten van gangbare modellen. Pas de gewichten aan zodra je iets in huis hebt en weegt. Vink af wat je hebt.
+        {packListNote(shelter, departure)}
       </p>
 
       {customised && (

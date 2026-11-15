@@ -30,6 +30,7 @@ import { resolveRouteSearch } from './routeSearchSetting';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { countDifferences } from './settingsDiff';
+import { shelterShort, SHELTER_ADVICE, type TrekShelter } from './trekShelter';
 import { resolveOverviews } from './overviewSettings';
 import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
 import { noticesBundleSummary, noticesNeed, permissionRows, permissionsSummary, resolveDeviceNotices, type DevicePermissions } from './deviceNotices';
@@ -174,6 +175,8 @@ export interface SettingsFacts {
   // Kilometers die ASCEND telde sinds de bergschoenen; weg zolang er geen datum is vastgelegd.
   bootKm?: number;
   packKg?: number;
+  // Waar je slaapt op je tocht (engine/trekShelter.ts); weg als het niet berekend is.
+  shelter?: TrekShelter;
   // Of de browser een vaste map kan onthouden en of die gekozen is.
   folderSupported: boolean;
   folderChosen: boolean;
@@ -366,6 +369,7 @@ export function rowContext(f: SettingsFacts): RowContext {
     goal: f.goal !== null,
     program: f.position !== null,
     trek: f.treks > 0,
+    trekGoal: f.trekGoal === true,
     strengthInApp: !f.strengthExternal,
     strengthTrainings: f.strengthDurations.length > 0,
     longSundayVisible: f.longSundayVisible,
@@ -553,6 +557,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.showSeasonStrip !== false };
     case 'vaardigheidsdoelen':
       return { checked: s.showSkillGoals !== false };
+    case 'slapen-onderweg':
+      return { value: shelterShort(f.shelter ?? SHELTER_ADVICE) };
     case 'volgende-tocht':
       return { checked: s.showNextTrek !== false };
     case 'water-per-etappe':

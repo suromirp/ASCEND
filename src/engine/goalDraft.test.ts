@@ -239,11 +239,13 @@ describe('een bestaand doel aanpassen', () => {
     expect(next.requirements.find((r) => r.id === 'a')?.target?.amount).toBe(9);
   });
 
-  it('de keuze Slapen heet duidelijk en staat standaard op hutten', () => {
+  // Backlogpunt G (15 november): drie keuzes, en de standaard is het advies, tent
+  // (docs/beslissingen/2026-11-14-keuzes-avond.md).
+  it('de keuze Slapen heet duidelijk en staat standaard op het advies, tent', () => {
     const q = questionsFor('trek').find((x) => x.key === 'shelter');
     expect(q).toMatchObject({ label: 'Slapen', required: true });
-    expect(q?.choices).toEqual([{ value: 'hut', label: 'In hutten' }, { value: 'tent', label: 'Met tent' }]);
-    expect(defaultDetails('trek')).toEqual({ shelter: 'hut' });
+    expect(q?.choices).toEqual([{ value: 'tent', label: 'Met tent' }, { value: 'hut', label: 'In hutten' }, { value: 'both', label: 'Hutten en tent' }]);
+    expect(defaultDetails('trek')).toEqual({ shelter: 'tent' });
     expect(defaultDetails('run_race')).toEqual({});
   });
 
@@ -278,5 +280,16 @@ describe('een bestaand doel aanpassen', () => {
     expect(applyGoalEdit(stored(), { details: detailsFromGoal(stored()), date: '2027-03-20', name: '  ', now: NOW }).name).toBe('Hardloopwedstrijd');
     const m = { ...stored(), name: 'Marathon' } as TrainingGoal;
     expect(applyGoalEdit(m, { details: { variant: 'marathon' }, date: '2027-04-18', name: 'Marathon', now: NOW }).name).toBe('Marathon');
+  });
+});
+
+describe('hutten en tent bij Doel aanpassen', () => {
+  it('beide blijft beide en rekent als tent', () => {
+    const draft = buildGoalDraft({ id: 'g', now: '2026-11-16T07:30:00Z', tile: 'trek', details: { shelter: 'both' }, date: '2027-03-15', name: '', priority: 'top', order: 0 });
+    expect(draft.kind).toBe('trek_tent');
+    expect(draft.details?.shelter).toBe('both');
+    const back = applyGoalEdit(draft, { tile: 'trek', details: { ...detailsFromGoal(draft), shelter: 'hut' }, date: '2027-03-15', name: draft.name, now: '2026-11-17T07:30:00Z' });
+    expect(back.kind).toBe('trek_hut');
+    expect(back.details?.shelter).toBe('hut');
   });
 });

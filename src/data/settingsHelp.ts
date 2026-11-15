@@ -1513,6 +1513,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Akkoord', text: 'pas dan staat de trapsessie in je week. Met Liever niet verandert er niets en blijft het drie weken stil.' },
     ],
   },
+  slapenOnderweg: {
+    title: 'Slapen onderweg',
+    lead: 'Waar je slaapt op je meerdaagse tocht: in hutten, met tent, of beide.',
+    points: [
+      { head: 'Met tent', text: 'het advies. Wie klaar is voor een tent, is ook klaar voor hutten. Je rugzak wordt zwaarder en de Reisplanner neemt de taken voor tent, brander en bivak mee.' },
+      { head: 'In hutten', text: 'een lichtere rugzak. De paklijst laat tent en kookspullen weg en de Reisplanner vraagt je hutten te reserveren.' },
+      { head: 'Beide', text: 'je draagt de tent altijd mee, dus de rugzak is die van een tent. De Reisplanner heeft de taken van allebei.' },
+      { head: 'Je planning', text: 'een andere keuze verandert je doel. Eerst een voorstel, pas na Akkoord verandert er iets.' },
+    ],
+  },
   rustNaTocht: {
     title: 'Rust na een bergtocht',
     lead: 'Hoe snel een zware beendag mag volgen op een bergtocht.',

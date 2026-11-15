@@ -29,6 +29,7 @@ import { adviceDays, chooseWeekShape, isStrengthTemplateId, type StartGoalKind }
 import { DIRECTIONS, type DirectionId } from '../data/directions';
 import { directionChangeLines } from './directionChange';
 import { beginnerStartLine } from './beginnerStart';
+import { kindForShelter, SHELTER_ADVICE, type TrekShelter } from './trekShelter';
 
 export type StartRace = '5k' | '10k' | 'half' | 'full';
 
@@ -63,7 +64,7 @@ function directionOfStart(goal: StartGoalKind): DirectionId | undefined {
   return goal === 'fit' ? 'maintain' : (goal as DirectionId);
 }
 
-export type StartStep = 'goal' | 'target' | 'race' | 'date' | 'days' | 'which' | 'strength' | 'beginner';
+export type StartStep = 'goal' | 'target' | 'shelter' | 'race' | 'date' | 'days' | 'which' | 'strength' | 'beginner';
 
 // De vragen die bij dit doel horen, in volgorde: tocht of wedstrijd, de afstand alleen voor een
 // wedstrijd, de datum alleen met een doel. Bij een richting de beginnersvraag, behalve als je
@@ -77,6 +78,8 @@ export function startSteps(goal: StartGoalKind, hasGoal = false, hasHistory = fa
     'goal',
     ...(direction ? [] : (['target'] as StartStep[])),
     ...(goal === 'race' ? (['race'] as StartStep[]) : []),
+    // Een tocht vraagt waar je slaapt (docs/beslissingen/2026-11-14-keuzes-avond.md).
+    ...(goal === 'trek' ? (['shelter'] as StartStep[]) : []),
     ...(direction ? [] : (['date'] as StartStep[])),
     'days', 'which', 'strength',
     ...(direction && !hasHistory ? (['beginner'] as StartStep[]) : []),
@@ -102,6 +105,8 @@ export function tapTooSoon(stepShownAt: number, now: number): boolean {
 export interface StartAnswers {
   goal: StartGoalKind;
   race: StartRace;
+  // Een tocht: hutten, tent of beide. Leeg is het advies (tent).
+  shelter?: TrekShelter;
   // De datum van de tocht of de wedstrijd; leeg mag.
   goalDate?: string;
   daysPerWeek: number;
@@ -174,14 +179,19 @@ function trekGoal(answers: StartAnswers, now: string): { goal: TrainingGoal; mil
   // Precies het doel en de ladder die een app altijd had (data/defaultProgram.ts,
   // storage/goalMilestoneSync.ts houdt ze bij); alleen de datum is die van jou.
   // De route (aantal dagen, rugzak) vul je later in bij je doel.
+  // De soort en waar je slaapt komen uit je antwoord, zodat de doelkop, de paklijst en de
+  // Reisplanner hetzelfde verhaal vertellen (nooit stil "hutten").
   const objective = { ...buildObjective(), ...(answers.goalDate ? { targetDate: answers.goalDate } : {}) };
   const { goal, milestones } = migrateGr5ObjectiveData(objective, []);
-  return { goal: { ...goal, createdAt: now, updatedAt: now }, milestones };
+  const shelter = answers.shelter ?? SHELTER_ADVICE;
+  return { goal: { ...goal, kind: kindForShelter(shelter), details: { ...(goal.details ?? {}), shelter }, createdAt: now, updatedAt: now }, milestones };
 }
+
+const SHELTER_LINE: Record<TrekShelter, string> = { tent: 'met tent', hut: 'in hutten', both: 'in hutten en met tent' };
 
 function goalLine(answers: StartAnswers): string {
   const when = answers.goalDate ? ` op ${formatDateNL(answers.goalDate)}` : ' (nog zonder datum)';
-  if (answers.goal === 'trek') return `Doel: een meerdaagse tocht met rugzak${when}.`;
+  if (answers.goal === 'trek') return `Doel: een meerdaagse tocht met rugzak${when}, ${SHELTER_LINE[answers.shelter ?? SHELTER_ADVICE]}.`;
   if (answers.goal === 'race') return `Doel: ${RACE_OPTIONS.find((o) => o.id === answers.race)!.label.toLowerCase()}${when}.`;
   return 'Geen doel met een datum, wel een richting.';
 }

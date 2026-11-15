@@ -146,7 +146,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-zonder-doel', 'richting', 'weekbudget', 'golven', 'golf-terugblik', 'beginnersstart'),
   // De seizoensstrook en de vaardigheden: wat de Ascend-tab laat zien (de pagina had al twaalf rijen).
   ...inSheet('bundel-ascend', 'seizoensstrook', 'vaardigheidsdoelen', 'racedag'),
-  ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'afdaalklok', 'bergschoenen', 'bergschoenen-herinnering'),
+  ...inSheet('bundel-tochten', 'slapen-onderweg', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'afdaalklok', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
   ...inSheet('bundel-sportschool', 'sportschool', 'gym-profiel', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels', 'toestelgewichten', 'standen-onthouden', 'tussengewichten', 'spotterrek'),
   ...inSheet('bundel-weergave', 'forge-1rm', 'forge-kent-je', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-volgorde-lijst', 'forge-plaatjes', 'forge-uitleg-open'),
@@ -207,6 +207,8 @@ export interface RowContext {
   goal: boolean;
   program: boolean;
   trek: boolean;
+  // Er is een doel dat een tocht is (engine/journeyAccess.ts#hasTrekGoal).
+  trekGoal: boolean;
   // Sets en gewichten houd je in ASCEND bij (niet in MacroFactor).
   strengthInApp: boolean;
   // Er staan krachttrainingen in de planning.
@@ -261,6 +263,7 @@ const B = {
   noGoal: { ok: (_s, c) => c.noGoal, reason: 'Zichtbaar zodra je geen doel hebt', parent: 'doelen' },
   goalOrProgram: { ok: (_s, c) => c.goal || c.program, reason: 'Zichtbaar zodra je een hoofddoel of programma hebt', parent: 'doelen' },
   goalOrTrek: { ok: (_s, c) => c.goal || c.trek, reason: 'Zichtbaar zodra je een hoofddoel of tocht hebt', parent: 'doelen' },
+  trekGoal: { ok: (_s, c) => c.trekGoal, reason: 'Zichtbaar zodra je een meerdaagse tocht als doel hebt', parent: 'doelen' },
   longSunday: { ok: (_s, c) => c.longSundayVisible, reason: 'Zichtbaar zodra je hoofddoel geen bergtocht is', parent: 'doelen' },
   pairing: { ok: (_s, c) => c.sameDayAllowed, reason: 'Zichtbaar zodra twee trainingen op een dag mag', parent: 'meerdere' },
   trainings: { ok: (_s, c) => c.strengthTrainings, reason: 'Zichtbaar zodra er krachttrainingen in je planning staan', parent: 'kracht' },
@@ -293,6 +296,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.goal], 'na-hoofddoel', 'klaar-weging', 'klaar-groei', 'klaar-marge'),
   ...rule([B.longSunday], 'lange-zondag'),
   ...rule([B.goalOrTrek], 'bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'afdaalklok', 'bergschoenen', 'bergschoenen-herinnering'),
+  ...rule([B.trekGoal], 'slapen-onderweg'),
   // Forge
   ...rule([B.trainings], 'trainingsduur'),
   ...rule([B.forge, B.mountain], 'forge-enkel'),

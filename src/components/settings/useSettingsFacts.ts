@@ -7,9 +7,10 @@ import { weightsInUse } from '../../engine/bodyWeight';
 import { loadBodyKg, weightShown } from '../../engine/weightTrend';
 import { predictDuration } from '../../engine/durationLearning';
 import { usableSweatEntries } from '../../engine/sweat';
-import { journeyProgress, normalizeJourneyState, withBootsDone, withDerivedDone } from '../../engine/journey';
+import { journeyProgress, tasksForShelter, normalizeJourneyState, withBootsDone, withDerivedDone } from '../../engine/journey';
 import { bootBreakInStatus, bootGoalKm, breakInTotals } from '../../engine/bootBreakIn';
 import { baseWeightGrams, resolvePackItems } from '../../engine/packList';
+import { journeyShelter } from '../../engine/trekShelter';
 import { JOURNEY_TASKS } from '../../data/journeyTasks';
 import { programAnchorDate } from '../../engine/programLayout';
 import { checkDataKey, quietCheck } from '../../engine/strengthHistory';
@@ -89,8 +90,9 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       (t) => t.type === 'strength' && !t.weeklyProgression && (t.defaultDayOfWeek || plannedSessions.some((s) => s.templateId === t.id && s.scheduledDate >= today)),
     );
     const journeyState = normalizeJourneyState(settings.journey).state;
+    const shelter = journeyShelter(trainingGoals, ladder, today);
     const boots = bootBreakInStatus({ boots: journeyState?.boots, logs: sessionLogs, goalKm: bootGoalKm(settings.bootBreakInKm), today, departure: goalDate });
-    const progress = goalDate ? journeyProgress(JOURNEY_TASKS, withBootsDone(withDerivedDone(journeyState, usableSweatEntries(settings.sweatEntries, sessionLogs)), boots, today)) : undefined;
+    const progress = goalDate ? journeyProgress(tasksForShelter(JOURNEY_TASKS, shelter), withBootsDone(withDerivedDone(journeyState, usableSweatEntries(settings.sweatEntries, sessionLogs)), boots, today)) : undefined;
     const use = loaded.watch?.use ?? DEFAULT_WATCH_USE;
     return {
       today,
@@ -118,7 +120,8 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       strengthCheck,
       bootKm: journeyState?.boots ? breakInTotals(sessionLogs, journeyState.boots.since).km : undefined,
       journeyOpen: progress ? progress.total - progress.done : undefined,
-      packKg: Math.round(baseWeightGrams(resolvePackItems(settings.packList)) / 100) / 10,
+      packKg: Math.round(baseWeightGrams(resolvePackItems(settings.packList, shelter)) / 100) / 10,
+      shelter,
       folderSupported: webBackupFileAdapter.supportsPreferredDirectory(),
       folderChosen: loaded.folderChosen,
       autoBackup: loaded.autoBackup,

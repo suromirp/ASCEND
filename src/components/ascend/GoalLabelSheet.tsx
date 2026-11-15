@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { GoalPriority, TrainingGoal } from '../../models/goals';
 import { GOAL_PRIORITIES } from '../../models/goals';
-import { GOAL_KINDS } from '../../data/goalKinds';
+import { goalKindName } from '../../engine/trekShelter';
 import { goalKindOf, PRIORITY_NAME } from '../../engine/goalLabels';
 import { labelEffectLines, labelLine } from '../../engine/goalList';
 import { Icon } from '../icons';
@@ -25,7 +25,7 @@ export function GoalLabelSheet({
 }) {
   const [picked, setPicked] = useState<GoalPriority>(priority);
   const kind = goalKindOf(goal);
-  const short = kind ? GOAL_KINDS[kind].label : 'doel';
+  const short = kind ? (goalKindName(goal, isMain) ?? 'doel') : 'doel';
   void short;
   const effects = labelEffectLines(goal, picked, priority);
   return (

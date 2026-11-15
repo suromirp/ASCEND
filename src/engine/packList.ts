@@ -5,10 +5,11 @@
 // The weight you leave a village with adds food and water to that. Pure: no
 // React, no IndexedDB.
 
-import { DEFAULT_PACK_ITEMS, PACK_GROUPS, type PackGroup, type PackItem } from '../data/packList';
+import { DEFAULT_PACK_ITEMS, HUT_PACK_ITEMS, PACK_GROUPS, type PackGroup, type PackItem } from '../data/packList';
 import { formatNumberNL } from '../utils/number';
 import { isRecord } from '../utils/guards';
 import { kgLabel } from '../utils/kg';
+import { SHELTER_ADVICE, type TrekShelter } from './trekShelter';
 
 // What is stored (AppSettings.packList). Absent means: the example list.
 // `v` is the shape's own version, for a later migration.
@@ -26,8 +27,11 @@ export const WATER_LITER_OPTIONS = [2, 3];
 const REFERENCE_FOOD_DAYS = 3;
 const REFERENCE_WATER_LITERS = 2;
 
-export function resolvePackItems(stored: PackListState | undefined): PackItem[] {
-  return stored ? stored.items : DEFAULT_PACK_ITEMS;
+// Zonder eigen lijst het voorbeeld dat bij waar je slaapt hoort: van hut naar hut zonder tent en
+// kookspullen, met tent (ook bij beide) de opzet met tent.
+export function resolvePackItems(stored: PackListState | undefined, shelter: TrekShelter = SHELTER_ADVICE): PackItem[] {
+  if (stored) return stored.items;
+  return shelter === 'hut' ? HUT_PACK_ITEMS : DEFAULT_PACK_ITEMS;
 }
 
 export function baseWeightGrams(items: PackItem[]): number {
