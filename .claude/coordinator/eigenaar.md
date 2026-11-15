@@ -4,11 +4,6 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-### Graphify eerlijk opnieuw proberen
-- Keuzes: (1) een eerlijke herkansing op het bouwmoment van woensdag (advies): Graphify zoals bedoeld, met de koppeling die elke nieuwe chat de kaart laat gebruiken en hem na elke wijziging bijwerkt; dezelfde taak twee keer bouwen, met en zonder, en de tokens vergelijken. (2) Laten: de werkbriefjes en de kennisindex doen hetzelfde al met de hand.
-- Zonder antwoord: niets verandert.
-- Sinds: 16 november 00:00
-
 ### Eén regel voor uitzonderingen: twee keuzes
 - Keuzes: (1) een training die u zelf vastzette op een dag met ziek of zonder sportschool: altijd een melding in Let op (advies), of alleen als u dat aanzet. (2) iets erbij (extra loop, meer kracht) in een periode zonder sportschool: niets erbij (advies, zoals nu op één plek), of wel.
 - Zonder antwoord: allebei het advies.
@@ -44,6 +39,10 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 - Week: Bovenlichaam A staat op woensdag 18 november, binnen uw periode zonder sportschool. Wordt uitgezocht en hersteld.
 - Waar je nu bent in de Briefing: "Je precieze plek is niet beschikbaar" (21:42, binnen). De app keurt de eerste grove plek af zonder te wachten, en zegt niet of Android alleen bij benadering geeft. Herstel wordt gebouwd; tot dan werkt Andere plek.
 - Back-up: de oplossing staat live (17:45). Graag een test op uw toestel: Gedwongen stoppen, openen, meteen Back-up maken, drie keer; kijk in Documents/ASCEND of er een bestand zonder -2 staat.
+
+## Loopt
+
+- Graphify eerlijk opnieuw: start vannacht zodra het lopende werk klaar is; de vergelijking staat morgenochtend hier.
 
 ## Net live
 
