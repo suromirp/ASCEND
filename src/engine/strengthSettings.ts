@@ -53,6 +53,8 @@ type RirPrefill = 'hint' | 'target';
 // het advies, docs/beslissingen/2026-11-11-forge-kern-zichtbaar.md), ook na de eerste en de laatste werkset ('vaker',
 // de oude regel), of nooit ('uit').
 export type QuickRirMode = 'twijfel' | 'vaker' | 'uit';
+// IJkset (docs/beslissingen/2026-11-15-ijkset-automatisch.md).
+export type CalibrationMode = 'vragen' | 'automatisch' | 'uit';
 
 export interface DumbbellRack {
   // The lightest dumbbell, the step up to `upToKg`, the step above that and the heaviest.
@@ -255,6 +257,9 @@ export interface StrengthSettings {
   // "Ijkset" (docs/beslissingen/2026-11-09-ijkset.md): eens per vier weken een kaart in Forge die een set voorstelt bij
   // één hoofdoefening, zo ver als netjes gaat. Absent = on. Pas na Akkoord komt er een set bij.
   calibration?: boolean;
+  // De stand van de ijkset (docs/beslissingen/2026-11-15-ijkset-automatisch.md): Vragen (het advies), Automatisch erbij
+  // of Uit. Afwezig: 'vragen', of 'uit' als calibration false is (oude back-ups).
+  calibrationMode?: CalibrationMode;
   // De dag van de laatste Akkoord op een ijkset (yyyy-mm-dd); daarna vier weken niets.
   calibratedAt?: string;
   // "Hoe goed kent Forge je" (docs/beslissingen/2026-11-09-hoe-goed-kent-forge-je.md): het blok op de Forge-pagina met
@@ -362,6 +367,7 @@ export interface ResolvedStrengthSettings {
   askBand: boolean;
   stepProposal: boolean;
   calibration: boolean;
+  calibrationMode: CalibrationMode;
   calibratedAt?: string;
   knowsYou: boolean;
   showOneRm: boolean;
@@ -521,6 +527,7 @@ type CarryMode = 'equal' | 'shift' | 'off';
 const CARRY_MODES: CarryMode[] = ['equal', 'shift', 'off'];
 const RIR_PREFILLS: RirPrefill[] = ['hint', 'target'];
 const QUICK_RIR_MODES: QuickRirMode[] = ['twijfel', 'vaker', 'uit'];
+const CALIBRATION_MODES: CalibrationMode[] = ['vragen', 'automatisch', 'uit'];
 const DUMBBELL_LOGS: DumbbellLog[] = ['auto', 'each', 'total'];
 const FATIGUE_MODES: FatigueMode[] = ['learned', 'fixed'];
 const STACK_WEIGHTS: StackWeights[] = ['learned', 'used_only', 'profile'];
@@ -594,6 +601,8 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.askBand === 'boolean') out.askBand = raw.askBand;
   if (typeof raw.stepProposal === 'boolean') out.stepProposal = raw.stepProposal;
   if (typeof raw.calibration === 'boolean') out.calibration = raw.calibration;
+  const calibrationMode = CALIBRATION_MODES.find((v) => v === raw.calibrationMode);
+  if (calibrationMode) out.calibrationMode = calibrationMode;
   if (typeof raw.knowsYou === 'boolean') out.knowsYou = raw.knowsYou;
   if (typeof raw.calibratedAt === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.calibratedAt)) out.calibratedAt = raw.calibratedAt;
   if (typeof raw.showOneRm === 'boolean') out.showOneRm = raw.showOneRm;
@@ -676,7 +685,8 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     askClean: s.askClean ?? true,
     askBand: s.askBand ?? true,
     stepProposal: s.stepProposal ?? true,
-    calibration: s.calibration ?? true,
+    calibration: (s.calibrationMode ?? (s.calibration === false ? 'uit' : 'vragen')) !== 'uit',
+    calibrationMode: s.calibrationMode ?? (s.calibration === false ? 'uit' : 'vragen'),
     ...(s.calibratedAt ? { calibratedAt: s.calibratedAt } : {}),
     knowsYou: s.knowsYou ?? true,
     showOneRm: s.showOneRm ?? true,
@@ -766,6 +776,9 @@ export function strengthModelKey(raw: StrengthSettings | undefined): string {
   delete copy.quickRir;
   delete copy.quickRirMode;
   delete copy.showPlates;
+  // De stand van de ijkset raakt alleen het scherm; de set zelf komt pas met Afronden in een log.
+  delete copy.calibration;
+  delete copy.calibrationMode;
   // Opwarmset later dempen verandert geen gewicht en geen telling, alleen hoe de set eruitziet.
   delete copy.warmupMuted;
   return JSON.stringify(copy);

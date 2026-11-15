@@ -412,12 +412,13 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     ],
   },
   'forge-ijkset': {
-    title: 'IJkset voorstellen',
-    lead: 'Een schatting van wat je over hebt is alleen goed als je hem af en toe controleert. Eens per vier weken stelt Forge daarom één set erbij voor.',
+    title: 'IJkset',
+    lead: 'Een schatting van wat je over hebt is alleen goed als je hem af en toe controleert. Eens per vier weken zet Forge daarom één set erbij.',
     points: [
       { head: 'Wat', text: 'bij één hoofdoefening een set erbij, zo ver als netjes gaat. Daarna kies je zoals altijd hoeveel je over had.' },
-      { head: 'Wanneer', text: 'niet in een week met een tocht of test, en hooguit eens per vier weken.' },
-      { head: 'Akkoord', text: 'pas dan komt de set erbij. Met Niet nu blijft je training zoals hij was en vraagt Forge het de volgende keer opnieuw.' },
+      { head: 'Vragen', text: 'het advies: een kaart met Niet nu en Akkoord. Pas na Akkoord komt de set erbij; met Niet nu blijft je training zoals hij was en vraagt Forge het de volgende keer opnieuw.' },
+      { head: 'Automatisch erbij', text: 'de set staat bij het openen al in je training, met één regel uitleg boven de oefening. Wil je hem niet, haal hem weg zoals elke set. De vier weken tellen pas als je de training afrondt met die set afgevinkt.' },
+      { head: 'Wanneer niet', text: 'als je ziek bent of opbouwt na ziek, op een dag zonder sportschool, in een vakantie of op een tocht, in een week met een tocht of test, en hooguit eens per vier weken.' },
     ],
   },
   'forge-soort': {

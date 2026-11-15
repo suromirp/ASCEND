@@ -23,7 +23,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 - Werkbriefje: [werkbriefjes/forge.md](../werkbriefjes/forge.md)
 - [architectuur/forge.md](../architectuur/forge.md): Het lange verhaal bij Forge: Je stand en volgorde, sessie, verloop, spotter, plaatjes, het blad Oefening en spieren voor de berg.
 - [visie/Los van MacroFactor.md](../visie/Los%20van%20MacroFactor.md): Het doel van de eigenaar van 9 november 2026: Forge maakt MacroFactor Workouts overbodig, de voedingsapp blijft.
-- Alles over dit onderwerp: [forge.md](forge.md) (65 besluiten die gelden, 15 deels ingehaald, 20 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [forge.md](forge.md) (66 besluiten die gelden, 15 deels ingehaald, 20 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Koppelingen en data
 

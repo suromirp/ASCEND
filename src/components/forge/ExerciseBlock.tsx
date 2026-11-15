@@ -74,6 +74,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   standLine,
   ladderLines,
   ladderHint,
+  calibrationLine,
   canStep = false,
   bandOn = false,
   cleanRow,
@@ -122,6 +123,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   // een lichtere of zwaardere stap kan (dezelfde regel als Ruilen), en of de keuze van de band er staat.
   ladderLines?: LadderLines;
   ladderHint?: string;
+  // IJkset Automatisch erbij (engine/calibration.ts#CALIBRATION_AUTO_LINE): één regel boven de sets.
+  calibrationLine?: string;
   canStep?: boolean;
   bandOn?: boolean;
   // De set waarna Forge vraagt of het netjes ging ("Ging het netjes?"), als er een is.
@@ -224,6 +227,9 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                 <p className="mt-1.5 border-l-2 pl-2 text-xs leading-snug" style={{ borderColor: 'var(--color-sage)', color: 'var(--color-ink-dim)' }}>{ladderHint}</p>
               )}
             </div>
+          )}
+          {calibrationLine && (
+            <p className="mt-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }} data-testid="forge-ijkset-regel">{calibrationLine}</p>
           )}
           {note && (
             <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>

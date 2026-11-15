@@ -141,7 +141,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-netjes" title="Ging het netjes?" facts={facts} info="forgeNetjes" onChange={(on) => save({ askClean: on })} />
           <SummaryRow id="forge-band" title="Band bij optrekken en dip" facts={facts} info="forgeBand" onChange={(on) => save({ askBand: on })} />
           <SummaryRow id="forge-stapvoorstel" title="Stap voorstellen" facts={facts} info="forgeStapVoorstel" onChange={(on) => save({ stepProposal: on })} />
-          <SummaryRow id="forge-ijkset" title="IJkset voorstellen" facts={facts} info="forgeIJkset" onChange={(on) => save({ calibration: on })} />
+          <SummaryRow id="forge-ijkset" title="IJkset" facts={facts} info="forgeIJkset" onClick={() => setInner('forge-ijkset')} />
           <SummaryRow id="forge-soort" title="Calisthenics per training" facts={facts} info="forgeSoort" onClick={() => setInner('forge-soort')} />
           <SummaryRow id="forge-doorvoeren" title="Wijzigingen doorvoeren" facts={facts} info="forgeDoorvoeren" onClick={() => setInner('forge-doorvoeren')} />
           <SummaryRow id="forge-schijven" title="Schijven bij de set tonen" facts={facts} info="forgeSchijven" onChange={(on) => save({ showPlates: on })} />
@@ -203,6 +203,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {inner === 'forge-vergelijken' && <ChoiceFromDef def={CHOICES.forgeVergelijken} value={s.compareWeeks} onPick={(v) => save({ compareWeeks: v })} onClose={closeInner} />}
       {inner === 'forge-volgorde-lijst' && <ChoiceFromDef def={CHOICES.forgeVolgorde} value={s.listSort} onPick={(v) => save({ listSort: v })} onClose={closeInner} />}
       {inner === 'forge-sets' && <ChoiceFromDef def={CHOICES.werksets} value={s.workSets} onPick={(v) => save({ workSets: v })} onClose={closeInner} />}
+      {inner === 'forge-ijkset' && <ChoiceFromDef def={CHOICES.ijkset} value={s.calibrationMode} onPick={(v) => save({ calibrationMode: v, calibration: v !== 'uit' })} onClose={closeInner} />}
       {inner === 'forge-rir-snel' && <ChoiceFromDef def={CHOICES.rirSnel} value={s.quickRirMode} onPick={(v) => save({ quickRirMode: v, quickRir: v !== 'uit' })} onClose={closeInner} />}
       {inner === 'forge-rir-vooraf' && <ChoiceFromDef def={CHOICES.rirVooraf} value={s.rirPrefill} onPick={(v) => save({ rirPrefill: v })} onClose={closeInner} />}
       {inner === 'forge-doorvoeren' && <ChoiceFromDef def={CHOICES.doorvoeren} value={s.carryMode} onPick={(v) => save({ carryMode: v })} onClose={closeInner} />}

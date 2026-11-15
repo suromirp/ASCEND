@@ -4,15 +4,22 @@
 // Een schatting van hoeveel je over hebt (RIR) klopt pas als je hem af en toe tegen een echte uitkomst houdt.
 // Eens per vier weken stelt Forge daarom een set erbij voor bij één hoofdoefening: zo ver als netjes gaat. Het is een
 // voorstel met Akkoord; zonder Akkoord verandert de training niet. Niet in een week met een tocht, een test of een
-// wedstrijd, en niet in de drie dagen ervoor, want de set maakt moe. Puur: geen React, geen opslag.
+// wedstrijd, en niet in de drie dagen ervoor, want de set maakt moe. Met de stand Automatisch erbij staat de set er bij
+// het openen al (docs/beslissingen/2026-11-15-ijkset-automatisch.md). Nooit als je ziek bent of opbouwt na ziek, op een
+// dag zonder sportschool, in een vakantie of op een tocht. Puur: geen React, geen opslag.
 
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { isMountainTrip } from './sportKind';
 import { isTestOrRace } from './templateRoles';
-import type { WorkoutExercise } from './forgeWorkout';
+import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
+import { addRow } from './forgeWorkout';
 import { exerciseById } from '../data/exercises';
 import { isCompound } from './warmup';
+import type { IllnessEpisode } from '../models/illness';
+import type { LeavePeriod } from '../models/leave';
+import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
+import { leaveDays } from './leave';
 
 export const CALIBRATION_DAYS = 28;
 // De reserve van de ijkset: zo ver als netjes gaat, met nog één over.
@@ -22,7 +29,10 @@ const LEAD_DAYS = 3;
 // Zoveel trainingen met de oefening gingen eraan vooraf (`WorkoutExercise.trainings`).
 const MIN_TRAININGS = 3;
 
-export type CalibrationBlock = 'recent' | 'trip' | 'test';
+export type CalibrationBlock = 'ill' | 'away' | 'nogym' | 'recent' | 'trip' | 'test';
+
+// De stand van de instelling IJkset (strengthModel.calibrationMode): Vragen is het advies.
+export type { CalibrationMode } from './strengthSettings';
 
 export interface CalibrationInput {
   // De dag van de training.
@@ -31,15 +41,30 @@ export interface CalibrationInput {
   lastAt?: string;
   planned: PlannedSession[];
   templates: SessionTemplate[];
+  // Ziekmeldingen (settings.illnessEpisodes): ziek en de opbouw erna.
+  illness?: IllnessEpisode[];
+  // Vrije periodes (settings.leavePeriods): vakantie, tocht en zonder sportschool.
+  leave?: LeavePeriod[];
 }
 
 // Waarom het nu niet kan (undefined: het kan).
 export function calibrationBlock(i: CalibrationInput): CalibrationBlock | undefined {
+  // Ziek of nog aan het opbouwen: de set maakt moe en meet dan iets anders dan je gewone kracht.
+  if (activeIllness(i.illness) || isIllnessDay(i.date, i.illness, i.date) || recoveryRamp(i.illness, i.date)) return 'ill';
+  const days = leaveDays(i.leave);
+  const today = days.get(i.date)?.kind;
+  if (today === 'off' || today === 'trek') return 'away';
+  if (today === 'nogym') return 'nogym';
   if (i.lastAt && Math.abs(daysBetween(i.lastAt, i.date)) < CALIBRATION_DAYS) return 'recent';
   const week = mondayOfWeek(i.date);
   const until = addDays(i.date, LEAD_DAYS);
   const byId = new Map(i.templates.map((t) => [t.id, t]));
   let block: CalibrationBlock | undefined;
+  // Een tocht met rugzak als vrije periode in dezelfde week of de drie dagen erna telt als een tocht.
+  for (let n = 0; n < 7 + LEAD_DAYS; n++) {
+    const d = n < 7 ? addDays(week, n) : addDays(i.date, n - 7 + 1);
+    if (days.get(d)?.kind === 'trek') block = 'trip';
+  }
   for (const s of i.planned) {
     if (s.status === 'skipped') continue;
     const inWeek = mondayOfWeek(s.scheduledDate) === week;
@@ -74,3 +99,36 @@ export function withCalibrationTarget(ex: WorkoutExercise): WorkoutExercise {
   if (at < 0) return ex;
   return { ...ex, rows: ex.rows.map((r, i) => (i === at ? { ...r, target: { ...r.target, rir: CALIBRATION_RIR, failure: false, open: false } } : r)) };
 }
+
+// De ijkset van Automatisch erbij heeft een vaste id: een toegevoegde set (`isOwnRow`), dus weg te tikken zoals elke
+// set, en in het concept te herkennen zonder nieuw veld.
+const AUTO_ROW = 'aijk';
+export function isCalibrationRow(row: Pick<WorkoutRow, 'id'>): boolean {
+  return row.id.endsWith(`:${AUTO_ROW}`);
+}
+
+// Automatisch erbij: de werkset staat bij het openen al bij de hoofdoefening, als gewone toegevoegde set met nog één
+// over. Geeft de oefening terug waar hij bij kwam (undefined: geen ijkset).
+export function withAutoCalibration(workout: WorkoutExercise[]): { workout: WorkoutExercise[]; slot: string; rowId: string } | undefined {
+  const slot = calibrationSlot(workout);
+  if (!slot) return undefined;
+  const rowId = `${slot}:${AUTO_ROW}`;
+  const next = workout.map((ex) => {
+    if (ex.slot !== slot) return ex;
+    const added = addRow(ex, 'work');
+    const rows = added.rows.map((r, n) => (n === added.rows.length - 1 ? { ...r, id: rowId } : r));
+    return withCalibrationTarget({ ...added, rows });
+  });
+  return { workout: next, slot, rowId };
+}
+
+// De dag telt pas als de training is afgerond met de ijkset afgevinkt.
+export function calibrationDone(workout: WorkoutExercise[]): boolean {
+  return workout.some((ex) => ex.rows.some((r) => r.done && r.kind === 'work' && isCalibrationRow(r)));
+}
+
+// In het verloop: wie de set erbij zette.
+export const CALIBRATION_AUTO_FACT = 'Forge zette deze ijkset erbij (IJkset: Automatisch erbij).';
+
+// De regel boven de oefening met de ijkset.
+export const CALIBRATION_AUTO_LINE = 'IJkset, eens per vier weken: de laatste set zo ver als netjes gaat, met nog één over. Wil je hem niet, haal hem weg.';
