@@ -9,6 +9,7 @@ Adres: `#/week`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 [knop: Volgende week]
 
 --- kaart 1 ---
+[knop: Bovenlichaam AMa 26·50 min· gedaandi 27Gedaan]
 [knop: Rustige duurloopMa 26·56 min·zonder planGedaan]
 
 --- kaart 2 ---
@@ -26,17 +27,17 @@ Za 31 · je rustdag op maandag is bezet
 
 --- kaart 3 ---
 [label: Wat nu wacht]
-[knop: Week opnieuw plannenJe hebt 2 trainingen gemist. Zet de rest terug naar het plan.]
+[knop: Week opnieuw plannenJe hebt deze week 2 trainingen gemist. Die doe je niet dubbel; zet de rest terug naar het plan.]
 
 --- kaart 4 ---
 Belasting per dag
 zware beendag
 vorige week
-Maandag was je zwaarste dag. Eén zware beendag: Lange duurloop. Je benen hebben ruimte.
+Dinsdag was je zwaarste dag. Eén zware beendag: Lange duurloop. Je benen hebben ruimte.
 Hoogte: minuten maal zwaarte.
 
 --- kaart 5 ---
 [label: Meer over deze week]
-[knop: Je week tot nu0 van 3 gedaan · 0:56 uur]
+[knop: Je week tot nu1 van 4 gedaan · 1:46 uur]
 [knop: Vrije dagen en vakantiesNiets gepland]
 [knop: JaaroverzichtAlle weken tot je doel]
