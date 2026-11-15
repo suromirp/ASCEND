@@ -82,8 +82,8 @@ const WALK_JOG_GUIDE: TrainingDayGuide = {
     },
     {
       heading: 'Zo doe je het',
-      items: ['Een paar minuten dribbelen, dan een paar minuten wandelen, en weer opnieuw.', 'Dribbelen is heel rustig hardlopen: je kunt er hele zinnen bij praten.'],
-      note: 'Wordt het zwaar, wandel dan langer. Scherpe pijn in een knie, scheen of voet? Stop en wandel naar huis.',
+      items: ['Begin met een paar minuten wandelen.', 'Dan om de beurt dribbelen en wandelen.', 'Dribbelen is heel rustig hardlopen: je kunt er hele zinnen bij praten.'],
+      note: 'Een extra wandelstuk mag altijd, dat hoort bij het plan. Scherpe pijn in een knie, scheen of voet? Stop en wandel naar huis.',
     },
   ],
   gear: ['hardloopschoenen'],

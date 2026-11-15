@@ -94,7 +94,11 @@ describe('BEGINNER_LADDER: elk getal met bewijslabel en bron', () => {
       }
     }
   });
-  it('de verhoudingen wandelen en dribbelen zijn afgeleid zolang er geen bron in het onderzoek staat', () => {
+  it('elke week om de beurt dribbelen en wandelen, het dribbelstuk groeit hoogstens 1 minuut per week (Scout, 15 november)', () => {
+    expect(weeks.map((w) => w.walkJog)).toEqual([{ jog: 1, walk: 2 }, { jog: 2, walk: 2 }, { jog: 3, walk: 2 }, { jog: 4, walk: 2 }]);
+    for (let i = 0; i + 1 < weeks.length; i++) expect(weeks[i + 1].walkJog!.jog - weeks[i].walkJog!.jog).toBeLessThanOrEqual(1);
+  });
+  it('een verhouding met meer dan afgeleid heeft een bron in het onderzoek', () => {
     for (const rung of BEGINNER_LADDER) {
       if (rung.walkJog.evidence === 'afgeleid') continue;
       expect(rung.walkJog.source.startsWith('docs/onderzoek/'), rung.walkJog.source).toBe(true);
