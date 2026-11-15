@@ -37,7 +37,7 @@ Een correctie op de opdracht: de beginnersstart zit niet in `engine/noGoalWaves.
 - `src/engine/programLayout.ts`: de fase Rustig beginnen (`PHASE_GOLF_START`, tekst op regel 63 tot 66), `layoutWaves` (regel 222), `directionFactor` (regel 270; regel 276 houdt een duurtraining in de start hoogstens op de gewone lengte), `flatWaveWeek` (regel 282) en `BEGINNER_SWAPS` (regel 680: alleen de heuvelloop wordt een herstelloop).
 - `src/storage/databaseHorizon.ts`: regel 93 en 114 geven de beginnersstart door aan de planning.
 - `src/engine/firstPlan.ts`: hoogstens vier dagen (regel 120) en de zin in het eerste voorstel (regel 245).
-- `src/data/defaultProgram.ts`: Bovenlichaam A is 75 minuten (regel 54) met 23 sets (regel 64 tot 70); de lange duurloop heeft de ladder 50, 60, 70, 45 (regel 249 tot 252).
+- `src/data/defaultProgram.ts`: Bovenlichaam A is 75 minuten (regel 54) met 23 sets (regel 64 tot 70); de lange duurloop heeft de ladder 50, 60, 70, 45 (regel 248 tot 251).
 
 Waarom week 1 nu zo zwaar is: de start haalt alleen de heuvelloop weg. Kracht houdt in een golf altijd zijn volle lengte (`directionFactor` slaat kracht over) en Fit blijven leest voor elke week de gewone opbouwweek (`flatWaveWeek` geeft 2), dus de lange loop staat meteen op 60.
 
