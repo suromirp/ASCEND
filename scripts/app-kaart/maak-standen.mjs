@@ -1,7 +1,7 @@
 // Maakt de nagemaakte standen voor de tekstkaart (docs/app-kaart/README.md) en laat elk één planningsronde
 // draaien op de vaste klok van de kaart, zodat een start daarna niets meer bijwerkt.
 //   node scripts/app-kaart/maak-standen.mjs            maakt alle standen opnieuw
-//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, zonder-kracht, ziek, ziek-eerder, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel, concept)
+//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, zonder-kracht, zonder-kracht-geen-blok, ziek, ziek-eerder, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel, concept)
 // Alles is nagemaakt: de basis is state-kracht.json, de rest zijn kleine wijzigingen met verzonnen getallen.
 //
 // Waarom "settle": bij de eerste start na het laden van een stand vindt de planningsronde nog iets te
@@ -95,6 +95,12 @@ function zonderKracht(state) {
   const s = meta(state, 'settings').value;
   s.direction = 'easy';
   s.strengthTraining = false;
+}
+
+// Als zonder-kracht, maar zonder krachtblok: dan staat de rij Krachtblok niet op Ascend (strengthBlockRowLine).
+function zonderKrachtGeenBlok(state) {
+  zonderKracht(state);
+  winkel(state, 'strengthProgramStrategies').records = [];
 }
 
 // Ziek gemeld sinds vandaag, verkouden boven de nek. De trainingen van vandaag en morgen zijn eraf.
@@ -270,6 +276,7 @@ export const STANDEN = {
   vakantie: metVakantie,
   'zonder-doel': zonderDoel,
   'zonder-kracht': zonderKracht,
+  'zonder-kracht-geen-blok': zonderKrachtGeenBlok,
   ziek,
   'ziek-eerder': ziekEerder,
   vaardigheid: metVaardigheid,

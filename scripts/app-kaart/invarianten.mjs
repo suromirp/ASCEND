@@ -487,6 +487,12 @@ export const INVARIANTEN = [
         ['instellingen-blad-bundel-zonder-doel-zonder-kracht', zonderKop(k('instellingen-blad-bundel-zonder-doel-zonder-kracht'))],
         ['instellingen-blad-weekbudget-zonder-kracht', zonderKop(k('instellingen-blad-weekbudget-zonder-kracht'))],
       ];
+      // De rij Krachtblok op Ascend: met een lopend blok zegt hij dat kracht uit staat, zonder blok staat hij er niet.
+      const blok = k('ascend-zonder-kracht').split('\n').filter((r) => /^\[knop: Krachtblok/.test(r));
+      if (blok.length !== 1 || !/Kracht staat uit in je planning/.test(blok[0])) uit.push(`ascend-zonder-kracht: de rij Krachtblok zegt niet dat kracht uit staat (${blok.join(' | ') || 'geen rij'})`);
+      const geenBlok = k('ascend-zonder-kracht-geen-blok');
+      if (!geenBlok.trim()) uit.push('ascend-zonder-kracht-geen-blok: leeg (stand zonder-kracht-geen-blok ontbreekt of het scherm is weg)');
+      else if (/^\[knop: Krachtblok/m.test(geenBlok)) uit.push('ascend-zonder-kracht-geen-blok: de rij Krachtblok staat er zonder blok');
       for (const [s, t] of delen) {
         // Nooit stil leeg: zonder het scherm of zonder de kaart toetst deze invariant niets.
         if (!t.trim()) { uit.push(`${s}: leeg of zonder Je week of de rij Zonder doel (stand zonder-kracht ontbreekt of het scherm is weg)`); continue; }

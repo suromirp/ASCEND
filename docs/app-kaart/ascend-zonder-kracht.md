@@ -21,7 +21,7 @@ Kort en zacht. Liever iets dan niets.
 
 --- kaart 3 ---
 [knop: TochtenEen tocht erbij? Er komen vrije dagen omheen.]
-[knop: KrachtblokHoe kracht in je week past]
+[knop: KrachtblokKracht staat uit in je planning]
 
 --- kaart 4 ---
 [knop: Eerdere doelen]

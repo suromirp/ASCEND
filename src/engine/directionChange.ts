@@ -26,7 +26,8 @@ export function directionChangeLines(id: DirectionId, settings: { weekBudget?: u
   return [
     `Richting: ${DIRECTIONS[id].label}.`,
     belowGuideline(budget, on) ? `${week} Dat is onder de richtlijn, en dat mag een keuze zijn.` : week,
-    WHAT_IT_DOES[id],
+    // Met kracht uit staat kracht niet voorop: Sterker worden zegt dan alleen wat de duur doet.
+    !on && id === 'stronger' ? 'De duur loopt rustig mee en is elke vierde week wat korter.' : WHAT_IT_DOES[id],
     'Geen bergtocht en geen rugzak, tot je een tocht als doel kiest.',
     on ? 'Je week bestaat uit kracht en lopen. Andere sporten die je doet tellen straks gewoon mee.' : 'Je week bestaat uit lopen. Andere sporten die je doet tellen straks gewoon mee.',
   ];

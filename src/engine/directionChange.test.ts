@@ -35,4 +35,10 @@ describe('directionChangeLines', () => {
     expect(lines[4]).toBe('Je week bestaat uit lopen. Andere sporten die je doet tellen straks gewoon mee.');
     expect(directionChangeLines('maintain', { strengthTraining: false }).join(' ')).not.toMatch(/kracht/i);
   });
+  it('zegt bij Sterker worden met kracht uit niet dat kracht voorop staat', () => {
+    const lines = directionChangeLines('stronger', { strengthTraining: false });
+    expect(lines[2]).toBe('De duur loopt rustig mee en is elke vierde week wat korter.');
+    expect(lines.join(' ')).not.toMatch(/kracht/i);
+    expect(directionChangeLines('stronger', {})[2]).toContain('Kracht staat voorop');
+  });
 });
