@@ -338,7 +338,7 @@ export const PLANNING: SettingDef[] = [
     place: { row: true },
     title: 'Testloop',
     search: false,
-    sheet: { eyebrow: 'Planning', title: 'Testloop', line: 'Hoe een test gelezen en gepland wordt.' },
+    sheet: { eyebrow: 'Planning', title: 'Testloop', line: 'Hoe een test telt en wanneer hij komt.' },
   },
   {
     id: 'twijfeltest',

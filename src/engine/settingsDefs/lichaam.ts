@@ -110,7 +110,7 @@ export const LICHAAM: SettingDef[] = [
     place: { in: 'lichaamsgewicht' },
     title: 'Gewicht uit Health Connect',
     rowTitle: 'Uit Health Connect',
-    note: 'Of je wegingen uit Health Connect gelezen worden en meetellen. Wat je zelf invult of uit MacroFactor inleest gaat op dezelfde dag voor.',
+    note: 'Of je wegingen uit Health Connect meetellen. Wat je zelf invult of uit MacroFactor inleest gaat op dezelfde dag voor.',
     keywords: ['gewicht', 'health connect', 'weegschaal', 'wegen', 'kilo', 'kg', 'vetpercentage', 'android', 'rugzak'],
     help: true,
     helpKey: 'healthConnectGewicht',

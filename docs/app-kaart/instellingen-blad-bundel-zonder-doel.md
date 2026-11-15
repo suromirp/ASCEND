@@ -5,7 +5,7 @@ Adres: `#/more/doel`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 Doel en tochten
 ### Zonder doel
 [knop: Sluiten]
-Hoe je weken gepland en geteld worden als je geen doel hebt.
+Hoe je weken eruitzien en tellen als je geen doel hebt.
 [knop: Richting, Fit blijven]
 Richting
 [knop: Uitleg: Richting]

@@ -202,7 +202,7 @@ export function SnapshotsSheet({ onChanged, onClose }: { onChanged: () => void; 
 
   return (
     <Sheet eyebrow="Gegevens en back-up" title="Kopieën van voor een import" line="Zet er een terug om een import ongedaan te maken." onClose={onClose}>
-      {snapshots && snapshots.length === 0 && <p className="st-hint" style={{ marginLeft: 0 }}>Nog geen kopieën. Vlak voor elke import worden je gegevens bewaard.</p>}
+      {snapshots && snapshots.length === 0 && <p className="st-hint" style={{ marginLeft: 0 }}>Nog geen kopieën. Vlak voor elke import komt hier een kopie van je gegevens.</p>}
       {snapshots && snapshots.length > 0 && (
         <SettingsList>
           {snapshots.map((s) => {

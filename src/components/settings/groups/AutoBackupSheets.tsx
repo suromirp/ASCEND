@@ -51,7 +51,7 @@ export function AutoBackupSheet({ facts, onClose }: { facts: SettingsFacts; onCl
       </div>
       {frequency !== 'off' && <p className="st-hint" style={{ marginLeft: 0 }}>{how}</p>}
       {frequency !== 'off' && (app || folder) && (
-        <p className="st-hint" style={{ marginLeft: 0 }}>Alleen de eigen back-ups in die map worden opgeruimd, andere bestanden niet.</p>
+        <p className="st-hint" style={{ marginLeft: 0 }}>Alleen je oudere eigen back-ups verdwijnen uit de map, andere bestanden blijven staan.</p>
       )}
     </Sheet>
   );

@@ -195,7 +195,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         </BundleSheet>
       )}
       {sheet === 'bundel-testloop' && (
-        <BundleSheet eyebrow="Planning" title="Testloop" line="Hoe een test gelezen en gepland wordt." onClose={close}>
+        <BundleSheet eyebrow="Planning" title="Testloop" line="Hoe een test telt en wanneer hij komt." onClose={close}>
           <SummaryRow id="twijfeltest" title="Twijfeltest eerst vragen" facts={facts} info="twijfeltest" onChange={(on) => void updateSettings({ askDoubtTest: on })} />
           <SummaryRow id="test-stilstaan" title="Stilstaan bij een testloop" facts={facts} info="testStilstaan" onClick={() => setInner('test-stilstaan')} />
           <SummaryRow id="nieuwe-test" title="Nieuwe test voorstellen bij stilstand" facts={facts} info="nieuweTest" onChange={(on) => void updateSettings({ newTestOnStops: on })} />

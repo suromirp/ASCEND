@@ -114,7 +114,7 @@ export const DOEL_CHOICES = {
   naHoofddoel: def({
     group: 'Doel en tochten',
     title: 'Na je hoofddoel',
-    line: 'Tijdens de tocht wordt nooit iets gepland.',
+    line: 'Tijdens de tocht komt er nooit iets in je planning.',
     advice: 'stop' as 'stop' | 'maintain',
     options: [
       { value: 'stop', label: 'Niets meer plannen', note: 'Geen training tijdens en na de tocht', short: 'Niets meer' },
@@ -160,7 +160,7 @@ export const DOEL: SettingDef[] = [
     place: { row: true },
     title: 'Zonder doel',
     search: false,
-    sheet: { eyebrow: 'Doel en tochten', title: 'Zonder doel', line: 'Hoe je weken gepland en geteld worden als je geen doel hebt.' },
+    sheet: { eyebrow: 'Doel en tochten', title: 'Zonder doel', line: 'Hoe je weken eruitzien en tellen als je geen doel hebt.' },
     showWhen: [B.noGoal],
   },
   {

@@ -80,7 +80,7 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
   },
   'klaar-groei': {
     title: 'Groei bij het rekenen',
-    lead: 'Hoe snel je beter wordt, verschilt sterk tussen mensen. Het gat naar je doel wordt omgerekend in weken werk met één groeigetal.',
+    lead: 'Hoe snel je beter wordt, verschilt sterk tussen mensen. Het gat naar je doel gaat in weken werk, met één groeigetal.',
     points: [
       { head: 'Gemiddeld', text: 'het midden van de band, bij hardlopen 0,55% per week. Afgeleid uit meerdere onderzoeken, niet uit één studie.' },
       { head: 'Voorzichtig', text: 'de onderkant van de band, bij hardlopen 0,3% per week. Je doel vraagt dan meer weken en de meters staan lager.' },

@@ -134,7 +134,7 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
   },
   'vroeg-ziek': {
     title: 'Vroeg ziek zien',
-    lead: 'Als je ziek wordt, kan je rusthartslag stijgen en je HRV dalen voor je iets merkt. Daar wordt op gelet.',
+    lead: 'Als je ziek wordt, kan je rusthartslag stijgen en je HRV dalen voor je iets merkt. Daar let deze vraag op.',
     points: [
       { head: 'Wanneer', text: 'twee ochtenden op rij je rusthartslag minstens 6 slagen hoger en je HRV onder je gewone bereik van de laatste vier weken.' },
       { head: 'Wat je ziet', text: 'een vraag op Vandaag: Voel me goed, Word ziek of Niet nu. Word ziek opent de gewone ziekmelding. Je planning verandert pas na Akkoord.' },

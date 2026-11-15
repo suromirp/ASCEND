@@ -67,7 +67,7 @@ export const GEGEVENS_UITLEG: Record<string, SettingsHelp> = {
     title: 'Volledige reeks bewaren',
     lead: 'Je horloge meet bijna elke seconde je tempo, hartslag en hoogte. Dat kan helemaal op deze telefoon bewaard blijven.',
     points: [
-      { head: 'Waarvoor', text: 'kilometer na kilometer, de rondes van je horloge en de grafieken van een loop. Verandert je drempel later, dan wordt alles opnieuw gerekend zonder iets op te halen.' },
+      { head: 'Waarvoor', text: 'kilometer na kilometer, de rondes van je horloge en de grafieken van een loop. Verandert je drempel later, dan gaat de berekening opnieuw, zonder iets op te halen.' },
       { head: 'Ruimte', text: 'ongeveer 120 KB voor een uur lopen, enkele tientallen MB per jaar.' },
       { head: 'Uit', text: 'alleen de samenvatting en de kilometers. Wat al bewaard is blijft staan. Je route wordt nooit bewaard, alleen de richting per kilometer, voor de wind.' },
     ],
@@ -116,7 +116,7 @@ export const GEGEVENS_UITLEG: Record<string, SettingsHelp> = {
   },
   'voorstellen-opruimen': {
     title: 'Oude voorstellen opruimen',
-    lead: 'Elk voorstel blijft bewaard met alle details. Na een paar maanden wordt het een korte regel.',
+    lead: 'Elk voorstel blijft bewaard met alle details. Na een paar maanden blijft er een korte regel over.',
     points: [
       { head: 'Blijft staan', text: 'de datum, de titel, of je Akkoord of Liever niet koos, en wat het uit je planning haalde.' },
       { head: 'Nooit', text: 'een voorstel dat nog open staat, een training die er nog aan vastzit, iets wat je ongedaan maakte, of een vrije periode die nog bestaat.' },
@@ -125,7 +125,7 @@ export const GEGEVENS_UITLEG: Record<string, SettingsHelp> = {
   },
   herbouwen: {
     title: 'Adviezen opnieuw berekenen',
-    lead: 'Je planning en je adviezen worden opnieuw bekeken. Er wordt niets verwijderd.',
+    lead: 'Je planning en je adviezen krijgen een nieuwe berekening. Er verdwijnt niets.',
     points: [
       { head: 'Meestal niet nodig', text: 'het gebeurt vanzelf na een update of import. Dit is een noodknop.' },
     ],

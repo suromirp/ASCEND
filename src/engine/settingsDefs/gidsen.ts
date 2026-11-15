@@ -12,7 +12,7 @@ export const GIDSEN: SettingDef[] = [
     page: 'gidsen',
     place: { row: true },
     title: 'Weer en kleding',
-    note: 'Het weer en wat je aantrekt bij je training, je plaats, en hoe het weer beoordeeld wordt.',
+    note: 'Het weer en wat je aantrekt bij je training, je plaats, en hoe het weer meetelt.',
     keywords: ['weer', 'weerbericht', 'kleding', 'aantrekken', 'jas', 'voorspelling', 'open-meteo', 'regen', 'wind', 'regels'],
     route: '/weer',
   },
