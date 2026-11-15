@@ -517,6 +517,9 @@ export const INVARIANTEN = [
         if (inWeek.length === 0) { uit.push(`week-zonder-sportschool heeft geen rij die ${woord} zegt: de invariant toetst niets`); continue; }
         if (!m) { uit.push(`weekterugblik-zonder-sportschool noemt ${woord} niet, Week wel (${inWeek.join(', ')})`); continue; }
         for (const nm of inWeek) if (!m[1].includes(nm)) uit.push(`weekterugblik-zonder-sportschool noemt ${nm} niet onder ${woord}, Week wel`);
+        // En andersom: wat de terugblik zo noemt, zegt Week ook (een open concept in een pauze heet in Week "loopt nog").
+        const alleNamen = rijen.map((r) => r.match(dagRij)[1]);
+        for (const nm of alleNamen) if (m[1].includes(nm) && !inWeek.includes(nm)) uit.push(`weekterugblik-zonder-sportschool noemt ${nm} onder ${woord}, Week niet`);
       }
       return uit;
     },
