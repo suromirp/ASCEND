@@ -232,6 +232,23 @@ const SCHERMEN = {
   'vandaag-concept': { titel: 'Vandaag met een training die bleef liggen (Benen A)', pad: '#/', stand: 'concept', actie: (p) => tik(p, '[role=dialog] button:has-text("Niet nu")') },
   'week-concept': { titel: 'Week met een training die bleef liggen (Benen A)', pad: '#/week', stand: 'concept', actie: (p) => tik(p, '[role=dialog] button:has-text("Niet nu")') },
   'weekterugblik-concept': { titel: 'Je week tot nu met een training die bleef liggen', pad: '#/week', stand: 'concept', actie: async (p) => { await tik(p, '[role=dialog] button:has-text("Niet nu")'); await tik(p, 'button:has-text("Je week tot nu")'); } },
+  // Training afronden van gisteren (besluiten 2026-11-15-dag-van-afronden.md en 2026-11-15-dag-van-afronden-opnieuw-afvinken.md):
+  // vrijdag 30 oktober 19:00 Benen A starten en de eerste werkset afvinken, dan zaterdag 31 oktober 08:00 (de vaste klok)
+  // de app opnieuw openen. Het blad Training niet afgerond gaat vanzelf open; Afronden opent Training afronden. Gedaan op
+  // heeft de knoppen vr 30 oktober (aan) en vandaag, als Chip (I-44).
+  'forge-afronden-gisteren': { titel: 'Training afronden van gisteren (Benen A, blad in Forge)', pad: '#/week', klok: '2026-10-30T19:00:00+01:00', actie: async (p) => {
+    await p.waitForTimeout(3000);
+    await tik(p, 'button[data-sheet-from]:has-text("Benen A")');
+    await tik(p, 'button:has-text("Training starten")');
+    await tik(p, 'button[aria-label="Set 1 gedaan"]');
+    await p.waitForTimeout(2000);
+    await p.clock.setFixedTime(new Date(KLOK));
+    await p.goto(BASE + '#/');
+    await p.reload();
+    await p.waitForSelector('[role=dialog] button:has-text("Afronden met")', { timeout: 25000 });
+    await tik(p, '[role=dialog] button:has-text("Afronden met")');
+    await p.waitForSelector('[role=dialog]:has-text("Training afronden")', { timeout: 15000 });
+  } },
   // Zonder sportschool (stand zonder-sportschool, besluit 2026-11-15-week-telling-zonder-sportschool.md): een gemiste loop,
   // een vervallen sportschooltraining en een overgeslagen rij. De invariant leest de kaart, de dagrijen en de terugblik.
   'week-zonder-sportschool': { titel: 'Week, zonder sportschool sinds dinsdag', pad: '#/week', stand: 'zonder-sportschool' },

@@ -83,6 +83,10 @@ export interface WorkoutRow {
   // When the row was ticked (epoch ms). Lives in the draft; it goes onto the log as SetLog.at.
   // Unticking removes it.
   doneAt?: number;
+  // The first moment this row was ticked, kept when you untick it and tick it again (I-45): ticking a set
+  // again days later is not new work, so the day Afronden suggests does not move (`lastWorkMoment`). Draft
+  // only; it is never part of the log (SetLog.at stays `doneAt`).
+  firstDoneAt?: number;
   // You changed kg or reps yourself, or took the prescription: a weight you
   // change on an earlier set no longer carries over to this one. Lives in the
   // draft only; it is never part of the log.
@@ -706,11 +710,28 @@ function fillTicked(row: WorkoutRow, carryKg: number | undefined, now: number): 
   };
 }
 
-// An unticked row loses its time as well.
+// An unticked row loses its time as well, but remembers when it was first ticked (`firstDoneAt`).
 function unticked(row: WorkoutRow): WorkoutRow {
-  const { doneAt: _at, ...rest } = row;
-  void _at;
-  return { ...rest, done: false };
+  const { doneAt, firstDoneAt, ...rest } = row;
+  const first = earliest(firstDoneAt, doneAt);
+  return { ...rest, done: false, ...(first !== undefined ? { firstDoneAt: first } : {}) };
+}
+
+function finiteMs(v: unknown): number | undefined {
+  return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+}
+
+function earliest(a: unknown, b: unknown): number | undefined {
+  const xs = [finiteMs(a), finiteMs(b)].filter((v): v is number => v !== undefined);
+  return xs.length > 0 ? Math.min(...xs) : undefined;
+}
+
+// Het laatste moment van echt werk in de training: de laatst afgevinkte set, waarbij een set die je uit en weer
+// aan zette telt op het moment dat je hem de eerste keer afvinkte (I-45). Alleen afgevinkte rijen; undefined
+// zonder afgevinkte set. Afronden stelt de dag hiervan voor (engine/forgeSession.ts#finishDayDefault).
+export function lastWorkMoment(workout: WorkoutExercise[]): number | undefined {
+  const moments = workout.flatMap((e) => e.rows.filter((r) => r.done).map((r) => earliest(r.firstDoneAt, r.doneAt))).filter((t): t is number => t !== undefined);
+  return moments.length > 0 ? Math.max(...moments) : undefined;
 }
 
 // The box above the column: every set of the exercise ticked at once, or all

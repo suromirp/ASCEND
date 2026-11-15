@@ -270,11 +270,19 @@ export function choiceSheetSeesGone(o: { stillThere: boolean; discarded: boolean
   return !o.stillThere && !o.discarded && !o.picked;
 }
 
+// Wie een sessie is: de training en het moment van starten (zoals de sleutel van OtherSessionRunning in ForgeWorkout).
+export function sessionIdentity(s: { pointer: { key: string }; startedAt: number }): string {
+  return `${s.pointer.key}\u0001${s.startedAt}`;
+}
+
 // De pil en zijn keuzeblad: verdwijnt de training terwijl het blad openstaat, dan blijft het blad staan met de
-// laatste stand (en zegt het zelf dat hij weg is); de pil zelf gaat weg. Zonder open blad: alleen de live sessie.
-export function pillSlot<S>(o: { live: S | undefined; last: S | undefined; sheetOpen: boolean }): { session: S; gone: boolean } | undefined {
+// laatste stand (en zegt het zelf dat hij weg is); de pil zelf gaat weg. Loopt er intussen een andere training
+// (in een ander tabblad A verwijderd en meteen B gestart), dan is A voor het open blad net zo goed weg: B komt nooit
+// in een blad dat voor A openging (Warden 15 november, I-45). Zonder open blad: alleen de live sessie.
+export function pillSlot<S>(o: { live: S | undefined; last: S | undefined; sheetOpen: boolean; keyOf: (s: S) => string }): { session: S; gone: boolean } | undefined {
+  const other = o.live !== undefined && o.last !== undefined && o.keyOf(o.live) !== o.keyOf(o.last);
+  if (o.sheetOpen && o.last !== undefined && (o.live === undefined || other)) return { session: o.last, gone: true };
   if (o.live !== undefined) return { session: o.live, gone: false };
-  if (o.sheetOpen && o.last !== undefined) return { session: o.last, gone: true };
   return undefined;
 }
 

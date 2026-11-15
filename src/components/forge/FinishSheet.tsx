@@ -1,7 +1,7 @@
 // Het blad om een training in Forge af te ronden of af te vinken.
 
 import { useEffect, useRef, useState } from 'react';
-import { progress, type WorkoutExercise } from '../../engine/forgeWorkout';
+import { lastWorkMoment, progress, type WorkoutExercise } from '../../engine/forgeWorkout';
 import { isLegHeavyTemplate } from '../../engine/scheduler';
 import type { SessionTemplate } from '../../models/training';
 import type { PainReport } from '../../models/checkIn';
@@ -9,7 +9,7 @@ import { addDays, formatDateNL, toISODate, todayISO, weekdayShortNL } from '../.
 import { TimeoutError, withTimeout } from '../../utils/withTimeout';
 import { NumberField } from '../NumberField';
 import { PainReportFields } from '../PainReportFields';
-import { PrimaryButton, SecondaryButton } from '../ui';
+import { Chip, PrimaryButton, SecondaryButton } from '../ui';
 import { finishDayChoices, finishDayDefault, finishDuration } from '../../engine/forgeSession';
 import { durationTooShort, entryMinutes, SHORT_DURATION_TEXT } from '../../engine/inputLimits';
 import { ForgeSheet } from './parts';
@@ -64,11 +64,9 @@ export function FinishSheet({
   const [pain, setPain] = useState<PainReport[]>([]);
   const [notes, setNotes] = useState('');
   // Een concept van gisteren afronden: de dag van je laatst afgevinkte set, ook bij een geplande training die je een
-  // dag eerder of later deed (de training blijft gekoppeld; alleen de dag van het nieuwe log volgt het werk).
-  const [lastTickAt] = useState(() => {
-    const ticks = workout.flatMap((e) => e.rows.map((r) => r.doneAt)).filter((t): t is number => typeof t === 'number' && Number.isFinite(t));
-    return ticks.length > 0 ? Math.max(...ticks) : undefined;
-  });
+  // dag eerder of later deed (de training blijft gekoppeld; alleen de dag van het nieuwe log volgt het werk). Een set
+  // die je later uit en weer aan zette telt op de eerste keer (I-45).
+  const [lastTickAt] = useState(() => lastWorkMoment(workout));
   const dayOf = (ms: number) => toISODate(new Date(ms));
   const tick = lastTickAt !== undefined ? { lastTickAt } : {};
   const [doneOn, setDoneOn] = useState(() => finishDayDefault({ today, plannedSessionId, scheduledDate, ...tick, dayOf }));
@@ -133,12 +131,12 @@ export function FinishSheet({
               <span style={{ color: 'var(--color-ink-dim)' }}>Gedaan op</span>
               {plannedSessionId ? (
                 dayChoices.map((d) => (
-                  <button key={d} type="button" aria-pressed={doneOn === d} onClick={() => setDoneOn(d)} className="min-h-[44px] rounded-full border px-3" style={{ borderColor: doneOn === d ? 'var(--color-ink)' : 'var(--color-card-border)', color: 'var(--color-ink)' }}>
+                  <Chip key={d} tone="quiet" selected={doneOn === d} onClick={() => setDoneOn(d)}>
                     {d === today ? 'vandaag' : `${weekdayShortNL(d).toLowerCase()} ${formatDateNL(d)}`}
-                  </button>
+                  </Chip>
                 ))
               ) : (
-                <input type="date" lang="nl" value={doneOn} max={today} min={addDays(today, -60)} onChange={(e) => e.target.value && setDoneOn(e.target.value)} className="rounded-lg border bg-transparent px-2" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)', colorScheme: 'dark' }} />
+                <input type="date" lang="nl" value={doneOn} max={today} min={addDays(today, -60)} onChange={(e) => e.target.value && setDoneOn(e.target.value)} className="min-h-[44px] rounded-lg border bg-transparent px-2 py-1.5" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)', colorScheme: 'dark' }} />
               )}
             </div>
           )}
