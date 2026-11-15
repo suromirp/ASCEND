@@ -2613,10 +2613,11 @@
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Boven de kaart en de zoekstand van Route (in de Briefing en het blad Route) staat een rij Start bij met chips: Waar je nu bent (het advies) en Thuis als die er is. Geldt nog: de rij Start bij met chips; de terugval op Thuis als Waar je nu bent niet lukt is weg.",
+   "kern": "Boven de kaart en de zoekstand van Route (in de Briefing en het blad Route) staat een rij Start bij met chips: Waar je nu bent (het advies) en Thuis als die er is. Geldt nog: de rij Start bij met chips; de terugval op Thuis als Waar je nu bent niet lukt is weg; een gekozen plek blijft nu per geplande training staan.",
    "stand": "deels",
    "vervangenDoor": [
-    "docs/beslissingen/2026-11-14-geen-stille-thuis.md"
+    "docs/beslissingen/2026-11-14-geen-stille-thuis.md",
+    "docs/beslissingen/2026-11-15-avond-ervoor-kent-de-plek.md"
    ]
   },
   "docs/beslissingen/2026-11-11-route-verfijnen.md": {
@@ -3037,6 +3038,13 @@
     "bediening-en-beweging"
    ],
    "kern": "In schermtekst is ASCEND nooit het onderwerp van een zin.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-avond-ervoor-kent-de-plek.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Een plek die je in de Briefing bij Start bij kiest, blijft voor die ene geplande training staan tot de dag voorbij is; De avond ervoor toont het weer van die plek.",
    "stand": "geldt"
   },
   "docs/beslissingen/2026-11-15-backup-eerste-keer.md": {
