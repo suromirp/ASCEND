@@ -28,7 +28,7 @@ Bijgewerkt: 15 november 2026, 14:20 Portugese tijd, door de coördinator session
 - 4de3367 (12:20): Q instellingen terug met Akkoord, kracht uit, wandelen in vaste bpm, kennisindex. Deploy en Android groen.
 - b2439653 (13:15): kracht en bpm netjes in Instellingen, weesregel Stand, backlog met codes en `npm run backlog:bij`. Deploy en Android groen.
 
-## Lopend (16:30)
+## Lopend (15:30)
 
 - Proef 2b8e2b8 op `proef/drie`: nacht plus Week telling (I-1), Afbreker (I-4, Warden Fable akkoord, briefjes bijgewerkt) en Weekbudget (I-39). tsc, lint, 730 testbestanden, build en kennisindex groen. Tekstkaart loopt bij mij. Lookout (Sonnet) session_01LnDpSjCg2dZkdQ6tWahpzK pusht afdrukken op `lookout/drie`; Pathfinder (Sonnet) session_01LnDpSn8hkHJPMkY8thgzJC pusht `pathfinder/drie`. Daarna afdrukken zelf bekijken, main via squash, backlog:bij, pushmelding.
 - Conflict bij elke merge zit in docs/kennisindex: bronnen.json met de hand, de .md met `--ours` en opnieuw `npm run kennisindex`. Een hook draait alle tests bij elke `git commit`: commit apart, niet in een lange keten.
