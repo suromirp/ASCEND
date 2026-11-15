@@ -311,7 +311,7 @@ describe('je plek voor de kaart', () => {
   });
 
   it('toestemming geweigerd of geen locatie: een regel, nooit een fout', async () => {
-    expect(await whereAmI(() => Promise.reject(new LocateError('denied')))).toEqual({ ok: false, line: 'ASCEND mag je locatie niet gebruiken.' });
+    expect(await whereAmI(() => Promise.reject(new LocateError('denied')))).toEqual({ ok: false, line: 'Geen toegang tot je locatie.' });
     expect(await whereAmI(() => Promise.reject(new LocateError('unsupported')))).toEqual({ ok: false, line: 'Je locatie is nu niet beschikbaar.' });
   });
 

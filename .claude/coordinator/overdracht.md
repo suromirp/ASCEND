@@ -4,6 +4,7 @@ Bijgewerkt: 14 november 2026, ongeveer 13:00 Amsterdam, door de coördinator ses
 
 ## Eerst lezen (eigenaar 14 november)
 
+- Voor het ochtendoverzicht (Vraag aan u): drie keuzes uit het ontwerp Routes wandelen en rugzak, gebouwd met het advies als standaard (stap 1 en 2 lopen sinds 03:12): (1) duur eerst boven hoogtemeters, instelbaar; (2) de sportwetenschapper legt minuten en hoogtemeters van de wandelladder naast elkaar en doet een voorstel (ladder verandert alleen via Akkoord); (3) herstelwandeling krijgt alleen een lus na een tik. Plus: kort/hard/wandeltempo-regels van de horlogetoets altijd aan (advies: zo laten).
 - Coördinator-wissel verschoven van 04:47 naar 10:47 Portugese tijd (trig_016NjGn4ZxB5Gt7zdHv9dYAU), na het ochtendoverzicht: Wachter, ochtendtaak en por-taken hangen aan deze sessie, en een wissel midden in de nacht is de zwakste schakel in het doorgaan. Bij de wissel: Wachter en lopende send_laters naar de nieuwe sessie overzetten.
 - Eigenaar 15 november 00:05 Portugese tijd: "Niet op mij wachten om 9 uur, stuur een update en ga verder." Om 09:00 het overzicht sturen en meteen doorbouwen; open vragen krijgen het advies als standaard, elke keuze en reflectie hier vastleggen. Wie de ochtendtaak opnieuw aanmaakt, neemt dit mee in de prompt.
 - Back-up eerste keer opslaan mislukt: eigenaar stuurt 15 november een screenshot van de melding (en of het de eerste keer na openen van de app was). Daarna pas een helper starten; tot dan niet zelf gokken naar de oorzaak.

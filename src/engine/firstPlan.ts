@@ -51,8 +51,8 @@ export const GOAL_OPTIONS: { id: StartGoalKind; label: string; note: string }[] 
 
 // De keuze na "Een tocht of wedstrijd".
 export const TARGET_OPTIONS: { id: 'trek' | 'race'; label: string; note: string }[] = [
-  { id: 'trek', label: 'Een meerdaagse tocht met rugzak', note: 'Zoals de GR5. ASCEND bouwt op naar lange dagen met een zware rugzak.' },
-  { id: 'race', label: 'Een hardloopwedstrijd', note: 'Een vaste afstand op een vaste dag. ASCEND plant een blok toe naar de wedstrijd.' },
+  { id: 'trek', label: 'Een meerdaagse tocht met rugzak', note: 'Zoals de GR5. Opbouw naar lange dagen met een zware rugzak.' },
+  { id: 'race', label: 'Een hardloopwedstrijd', note: 'Een vaste afstand op een vaste dag. Een blok toe naar de wedstrijd.' },
 ];
 
 // Een richting zonder doel, of een doel met een datum.
