@@ -23,7 +23,8 @@ import { locationEnabled, weatherFollowsLocation, weatherLocateText } from '../e
 import { isMyLocation, myLocation } from '../engine/weatherLocation';
 import { locateErrorMessage, locateMe } from '../utils/geolocation';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
-import { readWeatherPageLink } from '../engine/weatherPageLink';
+import { readWeatherPageLink, weatherRefreshOutcome } from '../engine/weatherPageLink';
+import { loadPlaceWeather } from '../storage/placeWeather';
 import { todayISO } from '../utils/dates';
 
 const fieldStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
@@ -40,10 +41,14 @@ type Action = 'locate' | 'search' | 'refresh' | 'clear';
 type Notice = { area: 'place' | 'search'; tone: 'ok' | 'error'; text: string };
 
 export function WeatherPage() {
-  const { settings, updateSettings, weather } = useAppData();
+  const { settings, updateSettings, weather, templateById } = useAppData();
   const place = settings.homeLocation;
   // De plek uit de Briefing, als je via de rij Weer kwam; anders, of als hij niet klopt, thuis.
-  const briefingLink = readWeatherPageLink(useLocation().state, todayISO());
+  const read = readWeatherPageLink(useLocation().state, todayISO());
+  // Een training die niet meer bestaat: geen plek, zoals de kaart bovenaan (WeatherTodayCard).
+  const briefingLink = read && templateById.has(read.templateId) ? read : undefined;
+  // Telt op na Nu verversen, zodat de kaart bovenaan het net opgehaalde weer van de plek leest.
+  const [refreshed, setRefreshed] = useState(0);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PlaceResult[] | null>(null);
   const [busy, setBusy] = useState<Record<Action, boolean>>({ locate: false, search: false, refresh: false, clear: false });
@@ -95,8 +100,13 @@ export function WeatherPage() {
 
   const refresh = () =>
     run('refresh', 'place', REFRESH_LIMIT_MS, async () => {
-      const result = await weather.refresh();
-      return result.status === 'error' ? { tone: 'error', text: result.message } : { tone: 'ok', text: 'Het weer is bijgewerkt.' };
+      // Kom je uit de Briefing met een plek, dan ververst de knop ook die plek: dat is het weer bovenaan.
+      const [home, there] = await Promise.all([
+        weather.refresh(),
+        briefingLink ? loadPlaceWeather(briefingLink.place, { force: true }) : Promise.resolve(undefined),
+      ]);
+      if (there) setRefreshed((n) => n + 1);
+      return weatherRefreshOutcome(briefingLink?.place.name, there?.status === 'ok', home.status === 'error' ? home.message : undefined);
     });
 
   const clearPlace = () =>
@@ -126,7 +136,7 @@ export function WeatherPage() {
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <PageHeader eyebrow="Buiten" title="Weer en kleding" line="Het weer en wat je aantrekt bij je buitentraining" />
 
-      <WeatherTodayCard link={briefingLink} />
+      <WeatherTodayCard link={briefingLink} refreshed={refreshed} />
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>Je plaats</Eyebrow>

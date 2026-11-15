@@ -6,7 +6,9 @@ import type { WeatherPlace } from '../models/weather';
 import type { PlaceWeatherState } from '../engine/placeWeather';
 import { loadPlaceWeather } from '../storage/placeWeather';
 
-export function usePlaceWeather(target: WeatherPlace | undefined): PlaceWeatherState | undefined {
+// `version`: telt op als de voorspelling net ververst is (Nu verversen op de pagina Weer); dan leest de
+// haak hem opnieuw uit de cache. Tot het antwoord er is blijft het vorige weer van dezelfde plek staan.
+export function usePlaceWeather(target: WeatherPlace | undefined, version = 0): PlaceWeatherState | undefined {
   const lat = target?.lat;
   const lon = target?.lon;
   const key = lat === undefined || lon === undefined ? undefined : `${lat},${lon}`;
@@ -22,7 +24,7 @@ export function usePlaceWeather(target: WeatherPlace | undefined): PlaceWeatherS
     return () => {
       alive = false;
     };
-  }, [key, lat, lon]);
+  }, [key, lat, lon, version]);
 
   if (key === undefined) return undefined;
   return found?.key === key ? found.state : { status: 'loading' };
