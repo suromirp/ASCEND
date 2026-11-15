@@ -46,10 +46,18 @@ export type RouteFn = (waypoints: RoutePoint[], options?: RouteOptions) => Promi
 
 export type RouteStyle = 'simple' | 'adventure';
 
-// Wat de training vraagt.
+// Wat de training vraagt. Een looptraining: alleen afstand en hoogtemeters. Een wandeltraining
+// (engine/hikeTarget.ts) ook de duur, de rugzak en wat hij aan hoogtemeters vraagt; `ascentM` is dan wat
+// in de duur past. Een bewaarde route bewaart geen doel, dus deze velden vragen geen migratie.
 export interface RouteTarget {
   distanceKm: number;
   ascentM: number;
+  // De duur van een wandeltraining in minuten; afwezig: een looptraining.
+  minutes?: number;
+  // De rugzak in kilo's, als de training er een vraagt.
+  packKg?: number;
+  // De hoogtemeters die de training vraagt, als hij die vraagt (ook als ze niet in de duur passen).
+  askedAscentM?: number;
 }
 
 export interface RouteProposal {

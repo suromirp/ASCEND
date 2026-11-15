@@ -5,7 +5,7 @@
 // geen netwerk; components/useRouteSearch.ts houdt de stand, components/RouteAdjust.tsx tekent.
 // Bijsturen plant niets en bewaart niets: het geldt voor deze lus zolang het blad open is.
 
-import type { AvoidArea, RoutePoint, RouteProposal, RouteStyle } from '../models/route';
+import type { AvoidArea, RoutePoint, RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { hysteresisLine, modelThresholdM } from './elevation';
 import { ascentOf, cumulative, metersBetween } from './routeGeometry';
 import { formatNumberNL } from '../utils/number';
@@ -33,6 +33,14 @@ export const maxLoopKm = (trainingKm: number): number => Math.round(Math.max(tra
 
 // Langer of Korter: de nieuwe afwijking van de afstand van de training, of de regel waarom het niet kan.
 // Het getal is op 0,1 km, net als de afstand van een lus.
+// Het doel waarmee gezocht wordt: het doel van de training, met Langer of Korter op de afstand. Alle andere
+// velden gaan mee (de duur, de rugzak, wat de training aan hoogtemeters vraagt): de zinnen van de planner
+// lezen ze (routePlanner.ts#askedAscent). Dit is het enige doel dat useRouteSearch aan findRoutes geeft.
+export function searchTarget(training: RouteTarget, deltaKm: number): RouteTarget {
+  if (!(deltaKm !== 0) || !Number.isFinite(deltaKm)) return training;
+  return { ...training, distanceKm: Math.round((training.distanceKm + deltaKm) * 10) / 10 };
+}
+
 export function stepDistance(trainingKm: number, deltaKm: number, dir: 'longer' | 'shorter'): { ok: true; deltaKm: number } | { ok: false; line: string } {
   const step = adjustStepKm(trainingKm);
   const next = Math.round((deltaKm + (dir === 'longer' ? step : -step)) * 10) / 10;
