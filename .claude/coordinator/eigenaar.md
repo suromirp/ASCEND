@@ -26,10 +26,14 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Stuk of vast
 
-- Week telt anders dan hij toont. Nagespeeld met uw back-up: de kruisen op vrijdag zijn overgeslagen, niet gemist; de lange loop en Heuvelintervallen zijn geruild; het inhaaladvies rekende zonder uw periode Zonder sportschool. Een bouwer maakt telling, teken en advies gelijk.
 - Back-up maken mislukt de eerste keer na het openen, de tweede keer lukt hij (het bestand krijgt dan -2). Een bouwer zoekt de oorzaak sinds 11:54.
 
 ## Net live
+
+### 15 november 16:20
+- Week telt zoals hij toont: gemist, overgeslagen en vervallen zijn overal hetzelfde, en het inhaaladvies rekent met je periode Zonder sportschool.
+- Training afronden in Forge stelt de dag van je laatste set voor, naast vandaag.
+- Hitte bij je loop: "trager" in plaats van "lager"; bij alleen vocht een kleinere band; bij intervallen en heuvels geen tempo of hartslag maar meer rust ertussen.
 
 ### 15 november 13:15
 - Instellingen, Sporten: kracht uit verbergt Keer kracht per week en Weekbudget zegt waarom; na Geen krachttraining bij de start zegt de rij "Je week heeft geen krachtdag".

@@ -29,13 +29,13 @@ Bijgewerkt: 15 november 2026, 14:20 Portugese tijd, door de coördinator session
 - 4de3367 (12:20): Q instellingen terug met Akkoord, kracht uit, wandelen in vaste bpm, kennisindex. Deploy en Android groen.
 - b2439653 (13:15): kracht en bpm netjes in Instellingen, weesregel Stand, backlog met codes en `npm run backlog:bij`. Deploy en Android groen.
 
-## Lopend (15:30)
+## Lopend (16:20)
 
-- Naar main gaan Week telling (I-1) en Afbreker (I-4): proef `proef/drie`, de commit vóór de merge van weekbudget (`proef/drie^1`). Pathfinder akkoord (`pathfinder/drie`), Lookout session_01LnDpSjCg2dZkdQ6tWahpzK loopt (afdrukken op `lookout/drie`); tekstkaart draait in een worktree in de scratchpad.
-- Weekbudget (I-39) niet af volgens Pathfinder: Sherpa ronde 2 session_01LnDpSkBcoMA95iogevFZjV (Opus) op `claude/weekbudget-kracht`.
-- Conflict bij elke merge zit in docs/kennisindex: bronnen.json met de hand, de .md met `--ours` en opnieuw `npm run kennisindex`. Een hook draait alle tests bij elke `git commit`: commit apart, niet in een lange keten.
-- Back-up eerste keer: Warden Fable geen blokkerend, wel Moet 1 tot 4 (o.a. stat-fout op lege map geeft -2: waarschijnlijk het symptoom van de eigenaar). Herstel naar de bouwer session_01LnDpSnNF5icymXAJ1Rc6xC (15:14); keuze: één keer opnieuw kijken na 300 ms. Daarna korte blik op de diff, geen volle review.
-- Beginner heel licht: Warden Fable niet akkoord (horlogelog in wandeltempo telt niet; eerste Akkoord noemt de beginnersstart niet; geen rem zonder log). Herstel naar session_01LnDpSk5RjwPEFvrRzyLnjW (15:14). Daarna weer een Warden op Fable.
+- Live 49eca57 (16:20): Week telling (I-1), Afbreker (I-4), hitteregel (melding eigenaar 15:37, besluit 2026-11-15-hitte-bij-herhalingen), kennisindex ronde 2. Deploy en Android nog nakijken.
+- Weekbudget (I-39) ronde 2 klaar (3f3bb08): Lookout session_01LnDpSkdgxjM61k9cG1nQ7p (`lookout/weekbudget`) en Pathfinder session_01LnDpSnrKnCEtgsmdvmX3KN (`pathfinder/weekbudget`). Warden is gedaan door de bouwer zelf op Sonnet; geen planner of opslag. Rest naar backlog: notitie in settingsDefs, Sterker worden met kracht uit.
+- Back-up: herstel 40679346; Warden Fable ronde 2 session_01LnDpSj4LDkgBj7FgZGcSrm (`warden/backup-herstel-2`). Daarna main en de toesteltest voor de eigenaar.
+- Beginner: herstel 52a45dee; Warden Fable ronde 3 session_01LnDpSiLqNk2UfWhBp7SySD (`warden/beginner-herstel-3`). Daarna Lookout en Pathfinder, dan stap 3.
+- Squash geeft andere geschiedenis dan nacht: een branch vanaf main mergen in een proef geeft add/add-conflicten; cherry-pick dan de commits.
 - Bouwrij daarna: I-40, I-41 (Week, later), D één plan (I-14, nakijken of het nog open is), I-23 M, I-8 Routes op reis. MacroFactor eruit na deze week. Woensdag 18 november: rustiger instap van de planner op de terugkomst van de eigenaar nakijken.
 
 ## Werkwijze, geleerd
