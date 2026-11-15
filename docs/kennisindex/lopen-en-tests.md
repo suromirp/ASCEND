@@ -59,6 +59,7 @@ Nieuwste eerst. Bij een besluit staat welk later besluit het deels vervangt of a
 - [onderzoek/Tempo bij zone 2, stabiele stukken.md](../onderzoek/Tempo%20bij%20zone%202,%20stabiele%20stukken.md): Wat een stabiel stuk is en hoe helling, warmte en hartslagdrift meetellen bij het tempo in zone 2.
 - [onderzoek/Trainingsvormen en varianten.md](../onderzoek/Trainingsvormen%20en%20varianten.md): Welke trainingen kloppen en wat ontbreekt: gericht afdalen voor de GR5 en snelheid boven de drempel voor de 10 km.
 - [onderzoek/Tussendoel hardloopwedstrijd.md](../onderzoek/Tussendoel%20hardloopwedstrijd.md): Onderbouwing van het blok van 8 weken voor een hardloopwedstrijd voor het hoofddoel: tempoloop, testloop en wedstrijdweek.
+- [onderzoek/Wandelen en dribbelen voor beginners.md](../onderzoek/Wandelen%20en%20dribbelen%20voor%20beginners.md): De ladder van wandelen en dribbelen voor een beginner klopt in week 1 tot 3 met de onderzochte schema's, week 4 niet; het advies is week 4 op 4 om 2 te zetten.
 - [onderzoek/notities/Aanvullend onderzoek GR5 voorbereiding/marathon.md](../onderzoek/notities/Aanvullend%20onderzoek%20GR5%20voorbereiding/marathon.md): Werknotities (Engels) over een marathon naast de GR5: weekvolume, tijdpad, sleuteltrainingen, taper en blessurerisico.
 - [visie/Run in detail.md](../visie/Run%20in%20detail.md): Ontwerp van 27 oktober 2026 voor het scherm Run in detail; besloten in `docs/beslissingen/2026-10-27-run-in-detail-gegevens.md`.
 
