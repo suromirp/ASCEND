@@ -3451,6 +3451,13 @@
    "kern": "Wat bevestigd is over kleding bij het weer en een voorstel voor engine-regels met voorbeelden.",
    "stand": "achtergrond"
   },
+  "docs/onderzoek/Kleding en wind getoetst.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "De windgrenzen en de warmtebonus van het kledingadvies getoetst aan bronnen: alles houden, alleen het windjack van 25 naar 20 km/u.",
+   "stand": "achtergrond"
+  },
   "docs/onderzoek/Kracht loggen en progressie.md": {
    "onderwerpen": [
     "forge"
