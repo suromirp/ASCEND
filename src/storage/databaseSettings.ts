@@ -679,9 +679,7 @@ export const SettingsRepo = {
     return { ...DEFAULT_SETTINGS, ...stored };
   },
   set: async (patch: Partial<AppSettings>): Promise<AppSettings> => {
-    const next = { ...(await SettingsRepo.get()), ...patch };
-    await MetaRepo.set('settings', next);
-    return next;
+    return MetaRepo.update<AppSettings>('settings', (stored) => ({ ...DEFAULT_SETTINGS, ...stored, ...patch }));
   },
 };
 
@@ -699,8 +697,6 @@ export const StretchCompletionRepo = {
     return (await MetaRepo.get<StretchCompletion>('stretchCompletion')) ?? {};
   },
   set: async (patch: Partial<StretchCompletion>): Promise<StretchCompletion> => {
-    const next = { ...(await StretchCompletionRepo.get()), ...patch };
-    await MetaRepo.set('stretchCompletion', next);
-    return next;
+    return MetaRepo.update<StretchCompletion>('stretchCompletion', (stored) => ({ ...(stored ?? {}), ...patch }));
   },
 };
