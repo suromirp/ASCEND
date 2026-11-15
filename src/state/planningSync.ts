@@ -166,6 +166,8 @@ export async function horizonKey(): Promise<string> {
       settings.afterMainGoal,
       // Je Akkoord op neutrale golven zonder doel (engine/noGoalWaves.ts).
       settings.noGoalWaves,
+      // Opbouw van de start (engine/beginnerStart.ts): wandelen en dribbelen in de start of niet.
+      settings.beginnerBuild,
       // The fourth run in Opbouw (engine/extraRun.ts) is off on Rustig.
       settings.ambition,
       // Tussendoelen (engine/raceBlock.ts) change the plan too. The rucksack

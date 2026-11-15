@@ -28,7 +28,7 @@ import type { WeekShape } from './sports';
 import { adviceDays, chooseWeekShape, isStrengthTemplateId, type StartGoalKind } from './weekShape';
 import { DIRECTIONS, type DirectionId } from '../data/directions';
 import { directionChangeLines } from './directionChange';
-import { beginnerStartLine } from './beginnerStart';
+import { beginnerStartLine, WALK_JOG_LINE } from './beginnerStart';
 import { kindForShelter, SHELTER_ADVICE, type TrekShelter } from './trekShelter';
 
 export type StartRace = '5k' | '10k' | 'half' | 'full';
@@ -148,7 +148,7 @@ export interface FirstPlanSetup {
   settings: {
     weekShape: WeekShape; restDay: RestWeekday; marathonRaceType?: 'half' | 'full'; marathonTargetDate?: string;
     // Zonder doel: de richting, de maandag waarop hij begint en je antwoord op de beginnersvraag.
-    direction?: DirectionId; directionStart?: string; beginnerStart?: 'ja' | 'nee';
+    direction?: DirectionId; directionStart?: string; beginnerStart?: 'ja' | 'nee'; beginnerBuild?: 'licht';
     // De antwoorden uit de start die een instelling met een advies zetten (AppSettings.startChoices).
     startChoices: { beginnerStart?: 'ja' | 'nee' };
   };
@@ -255,6 +255,8 @@ export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate
     strategy ? 'Met krachttraining.' : 'Zonder krachttraining.',
     ...(beginnerCap ? [`Je begint met hoogstens ${BEGINNER_MAX_DAYS} dagen per week.`] : []),
     ...(direction && direction !== 'easy' && answers.beginner === true ? [beginnerStartLine(startDate, startDate) ?? ''] : []),
+    // Heel licht (het advies) hoort bij dit Akkoord: wandelen en dribbelen in de start (engine/beginnerStart.ts).
+    ...(direction && answers.beginner === true ? [WALK_JOG_LINE] : []),
     ...(direction ? ['Je week bestaat uit kracht en lopen. Andere sporten die je doet tellen straks gewoon mee.'] : []),
     ...week.notes,
   ].filter(Boolean);
@@ -267,7 +269,7 @@ export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate
     milestones,
     settings: {
       weekShape: week.shape, restDay: week.restDay, ...(marathon ? { marathonRaceType: marathon, marathonTargetDate: answers.goalDate } : {}),
-      ...(direction ? { direction, directionStart: startDate, ...(beginnerAnswer ? { beginnerStart: beginnerAnswer } : {}) } : {}),
+      ...(direction ? { direction, directionStart: startDate, beginnerBuild: 'licht' as const, ...(beginnerAnswer ? { beginnerStart: beginnerAnswer } : {}) } : {}),
       // Wat je hier koos is jouw keuze, geen afwijking van het advies (engine/settingsDiff.ts#fromStart). Altijd mee,
       // ook leeg: een nieuwe start vervangt wat een vorige start koos.
       startChoices: beginnerAnswer ? { beginnerStart: beginnerAnswer } : {},

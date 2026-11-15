@@ -66,6 +66,17 @@ export const DOEL_CHOICES = {
       { value: 'nee', label: 'Nee', note: 'Meteen het gewone ritme van je richting', short: 'Nee' },
     ],
   }),
+  opbouwStart: def({
+    group: 'Doel en tochten',
+    title: 'Opbouw van de start',
+    line: 'Hoe licht de eerste weken van een beginnersstart zijn.',
+    advice: 'licht' as 'licht' | 'gewoon',
+    help: 'opbouw-start',
+    options: [
+      { value: 'licht', label: 'Heel licht', note: 'Wandelen en dribbelen op de plek van de rustige en de lange duurloop', short: 'Heel licht' },
+      { value: 'gewoon', label: 'Gewoon', note: 'De lopen van je richting, alleen zonder harde training', short: 'Gewoon' },
+    ],
+  }),
   afdaalklok: def({
     group: 'Doel en tochten',
     title: 'Afdaalklok',
@@ -202,6 +213,17 @@ export const DOEL: SettingDef[] = [
     keywords: ['beginner', 'beginnen', 'rustig', 'start', 'nieuw', 'weinig gesport', 'heuvelloop', 'harde training', 'zonder doel', 'richting'],
     help: true,
     choice: { key: 'beginnersstart', def: DOEL_CHOICES.beginnersstart },
+    showWhen: [B.noGoal],
+  },
+  {
+    id: 'opbouw-start',
+    page: 'doel',
+    place: { in: 'bundel-zonder-doel' },
+    title: 'Opbouw van de start',
+    note: 'In een beginnersstart wandel en dribbel je om de beurt, op de plek van de rustige en de lange duurloop. Gewoon houdt de lopen van je richting.',
+    keywords: ['beginner', 'start', 'wandelen', 'dribbelen', 'heel licht', 'opbouw', 'rustig beginnen', 'zonder doel', 'richting'],
+    help: true,
+    choice: { key: 'opbouwStart', def: DOEL_CHOICES.opbouwStart },
     showWhen: [B.noGoal],
   },
   {

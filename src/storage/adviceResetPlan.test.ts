@@ -37,7 +37,8 @@ describe('Alles terug naar het advies raakt de planning alleen met Akkoord', () 
     const { marathonRaceType: _r, marathonTargetDate: _d, ...settings } = setup.settings;
     const first: HorizonChangeInput = {
       title: setup.title, why: 'Test.', explanation: 'Test.', trigger: 'goal_created', program: setup.program, goals: setup.goals,
-      settings: { ...settings, beginnerStart: 'nee' },
+      // Opbouw Gewoon: deze test gaat over kortere lengtes; Heel licht (het advies) staat in de test eronder.
+      settings: { ...settings, beginnerStart: 'nee', beginnerBuild: 'gewoon' },
       firstPlan: { milestones: setup.milestones, strategy: setup.strategy, allowedDays: setup.allowedDays, restDay: setup.settings.restDay },
     };
     expect((await applyHorizonPlanNow(await computeHorizonPlan(first, { prime: primePlanningRegisters }), { prime: primePlanningRegisters })).status).toBe('applied');
@@ -68,6 +69,17 @@ describe('Alles terug naar het advies raakt de planning alleen met Akkoord', () 
     expect((await SettingsRepo.get()).beginnerStart).toBeUndefined();
     // Meteen, zonder nieuwe opening: wat het voorstel liet zien.
     expect(await weekMinutes()).toMatchObject({ tpl_easy_run: 35, tpl_long_run: 60 });
+  });
+
+  it('met Heel licht noemt het voorstel wandelen en dribbelen, en zet Akkoord het meteen in Week', async () => {
+    await SettingsRepo.set({ beginnerBuild: 'licht' });
+    const before = await weekMinutes();
+    const { plan: patch } = resetPatch(await SettingsRepo.get(), ['beginnersstart']);
+    const plan = await computeHorizonPlan({ title: 'Terug', why: 'Test.', explanation: 'Test.', trigger: 'availability_changed', settings: patch }, { prime: primePlanningRegisters });
+    expect(plan.proposal.changes.map((c) => c.templateId).filter(Boolean).sort()).toEqual(expect.arrayContaining(['tpl_walk_jog', 'tpl_walk_jog_long']));
+    expect(await weekMinutes()).toEqual(before);
+    expect((await applyHorizonPlanNow(plan, { prime: primePlanningRegisters })).status).toMatch(/applied|unchanged/);
+    expect(await weekMinutes()).toMatchObject({ tpl_walk_jog: 20, tpl_walk_jog_long: 30 });
   });
 
   it('Liever niet: geen Akkoord, dan blijven instelling en week zoals ze waren', async () => {

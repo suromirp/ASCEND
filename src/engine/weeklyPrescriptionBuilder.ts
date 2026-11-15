@@ -270,6 +270,8 @@ export function rankCandidateTemplates(key: CapabilityKey, templates: SessionTem
     // Een afdaaltraining zonder vaste dag en zonder weekopbouw (Trap af) hoort niet bij het programma: alleen een
     // voorstel met Akkoord zet hem neer (engine/descentClock.ts), het voorschrift nooit.
     .filter((t) => !(hasRole(t, 'descent') && !t.defaultDayOfWeek && !t.weeklyProgression?.length))
+    // Wandelen en dribbelen hoort alleen bij de beginnersstart: alleen die wissel zet het neer, het voorschrift nooit.
+    .filter((t) => !hasRole(t, 'start_only'))
     .map((t) => ({ id: t.id, keys: inferCapabilityKeysForTemplate(t) }))
     .filter((t) => t.keys.some((k) => keyId(k) === kId))
     .sort((a, b) => {

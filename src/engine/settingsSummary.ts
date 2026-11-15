@@ -64,7 +64,7 @@ import { bootGoalKm } from './bootBreakIn';
 import { HR_FALLBACK_TEXT, resolveCalmRun, resolveWatchHr, resolveWatchHrMode, type IntervalsHrBasis } from './watchHeartRate';
 import { adviceDifferences } from './settingsDiff';
 import { settingBudget } from './weekBudget';
-import { parseBeginnerStart } from './beginnerStart';
+import { parseBeginnerStart, resolveBeginnerBuild } from './beginnerStart';
 import { resolveWaveSettings } from './waves';
 import { DIRECTIONS } from '../data/directions';
 import { formatBytes } from './streamPack';
@@ -813,6 +813,11 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'beginnersstart':
       // Je antwoord bij de start is jouw keuze, geen afwijking van het advies (engine/settingsDiff.ts#fromStart).
       return { value: choiceShort('beginnersstart', parseBeginnerStart(s.beginnerStart)), ...(fromStart(s, 'beginnerStart') ? { sub: 'Je antwoord bij de start' } : {}) };
+    case 'opbouw-start':
+      // Zonder keuze gewoon tot je Akkoord (engine/beginnerStart.ts#resolveBeginnerBuild).
+      return s.beginnerBuild === undefined
+        ? { value: 'Nog niet gekozen', dim: true, sub: 'Advies: Heel licht' }
+        : { value: choiceShort('opbouwStart', resolveBeginnerBuild(s.beginnerBuild)) };
     case 'richting': {
       const w = settingBudget(s);
       return w.chosen ? { value: DIRECTIONS[w.id].label } : { value: 'Nog niet gekozen', dim: true, sub: 'Advies: Fit blijven' };

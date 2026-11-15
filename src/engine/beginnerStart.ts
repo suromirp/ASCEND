@@ -41,6 +41,24 @@ export function isBeginnerStart(choice: unknown, logs: readonly SessionLog[], st
   return trained / LOOKBACK_WEEKS < MIN_PER_WEEK;
 }
 
+// Opbouw van de start (AppSettings.beginnerBuild): heel licht (wandelen en dribbelen, het advies) of gewoon.
+// Zonder keuze gewoon: een start die al liep verandert alleen na Akkoord (docs/visie/Ontwerp beginner heel licht.md,
+// deel 5). Het eerste voorstel en het kiezen van een richting zetten heel licht in hun eigen Akkoord.
+export type BeginnerBuild = 'licht' | 'gewoon';
+export const BEGINNER_BUILD_ADVICE: BeginnerBuild = 'licht';
+export function resolveBeginnerBuild(raw: unknown): BeginnerBuild {
+  return raw === 'licht' ? 'licht' : 'gewoon';
+}
+
+// Een richting kiezen is een voorstel met Akkoord dat de start al laat zien: zonder eerdere keuze hoort heel licht
+// (het advies) erbij. Een keuze die je al maakte blijft.
+export function buildConsentPatch(settings: { beginnerBuild?: unknown }): { beginnerBuild?: BeginnerBuild } {
+  return settings.beginnerBuild === undefined ? { beginnerBuild: BEGINNER_BUILD_ADVICE } : {};
+}
+
+// De zin voor het voorstel bij heel licht: wat er in de start op de plek van je lopen staat.
+export const WALK_JOG_LINE = 'In die weken wandel en dribbel je om de beurt, op de plek van de rustige en de lange duurloop. Elke week dribbel je iets meer.';
+
 // De start beslaat hele golven: bij golven van drie of zes weken zijn het er zes.
 export function beginnerWeeksFor(waveLength: number): number {
   return Math.ceil(BEGINNER_WEEKS / waveLength) * waveLength;

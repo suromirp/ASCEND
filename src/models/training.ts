@@ -125,7 +125,8 @@ export type TemplateRole =
   | 'counted_sport' // a sport ASCEND does not plan but that counts (engine/sportTemplate.ts), never stored
   | 'strength' // a strength training (Hoeveel per soort, data/trainingKinds.ts)
   | 'ruck' // a walk with a backpack (Hoeveel per soort)
-  | 'descent'; // the session itself is a descent stimulus (engine/descentClock.ts)
+  | 'descent' // the session itself is a descent stimulus (engine/descentClock.ts)
+  | 'start_only'; // only the beginnersstart plans it (wandelen en dribbelen, engine/programLayout.ts BEGINNER_SWAPS)
 
 // The reusable definition of a workout — "what" a session is, independent of
 // when it happens.

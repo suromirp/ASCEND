@@ -4,7 +4,7 @@ import type { KindAmountMap } from '../data/trainingKinds';
 import type { Program } from '../models/program';
 import { ambitionFactor, type Ambition } from './ambitionLevels';
 import { addDays } from '../utils/dates';
-import { progressionTarget, readRunBuild } from './programLayout';
+import { progressionTarget, readRunBuild, START_STAND_INS } from './programLayout';
 import { longRunCapAfterRace } from './runGrowth';
 import { idHasRole } from './templateRoles';
 
@@ -74,6 +74,10 @@ export interface RecentSessionMaxima {
   // A race in the last week: the long run toward the days after it is at most half the race
   // (engine/runGrowth.ts#longRunCapAfterRace). The race itself never counts as the reference above.
   afterRace?: { date: string; durationMinutes: number }[];
+  // De beginnersstart (engine/programLayout.ts#START_STAND_INS): het langste wandelen en dribbelen in 30 dagen, onder
+  // de loop waarvan het de plek had. De eerste rustige en lange duurloop na de start meten daaraan, niet aan niets:
+  // wie in week 4 op 45 minuten zat groeit vanaf 45, wie een week oversloeg vanaf wat hij echt deed.
+  fromStart?: Record<string, number>;
 }
 let recentMaxima: RecentSessionMaxima = { asOf: '', minutesByTemplate: {} };
 export function setRecentSessionMaxima(maxima: RecentSessionMaxima): void {
@@ -93,6 +97,7 @@ export function recentSessionMaxima(
   const from = addDays(asOf, -30);
   const minutesByTemplate: Record<string, number> = {};
   const afterRace: { date: string; durationMinutes: number }[] = [];
+  const fromStart: Record<string, number> = {};
   for (const l of logs) {
     if (l.completedDate < from || l.completedDate > asOf || !(l.durationMinutes > 0)) continue;
     // A race is not the longest run to measure the next one against: it was run at race pace.
@@ -102,8 +107,10 @@ export function recentSessionMaxima(
       continue;
     }
     minutesByTemplate[l.templateId] = Math.max(minutesByTemplate[l.templateId] ?? 0, l.durationMinutes);
+    const standsFor = START_STAND_INS[l.templateId];
+    if (standsFor) fromStart[standsFor] = Math.max(fromStart[standsFor] ?? 0, l.durationMinutes);
   }
-  return { asOf, minutesByTemplate, ...(afterRace.length > 0 ? { afterRace } : {}) };
+  return { asOf, minutesByTemplate, ...(afterRace.length > 0 ? { afterRace } : {}), ...(Object.keys(fromStart).length > 0 ? { fromStart } : {}) };
 }
 
 // Hoeveel per soort (engine/kindAmount.ts): Minder or Meer per kind of training, set on every refresh like
@@ -180,7 +187,11 @@ export function resolveEffectiveFullDuration(
   if (!fixed && target && currentAmbition !== 'standaard') {
     base = Math.max(15, Math.round((base * ambitionFactor(currentAmbition, /rust/i.test(target.step.note ?? ''))) / 5) * 5);
   }
-  const longest = recentMaxima.minutesByTemplate[template.id];
+  const own = recentMaxima.minutesByTemplate[template.id];
+  const start = recentMaxima.fromStart?.[template.id];
+  const longest = Math.max(own ?? 0, start ?? 0) || undefined;
+  // Na de beginnersstart: de maat is wat je in de start deed, zonder de bodem van de eerste week hieronder.
+  const afterStart = start !== undefined && start >= (own ?? 0);
   // Hoeveel per soort: 15 procent korter of langer, rounded to 5 minutes. A session without a build-up
   // (strength) is held to 110% of its longest in 30 days here; one with a build-up by the cap below.
   const kind = fixed ? undefined : trainingKindOf(template);
@@ -189,7 +200,7 @@ export function resolveEffectiveFullDuration(
   if (!fixed && target && longest && scheduledDate >= recentMaxima.asOf && scheduledDate <= addDays(recentMaxima.asOf, SPIKE_CAP_DAYS)) {
     // Never below the first "Wennen" step: one short session must not pull
     // the whole build down.
-    const floor = (target.phaseSteps.find((s) => s.weekInPhase === 1) ?? target.step).targetMinutes;
+    const floor = afterStart ? 0 : (target.phaseSteps.find((s) => s.weekInPhase === 1) ?? target.step).targetMinutes;
     // Only the setting "Sneller dan het onderzoek" (Program.runBuild.spikeLimit) lifts the 110% of the long run.
     const limit = template.id === LONG_RUN_ID ? readRunBuild(program?.runBuild)?.spikeLimit ?? SESSION_SPIKE_LIMIT : SESSION_SPIKE_LIMIT;
     const cap = Math.max(floor, Math.round((longest * limit) / 5) * 5);
