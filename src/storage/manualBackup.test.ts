@@ -402,15 +402,16 @@ describe('de eerste tik na het openen', () => {
   });
 
   it('na een gelukte back-up gaan eigen resten van die naam weg, en verder niets', async () => {
-    mem.files.set(`ASCEND/${NAME}.oud1.tmp`, 'half');
-    mem.files.set(`ASCEND/${NAME}.oud1.old`, 'opzij');
+    mem.files.set(`ASCEND/${NAME}.mi0abc12x9k3.tmp`, 'half');
+    mem.files.set(`ASCEND/${NAME}.mi0abc12x9k3.old`, 'opzij');
     mem.files.set('ASCEND/notities.txt', 'van jou');
     // Geen rest van een poging: iemand hernoemde zelf een back-up. Die blijft.
     mem.files.set(`ASCEND/${NAME}.old`, 'zelf hernoemd');
     mem.files.set(`ASCEND/${NAME}.mijn kopie.old`, 'zelf hernoemd');
+    mem.files.set(`ASCEND/${NAME}.kopie.old`, 'zelf hernoemd');
     mem.files.set('ASCEND/ascend-2026-11-01-09u00.ascend-backup.json.x.old', 'andere naam');
     expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: NAME });
-    expect(names().sort()).toEqual(['ASCEND/ascend-2026-11-01-09u00.ascend-backup.json.x.old', `ASCEND/${NAME}`, `ASCEND/${NAME}.old`, `ASCEND/${NAME}.mijn kopie.old`, 'ASCEND/notities.txt'].sort());
+    expect(names().sort()).toEqual(['ASCEND/ascend-2026-11-01-09u00.ascend-backup.json.x.old', `ASCEND/${NAME}`, `ASCEND/${NAME}.old`, `ASCEND/${NAME}.mijn kopie.old`, `ASCEND/${NAME}.kopie.old`, 'ASCEND/notities.txt'].sort());
   });
 
   it('het tijdelijke bestand lukt niet: de zin over ruimte, en er blijft niets achter', async () => {

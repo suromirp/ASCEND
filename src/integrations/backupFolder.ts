@@ -92,6 +92,9 @@ function asBackupError(err: unknown, step: BackupWriteStep): AutoBackupError {
 
 const RENAME_PAUSE_MS = 250;
 const STAT_PAUSE_MS = 300;
+// De rest van een poging: <naam>.<id van de poging>.tmp of .old. Het id is de tijd en een paar willekeurige
+// tekens, samen minstens tien; een bestand dat iemand zelf hernoemde (<naam>.kopie.old) valt er niet onder.
+const ATTEMPT_REST = /^\.[a-z0-9]{10,}\.(tmp|old)$/;
 const pause = (ms: number) => (ms > 0 ? new Promise<void>((r) => setTimeout(r, ms)) : Promise.resolve());
 
 // Hoe vaak en hoe lang nakijken wacht op een bestand dat er net staat.
@@ -320,7 +323,7 @@ function androidFolder(): AppBackupFolder {
       const listed = await fs.Filesystem.readdir({ path: APP_BACKUP_DIR, directory: dir });
       for (const file of listed.files) {
         // Alleen resten van pogingen op precies deze naam: <naam>.<poging>.tmp of .old.
-        if (!file.name.startsWith(`${name}.`) || !/^\.[a-z0-9]+\.(tmp|old)$/.test(file.name.slice(name.length))) continue;
+        if (!file.name.startsWith(`${name}.`) || !ATTEMPT_REST.test(file.name.slice(name.length))) continue;
         await fs.Filesystem.deleteFile({ path: path(file.name), directory: dir }).catch(() => undefined);
       }
     },
