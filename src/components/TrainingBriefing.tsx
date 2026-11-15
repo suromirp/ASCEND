@@ -507,7 +507,7 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
   }
   const other = order.find((s) => s !== picked && plans[s].ok);
   const otherOutcome = other ? plans[other] : undefined;
-  const otherWarn = otherOutcome?.ok ? otherLoopWarn(otherOutcome.proposal, target) : undefined;
+  const otherWarn = otherOutcome?.ok ? otherLoopWarn(otherOutcome.proposal, target, pickedOutcome?.ok ? pickedOutcome.proposal : undefined) : undefined;
   return (
     <div className="flex flex-col gap-2">
       {model.mapStartPoint && (

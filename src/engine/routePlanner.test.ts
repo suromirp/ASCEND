@@ -377,6 +377,9 @@ describe('de woorden van een wandeling', () => {
     expect(notes.some((n) => n.startsWith('Langer dan de'))).toBe(false);
     expect(loopLines(p, target, notes).warn).toContain('Deze lus duurt ongeveer 6 uur 10, langer dan de 3 uur van je training.');
     expect(otherLoopWarn(p, target)).toBe('Deze lus duurt ongeveer 6 uur 10, langer dan de 3 uur van je training.');
+    // Is de gekozen lus ook te lang, dan zegt alleen die het: één waarschuwing per kaart.
+    expect(otherLoopWarn(p, target, p)).toBeUndefined();
+    expect(otherLoopWarn(p, target, loop(8.4, 0, { targetAscentM: undefined }))).toBe('Deze lus duurt ongeveer 6 uur 10, langer dan de 3 uur van je training.');
     // De grens is 12 procent boven de duur: 13 km vlak (3 uur 15) nog niet, 13,6 km vlak (3 uur 25) wel.
     const flat = { ...hike, askedAscentM: undefined, ascentM: 0 };
     expect(proposalNotes(loop(13, 0, { targetAscentM: undefined }), flat).some((n) => n.startsWith(LONGER_WALK_LEAD))).toBe(false);

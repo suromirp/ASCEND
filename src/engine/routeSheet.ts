@@ -165,8 +165,11 @@ export function otherLoopLine(name: string, p: RouteProposal, target?: RouteTarg
 
 // De waarschuwing in de ingeklapte rij van de andere lus, in amber zoals bij de gekozen lus: een stuk
 // langs een grote weg (dat weet je voor je op Kies tikt), anders te kort voor de training. Anders niets.
-export function otherLoopWarn(p: RouteProposal, target: RouteTarget): string | undefined {
+// Te lang voor de wandeling alleen als de gekozen lus dat niet al in amber zegt: de tijd staat al in de
+// regel zelf, en twee keer dezelfde waarschuwing op één kaart is ruis (Lookout, 15 november).
+export function otherLoopWarn(p: RouteProposal, target: RouteTarget, picked?: RouteProposal): string | undefined {
   if ((p.bigRoadM ?? 0) >= BIG_ROAD_NOTE_M) return bigRoadLine(p.bigRoadM as number);
   if (tooShort(p, target)) return shortLine(p, target);
+  if (picked && walkTooLong(picked, target)) return undefined;
   return walkTooLong(p, target) ? longerWalkLine(loopMinutes(p, target) as number, target.minutes as number) : undefined;
 }
