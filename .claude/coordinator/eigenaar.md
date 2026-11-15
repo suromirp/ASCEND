@@ -31,6 +31,12 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Net live
 
+### 15 november 12:20
+- Alles terug naar het advies: wat je planning raakt komt eerst als voorstel met Akkoord of Liever niet.
+- Zoeken in Instellingen toont de waarde van de instelling zelf.
+- Krachttraining aan of uit op het scherm Sporten, met een waarschuwing.
+- Wandelen en StairMaster op je horloge: een regel met vaste bpm uit je hardloopzones; bij korte blokken "Tussen de blokken onder N bpm". Elke wandelworkout gaat één keer opnieuw naar je intervals.icu-agenda.
+
 ### 15 november 10:43
 - Een wandellus zegt hoe lang hij duurt, en waarschuwt één keer in amber als hij duidelijk langer is dan je training.
 - De Werkkaart in de nieuwe vorm.
