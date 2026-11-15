@@ -1,0 +1,55 @@
+# Kennisindex: week
+
+Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md).
+
+## Begin hier
+
+- Werkbriefje: [werkbriefjes/week.md](../werkbriefjes/week.md)
+- [architectuur/week.md](../architectuur/week.md): Het lange verhaal bij de Week-tab: waarschuwingen, slepen en inhalen.
+
+## Besluiten die gelden
+
+Nieuwste eerst. Bij een besluit staat welk later besluit het deels vervangt of aanvult.
+
+- 2026-11-15 [Vervallen heeft één bron](../beslissingen/2026-11-15-vervallen-een-bron.md): Vervallen betekent overal hetzelfde: een voorbije training zonder log op een dag binnen een gemelde ziekte (tot en met de dag van beter melden) of vakantie, tocht of periode zonder sportschool.
+- 2026-11-15 [Oude sportlogs tellen ook in de weekcheck](../beslissingen/2026-11-15-oude-sportlogs-in-de-weekcheck.md): De weekcheck leest de sport van een log via `engine/sportOfLog.ts#sportOfLog`, ook voor een log uit Losse training van voor 14 november dat zijn sport alleen in het templateId noemt (`sport_padel`, `sport_custom_tennis`).
+- 2026-11-15 [Een training die bleef liggen loopt nog](../beslissingen/2026-11-15-concept-loopt-nog.md): Een voorbije geplande training waar nog een concept van in Forge ligt, heet "loopt nog".
+- 2026-11-14 [Vakantie en ziek niet gemist, race beschermd, rustiger instap](../beslissingen/2026-11-14-vakantie-en-ziek-niet-gemist.md): Een vakantie, tocht of periode zonder sportschool die je zelf meldde, telt nooit als gemist. Deels vervangen door: 2026-11-15-vervallen-een-bron.
+- 2026-11-12 [Een volle week na gemiste dagen: eerst vragen, met advies](../beslissingen/2026-11-12-week-na-gemiste-dagen.md): Valt er in je week een training weg en is de rest van de week daarna te vol, dan doet ASCEND één voorstel met een advies welke training vervalt, de reden in één zin en een tweede keuze (regel WEEK-FULL, `src/engine/fullWeek.ts`).
+- 2026-11-12 [Week: de dagen eerst, één kaart erboven, één lijst eronder](../beslissingen/2026-11-12-week-minimaal.md): De tab Week en het blad van een training worden gebouwd volgens `docs/visie/Ontwerp Week minimaal.md`.
+- 2026-11-12 [Je week tot nu: één blik, het voorstel als rij](../beslissingen/2026-11-12-je-week-tot-nu.md): Het blad Je week tot nu wordt gebouwd volgens `docs/visie/Ontwerp Je week tot nu.md`: drie blokken (de week, waar je op let, volgende week) en daaronder één lijst. Deels vervangen door: 2026-11-12-week-minimaal.
+- 2026-11-10 [Week zegt dat jij koos om een beendag te laten staan](../beslissingen/2026-11-10-week-melding-na-keuze.md): Koos je Benen fris en blijft een zware beendag staan, dan zegt de melding in Week dat jij dat koos en is het voorstel een gewone tekstknop.
+- 2026-11-10 [De regel bij te dicht op elkaar vraagt wat de controle vraagt](../beslissingen/2026-11-10-beendagen-afstand-tekst.md): De melding in Week over twee zware beendagen rekent het aantal dagen ertussen met dezelfde som als de controle zelf.
+- 2026-11-09 [Een periode in de weeklijst is een eigen paneel (variant A)](../beslissingen/2026-11-09-week-paneel.md): Een periode (vakantie, zonder sportschool, tocht, vrije dagen) staat in de weeklijst als een eigen afgerond paneel met een lichte ijsblauwe tint (`--color-period-tint`, rand `--color-period-edge`).
+- 2026-11-09 [Eén band per periode in de weeklijst](../beslissingen/2026-11-09-week-band.md): In de weeklijst staat een periode (Zonder sportschool, Vakantie, Tocht, Vrije dagen) als één band boven de eerste dag die in die week valt, niet meer als kaart per dag. Deels vervangen door: 2026-11-09-week-paneel.
+- 2026-11-05 [Een gemiste training naar later heet gewoon verplaatsen](../beslissingen/2026-11-05-inhalen-heet-verplaatsen.md): Zet je een gemiste training naar vandaag of later (slepen of het blad), dan ziet dat eruit als een gewone verplaatsing.
+- 2026-11-02 [Week opnieuw plannen](../beslissingen/2026-11-02-week-opnieuw-plannen.md): Onder de week in Week staat "Week opnieuw plannen", alleen voor de getoonde week als die vandaag of later nog dagen heeft.
+- 2026-11-02 [Vier kleine hulpmiddelen in Week en Vandaag](../beslissingen/2026-11-02-week-en-vandaag-hulp.md): Vier kleine hulpmiddelen in Week en Vandaag, elk zonder stille wijziging van je planning, waaronder Waarom staat dit hier.
+- 2026-11-02 [Een tweede lange duurloop in de week, en de laatste vrije dag](../beslissingen/2026-11-02-tweede-lange-duurloop.md): Twee zware beendagen achter elkaar (LEG-SPACING) in Week krijgen dezelfde laatste keuze als TEST-DAY: alleen als verplaatsen niets oplevert, biedt het voorstel aan om een training van jou (niveau 1) te laten gaan.
+- 2026-11-02 [Trainingen ruilen in Week](../beslissingen/2026-11-02-trainingen-wisselen.md): Twee trainingen van dezelfde week kun je van dag laten ruilen: in het actieblad met de keuze "Ruilen", en bij het slepen door een training los te laten op een dag waar precies één training staat die mag bewegen. Deels vervangen door: 2026-11-02-ruilen-zoals-verplaatsen.
+- 2026-11-02 [Een herkansing die niet doorging, en twee zware beendagen die je zelf neerzette](../beslissingen/2026-11-02-testloop-en-zware-benen.md): Een herkansing van de testloop die je oversloeg of liet liggen, telt niet als gedaan: ASCEND stelt nog één keer een test voor (regel TEST-RETRY, id `retest:<datum van de test>:opnieuw`), met Akkoord en Liever niet. Deels vervangen door: 2026-11-02-rust-voor-een-test.
+- 2026-11-02 [Rustdag deze week](../beslissingen/2026-11-02-rustdag-deze-week.md): Staat er een training op je vaste rustdag, dan heet in Week de eerste vrije dag van die week "Rustdag deze week", met de reden eronder ("je rustdag op maandag is bezet").
+- 2026-11-02 [Ruilen vraagt zoals Verplaatsen, met een keuze voor loslaten](../beslissingen/2026-11-02-ruilen-zoals-verplaatsen.md): Een ruil die vraagt, heeft in het blad dezelfde opbouw als een verplaatsing.
+- 2026-11-01 [Een vakantie bijwerken in Week](../beslissingen/2026-11-01-vakantie-bijwerken.md): Een tik op een vrije periode, vakantie of tocht in Week opent een blad waarin je de eerste en laatste dag, de soort en de notitie bijwerkt; Verwijderen staat in hetzelfde blad. Aangevuld door: 2026-11-09-planner-rond-vakantie.
+- 2026-11-01 [Een training die niet doorging](../beslissingen/2026-11-01-niet-doorgegaan.md): Een geplande training die een paar dagen voorbij is zonder log (advies: 2 dagen, instelbaar op 1, 2 of 3) krijgt één korte vraag op Vandaag: "Niet gedaan?" met Niet gedaan (de rij gaat op overgeslagen, een status), Toch gedaan (het gewone invullen) en Niet nu. Deels vervangen door: 2026-11-14-vakantie-en-ziek-niet-gemist. Aangevuld door: 2026-11-01-vandaag-volgorde.
+- 2026-10-31 [Testdag in Week](../beslissingen/2026-10-31-testdag-in-week.md): TEST-DAY (iets zwaars op de dag van een test of wedstrijd) is nu ook een melding onder "Let op" in Week, met een voorstel via `engine/weekFixProposal.ts`.
+- 2026-10-29 [Een gemiste training inhalen](../beslissingen/2026-10-29-gemiste-training-inhalen.md): Een gemiste training van deze of de vorige week kun je inhalen, in het actieblad en met de greep in Week. Deels vervangen door: 2026-11-05-inhalen-heet-verplaatsen. Aangevuld door: 2026-11-01-vandaag-volgorde.
+- 2026-10-28 [Waarschuwingen in Week](../beslissingen/2026-10-28-waarschuwingen-in-week.md): Week zegt in woorden wat er in de week niet klopt: een kaart "Let op" bovenaan, onder de lucht, en een korte tekst in de rij van elke betrokken training. Status: aangenomen (stap 1 en 2 van het ontwerp). Aangevuld door: 2026-11-02-testloop-en-zware-benen.
+- 2026-10-28 [Slepen in Week](../beslissingen/2026-10-28-slepen-in-week.md): Een training in Week verplaats je met het greepje rechts in de rij naar een andere dag van dezelfde week.
+- 2026-10-24 [Uitleg van een training later in de week alvast openen](../beslissingen/2026-10-24-uitleg-later-in-de-week.md): Het blad van een training van morgen of later heeft een rij "Hoe je het doet", boven "Vandaag al doen" en "Overslaan".
+- 2026-10-24 [Rustweek en herhaalde week via een voorstel, en alleen wat nog open is](../beslissingen/2026-10-24-rustweek-via-voorstel.md): Doortrainen, Rustweek terugzetten, Deze week nog een keer en Herhaling terugzetten veranderen de planning niet meer stil.
+- 2026-10-24 [Een losse training staat op Week](../beslissingen/2026-10-24-losse-training-op-week.md): Een log zonder geplande training (een losse training, bijvoorbeeld een Garmin-activiteit die je als losse training bewaarde) staat op Week op zijn dag, als gedane rij met dezelfde vormgeving als een gedane geplande training en het kleine label "zonder plan".
+- 2026-10-22 [Een herhaalde week schuift alleen de opbouw van die golf](../beslissingen/2026-10-22-week-herhalen-binnen-de-golf.md): Bij "Deze week nog een keer" krijgt de week de belasting van de week ervoor en lopen de weken erna in dezelfde golf één stap achter.
+- 2026-10-22 [Toch doen: een overgeslagen training terug op de planning](../beslissingen/2026-10-22-toch-doen.md): Het blad van een overgeslagen training heeft een knop "Toch doen".
+- 2026-10-22 [Het blad van een geplande training: eerst kiezen, dan invullen](../beslissingen/2026-10-22-actieblad-van-een-training.md): Het blad dat opent als je op een geplande training tikt, toont eerst wat het is (dag, naam, soort en minuten), één gouden knop voor de keuze die bij de dag past en daaronder de andere keuzes als rijen.
+
+## Onderzoek, ontwerpen en verslagen
+
+- [visie/Ontwerp Je week tot nu.md](../visie/Ontwerp%20Je%20week%20tot%20nu.md): Ontwerpvoorstel van 12 november 2026 voor het blad Je week tot nu; besloten in `docs/beslissingen/2026-11-12-je-week-tot-nu.md`.
+- [visie/Ontwerp Week minimaal.md](../visie/Ontwerp%20Week%20minimaal.md): Ontwerpvoorstel van 12 november 2026 voor de tab Week; besloten in `docs/beslissingen/2026-11-12-week-minimaal.md`.
+- [visie/Slepen in Week.md](../visie/Slepen%20in%20Week.md): Ontwerp voor het slepen van een training in Week; besloten in `docs/beslissingen/2026-10-28-slepen-in-week.md`.
+- [visie/Waarschuwingen in Week.md](../visie/Waarschuwingen%20in%20Week.md): Ontwerp voor waarschuwingen in woorden in Week; besloten in `docs/beslissingen/2026-10-28-waarschuwingen-in-week.md`.
+
+## Vervangen of verouderd
+
+Niets.

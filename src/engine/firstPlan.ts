@@ -149,6 +149,8 @@ export interface FirstPlanSetup {
     weekShape: WeekShape; restDay: RestWeekday; marathonRaceType?: 'half' | 'full'; marathonTargetDate?: string;
     // Zonder doel: de richting, de maandag waarop hij begint en je antwoord op de beginnersvraag.
     direction?: DirectionId; directionStart?: string; beginnerStart?: 'ja' | 'nee';
+    // De antwoorden uit de start die een instelling met een advies zetten (AppSettings.startChoices).
+    startChoices: { beginnerStart?: 'ja' | 'nee' };
   };
   allowedDays: Weekday[];
   strategy: StrengthProgramStrategy | null;
@@ -257,6 +259,7 @@ export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate
     ...week.notes,
   ].filter(Boolean);
 
+  const beginnerAnswer = direction && answers.beginner !== undefined ? (answers.beginner ? 'ja' as const : 'nee' as const) : undefined;
   return {
     title: 'Zo ziet je eerste week eruit',
     program,
@@ -264,7 +267,10 @@ export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate
     milestones,
     settings: {
       weekShape: week.shape, restDay: week.restDay, ...(marathon ? { marathonRaceType: marathon, marathonTargetDate: answers.goalDate } : {}),
-      ...(direction ? { direction, directionStart: startDate, ...(answers.beginner !== undefined ? { beginnerStart: answers.beginner ? 'ja' as const : 'nee' as const } : {}) } : {}),
+      ...(direction ? { direction, directionStart: startDate, ...(beginnerAnswer ? { beginnerStart: beginnerAnswer } : {}) } : {}),
+      // Wat je hier koos is jouw keuze, geen afwijking van het advies (engine/settingsDiff.ts#fromStart). Altijd mee,
+      // ook leeg: een nieuwe start vervangt wat een vorige start koos.
+      startChoices: beginnerAnswer ? { beginnerStart: beginnerAnswer } : {},
     },
     allowedDays: answers.allowedDays.filter((d) => d >= 1 && d <= 7).map((d) => WEEKDAY_KEYS[d - 1]),
     strategy,

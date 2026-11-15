@@ -29,6 +29,15 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Zwaar', text: 'benen en een zware loop op één dag staat apart onder Geavanceerd.' },
     ],
   },
+  krachttraining: {
+    title: 'Krachttraining',
+    lead: 'Kracht helpt bij bergtochten: sterke benen en romp vangen de klappen van het dalen op en sparen je knieën.',
+    points: [
+      { head: 'Aan', text: 'het advies. Je krachttrainingen staan in je week, op de dagen die bij je benen passen.' },
+      { head: 'Uit', text: 'er komt geen krachttraining meer in je planning, ook geen eigen gewicht. Je week houdt lopen en rust. Wat je al deed blijft staan.' },
+      { head: 'Je planning', text: 'een andere keuze is altijd eerst een voorstel met Akkoord of Liever niet.' },
+    ],
+  },
   sporten: {
     title: 'Sporten',
     lead: 'Per sport kies je wat ermee gebeurt. Verandert een keuze je planning, dan gaat dat zoals je bij Wijzigingen koos.',

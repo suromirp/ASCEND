@@ -257,6 +257,16 @@ export const PLANNING: SettingDef[] = [
     keywords: ['hardlopen', 'wandelen', 'fietsen', 'frequentie', 'keer per week', 'auto'],
   },
   {
+    id: 'krachttraining',
+    page: 'planning',
+    // Op het scherm Sporten (Planning zit op het plafond van 12 rijen): kracht staat naast je andere sporten.
+    place: { on: 'sporten' },
+    title: 'Krachttraining',
+    note: 'Aan is het advies. Uit mag: dan houdt je week lopen en rust. Een andere keuze is eerst een voorstel.',
+    keywords: ['kracht', 'krachttraining', 'sportschool', 'gym', 'uitzetten', 'zonder kracht', 'geen kracht', 'alleen lopen', 'eigen gewicht'],
+    help: true,
+  },
+  {
     id: 'hoeveel-per-soort',
     page: 'planning',
     place: { row: true },

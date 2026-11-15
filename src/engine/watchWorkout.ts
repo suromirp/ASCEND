@@ -36,6 +36,9 @@
 //   watch would only be clutter and a strength workout without exercises
 //   starts nothing useful. A rest day, the race (nothing to prescribe, you
 //   run your own race) and anything without a Garmin sport are skipped too.
+// - A walking workout (Walk or Hike) never gets a zone: intervals.icu files walking under Other, which has no
+//   zones. With "Hartslag bij wandelen" on it gets fixed beats from your running zones as a line of text above
+//   the steps instead (engine/walkHeartRate.ts, docs/beslissingen/2026-11-15-wandelen-vaste-bpm.md).
 // - The 5 km test is sent as warm-up, "5km" without a target and cool-down:
 //   a test is run by feel and a beep on a "target" would spoil it.
 
@@ -49,6 +52,8 @@ import { hrPercentTarget, type WatchHrPlan } from './watchHeartRate';
 import { resolvePlace } from './trainingPlace';
 import { getModality } from '../data/modalities';
 import { placeBrief } from '../data/placeBrief';
+import type { HeartRateSettings } from './heartRateZones';
+import { walkBpm, walkBpmText } from './walkHeartRate';
 
 export const WATCH_EXTERNAL_PREFIX = 'ascend:';
 // intervals.icu sends about the next 7 days to the watch, so that is as far
@@ -78,6 +83,10 @@ export interface WatchBuildOptions {
   places?: Record<string, string>;
   // "Eigen workout bij een andere manier" (AppSettings.watchPlaceWorkout). Absent = on; off = `places` is ignored.
   placeWorkout?: boolean;
+  // "Hartslag bij wandelen" (AppSettings.watchWalkBpm, engine/walkHeartRate.ts): your heart rate settings when it
+  // is on. A walking workout (Walk or Hike) then gets no zone target on a step, and a line with fixed beats per
+  // minute from your running zones above the steps. Absent = the walking workout as before.
+  walkHr?: HeartRateSettings;
 }
 
 export type WatchSport = 'Run' | 'Walk' | 'Hike' | 'Ride';
@@ -144,7 +153,8 @@ function stepRange(step: PlanStep, template: SessionTemplate, paces: RacePaces):
 // Steps done by feel: no target on the watch.
 const OPEN_KINDS = new Set<StepKind>(['warmup', 'cooldown', 'walk']);
 
-function hrTarget(step: PlanStep, hr?: WatchHrPlan): string | undefined {
+function hrTarget(step: PlanStep, hr?: WatchHrPlan | 'none'): string | undefined {
+  if (hr === 'none') return undefined;
   if (step.noTarget || step.kind === 'recover' || OPEN_KINDS.has(step.kind) || step.seconds < HR_MIN_SECONDS) return undefined;
   if (hr?.kind === 'bpm') {
     const percent = hrPercentTarget(hr, step.intensity);
@@ -163,7 +173,8 @@ interface WorkoutText {
 
 // The workout text for a session. `paces` is optional: without a test every
 // session runs on heart rate zones.
-function intervalsWorkoutText(plan: WorkoutPlan, template: SessionTemplate, paces?: RacePaces, hr?: WatchHrPlan): WorkoutText {
+// `hr` 'none': no heart rate target on any step (a walking workout with fixed beats in the text instead).
+function intervalsWorkoutText(plan: WorkoutPlan, template: SessionTemplate, paces?: RacePaces, hr?: WatchHrPlan | 'none'): WorkoutText {
   const target: WatchTarget = paces && PACE_SESSIONS.has(template.id) ? 'PACE' : 'HR';
   const distance = DISTANCE_STEPS[template.id];
 
@@ -241,13 +252,19 @@ export interface WatchManual {
   // Above the steps: how hard, in words.
   note?: string;
 }
-export function watchManualFor(template: SessionTemplate, plan: WorkoutPlan | undefined, stored: unknown, placeWorkout?: boolean): WatchManual | undefined {
+// `walkHr`: as WatchBuildOptions.walkHr, so a walking workout shows the same beats as the one on the watch.
+export function watchManualFor(template: SessionTemplate, plan: WorkoutPlan | undefined, stored: unknown, placeWorkout?: boolean, walkHr?: HeartRateSettings): WatchManual | undefined {
   const place = watchPlaceOf(template, stored, placeWorkout);
-  if (!plan || !place) return plan?.garmin;
+  if (!plan || !place) {
+    const sport = sportOf(template);
+    const bpm = plan?.garmin && (sport === 'Walk' || sport === 'Hike') ? walkBpm(plan, walkHr) : undefined;
+    return plan?.garmin && bpm ? { ...plan.garmin, note: walkBpmText(bpm) } : plan?.garmin;
+  }
   const named = walkingPlan(plan, template.id, place);
   const line = (s: PlanStep, indent = '') => `${indent}${s.label} · ${formatClock(s.seconds)}`;
   const lines = named.items.flatMap((it) => ('step' in it ? [line(it.step)] : [`Herhaal ${it.repeat}×`, ...it.steps.map((s) => line(s, '   '))]));
-  const note = walkingNote(named, template.id, place);
+  const bpm = walkBpm(named, walkHr);
+  const note = [walkingNote(named, template.id, place), bpm ? walkBpmText(bpm) : undefined].filter(Boolean).join(' ');
   // Zonder de naam van de manier vooraan: die staat al in de Briefing.
   return { sport: 'Wandelen', lines, note: note.slice(note.indexOf('. ') + 2) };
 }
@@ -287,11 +304,16 @@ export function buildWatchWorkout(
   const place = watchPlaceOf(template, options.places?.[session.id], options.placeWorkout);
   const type: WatchSport = place ? 'Walk' : base;
   const plan = place ? walkingPlan(raw, template.id, place) : raw;
-  const built = intervalsWorkoutText(plan, template, place ? undefined : paces, type === 'Run' ? options.hr : undefined);
+  // A walking workout: fixed beats from your running zones in the text, never a zone (engine/walkHeartRate.ts).
+  const walking = type === 'Walk' || type === 'Hike';
+  const bpm = walking ? walkBpm(plan, options.walkHr) : undefined;
+  const bpmLine = bpm ? walkBpmText(bpm) : undefined;
+  const built = intervalsWorkoutText(plan, template, place ? undefined : paces, type === 'Run' ? options.hr : walking && options.walkHr ? 'none' : undefined);
   const target = built.target;
   const prefix = WATCH_NAME_PREFIXES[options.namePrefix ?? DEFAULT_WATCH_NAME_PREFIX];
   const marked = options.namePrefix !== 'none';
-  const steps = place ? `${walkingNote(plan, template.id, place)}\n\n${built.text}` : built.text;
+  const note = [place ? walkingNote(plan, template.id, place) : undefined, bpmLine].filter(Boolean).join(' ');
+  const steps = note ? `${note}\n\n${built.text}` : built.text;
   const text = marked ? `Gepland door ASCEND voor ${formatWeekdayDayMonthNL(session.scheduledDate)}\n\n${steps}` : steps;
   const movingTimeSec = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
   const base0 = { plannedId: session.id, externalId: externalIdFor(session.id), date: session.scheduledDate, name: `${prefix}${template.name}`, type, description: text, movingTimeSec, target };

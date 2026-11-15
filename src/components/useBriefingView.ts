@@ -3,6 +3,7 @@
 // het blad van een training in Week, zodat die twee hetzelfde zeggen (de mint knop, de rij Je horloge
 // en de regel onder de rij Briefing). Rekent niets zelf.
 
+import { walkHrFromSettings } from '../engine/walkHeartRate';
 import { useState } from 'react';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
@@ -62,6 +63,8 @@ export function useBriefingInput({ template, session, date, program, storedPlace
     watchSource,
     watch: { showStatus: settings.showWatchStatus !== false, fieldsShown: watchFieldsShown(settings), model: resolveWatchModel(settings.watchModel), store: settings.watchFieldVersions, hasZonesNote: !!guide?.garminNote },
     watchStatus: session && ready ? statusOf(session, template) : undefined,
+    walkHr: walkHrFromSettings(settings),
+    placeWorkout: settings.watchPlaceWorkout,
     forecast: weather.forecast ?? undefined,
     weatherOn: showWeatherLine(settings.overviews),
     uvAltitudeOn: showUvAltitude(settings.overviews),

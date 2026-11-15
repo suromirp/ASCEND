@@ -15,7 +15,7 @@ import { cleanMorningNotice } from '../engine/morningNotice';
 import { cleanWeekNoticeTime } from '../engine/deviceNotices';
 import { cleanEveningTime } from '../engine/eveningBefore';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateSportHandling, migrateSportCounting, migrateKindAmount, migrateCustomSports, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateTestJudgments, migrateZoneAnswers, migrateWeeklyHealthCheck, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings } from './migrations';
+import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateStartChoices, migrateSportHandling, migrateSportCounting, migrateKindAmount, migrateCustomSports, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateTestJudgments, migrateZoneAnswers, migrateWeeklyHealthCheck, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings } from './migrations';
 import { normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { validCatchUp } from '../engine/catchUp';
@@ -237,7 +237,7 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   // Snelknoppen tonen bestaat niet meer (docs/beslissingen/2026-11-02-forge-herinrichting.md): een oude
   // waarde wordt stil genegeerd, het is geen fout in het bestand.
   delete s.forgeQuickButtons;
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'watchPlaceWorkout', 'stravaText', 'watchFieldsShown', 'routeProposal', 'routeAvoidBigRoads', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'fullWeekAsk', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'watchKindCheck', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'eveningBefore', 'eveningNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'tempoStablePieces', 'fuelOnTheGo', 'raceDay'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'watchPlaceWorkout', 'watchWalkBpm', 'stravaText', 'watchFieldsShown', 'routeProposal', 'routeAvoidBigRoads', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'fullWeekAsk', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'watchKindCheck', 'illnessSigns', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'eveningBefore', 'eveningNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'tempoStablePieces', 'fuelOnTheGo', 'raceDay'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -484,6 +484,18 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     const clean = migrateSportCounting(s.sportCounting);
     delete s.sportCounting;
     if (clean.value) s.sportCounting = clean.value;
+    skipped.n += clean.skipped;
+  }
+  // Krachttraining: only `false` (off) is stored; anything else is the advice (on).
+  if ('strengthTraining' in s && s.strengthTraining !== false) {
+    delete s.strengthTraining;
+    skipped.n++;
+  }
+  // The answers from the start that set a setting with an advice: known keys and values only.
+  if ('startChoices' in s) {
+    const clean = migrateStartChoices(s.startChoices);
+    delete s.startChoices;
+    if (clean.value) s.startChoices = clean.value;
     skipped.n += clean.skipped;
   }
   // Zonder doel: the choices around waves; known values stay.

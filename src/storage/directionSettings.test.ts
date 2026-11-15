@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { SettingsRepo, wipeAllData } from './database';
 import { buildBackupEnvelope } from './backupExport';
 import { normalizeBackupToCurrentModel } from './backupNormalize';
-import { migrateDirection, migrateWaveSettings } from './migrations';
+import { migrateDirection, migrateStartChoices, migrateWaveSettings } from './migrations';
 
 describe('migrateDirection', () => {
   it('houdt bekende waarden over', () => {
@@ -83,6 +83,16 @@ describe('richting en weekbudget in de back-up', () => {
     const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
     envelope.payload.settings = { ...envelope.payload.settings, beginnerStart: 'soms' };
     expect(normalizeBackupToCurrentModel(envelope).settings?.beginnerStart).toBeUndefined();
+  });
+
+  it('het antwoord uit de start reist mee, een onbekende sleutel of waarde niet (backlog Q)', async () => {
+    await SettingsRepo.set({ beginnerStart: 'nee', startChoices: { beginnerStart: 'nee' } });
+    expect(normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope()))).settings?.startChoices).toEqual({ beginnerStart: 'nee' });
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    envelope.payload.settings = { ...envelope.payload.settings, startChoices: { beginnerStart: 'soms', ambition: 'stevig' } };
+    expect(normalizeBackupToCurrentModel(envelope).settings?.startChoices).toEqual({});
+    expect(migrateStartChoices({ beginnerStart: 'ja' })).toEqual({ value: { beginnerStart: 'ja' }, skipped: 0 });
+    expect(migrateStartChoices('ja')).toEqual({ skipped: 1 });
   });
 
   it('een oudere back-up zonder deze velden importeert zoals eerst', async () => {

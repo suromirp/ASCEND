@@ -4,11 +4,6 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-### Een verse back-up voor het naspelen van Week
-- Keuzes: exporteer een back-up en zet hem in de chat van de coördinator (advies). Of: zonder back-up, dan raadt de bouwer met nagemaakte data.
-- Zonder antwoord: de bouwer begint met nagemaakte data.
-- Sinds: 15 november 10:40
-
 ### Routes wandelen: drie standaardkeuzes, gebouwd met het advies
 - Keuzes: zo laten (advies): duur gaat voor hoogtemeters, en dat is instelbaar; de wandelladder verandert alleen via Akkoord; een herstelwandeling krijgt pas een lus na een tik. Of: een van de drie anders.
 - Zonder antwoord: het blijft zoals het nu live staat.
@@ -31,9 +26,14 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Stuk of vast
 
-- Week telt anders dan hij toont: drie rode kruisen, maar "1 training gemist"; zaterdag zonder kruis; een waarschuwing over een lange loop die niet gedaan is. De volgende coördinator speelt het na zodra er een verse back-up is.
+- Week telt anders dan hij toont. Nagespeeld met uw back-up: de kruisen op vrijdag zijn overgeslagen, niet gemist; de lange loop en Heuvelintervallen zijn geruild; het inhaaladvies rekende zonder uw periode Zonder sportschool. Een bouwer maakt telling, teken en advies gelijk.
+- Back-up maken mislukt de eerste keer na het openen, de tweede keer lukt hij (het bestand krijgt dan -2). Een bouwer zoekt de oorzaak sinds 11:54.
 
 ## Net live
+
+### 15 november 10:43
+- Een wandellus zegt hoe lang hij duurt, en waarschuwt één keer in amber als hij duidelijk langer is dan je training.
+- De Werkkaart in de nieuwe vorm.
 
 ### 15 november 08:46
 - Een half afgemaakte Forge-training blijft als concept liggen (Afronden, Verder, Verwijderen) en heet "loopt nog", niet gemist.
