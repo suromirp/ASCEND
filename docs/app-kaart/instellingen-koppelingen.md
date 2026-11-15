@@ -28,4 +28,4 @@ Tekst voor Strava
 [knop: Uitleg: Tekst voor Strava]
 Titel en regel
 [knop: Geavanceerd]
-Datavelden voor je horloge, Model
+Datavelden voor je horloge, Model, Soort van een loop toetsen
