@@ -4,11 +4,6 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-### De Wachter op de nieuwe coördinator zetten
-- Keuzes: ja (advies), zeg "Zet wachter aan" en hij draait weer elk uur op :40. Of: zonder Wachter, alleen het uurlijkse nakijken van de bouwers.
-- Zonder antwoord: alleen het nakijken op :10; de Werkkaart wordt dan niet extra bewaakt.
-- Sinds: 15 november 14:20
-
 ### Routes wandelen: drie standaardkeuzes, gebouwd met het advies
 - Keuzes: zo laten (advies): duur gaat voor hoogtemeters, en dat is instelbaar; de wandelladder verandert alleen via Akkoord; een herstelwandeling krijgt pas een lus na een tik. Of: een van de drie anders.
 - Zonder antwoord: het blijft zoals het nu live staat.
