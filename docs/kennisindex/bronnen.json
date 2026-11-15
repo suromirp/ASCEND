@@ -3119,6 +3119,16 @@
    "kern": "De weekcheck leest de sport van een log via `engine/sportOfLog.ts#sportOfLog`, ook voor een log uit Losse training van voor 14 november dat zijn sport alleen in het templateId noemt (`sport_padel`, `sport_custom_tennis`).",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-15-route-grens-per-stap.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "De zoektocht naar een lus verdeelt zijn grens van 30 s: heuvels en paden hoogstens 10 s, dan verder met de cache of zonder kaart; is de tijd op, dan blijft de beste lus die er al is.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-14-geen-stille-thuis.md"
+   ]
+  },
   "docs/beslissingen/2026-11-15-routes-wandelen-standaardkeuzes.md": {
    "onderwerpen": [
     "koppelingen-en-data"

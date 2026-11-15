@@ -748,6 +748,8 @@ export function ascentNotice(p: Pick<RouteProposal, 'ascentM'>, target: RouteTar
 export function failureLine(style: RouteProposal['style'], outcome: Extract<PlanOutcome, { ok: false }>, flat: boolean): string {
   if (outcome.at === 'start') return 'Geen lus zonder pad bij je startpunt.';
   if (outcome.reason === 'nothing' || outcome.reason === 'unmapped') return style === 'simple' ? (flat ? 'Geen pad gevonden vanaf je plek.' : 'Geen helling gevonden die bij je training past.') : 'Geen lus gevonden vanaf je plek.';
+  // Bij zwak bereik houdt de zoektocht vlak voor zijn grens op en toont wat er al is: deze lus kwam niet op tijd.
+  if (outcome.reason === 'timeout') return 'De routeplanner antwoordde niet op tijd.';
   return 'De routeplanner antwoordde niet.';
 }
 
