@@ -80,7 +80,7 @@ export function locateErrorMessage(err: unknown): string {
     case 'unsupported':
       return 'Deze browser kan je locatie niet bepalen. Zoek hieronder een plaats.';
     case 'denied':
-      return 'ASCEND mag je locatie niet gebruiken. Sta het toe in de instellingen van je browser, of zoek hieronder een plaats.';
+      return 'Geen toegang tot je locatie. Sta het toe in de instellingen van je browser, of zoek hieronder een plaats.';
     case 'timeout':
       return 'Je locatie kwam niet op tijd. Probeer het nog eens, of zoek hieronder een plaats.';
     default:

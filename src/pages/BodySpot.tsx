@@ -36,7 +36,7 @@ export function BodySpotPage() {
       <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
         <PageHeader eyebrow="Lichaam" title="Plek niet gevonden" fallback="/lichaam" />
         <Card className="flex flex-col gap-3">
-          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>ASCEND kent deze plek niet. Kies er een op het figuur.</p>
+          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Deze plek is onbekend. Kies er een op het figuur.</p>
           <SecondaryButton onClick={() => navigate('/lichaam')}>Naar Lichaam</SecondaryButton>
         </Card>
       </div>

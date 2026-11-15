@@ -44,7 +44,7 @@ export const DOEL_CHOICES = {
   klaarMarge: def({
     group: 'Doel en tochten',
     title: 'Marge bij een tijdslimiet',
-    line: 'Hoeveel ruimte onder de limiet of cutoff ASCEND je gunt.',
+    line: 'Hoeveel ruimte je houdt onder de limiet of cutoff.',
     advice: 'ten' as 'ten' | 'five' | 'none',
     help: 'klaarMarge',
     options: [
@@ -68,7 +68,7 @@ export const DOEL_CHOICES = {
   afdaalklok: def({
     group: 'Doel en tochten',
     title: 'Afdaalklok',
-    line: 'Na drie weken zonder afdaling stelt ASCEND een korte trapsessie voor.',
+    line: 'Na drie weken zonder afdaling: een korte trapsessie als voorstel.',
     advice: 'advies' as 'advies' | 'altijd' | 'uit',
     help: 'afdaalklok',
     options: [
@@ -104,7 +104,7 @@ export const DOEL_CHOICES = {
   naHoofddoel: def({
     group: 'Doel en tochten',
     title: 'Na je hoofddoel',
-    line: 'Tijdens de tocht plant ASCEND nooit.',
+    line: 'Tijdens de tocht wordt nooit iets gepland.',
     advice: 'stop' as 'stop' | 'maintain',
     options: [
       { value: 'stop', label: 'Niets meer plannen', note: 'Geen training tijdens en na de tocht', short: 'Niets meer' },
@@ -150,7 +150,7 @@ export const DOEL: SettingDef[] = [
     place: { row: true },
     title: 'Zonder doel',
     search: false,
-    sheet: { eyebrow: 'Doel en tochten', title: 'Zonder doel', line: 'Hoe ASCEND je weken plant en telt als je geen doel hebt.' },
+    sheet: { eyebrow: 'Doel en tochten', title: 'Zonder doel', line: 'Hoe je weken gepland en geteld worden als je geen doel hebt.' },
     showWhen: [B.noGoal],
   },
   {
@@ -220,7 +220,7 @@ export const DOEL: SettingDef[] = [
     page: 'doel',
     place: { row: true },
     title: 'Na je hoofddoel',
-    note: 'Of ASCEND na je hoofddoel niets meer plant (advies) of onderhoudsweken. Tijdens de tocht nooit.',
+    note: 'Na je hoofddoel niets meer plannen (advies) of onderhoudsweken. Tijdens de tocht nooit.',
     keywords: ['na de gr5', 'onderhoud', 'onderhoudsweken', 'daarna', 'na het doel', 'klaar', 'voorbij'],
     help: true,
     helpKey: 'naHoofddoel',
@@ -244,7 +244,7 @@ export const DOEL: SettingDef[] = [
     page: 'doel',
     place: { row: true },
     title: 'Groei bij het rekenen',
-    note: 'Of ASCEND bij Klaar voor je doel rekent met gemiddelde groei of met de voorzichtige onderkant van de band.',
+    note: 'Of Klaar voor je doel rekent met gemiddelde groei of met de voorzichtige onderkant van de band.',
     keywords: ['klaar voor je doel', 'groei', 'voorzichtig', 'gemiddeld', 'weken werk', 'tempo', 'percentage', 'snelheid', 'band'],
     help: true,
     helpKey: 'klaarGroei',
@@ -268,7 +268,7 @@ export const DOEL: SettingDef[] = [
     page: 'doel',
     place: { row: true },
     title: 'Doeltijd aanpassen voorstellen',
-    note: 'Of ASCEND na een testloop een andere doeltijd voorstelt. Eén Liever niet geldt voor dat doel tot je de doeltijd zelf verandert.',
+    note: 'Of je na een testloop een andere doeltijd als voorstel krijgt. Eén Liever niet geldt voor dat doel tot je de doeltijd zelf verandert.',
     keywords: ['doeltijd', 'voorstel', 'testloop', 'wedstrijd', 'liever niet', 'ambitie', 'hardlopen', 'tijd'],
     help: true,
     helpKey: 'doeltijdVoorstel',
@@ -316,7 +316,7 @@ export const DOEL: SettingDef[] = [
     place: { row: true },
     title: 'Tochten',
     search: false,
-    sheet: { eyebrow: 'Doel en tochten', title: 'Tochten', line: 'Wat ASCEND doet rond een tocht.' },
+    sheet: { eyebrow: 'Doel en tochten', title: 'Tochten', line: 'Wat er gebeurt rond een tocht.' },
     help: true,
     helpKey: 'bundelTochten',
     showWhen: [B.goalOrTrek],
@@ -358,7 +358,7 @@ export const DOEL: SettingDef[] = [
     page: 'doel',
     place: { in: 'bundel-tochten' },
     title: 'Afdaalklok',
-    note: 'Na 21 dagen zonder afdaling stelt ASCEND een korte trapsessie voor, en voor een bergtocht nog één bekende afdaling.',
+    note: 'Na 21 dagen zonder afdaling komt een korte trapsessie als voorstel, en voor een bergtocht nog één bekende afdaling.',
     keywords: ['afdalen', 'afdaling', 'dalen', 'bergaf', 'trap', 'trappen', 'trapsessie', 'spierpijn', 'bovenbenen', 'tocht', 'tochten', 'klok', '21 dagen'],
     help: true,
     choice: { key: 'afdaalklok', def: DOEL_CHOICES.afdaalklok },

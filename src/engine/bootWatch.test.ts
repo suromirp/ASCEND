@@ -93,7 +93,7 @@ describe('als het openen hangt', () => {
   it('antwoordt de opslag niet, dan zegt het scherm wat je doet en dat je gegevens blijven', () => {
     const lines = bootStuckLines('migraties', 'seedIfEmpty', 'silent').join(' ');
     expect(lines).toContain('migraties, onderdeel seedIfEmpty (1 van');
-    expect(lines).toContain('ergens anders open of is vastgelopen');
+    expect(lines).toContain('ander venster open, of is iets vastgelopen');
     expect(lines).toContain('Apps, Chrome, Geforceerd stoppen');
     expect(lines).toContain('Je gegevens blijven staan');
   });

@@ -40,7 +40,7 @@ const MESSAGES: Record<Exclude<OpenMeteoErrorKind, 'input'>, string> = {
   rate: 'Open-Meteo vraagt even te wachten met opnieuw proberen. Probeer het over een kwartier nog eens.',
   server: 'Open-Meteo heeft op dit moment een storing. Probeer het later nog eens; je eigen gegevens in ASCEND zijn niet geraakt.',
   network: 'Geen verbinding met Open-Meteo. Controleer je internet en probeer het later opnieuw.',
-  response: 'Open-Meteo gaf een antwoord dat ASCEND niet begrijpt. Probeer het later nog eens.',
+  response: 'Open-Meteo gaf een onleesbaar antwoord. Probeer het later nog eens.',
 };
 
 // Two decimals is about a kilometre: enough for the weather, not an address.

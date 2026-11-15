@@ -396,7 +396,7 @@ const MOUNTAINEERING: GoalKindDefinition = {
       why: 'Hutten-tochten van twee tot vier dagen vragen herhaalde lange dagen.',
     },
   ],
-  caution: 'Dit meet je benen en je uithouding, niet je ervaring op hoogte of op een gletsjer. Volg een cursus van een bergsportvereniging of ga met een gediplomeerde berggids, en overleg bij een medische vraag met een arts. ASCEND geeft geen hoogteadvies.',
+  caution: 'Dit meet je benen en je uithouding, niet je ervaring op hoogte of op een gletsjer. Volg een cursus van een bergsportvereniging of ga met een gediplomeerde berggids, en overleg bij een medische vraag met een arts. Hoogteadvies staat hier niet in.',
 };
 
 const RUN_VARIANTS: VariantSpec[] = [
@@ -705,7 +705,7 @@ const STRONGER: GoalKindDefinition = {
       need: s({ from: 'external' }, 'matig', B('10 (4) meter 1: gewicht maal herhalingen, geschat maximum (KR-1)')),
       measure: 'Je beste set van de laatste 4 weken per hoofdoefening, omgerekend naar een geschat maximum.',
       full: 'Het gat tussen je geschatte maximum en dat van je doel (gewicht maal herhalingen), in weken werk bij de groei uit je instelling (advies gemiddeld). Bij tien weken staat de meter op 50%.',
-      why: 'Het toont "nog 7 kg voor 5 herhalingen", nooit "je max is". Het tempo hangt af van hoe lang je deze oefening al logt; het blad zegt welk niveau ASCEND neemt.',
+      why: 'Het toont "nog 7 kg voor 5 herhalingen", nooit "je max is". Het tempo hangt af van hoe lang je deze oefening al logt; het blad zegt welk niveau geldt.',
     },
     {
       id: 'hardeSets', label: 'Harde sets per spiergroep', type: 'volume_of_trend', metric: 'extern', unit: 'aandeel', sports: ['strength'], windowDays: s(28, 'matig', B('10 (4) meter 2')),
@@ -716,7 +716,7 @@ const STRONGER: GoalKindDefinition = {
     },
     volhouden(),
   ],
-  caution: 'De snelheid van krachtwinst is niet vastgesteld. ASCEND rekent nooit om van de ene oefening naar de andere.',
+  caution: 'De snelheid van krachtwinst is niet vastgesteld. Er wordt nooit omgerekend van de ene oefening naar de andere.',
 };
 
 const FIT: GoalKindDefinition = {

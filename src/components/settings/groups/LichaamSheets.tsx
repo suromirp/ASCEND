@@ -71,7 +71,7 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
     try {
       const r = await askHealthConnectWeight();
       if (r.status === 'ok') setHcNote(null);
-      else if (r.status === 'denied') setHcNote({ text: 'Je gewicht mag ASCEND nog niet lezen. Vraagt Android het niet meer, sta het dan toe in Health Connect zelf.', open: true });
+      else if (r.status === 'denied') setHcNote({ text: 'Nog geen toestemming om je gewicht te lezen. Vraagt Android het niet meer, sta het dan toe in Health Connect zelf.', open: true });
       else if (r.status === 'error') setHcNote({ text: r.message });
       else setHcNote({ text: 'Health Connect werkt alleen in de Android-app van ASCEND.' });
     } finally {
@@ -172,7 +172,7 @@ export function WeightSheet({ onClose, health, reload }: { onClose: () => void; 
 
             {askWeight && (
               <div role="status">
-                <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }}>{hcNote?.text ?? 'Health Connect staat aan, maar ASCEND mag je gewicht nog niet lezen.'}</p>
+                <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }}>{hcNote?.text ?? 'Health Connect staat aan, maar er is nog geen toestemming om je gewicht te lezen.'}</p>
                 <div className="st-hint" style={{ marginTop: 0, marginLeft: 0 }}>
                   {hcNote?.open ? (
                     <TextButton onClick={() => void openHealthConnectSettings().then((ok) => !ok && setHcNote({ text: 'Health Connect ging niet open. Je vindt het in de instellingen van je telefoon.' }))}>Health Connect openen</TextButton>

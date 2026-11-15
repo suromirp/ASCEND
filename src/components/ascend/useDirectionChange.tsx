@@ -74,7 +74,7 @@ export function useDirectionChange(): {
       () => planHorizonChange({
         title: directionChangeTitle(id),
         why: 'Volgt je richting.',
-        explanation: 'Je richting bepaalt hoe ASCEND je weken plant als je geen doel hebt. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
+        explanation: 'Zonder doel bepaalt je richting hoe je weken gepland worden. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
         trigger: 'direction_changed',
         settings: { ...patch, ...kracht.settings },
         ...kracht.block,

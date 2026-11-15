@@ -120,7 +120,7 @@ export function planRestDayChange(input: RestDayPlanInput): RestDayPlan {
     consequences: items.length === 0
       ? 'Je planning hoefde niet te veranderen.'
       : `${items.length === 1 ? 'Eén training schuift' : `${items.length} trainingen schuiven`} naar de dag die ze in de week met je nieuwe rustdag hebben, met genoeg afstand tussen zware dagen.`,
-    explanation: 'Een andere rustdag verandert je planning nooit ongemerkt. ASCEND laat zien wat er verschuift, ook deze week, en past het pas toe na jouw akkoord. Wat je zelf verplaatste of al afvinkte blijft staan.',
+    explanation: 'Een andere rustdag verandert je planning nooit ongemerkt. Je ziet eerst wat er verschuift, ook deze week; het gaat pas in na jouw akkoord. Wat je zelf verplaatste of al afvinkte blijft staan.',
     createdAt: new Date().toISOString(),
   };
   return { restDay, proposal, near };

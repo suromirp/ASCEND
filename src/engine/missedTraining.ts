@@ -317,7 +317,7 @@ export function lapsedLine(kind: 'ill' | 'away', sessions: readonly MissedSessio
 export function autoSkipNotice(skipped: readonly MissedSession[], days: number): { title: string; lines: string[]; why: string } {
   const title = skipped.length === 1 ? `${skipped[0].template.name} overgeslagen` : `${skipped.length} trainingen overgeslagen`;
   const lines = skipped.map((m) => `${askLine(m.session, m.template)} overgeslagen`);
-  const why = `Je koos bij Training die niet doorging voor Zelf overslaan. Na ${days === 1 ? '1 dag' : `${days} dagen`} was er nog niets gelogd, dus zette ASCEND ${skipped.length === 1 ? 'hem' : 'ze'} op overgeslagen. Er is geen training verzonnen en je historie blijft zoals hij was. Met Ongedaan maken ${skipped.length === 1 ? 'staat hij' : 'staan ze'} weer open.`;
+  const why = `Je koos bij Training die niet doorging voor Zelf overslaan. Na ${days === 1 ? '1 dag' : `${days} dagen`} was er nog niets gelogd, dus ${skipped.length === 1 ? 'staat hij' : 'staan ze'} op overgeslagen. Er is geen training verzonnen en je historie blijft zoals hij was. Met Ongedaan maken ${skipped.length === 1 ? 'staat hij' : 'staan ze'} weer open.`;
   return { title, lines, why };
 }
 

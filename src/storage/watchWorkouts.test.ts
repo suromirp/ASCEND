@@ -355,7 +355,7 @@ describe('"Eén training testen"', () => {
     const { today } = await setup();
     const result = await sendNextWatchWorkout({ fetchImpl: fakeAgenda({ failWith: 403 }).fn, today });
     expect(result.status).toBe('error');
-    expect(result.status === 'error' && result.message).toMatch(/geen trainingen in je agenda/);
+    expect(result.status === 'error' && result.message).toMatch(/geen recht om trainingen in je agenda/);
   });
 
   it('can be taken away again', async () => {

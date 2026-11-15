@@ -7,7 +7,7 @@ import type { SettingsHelp } from '../../../data/settingsHelp';
 export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
   trainingstijd: {
     title: 'Trainingstijd per dag',
-    lead: 'Hoeveel tijd je normaal per dag hebt. ASCEND kiest dagen waar de training in past en zet er geen tweede training bij als het niet past. Een beetje ruimte erboven mag.',
+    lead: 'Hoeveel tijd je normaal per dag hebt. Trainingen komen op dagen waar ze in passen, zonder tweede training als het niet past. Een beetje ruimte erboven mag.',
     points: [
       { head: 'Veranderen', text: 'je planning verandert zoals je bij Wijzigingen koos: eerst een voorstel, of meteen met een melding en ongedaan maken.' },
     ],
@@ -22,20 +22,20 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
   },
   meerdere: {
     title: 'Twee trainingen per dag',
-    lead: 'Mag ASCEND twee trainingen op één dag plannen, als je tijd het toelaat?',
+    lead: 'Twee trainingen op één dag, als je tijd het toelaat?',
     points: [
-      { head: 'Automatisch', text: 'ASCEND beslist op je tijdbudget per dag.' },
+      { head: 'Automatisch', text: 'Je tijdbudget per dag beslist.' },
       { head: 'Nee', text: 'nooit meer dan één training per dag.' },
       { head: 'Zwaar', text: 'benen en een zware loop op één dag staat apart onder Geavanceerd.' },
     ],
   },
   sporten: {
     title: 'Sporten',
-    lead: 'Per sport kies je hoe ASCEND ermee omgaat. Verandert een keuze je planning, dan gaat dat zoals je bij Wijzigingen koos.',
+    lead: 'Per sport kies je wat ermee gebeurt. Verandert een keuze je planning, dan gaat dat zoals je bij Wijzigingen koos.',
     points: [
-      { head: 'Plan dit voor mij', text: 'ASCEND zet het in je week, op dagen die bij je benen passen. Alleen voor hardlopen, wandelen en fietsen.' },
+      { head: 'Plan dit voor mij', text: 'Het komt in je week, op dagen die bij je benen passen. Alleen voor hardlopen, wandelen en fietsen.' },
       { head: 'Telt mee als ik het doe', text: 'je plant het zelf. Wat je doet telt mee voor je benen en je week.' },
-      { head: 'Negeren', text: 'ASCEND doet er niets mee. Je kunt het wel loggen.' },
+      { head: 'Negeren', text: 'Er gebeurt niets mee. Je kunt het wel loggen.' },
     ],
   },
   'hoeveel-per-soort': {
@@ -49,19 +49,19 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
   },
   'bundel-sporten-tellen': {
     title: 'Hoe sporten meetellen',
-    lead: 'Zwemmen, padel en voetbal plant ASCEND niet, maar ze kunnen meetellen voor je benen en je week. Wat een sport met je benen doet is afgeleid uit onderzoek en niet getoetst.',
+    lead: 'Zwemmen, padel en voetbal komen niet in je planning, maar ze kunnen meetellen voor je benen en je week. Wat een sport met je benen doet is afgeleid uit onderzoek en niet getoetst.',
     points: [
       { head: 'Vragen bij een nieuwe sport', text: 'komt er van je horloge een sport die je nog niet koos, dan vraagt Vandaag hoe hij telt. Tot je antwoordt telt hij niet mee. Uit: hij telt meteen mee.' },
-      { head: 'Vragen hoe zwaar het was', text: 'Rustig, Pittig, Zwaar of Heel zwaar. Hoe zwaarder, hoe meer het telt voor je benen. Uit: ASCEND neemt de gebruikelijke zwaarte en rekent een tikje voorzichtiger.' },
+      { head: 'Vragen hoe zwaar het was', text: 'Rustig, Pittig, Zwaar of Heel zwaar. Hoe zwaarder, hoe meer het telt voor je benen. Uit: de gebruikelijke zwaarte telt, een tikje voorzichtiger.' },
       { head: 'Rust na een zware sport', text: 'Ruim houdt na een voetbalwedstrijd 72 uur en na padel of een voetbaltraining 48 uur vrij van zware beenkracht. Korter maakt dat 48 en 24 uur. Het bewijs voor recreanten is matig. De 72 uur komt van onderzoek bij profs. Staat een beendag te dicht na je sport, dan zie je in Week een voorstel.' },
     ],
   },
   wijzigingen: {
     title: 'Wijzigingen',
-    lead: 'Wie beslist als je planning verandert: jij, of bij kleine dingen ASCEND.',
+    lead: 'Wanneer een wijziging in je planning eerst een vraag is: altijd, of alleen bij grote dingen.',
     points: [
-      { head: 'Vraag eerst', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Alleen de weekcontrole zet wat ASCEND zelf plande meteen recht, met de melding Planning bijgewerkt en ongedaan maken.' },
-      { head: 'Deels zelf', text: 'weken verder weg past ASCEND zelf aan, met een melding. Deze en volgende week, of iets schrappen, vraagt altijd eerst.' },
+      { head: 'Vraag eerst', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Alleen wat vanzelf gepland was, zet de weekcontrole meteen recht, met de melding Planning bijgewerkt en ongedaan maken.' },
+      { head: 'Deels zelf', text: 'weken verder weg passen zich vanzelf aan, met een melding. Deze en volgende week, of iets schrappen, vraagt altijd eerst.' },
       { head: 'Alles zelf', text: 'alles meteen, met een melding en ongedaan maken.' },
     ],
   },
@@ -85,7 +85,7 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
   },
   twijfeltest: {
     title: 'Twijfeltest eerst vragen',
-    lead: 'Is een testloop duidelijk trager dan je vorige, dan vraagt ASCEND eerst of hij meetelt voor je tempo\'s.',
+    lead: 'Is een testloop duidelijk trager dan je vorige, dan komt eerst de vraag of hij meetelt voor je tempo\'s.',
     points: [
       { head: 'Waarom', text: 'fietsen vooraf, wind of vermoeide benen maken een test trager. Zonder antwoord blijven je tempo\'s die van je vorige test.' },
       { head: 'Telt mee of niet', text: 'bij Telt mee eerst een voorstel, pas na Akkoord verandert er iets. Telt niet mee laat de test in je logboek, maar hij telt niet voor je tempo\'s en je voorspelling.' },
@@ -96,41 +96,41 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
     title: 'Stilstaan bij een testloop',
     lead: 'Staat je horloge niet stil als jij voor een stoplicht wacht, dan loopt de klok door in je snelste 5 km.',
     points: [
-      { head: 'Niet meetellen', text: 'de tijd dat je stilstond telt niet in je snelste 5 km. ASCEND zegt hoe vaak en hoelang. Na meer dan een minuut of meer dan 3 stops zegt ASCEND dat de test iets te gunstig is.' },
+      { head: 'Niet meetellen', text: 'de tijd dat je stilstond telt niet in je snelste 5 km. Je ziet hoe vaak en hoelang. Na meer dan een minuut of meer dan 3 stops staat erbij dat de test iets te gunstig is.' },
       { head: 'Meetellen', text: 'de klok loopt door. Pauzeert je horloge vanzelf, dan telt een stuk met zo\'n gat niet mee.' },
-      { head: 'Je tempo\'s', text: 'veranderen niet vanzelf. Verandert er door het stilstaan een tempo, dan vraagt ASCEND eerst Akkoord in het logblad.' },
+      { head: 'Je tempo\'s', text: 'veranderen niet vanzelf. Verandert er door het stilstaan een tempo, dan komt eerst de vraag om Akkoord in het logblad.' },
     ],
   },
   'nieuwe-test': {
     title: 'Nieuwe test voorstellen bij stilstand',
-    lead: 'Stond je veel stil tijdens je testloop, dan stelt ASCEND een nieuwe poging voor.',
+    lead: 'Stond je veel stil tijdens je testloop, dan krijg je een nieuwe poging als voorstel.',
     points: [
       { head: 'Wanneer', text: 'meer dan een minuut stilstand of meer dan 3 keer stilstaan in je snelste 5 km, of een test die nog op je antwoord wacht.' },
       { head: 'Wat er gebeurt', text: 'je eerstvolgende harde loop, minstens 3 dagen later, wordt een testloop van 5 km. Er komt geen training bij. Wat in de weg staat schuift mee in hetzelfde voorstel. Een zware beendag of lange duurloop kan daarbij vervallen.' },
-      { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet vraagt ASCEND het niet meer voor deze test. Is er binnen 10 dagen geen goede dag, dan zegt ASCEND niets.' },
+      { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet krijg je er voor deze test geen vraag meer over. Is er binnen 10 dagen geen goede dag, dan komt er niets.' },
     ],
   },
   'test-rust': {
     title: 'Rust voor een test',
-    lead: 'Een testloop laat zien wat je kunt als je benen fris zijn. Daarom houdt ASCEND rust tussen een zware dag en je test.',
+    lead: 'Een testloop laat zien wat je kunt als je benen fris zijn. Daarom zit er rust tussen een zware dag en je test.',
     points: [
       { head: '72 uur', text: 'het advies. Zoveel tijd na de laatste zware loop- of beendag: een zware beendag, de lange duurloop, zware heuvels of intervallen, een bergtocht.' },
       { head: '48 uur', text: 'voor als je benen snel herstellen of je week vol is.' },
-      { head: 'Wat ASCEND doet', text: 'een nieuwe of gemiste test komt alleen op een dag met genoeg rust. Staat een test te dicht op een zware dag, dan meldt Week het met een voorstel. Wat jij vastzette verschuift niet zonder jouw Akkoord.' },
+      { head: 'Wat er gebeurt', text: 'een nieuwe of gemiste test komt alleen op een dag met genoeg rust. Staat een test te dicht op een zware dag, dan meldt Week het met een voorstel. Wat jij vastzette verschuift niet zonder jouw Akkoord.' },
     ],
   },
   'rustdag-terug': {
     title: 'Rustdag terugzetten voorstellen',
-    lead: 'Liet een voorstel je rustdag vervallen en is die dag later weer leeg, dan stelt ASCEND voor hem terug te zetten.',
+    lead: 'Liet een voorstel je rustdag vervallen en is die dag later weer leeg, dan krijg je een voorstel om hem terug te zetten.',
     points: [
       { head: 'Wanneer', text: 'op je vaste rustdag, als er die dag niets gepland of gedaan is en de week zijn rust niet al op een andere dag heeft.' },
       { head: 'Niet', text: 'als je de twee dagen ervoor niet trainde, als je de rustdag zelf oversloeg, of als een gemiste test of sleuteltraining van je doel op die dag past.' },
-      { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet blijft de dag leeg en vraagt ASCEND er niet meer naar.' },
+      { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet blijft de dag leeg en krijg je er geen vraag meer over.' },
     ],
   },
   weekvoorstel: {
     title: 'Voorstel bij een probleem in de week',
-    lead: 'Klopt er iets niet in je week en mag ASCEND het niet zelf herstellen, omdat jij of een eerder voorstel de training vastzette, dan krijg je een voorstel.',
+    lead: 'Klopt er iets niet in je week en is het niet vanzelf te herstellen, omdat jij of een eerder voorstel de training vastzette, dan krijg je een voorstel.',
     points: [
       { head: 'Wat telt als probleem', text: 'geen rustdag, zware beendagen te dicht op elkaar, twee harde lopen op een dag, een zware training na een test, twee volle lange trainingen, benen niet fris voor een test.' },
       { head: 'Nooit stil', text: 'eerst een voorstel, pas na Akkoord verandert er iets. In een volle week kan de lichtste training vervallen, nooit een lange duurloop, harde loop, test, wedstrijd of tocht.' },
@@ -148,7 +148,7 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
   },
   'week-vol': {
     title: 'Vragen als je week te vol wordt',
-    lead: 'Viel er in je week een dag weg en is de rest te vol, dan vraagt ASCEND welke training mag vervallen.',
+    lead: 'Viel er in je week een dag weg en is de rest te vol, dan komt de vraag welke training mag vervallen.',
     points: [
       { head: 'Wanneer', text: 'na een gemiste of naar later gezette training, bij twee dagen met twee trainingen, twee trainingen meer dan dagen, vier loopdagen op rij of drie zware dagen achter elkaar.' },
       { head: 'Het advies', text: 'eerst de extra training die je via een voorstel kreeg, dan wat het minst telt voor je doel. Nooit een test, een wedstrijd, je sleuteltraining of wat je zelf neerzette.' },
@@ -166,19 +166,19 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
   },
   'vakantie-schuiven': {
     title: 'Rond een vakantie schuiven',
-    lead: 'Hoe ASCEND je weken rond een vakantie indeelt.',
+    lead: 'Hoe je weken rond een vakantie ingedeeld worden.',
     points: [
-      { head: 'Flink', text: 'ASCEND kijkt naar alle werkbare dagen van de weken rond je vakantie, ook over de weekgrens. Het kiest de indeling met genoeg rust tussen zware beendagen en zo min mogelijk dubbele dagen. Wat niet past, vervalt met één zin erbij.' },
+      { head: 'Flink', text: 'Alle werkbare dagen van de weken rond je vakantie tellen mee, ook over de weekgrens. De indeling met genoeg rust tussen zware beendagen en zo min mogelijk dubbele dagen wint. Wat niet past, vervalt met één zin erbij.' },
       { head: 'Weinig', text: 'een training schuift alleen naar de dichtstbijzijnde dag van zijn eigen week die past, of vervalt.' },
       { head: 'Altijd', text: 'twee zware beendagen staan nooit binnen 48 uur en wat je zelf vastzette blijft staan. Het geldt voor een vakantie zonder training die je hierna toevoegt of wijzigt. Je ziet het eerst in het voorstel.' },
     ],
   },
   'bundel-niet-doorgegaan': {
     title: 'Training die niet doorging',
-    lead: 'Wat ASCEND doet met een training die een paar dagen voorbij is zonder log. ASCEND verzint nooit een log.',
+    lead: 'Wat er gebeurt met een training die een paar dagen voorbij is zonder log. Een log wordt nooit verzonnen.',
     points: [
-      { head: 'Vragen', text: 'één vraag op Vandaag, de oudste eerst. Niet gedaan zet hem op overgeslagen, Toch gedaan opent het gewone invullen, Niet nu laat hem rusten. Ouder dan een week vraagt ASCEND niet meer, en op een racedag niet. Wat op een vakantie of tocht stond is nooit gemist; wat ervoor nog open stond vervalt bij een ziekmelding of vakantie, met één regel op Vandaag.' },
-      { head: 'Zelf overslaan', text: 'ASCEND zet hem op overgeslagen en meldt het, met Ongedaan maken. Een test, een wedstrijd en wat je zelf vastzette krijgen toch de vraag.' },
+      { head: 'Vragen', text: 'één vraag op Vandaag, de oudste eerst. Niet gedaan zet hem op overgeslagen, Toch gedaan opent het gewone invullen, Niet nu laat hem rusten. Ouder dan een week komt er geen vraag meer, en op een racedag niet. Wat op een vakantie of tocht stond is nooit gemist; wat ervoor nog open stond vervalt bij een ziekmelding of vakantie, met één regel op Vandaag.' },
+      { head: 'Zelf overslaan', text: 'Hij gaat op overgeslagen, met een melding en Ongedaan maken. Een test, een wedstrijd en wat je zelf vastzette krijgen toch de vraag.' },
       { head: 'Niets doen', text: 'hij blijft als gemist in je week staan.' },
     ],
   },
@@ -206,7 +206,7 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
     points: [
       { head: 'Ruilen', text: 'het advies. De twee ruilen van dag, zodat elke dag één training houdt.' },
       { head: 'Samen', text: 'de training komt erbij op die dag.' },
-      { head: 'Altijd', text: 'een botsing zie je tijdens het slepen en ASCEND vraagt het eerst. Een gewone ruil gaat meteen, met Ongedaan maken in de melding.' },
+      { head: 'Altijd', text: 'een botsing zie je tijdens het slepen, met eerst een vraag. Een gewone ruil gaat meteen, met Ongedaan maken in de melding.' },
     ],
   },
   'volgorde-stand': {
@@ -220,7 +220,7 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
   },
   'vakantie-opzij': {
     title: 'Opzij voor een vakantie',
-    lead: 'Wat ASCEND doet met een training die moet wijken voor een vakantie of de lichte dagen rond een tocht.',
+    lead: 'Wat er gebeurt met een training die moet wijken voor een vakantie of de lichte dagen rond een tocht.',
     points: [
       { head: 'Liever laten vervallen', text: 'de training schuift naar een andere dag van die week, maar niet vlak voor of na zijn volgende keer. Een wekelijkse training houdt minstens vier dagen afstand. Lukt dat niet, dan vervalt hij.' },
       { head: 'Toch verschuiven', text: 'de training gaat naar elke dag van die week die past, ook kort voor zijn volgende keer.' },
@@ -229,11 +229,11 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
   },
   'zones-na-test': {
     title: 'Zones bijwerken na een test',
-    lead: 'Na een testloop die meetelt stelt ASCEND een nieuwe drempelhartslag voor, als die duidelijk anders is.',
+    lead: 'Na een testloop die meetelt krijg je een nieuwe drempelhartslag als voorstel, als die duidelijk anders is.',
     points: [
       { head: 'Wat je ziet', text: 'per zone het oude en het nieuwe getal, voor je hartslag en je tempo\'s. Je tempo\'s volgen je test al.' },
       { head: 'Een schatting', text: '98 procent van je gemiddelde hartslag over kilometer 2 tot en met 5. Geen labtest.' },
-      { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet vraagt ASCEND het voor deze test niet meer.' },
+      { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet krijg je er voor deze test geen vraag meer over.' },
     ],
   },
 };

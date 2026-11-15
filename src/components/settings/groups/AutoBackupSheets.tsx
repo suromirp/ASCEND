@@ -22,7 +22,7 @@ export function AutoBackupSheet({ facts, onClose }: { facts: SettingsFacts; onCl
   const app = facts.autoBackup?.platform === 'app';
   const folder = facts.autoBackup?.folder;
   const how = app
-    ? `In de app maakt ASCEND het bestand zelf in ${folder ?? APP_BACKUP_LABEL}, de eerste keer dat je hem opent na het moment.`
+    ? `In de app komt het bestand vanzelf in ${folder ?? APP_BACKUP_LABEL}, de eerste keer dat je de app opent na het moment.`
     : folder
       ? `Je browser schrijft het stil in ${folder} als hij die map zonder vragen vrijgeeft. Anders staat er op het moment een kaart op Vandaag.`
       : 'Een browser mag niet zelf een bestand opslaan. Op het moment staat er een kaart op Vandaag met Back-up maken.';
@@ -51,7 +51,7 @@ export function AutoBackupSheet({ facts, onClose }: { facts: SettingsFacts; onCl
       </div>
       {frequency !== 'off' && <p className="st-hint" style={{ marginLeft: 0 }}>{how}</p>}
       {frequency !== 'off' && (app || folder) && (
-        <p className="st-hint" style={{ marginLeft: 0 }}>ASCEND ruimt alleen back-ups op die hij zelf in die map zette.</p>
+        <p className="st-hint" style={{ marginLeft: 0 }}>Alleen de eigen back-ups in die map worden opgeruimd, andere bestanden niet.</p>
       )}
     </Sheet>
   );
@@ -75,7 +75,7 @@ export function AppFolderSheet({ facts, onChanged, onClose }: { facts: SettingsF
       if (ok) await clearAutoBackupFailure();
       setGranted(ok);
       setNote(ok
-        ? { text: 'ASCEND mag in de map schrijven. De volgende back-up komt er vanzelf in.', warn: false }
+        ? { text: 'Toegang tot de map. De volgende back-up komt er vanzelf in.', warn: false }
         : { text: 'Geen toegang. Geef ASCEND toegang tot bestanden in de instellingen van je telefoon, of maak de back-up zelf.', warn: true });
       onChanged();
     } finally {

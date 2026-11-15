@@ -99,7 +99,7 @@ export function bootBreakInStatus(input: {
     const late = left !== undefined && left < MIN_BREAKIN_WEEKS;
     return {
       kind: 'none', km: 0, gainM: 0, goalKm, name,
-      line: late ? LATE : 'Leg de datum vast waarop je je nieuwe bergschoenen voor het eerst draagt, dan telt ASCEND de kilometers mee.',
+      line: late ? LATE : 'Leg de datum vast waarop je je nieuwe bergschoenen voor het eerst draagt, dan tellen de kilometers mee.',
     };
   }
 

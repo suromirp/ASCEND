@@ -81,8 +81,8 @@ export function StrengthProgramCard() {
       {!strategy ? (
         <>
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-            Nog geen krachtblok ingesteld. ASCEND bepaalt hoe vaak je traint, de split en de planning; MacroFactor Workouts
-            bepaalt de oefeningen.
+            Nog geen krachtblok ingesteld. Hoe vaak je traint, de split en de planning komen hier vandaan; de oefeningen
+            komen uit MacroFactor Workouts.
           </p>
           <SecondaryButton onClick={() => setWizard({ mode: 'create', draft: blankStrategyDraft(strengthExternal) })}>
             Krachtblok starten

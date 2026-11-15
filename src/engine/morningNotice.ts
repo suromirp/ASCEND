@@ -111,8 +111,8 @@ export function noticeSupport(env: NoticeEnvironment): NoticeSupport {
 
 // Eén eerlijke zin voor onder het blad, als het niet kan.
 export const NOTICE_SUPPORT_TEXT: Record<Exclude<NoticeSupport, 'ready'>, string> = {
-  unavailable: 'Je telefoon laat ASCEND niet op de achtergrond wakker worden; je krijgt de vraag als je de app opent.',
-  not_installed: 'Chrome wekt ASCEND alleen op de achtergrond als de app op je beginscherm staat. Zet hem daar eerst neer; tot dan krijg je de vraag als je de app opent.',
+  unavailable: 'Je telefoon wekt de app niet op de achtergrond; je krijgt de vraag als je de app opent.',
+  not_installed: 'Chrome wekt de app alleen op de achtergrond als hij op je beginscherm staat. Zet hem daar eerst neer; tot dan krijg je de vraag als je de app opent.',
   blocked: 'Meldingen staan voor ASCEND uit in je telefoon. Zet ze daar aan, dan kun je deze schakelaar gebruiken.',
 };
 
@@ -123,7 +123,7 @@ export const NOTICE_NOT_DONE_TEXT = 'Aanzetten is niet gelukt. Kies Toestaan als
 // Meldingen mogen wel, maar Chrome weigert het wakker maken op de achtergrond. Chrome
 // geeft dat alleen aan een geïnstalleerde app die je een tijd vaak opent; ASCEND kan
 // dat niet afdwingen (zonder server bestaat er geen andere manier).
-export const NOTICE_SYNC_REFUSED_TEXT = 'Meldingen mogen, maar Chrome laat ASCEND nog niet op de achtergrond wakker worden. Chrome staat dat pas toe als je de app een tijd vaak opent. Probeer het over een paar dagen opnieuw; tot dan staat de vraag klaar als je de app opent.';
+export const NOTICE_SYNC_REFUSED_TEXT = 'Meldingen mogen, maar Chrome wekt de app nog niet op de achtergrond. Chrome staat dat pas toe als je de app een tijd vaak opent. Probeer het over een paar dagen opnieuw; tot dan staat de vraag klaar als je de app opent.';
 
 // De tekst in het blad na een mislukte poging, of bij het tikken op de rij.
 export function noticeProblemText(support: NoticeSupport | undefined, failure?: 'denied' | 'no_background' | 'sync_refused'): string {

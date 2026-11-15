@@ -152,7 +152,7 @@ export function DirectionSheet({
     ...(onGoal ? [{ value: GOAL_ROW, label: 'Naar een doel', note: 'Kies een tocht of wedstrijd.' }] : []),
   ];
   return (
-    <Sheet eyebrow="Je richting" title="Wat past nu bij jou?" line="Je richting bepaalt hoe ASCEND je weken plant zolang je geen doel hebt." onClose={onClose}>
+    <Sheet eyebrow="Je richting" title="Wat past nu bij jou?" line="Zolang je geen doel hebt, bepaalt je richting hoe je weken gepland worden." onClose={onClose}>
       {(close) => (
         <div className="flex flex-col gap-4">
           <ChoiceList<string>

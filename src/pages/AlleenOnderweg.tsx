@@ -177,7 +177,7 @@ export function AlleenOnderwegPage() {
       <Card className="flex flex-col gap-3">
         <Eyebrow>Vertrekbrief</Eyebrow>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-          ASCEND stelt een brief voor thuis samen uit je etappeplan: de route, je slaapplek per datum, je uitrusting, de afspraak en of je een satellietcommunicator meeneemt.
+          Een brief voor thuis, samengesteld uit je etappeplan: de route, je slaapplek per datum, je uitrusting, de afspraak en of je een satellietcommunicator meeneemt.
         </p>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Nu {totals.walkDays} loopdagen{totals.restDays > 0 ? ` en ${totals.restDays} ${totals.restDays === 1 ? 'rustdag' : 'rustdagen'}` : ''}

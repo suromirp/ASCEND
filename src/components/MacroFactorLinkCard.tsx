@@ -90,7 +90,7 @@ export function MacroFactorLinkCard({ primary }: { primary: boolean }) {
           {open.length === 0 ? 'Alles is gekoppeld' : open.length === 1 ? 'Eén naam koppelen' : <><Num>{open.length}</Num> namen koppelen</>}
         </p>
         <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Welke training in ASCEND hoort bij elke naam uit MacroFactor. ASCEND kijkt naar de oefeningen en stelt per naam iets voor. Wat je kiest geldt meteen voor alle trainingen met die naam, en ASCEND onthoudt het op deze telefoon.
+          Welke eigen training hoort bij elke naam uit MacroFactor. Per naam staat een voorstel klaar, op basis van de oefeningen. Wat je kiest geldt meteen voor alle trainingen met die naam en blijft bewaard op deze telefoon.
         </p>
       </div>
 
@@ -214,7 +214,7 @@ function ChoiceSheet({
             )}
             <select
               value={value}
-              aria-label={`Welke training in ASCEND is ${row.name}?`}
+              aria-label={`Welke eigen training hoort bij ${row.name}?`}
               onChange={(e) => onChange(e.target.value)}
               className="min-h-[44px] w-full rounded-xl border px-3 text-sm"
               style={{

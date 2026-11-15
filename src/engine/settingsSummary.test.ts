@@ -123,7 +123,7 @@ describe('rowSummary: doel en tochten', () => {
   it('zonder doel staat er geen doel en een uitnodiging', () => {
     const s = groupSummary('doel', facts({ goal: null, treks: 0 }));
     expect(s).toEqual({ value: 'Geen doel', dim: true, sub: 'Kies een doel om naartoe te plannen' });
-    expect(rowSummary('doelen', facts({ goal: null }))).toEqual({ value: 'Geen doel', dim: true, sub: 'Een doel geeft ASCEND een einddatum' });
+    expect(rowSummary('doelen', facts({ goal: null }))).toEqual({ value: 'Geen doel', dim: true, sub: 'Een doel geeft je planning een einddatum' });
   });
 
   it('de lange zondag is verborgen bij een bergdoel', () => {
@@ -282,7 +282,7 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('toestelgewichten', withForge({ activeProfileId: 'a', profiles: [profile] })).value).toBe('1 toestel');
   });
 
-  it('Toestellen leren staat aan met het label auto, en ASCEND naast MacroFactor staat uit en toont de stand', () => {
+  it('Toestellen leren staat aan met het label auto, en Voorstel naast MacroFactor staat uit en toont de stand', () => {
     const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
     expect(rowSummary('forge-leren', facts())).toEqual({ value: 'Geleerd', hidden: false });
     expect(rowSummary('forge-leren', withForge({ learnStacks: false })).value).toBe('Profiel');
@@ -450,7 +450,7 @@ describe('rowSummary: wat speelde er', () => {
     expect(rowSummary('wat-teken', withSettings({ influenceSign: false })).checked).toBe(false);
     expect(rowSummary('wat-overzicht', withSettings({ influenceOverview: false })).checked).toBe(false);
     expect(rowSummary('wat-test', withSettings({ influenceTestMove: false })).checked).toBe(false);
-    expect(rowSummary('wat-oorzaak', withSettings({ influenceCause: 'weet' })).value).toBe('Wat ASCEND weet');
+    expect(rowSummary('wat-oorzaak', withSettings({ influenceCause: 'weet' })).value).toBe('Wat bekend is');
     expect(rowSummary('wat-oorzaak', withSettings({ influenceCause: 'uit' })).value).toBe('Uit');
   });
 
@@ -931,7 +931,7 @@ describe('rowSummary: de ochtendkaart en de ochtendmelding', () => {
     const nothing = rowSummary('ochtendmelding', facts({ settings: { ...facts().settings, ...on }, notice: { support: 'unavailable', granted: false } }));
     expect(nothing).toEqual({ value: 'Niet mogelijk', dim: true, sub: 'Alleen als je de app opent' });
     const browser = rowSummary('ochtendmelding', facts({ settings: { ...facts().settings, ...on }, notice: { support: 'not_installed', granted: false } }));
-    expect(browser.sub).toBe('Zet ASCEND eerst op je beginscherm');
+    expect(browser.sub).toBe('Eerst op je beginscherm zetten');
     expect(browser.checked).toBeUndefined();
     for (const r of [nothing, browser]) expect((r.sub ?? '').length).toBeLessThanOrEqual(SUB_MAX_LENGTH);
   });
