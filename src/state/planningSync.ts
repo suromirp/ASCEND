@@ -31,6 +31,7 @@ import { syncProgramHorizon, type ProgramHorizonResult } from '../storage/databa
 import { programAnchorDate } from '../engine/programLayout';
 import { isRaceGoal } from '../engine/raceBlock';
 import { bootSettled } from './boot';
+import { stringHash, stringHashKey } from '../utils/stringHash';
 
 export const syncChannel: BroadcastChannel | null = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('ascend-data') : null;
 
@@ -44,12 +45,8 @@ export function setLastHorizonKey(key: string) {
   lastHorizonKey = key;
 }
 function planFingerprint(planned: PlannedSession[]): number {
-  let h = 0;
-  for (const s of [...planned].sort((a, b) => a.id.localeCompare(b.id))) {
-    const line = `${s.id}|${s.scheduledDate}|${s.status}|${s.templateId}|${s.plannedMinutes ?? ''}|${s.lock ? 1 : 0}`;
-    for (let i = 0; i < line.length; i++) h = (Math.imul(h, 31) + line.charCodeAt(i)) | 0;
-  }
-  return h;
+  const lines = [...planned].sort((a, b) => a.id.localeCompare(b.id)).map((s) => `${s.id}|${s.scheduledDate}|${s.status}|${s.templateId}|${s.plannedMinutes ?? ''}|${s.lock ? 1 : 0}`);
+  return stringHash(lines.join(''));
 }
 // One sync at a time, always (utils/serialQueue.ts): the next one starts only
 // when the one before has really finished. A caller that waited longer than a
@@ -199,10 +196,9 @@ export function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Prom
     .then((ran) => ran ?? false);
 }
 
+// Kept under its name: the id of an advice (`planner:<hash>`) is stored with your answer to it.
 export function simpleHash(text: string): string {
-  let h = 0;
-  for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
-  return (h >>> 0).toString(36);
+  return stringHashKey(text);
 }
 
 // Een ander open venster schreef iets: lees opnieuw, zonder zelf weer een sync te starten.
