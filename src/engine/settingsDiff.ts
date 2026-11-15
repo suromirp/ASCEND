@@ -34,6 +34,7 @@ import { ADVICE_WAVE_LENGTH, resolveWaveSettings } from './waves';
 import { resolveCalmRun, resolveWatchHrMode } from './watchHeartRate';
 import { DEFAULT_STREAMS_BACKUP, resolveStreamsBackup } from './streamsBackup';
 import { DEFAULT_PROPOSAL_TIDY_MONTHS, resolveProposalTidyMonths } from './proposalTidy';
+import { strengthTrainingOn } from './strengthTraining';
 
 export interface AdviceSpec {
   // Een id uit de index (settingsIndex.ts): zo vindt de kaart de plek van de instelling.
@@ -69,6 +70,15 @@ function omit<T extends object>(obj: T | undefined, ...keys: string[]): T | unde
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
+// Een antwoord uit de start (AppSettings.startChoices, engine/firstPlan.ts) is jouw keuze en geen afwijking van
+// het advies: zolang de instelling daarop staat telt hij niet bij Aangepaste instellingen en zet Alles terug
+// naar het advies hem niet terug. Kies je later iets anders dan het advies en dan je antwoord, dan telt hij wel
+// (backlog Q, 15 november).
+export function fromStart(s: AppSettings, key: keyof AppSettings): boolean {
+  const chosen = s.startChoices as Record<string, unknown> | undefined;
+  return !!chosen && key in chosen && chosen[key] !== undefined && same(s[key], chosen[key]);
+}
+
 // Een gewone sleutel van AppSettings met een standaard.
 function plain<K extends keyof AppSettings>(
   id: string,
@@ -82,7 +92,7 @@ function plain<K extends keyof AppSettings>(
   const read = (s: AppSettings) => (s[key] ?? fallback) as NonNullable<AppSettings[K]>;
   return {
     id, title, page, plan: opts.plan,
-    differs: (s) => !same(read(s), fallback),
+    differs: (s) => !same(read(s), fallback) && !fromStart(s, key),
     value: (s) => text(read(s)),
     reset: () => ({ [key]: 'resetTo' in opts ? opts.resetTo : undefined }) as Partial<AppSettings>,
   };
@@ -157,6 +167,14 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('lange-loop', 'Groei van de lange loop', 'planning', 'longRunGrowth', 'weekly', 'langeLoopGroei', true),
   choice('rustdag-doen', 'Op je rustdag', 'planning', 'restDayMode', 'rest', 'rustdagDoen', true),
   plain('zware-dingen', 'Benen en een zware loop', 'planning', 'hardSameDay', false as boolean, (v) => onOff(v === true), { plan: true }),
+  // Kracht uit mag, met een waarschuwing (engine/strengthTraining.ts); terug naar aan is een voorstel dat je
+  // krachttrainingen terugzet (components/settings/useAdviceReset.tsx).
+  {
+    id: 'krachttraining', title: 'Krachttraining', page: 'planning', plan: true,
+    differs: (s) => !strengthTrainingOn(s),
+    value: (s) => onOff(strengthTrainingOn(s)),
+    reset: () => ({ strengthTraining: undefined }),
+  },
   plain('lange-loop-benen', 'Beenkracht de dag na de lange duurloop', 'planning', 'longRunThenLegs', false as boolean, (v) => onOff(v === true), { plan: true }),
 
   // Doel en tochten
@@ -524,6 +542,15 @@ export function resetPatch(s: AppSettings, ids: string[]): { now: Partial<AppSet
     }
   }
   return { now, plan, planTitles };
+}
+
+// De uitkomst van terugzetten (components/settings/useAdviceReset.tsx). Wat de planning niet raakt staat meteen
+// op het advies; wat haar wel raakt wacht op Akkoord. Liever niet laat dat laatste zoals het was.
+export const RESET_NOW_NOTE = 'Terug naar het advies. Je planning verandert hier niet door.';
+export function resetDeclinedNote(othersReset: boolean): string {
+  return othersReset
+    ? 'Wat je planning raakt, blijft zoals het was. De andere instellingen staan weer op het advies.'
+    : 'Je instellingen en je planning blijven zoals ze waren.';
 }
 
 // Alle verschillen van één groep (voor "Alles in deze groep terug naar het advies").
