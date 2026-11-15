@@ -36,6 +36,20 @@ export function sportLines(r: WeekReview): string[] {
   });
 }
 
+// De verwijzing naar de rij in Week, met haar eigen naam.
+export const MISSED_REPLAN_HINT = 'De rest van je week zet Week opnieuw plannen terug naar het plan.';
+
+// Wat naast gedaan en gemist nog in de week stond, zodat de som sluit: "Overgeslagen: Bovenlichaam B" (telt mee in
+// "van n") en "Vervallen: Benen A (zwaar), telt niet mee" (een pauze haalde hem uit de telling). Valt Gemist buiten de
+// twee regels om op te letten, dan staat hij hier, zonder advies (Pathfinder, 15 november, I-40).
+export function weekRestLines(r: WeekReview, opts: { missedShown: boolean }): string[] {
+  const out: string[] = [];
+  if (!opts.missedShown && r.missed.length > 0) out.push(`Gemist: ${joinNames(r.missed)}`);
+  if (r.skipped?.length) out.push(`Overgeslagen: ${joinNames(r.skipped)}`);
+  if (r.lapsed?.length) out.push(`Vervallen: ${joinNames(r.lapsed)}, telt niet mee`);
+  return out;
+}
+
 export interface AttentionLine { key: string; label: string; value: string; warn: boolean }
 
 // Een klacht uit de wekelijkse lijfvraag: het vaste woord is de plek, de zin is de waarschuwing, volledig.
@@ -70,11 +84,13 @@ export function attentionLines(r: WeekReview): AttentionLine[] {
   }
   if (r.missed.length > 0) {
     const names = joinNames(r.missed);
+    // Eén richting met de rij Week opnieuw plannen in Week: wat je miste doe je niet dubbel, de rest van je week kan
+    // terug naar het plan (docs/beslissingen/2026-11-15-gemist-en-opnieuw-plannen.md).
     out.push({
       key: 'missed', label: 'Gemist', warn: false,
-      value: r.keyMissedName
+      value: (r.keyMissedName
         ? `${names}. De ${lower(r.keyMissedName)} is de belangrijkste; die komt na Akkoord op een vrije dag, als dat past.`
-        : `${names}. Laat het los; dubbel doen helpt niet.`,
+        : `${names}. Laat het los; dubbel doen helpt niet.`) + (r.replan ? ` ${MISSED_REPLAN_HINT}` : ''),
     });
   }
   if (r.heavier >= 2) out.push({ key: 'heavier', label: 'Zwaarder', warn: false, value: 'Twee of meer trainingen voelden zwaarder. Voelt het weer zo, kies de korte versie.' });
