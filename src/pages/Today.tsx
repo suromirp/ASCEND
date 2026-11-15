@@ -103,7 +103,9 @@ import { ProposalSheet } from '../components/ProposalSheet';
 import { RaceDayLine } from '../components/RaceDay';
 
 function TodayContent() {
-  const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
+  const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
+  // Afvinken met één tik: grens in tijd en de melding bovenin (state/logSave.ts#tickOff).
+  const tickNotice = { report: reportStorageError, withdraw: withdrawStorageNotice, refresh };
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -293,7 +295,7 @@ function TodayContent() {
         strengthRir: extra?.rir,
         // Ticked off afterwards: it happened on its own day.
         completedDate: session.scheduledDate < todayISO() ? session.scheduledDate : undefined,
-      }, reportStorageError);
+      }, tickNotice);
     } else {
       setLoggingVariant(variant);
       setLoggingAtForm(false);
@@ -432,7 +434,7 @@ function TodayContent() {
       body={REST_DAY_COPY[restMode].valley}
       detail={restMode === 'active' ? REST_DAY_COPY.active.detail : undefined}
       doneLabel={restMode === 'active' ? 'Gedaan' : undefined}
-      onDone={() => { const t = templateById.get(restToday.templateId); if (t) void tickOff(logSession, asPlannedLog(restToday, t, program, today), reportStorageError); }}
+      onDone={() => { const t = templateById.get(restToday.templateId); if (t) void tickOff(logSession, asPlannedLog(restToday, t, program, today), tickNotice); }}
       linkLabel={restMode === 'active' ? 'Invullen wat je deed' : 'Toch gewandeld?'}
       onLink={() => { const t = templateById.get(restToday.templateId); if (t) startSession(restToday, t, 'full'); }}
       tomorrow={quietTomorrow}

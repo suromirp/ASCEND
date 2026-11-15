@@ -39,9 +39,11 @@ export class LogStoredFollowUpFailed extends Error {
   }
 }
 
-// Afvinken met één tik (Vandaag en Week, state/logSave.ts#tickOff) duurt langer dan de grens. Er is geen blad
-// om een zin op te zetten, dus zegt de melding bovenin het. Het log kan nog landen: geen "mislukt".
-export const TICK_OFF_STILL_RUNNING = 'Afvinken duurt langer dan verwacht. Kijk zo in je logboek of hij er staat; zo niet, vink hem dan nog eens af.';
+// Afvinken met één tik (Vandaag en Week, state/logSave.ts#tickOff) duurt langer dan de grens, of een tweede tik
+// komt terwijl de eerste nog loopt. Er is geen blad om een zin op te zetten, dus zegt de melding bovenin het. Het
+// log kan nog landen: geen "mislukt", en geen "nog eens afvinken" (dat helpt niet zolang de eerste loopt). De
+// woorden na de eerste zin zijn die van state/logSave.ts#STILL_RUNNING_HELP (logSave.test.ts houdt ze gelijk).
+export const TICK_OFF_STILL_RUNNING = 'Afvinken duurt langer dan verwacht. Kijk in je logboek of hij er staat. Staat hij er niet, sluit de app dan af en open hem opnieuw.';
 
 export class TickOffStillRunning extends Error {
   constructor() {

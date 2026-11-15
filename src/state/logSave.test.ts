@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PlannedSessionsRepo, SessionLogsRepo, wipeAllData } from '../storage/database';
 import { runLogSession, LogNotSaved, type LogSessionDeps, type LogSessionOpts } from './logSession';
-import { autoTickLog, cardAfterSave, closeClearsDraft, failedNote, formAfterSave, logOrAlready, reportIfGone, resetFailedNotes, saveLogThenChoice, saveLogWithin, saveOnCard, saveOnLogger, formNoteText, loggerShowsClose, tickOff, settleWithOwnNotice, thrownSaveNote, ChoiceNotSaved, CHOICE_NOT_SAVED, ALREADY_LOGGED_NOTE, FORM_SAVE_NOTE, LOG_SAVE_NOTE, LOG_STILL_RUNNING_NOTE, type CardSaveUi, type LoggerSaveUi, type LogSaveResult, type ShownSaveNote } from './logSave';
+import { autoTickLog, cardAfterSave, closeClearsDraft, failedNote, formAfterSave, logOrAlready, reportIfGone, resetFailedNotes, saveLogThenChoice, saveLogWithin, saveOnCard, saveOnLogger, formNoteText, loggerNote, loggerShowsClose, tickOff, STILL_RUNNING_HELP, type TickOffNotice, settleWithOwnNotice, thrownSaveNote, ChoiceNotSaved, CHOICE_NOT_SAVED, ALREADY_LOGGED_NOTE, FORM_SAVE_NOTE, LOG_SAVE_NOTE, LOG_STILL_RUNNING_NOTE, type CardSaveUi, type LoggerSaveUi, type LogSaveResult, type ShownSaveNote } from './logSave';
 import { forgeFinishNote } from '../components/forge/forgeFinishLog';
 import { HOW_TEXT } from '../components/logForm/howDidItGo';
 import { TimeoutError } from '../utils/withTimeout';
@@ -947,37 +947,127 @@ describe('logOrAlready: het blad Hoe ging het? onderscheidt stond er al van misl
 });
 
 describe('tickOff: afvinken met één tik op Vandaag en Week (I-32)', () => {
+  function notice() {
+    const seen = { reported: [] as unknown[], withdrawn: [] as unknown[], refreshed: 0 };
+    const n: TickOffNotice = { report: (e) => seen.reported.push(e), withdraw: (e) => seen.withdrawn.push(e), refresh: () => { seen.refreshed += 1; } };
+    return { n, seen };
+  }
+  function heldPut() {
+    const real = SessionLogsRepo.put.bind(SessionLogsRepo);
+    let go!: (fail?: Error) => void;
+    const hold = new Promise<Error | undefined>((resolve) => (go = resolve));
+    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => { const fail = await hold; if (fail) throw fail; return real(log); });
+    return go;
+  }
+  const settle = () => new Promise((r) => setTimeout(r, 60));
+
   it('gelukt: een log, niets bovenin', async () => {
     await PlannedSessionsRepo.put(planned);
-    expect(await tickOff(makeLogSession(), forPlanned, (err) => general.push(err))).toBe('saved');
+    const { n, seen } = notice();
+    expect(await tickOff(makeLogSession(), forPlanned, n)).toBe('saved');
     expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+    expect(seen.reported).toEqual([]);
     expect(general).toEqual([]);
   });
 
-  it('stond er al: geen tweede log en geen melding', async () => {
+  it('stond er al: geen tweede log, geen melding, het logboek wordt opnieuw gelezen', async () => {
     await PlannedSessionsRepo.put(planned);
     const logSession = makeLogSession();
     await logSession(forPlanned);
-    expect(await tickOff(logSession, forPlanned, (err) => general.push(err))).toBe('already');
+    const { n, seen } = notice();
+    expect(await tickOff(logSession, forPlanned, n)).toBe('already');
     expect(await SessionLogsRepo.getAll()).toHaveLength(1);
-    expect(general).toEqual([]);
+    expect(seen).toMatchObject({ reported: [], refreshed: 1 });
   });
 
   it('mislukt: precies een melding bovenin, met de zin van de schrijffout', async () => {
     await PlannedSessionsRepo.put(planned);
     vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
-    expect(await tickOff(makeLogSession(), forPlanned, (err) => general.push(err))).toBe('failed');
-    expect(general).toHaveLength(1);
-    expect(describeWriteError(general[0])).not.toBe(TICK_OFF_STILL_RUNNING);
+    const { n, seen } = notice();
+    expect(await tickOff(makeLogSession(), forPlanned, n)).toBe('failed');
+    expect(seen.reported).toHaveLength(1);
+    expect(general).toEqual([]);
+    expect(describeWriteError(seen.reported[0])).not.toBe(TICK_OFF_STILL_RUNNING);
   });
 
-  it('na de grens: de melding bovenin zegt dat het langer duurt, niet dat het mislukte', async () => {
-    const { logSession, open } = gated();
-    const report: unknown[] = [];
-    expect(await tickOff(logSession, forPlanned, (err) => report.push(err), 10)).toBe('slow');
-    expect(report).toHaveLength(1);
-    expect(describeWriteError(report[0])).toBe(TICK_OFF_STILL_RUNNING);
-    open(true);
+  it('na de grens: langer dan verwacht; landt het toch, dan wordt die melding ingetrokken', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const go = heldPut();
+    const { n, seen } = notice();
+    expect(await tickOff(makeLogSession(), forPlanned, n, 10)).toBe('slow');
+    expect(seen.reported.map(describeWriteError)).toEqual([TICK_OFF_STILL_RUNNING]);
+    go();
+    await settle();
+    expect(seen.withdrawn.map(describeWriteError)).toEqual([TICK_OFF_STILL_RUNNING]);
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+  });
+
+  it('na de grens, laat nee: de schrijffout komt bovenin, niets ingetrokken', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const go = heldPut();
+    const { n, seen } = notice();
+    await tickOff(makeLogSession(), forPlanned, n, 10);
+    go(new Error('kapot'));
+    await settle();
+    expect(seen.reported).toHaveLength(2);
+    expect(describeWriteError(seen.reported[1])).not.toBe(TICK_OFF_STILL_RUNNING);
+    expect(seen.withdrawn).toEqual([]);
+  });
+
+  it('een tweede tik terwijl de eerste loopt: nooit stil, de zin dat het loopt (Warden M1)', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const go = heldPut();
+    const logSession = makeLogSession();
+    const first = notice();
+    expect(await tickOff(logSession, forPlanned, first.n, 10)).toBe('slow');
+    const second = notice();
+    expect(await tickOff(logSession, forPlanned, second.n, 10)).toBe('failed');
+    expect(second.seen.reported.map(describeWriteError)).toEqual([TICK_OFF_STILL_RUNNING]);
+    expect(general).toEqual([]);
+    go();
+    await settle();
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+  });
+
+  it('de zin raadt niet aan nog eens af te vinken: dezelfde uitweg als STILL_RUNNING_HELP', () => {
+    expect(TICK_OFF_STILL_RUNNING.endsWith(STILL_RUNNING_HELP)).toBe(true);
+    expect(TICK_OFF_STILL_RUNNING).not.toMatch(/nog eens af/);
+  });
+});
+
+describe('saveOnLogger: een tweede poging terwijl de eerste hangt (Warden M2)', () => {
+  function heldPut() {
+    const real = SessionLogsRepo.put.bind(SessionLogsRepo);
+    let go!: (fail?: Error) => void;
+    const hold = new Promise<Error | undefined>((resolve) => (go = resolve));
+    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => { const fail = await hold; if (fail) throw fail; return real(log); });
+    return go;
+  }
+  const ui = (notes: (ShownSaveNote | null)[], over: Partial<LoggerSaveUi> = {}): LoggerSaveUi => ({
+    loose: false, mounted: () => true, showing: () => true, busy: () => undefined, clearDraft: () => undefined,
+    report: (e) => general.push(e), apply: (next) => { if (!next.close) notes.push(next.note); }, limitMs: 20, ...over,
+  });
+
+  it('gepland, scherm opnieuw open: de zin dat het nog loopt, niet amber mislukt; een log', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const go = heldPut();
+    const logSession = makeLogSession();
+    expect(await saveOnLogger(logSession, forPlanned, ui([], { mounted: () => false }))).toBe('slow');
+    const notes: (ShownSaveNote | null)[] = [];
+    expect(await saveOnLogger(logSession, { ...forPlanned, durationMinutes: 50 }, ui(notes))).toBe('failed');
+    expect(notes).toEqual([{ text: LOG_STILL_RUNNING_NOTE, warn: false }]);
+    go();
+    await new Promise((r) => setTimeout(r, 60));
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+    expect(general).toEqual([]);
+  });
+
+  it('loggerNote: alleen een geplande training zonder schrijffout is "loopt nog"', () => {
+    expect(loggerNote('failed', false, undefined)).toBe('stillRunning');
+    expect(loggerNote('failed', false, new Error('kapot'))).toBe('failed');
+    expect(loggerNote('failed', true, undefined)).toBe('failed');
+    expect(loggerNote('slow', false, undefined)).toBe('slow');
+    expect(loggerNote('saved', false, undefined)).toBeUndefined();
   });
 });
 

@@ -167,10 +167,11 @@ export function closeClearsDraft(saving: boolean): boolean {
 
 // De zin onderaan het oude trainingsscherm bij een uitkomst van formAfterSave. `loose`: een losse training, zonder
 // geplande training die een tweede log tegenhoudt. Alleen mislukt is amber.
-export function formNoteText(note: SaveNoteKind | undefined, loose: boolean): ShownSaveNote | null {
+export function formNoteText(note: SaveNoteKind | 'stillRunning' | undefined, loose: boolean): ShownSaveNote | null {
   if (!note) return null;
   if (note === 'failed') return { text: failedNote(loose ? FORM_SAVE_NOTE.failedLoose : FORM_SAVE_NOTE.failed), warn: true };
   if (note === 'slow') return { text: loose ? FORM_SAVE_NOTE.slowLoose : FORM_SAVE_NOTE.slow, warn: false };
+  if (note === 'stillRunning') return { text: LOG_STILL_RUNNING_NOTE, warn: false };
   return { text: FORM_SAVE_NOTE.already, warn: false };
 }
 
@@ -178,6 +179,16 @@ export function formNoteText(note: SaveNoteKind | undefined, loose: boolean): Sh
 // nog (knop uit) en de zin is de wachtzin, niet mislukt. Sluiten is dan de uitweg die de zin noemt.
 export function loggerShowsClose(saving: boolean, note: ShownSaveNote | null): boolean {
   return saving && !!note && !note.warn;
+}
+
+// De zin bij een uitkomst op het oude trainingsscherm. Nee zonder schrijffout bij een geplande training is "loopt
+// nog" (een eerdere poging houdt hem vast, loggingInFlight), nooit mislukt: LOG_STILL_RUNNING_NOTE, niet amber, zoals
+// de kaart Van je horloge (Warden M2). Een losse training wacht op de eerste poging; daar is zo'n nee het besluit
+// 2026-11-14-opslaan-rest.md ("kijk eerst in je logboek").
+export function loggerNote(outcome: LogSaveOutcome, loose: boolean, writeError: unknown): SaveNoteKind | 'stillRunning' | undefined {
+  const note = formAfterSave(outcome).note;
+  if (note === 'failed' && !loose && writeError === undefined) return 'stillRunning';
+  return note;
 }
 
 // Wat het oude trainingsscherm aanlevert om op te slaan (saveOnLogger). `mounted`: het scherm bestaat nog.
@@ -211,7 +222,7 @@ export async function saveOnLogger(logSession: LogSessionFn, input: LogSessionIn
     if (outcome === 'failed') reportIfGone(ui.mounted() && ui.showing(), writeError, ui.report);
     if (!ui.mounted()) return;
     // Al aan het sluiten: useSheetClose sluit zelf, dus niet nog eens (Warden).
-    ui.apply({ close: next.close && ui.showing(), note: formNoteText(next.note, ui.loose) });
+    ui.apply({ close: next.close && ui.showing(), note: formNoteText(loggerNote(outcome, ui.loose, writeError), ui.loose) });
   };
   ui.busy(true);
   const outcome = await saveLogWithin(logSession, input, { limitMs: ui.limitMs, onLate: show, onWriteError: (err) => { writeError = err; } });
@@ -311,11 +322,29 @@ export async function saveOnCard(logSession: LogSessionFn, input: LogSessionInpu
 
 // Afvinken met één tik op Vandaag en Week: een rustdag, een krachttraining die je in MacroFactor bijhoudt en Gedaan
 // zoals gepland (I-32). Er is geen concept en geen blad, dus niets om weg te gooien of te sluiten. Wel een zichtbare
-// uitkomst met een grens in tijd: een schrijffout meldt logSession zelf bovenin (geen `onWriteError`), stond er al
-// is goed, en na de grens zegt de melding bovenin dat het langer duurt. Een laat nee meldt logSession ook zelf.
-export async function tickOff(logSession: LogSessionFn, input: LogSessionInput, report: OnWriteError, limitMs?: number): Promise<LogSaveOutcome> {
-  const outcome = await saveLogWithin(logSession, input, { limitMs });
-  if (outcome === 'slow') report(new TickOffStillRunning());
+// uitkomst met een grens in tijd, steeds in de melding bovenin (`report`):
+// - een schrijffout (ook een late): die fout;
+// - nee zonder schrijffout: een eerdere tik loopt nog (loggingInFlight), dus TickOffStillRunning, nooit stil (Warden M1);
+// - na de grens: TickOffStillRunning; landt het log daarna toch (ja of stond er al), dan trekt `withdraw` die
+//   melding in als hij er nog staat;
+// - stond er al: het logboek op het scherm liep achter, `refresh` leest het opnieuw.
+export interface TickOffNotice {
+  report: OnWriteError;
+  withdraw: OnWriteError;
+  refresh?: () => unknown;
+}
+
+export async function tickOff(logSession: LogSessionFn, input: LogSessionInput, notice: TickOffNotice, limitMs?: number): Promise<LogSaveOutcome> {
+  let writeError: unknown;
+  const still = new TickOffStillRunning();
+  const settled = (result: LogSaveResult, late: boolean) => {
+    if (result === 'failed') return notice.report(writeError ?? still);
+    if (late) notice.withdraw(still);
+    if (result === 'already') void Promise.resolve(notice.refresh?.()).catch(() => undefined);
+  };
+  const outcome = await saveLogWithin(logSession, input, { limitMs, onWriteError: (err) => { writeError = err; }, onLate: (result) => settled(result, true) });
+  if (outcome === 'slow') notice.report(still);
+  else settled(outcome, false);
   return outcome;
 }
 
