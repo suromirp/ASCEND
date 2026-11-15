@@ -3,7 +3,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { DIRECTIONS, GUIDELINE_MINUTES, GUIDELINE_STRENGTH, MINUTES_CEILING } from '../../../data/directions';
 import { belowGuideline, budgetFor, resolveWeekBudget, settingBudget, type WeekBudgetChoice } from '../../../engine/weekBudget';
 import { PrimaryButton, Stepper } from '../../ui';
-import { weekBudgetAdviceLine, weekBudgetFollowNote } from '../../../engine/weekBudgetText';
+import { belowGuidelineLine, weekBudgetAdviceLine, weekBudgetFollowNote } from '../../../engine/weekBudgetText';
 import { strengthTrainingOn } from '../../../engine/strengthTraining';
 import { TextButton } from '../../TextButton';
 import { SettingsList, SettingsRow } from '../SettingsList';
@@ -90,8 +90,8 @@ export function WeekBudgetSheet({ onClose, onPropose }: { onClose: () => void; o
       <p className="st-hint" style={{ marginLeft: 0 }}>
         {weekBudgetAdviceLine({ chosen, label, minutes: advice.minutes, strength: advice.strength, guidelineMinutes: GUIDELINE_MINUTES, guidelineStrength: GUIDELINE_STRENGTH }, strengthOn)}
       </p>
-      {belowGuideline(budget) && (
-        <p className="st-hint" style={{ marginLeft: 0 }}>Dit is onder de richtlijn van {GUIDELINE_MINUTES} minuten en {GUIDELINE_STRENGTH} keer kracht. Dat mag een keuze zijn.</p>
+      {belowGuideline(budget, strengthOn) && (
+        <p className="st-hint" style={{ marginLeft: 0 }}>{belowGuidelineLine(strengthOn)}</p>
       )}
       <p className="st-hint" style={{ marginLeft: 0 }}>
         {weekBudgetFollowNote(follows, strengthOn)}

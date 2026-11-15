@@ -2,7 +2,7 @@
 // het weekbudget en de logs van deze week om in wat de kaart en het blad zeggen. Alleen
 // lezen: niets hier verandert de planning. Puur: geen React, geen IndexedDB.
 
-import { DIRECTIONS, GUIDELINE_MINUTES, GUIDELINE_STRENGTH, type DirectionId } from '../data/directions';
+import { DIRECTIONS, GUIDELINE_MINUTES, type DirectionId } from '../data/directions';
 import type { TrainingGoal } from '../models/goals';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { plannedByIdOf } from './logDay';
@@ -18,9 +18,11 @@ import {
   type CountOptions, type WeekBudget, type WeekProgress,
 } from './weekBudget';
 import { waveShapeFor, waveWeek, type WaveWeek } from './waves';
+import { strengthTrainingOn } from './strengthTraining';
+import { belowGuidelineLine } from './weekBudgetText';
 
 export interface YourWeekInputs {
-  settings: { direction?: unknown; directionStart?: unknown; weekBudget?: unknown; heartRate?: HeartRateSettings };
+  settings: { direction?: unknown; directionStart?: unknown; weekBudget?: unknown; heartRate?: HeartRateSettings; strengthTraining?: unknown };
   // De doelen zoals de Ascend-tab ze toont.
   goals: readonly Pick<TrainingGoal, 'id' | 'status' | 'kind' | 'targetDate'>[];
   milestones: Ladder;
@@ -54,7 +56,10 @@ export interface YourWeek {
   wave?: WaveWeek;
   bars: WaveBar[];
   minutesLine: string;
-  strengthLine: string;
+  // Leeg met krachttraining uit (engine/strengthTraining.ts): dan telt het budget geen kracht.
+  strengthLine?: string;
+  // Hoe kracht telt, onder Wat telt mee; leeg met krachttraining uit.
+  strengthExplain?: string;
   waveLine?: string;
   remainingLine: string;
   explain: string;
@@ -113,7 +118,10 @@ export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
   const history = id === 'improve' ? recentAverage(input.logs, wave?.startsOn ?? weekStart, opts) : undefined;
   const budget = budgetFor(id, { choice, history, wave, shape });
   const base = budgetFor(id, { choice, history, shape });
-  const progress = weekProgress(input.logs, weekStart, budget, opts);
+  const strengthOn = strengthTrainingOn(input.settings);
+  const counted = weekProgress(input.logs, weekStart, budget, opts);
+  // Met kracht uit staat er geen krachtteller, dus ook geen krachttraining in Wat telde.
+  const progress = strengthOn ? counted : { ...counted, items: counted.items.filter((i) => i.kind !== 'strength') };
 
   const bars: WaveBar[] = wave && shape
     ? Array.from({ length: shape.weeks }, (_, i) => {
@@ -164,11 +172,12 @@ export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
     wave,
     bars,
     minutesLine: `${progress.minutes} van ${progress.target} minuten`,
-    strengthLine: `Kracht: ${progress.strengthDone} van ${times(progress.strengthTarget)}`,
+    strengthLine: strengthOn ? `Kracht: ${progress.strengthDone} van ${times(progress.strengthTarget)}` : undefined,
+    strengthExplain: strengthOn ? 'Kracht telt apart, als keer. Een volledige krachttraining is een keer.' : undefined,
     waveLine,
     remainingLine,
     explain,
-    belowLine: belowGuideline(base) ? `Dat is onder de richtlijn van ${GUIDELINE_MINUTES} minuten en ${GUIDELINE_STRENGTH} keer kracht. Dat mag een keuze zijn.` : undefined,
+    belowLine: belowGuideline(base, strengthOn) ? belowGuidelineLine(strengthOn, 'Dat') : undefined,
     adviceLine: active.chosen ? undefined : 'Dit is het advies van Fit blijven. Kies een richting als je het anders wilt.',
   };
 }

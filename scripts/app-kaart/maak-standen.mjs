@@ -1,7 +1,7 @@
 // Maakt de nagemaakte standen voor de tekstkaart (docs/app-kaart/README.md) en laat elk één planningsronde
 // draaien op de vaste klok van de kaart, zodat een start daarna niets meer bijwerkt.
 //   node scripts/app-kaart/maak-standen.mjs            maakt alle standen opnieuw
-//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, ziek-eerder, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel, concept)
+//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, zonder-kracht, ziek, ziek-eerder, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel, concept)
 // Alles is nagemaakt: de basis is state-kracht.json, de rest zijn kleine wijzigingen met verzonnen getallen.
 //
 // Waarom "settle": bij de eerste start na het laden van een stand vindt de planningsronde nog iets te
@@ -86,6 +86,15 @@ function metVakantie(state) {
 function zonderDoel(state) {
   winkel(state, 'trainingGoals').records = [];
   meta(state, 'settings').value.direction = 'maintain';
+}
+
+// Zonder doel, de richting Rustig aan, en krachttraining uit (besluit 2026-11-14-keuzes-avond.md, punt 3). Rustig aan
+// ligt onder de richtlijn, dus de richtlijnzin staat er. Voor de invariant Kracht uit: geen kracht in het budget.
+function zonderKracht(state) {
+  zonderDoel(state);
+  const s = meta(state, 'settings').value;
+  s.direction = 'easy';
+  s.strengthTraining = false;
 }
 
 // Ziek gemeld sinds vandaag, verkouden boven de nek. De trainingen van vandaag en morgen zijn eraf.
@@ -260,6 +269,7 @@ export const STANDEN = {
   horloge: metHorloge,
   vakantie: metVakantie,
   'zonder-doel': zonderDoel,
+  'zonder-kracht': zonderKracht,
   ziek,
   'ziek-eerder': ziekEerder,
   vaardigheid: metVaardigheid,

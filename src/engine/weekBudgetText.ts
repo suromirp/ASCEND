@@ -1,6 +1,19 @@
 // De teksten onder het blad Weekbudget. Met krachttraining uit telt het budget geen kracht
 // (engine/strengthTraining.ts), dus dan noemen ze ook geen kracht.
 
+import { GUIDELINE_MINUTES, GUIDELINE_STRENGTH } from '../data/directions';
+
+// De richtlijn in woorden, met of zonder kracht.
+export function guidelineText(strengthOn: boolean): string {
+  return strengthOn ? `${GUIDELINE_MINUTES} minuten en ${GUIDELINE_STRENGTH} keer kracht` : `${GUIDELINE_MINUTES} minuten`;
+}
+
+// De zin als je budget onder de richtlijn ligt (engine/weekBudget.ts#belowGuideline): in het blad
+// "Dit", op de kaart Je week "Dat".
+export function belowGuidelineLine(strengthOn: boolean, start: 'Dit' | 'Dat' = 'Dit'): string {
+  return `${start} is onder de richtlijn van ${guidelineText(strengthOn)}. Dat mag een keuze zijn.`;
+}
+
 export function weekBudgetAdviceLine(
   o: { chosen: boolean; label: string; minutes: number; strength: number; guidelineMinutes: number; guidelineStrength: number },
   strengthOn: boolean,

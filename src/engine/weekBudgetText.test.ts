@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { weekBudgetAdviceLine, weekBudgetFollowNote } from './weekBudgetText';
+import { belowGuidelineLine, weekBudgetAdviceLine, weekBudgetFollowNote } from './weekBudgetText';
 
 const o = { chosen: true, label: 'Fit blijven', minutes: 150, strength: 2, guidelineMinutes: 150, guidelineStrength: 2 };
 
@@ -14,5 +14,9 @@ describe('weekbudget teksten', () => {
     expect(weekBudgetAdviceLine({ ...o, chosen: false }, false)).toBe('Advies: 150 min. De richtlijn is 150 minuten.');
     expect(weekBudgetFollowNote(true, false)).not.toMatch(/kracht(training)?en/);
     expect(weekBudgetFollowNote(false, false)).toBe(weekBudgetFollowNote(false, true));
+  });
+  it('de richtlijnzin noemt met kracht uit alleen de minuten', () => {
+    expect(belowGuidelineLine(true)).toBe('Dit is onder de richtlijn van 150 minuten en 2 keer kracht. Dat mag een keuze zijn.');
+    expect(belowGuidelineLine(false, 'Dat')).toBe('Dat is onder de richtlijn van 150 minuten. Dat mag een keuze zijn.');
   });
 });

@@ -30,6 +30,24 @@ describe('yourWeek', () => {
     expect(w.belowLine).toBeUndefined();
   });
 
+  it('laat met kracht uit de krachtteller en het krachtdeel van de richtlijn weg', () => {
+    const logs = [log('a', '2026-10-27'), log('s', '2026-10-27', { type: 'strength', templateId: 'tpl_kracht' })];
+    const w = yourWeek(base({ settings: { direction: 'easy', strengthTraining: false }, logs }))!;
+    expect(w.strengthLine).toBeUndefined();
+    expect(w.strengthExplain).toBeUndefined();
+    expect(w.belowLine).toBe('Dat is onder de richtlijn van 150 minuten. Dat mag een keuze zijn.');
+    expect(w.progress.items.map((i) => i.log.id)).toEqual(['a']);
+    const all = [w.minutesLine, w.strengthLine, w.remainingLine, w.explain, w.belowLine, w.adviceLine, w.waveLine].join(' ');
+    expect(all).not.toMatch(/kracht/i);
+    // Met 150 minuten of meer zit je met kracht uit niet onder de richtlijn, ook bij 1 keer kracht in het budget.
+    const enough = yourWeek(base({ settings: { direction: 'easy', strengthTraining: false, weekBudget: { minutes: 150 } } }))!;
+    expect(enough.belowLine).toBeUndefined();
+  });
+
+  it('noemt met kracht aan hoe kracht telt', () => {
+    expect(yourWeek(base())!.strengthExplain).toContain('Kracht telt apart');
+  });
+
   it('zegt eerlijk dat Rustig aan onder de richtlijn zit', () => {
     const w = yourWeek(base({ settings: { direction: 'easy' } }))!;
     expect(w.minutesLine).toBe('0 van 90 minuten');

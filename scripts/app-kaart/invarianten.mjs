@@ -465,6 +465,39 @@ export const INVARIANTEN = [
       return uit;
     },
   },
+  {
+    // Kracht uit (I-39, Pathfinder proef/drie punt 3): met krachttraining uit telt het weekbudget geen kracht. Dan zegt
+    // de Je week-kaart (Ascend en Stand), haar blad, de rij en het blad Zonder doel en het blad Weekbudget niets over
+    // kracht. Eerst stond er "150 min, 2× kracht" op de rij en "Kracht: 0 van 1 keer" op de kaart.
+    naam: 'Kracht uit: geen kracht in het weekbudget',
+    controleer: (k) => {
+      const uit = [];
+      // De kop (# titel) noemt de stand; die telt niet. Een zin die zegt dat kracht uit staat mag ("Zonder kracht" op de rij
+      // Weekbudget, "Krachttraining staat uit" in het blad).
+      const zonderKop = (t) => t.split('\n').filter((r) => !r.startsWith('# ')).join('\n');
+      // Alleen wat bij Je week hoort: de knop van de kaart op Ascend en Stand.
+      const jeWeek = (t) => t.split('\n').filter((r) => /^\[knop: .*Je week/.test(r)).join('\n');
+      // Op de pagina Doel en tochten: de rij Zonder doel, van haar knop tot de volgende.
+      const rij = (t, naam) => { const m = t.match(new RegExp(`^\\[knop: ${naam}\\b.*\\]$\\n(?:(?!\\[knop: ).*\\n)*`, 'm')); return m ? m[0] : ''; };
+      const delen = [
+        ['ascend-zonder-kracht', jeWeek(k('ascend-zonder-kracht'))],
+        ['stand-zonder-kracht', jeWeek(k('stand-zonder-kracht'))],
+        ['ascend-je-week-zonder-kracht', zonderKop(k('ascend-je-week-zonder-kracht'))],
+        ['instellingen-doel-zonder-kracht', rij(k('instellingen-doel-zonder-kracht'), 'Zonder doel')],
+        ['instellingen-blad-bundel-zonder-doel-zonder-kracht', zonderKop(k('instellingen-blad-bundel-zonder-doel-zonder-kracht'))],
+        ['instellingen-blad-weekbudget-zonder-kracht', zonderKop(k('instellingen-blad-weekbudget-zonder-kracht'))],
+      ];
+      for (const [s, t] of delen) {
+        // Nooit stil leeg: zonder het scherm of zonder de kaart toetst deze invariant niets.
+        if (!t.trim()) { uit.push(`${s}: leeg of zonder Je week of de rij Zonder doel (stand zonder-kracht ontbreekt of het scherm is weg)`); continue; }
+        for (const m of alle(t, /^.*kracht.*$/gim)) {
+          if (/zonder kracht|krachttraining staat uit/i.test(m[0])) continue;
+          uit.push(`${s}: "${m[0].trim()}"`);
+        }
+      }
+      return uit;
+    },
+  },
 ];
 
 const SCHERMEN = [
