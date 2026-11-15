@@ -6,7 +6,7 @@ description: Het vaste bouwmoment van ASCEND (maandag, woensdag en vrijdag om 19
 # Bouwmoment
 
 Tussen de bouwmomenten bouwt niemand wat de eigenaar meldt, op twee uitzonderingen na. Meteen, tussendoor: iets dat nu stuk is (de app werkt niet, verkeerde getallen in je training, data die verloren kan gaan) en kleine fixes die de coördinator zelf in een paar minuten doet, zonder helper (een tekst, een regel, een getal). De rest gaat in de Inbox. Al het andere gaat
-in `## Inbox` bovenaan `docs/backlog.md`, met de datum en zijn woorden kort. Een tweede opmerking over hetzelfde
+in `## Inbox` bovenaan `docs/backlog.md`, met de datum en zijn woorden kort en het volgende nummer `[I-<n>]` (het hoogste staat bovenaan de Inbox; zet het getal mee op). Een tweede opmerking over hetzelfde
 komt bij het eerste punt. Zo wordt er één keer gebouwd, met alle wensen erin.
 
 1. Lees `docs/backlog.md` (Inbox eerst), `docs/onderhoud/2026-11-06-kosten-voor-maandag.md` en de skill `werkverdeling`.
@@ -17,7 +17,8 @@ komt bij het eerste punt. Zo wordt er één keer gebouwd, met alle wensen erin.
    vraag staat bovenaan de melding.
 4. Bouw per onderwerp: klein zelf, groter met één helper per onderwerp volgens het opdrachtsjabloon. Gerichte tests
    tijdens het werk, de volle set een keer voor main.
-5. Eén keer naar main met alles van deze ronde, één pushmelding. Zet de afgehandelde punten uit de Inbox naar
-   "Live op <datum>" en de rest terug met de reden.
+5. Eén keer naar main met alles van deze ronde, één pushmelding. Draai na de squash `npm run backlog:bij` en commit de
+   backlog mee: dat zet elk punt met `Klaar: I-<n>` onder Pas live. De rest blijft met de reden. Voor elke start eerst
+   `git log origin/main --grep "I-<n>"`; staat het er al, dan is het punt gebouwd.
 6. Is de Inbox leeg: niets bouwen, alleen één regel "Bouwmoment: Inbox leeg". Kostenregel per helper in `.claude/kosten/logboek.md`. Korte melding aan de eigenaar: wat live is, wat bleef, wat
    hij moet doen (app twee keer openen, een APK).

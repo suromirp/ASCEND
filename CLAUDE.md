@@ -127,6 +127,7 @@ afspraken voor elke agent die in deze repo werkt.
   `engine/settingsSummary.ts` (de waarde in de rij), en een groepspagina in
   `src/components/settings/groups/` (`docs/beslissingen/2026-10-22-alles-instelbaar.md`,
   `docs/beslissingen/2026-10-22-instellingen-in-groepen.md`).
+- Backlog: elk Inboxpunt heeft een code `[I-n]`; de bouwer zet `Klaar: I-<n>` in zijn commit en na elke squash naar main draait `npm run backlog:bij` en gaat mee; voor een start eerst `git log origin/main --grep "I-<n>"`.
 - Besluiten: leg ze vast in `docs/beslissingen/`, één bestand per besluit
   (`JJJJ-MM-DD-onderwerp.md`, sjabloon `_sjabloon.md`), nooit herschrijven.
 - Geen identificerende persoonsgegevens: de repo is openbaar. Geen naam,

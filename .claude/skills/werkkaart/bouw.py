@@ -67,7 +67,7 @@ def inbox(backlog):
     uit = []
     for regel in blok(backlog, 'Inbox').splitlines():
         if regel.startswith('- '):
-            t = kaal(regel[2:])
+            t = re.sub(r'^\[I-\d+\]\s*', '', kaal(regel[2:]))
             titel = re.split(r'\s[(]|:\s', t, maxsplit=1)[0].strip().rstrip('.')
             uit.append({'titel': kort(titel, 80)})
     return uit

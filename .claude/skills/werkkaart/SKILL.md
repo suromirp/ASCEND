@@ -17,7 +17,7 @@ De sessie "Werkkaart ASCEND (elk uur)" op Sonnet, elk uur op :20. De coördinato
 - Stuk of vast: de punten onder `## Stuk of vast` in `eigenaar.md` (schrijf "Niets." als er niets is), plus vanzelf: een rode deploy op main, een bouwer met bucket failed, of een bouwer die werkt maar al meer dan twee uur geen update gaf; amber voor een bouwer die blocked is of een needs_action heeft.
 - Loopt goed: de bouwers uit `stand.json`, met hun stap (bouwen, controle, naar main) en de laatste stand in gewone taal; `bouw.py` haalt commit-hashes en branchnamen eruit.
 - Net live: `## Net live` in `eigenaar.md`, nieuwste datum bovenaan.
-- Stroom: Inbox uit `## Inbox` van `docs/backlog.md` (alleen de titel), Bouwen en Controle uit de bouwers, Live de laatste vijf commits op main.
+- Stroom: Inbox uit `## Inbox` van `docs/backlog.md` (alleen de titel, zonder de code `[I-n]`), Bouwen en Controle uit de bouwers, Live de laatste vijf commits op main.
 - Kaart van de app: knooppunten zijn de werkbriefjes, hun bestanden de paden onder `## Bestanden`, lijnen de imports tussen die bestanden in `src/`. Een onderwerp waar een bouwer bestanden wijzigt (branch tegen origin/main) pulseert met de naam van de bouwer.
 
 ## Stappen (elk uur op :20, en na elke push naar main)
