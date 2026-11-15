@@ -286,7 +286,7 @@ function lostText(lost: WeekLoss[]): string {
   return days === 1 ? 'Je verloor deze week een dag.' : `Je verloor deze week ${days} dagen.`;
 }
 
-const WHY = 'ASCEND kijkt hiernaar zodra er in je week een training wegviel of naar later ging. Vol is: twee dagen met twee trainingen, twee trainingen meer dan er dagen over zijn, vier loopdagen op rij of drie zware dagen achter elkaar. Het advies kiest eerst de extra training die je via een voorstel kreeg, dan wat het minst telt. Een test, een wedstrijd, je sleuteltraining en wat je zelf neerzette staan nooit in het advies. Eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet vraagt ASCEND het deze week niet meer.';
+const WHY = 'Dit telt zodra er in je week een training wegviel of naar later ging. Vol is: twee dagen met twee trainingen, twee trainingen meer dan er dagen over zijn, vier loopdagen op rij of drie zware dagen achter elkaar. Het advies kiest eerst de extra training die je via een voorstel kreeg, dan wat het minst telt. Een test, een wedstrijd, je sleuteltraining en wat je zelf neerzette staan nooit in het advies. Eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet krijg je er deze week geen vraag meer over.';
 
 function dropProposal(c: Candidate, title: string, consequences: string): PlanChangeProposal {
   const item: PlanChangeItem = {
@@ -326,7 +326,7 @@ export function fullWeekAdvice(input: FullWeekAdviceInput): Advice[] {
   if (list.length === 0) {
     const own = candidates(input, ctx, isYours, taken).filter((c) => !c.session.fixed)[0];
     const tip = own ? ` Wil je lucht, dan ${own.tier === 3 ? `komt ${lower(own.template.name)} op ${formatWeekdayDateNL(own.session.scheduledDate)} als eerste in aanmerking` : `kost ${lower(own.template.name)} op ${formatWeekdayDateNL(own.session.scheduledDate)} je het minst`}. Overslaan doe je zelf in Week.` : ' Wil je lucht, dan sla je zelf een training over in Week.';
-    return [{ ...base, effect: `${lead} ASCEND raadt niets aan om te laten vallen: wat er nog staat zette je zelf neer, is je sleuteltraining of een test, of maakt je week niet rustiger als het vervalt.${tip}` }];
+    return [{ ...base, effect: `${lead} Geen advies om iets te laten vallen: wat er nog staat zette je zelf neer, is je sleuteltraining of een test, of maakt je week niet rustiger als het vervalt.${tip}` }];
   }
   // Hoogstens twee zinnen: wat vervalt en waarom, en wat er dan staat. Blijft de week ook dan vol, dan staat dat er.
   const afterOf = (c: Candidate) => (c.after.full ? `Ook dan is je week nog vol: ${shapeText(c.after)}.` : `Dan ${stands(c.after)} er nog ${shapeText(c.after)}.`);

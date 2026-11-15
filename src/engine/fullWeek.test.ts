@@ -186,7 +186,7 @@ describe('WEEK-FULL: wat verlies is en wat erbij kwam (review van 12 november)',
     const [advice] = fullWeekAdvice(input(THU, block, logs));
     expect(advice.tip).not.toContain('kwam er als extra bij');
     expect(advice.tip).toBe('Rustige duurloop van do 5 november vervalt: een rustige loop kost je het minst. Ook dan is je week nog vol: 5 trainingen in 4 dagen en 2 dagen met twee trainingen.');
-    expect(advice.why).toContain('Na Liever niet vraagt ASCEND het deze week niet meer.');
+    expect(advice.why).toContain('Na Liever niet krijg je er deze week geen vraag meer over.');
     expect(advice.proposal!.changes[0].plannedSessionId).toBe('tpl_easy_run@3');
   });
 

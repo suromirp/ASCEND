@@ -214,6 +214,8 @@ const SCHERMEN = {
   'stand-ziek': { titel: 'Stand, ziek gemeld', pad: '#/stand', stand: 'ziek' },
   'vandaag-ziek': { titel: 'Vandaag, ziek gemeld', pad: '#/', stand: 'ziek' },
   'week-ziek': { titel: 'Week, ziek gemeld', pad: '#/week', stand: 'ziek' },
+  'vandaag-ziek-eerder': { titel: 'Vandaag, ziek sinds twee dagen', pad: '#/', stand: 'ziek-eerder' },
+  'week-ziek-eerder': { titel: 'Week, ziek sinds twee dagen', pad: '#/week', stand: 'ziek-eerder' },
   'ascend-vaardigheid': { titel: 'Ascend met een vaardigheid (Pull-Up)', pad: '#/ascend', stand: 'vaardigheid' },
   'ascend-algemeen': { titel: 'Ascend met Algemeen sterk met eigen gewicht', pad: '#/ascend', stand: 'algemeen' },
   // Het voorstel voor spieren voor de berg als eigen weergave in de weekterugblik (besluit 2026-11-12-je-week-tot-nu).

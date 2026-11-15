@@ -28,7 +28,7 @@ export interface StreakContext {
 // where every planned session was completed extends it by one. A day with
 // a skipped or missed session ends it.
 //
-// Neutral too, like on Logboek (pages/History.tsx#countMissed): a rest day, a
+// Neutral too, like the count on Week (engine/weekLogs.ts#leftOutOfCount): a rest day, a
 // day you were ill and logged nothing on, a session that fell away because of a leave
 // (`leave.role === 'dropped'`), a session ASCEND itself took out of the plan
 // (`leftOut`, as on Week) and days before the program started.

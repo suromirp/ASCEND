@@ -135,12 +135,12 @@ export function zone2Explanation(chart: Zone2Chart, statement: AerobicTrend['sta
   // Wat het getal is.
   if (o.pieces) {
     out.push(
-      `Het getal is je tempo per km bij ${hrWords}${o.zones && o.referenceHr > 0 ? ', het midden van je zone 2' : ''}. ASCEND haalt het uit stabiele stukken van je buitenlopen: minstens ${R.minPieceSec / 60} minuten met een vaste hartslag en een vast tempo, op vrijwel vlak terrein, en nooit uit de eerste ${R.startAfterSec / 60} minuten van een loop. Een stuk een paar slagen hoger of lager rekent ASCEND om naar die ene hartslag.`,
+      `Het getal is je tempo per km bij ${hrWords}${o.zones && o.referenceHr > 0 ? ', het midden van je zone 2' : ''}. Het getal komt uit stabiele stukken van je buitenlopen: minstens ${R.minPieceSec / 60} minuten met een vaste hartslag en een vast tempo, op vrijwel vlak terrein, en nooit uit de eerste ${R.startAfterSec / 60} minuten van een loop. Een stuk een paar slagen hoger of lager telt mee, omgerekend naar die ene hartslag.`,
     );
   } else {
     out.push(`Het getal is je tempo per km bij ${hrWords}. Tempo uit stabiele stukken staat uit, dus elke vlakke rustige of lange duurloop telt met de gemiddelde hartslag van de hele loop.`);
   }
-  if (!o.zones) out.push('Je hartslag is nog niet ingevuld. Vul hem in bij Instellingen, Lichaam, dan rekent ASCEND met je eigen zone 2.');
+  if (!o.zones) out.push('Je hartslag is nog niet ingevuld. Vul hem in bij Instellingen, Lichaam, dan telt je eigen zone 2.');
 
   // Wat sneller of trager betekent.
   out.push('Sneller bij dezelfde hartslag past bij fitter worden. In de grafiek staat sneller boven. Trager kan ook komen door vermoeidheid, warmte of weinig slaap. Van dag tot dag schommelt dit tempo al snel een paar procent, daarom telt de lijn over weken en niet één loop.');
@@ -152,17 +152,17 @@ export function zone2Explanation(chart: Zone2Chart, statement: AerobicTrend['sta
   const oneMeasurement = o.pieces && chart.pieces > chart.runs ? ' Stukken uit dezelfde loop tellen samen als één meting, want ze delen dezelfde dag, slaap en weer.' : '';
   const need = `Voor een uitspraak over sneller of trager zijn minstens ${R.firstRuns} lopen nodig, verspreid over minstens ${R.firstSpanDays / 7} weken en ${R.firstWeeks} verschillende weken.`;
   if (chart.state === 'leeg') {
-    out.push(`Er is nog geen loop die meetelt in de laatste ${R.lineWeeks} weken. Daarom zegt ASCEND nog niets over je tempo. ${need}`);
+    out.push(`Er is nog geen loop die meetelt in de laatste ${R.lineWeeks} weken. Daarom staat er nog niets over je tempo. ${need}`);
   } else if (chart.state === 'eerste-schatting') {
-    out.push(`Dit rust op ${carried} uit de laatste ${R.lineWeeks} weken.${oneMeasurement}${whole} Dat is te weinig voor een verandering. ${need} Tot dan is het getal een eerste schatting en zegt ASCEND niets over sneller of trager.`);
+    out.push(`Dit rust op ${carried} uit de laatste ${R.lineWeeks} weken.${oneMeasurement}${whole} Dat is te weinig voor een verandering. ${need} Tot dan is het getal een eerste schatting, zonder iets over sneller of trager.`);
   } else if (statement?.kind === 'uitspraak') {
     const base = `De lijn loopt door ${carried} uit de laatste ${R.lineWeeks} weken.${oneMeasurement}${whole}`;
     if (chart.state === 'te-veel-verschil') {
-      out.push(`${base} Je lopen verschillen nog te veel: de band rond de verandering is breder dan ${R.tooWideSec} seconden. Dan zegt ASCEND niets over sneller of trager, en staat er geen lijn in de grafiek.`);
+      out.push(`${base} Je lopen verschillen nog te veel: de band rond de verandering is breder dan ${R.tooWideSec} seconden. Dan staat er niets over sneller of trager, en geen lijn in de grafiek.`);
     } else {
       const phrase = bandPhrase(statement);
       const band = phrase === 'gelijk' ? `Afgerond op ${R.roundSec} seconden is de verandering per ${R.firstSpanDays / 7} weken nul.` : `De verandering per ${R.firstSpanDays / 7} weken ligt waarschijnlijk tussen twee grenzen: ${phrase} per km, afgerond op ${R.roundSec} seconden.`;
-      const unclear = statement.verdict === 'geen-duidelijke-verandering' && phrase !== 'gelijk' ? ' Die band ligt aan beide kanten van nul, dus ASCEND noemt het nog geen duidelijke verandering.' : '';
+      const unclear = statement.verdict === 'geen-duidelijke-verandering' && phrase !== 'gelijk' ? ' Die band ligt aan beide kanten van nul, dus het heet nog geen duidelijke verandering.' : '';
       out.push(`${base} ${band} Waarschijnlijk betekent hier: in ongeveer 8 van de 10 gevallen valt de echte verandering binnen die band. De lichte waaier in de grafiek laat zien hoe schuin de lijn daarmee kan lopen.${unclear}`);
     }
   }

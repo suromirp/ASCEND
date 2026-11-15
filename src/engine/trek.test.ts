@@ -287,14 +287,14 @@ describe('een zware beendag vlak na een tocht', () => {
     const change = planLeaveChange({ mode: 'add', period: trekWeekend, existing: [], sessions: base, logs: [], templates, today: TODAY, context: (p) => context(p, { trekRest: 'strict' }) });
     const item = change.proposal.changes.find((c) => c.plannedSessionId === legDay);
     expect(item?.action).toBe('remove');
-    expect(item?.reason).toBe('Te dicht na je tocht: na een bergtocht houdt ASCEND 72 uur tot de volgende zware beendag, en deze week is er geen dag voor.');
+    expect(item?.reason).toBe('Te dicht na je tocht: na een bergtocht zit er 72 uur tot de volgende zware beendag, en deze week is er geen dag voor.');
   });
 
   it('soepel (standaard): de korte versie blijft 48 uur na de tocht staan, met een zin die het uitlegt', () => {
     const base = planPass(plan7, context([])).sessions;
     const change = planLeaveChange({ mode: 'add', period: trekWeekend, existing: [], sessions: base, logs: [], templates, today: TODAY, context: (p) => context(p) });
     const item = change.proposal.changes.find((c) => c.plannedSessionId === legDay);
-    expect(item).toMatchObject({ action: 'move', fromDate: '2026-11-17', toDate: '2026-11-17', plannedMinutes: 45, reason: 'Iets eerder dan ASCEND graag ziet na je tocht, daarom de korte versie.' });
+    expect(item).toMatchObject({ action: 'move', fromDate: '2026-11-17', toDate: '2026-11-17', plannedMinutes: 45, reason: 'Iets eerder dan gewenst na je tocht, daarom de korte versie.' });
     const applied = applyPlanChangeItems(change.proposal.changes, base, () => 'x', { by: 'proposal', proposalId: change.proposal.id, at: '2026-10-22T08:00:00.000Z' }).sessions;
     expect(applied.find((s) => s.id === legDay)).toMatchObject({ scheduledDate: '2026-11-17', plannedMinutes: 45 });
     expect(planPass(applied, context(change.periodsAfter)).repairs).toEqual([]);

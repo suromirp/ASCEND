@@ -1,7 +1,7 @@
 // Maakt de nagemaakte standen voor de tekstkaart (docs/app-kaart/README.md) en laat elk één planningsronde
 // draaien op de vaste klok van de kaart, zodat een start daarna niets meer bijwerkt.
 //   node scripts/app-kaart/maak-standen.mjs            maakt alle standen opnieuw
-//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel)
+//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, ziek-eerder, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel)
 // Alles is nagemaakt: de basis is state-kracht.json, de rest zijn kleine wijzigingen met verzonnen getallen.
 //
 // Waarom "settle": bij de eerste start na het laden van een stand vindt de planningsronde nog iets te
@@ -93,6 +93,14 @@ function ziek(state) {
   const s = meta(state, 'settings').value;
   s.illnessEpisodes = [{ id: 'ill_kaart_1', kind: 'above_neck', startDate: VANDAAG }];
   verwijderPlanning(state, (d) => d >= VANDAAG && d <= '2026-11-01');
+}
+
+// Ziek sinds twee dagen (donderdag 29 oktober), met een training vóór de melding (Benen A op woensdag 28, gemist) en
+// één binnen de ziekte (de testloop op donderdag 29, vervallen). Voor de invariant Vervallen tegen gemist
+// (scripts/app-kaart/invarianten.mjs): die vraagt een stand met dagen vóór de meldingsdag.
+function ziekEerder(state) {
+  const s = meta(state, 'settings').value;
+  s.illnessEpisodes = [{ id: 'ill_kaart_2', kind: 'below_neck', startDate: '2026-10-29' }];
 }
 
 // Eén vaardigheid (F4e): Pull-Up op de ladder Optrekken, met de eerste twee stappen gehaald.
@@ -235,6 +243,7 @@ export const STANDEN = {
   vakantie: metVakantie,
   'zonder-doel': zonderDoel,
   ziek,
+  'ziek-eerder': ziekEerder,
   vaardigheid: metVaardigheid,
   algemeen: metAlgemeen,
   voorstel: metVoorstel,

@@ -16,7 +16,7 @@ const answer = (items: PlanChangeItem[], sessions = week()) => {
 
 describe('een andere lengte op dezelfde dag', () => {
   it('de korte versie na een tocht (zoals in trek.test.ts): een regel met de minuten, en Akkoord', () => {
-    const item: PlanChangeItem = { plannedSessionId: 'legs', action: 'move', fromDate: '2026-11-17', toDate: '2026-11-17', plannedMinutes: 45, reason: 'Iets eerder dan ASCEND graag ziet na je tocht, daarom de korte versie.' };
+    const item: PlanChangeItem = { plannedSessionId: 'legs', action: 'move', fromDate: '2026-11-17', toDate: '2026-11-17', plannedMinutes: 45, reason: 'Iets eerder dan gewenst na je tocht, daarom de korte versie.' };
     const { data, answer: a } = answer([item]);
     expect(data.moves).toEqual([{ name: expect.any(String), action: 'length', to: '2026-11-17', sessionId: 'legs', minutes: 45 }]);
     expect(a.canAccept).toBe(true);

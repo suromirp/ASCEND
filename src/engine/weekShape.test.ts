@@ -76,7 +76,7 @@ describe('chooseWeekShape', () => {
   it('keeps one weekday free when all five weekdays are chosen', () => {
     const r = chooseWeekShape(templates, { ...base, daysPerWeek: 5, allowedDays: [1, 2, 3, 4, 5] });
     expect(r.count).toBe(4);
-    expect(r.notes.join(' ')).toContain('doordeweekse dag vrij');
+    expect(r.notes.join(' ')).toContain('doordeweekse dag blijft vrij');
   });
 
   it('uses fewer trainings when fewer days are chosen than asked', () => {

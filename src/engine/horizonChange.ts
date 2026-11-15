@@ -71,7 +71,7 @@ export function diffHorizon(input: HorizonDiffInput): HorizonDiff {
       continue;
     }
     if (!a || a.status === 'skipped') {
-      const why = pastGoal(b.scheduledDate) ? 'Na de dag van je hoofddoel plant ASCEND niets meer.' : reason;
+      const why = pastGoal(b.scheduledDate) ? 'Na de dag van je hoofddoel staat er niets meer.' : reason;
       // Off the plan entirely, as the planning run does it; undo puts it back.
       items.push({ plannedSessionId: b.id, action: 'remove', restore: true, ...(a ? {} : { discard: true }), fromDate: b.scheduledDate, reason: why, generatedBy: SOURCE });
       counts.removed++;
