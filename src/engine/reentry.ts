@@ -30,6 +30,7 @@ import { awayPeriods, isAwayDay } from './leave';
 import { isTestOrRace } from './templateRoles';
 import { raceWeekGuard } from './adviceShared';
 import type { RaceBlock } from './raceBlock';
+import type { PlanChangeProposal } from '../models/planChange';
 import { addDays, daysBetween, formatWeekdayDateNL, mondayOfWeek } from '../utils/dates';
 
 export type ReentryChoice = 'three_quarters' | 'half' | 'off';
@@ -180,6 +181,26 @@ export const REENTRY_WHY = 'Na een pauze zakt je conditie wat terug. Meteen een 
 // De regel in het voorstel van de planningsronde.
 export function reentryNote(week: ReentryWeek): string {
   return `Van ${formatWeekdayDateNL(week.from)} tot en met ${formatWeekdayDateNL(week.until)} duren je trainingen ${share(week.factor)} van de gewone tijd. Daarna gaat je schema gewoon verder.`;
+}
+
+// Een instap terugzetten (Aangepast door ASCEND in Week) is zelf een wijziging: een eigen regel in het logboek van
+// wijzigingen, zodat Ongedaan maken in de melding daarnaar verwijst (revertsProposalId) en het logboek beide toont.
+export const REENTRY_UNDONE_TITLE = 'Rustiger instap teruggezet';
+export const REENTRY_UNDONE_LINE = 'Je trainingen hebben weer hun gewone duur.';
+
+export function reentryUndoneRecord(id: string, week: ReentryWeek, at: string): PlanChangeProposal {
+  return {
+    id,
+    trigger: 'reentry_planned',
+    issue: REENTRY_UNDONE_TITLE,
+    changes: [],
+    alternatives: [],
+    consequences: `${REENTRY_UNDONE_LINE} De instap van ${formatWeekdayDateNL(week.from)} tot en met ${formatWeekdayDateNL(week.until)} is weg.`,
+    explanation: 'Door jou teruggezet in Aangepast door ASCEND.',
+    createdAt: at,
+    resolvedAt: at,
+    resolution: 'accepted',
+  };
 }
 
 // De instap die vandaag loopt, als je er Akkoord op gaf: de kaart Weer opbouwen op Vandaag zegt het dan.

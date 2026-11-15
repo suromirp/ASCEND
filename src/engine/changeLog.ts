@@ -3,7 +3,7 @@
 // trail. Nothing new is stored for it; this only makes the existing record
 // readable (Aangepast door ASCEND in Week, "Volgende week verandert").
 
-import { reentryAdjustments, reentryNote, type ReentryWeek } from './reentry';
+import { REENTRY_UNDONE_TITLE, reentryAdjustments, reentryNote, type ReentryWeek } from './reentry';
 import type { PlanChangeItem, PlanChangeProposal, EngineEvent } from '../models/planChange';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { describeChanges } from './changeImpact';
@@ -289,7 +289,7 @@ export function weekAdjustments(
 
   // Rustiger instap: elke training in die zeven dagen wordt korter. Een andere regel van ASCEND voor dezelfde
   // training gaat voor; de reden noemt de instap niet nog eens.
-  const reentryAt = (from: string) => accepted.filter((p) => p.trigger === 'reentry_planned').map((p) => p.resolvedAt ?? p.createdAt).filter((at) => localDateOf(at) <= from).at(-1);
+  const reentryAt = (from: string) => accepted.filter((p) => p.trigger === 'reentry_planned' && p.issue !== REENTRY_UNDONE_TITLE).map((p) => p.resolvedAt ?? p.createdAt).filter((at) => localDateOf(at) <= from).at(-1);
   for (const w of reentryAdjustments(reentryWeeks)) {
     if (w.until < weekStart || w.from > weekEnd) continue;
     for (const s of sessions) {

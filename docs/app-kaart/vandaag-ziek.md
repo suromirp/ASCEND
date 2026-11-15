@@ -44,10 +44,6 @@ Doeltijd 10 km: 45:00 vraagt meer dan je test laat zien
 [knop: Bekijk]
 
 --- kaart 8 ---
-Vervallen
-Benen A (zwaar) van woensdag 28 oktober en Testloop 5 km van donderdag 29 oktober vervallen: je meldde ziekte. Inhalen hoeft niet.
-
---- kaart 9 ---
 Back-up
 Tijd voor je back-up.
 Je hebt nog geen back-up. Je 13 trainingen staan alleen op deze telefoon.

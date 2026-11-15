@@ -16,6 +16,8 @@ import { activeStrengthStrategy, strengthTrackedExternally } from '../engine/str
 import { todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { bumpPlanRevision } from './planningSync';
+import { undoReentryNow } from '../storage/reentryUndo';
+import { REENTRY_UNDONE_LINE, REENTRY_UNDONE_TITLE } from '../engine/reentry';
 import { isMarathonGoal } from '../engine/mainGoal';
 import type { UndoRestore } from './appDataTypes';
 import type { Dispatch, SetStateAction } from 'react';
@@ -164,17 +166,18 @@ export function useGoalActions(deps: {
   // Een rustiger instap terugzetten (engine/reentry.ts), vanuit Aangepast door ASCEND in Week. Zoals Akkoord: de
   // planning en de duurregisters lezen het opnieuw (refresh), en de uitkomst staat in de meldingsbalk, die blijft
   // staan als het blad dichtgaat. Ongedaan maken in die melding zet de instap weer terug zoals hij was.
+  // Het terugzetten staat zelf in het logboek van wijzigingen (storage/reentryUndo.ts); de melding draagt het id van
+  // die regel, zodat Ongedaan maken ernaar verwijst.
   const undoReentry = useCallback(async (from: string): Promise<void> => {
-    const before = (await SettingsRepo.get()).reentryWeeks;
-    const next = await SettingsRepo.set({ reentryWeeks: (before ?? []).filter((w) => w.from !== from) });
+    const { settings: next, before, record } = await undoReentryNow(from);
     setSettings(next);
     bumpPlanRevision();
     await refresh();
     setRecentChange({
-      id: makeId('reentry-undo'),
+      id: record?.id ?? makeId('reentry-undo'),
       trigger: 'reentry_planned',
-      title: 'Rustiger instap teruggezet',
-      lines: ['Je trainingen hebben weer hun gewone duur.'],
+      title: REENTRY_UNDONE_TITLE,
+      lines: [REENTRY_UNDONE_LINE],
       why: 'Je zette de rustiger instap terug in Aangepast door ASCEND.',
       before: [],
       addedIds: [],

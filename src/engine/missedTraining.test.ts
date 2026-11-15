@@ -127,13 +127,18 @@ describe('ziek gemeld: de vragen wachten', () => {
   const ill = [{ id: 'ziek', kind: 'below_neck' as const, startDate: '2026-10-26' }];
   const before = planned('za', 'tpl_easy_run', '2026-10-24');
 
-  it('geen Niet gedaan? zolang je ziek bent; wat van voor de ziekte open stond vervalt met één regel', () => {
+  it('geen Niet gedaan? zolang je ziek bent; de regel Vervallen noemt alleen wat binnen de ziekte stond', () => {
     expect(planMissed(input({ plannedSessions: [before] })).item).toMatchObject({ kind: 'ask', session: { id: 'za' } });
+    // Van voor de ziekte: geen vraag, en ook geen regel. Het blijft gemist, zoals in Week.
     const plan = planMissed(input({ plannedSessions: [before], illnessEpisodes: ill }));
     expect(plan.item).toBeUndefined();
     expect(plan.autoSkip).toEqual([]);
-    expect(plan.lapsed).toMatchObject({ kind: 'ill', sessions: [{ session: { id: 'za' } }] });
-    expect(lapsedLine(plan.lapsed!.kind, plan.lapsed!.sessions)).toBe('Rustige duurloop van zaterdag 24 oktober vervalt: je meldde ziekte. Inhalen hoeft niet.');
+    expect(plan.lapsed).toBeUndefined();
+    // Op de eerste ziektedag: vervallen, zoals in Week.
+    const onIll = planned('ma', 'tpl_easy_run', '2026-10-26');
+    const withIll = planMissed(input({ plannedSessions: [before, onIll], illnessEpisodes: ill }));
+    expect(withIll.lapsed).toMatchObject({ kind: 'ill', sessions: [{ session: { id: 'ma' } }] });
+    expect(lapsedLine(withIll.lapsed!.kind, withIll.lapsed!.sessions)).toBe('Rustige duurloop van maandag 26 oktober vervalt: je meldde ziekte. Inhalen hoeft niet.');
   });
 
   it('geen koppelvoorstel zolang je ziek bent', () => {

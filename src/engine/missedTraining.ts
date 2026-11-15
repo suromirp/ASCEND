@@ -22,6 +22,7 @@ import { lockLevel } from './weekValidator';
 import { isHandLog } from './activityImport';
 import { fitsChosenWayLog, isLooseSourceLog, sameLinkKind, templateKind } from './looseLog';
 import { daysBetween, formatDateNL, weekdayLongNL } from '../utils/dates';
+import { isPausedDay } from './sessionStatus';
 
 type MissedChoice = 'ask' | 'auto' | 'off';
 type MissedDays = 1 | 2 | 3;
@@ -106,14 +107,14 @@ export interface MissedInput {
   illnessEpisodes?: IllnessEpisode[];
   // De keuze Waar train je? per geplande training (zie LinkInput).
   places?: Readonly<Record<string, string>>;
-  // Vakanties en tochten die je meldde (engine/leave.ts#isAwayDay): wat daar stond is nooit gemist, en wat ervoor
-  // nog open stond vervalt met één regel.
+  // Vakanties en tochten die je meldde (engine/leave.ts#isAwayDay): wat daar stond is nooit gemist en vervalt met
+  // één regel; wat ervoor nog open stond blijft gemist, maar krijgt geen vraag meer.
   leavePeriods?: LeavePeriod[];
 }
 
 // Een pauze die je zelf meldde (ziek of weg) en die begon na deze dag en uiterlijk vandaag: wat op die dag
-// nog open stond, vervalt. Geen vraag meer en geen inhaaladvies; de kaart zegt het in één regel zolang de pauze
-// loopt. Het blijft gewoon gemist in de week ervoor: er is niets overgeslagen of herschreven.
+// nog open stond, krijgt geen vraag en geen inhaaladvies meer. Het blijft gemist, in Week, de weekterugblik en op
+// de kaart (die noemt het niet): er is niets overgeslagen of herschreven.
 export interface PauseSince {
   kind: 'ill' | 'away';
   start: string;
@@ -129,6 +130,17 @@ export function pauseSince(date: string, today: string, illnessEpisodes: Illness
   return pauses.filter((p) => p.start > date && p.start <= today).sort((a, b) => b.start.localeCompare(a.start))[0];
 }
 
+// De pauze waar deze dag in valt, of niets. Binnen een pauze precies wanneer engine/sessionStatus.ts#isPausedDay
+// ja zegt; die toets blijft de bron, dit zoekt er alleen het begin en de soort bij.
+function pauseOn(date: string, today: string, illnessEpisodes: IllnessEpisode[] | undefined, leavePeriods: LeavePeriod[] | undefined): PauseSince | undefined {
+  if (!isPausedDay(date, { leave: leavePeriods, illness: illnessEpisodes }, today)) return undefined;
+  const pauses: PauseSince[] = [
+    ...(illnessEpisodes ?? []).filter((e) => isIllnessDay(date, [e], today)).map((e) => ({ kind: 'ill' as const, start: e.startDate, running: !e.endDate || e.endDate >= today })),
+    ...awayPeriods(leavePeriods).filter((p) => date >= p.startDate && date <= p.endDate && isAwayDay(date, leavePeriods)).map((p) => ({ kind: 'away' as const, start: p.startDate, running: p.endDate >= today })),
+  ];
+  return pauses.sort((a, b) => b.start.localeCompare(a.start))[0];
+}
+
 export interface MissedSession {
   session: PlannedSession;
   template: SessionTemplate;
@@ -141,7 +153,8 @@ export interface MissedPlan {
   item?: MissedItem;
   // Met Zelf overslaan: wat ASCEND nu op overgeslagen zet (met een melding en Ongedaan maken).
   autoSkip: MissedSession[];
-  // Wat voor een ziekmelding of vakantie nog open stond en nu vervalt; alleen zolang die pauze loopt.
+  // Wat binnen een ziekmelding of vakantie stond en niet gedaan is (in Week Vervallen); alleen zolang die pauze
+  // loopt, de eerste drie dagen.
   lapsed?: { kind: 'ill' | 'away'; sessions: MissedSession[] };
 }
 
@@ -218,19 +231,24 @@ export function planMissed(input: MissedInput): MissedPlan {
     .filter((m) => age(m.session) >= 1 && age(m.session) <= MISSED_MAX_AGE_DAYS)
     .filter((m) => !isIllnessDay(m.session.scheduledDate, illnessEpisodes, today) && !isAwayDay(m.session.scheduledDate, leavePeriods, awayDays))
     .sort((a, b) => a.session.scheduledDate.localeCompare(b.session.scheduledDate) || a.session.order - b.session.order || a.session.id.localeCompare(b.session.id));
-  // Wat voor een ziekmelding of vakantie nog open stond, vervalt: één regel zolang de pauze loopt, daarna niets.
-  const lapsedPairs = recent.map((m) => ({ m, pause: pauseSince(m.session.scheduledDate, today, illnessEpisodes, leavePeriods) })).filter((x) => !!x.pause);
-  // Alleen de eerste drie dagen van de pauze, niet elke dag (Pathfinder, 14 november).
-  const running = lapsedPairs.filter((x) => x.pause!.running && daysBetween(x.pause!.start, today) <= 2);
+  // Wat voor een ziekmelding of vakantie nog open stond, krijgt geen vraag meer; het blijft gemist.
+  const beforePauseIds = new Set(recent.filter((m) => !!pauseSince(m.session.scheduledDate, today, illnessEpisodes, leavePeriods)).map((m) => m.session.id));
+  // De kaart Vervallen noemt alleen wat Week Vervallen noemt: voorbij, zonder log en binnen de pauze
+  // (engine/sessionStatus.ts#isPausedDay). Eén regel zolang de pauze loopt, alleen de eerste drie dagen ervan
+  // (Pathfinder, 14 november).
+  const running = unlogged
+    .filter((m) => age(m.session) >= 1)
+    .map((m) => ({ m, pause: pauseOn(m.session.scheduledDate, today, illnessEpisodes, leavePeriods) }))
+    .filter((x) => !!x.pause && x.pause.running && daysBetween(x.pause.start, today) <= 2)
+    .sort((a, b) => a.m.session.scheduledDate.localeCompare(b.m.session.scheduledDate) || a.m.session.order - b.m.session.order || a.m.session.id.localeCompare(b.m.session.id));
   // Met Niets doen zegt ASCEND ook niets over vervallen.
   const lapsed = running.length > 0 && settings.choice !== 'off' ? { kind: running.at(-1)!.pause!.kind, sessions: running.map((x) => x.m) } : undefined;
-  const lapsedIds = new Set(lapsedPairs.map((x) => x.m.session.id));
   // Ziek gemeld: geen vragen tot je beter bent.
   if (activeIllness(illnessEpisodes)) return { autoSkip: [], ...(lapsed ? { lapsed } : {}) };
   // Een racedag gaat over vandaag: geen vraag over wat voorbij is.
   if (input.plannedSessions.some((s) => s.scheduledDate === today && s.status !== 'skipped' && idHasRole(s.templateId, 'race', templateById))) return { autoSkip: [], ...(lapsed ? { lapsed } : {}) };
 
-  // Niet al in een ander voorstel. Wat vervallen is krijgt geen vraag meer; een log van je horloge die erbij
+  // Niet al in een ander voorstel. Wat binnen of vlak voor een pauze viel krijgt geen vraag meer; een log van je horloge die erbij
   // hoort mag nog wel gekoppeld worden (dat herstelt je historie, het vraagt niets in te halen).
   const open = recent.filter((m) => !input.busy?.has(m.session.id));
 
@@ -239,7 +257,7 @@ export function planMissed(input: MissedInput): MissedPlan {
 
   // Met een log die erbij kan horen komt geen vraag en niets vanzelf: eerst het koppelvoorstel.
   // Wat een vakantie of tocht neerzette, verplaatste of liet gaan (`leave`) gaat via zijn eigen weg: geen vraag en niets vanzelf.
-  const due = open.filter((m) => !links.has(m.session.id) && !lapsedIds.has(m.session.id) && age(m.session) >= settings.days && !memory.auto.includes(m.session.id) && !m.session.leave);
+  const due = open.filter((m) => !links.has(m.session.id) && !beforePauseIds.has(m.session.id) && age(m.session) >= settings.days && !memory.auto.includes(m.session.id) && !m.session.leave);
   const autoSkip = settings.choice === 'auto' ? due.filter(freeToSkip) : [];
   const autoIds = new Set(autoSkip.map((m) => m.session.id));
   const asks = settings.choice === 'off' ? [] : due.filter((m) => !autoIds.has(m.session.id) && !memory.notNow.includes(m.session.id));
@@ -282,7 +300,7 @@ export function linkLine(session: PlannedSession, template: SessionTemplate, log
   return `Je ${lowerFirst(template.name)} van ${nearDay(session.scheduledDate, today)} ${where} ${sourcePlace(log)}. Hoort die bij elkaar?`;
 }
 
-// "Benen A van woensdag 25 november vervalt: je bent op vakantie. Inhalen hoeft niet."
+// "Benen A van woensdag 25 november vervalt: je meldde een vakantie. Inhalen hoeft niet."
 export function lapsedLine(kind: 'ill' | 'away', sessions: readonly MissedSession[]): string {
   const names = sessions.map((m) => askLine(m.session, m.template));
   const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} en ${names.at(-1)}`;
