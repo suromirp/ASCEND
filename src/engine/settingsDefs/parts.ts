@@ -10,14 +10,14 @@ import { resolveSky } from '../skySettings';
 import { resolveLegEase } from '../legEaseSettings';
 import { resolveStrengthSettings } from '../strengthSettings';
 import { resolveWatchHrMode } from '../watchHeartRate';
-import type { Blocker } from './types';
+import type { Blocker, ChoiceDef } from './types';
 
 const strength = (s: AppSettings) => resolveStrengthSettings(s.strengthModel);
 
 export const B = {
   forge: { ok: (s) => strength(s).enabled, reason: 'Zichtbaar zodra Kracht meerekenen aan staat', parent: 'forge' },
   oneRm: { ok: (s) => strength(s).showOneRm, reason: 'Zichtbaar zodra Geschatte 1RM tonen aan staat', parent: 'forge-1rm' },
-  inApp: { ok: (_s, c) => c.strengthInApp, reason: 'Zichtbaar zodra je sets in ASCEND bijhoudt', parent: 'kracht' },
+  inApp: { ok: (_s, c) => c.strengthInApp, reason: 'Zichtbaar zodra je sets in de app bijhoudt', parent: 'kracht' },
   ladderRow: { ok: (s) => strength(s).ladderRow, reason: 'Zichtbaar zodra Stappen bij calisthenics aan staat', parent: 'forge-stappen' },
   mountain: { ok: (s) => strength(s).mountainMuscles, reason: 'Zichtbaar zodra Spieren voor de berg aan staat', parent: 'forge-bergspieren-aan' },
   restAuto: { ok: (s) => strength(s).restAuto, reason: 'Zichtbaar zodra de rusttimer aan staat', parent: 'forge-rust' },
@@ -34,7 +34,7 @@ export const B = {
   send: { ok: (_s, c) => c.sendToWatch, reason: 'Zichtbaar zodra Trainingen naar je horloge aan staat', parent: 'naar-horloge' },
   ascendHr: { ok: (s) => resolveWatchHrMode({ mode: s.watchHeartRate }) !== 'intervals', reason: 'Zichtbaar zodra de hartslag van ASCEND naar je horloge gaat', parent: 'horloge-hartslag' },
   dragWeek: { ok: (s) => s.dragWeek !== false, reason: 'Zichtbaar zodra Trainingen slepen in Week aan staat', parent: 'slepen-week' },
-  missedOn: { ok: (s) => s.missedTraining !== 'off', reason: 'Zichtbaar zodra ASCEND iets doet met een training die niet doorging', parent: 'niet-doorgegaan' },
+  missedOn: { ok: (s) => s.missedTraining !== 'off', reason: 'Zichtbaar zodra Training die niet doorging niet op Uit staat', parent: 'niet-doorgegaan' },
   goal: { ok: (_s, c) => c.goal, reason: 'Zichtbaar zodra je een hoofddoel hebt', parent: 'doelen' },
   noGoal: { ok: (_s, c) => c.noGoal, reason: 'Zichtbaar zodra je geen doel hebt', parent: 'doelen' },
   goalOrProgram: { ok: (_s, c) => c.goal || c.program, reason: 'Zichtbaar zodra je een hoofddoel of programma hebt', parent: 'doelen' },
@@ -46,14 +46,19 @@ export const B = {
   morning: { ok: (s) => resolveOverviews(s.overviews).morningCheckIn, reason: 'Zichtbaar zodra de ochtendcheck aan staat', parent: 'ochtendcheck' },
   review: { ok: (s) => resolveOverviews(s.overviews).weekReview, reason: 'Zichtbaar zodra de weekterugblik aan staat', parent: 'weekterugblik' },
   notice: { ok: (_s, c) => c.noticeAvailable, reason: 'Zichtbaar zodra je telefoon de ochtendmelding kan sturen', parent: 'ochtendmelding' },
-  timed: { ok: (_s, c) => c.timed, reason: 'Zichtbaar zodra ASCEND als Android-app draait', parent: 'toestemmingen' },
+  timed: { ok: (_s, c) => c.timed, reason: 'Zichtbaar in de Android-app', parent: 'toestemmingen' },
   weekNotice: { ok: (s) => s.weekNotice !== false, reason: 'Zichtbaar zodra de weekmelding aan staat', parent: 'weekmelding' },
   evening: { ok: (s) => s.eveningBefore !== false, reason: 'Zichtbaar zodra De avond ervoor aan staat', parent: 'avond-ervoor' },
-  liveUpdate: { ok: (_s, c) => c.liveUpdate, reason: 'Zichtbaar zodra ASCEND als Android-app draait', parent: 'toestemmingen' },
+  liveUpdate: { ok: (_s, c) => c.liveUpdate, reason: 'Zichtbaar in de Android-app', parent: 'toestemmingen' },
   clothing: { ok: (s) => resolveOverviews(s.overviews).clothingAdvice, reason: 'Zichtbaar zodra het kledingadvies aan staat', parent: 'kledingadvies' },
   runDetail: { ok: (s) => resolveRunInsight(s.runInsight).detail.show, reason: 'Zichtbaar zodra Run in detail tonen aan staat', parent: 'run-detail' },
   insight: { ok: (s) => resolveRunInsight(s.runInsight).enabled, reason: 'Zichtbaar zodra Inzicht na een training aan staat', parent: 'loopinzicht' },
   legEaseOffers: { ok: (s) => resolveLegEase(s) === 'voorstel', reason: 'Zichtbaar zodra Lichter bij vermoeide benen met een voorstel werkt', parent: 'lichterbenen' },
   skyAuto: { ok: (s) => resolveSky(s).sky === 'auto', reason: 'Zichtbaar zodra Lucht bovenaan op Automatisch staat', parent: 'lucht' },
-  folder: { ok: (_s, c) => c.folderSupported, reason: 'Zichtbaar zodra je browser een vaste map kan onthouden of ASCEND als Android-app draait', parent: 'backup' },
+  folder: { ok: (_s, c) => c.folderSupported, reason: 'Zichtbaar zodra je browser een vaste map kan onthouden of in de Android-app', parent: 'backup' },
 } satisfies Record<string, Blocker>;
+
+// Een keuze met haar eigen typen (de waarden van de opties), zodat CHOICES.<sleutel> smal getypeerd blijft.
+export function def<T extends string | number>(d: ChoiceDef<T>): ChoiceDef<T> {
+  return d;
+}

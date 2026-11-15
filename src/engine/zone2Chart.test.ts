@@ -51,7 +51,7 @@ describe('zone2Chart: wat de grafiek draagt', () => {
     expect(chart.fan).toBeUndefined();
     expect(chart).toMatchObject({ runs: 1, pieces: 1 });
     expect(text).toMatch(/Dit rust op één loop met samen één stuk/);
-    expect(text).toMatch(/minstens 8 lopen nodig, verspreid over minstens 4 weken en 3 verschillende weken/);
+    expect(text).toMatch(/minstens 8 lopen nodig, verspreid over minstens 4 weken, in minstens 3 daarvan/);
     expect(text).toMatch(/eerste schatting/);
     // Eén stuk is geen reden om over één meting per loop te beginnen.
     expect(text).not.toMatch(/Stukken uit dezelfde loop/);

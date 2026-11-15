@@ -576,7 +576,7 @@ export function searchWeeklyPlacement(
       if (!feasible) {
         return { status: 'unplaceable', reason: 'Geen enkele combinatie van dagen plaatst alle sessies binnen de harde beschikbaarheidsgrenzen (bevestigd door een zuivere haalbaarheidscheck).', confirmedBy: 'feasibility-check' };
       }
-      return { status: 'search-limited', reason: 'Er bestaat een hard-geldige plaatsing, maar ASCEND kon binnen de zoekopdracht geen bruikbare complete plaatsing vinden.' };
+      return { status: 'search-limited', reason: 'Er bestaat een hard-geldige plaatsing, maar binnen de zoekopdracht is geen bruikbare complete plaatsing gevonden.' };
     }
   }
 
@@ -595,8 +595,8 @@ export function searchWeeklyPlacement(
 
   if (isCompromised(best)) {
     const reason = best.worstFinding
-      ? `Twee zware trainingen voor ${AXIS_NL[best.worstFinding.axis] ?? 'dezelfde spieren'} liggen ${best.worstFinding.daysApart === 1 ? '1 dag' : `${best.worstFinding.daysApart} dagen`} uit elkaar. ASCEND vond geen betere verdeling.`
-      : 'De cumulatieve belasting van deze week bleef boven de gewenste drempel. ASCEND vond geen betere verdeling binnen de onderzochte opties.';
+      ? `Twee zware trainingen voor ${AXIS_NL[best.worstFinding.axis] ?? 'dezelfde spieren'} liggen ${best.worstFinding.daysApart === 1 ? '1 dag' : `${best.worstFinding.daysApart} dagen`} uit elkaar. Een betere verdeling is er niet.`
+      : 'De cumulatieve belasting van deze week bleef boven de gewenste drempel. Binnen de onderzochte opties is er geen betere verdeling.';
     return { status: 'compromised', bestFound: best, alternatives, compromisedReason: reason, searchWasTruncated: truncated };
   }
 

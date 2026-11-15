@@ -5,7 +5,7 @@ Adres: `#/more/lichaam`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 Lichaam
 ### Signalen uit je gegevens
 [knop: Sluiten]
-Wat ASCEND opmerkt in je ochtenden, je trainingen en het weer. ASCEND zegt het. Je planning verandert alleen na Akkoord.
+Wat opvalt in je ochtenden, je trainingen en het weer, als melding. Je planning verandert alleen na Akkoord.
 [knop: Vroeg ziek zien]
 Vroeg ziek zien
 [knop: Uitleg: Vroeg ziek zien]

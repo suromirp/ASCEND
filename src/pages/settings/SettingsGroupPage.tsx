@@ -1,4 +1,4 @@
-import { useMemo, useState, type ComponentType } from 'react';
+import { useEffect, useMemo, useState, type ComponentType } from 'react';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Icon } from '../../components/icons';
 import { SkyBand } from '../../components/SkyBand';
@@ -16,6 +16,7 @@ import { GidsenGroup } from '../../components/settings/groups/GidsenGroup';
 import { LichaamGroup } from '../../components/settings/groups/LichaamGroup';
 import { GroupReset } from '../../components/settings/AdviceReset';
 import { adjustedRows } from '../../engine/settingsAvailability';
+import { loadSettingsHelp } from '../../data/settingsHelpKeys';
 import { PAGE_ROWS, SETTINGS_ROOT, isAdvancedRow, isSettingsPageId, placementOf, settingsAdvancedRoute, settingsPageRoute, settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
 
 // Welke inhoud bij welke groep hoort. Elke groep heeft inhoud; een onbekende groep gaat naar het overzicht.
@@ -57,6 +58,8 @@ function GroupPageInner({ id, advanced }: { id: SettingsPageId; advanced: boolea
   const location = useLocation();
   const jump = useJumpState();
   const { facts, reload } = useSettingsFacts();
+  // De uitleg achter de i laadt niet bij de start van de app; op een instellingenpagina vast vooraf.
+  useEffect(() => { loadSettingsHelp().catch(() => {}); }, []);
   // Een link naar een keuze die nu in het blad van een rij zit (de oude rij-id's) gaat naar die
   // rij en opent het blad; een sprong naar een gewone rij laat hem oplichten.
   const place = jump.jumpTo ? placementOf(jump.jumpTo.replace(/^instelling-/, '')) : undefined;

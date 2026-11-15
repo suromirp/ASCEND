@@ -5,7 +5,7 @@ Adres: `#/more/vandaag`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 Vandaag en meldingen
 ### Meldingen
 [knop: Sluiten]
-Welke meldingen ASCEND op je telefoon mag geven, en wanneer.
+Welke meldingen je op je telefoon krijgt, en wanneer.
 [knop: Ochtendvraag]
 Ochtendvraag
 [knop: Uitleg: Ochtendvraag]

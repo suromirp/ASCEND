@@ -205,7 +205,7 @@ describe('een ronde', () => {
     await turnOn(fake({ workouts: [workout('w1', 21, 7, 40)] }));
     const result = await syncHealthConnect({ port: fake({ granted: [] }), now: later(4) });
     expect(result).toMatchObject({ status: 'error', kind: 'denied' });
-    expect(result.status === 'error' && result.message).toMatch(/niet meer lezen/);
+    expect(result.status === 'error' && result.message).toMatch(/Geen toegang meer tot Health Connect/);
     const state = await getHealthConnectState();
     expect(state.enabled).toBe(true);
     expect(state.activities).toHaveLength(1);

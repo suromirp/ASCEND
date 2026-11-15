@@ -37,8 +37,8 @@ const TRAIL_EXPONENT = 1.06;
 const TRAIL_EXPONENT_LONG = 1.15;
 const TRAIL_LONG_MINUTES = 180;
 
-export const NEED_HIKES_LINE = 'Na drie lange wandelingen kan ASCEND je tempo schatten.';
-export const NEED_LONG_RUN_LINE = 'Na een lange loop of wandeling van minstens anderhalf uur kan ASCEND je tempo schatten.';
+export const NEED_HIKES_LINE = 'Na drie lange wandelingen is je tempo te schatten.';
+export const NEED_LONG_RUN_LINE = 'Na een lange loop of wandeling van minstens anderhalf uur is je tempo te schatten.';
 
 const dataOf = (l: SessionLog) => l.outdoorData ?? l.cardioData;
 const kmOf = (l: SessionLog): number => dataOf(l)?.distanceKm ?? 0;
@@ -119,12 +119,12 @@ export function readLimit(goal: TrainingGoal, logs: SessionLog[], date: string, 
   let expected: number;
   let refSport: 'run' | 'hike' | undefined;
   if (hike) {
-    if (!d.distanceKm) return { need: 'Vul de afstand van je dag in, dan kan ASCEND je tempo naast je tijdslimiet leggen.' };
+    if (!d.distanceKm) return { need: 'Vul de afstand van je dag in, dan staat je tempo naast je tijdslimiet.' };
     const factor = dinFactor(logs, date);
     if (factor === undefined) return { need: NEED_HIKES_LINE };
     expected = estimatedHikingMinutes(d.distanceKm, d.gainM ?? 0, d.lossM ?? 0) * factor;
   } else {
-    if (!d.distanceKm) return { need: 'Vul de afstand van je wedstrijd in, dan kan ASCEND je tempo naast je cutoff leggen.' };
+    if (!d.distanceKm) return { need: 'Vul de afstand van je wedstrijd in, dan staat je tempo naast je cutoff.' };
     const ref = bestEffortPace(logs, date);
     if (!ref) return { need: NEED_LONG_RUN_LINE };
     const raceEffort = d.distanceKm + (d.gainM ?? 0) / 100;

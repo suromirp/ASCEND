@@ -77,7 +77,7 @@ export function ClothingSheet({ onClose }: { onClose: () => void }) {
     void updateSettings({ clothingAdjust: Object.keys(next).length ? next : undefined });
   };
   return (
-    <Sheet eyebrow="Vandaag en meldingen" title="Kleding bijstellen" line="ASCEND leert dit van je tikken na een buitentraining. Je kunt het hier ook zelf bijstellen." onClose={onClose}>
+    <Sheet eyebrow="Vandaag en meldingen" title="Kleding bijstellen" line="Geleerd van je tikken na een buitentraining. Je kunt het hier ook zelf bijstellen." onClose={onClose}>
       <SettingsList>
         {SPORTS.map((s) => {
           const v = adjust[s] ?? 0;

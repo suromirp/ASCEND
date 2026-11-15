@@ -90,7 +90,7 @@ describe('noticeSupport', () => {
   });
 
   it('has an honest sentence for every case that does not work', () => {
-    expect(NOTICE_SUPPORT_TEXT.unavailable).toBe('Je telefoon laat ASCEND niet op de achtergrond wakker worden; je krijgt de vraag als je de app opent.');
+    expect(NOTICE_SUPPORT_TEXT.unavailable).toBe('Je telefoon wekt de app niet op de achtergrond; je krijgt de vraag als je de app opent.');
     for (const text of Object.values(NOTICE_SUPPORT_TEXT)) expect(text).not.toMatch(/[–—]/);
   });
 });

@@ -109,7 +109,7 @@ export function extraRunEarned(inputs: Omit<ExtraRunInputs, 'newId' | 'anchor' |
     weeks++;
     done += review.done; planned += review.planned; keyDone += review.keyDone; keyPlanned += review.keyPlanned;
   }
-  if (weeks < MIN_WEEKS) return { earned: false, reason: 'Na twee volle weken in je plan kijkt ASCEND of er een loop bij kan.' };
+  if (weeks < MIN_WEEKS) return { earned: false, reason: 'Na twee volle weken in je plan volgt de toets of er een loop bij kan.' };
   if (done / planned < MIN_DONE_SHARE) return { earned: false, reason: `De laatste weken deed je ${done} van de ${planned} trainingen. Bij 80% komt er een loop bij.` };
   if (keyPlanned > 0 && keyDone / keyPlanned < MIN_KEY_SHARE) return { earned: false, reason: 'De sleuteltraining viel de laatste weken een paar keer weg. Die gaat voor.' };
   return { earned: true, reason: `De laatste ${weeks} weken deed je ${done} van de ${planned} trainingen, zonder pijn.` };

@@ -297,7 +297,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
               {readOnly ? (
                 <span role="columnheader">Vorige</span>
               ) : (
-                <button type="button" role="columnheader" onClick={act.column} className="relative flex items-center gap-1 text-left before:absolute before:-inset-y-[14px] before:inset-x-0 before:content-['']" aria-label={showPrevious ? 'Toon het voorschrift' : 'Toon vorige keer'}>
+                <button type="button" role="columnheader" onClick={act.column} className="-my-[14px] flex items-center gap-1 py-[14px] text-left" aria-label={showPrevious ? 'Toon het voorschrift' : 'Toon vorige keer'}>
                   {showPrevious ? 'Vorige' : 'Voorschrift'}
                   <Icon name="ruilen" size={12} />
                 </button>

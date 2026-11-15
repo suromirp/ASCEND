@@ -17,7 +17,7 @@ describe('storageUseText', () => {
   });
 
   it('gewoon: wat de app gebruikt en wat de browser geeft', () => {
-    expect(storageUseText({ kind: 'measured', usage: 24_000_000, quota: 2_000_000_000 })).toEqual({ value: '24 MB', sub: 'Van de 2 GB die ASCEND mag gebruiken' });
+    expect(storageUseText({ kind: 'measured', usage: 24_000_000, quota: 2_000_000_000 })).toEqual({ value: '24 MB', sub: 'Van de 2 GB die beschikbaar is' });
   });
 
   it('zonder quota alleen het gebruik', () => {

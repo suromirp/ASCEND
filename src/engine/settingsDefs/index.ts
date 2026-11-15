@@ -1,5 +1,6 @@
 // ASCEND: alle verklaringen van de instellingen, één bestand per groep (docs/visie/Ontwerp instellingen op een
-// plek.md). Stap 1: naast de oude bestanden, die tot stap 2 en 3 de bron blijven.
+// plek.md). Sinds stap 2 en 3 de bron van de index, de rijen, de voorwaarden en de keuzes; de uitleg staat apart in
+// uitleg/<groep>.ts en laadt niet bij de start (data/settingsHelpKeys.ts).
 
 import type { SettingsPageId } from '../../data/settingsLayout';
 import type { SettingDef } from './types';

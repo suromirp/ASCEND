@@ -131,7 +131,7 @@ export function TrekGoalsCard() {
           leave={plan.periodsAfter}
           notes={plan.notes}
           emptyText={plan.mode === 'add'
-            ? 'Je planning hoeft niet te veranderen. Met Akkoord bewaar je de tocht en houdt ASCEND er rekening mee.'
+            ? 'Je planning hoeft niet te veranderen. Met Akkoord bewaar je de tocht en houden voorstellen er rekening mee.'
             : 'Je planning hoeft niet te veranderen. Met Akkoord verwijder je de tocht.'}
           onRespond={async (response) => {
             setStale(response === 'accepted' && (await applyLeave(plan)) === 'stale');

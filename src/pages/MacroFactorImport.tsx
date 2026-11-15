@@ -104,7 +104,7 @@ export function MacroFactorImportPage() {
       setNotice(
         err instanceof MacroFactorFormatError
           ? { tone: 'error', text: err.message, details: err.details }
-          : { tone: 'error', text: 'ASCEND kan dit bestand niet lezen. Kies de export van MacroFactor als xlsx- of CSV-bestand.' },
+          : { tone: 'error', text: 'Dit bestand is niet te lezen. Kies de export van MacroFactor als xlsx- of CSV-bestand.' },
       );
     } finally {
       setBusy(false);
@@ -143,7 +143,7 @@ export function MacroFactorImportPage() {
     try {
       await readData(new Uint8Array(await file.arrayBuffer()), file.name);
     } catch {
-      setNotice({ tone: 'error', text: 'ASCEND kan dit bestand niet openen.' });
+      setNotice({ tone: 'error', text: 'Dit bestand gaat niet open.' });
     }
     if (input.current) input.current.value = '';
   }
@@ -169,10 +169,10 @@ export function MacroFactorImportPage() {
         <Step n={2}>Kies Granular Export. Vink Weight Trend en Scale Weight aan en tik op Export. Voor krachttrainingen tik je op Export Workout Log: de eerste keer 30 dagen, daarna wekelijks 7 dagen.</Step>
         <Step n={3}>Je krijgt een xlsx-bestand. Tik op Delen en kies ASCEND, voor elk bestand. Lukt dat niet, bewaar het bestand en tik hieronder op Bestand kiezen.</Step>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          ASCEND leest het bestand alleen op deze telefoon; het gaat nergens heen. Bij krachttrainingen koppel je eerst de namen en verwerk je ze daarna in één keer; er wordt nooit iets stil opgeslagen.
+          Het bestand wordt alleen op deze telefoon gelezen; het gaat nergens heen. Bij krachttrainingen koppel je eerst de namen en verwerk je ze daarna in één keer; er wordt nooit iets stil opgeslagen.
         </p>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          ASCEND leest xlsx en csv en ziet aan de kolommen zelf wat erin zit: gewicht, krachttrainingen of allebei in één bestand. Zit in je export het blad Exercises&nbsp;-&nbsp;1-RM, dan leest ASCEND ook je 1RM per oefening.
+          Xlsx en csv werken; de kolommen zelf zeggen wat erin zit: gewicht, krachttrainingen of allebei in één bestand. Zit in je export het blad Exercises&nbsp;-&nbsp;1-RM, dan komt ook je 1RM per oefening mee.
         </p>
       </Card>
 
@@ -274,7 +274,7 @@ export function MacroFactorImportPage() {
         <Card className="flex flex-col gap-1">
           <Eyebrow>Alles staat al in je logboek</Eyebrow>
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-            Van de {countText(state.workouts.length)} in dit bestand is er niets meer dat ASCEND kan toevoegen.
+            Van de {countText(state.workouts.length)} in dit bestand is er niets meer om toe te voegen.
           </p>
         </Card>
       )}
@@ -338,8 +338,8 @@ function WeightSourceCard({ entries, on, onChange }: { entries: WeightEntry[]; o
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Gewicht uit MacroFactor gebruiken</p>
           <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
             Gewicht komt uit MacroFactor (bijgewerkt op {formatDateNL(last.date)}): <span className="font-sans tabular-nums">{kgLabel(last.kg)}</span>, {last.basis === 'trend' ? 'je trendgewicht' : 'de weegschaal'}.
-            {last.basis === 'trend' ? ' ASCEND rekent met het trendgewicht, omdat dat rustiger is dan één weging.' : ' In de export stond geen trendgewicht, dus ASCEND rekent met de weging zelf.'}
-            {' '}Het telt voor rugzakgewicht als deel van je lichaamsgewicht en voor de beenindex. Uit betekent: ASCEND laat het staan maar rekent er niet mee, en vraagt weer om je gewicht.
+            {last.basis === 'trend' ? ' Gerekend met het trendgewicht, omdat dat rustiger is dan één weging.' : ' In de export stond geen trendgewicht, dus gerekend met de weging zelf.'}
+            {' '}Het telt voor rugzakgewicht als deel van je lichaamsgewicht en voor de beenindex. Uit betekent: het blijft staan maar telt niet mee, en je krijgt weer de vraag om je gewicht.
           </p>
           {old && on && (
             <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
@@ -378,7 +378,7 @@ function DetailsSheet({ text, onClose }: { text: string; onClose: () => void }) 
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <Eyebrow>Details</Eyebrow>
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              Dit zijn de werkbladen en kolommen die ASCEND in het bestand zag. Geef ze door, dan kan ASCEND ze leren herkennen.
+              Dit zijn de werkbladen en kolommen in het bestand. Geef ze door, dan komen ze in de herkenning.
             </p>
             <p className="whitespace-pre-line text-xs leading-snug" style={{ color: 'var(--color-ink)', overflowWrap: 'anywhere' }}>{text}</p>
             <SecondaryButton onClick={requestClose}>Begrepen</SecondaryButton>

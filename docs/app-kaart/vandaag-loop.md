@@ -54,7 +54,7 @@ Doeltijd 10 km: 45:00 vraagt meer dan je test laat zien
 Gemist
 Niet gedaan?
 Benen A (zwaar) van woensdag 28 oktober
-Je hebt hier nog niets voor gelogd. Ging hij niet door, dan zet ASCEND hem op overgeslagen; verder verandert er niets.
+Je hebt hier nog niets voor gelogd. Ging hij niet door, dan komt hij op overgeslagen; verder verandert er niets.
 [knop: Niet gedaan]
 [knop: Toch gedaan]
 [knop: Niet nu]

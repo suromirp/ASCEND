@@ -25,8 +25,8 @@ Toestemmingen
 2 staan uit
 Ruimte op dit toestel
 [knop: Uitleg: Ruimte op dit toestel]
-Van de <ruimte> die ASCEND mag gebruiken
-<gebruikt>
+Van de 3,2 GB die beschikbaar is
+233 KB
 [knop: Kopieën van voor een import, 0]
 Kopieën van voor een import
 [knop: Uitleg: Kopieën van voor een import]

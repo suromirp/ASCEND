@@ -1,12 +1,188 @@
 // ASCEND: de instellingen van de groep Planning (docs/visie/Ontwerp instellingen op een plek.md).
 //
-// Stap 1: alleen de teksten en de plek, één keer gegenereerd uit de exports van 14 november en daarna met de
-// hand bijgewerkt. De bron blijft data/settingsIndex.ts, settingsLayout.ts, settingsHelp.ts en
-// settingsChoices.ts tot stap 2 en 3; settingsDefs.parity.test.ts bewaakt dat de teksten gelijk zijn. De volgorde
-// is die van de pagina: een rij, met daaronder wat in haar blad staat.
+// Elke instelling van deze groep staat hier één keer: titel, zin en trefwoorden voor het zoekveld, de plek op de
+// pagina, de voorwaarden en de keuze; de uitleg achter de i staat in uitleg/planning.ts. De volgorde is die van de
+// pagina: een rij, met daaronder wat in haar blad staat. Samenvatting en advies volgen in stap 4.
 
-import { B } from './parts';
+import { B, def } from './parts';
 import type { SettingDef } from './types';
+
+// De keuzes van deze groep, onder hun oude sleutel in CHOICES (data/settingsChoices.ts leest ze hier).
+export const PLANNING_CHOICES = {
+  wijzigingen: def({
+    group: 'Planning',
+    title: 'Wijzigingen',
+    line: 'Als je planning zou veranderen.',
+    advice: 'auto_small' as 'always_ask' | 'auto_small' | 'auto_all',
+    help: 'wijzigingen',
+    options: [
+      { value: 'always_ask', label: 'Vraag eerst', note: 'Wacht op je Akkoord, de weekcontrole meldt wat ze rechtzet' },
+      { value: 'auto_small', label: 'Deels zelf', note: 'Weken verder weg zelf, met een melding' },
+      { value: 'auto_all', label: 'Alles zelf', note: 'Meteen, met een melding achteraf' },
+    ],
+  }),
+  testStilstaan: def({
+    group: 'Planning',
+    title: 'Stilstaan bij een testloop',
+    line: 'Wachten voor een stoplicht in je snelste 5 km.',
+    advice: 'skip' as 'skip' | 'count',
+    help: 'testStilstaan',
+    options: [
+      { value: 'skip', label: 'Niet meetellen', note: 'De tijd dat je stilstond telt niet, de stops staan erbij', short: 'Niet meetellen' },
+      { value: 'count', label: 'Meetellen', note: 'De klok loopt door, zoals het was', short: 'Meetellen' },
+    ],
+  }),
+  testRust: def({
+    group: 'Planning',
+    title: 'Rust voor een test',
+    line: 'Hoelang na een zware loop- of beendag een testloop mag staan.',
+    advice: 72 as 72 | 48,
+    help: 'testRust',
+    options: [
+      { value: 72, label: '72 uur', note: 'Twee dagen ertussen, de test op de derde dag', short: '72 uur' },
+      { value: 48, label: '48 uur', note: 'Eén dag ertussen', short: '48 uur' },
+    ],
+  }),
+  nietDoorgegaan: def({
+    group: 'Planning',
+    title: 'Wat er gebeurt',
+    line: 'Met een training die voorbij is zonder log.',
+    advice: 'ask' as 'ask' | 'auto' | 'off',
+    help: 'nietDoorgegaan',
+    options: [
+      { value: 'ask', label: 'Vragen', note: 'Eén korte vraag op Vandaag, jij kiest' },
+      { value: 'auto', label: 'Zelf overslaan', note: 'Op overgeslagen, met een melding en Ongedaan maken' },
+      { value: 'off', label: 'Niets doen', note: 'Hij blijft als gemist in je week staan' },
+    ],
+  }),
+  nietDoorgegaanDagen: def({
+    group: 'Planning',
+    title: 'Na hoeveel dagen',
+    line: 'Gerekend vanaf de dag dat hij gepland stond.',
+    advice: 2 as 1 | 2 | 3,
+    help: 'nietDoorgegaan',
+    options: [
+      { value: 1, label: '1 dag', short: '1 dag' },
+      { value: 2, label: '2 dagen', short: '2 dagen' },
+      { value: 3, label: '3 dagen', short: '3 dagen' },
+    ],
+  }),
+  ambitie: def({
+    group: 'Planning',
+    title: 'Ambitie',
+    line: 'Hoe snel lopen en tochten opbouwen.',
+    advice: 'standaard' as 'rustig' | 'standaard' | 'stevig',
+    help: 'ambitie',
+    options: [
+      { value: 'rustig', label: 'Rustig', note: '10% trager, voor drukke weken' },
+      { value: 'standaard', label: 'Standaard', note: 'Het plan zoals het is' },
+      { value: 'stevig', label: 'Stevig', note: '10% sneller, terug naar standaard bij pijn' },
+    ],
+  }),
+  rustdagDoen: def({
+    group: 'Planning',
+    title: 'Op je rustdag',
+    line: 'Wat er op je rustdag staat.',
+    advice: 'rest' as 'rest' | 'active',
+    options: [
+      { value: 'rest', label: 'Rust', note: 'Wandelen mag, er valt niets af te vinken' },
+      { value: 'active', label: 'Hersteldag', note: '20 tot 30 min heel rustig, telt niet mee' },
+    ],
+  }),
+  meerdere: def({
+    group: 'Planning',
+    title: 'Twee trainingen per dag',
+    line: 'Als je tijd per dag het toelaat.',
+    advice: 'automatic' as 'automatic' | 'always' | 'only_if_useful' | 'never',
+    help: 'meerdere',
+    options: [
+      { value: 'automatic', label: 'Automatisch', note: 'Hangt af van je tijd per dag', short: 'Auto' },
+      { value: 'always', label: 'Ja', note: 'Zoveel mogelijk samen als de tijd het toelaat', short: 'Ja' },
+      { value: 'only_if_useful', label: 'Alleen als het moet', note: 'Alleen als er anders echt geen plek is', short: 'Alleen nodig' },
+      { value: 'never', label: 'Nee', note: 'Nooit meer dan één training per dag', short: 'Nee' },
+    ],
+  }),
+  langeLoopGroei: def({
+    group: 'Planning',
+    title: 'Groei van de lange loop',
+    line: 'Hoe snel de lange loop groeit naar je hardloopwedstrijd.',
+    advice: 'weekly' as 'weekly' | 'biweekly' | 'wave' | 'firm' | 'fast',
+    help: 'langeLoopGroei',
+    options: [
+      { value: 'wave', label: 'Heel rustig', note: 'Per blok van vier weken, zoals eerst', short: 'Heel rustig' },
+      { value: 'biweekly', label: 'Rustiger', note: 'Om de twee weken een stap van 10%', short: 'Rustiger' },
+      { value: 'weekly', label: 'Volgens het onderzoek', note: 'Elke week hoogstens 10%, de piek om de week', short: 'Volgens het onderzoek' },
+      { value: 'firm', label: 'Stevig', note: 'Elke week hoogstens 10%, de piek elke week toegestaan', short: 'Stevig' },
+      { value: 'fast', label: 'Sneller dan het onderzoek', note: 'Wekelijks tot 120% van je langste loop van 30 dagen', short: 'Sneller dan het onderzoek' },
+    ],
+  }),
+  sportRust: def({
+    group: 'Planning',
+    title: 'Rust na een zware sport',
+    line: 'Voor je benen, na padel of voetbal.',
+    advice: 'ruim' as 'ruim' | 'korter',
+    help: 'sportenTellen',
+    options: [
+      { value: 'ruim', label: 'Ruim', note: '72 uur na een wedstrijd, 48 uur na een training of padel', short: 'Ruim' },
+      { value: 'korter', label: 'Korter', note: '48 uur na een wedstrijd, 24 uur na een training of padel', short: 'Korter' },
+    ],
+  }),
+  loslaten: def({
+    group: 'Planning',
+    title: 'Loslaten op een training',
+    line: 'Wat er gebeurt als je in Week een training loslaat op een dag waar al een training staat.',
+    advice: 'swap' as 'swap' | 'together',
+    help: 'loslatenTraining',
+    options: [
+      { value: 'swap', label: 'Ruilen', note: 'De twee ruilen van dag, als die ene training mag bewegen', short: 'Ruilen' },
+      { value: 'together', label: 'Samen', note: 'Ze staan samen op die dag', short: 'Samen' },
+    ],
+  }),
+  weekNaKeuze: def({
+    group: 'Planning',
+    title: 'Melding na jouw keuze',
+    line: 'Wat Week zegt als je op Vandaag koos dat een beendag blijft staan.',
+    advice: 'mine' as 'mine' | 'plain',
+    help: 'weekNaKeuze',
+    options: [
+      { value: 'mine', label: 'Met jouw keuze', note: 'De melding zegt dat jij koos, het voorstel is een gewone tekstknop', short: 'Met jouw keuze' },
+      { value: 'plain', label: 'Gewone melding', note: 'Zoals altijd, met Bekijk voorstel als hoofdknop', short: 'Gewone melding' },
+    ],
+  }),
+  vakantieOpzij: def({
+    group: 'Planning',
+    title: 'Opzij voor een vakantie',
+    line: 'Een training die moet wijken voor een vakantie of een tocht.',
+    advice: 'drop' as 'drop' | 'shift',
+    help: 'vakantieOpzij',
+    options: [
+      { value: 'drop', label: 'Liever laten vervallen', note: 'Als hij anders vlak voor of na zijn volgende keer komt', short: 'Laten vervallen' },
+      { value: 'shift', label: 'Toch verschuiven', note: 'Naar elke dag van die week die past', short: 'Verschuiven' },
+    ],
+  }),
+  vakantieSchuiven: def({
+    group: 'Planning',
+    title: 'Rond een vakantie schuiven',
+    line: 'Hoeveel er mag schuiven om je weken rond een vakantie zo goed mogelijk in te delen.',
+    advice: 'wide' as 'wide' | 'little',
+    help: 'vakantieSchuiven',
+    options: [
+      { value: 'wide', label: 'Flink', note: 'De beste indeling over alle werkbare dagen, ook over de weekgrens', short: 'Flink' },
+      { value: 'little', label: 'Weinig', note: 'Een training schuift alleen naar de dichtstbijzijnde dag van zijn eigen week', short: 'Weinig' },
+    ],
+  }),
+  zonderSportschool: def({
+    group: 'Planning',
+    title: 'Kracht zonder sportschool',
+    line: 'Wat er met kracht in de sportschool gebeurt als je een periode zonder sportschool toevoegt.',
+    advice: 'bodyweight' as 'bodyweight' | 'drop',
+    help: 'zonderSportschool',
+    options: [
+      { value: 'bodyweight', label: 'Eigen gewicht', note: 'Een korte sessie van 15 tot 20 minuten met squats, lunges, push-ups en kuitheffingen', short: 'Eigen gewicht' },
+      { value: 'drop', label: 'Laten vervallen', note: 'Geen kracht in die periode, alleen lopen', short: 'Laten vervallen' },
+    ],
+  }),
+} as const;
 
 export const PLANNING: SettingDef[] = [
   {
@@ -24,13 +200,7 @@ export const PLANNING: SettingDef[] = [
     title: 'Trainingstijd per dag',
     note: 'Hoeveel tijd je normaal hebt per dag.',
     keywords: ['tijd', 'minuten', 'budget', 'dagbudget', 'uur', 'beschikbaar', 'dagen en tijd'],
-    help: {
-      title: 'Trainingstijd per dag',
-      lead: 'Hoeveel tijd je normaal per dag hebt. ASCEND kiest dagen waar de training in past en zet er geen tweede training bij als het niet past. Een beetje ruimte erboven mag.',
-      points: [
-        { head: 'Veranderen', text: 'je planning verandert zoals je bij Wijzigingen koos: eerst een voorstel, of meteen met een melding en ongedaan maken.' },
-      ],
-    },
+    help: true,
   },
   {
     id: 'rustdag',
@@ -39,14 +209,7 @@ export const PLANNING: SettingDef[] = [
     title: 'Rustdag',
     note: 'Op welke dag je rust, en wat je dan doet. Een andere dag laat eerst zien wat er verschuift.',
     keywords: ['rust', 'vrije dag', 'hersteldag', 'herstel', 'maandag', 'dagen en tijd'],
-    help: {
-      title: 'Rustdag',
-      lead: 'De dag waarop je niet traint. Een andere dag is eerst een voorstel, pas na Akkoord verandert er iets.',
-      points: [
-        { head: 'Altijd', text: 'het weekend blijft voor je lange trainingen.' },
-        { head: 'Bezet', text: 'staat er deze week een training op je rustdag, dan heet een vrije dag in Week "Rustdag deze week", liefst niet vlak voor een zware dag. Er verschuift niets.' },
-      ],
-    },
+    help: true,
   },
   {
     id: 'rustdag-doen',
@@ -55,52 +218,17 @@ export const PLANNING: SettingDef[] = [
     title: 'Op je rustdag',
     note: 'Rust, of een lichte hersteldag van 20 tot 30 minuten.',
     keywords: ['rust', 'hersteldag', 'wandelen', 'actief herstel', 'dagen en tijd'],
-    choice: {
-      key: 'rustdagDoen',
-      def: {
-        group: 'Planning',
-        title: 'Op je rustdag',
-        line: 'Wat er op je rustdag staat.',
-        advice: 'rest',
-        options: [
-          { value: 'rest', label: 'Rust', note: 'Wandelen mag, er valt niets af te vinken' },
-          { value: 'active', label: 'Hersteldag', note: '20 tot 30 min heel rustig, telt niet mee' },
-        ],
-      },
-    },
+    choice: { key: 'rustdagDoen', def: PLANNING_CHOICES.rustdagDoen },
   },
   {
     id: 'meerdere',
     page: 'planning',
     place: { row: true },
     title: 'Twee trainingen per dag',
-    note: 'Of ASCEND twee trainingen op één dag mag plannen.',
+    note: 'Of er twee trainingen op één dag mogen staan.',
     keywords: ['meerdere', 'dubbel', 'twee keer', 'zelfde dag', 'combineren', 'samen', 'zware dingen', 'sessies', 'meerdere trainingen'],
-    help: {
-      title: 'Twee trainingen per dag',
-      lead: 'Mag ASCEND twee trainingen op één dag plannen, als je tijd het toelaat?',
-      points: [
-        { head: 'Automatisch', text: 'ASCEND beslist op je tijdbudget per dag.' },
-        { head: 'Nee', text: 'nooit meer dan één training per dag.' },
-        { head: 'Zwaar', text: 'benen en een zware loop op één dag staat apart onder Geavanceerd.' },
-      ],
-    },
-    choice: {
-      key: 'meerdere',
-      def: {
-        group: 'Planning',
-        title: 'Twee trainingen per dag',
-        line: 'Als je tijd per dag het toelaat.',
-        advice: 'automatic',
-        help: 'meerdere',
-        options: [
-          { value: 'automatic', label: 'Automatisch', note: 'ASCEND beslist zelf op je tijd per dag', short: 'Auto' },
-          { value: 'always', label: 'Ja', note: 'Zoveel mogelijk samen als de tijd het toelaat', short: 'Ja' },
-          { value: 'only_if_useful', label: 'Alleen als het moet', note: 'Alleen als er anders echt geen plek is', short: 'Alleen nodig' },
-          { value: 'never', label: 'Nee', note: 'Nooit meer dan één training per dag', short: 'Nee' },
-        ],
-      },
-    },
+    help: true,
+    choice: { key: 'meerdere', def: PLANNING_CHOICES.meerdere },
   },
   {
     id: 'zware-dingen',
@@ -116,17 +244,9 @@ export const PLANNING: SettingDef[] = [
     page: 'planning',
     place: { row: true },
     title: 'Sporten',
-    note: 'Per sport hoe ASCEND ermee omgaat: plannen, meetellen of negeren.',
+    note: 'Per sport: plannen, meetellen of negeren.',
     keywords: ['hardlopen', 'lopen', 'wandelen', 'fietsen', 'zwemmen', 'padel', 'voetbal', 'yoga', 'eigen sport', 'tennis', 'telt mee', 'negeren', 'frequentie', 'hoe vaak', 'per week'],
-    help: {
-      title: 'Sporten',
-      lead: 'Per sport kies je hoe ASCEND ermee omgaat. Verandert een keuze je planning, dan gaat dat zoals je bij Wijzigingen koos.',
-      points: [
-        { head: 'Plan dit voor mij', text: 'ASCEND zet het in je week, op dagen die bij je benen passen. Alleen voor hardlopen, wandelen en fietsen.' },
-        { head: 'Telt mee als ik het doe', text: 'je plant het zelf. Wat je doet telt mee voor je benen en je week.' },
-        { head: 'Negeren', text: 'ASCEND doet er niets mee. Je kunt het wel loggen.' },
-      ],
-    },
+    help: true,
   },
   {
     id: 'sport-per-week',
@@ -143,15 +263,7 @@ export const PLANNING: SettingDef[] = [
     title: 'Hoeveel per soort',
     note: 'Per soort training Minder, Normaal of Meer: eerst de duur, daarna het aantal.',
     keywords: ['minder', 'meer', 'langer', 'korter', 'kracht', 'lange duur', 'harde training', 'rustige duur', 'rugzak', 'hoeveelheid'],
-    help: {
-      title: 'Hoeveel per soort',
-      lead: 'Per soort training kies je Minder, Normaal of Meer. Normaal is het advies. Eerst een voorstel, pas na Akkoord verandert er iets.',
-      points: [
-        { head: 'De soorten', text: 'Kracht, Lange duur (je lange loop van de week), Harde training (de loop waarbij je hijgt, zoals intervallen of tempo) en Rustige duur.' },
-        { head: 'Eerst de duur', text: '15 procent korter of langer, afgerond op 5 minuten. Nooit meer dan 110 procent van je langste training van die soort in de laatste 30 dagen.' },
-        { head: 'Dan het aantal', text: 'Meer zet er een training bij op een vrije dag, als de regels het toelaten. Minder laat er een weg als er meer dan één staat. De 48 uur tussen zware beendagen, de rust na een tocht of wedstrijd, je rustdag en het aantal harde dagen schuiven nooit.' },
-      ],
-    },
+    help: true,
     helpKey: 'hoeveelPerSoort',
   },
   {
@@ -159,17 +271,9 @@ export const PLANNING: SettingDef[] = [
     page: 'planning',
     place: { row: true },
     title: 'Hoe sporten meetellen',
-    note: 'Of ASCEND vraagt bij een nieuwe sport en hoe zwaar het was.',
+    note: 'Of je een vraag krijgt bij een nieuwe sport en over hoe zwaar het was.',
     keywords: ['sporten meetellen', 'zwemmen', 'padel', 'voetbal', 'nieuwe sport', 'telt mee'],
-    help: {
-      title: 'Hoe sporten meetellen',
-      lead: 'Zwemmen, padel en voetbal plant ASCEND niet, maar ze kunnen meetellen voor je benen en je week. Wat een sport met je benen doet is afgeleid uit onderzoek en niet getoetst.',
-      points: [
-        { head: 'Vragen bij een nieuwe sport', text: 'komt er van je horloge een sport die je nog niet koos, dan vraagt Vandaag hoe hij telt. Tot je antwoordt telt hij niet mee. Uit: hij telt meteen mee.' },
-        { head: 'Vragen hoe zwaar het was', text: 'Rustig, Pittig, Zwaar of Heel zwaar. Hoe zwaarder, hoe meer het telt voor je benen. Uit: ASCEND neemt de gebruikelijke zwaarte en rekent een tikje voorzichtiger.' },
-        { head: 'Rust na een zware sport', text: 'Ruim houdt na een voetbalwedstrijd 72 uur en na padel of een voetbaltraining 48 uur vrij van zware beenkracht. Korter maakt dat 48 en 24 uur. Het bewijs voor recreanten is matig. De 72 uur komt van onderzoek bij profs. Staat een beendag te dicht na je sport, dan zie je in Week een voorstel.' },
-      ],
-    },
+    help: true,
     helpKey: 'sportenTellen',
   },
   {
@@ -177,7 +281,7 @@ export const PLANNING: SettingDef[] = [
     page: 'planning',
     place: { in: 'bundel-sporten-tellen' },
     title: 'Vragen bij een nieuwe sport',
-    note: 'Komt er een sport binnen die je nog niet koos, dan vraagt ASCEND hoe die telt. Uit: hij telt meteen mee.',
+    note: 'Komt er een sport binnen die je nog niet koos, dan krijg je de vraag hoe die telt. Uit: hij telt meteen mee.',
     keywords: ['nieuwe sport', 'zwemmen', 'padel', 'voetbal', 'hoe telt dit', 'hoe sporten meetellen'],
   },
   {
@@ -185,7 +289,7 @@ export const PLANNING: SettingDef[] = [
     page: 'planning',
     place: { in: 'bundel-sporten-tellen' },
     title: 'Vragen hoe zwaar het was',
-    note: 'Bij een sport die meetelt vraagt ASCEND hoe zwaar het voelde. Uit: ASCEND neemt het aan.',
+    note: 'Bij een sport die meetelt krijg je de vraag hoe zwaar het voelde. Uit: geen vraag, dan telt een aanname.',
     keywords: ['zwaarte', 'rpe', 'hoe zwaar', 'inspanning', 'pittig', 'hoe sporten meetellen'],
   },
   {
@@ -195,52 +299,17 @@ export const PLANNING: SettingDef[] = [
     title: 'Rust na een zware sport',
     note: 'Hoe lang je benen na padel of voetbal vrij blijven van een zware beendag.',
     keywords: ['rust', 'voetbal', 'padel', 'wedstrijd', '72 uur', '48 uur', 'hoe sporten meetellen'],
-    choice: {
-      key: 'sportRust',
-      def: {
-        group: 'Planning',
-        title: 'Rust na een zware sport',
-        line: 'Voor je benen, na padel of voetbal.',
-        advice: 'ruim',
-        help: 'sportenTellen',
-        options: [
-          { value: 'ruim', label: 'Ruim', note: '72 uur na een wedstrijd, 48 uur na een training of padel', short: 'Ruim' },
-          { value: 'korter', label: 'Korter', note: '48 uur na een wedstrijd, 24 uur na een training of padel', short: 'Korter' },
-        ],
-      },
-    },
+    choice: { key: 'sportRust', def: PLANNING_CHOICES.sportRust },
   },
   {
     id: 'wijzigingen',
     page: 'planning',
     place: { row: true },
     title: 'Wijzigingen',
-    note: 'Of ASCEND eerst vraagt voordat de planning verandert, of kleine dingen zelf doet.',
+    note: 'Eerst een vraag voordat de planning verandert, of kleine dingen meteen.',
     keywords: ['akkoord', 'bevestigen', 'automatisch', 'vragen', 'voorstel', 'planning', 'toepassen'],
-    help: {
-      title: 'Wijzigingen',
-      lead: 'Wie beslist als je planning verandert: jij, of bij kleine dingen ASCEND.',
-      points: [
-        { head: 'Vraag eerst', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Alleen de weekcontrole zet wat ASCEND zelf plande meteen recht, met de melding Planning bijgewerkt en ongedaan maken.' },
-        { head: 'Deels zelf', text: 'weken verder weg past ASCEND zelf aan, met een melding. Deze en volgende week, of iets schrappen, vraagt altijd eerst.' },
-        { head: 'Alles zelf', text: 'alles meteen, met een melding en ongedaan maken.' },
-      ],
-    },
-    choice: {
-      key: 'wijzigingen',
-      def: {
-        group: 'Planning',
-        title: 'Wijzigingen',
-        line: 'Als ASCEND je planning wil aanpassen.',
-        advice: 'auto_small',
-        help: 'wijzigingen',
-        options: [
-          { value: 'always_ask', label: 'Vraag eerst', note: 'Wacht op je Akkoord, de weekcontrole meldt wat ze rechtzet' },
-          { value: 'auto_small', label: 'Deels zelf', note: 'Weken verder weg zelf, met een melding' },
-          { value: 'auto_all', label: 'Alles zelf', note: 'Meteen, met een melding achteraf' },
-        ],
-      },
-    },
+    help: true,
+    choice: { key: 'wijzigingen', def: PLANNING_CHOICES.wijzigingen },
   },
   {
     id: 'ambitie',
@@ -249,30 +318,8 @@ export const PLANNING: SettingDef[] = [
     title: 'Ambitie',
     note: 'Hoe snel je loopminuten en wandelminuten groeien.',
     keywords: ['tempo', 'opbouw', 'rustig', 'stevig', 'progressie', 'snelheid'],
-    help: {
-      title: 'Ambitie',
-      lead: 'Hoe snel de minuten van je lopen en tochten groeien.',
-      points: [
-        { head: 'Altijd', text: 'een training wordt nooit meer dan 10% langer dan je langste van de afgelopen maand.' },
-        { head: 'Waarom', text: 'pezen en botten wennen langzamer dan je conditie.' },
-        { head: 'Stevig', text: 'valt vanzelf terug op Standaard bij pijn of trainingen die te zwaar voelen.' },
-      ],
-    },
-    choice: {
-      key: 'ambitie',
-      def: {
-        group: 'Planning',
-        title: 'Ambitie',
-        line: 'Hoe snel lopen en tochten opbouwen.',
-        advice: 'standaard',
-        help: 'ambitie',
-        options: [
-          { value: 'rustig', label: 'Rustig', note: '10% trager, voor drukke weken' },
-          { value: 'standaard', label: 'Standaard', note: 'Het plan zoals het is' },
-          { value: 'stevig', label: 'Stevig', note: '10% sneller, terug naar standaard bij pijn' },
-        ],
-      },
-    },
+    help: true,
+    choice: { key: 'ambitie', def: PLANNING_CHOICES.ambitie },
   },
   {
     id: 'lange-loop',
@@ -281,33 +328,9 @@ export const PLANNING: SettingDef[] = [
     title: 'Groei van de lange loop',
     note: 'Hoe snel de lange loop groeit naar je hardloopwedstrijd, binnen de 110%-rem.',
     keywords: ['lange loop', 'duurloop', 'groei', 'opbouw', 'wekelijks', 'rustiger', '110%', 'wedstrijd', 'halve marathon', 'marathon', '10 km'],
-    help: {
-      title: 'Groei van de lange loop',
-      lead: 'Hoe snel je lange loop groeit naar je hardloopwedstrijd. Het advies blijft binnen 110% van je langste loop. Daarboven vond het onderzoek geen veilige marge.',
-      points: [
-        { head: 'Volgens het onderzoek', text: 'hoogstens 10% per week, met de lichtere week van de golf en de piek om de week. Tot 30% per twee weken gaf geen hoger risico, boven 30% wel (Nielsen 2014, matig). Bij Stevig mag de piek elke week staan.' },
-        { head: 'Rustiger en Heel rustig', text: 'een stap om de twee weken, of per blok van vier weken.' },
-        { head: 'Sneller dan het onderzoek', text: 'onder Geavanceerd, wekelijks tot 120% van je langste loop van 30 dagen. Boven 10% gaf in het grootste onderzoek ongeveer 64% meer kans op een overbelastingsblessure (Frandsen 2025, matig).' },
-      ],
-    },
+    help: true,
     helpKey: 'langeLoopGroei',
-    choice: {
-      key: 'langeLoopGroei',
-      def: {
-        group: 'Planning',
-        title: 'Groei van de lange loop',
-        line: 'Hoe snel de lange loop groeit naar je hardloopwedstrijd.',
-        advice: 'weekly',
-        help: 'langeLoopGroei',
-        options: [
-          { value: 'wave', label: 'Heel rustig', note: 'Per blok van vier weken, zoals eerst', short: 'Heel rustig' },
-          { value: 'biweekly', label: 'Rustiger', note: 'Om de twee weken een stap van 10%', short: 'Rustiger' },
-          { value: 'weekly', label: 'Volgens het onderzoek', note: 'Elke week hoogstens 10%, de piek om de week', short: 'Volgens het onderzoek' },
-          { value: 'firm', label: 'Stevig', note: 'Elke week hoogstens 10%, de piek elke week toegestaan', short: 'Stevig' },
-          { value: 'fast', label: 'Sneller dan het onderzoek', note: 'Wekelijks tot 120% van je langste loop van 30 dagen', short: 'Sneller dan het onderzoek' },
-        ],
-      },
-    },
+    choice: { key: 'langeLoopGroei', def: PLANNING_CHOICES.langeLoopGroei },
   },
   {
     id: 'bundel-testloop',
@@ -315,24 +338,16 @@ export const PLANNING: SettingDef[] = [
     place: { row: true },
     title: 'Testloop',
     search: false,
-    sheet: { eyebrow: 'Planning', title: 'Testloop', line: 'Hoe ASCEND een test leest en plant.' },
+    sheet: { eyebrow: 'Planning', title: 'Testloop', line: 'Hoe een test gelezen en gepland wordt.' },
   },
   {
     id: 'twijfeltest',
     page: 'planning',
     place: { in: 'bundel-testloop' },
     title: 'Twijfeltest eerst vragen',
-    note: 'Is een testloop duidelijk trager dan je vorige, dan vraagt ASCEND eerst of hij meetelt voor je tempo\'s.',
+    note: 'Is een testloop duidelijk trager dan je vorige, dan krijg je eerst de vraag of hij meetelt voor je tempo\'s.',
     keywords: ['test', 'testloop', 'tempo', 'trager', 'wind', 'telt mee', 'telt niet mee', 'slechte dag', 'voorspelling', 'vdot'],
-    help: {
-      title: 'Twijfeltest eerst vragen',
-      lead: 'Is een testloop duidelijk trager dan je vorige, dan vraagt ASCEND eerst of hij meetelt voor je tempo\'s.',
-      points: [
-        { head: 'Waarom', text: 'fietsen vooraf, wind of vermoeide benen maken een test trager. Zonder antwoord blijven je tempo\'s die van je vorige test.' },
-        { head: 'Telt mee of niet', text: 'bij Telt mee eerst een voorstel, pas na Akkoord verandert er iets. Telt niet mee laat de test in je logboek, maar hij telt niet voor je tempo\'s en je voorspelling.' },
-        { head: 'Uit', text: 'de laatste test telt altijd.' },
-      ],
-    },
+    help: true,
   },
   {
     id: 'test-stilstaan',
@@ -341,47 +356,18 @@ export const PLANNING: SettingDef[] = [
     title: 'Stilstaan bij een testloop',
     note: 'Of de tijd dat je voor een stoplicht stond meetelt in je snelste 5 km.',
     keywords: ['test', 'testloop', 'stoplicht', 'stilstaan', 'wachten', 'pauze', 'auto-pauze', 'stops', 'snelste 5 km'],
-    help: {
-      title: 'Stilstaan bij een testloop',
-      lead: 'Staat je horloge niet stil als jij voor een stoplicht wacht, dan loopt de klok door in je snelste 5 km.',
-      points: [
-        { head: 'Niet meetellen', text: 'de tijd dat je stilstond telt niet in je snelste 5 km. ASCEND zegt hoe vaak en hoelang. Na meer dan een minuut of meer dan 3 stops zegt ASCEND dat de test iets te gunstig is.' },
-        { head: 'Meetellen', text: 'de klok loopt door. Pauzeert je horloge vanzelf, dan telt een stuk met zo\'n gat niet mee.' },
-        { head: 'Je tempo\'s', text: 'veranderen niet vanzelf. Verandert er door het stilstaan een tempo, dan vraagt ASCEND eerst Akkoord in het logblad.' },
-      ],
-    },
+    help: true,
     helpKey: 'testStilstaan',
-    choice: {
-      key: 'testStilstaan',
-      def: {
-        group: 'Planning',
-        title: 'Stilstaan bij een testloop',
-        line: 'Wachten voor een stoplicht in je snelste 5 km.',
-        advice: 'skip',
-        help: 'testStilstaan',
-        options: [
-          { value: 'skip', label: 'Niet meetellen', note: 'De tijd dat je stilstond telt niet, ASCEND noemt de stops erbij', short: 'Niet meetellen' },
-          { value: 'count', label: 'Meetellen', note: 'De klok loopt door, zoals het was', short: 'Meetellen' },
-        ],
-      },
-    },
+    choice: { key: 'testStilstaan', def: PLANNING_CHOICES.testStilstaan },
   },
   {
     id: 'nieuwe-test',
     page: 'planning',
     place: { in: 'bundel-testloop' },
     title: 'Nieuwe test voorstellen bij stilstand',
-    note: 'Had je testloop veel stilstand, dan stelt ASCEND een nieuwe poging voor in plaats van je eerstvolgende harde loop.',
+    note: 'Had je testloop veel stilstand, dan komt er een nieuwe poging als voorstel in plaats van je eerstvolgende harde loop.',
     keywords: ['test', 'testloop', 'stilstaan', 'stoplicht', 'opnieuw', 'nieuwe poging', 'herkansing', 'harde loop'],
-    help: {
-      title: 'Nieuwe test voorstellen bij stilstand',
-      lead: 'Stond je veel stil tijdens je testloop, dan stelt ASCEND een nieuwe poging voor.',
-      points: [
-        { head: 'Wanneer', text: 'meer dan een minuut stilstand of meer dan 3 keer stilstaan in je snelste 5 km, of een test die nog op je antwoord wacht.' },
-        { head: 'Wat er gebeurt', text: 'je eerstvolgende harde loop, minstens 3 dagen later, wordt een testloop van 5 km. Er komt geen training bij. Wat in de weg staat schuift mee in hetzelfde voorstel. Een zware beendag of lange duurloop kan daarbij vervallen.' },
-        { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet vraagt ASCEND het niet meer voor deze test. Is er binnen 10 dagen geen goede dag, dan zegt ASCEND niets.' },
-      ],
-    },
+    help: true,
     helpKey: 'nieuweTest',
   },
   {
@@ -391,47 +377,18 @@ export const PLANNING: SettingDef[] = [
     title: 'Rust voor een test',
     note: 'Hoelang na een zware loop- of beendag een testloop mag staan. Het advies is 72 uur.',
     keywords: ['test', 'testloop', 'rust', 'herstel', 'fris', '72 uur', '48 uur', 'lange duurloop', 'zware beendag', 'heuvels', 'benen'],
-    help: {
-      title: 'Rust voor een test',
-      lead: 'Een testloop laat zien wat je kunt als je benen fris zijn. Daarom houdt ASCEND rust tussen een zware dag en je test.',
-      points: [
-        { head: '72 uur', text: 'het advies. Zoveel tijd na de laatste zware loop- of beendag: een zware beendag, de lange duurloop, zware heuvels of intervallen, een bergtocht.' },
-        { head: '48 uur', text: 'voor als je benen snel herstellen of je week vol is.' },
-        { head: 'Wat ASCEND doet', text: 'een nieuwe of gemiste test komt alleen op een dag met genoeg rust. Staat een test te dicht op een zware dag, dan meldt Week het met een voorstel. Wat jij vastzette verschuift niet zonder jouw Akkoord.' },
-      ],
-    },
+    help: true,
     helpKey: 'testRust',
-    choice: {
-      key: 'testRust',
-      def: {
-        group: 'Planning',
-        title: 'Rust voor een test',
-        line: 'Hoelang na een zware loop- of beendag een testloop mag staan.',
-        advice: 72,
-        help: 'testRust',
-        options: [
-          { value: 72, label: '72 uur', note: 'Twee dagen ertussen, de test op de derde dag', short: '72 uur' },
-          { value: 48, label: '48 uur', note: 'Eén dag ertussen', short: '48 uur' },
-        ],
-      },
-    },
+    choice: { key: 'testRust', def: PLANNING_CHOICES.testRust },
   },
   {
     id: 'rustdag-terug',
     page: 'planning',
     place: { row: true },
     title: 'Rustdag terugzetten voorstellen',
-    note: 'Liet een voorstel je rustdag vervallen en is die dag weer leeg, dan stelt ASCEND voor hem terug te zetten.',
+    note: 'Liet een voorstel je rustdag vervallen en is die dag weer leeg, dan komt er een voorstel om hem terug te zetten.',
     keywords: ['rustdag', 'rust', 'herstel', 'terug', 'terugzetten', 'vrij', 'leeg', 'vervallen', 'voorstel'],
-    help: {
-      title: 'Rustdag terugzetten voorstellen',
-      lead: 'Liet een voorstel je rustdag vervallen en is die dag later weer leeg, dan stelt ASCEND voor hem terug te zetten.',
-      points: [
-        { head: 'Wanneer', text: 'op je vaste rustdag, als er die dag niets gepland of gedaan is en de week zijn rust niet al op een andere dag heeft.' },
-        { head: 'Niet', text: 'als je de twee dagen ervoor niet trainde, als je de rustdag zelf oversloeg, of als een gemiste test of sleuteltraining van je doel op die dag past.' },
-        { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet blijft de dag leeg en vraagt ASCEND er niet meer naar.' },
-      ],
-    },
+    help: true,
     helpKey: 'rustdagTerug',
   },
   {
@@ -449,15 +406,7 @@ export const PLANNING: SettingDef[] = [
     title: 'Voorstel bij een probleem in de week',
     note: 'Klopt er iets niet in je week bij een training die je zelf vastzette, dan krijg je een voorstel met Akkoord.',
     keywords: ['week', 'melding', 'probleem', 'rustdag', 'voorstel', 'waarschuwing', 'let op', 'zware beendag', 'te dicht'],
-    help: {
-      title: 'Voorstel bij een probleem in de week',
-      lead: 'Klopt er iets niet in je week en mag ASCEND het niet zelf herstellen, omdat jij of een eerder voorstel de training vastzette, dan krijg je een voorstel.',
-      points: [
-        { head: 'Wat telt als probleem', text: 'geen rustdag, zware beendagen te dicht op elkaar, twee harde lopen op een dag, een zware training na een test, twee volle lange trainingen, benen niet fris voor een test.' },
-        { head: 'Nooit stil', text: 'eerst een voorstel, pas na Akkoord verandert er iets. In een volle week kan de lichtste training vervallen, nooit een lange duurloop, harde loop, test, wedstrijd of tocht.' },
-        { head: 'Liever niet of uit', text: 'je week blijft zoals hij is en de melding blijft staan. Uit haalt alleen de knop met het voorstel weg.' },
-      ],
-    },
+    help: true,
     helpKey: 'weekVoorstel',
   },
   {
@@ -467,47 +416,18 @@ export const PLANNING: SettingDef[] = [
     title: 'Melding na jouw keuze',
     note: 'Koos je op Vandaag Benen fris, dan zegt de melding in Week dat jij koos om de training te laten staan.',
     keywords: ['week', 'melding', 'benen fris', 'keuze', 'beendag', 'te dicht', 'voorstel', 'let op', 'laten staan'],
-    help: {
-      title: 'Melding na jouw keuze',
-      lead: 'Koos je op Vandaag Benen fris en blijft een zware beendag staan, dan zegt Week dat jij dat koos.',
-      points: [
-        { head: 'Met jouw keuze', text: 'de melding blijft, met jouw keuze erbij. Het voorstel staat nog achter een gewone tekstknop.' },
-        { head: 'Gewone melding', text: 'Week meldt het zoals altijd, met Bekijk voorstel als hoofdknop.' },
-        { head: 'Alleen vandaag', text: 'je antwoord geldt voor vandaag en voor die ene training. Er verandert niets in je planning.' },
-      ],
-    },
+    help: true,
     helpKey: 'weekNaKeuze',
-    choice: {
-      key: 'weekNaKeuze',
-      def: {
-        group: 'Planning',
-        title: 'Melding na jouw keuze',
-        line: 'Wat Week zegt als je op Vandaag koos dat een beendag blijft staan.',
-        advice: 'mine',
-        help: 'weekNaKeuze',
-        options: [
-          { value: 'mine', label: 'Met jouw keuze', note: 'De melding zegt dat jij koos, het voorstel is een gewone tekstknop', short: 'Met jouw keuze' },
-          { value: 'plain', label: 'Gewone melding', note: 'Zoals altijd, met Bekijk voorstel als hoofdknop', short: 'Gewone melding' },
-        ],
-      },
-    },
+    choice: { key: 'weekNaKeuze', def: PLANNING_CHOICES.weekNaKeuze },
   },
   {
     id: 'week-vol',
     page: 'planning',
     place: { in: 'bundel-weekmelding' },
     title: 'Vragen als je week te vol wordt',
-    note: 'Viel er een dag weg en is de rest van je week te vol, dan vraagt ASCEND welke training mag vervallen, met een advies.',
+    note: 'Viel er een dag weg en is de rest van je week te vol, dan krijg je de vraag welke training mag vervallen, met een advies.',
     keywords: ['vol', 'te vol', 'druk', 'zwaar', 'gemist', 'weggevallen', 'niet kunnen', 'vervallen', 'laten vallen', 'overslaan', 'dubbele dag', 'twee trainingen', 'loopdagen', 'extra loop', 'voorstel', 'week'],
-    help: {
-      title: 'Vragen als je week te vol wordt',
-      lead: 'Viel er in je week een dag weg en is de rest te vol, dan vraagt ASCEND welke training mag vervallen.',
-      points: [
-        { head: 'Wanneer', text: 'na een gemiste of naar later gezette training, bij twee dagen met twee trainingen, twee trainingen meer dan dagen, vier loopdagen op rij of drie zware dagen achter elkaar.' },
-        { head: 'Het advies', text: 'eerst de extra training die je via een voorstel kreeg, dan wat het minst telt voor je doel. Nooit een test, een wedstrijd, je sleuteltraining of wat je zelf neerzette.' },
-        { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet blijft je week staan en zegt Week dat hij vol is, na Akkoord niet meer. Uit: geen vraag, alleen die regel in Week.' },
-      ],
-    },
+    help: true,
     helpKey: 'weekVol',
   },
   {
@@ -517,62 +437,20 @@ export const PLANNING: SettingDef[] = [
     title: 'Kracht zonder sportschool',
     note: 'In een periode zonder sportschool wordt kracht een korte sessie met je eigen gewicht, of vervalt.',
     keywords: ['sportschool', 'gym', 'eigen gewicht', 'lichaamsgewicht', 'weg', 'reis', 'vakantie', 'kracht', 'push-ups', 'squats'],
-    help: {
-      title: 'Kracht zonder sportschool',
-      lead: 'De eerste keuze voor kracht als je in Week een periode zonder sportschool toevoegt. Per periode kun je het anders kiezen.',
-      points: [
-        { head: 'Eigen gewicht', text: 'een krachttraining wordt op dezelfde dag een korte sessie met je eigen gewicht, 15 tot 20 minuten: squats, lunges, push-ups en kuitheffingen.' },
-        { head: 'Laten vervallen', text: 'kracht vervalt in die periode. Lopen blijft.' },
-        { head: 'Altijd', text: 'je ziet eerst een voorstel. Een periode die al staat, houdt zijn eigen keuze.' },
-      ],
-    },
+    help: true,
     helpKey: 'zonderSportschool',
-    choice: {
-      key: 'zonderSportschool',
-      def: {
-        group: 'Planning',
-        title: 'Kracht zonder sportschool',
-        line: 'Wat er met kracht in de sportschool gebeurt als je een periode zonder sportschool toevoegt.',
-        advice: 'bodyweight',
-        help: 'zonderSportschool',
-        options: [
-          { value: 'bodyweight', label: 'Eigen gewicht', note: 'Een korte sessie van 15 tot 20 minuten met squats, lunges, push-ups en kuitheffingen', short: 'Eigen gewicht' },
-          { value: 'drop', label: 'Laten vervallen', note: 'Geen kracht in die periode, alleen lopen', short: 'Laten vervallen' },
-        ],
-      },
-    },
+    choice: { key: 'zonderSportschool', def: PLANNING_CHOICES.zonderSportschool },
   },
   {
     id: 'vakantie-schuiven',
     page: 'planning',
     place: { row: true },
     title: 'Rond een vakantie schuiven',
-    note: 'Hoeveel ASCEND mag verschuiven om je weken rond een vakantie zo goed mogelijk in te delen, ook over de weekgrens.',
+    note: 'Hoeveel er mag schuiven om je weken rond een vakantie zo goed mogelijk in te delen, ook over de weekgrens.',
     keywords: ['vakantie', 'vrij', 'verschuiven', 'schuiven', 'indelen', 'weekgrens', 'flink', 'weinig', 'dubbele dag'],
-    help: {
-      title: 'Rond een vakantie schuiven',
-      lead: 'Hoe ASCEND je weken rond een vakantie indeelt.',
-      points: [
-        { head: 'Flink', text: 'ASCEND kijkt naar alle werkbare dagen van de weken rond je vakantie, ook over de weekgrens. Het kiest de indeling met genoeg rust tussen zware beendagen en zo min mogelijk dubbele dagen. Wat niet past, vervalt met één zin erbij.' },
-        { head: 'Weinig', text: 'een training schuift alleen naar de dichtstbijzijnde dag van zijn eigen week die past, of vervalt.' },
-        { head: 'Altijd', text: 'twee zware beendagen staan nooit binnen 48 uur en wat je zelf vastzette blijft staan. Het geldt voor een vakantie zonder training die je hierna toevoegt of wijzigt. Je ziet het eerst in het voorstel.' },
-      ],
-    },
+    help: true,
     helpKey: 'vakantieSchuiven',
-    choice: {
-      key: 'vakantieSchuiven',
-      def: {
-        group: 'Planning',
-        title: 'Rond een vakantie schuiven',
-        line: 'Hoeveel ASCEND mag verschuiven om je weken rond een vakantie zo goed mogelijk in te delen.',
-        advice: 'wide',
-        help: 'vakantieSchuiven',
-        options: [
-          { value: 'wide', label: 'Flink', note: 'De beste indeling over alle werkbare dagen, ook over de weekgrens', short: 'Flink' },
-          { value: 'little', label: 'Weinig', note: 'Een training schuift alleen naar de dichtstbijzijnde dag van zijn eigen week', short: 'Weinig' },
-        ],
-      },
-    },
+    choice: { key: 'vakantieSchuiven', def: PLANNING_CHOICES.vakantieSchuiven },
   },
   {
     id: 'bundel-niet-doorgegaan',
@@ -581,42 +459,20 @@ export const PLANNING: SettingDef[] = [
     title: 'Training die niet doorging',
     search: false,
     sheet: { eyebrow: 'Planning', title: 'Training die niet doorging', line: 'Een training die voorbij is zonder log.' },
-    help: {
-      title: 'Training die niet doorging',
-      lead: 'Wat ASCEND doet met een training die een paar dagen voorbij is zonder log. ASCEND verzint nooit een log.',
-      points: [
-        { head: 'Vragen', text: 'één vraag op Vandaag, de oudste eerst. Niet gedaan zet hem op overgeslagen, Toch gedaan opent het gewone invullen, Niet nu laat hem rusten. Ouder dan een week vraagt ASCEND niet meer, en op een racedag niet. Wat op een vakantie of tocht stond is nooit gemist; wat ervoor nog open stond vervalt bij een ziekmelding of vakantie, met één regel op Vandaag.' },
-        { head: 'Zelf overslaan', text: 'ASCEND zet hem op overgeslagen en meldt het, met Ongedaan maken. Een test, een wedstrijd en wat je zelf vastzette krijgen toch de vraag.' },
-        { head: 'Niets doen', text: 'hij blijft als gemist in je week staan.' },
-      ],
-    },
+    help: true,
     helpKey: 'nietDoorgegaan',
   },
   {
     id: 'niet-doorgegaan',
     page: 'planning',
     place: { in: 'bundel-niet-doorgegaan' },
-    title: 'Training die niet doorging: wat ASCEND doet',
-    rowTitle: 'Wat ASCEND doet',
+    title: 'Training die niet doorging: wat er gebeurt',
+    rowTitle: 'Wat er gebeurt',
     adviceTitle: 'Training die niet doorging',
     note: 'Vragen op Vandaag, zelf overslaan met Ongedaan maken, of niets doen.',
     keywords: ['gemist', 'niet gedaan', 'overgeslagen', 'overslaan', 'vergeten', 'geen log', 'blijven liggen', 'niet doorgegaan', 'vragen', 'zelf overslaan', 'training die niet doorging'],
     help: { from: 'bundel-niet-doorgegaan' },
-    choice: {
-      key: 'nietDoorgegaan',
-      def: {
-        group: 'Planning',
-        title: 'Wat ASCEND doet',
-        line: 'Met een training die voorbij is zonder log.',
-        advice: 'ask',
-        help: 'nietDoorgegaan',
-        options: [
-          { value: 'ask', label: 'Vragen', note: 'Eén korte vraag op Vandaag, jij kiest' },
-          { value: 'auto', label: 'Zelf overslaan', note: 'Op overgeslagen, met een melding en Ongedaan maken' },
-          { value: 'off', label: 'Niets doen', note: 'Hij blijft als gemist in je week staan' },
-        ],
-      },
-    },
+    choice: { key: 'nietDoorgegaan', def: PLANNING_CHOICES.nietDoorgegaan },
   },
   {
     id: 'niet-doorgegaan-dagen',
@@ -625,23 +481,9 @@ export const PLANNING: SettingDef[] = [
     title: 'Training die niet doorging: na hoeveel dagen',
     rowTitle: 'Na hoeveel dagen',
     adviceTitle: 'Na hoeveel dagen',
-    note: 'Hoeveel dagen na de geplande dag ASCEND vraagt of overslaat: 1, 2 of 3.',
+    note: 'Hoeveel dagen na de geplande dag de vraag of het overslaan komt: 1, 2 of 3.',
     keywords: ['gemist', 'dagen', 'wachten', 'training die niet doorging'],
-    choice: {
-      key: 'nietDoorgegaanDagen',
-      def: {
-        group: 'Planning',
-        title: 'Na hoeveel dagen',
-        line: 'Gerekend vanaf de dag dat hij gepland stond.',
-        advice: 2,
-        help: 'nietDoorgegaan',
-        options: [
-          { value: 1, label: '1 dag', short: '1 dag' },
-          { value: 2, label: '2 dagen', short: '2 dagen' },
-          { value: 3, label: '3 dagen', short: '3 dagen' },
-        ],
-      },
-    },
+    choice: { key: 'nietDoorgegaanDagen', def: PLANNING_CHOICES.nietDoorgegaanDagen },
     showWhen: [B.missedOn],
   },
   {
@@ -649,7 +491,7 @@ export const PLANNING: SettingDef[] = [
     page: 'planning',
     place: { in: 'bundel-niet-doorgegaan' },
     title: 'Log op een andere dag koppelen',
-    note: 'Staat een training van je horloge of MacroFactor op een andere dag, dan vraagt ASCEND of die bij je geplande training hoort.',
+    note: 'Staat een training van je horloge of MacroFactor op een andere dag, dan krijg je de vraag of die bij je geplande training hoort.',
     keywords: ['koppelen', 'horloge', 'garmin', 'macrofactor', 'andere dag', 'gemist', 'log', 'hoort bij', 'training die niet doorging'],
   },
   {
@@ -657,17 +499,9 @@ export const PLANNING: SettingDef[] = [
     page: 'planning',
     place: { row: true, advanced: true },
     title: 'Beenkracht de dag na de lange duurloop',
-    note: 'Uit houdt ASCEND 48 uur tussen de lange duurloop en een zware beendag. Aan mag beenkracht de dag erna, nooit de dag ervoor.',
+    note: 'Uit: 48 uur tussen de lange duurloop en een zware beendag. Aan mag beenkracht de dag erna, nooit de dag ervoor.',
     keywords: ['lange duurloop', 'lange loop', 'benen', 'beenkracht', 'benen a', 'zware beendag', '48 uur', '24 uur', 'dag erna', 'maandag', 'herstel'],
-    help: {
-      title: 'Beenkracht de dag na de lange duurloop',
-      lead: 'Kracht is een dag na een rustige lange loop meestal weer op niveau. Zet dit aan als je liever een vrije dag houdt dan 48 uur tussen die twee.',
-      points: [
-        { head: 'Uit', text: 'het advies. 48 uur tussen de lange duurloop en een zware beendag, in beide volgordes.' },
-        { head: 'Aan', text: 'beenkracht mag de dag na de lange duurloop, niet als de dag ervoor al zwaar was voor je benen. Drie zware beendagen op rij komen er nooit.' },
-        { head: 'Altijd', text: 'kracht de dag vóór de lange duurloop blijft 48 uur. Je planning verandert zoals je bij Wijzigingen koos: eerst een voorstel, of meteen met een melding en ongedaan maken.' },
-      ],
-    },
+    help: true,
     helpKey: 'langeLoopBenen',
   },
   {
@@ -677,15 +511,7 @@ export const PLANNING: SettingDef[] = [
     title: 'Trainingen slepen in Week',
     search: false,
     sheet: { eyebrow: 'Planning', title: 'Trainingen slepen in Week', line: 'Een training met het greepje naar een andere dag.' },
-    help: {
-      title: 'Trainingen slepen in Week',
-      lead: 'Sleep een training met het greepje naar een andere dag. Het gaat zoals Verplaatsen in het actieblad. Uit haalt de grepen weg.',
-      points: [
-        { head: 'Een botsing', text: 'twee zware beendagen binnen 48 uur, of je rustdag, zie je al tijdens het slepen. Bij het loslaten krijg je een voorstel met Akkoord. Liever niet laat alles staan.' },
-        { head: 'Loslaten op een training', text: 'staat er op die dag precies één training die mag bewegen, dan ruilen de twee van dag. Liever samen op één dag? Kies dat bij Loslaten op een training.' },
-        { head: 'Test en wedstrijd', text: 'een testloop verplaats of ruil je altijd met Akkoord. Een wedstrijd verplaats je via je doel op de Ascend-tab. Een gewone verplaatsing gaat meteen, met Ongedaan maken.' },
-      ],
-    },
+    help: true,
     helpKey: 'slepenWeek',
   },
   {
@@ -704,30 +530,9 @@ export const PLANNING: SettingDef[] = [
     title: 'Loslaten op een training',
     note: 'Laat je in Week een training los op een andere training, dan ruilen ze van dag. Of kies Samen.',
     keywords: ['ruilen', 'wisselen', 'slepen', 'loslaten', 'samen', 'week', 'dag', 'omwisselen'],
-    help: {
-      title: 'Loslaten op een training',
-      lead: 'Wat er gebeurt als je in Week een training loslaat op een dag waar al één training staat die mag bewegen.',
-      points: [
-        { head: 'Ruilen', text: 'het advies. De twee ruilen van dag, zodat elke dag één training houdt.' },
-        { head: 'Samen', text: 'de training komt erbij op die dag.' },
-        { head: 'Altijd', text: 'een botsing zie je tijdens het slepen en ASCEND vraagt het eerst. Een gewone ruil gaat meteen, met Ongedaan maken in de melding.' },
-      ],
-    },
+    help: true,
     helpKey: 'loslatenTraining',
-    choice: {
-      key: 'loslaten',
-      def: {
-        group: 'Planning',
-        title: 'Loslaten op een training',
-        line: 'Wat er gebeurt als je in Week een training loslaat op een dag waar al een training staat.',
-        advice: 'swap',
-        help: 'loslatenTraining',
-        options: [
-          { value: 'swap', label: 'Ruilen', note: 'De twee ruilen van dag, als die ene training mag bewegen', short: 'Ruilen' },
-          { value: 'together', label: 'Samen', note: 'Ze staan samen op die dag', short: 'Samen' },
-        ],
-      },
-    },
+    choice: { key: 'loslaten', def: PLANNING_CHOICES.loslaten },
     showWhen: [B.dragWeek],
   },
   {
@@ -737,15 +542,7 @@ export const PLANNING: SettingDef[] = [
     title: 'Volgorde van Je stand',
     note: 'Kies zelf de volgorde van de regels en de rijen op Je stand. Het verandert niets aan je planning of je cijfers.',
     keywords: ['volgorde', 'ordenen', 'slepen', 'kaarten', 'blokken', 'regels', 'rijen', 'lijst', 'stand', 'kracht', 'forge', 'sorteren'],
-    help: {
-      title: 'Volgorde van Je stand',
-      lead: 'Kies de volgorde van de regels en de rijen op Je stand. Je planning en je cijfers veranderen er niet door.',
-      points: [
-        { head: 'Regels en rijen', text: 'Benen, Belasting en Ritme zijn de drie regels bovenaan; Kracht, Lopen en Wat speelde er de rijen in de lijst. Hun volgorde onderling bepaalt wat eerst staat.' },
-        { head: 'Zonder slepen', text: 'kies per blok Hoger of Lager.' },
-        { head: 'Terug naar standaard', text: 'zet alles terug. Een blok dat in de instellingen uit staat, houdt zijn plek.' },
-      ],
-    },
+    help: true,
     helpKey: 'volgordeStand',
   },
   {
@@ -753,32 +550,11 @@ export const PLANNING: SettingDef[] = [
     page: 'planning',
     place: { row: true, advanced: true },
     title: 'Opzij voor een vakantie',
-    note: 'Een training die voor een vakantie moet wijken, laat ASCEND liever vervallen dan vlak voor zijn volgende keer te zetten.',
+    note: 'Een training die voor een vakantie moet wijken, vervalt liever dan dat hij vlak voor zijn volgende keer komt.',
     keywords: ['vakantie', 'vrij', 'verschuiven', 'vervallen', 'schuiven', 'opzij', 'tocht', 'te dicht', 'volgende keer'],
-    help: {
-      title: 'Opzij voor een vakantie',
-      lead: 'Wat ASCEND doet met een training die moet wijken voor een vakantie of de lichte dagen rond een tocht.',
-      points: [
-        { head: 'Liever laten vervallen', text: 'de training schuift naar een andere dag van die week, maar niet vlak voor of na zijn volgende keer. Een wekelijkse training houdt minstens vier dagen afstand. Lukt dat niet, dan vervalt hij.' },
-        { head: 'Toch verschuiven', text: 'de training gaat naar elke dag van die week die past, ook kort voor zijn volgende keer.' },
-        { head: 'Altijd', text: 'twee zware beendagen staan nooit binnen 48 uur en wat je zelf vastzette blijft staan. Het geldt voor nieuwe en gewijzigde periodes. Je ziet het eerst in het voorstel.' },
-      ],
-    },
+    help: true,
     helpKey: 'vakantieOpzij',
-    choice: {
-      key: 'vakantieOpzij',
-      def: {
-        group: 'Planning',
-        title: 'Opzij voor een vakantie',
-        line: 'Een training die moet wijken voor een vakantie of een tocht.',
-        advice: 'drop',
-        help: 'vakantieOpzij',
-        options: [
-          { value: 'drop', label: 'Liever laten vervallen', note: 'Als hij anders vlak voor of na zijn volgende keer komt', short: 'Laten vervallen' },
-          { value: 'shift', label: 'Toch verschuiven', note: 'Naar elke dag van die week die past', short: 'Verschuiven' },
-        ],
-      },
-    },
+    choice: { key: 'vakantieOpzij', def: PLANNING_CHOICES.vakantieOpzij },
   },
   {
     id: 'zones-na-test',
@@ -787,15 +563,7 @@ export const PLANNING: SettingDef[] = [
     title: 'Zones bijwerken na een test',
     note: 'Na een testloop die meetelt een nieuwe drempelhartslag voorstellen, met het oude en nieuwe getal per zone.',
     keywords: ['zones', 'hartslagzones', 'drempelhartslag', 'lthr', 'test', 'testloop', 'tempo', 'bijwerken', 'bpm'],
-    help: {
-      title: 'Zones bijwerken na een test',
-      lead: 'Na een testloop die meetelt stelt ASCEND een nieuwe drempelhartslag voor, als die duidelijk anders is.',
-      points: [
-        { head: 'Wat je ziet', text: 'per zone het oude en het nieuwe getal, voor je hartslag en je tempo\'s. Je tempo\'s volgen je test al.' },
-        { head: 'Een schatting', text: '98 procent van je gemiddelde hartslag over kilometer 2 tot en met 5. Geen labtest.' },
-        { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet vraagt ASCEND het voor deze test niet meer.' },
-      ],
-    },
+    help: true,
     helpKey: 'zonesNaTest',
   },
 ];
