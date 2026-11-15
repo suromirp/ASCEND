@@ -12,6 +12,8 @@
 // - no log made by hand that day that looks like the same training,
 // - not a test run or a race (their log feeds the pace calculation and the
 //   user fills those in himself),
+// - no doubt about what it was (engine/activityFit.ts): not a run in walking
+//   pace, and not a hard run for an easy training,
 // - and no other activity of the same day pointing at the same training.
 //
 // In any doubt the ordinary proposal stays, with its Opslaan / Andere training
@@ -28,12 +30,16 @@ import {
   candidatePlanned,
   durationIsClose,
   findSimilarLog,
+  hardOnEasyMatch,
   isImportable,
+  measuredOf,
   pairWithManualLogs,
   plannedMinutes,
   type ExternalActivity,
+  type ImportFit,
   type PlannedMatch,
 } from './activityImport';
+import { isWalkPaced } from './activityFit';
 import { RACE_TEMPLATE_ID, TEST_TEMPLATE_ID } from './raceBlock';
 import { todayISO } from '../utils/dates';
 
@@ -75,8 +81,11 @@ export function autoTickMatch(
   logs: SessionLog[],
   today: string = todayISO(),
   places?: Readonly<Record<string, string>>,
+  fit?: ImportFit,
 ): PlannedMatch | undefined {
   if (!isImportable(activity)) return undefined;
+  // Een loop in wandeltempo: daarover kies jij, ook als Soort van een loop toetsen uit staat.
+  if (activity.kind === 'run' && isWalkPaced(measuredOf(activity))) return undefined;
   if (activityDate(activity) > today) return undefined;
   if (logs.some((l) => l.externalId === activity.externalId)) return undefined;
   const candidates = candidatePlanned(activity, planned, templates, logs, { sameDayOnly: true, places });
@@ -84,6 +93,7 @@ export function autoTickMatch(
   const [match] = candidates;
   if (!mayAutoTick(match.template.id) || !mayAutoTick(match.session.templateId)) return undefined;
   if (!durationIsClose(activity.durationSec / 60, plannedMinutes(match))) return undefined;
+  if (hardOnEasyMatch(activity, match, fit)) return undefined;
   if (findSimilarLog(activity, logs)) return undefined;
   // The same training typed in by hand, even when its length is further off.
   if (pairWithManualLogs([activity], logs).length > 0) return undefined;
@@ -102,13 +112,14 @@ export function planAutoTicks(
   logs: SessionLog[],
   today: string = todayISO(),
   places?: Readonly<Record<string, string>>,
+  fit?: ImportFit,
 ): AutoTick[] {
   const dismissed = new Set(dismissedIds);
   const known = new Set(autoLogged.map((a) => a.externalId));
   const found: AutoTick[] = [];
   for (const activity of [...activities].sort((a, b) => a.start.localeCompare(b.start))) {
     if (dismissed.has(activity.externalId) || known.has(activity.externalId)) continue;
-    const match = autoTickMatch(activity, planned, templates, logs, today, places);
+    const match = autoTickMatch(activity, planned, templates, logs, today, places, fit);
     if (match) found.push({ activity, match });
   }
   // Two activities for one training (a warm-up walk and the run): which one

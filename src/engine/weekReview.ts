@@ -211,7 +211,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     const trainingIds = new Set(trainings.map((s) => s.id));
     const short = weekLogs.filter((l) => {
       const t = byId.get(l.templateId);
-      return !!l.plannedSessionId && trainingIds.has(l.plannedSessionId) && !!t && isShortTraining(l, t, program);
+      return !!l.plannedSessionId && trainingIds.has(l.plannedSessionId) && !!t && isShortTraining(l, t, program, trainings.find((s) => s.id === l.plannedSessionId)?.plannedMinutes);
     }).length;
     advice.push(short === 0
       ? 'Alles gedaan wat gepland stond. Zo bouw je op.'

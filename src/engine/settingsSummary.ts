@@ -1164,6 +1164,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.morningRule !== false };
     case 'horloge-stil':
       return { checked: s.watchSilence !== false };
+    case 'horloge-soort':
+      return { checked: s.watchKindCheck !== false };
     case 'ochtend-backup':
       return { checked: s.morningInBackup !== false, sub: s.morningInBackup !== false ? 'Ook je slaap en hartslag gaan mee' : undefined };
     case 'reeksen-bewaren':

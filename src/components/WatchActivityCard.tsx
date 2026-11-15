@@ -33,10 +33,13 @@ import {
   pendingProposals,
   templatesForKind,
   type ExternalActivity,
+  type ImportFit,
   type ImportProposal,
   type PlannedMatch,
 } from '../engine/activityImport';
 import type { SessionTemplate } from '../models/training';
+import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
+import { resolveWatchKindCheck } from '../engine/activityFit';
 import { formatDateNL, todayISO, weekdayLongNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
@@ -59,7 +62,7 @@ const AUTO_TICK_DELAY_MS = 1200;
 // `quiet`: Opslaan omlijnd in plaats van gevuld, op Vandaag naast de hoofdknop van de missie (regel 5: één mint per
 // scherm; besluit 2026-11-12-missiekaart.md).
 export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
-  const { plannedSessions, templates, sessionLogs, logSession, reportStorageError, refresh } = useAppData();
+  const { plannedSessions, templates, sessionLogs, logSession, reportStorageError, refresh, settings, program } = useAppData();
   // De keuze Waar train je? per geplande training; undefined zolang hij nog niet gelezen is.
   const places = useTrainingPlaces();
   const [state, setState] = useState<WatchActivityState | null>(null);
@@ -104,6 +107,11 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
     [refresh],
   );
 
+  // Toetsen aan duur en intensiteit (engine/activityFit.ts): hartslagzones, je rustige tempo en de keuze Soort
+  // van een loop toetsen.
+  const easyPace = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy, [sessionLogs, settings]);
+  const fit = useMemo<ImportFit>(() => ({ hr: settings.heartRate, easyPace, kindCheck: resolveWatchKindCheck(settings.watchKindCheck), program }), [settings.heartRate, settings.watchKindCheck, easyPace, program]);
+
   const activities = useMemo(() => (state ? offeredActivities(state.activities, fromHealth, sessionLogs, state.history) : []), [state, fromHealth, sessionLogs]);
 
   // Vanzelf afvinken: only what nothing is left to choose about.
@@ -111,7 +119,7 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
     if (!state || !state.autoTick || !state.use.activities || ticking.current) return;
     // Eerst de keuzes Waar train je?: een wandeling op de StairMaster hoort bij de geplande looptraining.
     if (places === undefined) return;
-    const ticks = planAutoTicks(activities, state.dismissed, state.autoLogged, plannedSessions, templates, sessionLogs, undefined, places)
+    const ticks = planAutoTicks(activities, state.dismissed, state.autoLogged, plannedSessions, templates, sessionLogs, undefined, places, fit)
       .filter((t) => !attempted.current.has(t.activity.externalId));
     if (ticks.length === 0) return;
     const timer = setTimeout(() => {
@@ -136,13 +144,13 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
       })();
     }, AUTO_TICK_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [state, activities, plannedSessions, templates, sessionLogs, logSession, addDetail, places]);
+  }, [state, activities, plannedSessions, templates, sessionLogs, logSession, addDetail, places, fit]);
 
   // Trainings switched off ("Wat ASCEND van je horloge gebruikt"): nothing of
   // the watch is offered here.
   const proposals = useMemo(
-    () => (state?.use.activities ? pendingProposals(activities, state.dismissed, plannedSessions, templates, sessionLogs, places) : []),
-    [state, activities, plannedSessions, templates, sessionLogs, places],
+    () => (state?.use.activities ? pendingProposals(activities, state.dismissed, plannedSessions, templates, sessionLogs, places, fit) : []),
+    [state, activities, plannedSessions, templates, sessionLogs, places, fit],
   );
   const proposal = proposals[0];
   // Het voorstel dat nu op de kaart staat; leeg als de kaart niets toont (de vraag na een training staat in Je dag).
@@ -156,7 +164,8 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
   // De zin hoort bij de activiteit waarvoor hij kwam; bij de volgende activiteit is hij weg.
   const note = saveNote?.externalId === proposal.activity.externalId ? saveNote : undefined;
 
-  async function save(activity: ExternalActivity, template: SessionTemplate, match?: PlannedMatch) {
+  // `detailOf`: de activiteit zoals het horloge hem gaf, voor de details (een loop in wandeltempo die een wandeling werd).
+  async function save(activity: ExternalActivity, template: SessionTemplate, match?: PlannedMatch, detailOf: ExternalActivity = activity) {
     if (saving) return;
     const id = activity.externalId;
     setSaving(true);
@@ -170,7 +179,7 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
       mounted: () => aliveRef.current,
       showing: () => shownRef.current === id,
       report: reportStorageError,
-      onStored: () => addDetail(activity),
+      onStored: () => addDetail(detailOf),
       apply: (next) => {
         if (next.closeSheet) setChoosing(false);
         if (next.refresh) void refresh().catch(() => undefined);
@@ -189,16 +198,17 @@ export function WatchActivityCard({ quiet = false }: { quiet?: boolean } = {}) {
         more={proposals.length - 1}
         saving={saving}
         note={choosing ? undefined : note}
-        onSave={() => proposal.template && void save(proposal.activity, proposal.template, proposal.match)}
+        onSave={() => proposal.template && void save(proposal.activity, proposal.template, proposal.match, proposal.original)}
         onChoose={() => setChoosing(true)}
         onDismiss={() => void dismissActivity(proposal.activity.externalId)}
       />
       {choosing && (
         <ChooseSheet
           activity={proposal.activity}
+          original={proposal.original}
           saving={saving}
           note={note}
-          onPick={(template, match) => void save(proposal.activity, template, match)}
+          onPick={(activity, template, match) => void save(activity, template, match, proposal.original)}
           onClose={() => setChoosing(false)}
         />
       )}
@@ -250,6 +260,10 @@ function ProposalCard({
             ? <>Er stond niets passends gepland. Met Opslaan komt hij los in je logboek, als <span style={{ color: 'var(--color-action)' }}>{template.name}</span>.</>
             : 'Er stond niets passends gepland. Kies bij Andere training wat het was.'}
       </p>
+      {/* Kort, hard of in wandeltempo (engine/activityFit.ts): een regel, de keuze blijft bij jou. */}
+      {proposal.fitNote && (
+        <p className="text-xs" style={{ color: 'var(--color-warning)' }}>{proposal.fitNote}</p>
+      )}
       {similarLog && (
         <p className="text-xs" style={{ color: 'var(--color-warning)' }}>
           Je legde die dag al een training vast van {similarLog.durationMinutes} min. Sla dit alleen op als het een andere training was.
@@ -275,22 +289,27 @@ function ProposalCard({
 // "Andere training": a planned session of that week, or save it on its own.
 function ChooseSheet({
   activity,
+  original,
   saving,
   note,
   onPick,
   onClose,
 }: {
   activity: ExternalActivity;
+  // De loop zoals het horloge hem gaf, als hij een wandeling werd: die kun je hier nog als loop opslaan.
+  original?: ExternalActivity;
   saving: boolean;
   note?: SaveNote;
-  onPick: (template: SessionTemplate, match?: PlannedMatch) => void;
+  onPick: (activity: ExternalActivity, template: SessionTemplate, match?: PlannedMatch) => void;
   onClose: () => void;
 }) {
   const { plannedSessions, templates, sessionLogs } = useAppData();
   const places = useTrainingPlaces();
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const planned = candidatePlanned(activity, plannedSessions, templates, sessionLogs, { anyKind: true, notAfter: todayISO(), places }).slice(0, 8);
-  const loose = templatesForKind(activity.kind, templates);
+  const loose = [...new Map([...templatesForKind(activity.kind, templates), ...(original ? templatesForKind(original.kind, templates) : [])].map((t) => [t.id, t])).values()];
+  // Een training van de soort van het horloge krijgt de activiteit zoals het horloge hem gaf.
+  const activityFor = (t: SessionTemplate) => (original && templatesForKind(activity.kind, [t]).length === 0 ? original : activity);
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
@@ -303,7 +322,7 @@ function ChooseSheet({
               <div className="flex flex-col gap-2">
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoort bij een geplande training:</p>
                 {planned.map((m) => (
-                  <OptionButton key={m.session.id} title={m.template.name} note={dayLabel(m.session.scheduledDate)} disabled={saving} onClick={() => onPick(m.template, m)} />
+                  <OptionButton key={m.session.id} title={m.template.name} note={dayLabel(m.session.scheduledDate)} disabled={saving} onClick={() => onPick(activityFor(m.template), m.template, m)} />
                 ))}
               </div>
             )}
@@ -311,7 +330,7 @@ function ChooseSheet({
               <div className="flex flex-col gap-2">
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Of los opslaan, zonder geplande training af te vinken:</p>
                 {loose.map((t) => (
-                  <OptionButton key={t.id} title={t.name} note="los" disabled={saving} onClick={() => onPick(t)} />
+                  <OptionButton key={t.id} title={t.name} note="los" disabled={saving} onClick={() => onPick(activityFor(t), t)} />
                 ))}
               </div>
             )}

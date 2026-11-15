@@ -24,6 +24,7 @@ import { PHASE_BASIS, PHASE_BERG, PHASE_EXPEDITIE, PHASE_GOLF, PHASE_GOLF_START,
 import { logSport, SPORT_LABEL } from './sports';
 import { mainGoal } from './mainGoal';
 import { kgLabel } from '../utils/kg';
+import { hardLogOnEasy, type FitContext } from './activityFit';
 
 export interface ActivityTextInput {
   log: SessionLog;
@@ -34,6 +35,8 @@ export interface ActivityTextInput {
   program?: Program | null;
   // De korte naam van je hoofddoel (stravaGoalName), voor "richting GR5".
   goalName?: string;
+  // Je hartslagzones: een harde loop bij een rustige training heet niet "rustig" (engine/activityFit.ts).
+  fit?: Pick<FitContext, 'hr' | 'easyPace'>;
 }
 
 // De tekst voor Strava: een titel en hooguit één regel waarom.
@@ -69,6 +72,12 @@ export function minutesText(minutes: number): string {
 const stepOf = (steps: PlanStep[] | undefined, kind: PlanStep['kind']): PlanStep | undefined => steps?.find((s) => s.kind === kind);
 
 const lowerFirst = (text: string): string => text.charAt(0).toLowerCase() + text.slice(1);
+
+// Dezelfde trainingen, hard gelopen: de naam zonder zone en zonder "rustig" ("Rustige duurloop" wordt "Duurloop").
+function hardTitle(name: string): string {
+  const bare = name.replace(/^rustige\s+/i, '');
+  return bare.charAt(0).toUpperCase() + bare.slice(1);
+}
 
 // Rustige, doorlopende trainingen: de zone of het gevoel staat voorop.
 const STEADY_TITLE: Record<string, string> = {
@@ -111,7 +120,8 @@ function titleOf(input: ActivityTextInput): string {
   const workSec = log.workout?.repSeconds ?? (inPlan ? stepOf(repeat?.steps, 'work')?.seconds : undefined);
   const climb = climbText(log);
 
-  if (template && STEADY_TITLE[id]) return STEADY_TITLE[id];
+  // Hard gelopen bij een rustige training: de naam, zonder "zone 2" of "rustig" (profiel horloge, 14 november).
+  if (template && STEADY_TITLE[id]) return input.fit && hardLogOnEasy(log, template, program, input.fit) ? hardTitle(name) : STEADY_TITLE[id];
 
   switch (template ? id : undefined) {
     case 'tpl_hills_descent':

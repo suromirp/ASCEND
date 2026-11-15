@@ -423,6 +423,9 @@ export interface AppSettings {
   // "Melden als je horloge stilvalt" (engine/sourceWatch.ts): one quiet line on Vandaag when
   // nothing comes in from the watch for three days while the link works. Absent = on.
   watchSilence?: boolean;
+  // "Soort van een loop toetsen" (engine/activityFit.ts): een loop in wandeltempo wordt een wandeling en
+  // een harde loop zonder geplande training een tempoloop, op de kaart Van je horloge. Absent = aan.
+  watchKindCheck?: boolean;
   // "Vroeg ziek zien" (engine/illnessSigns.ts): a question on Vandaag when resting heart rate and
   // HRV are off together for two mornings in a row. Absent = on. Optional and additive.
   illnessSigns?: boolean;
