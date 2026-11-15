@@ -28,7 +28,7 @@ import { useDeviations } from './influence/useInfluence';
 import { entryForLog, signState, type SignState } from '../engine/influence';
 import { Fragment, useMemo, type ReactNode } from 'react';
 import { dragEligibility } from '../engine/weekDrag';
-import { rowExtra } from '../engine/weekRow';
+import { doneOnOtherDay, rowExtra } from '../engine/weekRow';
 import { catchUpEligibility, catchUpNoteFor, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { WeekDragGhost } from './WeekDragGhost';
 import { WeekDragNote } from './WeekDragNote';
@@ -101,6 +101,7 @@ function SessionRow({
   // Een rustdag houdt "bewust herstel"; alleen een punt uit Let op en "aangepast" komen erbij.
   const extra = isRest ? rowExtra({ concern, adjusted }) : rowExtra({
     concern, missed: status === 'missed', lapsed: status === 'away', open: status === 'open', skipped: status === 'skipped', catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
+    doneOn: status === 'completed' ? doneOnOtherDay(session, log) : undefined,
   });
   const note = extra && [extra.text, extra.also].filter(Boolean).join(', ');
   // Het streepje met de kleur van de zone alleen bij een training te voet of op de fiets, niet bij kracht.
