@@ -31,14 +31,13 @@ Bijgewerkt: 15 november 2026, 14:20 Portugese tijd, door de coördinator session
 ## Lopend (14:20)
 
 - Wardens op Fable gestart om 14:14, elk pusht herstel.md op warden/<onderwerp>-herstel: Afbreker session_01LnDpSidQYFbuC9fh8bb9mt, Back-up session_01LnDpSktRyJ9tNDAW6X7ZhL, Beginner session_01LnDpSiJcwFr9G6m4KfgPCx (herstel 024d057 was al klaar).
-- Kennisindex ronde 2 klaar (3f21610), alleen kaart:vergelijk afgebroken: zelf nakijken.
+- Kennisindex ronde 2 (3f21610) door mij nagekeken en op nacht (762632f): deels ingehaalde besluiten apart met "Geldt nog", test groen; kaart:vergelijk overgeslagen (raakt alleen docs/kennisindex en het script; duurt meer dan tien minuten). Gaat mee met de volgende main. Sessie gearchiveerd.
 
 - Week telling (I-1), Sherpa session_01LnDpSihpwmNKme8Mudp1nF (`claude/week-telling`): Warden (Opus) en Pathfinder akkoord. Laatste ronde loopt: `openToday` in adviceWeek telt alleen wat Week open noemt (sportschooltraining in de periode houdt het voorstel niet tegen), "gemist" krimpt niet op 360 px, een gemiste rij heeft altijd het woord. Daarna: proefmerge, volle controles, Lookout op 360 en 412 px (week-aangepast en de stand zonder-sportschool), main. Eigen blik op de afdrukken.
 - Back-up eerste keer, Sherpa session_01LnDpSnNF5icymXAJ1Rc6xC (`claude/backup-eerste-keer`): tweede herstel loopt. Blokkerend was: `verify` na een gelukte rename haalt bij een leesfout de complete back-up weg (`manualBackup.ts`, `autoBackup.ts`, `backupFolder.ts`). Ook op main zit dat (manualBackup regel 43): waarschijnlijk de kern van de melding van de eigenaar. Na het herstel een frisse Warden op Fable (laat hem renameFile van ionfilesystem 1.1.1 nabouwen: het doel gaat eerst weg). Daarna main en de eigenaar een toesteltest geven: Gedwongen stoppen, openen, meteen Back-up maken, de zin letterlijk noteren, in Documents/ASCEND kijken welke bestanden er van die minuut staan, drie keer, één keer met twee snelle tikken, daarna het nieuwste bestand terugzetten.
 - Beginner heel licht stap 1 en 2, Sherpa session_01LnDpSk5RjwPEFvrRzyLnjW (`claude/beginner-licht`): herstel loopt (rem na week 4 leest de langste echte sessie; wissel via Akkoord optioneel). Daarna een frisse Warden op Fable (let op de planGolden-foto: A en C bewegen niet), dan Lookout en Pathfinder. Daarna stap 3.
 - Afbreker randgevallen (I-4), Sherpa session_01LnDpSmcBhQfQpy5MYTXTbi (`claude/afbreker-rand`, ba0e481): Warden op Fable liep in de oude sessie. Start een frisse Warden op Fable (punt 3, de dag van de laatste set, raakt historie). Daarna Lookout.
 - Weekbudget bij kracht uit (I-39): `claude/weekbudget-kracht` (645d59f), door mij nagekeken, klaar voor main samen met Afbreker. Sessie gearchiveerd.
-- Kennisindex ronde 2, Sherpa session_01LnDpSn9oU4BwQzag7cN8tZ (Fable, `claude/kennisindex-2`): welke besluiten zijn ingehaald (nu 394 van 525 "geldt").
 - Bouwrij daarna: I-40, I-41 (Week, later), D één plan (I-14, nakijken of het nog open is), I-23 M, I-8 Routes op reis. MacroFactor eruit na deze week. Woensdag 18 november: rustiger instap van de planner op de terugkomst van de eigenaar nakijken.
 
 ## Werkwijze, geleerd
