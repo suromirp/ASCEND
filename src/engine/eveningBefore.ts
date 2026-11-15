@@ -34,6 +34,7 @@ import { sweatRateAt } from './sweat';
 import { litersText } from './stageWater';
 import { routeTarget, targetText, walkShortText } from './routeTarget';
 import { routeShownFor } from './trainingPlace';
+import { PLACE_WEATHER_FROM_HOME, placeWeatherFailed, placeWeatherLine } from './placeWeather';
 import { fuelEveningLine, fuelForTraining, fuelForTrekDay, trekEveningLine } from './fuelOnTheGo';
 
 // ---- de instelling ---------------------------------------------------------------------------
@@ -121,6 +122,10 @@ export interface EveningInput {
   bodyKg?: number;
   // Instelling Eten onderweg (engine/fuelOnTheGo.ts). Afwezig is hier uit; de hook geeft de instelling door.
   fuelOn?: boolean;
+  // Het weer van de plek die je in de Briefing voor een training van morgen koos (engine/startPlaceChoice.ts):
+  // 'shown' met de voorspelling daar, 'failed' als die niet laadde (dan het weer van huis met die regel).
+  // Afwezig of nog bezig: het weer van huis, zonder plaatsnaam, zoals de rij Weer in de Briefing.
+  placeWeather?: { sessionId: string; name: string; state: 'shown'; forecast: WeatherForecast } | { sessionId: string; name: string; state: 'failed' };
   // De bewaarde keuzes Waar train je? per geplande training (storage/trainingPlace.ts), ongelezen.
   // Afwezig: de standaard. Bij Loopband of binnen geen route (engine/trainingPlace.ts#routeShownFor).
   trainingPlaces?: Record<string, unknown>;
@@ -189,24 +194,31 @@ function trainingPrep(input: EveningInput, session: PlannedSession, template: Se
   // In volgorde van belang; de kaart neemt de eerste vier.
   const lines: string[] = [];
 
+  // De plek uit de Briefing voor deze training: het weer daar, of het weer van huis met de eerlijke regel.
+  const at = input.placeWeather?.sessionId === session.id ? input.placeWeather : undefined;
+  const forecast = at?.state === 'shown' ? at.forecast : input.forecast;
+
   // 1. Het weer bij de start, met de eerste kledingregel erachter.
-  if (outside && input.forecast && (input.weatherOn || input.clothingOn)) {
-    const w = weatherForTraining({ forecast: input.forecast, template, logs: input.logs, date, durationMinutes: minutes, now: input.now });
+  if (outside && forecast && (input.weatherOn || input.clothingOn)) {
+    const w = weatherForTraining({ forecast, template, logs: input.logs, date, durationMinutes: minutes, now: input.now });
     if (w) {
       const parts: string[] = [];
       if (input.weatherOn) parts.push(`${capital(weatherLine({ ...w, daylight: undefined }))}.`);
       if (input.clothingOn) {
-        const advice = clothingForTraining({ forecast: input.forecast, template, logs: input.logs, date, durationMinutes: minutes, adjustC: input.clothingAdjust?.(template), now: input.now });
+        const advice = clothingForTraining({ forecast, template, logs: input.logs, date, durationMinutes: minutes, adjustC: input.clothingAdjust?.(template), now: input.now });
         if (advice?.lines[0]) parts.push(advice.lines[0]);
       }
-      if (parts.length > 0) lines.push(parts.join(' '));
+      const plain = parts.join(' ');
+      if (parts.length > 0) {
+        lines.push(at?.state === 'shown' ? placeWeatherLine(at.name, plain) : at?.state === 'failed' ? `${placeWeatherFailed(at.name)} ${PLACE_WEATHER_FROM_HOME} ${lowerFirst(plain)}` : plain);
+      }
     }
   }
 
   // 2. Een lampje: start voor zonsopgang of einde na zonsondergang. Met een voorspelling dezelfde tijden
   // als de weerregel op de missie; zonder uitgerekend (engine/sun.ts), dus ook zonder netwerk.
   if (outside) {
-    const daylight = input.forecast ? weatherForTraining({ forecast: input.forecast, template, logs: input.logs, date, durationMinutes: minutes, now: input.now })?.daylight : undefined;
+    const daylight = forecast ? weatherForTraining({ forecast, template, logs: input.logs, date, durationMinutes: minutes, now: input.now })?.daylight : undefined;
     const lamp = daylight
       ? daylight.startsBeforeSunrise
         ? lampText('tot', daylight.sunrise)
@@ -229,7 +241,7 @@ function trainingPrep(input: EveningInput, session: PlannedSession, template: Se
   if (watch && watchKind !== 'sent') lines.push(watch);
 
   // 5. Drinken bij een lange training buiten: wat je ongeveer kwijtraakt, uit je eigen zweettempo.
-  const drink = drinkLine({ template, minutes, forecast: input.forecast, logs: input.logs, date, now: input.now, sweatEntries: input.sweatEntries });
+  const drink = drinkLine({ template, minutes, forecast, logs: input.logs, date, now: input.now, sweatEntries: input.sweatEntries });
   if (drink) lines.push(drink);
 
   // 6. Eten mee bij een loop of wandeling vanaf 90 minuten (engine/fuelOnTheGo.ts), naast het drinken.
@@ -322,6 +334,10 @@ export function lampLine(date: string, startMinute: number, minutes: number, pla
   if (startDark && startMinute < day.sunrise) return lampText('tot', clockOf(day.sunrise));
   if (startDark || end >= 1440 || isNightAt(day, end)) return lampText('vanaf', clockOf(day.sunset));
   return undefined;
+}
+
+function lowerFirst(s: string): string {
+  return s.charAt(0).toLowerCase() + s.slice(1);
 }
 
 function capital(s: string): string {

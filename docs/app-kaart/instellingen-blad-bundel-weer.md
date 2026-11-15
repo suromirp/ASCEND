@@ -42,6 +42,8 @@ Bij het openen
 [knop: Grote wegen mijden]
 Grote wegen mijden
 [knop: Uitleg: Grote wegen mijden]
+[knop: Gekozen plek onthouden]
+Gekozen plek onthouden
 [knop: Ondergrond van de kaart, Donker]
 Ondergrond van de kaart
 [knop: Uitleg: Ondergrond van de kaart]

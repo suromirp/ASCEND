@@ -161,6 +161,13 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
   }
 }
 
+// Wie iets in het geheugen houdt van de opslag, hoort het als alles gewist is.
+const wipeListeners = new Set<() => void>();
+export function afterWipe(listener: () => void): () => void {
+  wipeListeners.add(listener);
+  return () => wipeListeners.delete(listener);
+}
+
 // Every store in one transaction: all of it is gone, or (on a failure halfway) none
 // of it. Taken from the database itself, so a new store can never be forgotten here.
 // `meta` is written in the same transaction after the clear (flags for the next start).
@@ -173,6 +180,7 @@ export async function clearAllStores(meta: Record<string, unknown> = {}): Promis
     for (const name of names) ops.push(tx.objectStore(name).clear());
     for (const [key, value] of Object.entries(meta)) ops.push(tx.objectStore('meta').put(value, key));
     await Promise.all([...ops, tx.done]);
+    for (const l of wipeListeners) l();
   } catch (err) {
     // A put that cannot be stored must not let the clears commit on their own.
     try {

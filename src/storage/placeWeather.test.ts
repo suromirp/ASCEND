@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MetaRepo, wipeAllData } from './database';
-import { PLACE_WEATHER_KEY, loadPlaceWeather } from './placeWeather';
+import { MAX_CACHED_PLACES, PLACE_WEATHER_KEY, loadPlaceWeather } from './placeWeather';
 import { getWeatherState, syncWeather } from './weather';
 import { buildBackupEnvelope } from './backupExport';
 import { rawOpenMeteo } from '../engine/fixtures/weatherFixture';
@@ -46,6 +46,57 @@ describe('loadPlaceWeather', () => {
     const f = okFetch();
     await loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: T0 });
     await loadPlaceWeather(OTHER, { fetchImpl: asFetch(f), now: minutesLater(5) });
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+
+  it('een cache per plek: terug naar de eerste plek binnen het uur is geen aanroep (I-37)', async () => {
+    const f = okFetch();
+    await loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: T0 });
+    await loadPlaceWeather(OTHER, { fetchImpl: asFetch(f), now: minutesLater(5) });
+    const back = await loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: minutesLater(10) });
+    expect(back.status).toBe('ok');
+    expect(back.status === 'ok' && back.forecast.place.lat).toBe(50.72);
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+
+  it('onthoudt hoogstens zes plekken; de oudste valt af', async () => {
+    const f = okFetch();
+    for (let i = 0; i <= MAX_CACHED_PLACES; i++) await loadPlaceWeather({ name: '', lat: 40 + i, lon: 4 }, { fetchImpl: asFetch(f), now: minutesLater(i) });
+    const stored = await MetaRepo.get<{ places: Record<string, unknown> }>(PLACE_WEATHER_KEY);
+    expect(Object.keys(stored!.places)).toHaveLength(MAX_CACHED_PLACES);
+    expect(Object.keys(stored!.places)).not.toContain('40,4');
+    await loadPlaceWeather({ name: '', lat: 40, lon: 4 }, { fetchImpl: asFetch(f), now: minutesLater(10) });
+    expect(f).toHaveBeenCalledTimes(MAX_CACHED_PLACES + 2);
+  });
+
+  it('de oude vorm (één voorspelling) telt nog als bewaarde plek', async () => {
+    const f = okFetch();
+    const first = await loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: T0 });
+    await MetaRepo.set(PLACE_WEATHER_KEY, { forecast: first.status === 'ok' ? first.forecast : undefined });
+    expect((await loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: minutesLater(5) })).status).toBe('ok');
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+
+  it('twee plekken tegelijk: allebei bewaard, de een schrijft de ander niet weg (Warden)', async () => {
+    const f = okFetch();
+    await Promise.all([loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: T0 }), loadPlaceWeather(OTHER, { fetchImpl: asFetch(f), now: T0 })]);
+    const stored = await MetaRepo.get<{ places: Record<string, unknown> }>(PLACE_WEATHER_KEY);
+    expect(Object.keys(stored!.places).sort()).toEqual(['50.72,4.01', '51.52,5.03']);
+  });
+
+  it('force deelt geen gewone aanroep die al loopt: er gaat echt een nieuwe uit (Warden)', async () => {
+    const f = okFetch();
+    await Promise.all([
+      loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: T0 }),
+      loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: T0, force: true }),
+    ]);
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+
+  it('force haalt op, ook binnen het uur (Nu verversen)', async () => {
+    const f = okFetch();
+    await loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: T0 });
+    expect((await loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: minutesLater(5), force: true })).status).toBe('ok');
     expect(f).toHaveBeenCalledTimes(2);
   });
 

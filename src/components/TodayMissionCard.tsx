@@ -38,6 +38,7 @@ import { isTestOrRace } from '../engine/templateRoles';
 import { BRIEFING_TEXT, briefingEntry, missionButton } from '../engine/briefing';
 import { useWatchLink } from './useWatchLink';
 import { TrainingBriefing } from './TrainingBriefing';
+import { useBriefingReturn } from '../utils/briefingReturn';
 import { HowDidItGoSheet } from './HowDidItGoSheet';
 
 // "40 minuten" groot, de rest kleiner met zijn eenheid ernaast.
@@ -134,6 +135,8 @@ export function TodayMissionCard({
   const inAppStrength = template.type === 'strength';
   const view = missionCardView({ briefingReach, briefingButton, quickComplete, inAppStrength });
   const [showBriefing, setShowBriefing] = useState(false);
+  // Terug vanaf een pagina die je uit deze Briefing opende: de Briefing gaat weer open.
+  useBriefingReturn('mission', () => setShowBriefing(true), (m) => m.templateId === template.id && m.date === todayISO());
   const [showManual, setShowManual] = useState(false);
   const garmin = buildWorkoutPlan(template, todayISO(), program)?.garmin;
   const watchView = useWatchSheet({ template, garmin, session, hasZonesNote: !!guide?.garminNote });
@@ -269,6 +272,7 @@ export function TodayMissionCard({
           onClose={() => setShowBriefing(false)}
           // Zelf invullen: het blad Hoe ging het? over de Briefing; na Opslaan gaan beide dicht.
           onManual={() => setShowManual(true)}
+          origin="mission"
         />
       )}
       {showBriefing && showManual && (

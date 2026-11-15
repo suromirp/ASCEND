@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { makeForecast } from './fixtures/weatherFixture';
-import { readWeatherPageLink, weatherPageLink, weatherPageNote, weatherPageView } from './weatherPageLink';
+import { readWeatherPageLink, weatherCardMinutes, weatherPageLink, weatherPageNote, weatherPageView, weatherRefreshOutcome } from './weatherPageLink';
 
 // Verzonnen plek: de coördinaten wijzen nergens heen.
 const PLACE = { name: 'Verwegdal', lat: 50.72, lon: 4.1 };
@@ -87,5 +87,38 @@ describe('weatherPageView: welke voorspelling de kaart leest en wat erbij staat'
   it('geen gedachtestreepjes in de teksten', () => {
     const all = [weatherPageNote.loading('X'), weatherPageNote.shown('X'), weatherPageNote.failed('X', true), weatherPageNote.failed('', false)].join(' ');
     expect(all).not.toMatch(/[–—]/);
+  });
+});
+
+describe('de duur: de pagina rekent met dezelfde minuten als de rij Weer (I-37)', () => {
+  it('de duur van de Briefing gaat heen en terug mee', () => {
+    expect(readWeatherPageLink(weatherPageLink(PLACE, 'tpl-run', TODAY, 45), TODAY)?.minutes).toBe(45);
+  });
+  it('een duur die geen training kan zijn gaat niet mee en wordt niet gelezen', () => {
+    for (const bad of [0, -5, 12.5, 24 * 60 + 1, Number.NaN]) expect(weatherPageLink(PLACE, 'tpl-run', TODAY, bad)?.weatherPlace.minutes).toBeUndefined();
+    const raw = { weatherPlace: { place: PLACE, templateId: 'tpl-run', date: TODAY, minutes: '45' } };
+    expect(readWeatherPageLink(raw, TODAY)).toEqual({ place: PLACE, templateId: 'tpl-run', date: TODAY });
+  });
+  it('volgorde: de Briefing, dan de aangepaste duur van de geplande training, dan de volle duur', () => {
+    const link = { place: PLACE, templateId: 'tpl-run', date: TODAY };
+    expect(weatherCardMinutes({ ...link, minutes: 40 }, 90, 60)).toBe(40);
+    expect(weatherCardMinutes(link, 90, 60)).toBe(90);
+    expect(weatherCardMinutes(undefined, 90, 60)).toBe(90);
+    expect(weatherCardMinutes(undefined, undefined, 60)).toBe(60);
+    expect(weatherCardMinutes(undefined, 0, 60)).toBe(60);
+  });
+});
+
+describe('weatherRefreshOutcome: Nu verversen noemt thuis en de plek', () => {
+  it('zonder plek: zoals altijd', () => {
+    expect(weatherRefreshOutcome(undefined, false, undefined)).toEqual({ tone: 'ok', text: 'Het weer is bijgewerkt.' });
+    expect(weatherRefreshOutcome(undefined, false, 'Geen verbinding.')).toEqual({ tone: 'error', text: 'Geen verbinding.' });
+  });
+  it('met plek: beide gelukt, of het feit van wat niet lukte voorop', () => {
+    expect(weatherRefreshOutcome('Verwegdal', true, undefined).text).toBe('Het weer is bijgewerkt, thuis en in Verwegdal.');
+    expect(weatherRefreshOutcome('', true, undefined).text).toBe('Het weer is bijgewerkt, thuis en op je plek.');
+    expect(weatherRefreshOutcome('Verwegdal', false, undefined)).toEqual({ tone: 'error', text: 'Weer in Verwegdal laadde niet. Het weer van thuis is bijgewerkt.' });
+    expect(weatherRefreshOutcome('Verwegdal', false, 'Geen verbinding.').text).toBe('Weer in Verwegdal laadde niet. Geen verbinding.');
+    expect(weatherRefreshOutcome('Verwegdal', true, 'Geen verbinding.').tone).toBe('error');
   });
 });

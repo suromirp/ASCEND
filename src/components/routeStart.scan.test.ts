@@ -34,7 +34,7 @@ describe('Start bij in de regie en op het scherm', () => {
     expect(search).toContain('locateStop.current = stop;');
   });
   it('Thuis niet gelezen is een eigen stand: geen Maak dit Thuis', () => {
-    expect(search).toContain("setSaved('unread')");
+    expect(search).toContain("() => 'unread' as const");
     expect(search).toContain('makeHome: homeUnread ? undefined : makeHome');
   });
   // Besluit 2026-11-12-trainingsscherm-sporen-1-4.md: ook Waar train je? in de Briefing is nu stil, zodat de

@@ -186,6 +186,9 @@ export interface AppSettings {
   routeProposal?: boolean;
   // Grote wegen mijden bij Route voorstellen; afwezig is aan (besluit 2026-11-14-routes-vorm.md).
   routeAvoidBigRoads?: boolean;
+  // De plek van Start bij blijft per geplande training staan tot de dag voorbij is; afwezig is aan
+  // (besluit 2026-11-15-avond-ervoor-kent-de-plek.md). Optioneel en erbij, dus geen migratiestap.
+  rememberStartPlace?: boolean;
   // Which loop comes first in the route proposal: one long loop past different
   // hills ('adventure', absent = adventure) or the same hill up and down ('simple').
   routeStyle?: 'simple' | 'adventure';

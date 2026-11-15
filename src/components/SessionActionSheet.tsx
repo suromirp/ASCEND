@@ -87,6 +87,7 @@ export function SessionActionSheet({
   onBackOnPlan,
   onOpenLog,
   startStep,
+  openBriefing = false,
   catchUp = false,
   caughtUpOn,
   placeReason,
@@ -120,6 +121,8 @@ export function SessionActionSheet({
   onOpenLog?: () => void;
   // Een tik op de greep in Week opent het blad direct op Verplaatsen.
   startStep?: 'move';
+  // Terug vanaf een pagina die je uit de Briefing opende: het blad opent met de Briefing erover.
+  openBriefing?: boolean;
   // Een gemiste training die je naar later zet (engine/catchUp.ts): dezelfde dagkeuze, alleen vandaag of later.
   catchUp?: boolean;
   // De oude rij van een inhaal ("ingehaald op za 31"): alleen dat feit, geen acties, zodat je hem niet
@@ -136,7 +139,7 @@ export function SessionActionSheet({
   // "Hoe je het doet" for a day still to come: the training screen of that day, to read only.
   const [showPreview, setShowPreview] = useState(false);
   // De Briefing (spoor 5): voor een training buiten te voet op de plek van "Hoe je het doet".
-  const [showBriefing, setShowBriefing] = useState(false);
+  const [showBriefing, setShowBriefing] = useState(openBriefing);
   // Zelf invullen vanuit de Briefing: het blad Hoe ging het? erover.
   const [showManual, setShowManual] = useState(false);
   const [step, setStep] = useState<'main' | 'done' | 'move' | 'swap'>(startStep ?? 'main');
@@ -409,6 +412,7 @@ export function SessionActionSheet({
           // Zelf invullen: het blad Hoe ging het? over de Briefing; na Opslaan gaat alles dicht.
           onManual={() => setShowManual(true)}
           onLeave={requestClose}
+          origin="sheet"
         />
       )}
       {showBriefing && showManual && (
