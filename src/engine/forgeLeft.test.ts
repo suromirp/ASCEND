@@ -177,7 +177,7 @@ describe('herstelronde Warden', () => {
     expect(sessionIsDead({ templateId: 'tpl_upper_a', plannedSessionId: 'ps1' }, world)).toBe(false);
   });
 
-  it('Gedaan op: een losse training van gisteren krijgt de dag van je laatste set; gepland houdt zijn dag', async () => {
+  it('Gedaan op: een training van gisteren krijgt de dag van je laatste set, ook gepland (I-4); zonder set houdt gepland zijn dag', async () => {
     const { finishDayDefault } = await import('./forgeSession');
     const lastTickAt = at('2026-11-17T22:10:00Z'); // di 17 november 23:10 in Amsterdam
     expect(finishDayDefault({ today: '2026-11-18', lastTickAt, dayOf })).toBe('2026-11-17');
@@ -185,8 +185,12 @@ describe('herstelronde Warden', () => {
     expect(finishDayDefault({ today: '2026-11-17', lastTickAt, dayOf })).toBe('2026-11-17');
     // Buiten de 60 dagen van het veld: vandaag.
     expect(finishDayDefault({ today: '2027-02-01', lastTickAt, dayOf })).toBe('2027-02-01');
-    expect(finishDayDefault({ today: '2026-11-18', plannedSessionId: 'ps1', scheduledDate: '2026-11-16', lastTickAt, dayOf })).toBe('2026-11-16');
-    expect(finishDayDefault({ today: '2026-11-18', plannedSessionId: 'ps1', scheduledDate: '2026-11-18', lastTickAt, dayOf })).toBe('2026-11-18');
+    // Gepland op ma 16, gedaan di 17: de dag van de laatste set, niet de geplande dag (was 16 voor I-4).
+    expect(finishDayDefault({ today: '2026-11-18', plannedSessionId: 'ps1', scheduledDate: '2026-11-16', lastTickAt, dayOf })).toBe('2026-11-17');
+    // Gepland op wo 18 (vandaag), al gedaan op di 17: dinsdag (was 18 voor I-4).
+    expect(finishDayDefault({ today: '2026-11-18', plannedSessionId: 'ps1', scheduledDate: '2026-11-18', lastTickAt, dayOf })).toBe('2026-11-17');
+    // Zonder afgevinkte set (alleen afvinken): gepland in het verleden houdt zijn dag, zoals voorheen.
+    expect(finishDayDefault({ today: '2026-11-18', plannedSessionId: 'ps1', scheduledDate: '2026-11-16', dayOf })).toBe('2026-11-16');
   });
 
   it('Lange onderbreking: een gesloten blad komt niet terug op de minuut-tik, wel bij een terugkomst of een nieuwe stilte', async () => {

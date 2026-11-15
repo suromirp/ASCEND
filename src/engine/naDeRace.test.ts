@@ -235,8 +235,10 @@ describe('Warden ronde 2: elke stem, en een antwoord op de race klapt niets teru
     expect(planMissed(missedInput({ plannedSessions: list, logs: noRaceLog, today: '2027-03-15' })).item).toBeUndefined();
     expect(computeAdvice(adviceInputs({ plannedSessions: list, logs: noRaceLog, asOf: '2027-03-15' })).filter((a) => a.ruleId === 'MISSED-CATCH-UP')).toEqual([]);
     const review = buildWeekReview({ weekStart: '2027-03-08', plannedSessions: list, logs: noRaceLog, templates, program, planChangeLog: [], asOf: '2027-03-15' })!;
-    // Alleen de race zelf: je zei dat je hem niet liep.
-    expect(review.missed).toHaveLength(1);
+    // Alleen de race zelf telt als gepland en niet gedaan: je zei dat je hem niet liep. Overgeslagen heet niet gemist
+    // (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md), de afbouw vervalt.
+    expect(review.planned - review.done).toBe(1);
+    expect(review.missed).toEqual([]);
     at('2027-03-16');
     expect(deriveSessionStatus(easy, noRaceLog, false, { races: raceDatesOf(list, templates) }).status).toBe('away');
   });

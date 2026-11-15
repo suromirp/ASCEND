@@ -2,7 +2,7 @@
 // onderbreking (engine/forgeSession.ts). Het concept bewaart de uitkomst; dit houdt alleen de stand bij.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { askBreakNow, breakAsPause, breakCounts, cleanPauses, isPaused, longBreakMs, pause as pauseClock, resolveBreakAsk, resume as resumeClock, type Pause } from '../../engine/forgeSession';
+import { askBreakNow, breakAsPause, rememberDismiss, breakCounts, cleanPauses, isPaused, longBreakMs, pause as pauseClock, resolveBreakAsk, resume as resumeClock, type Pause } from '../../engine/forgeSession';
 import { haptics } from '../../utils/haptics';
 import { lastActionOfDraft, type WorkoutDraft } from './forgeDraft';
 import type { useAppData } from '../../state/AppDataContext';
@@ -80,7 +80,7 @@ export function useForgeClock(restored: WorkoutDraft | undefined, readOnly: bool
   };
   // Het blad gesloten zonder antwoord: onthoud voor welke stilte, zodat de minuut-tik hem niet terugzet.
   const dismissBreak = () => {
-    if (asking.current) dismissedFor.current = lastAction.current;
+    dismissedFor.current = rememberDismiss({ asking: asking.current, lastActionAt: lastAction.current, ...(dismissedFor.current !== undefined ? { dismissedFor: dismissedFor.current } : {}) });
     asking.current = false;
     setAwayMs(undefined);
   };

@@ -1,70 +1,53 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 15 november 2026, 11:20 Portugese tijd, door de coördinator session_01LnDpSkfdHZiUDTtrj7CB8T. Oudere versies staan in de git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
+Bijgewerkt: 15 november 2026, 14:20 Portugese tijd, door de coördinator session_01LnDpSnngzUAioWQ5b8xBWH (overgenomen van session_01LnDpSkfdHZiUDTtrj7CB8T om 14:13). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
 
-## Vaste afspraken van nu
-
-- Eigenaar 15 november 12:15: "ik vertrouw erop dat jij weet wat de beste aanpak is": zelf beslissen met het advies, keuzes hier vastleggen.
-- Backlog bijhouden (eigenaar 12:18, "hoe blijft dit up to date?"): Sherpa Backlog session_01LnDpSj5qWPZmyX97SijVCU (`claude/backlog-bijhouden`): eenmalig opruimen, codes [I-n], `npm run backlog:bij` na elke squash, test. Tot dan: voor elke start eerst in de code en git log kijken of het al gebouwd is.
-
-- Zonder sportschool (eigenaar 15 november, "Ja advies"): alleen wat de sportschool nodig heeft vervalt; een loop of wandeling die je niet deed telt als gemist. Doorgegeven aan Sherpa Week.
+## Vaste afspraken
 
 - Tijden aan de eigenaar in Portugese tijd (Europe/Lisbon) tot woensdag 18 november, daarna Amsterdamse tijd; nooit UTC.
-- Stijl Jarvis met "meneer"; vragen apart onderaan onder **Vraag aan u**, advies voorop, en wat er zonder antwoord gebeurt.
-- Niet op de eigenaar wachten: open vragen krijgen het advies als standaard; elke keuze en reflectie hier vastleggen.
+- Stijl Jarvis met "meneer"; vragen apart onderaan onder **Vraag aan u**, advies voorop, wat er zonder antwoord gebeurt.
+- Eigenaar 15:36: "Ja jouw advies voor de wachters doe dit vanaf nu standaard en zeg alleen wat je gekozen hebt": Wachter en andere uurtaken bij elke wissel zelf verhuizen met het advies; geen vraag meer, alleen melden wat gekozen is. Weigert het systeem, dan dit citaat tonen.
+- Eigenaar 12:15: "ik vertrouw erop dat jij weet wat de beste aanpak is": zelf beslissen met het advies, keuzes hier vastleggen. Niet op hem wachten.
+- Fable (eigenaar 13:52): "fable mag je ook gwn gebruiken". Limiet toen: alle modellen 79 procent (reset 17:59), Fable 36 procent (reset 18:00). Bij een limiet: send_later op resetsAt plus vijf minuten.
+- Zonder sportschool (eigenaar, "Ja advies"): alleen wat de sportschool nodig heeft vervalt; een loop of wandeling die je niet deed telt als gemist.
 - Elke afspraak meteen hier; elke verandering in vragen, stuk of live meteen in `eigenaar.md`.
-- Limiet (09:50): alle modellen 69 procent, reset 17:59; Fable 25 procent, reset 18:00. Fable tot 18:00 benutten (Warden, Scout, Cartographer, planner-bouwers). Bij een limiet: send_later op resetsAt plus vijf minuten.
-- Werkwijze overdag: klaar werk na de volle controles op `claude/nacht`; per onderwerp Lookout en Pathfinder (bij iets zichtbaars); dan main via squash (`git commit-tree HEAD^{tree} -p origin/main`), pushmelding, werkkaart.
-- Bouwplekken vol (drie bouwers, tot zes sessies). Bouwers en Wardens melden zich niet: kijk met get_session (de tag-filter van list_sessions werkt niet; gebruik de id's hieronder).
-- Inspanning coördinator overdag: medium.
-- Back-up van de eigenaar alleen in de scratchpad (chmod 600), alleen lezen, nooit in de repo.
+- Werkwijze: klaar werk na de volle controles op `claude/nacht`; Warden (planner en opslag op Fable), Lookout en Pathfinder bij iets zichtbaars, eigen blik op de afdrukken; dan main via squash (`git commit-tree HEAD^{tree} -p origin/main`), daarna `npm run backlog:bij` en meecommitten op nacht, pushmelding, `eigenaar.md` Net live, Werkkaart extra ronde (fire_trigger trig_01JoRN6XzHJ17frpcWQAdEzB).
+- Backlog: elk Inboxpunt heeft een code [I-n]; een bouwer zet `Klaar: I-n` in zijn commit; voor een start eerst `git log origin/main --grep "I-n"` en in de code kijken of het al gebouwd is (vandaag twee keer oud werk in de Inbox).
+- Kennisindex: elk nieuw document in docs/ krijgt een regel in `docs/kennisindex/bronnen.json`, dan `npm run kennisindex`; na een proefmerge altijd `npm run kennisindex` opnieuw. Zet dat in elke bouwopdracht.
+- Een Warden pusht zijn herstel als `herstel.md` op `warden/<onderwerp>-herstel`: zet dat in zijn eerste opdracht (achteraf vragen weigert hij). Bouwers melden zich niet: kijk met get_session; list_sessions children werkt, de tag-filter niet. list_events heb je niet: laat bevindingen in een bestand of in de samenvatting landen.
+- Back-up van de eigenaar: stond alleen in de scratchpad van de vorige coördinator (11:50, app fe704a3). Voor nieuw naspelen: vraag een verse.
 
-## Taken en wissel
+## Taken
 
-- Wachter (elk uur op :40): trig_01Y6Gb6hgELCGn9XV2EAkMny op deze sessie (eigenaar 11:50: "Zet wachter aan"; eerst geweigerd door de rechtencontrole, met zijn akkoord gelukt).
-- Bouwers nakijken (elk uur op :10): trig_011KHnGB7dsiNtt5r3VgdE4Q op deze sessie.
-- Werkkaart elk uur op :20: eigen sessie session_01LnDpSktfMxYFgMMgDhw8Do (trig_01JoRN6XzHJ17frpcWQAdEzB), niet aanraken, niet archiveren.
-- Wissel: send_later 16 november 04:47 Amsterdam (trig_01L3EV4HCeLhdnygvM2rh9bM).
+- Bouwers nakijken elk uur op :10: trig_015XdDMzaV3mQ89aqdgLLHpo op deze sessie. De oude (trig_011KHnGB7dsiNtt5r3VgdE4Q) staat uit.
+- Wachter elk uur op :40: trig_01CDpj9NsMnvoumE9kVDUPt3 op deze sessie (eigenaar 15:36 "Ja"). De oude (trig_01Y6Gb6hgELCGn9XV2EAkMny) staat uit. Bij de volgende wissel: zelf verhuizen, niet meer vragen.
+- Werkkaart elk uur op :20: eigen sessie session_01LnDpSktfMxYFgMMgDhw8Do (trig_01JoRN6XzHJ17frpcWQAdEzB). Niet aanraken, niet archiveren.
+- Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam] staat (trig_01Eu5zZc9REdsU1VGyWCvjFe).
 
-## Lopend (15 november 11:20)
+## Live vandaag
 
-- EERST: melding Week van de eigenaar (10:40). Telling klopt niet met de kruisen; za 14 lange loop grijs zonder kruis (vermoedelijk: Zonder sportschool telt nu als nooit gemist, ook voor een loop, besluit 2026-11-14); waarschuwing naast een niet gedane lange loop; inhaaladvies zegt "vandaag deed je geen training" terwijl Heuvelintervallen vandaag staat, legt de lange loop direct na de heuvelintervallen en zegt vaag "die week". Sherpa Week session_01LnDpSihpwmNKme8Mudp1nF (Opus high, `claude/week-telling`), met nagemaakte data. Na hem: Warden op Fable. Zodra de eigenaar een back-up stuurt: skill naspelen en de uitkomst naar de Sherpa. De notitie bij zijn periode is privé.
-- Q instellingen (`claude/q-instellingen`): Warden akkoord, niet blokkerend. Proefmerge met nacht op `proef/q-kennis` (lokaal; conflict in de instellingenfoto opgelost door hem opnieuw te maken). Daarna Lookout en Pathfinder, samen met StairMaster.
-- StairMaster en wandelen in bpm: Warden akkoord en zelf op claude/nacht gezet (e78388d). Nog Lookout en Pathfinder.
-- Kennisindex: op claude/nacht (4306d25). Elk nieuw document in docs/ heeft nu een regel in `docs/kennisindex/bronnen.json` nodig, anders faalt `scripts/kennisindex`; `npm run kennisindex` maakt de index opnieuw. Zet dat in elke bouwopdracht die een besluit schrijft.
-- Beginner heel licht stap 1 en 2 (`claude/beginner-licht`, Sherpa session_01LnDpSk5RjwPEFvrRzyLnjW, idle met een open vraag over de overgang na week 4, volgt het advies): Warden session_01LnDpSji7qMKisXbWFkVsdb (Fable), let op de veranderde planGolden-foto. Daarna stap 3.
-- Gearchiveerd 12:10 (eigenaar: "oude bouwer sessies archiveren"): twaalf afgeronde sessies, ook de coördinatoren van 12 en 14 november. Open blijven: Werkkaart-sessie, Sherpa beginner (herstel volgt), lopende bouwers.
-- Week: Sherpa klaar (dd92b19), Warden Week session_01LnDpSj4BZ8tUcTDLVp4ZkT (Fable); bij blokkerend schrijft hij `herstel.md` op `warden/week-herstel`.
-- Beginner: Warden wil herstel (rem na de start moet de langste sessie lezen; de Akkoord-wissel optioneel). Gevraagd als `herstel.md` op `warden/beginner-herstel` (trig_01Hs1bhNkoZZy84rJtr6ERM9), daarna naar Sherpa beginner.
-- Klein 15 november klaar (41f0901 op claude/klein-15-nov): proefmerge, Warden sonnet, Lookout.
-- Les: list_events heb ik niet; een Warden die niet akkoord is laat zijn herstel als bestand op een branch achter.
+- 4de3367 (12:20): Q instellingen terug met Akkoord, kracht uit, wandelen in vaste bpm, kennisindex. Deploy en Android groen.
+- b2439653 (13:15): kracht en bpm netjes in Instellingen, weesregel Stand, backlog met codes en `npm run backlog:bij`. Deploy en Android groen.
 
-- Back-up van de eigenaar (15 november 11:50, app fe704a3) staat in de scratchpad van deze sessie: `backup-eigenaar-1/b.json`, chmod 600. Naspelen Week: vr 13 beide skipped (geen gemist), za 14 Lange duurloop (type hiking) en zo 15 Heuvelintervallen geruild, za 14 afgeleid away; advies met leave leeg, zonder leave precies zijn tekst. Doorgegeven aan Sherpa Week (trig_014agsDwjutsHvizV1TUzx61).
-- Back-up eerste keer mislukt (schermafdruk 11:50, "het bestand kon niet worden geschreven", tweede poging lukt met -2 in de naam): Sherpa Back-up session_01LnDpSnNF5icymXAJ1Rc6xC (Fable, `claude/backup-eerste-keer`).
-- Sherpa Klein 15 november session_01LnDpSnF3VCAmFtp8CGzVEz (Opus medium, `claude/klein-15-nov`): Forge-tikdoelen en Logboek lege maand.
-- Q, StairMaster en Kennisindex: Lookout groen, Pathfinder akkoord, eigen blik: bpm-regel bij korte blokken werd "Tussen de blokken onder N bpm." (ddd0a35 op proef/q-kennis). Volle controles lopen, dan squash naar main.
+## Lopend (15:30)
 
-## Bouwrij daarna
-
-- D één plan (planner, Fable), dan M2, R, P uit de Inbox van `docs/backlog.md`. Pathfinder-punten 2 en 4 van routes wandelen staan in de backlog (later).
-- Na routes wandelen: de vaste ijktocht. MacroFactor eruit na deze week (oude logs blijven leesbaar).
-- Woensdag 18 november: de rustiger instap van de planner op de terugkomst van de eigenaar nakijken.
+- Naar main gaan Week telling (I-1) en Afbreker (I-4): proef `proef/drie`, de commit vóór de merge van weekbudget (`proef/drie^1`). Pathfinder akkoord (`pathfinder/drie`), Lookout session_01LnDpSjCg2dZkdQ6tWahpzK loopt (afdrukken op `lookout/drie`); tekstkaart draait in een worktree in de scratchpad.
+- Weekbudget (I-39) niet af volgens Pathfinder: Sherpa ronde 2 session_01LnDpSkBcoMA95iogevFZjV (Opus) op `claude/weekbudget-kracht`.
+- Conflict bij elke merge zit in docs/kennisindex: bronnen.json met de hand, de .md met `--ours` en opnieuw `npm run kennisindex`. Een hook draait alle tests bij elke `git commit`: commit apart, niet in een lange keten.
+- Back-up eerste keer: Warden Fable geen blokkerend, wel Moet 1 tot 4 (o.a. stat-fout op lege map geeft -2: waarschijnlijk het symptoom van de eigenaar). Herstel naar de bouwer session_01LnDpSnNF5icymXAJ1Rc6xC (15:14); keuze: één keer opnieuw kijken na 300 ms. Daarna korte blik op de diff, geen volle review.
+- Beginner heel licht: Warden Fable niet akkoord (horlogelog in wandeltempo telt niet; eerste Akkoord noemt de beginnersstart niet; geen rem zonder log). Herstel naar session_01LnDpSk5RjwPEFvrRzyLnjW (15:14). Daarna weer een Warden op Fable.
+- Bouwrij daarna: I-40, I-41 (Week, later), D één plan (I-14, nakijken of het nog open is), I-23 M, I-8 Routes op reis. MacroFactor eruit na deze week. Woensdag 18 november: rustiger instap van de planner op de terugkomst van de eigenaar nakijken.
 
 ## Werkwijze, geleerd
 
-- Een Warden weigert een eigen branch te pushen op verzoek van de coördinator achteraf ("bericht van de eigenaar nodig"). Zet het pushen van `herstel.md` op `warden/<onderwerp>-herstel` daarom al in zijn eerste opdracht (zoals bij Warden Week). Beginner: Warden gearchiveerd, de twee bekende punten naar de Sherpa (trig_01MFasvRS6Qg1L1qVrGPikC4), daarna een frisse review.
-- Fable: seven_day allowed_warning tot 18:00 Portugese tijd (15 november). Kennisindex ronde 2 (welke besluiten zijn ingehaald; nu 394 van 525 "geldt", te veel) start om 18:05 op Fable (send_later). Deploy en Android van 4de3367 groen.
-
-- Uit het archief halen (eigenaar 15 november vroeg ernaar): kan met unarchive_session, maar alleen voor een kleine herstelronde op eigen werk dezelfde dag, als de bouwer iets weet dat niet in de repo staat. Anders een verse bouwer met branch, besluit en opdracht: een oude sessie leest bij elke stap zijn hele geschiedenis (200 tot 500k tokens).
-
-- Een fix in foutafhandeling opent telkens een nieuwe naad: vraag de bouwer vooraf naar elk pad (in beeld, weg, laat antwoord, tweede poging, automatisch).
-- Kijk voor je een bouwer start of het scherm uit de backlogregel nog bereikbaar is.
-- Een werkbriefje heeft hoogstens 45 regels (`src/werkbriefjes.scan.test.ts`).
-- Lookout-poorten botsen: noem een vrije poort.
 - Twee branches die elk een instelling toevoegen botsen in `src/engine/__snapshots__/instellingen-foto.json`: kies een kant en maak hem opnieuw met `npx vitest run -u src/engine/settingsFoto.test.ts`.
-- Draai `kaart:vergelijk` nooit midden in een merge-conflict (hing tien minuten).
+- Draai `kaart:vergelijk` nooit midden in een merge-conflict.
+- Een fix in foutafhandeling opent telkens een nieuwe naad: vraag elk pad vooraf (in beeld, weg, laat antwoord, tweede poging, automatisch). Vandaag: een leesfout mag nooit tot weghalen leiden.
+- Uit het archief halen kan (unarchive_session), alleen voor een kleine herstelronde dezelfde dag; anders een verse bouwer.
+- Een werkbriefje heeft hoogstens 45 regels. Lookout-poorten: noem een vrije poort.
+- Wissel bij ongeveer 50 tot 60 procent context, niet pas 's nachts.
 
-## Reflectie
+## Reflectie 15 november
 
-- 14 november: een half uur maar één bouwer terwijl ik op een review wachtte. Goed: eigen blik op afdrukken ving een Engelse naam die Warden en Pathfinder misten.
-- 15 november nacht: vijf coördinatorfouten (bouwers kunnen zich wel melden aangenomen, planner een uur onopgemerkt, run_once_at in het verleden, verkeerd uur in twee opdrachten, een regel van een werkbriefje overschreven). Overdag inspanning medium, tenzij de eigenaar anders kiest.
+- Goed: naspelen met de echte back-up vond de oorzaak van de Week-melding in een kwartier; de Warden op Opus ving twee keer dat de back-upfix een goed bestand kon weghalen.
+- Slechter: een bouwer gestart voor werk dat al gebouwd was; een Warden die zijn herstel niet wilde pushen; de wissel te laat gepland.

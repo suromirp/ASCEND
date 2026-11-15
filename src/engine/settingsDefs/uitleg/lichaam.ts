@@ -164,7 +164,7 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
     lead: 'In warmte, en vooral bij vocht, loop je bij dezelfde moeite trager. Dat is je lichaam dat koelt, geen slechte vorm.',
     points: [
       { head: 'Wanneer', text: 'bij een loop buiten als het voelt als 22 graden of meer, of als het dauwpunt 16 of hoger is.' },
-      { head: 'Wat je ziet', text: 'een regel onder het weer: loop op hartslag, 10 tot 20 seconden per km trager, of 20 tot 40 als het heet of benauwd is.' },
+      { head: 'Wat je ziet', text: 'een regel onder het weer: loop op hartslag, 10 tot 20 seconden per km trager, 5 tot 10 als het alleen vochtig is, of 20 tot 40 als het heet of benauwd is. Bij intervallen en heuvelherhalingen: meer rust ertussen.' },
       { head: 'Hoe zeker', text: 'een gemiddelde over veel lopers (bewijs matig).' },
     ],
   },

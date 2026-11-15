@@ -8,10 +8,10 @@ import type { PlanChangeItem } from '../models/planChange';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
 import { respectsHeavySpacing } from './scheduler';
 import { isTemplatePlannable } from './sports';
-import { addDays, daysBetween, formatWeekdayDateNL } from '../utils/dates';
+import { addDays, daysBetween, formatDateNL, formatWeekdayDateNL, mondayOfWeek } from '../utils/dates';
 import { proposeExtraSession } from './extraRun';
 import { lastDeclinedOn, linkCandidates, pauseSince } from './missedTraining';
-import { isAwayDay } from './leave';
+import { isAwayFor, isPauseDay } from './leave';
 import { type AdviceInputs, type Advice, isDone, inProgram, isKeySession, findCatchUpDate, findRestDayToUse, keyCatchUpShort, raceWeekGuard, recoveryWeekGuard, type AdviceOption, catchUpDates, moveOptions, proposal } from './adviceShared';
 import { TEST_RUN_ID } from './adviceTestRun';
 import { isTaperDay, raceDatesOf } from './raceWindow';
@@ -19,6 +19,15 @@ import { isDraftOpen } from './sessionStatus';
 
 // Een naam midden in een zin: "Tempoloop" wordt "tempoloop".
 const lower = (name: string) => `${name.charAt(0).toLowerCase()}${name.slice(1)}`;
+
+// Welke week een inhaal in landt, in woorden: "deze week", "volgende week" of "de week van 23 november" (eigenaar,
+// 15 november: "die week" zei niet welke).
+export function weekWord(date: string, asOf: string): string {
+  const week = mondayOfWeek(date);
+  if (week === mondayOfWeek(asOf)) return 'deze week';
+  if (week === addDays(mondayOfWeek(asOf), 7)) return 'volgende week';
+  return `de week van ${formatDateNL(week)}`;
+}
 
 // --- Rule MISSED-CATCH-UP --------------------------------------------------
 // Trigger: a planned session in the last 3 days has no log and wasn't
@@ -29,7 +38,9 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
   // Ill or building back up: nothing gets caught up (engine/illness.ts).
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
   // De afbouw voor een race, de racedag en de herstelweek erna: niets inhalen. Weg (vakantie, tocht): ook niet.
-  if (raceWeekGuard(inputs) || recoveryWeekGuard(inputs) || (inputs.leave?.length && isAwayDay(inputs.asOf, inputs.leave))) return [];
+  // Zonder sportschool loop je door: een lange duurloop haal je dan gewoon in
+  // (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md).
+  if (raceWeekGuard(inputs) || recoveryWeekGuard(inputs) || (inputs.leave?.length && isPauseDay(inputs.asOf, inputs.leave))) return [];
   const races = raceDatesOf(inputs.plannedSessions, templateById);
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   // First link, then catch up: a training a loose log may belong to gets the link proposal on Vandaag
@@ -41,8 +52,9 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
   const recentMissed = inputs.plannedSessions.filter(
     (s) => s.templateId !== TEST_RUN_ID && s.status !== 'skipped' && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(windowFrom(s), inputs.asOf) <= 3
       && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf) && !linkable.has(s.id)
-      // Een vakantie of tocht die je meldde is nooit gemist; wat ervoor open stond vervalt (engine/missedTraining.ts#pauseSince).
-      && !isAwayDay(s.scheduledDate, inputs.leave) && !pauseSince(s.scheduledDate, inputs.asOf, inputs.illnessEpisodes, inputs.leave)
+      // Een vakantie of tocht die je meldde is nooit gemist, zonder sportschool alleen wat de sportschool nodig heeft
+      // (engine/leave.ts#isAwayFor, dezelfde toets als Week); wat voor een pauze open stond vervalt (engine/missedTraining.ts#pauseSince).
+      && !isAwayFor(s.scheduledDate, templateById.get(s.templateId), inputs.leave) && !pauseSince(s.scheduledDate, inputs.asOf, inputs.illnessEpisodes, inputs.leave)
       // Een training uit de afbouw voor een race die er al was vervalt, ook als het venster later begon (engine/raceWindow.ts).
       && !isTaperDay(s.scheduledDate, races, inputs.asOf)
       // Een training die nog loopt (een concept in Forge) is niet gemist (engine/sessionStatus.ts#isDraftOpen).
@@ -86,7 +98,7 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
       const minutes = short?.minutes;
       items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: restDay.scheduledDate, plannedMinutes: minutes, reason: `Gemist op ${formatWeekdayDateNL(s.scheduledDate)}, ingehaald op je rustdag: de dag ervoor deed je geen training.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
       items.push({ plannedSessionId: restDay.id, action: 'remove', reason: 'Rustdag niet nodig: de dag ervoor deed je geen training.', generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
-      caughtUp.push(`${template.name} doe je ${restDay.scheduledDate === inputs.asOf ? 'vandaag' : 'morgen'} in plaats van je rustdag, want ${restDay.scheduledDate === inputs.asOf ? 'gisteren' : 'vandaag'} deed je geen training${short ? `. Korter, ${short.minutes} minuten: die week heeft al een ${lower(short.own)}, en twee volle in één week is te veel ineens` : ''}`);
+      caughtUp.push(`${template.name} doe je ${restDay.scheduledDate === inputs.asOf ? 'vandaag' : 'morgen'} in plaats van je rustdag, want ${restDay.scheduledDate === inputs.asOf ? 'gisteren' : 'vandaag'} deed je geen training${short ? `. Korter, ${short.minutes} minuten: ${weekWord(restDay.scheduledDate, inputs.asOf)} heeft al een ${lower(short.own)}, en twee volle in één week is te veel ineens` : ''}`);
     } else if (catchUp) {
       items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: catchUp, reason: `Gemist op ${formatWeekdayDateNL(s.scheduledDate)}, ingehaald op een vrije dag in dezelfde week.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
       caughtUp.push(`${template.name} haal je in op ${formatWeekdayDateNL(catchUp)}`);
@@ -97,6 +109,21 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
       if (notChosen) otherKeys.push(template.name);
     }
   }
+  // De sleuteltraining is niet in te halen en vandaag staat nog een training open: dan wacht het voorstel tot die
+  // training gedaan of overgeslagen is of de dag om is. "Vervalt" om 10:40 leest als opgeven, en wordt de training van
+  // vandaag overgeslagen, dan kan de sleuteltraining vandaag nog (aanvulling op
+  // docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md, Warden). Zonder sleuteltraining vervalt alles hoe
+  // dan ook: dat voorstel komt meteen.
+  // Open is wat Week open noemt: dezelfde afleiding als gemist. Een training die de periode laat vervallen (zonder
+  // sportschool een sportschooltraining, engine/leave.ts#isAwayFor), die een periode of ASCEND wegliet, of die buiten
+  // het programma valt, houdt niets tegen (Warden, 15 november).
+  const openToday = inputs.plannedSessions.some((s) => {
+    const t = templateById.get(s.templateId);
+    return s.scheduledDate === inputs.asOf && s.status !== 'skipped' && !loggedIds.has(s.id) && !!t && t.type !== 'recovery'
+      && s.leave?.role !== 'dropped' && s.amount?.change !== 'left_out' && inProgram(s, inputs.program)
+      && !isAwayFor(inputs.asOf, t, inputs.leave);
+  });
+  if (caughtUp.length === 0 && chosen && openToday) return [];
   const names = missed.map((m) => m.template.name);
   // Een naam met "en" erin ("Heuvelsprints en afdalen") maakt een opsomming met "en" onleesbaar; dan alleen komma's.
   const list = (xs: string[]) => (xs.length === 1 ? xs[0] : xs.some((x) => / en /.test(x)) ? xs.join(', ') : `${xs.slice(0, -1).join(', ')} en ${xs.at(-1)}`);
@@ -135,7 +162,8 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
 // already uses this rest day for a catch-up.
 export function restSwapAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
-  if (raceWeekGuard(inputs) || isAwayDay(inputs.asOf, inputs.leave)) return [];
+  // Weg (vakantie, tocht): geen ruil. Zonder sportschool loop je door, dus de ruil kan (Warden, 15 november).
+  if (raceWeekGuard(inputs) || isPauseDay(inputs.asOf, inputs.leave)) return [];
   const today = inputs.asOf;
   const yesterday = addDays(today, -1);
   const tomorrow = addDays(today, 1);
@@ -174,8 +202,9 @@ export function restSwapAdvice(inputs: AdviceInputs, templateById: Map<string, S
 // straight away, the evening of the skip, not only the next morning.
 export function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
-  // Ook de herstelweek na een race: een overgeslagen sleuteltraining wordt dan niet op een rustdag ingehaald.
-  if (raceWeekGuard(inputs) || recoveryWeekGuard(inputs) || isAwayDay(inputs.asOf, inputs.leave)) return [];
+  // Ook de herstelweek na een race: een overgeslagen sleuteltraining wordt dan niet op een rustdag ingehaald. Weg
+  // (vakantie, tocht) ook niet; zonder sportschool wel, zoals bij het inhalen.
+  if (raceWeekGuard(inputs) || recoveryWeekGuard(inputs) || isPauseDay(inputs.asOf, inputs.leave)) return [];
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const skipped = inputs.plannedSessions
     .filter((s) => s.status === 'skipped' && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program)
@@ -192,7 +221,7 @@ export function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string,
     const title = `${template.name} overgeslagen`;
     const short = keyCatchUpShort(s, template, rest.scheduledDate, inputs, templateById);
     const minutes = short?.minutes;
-    const effect = `Doe hem ${when} in plaats van je rustdag: ${before} deed je geen training, dus die rust heb je niet nodig.${short ? ` Wel korter, ${short.minutes} minuten: die week heeft al een ${lower(short.own)}, en twee volle in één week is te veel ineens.` : ''}`;
+    const effect = `Doe hem ${when} in plaats van je rustdag: ${before} deed je geen training, dus die rust heb je niet nodig.${short ? ` Wel korter, ${short.minutes} minuten: ${weekWord(rest.scheduledDate, inputs.asOf)} heeft al een ${lower(short.own)}, en twee volle in één week is te veel ineens.` : ''}`;
     const items: PlanChangeItem[] = [
       { plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: rest.scheduledDate, plannedMinutes: minutes, reason: `Overgeslagen op ${formatWeekdayDateNL(s.scheduledDate)}, gedaan op de rustdag erna.`, generatedBy: ['engine/adviceEngine.ts', 'SKIPPED-KEY-TO-REST'] },
       { plannedSessionId: rest.id, action: 'remove', reason: `Rustdag niet nodig: ${before} geen training.`, generatedBy: ['engine/adviceEngine.ts', 'SKIPPED-KEY-TO-REST'] },

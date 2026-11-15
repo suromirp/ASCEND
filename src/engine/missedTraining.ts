@@ -16,13 +16,13 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isIllnessDay } from './illness';
 import { idHasRole, isTestOrRace } from './templateRoles';
-import { awayPeriods, isAwayDay, leaveDays } from './leave';
+import { awayPeriods, isAwayFor, leaveDays } from './leave';
 import type { LeavePeriod } from '../models/leave';
 import { lockLevel } from './weekValidator';
 import { isHandLog } from './activityImport';
 import { fitsChosenWayLog, isLooseSourceLog, sameLinkKind, templateKind } from './looseLog';
 import { daysBetween, formatDateNL, weekdayLongNL } from '../utils/dates';
-import { isDraftOpen, isPausedDay } from './sessionStatus';
+import { isDraftOpen, isPausedFor } from './sessionStatus';
 import { isTaperDay, raceDatesOf } from './raceWindow';
 
 type MissedChoice = 'ask' | 'auto' | 'off';
@@ -108,7 +108,8 @@ export interface MissedInput {
   illnessEpisodes?: IllnessEpisode[];
   // De keuze Waar train je? per geplande training (zie LinkInput).
   places?: Readonly<Record<string, string>>;
-  // Vakanties en tochten die je meldde (engine/leave.ts#isAwayDay): wat daar stond is nooit gemist en vervalt met
+  // Vakanties en tochten die je meldde, en zonder sportschool wat de sportschool nodig heeft (engine/leave.ts#isAwayFor):
+  // wat daar stond is nooit gemist en vervalt met
   // één regel; wat ervoor nog open stond blijft gemist, maar krijgt geen vraag meer.
   leavePeriods?: LeavePeriod[];
   // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): die loopt nog en
@@ -126,21 +127,24 @@ export interface PauseSince {
   running: boolean;
 }
 
+// Zonder sportschool is geen pauze: je loopt door, dus wat ervoor open stond vervalt niet
+// (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md).
 export function pauseSince(date: string, today: string, illnessEpisodes: IllnessEpisode[] | undefined, leavePeriods: LeavePeriod[] | undefined): PauseSince | undefined {
   const pauses: PauseSince[] = [
     ...(illnessEpisodes ?? []).map((e) => ({ kind: 'ill' as const, start: e.startDate, running: !e.endDate || e.endDate >= today })),
-    ...awayPeriods(leavePeriods).map((p) => ({ kind: 'away' as const, start: p.startDate, running: p.endDate >= today })),
+    ...awayPeriods(leavePeriods).filter((p) => p.kind !== 'no_gym').map((p) => ({ kind: 'away' as const, start: p.startDate, running: p.endDate >= today })),
   ];
   return pauses.filter((p) => p.start > date && p.start <= today).sort((a, b) => b.start.localeCompare(a.start))[0];
 }
 
-// De pauze waar deze dag in valt, of niets. Binnen een pauze precies wanneer engine/sessionStatus.ts#isPausedDay
+// De pauze waar deze training in valt, of niets. Binnen een pauze precies wanneer engine/sessionStatus.ts#isPausedFor
 // ja zegt; die toets blijft de bron, dit zoekt er alleen het begin en de soort bij.
-function pauseOn(date: string, today: string, illnessEpisodes: IllnessEpisode[] | undefined, leavePeriods: LeavePeriod[] | undefined): PauseSince | undefined {
-  if (!isPausedDay(date, { leave: leavePeriods, illness: illnessEpisodes }, today)) return undefined;
+function pauseOn(m: MissedSession, today: string, illnessEpisodes: IllnessEpisode[] | undefined, leavePeriods: LeavePeriod[] | undefined): PauseSince | undefined {
+  const date = m.session.scheduledDate;
+  if (!isPausedFor(m.session, { leave: leavePeriods, templates: [m.template], illness: illnessEpisodes }, today)) return undefined;
   const pauses: PauseSince[] = [
     ...(illnessEpisodes ?? []).filter((e) => isIllnessDay(date, [e], today)).map((e) => ({ kind: 'ill' as const, start: e.startDate, running: !e.endDate || e.endDate >= today })),
-    ...awayPeriods(leavePeriods).filter((p) => date >= p.startDate && date <= p.endDate && isAwayDay(date, leavePeriods)).map((p) => ({ kind: 'away' as const, start: p.startDate, running: p.endDate >= today })),
+    ...awayPeriods(leavePeriods).filter((p) => date >= p.startDate && date <= p.endDate && isAwayFor(date, m.template, [p])).map((p) => ({ kind: 'away' as const, start: p.startDate, running: p.endDate >= today })),
   ];
   return pauses.sort((a, b) => b.start.localeCompare(a.start))[0];
 }
@@ -234,7 +238,7 @@ export function planMissed(input: MissedInput): MissedPlan {
   // een dag dat je weg was.
   const recent = unlogged
     .filter((m) => age(m.session) >= 1 && age(m.session) <= MISSED_MAX_AGE_DAYS)
-    .filter((m) => !isIllnessDay(m.session.scheduledDate, illnessEpisodes, today) && !isAwayDay(m.session.scheduledDate, leavePeriods, awayDays))
+    .filter((m) => !isIllnessDay(m.session.scheduledDate, illnessEpisodes, today) && !isAwayFor(m.session.scheduledDate, m.template, leavePeriods, awayDays))
     .sort((a, b) => a.session.scheduledDate.localeCompare(b.session.scheduledDate) || a.session.order - b.session.order || a.session.id.localeCompare(b.session.id));
   // Een training uit de afbouw voor een race die er al was, vervalt: geen vraag en niets vanzelf (engine/raceWindow.ts).
   // Een log van je horloge die erbij hoort mag nog gekoppeld worden.
@@ -243,11 +247,11 @@ export function planMissed(input: MissedInput): MissedPlan {
   // Wat voor een ziekmelding of vakantie nog open stond, krijgt geen vraag meer; het blijft gemist.
   const beforePauseIds = new Set(recent.filter((m) => !!pauseSince(m.session.scheduledDate, today, illnessEpisodes, leavePeriods)).map((m) => m.session.id));
   // De kaart Vervallen noemt alleen wat Week Vervallen noemt: voorbij, zonder log en binnen de pauze
-  // (engine/sessionStatus.ts#isPausedDay). Eén regel zolang de pauze loopt, alleen de eerste drie dagen ervan
+  // (engine/sessionStatus.ts#isPausedFor). Eén regel zolang de pauze loopt, alleen de eerste drie dagen ervan
   // (Pathfinder, 14 november).
   const running = unlogged
     .filter((m) => age(m.session) >= 1)
-    .map((m) => ({ m, pause: pauseOn(m.session.scheduledDate, today, illnessEpisodes, leavePeriods) }))
+    .map((m) => ({ m, pause: pauseOn(m, today, illnessEpisodes, leavePeriods) }))
     .filter((x) => !!x.pause && x.pause.running && daysBetween(x.pause.start, today) <= 2)
     .sort((a, b) => a.m.session.scheduledDate.localeCompare(b.m.session.scheduledDate) || a.m.session.order - b.m.session.order || a.m.session.id.localeCompare(b.m.session.id));
   // Met Niets doen zegt ASCEND ook niets over vervallen.

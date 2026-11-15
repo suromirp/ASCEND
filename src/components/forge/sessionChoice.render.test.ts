@@ -72,7 +72,8 @@ describe('er loopt nog een training (een andere starten)', () => {
   });
 
   it('na Verwijderen start de nieuwe training (ForgeWorkout zet other weg), andere keuzes sluiten', () => {
-    expect(workoutSrc).toContain('onDiscarded={() => setOther(undefined)}');
+    // Na Verwijderen kijkt ForgeWorkout opnieuw (findOther): geen andere meer, dan start de nieuwe training.
+    expect(workoutSrc).toContain('onDiscarded={() => setOther(findOther())}');
     expect(otherSrc).toContain('SessionChoiceSheet');
   });
 

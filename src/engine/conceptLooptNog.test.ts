@@ -188,7 +188,7 @@ describe('elke plek die gemist toont, krijgt het concept mee', () => {
     ['state/adviceAndWeek.ts', adviceState, 1],
     ['components/OnCourseCard.tsx', onCourseCard, 0],
   ])('%s', (_name, src, min) => {
-    const calls = (src.match(/leftOutOfCount\(|buildWeekReview\(|recentAdherence\(|deriveSessionStatus\([^)]*\{ leave|planMissed\(|computeAdvice\(\{/g) ?? []).length;
+    const calls = (src.match(/leftOutOfCount\(|buildWeekReview\(|recentAdherence\(|deriveSessionStatus\([^)]*\{ leave|missedInWeek\(|planMissed\(|computeAdvice\(\{/g) ?? []).length;
     const passed = (src.match(/openDraft(Id)?\b/g) ?? []).length;
     expect(calls).toBeGreaterThanOrEqual(min);
     expect(passed).toBeGreaterThanOrEqual(calls);

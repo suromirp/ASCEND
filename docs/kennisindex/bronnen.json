@@ -1,5 +1,5 @@
 {
- "uitleg": "Een regel per document in docs/ (behalve docs/app-kaart/, docs/kennisindex/ en afbeeldingen). stand is geldt, vervangen (met door), verouderd (met waarom) of achtergrond. Na een wijziging: npm run kennisindex.",
+ "uitleg": "Een regel per document in docs/ (behalve docs/app-kaart/, docs/kennisindex/ en afbeeldingen). stand is geldt, deels (deels ingehaald: met vervangenDoor, en de kern eindigt op \"Geldt nog: ...\"), vervangen (met vervangenDoor), verouderd (met waarom) of achtergrond. vervangenDoor is een lijst paden van latere documenten. vultAan is een lijst besluiten die dit besluit in zijn \"Vervangt\" noemt maar alleen aanvult. Besluiten zelf worden nooit herschreven; de stand staat alleen hier. Na een wijziging: npm run kennisindex.",
  "onderwerpen": [
   "forge",
   "koppelingen-en-data",
@@ -168,8 +168,12 @@
    "onderwerpen": [
     "bediening-en-beweging"
    ],
-   "kern": "Elke keuze die ASCEND voor de gebruiker maakt, kan de gebruiker in de instellingen veranderen.",
-   "stand": "geldt"
+   "kern": "Elke keuze die ASCEND voor de gebruiker maakt, kan de gebruiker in de instellingen veranderen. Geldt nog: elke keuze van de app is instelbaar, met het advies als standaard; de zes groepen op één pagina zijn acht groepen met een eigen pagina, en een instelling komt nu als verklaring in plaats van in de index en de layout.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-22-instellingen-in-groepen.md",
+    "docs/beslissingen/2026-11-15-instellingen-op-een-plek.md"
+   ]
   },
   "docs/beslissingen/2026-10-22-back-up-v5.md": {
    "onderwerpen": [
@@ -197,8 +201,11 @@
    "onderwerpen": [
     "forge"
    ],
-   "kern": "ASCEND rekent mee met de krachttrainingen die uit MacroFactor binnenkomen, volgens de regels KR-1 tot KR-8 van `docs/onderzoek/Kracht loggen en progressie.md` (`src/engine/strengthModel.ts`).",
-   "stand": "geldt"
+   "kern": "ASCEND rekent mee met de krachttrainingen die uit MacroFactor binnenkomen, volgens de regels KR-1 tot KR-8 van `docs/onderzoek/Kracht loggen en progressie.md` (`src/engine/strengthModel.ts`). Geldt nog: KR-1 tot KR-8 als basis van het krachtmodel; ingehaald zijn het gemiddelde van de twee hoogste schattingen in KR-2, de pauze in KR-3 en de rem op het gewicht in KR-5.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-25-kracht-eigen-regels.md"
+   ]
   },
   "docs/beslissingen/2026-10-22-forge-opwarmen.md": {
    "onderwerpen": [
@@ -219,8 +226,11 @@
     "koppelingen-en-data",
     "historie-en-logs"
    ],
-   "kern": "Een training die je met de hand invulde (bron \"manual\", zonder externalId) en waarvoor een passende activiteit van je horloge bestaat, neemt de gemeten cijfers van het horloge over: duur, afstand, gemiddelde en hoogste hartslag, stijging, daling en cadans.",
-   "stand": "geldt"
+   "kern": "Een training die je met de hand invulde (bron \"manual\", zonder externalId) en waarvoor een passende activiteit van je horloge bestaat, neemt de gemeten cijfers van het horloge over: duur, afstand, gemiddelde en hoogste hartslag, stijging, daling en cadans. Geldt nog: een handmatige log neemt de gemeten cijfers van het horloge over; dat een log na het koppelen niet meer wordt aangeraakt geldt niet meer, hij volgt correcties in intervals.icu.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-25-correcties-uit-intervals.md"
+   ]
   },
   "docs/beslissingen/2026-10-22-gewicht-uit-macrofactor.md": {
    "onderwerpen": [
@@ -234,8 +244,11 @@
    "onderwerpen": [
     "doelen"
    ],
-   "kern": "De voortgang naar de GR5 heet overal \"Klaar voor de GR5\" en is één percentage: het gemiddelde van vier meters (rugzak, langste dag, stijging en daling, dagen achter elkaar), elk begrensd op 100%, steeds met de zin eronder waaruit het bestaat.",
-   "stand": "geldt"
+   "kern": "De voortgang naar de GR5 heet overal \"Klaar voor de GR5\" en is één percentage: het gemiddelde van vier meters (rugzak, langste dag, stijging en daling, dagen achter elkaar), elk begrensd op 100%, steeds met de zin eronder waaruit het bestaat. Geldt nog: één percentage, het gemiddelde van de meters, altijd met de zin waaruit het bestaat; het is niet meer aan de GR5 gebonden en geldt per doelsoort als \"Klaar voor je doel\".",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-26-kracht-en-berg-voor-iedereen.md"
+   ]
   },
   "docs/beslissingen/2026-10-22-herkenbaar-en-opruimen-horloge.md": {
    "onderwerpen": [
@@ -306,8 +319,11 @@
    "onderwerpen": [
     "lopen-en-tests"
    ],
-   "kern": "Van elke loop en tocht bewaart ASCEND een compact profiel van 48 stukjes als merkloos veld `detail` op de log en vergelijkt daarmee met eerdere trainingen van dezelfde soort.",
-   "stand": "geldt"
+   "kern": "Van elke loop en tocht bewaart ASCEND een compact profiel van 48 stukjes als merkloos veld `detail` op de log en vergelijkt daarmee met eerdere trainingen van dezelfde soort. Geldt nog: het profiel van 48 stukjes in `detail` en het vergelijken; de reeksen van het horloge worden nu wel bewaard, alleen de route niet.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-27-run-in-detail-gegevens.md"
+   ]
   },
   "docs/beslissingen/2026-10-22-macrofactor-leidend-voor-kracht.md": {
    "onderwerpen": [
@@ -399,8 +415,12 @@
    "onderwerpen": [
     "bediening-en-beweging"
    ],
-   "kern": "De visuele richting \"steen en contour\" wordt de vaste stijl van ASCEND.",
-   "stand": "geldt"
+   "kern": "De visuele richting \"steen en contour\" wordt de vaste stijl van ASCEND. Geldt nog: de tabbalk met vijf tabs en het tandwiel, Marcellus alleen voor woorden, getallen in Inter en niets kleiner dan 12 px; goud en brons zijn weg en het tandwiel staat niet meer in een ronde knop.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-24-thema-zee-en-berg.md",
+    "docs/beslissingen/2026-10-24-ontwerpadvies-kop-en-weekstrook.md"
+   ]
   },
   "docs/beslissingen/2026-10-22-terugknop-en-hervatten.md": {
    "onderwerpen": [
@@ -450,8 +470,11 @@
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "ASCEND zet de geplande trainingen van de komende 7 dagen in de intervals.icu-agenda van de eigenaar, als gestructureerde workout, zodat intervals.icu ze naar Garmin Connect en het horloge stuurt.",
-   "stand": "geldt"
+   "kern": "ASCEND zet de geplande trainingen van de komende 7 dagen in de intervals.icu-agenda van de eigenaar, als gestructureerde workout, zodat intervals.icu ze naar Garmin Connect en het horloge stuurt. Geldt nog: de trainingen van de komende 7 dagen gaan als gestructureerde workout naar intervals.icu; dat een afgeronde of verstreken training in de agenda blijft staan is vervallen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-22-herkenbaar-en-opruimen-horloge.md"
+   ]
   },
   "docs/beslissingen/2026-10-22-vanzelf-afvinken.md": {
    "onderwerpen": [
@@ -502,8 +525,11 @@
     "planning",
     "lichaam-en-herstel"
    ],
-   "kern": "Een zware beendag binnen 72 uur na een bergtocht krijgt van de weekcontrole een andere dag of de korte versie, in een vaste volgorde.",
-   "stand": "geldt"
+   "kern": "Een zware beendag binnen 72 uur na een bergtocht krijgt van de weekcontrole een andere dag of de korte versie, in een vaste volgorde. Geldt nog: een zware beendag binnen 72 uur na een bergtocht krijgt een andere dag of de korte versie; de zin over de 72 uur en de keuze voor heuvels is gecorrigeerd: een tocht in heuvels is een bergtocht.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-22-heuveltocht-is-bergtocht.md"
+   ]
   },
   "docs/beslissingen/2026-10-23-bereik-uit-het-plan.md": {
    "onderwerpen": [
@@ -523,8 +549,11 @@
    "onderwerpen": [
     "forge"
    ],
-   "kern": "Het krachtscherm van Forge voelt nu als MacroFactor Workouts, niet alleen alsof.",
-   "stand": "geldt"
+   "kern": "Het krachtscherm van Forge voelt nu als MacroFactor Workouts, niet alleen alsof. Geldt nog: alles behalve de schakelaar \"Gewicht doorgeven aan volgende sets\", die nu de keuze \"Zelfde verschil\" bij \"Wijzigingen doorvoeren\" is.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-26-doorvoeren-en-raak-dichtbij.md"
+   ]
   },
   "docs/beslissingen/2026-10-23-krachtduur-die-niet-kan.md": {
    "onderwerpen": [
@@ -538,8 +567,11 @@
    "onderwerpen": [
     "lichaam-en-herstel"
    ],
-   "kern": "In de ochtend staat bovenaan Vandaag, boven de missiekaart, een eigen kaart met de vraag \"Goedemorgen.",
-   "stand": "geldt"
+   "kern": "In de ochtend staat bovenaan Vandaag, boven de missiekaart, een eigen kaart met de vraag \"Goedemorgen. Geldt nog: de regels voor wanneer de kaart er staat en de melding; de vorm van de kaart is vervangen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-31-ochtendkaart-vernieuwd.md"
+   ]
   },
   "docs/beslissingen/2026-10-23-oefeningen-bij-de-start.md": {
    "onderwerpen": [
@@ -632,7 +664,11 @@
     "koppelingen-en-data"
    ],
    "kern": "Je kunt wat ASCEND over je kleding leerde ook zelf bijstellen.",
-   "stand": "geldt"
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-10-22-kledingadvies-bij-het-weer.md",
+    "docs/beslissingen/2026-10-22-instellingen-in-groepen.md"
+   ]
   },
   "docs/beslissingen/2026-10-24-kracht-stil-toetsen.md": {
    "onderwerpen": [
@@ -674,29 +710,41 @@
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Vier trainingen krijgen een naam die zegt wat je gaat doen, en ASCEND zet bij een gedane training een korte beschrijving klaar die je zelf in Strava plakt.",
-   "stand": "geldt"
+   "kern": "Vier trainingen krijgen een naam die zegt wat je gaat doen, en ASCEND zet bij een gedane training een korte beschrijving klaar die je zelf in Strava plakt. Geldt nog: de namen van de vier trainingen; de tekst voor Strava is vervangen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-09-strava-tekst-soort-training.md"
+   ]
   },
   "docs/beslissingen/2026-10-24-ochtend-begint-om.md": {
    "onderwerpen": [
     "lichaam-en-herstel"
    ],
    "kern": "De ochtendkaart en de vraag hoe je je voelt (de regel Gevoel in Je dag) verschijnen pas vanaf het begin van de ochtend, standaard 5 uur, en niet meteen na middernacht.",
-   "stand": "geldt"
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-10-23-ochtendkaart-en-melding.md"
+   ]
   },
   "docs/beslissingen/2026-10-24-ochtend-een-tik.md": {
    "onderwerpen": [
     "lichaam-en-herstel"
    ],
    "kern": "Op de ochtendkaart is één tik op hoe je benen voelen het antwoord.",
-   "stand": "geldt"
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-10-23-ochtendkaart-en-melding.md"
+   ]
   },
   "docs/beslissingen/2026-10-24-ochtend-terugdraaien.md": {
    "onderwerpen": [
     "lichaam-en-herstel"
    ],
    "kern": "Na één tik op de ochtendkaart blijft de kaart klein staan met wat je koos (\"Benen fris.",
-   "stand": "geldt"
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-10-24-ochtend-een-tik.md"
+   ]
   },
   "docs/beslissingen/2026-10-24-ontwerpadvies-kop-en-weekstrook.md": {
    "onderwerpen": [
@@ -716,8 +764,11 @@
    "onderwerpen": [
     "bediening-en-beweging"
    ],
-   "kern": "De sporten, de rustdag en het lichaam krijgen pictogrammen in stijl C, \"kleine illustraties\": drie tinten van één kleur, een lichte achtergrondvorm, een middentint en de volle hoofdvorm (`src/components/pictograms.tsx`, `Pictogram` met `name` en `size`).",
-   "stand": "geldt"
+   "kern": "De sporten, de rustdag en het lichaam krijgen pictogrammen in stijl C, \"kleine illustraties\": drie tinten van één kleur, een lichte achtergrondvorm, een middentint en de volle hoofdvorm (`src/components/pictograms.tsx`, `Pictogram` met `name` en `size`). Geldt nog: stijl C voor alle pictogrammen; alleen het pictogram rust is vervangen, door de hangmat.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-26-rustdag-als-hangmat.md"
+   ]
   },
   "docs/beslissingen/2026-10-24-rustweek-via-voorstel.md": {
    "onderwerpen": [
@@ -738,30 +789,42 @@
    "onderwerpen": [
     "bediening-en-beweging"
    ],
-   "kern": "ASCEND krijgt het palet \"C3 definitief, licht bovenin, kop a\".",
-   "stand": "geldt"
+   "kern": "ASCEND krijgt het palet \"C3 definitief, licht bovenin, kop a\". Geldt nog: het palet Zee en berg; de weekstrook met staafjes en maantje is vervangen door sporticonen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-24-ontwerpadvies-kop-en-weekstrook.md"
+   ]
   },
   "docs/beslissingen/2026-10-24-trainingsscherm-duursport.md": {
    "onderwerpen": [
     "bediening-en-beweging",
     "lopen-en-tests"
    ],
-   "kern": "Het scherm van een duurtraining begint met de lucht en de titel, dan de grote getallen, het verloop als één balk in zonekleuren, de stappen en de plek.",
-   "stand": "geldt"
+   "kern": "Het scherm van een duurtraining begint met de lucht en de titel, dan de grote getallen, het verloop als één balk in zonekleuren, de stappen en de plek. Geldt nog: hooguit het scherm van een duurtraining zonder Briefing; voor een training te voet is dit scherm vervangen door de Briefing en het blad Hoe ging het?.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-12-trainingsscherm-en-ontwerpregels.md"
+   ]
   },
   "docs/beslissingen/2026-10-24-trillen-bij-het-rustgeluid.md": {
    "onderwerpen": [
     "forge"
    ],
-   "kern": "Het trillen als de rust om is heeft het ritme van het gekozen geluid, in plaats van één vast patroon.",
-   "stand": "geldt"
+   "kern": "Het trillen als de rust om is heeft het ritme van het gekozen geluid, in plaats van één vast patroon. Geldt nog: trillen volgt het ritme van het geluid; de zes geluiden zijn vervangen door tien klanken in vijf groepen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-rusttimer-geluiden.md"
+   ]
   },
   "docs/beslissingen/2026-10-24-uitleg-later-in-de-week.md": {
    "onderwerpen": [
     "week"
    ],
-   "kern": "Het blad van een training van morgen of later heeft een rij \"Hoe je het doet\", boven \"Vandaag al doen\" en \"Overslaan\".",
-   "stand": "geldt"
+   "kern": "Het blad van een training van morgen of later heeft een rij \"Hoe je het doet\", boven \"Vandaag al doen\" en \"Overslaan\". Geldt nog: \"Hoe je het doet\" voor kracht en de andere trainingen; bij een looptraining staat op die plek de rij Briefing.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-briefing-sporen-5-6.md"
+   ]
   },
   "docs/beslissingen/2026-10-25-bergschoenen-inlopen.md": {
    "onderwerpen": [
@@ -811,8 +874,11 @@
    "onderwerpen": [
     "lopen-en-tests"
    ],
-   "kern": "De kaart Intensiteit op Je stand telt minuten in plaats van trainingen, en telt ze naar de hartslag uit het profiel op de log: rustig is zone 1 en 2, middel zone 3, hard zone 4 en hoger.",
-   "stand": "geldt"
+   "kern": "De kaart Intensiteit op Je stand telt minuten in plaats van trainingen, en telt ze naar de hartslag uit het profiel op de log: rustig is zone 1 en 2, middel zone 3, hard zone 4 en hoger. Geldt nog: minuten tellen naar de hartslag van het profiel; de kaart Intensiteit staat nu op het scherm Belasting onder Stand.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-12-stand-minimaal.md"
+   ]
   },
   "docs/beslissingen/2026-10-25-korte-nacht-vragen.md": {
    "onderwerpen": [
@@ -826,14 +892,21 @@
     "forge"
    ],
    "kern": "Het eigen krachtmodel (`engine/strengthModel.ts`) verandert op vijf punten.",
-   "stand": "geldt"
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-10-24-kracht-stil-toetsen.md",
+    "docs/beslissingen/2026-10-25-macrofactor-workouts-tijdelijk.md"
+   ]
   },
   "docs/beslissingen/2026-10-25-logo-ring-en-pad.md": {
    "onderwerpen": [
     "bediening-en-beweging"
    ],
-   "kern": "Het logo van ASCEND is richting 1 \"Ring en pad\", in de kleurvariant \"lucht\": een lichte ring, een lichte kam met drie toppen die precies op de ring eindigt, een groenblauwe berg die overloopt in marine, een rustig S-pad en een stip op de top in mint.",
-   "stand": "geldt"
+   "kern": "Het logo van ASCEND is richting 1 \"Ring en pad\", in de kleurvariant \"lucht\": een lichte ring, een lichte kam met drie toppen die precies op de ring eindigt, een groenblauwe berg die overloopt in marine, een rustig S-pad en een stip op de top in mint. Geldt nog: het logo Ring en pad; de stille opbouw zonder lus en de minimale duur van 2 seconden van het openingsscherm zijn vervangen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-25-openingsscherm-terug.md"
+   ]
   },
   "docs/beslissingen/2026-10-25-macrofactor-workouts-tijdelijk.md": {
    "onderwerpen": [
@@ -883,8 +956,11 @@
    "onderwerpen": [
     "bediening-en-beweging"
    ],
-   "kern": "De grote kaart \"Anders dan het advies\" bovenaan het overzicht van Instellingen is weg.",
-   "stand": "geldt"
+   "kern": "De grote kaart \"Anders dan het advies\" bovenaan het overzicht van Instellingen is weg. Geldt nog: de grote kaart is weg en het terugzetten blijft; het label \"aangepast\" is een stipje voor de waarde geworden.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-27-stipje-bij-aangepast.md"
+   ]
   },
   "docs/beslissingen/2026-10-26-ascend-tab-als-doelen.md": {
    "onderwerpen": [
@@ -926,8 +1002,11 @@
     "planning",
     "lopen-en-tests"
    ],
-   "kern": "De lange loop naar een hardloopwedstrijd groeit geleidelijk en zo snel als de gekozen stand toelaat.",
-   "stand": "geldt"
+   "kern": "De lange loop naar een hardloopwedstrijd groeit geleidelijk en zo snel als de gekozen stand toelaat. Geldt nog: de lange loop groeit geleidelijk; op twee punten gecorrigeerd, waaronder dat de groei van hoogstens 10% loopt tot de piek van de wedstrijd en niet tot de piek van het programma.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-27-groei-tot-de-wedstrijdpiek.md"
+   ]
   },
   "docs/beslissingen/2026-10-26-grove-stap-voor-afronden.md": {
    "onderwerpen": [
@@ -941,14 +1020,21 @@
     "lichaam-en-herstel"
    ],
    "kern": "De wekelijkse vraag naar klachten in het blad van de weekterugblik (vier chips, een plekkeuze en een ernststrook) is vervangen door een kleine kaart op Vandaag, \"Hoe voelt je lijf?\".",
-   "stand": "geldt"
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-10-24-lichaam-als-figuur.md"
+   ]
   },
   "docs/beslissingen/2026-10-26-instellingen-opruimen.md": {
    "onderwerpen": [
     "bediening-en-beweging"
    ],
-   "kern": "Een rij in Instellingen is een beslissing die een gewoon mens neemt.",
-   "stand": "geldt"
+   "kern": "Een rij in Instellingen is een beslissing die een gewoon mens neemt. Geldt nog: een rij in Instellingen is een beslissing die een gewoon mens neemt; de kaart Anders dan het advies bovenaan en de uitklapbare Geavanceerd zijn weg.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-26-advies-anders.md",
+    "docs/beslissingen/2026-11-02-instellingen-ronde3.md"
+   ]
   },
   "docs/beslissingen/2026-10-26-kracht-en-berg-voor-iedereen.md": {
    "onderwerpen": [
@@ -978,8 +1064,11 @@
     "planning",
     "doelen"
    ],
-   "kern": "De planning gebruikt het label van een doel (Top, Voortop, Verkenning) en de soort van het doel, uit `data/goalKinds.ts`.",
-   "stand": "geldt"
+   "kern": "De planning gebruikt het label van een doel (Top, Voortop, Verkenning) en de soort van het doel, uit `data/goalKinds.ts`. Geldt nog: het label en de soort van een doel sturen de planning; het vierde punt over de lange loop (elke twee weken, niet naast een tocht) is vervangen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-26-groei-lange-loop.md"
+   ]
   },
   "docs/beslissingen/2026-10-26-rustdag-als-hangmat.md": {
    "onderwerpen": [
@@ -1014,8 +1103,11 @@
     "planning",
     "lopen-en-tests"
    ],
-   "kern": "De wekelijkse groei van hoogstens 10% geldt tot de piek van de wedstrijd (10 km 75 minuten, halve marathon 120, marathon 180), niet tot de piek van het programma.",
-   "stand": "geldt"
+   "kern": "De wekelijkse groei van hoogstens 10% geldt tot de piek van de wedstrijd (10 km 75 minuten, halve marathon 120, marathon 180), niet tot de piek van het programma. Geldt nog: de groei tot de wedstrijdpiek; de 24 uur tussen de lange loop en beenkracht is 48 uur geworden, in beide volgordes.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md"
+   ]
   },
   "docs/beslissingen/2026-10-27-redenen-bij-naam.md": {
    "onderwerpen": [
@@ -1065,14 +1157,19 @@
    ],
    "kern": "ASCEND praat als een trainer die je kent (stem C, \"Coach naast je\"), met stem A (\"Droog en vast\") waar duidelijkheid voorgaat: een getal of datum, een waarschuwing en de precieze uitleg van wat een label of voorstel met je planning doet.",
    "stand": "vervangen",
-   "door": "docs/beslissingen/2026-11-09-stem-van-ascend.md"
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-09-stem-van-ascend.md"
+   ]
   },
   "docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop-aanvulling.md": {
    "onderwerpen": [
     "lopen-en-tests"
    ],
-   "kern": "Een testloop die al meetelt blijft tellen tot jij Akkoord geeft op de nieuwe lezing zonder stilstand.",
-   "stand": "geldt"
+   "kern": "Een testloop die al meetelt blijft tellen tot jij Akkoord geeft op de nieuwe lezing zonder stilstand. Geldt nog: een testloop die meetelt blijft tellen tot je Akkoord geeft; in punt 3 is de referentie nu het tempo vlak voor de stop, niet de hele log.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-28-stilstaan-inhaalsprong.md"
+   ]
   },
   "docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop.md": {
    "onderwerpen": [
@@ -1114,8 +1211,11 @@
     "planning",
     "doelen"
    ],
-   "kern": "De eerste drie bouwstappen van Zonder doel staan er: een meting, de pure functies voor richting en weekbudget, en Je week; de planning verandert nog niet.",
-   "stand": "geldt"
+   "kern": "De eerste drie bouwstappen van Zonder doel staan er: een meting, de pure functies voor richting en weekbudget, en Je week; de planning verandert nog niet. Geldt nog: de meting, de pure functies en Je week; \"de planning volgt in een volgende versie\" geldt niet meer, zonder doel plant ASCEND in golven.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-31-zonder-doel-stap-4.md"
+   ]
   },
   "docs/beslissingen/2026-10-27-zweet-bij-afronden.md": {
    "onderwerpen": [
@@ -1135,16 +1235,22 @@
    "onderwerpen": [
     "forge"
    ],
-   "kern": "Forge krijgt een vaste, duidelijke plek: een ingangskaart bovenaan een eigen blok Kracht op Je stand, met Krachtprogressie en Trainingsverdeling eronder.",
-   "stand": "geldt"
+   "kern": "Forge krijgt een vaste, duidelijke plek: een ingangskaart bovenaan een eigen blok Kracht op Je stand, met Krachtprogressie en Trainingsverdeling eronder. Geldt nog: de instelling Volgorde van Je stand en dat Forge altijd te vinden is; het blok Kracht is op Stand de rij Kracht die Forge opent, en de knop Volgorde aanpassen op de pagina is weg.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-12-stand-minimaal.md"
+   ]
   },
   "docs/beslissingen/2026-10-28-forge-logboek.md": {
    "onderwerpen": [
     "forge",
     "historie-en-logs"
    ],
-   "kern": "Forge houdt per training een verloop bij, zoals het Event Log van MacroFactor: per moment welke set van wat naar wat ging en waardoor (Forge stuurde bij, doorgevoerd, jij paste het aan, onder het bereik, past niet, zonder spotter).",
-   "stand": "geldt"
+   "kern": "Forge houdt per training een verloop bij, zoals het Event Log van MacroFactor: per moment welke set van wat naar wat ging en waardoor (Forge stuurde bij, doorgevoerd, jij paste het aan, onder het bereik, past niet, zonder spotter). Geldt nog: het verloop per training en de stip; de tijdlijn met het nieuwste bovenaan is een regel per set geworden.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-forge-verloop.md"
+   ]
   },
   "docs/beslissingen/2026-10-28-klaar-voor-je-doel-logisch-aanvulling.md": {
    "onderwerpen": [
@@ -1164,8 +1270,11 @@
    "onderwerpen": [
     "doelen"
    ],
-   "kern": "Klaar voor je doel rekent kracht per niveau als weken werk en kent een tijdslimiet en cutoff per doel.",
-   "stand": "geldt"
+   "kern": "Klaar voor je doel rekent kracht per niveau als weken werk en kent een tijdslimiet en cutoff per doel. Geldt nog: kracht per niveau als weken werk, met een tijdslimiet en cutoff per doel; dat er geen nieuwe instelling komt en dat de krachtdoelen en twee instellingen niet gebouwd zijn klopt niet meer.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-28-klaar-voor-je-doel-logisch-afwerking.md"
+   ]
   },
   "docs/beslissingen/2026-10-28-klaar-voor-je-doel-logisch.md": {
    "onderwerpen": [
@@ -1178,15 +1287,23 @@
    "onderwerpen": [
     "doelen"
    ],
-   "kern": "Haalbaarheid staat op de kaart als droog feit en de gebruiker beslist zelf over zijn doeltijd.",
-   "stand": "geldt"
+   "kern": "Haalbaarheid staat op de kaart als droog feit en de gebruiker beslist zelf over zijn doeltijd. Geldt nog: haalbaarheid als droog feit en de gebruiker beslist zelf; de zin \"dus 45:00 vraagt meer dan gemiddelde groei\" en de band van 0,3 tot 0,8% per week als haalbaarheidsregel zijn vervallen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-28-klaar-voor-je-doel-logisch.md",
+    "docs/beslissingen/2026-10-28-klaar-voor-je-doel-logisch-aanvulling.md"
+   ]
   },
   "docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid.md": {
    "onderwerpen": [
     "doelen"
    ],
-   "kern": "Bij een wedstrijd met een doeltijd is Snelheid de hoofdmeter van Klaar voor je doel en weegt hij het zwaarst.",
-   "stand": "geldt"
+   "kern": "Bij een wedstrijd met een doeltijd is Snelheid de hoofdmeter van Klaar voor je doel en weegt hij het zwaarst. Geldt nog: Snelheid is de hoofdmeter bij een wedstrijd met doeltijd en één Liever niet geldt tot de doeltijd verandert; snelheid als doeltijd gedeeld door verwachte tijd is vervangen door weken werk.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-28-klaar-voor-je-doel-snelheid-aanvulling.md",
+    "docs/beslissingen/2026-10-28-klaar-voor-je-doel-logisch.md"
+   ]
   },
   "docs/beslissingen/2026-10-28-klaar-voor-je-doel-vervolg.md": {
    "onderwerpen": [
@@ -1208,8 +1325,12 @@
     "lopen-en-tests",
     "planning"
    ],
-   "kern": "Een nieuwe testpoging maakt ruimte: de harde loop, de lange duurloop en een zware beendag in die week schuiven of worden korter.",
-   "stand": "geldt"
+   "kern": "Een nieuwe testpoging maakt ruimte: de harde loop, de lange duurloop en een zware beendag in die week schuiven of worden korter. Geldt nog: een nieuwe testpoging maakt ruimte door te schuiven of in te korten; de zin over vastgezette beendagen in punt 3 is gewijzigd, en een lange duurloop die naar een week met een eigen lange duurloop zou schuiven vervalt nu.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-28-nieuwe-testpoging-herstel.md",
+    "docs/beslissingen/2026-11-02-lange-duurloop-vervalt.md"
+   ]
   },
   "docs/beslissingen/2026-10-28-nieuwe-testpoging-rustdag.md": {
    "onderwerpen": [
@@ -1246,15 +1367,21 @@
    "onderwerpen": [
     "forge"
    ],
-   "kern": "Het kleine kaartje van 44 bij 44 px (`ExerciseArtButton`: in de kop van een oefening, in de rijen van de lijst en in het ruilblad) toont voortaan het middelste beeld van de tekening, in plaats van het spierkaartje.",
-   "stand": "geldt"
+   "kern": "Het kleine kaartje van 44 bij 44 px (`ExerciseArtButton`: in de kop van een oefening, in de rijen van de lijst en in het ruilblad) toont voortaan het middelste beeld van de tekening, in plaats van het spierkaartje. Geldt nog: het kaartje toont het middelste beeld van de tekening; dat de lijst en het ruilblad geen extra netwerk mochten kosten is vervallen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-29-tekeningen-in-beeld.md"
+   ]
   },
   "docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen.md": {
    "onderwerpen": [
     "forge"
    ],
-   "kern": "Elke oefening in Forge krijgt een kaartje van 44 bij 44 px met de spieren die werken, en een blad met de beweging in drie stappen (tekeningen van Workout Guide, CC BY-SA 4.0), het spierkaartje, Doen, Let op en Vaak fout, en de naamsvermelding.",
-   "stand": "geldt"
+   "kern": "Elke oefening in Forge krijgt een kaartje van 44 bij 44 px met de spieren die werken, en een blad met de beweging in drie stappen (tekeningen van Workout Guide, CC BY-SA 4.0), het spierkaartje, Doen, Let op en Vaak fout, en de naamsvermelding. Geldt nog: het blad met de beweging in drie stappen, het spierkaartje, Doen en Let op; het kleine kaartje toont nu het middelste beeld van de tekening en niet meer het spierkaartje.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen-kaartje.md"
+   ]
   },
   "docs/beslissingen/2026-10-28-slepen-in-week.md": {
    "onderwerpen": [
@@ -1323,8 +1450,11 @@
    "onderwerpen": [
     "forge"
    ],
-   "kern": "Bij een stangoefening waar falen gevaarlijk is (bankdrukken en schuin bankdrukken met een stang, squat met een stang) schrijft Forge minstens 1 herhaling in reserve voor, in het doel en in de hint.",
-   "stand": "geldt"
+   "kern": "Bij een stangoefening waar falen gevaarlijk is (bankdrukken en schuin bankdrukken met een stang, squat met een stang) schrijft Forge minstens 1 herhaling in reserve voor, in het doel en in de hint. Geldt nog: minstens 1 herhaling in reserve bij een gevaarlijke stangoefening en het rekenen; een set tot falen is nu een open set met 1 over.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-29-oefeningen-opzij-vegen.md"
+   ]
   },
   "docs/beslissingen/2026-10-29-dag-van-een-training.md": {
    "onderwerpen": [
@@ -1345,8 +1475,11 @@
    "onderwerpen": [
     "week"
    ],
-   "kern": "Een gemiste training van deze of de vorige week kun je inhalen, in het actieblad en met de greep in Week.",
-   "stand": "geldt"
+   "kern": "Een gemiste training van deze of de vorige week kun je inhalen, in het actieblad en met de greep in Week. Geldt nog: de opslag; de woorden en de zichtbare oude rij zijn vervangen, inhalen ziet eruit als een gewone verplaatsing.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md"
+   ]
   },
   "docs/beslissingen/2026-10-29-gewichten-als-bereik.md": {
    "onderwerpen": [
@@ -1374,15 +1507,23 @@
    "onderwerpen": [
     "forge"
    ],
-   "kern": "De rij snelknoppen is Ruilen, Opwarmset en Notitie.",
-   "stand": "geldt"
+   "kern": "De rij snelknoppen is Ruilen, Opwarmset en Notitie. Geldt nog: vegen om te verwijderen, eigen sets en Terugzetten; de rij snelknoppen en de instelling Snelknoppen tonen zijn weg.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-02-forge-herinrichting.md"
+   ]
   },
   "docs/beslissingen/2026-10-29-snelknoppen-in-forge.md": {
    "onderwerpen": [
     "forge"
    ],
-   "kern": "Onder de naam van elke oefening in een Forge-training staat een rij van vier kleine knoppen: Ruilen, Opwarmset, Set erbij en Notitie.",
-   "stand": "geldt"
+   "kern": "Onder de naam van elke oefening in een Forge-training staat een rij van vier kleine knoppen: Ruilen, Opwarmset, Set erbij en Notitie. Geldt nog: vegen om te verwijderen, eigen sets en Terugzetten; de rij snelknoppen en de instelling Snelknoppen tonen zijn weg.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-29-snelknoppen-in-forge-aanvulling.md",
+    "docs/beslissingen/2026-10-29-oefeningen-opzij-vegen.md",
+    "docs/beslissingen/2026-11-02-forge-herinrichting.md"
+   ]
   },
   "docs/beslissingen/2026-10-29-spierpijn-waar.md": {
    "onderwerpen": [
@@ -1423,15 +1564,21 @@
    "onderwerpen": [
     "lichaam-en-herstel"
    ],
-   "kern": "De ochtendkaart toont na je antwoord één regel met wat het voor vandaag doet (`engine/morningCard.ts#morningConsequence`, alleen tekst, plant niets) en klapt daarna in tot één rij met Wijzigen en Ongedaan maken.",
-   "stand": "geldt"
+   "kern": "De ochtendkaart toont na je antwoord één regel met wat het voor vandaag doet (`engine/morningCard.ts#morningConsequence`, alleen tekst, plant niets) en klapt daarna in tot één rij met Wijzigen en Ongedaan maken. Geldt nog: de regel met wat je antwoord voor vandaag doet en het inklappen; de hoogte van de kaart na je antwoord is veranderd.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-01-ochtendkaart-na-antwoord.md"
+   ]
   },
   "docs/beslissingen/2026-10-31-richting-en-weekbudget.md": {
    "onderwerpen": [
     "planning"
    ],
-   "kern": "Zonder doel werkt ASCEND met een richting en een weekbudget.",
-   "stand": "geldt"
+   "kern": "Zonder doel werkt ASCEND met een richting en een weekbudget. Geldt nog: het hele besluit over richting en weekbudget; alleen de eerste twee punten onder \"Wat nog niet gebouwd is\" zijn inmiddels gebouwd.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-02-zonder-doel-je-week.md"
+   ]
   },
   "docs/beslissingen/2026-10-31-sporten-gegevens-en-omrekening.md": {
    "onderwerpen": [
@@ -1479,8 +1626,11 @@
    "onderwerpen": [
     "planning"
    ],
-   "kern": "Zonder doel plant ASCEND in neutrale golven van vier weken (fase \"Golven\", `engine/programLayout.ts#layoutWaves`).",
-   "stand": "geldt"
+   "kern": "Zonder doel plant ASCEND in neutrale golven van vier weken (fase \"Golven\", `engine/programLayout.ts#layoutWaves`). Geldt nog: neutrale golven van vier weken; een geplande bergtocht wordt zonder doel niet meer stil de lange loop, een bestaand plan verandert pas na Akkoord.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-10-31-zonder-doel-golven-na-akkoord.md"
+   ]
   },
   "docs/beslissingen/2026-10-31-zonder-doel-startvragen.md": {
    "onderwerpen": [
@@ -1530,8 +1680,11 @@
    "onderwerpen": [
     "week"
    ],
-   "kern": "Een geplande training die een paar dagen voorbij is zonder log (advies: 2 dagen, instelbaar op 1, 2 of 3) krijgt één korte vraag op Vandaag: \"Niet gedaan?\" met Niet gedaan (de rij gaat op overgeslagen, een status), Toch gedaan (het gewone invullen) en Niet nu.",
-   "stand": "geldt"
+   "kern": "Een geplande training die een paar dagen voorbij is zonder log (advies: 2 dagen, instelbaar op 1, 2 of 3) krijgt één korte vraag op Vandaag: \"Niet gedaan?\" met Niet gedaan (de rij gaat op overgeslagen, een status), Toch gedaan (het gewone invullen) en Niet nu. Geldt nog: de vraag Niet gedaan? na een paar dagen; hij reikt een week terug in plaats van twee, en na beter melden komt een vraag van voor de ziekte niet terug.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-14-vakantie-en-ziek-niet-gemist.md"
+   ]
   },
   "docs/beslissingen/2026-11-01-ochtenden-archief.md": {
    "onderwerpen": [
@@ -1574,8 +1727,11 @@
    "onderwerpen": [
     "bediening-en-beweging"
    ],
-   "kern": "De kaarten op Vandaag hebben één vaste rangorde (`engine/todayCards.ts`), met hoogstens één kaart boven de missie.",
-   "stand": "geldt"
+   "kern": "De kaarten op Vandaag hebben één vaste rangorde (`engine/todayCards.ts`), met hoogstens één kaart boven de missie. Geldt nog: de vaste rangorde en hoogstens één kaart boven de missie; \"de rest direct onder de missie\" geldt alleen nog voor de ochtendvraag, de rest staat onder Je dag.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-12-missiekaart.md"
+   ]
   },
   "docs/beslissingen/2026-11-02-48-uur-lange-duurloop.md": {
    "onderwerpen": [
@@ -1611,8 +1767,11 @@
     "bediening-en-beweging",
     "historie-en-logs"
    ],
-   "kern": "Stand, de weekterugblik en het Logboek zijn opnieuw ingericht volgens `docs/visie/Ontwerprapport gegevens.md`, met voor elke open vraag uit hoofdstuk 8 de aanbevolen keuze.",
-   "stand": "geldt"
+   "kern": "Stand, de weekterugblik en het Logboek zijn opnieuw ingericht volgens `docs/visie/Ontwerprapport gegevens.md`, met voor elke open vraag uit hoofdstuk 8 de aanbevolen keuze. Geldt nog: de inrichting van de weekterugblik en het Logboek; Stand is opnieuw ingedeeld in drie regels, één grafiek en één lijst.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-12-stand-minimaal.md"
+   ]
   },
   "docs/beslissingen/2026-11-02-health-connect.md": {
    "onderwerpen": [
@@ -1654,8 +1813,11 @@
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "ASCEND krijgt de instelling Je locatie, standaard uit, bij Toestemmingen in Gegevens en back-up.",
-   "stand": "geldt"
+   "kern": "ASCEND krijgt de instelling Je locatie, standaard uit, bij Toestemmingen in Gegevens en back-up. Geldt nog: de instelling Je locatie, standaard uit; dat coördinaten van etappes alleen uit de GPX van de site komen is vervallen, ze komen uit OpenStreetMap.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-gr5-uit-osm.md"
+   ]
   },
   "docs/beslissingen/2026-11-02-ochtendkaart-compact.md": {
    "onderwerpen": [
@@ -1727,15 +1889,21 @@
     "lopen-en-tests",
     "week"
    ],
-   "kern": "Een herkansing van de testloop die je oversloeg of liet liggen, telt niet als gedaan: ASCEND stelt nog één keer een test voor (regel TEST-RETRY, id `retest:<datum van de test>:opnieuw`), met Akkoord en Liever niet.",
-   "stand": "geldt"
+   "kern": "Een herkansing van de testloop die je oversloeg of liet liggen, telt niet als gedaan: ASCEND stelt nog één keer een test voor (regel TEST-RETRY, id `retest:<datum van de test>:opnieuw`), met Akkoord en Liever niet. Geldt nog: een overgeslagen herkansing telt niet als gedaan en er komt nog één testvoorstel; de 48 uur na een zware beendag is nu de grens van de instelling voor rust voor een test (advies 72 uur).",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-02-rust-voor-een-test.md"
+   ]
   },
   "docs/beslissingen/2026-11-02-trainingen-wisselen.md": {
    "onderwerpen": [
     "week"
    ],
-   "kern": "Twee trainingen van dezelfde week kun je van dag laten ruilen: in het actieblad met de keuze \"Ruilen\", en bij het slepen door een training los te laten op een dag waar precies één training staat die mag bewegen.",
-   "stand": "geldt"
+   "kern": "Twee trainingen van dezelfde week kun je van dag laten ruilen: in het actieblad met de keuze \"Ruilen\", en bij het slepen door een training los te laten op een dag waar precies één training staat die mag bewegen. Geldt nog: twee trainingen van dezelfde week ruilen via het blad of door te slepen; de knoppen \"Liever niet links, Akkoord rechts\" zijn vervangen door de opbouw van een verplaatsing.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-02-ruilen-zoals-verplaatsen.md"
+   ]
   },
   "docs/beslissingen/2026-11-02-tweede-lange-duurloop.md": {
    "onderwerpen": [
@@ -1777,15 +1945,21 @@
    "onderwerpen": [
     "planning"
    ],
-   "kern": "Zonder doel staat de kaart Je week op Je stand en volgt de kracht de gekozen richting.",
-   "stand": "geldt"
+   "kern": "Zonder doel staat de kaart Je week op Je stand en volgt de kracht de gekozen richting. Geldt nog: de kracht volgt de gekozen richting; Je week is op Stand geen kaart meer maar een rij die naar de kaart op Ascend verwijst.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-12-stand-minimaal.md"
+   ]
   },
   "docs/beslissingen/2026-11-03-forge-na-de-eerste-vergelijking.md": {
    "onderwerpen": [
     "forge"
    ],
-   "kern": "Na de eerste training die de eigenaar naast MacroFactor in Forge deed (Benen A, 3 november) veranderen vijf dingen in Forge.",
-   "stand": "geldt"
+   "kern": "Na de eerste training die de eigenaar naast MacroFactor in Forge deed (Benen A, 3 november) veranderen vijf dingen in Forge. Geldt nog: de overige punten; Hoeveel over? na de topset en de laatste set is nu de stand Vaker vragen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-forge-kern-zichtbaar.md"
+   ]
   },
   "docs/beslissingen/2026-11-03-forge-rekent-mee.md": {
    "onderwerpen": [
@@ -1798,8 +1972,11 @@
    "onderwerpen": [
     "forge"
    ],
-   "kern": "Een krachttraining in Forge duurt hoogstens 60 minuten en een beendag hoogstens 75 (het advies, instelling \"Hoogstens per krachttraining\" onder Forge, Geavanceerd: Uit, 45, 60, 75 of 90 per soort, `AppSettings.forgeCapStrength` en `forgeCapLegs`).",
-   "stand": "geldt"
+   "kern": "Een krachttraining in Forge duurt hoogstens 60 minuten en een beendag hoogstens 75 (het advies, instelling \"Hoogstens per krachttraining\" onder Forge, Geavanceerd: Uit, 45, 60, 75 of 90 per soort, `AppSettings.forgeCapStrength` en `forgeCapLegs`). Geldt nog: een gekozen 45, 60, 75 of 90 minuten kort in zoals hier beschreven; de standaard is nu Tonen en niet inkorten, en Uit valt samen met Tonen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-forge-kern-zichtbaar.md"
+   ]
   },
   "docs/beslissingen/2026-11-03-testloop-in-detail.md": {
    "onderwerpen": [
@@ -1813,8 +1990,11 @@
     "koppelingen-en-data",
     "lichaam-en-herstel"
    ],
-   "kern": "In de Android-app leest ASCEND je gewicht en vetpercentage uit Health Connect, bij dezelfde ronde als je trainingen en ochtenden, alleen lezen.",
-   "stand": "geldt"
+   "kern": "In de Android-app leest ASCEND je gewicht en vetpercentage uit Health Connect, bij dezelfde ronde als je trainingen en ochtenden, alleen lezen. Geldt nog: het lezen van gewicht en vetpercentage uit Health Connect; bij Lichaamsgewicht staat nu de trend in plaats van de nieuwste dag.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-09-gewichtstrend.md"
+   ]
   },
   "docs/beslissingen/2026-11-05-inhalen-heet-verplaatsen.md": {
    "onderwerpen": [
@@ -1841,8 +2021,11 @@
    "onderwerpen": [
     "forge"
    ],
-   "kern": "De tijdsgrens haalde inderdaad een set bijwerk weg.",
-   "stand": "geldt"
+   "kern": "De tijdsgrens haalde inderdaad een set bijwerk weg. Geldt nog: de regel \"1 set weg door je tijdsgrens\" met Terugzetten en de bergspieren; punt 3, dat de standaard 60 blijft, is vervallen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-forge-kern-zichtbaar.md"
+   ]
   },
   "docs/beslissingen/2026-11-08-heuvels-osm.md": {
    "onderwerpen": [
@@ -1965,15 +2148,22 @@
    "onderwerpen": [
     "lichaam-en-herstel"
    ],
-   "kern": "Op Je stand staat een kleine kaart Gewicht: de trend groot (of de laatste weging als er geen trend is), de laatste weging met datum klein en een rustige lijn van de laatste zes weken, één punt per week.",
-   "stand": "geldt"
+   "kern": "Op Je stand staat een kleine kaart Gewicht: de trend groot (of de laatste weging als er geen trend is), de laatste weging met datum klein en een rustige lijn van de laatste zes weken, één punt per week. Geldt nog: je gewicht is te vinden op Stand; een tik opent het overzicht Gewicht en niet het blad Lichaamsgewicht, en de kaart is op Stand een rij geworden.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-09-overzicht-gewicht.md",
+    "docs/beslissingen/2026-11-12-stand-minimaal.md"
+   ]
   },
   "docs/beslissingen/2026-11-09-gewichtstrend.md": {
    "onderwerpen": [
     "lichaam-en-herstel"
    ],
-   "kern": "Bij Lichaamsgewicht staat je gewicht als trend: een gewogen gemiddelde van je wegingen van de laatste 14 dagen, met de laatste weging erbij (\"Trend 78,4 kg, laatste weging 79,1 kg\").",
-   "stand": "geldt"
+   "kern": "Bij Lichaamsgewicht staat je gewicht als trend: een gewogen gemiddelde van je wegingen van de laatste 14 dagen, met de laatste weging erbij (\"Trend 78,4 kg, laatste weging 79,1 kg\"). Geldt nog: de trend bij Lichaamsgewicht; \"in deze stap verandert alleen wat je ziet\" geldt niet meer, het rekenen gebruikt de trend nu ook.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-09-gewicht-bij-eigen-gewicht.md"
+   ]
   },
   "docs/beslissingen/2026-11-09-gr5-waarschuwingen.md": {
    "onderwerpen": [
@@ -2051,15 +2241,26 @@
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Bij een looptraining staat de knop Route voorstellen.",
-   "stand": "geldt"
+   "kern": "Bij een looptraining staat de knop Route voorstellen. Geldt nog: de knop Route voorstellen en het zoeken van lussen; een route wordt nu wel bewaard en de vraag over een exact startpunt is anders geregeld.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-briefing.md",
+    "docs/beslissingen/2026-11-11-locatie-en-kaart.md"
+   ]
   },
   "docs/beslissingen/2026-11-09-startpunt-lus.md": {
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Een voorgestelde lus kan bij de deur van de eigenaar beginnen.",
-   "stand": "geldt"
+   "kern": "Een voorgestelde lus kan bij de deur van de eigenaar beginnen. Geldt nog: alleen dat een lus bij je deur kan beginnen; de standaard Ongeveer, het bewaren met Start hier, de privacygrenzen, het punt buiten de back-up en de grens van 250 m zijn ingehaald, en Vast punt is de plek Thuis geworden.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-locatie-en-kaart.md",
+    "docs/beslissingen/2026-11-11-plekken-antwoorden.md",
+    "docs/beslissingen/2026-11-11-plekken-opslag.md",
+    "docs/beslissingen/2026-11-11-route-kaart-2.md",
+    "docs/beslissingen/2026-11-11-route-verfijnen.md"
+   ]
   },
   "docs/beslissingen/2026-11-09-stem-van-ascend.md": {
    "onderwerpen": [
@@ -2128,8 +2329,11 @@
    "onderwerpen": [
     "week"
    ],
-   "kern": "In de weeklijst staat een periode (Zonder sportschool, Vakantie, Tocht, Vrije dagen) als één band boven de eerste dag die in die week valt, niet meer als kaart per dag.",
-   "stand": "geldt"
+   "kern": "In de weeklijst staat een periode (Zonder sportschool, Vakantie, Tocht, Vrije dagen) als één band boven de eerste dag die in die week valt, niet meer als kaart per dag. Geldt nog: een periode is één geheel in de weeklijst en geen kaart per dag; de vorm van de band en de lijn links zijn het paneel geworden.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-09-week-paneel.md"
+   ]
   },
   "docs/beslissingen/2026-11-09-week-paneel.md": {
    "onderwerpen": [
@@ -2149,8 +2353,11 @@
    "onderwerpen": [
     "planning"
    ],
-   "kern": "Vier verbeteringen aan de periode Zonder sportschool: Gewoon maakt loopjes niet korter en Heuvels in de buurt plant een heuveltraining.",
-   "stand": "geldt"
+   "kern": "Vier verbeteringen aan de periode Zonder sportschool: Gewoon maakt loopjes niet korter en Heuvels in de buurt plant een heuveltraining. Geldt nog: de vier verbeteringen; een week zonder loop op een dag van de periode krijgt nu wel één Rustige heuvelloop als voorstel.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-09-zonder-sportschool-heuvelloop.md"
+   ]
   },
   "docs/beslissingen/2026-11-09-zonder-sportschool-heuvelloop.md": {
    "onderwerpen": [
@@ -2163,8 +2370,11 @@
    "onderwerpen": [
     "planning"
    ],
-   "kern": "Naast Vakantie zonder training, Tocht met rugzak en Vrije dagen is er een vierde soort periode: Zonder sportschool (`no_gym`, `engine/noGym.ts`).",
-   "stand": "geldt"
+   "kern": "Naast Vakantie zonder training, Tocht met rugzak en Vrije dagen is er een vierde soort periode: Zonder sportschool (`no_gym`, `engine/noGym.ts`). Geldt nog: de periode Zonder sportschool als vierde soort; Gewoon maakt loopjes niet meer korter en Heuvels in de buurt plant nu wel een heuveltraining.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-09-zonder-sportschool-beter.md"
+   ]
   },
   "docs/beslissingen/2026-11-10-beendagen-afstand-tekst.md": {
    "onderwerpen": [
@@ -2178,22 +2388,32 @@
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Het paneel Route voorstellen krijgt een kaartje dat ASCEND zelf tekent als SVG, zonder kaarttegels: beide lussen op één schaal en het startpunt als stip.",
-   "stand": "geldt"
+   "kern": "Voorstel voor een kaartje dat ASCEND zelf tekent als SVG, zonder kaarttegels; nooit gebouwd, de kaart met MapLibre en OpenFreeMap kwam ervoor in de plaats.",
+   "stand": "vervangen",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-route-kaart.md",
+    "docs/beslissingen/2026-11-11-locatie-en-kaart.md"
+   ]
   },
   "docs/beslissingen/2026-11-10-route-naar-garmin-connect.md": {
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Onder elke voorgestelde lus staat de knop Naar Garmin Connect, naast GPX downloaden.",
-   "stand": "geldt"
+   "kern": "Onder elke voorgestelde lus staat de knop Naar Garmin Connect, naast GPX downloaden. Geldt nog: de knop Naar Garmin Connect naast GPX downloaden; dat de uitleg en de uitkomst als twee regels onder elkaar staan is vervallen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-10-route-uitleg.md"
+   ]
   },
   "docs/beslissingen/2026-11-10-route-uitleg.md": {
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Na het zoeken zegt het paneel Route voorstellen in één regel wat er op de kaart lag: hoeveel hellingen in de buurt en de hoogste.",
-   "stand": "geldt"
+   "kern": "Na het zoeken zegt het paneel Route voorstellen in één regel wat er op de kaart lag: hoeveel hellingen in de buurt en de hoogste. Geldt nog: de ene regel over wat er op de kaart lag; de korter-zin met 12 procent en \"Minder dan de hoogtemeters van je training\" zijn vervangen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-route-verfijnen.md"
+   ]
   },
   "docs/beslissingen/2026-11-10-week-melding-na-keuze.md": {
    "onderwerpen": [
@@ -2222,8 +2442,11 @@
    "onderwerpen": [
     "bediening-en-beweging"
    ],
-   "kern": "Vanaf 20:00 (instelbaar) staat op Vandaag een rustige kaart De avond ervoor met de training van morgen en hoogstens vier regels om klaar te leggen.",
-   "stand": "geldt"
+   "kern": "Vanaf 20:00 (instelbaar) staat op Vandaag een rustige kaart De avond ervoor met de training van morgen en hoogstens vier regels om klaar te leggen. Geldt nog: de kaart De avond ervoor vanaf 20:00 met hoogstens vier regels; de volgorde bij de grens van vier is veranderd en een tochtdag zonder rugzakgewicht krijgt nu een kaart met alleen het eten.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-eten-onderweg.md"
+   ]
   },
   "docs/beslissingen/2026-11-11-briefing-sporen-1-3-4.md": {
    "onderwerpen": [
@@ -2246,16 +2469,23 @@
     "bediening-en-beweging",
     "lopen-en-tests"
    ],
-   "kern": "Voor een loop of wandeling buiten komt een nieuw scherm vooraf, de Briefing (richting 2 van `docs/visie/Ontwerp Route en trainingsscherm.md`).",
-   "stand": "geldt"
+   "kern": "Voor een loop of wandeling buiten komt een nieuw scherm vooraf, de Briefing (richting 2 van `docs/visie/Ontwerp Route en trainingsscherm.md`). Geldt nog: de Briefing als scherm vooraf voor een loop of wandeling buiten; de vier vakken, de knop Horloge in de onderbalk en het vak Wat je loopt zijn de hartkaart en de lijst geworden, en de schuifrij bij Waar train je? is weg.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-12-trainingsscherm-sporen-1-4.md",
+    "docs/beslissingen/2026-11-12-briefing-per-manier.md"
+   ]
   },
   "docs/beslissingen/2026-11-11-enkel-evenwicht.md": {
    "onderwerpen": [
     "forge",
     "lichaam-en-herstel"
    ],
-   "kern": "Spieren voor de berg krijgt een vierde rij: enkel en evenwicht.",
-   "stand": "geldt"
+   "kern": "Spieren voor de berg krijgt een vierde rij: enkel en evenwicht. Geldt nog: de vierde rij enkel en evenwicht; een week met vakantie, een tocht of zonder sportschool telt voor de spieren niet meer mee.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-14-bergspieren-zonder-vakantieweek.md"
+   ]
   },
   "docs/beslissingen/2026-11-11-eten-onderweg.md": {
    "onderwerpen": [
@@ -2297,8 +2527,11 @@
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Het trainingsscherm krijgt onderaan de knop Horloge in plaats van Info.",
-   "stand": "geldt"
+   "kern": "Het trainingsscherm krijgt onderaan de knop Horloge in plaats van Info. Geldt nog: het blad Je horloge en de knop ernaartoe; de zin over de wedstrijd en de naam van de zones-rij zijn gecorrigeerd.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-info-blad-horloge-spoor-2.md"
+   ]
   },
   "docs/beslissingen/2026-11-11-locatie-en-kaart.md": {
    "onderwerpen": [
@@ -2326,7 +2559,10 @@
     "koppelingen-en-data"
    ],
    "kern": "De vijf vragen uit `docs/visie/Ontwerp Plekken en routes.md`: 1.",
-   "stand": "geldt"
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-11-plekken-en-routes.md"
+   ]
   },
   "docs/beslissingen/2026-11-11-plekken-en-routes.md": {
    "onderwerpen": [
@@ -2347,28 +2583,41 @@
     "koppelingen-en-data"
    ],
    "kern": "Plekken en bewaarde routes zijn een opgeslagen vorm: twee sleutels in de meta-opslag (`places` en `savedRoutes`), twee optionele velden in de back-up, en Vast punt is de plek Thuis geworden.",
-   "stand": "geldt"
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-11-plekken-en-routes.md"
+   ]
   },
   "docs/beslissingen/2026-11-11-route-kaart-2.md": {
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Startpunt van je lus krijgt een derde keuze, Waar je nu bent, en die is de nieuwe standaard voor wie nooit zelf koos.",
-   "stand": "geldt"
+   "kern": "Startpunt van je lus krijgt een derde keuze, Waar je nu bent, en die is de nieuwe standaard voor wie nooit zelf koos. Geldt nog: Waar je nu bent als standaard; de balk per stap en de stille terugval op je vaste punt of op Ongeveer zijn weg.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-route-start.md",
+    "docs/beslissingen/2026-11-14-geen-stille-thuis.md"
+   ]
   },
   "docs/beslissingen/2026-11-11-route-kaart.md": {
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Het paneel Route voorstellen krijgt een kaart met MapLibre GL JS 6.17.0 op de stijl Dark van OpenFreeMap, overgeschilderd met de tokens.",
-   "stand": "geldt"
+   "kern": "Het paneel Route voorstellen krijgt een kaart met MapLibre GL JS 6.17.0 op de stijl Dark van OpenFreeMap, overgeschilderd met de tokens. Geldt nog: de kaart met MapLibre en OpenFreeMap en de instelling Ondergrond van de kaart; Start hier bewaart het punt niet meer als vast punt.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-11-route-start.md"
+   ]
   },
   "docs/beslissingen/2026-11-11-route-start.md": {
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Boven de kaart en de zoekstand van Route (in de Briefing en het blad Route) staat een rij Start bij met chips: Waar je nu bent (het advies) en Thuis als die er is.",
-   "stand": "geldt"
+   "kern": "Boven de kaart en de zoekstand van Route (in de Briefing en het blad Route) staat een rij Start bij met chips: Waar je nu bent (het advies) en Thuis als die er is. Geldt nog: de rij Start bij met chips; de terugval op Thuis als Waar je nu bent niet lukt is weg.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-14-geen-stille-thuis.md"
+   ]
   },
   "docs/beslissingen/2026-11-11-route-verfijnen.md": {
    "onderwerpen": [
@@ -2403,8 +2652,12 @@
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "In de rij Start bij (Briefing en blad Route) staat een chip Andere plek.",
-   "stand": "geldt"
+   "kern": "In de rij Start bij (Briefing en blad Route) staat een chip Andere plek. Geldt nog: de chip Andere plek, het zoeken, Bewaar als plek en Je plekken; bewaarde plekken als chips in een schuifrij en \"geen tweede zoekdienst\" zijn vervallen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-12-route-blok.md",
+    "docs/beslissingen/2026-11-12-andere-plek-photon.md"
+   ]
   },
   "docs/beslissingen/2026-11-12-briefing-per-manier.md": {
    "onderwerpen": [
@@ -2426,8 +2679,11 @@
     "historie-en-logs",
     "bediening-en-beweging"
    ],
-   "kern": "Zelf invullen voor een training te voet (`engine/briefing.ts#briefingEntry`: hardlopen en wandelen) is het blad Hoe ging het? in twee stappen (`src/components/HowDidItGoSheet.tsx`), zoals spoor 5 van `docs/visie/Ontwerp trainingsscherm minimaal.md` vraagt.",
-   "stand": "geldt"
+   "kern": "Zelf invullen voor een training te voet (`engine/briefing.ts#briefingEntry`: hardlopen en wandelen) is het blad Hoe ging het? in twee stappen (`src/components/HowDidItGoSheet.tsx`), zoals spoor 5 van `docs/visie/Ontwerp trainingsscherm minimaal.md` vraagt. Geldt nog: het blad Hoe ging het? in twee stappen; de waarschuwing in punt 6 dat `logSession` kan mislukken na het schrijven geldt niet meer.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-12-dubbel-log.md"
+   ]
   },
   "docs/beslissingen/2026-11-12-hoogtemeters-stap-1.md": {
    "onderwerpen": [
@@ -2442,8 +2698,11 @@
     "lopen-en-tests",
     "historie-en-logs"
    ],
-   "kern": "Een nieuw log draagt op `detail` en op `runDetail` een optioneel veld `counter: 2`: de stijging is geteld met de teller van `engine/elevation.ts`.",
-   "stand": "geldt"
+   "kern": "Een nieuw log draagt op `detail` en op `runDetail` een optioneel veld `counter: 2`: de stijging is geteld met de teller van `engine/elevation.ts`. Geldt nog: het veld `counter: 2` op een nieuw log; de twee zinnen over de 15 m per km die blijft staan en over een onbekend merk dat als geen merk telt zijn vervangen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-14-hoogtemeters-na-stap-1.md"
+   ]
   },
   "docs/beslissingen/2026-11-12-je-dag.md": {
    "onderwerpen": [
@@ -2456,22 +2715,31 @@
    "onderwerpen": [
     "week"
    ],
-   "kern": "Het blad Je week tot nu wordt gebouwd volgens `docs/visie/Ontwerp Je week tot nu.md`: drie blokken (de week, waar je op let, volgende week) en daaronder één lijst.",
-   "stand": "geldt"
+   "kern": "Het blad Je week tot nu wordt gebouwd volgens `docs/visie/Ontwerp Je week tot nu.md`: drie blokken (de week, waar je op let, volgende week) en daaronder één lijst. Geldt nog: de drie blokken en de lijst; de rij Wat ASCEND aanpaste staat alleen nog in Week.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-12-week-minimaal.md"
+   ]
   },
   "docs/beslissingen/2026-11-12-missiekaart.md": {
    "onderwerpen": [
     "bediening-en-beweging"
    ],
-   "kern": "Spoor 10 van `docs/visie/Ontwerp trainingsscherm minimaal.md` voor Vandaag, binnen regel 1, 5 en 6.",
-   "stand": "geldt"
+   "kern": "Spoor 10 van `docs/visie/Ontwerp trainingsscherm minimaal.md` voor Vandaag, binnen regel 1, 5 en 6. Geldt nog: de missiekaart van spoor 10; het tempo staat nu in de Briefing en blijft niet op de kaart.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-12-briefing-per-manier.md"
+   ]
   },
   "docs/beslissingen/2026-11-12-route-blok.md": {
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Het blok met de route in de Briefing (een loop te voet, onder de hartkaart) heeft nog drie dingen: Start bij met twee chips, een stille kaart met één lijn, en de regel met de gekozen lus en Groter.",
-   "stand": "geldt"
+   "kern": "Het blok met de route in de Briefing (een loop te voet, onder de hartkaart) heeft nog drie dingen: Start bij met twee chips, een stille kaart met één lijn, en de regel met de gekozen lus en Groter. Geldt nog: de stille kaart met één lijn en de regel met de gekozen lus en Groter; de tweede chip met de naam van de plek en het verdwijnen van de chip Thuis zijn vervallen.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-14-geen-stille-thuis.md"
+   ]
   },
   "docs/beslissingen/2026-11-12-stairmaster-horloge.md": {
    "onderwerpen": [
@@ -2499,14 +2767,20 @@
     "bediening-en-beweging"
    ],
    "kern": "Het ontwerp `docs/visie/Ontwerp trainingsscherm minimaal.md` wordt gebouwd in de sporen van hoofdstuk 7, en de acht regels van hoofdstuk 6 gelden voor alle nieuwe en herziene schermen.",
-   "stand": "geldt"
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-11-briefing.md"
+   ]
   },
   "docs/beslissingen/2026-11-12-trainingsscherm-sporen-1-4.md": {
    "onderwerpen": [
     "bediening-en-beweging"
    ],
-   "kern": "Sporen 1 tot 4 van het minimale trainingsscherm zijn gebouwd; hier staan de keuzes van de bouwer waar het ontwerp iets open liet.",
-   "stand": "geldt"
+   "kern": "Sporen 1 tot 4 van het minimale trainingsscherm zijn gebouwd; hier staan de keuzes van de bouwer waar het ontwerp iets open liet. Geldt nog: de keuzes van de bouwer bij sporen 1 tot 4; de schuifrij met vervaging bij Waar train je? is weg.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-12-briefing-per-manier.md"
+   ]
   },
   "docs/beslissingen/2026-11-12-week-minimaal.md": {
    "onderwerpen": [
@@ -2533,8 +2807,11 @@
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Kies je in de Briefing bij Start bij een bewaarde of gezochte plek die verder dan 10 km van huis ligt, dan toont de rij Weer de voorspelling van die plek, met de naam ervoor (\"In <plek>: 2 graden, ...\").",
-   "stand": "geldt"
+   "kern": "Kies je in de Briefing bij Start bij een bewaarde of gezochte plek die verder dan 10 km van huis ligt, dan toont de rij Weer de voorspelling van die plek, met de naam ervoor (\"In <plek>: 2 graden, ...\"). Geldt nog: de rij Weer toont de voorspelling van een plek verder dan 10 km van huis; de pagina Weer krijgt die plek nu mee als je via de rij komt.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-13-weer-van-de-plek-pagina.md"
+   ]
   },
   "docs/beslissingen/2026-11-12-zone2-kaart.md": {
    "onderwerpen": [
@@ -2601,15 +2878,22 @@
     "koppelingen-en-data"
    ],
    "kern": "De eigenaar gaf op 14 november akkoord op alle vijf adviezen onder \"Vragen voor de eigenaar\" in `docs/visie/Ontwerp Info-blad.md`.",
-   "stand": "geldt"
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-11-info-blad-horloge-spoor-2.md",
+    "docs/beslissingen/2026-11-11-info-blad-horloge.md"
+   ]
   },
   "docs/beslissingen/2026-11-14-keuzes-avond.md": {
    "onderwerpen": [
     "doelen",
     "planning"
    ],
-   "kern": "GR5 en meerdaagse tochten: de startvragen vragen hutten, tent of beide; de doelkop, de paklijst, de Reisplanner en de rugzakladder volgen die keuze.",
-   "stand": "geldt"
+   "kern": "GR5 en meerdaagse tochten: de startvragen vragen hutten, tent of beide; de doelkop, de paklijst, de Reisplanner en de rugzakladder volgen die keuze. Geldt nog: alle punten; in punt 2 is alleen \"tot het gewone plan in week 4\" vervangen door een groei van hoogstens 10% per stap.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-15-beginner-tien-procent.md"
+   ]
   },
   "docs/beslissingen/2026-11-14-nee-van-logsession.md": {
    "onderwerpen": [
@@ -2651,8 +2935,11 @@
    "onderwerpen": [
     "doelen"
    ],
-   "kern": "In de laatste week voor een 10 km-doel (de race zelf meegeteld) staat één rij Racedag op Vandaag, direct onder de missie, en dezelfde rij in het blad van het doel op Ascend.",
-   "stand": "geldt"
+   "kern": "In de laatste week voor een 10 km-doel (de race zelf meegeteld) staat één rij Racedag op Vandaag, direct onder de missie, en dezelfde rij in het blad van het doel op Ascend. Geldt nog: de rij Racedag in de laatste week voor een 10 km en in het blad van het doel; op Vandaag staat hij onder de ochtendvraag en de kaarten, niet direct onder de missie.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-14-racedag-plek-en-weer.md"
+   ]
   },
   "docs/beslissingen/2026-11-14-racedag-plek-en-weer.md": {
    "onderwerpen": [
@@ -2693,15 +2980,21 @@
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "De UV-zin volgt het kledingadvies, zodat ze elkaar niet herhalen of tegenspreken.",
-   "stand": "geldt"
+   "kern": "De UV-zin volgt het kledingadvies, zodat ze elkaar niet herhalen of tegenspreken. Geldt nog: de UV-zin volgt het kledingadvies op de pagina Weer; in de rij Weer van de Briefing staat alleen nog het getal.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-14-uv-rij-alleen-getal.md"
+   ]
   },
   "docs/beslissingen/2026-11-14-uv-en-hoogte-buiten.md": {
    "onderwerpen": [
     "koppelingen-en-data"
    ],
-   "kern": "Bij een training buiten staat in de rij Weer van de Briefing (en op de pagina Weer, onder de weerregel) de UV-index vanaf 3, met wat je doet, en de hoogte van je plek vanaf 1000 m.",
-   "stand": "geldt"
+   "kern": "Bij een training buiten staat in de rij Weer van de Briefing (en op de pagina Weer, onder de weerregel) de UV-index vanaf 3, met wat je doet, en de hoogte van je plek vanaf 1000 m. Geldt nog: de UV-zin en de hoogte op de pagina Weer; in de rij Weer van de Briefing staat alleen nog het getal (\"UV 8\").",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-14-uv-rij-alleen-getal.md"
+   ]
   },
   "docs/beslissingen/2026-11-14-uv-rij-alleen-getal.md": {
    "onderwerpen": [
@@ -2715,8 +3008,12 @@
     "planning",
     "week"
    ],
-   "kern": "Een vakantie, tocht of periode zonder sportschool die je zelf meldde, telt nooit als gemist.",
-   "stand": "geldt"
+   "kern": "Een vakantie, tocht of periode zonder sportschool die je zelf meldde, telt nooit als gemist. Geldt nog: een gemelde vakantie of tocht telt nooit als gemist en er komt geen vraag of inhaaladvies over wat ervoor lag; zonder sportschool vervalt alleen wat de sportschool nodig heeft (2026-11-15-week-telling-zonder-sportschool); de regel onder Vervallen noemt wat binnen de pauze stond.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-15-vervallen-een-bron.md",
+    "docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md"
+   ]
   },
   "docs/beslissingen/2026-11-14-verborgen-schermen.md": {
    "onderwerpen": [
@@ -2729,8 +3026,11 @@
    "onderwerpen": [
     "forge"
    ],
-   "kern": "Het voorstel van Spieren voor de berg toont één korte laag per regel: de oefening, de training, de dosis, waarom, wat onzeker is en wat Akkoord doet.",
-   "stand": "geldt"
+   "kern": "Het voorstel van Spieren voor de berg toont één korte laag per regel: de oefening, de training, de dosis, waarom, wat onzeker is en wat Akkoord doet. Geldt nog: de ene korte laag per regel; achter de i staat bij de drie spieren nu dezelfde zin als bij evenwicht, niet alleen de rustweek.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-14-bergspieren-zonder-vakantieweek.md"
+   ]
   },
   "docs/beslissingen/2026-11-14-zonder-ascend-als-onderwerp.md": {
    "onderwerpen": [
@@ -2752,6 +3052,20 @@
     "week"
    ],
    "kern": "Een voorbije geplande training waar nog een concept van in Forge ligt, heet \"loopt nog\".",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-dag-van-afronden.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Afronden in Forge geeft het log de dag van je laatst afgevinkte set, ook bij een geplande training die je een dag eerder of later deed.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-hitte-bij-herhalingen.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "De hitteregel zegt trager, nooit lager; alleen vochtig onder 22 graden gevoel geeft 5 tot 10 seconden per km; bij intervallen en heuvelherhalingen geen tempoband of hartslag maar meer rust.",
    "stand": "geldt"
   },
   "docs/beslissingen/2026-11-15-hutten-of-tent-vraag.md": {
@@ -2819,6 +3133,14 @@
     "lopen-en-tests"
    ],
    "kern": "Een wandelworkout naar het horloge krijgt geen zonedoel maar een regel met vaste bpm uit je hardloopzones in de beschrijving, omdat intervals.icu voor wandelen geen eigen zones heeft.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Gemist heeft één afleiding voor Week, de kaart, de weekterugblik en het inhaaladvies: zonder sportschool vervalt alleen wat de sportschool nodig heeft, overgeslagen is geen gemist, en het inhalen leest dezelfde weekcontrole als Let op.",
    "stand": "geldt"
   },
   "docs/beslissingen/_sjabloon.md": {
@@ -3096,7 +3418,9 @@
    ],
    "kern": "Afweging voor een kaartje bij de lussen: zelf tekenen als SVG of tegels laden, met wat tegels verraden.",
    "stand": "vervangen",
-   "door": "docs/onderzoek/Kaartbron voor Route voorstellen.md"
+   "vervangenDoor": [
+    "docs/onderzoek/Kaartbron voor Route voorstellen.md"
+   ]
   },
   "docs/onderzoek/Kansen 11 november training.md": {
    "onderwerpen": [

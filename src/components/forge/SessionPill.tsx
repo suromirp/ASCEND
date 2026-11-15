@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { activeMinutes, activeSeconds, formatSessionClock, isPaused, setsPhrase } from '../../engine/forgeSession';
+import { activeMinutes, activeSeconds, formatSessionClock, isPaused, pillSlot, setsPhrase } from '../../engine/forgeSession';
 import { promptKey, requestOpenSession, wasPrompted, type SessionState } from '../../utils/forgeSessionStore';
 import { Icon } from '../icons';
 import { Pictogram } from '../pictograms';
@@ -25,7 +25,20 @@ function useSecond(running: boolean): number {
   return nowMs();
 }
 
-export function SessionPill({ session }: { session: SessionState }) {
+// De plek van de pil in App: de live sessie, of (als die net verdween terwijl het keuzeblad openstond, bijvoorbeeld
+// verwijderd in een ander tabblad) de laatste stand, zodat het blad blijft staan en zegt dat de training weg is in
+// plaats van stil te verdwijnen (Warden 15 november, I-4).
+export function SessionPillSlot({ session }: { session: SessionState | undefined }) {
+  // De laatste live stand (de sessie is per stand dezelfde waarde, useLiveSession onthoudt hem).
+  const [last, setLast] = useState(session);
+  if (session && session !== last) setLast(session);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const slot = pillSlot({ live: session, last: session ?? last, sheetOpen });
+  if (!slot) return null;
+  return <SessionPill session={slot.session} gone={slot.gone} onSheet={setSheetOpen} />;
+}
+
+export function SessionPill({ session, gone = false, onSheet }: { session: SessionState; gone?: boolean; onSheet?: (open: boolean) => void }) {
   const { templates } = useAppData();
   const template = templates.find((t) => t.id === session.pointer.templateId);
   // Bleef de training liggen (na middernacht, na de grens of overgeslagen), dan is hij een concept: geen lopende
@@ -51,6 +64,10 @@ export function SessionPill({ session }: { session: SessionState }) {
   }, []);
   // Bij het opstarten laadt de app nog; zodra hij klaar is, is dat nog steeds het openen.
   const { loading } = useSessionWorld();
+  // De plek in App weet zo of het blad openstaat (en houdt het dan vast als de training verdwijnt).
+  useEffect(() => {
+    onSheet?.(choosing);
+  }, [choosing, onSheet]);
   useEffect(() => {
     if (!loading) checkRef.current();
   }, [loading]);
@@ -64,6 +81,7 @@ export function SessionPill({ session }: { session: SessionState }) {
     : `Training ${session.pointer.name}, ${minutes === 1 ? '1 minuut' : `${minutes} minuten`}, ${paused ? 'gepauzeerd' : 'loopt'}`;
   return (
     <>
+    {!gone && (
     <div
       className="pointer-events-none fixed inset-x-0 z-30 mx-auto w-full max-w-md px-4"
       style={{ bottom: 'calc(4.5rem + max(var(--rand-onder), 8px) + 8px)' }}
@@ -92,7 +110,8 @@ export function SessionPill({ session }: { session: SessionState }) {
         )}
       </button>
     </div>
-    {choosing && <SessionChoiceSheet session={session} {...(left ? { left } : {})} onClose={() => setChoosing(false)} />}
+    )}
+    {choosing && <SessionChoiceSheet session={session} {...(left ? { left } : {})} vanished={gone} onClose={() => setChoosing(false)} />}
     </>
   );
 }

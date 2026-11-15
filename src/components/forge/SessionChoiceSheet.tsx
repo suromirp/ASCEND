@@ -4,12 +4,13 @@
 // Afronden opent Forge op het blad Training afronden met wat je deed; Verder opent Forge waar je was; Verwijderen
 // pas na een tweede tik met Annuleren ernaast (engine/forgeSession.ts#discardTap). Bij een concept wordt de stille
 // tijd eerst een pauze (utils/forgeSessionStore.ts#parkSession), zodat de duur alleen de tijd telt dat je trainde.
-// Is de training elders al afgerond of verwijderd, dan zegt het blad dat en sluit het niet stil. De planning en
+// Is de training elders al afgerond of verwijderd (bij een keuze, of terwijl het blad openstaat), dan zegt het blad
+// dat en sluit het niet stil; met een vervolg (een nieuwe training starten) start die na Begrepen. De planning en
 // het logboek veranderen hier nooit.
 
 import { useEffect, useRef, useState } from 'react';
-import { SESSION_GONE_TEXT, discardTap, leftActiveSeconds, leftSessionLines, setsPhrase, activeSeconds, whenPhrase, type DiscardStep, type LeftSession } from '../../engine/forgeSession';
-import { discardSession, markPrompted, parkSession, promptKey, requestOpenSession, sessionStillThere, type SessionState } from '../../utils/forgeSessionStore';
+import { GONE_NEXT_TEXT, SESSION_GONE_TEXT, afterChoiceClose, choiceSheetSeesGone, discardTap, leftActiveSeconds, leftSessionLines, setsPhrase, activeSeconds, whenPhrase, type DiscardStep, type LeftSession } from '../../engine/forgeSession';
+import { discardSession, markPrompted, parkSession, promptKey, requestOpenSession, sessionStillThere, subscribeSession, type SessionState } from '../../utils/forgeSessionStore';
 import { PrimaryButton, SecondaryButton } from '../ui';
 import { TextButton } from '../TextButton';
 import { ForgeSheet } from './parts';
@@ -21,16 +22,25 @@ export function SessionChoiceSheet({
   left,
   onClose,
   onDiscarded,
+  vanished = false,
 }: {
   session: SessionState;
   // Een concept (bleef liggen); zonder is het een lopende training en heet Verder "Naar de training".
   left?: LeftSession;
   onClose: () => void;
-  // Na Verwijderen: de aanroeper gaat verder (een nieuwe training starten) in plaats van te sluiten.
+  // Na Verwijderen, of na Begrepen als de training elders al weg was: de aanroeper gaat verder (een nieuwe training
+  // starten) in plaats van te sluiten.
   onDiscarded?: () => void;
+  // De plek van de pil zag de training verdwijnen terwijl dit blad openstond.
+  vanished?: boolean;
 }) {
   const [step, setStep] = useState<DiscardStep>('kiezen');
   const [gone, setGone] = useState(false);
+  const goneRef = useRef(false);
+  const markGone = () => {
+    goneRef.current = true;
+    setGone(true);
+  };
   const [openedAt] = useState(() => Date.now());
   const choice = useRef<Choice>(null);
   const discarded = useRef(false);
@@ -44,16 +54,31 @@ export function SessionChoiceSheet({
   const finishLabel = `Afronden met ${setsPhrase(session.doneSets)}`;
   const resumeLabel = left ? 'Verder' : 'Naar de training';
   const stillThere = () => sessionStillThere(session.pointer.key, session.startedAt);
+  // Verdwijnt de training terwijl dit blad openstaat (een ander tabblad rondde hem af of verwijderde hem), dan zegt
+  // het blad dat in plaats van stil te verdwijnen (Warden 15 november, I-4).
+  const key = session.pointer.key;
+  const startedAt = session.startedAt;
+  const checkGone = useRef(() => {});
+  useEffect(() => {
+    checkGone.current = () => {
+      if (choiceSheetSeesGone({ stillThere: sessionStillThere(key, startedAt), discarded: discarded.current, picked: choice.current !== null })) markGone();
+    };
+  });
+  useEffect(() => subscribeSession(() => checkGone.current()), []);
+  useEffect(() => {
+    if (vanished) checkGone.current();
+  }, [vanished]);
 
   // Pas na het sluiten van dit blad opent Forge: geen twee bladen over elkaar.
   const afterClose = () => {
-    // Na Verwijderen met een vervolg (een nieuwe training starten) gaat dat vervolg voor sluiten.
-    if (discarded.current && onDiscarded) {
-      onDiscarded();
+    // Na Verwijderen of Begrepen met een vervolg (een nieuwe training starten) gaat dat vervolg voor sluiten.
+    const next = afterChoiceClose({ discarded: discarded.current, gone: goneRef.current, hasNext: !!onDiscarded, choice: choice.current });
+    if (next === 'next') {
+      onDiscarded?.();
       return;
     }
     onClose();
-    if (discarded.current || !choice.current) return;
+    if (next === 'close' || !choice.current) return;
     // Een concept: eerst de stille tijd als pauze. Lukt dat niet (net weg), dan opent Forge niets.
     if (left && !parkSession(session.pointer, Date.now())) return;
     requestOpenSession(choice.current === 'finish' ? 'finish' : undefined);
@@ -62,7 +87,7 @@ export function SessionChoiceSheet({
   // Een keuze: alleen als de training er nog is; anders de zin dat hij weg is, en het blad blijft staan.
   const pick = (c: Exclude<Choice, null>, close: () => void) => {
     if (!stillThere()) {
-      setGone(true);
+      markGone();
       return;
     }
     choice.current = c;
@@ -74,7 +99,7 @@ export function SessionChoiceSheet({
     setStep(next.step);
     if (!next.discard) return;
     if (!stillThere()) {
-      setGone(true);
+      markGone();
       return;
     }
     discardSession(session.pointer);
@@ -88,7 +113,7 @@ export function SessionChoiceSheet({
       {(close) =>
         gone ? (
           <div className="flex flex-col gap-4">
-            <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{SESSION_GONE_TEXT}</p>
+            <GoneNote next={!!onDiscarded} />
             <SecondaryButton onClick={close}>Begrepen</SecondaryButton>
           </div>
         ) : step === 'bevestigen' ? (
@@ -96,14 +121,9 @@ export function SessionChoiceSheet({
             <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{lines.discard}</p>
             <div className="flex gap-3">
               <SecondaryButton onClick={() => setStep('kiezen')}>Annuleren</SecondaryButton>
-              <button
-                type="button"
-                onClick={() => tapDiscard(close)}
-                className="min-h-[44px] flex-1 rounded-xl border text-sm font-medium"
-                style={{ borderColor: 'var(--color-danger)', color: 'var(--color-danger-text)' }}
-              >
+              <TextButton tone="danger" onClick={() => tapDiscard(close)} className="flex-1 justify-center rounded-xl border" style={{ borderColor: 'var(--color-danger)' }}>
                 Verwijderen
-              </button>
+              </TextButton>
             </div>
           </div>
         ) : (
@@ -131,5 +151,15 @@ export function SessionChoiceSheet({
         )
       }
     </ForgeSheet>
+  );
+}
+
+// De zin als de training er niet meer is. Met een vervolg zegt hij eerlijk wat Begrepen doet: je nieuwe training start.
+export function GoneNote({ next }: { next: boolean }) {
+  return (
+    <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
+      {SESSION_GONE_TEXT}
+      {next ? ` ${GONE_NEXT_TEXT}` : ''}
+    </p>
   );
 }

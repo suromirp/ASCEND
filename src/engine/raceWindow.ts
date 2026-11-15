@@ -6,7 +6,7 @@
 // - De herstelweek: de zeven dagen na een race. Daarin wordt niets ingehaald (`afterRaceGuard`).
 // - Een training uit de afbouw die niet gedaan is, vervalt zodra de racedag er is: geen vraag
 //   "Niet gedaan?", geen inhaaladvies, en hij telt niet als gemist (`isTaperDay`, gelezen door
-//   engine/sessionStatus.ts#isPausedDay en engine/weekLogs.ts#leftOutOfCount).
+//   engine/sessionStatus.ts#isPausedFor en engine/weekLogs.ts#leftOutOfCount).
 //
 // Een race is een geplande sessie met de rol 'race'; of hij gelogd is, maakt niet uit (zoals raceWeekGuard). Een race
 // die vóór zijn dag is overgeslagen (afgezegd) telt niet. Een race die je op of na zijn dag overslaat (Niet gedaan)
