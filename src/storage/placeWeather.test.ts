@@ -77,6 +77,22 @@ describe('loadPlaceWeather', () => {
     expect(f).toHaveBeenCalledTimes(1);
   });
 
+  it('twee plekken tegelijk: allebei bewaard, de een schrijft de ander niet weg (Warden)', async () => {
+    const f = okFetch();
+    await Promise.all([loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: T0 }), loadPlaceWeather(OTHER, { fetchImpl: asFetch(f), now: T0 })]);
+    const stored = await MetaRepo.get<{ places: Record<string, unknown> }>(PLACE_WEATHER_KEY);
+    expect(Object.keys(stored!.places).sort()).toEqual(['50.72,4.01', '51.52,5.03']);
+  });
+
+  it('force deelt geen gewone aanroep die al loopt: er gaat echt een nieuwe uit (Warden)', async () => {
+    const f = okFetch();
+    await Promise.all([
+      loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: T0 }),
+      loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: T0, force: true }),
+    ]);
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+
   it('force haalt op, ook binnen het uur (Nu verversen)', async () => {
     const f = okFetch();
     await loadPlaceWeather(AWAY, { fetchImpl: asFetch(f), now: T0 });

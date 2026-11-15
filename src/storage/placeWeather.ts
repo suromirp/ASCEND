@@ -54,12 +54,25 @@ export function withForecast(cache: Record<string, WeatherForecast>, forecast: W
 }
 
 const inFlight = new Map<string, Promise<PlaceWeatherResult>>();
+// Bewaren gebeurt een voor een (lezen en schrijven in één schakel): twee plekken die tegelijk
+// binnenkomen schrijven elkaar dan niet weg.
+let writes: Promise<unknown> = Promise.resolve();
+
+function store(forecast: WeatherForecast): Promise<void> {
+  const run = writes.then(async () => {
+    const current = readPlaceCache(await MetaRepo.get<unknown>(PLACE_WEATHER_KEY).catch(() => undefined));
+    await MetaRepo.set(PLACE_WEATHER_KEY, withForecast(current, forecast));
+  });
+  writes = run.catch(() => undefined);
+  return run;
+}
 
 // De voorspelling voor deze plek: de bewaarde als die van dezelfde plek en jonger dan een uur is
 // (geen aanroep), anders een nieuwe. Mislukt lezen, ophalen of het antwoord: 'failed'.
 // `force`: altijd ophalen (Nu verversen op de pagina Weer); de grens in tijd blijft.
 export function loadPlaceWeather(place: WeatherPlace, options: FetchOptions & { now?: Date; force?: boolean } = {}): Promise<PlaceWeatherResult> {
-  const key = keyOf(place);
+  // Een geforceerde aanroep deelt nooit het antwoord van een gewone die al loopt (dat kan uit de cache komen).
+  const key = `${keyOf(place)}${options.force ? '|force' : ''}`;
   const busy = inFlight.get(key);
   if (busy) return busy;
   const promise = run(place, options).finally(() => {
@@ -82,9 +95,8 @@ async function run(place: WeatherPlace, options: FetchOptions & { now?: Date; fo
   try {
     const forecast = await fetchForecast(place, { fetchImpl: options.fetchImpl, signal: options.signal, now });
     try {
-      // Opnieuw lezen vlak voor het schrijven: een andere plek die intussen binnenkwam blijft staan.
-      const current = readPlaceCache(await MetaRepo.get<unknown>(PLACE_WEATHER_KEY).catch(() => undefined));
-      await MetaRepo.set(PLACE_WEATHER_KEY, withForecast(current, forecast));
+      // Opnieuw lezen vlak voor het schrijven, in de rij: een andere plek die intussen binnenkwam blijft staan.
+      await store(forecast);
     } catch {
       // Niet bewaard: de voorspelling is er nu wel; de volgende keer vraagt hij opnieuw.
     }
