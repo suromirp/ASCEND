@@ -1,7 +1,7 @@
 // Het log dat Afronden in Forge maakt: de sets, de zwaarste RIR van een beendag, het profiel en het verloop.
 // Alleen samenstellen; opslaan doet `logSession`, en een bestaand log wordt nooit beschreven.
 
-import { hardestLegRir, lastWorkMoment, toStrengthData, type WorkoutExercise } from '../../engine/forgeWorkout';
+import { hardestLegRir, lastWorkMomentOn, toStrengthData, type WorkoutExercise } from '../../engine/forgeWorkout';
 import { finishCompletedAt } from '../../engine/forgeSession';
 import { toISODate } from '../../utils/dates';
 import { templateSport } from '../../engine/sports';
@@ -25,13 +25,14 @@ export function forgeLogInput({ template, variant, extra, workout, readOnly, pla
   // Alleen voor tests: het moment van opslaan.
   now?: number;
 }): LogSessionInput {
+  const dayOf = (ms: number) => toISODate(new Date(ms));
   const strengthData = readOnly ? undefined : toStrengthData(workout);
   const rir = readOnly ? undefined : hardestLegRir(workout);
   return {
     plannedSessionId: plannedStill ? plannedSessionId : undefined,
     completedDate: extra.doneOn,
-    // Het tijdstip hoort bij de gekozen dag: een eerdere dag krijgt het moment van je laatste set, nooit nu.
-    completedAt: finishCompletedAt({ doneOn: extra.doneOn, today: toISODate(new Date(now)), now, lastWorkAt: lastWorkMoment(workout), dayOf: (ms) => toISODate(new Date(ms)) }),
+    // Het tijdstip hoort bij de gekozen dag: een eerdere dag krijgt je laatste set op die dag, nooit nu.
+    completedAt: finishCompletedAt({ doneOn: extra.doneOn, today: toISODate(new Date(now)), now, lastWorkAt: lastWorkMomentOn(workout, extra.doneOn, dayOf), dayOf }),
     templateId: template.id,
     type: template.type,
     sport: templateSport(template),

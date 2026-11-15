@@ -7,7 +7,7 @@ Status: aangenomen
 
 Afronden in Forge stelt de dag voor van het laatste echte werk in de training, niet van de laatste tik. Een set die je uit en weer aan zet, telt op het moment dat je hem de eerste keer afvinkte (`engine/forgeWorkout.ts#lastWorkMoment`, het conceptveld `firstDoneAt`). Een nieuwe set die je later voor het eerst afvinkt is wel nieuw werk en neemt de dag mee. Alleen afgevinkte rijen tellen. Aanvulling op `2026-11-15-dag-van-afronden.md`.
 
-Het tijdstip (`completedAt`) van het nieuwe log hoort bij die dag (`engine/forgeSession.ts#finishCompletedAt`): vandaag is het het moment van opslaan; een eerdere dag krijgt het moment van je laatste echte werk als dat op die dag viel, anders 12:00 op die dag. Nooit later dan nu en nooit op een andere dag dan `completedDate`.
+Het tijdstip (`completedAt`) van het nieuwe log hoort bij die dag (`engine/forgeSession.ts#finishCompletedAt`): vandaag is het het moment van opslaan; een eerdere dag krijgt het moment van je laatste echte werk op die dag (`engine/forgeWorkout.ts#lastWorkMomentOn`; een set na middernacht telt niet voor de dag ervoor), en 12:00 alleen zonder set op die dag. Nooit later dan nu en nooit op een andere dag dan `completedDate`. De dag van een set is de dag in de tijdzone van de telefoon bij het afronden: op reis kan een set om 00:30 in Nederland in Portugal op de dag ervoor vallen; dag en tijdstip horen dan bij elkaar en de dag is zichtbaar en te kiezen.
 
 ## Reden
 
@@ -16,6 +16,8 @@ Warden (15 november, I-45): gepland maandag 16 en maandag gedaan; woensdag 18 vo
 Wat het kost: vink je een set per ongeluk af en meteen weer uit, en doe je hem dagen later echt, dan telt hij op de eerste keer. Dat raakt de dag alleen als je die latere dag niets anders voor het eerst afvinkt; de knoppen bij Gedaan op laten de dag dan zien en kiezen. `SetLog.at` blijft het moment van de laatste keer afvinken; geen lezer in de engine maakt daar een dag van (15 november nagezocht), de dag komt uit `completedDate`. Een oefening met alleen uitgezette sets houdt `firstDoneAt` bij een nieuw plan (`engine/forgeInput.ts#touchedInDraft`).
 
 De onderhoudsronde van 15 november (`warden/onderhoud-15-nov`, punt 1, moet): een training op een eerdere dag afgerond kreeg de dag van de laatste set maar het tijdstip van nu. De kracht-historie, de kalibratie van Forge en de belasting sorteren op `completedAt`, dus "de laatste keer" en "vermoeide benen ervoor" klopten dan niet.
+
+Bekende kost (Warden 15 november, moet 2): de herinnering op Vandaag en het blad Back-up tellen "trainingen sinds je back-up" op `completedAt`. Een Forge-log van gisteren dat je na een back-up van vandaag afrondt, telt daar niet meer mee (bij horloge en MacroFactor was dat al zo). Terugzetten telt nu op id (`storage/backupPreview.ts#logsNotInBackup`) en zegt het dus wel goed. Herstel van de twee tellers: backlogpunt I-49.
 
 ## Alternatieven
 
