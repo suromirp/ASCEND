@@ -120,7 +120,8 @@ export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
   const base = budgetFor(id, { choice, history, shape });
   const strengthOn = strengthTrainingOn(input.settings);
   const counted = weekProgress(input.logs, weekStart, budget, opts);
-  // Met kracht uit staat er geen krachtteller, dus ook geen krachttraining in Wat telde.
+  // Met kracht uit staat er geen krachtteller, dus ook geen krachttraining in Wat telde. strengthDone en
+  // strengthTarget blijven gerekend maar worden dan nergens getoond: lees eerst strengthLine.
   const progress = strengthOn ? counted : { ...counted, items: counted.items.filter((i) => i.kind !== 'strength') };
 
   const bars: WaveBar[] = wave && shape

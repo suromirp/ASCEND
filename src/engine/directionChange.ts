@@ -4,6 +4,7 @@
 
 import { DIRECTIONS, type DirectionId } from '../data/directions';
 import { belowGuideline, budgetFor, resolveWeekBudget } from './weekBudget';
+import { strengthTrainingOn } from './strengthTraining';
 
 export function directionChangeTitle(id: DirectionId): string {
   return `Richting: ${DIRECTIONS[id].label}`;
@@ -17,14 +18,16 @@ const WHAT_IT_DOES: Record<DirectionId, string> = {
   easy: 'Elke week hetzelfde en nooit een harde training: de heuvelloop van de zaterdag wordt een herstelloop.',
 };
 
-export function directionChangeLines(id: DirectionId, settings: { weekBudget?: unknown }): string[] {
+// Met krachttraining uit (engine/strengthTraining.ts) telt het budget geen kracht: dan noemen de zinnen alleen minuten en lopen.
+export function directionChangeLines(id: DirectionId, settings: { weekBudget?: unknown; strengthTraining?: unknown }): string[] {
+  const on = strengthTrainingOn(settings);
   const budget = budgetFor(id, { choice: resolveWeekBudget(settings.weekBudget) });
-  const week = `Je week: ${budget.minutes} minuten en ${budget.strength} keer kracht.`;
+  const week = on ? `Je week: ${budget.minutes} minuten en ${budget.strength} keer kracht.` : `Je week: ${budget.minutes} minuten.`;
   return [
     `Richting: ${DIRECTIONS[id].label}.`,
-    belowGuideline(budget) ? `${week} Dat is onder de richtlijn, en dat mag een keuze zijn.` : week,
+    belowGuideline(budget, on) ? `${week} Dat is onder de richtlijn, en dat mag een keuze zijn.` : week,
     WHAT_IT_DOES[id],
     'Geen bergtocht en geen rugzak, tot je een tocht als doel kiest.',
-    'Je week bestaat uit kracht en lopen. Andere sporten die je doet tellen straks gewoon mee.',
+    on ? 'Je week bestaat uit kracht en lopen. Andere sporten die je doet tellen straks gewoon mee.' : 'Je week bestaat uit lopen. Andere sporten die je doet tellen straks gewoon mee.',
   ];
 }
