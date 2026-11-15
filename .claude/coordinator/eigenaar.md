@@ -26,9 +26,13 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Stuk of vast
 
-- Back-up maken mislukt de eerste keer na het openen, de tweede keer lukt hij (het bestand krijgt dan -2). Een bouwer zoekt de oorzaak sinds 11:54.
+- Back-up: de oplossing staat live (17:45). Graag een test op uw toestel: Gedwongen stoppen, openen, meteen Back-up maken, drie keer; kijk in Documents/ASCEND of er een bestand zonder -2 staat.
 
 ## Net live
+
+### 15 november 17:45
+- Back-up maken lukt de eerste keer; een leesfout haalt nooit meer een goed bestand weg en er komt geen -2 meer bij een lege map.
+- Kracht uit: Je week, Weekbudget en Zonder doel noemen alleen nog minuten; de rij Krachtblok verdwijnt zonder blok.
 
 ### 15 november 16:20
 - Week telt zoals hij toont: gemist, overgeslagen en vervallen zijn overal hetzelfde, en het inhaaladvies rekent met je periode Zonder sportschool.
