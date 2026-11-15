@@ -22,11 +22,11 @@ function sentenceCase(name: string) {
 }
 
 export function SeasonOverview({ onSelectWeek }: { onSelectWeek: (weekStart: string) => void }) {
-  const { program, plannedSessions, sessionLogs, templates, trainingGoals, goalMilestones, planChangeLog, settings } = useAppData();
+  const { program, plannedSessions, sessionLogs, templates, trainingGoals, goalMilestones, planChangeLog, settings, openDraftId } = useAppData();
   const today = todayISO();
   const phases = useMemo(
-    () => (program ? buildSeasonPlan(program, plannedSessions, sessionLogs, templates, today, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)), races: raceDatesOf(plannedSessions, templates) })) : []),
-    [program, plannedSessions, sessionLogs, templates, today, planChangeLog, settings.illnessEpisodes, settings.leavePeriods],
+    () => (program ? buildSeasonPlan(program, plannedSessions, sessionLogs, templates, today, leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)), races: raceDatesOf(plannedSessions, templates), openDraft: openDraftId })) : []),
+    [program, plannedSessions, sessionLogs, templates, today, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, openDraftId],
   );
   const [open, setOpen] = useState<string | undefined>(() => phases.find((p) => p.current)?.id);
   if (!program || phases.length === 0) return null;

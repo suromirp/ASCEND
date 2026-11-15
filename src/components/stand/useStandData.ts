@@ -23,7 +23,7 @@ import { mondayOfWeek } from '../../utils/dates';
 // en het scherm erachter altijd hetzelfde getal tonen. Alleen lezen: elke berekening staat in engine/
 // (standing.ts, standRhythm.ts, legFatigue.ts, onCourse.ts) en verandert hier niet.
 export function useStandData() {
-  const { program, plannedSessions, sessionLogs, templates, templateById, settings, planChangeLog, trainingGoals, goalMilestones } = useAppData();
+  const { program, plannedSessions, sessionLogs, templates, templateById, settings, planChangeLog, trainingGoals, goalMilestones, openDraftId } = useAppData();
   const keyFocus = useKeyFocus();
   const inputs = useLegFatigueInputs();
   const today = inputs.today;
@@ -59,16 +59,16 @@ export function useStandData() {
   // The same count as the coach on Ascend (engine/onCourse.ts#recentAdherence): the last
   // four finished weeks, what you skipped counts as not done. Deze week komt er als stipjes bij.
   const adherence = useMemo(
-    () => recentAdherence({ today, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, keyFocus }),
-    [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, keyFocus],
+    () => recentAdherence({ today, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, openDraft: openDraftId, keyFocus }),
+    [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, openDraftId, keyFocus],
   );
   const thisWeek = useMemo(() => {
     const planned = plannedSessions.filter((s) => !s.fixed);
-    return buildWeekReview({ plannedById: plannedByIdOf(planned), weekStart: mondayOfWeek(today), plannedSessions: planned, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, heartRate: settings.heartRate, intensityCounting: counting, keyFocus });
-  }, [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, settings.heartRate, counting, keyFocus]);
+    return buildWeekReview({ plannedById: plannedByIdOf(planned), weekStart: mondayOfWeek(today), plannedSessions: planned, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, openDraft: openDraftId, heartRate: settings.heartRate, intensityCounting: counting, keyFocus });
+  }, [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes, settings.leavePeriods, settings.heartRate, counting, keyFocus, openDraftId]);
   const streak = useMemo(
-    () => computeCurrentStreak(plannedSessions, sessionLogs, { templateById, programStart: program?.startDate, illnessEpisodes: settings.illnessEpisodes, leftOut: leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)), races: raceDatesOf(plannedSessions, templateById) }) }),
-    [plannedSessions, sessionLogs, templateById, program?.startDate, settings.illnessEpisodes, settings.leavePeriods, planChangeLog, today],
+    () => computeCurrentStreak(plannedSessions, sessionLogs, { templateById, programStart: program?.startDate, illnessEpisodes: settings.illnessEpisodes, leftOut: leftOutOfCount(plannedSessions, planChangeLog, settings.illnessEpisodes, today, program?.startDate, { periods: settings.leavePeriods, loggedIds: new Set(sessionLogs.map((l) => l.plannedSessionId)), races: raceDatesOf(plannedSessions, templateById), openDraft: openDraftId }) }),
+    [plannedSessions, sessionLogs, templateById, program?.startDate, settings.illnessEpisodes, settings.leavePeriods, planChangeLog, today, openDraftId],
   );
   const rhythm = useMemo(() => buildRhythm({ adherence, thisWeek, streak }), [adherence, thisWeek, streak]);
   // The main goal is behind you: nothing planned any more (engine/programLayout.ts#planEndDay).

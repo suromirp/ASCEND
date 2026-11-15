@@ -117,6 +117,9 @@ export interface AppData {
   // Wat dit toestel onthoudt van je antwoorden op die kaart (Niet nu, Liever niet, wat ASCEND zelf
   // oversloeg). Null tot het gelezen is. Het inhaaladvies leest hieruit welke koppelingen je afwees.
   missedMemory: ResolvedMissedMemory | null;
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId), of niets: die
+  // training loopt nog, is niet gemist en niet gedaan. Geef hem mee als `openDraft` naast leave, illness en races.
+  openDraftId?: string;
   rememberMissed: (change: (m: ResolvedMissedMemory) => MissedMemory) => void;
   // "Inkorten": a watch activity cut at the end and/or the beginning (the series
   // come from the sheet, in memory), and "Inkorten ongedaan maken". Both

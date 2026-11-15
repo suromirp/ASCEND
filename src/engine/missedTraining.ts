@@ -22,7 +22,7 @@ import { lockLevel } from './weekValidator';
 import { isHandLog } from './activityImport';
 import { fitsChosenWayLog, isLooseSourceLog, sameLinkKind, templateKind } from './looseLog';
 import { daysBetween, formatDateNL, weekdayLongNL } from '../utils/dates';
-import { isPausedDay } from './sessionStatus';
+import { isDraftOpen, isPausedDay } from './sessionStatus';
 import { isTaperDay, raceDatesOf } from './raceWindow';
 
 type MissedChoice = 'ask' | 'auto' | 'off';
@@ -111,6 +111,9 @@ export interface MissedInput {
   // Vakanties en tochten die je meldde (engine/leave.ts#isAwayDay): wat daar stond is nooit gemist en vervalt met
   // één regel; wat ervoor nog open stond blijft gemist, maar krijgt geen vraag meer.
   leavePeriods?: LeavePeriod[];
+  // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): die loopt nog en
+  // krijgt geen vraag, niets vanzelf, geen koppelvoorstel en geen regel Vervallen.
+  openDraftId?: string;
 }
 
 // Een pauze die je zelf meldde (ziek of weg) en die begon na deze dag en uiterlijk vandaag: wat op die dag
@@ -220,9 +223,10 @@ export function planMissed(input: MissedInput): MissedPlan {
   const age = (s: PlannedSession) => daysBetween(s.scheduledDate, today);
   const awayDays = leaveDays(awayPeriods(leavePeriods));
 
-  // Nog zonder log en niet overgeslagen, met een soort; dat kan bij een log horen.
+  // Nog zonder log en niet overgeslagen, met een soort; dat kan bij een log horen. Een training die nog loopt (een
+  // concept in Forge) doet niet mee: daar valt niets te vragen.
   const unlogged = input.plannedSessions
-    .filter((s) => s.status !== 'skipped' && !logged.has(s.id))
+    .filter((s) => s.status !== 'skipped' && !logged.has(s.id) && !isDraftOpen(s, input.openDraftId, today))
     .map((s) => ({ session: s, template: templateById.get(s.templateId) }))
     .filter((m): m is MissedSession => !!m.template && templateKind(m.template) !== undefined);
 

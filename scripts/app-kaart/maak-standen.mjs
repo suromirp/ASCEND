@@ -1,7 +1,7 @@
 // Maakt de nagemaakte standen voor de tekstkaart (docs/app-kaart/README.md) en laat elk één planningsronde
 // draaien op de vaste klok van de kaart, zodat een start daarna niets meer bijwerkt.
 //   node scripts/app-kaart/maak-standen.mjs            maakt alle standen opnieuw
-//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, ziek-eerder, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel)
+//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, ziek, ziek-eerder, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel, concept)
 // Alles is nagemaakt: de basis is state-kracht.json, de rest zijn kleine wijzigingen met verzonnen getallen.
 //
 // Waarom "settle": bij de eerste start na het laden van een stand vindt de planningsronde nog iets te
@@ -210,6 +210,24 @@ function metHerstel(state) {
   winkel(state, 'sessionLogs').records.push({ value: { id: 'fake_herstel', templateId: 'tpl_herstel', type: 'recovery', completedDate: '2026-11-01', completedAt: '2026-11-01T10:00:00Z', variant: 'full', durationMinutes: 56, source: 'manual', outdoorData: { durationMinutes: 56, distanceKm: 4.8, source: 'manual' } } });
 }
 
+// Een training die bleef liggen (besluit 2026-11-15-concept-loopt-nog.md): Benen A van woensdag 28 oktober is in Forge
+// begonnen en ligt als concept, drie werksets afgevinkt, laatste handeling die avond. De planner noemt hem "loopt nog",
+// niet gemist. Het concept staat in localStorage (utils/forgeSessionStore.ts), net als in de app.
+function metConcept(state) {
+  const id = 'planned_mvsb9yotvrxtjp6';
+  const key = `ascend.afvinkconcept.${id}:forge`;
+  const start = Date.parse('2026-10-28T19:30:00+01:00');
+  const rij = (rid, kind, done) => ({ id: rid, kind, done, weightKg: 60, reps: 8 });
+  const concept = {
+    v: 1, savedAt: start + 25 * 60_000, startedAt: start, lastActionAt: start + 25 * 60_000, pauses: [], column: 'target',
+    exercises: [{ slot: 'kaart_a', rows: [rij('w1', 'warmup', true), rij('r1', 'work', true), rij('r2', 'work', true), rij('r3', 'work', true), rij('r4', 'work', false)] }],
+    log: [],
+  };
+  const wijzer = { key, templateId: 'tpl_lower_a', name: 'Benen A', plannedSessionId: id, scheduledDate: '2026-10-28' };
+  const ls = state.origins[0].localStorage;
+  ls.push({ name: key, value: JSON.stringify(concept) }, { name: 'ascend.forge.sessie', value: JSON.stringify(wijzer) });
+}
+
 export const STANDEN = {
   kracht: () => {},
   horloge: metHorloge,
@@ -226,6 +244,7 @@ export const STANDEN = {
   rustweek: metRustweek,
   heuvel: metHeuvel,
   herstel: metHerstel,
+  concept: metConcept,
 };
 
 // --- één planningsronde op de vaste klok -------------------------------------------------------------

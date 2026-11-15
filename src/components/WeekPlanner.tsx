@@ -87,10 +87,10 @@ function SessionRow({
   // Een gemiste training die je naar later sleepte: "verplaatst van wo 28" op de nieuwe rij.
   catchNote?: string;
 }) {
-  const { restDayMode, illnessEpisodes } = useAppData().settings;
+  const { settings: { restDayMode, illnessEpisodes }, openDraftId } = useAppData();
   const restMode = restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
-  const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest, { leave, illness: illnessEpisodes, races });
+  const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest, { leave, illness: illnessEpisodes, races, openDraft: openDraftId });
   // Een vaste afspraak van een sport (engine/fixedSports.ts) heeft de lengte die jij koos.
   // Gedaan: de duur van het log (engine/sessionStatus.ts#rowMinutes), niet die van het plan.
   const duration = rowMinutes(log, session.fixed && session.plannedMinutes ? session.plannedMinutes : resolveEffectiveFullDuration(template, session.scheduledDate, program));
@@ -100,7 +100,7 @@ function SessionRow({
   // met een regel in Aangepast door ASCEND, ook als hij gedaan is (engine/changeLog.ts#weekAdjustments).
   // Een rustdag houdt "bewust herstel"; alleen een punt uit Let op en "aangepast" komen erbij.
   const extra = isRest ? rowExtra({ concern, adjusted }) : rowExtra({
-    concern, missed: status === 'missed' && !!handle, lapsed: status === 'away', catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
+    concern, missed: status === 'missed' && !!handle, lapsed: status === 'away', open: status === 'open', catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
   });
   const note = extra && [extra.text, extra.also].filter(Boolean).join(', ');
   // Het streepje met de kleur van de zone alleen bij een training te voet of op de fiets, niet bij kracht.
@@ -321,7 +321,7 @@ export function WeekPlanner({
   const today = todayISO();
   const loggedIds = new Set(logs.map((l) => l.plannedSessionId));
   const { statusOf } = useWatchStatuses();
-  const { settings, plannedSessions } = useAppData();
+  const { settings, plannedSessions, openDraftId } = useAppData();
   const caughtUp = useMemo(() => caughtUpMap(plannedSessions), [plannedSessions]);
   const races = useMemo(() => raceDatesOf(plannedSessions, templateById), [plannedSessions, templateById]);
   const showWatch = settings.showWatchStatusOnWeek !== false;
@@ -348,7 +348,9 @@ export function WeekPlanner({
     // Een gemiste training heeft ook een greep, als er in deze week nog een dag is om naartoe te slepen
     // (vandaag of later): loslaten haalt hem in (engine/catchUp.ts). Een andere week gaat via het blad.
     // Vervallen (een gemelde vakantie of ziekte, of de afbouw voor een race die er al was) haal je niet in: geen greep.
-    const lapsedDay = deriveSessionStatus(s, logs, false, { leave, illness: settings.illnessEpisodes, races }).status === 'away';
+    // Een training die nog loopt (een concept in Forge) haal je ook niet in: rond hem af of verwijder hem eerst.
+    const pastStatus = deriveSessionStatus(s, logs, false, { leave, illness: settings.illnessEpisodes, races, openDraft: openDraftId }).status;
+    const lapsedDay = pastStatus === 'away' || pastStatus === 'open';
     const catchable = eligibility && !eligibility.ok && eligibility.reason === 'history' && !lapsedDay && days.some((d) => d >= today)
       && catchUpEligibility(s, template, { logged: loggedIds.has(s.id), today, caughtUp: caughtUp.has(s.id) }).ok;
     const ingehaald = caughtUp.get(s.id);

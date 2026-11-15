@@ -15,6 +15,7 @@ import { isAwayDay } from './leave';
 import { type AdviceInputs, type Advice, isDone, inProgram, isKeySession, findCatchUpDate, findRestDayToUse, keyCatchUpShort, raceWeekGuard, recoveryWeekGuard, type AdviceOption, catchUpDates, moveOptions, proposal } from './adviceShared';
 import { TEST_RUN_ID } from './adviceTestRun';
 import { isTaperDay, raceDatesOf } from './raceWindow';
+import { isDraftOpen } from './sessionStatus';
 
 // Een naam midden in een zin: "Tempoloop" wordt "tempoloop".
 const lower = (name: string) => `${name.charAt(0).toLowerCase()}${name.slice(1)}`;
@@ -43,7 +44,9 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
       // Een vakantie of tocht die je meldde is nooit gemist; wat ervoor open stond vervalt (engine/missedTraining.ts#pauseSince).
       && !isAwayDay(s.scheduledDate, inputs.leave) && !pauseSince(s.scheduledDate, inputs.asOf, inputs.illnessEpisodes, inputs.leave)
       // Een training uit de afbouw voor een race die er al was vervalt, ook als het venster later begon (engine/raceWindow.ts).
-      && !isTaperDay(s.scheduledDate, races, inputs.asOf),
+      && !isTaperDay(s.scheduledDate, races, inputs.asOf)
+      // Een training die nog loopt (een concept in Forge) is niet gemist (engine/sessionStatus.ts#isDraftOpen).
+      && !isDraftOpen(s, inputs.openDraft, inputs.asOf),
   );
   // One advice for everything missed, not one each (production feedback:
   // a stack of "gemist" cards). Only a key session (engine/keySession.ts:

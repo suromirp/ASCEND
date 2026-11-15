@@ -55,13 +55,14 @@ export function useAdviceAndWeek(deps: {
   planChangeLog: PlanChangeProposal[];
   adviceResponses: Record<string, StoredResponse>;
   missedMemory: ResolvedMissedMemory | null;
+  openDraftId: string | undefined;
   plannerAdvice: Advice | null;
   templateById: Map<string, SessionTemplate>;
   goalOverviews: GoalOverview[];
   dragContextFor: (weekStart: string) => DragContext;
   updateSettings: (patch: Partial<AppSettings>) => Promise<AppSettings>;
 }) {
-  const { loading, program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, templates, planChangeLog, adviceResponses, missedMemory, plannerAdvice, templateById, goalOverviews, dragContextFor, updateSettings } = deps;
+  const { loading, program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, templates, planChangeLog, adviceResponses, missedMemory, openDraftId, plannerAdvice, templateById, goalOverviews, dragContextFor, updateSettings } = deps;
   // What the extra training of the week is chosen from (engine/extraRun.ts).
   const extraSessionContext = useMemo(() => {
     const today = todayISO();
@@ -165,6 +166,8 @@ export function useAdviceAndWeek(deps: {
         answeredOn: answeredDays(adviceResponses),
         // Eerst koppelen, dan inhalen (engine/missedTraining.ts#linkCandidates).
         missedLink: { on: settings.missedLink !== false, declined: missedMemory?.declined ?? [], declinedOn: missedMemory?.declinedOn, places },
+        // Een training die nog loopt (een concept in Forge) wordt niet ingehaald (engine/sessionStatus.ts#isDraftOpen).
+        openDraft: openDraftId,
         leave: settings.leavePeriods,
         // Rustiger instap na een pauze (engine/reentry.ts).
         reentry: { choice: resolveReentry(settings.reentry), weeks: settings.reentryWeeks },
@@ -179,7 +182,7 @@ export function useAdviceAndWeek(deps: {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, places, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction, settings.reentry, settings.reentryWeeks],
+    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, openDraftId, places, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction, settings.reentry, settings.reentryWeeks],
   );
 
   // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).
