@@ -401,6 +401,14 @@ export function GarminLinkPage() {
         )}
         {connected && (
           <UseRow
+            title="Hartslag bij wandelen"
+            text="Een wandelworkout krijgt vaste slagen per minuut uit je hardloopzones, want wandelen heeft in intervals.icu geen eigen zones."
+            checked={settings.watchWalkBpm !== false}
+            onChange={(on) => void updateSettings({ watchWalkBpm: on }).then(() => syncWatchWorkouts({ force: true }))}
+          />
+        )}
+        {connected && (
+          <UseRow
             title="Gedane trainingen weghalen"
             text="Een training die je hebt gedaan of voorbij liet gaan, gaat weer uit je intervals.icu-agenda. Je activiteit zelf blijft staan."
             checked={settings.watchRemoveDone !== false}

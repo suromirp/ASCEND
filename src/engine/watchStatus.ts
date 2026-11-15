@@ -20,6 +20,7 @@
 // "Sent" means: written to the intervals.icu agenda, which hands it on to
 // Garmin Connect and the watch. ASCEND cannot see the watch itself.
 
+import type { HeartRateSettings } from './heartRateZones';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import { addDays, formatDateNL, toISODate, weekdayLongNL } from '../utils/dates';
@@ -62,13 +63,15 @@ export interface WatchStatusContext {
   // The same choices Waar train je? and the same setting the send uses, or the fingerprint differs.
   places?: Record<string, string>;
   placeWorkout?: boolean;
+  // The same heart rate for a walking workout the send uses (engine/walkHeartRate.ts), or the fingerprint differs.
+  walkHr?: HeartRateSettings;
   // The ids of planned sessions that have a log.
   logged: Set<string>;
 }
 
 export function watchStatusFor(session: PlannedSession, template: SessionTemplate, ctx: WatchStatusContext): WatchStatus {
   if (session.status === 'skipped' || ctx.logged.has(session.id) || session.scheduledDate < ctx.today) return { kind: 'none' };
-  const workout = buildWatchWorkout(session, template, ctx.program, ctx.paces, { namePrefix: ctx.namePrefix, hr: ctx.hr, places: ctx.places, placeWorkout: ctx.placeWorkout });
+  const workout = buildWatchWorkout(session, template, ctx.program, ctx.paces, { namePrefix: ctx.namePrefix, hr: ctx.hr, places: ctx.places, placeWorkout: ctx.placeWorkout, walkHr: ctx.walkHr });
   if (!workout) return { kind: 'none' };
   if (!ctx.linked) return { kind: 'unlinked' };
 

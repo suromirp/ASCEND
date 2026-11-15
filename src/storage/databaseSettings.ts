@@ -163,6 +163,9 @@ export interface AppSettings {
   // "Eigen workout bij een andere manier": a run with the StairMaster chosen goes to the
   // watch as a walking workout of its own. Absent = on. Optional and additive, so no migration step.
   watchPlaceWorkout?: boolean;
+  // "Hartslag bij wandelen" (engine/walkHeartRate.ts): a walking workout gets fixed beats per minute from your
+  // running zones in its text and in the Briefing, never a zone. Absent = on. Optional and additive, so no migration step.
+  watchWalkBpm?: boolean;
   // The text for Strava on a done training (engine/
   // activityText.ts). Absent = on. Optional and additive, so no migration step.
   stravaText?: boolean;

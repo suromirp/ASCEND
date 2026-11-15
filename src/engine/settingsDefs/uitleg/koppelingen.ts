@@ -96,6 +96,16 @@ export const KOPPELINGEN_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'de workout van de training blijft staan en je start de manier zonder workout.' },
     ],
   },
+  'horloge-wandel-hartslag': {
+    title: 'Hartslag bij wandelen',
+    lead: 'Een wandelworkout krijgt geen zone maar vaste slagen per minuut uit je hardloopzones, boven de stappen en in de Briefing.',
+    points: [
+      { head: 'Waarom', text: 'intervals.icu kent alleen Fietsen, Hardlopen, Zwemmen en Andere. Wandelen valt onder Andere, en daar staan geen zones.' },
+      { head: 'Rustig', text: 'alleen een bovengrens, het einde van zone 2. Wandelend onder zone 1 zakken is goed.' },
+      { head: 'Let op', text: 'het is tekst, geen hartslagdoel: je horloge piept er niet op.' },
+      { head: 'Uit', text: 'geen getallen, je wandelt op gevoel zoals voorheen.' },
+    ],
+  },
   'horloge-gedaan-weghalen': {
     title: 'Gedane trainingen weghalen',
     lead: 'Een training die je deed of oversloeg, verdwijnt weer uit je agenda.',
