@@ -111,7 +111,7 @@ export function IllnessStatusCard({ quiet = false }: { quiet?: boolean }) {
             onClick={() => void request({ action: 'report', kind: 'below_neck' })}
             className="self-start text-left"
           >
-            Toch koorts of klachten onder de nek?
+            Toch koorts of klachten op je borst?
           </TextButton>
         )}
       </Card>

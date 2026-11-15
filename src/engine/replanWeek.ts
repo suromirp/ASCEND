@@ -52,7 +52,7 @@ function backToPlan(row: PlannedSession, slot: Pick<PlannedSession, 'templateId'
   return { ...rest, templateId: slot.templateId, scheduledDate: slot.scheduledDate, weekStartDate: slot.weekStartDate, status: 'planned' };
 }
 
-// Ziek en opbouwen na ziekte blijven gelden: zolang je ziek bent vandaag en morgen (boven de nek alleen
+// Ziek en opbouwen na ziekte blijven gelden: zolang je ziek bent vandaag en morgen (neus of keel zonder koorts alleen
 // wat zwaar is), tijdens het opbouwen alles wat zwaar is tot de dag dat zwaar weer mag.
 export function illnessHeld(episodes: IllnessEpisode[] | undefined, today: string, templates: SessionTemplate[]): (date: string, templateId: string) => boolean {
   const byId = new Map(templates.map((t) => [t.id, t]));
