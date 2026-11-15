@@ -10,6 +10,7 @@
 // Puur: geen React, geen IndexedDB.
 
 import type { SessionLog } from '../models/training';
+import { BEGINNER_LADDER, REFERENCE_SETS, type WalkJog } from '../data/beginnerLadder';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 
 export type BeginnerStartChoice = 'auto' | 'ja' | 'nee';
@@ -54,4 +55,45 @@ export function beginnerStartLine(start: string, today: string, waveLength = BEG
   const since = Math.floor(daysBetween(mondayOfWeek(start), mondayOfWeek(today)) / 7);
   if (since < 0 || since >= weeks) return undefined;
   return `Je begint rustig: de eerste ${WEEKS_WORD[weeks] ?? weeks} weken alleen makkelijk, de eerste pittige training pas daarna. Zo went je lichaam eerst aan het ritme.`;
+}
+
+// --- heel licht: de ladder per week (docs/visie/Ontwerp beginner heel licht.md, deel 1) -------------
+
+export interface BeginnerWeekPlan {
+  // Week van de start, vanaf 1.
+  week: number;
+  strengthMinutes: number;
+  // Werksets voor een krachttraining met `fullSets` sets in het gewone plan.
+  strengthSets: number;
+  // De kortere en de langere sessie wandelen en dribbelen.
+  shortMinutes: number;
+  longMinutes: number;
+  // Minuten dribbelen en wandelen om de beurt; null is gewoon lopen.
+  walkJog: WalkJog | null;
+}
+
+// De week van de start waarin `date` valt, vanaf 1; voor de start 0 of minder.
+export function beginnerWeekNumber(start: string, date: string): number {
+  return Math.floor(daysBetween(mondayOfWeek(start), mondayOfWeek(date)) / 7) + 1;
+}
+
+// Wat week `week` van de beginnersstart vraagt (data/beginnerLadder.ts), of niets: voor de start en
+// na de ladder geldt het gewone plan (zonder harde training zolang de start loopt, beginnerWeeksFor).
+// `fullSets`: de werksets van de krachttraining in het gewone plan; die krijgt hetzelfde deel als
+// Bovenlichaam A, in week 1 nooit meer dan de helft en nooit meer dan het gewone plan.
+// Puur: de planning leest dit nog niet (stap 3 van het ontwerp).
+export function beginnerWeek(week: number, fullSets = REFERENCE_SETS): BeginnerWeekPlan | undefined {
+  const rung = Number.isInteger(week) ? BEGINNER_LADDER[week - 1] : undefined;
+  if (!rung) return undefined;
+  const full = Math.max(0, Math.floor(fullSets));
+  const share = Math.round((full * rung.strengthSets.value) / REFERENCE_SETS);
+  const strengthSets = Math.min(full, week === 1 ? Math.floor(full / 2) : full, Math.max(full > 0 ? 1 : 0, share));
+  return {
+    week,
+    strengthMinutes: rung.strengthMinutes.value,
+    strengthSets,
+    shortMinutes: rung.shortMinutes.value,
+    longMinutes: rung.longMinutes.value,
+    walkJog: rung.walkJog.value ? { ...rung.walkJog.value } : null,
+  };
 }

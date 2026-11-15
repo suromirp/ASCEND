@@ -10,7 +10,7 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 - `src/engine/templateRoles.ts#hasRole` een training herken je aan een rol, nooit aan een id
 - `src/engine/workSets.ts#isWorkSet` alles wat sets telt gaat hierdoor
 - `src/engine/leaveProposal.ts#planLeaveChange` vrije dagen, vakanties, tochten en zonder sportschool als voorstel, met `src/engine/leaveAround.ts#planAroundLeave` voor de beste indeling rond een vakantie (ook over de weekgrens); `src/engine/noGym.ts#applyNoGymDays` wat zonder sportschool verandert
-- `src/engine/programLayout.ts#layoutWaves` fases en golven, geteld vanaf het doel
+- `src/engine/programLayout.ts#layoutWaves` fases en golven, geteld vanaf het doel; `src/engine/beginnerStart.ts#beginnerWeek` de ladder van heel licht per week van de start (minuten, sets, wandelen en dribbelen), gegevens met bron in `src/data/beginnerLadder.ts`; de planning leest hem nog niet (`docs/visie/Ontwerp beginner heel licht.md`, stap 3)
 - `src/storage/databaseHorizon.ts#syncProgramHorizon` schrijft het plan weg, draait bij elke verandering
 - `src/storage/horizonPlan.ts#computeHorizonPlan` rekent een voorstel uit, `applyHorizonPlanNow` schrijft het
 - `src/storage/databaseSeed.ts#seedIfEmpty` een nieuwe installatie plant niets
