@@ -119,8 +119,8 @@ afspraken voor elke agent die in deze repo werkt.
   gaat in de app via een voorstel met Akkoord, nooit stil.
 - Instellingen: elke keuze die de app voor de gebruiker maakt is instelbaar,
   met het advies als standaard en één zin uitleg. Een nieuwe functie zonder
-  instelling is niet af; de instelling komt ook in `src/data/settingsIndex.ts`
-  (zoeken), `src/data/settingsLayout.ts` (pagina en rij) en
+  instelling is niet af; de instelling komt ook als verklaring in
+  `src/engine/settingsDefs/<groep>.ts` (zoeken, pagina, rij en voorwaarden) en in
   `engine/settingsSummary.ts` (de waarde in de rij), en een groepspagina in
   `src/components/settings/groups/` (`docs/beslissingen/2026-10-22-alles-instelbaar.md`,
   `docs/beslissingen/2026-10-22-instellingen-in-groepen.md`).

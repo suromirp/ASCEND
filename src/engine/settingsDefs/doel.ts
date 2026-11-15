@@ -5,6 +5,7 @@
 // settingsChoices.ts tot stap 2 en 3; settingsDefs.parity.test.ts bewaakt dat de teksten gelijk zijn. De volgorde
 // is die van de pagina: een rij, met daaronder wat in haar blad staat.
 
+import { B } from './parts';
 import type { SettingDef } from './types';
 
 export const DOEL: SettingDef[] = [
@@ -48,6 +49,7 @@ export const DOEL: SettingDef[] = [
         { head: 'Opnieuw bij week 1', text: 'kies je een schone start of alleen de weektelling, en vanaf welke week.' },
       ],
     },
+    showWhen: [B.goalOrProgram],
   },
   {
     id: 'bundel-zonder-doel',
@@ -56,6 +58,7 @@ export const DOEL: SettingDef[] = [
     title: 'Zonder doel',
     search: false,
     sheet: { eyebrow: 'Doel en tochten', title: 'Zonder doel', line: 'Hoe ASCEND je weken plant en telt als je geen doel hebt.' },
+    showWhen: [B.noGoal],
   },
   {
     id: 'richting',
@@ -73,6 +76,7 @@ export const DOEL: SettingDef[] = [
         { head: 'Rustig aan', text: '90 minuten en 1 keer kracht, nooit een harde training. Een andere richting is eerst een voorstel, pas na Akkoord verandert er iets.' },
       ],
     },
+    showWhen: [B.noGoal],
   },
   {
     id: 'weekbudget',
@@ -90,6 +94,7 @@ export const DOEL: SettingDef[] = [
         { head: 'Planning', text: 'met een richting bepaalt het budget hoe lang je duurtrainingen zijn. Eerst een voorstel, pas na Akkoord verandert er iets.' },
       ],
     },
+    showWhen: [B.noGoal],
   },
   {
     id: 'golven',
@@ -107,6 +112,7 @@ export const DOEL: SettingDef[] = [
         { head: 'Terugblik na een golf', text: 'een kaart op Ascend na elke golf. Haalde je genoeg weken je minuten (advies 3 van 4), dan stelt Nog een golf een iets hoger budget voor.' },
       ],
     },
+    showWhen: [B.noGoal],
   },
   {
     id: 'beginnersstart',
@@ -139,6 +145,7 @@ export const DOEL: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.noGoal],
   },
   {
     id: 'golf-terugblik',
@@ -147,6 +154,7 @@ export const DOEL: SettingDef[] = [
     title: 'Terugblik na een golf',
     note: 'Na elke golf een kaart op Ascend met hoe het ging en wat nu: nog een golf, rustiger aan of een doel. Staat in Golven.',
     keywords: ['terugblik', 'golf', 'golven', 'na een golf', 'stap omhoog', 'zonder doel', 'richting'],
+    showWhen: [B.noGoal],
   },
   {
     id: 'lange-zondag',
@@ -176,6 +184,7 @@ export const DOEL: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.longSunday],
   },
   {
     id: 'na-hoofddoel',
@@ -205,6 +214,7 @@ export const DOEL: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.goal],
   },
   {
     id: 'klaar-weging',
@@ -237,6 +247,7 @@ export const DOEL: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.goal],
   },
   {
     id: 'klaar-groei',
@@ -269,6 +280,7 @@ export const DOEL: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.goal],
   },
   {
     id: 'klaar-marge',
@@ -302,6 +314,7 @@ export const DOEL: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.goal],
   },
   {
     id: 'doeltijd-voorstel',
@@ -402,6 +415,7 @@ export const DOEL: SettingDef[] = [
       ],
     },
     helpKey: 'bundelTochten',
+    showWhen: [B.goalOrTrek],
   },
   {
     id: 'volgende-tocht',
@@ -410,6 +424,7 @@ export const DOEL: SettingDef[] = [
     title: 'Volgende tocht op Vandaag',
     note: 'Of je volgende tocht als regel op Vandaag staat.',
     keywords: ['tocht', 'sneeuwhike', 'weekend', 'aftellen', 'trek', 'vandaag', 'tochten'],
+    showWhen: [B.goalOrTrek],
   },
   {
     id: 'water-per-etappe',
@@ -428,6 +443,7 @@ export const DOEL: SettingDef[] = [
       ],
     },
     helpKey: 'waterPerEtappe',
+    showWhen: [B.goalOrTrek],
   },
   {
     id: 'rust-na-tocht',
@@ -460,6 +476,7 @@ export const DOEL: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.goalOrTrek],
   },
   {
     id: 'afdaalklok',
@@ -494,6 +511,7 @@ export const DOEL: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.goalOrTrek],
   },
   {
     id: 'bergschoenen',
@@ -528,6 +546,7 @@ export const DOEL: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.goalOrTrek],
   },
   {
     id: 'bergschoenen-herinnering',
@@ -545,6 +564,7 @@ export const DOEL: SettingDef[] = [
       ],
     },
     helpKey: 'bergschoenenHerinnering',
+    showWhen: [B.goalOrTrek],
   },
   {
     id: 'vrije-dagen',

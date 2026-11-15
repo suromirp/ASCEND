@@ -325,7 +325,8 @@ function photo(): string {
   sections.index = Object.fromEntries(SETTINGS_INDEX.map((item, i) => [numbered(i, item.id), item]));
   sections.pagina = Object.fromEntries(SETTINGS_PAGES.map((p) => [p.id, { ...p, rows: PAGE_ROWS[p.id] }]));
   sections.plek = Object.fromEntries(ALL_IDS.map((id) => [id, { placement: placementOf(id) ?? null, page: pageOfRow(id) ?? null, advanced: SETTINGS_PAGES.some((p) => isAdvancedRow(p.id, id)) }]));
-  sections.voorwaarden = Object.fromEntries(Object.entries(SHOW_WHEN).map(([id, list]) => [id, list.map((b) => ({ reason: b.reason, parent: b.parent }))]));
+  // Op id gesorteerd: de volgorde van de sleutels in SHOW_WHEN doet niets (sinds stap 2 volgt ze de verklaringen).
+  sections.voorwaarden = Object.fromEntries(Object.entries(SHOW_WHEN).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([id, list]) => [id, list.map((b) => ({ reason: b.reason, parent: b.parent }))]));
   sections.uitleg = { ...SETTINGS_HELP };
   sections['uitleg zonder namen'] = Object.fromEntries(Object.keys(SETTINGS_HELP).flatMap((k) => (settingsHelp(k, false) === SETTINGS_HELP[k] ? [] : [[k, settingsHelp(k, false)]])));
   sections.keuzes = Object.fromEntries(Object.entries(CHOICES).map(([k, c]) => [k, { ...c, shorts: c.options.map((o) => choiceShort(k as ChoiceId, o.value)) }]));

@@ -5,6 +5,7 @@
 // settingsChoices.ts tot stap 2 en 3; settingsDefs.parity.test.ts bewaakt dat de teksten gelijk zijn. De volgorde
 // is die van de pagina: een rij, met daaronder wat in haar blad staat.
 
+import { B } from './parts';
 import type { SettingDef } from './types';
 
 export const PLANNING: SettingDef[] = [
@@ -108,6 +109,7 @@ export const PLANNING: SettingDef[] = [
     title: 'Benen en een zware loop',
     note: 'Of een zware beentraining en een zware loop op één dag mogen, met de loop eerst.',
     keywords: ['zware dingen', 'heuvels', 'zelfde dag', 'beentraining', 'kracht'],
+    showWhen: [B.pairing],
   },
   {
     id: 'sporten',
@@ -640,6 +642,7 @@ export const PLANNING: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.missedOn],
   },
   {
     id: 'log-koppelen',
@@ -725,6 +728,7 @@ export const PLANNING: SettingDef[] = [
         ],
       },
     },
+    showWhen: [B.dragWeek],
   },
   {
     id: 'volgorde-stand',
