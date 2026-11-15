@@ -242,6 +242,17 @@ function tickDay(o: { today: string; lastTickAt?: number; dayOf: (ms: number) =>
   return day <= o.today && day >= addDays(o.today, -60) ? day : undefined;
 }
 
+// Het tijdstip (`completedAt`) van het nieuwe log bij de dag van Afronden (onderhoud 15 november): vandaag is het nu;
+// een eerdere dag krijgt het moment van je laatste echte werk als dat op die dag viel, anders 12:00 op die dag. Nooit
+// later dan nu, en nooit een dag naast `completedDate` (die twee lopen niet uiteen). Alleen voor een nieuw log.
+export function finishCompletedAt(o: { doneOn: string; today: string; now: number; lastWorkAt?: number; dayOf: (ms: number) => string }): string {
+  if (o.doneOn >= o.today) return new Date(o.now).toISOString();
+  const work = o.lastWorkAt;
+  if (work !== undefined && Number.isFinite(work) && work <= o.now && o.dayOf(work) === o.doneOn) return new Date(work).toISOString();
+  const noon = new Date(`${o.doneOn}T12:00:00`).getTime();
+  return new Date(Number.isFinite(noon) ? Math.min(noon, o.now) : o.now).toISOString();
+}
+
 // De knoppen bij Gedaan op voor een geplande training: de geplande dag (als die niet na vandaag ligt), de dag van
 // je laatste set en vandaag, oud naar nieuw, zonder dubbele. Een enkele dag (alles vandaag) is geen keuze: leeg.
 export function finishDayChoices(o: { today: string; scheduledDate?: string; lastTickAt?: number; dayOf: (ms: number) => string }): string[] {
