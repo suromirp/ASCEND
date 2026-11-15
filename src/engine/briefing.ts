@@ -31,7 +31,7 @@ import { formatClockTime, goesOnWhen } from './watchStatus';
 import { watchSheet, type WatchSheetInput } from './watchSheet';
 import { mayAutoTick } from './autoTick';
 import { sourceSilence, type SourceWatchInput } from './sourceWatch';
-import { routeTarget } from './routeTarget';
+import { routeTarget, searchesOnOpen } from './routeTarget';
 import { showSpotsFor } from './trainingSpots';
 import { uvShort } from './outdoorSun';
 import { placeChoices, placeHasRoute, placeIsOutdoor, resolvePlace, type PlaceChoice } from './trainingPlace';
@@ -222,6 +222,12 @@ export interface BriefingInput {
   // Instelling Lus zoeken (ongelezen); afwezig is het advies, zoeken bij het openen.
   routeSearch?: unknown;
   easyPace?: PaceRange;
+  // Je lichaamsgewicht (weightTrend.ts#loadBodyKg), voor de rugzak van een wandeltraining op je eigen
+  // klimtempo (engine/hikeTarget.ts); afwezig: geen omrekening.
+  bodyKg?: number;
+  // Instelling Route bij wandelen (stap 5, nog zonder rij), ongelezen; afwezig is het advies: een
+  // herstelwandeling zoekt alleen na een tik (engine/routeTarget.ts#searchesOnOpen).
+  walkRoute?: unknown;
   // De koppeling: afwezig zolang hij gelezen wordt. Dan de veilige kant: zelf invullen.
   watchLink?: { linked: boolean; autoTick: boolean; activities: boolean };
   // Wat de bronbewaking nodig heeft; afwezig is geen stilte.
@@ -464,13 +470,13 @@ function mapOf(
   if (!outdoor && modality) return { kind: 'place' };
   if (!input.routeOn) return { kind: 'none' };
   if (placeHasRoute(input.template, place)) {
-    const target = routeTarget({ template: input.template, date: input.date, program: input.program, logs: input.logs, testPace: input.easyPace });
+    const target = routeTarget({ template: input.template, date: input.date, program: input.program, logs: input.logs, testPace: input.easyPace, bodyKg: input.bodyKg });
     const soon = input.date === today || input.date === addDays(today, 1);
-    const onOpen = soon && resolveRouteSearch(input.routeSearch) === 'open';
+    const onOpen = soon && resolveRouteSearch(input.routeSearch) === 'open' && searchesOnOpen(input.template, input.walkRoute);
     // Alleen de kilometers: de hoogtemeters staan al in de hartkaart.
     return { kind: 'route', target, line: kmText(target), search: onOpen ? 'open' : 'tap' };
   }
-  // Wandelen of rugzak buiten: nog geen lus van de planner, wel plekken in de buurt. Fietsen: niets.
+  // Te voet buiten zonder lus (Trap af: een plek, geen lus): plekken in de buurt. Fietsen: niets.
   const sport = (place ? modalitySport(place) : undefined) ?? templateSport(input.template);
   return sport === 'hiking' ? { kind: 'nearby' } : { kind: 'none' };
 }

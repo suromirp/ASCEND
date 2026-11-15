@@ -16,6 +16,7 @@ import type { SessionTemplate } from '../models/training';
 import type { RoutePoint, RouteStyle, RouteTarget } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
+import { loadBodyKg } from '../engine/weightTrend';
 import { resolveRouteStyle, roundStart, routeTarget } from '../engine/routeTarget';
 import { searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
@@ -179,7 +180,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const first = resolveRouteStyle(settings.routeStyle);
   // Grote wegen mijden in de aanvraag aan de routeplanner (standaard aan).
   const avoidBigRoads = settings.routeAvoidBigRoads !== false;
-  const trainingTarget = routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy });
+  // Een wandeltraining rekent met je lichaamsgewicht voor de rugzak op je eigen klimtempo (engine/hikeTarget.ts).
+  const trainingTarget = routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy, bodyKg: loadBodyKg(settings) });
 
   useEffect(() => {
     let alive = true;

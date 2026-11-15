@@ -14,6 +14,7 @@ import { templateSport } from '../engine/sports';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { fuelOn } from '../engine/fuelOnTheGo';
 import { recentRunPace } from '../engine/recentRunPace';
+import { loadBodyKg } from '../engine/weightTrend';
 import { toISODate } from '../utils/dates';
 import { watchFieldsShown, resolveWatchModel } from '../engine/watchFields';
 import { getTrainingGuide } from '../data/trainingGuide';
@@ -53,6 +54,7 @@ export function useBriefingInput({ template, session, date, program, storedPlace
     routeOn: settings.routeProposal !== false,
     routeSearch: settings.routeSearch,
     easyPace: paces?.easy,
+    bodyKg: loadBodyKg(settings),
     paces,
     recentPace: recentRunPace(sessionLogs, template.id, toISODate(now)),
     watchLink,

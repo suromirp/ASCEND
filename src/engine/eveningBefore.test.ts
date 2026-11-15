@@ -133,6 +133,14 @@ describe('de regels', () => {
     const view = eveningBefore(input({ planned: [plan('p1', 'tpl_easy_run')], routeOn: true, forecast: undefined }))!;
     expect(view.lines.some((l) => /^Route [\d,]+ km: je lus staat in de Briefing\.$/.test(l))).toBe(true);
   });
+  it('een wandeltraining buiten krijgt ook de route; een herstelwandeling (geen Briefing) staat hier nooit', () => {
+    const ruck = eveningBefore(input({ planned: [plan('p1', 'tpl_ruck_walk')], routeOn: true, forecast: undefined }))!;
+    // 60 minuten op de wandelnorm: 4 km.
+    expect(ruck.lines).toContain('Route 4 km: je lus staat in de Briefing.');
+    const herstel: SessionTemplate = { id: 'tpl_herstel', name: 'Herstelwandeling', type: 'recovery', durationVariants: { full: 45 } };
+    const view = eveningBefore(input({ planned: [plan('p1', 'tpl_herstel')], templateById: new Map([...byId, [herstel.id, herstel]]), routeOn: true, forecast: undefined }));
+    expect(view?.lines.some((l) => l.startsWith('Route ')) ?? false).toBe(false);
+  });
   it('rugzak met gewicht bij een rugzaktraining', () => {
     const view = eveningBefore(input({ planned: [plan('p1', 'tpl_ruck_walk')] }))!;
     expect(view.lines).toContain('Rugzak 8 kg.');

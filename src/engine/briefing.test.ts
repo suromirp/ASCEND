@@ -261,9 +261,25 @@ describe('eten en drinken', () => {
 });
 
 describe('een rugzaktraining', () => {
-  it('het gewicht staat in de hartkaart, en buiten zonder lus van de planner staan de plekken in de buurt', () => {
+  it('het gewicht staat in de hartkaart, en buiten krijgt hij een lus op de duur (engine/hikeTarget.ts)', () => {
     const view = briefing(input({ template: RUCK, session: plan('tpl_ruck_walk') }));
     expect(view?.heart.facts.find((f) => f.label === 'rugzak')?.value).toMatch(/^\d/);
+    expect(view?.map.kind).toBe('route');
+    if (view?.map.kind !== 'route') return;
+    // 75 minuten zonder hoogtemeters: 5 km op de wandelnorm, en zoeken bij het openen zoals een loop.
+    expect(view.map.target).toMatchObject({ distanceKm: 5, ascentM: 0, minutes: 75 });
+    expect(view.map.line).toBe('5 km');
+    expect(view.map.search).toBe('open');
+  });
+  it('met de rugzak op je eigen klimtempo rekent de Briefing met je lichaamsgewicht, net als het blad Route', () => {
+    const view = briefing(input({ template: RUCK, session: plan('tpl_ruck_walk'), bodyKg: 75 }));
+    expect(view?.map.kind === 'route' && view.map.target).toEqual(routeTarget({ template: RUCK, date: TODAY, program: null, logs: [], bodyKg: 75 }));
+  });
+  it('op de loopband of de trap binnen geen lus', () => {
+    expect(briefing(input({ template: RUCK, session: plan('tpl_ruck_walk'), storedPlace: 'incline_treadmill' }))?.map.kind).toBe('place');
+  });
+  it('Trap af: een plek, geen lus; buiten blijven de plekken in de buurt', () => {
+    const view = briefing(input({ template: byId('tpl_stairs_down'), session: plan('tpl_stairs_down') }));
     expect(view?.map.kind).toBe('nearby');
   });
 });

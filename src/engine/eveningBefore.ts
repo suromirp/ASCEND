@@ -117,6 +117,8 @@ export interface EveningInput {
   // Instelling Route voorstellen, en het rustige tempo uit je test voor de afstand.
   routeOn: boolean;
   easyPace?: PaceRange;
+  // Je lichaamsgewicht, voor de rugzak van een wandeltraining op je eigen klimtempo (engine/hikeTarget.ts).
+  bodyKg?: number;
   // Instelling Eten onderweg (engine/fuelOnTheGo.ts). Afwezig is hier uit; de hook geeft de instelling door.
   fuelOn?: boolean;
   // De bewaarde keuzes Waar train je? per geplande training (storage/trainingPlace.ts), ongelezen.
@@ -242,7 +244,7 @@ function trainingPrep(input: EveningInput, session: PlannedSession, template: Se
   // 8. De route, als Route voorstellen aan staat: de lus staat in de Briefing van morgen (spoor 5). De kaart
   // krijgt geen knop (besluit 2026-11-11-briefing.md); de rij Morgen in Je dag opent het blad met Briefing.
   if (input.routeOn && routeShownFor(template, input.trainingPlaces?.[session.id])) {
-    const target = routeTarget({ template, date, program: input.program, logs: input.logs, testPace: input.easyPace });
+    const target = routeTarget({ template, date, program: input.program, logs: input.logs, testPace: input.easyPace, bodyKg: input.bodyKg });
     lines.push(`Route ${targetText(target)}: je lus staat in de Briefing.`);
   }
 
