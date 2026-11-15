@@ -109,7 +109,7 @@ export function SportsPage() {
       </div>
       {/* Kracht uit mag, met een waarschuwing; altijd eerst een voorstel (usePlanSettingChange#toggleStrength). */}
       <div className="mt-6">
-        <Eyebrow>Kracht</Eyebrow>
+        <Eyebrow>Naast je sporten</Eyebrow>
         <div className="mt-2">
           <SettingsList>
             <SummaryRow id="krachttraining" title="Krachttraining" facts={facts} info="krachttraining" onChange={(on) => void plan.toggleStrength(on)} />
