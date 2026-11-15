@@ -31,6 +31,12 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Net live
 
+### 15 november 13:15
+- Instellingen, Sporten: kracht uit verbergt Keer kracht per week en Weekbudget zegt waarom; na Geen krachttraining bij de start zegt de rij "Je week heeft geen krachtdag".
+- De uitleg bij Sporten en Hartslag bij wandelen klopt nu met wat de app doet.
+- Stand: geen los getal meer op een tweede regel.
+- De backlog houdt zichzelf bij: wat live gaat, schuift vanzelf naar Pas live.
+
 ### 15 november 12:20
 - Alles terug naar het advies: wat je planning raakt komt eerst als voorstel met Akkoord of Liever niet.
 - Zoeken in Instellingen toont de waarde van de instelling zelf.
