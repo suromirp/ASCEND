@@ -1,6 +1,6 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 15 november 2026, 18:40 Portugese tijd, door de coördinator session_01LnDpSjEhK5wS8sN1rH1p5c (overgenomen van session_01LnDpSnngzUAioWQ5b8xBWH). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
+Bijgewerkt: 15 november 2026, 22:40 Portugese tijd, door de coördinator session_01LnDpSjEhK5wS8sN1rH1p5c (wissel om context 63 procent). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
 
 ## Vaste afspraken
 
@@ -11,23 +11,29 @@ Bijgewerkt: 15 november 2026, 18:40 Portugese tijd, door de coördinator session
 - Fable (eigenaar 13:52): "fable mag je ook gwn gebruiken". Limiet toen: alle modellen 79 procent (reset 17:59), Fable 36 procent (reset 18:00). Bij een limiet: send_later op resetsAt plus vijf minuten.
 - Zonder sportschool (eigenaar, "Ja advies"): alleen wat de sportschool nodig heeft vervalt; een loop of wandeling die je niet deed telt als gemist.
 - Elke afspraak meteen hier; elke verandering in vragen, stuk of live meteen in `eigenaar.md`.
-- Werkwijze: klaar werk na de volle controles op `claude/nacht`; Warden (planner en opslag op Fable), Lookout en Pathfinder bij iets zichtbaars, eigen blik op de afdrukken; dan main via squash (`git commit-tree HEAD^{tree} -p origin/main`), daarna `npm run backlog:bij` en meecommitten op nacht, pushmelding, `eigenaar.md` Net live, Werkkaart extra ronde (fire_trigger trig_01JoRN6XzHJ17frpcWQAdEzB).
+- Werkwijze: klaar werk na de volle controles op `claude/nacht`; Warden (planner en opslag op Fable), Lookout en Pathfinder bij iets zichtbaars, eigen blik op de afdrukken; dan main via squash (`git commit-tree HEAD^{tree} -p origin/main`), daarna `npm run backlog:bij` en meecommitten op nacht, pushmelding, `eigenaar.md` Net live, Werkkaart extra ronde met create_trigger op session_01LnDpSktfMxYFgMMgDhw8Do (run_once_at een paar minuten vooruit), nooit fire_trigger: dat opent een lege chat zonder repo.
 - Backlog: elk Inboxpunt heeft een code [I-n]; een bouwer zet `Klaar: I-n` in zijn commit; voor een start eerst `git log origin/main --grep "I-n"` en in de code kijken of het al gebouwd is (vandaag twee keer oud werk in de Inbox).
 - Kennisindex: elk nieuw document in docs/ krijgt een regel in `docs/kennisindex/bronnen.json`, dan `npm run kennisindex`; na een proefmerge altijd `npm run kennisindex` opnieuw. Zet dat in elke bouwopdracht.
 - Een Warden pusht zijn herstel als `herstel.md` op `warden/<onderwerp>-herstel`: zet dat in zijn eerste opdracht (achteraf vragen weigert hij). Bouwers melden zich niet: kijk met get_session; list_sessions children werkt, de tag-filter niet. list_events heb je niet: laat bevindingen in een bestand of in de samenvatting landen.
-- Back-up van de eigenaar: 15 november 16:29 (app b243965), in de scratchpad van session_01LnDpSnngzUAioWQ5b8xBWH onder backup/ (chmod 600, alleen lezen met python -I). Bestandsnaam eindigde weer op -2 (fix nog niet live). Een volgende coördinator vraagt een verse.
+- Back-up van de eigenaar: 15 november 22:03 in de scratchpad van session_01LnDpSjEhK5wS8sN1rH1p5c (backup/b.json, chmod 600, alleen python -I). Een nieuwe coördinator heeft hem niet: vraag een verse als je moet naspelen (I-63 maandag).
 - Eigenaar ziek sinds 15 november, boven de nek (staat in de app). Zijn bericht via de vorige chat (16:45, "advies over koorts") kwam hier niet aan; gevraagd wat hij schreef.
-- Opgeruimd 16:50: alle klaar zijnde sessies van vandaag gearchiveerd. Niet aanraken: Werkkaart, de drie bouwers, de vastgezette chat ASCEND, ECHO en Dual Ubuntu (geen ASCEND-werk).
+- Eigenaar 19:41: oude bouwers, coördinators en chats archiveren zodra ze klaar zijn. Niet aanraken: Werkkaart session_01LnDpSktfMxYFgMMgDhw8Do, de vastgezette chat ASCEND, ECHO en Dual Ubuntu (geen ASCEND-werk), en de coördinator van de middag zolang de Wachter daar draait.
+- Helpers in de coördinator-chat: zeg in elke opdracht dat ze alleen in een eigen worktree werken en /home/user/ascend nooit van branch wisselen (een Pathfinder deed dat om 22:35).
 
 ## Taken
 
-- Bouwers nakijken elk uur op :10: trig_01E4NEQpURCEZGKYzpZGQizh op session_01LnDpSjEhK5wS8sN1rH1p5c. Oude trig_015XdDMzaV3mQ89aqdgLLHpo staat uit.
-- Wachter elk uur op :40: verhuizen werd 18:32 geweigerd door de automatische toestemmingscontrole. De oude trig_01CDpj9NsMnvoumE9kVDUPt3 blijft aan en wekt de vorige coördinator (session_01LnDpSnngzUAioWQ5b8xBWH); aan de eigenaar gemeld met zijn citaat van 15:36.
+- Bouwers nakijken elk uur op :10: trig_01E4NEQpURCEZGKYzpZGQizh op de vorige coördinator session_01LnDpSjEhK5wS8sN1rH1p5c. Nieuwe coördinator: maak hem op je eigen sessie (zelfde prompt, initiation human_schedule) en zet deze uit.
+- Wachter elk uur op :40: trig_01CDpj9NsMnvoumE9kVDUPt3 wekt de coördinator van de middag (session_01LnDpSnngzUAioWQ5b8xBWH). Aanmaken op een eigen sessie werd drie keer geweigerd (Undermining Oversight), ook na het "Nee" van de eigenaar. Gevraagd dat hij hem zelf in de app op de coördinator-chat zet en "staat" zegt; dan de oude uit en die chat archiveren. Niet opnieuw zelf proberen.
 - Werkkaart elk uur op :20: eigen sessie session_01LnDpSktfMxYFgMMgDhw8Do (trig_01JoRN6XzHJ17frpcWQAdEzB). Niet aanraken, niet archiveren.
-- Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam] staat (trig_01SgRjhVtzejbpKaz26bmsAi).
-- 18:35: deploy en Android van 8cce377 groen. Lookout en Pathfinder Beginner heel licht en Pathfinder Routes op reis 3 lopen als helpers in de coördinator-chat.
+- Volgende wissel: send_later 16 november 04:47 [Europe/Amsterdam] op de nieuwe coördinator; de oude (trig_01SgRjhVtzejbpKaz26bmsAi) is uitgezet.
+- Bouwers melden zich met create_trigger bij session_01LnDpSjEhK5wS8sN1rH1p5c; bij de wissel kregen ze de nieuwe id. Kijk ook zelf met get_session.
 
-## Stand 22:45 (coördinator session_01LnDpSjEhK5wS8sN1rH1p5c)
+## Bij de wissel (22:40) in behandeling
+
+- Waar je nu bent (I-61, `claude/waar-je-nu-bent` 79397b0): Pathfinder: één moet voor main: de kaart zonder lus in de Briefing heeft touchAction none (RoutePanel.tsx:101 zonder onOpen, RouteMap.tsx:305) en blokkeert het scrollen; maak hem rustig (pan-y), tik kiest een punt, slepen en knijpen pas in de grote kaart. Later: dubbele "of kies hierboven Andere plek" weg zodra de kaart er staat (routeStart.ts:237, 242, 268), kortere zin bij approximate (219), midden op de weerplaats zegt dat de kaart globaal staat, I-62 hergebruikt askMapCenter en dezelfde kaart. Warden op Fable en Lookout (390/412 met nep-geolocatie) liepen nog als helpers in de vorige coördinator-chat; hun uitslag komt op `warden/waar-je-nu-bent-herstel` en `lookout/waar-je-nu-bent` (lookout.md). Lees die branches.
+- Back-up telling (I-50, I-55, `claude/backup-telling` 74b5f18): Warden op Fable liep nog als helper; uitslag op `warden/backup-telling-herstel` (herstel.md). Daarna main (geen Lookout: niets zichtbaars).
+
+## Stand 22:40 (coördinator session_01LnDpSjEhK5wS8sN1rH1p5c)
 
 - Live vanavond op main: 09c716d Routes op reis (I-8), 8af3e43 Beginner heel licht 1 en 2 (I-18 loopt: stap 3), 91a4419 Ziek melden (I-48), e24d944 Back-up mag, dee69d9 Week samenhang (I-40 tot I-43), 701578c Forge nawerk (I-44, I-45), 9cdc1fb Import alleen nieuw (I-38), 9d035be Oud trainingsscherm (I-9, I-32), 5d68b87 Weer van de plek (I-37). Pushmelding gedaan; Werkkaart extra ronde 21:50.
 - Bouwers (melden zich hier met create_trigger):
