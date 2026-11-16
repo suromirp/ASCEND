@@ -90,6 +90,8 @@ import { wantsLogShortcut, withoutShortcut } from '../engine/shortcutAction';
 import { resolveQuoteLanguage } from '../engine/quoteSettings';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
+import { decideMove, dragEligibility } from '../engine/weekDrag';
+import { noGymAsk } from '../engine/noGymGuard';
 import { goalTiming } from '../engine/goalRoute';
 import { SkyBand } from '../components/SkyBand';
 import { StretchMenuButton } from '../components/StretchMenuButton';
@@ -242,9 +244,14 @@ function TodayContent() {
   // A clean move (nothing else has to shift) applies at once, with undo
   // in the notice; anything that pushes another session asks first.
   function handleMove(sessionId: string, date: string) {
-    const proposal = moveSession(sessionId, date);
-    if (proposal.resolved && proposal.changes.length === 1) void applyProposal(proposal);
-    else setPendingProposal(proposal);
+    // Een sportschooltraining naar een dag zonder sportschool: eerst de vraag, met Akkoord (engine/noGymGuard.ts).
+    // Dezelfde vraag om Akkoord als in Week (een test, wat een periode neerzette of opzij schoof).
+    const session = plannedSessions.find((s) => s.id === sessionId);
+    const tpl = session ? templateById.get(session.templateId) : undefined;
+    const eligible = session && tpl ? dragEligibility(session, tpl, { logged: sessionLogs.some((l) => l.plannedSessionId === session.id), today: todayISO(), periods: settings.leavePeriods }) : undefined;
+    const decision = decideMove(moveSession(sessionId, date), { askAlways: eligible?.ok ? eligible.askAlways : undefined, extraAsk: noGymAsk(tpl, date, settings.leavePeriods), restDay: settings.restDay ?? 1 });
+    if (decision.action === 'apply') void applyProposal(decision.proposal);
+    else if (decision.action === 'ask') setPendingProposal(decision.proposal);
   }
 
   function handleSkip(sessionId: string) {

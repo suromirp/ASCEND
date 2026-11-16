@@ -8,26 +8,28 @@
 import type { PlanLock, PlannedSession, SessionTemplate } from '../models/training';
 import { dayHasRoomFor, findHeavyConflicts, isHeavyBeforeTest, isLegHeavyTemplate, isTestOnly, sharedHeavyAxes, testRestHours, tooCloseBeforeTest, type ScheduleProposal } from './scheduler';
 import { keptDayReason, type KeptReason } from './moveSuggestions';
+import { NO_GYM_ASK, needsGymOn } from './noGymGuard';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { hasRole } from './templateRoles';
 import { weekConcerns } from './weekConcerns';
 import type { CheckInput } from './weekValidator';
 import { dayOrder } from './dayOrder';
-import { dayTitle, dragEligibility, PLACED_ASK_REASON, type DayVerdict, type DragContext, type MoveDecision } from './weekDrag';
+import { dayTitle, dragEligibility, leaveAskReason, PLACED_ASK_REASON, type DayVerdict, type DragContext, type MoveDecision } from './weekDrag';
 import { addDays, formatDateNL, mondayOfWeek, weekdayLongNL, weekdayOf } from '../utils/dates';
 
 export const SWAP_TEST = 'Een testloop ruil je alleen met Akkoord.';
 const SWAP_LEAVE = 'Deze training schoof opzij voor je vakantie. Ruil je hem, dan blijft hij op de nieuwe dag staan.';
 const SWAP_PLACED = 'Je periode zette deze training hier neer. Ruil je hem, dan blijft hij bij je periode horen: haal je die weg, dan gaat hij mee.';
 export const SWAP_LEGS = 'Twee zware beendagen achter elkaar.';
-const SWAP_ASK_TAIL = 'Als je loslaat, komt eerst de vraag of je dat echt wilt.';
+// De korte vraag onder de vinger bij een ruil die eerst vraagt; de chip zegt al met wie je ruilt (Lookout, 16 november).
+const SWAP_DROP_ASK = 'Als je loslaat, komt eerst de vraag.';
 const CHIP_MAX = 28;
 const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 
 const dayLower = (date: string) => `${weekdayLongNL(date)} ${formatDateNL(date)}`;
 const fit = (...options: string[]) => options.find((o) => o.length <= CHIP_MAX) ?? options[options.length - 1].slice(0, CHIP_MAX);
 
-const KEPT_LINE: Record<Exclude<KeptReason, 'rest'>, string> = {
+const KEPT_LINE: Record<Exclude<KeptReason, 'rest' | 'nogym'>, string> = {
   off: 'is een vakantiedag',
   trek: 'is een tochtdag',
   light: 'blijft licht door je tocht',
@@ -56,8 +58,8 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
   if (a.scheduledDate === b.scheduledDate) return { ok: false, line: 'Die twee staan al op dezelfde dag.' };
   if (mondayOfWeek(a.scheduledDate) !== mondayOfWeek(b.scheduledDate)) return { ok: false, line: 'Ruilen kan alleen binnen één week.' };
   const logged = new Set(ctx.logs.map((l) => l.plannedSessionId));
-  const ea = dragEligibility(a, ta, { logged: logged.has(a.id), today: ctx.asOf });
-  const eb = dragEligibility(b, tb, { logged: logged.has(b.id), today: ctx.asOf });
+  const ea = dragEligibility(a, ta, { logged: logged.has(a.id), today: ctx.asOf, periods: ctx.move.leave });
+  const eb = dragEligibility(b, tb, { logged: logged.has(b.id), today: ctx.asOf, periods: ctx.move.leave });
   if (!ea.ok || !eb.ok) return { ok: false, line: 'Deze training kan niet van dag ruilen.' };
 
   // Waar elk van de twee heen gaat, en wat daar al staat (zonder de twee zelf).
@@ -68,7 +70,7 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
   const rest = ctx.sessions.filter((s) => s.id !== a.id && s.id !== b.id && s.status !== 'skipped');
   for (const leg of legs) {
     const kept = keptDayReason(ctx.move, leg.t, leg.to, ctx.asOf);
-    if (kept && kept !== 'rest') return { ok: false, line: `${dayTitle(leg.to)} ${KEPT_LINE[kept]}.` };
+    if (kept && kept !== 'rest' && kept !== 'nogym') return { ok: false, line: `${dayTitle(leg.to)} ${KEPT_LINE[kept]}.` };
     if (rest.filter((s) => s.scheduledDate === leg.to).length >= 2) return { ok: false, line: `${dayTitle(leg.to)} zit vol.` };
   }
 
@@ -94,10 +96,21 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
       return !!ct && ((isTestOnly(leg.t) && isHeavyBeforeTest(ct) && tooCloseBeforeTest(cDate, leg.to)) || (isTestOnly(ct) && isHeavyBeforeTest(leg.t) && tooCloseBeforeTest(leg.to, cDate)));
     });
     const rule = restClash ? ` Liefst ${testRestHours()} uur tussen een zware dag en je test.` : test ? ' Je test heeft frisse benen nodig.' : legsBoth ? ' Liefst 48 uur ertussen.' : '';
-    asks.push(`${leg.t.name} op ${dayLower(leg.to)} valt dicht op ${others.map((t) => t.name).join(' en ')}.${rule}`);
+    // Dezelfde naam als de training zelf (twee keer Bovenlichaam A in een week): met de dag erbij, anders leest het als
+    // dicht op zichzelf (Lookout, 16 november).
+    const otherNames = conflicts.flatMap((c) => {
+      const t = templateById.get(c.templateId);
+      if (!t) return [];
+      const d = simulated.find((x) => x.id === c.id)?.scheduledDate ?? c.scheduledDate;
+      return [t.name === leg.t.name ? `${t.name} van ${weekdayLongNL(d)} ${Number(d.slice(8, 10))}` : t.name];
+    });
+    asks.push(`${leg.t.name} op ${dayLower(leg.to)} valt dicht op ${otherNames.join(' en ')}.${rule}`);
   }
   for (const leg of legs) {
-    if (keptDayReason(ctx.move, leg.t, leg.to, ctx.asOf) === 'rest') asks.push(`${dayTitle(leg.to)} is je rustdag.`);
+    const kept = keptDayReason(ctx.move, leg.t, leg.to, ctx.asOf);
+    if (kept === 'rest') asks.push(`${dayTitle(leg.to)} is je rustdag.`);
+    // Zonder sportschool: ruilen mag, met de vraag ervoor (engine/noGymGuard.ts), ook op je rustdag.
+    if (kept === 'nogym' || (kept === 'rest' && needsGymOn(leg.to, leg.t, ctx.move.leave))) asks.push(`${leg.t.name} op ${dayLower(leg.to)}: ${NO_GYM_ASK.charAt(0).toLowerCase()}${NO_GYM_ASK.slice(1)}`);
   }
   // Past de tijd op de nieuwe dag?
   for (const leg of legs) {
@@ -123,7 +136,7 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
   }
   for (const leg of legs) {
     if (leg.ask === true) { if (!asks.includes(SWAP_TEST)) asks.push(SWAP_TEST); }
-    else if (leg.ask) { const text = leg.ask === PLACED_ASK_REASON ? SWAP_PLACED : SWAP_LEAVE; if (!asks.includes(text)) asks.push(text); }
+    else if (leg.ask) { const text = leg.ask === PLACED_ASK_REASON ? SWAP_PLACED : leg.s.leave ? leaveAskReason({ ...leg.s, leave: leg.s.leave }, leg.t, ctx.move.leave, 'Ruil') : SWAP_LEAVE; if (!asks.includes(text)) asks.push(text); }
   }
 
   const proposal: ScheduleProposal = {
@@ -194,6 +207,9 @@ export function withSwapVerdicts(ctx: DragContext, sessionId: string, verdicts: 
     const check = checkSwap(ctx, a.id, b.id);
     if (!check.ok) return v;
     const asks = check.asks.join(' ');
+    // De regel onder de vinger: het ene belangrijkste feit (sportschool nodig gaat voor afstand) en de vraag; het blad
+    // na loslaten noemt ze allemaal (Lookout, 16 november: op 360 waren het acht regels).
+    const said = check.asks.find((x) => x.toLowerCase().includes(NO_GYM_ASK.toLowerCase().slice(0, -1))) ?? check.asks[0];
     const hints = check.hints.length > 0 ? ` ${check.hints.join(' ')}` : '';
     return {
       date: v.date,
@@ -201,7 +217,7 @@ export function withSwapVerdicts(ctx: DragContext, sessionId: string, verdicts: 
       droppable: true,
       tone: asks ? 'warn' : 'ok',
       chip: fit(`Ruilen met ${tb.name}`, 'Ruilen'),
-      line: `${dayTitle(v.date)}. Ruilen met ${tb.name}, die gaat naar ${dayLower(a.scheduledDate)}.${asks ? ` ${asks} ${SWAP_ASK_TAIL}` : hints}`,
+      line: asks ? `${dayTitle(v.date)}. ${said} ${SWAP_DROP_ASK}` : `${dayTitle(v.date)}. Ruilen met ${tb.name}, die gaat naar ${dayLower(a.scheduledDate)}.${hints}`,
       ask: !!asks,
       ...(asks ? { askReason: asks } : {}),
       swapWithId: b.id,
