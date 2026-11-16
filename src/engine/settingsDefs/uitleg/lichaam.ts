@@ -63,7 +63,8 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
     title: 'Drempel',
     lead: 'De hartslag die je ongeveer een uur vol kunt houden. Garmin noemt hem lactaatdrempel (LTHR).',
     points: [
-      { head: 'Waar', text: 'in Garmin Connect, bij je hartslagzones.' },
+      { head: 'Zelf', text: 'na een testloop van 5 km stelt ASCEND een nieuwe drempel voor. Loop hem met een borstband: hartslag van de pols is bij hard lopen te onzeker. Pas na Akkoord geldt hij.' },
+      { head: 'Of uit Garmin', text: 'in Garmin Connect, bij je hartslagzones.' },
       { head: 'Zonder', text: 'geldt je maximale hartslag. Dat is minder precies.' },
     ],
   },
