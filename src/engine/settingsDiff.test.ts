@@ -127,6 +127,7 @@ const everything: AppSettings = {
   stravaTextParts: 'title',
   routeProposal: false,
   routeAvoidBigRoads: false,
+  rememberStartPlace: false,
   routeStyle: 'simple',
   routeStart: 'exact',
   routeMapBase: 'none',

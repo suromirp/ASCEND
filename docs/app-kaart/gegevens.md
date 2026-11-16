@@ -26,7 +26,7 @@ Toestemmingen
 Ruimte op dit toestel
 [knop: Uitleg: Ruimte op dit toestel]
 Van de 3,2 GB die beschikbaar is
-233 KB
+238 KB
 [knop: Kopieën van voor een import, 0]
 Kopieën van voor een import
 [knop: Uitleg: Kopieën van voor een import]

@@ -687,6 +687,15 @@ export const VANDAAG: SettingDef[] = [
     showWhen: [B.route],
   },
   {
+    id: 'plek-onthouden',
+    page: 'vandaag',
+    place: { in: 'bundel-weer' },
+    title: 'Gekozen plek onthouden',
+    note: 'Een plek die je in de Briefing bij Start bij kiest, blijft voor die training staan tot de dag voorbij is. Met Weer van de gekozen plek aan wordt het weer daar vooraf opgehaald, ook voor De avond ervoor. Uitzetten wist de onthouden plekken.',
+    keywords: ['plek', 'plekken', 'start bij', 'onthouden', 'briefing', 'avond ervoor', 'weer', 'lus', 'route'],
+    showWhen: [B.route],
+  },
+  {
     id: 'route-kaart',
     page: 'vandaag',
     place: { in: 'bundel-weer' },

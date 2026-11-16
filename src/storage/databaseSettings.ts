@@ -45,6 +45,9 @@ export interface AppSettings {
   // local-only (see CLAUDE.md) — this is what a weekly "you haven't backed
   // up" nudge compares against.
   lastExportedAt?: string;
+  // De ids van de trainingen in die back-up, met hetzelfde tijdstip (engine/backupSince.ts). Hoort bij dit
+  // toestel en gaat niet mee in een gewone back-up (storage/backupExport.ts). Optioneel; oud leest als leeg.
+  lastBackupLogs?: { at: string; ids: string[] };
   // ISO timestamp the export nudge was last dismissed. Tracked separately
   // from lastExportedAt so dismissing it actually snoozes for a week,
   // rather than reappearing on the very next app open.
@@ -186,6 +189,9 @@ export interface AppSettings {
   routeProposal?: boolean;
   // Grote wegen mijden bij Route voorstellen; afwezig is aan (besluit 2026-11-14-routes-vorm.md).
   routeAvoidBigRoads?: boolean;
+  // De plek van Start bij blijft per geplande training staan tot de dag voorbij is; afwezig is aan
+  // (besluit 2026-11-15-avond-ervoor-kent-de-plek.md). Optioneel en erbij, dus geen migratiestap.
+  rememberStartPlace?: boolean;
   // Which loop comes first in the route proposal: one long loop past different
   // hills ('adventure', absent = adventure) or the same hill up and down ('simple').
   routeStyle?: 'simple' | 'adventure';

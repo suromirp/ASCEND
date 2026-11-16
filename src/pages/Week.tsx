@@ -38,6 +38,7 @@ import { patternDays } from '../engine/planPass';
 import { SeasonOverview } from '../components/SeasonOverview';
 import { useSeasonHeader } from '../components/useSeasonHeader';
 import { SessionActionSheet } from '../components/SessionActionSheet';
+import { useBriefingReturn } from '../utils/briefingReturn';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { Card, Eyebrow, Num } from '../components/ui';
@@ -76,6 +77,17 @@ export function WeekPage() {
   const [selected, setSelected] = useState<PlannedSession | null>(null);
   // Een tik op de greep opent het actieblad direct op de stap Verplaatsen.
   const [openOnMove, setOpenOnMove] = useState(false);
+  // Terug vanaf een pagina die je uit de Briefing van een blad opende: het blad opent weer met de Briefing
+  // erover (engine/briefingReturn.ts). Alleen voor dit ene blad.
+  const [briefingFor, setBriefingFor] = useState<string | null>(null);
+  useBriefingReturn('sheet', (m) => {
+    const back = plannedSessions.find((s) => s.id === m.sessionId);
+    if (!back) return;
+    setBriefingFor(back.id);
+    setSelected(back);
+  });
+  // Gaat het blad dicht, dan is het op: een latere tik op dezelfde training opent geen Briefing.
+  if (briefingFor && selected?.id !== briefingFor) setBriefingFor(null);
   const [openPeriodId, setOpenPeriodId] = useState<string | null>(null);
   // A training done without a plan (a loose one), opened from its row: the same log sheet as the Logboek.
   const [openLog, setOpenLog] = useState<SessionLog | null>(null);
@@ -381,6 +393,7 @@ export function WeekPage() {
       {selected && templateById.get(selected.templateId) && (
         <SessionActionSheet
           session={selected}
+          openBriefing={briefingFor === selected.id}
           startStep={openOnMove ? 'move' : undefined}
           caughtUpOn={!selectedLog && caughtUp.has(selected.id) ? caughtUpNoteFor(caughtUp.get(selected.id)!) : undefined}
           catchUp={!selectedLog && selected.id !== openDraftId && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id) }).ok}

@@ -15,7 +15,7 @@
 
 import { walkHrFromSettings } from '../engine/walkHeartRate';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { RouteStyle } from '../models/route';
@@ -56,6 +56,8 @@ import { usePlaceWeather } from './usePlaceWeather';
 import type { WeatherForecast } from '../models/weather';
 import { briefingWeather, placeWeatherTarget } from '../engine/placeWeather';
 import { weatherPageLink } from '../engine/weatherPageLink';
+import type { BriefingOrigin } from '../engine/briefingReturn';
+import { markBriefingReturn } from '../utils/briefingReturn';
 import { showPlaceWeather } from '../engine/overviewSettings';
 import { useMotionMode } from './motion';
 import { RouteMap } from './RouteMap';
@@ -85,6 +87,7 @@ export function TrainingBriefing({
   onClose,
   onManual,
   onLeave,
+  origin,
 }: {
   template: SessionTemplate;
   session?: PlannedSession;
@@ -95,9 +98,12 @@ export function TrainingBriefing({
   onManual?: () => void;
   // Sluit de lagen onder dit scherm (het blad in Week) voordat een vak naar een pagina gaat.
   onLeave?: () => void;
+  // Welke laag deze Briefing opende: dan brengt Terug vanaf een pagina je weer hier (engine/briefingReturn.ts).
+  origin?: BriefingOrigin;
 }) {
   const { settings } = useAppData();
   const navigate = useNavigate();
+  const { pathname, key: entry } = useLocation();
   const motion = useMotionMode();
   const { closing, requestClose } = useSheetClose(onClose);
   const today = todayISO();
@@ -130,7 +136,7 @@ export function TrainingBriefing({
   const [declined, setDeclined] = useState(false);
   const routeMap = homeView?.map.kind === 'route' ? homeView.map : undefined;
   const searchOn = !!routeMap && !declined && (routeMap.search === 'open' || tapped);
-  const model = useRouteSearch({ template, date, closing, enabled: searchOn });
+  const model = useRouteSearch({ template, date, closing, enabled: searchOn, sessionId: session?.id });
 
   // Het weer van de gekozen plek: alleen bij een route op de kaart en een plek verder dan 10 km van huis.
   const weatherTarget = placeWeatherTarget({ on: showPlaceWeather(settings.overviews) && !!routeMap && !declined, place: model.placeStart, home: model.homePoint, weatherHome: settings.homeLocation });
@@ -152,6 +158,8 @@ export function TrainingBriefing({
 
   // Naar een pagina: eerst alle lagen dicht, dan de pagina.
   function toPage(to: string, state?: unknown) {
+    // Terug vanaf de pagina opent deze Briefing weer op de pagina eronder.
+    if (origin) markBriefingReturn({ origin, templateId: template.id, date, sessionId: session?.id, path: pathname, entry });
     onLeave?.();
     requestClose();
     navigate(to, state === undefined ? undefined : { state });
@@ -160,7 +168,7 @@ export function TrainingBriefing({
   function openRow(row: BriefingRow) {
     if (!row.opens) return;
     // De gekozen plek gaat mee: de pagina Weer toont dan hetzelfde weer als deze rij (engine/weatherPageLink.ts).
-    if (row.id === 'weather') toPage('/weer', weatherPageLink(weatherTarget, template.id, date));
+    if (row.id === 'weather') toPage('/weer', weatherPageLink(weatherTarget, template.id, date, minutes));
     else if (row.id === 'watch') { if (watchView.hasWatchSheet) setSheet('watch'); }
     // Waar kun je dit doen?: een pagina, dus eerst alle lagen dicht.
     else if (row.id === 'spots') toPage(spotsPageFor(template.id));

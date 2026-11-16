@@ -7,9 +7,10 @@
 // `enabled`: of er gezocht mag worden. De Briefing zet hem pas aan bij het openen (instelling Lus
 // zoeken, vandaag en morgen) of na een tik; tot dan gaat er niets de deur uit, ook geen vraag om je
 // plek. `closing`: het blad of scherm gaat dicht; dan stopt het zoeken meteen.
-// Een tik op een chip, een gezochte plek of Start hier geldt voor deze training en wordt niet bewaard;
-// alleen Maak dit Thuis en Bewaar als plek bewaren iets (besluiten 2026-11-11-route-start.md en
-// 2026-11-12-andere-plek.md). Plant niets en bewaart geen lus.
+// Een tik op een chip, een gezochte plek of Start hier geldt voor deze training; alleen Maak dit Thuis
+// en Bewaar als plek bewaren een plek (besluiten 2026-11-11-route-start.md en 2026-11-12-andere-plek.md).
+// Een gekozen plek blijft wel per geplande training staan tot de dag voorbij is
+// (2026-11-15-avond-ervoor-kent-de-plek.md). Plant niets en bewaart geen lus.
 
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
@@ -25,6 +26,8 @@ import { getRouteStartPoint, locateStartHere, saveRouteStartPoint, START_LOCATE_
 import { homeFromStartPoint, savedStartChips, startChoices, type StartChip } from '../engine/places';
 import { placeLabel, placeToSave, savedAt, type FoundPlace } from '../engine/placeSearch';
 import { readPlaceStore, savePlace } from '../storage/places';
+import { readStartPlaceChoices, saveStartPlaceChoice } from '../storage/startPlaceChoice';
+import { choiceFor, restoredStart } from '../engine/startPlaceChoice';
 import type { Place } from '../models/place';
 import { makeId } from '../utils/id';
 import { todayISO } from '../utils/dates';
@@ -131,7 +134,7 @@ export interface RouteSearchModel {
   pieces: LoopPiece[];
 }
 
-export function useRouteSearch({ template, date, closing = false, enabled = true }: { template: SessionTemplate; date: string; closing?: boolean; enabled?: boolean }): RouteSearchModel {
+export function useRouteSearch({ template, date, closing = false, enabled = true, sessionId }: { template: SessionTemplate; date: string; closing?: boolean; enabled?: boolean; sessionId?: string }): RouteSearchModel {
   const { settings, program, sessionLogs, updateSettings } = useAppData();
   const place = settings.homeLocation;
   const lat = place?.lat;
@@ -150,7 +153,8 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
   const [startPicked, setStartPicked] = useState<StartPick | undefined>();
   // Start hier: een getikt punt, alleen voor deze zoektocht; niet bewaard.
   const [mapStart, setMapStart] = useState<RoutePoint | undefined>();
-  // Een bewaarde plek (chip) of een gezochte plek (Andere plek), voor deze training; niet bewaard.
+  // Een bewaarde plek (chip) of een gezochte plek (Andere plek), voor deze training. Met een geplande training
+  // en de instelling Gekozen plek onthouden blijft hij staan tot de dag voorbij is (storage/startPlaceChoice.ts).
   // `key` is het id van de bewaarde plek, of `other` bij een treffer die nog niet bewaard is.
   // `saveId` blijft bij een treffer gelijk: een tweede tik op Bewaar als plek na een trage opslag overschrijft dezelfde plek.
   const [startPlace, setStartPlace] = useState<{ key: string; name: string; point: RoutePoint; found?: FoundPlace; saveId?: string } | undefined>();
@@ -200,18 +204,39 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     };
   }, []);
 
+  // De plek die je eerder voor deze geplande training koos (instelling Gekozen plek onthouden): hij staat
+  // er weer bij het openen, voordat er gezocht wordt (engine/startPlaceChoice.ts).
+  const rememberOn = !!sessionId && settings.rememberStartPlace !== false;
+  // Een tik voordat de opslag antwoordde gaat voor: dan wordt er niets teruggezet.
+  const touched = useRef(false);
   useEffect(() => {
     let alive = true;
-    void withTimeout(getRouteStartPoint(), CONSENT_LIMIT_MS).then((p) => {
-      if (alive) setSaved(p ?? null);
-    }, () => {
+    const home = withTimeout(getRouteStartPoint(), CONSENT_LIMIT_MS).then((p) => p ?? null, () => 'unread' as const);
+    const back = rememberOn
+      ? withTimeout(Promise.all([readStartPlaceChoices(), readPlaceStore()]), CONSENT_LIMIT_MS).then(
+        ([map, read]) => restoredStart(choiceFor(map, sessionId, date, todayISO()), read.ok ? read.places : undefined),
+        () => undefined,
+      )
+      : Promise.resolve(undefined);
+    void Promise.all([home, back]).then(([p, again]) => {
+      if (!alive) return;
+      if (again && !touched.current) setStartPlace({ key: again.placeId ?? 'other', name: again.name, point: again.point, ...(again.found ? { found: again.found, saveId: makeId('place') } : {}) });
       // Trage of kapotte opslag: Thuis is onbekend, niet afwezig. De regel zegt dat; Maak dit Thuis staat er dan niet.
-      if (alive) setSaved('unread');
+      setSaved(p);
     });
     return () => {
       alive = false;
     };
+    // Eén keer bij het openen: een latere keuze staat al in de regie.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Onthoud of wis de plek van deze training. Mislukt bewaren is niet erg: dan begint de lus de volgende keer zoals vroeger.
+  function remember(choice: { name: string; lat: number; lon: number; placeId?: string; found?: FoundPlace } | undefined) {
+    touched.current = true;
+    if (!rememberOn || !sessionId) return;
+    void saveStartPlaceChoice(sessionId, choice ? { ...choice, date } : undefined);
+  }
 
   useEffect(() => {
     let alive = true;
@@ -321,6 +346,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
       // Het getikte punt is nu de start: de chip van een gekozen plek staat dan niet meer gekozen.
       setStartPlace(undefined);
       setMapStart(found.point);
+      remember(undefined);
     }
     return found;
   }
@@ -332,10 +358,14 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     setMapStart(undefined);
     if (chip.kind === 'place') {
       const p = places.find((x) => x.id === chip.placeId);
-      if (p) setStartPlace({ key: p.id, name: p.name, point: { lat: p.lat, lon: p.lon } });
+      if (p) {
+        setStartPlace({ key: p.id, name: p.name, point: { lat: p.lat, lon: p.lon } });
+        remember({ name: p.name, lat: p.lat, lon: p.lon, placeId: p.id });
+      }
       return;
     }
     setStartPlace(undefined);
+    remember(undefined);
     const next: StartPick = chip.kind === 'home' ? 'home' : 'here';
     setStartPicked(next);
     // Waar je nu bent na een mislukte plek: een tik is een nieuwe poging, met één nieuwe vraag om je plek.
@@ -348,8 +378,14 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     const known = savedAt(found, allPlaces);
     if (known?.home) return pickStart({ kind: 'home', label: known.name, placeId: known.id });
     setMapStart(undefined);
-    if (known) return setStartPlace({ key: known.id, name: known.name, point: { lat: known.lat, lon: known.lon } });
-    setStartPlace({ key: 'other', name: placeLabel(found, allPlaces), point: { lat: found.lat, lon: found.lon }, found, saveId: makeId('place') });
+    if (known) {
+      setStartPlace({ key: known.id, name: known.name, point: { lat: known.lat, lon: known.lon } });
+      remember({ name: known.name, lat: known.lat, lon: known.lon, placeId: known.id });
+      return;
+    }
+    const name = placeLabel(found, allPlaces);
+    setStartPlace({ key: 'other', name, point: { lat: found.lat, lon: found.lon }, found, saveId: makeId('place') });
+    remember({ name, lat: found.lat, lon: found.lon, found });
   }
 
   // Bewaar als plek bij een gezochte plek: via de bestaande opslag (storage/places.ts#savePlace), nooit dubbel.
@@ -362,6 +398,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     if (!ok || !mounted.current) return ok;
     if (next.kind === 'new') setPlaces((list) => [...list.filter((p) => p.id !== next.place.id), next.place]);
     setStartPlace({ key: next.place.id, name: next.place.name, point: { lat: next.place.lat, lon: next.place.lon } });
+    remember({ name: next.place.name, lat: next.place.lat, lon: next.place.lon, placeId: next.place.id });
     return true;
   }
 
@@ -480,6 +517,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     retryHere: () => {
       setMapStart(undefined);
       setStartPlace(undefined);
+      remember(undefined);
       setStartPicked('here');
       setAttempt((n) => n + 1);
     },

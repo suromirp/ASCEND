@@ -64,7 +64,9 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
     goalMilestoneProgress,
     capabilityEvidence,
     injuryNotes,
-    settings,
+    // Welke trainingen in de vorige back-up stonden hoort bij dit toestel (engine/backupSince.ts); alleen de
+    // kopie van voor een import neemt het mee, zodat terugzetten de telling terugzet.
+    settings: options.wholeState ? settings : withoutDeviceBookkeeping(settings),
     goalEngineConfig: goalEngineConfig ?? null,
     strengthProgramStrategies,
     strengthProgramRecommendations,
@@ -116,6 +118,19 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
     createdAt: new Date().toISOString(),
     payload,
   };
+}
+
+function withoutDeviceBookkeeping<T extends { lastBackupLogs?: unknown }>(settings: T): T {
+  if (!('lastBackupLogs' in settings)) return settings;
+  const rest = { ...settings };
+  delete rest.lastBackupLogs;
+  return rest;
+}
+
+// De ids van de trainingen in een back-up, voor de telling op Vandaag en bij Back-up (engine/backupSince.ts).
+export function logIdsInEnvelope(envelope: AscendBackupEnvelope): string[] | undefined {
+  const logs = (envelope.payload as { sessionLogs?: unknown }).sessionLogs;
+  return Array.isArray(logs) ? logs.map((l) => (l as { id?: unknown }).id).filter((id): id is string => typeof id === 'string') : undefined;
 }
 
 export function backupFileName(createdAt: string): string {
