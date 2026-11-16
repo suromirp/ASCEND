@@ -19,7 +19,7 @@ import { keptAsk, keptDayReason, keptRefusal, suggestMoveDates } from './moveSug
 import { proposeMove } from './scheduler';
 import { deriveSessionStatus } from './sessionStatus';
 import { computeCurrentStreak } from './streak';
-import { dayVerdicts, decideMove, type DragContext } from './weekDrag';
+import { dayVerdicts, decideMove, PLACED_ASK_REASON, TEST_ASK_REASON, type DragContext } from './weekDrag';
 import { checkSwap } from './weekSwap';
 import { weekConcerns } from './weekConcerns';
 import { planWeekFix } from './weekFixProposal';
@@ -289,6 +289,14 @@ describe('het sleepblad: hoogstens twee zinnen, en Let op niet dubbel', () => {
     expect(decision.proposal.reason).toBe(`Je bent verkouden, dus niets zwaars. Dicht op ${byId.get('tpl_lower_a')!.name}, liefst 48 uur ertussen.`);
     expect(decision.proposal.reason.split('. ').length).toBeLessThanOrEqual(2);
   });
+  it('de korte zin vervangt alleen de botsing: een testloop of wat een periode neerzette blijft staan', () => {
+    const ctx: DragContext = { sessions: plan, templates, logs, program, asOf: TODAY, sameDayPairingPreference: 'automatic', move: { illness: COLD, restDay: 2 } };
+    const verdict = dayVerdicts(ctx, 'lb19', MONDAY).find((v) => v.date === addDays(TODAY, 1))!;
+    const proposal = proposeMove(plan, templates, 'lb19', addDays(TODAY, 1), logs, program, undefined, 'automatic', TODAY);
+    const short = `Dicht op ${byId.get('tpl_lower_a')!.name}, liefst 48 uur ertussen.`;
+    expect(decideMove(proposal, { verdict, askAlways: PLACED_ASK_REASON }).proposal.reason).toBe(`Je bent verkouden, dus niets zwaars. ${PLACED_ASK_REASON} ${short}`);
+    expect(decideMove(proposal, { verdict, askAlways: true }).proposal.reason).toBe(`Je bent verkouden, dus niets zwaars. ${TEST_ASK_REASON} ${short}`);
+  });
   it('een dag die al zegt wat Let op zou zeggen, slaat die melding over', () => {
     const ctx = drag(week(), { illness: [ill('below_neck', addDays(TODAY, -3), TODAY)], leave: [period('no_gym', addDays(TODAY, 1), addDays(TODAY, 1))] });
     expect(verdictOn(ctx, 'ua18', addDays(TODAY, 1)).skipRules).toEqual(['NO-GYM', 'ILL']);
@@ -300,6 +308,11 @@ describe('de datumkiezer weigert een dag die dicht is, met de zin van slepen', (
   const tomorrow = addDays(TODAY, 1);
   it('koorts', () => {
     expect(keptRefusal({ illness: [ill('below_neck', TODAY)] }, t, tomorrow, TODAY)).toBe('Dinsdag 17 november valt nog in je ziekte.');
+  });
+  it('de dag van je doel en later', () => {
+    expect(keptRefusal({ goalDay: tomorrow }, t, tomorrow, TODAY)).toBe('Dinsdag 17 november ligt op of na je doel.');
+    expect(keptRefusal({ goalDay: tomorrow }, t, addDays(tomorrow, 1), TODAY)).toBe('Woensdag 18 november ligt op of na je doel.');
+    expect(keptRefusal({ goalDay: tomorrow }, t, TODAY, TODAY)).toBeUndefined();
   });
   it('vakantie en tocht', () => {
     expect(keptRefusal({ leave: [period('no_training', tomorrow, tomorrow)] }, t, tomorrow, TODAY)).toBe('Dinsdag 17 november is een vakantiedag.');

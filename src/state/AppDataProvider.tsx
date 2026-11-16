@@ -302,7 +302,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       });
   }, []);
   const { linkMissedLog, restoreFromWatch, trimWatchActivity, undoTrimWatchActivity, restoreSourceUpdate, takeOverSourceNumbers, takeOverFromMacroFactor, restoreFromMacroFactor, setLogWorkout } = useWatchAndSourceActions({ setRecentChange, refresh });
-  const { moveSession, suggestMoves, dragContextFor, dragVerdicts, applyProposal, proposeSkip, proposeBackOnPlan } = useMoveActions({ program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalEngineConfig, settings, templates, setRecentChange, refresh, sessionsForWeek, planChangeLog });
+  const { moveSession, suggestMoves, moveContext, dragContextFor, dragVerdicts, applyProposal, proposeSkip, proposeBackOnPlan } = useMoveActions({ program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalEngineConfig, settings, templates, setRecentChange, refresh, sessionsForWeek, planChangeLog });
   const { clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, strengthExternal, setStrengthExternal, updateSettings, showStatusOnlyChange, undoReentry } = useGoalActions({ trainingGoals, goalMilestones, settings, setSettings, setCelebration, setRecentChange, strengthProgramStrategies, setStrengthProgramStrategies, refresh });
   const { saveInfluence, saveSweat, saveSweatPre, removeInfluence, clearInfluences, planIllness, applyIllness } = useNotesAndIllness({ plannedSessions, sessionLogs, setSettings, settings, templates, commitPlanChange, showStatusOnlyChange });
   const { updateGoalEngineConfig, planHorizonChangeImpl, applyHorizonPlanImpl, planWeekLoadChange, planGoalChange, planGoalRole, planGoalPriority, setGoalOrder, planMarathonGoal, activateGoal } = useHorizonActions({ setGoalEngineConfig, setRecentChange, setStorageNotice, refresh });
@@ -359,6 +359,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     planWeekLoadChange,
     moveSession,
     suggestMoves,
+    moveContext,
     dragVerdicts,
     previewDrop,
     legsCloseAt,

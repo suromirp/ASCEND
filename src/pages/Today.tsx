@@ -107,7 +107,7 @@ import { RaceDayLine } from '../components/RaceDay';
 import { logsNotInLastBackup } from '../engine/backupSince';
 
 function TodayContent() {
-  const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones, showFailure } = useAppData();
+  const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones, showFailure, moveContext } = useAppData();
   // Afvinken met één tik: grens in tijd en de melding bovenin (state/logSave.ts#tickOff).
   const tickNotice = { report: reportStorageError, withdraw: withdrawStorageNotice, refresh };
   const today = todayISO();
@@ -251,7 +251,7 @@ function TodayContent() {
     const session = plannedSessions.find((s) => s.id === sessionId);
     const tpl = session ? templateById.get(session.templateId) : undefined;
     const eligible = session && tpl ? dragEligibility(session, tpl, { logged: sessionLogs.some((l) => l.plannedSessionId === session.id), today: todayISO(), periods: settings.leavePeriods }) : undefined;
-    const context = { leave: settings.leavePeriods, illness: settings.illnessEpisodes };
+    const context = moveContext();
     // Een dag die dicht is (koorts, vakantie, tocht): niet verplaatsen, met dezelfde zin als slepen in Week.
     const refused = keptRefusal(context, tpl, date, todayISO());
     if (refused) { showFailure('Niet verplaatst.', refused); return; }

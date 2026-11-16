@@ -77,7 +77,8 @@ export function keptDay(context: MoveContext, template: SessionTemplate, date: s
   // De sterkste reden eerst, in de volgorde van de regel (verkouden, opbouw, zonder sportschool, rustdag).
   const asks = all.filter((c) => c.outcome === 'warn').map((c) => c.cause);
   const block = all.find((c) => c.outcome !== 'warn');
-  // A day that is closed stays closed; otherwise the rest day leads (its sentence comes first), then the others.
+  // Een dichte dag blijft dicht. Anders is de rustdag de soort dag (chip Je rustdag), maar de zinnen staan op sterkte:
+  // de sterkste eerst (`asks`), en het blad noemt er hoogstens twee (keptAskLine).
   const reason = block?.cause ?? (asks.includes('rest') ? 'rest' : asks[0]);
   return { reason, asks: block ? [] : asks };
 }

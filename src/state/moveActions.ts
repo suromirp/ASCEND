@@ -18,7 +18,7 @@ import { writeCatchUp } from '../storage/catchUpApply';
 import { writeSwap } from '../storage/weekSwap';
 import { snapshotWritten } from '../storage/undoPlanChange';
 import { resolveDropOnTraining } from '../engine/dropOnTraining';
-import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
+import { suggestMoveDates, type MoveContext, type MoveSuggestion } from '../engine/moveSuggestions';
 import { dayVerdicts, type DayVerdict, type DragContext } from '../engine/weekDrag';
 import { withSwapVerdicts } from '../engine/weekSwap';
 import { armFlip, disarmFlip } from '../utils/flipDom';
@@ -80,6 +80,13 @@ export function useMoveActions(deps: {
     [sessionsForWeek, plannedSessions, templates, sessionLogs, program, goalEngineConfig, planChangeLog, settings, trainingGoals, goalMilestones],
   );
 
+  // Wat een dag dicht houdt of laat vragen (engine/dayRules.ts), één keer voor slepen, ruilen, de voorgestelde dagen en
+  // de datumkiezer in Week en op Vandaag. Een weg die een veld weglaat, laat die dag stil open (Warden, 16 november).
+  const moveContext = useCallback((): MoveContext => {
+    const today = todayISO();
+    return { leave: settings.leavePeriods, restDay: settings.restDay ?? 1, goalDay: planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal), illness: settings.illnessEpisodes };
+  }, [settings.leavePeriods, settings.restDay, settings.afterMainGoal, settings.illnessEpisodes, trainingGoals, goalMilestones]);
+
   const suggestMoves = useCallback(
     (sessionId: string): MoveSuggestion[] => {
       const session = plannedSessions.find((s) => s.id === sessionId);
@@ -91,10 +98,10 @@ export function useMoveActions(deps: {
       return suggestMoveDates(
         nearby, templates, sessionId, sessionLogs, program,
         goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, today, undefined,
-        { leave: settings.leavePeriods, restDay: settings.restDay ?? 1, goalDay: planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal), illness: settings.illnessEpisodes },
+        moveContext(),
       );
     },
-    [plannedSessions, sessionsForWeek, templates, sessionLogs, program, goalEngineConfig, settings.leavePeriods, settings.restDay, settings.afterMainGoal, settings.illnessEpisodes, trainingGoals, goalMilestones],
+    [plannedSessions, sessionsForWeek, templates, sessionLogs, program, goalEngineConfig, moveContext],
   );
 
   // The week of `weekStart` and the weeks around it, with what keeps a day free: for dragging and swapping.
@@ -106,10 +113,10 @@ export function useMoveActions(deps: {
       return {
         sessions: nearby, templates, logs: sessionLogs, program,
         dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference, asOf: today,
-        move: { leave: settings.leavePeriods, restDay: settings.restDay ?? 1, goalDay: planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal), illness: settings.illnessEpisodes },
+        move: moveContext(),
       };
     },
-    [sessionsForWeek, templates, sessionLogs, program, goalEngineConfig, settings.leavePeriods, settings.restDay, settings.afterMainGoal, settings.illnessEpisodes, trainingGoals, goalMilestones],
+    [sessionsForWeek, templates, sessionLogs, program, goalEngineConfig, moveContext],
   );
 
   // A day with exactly one training that may move becomes Ruilen (engine/weekSwap.ts#withSwapVerdicts), unless
@@ -257,5 +264,5 @@ export function useMoveActions(deps: {
     [plannedSessions, sessionsForWeek, templates, sessionLogs, program, goalEngineConfig],
   );
 
-  return { moveSession, suggestMoves, dragContextFor, dragVerdicts, applyProposal, proposeSkip, proposeBackOnPlan };
+  return { moveSession, suggestMoves, moveContext, dragContextFor, dragVerdicts, applyProposal, proposeSkip, proposeBackOnPlan };
 }

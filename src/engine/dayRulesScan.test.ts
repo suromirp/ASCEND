@@ -25,10 +25,10 @@ const LEFT: Record<string, { calls: Partial<Record<typeof OLD[number], number>>;
   'components/IllnessCard.tsx': { calls: { activeIllness: 2, recoveryRamp: 1 }, why: 'de kaart Ziek toont de melding en de opbouw' },
   'components/useIllnessSign.ts': { calls: { activeIllness: 1 }, why: 'het teken dat je ziek gemeld bent' },
   'components/vandaag/yourDayRows.ts': { calls: { activeIllness: 1 }, why: 'geen weegherinnering terwijl je ziek bent' },
-  'engine/widgetSummary.ts': { calls: { activeIllness: 1, leaveLabelOn: 2 }, why: 'de widget zegt dat je ziek bent' },
-  'pages/Today.tsx': { calls: { activeIllness: 1, recoveryRamp: 1, leaveLabelOn: 1 }, why: 'de missie volgt de melding (de toets zelf is dayRules, stap doen); de kaart Opbouw' },
+  'engine/widgetSummary.ts': { calls: { activeIllness: 1, leaveLabelOn: 2 }, why: 'de widget zegt dat je ziek bent en noemt de periode van vandaag' },
+  'pages/Today.tsx': { calls: { activeIllness: 1, recoveryRamp: 1, leaveLabelOn: 1 }, why: 'de missie volgt de melding (de toets zelf is dayRules, stap doen); de kaart Opbouw; het etiket van de periode van vandaag' },
   'engine/missedTraining.ts': { calls: { activeIllness: 1, isTaperDay: 1 }, why: 'geen vragen tot je beter bent; de afbouw apart omdat een horlogelog nog gekoppeld mag worden' },
-  'engine/eveningBefore.ts': { calls: { activeIllness: 1, isIllnessDay: 1, leaveDays: 1 }, why: 'de avond ervoor: rust uit, er valt niets klaar te leggen' },
+  'engine/eveningBefore.ts': { calls: { activeIllness: 1, isIllnessDay: 1, leaveDays: 1 }, why: 'de avond ervoor: rust uit, er valt niets klaar te leggen; de soort periode van morgen (vakantie, tocht) voor wat er klaar ligt' },
   // De ronde en wat de planning kent (stap 5 van het ontwerp: alleen als stap 0 tot 4 stil bleven).
   'engine/sports.ts': { calls: { strengthAllows: 1 }, why: 'ronde: met kracht uit kent de planning geen kracht' },
   'storage/weeklyPrescriptionStep.ts': { calls: { strengthAllows: 1 }, why: 'ronde: met kracht uit geen kracht in het voorschrift' },

@@ -64,7 +64,7 @@ const SWAP_FAILED = 'Beide trainingen staan nog op hun eigen dag.';
 const MOVE_FAILED = 'Kijk in je week wat er nu staat.';
 
 export function WeekPage() {
-  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt, proposeSwap, swapOptionsFor, showFailure, openDraftId } = useAppData();
+  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt, proposeSwap, swapOptionsFor, showFailure, openDraftId, moveContext } = useAppData();
   // Afvinken met één tik: grens in tijd en de melding bovenin (state/logSave.ts#tickOff).
   const tickNotice = { report: reportStorageError, withdraw: withdrawStorageNotice, refresh };
   const keyFocus = useKeyFocus();
@@ -423,7 +423,7 @@ export function WeekPage() {
             const tpl = templateById.get(sel.templateId);
             const eligible = tpl ? dragEligibility(sel, tpl, { logged: !!selectedLog, today: todayISO(), periods: settings.leavePeriods }) : undefined;
             // Zonder sportschool, verkouden of opbouw na ziekte: eerst de vraag (de ene regel, engine/dayRules.ts).
-            const context = { leave: settings.leavePeriods, illness: settings.illnessEpisodes };
+            const context = moveContext();
             // Een dag die dicht is (koorts, vakantie, tocht): niet verplaatsen, met dezelfde zin als slepen.
             const refused = keptRefusal(context, tpl, date, todayISO());
             if (refused) { showFailure('Niet verplaatst.', refused); setSelected(null); return; }

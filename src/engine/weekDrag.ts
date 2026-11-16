@@ -292,8 +292,11 @@ export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {})
   if (reasons.length === 0) return { action: clean ? 'apply' : 'ask', proposal };
   // Een dag die zelf vraagt en ook dicht op een zware dag valt: hoogstens twee zinnen, de sterkste reden en de 48 uur
   // kort (Lookout op 360, 16 november).
-  if (opts.verdict?.ask && opts.verdict.askReason && !clean && proposal.short) {
-    return { action: 'ask', proposal: { ...proposal, resolved, reason: `${firstSentence(reasons[0])} ${proposal.short}` } };
+  // De korte zin vervangt alleen de botsing, nooit een andere reden: een testloop, wat een periode neerzette of opzij
+  // schoof (askAlways) en een training die mee op je rustdag komt blijven staan, voor de 48 uur (Warden, 16 november).
+  if (opts.verdict?.ask && opts.verdict.askReason && !clean && proposal.short && !legs) {
+    const [day, ...others] = reasons;
+    return { action: 'ask', proposal: { ...proposal, resolved, reason: [firstSentence(day), ...others, proposal.short].join(' ') } };
   }
   // Een cascade of botsing houdt zijn eigen reden, met de nieuwe er vooraan.
   const kept = clean ? [] : [proposal.reason];
