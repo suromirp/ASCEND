@@ -46,7 +46,7 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Loopt
 
-- Graphify eerlijk opnieuw: start vannacht zodra het lopende werk klaar is; de vergelijking staat morgenochtend hier.
+- Graphify eerlijk opnieuw: gestart om 02:05. Dezelfde kleine taak (een gewone Wandeling loggen) twee keer gebouwd, met en zonder Graphify; de vergelijking staat morgenochtend hier.
 
 ## Net live
 

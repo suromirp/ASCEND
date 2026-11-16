@@ -53,6 +53,11 @@ Bijgewerkt: 15 november 2026, 22:40 Portugese tijd. Coördinator sinds 22:35: se
 
 - Eigenaar 23:55: denkt dat we Graphify verkeerd gebruikten (eenmalig een graaf, opslaan, elke chat weet waar te zoeken, steeds aanvullen). Antwoord: de proef van 13 november deed dat deels; niet getest waren `graphify install` (hook en regel in CLAUDE.md) en bijwerken na elke wijziging. Eigenaar 00:00 "Waarom niet eerder?", daarna "Prima, doe maar zo": ja. Proef start vannacht zodra I-61, I-62, I-64, I-65 en Back-up telling klaar zijn (rond 01:30): Graphify zoals bedoeld (install met hook en CLAUDE.md-regel, bijwerken na elke wijziging) op een eigen branch `claude/proef-graphify-2`, nooit op main; één afgebakende taak twee keer met dezelfde opdracht, met en zonder, tokens en tijd vergelijken; uitslag op de Werkkaart.
 
+## Graphify-proef (gestart 02:05, 16 november)
+
+- Taak I-70 (neutraal sjabloon Wandeling) twee keer op Sonnet met dezelfde opdracht: zonder Graphify session_01LnDpSkeCxdN8DGXZkSTxji (`claude/proef-graphify-zonder`), met Graphify zoals bedoeld (install, hook, CLAUDE.md-regel alleen op de proefbranch, aparte commit) session_01LnDpSnUqhYDz4jXqUJ1Mke (`claude/proef-graphify-met`).
+- Meten: cost_usd en tokens uit get_session (usage), tijd (created tot laatste push), tool-aanroepen, zoekacties, en de kwaliteit (Warden Sonnet op allebei kort). Uitslag in `docs/onderzoek/Ponytail en Graphify.md` als aanvulling (nieuwe kop, niet herschrijven) en op de Werkkaart; advies houden of schrappen. Nooit de Graphify-commit naar main; de betere bouw gaat daarna via de gewone poorten als I-70.
+
 ## Stand 23:45 (session_01LnDpSncLf13Bm9hk3D5VBF)
 
 - 22:50 tot 23:30 liep de vijfuurslimiet vol: helpers en bouwers I-62 en I-64 stopten. Om 23:41 alles weer aangezet.
