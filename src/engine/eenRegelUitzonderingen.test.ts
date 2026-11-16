@@ -7,7 +7,9 @@ import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { addDays, mondayOfWeek } from '../utils/dates';
+import { calibrationBlock } from './calibration';
 import { catchUpEligibility } from './catchUp';
+import { quietWeeks } from './quietWeeks';
 import { keptAsk, keptDayReason, suggestMoveDates } from './moveSuggestions';
 import { deriveSessionStatus } from './sessionStatus';
 import { computeCurrentStreak } from './streak';
@@ -177,5 +179,31 @@ describe('gat 10: vervallen en toch inhalen', () => {
     expect(catchUpEligibility(s, t, { logged: false, today: TODAY, caughtUp: false }).ok).toBe(true);
     expect(catchUpEligibility(s, t, { logged: false, today: TODAY, caughtUp: false, pause: { illness: [ill('below_neck', addDays(TODAY, -3), addDays(TODAY, -1))] } })).toEqual({ ok: false, reason: 'paused' });
     expect(catchUpEligibility(s, t, { logged: false, today: TODAY, caughtUp: false, pause: { leave: [period('no_training', addDays(TODAY, -2), addDays(TODAY, -2))], templates } })).toEqual({ ok: false, reason: 'paused' });
+  });
+});
+
+// --- stap 3: Forge ------------------------------------------------------------------------------------------------------
+
+describe('gat 3 en 4: de ijkset kent ziek, de week voor een race en de rustige weken', () => {
+  const base = { date: TODAY, planned: [] as PlannedSession[], templates };
+  it('gat 3: niet als je ziek bent of opbouwt, ook niet met neus of keel', () => {
+    expect(calibrationBlock({ ...base, illness: [ill('above_neck', TODAY)] })).toBe('ill');
+    expect(calibrationBlock({ ...base, illness: [ill('below_neck', addDays(TODAY, -3), addDays(TODAY, -1))] })).toBe('ill');
+    expect(calibrationBlock(base)).toBeUndefined();
+  });
+  it('gat 4: de week voor een race is het venster van raceWeekGuard, niet drie dagen', () => {
+    // Vrijdag 20, een race op woensdag 25: vijf dagen ervoor, in de week erna. Vroeger mocht de set nog.
+    const race = ps('race', 'tpl_race', addDays(TODAY, 9));
+    expect(calibrationBlock({ ...base, planned: [race] })).toBeUndefined();
+    expect(calibrationBlock({ ...base, date: addDays(TODAY, 4), planned: [race] })).toBe('test');
+  });
+  it('gat 4: geen set tot bijna falen in een rustige instap of de lichte week van een golf', () => {
+    const quiet = quietWeeks({ reentryWeeks: [{ id: 'r', from: TODAY, until: addDays(TODAY, 6), factor: 0.75, reason: 'pause' }], around: TODAY });
+    expect(quiet).toEqual([{ from: TODAY, until: addDays(TODAY, 6) }]);
+    expect(calibrationBlock({ ...base, quietWeeks: quiet })).toBe('quiet');
+    expect(calibrationBlock({ ...base, date: addDays(TODAY, 7), quietWeeks: quiet })).toBeUndefined();
+  });
+  it('gat 12: niet met krachttraining uit', () => {
+    expect(calibrationBlock({ ...base, strengthOff: true })).toBe('off');
   });
 });

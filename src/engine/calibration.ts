@@ -21,8 +21,9 @@ import { exerciseById } from '../data/exercises';
 import { isCompound } from './warmup';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
-import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
 import { leaveDays } from './leave';
+import { dayRules, type EasedRange } from './dayRules';
+import { raceDatesOf } from './raceWindow';
 
 export const CALIBRATION_DAYS = 28;
 // De reserve van de ijkset: zo ver als netjes gaat, met nog één over.
@@ -32,7 +33,8 @@ const LEAD_DAYS = 3;
 // Zoveel trainingen met de oefening gingen eraan vooraf (`WorkoutExercise.trainings`).
 const MIN_TRAININGS = 3;
 
-export type CalibrationBlock = 'ill' | 'away' | 'nogym' | 'eased' | 'pending' | 'recent' | 'trip' | 'test';
+// quiet: een rustige week (rustige instap, de lichte week van een golf); off: krachttraining staat uit.
+export type CalibrationBlock = 'ill' | 'away' | 'nogym' | 'quiet' | 'off' | 'eased' | 'pending' | 'recent' | 'trip' | 'test';
 
 // De stand van de instelling IJkset (strengthModel.calibrationMode): Vragen is het advies.
 export type { CalibrationMode } from './strengthSettings';
@@ -50,19 +52,30 @@ export interface CalibrationInput {
   leave?: LeavePeriod[];
   // Forge maakt deze training lichter (Lichter bij vermoeide benen): geen set tot bijna falen erbij.
   eased?: boolean;
+  // De rustige weken rond deze dag (engine/dayRules.ts#easedWeeks): rustige instap, de lichte week van een golf.
+  quietWeeks?: readonly EasedRange[];
+  // Krachttraining staat uit.
+  strengthOff?: boolean;
   // Een andere training loopt nog als concept met een ijkset erin: de vier weken tellen pas bij Afronden, dus anders
   // komen er twee binnen vier weken.
   pending?: boolean;
 }
 
+// Wat de ene regel (engine/dayRules.ts, stap een set erbij) zegt, in de woorden van de ijkset.
+const BLOCK_OF: Partial<Record<string, CalibrationBlock>> = {
+  ill: 'ill', ill_light: 'ill', ramp: 'ill', off: 'away', trek: 'away', nogym: 'nogym', race: 'test', taper: 'test', eased: 'quiet', strength_off: 'off',
+};
+
 // Waarom het nu niet kan (undefined: het kan).
 export function calibrationBlock(i: CalibrationInput): CalibrationBlock | undefined {
-  // Ziek of nog aan het opbouwen: de set maakt moe en meet dan iets anders dan je gewone kracht.
-  if (activeIllness(i.illness) || isIllnessDay(i.date, i.illness, i.date) || recoveryRamp(i.illness, i.date)) return 'ill';
+  // De ene regel: ziek of nog aan het opbouwen (de set maakt moe en meet dan iets anders dan je gewone kracht),
+  // vakantie of tocht, zonder sportschool, de week voor een race (het venster van adviceShared.ts#raceWeekGuard, I-67
+  // gat 4), een rustige week en kracht uit.
+  const v = dayRules({
+    today: i.date, illness: i.illness, leave: i.leave, races: raceDatesOf(i.planned, i.templates), eased: i.quietWeeks, strengthOff: i.strengthOff,
+  }).may({ date: i.date, step: 'add_set', template: { id: 'calibration', type: 'strength' } });
+  if (!v.ok && BLOCK_OF[v.cause]) return BLOCK_OF[v.cause];
   const days = leaveDays(i.leave);
-  const today = days.get(i.date)?.kind;
-  if (today === 'off' || today === 'trek') return 'away';
-  if (today === 'nogym') return 'nogym';
   if (i.eased) return 'eased';
   if (i.pending) return 'pending';
   if (i.lastAt && Math.abs(daysBetween(i.lastAt, i.date)) < CALIBRATION_DAYS) return 'recent';
