@@ -1,6 +1,15 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 15 november 2026, 22:40 Portugese tijd. Coördinator sinds 22:35: session_01LnDpSncLf13Bm9hk3D5VBF (vorige: session_01LnDpSjEhK5wS8sN1rH1p5c). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
+Bijgewerkt: 16 november 2026, 03:50 Portugese tijd, door coördinator session_01LnDpSncLf13Bm9hk3D5VBF (wissel op de vaste tijd). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
+
+## Stand 03:50 (kort)
+
+- Live vannacht op main: 08fef4e (testfix briefingPerManier), b5b210d Back-up telling (I-50, I-55), 4dec920 IJkset (I-65), af7fda7 Waar je nu bent (I-61), 4cf7beb Wandeling plannen (I-62), 06ff4b1 Zonder sportschool (I-64). Er lopen geen bouwers of helpers meer; alle bouwers gearchiveerd.
+- Open vragen aan de eigenaar (eigenaar.md): IJkset zelf op Automatisch zetten; Graphify-hook nog proberen (advies laten). Plus de oudere vragen daar.
+- Graphify-herkansing klaar: met graaf +45 % kosten, zelfde resultaat; hook niet getest (bouwer weigerde, instellingen alleen op vraag eigenaar). I-70 (sjabloon Wandeling) ligt klaar op `claude/proef-graphify-zonder` (df92445, controles groen): nog Warden, dan main (geen UI-wijziging).
+- Volgende: I-67 (één regel voor uitzonderingen, ontwerp op `claude/een-regel-uitzonderingen`) bouwen met verse bouwer Opus high en Warden Fable; I-63 (back-up kleiner) op het bouwmoment maandag 19:43 Amsterdam met verse back-up van de eigenaar; I-66 onderhoudsronde maandag; I-68 tot I-72 kleine punten.
+- Bouwers nakijken (trig_01E4NEQpURCEZGKYzpZGQizh) vuurt nog in de chat van 15 november avond (session_01LnDpSjEhK5wS8sN1rH1p5c) en die stuurt elke beurt door; verhuizen werd geweigerd. Werkkaart elk uur op :20 in session_01LnDpSktfMxYFgMMgDhw8Do.
+- Geleerd vannacht: (1) reviewer-rol schrijft geen bestand tenzij de opdracht "je MAG herstel.md schrijven" zegt; (2) een `&&`-keten met `git add -A` faalt op node_modules: gebruik `git add -A -- docs src`; (3) bouwers mogen niet force-pushen: ze mergen main in hun branch, squash naar main is dan nog steeds `merge --squash` op een worktree van origin/main; (4) bouwers geven backlogcodes op een oude backlog: altijd nacht's backlog houden en codes zelf toekennen.
 
 ## Vaste afspraken
 
