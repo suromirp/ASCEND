@@ -57,7 +57,7 @@ Bijgewerkt: 15 november 2026, 22:40 Portugese tijd. Coördinator sinds 22:35: se
 
 - 22:50 tot 23:30 liep de vijfuurslimiet vol: helpers en bouwers I-62 en I-64 stopten. Om 23:41 alles weer aangezet.
 - I-61: Warden Fable NIET AKKOORD (`warden/waar-je-nu-bent-herstel`: blokkerend 1 late watch stopt nooit, moet 2, 3, 8, mag 5, 6). Herstel naar de bouwer om 23:44, plus push van zijn tikfix. Lookout I-61 heeft nooit iets gepusht (helper in de vorige chat, verloren): na het herstel opnieuw Lookout starten.
-- Back-up telling: Warden AKKOORD; bouwer bouwt Moet 1 (B4, halfWritten per map). Moet 2 (B2: lastExportedAt springt terug bij Terugzetten) en Mag 3 (B3: laat antwoord na tweede poging) worden nieuwe Inboxpunten. Daarna main zonder Lookout.
+- Back-up telling LIVE 00:30 als b5b210d (I-50, I-55; B4 mee). Nieuwe Inbox I-68 (B2) en I-69 (B3); de bouwer had ze I-60/I-61 genoemd. Bouwer session_01LnDpSnaiuj5CodXD7EQjxY kan gearchiveerd. Oud: Warden AKKOORD; bouwer bouwt Moet 1 (B4, halfWritten per map). Moet 2 (B2: lastExportedAt springt terug bij Terugzetten) en Mag 3 (B3: laat antwoord na tweede poging) worden nieuwe Inboxpunten. Daarna main zonder Lookout.
 - I-64 klaar 23:54 (`claude/zonder-sportschool-verplaatst` d5818e5): Warden Fable loopt (`warden/zonder-sportschool-herstel`); daarna Lookout en Pathfinder (Week met amber punt, slepen naar wo 18).
 - briefingPerManier.test.ts werd rood vanaf 16 nov 00:00 Amsterdam ook op main (programma start op de echte maandag): de fix staat los op main als 08fef4e (00:10, alle controles groen). Zeg bouwers: rebase of cherry-pick die fix als hun commit-hook faalt.
 - I-62: om 23:44 gewekt om af te ronden.

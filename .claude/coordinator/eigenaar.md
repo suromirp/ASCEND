@@ -46,6 +46,10 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Net live
 
+### 16 november 00:30
+- Back-up: de teller van wat nog niet in een back-up staat telt nu ook een training van gisteren die je na je laatste back-up bewaarde.
+- Een automatische back-up die laat antwoordt, laat geen dubbel bestand of rest meer achter, ook niet als je intussen een andere map kiest.
+
 ### 15 november 22:45
 - Week zegt overal hetzelfde: een training die je op een andere dag deed zegt "gedaan di 27", de weekterugblik noemt ook overgeslagen en vervallen, en bij gemist is er één advies: niet dubbel doen, zet de rest terug.
 - Forge: Training afronden stelt de dag van je laatste set voor, met het tijdstip van die set.
