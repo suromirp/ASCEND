@@ -42,7 +42,6 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 ## Stuk of vast
 
 - Week: Bovenlichaam A staat op woensdag 18 november, binnen uw periode zonder sportschool. Wordt uitgezocht en hersteld.
-- Waar je nu bent in de Briefing: "Je precieze plek is niet beschikbaar" (21:42, binnen). De app keurt de eerste grove plek af zonder te wachten, en zegt niet of Android alleen bij benadering geeft. Herstel wordt gebouwd; tot dan werkt Andere plek.
 - Back-up: de oplossing staat live (17:45). Graag een test op uw toestel: Gedwongen stoppen, openen, meteen Back-up maken, drie keer; kijk in Documents/ASCEND of er een bestand zonder -2 staat.
 
 ## Loopt
@@ -50,6 +49,9 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 - Graphify eerlijk opnieuw: start vannacht zodra het lopende werk klaar is; de vergelijking staat morgenochtend hier.
 
 ## Net live
+
+### 16 november 01:40
+- Waar je nu bent: de Briefing wacht tot je plek scherp is (hooguit 15 seconden) en zegt anders waarom, met Opnieuw, Andere plek of een tik op de kaart. De kaart in de Briefing blokkeert het scrollen niet meer; slepen en knijpen in de grote kaart.
 
 ### 16 november 01:10
 - IJkset heeft drie standen: Vragen, Automatisch erbij en Uit. Automatisch zet eens per vier weken een set erbij die je weg kunt halen; nooit als je ziek bent, weg bent, zonder sportschool zit of Forge de training lichter maakt.
