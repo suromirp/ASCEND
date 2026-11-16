@@ -9,7 +9,7 @@
 // kort in de hoek en buiten de lus; een tik opent Groter (besluit 2026-11-12-route-blok.md).
 // Docs: docs/beslissingen/2026-11-11-route-kaart.md, docs/beslissingen/2026-11-11-route-start.md.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RoutePoint, RouteStyle } from '../models/route';
 import { groundLine, MAKE_HOME_MOVE, MAKE_HOME_NEW, mapStatusLine, photoOffered, quietAttribution, readMapColors, type MapBase, type MapPhoto, type MapRoute } from '../engine/routeMap';
 import { ROUTE_MAP_HEIGHT, mapFallbackLine } from '../engine/routeSheet';
@@ -68,11 +68,13 @@ function PhotoSwitch({ value, onPick }: { value: MapPhoto; onPick: (v: MapPhoto)
 // Bij Bewaar als plek: wat er gebeurt, in één zin (engine/routeMap.ts).
 export { MAKE_HOME_MOVE, MAKE_HOME_NEW };
 
-export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep, onOpen, piece, onBigger, full = false }: {
+export function RouteMap({ routes, chosen, start, center: centerIn, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep, onOpen, piece, onBigger, full = false, still = false }: {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
-  // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is).
-  start: RoutePoint;
+  // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is). Zonder start: de kaart zonder lus.
+  start?: RoutePoint;
+  // Alleen het midden van de kaart als er geen start is (je plek lukte niet); nooit een ring of startpunt.
+  center?: RoutePoint;
   base: MapBase;
   onChoose: (style: RouteStyle) => void;
   // Start hier (een getikt punt), alleen voor deze zoektocht; heeft zelf een grens in tijd.
@@ -104,8 +106,15 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   onBigger?: () => void;
   // De vergrote kaart: het vak vult de hoogte en volgt het draaien van de telefoon (ResizeObserver).
   full?: boolean;
+  // De kaart zonder lus in de pagina: een veeg scrolt de pagina, een tik kiest een punt; slepen en knijpen
+  // alleen in Hele kaart (Lookout, I-61).
+  still?: boolean;
 }) {
   const quiet = onOpen !== undefined;
+  // Het midden op zijn getallen: een nieuw object met dezelfde plek zet de kaart niet opnieuw.
+  const centerLat = centerIn?.lat;
+  const centerLon = centerIn?.lon;
+  const center = useMemo(() => (centerLat !== undefined && centerLon !== undefined ? { lat: centerLat, lon: centerLon } : undefined), [centerLat, centerLon]);
   const motion = useMotionMode();
   const box = useRef<HTMLDivElement>(null);
   const view = useRef<RouteMapView | undefined>(undefined);
@@ -121,9 +130,9 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   const [fullCredit, setFullCredit] = useState(false);
   const alive = useRef(true);
   // Wat de kaart nodig heeft, ook binnen de callbacks van de kaart zelf.
-  const latest = useRef({ routes, chosen, dots: { start, me, pick }, piece, motion, onChoose, photo });
+  const latest = useRef({ routes, chosen, dots: { start, me, pick }, piece, center, motion, onChoose, photo });
   useEffect(() => {
-    latest.current = { routes, chosen, dots: { start, me, pick }, piece, motion, onChoose, photo };
+    latest.current = { routes, chosen, dots: { start, me, pick }, piece, center, motion, onChoose, photo };
   });
   // De keuze geldt meteen op het scherm; het bewaren (onPhoto) volgt, en lukt dat niet, dan wisselt hij toch.
   const [picked, setPicked] = useState<MapPhoto>(photo);
@@ -135,6 +144,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   const showPhoto = photoOffered(base) && picked === 'photo';
   const photoShown = useRef(showPhoto);
   const quietAtStart = useRef(quiet);
+  const stillAtStart = useRef(still);
 
   useEffect(() => {
     alive.current = true;
@@ -158,6 +168,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
       webgl: hasWebGL2,
       motion: () => latest.current.motion,
       ...(quietAtStart.current ? { padding: QUIET_FIT_PADDING } : {}),
+      ...(stillAtStart.current ? { still: true } : {}),
     }, photoShown.current);
     view.current = v;
     return () => {
@@ -168,8 +179,8 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   }, [base]);
 
   useEffect(() => {
-    view.current?.update({ routes, chosen, dots: { start, me, pick }, piece });
-  }, [routes, chosen, start, me, pick, piece]);
+    view.current?.update({ routes, chosen, dots: { start, me, pick }, piece, center });
+  }, [routes, chosen, start, me, pick, piece, center]);
 
   // De vergrote kaart: draait de telefoon (of verandert het vak anders van maat), dan rekent de kaart
   // opnieuw en staat de lus weer in beeld, ook terug naar staand.
@@ -197,7 +208,7 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
   }, [showPhoto]);
 
   // Nieuwe lussen of een nieuw startpunt: alles in beeld, één keer.
-  const fitKey = `${routes.map((r) => `${r.style}:${r.points.length}`).join(',')}|${start.lat}|${start.lon}`;
+  const fitKey = `${routes.map((r) => `${r.style}:${r.points.length}`).join(',')}|${start?.lat}|${start?.lon}|${start ? '' : `${center?.lat}|${center?.lon}`}`;
   const ready = state.kind === 'ready';
   useEffect(() => {
     if (ready) view.current?.fitAll();
@@ -300,10 +311,25 @@ export function RouteMap({ routes, chosen, start, base, onChoose, onStart, onNoM
     <div className={`flex flex-col gap-1${full ? ' h-full min-h-0' : ''}`}>
       {/* Slepen en knijpen horen bij de kaart: niet bij het blad en niet bij de pagina. Een vaste hoogte
           (engine/routeSheet.ts), zodat de gekozen lus en de hoofdknop eronder op 360 px nog in beeld staan. */}
-      <div data-no-sheet-drag="" className={`relative w-full overflow-hidden rounded-xl border${full ? ' min-h-0 flex-1' : ''}`} style={{ ...(full ? {} : { height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}) }), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', touchAction: quiet ? 'pan-y' : 'none', overscrollBehavior: 'contain' }}>
+      <div data-no-sheet-drag="" className={`relative w-full overflow-hidden rounded-xl border${full ? ' min-h-0 flex-1' : ''}`} style={{ ...(full ? {} : { height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}) }), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', touchAction: quiet || still ? 'pan-y' : 'none', overscrollBehavior: quiet || still ? 'auto' : 'contain' }}>
         {/* MapLibre zet zelf position: relative op dit vak; daarom de volle maat, niet absolute. */}
         <div ref={box} style={{ width: '100%', height: '100%' }} />
         {state.kind === 'loading' && <p role="status" className="absolute bottom-1 left-2 text-xs" style={dim}>De kaart wordt geladen.</p>}
+        {/* De kaart zonder lus in de pagina: een laag over de kaart. Een veeg gaat naar de pagina (MapLibre ziet
+            hem niet), een tik zet de ring; met het toetsenbord het midden van de kaart (Lookout, I-61). */}
+        {still && !quiet && (
+          <button
+            type="button"
+            aria-label="Kies hier waar je begint"
+            onClick={(e) => {
+              const r = e.currentTarget.getBoundingClientRect();
+              const keyboard = e.detail === 0;
+              view.current?.tapAt(keyboard ? r.width / 2 : e.clientX - r.left, keyboard ? r.height / 2 : e.clientY - r.top);
+            }}
+            className="absolute inset-0 h-full w-full rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-ink)] focus-visible:-outline-offset-2"
+            style={{ touchAction: 'pan-y' }}
+          />
+        )}
         {/* De stille kaart: één knop over de hele kaart naar Groter; de pagina scrolt er gewoon overheen. */}
         {quiet && <button type="button" aria-label="Groter: de kaart met je lus" data-sheet-from="" onClick={onOpen} className="absolute inset-0 h-full w-full rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-ink)] focus-visible:-outline-offset-2" />}
         {!quiet && photoOffered(base) && onPhoto && (

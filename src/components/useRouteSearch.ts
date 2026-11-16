@@ -21,7 +21,7 @@ import { loadBodyKg } from '../engine/weightTrend';
 import { resolveRouteStyle, roundStart, routeTarget } from '../engine/routeTarget';
 import { searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
-import { locateAnswerCounts, locateNow, maySearch, planStart, startView, resolveRouteStart, roundExact, roundHere, startFailureReason, type RouteStartMode, type StartPick } from '../engine/routeStart';
+import { askMapCenter, locateAnswerCounts, locateNow, maySearch, planStart, startView, resolveRouteStart, type AskMapCenter, roundExact, roundHere, startFailureReason, type RouteStartMode, type StartPick } from '../engine/routeStart';
 import { getRouteStartPoint, locateStartHere, saveRouteStartPoint, START_LOCATE_LIMIT_MS, startFromMap, type StartLocation } from '../storage/routeStart';
 import { homeFromStartPoint, savedStartChips, startChoices, type StartChip } from '../engine/places';
 import { placeLabel, placeToSave, savedAt, type FoundPlace } from '../engine/placeSearch';
@@ -110,6 +110,8 @@ export interface RouteSearchModel {
   retry: () => void;
   // Je plek lukte niet: de reden, en of er een Thuis is om te kiezen. Geen zoektocht tot een tik.
   ask: { line: string; homeOffered: boolean } | undefined;
+  // Bij de vraag: het midden van de kaart zonder lus (engine/routeStart.ts#askMapCenter); nooit een startpunt.
+  askCenter?: AskMapCenter;
   // Opnieuw: één nieuwe vraag om je plek (een nieuwe poging).
   retryHere: () => void;
   // De regel als zoeken niet lukte: geen verbinding, of welke stap niet op tijd was.
@@ -511,6 +513,7 @@ export function useRouteSearch({ template, date, closing = false, enabled = true
     parts: routeSheetParts(stage, plans ? { anyOk: okStyles.length > 0, anyFailed: order.some((s) => !plans[s].ok) } : undefined),
     retry: () => setAttempt((n) => n + 1),
     ask: start.ask,
+    askCenter: start.ask ? askMapCenter({ rough: hereFound && !hereFound.ok ? hereFound.rough : undefined, home: saved, town: lat !== undefined && lon !== undefined ? { lat, lon } : undefined }) : undefined,
     retryHere: () => {
       setMapStart(undefined);
       setStartPlace(undefined);

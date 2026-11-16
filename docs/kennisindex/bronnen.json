@@ -3170,6 +3170,16 @@
    "kern": "Vervallen betekent overal hetzelfde: een voorbije training zonder log op een dag binnen een gemelde ziekte (tot en met de dag van beter melden) of vakantie, tocht of periode zonder sportschool.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-15-waar-je-nu-bent-scherp.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Waar je nu bent volgt je plek binnen 15 s tot hij hoogstens 50 m is en neemt de eerste goede; geweigerd, alleen bij benadering (approximate) en te grof na de grens hebben elk een eigen zin, een fout van de vraag om toegang telt niet als weigering, en bij de vraag staat toch de kaart zonder lus, waarvan het midden nooit een startpunt is.",
+   "vultAan": [
+    "docs/beslissingen/2026-11-14-geen-stille-thuis.md"
+   ],
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-15-wandelen-vaste-bpm.md": {
    "onderwerpen": [
     "koppelingen-en-data",

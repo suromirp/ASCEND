@@ -18,6 +18,8 @@ export function RouteMapFull({ model, piece, onClose }: { model: RouteSearchMode
   const { closing, requestClose } = useSheetClose(onClose);
   useFreeRotation();
   const start = model.mapStartPoint;
+  // Je plek lukte niet: de kaart zonder lus, met alleen een midden (nooit een startpunt); een tik zet de ring.
+  const askCenter = model.stage === 'ask' ? model.askCenter : undefined;
   return (
     <Portal>
       <div
@@ -36,7 +38,25 @@ export function RouteMapFull({ model, piece, onClose }: { model: RouteSearchMode
         </div>
         <div className="min-h-0 flex-1">
           {/* Tijdens een nieuwe zoektocht (na Langer of een andere start) blijft Groter open, met één regel. */}
-          {(!start || model.stage !== 'plans') && <p role="status" className="py-2 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{model.stage === 'searching' ? 'Lussen zoeken…' : 'Er is nu geen lus om te tonen.'}</p>}
+          {!askCenter && (!start || model.stage !== 'plans') && <p role="status" className="py-2 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{model.stage === 'searching' ? 'Lussen zoeken…' : 'Er is nu geen lus om te tonen.'}</p>}
+          {askCenter && (
+            <RouteMap
+              full
+              routes={[]}
+              chosen={undefined}
+              center={askCenter.kind === 'overview' ? undefined : askCenter.point}
+              base={model.base}
+              onChoose={() => undefined}
+              onStart={model.startOnMap}
+              onNoMap={model.markNoMap}
+              photo={model.photo}
+              onPhoto={model.setPhoto}
+              me={model.mePoint}
+              tapped={model.tapPoint}
+              hasHome={model.hasHome}
+              onMakeHome={model.makeHome}
+            />
+          )}
           {start && model.stage === 'plans' && (
             <RouteMap
               full

@@ -24,6 +24,7 @@ import type { FileSender } from '../integrations/fileSender';
 import { OSM_COPYRIGHT } from '../integrations/overpass';
 import { TextButton } from './TextButton';
 import { RouteMap } from './RouteMap';
+import type { MapRoute } from '../engine/routeMap';
 import { NO_PLACE_LINE, OFFLINE_LINE, ROUTE_MAP_HEIGHT, TIMEOUT_LINE, loopLines, pickTransition, routeOutcomeLine, type RouteSheetPart } from '../engine/routeSheet';
 import { useMotionMode } from './motion';
 import { Icon } from './icons';
@@ -101,19 +102,37 @@ export function RouteFailure({ kind, onRetry, height, line }: { kind: 'offline' 
   );
 }
 
-// Je plek lukte niet: op de plek van de kaart de reden en Opnieuw (één nieuwe vraag om je plek). Thuis en
-// Andere plek zijn de chips erboven; ze staan hier niet nog eens. Er wordt pas gezocht na een tik: nooit
-// stil terug op Thuis, dat kan duizenden kilometers verderop liggen (besluit 2026-11-14-geen-stille-thuis.md).
-export function AskStart({ model, height }: { model: RouteSearchModel; height?: string }) {
+// Je plek lukte niet: de reden en Opnieuw (één nieuwe vraag om je plek), en daaronder toch de kaart, zonder
+// lussen: een tik zet de ring en Start hier zoekt vanaf dat punt (eigenaar 15 november). Het midden van de
+// kaart is geen startpunt: geen ring en geen zoektocht tot je tikt. Thuis en Andere plek zijn de chips
+// erboven; ze staan hier niet nog eens. Nooit stil terug op Thuis (besluit 2026-11-14-geen-stille-thuis.md,
+// 2026-11-15-waar-je-nu-bent-scherp.md).
+// De kaart is stil: een veeg scrolt de pagina, een tik zet de ring; slepen en knijpen in Hele kaart (`onFull`).
+export function AskStart({ model, height, onFull }: { model: RouteSearchModel; height?: string; onFull?: () => void }) {
   if (!model.ask) return null;
+  const line = <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{model.ask.line}</p>;
+  // Een gewone tekstknop in inkt, geen mint (dat is de knop onderaan) en niet gedempt: dit is de keuze hier.
+  const again = <TextButton tone="dim" style={{ color: 'var(--color-ink)' }} onClick={model.retryHere}>Opnieuw</TextButton>;
+  const center = model.askCenter;
+  if (!center) {
+    return (
+      <div className="flex w-full flex-col items-start justify-center gap-1 rounded-xl border px-5" style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
+        {line}
+        {again}
+      </div>
+    );
+  }
   return (
-    <div className="flex w-full flex-col items-start justify-center gap-1 rounded-xl border px-5" style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-      <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{model.ask.line}</p>
-      {/* Een gewone tekstknop in inkt, geen mint (dat is de knop onderaan) en niet gedempt: dit is de keuze hier. */}
-      <TextButton tone="dim" style={{ color: 'var(--color-ink)' }} onClick={model.retryHere}>Opnieuw</TextButton>
+    <div className="flex flex-col gap-1">
+      {line}
+      <div>{again}</div>
+      <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{center.line}</p>
+      <RouteMap routes={NO_ROUTES} chosen={undefined} center={center.kind === 'overview' ? undefined : center.point} base={model.base} onChoose={ignoreChoice} onStart={model.startOnMap} onNoMap={model.markNoMap} photo={model.photo} onPhoto={model.setPhoto} me={model.mePoint} tapped={model.tapPoint} hasHome={model.hasHome} onMakeHome={model.makeHome} still {...(onFull ? { onBigger: onFull } : {})} {...(height ? { height } : {})} />
     </div>
   );
 }
+const NO_ROUTES: MapRoute[] = [];
+const ignoreChoice = () => undefined;
 
 // Een lus als rij om te kiezen: geen uitklap. De gekozen rij heeft een rand in inkt; het mint accent
 // is de lus op de kaart. Een melding (te kort, te weinig hoogtemeters) staat in amber in een eigen regel
@@ -250,7 +269,7 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
       case 'searching':
         return <RouteSearching key={`${p}-${model.searchKey}`} steps={model.steps} current={model.currentStep} limitLine={model.limitLine} limitMs={model.limitMs} />;
       case 'ask':
-        return <AskStart key={p} model={model} />;
+        return <AskStart key={p} model={model} onFull={() => setBigger(true)} />;
       case 'failure':
         return <RouteFailure key={p} kind={stage === 'offline' ? 'offline' : 'timeout'} onRetry={model.retry} line={model.failLine} />;
       case 'map':

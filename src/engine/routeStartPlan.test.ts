@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { locateAnswerCounts, planStart, resolveRouteStart, START_LINE_APPROX, START_LINE_EXACT, START_LINE_HOME_UNREAD, START_LINE_NO_HOME, START_LINE_TAP, askStartLine, startFailureReason, type StartFailure } from './routeStart';
+import { ASK_MAP_HINT, askMapCenter, locateAnswerCounts, planStart, resolveRouteStart, START_LINE_APPROX, START_LINE_EXACT, START_LINE_HOME_UNREAD, START_LINE_NO_HOME, START_LINE_TAP, askStartLine, startFailureReason, type StartFailure } from './routeStart';
 import { homeFromStartPoint, startChoices } from './places';
 
 // Start bij (docs/onderhoud/2026-11-11-pathfinder-route-start.md). Nagemaakte punten, geen echte plek.
@@ -29,7 +29,7 @@ describe('Start bij: welke chip en welk punt', () => {
 });
 
 describe('locatie lukt niet: nooit stil terug op Thuis (eigenaar 14 november, op reis)', () => {
-  for (const reason of ['denied', 'unavailable', 'timeout', 'coarse', 'unsupported'] as const) {
+  for (const reason of ['denied', 'unavailable', 'timeout', 'coarse', 'unsupported', 'approximate'] as const) {
     it(`${reason}, met Thuis: vragen (Opnieuw, Thuis, Andere plek), geen punt en dus geen zoektocht`, () => {
       const p = planStart({ mode: 'here', home, found: fail(reason) });
       expect(p).toEqual({ kind: 'ask', chip: 'here', line: askStartLine(reason, true), reason, homeOffered: true });
@@ -53,7 +53,15 @@ describe('locatie lukt niet: nooit stil terug op Thuis (eigenaar 14 november, op
     expect(askStartLine('timeout', false)).toBe('Je locatie kwam niet op tijd. Probeer het opnieuw, of kies hierboven Andere plek.');
   });
   it('te grof (meer dan 50 m) heeft een eigen reden', () => {
-    expect(startFailureReason('coarse')).toBe('Je precieze plek is niet beschikbaar.');
+    expect(startFailureReason('coarse')).toBe('Je plek is nog niet scherp genoeg. Probeer het buiten of bij een raam opnieuw.');
+    expect(askStartLine('coarse', true)).toBe('Je plek is nog niet scherp genoeg. Probeer het buiten of bij een raam opnieuw, of kies hierboven Andere plek of Thuis.');
+  });
+  it('alleen bij benadering heeft een eigen reden, met wat je moet aanzetten', () => {
+    expect(startFailureReason('approximate')).toBe('Android geeft alleen je plek bij benadering. Zet Precieze locatie aan voor ASCEND in de instellingen van je telefoon.');
+  });
+  it('Thuis niet gelezen en je plek te grof: één keer opnieuw proberen in de regel', () => {
+    const p = planStart({ mode: 'here', home, homeUnread: true, found: fail('coarse') });
+    expect(p.line).toBe('Je plek is nog niet scherp genoeg. Thuis kon niet gelezen worden. Probeer het buiten of bij een raam opnieuw, of kies hierboven Andere plek.');
   });
 });
 
@@ -134,5 +142,26 @@ describe('een bewaarde of gezochte plek (Andere plek)', () => {
   });
   it('een kapotte plek telt niet', () => {
     expect(planStart({ mode: 'here', home, place: { lat: Number.NaN, lon: 5 } }).kind).toBe('locate');
+  });
+});
+
+describe('de kaart zonder lus: het midden (I-61)', () => {
+  const rough = { lat: 52.123456, lon: 5.654321 };
+  const town = { lat: 52.0912, lon: 5.1199 };
+  it('eerst de laatste grove plek van het toestel, op drie decimalen', () => {
+    expect(askMapCenter({ rough, home, town })).toEqual({ kind: 'device', point: { lat: 52.123, lon: 5.654 }, line: ASK_MAP_HINT });
+  });
+  it('dan Thuis, dan je plaats op twee decimalen', () => {
+    expect(askMapCenter({ home, town })).toEqual({ kind: 'home', point: home, line: ASK_MAP_HINT });
+    expect(askMapCenter({ town })).toEqual({ kind: 'town', point: { lat: 52.09, lon: 5.12 }, line: ASK_MAP_HINT });
+  });
+  it('zonder iets: een overzicht met de regel', () => {
+    expect(askMapCenter({})).toEqual({ kind: 'overview', line: 'Tik op de kaart waar je wilt beginnen, of kies hierboven Andere plek.' });
+    expect(askMapCenter({ rough: { lat: 99, lon: 0 }, home: 'kapot' })).toMatchObject({ kind: 'overview' });
+  });
+  it('het midden is nooit een startpunt: de stand blijft ask, zonder punt, en er wordt niet gezocht', () => {
+    const p = planStart({ mode: 'here', home, found: { ok: false, reason: 'coarse' } });
+    expect(p.kind).toBe('ask');
+    expect('point' in p).toBe(false);
   });
 });
