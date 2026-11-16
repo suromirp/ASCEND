@@ -29,6 +29,12 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Net live
 
+### 16 november 20:12 (bouwmoment)
+- Back-up kleiner: dezelfde gegevens, ruim een derde kleiner (met uw back-up 2,55 naar 1,61 MB). Oude back-ups blijven te lezen; een toestel met een oudere app vraagt om bij te werken.
+- Overgeslagen of vervallen training: het blad zegt meteen waarom; Week en Vandaag zeggen hetzelfde woord (Vervallen bij ziek); geen mint knop zolang je ziek bent.
+- Windjack vanaf 20 km/u; Wandeling plannen zegt een stuk heen en terug nog maar één keer.
+- Onderhoudsronde: rapport in docs/onderhoud/2026-11-16-onderhoudsronde.md; opruimen staat als I-82, IJkset dieper dan nodig als I-83.
+
 ### 16 november 10:20
 - Wandeling plannen: het stuk van je startpunt naar de eerste kruising telt niet meer als doodlopende tak; een lus zonder tak gaat voor. Te veel hoogtemeters en een stuk heen en terug krijgen een amber regel; een voorstel van ver onder je afstand verschijnt alleen als er niets beters is.
 
