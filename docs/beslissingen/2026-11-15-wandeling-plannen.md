@@ -5,7 +5,7 @@ Status: aangenomen
 
 ## Besluit
 
-Er is een blad Wandeling plannen met twee ingangen. Op Vandaag vervangt één + de tekstknop Losse training; de + (aria-label "Loggen of plannen") opent een klein keuzeblad met Training loggen en Wandeling plannen. Op de tab Ascend staat onderaan, in de kaart met Tochten en Krachtblok, de rij Wandeling plannen, zonder mint. Staat Route voorstellen uit, dan opent de + meteen Losse training en staat de rij er niet.
+Er is een blad Wandeling plannen met twee ingangen. Op Vandaag vervangt één + de tekstknop Losse training; de + met de zichtbare tekst "Loggen of plannen" (Pathfinder: een kale + zei niet wat erachter zit) opent een klein keuzeblad met Training loggen en Wandeling plannen. Op Week heet de + op een vrije dag nu ook Training loggen. Op de tab Ascend staat onderaan, in de kaart met Tochten en Krachtblok, de rij Wandeling plannen, zonder mint. Staat Route voorstellen uit, dan heet de knop Losse training, opent hij meteen Losse training en staat de rij er niet.
 
 Het blad vraagt een afstand (chips 3, 5, 8 en 12 km en Anders, standaard de instelling Afstand van een wandeling, advies 5 km), toont ongeveer de duur, vraagt een wens voor de hoogtemeters (Geen voorkeur, Vlak, Heuvelig, Pittig of Anders) en heeft de chips Start bij en Grote wegen mijden. Eén mint knop, Stel route voor, zoekt met de bestaande regie van Route voorstellen en toont de lussen met hetzelfde paneel. De wandeling is geen training: geen geplande sessie, geen voorstel met Akkoord, geen log en niets nieuws in de opslag. Onder de route staat: "Gelopen? Log hem achteraf met de + op Vandaag: Training loggen, Wandelen."
 

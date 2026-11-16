@@ -50,14 +50,17 @@ export function LogOrPlan() {
   const walkOn = settings.routeProposal !== false;
   return (
     <>
+      {/* De + met zichtbare tekst (Pathfinder): één knop, 44 px hoog, in gedimde inkt zoals de oude tekstknop. */}
       <button
         type="button"
-        aria-label={walkOn ? 'Loggen of plannen' : 'Losse training'}
         onClick={() => setOpen(walkOn ? 'choose' : 'log')}
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full border"
-        style={{ color: 'var(--color-ink-dim)', borderColor: 'var(--color-card-border)' }}
+        className="inline-flex min-h-[44px] items-center gap-2 text-sm"
+        style={{ color: 'var(--color-ink-dim)' }}
       >
-        <Icon name="plus" size={20} />
+        <span aria-hidden className="inline-flex h-8 w-8 items-center justify-center rounded-full border" style={{ borderColor: 'var(--color-card-border)' }}>
+          <Icon name="plus" size={16} />
+        </span>
+        {walkOn ? 'Loggen of plannen' : 'Losse training'}
       </button>
       {open === 'choose' && <ChooseSheet onPick={setOpen} onClose={() => setOpen(undefined)} />}
       {open === 'log' && <AdHocLogFlow templates={templates} program={program} date={todayISO()} onClose={() => setOpen(undefined)} />}
