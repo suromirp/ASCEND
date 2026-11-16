@@ -501,3 +501,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-16, Warden I-67 herkeuring (fable) 122k, niet akkoord op 3 kleine moet (doeldag datumkiezer, askAlways in korte zin, twee zinnen eerlijk).
 - 2026-11-16, I-67: bouwer Opus high $21 in drie rondes; Warden herkeuringen (fable) 46k en 124k; live 4f5d722.
 - 2026-11-16, Sherpa I-75 (sonnet, helper per vergissing) 124k; Warden en Lookout gestopt bij onderbreking; live e152f17.
+| 2026-11-16 | Lookout Wandeling plannen I-75 | tester | sonnet | - | - | 0 |
