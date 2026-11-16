@@ -1,7 +1,16 @@
+import type { SessionLog } from '../models/training';
+import { idHasRole, type RoleCarrier } from './templateRoles';
+
 // What the moment after Gedaan says for the trainings a caller saved: one
 // training gets its own moment, several (MacroFactor "Alles opslaan") one
 // summary. Every caller keeps its own list, so what one saves is never
 // announced with what another saved at the same time.
+
+// Alleen een echte herstelwandeling is "Herstel gedaan"; een gewone wandeling (rol plain_walk,
+// ook van type recovery) krijgt gewoon "Gedaan".
+export function isRestLog(log: Pick<SessionLog, 'type' | 'templateId'>, templates?: Iterable<RoleCarrier>): boolean {
+  return log.type === 'recovery' && !idHasRole(log.templateId, 'plain_walk', templates);
+}
 
 export interface SavedMoment {
   logId: string;

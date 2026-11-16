@@ -25,6 +25,7 @@ import {
   MetaRepo,
 } from './database';
 import { migrateToGoalEngine } from './goalMigration';
+import { buildDefaultProgramData } from '../data/defaultProgram';
 import { mondayOfWeek, todayISO, addDays } from '../utils/dates';
 import type { InjuryNote } from '../models/injury';
 import type { TrainingGoal } from '../models/goals';
@@ -655,5 +656,21 @@ describe('ensureDefaultTemplates: nieuwe namen van trainingen', () => {
     expect(after.find((t) => t.id === 'tpl_hills_descent')?.name).toBe('Heuvelsprints en afdalen');
     expect(after.find((t) => t.id === 'tpl_strides_run')?.name).toBe('Duurloop met versnellingen');
     expect(after.find((t) => t.id === 'tpl_long_run')?.name).toBe('Lange duurloop');
+  });
+
+  it('voegt Wandeling toe aan een bestaand programma zonder Herstelwandeling te raken', async () => {
+    // Een toestel van vóór Wandeling: wissen en alleen de oude sjablonen opslaan.
+    await wipeAllData();
+    const old = buildDefaultProgramData().templates.filter((t) => t.id !== 'tpl_walk');
+    for (const t of old) await SessionTemplatesRepo.put(t);
+    const herstel = old.find((t) => t.id === 'tpl_herstel')!;
+    expect((await SessionTemplatesRepo.getAll()).some((t) => t.id === 'tpl_walk')).toBe(false);
+    await ensureDefaultTemplates();
+    const after = await SessionTemplatesRepo.getAll();
+    const walk = after.find((t) => t.id === 'tpl_walk')!;
+    expect(walk.name).toBe('Wandeling');
+    expect(walk.type).toBe('recovery');
+    expect(walk.defaultDayOfWeek).toBeUndefined();
+    expect(after.find((t) => t.id === 'tpl_herstel')).toEqual(herstel);
   });
 });

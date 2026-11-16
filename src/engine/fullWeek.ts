@@ -98,7 +98,7 @@ function contextOf(input: FullWeekInput) {
 // - gemist: een training op een dag die voorbij is en niet gedaan (ook een die je zelf oversloeg);
 // - naar later: een training die jij of een voorstel van een voorbije dag van deze week naar later zette,
 //   als die dag daarna leeg bleef (een ruil van twee dagen is geen verlies).
-// Geen verlies: een herstelwandeling, wat ASCEND zelf wegliet of verving (Minder, zonder sportschool, een
+// Geen verlies: een herstelwandeling of gewone wandeling, wat ASCEND zelf wegliet of verving (Minder, zonder sportschool, een
 // geaccepteerd voorstel), een vakantie-, tocht- of ziektedag, en een training die nog loopt (een concept in Forge).
 export function weekLoss(input: FullWeekInput): WeekLoss[] {
   const ctx = contextOf(input);

@@ -444,6 +444,9 @@ export const MODALITIES_BY_TEMPLATE: Record<string, ModalityDefinition[]> = {
   tpl_test_run: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
   tpl_bergconditie: FRIDAY_MODALITIES,
   tpl_herstel: SUNDAY_MODALITIES,
+  // Een gewone wandeling: alleen wandelen, onder de sleutel die walkKind als wandeling herkent.
+  tpl_walk: SUNDAY_MODALITIES.filter((m) => m.key === 'recovery_walk')
+    .map((m) => ({ ...m, label: 'Wandelen', role: 'PRIMARY' as const, durationHint: undefined, how: 'In je eigen tempo.', why: 'Bewegen zonder trainingsbelasting.' })),
   tpl_hill_intervals: HILL_INTERVAL_MODALITIES,
   tpl_long_run: LONG_RUN_MODALITIES,
   tpl_mountain_hike: MOUNTAIN_HIKE_MODALITIES,
