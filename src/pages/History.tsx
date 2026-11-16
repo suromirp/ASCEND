@@ -148,7 +148,7 @@ export function HistoryPage() {
           </LightCard>
         ) : trainingCount === 0 ? (
           <LightCard>
-            <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{emptyMonthTitle({ beforeFirst, weighings: weighings.length, recovery: compare.recovery, listLogs: monthLogs.length })}</p>
+            <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{emptyMonthTitle({ beforeFirst, weighings: weighings.length, recovery: compare.recovery, walks: compare.walks, listLogs: monthLogs.length })}</p>
           </LightCard>
         ) : (
           <LightCard className="grid grid-cols-2 gap-4">

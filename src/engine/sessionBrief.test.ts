@@ -12,6 +12,12 @@ const { templates } = buildDefaultProgramData();
 const tpl = (id: string) => templates.find((t) => t.id === id)!;
 
 describe('buildSessionBrief', () => {
+  it('zegt bij een gewone wandeling Wandelen één keer en geeft de feiten Eigen tempo, geen doel', () => {
+    const brief = buildSessionBrief(tpl('tpl_walk'), addDays(START, 2), program);
+    expect(brief.headline).toBe('WANDELEN');
+    expect(brief.facts.map((f) => `${f.value} ${f.label}`)).toContain('Eigen tempo geen doel');
+  });
+
   it('names the sport and kind of training, with the same numbers as the plan', () => {
     const saturday = addDays(START, 5);
     const brief = buildSessionBrief(tpl('tpl_hill_intervals'), saturday, program);

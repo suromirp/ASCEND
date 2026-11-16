@@ -139,3 +139,16 @@ function addDay(d: string): string {
   t.setUTCDate(t.getUTCDate() + 1);
   return t.toISOString().slice(0, 10);
 }
+
+describe('een gewone wandeling heet Wandelen, niet Herstel', () => {
+  it('in het sjabloon en het logboek', () => {
+    const { templates } = buildDefaultProgramData();
+    const walk = templates.find((t) => t.id === 'tpl_walk')!;
+    const rest = templates.find((t) => t.id === 'tpl_herstel')!;
+    expect(walk.type).toBe('recovery');
+    expect(sessionKindLabel(walk)).toBe('Wandelen');
+    expect(sessionKindLabel(rest)).toBe('Herstel');
+    expect(logKindLabel({ type: 'recovery', templateId: 'tpl_walk' })).toBe('Wandelen');
+    expect(logKindLabel({ type: 'recovery', templateId: 'tpl_herstel' })).toBe('Herstel');
+  });
+});

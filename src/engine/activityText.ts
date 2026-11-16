@@ -87,6 +87,7 @@ const STEADY_TITLE: Record<string, string> = {
   tpl_walk_jog: 'Wandelen en dribbelen · rustig',
   tpl_walk_jog_long: 'Lang wandelen en dribbelen · rustig',
   tpl_herstel: 'Herstelwandeling · rustig',
+  tpl_walk: 'Wandeling',
 };
 
 // Trainingen met een rugzak: het gewicht hoort in de titel.

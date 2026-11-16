@@ -322,6 +322,18 @@ function buildTemplates(): SessionTemplate[] {
       cooldown: COOLDOWN_RECOVERY,
       baseStressProfile: { lowerBodyLoad: 'none', impact: 'none', eccentricLoad: 'none', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'none' },
     },
+    // Een gewone wandeling, de standaard onder Wandelen in Losse training (engine/adHocGroups.ts).
+    // Geen vaste dag en geen notitie over herstel. Type recovery: telt niet als zware training in de
+    // week (engine/fullWeek.ts), net als de herstelwandeling.
+    {
+      id: 'tpl_walk',
+      name: 'Wandeling',
+      type: 'recovery',
+      focus: 'Een gewone wandeling',
+      durationVariants: { full: 45 },
+      cooldown: COOLDOWN_RECOVERY,
+      baseStressProfile: { lowerBodyLoad: 'none', impact: 'none', eccentricLoad: 'none', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'none' },
+    },
     // Tussendoel (een hardloopwedstrijd vóór het hoofddoel): in de 8 weken
     // ervoor wordt de rustige duurloop een tempoloop (engine/raceBlock.ts).
     // Geen vaste dag: hij neemt de plek van de rustige duurloop in.

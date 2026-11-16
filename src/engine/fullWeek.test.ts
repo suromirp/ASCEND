@@ -74,6 +74,11 @@ describe('WEEK-FULL: wanneer', () => {
     const sessions = standard();
     expect(weekLoss(input(day(1), sessions))).toEqual([]);
   });
+
+  it('een gemiste gewone wandeling is ook geen verlies', () => {
+    const sessions = [...standard().filter((s) => s.templateId !== 'tpl_herstel'), row('tpl_walk', 0)];
+    expect(weekLoss(input(day(1), sessions))).toEqual([]);
+  });
 });
 
 describe('WEEK-FULL: de nagemaakte week', () => {

@@ -495,6 +495,16 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sources: [PUBMED_CONCURRENT_TRAINING],
   },
 
+  tpl_walk: {
+    subtitle: 'Wandelen · gewone wandeling',
+    registration: 'Je mag hem achteraf loggen.',
+    sections: [
+      { heading: 'Doel', body: 'Een gewone wandeling in je eigen tempo. Geen tempo- of hartslagdoel nodig.' },
+    ],
+    gear: ['comfortabele wandelschoenen (optioneel)'],
+    sources: [],
+  },
+
   tpl_herstel: {
     subtitle: 'Herstel · rustig bewegen',
     registration: 'Training is niet verplicht.',

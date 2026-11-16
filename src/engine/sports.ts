@@ -4,6 +4,7 @@
 // ASCEND just stops putting new sessions of it on the calendar.
 
 import type { SessionTemplate, SessionLog } from '../models/training';
+import { hasRole, idHasRole } from './templateRoles';
 import { sportOfLog } from './sportOfLog';
 import { findModalityByKey, isCyclingModality, modalitySport } from '../data/modalities';
 import { SPORTS, SPORT_IDS, anySportDefinition, type SportId } from '../data/sports';
@@ -42,6 +43,7 @@ const TYPE_KIND: Record<SessionTemplate['type'], string> = {
 };
 
 export function sessionKindLabel(template: SessionTemplate): string {
+  if (hasRole(template, 'plain_walk')) return 'Wandelen';
   if (template.countedSport) return anySportDefinition(template.countedSport).label;
   if (template.customSport) return template.name;
   const sport = template.type === 'strength' || template.type === 'recovery' ? undefined : templateSport(template);
@@ -52,6 +54,7 @@ export function logKindLabel(log: Pick<SessionLog, 'type' | 'sport' | 'cardioDat
   const { countedSport, customSport } = sportOfLog(log);
   if (countedSport) return anySportDefinition(countedSport).label;
   if (customSport) return customName(customSport);
+  if (log.type === 'recovery' && log.templateId && idHasRole(log.templateId, 'plain_walk')) return 'Wandelen';
   const sport = log.type === 'strength' || log.type === 'recovery' ? undefined : logSport(log);
   return sport ? SPORT_LABEL[sport] : TYPE_KIND[log.type];
 }

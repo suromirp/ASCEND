@@ -4249,13 +4249,24 @@
    "kern": "\"Sinds je laatste back-up\" telt op id uit de laatste back-up (`engine/backupSince.ts`, `lastBackupLogs`), niet op `completedAt`; een schrijfactie die na de tijdsgrens landt is van de app en wordt bij de volgende poging vervangen, zonder -2.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-16-wandeling-als-standaard.md": {
+   "onderwerpen": [
+    "planning",
+    "historie-en-logs"
+   ],
+   "kern": "Een gewone wandeling (tpl_walk) is de standaard onder Wandelen: type recovery blijft, de rol plain_walk geeft de soort het woord Wandelen en Gedaan; alleen de herstelwandeling blijft Herstel. Vervangt de alinea over de Herstelwandeling in het besluit van 15 november.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-15-wandeling-plannen.md": {
    "onderwerpen": [
     "koppelingen-en-data",
     "historie-en-logs"
    ],
-   "kern": "Wandeling plannen: één blad met afstand, hoogtewens en startpunt dat een route zoekt met de bestaande regie, zonder training, voorstel, log of opslag; ingangen zijn de + op Vandaag (Loggen of plannen) en een rij op Ascend. Losse training gaat in twee stappen: eerst de sport, dan meteen loggen met de algemeenste training.",
-   "stand": "geldt"
+   "kern": "Wandeling plannen: één blad met afstand, hoogtewens en startpunt dat een route zoekt met de bestaande regie, zonder training, voorstel, log of opslag; ingangen zijn de + op Vandaag (Loggen of plannen) en een rij op Ascend. Losse training gaat in twee stappen: eerst de sport, dan meteen loggen met de algemeenste training. Geldt nog: alles behalve de Herstelwandeling als standaard onder Wandelen; dat is nu de gewone wandeling.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-16-wandeling-als-standaard.md"
+   ]
   }
  }
 }

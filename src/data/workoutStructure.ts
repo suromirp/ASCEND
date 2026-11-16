@@ -356,6 +356,13 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
       { label: 'Conditie', why: 'Je hart en longen trainen, je benen hebben minder te verduren dan bij een loop.' },
     ],
   },
+  tpl_walk: {
+    summary: () => 'Een gewone wandeling in je eigen tempo.',
+    structure: [{ kind: 'walk', label: 'Wandelen', rest: true, intensity: 1, noTarget: true, detail: 'Geen tempo of hartslag om op te letten' }],
+    builds: [
+      { label: 'Beweging', why: 'Rustig in beweging blijven, zonder dat het je week zwaarder maakt.' },
+    ],
+  },
   tpl_herstel: {
     summary: () => 'Rust of een rustige wandeling. Geen prestatie, alleen bewegen.',
     structure: [{ kind: 'walk', label: 'Rustig wandelen of rust', rest: true, intensity: 1, noTarget: true, detail: 'Allebei goed. Geen tempo of hartslag om op te letten' }],
