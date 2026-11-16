@@ -50,6 +50,10 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Net live
 
+### 16 november 02:10
+- Op Vandaag staat nu "Loggen of plannen": een training loggen die niet op de planning stond, of een wandeling plannen met een route van een paar kilometer. Wandeling plannen staat ook in de tab Ascend.
+- Een losse training log je in twee stappen: eerst de sport, daarna eventueel de precieze training.
+
 ### 16 november 01:40
 - Waar je nu bent: de Briefing wacht tot je plek scherp is (hooguit 15 seconden) en zegt anders waarom, met Opnieuw, Andere plek of een tik op de kaart. De kaart in de Briefing blokkeert het scrollen niet meer; slepen en knijpen in de grote kaart.
 
