@@ -18,6 +18,10 @@ Bijgewerkt: 16 november 2026, 03:52 Portugese tijd, door coördinator session_01
 - Bouwers nakijken (trig_01E4NEQpURCEZGKYzpZGQizh) vuurt nog in de chat van 15 november avond (session_01LnDpSjEhK5wS8sN1rH1p5c) en die stuurt elke beurt door; verhuizen werd geweigerd. Werkkaart elk uur op :20 in session_01LnDpSktfMxYFgMMgDhw8Do.
 - Geleerd vannacht: (1) reviewer-rol schrijft geen bestand tenzij de opdracht "je MAG herstel.md schrijven" zegt; (2) een `&&`-keten met `git add -A` faalt op node_modules: gebruik `git add -A -- docs src`; (3) bouwers mogen niet force-pushen: ze mergen main in hun branch, squash naar main is dan nog steeds `merge --squash` op een worktree van origin/main; (4) bouwers geven backlogcodes op een oude backlog: altijd nacht's backlog houden en codes zelf toekennen.
 
+## Stand 12:10
+
+- Bouwers nakijken (trig_01YQBeGjDQevzEFpmmYJ8SBj, :10) uitgezet: dubbel met de Wachter op :40, die ook naar bouwers kijkt. Weer aan met update_trigger enabled=true als de Wachter weg is.
+
 ## Stand 10:20
 
 - I-75 LIVE als e152f17. Warden en Lookout waren als helpers gestopt bij de onderbreking van 09:25 (nooit gemeld); een uur gewacht op dode helpers. Eigen review van de diff (geen blokkade; drie regels kunnen dubbel zeggen dat je iets twee keer loopt) en volle controles groen; Lookout niet gedaan: op het bouwmoment een korte Lookout van het blad Wandeling plannen. Les: na een onderbreking door de eigenaar kijken of helpers nog leven (SendMessage geeft 'stopped').
