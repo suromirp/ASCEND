@@ -141,6 +141,8 @@ export function buildSessionBrief(
         return options.macroFactor !== true
           ? [total, { value: String(template.exercises?.length ?? 0), label: 'oefeningen' }]
           : [total, { value: String(template.exercises?.length ?? 0), label: 'oefeningen' }, { value: 'MacroFactor', label: 'zwaarte volgens' }];
+      case 'walk':
+        return [total, { value: 'Eigen tempo', label: 'geen doel' }];
       case 'recovery':
         return [{ value: 'Rust', label: 'of rustig wandelen' }, { value: '30-60 min', label: 'als je wandelt' }, { value: 'Geen doel', label: 'tempo of hartslag' }];
       default:

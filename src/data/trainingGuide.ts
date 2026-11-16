@@ -497,7 +497,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
 
   tpl_walk: {
     subtitle: 'Wandelen · gewone wandeling',
-    registration: 'Training is niet verplicht.',
+    registration: 'Je mag hem achteraf loggen.',
     sections: [
       { heading: 'Doel', body: 'Een gewone wandeling in je eigen tempo. Geen tempo- of hartslagdoel nodig.' },
     ],

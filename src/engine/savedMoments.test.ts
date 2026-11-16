@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { announcementFor, type SavedMoment } from './savedMoments';
+import { announcementFor, isRestLog, type SavedMoment } from './savedMoments';
+import { buildDefaultProgramData } from '../data/defaultProgram';
 
 const moment = (logId: string, extra: Partial<SavedMoment> = {}): SavedMoment => ({ logId, recovery: false, ...extra });
 
@@ -29,5 +30,17 @@ describe('announcementFor', () => {
   it('calls it a recovery moment only when all of them are recovery', () => {
     expect(announcementFor([moment('a', { recovery: true }), moment('b', { recovery: true })])?.kind).toBe('recovery');
     expect(announcementFor([moment('a', { recovery: true }), moment('b')])?.kind).toBe('session');
+  });
+});
+
+describe('isRestLog: een gewone wandeling is geen herstel', () => {
+  it('geeft de wandeling Gedaan en de herstelwandeling Herstel gedaan', () => {
+    const { templates } = buildDefaultProgramData();
+    const walk = isRestLog({ type: 'recovery', templateId: 'tpl_walk' }, templates);
+    const rest = isRestLog({ type: 'recovery', templateId: 'tpl_herstel' }, templates);
+    expect(walk).toBe(false);
+    expect(rest).toBe(true);
+    expect(announcementFor([moment('a', { recovery: walk })])?.kind).toBe('session');
+    expect(announcementFor([moment('a', { recovery: rest })])?.kind).toBe('recovery');
   });
 });

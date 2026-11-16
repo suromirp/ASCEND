@@ -4,7 +4,7 @@
 // stop or ease off during the training itself (audit 2026-10, report 6).
 // Keyed by SessionTemplate.id, like data/workoutStructure.ts.
 
-type FactKind = 'steady' | 'intervals' | 'long' | 'hike' | 'strength' | 'recovery' | 'tempo' | 'race' | 'test' | 'strides' | 'fartlek' | 'progression' | 'ruck' | 'vo2' | 'descent' | 'stairs';
+type FactKind = 'steady' | 'intervals' | 'long' | 'hike' | 'strength' | 'recovery' | 'walk' | 'tempo' | 'race' | 'test' | 'strides' | 'fartlek' | 'progression' | 'ruck' | 'vo2' | 'descent' | 'stairs';
 
 export interface SessionStyle {
   styleLabel: string; // after the sport: "HARDLOPEN · BERGOP"
@@ -171,7 +171,7 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
     styleLabel: 'wandelen',
     purpose: 'Een gewone wandeling, zonder doel of tempo.',
     stopSignals: [],
-    facts: 'recovery',
+    facts: 'walk',
   },
   tpl_herstel: {
     styleLabel: 'rust of wandelen',

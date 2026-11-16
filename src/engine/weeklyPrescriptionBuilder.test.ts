@@ -492,3 +492,13 @@ describe('rankCandidateTemplates: Trap af is geen kandidaat', () => {
     expect(rankCandidateTemplates({ dimension: 'aerobic_engine' }, templates, new Set())).toContain('tpl_hills_descent');
   });
 });
+
+describe('rankCandidateTemplates: een gewone wandeling is geen kandidaat', () => {
+  it('tpl_walk komt voor geen enkele sleutel in de kandidaten', () => {
+    const { templates } = buildDefaultProgramData();
+    const dims = ['aerobic_engine', 'strength', 'durability', 'leg_resilience'] as const;
+    for (const dimension of dims) {
+      expect(rankCandidateTemplates({ dimension } as never, templates, new Set()), dimension).not.toContain('tpl_walk');
+    }
+  });
+});

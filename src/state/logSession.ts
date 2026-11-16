@@ -3,7 +3,7 @@
 
 import type { SessionLog } from '../models/training';
 import { PlannedSessionsRepo, ProgramsRepo, SessionTemplatesRepo, SessionLogsRepo, SettingsRepo, MetaRepo, type AppSettings } from '../storage/database';
-import type { SavedMoment } from '../engine/savedMoments';
+import { isRestLog, type SavedMoment } from '../engine/savedMoments';
 import { recordClearedMilestones } from '../storage/milestoneClearing';
 import { LogStoredFollowUpFailed } from '../storage/storageError';
 import { todayISO } from '../utils/dates';
@@ -177,7 +177,7 @@ async function writeLog(input: LogSessionInput, opts: LogSessionOpts | undefined
         coachNote = `${coachNote} ${progress}`;
         await MetaRepo.set('aerobicProgressCelebrated', { date: log.completedDate, changeSec: near });
       }
-      const moment: SavedMoment = { logId: log.id, recovery: log.type === 'recovery', clearedTitle, coachNote, auto: input.quiet };
+      const moment: SavedMoment = { logId: log.id, recovery: isRestLog(log, allTemplates), clearedTitle, coachNote, auto: input.quiet };
       if (opts?.batch) opts.batch.push(moment);
       else announceSaved([moment]);
     } catch (err) {
