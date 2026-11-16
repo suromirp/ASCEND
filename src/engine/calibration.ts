@@ -13,6 +13,9 @@ import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { isMountainTrip } from './sportKind';
 import { isTestOrRace } from './templateRoles';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
+import type { ForgeEvent } from '../models/forgeLog';
+import { setCountEvent } from './forgeLog';
+import { rowLabel } from './forgeRows';
 import { addRow } from './forgeWorkout';
 import { exerciseById } from '../data/exercises';
 import { isCompound } from './warmup';
@@ -29,7 +32,7 @@ const LEAD_DAYS = 3;
 // Zoveel trainingen met de oefening gingen eraan vooraf (`WorkoutExercise.trainings`).
 const MIN_TRAININGS = 3;
 
-export type CalibrationBlock = 'ill' | 'away' | 'nogym' | 'recent' | 'trip' | 'test';
+export type CalibrationBlock = 'ill' | 'away' | 'nogym' | 'eased' | 'pending' | 'recent' | 'trip' | 'test';
 
 // De stand van de instelling IJkset (strengthModel.calibrationMode): Vragen is het advies.
 export type { CalibrationMode } from './strengthSettings';
@@ -45,6 +48,11 @@ export interface CalibrationInput {
   illness?: IllnessEpisode[];
   // Vrije periodes (settings.leavePeriods): vakantie, tocht en zonder sportschool.
   leave?: LeavePeriod[];
+  // Forge maakt deze training lichter (Lichter bij vermoeide benen): geen set tot bijna falen erbij.
+  eased?: boolean;
+  // Een andere training loopt nog als concept met een ijkset erin: de vier weken tellen pas bij Afronden, dus anders
+  // komen er twee binnen vier weken.
+  pending?: boolean;
 }
 
 // Waarom het nu niet kan (undefined: het kan).
@@ -55,6 +63,8 @@ export function calibrationBlock(i: CalibrationInput): CalibrationBlock | undefi
   const today = days.get(i.date)?.kind;
   if (today === 'off' || today === 'trek') return 'away';
   if (today === 'nogym') return 'nogym';
+  if (i.eased) return 'eased';
+  if (i.pending) return 'pending';
   if (i.lastAt && Math.abs(daysBetween(i.lastAt, i.date)) < CALIBRATION_DAYS) return 'recent';
   const week = mondayOfWeek(i.date);
   const until = addDays(i.date, LEAD_DAYS);
@@ -132,3 +142,36 @@ export const CALIBRATION_AUTO_FACT = 'Forge zette deze ijkset erbij (IJkset: Aut
 
 // De regel boven de oefening met de ijkset.
 export const CALIBRATION_AUTO_LINE = 'IJkset, eens per vier weken: de laatste set zo ver als netjes gaat, met nog één over. Wil je hem niet, haal hem weg.';
+
+// Een concept (de rijen van een lopende training) met een ijkset erin.
+export function hasCalibrationRow(workout: readonly Pick<WorkoutExercise, 'rows'>[] | undefined): boolean {
+  return (workout ?? []).some((ex) => Array.isArray(ex.rows) && ex.rows.some((r) => typeof r?.id === 'string' && isCalibrationRow(r)));
+}
+
+// Je haalde de ijkset in deze training zelf weg: dan komt hij niet terug.
+export function calibrationRemoved(log: readonly ForgeEvent[]): boolean {
+  return log.some((e) => e.kind === 'weggehaald' && typeof e.rowId === 'string' && isCalibrationRow({ id: e.rowId }));
+}
+
+// Zet de ijkset van Automatisch erbij in een (opnieuw) opgebouwde training, of laat hem weg, en houdt het verloop
+// daarmee gelijk: bij het openen, na Lichter aan of uit (`replan`) en na een heropend concept dat opnieuw werd
+// gepland. `want` is de stand Automatisch zonder blok; een set die je zelf weghaalde komt nooit terug. Een
+// afgevinkte ijkset blijft altijd staan. Een regel "toegevoegd" van een ijkset die er niet meer staat valt weg.
+export function syncAutoCalibration(workout: WorkoutExercise[], log: ForgeEvent[], want: boolean, at: number, newId: () => string): { workout: WorkoutExercise[]; log: ForgeEvent[] } {
+  let next = workout;
+  if (!want || calibrationRemoved(log)) {
+    next = workout.map((ex) => (ex.rows.some((r) => isCalibrationRow(r) && !r.done) ? { ...ex, rows: ex.rows.filter((r) => !(isCalibrationRow(r) && !r.done)) } : ex));
+  } else if (!hasCalibrationRow(workout)) {
+    next = withAutoCalibration(workout)?.workout ?? workout;
+  }
+  const rowIds = new Set(next.flatMap((ex) => ex.rows.filter(isCalibrationRow).map((r) => r.id)));
+  const added = (e: ForgeEvent) => e.kind === 'toegevoegd' && typeof e.rowId === 'string' && isCalibrationRow({ id: e.rowId });
+  let nextLog = log.filter((e) => !added(e) || rowIds.has(e.rowId!));
+  for (const ex of next) {
+    const row = ex.rows.find(isCalibrationRow);
+    if (row && !nextLog.some((e) => added(e) && e.rowId === row.id)) {
+      nextLog = [...nextLog, { ...setCountEvent('toegevoegd', ex, row, rowLabel(ex, row.id), at, newId()), fact: CALIBRATION_AUTO_FACT }];
+    }
+  }
+  return { workout: next, log: nextLog };
+}

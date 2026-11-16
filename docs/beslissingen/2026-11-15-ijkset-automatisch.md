@@ -11,15 +11,17 @@ Met Automatisch erbij staat de ijkset bij het openen van de training al bij de h
 
 Voor alle standen komt er nooit een ijkset als je ziek bent of opbouwt na ziek, op een dag zonder sportschool, op een vakantiedag of tochtdag, en ook niet in een week met een tocht als vrije periode of in de drie dagen ervoor. De eerdere uitzonderingen (tocht, test of wedstrijd in de planning, vier weken na de vorige) blijven.
 
+Een training die Forge lichter maakt (Lichter bij vermoeide benen) krijgt geen ijkset: een set tot bijna falen past niet bij lichter. Zet je Lichter aan, dan gaat de ijkset met zijn regel in het verloop weg; met Terugzetten komt hij terug, behalve als je hem zelf weghaalde. Een concept dat opnieuw gepland wordt omdat Lichter intussen veranderde, volgt dezelfde regel. Loopt een andere training nog als concept met een ijkset erin, dan krijgt deze er geen tweede, want de vier weken tellen pas bij Afronden.
+
 ## Hoe het werkt
 
-`engine/calibration.ts#calibrationBlock` kent nu ook `ill` (`engine/illness.ts`: een open ziekmelding, een ziekdag of de opbouw met `recoveryRamp`), `away` en `nogym` (`engine/leave.ts#leaveDays`). `#withAutoCalibration` zet de set erbij met de vaste id `<plek>:aijk` (een toegevoegde set voor `isOwnRow`, herkend met `#isCalibrationRow`), zodat het concept hem zonder nieuw veld draagt. In het verloop staat hij als toegevoegd, met "Forge zette deze ijkset erbij". Afronden (`ForgeSheets.tsx`) zet `strengthModel.calibratedAt` op de dag van het log als `#calibrationDone`.
+`engine/calibration.ts#calibrationBlock` kent nu ook `ill` (`engine/illness.ts`: een open ziekmelding, een ziekdag of de opbouw met `recoveryRamp`), `away` en `nogym` (`engine/leave.ts#leaveDays`), `eased` (Lichter) en `pending` (`utils/forgeSessionStore.ts#otherDraftHasCalibration`). `#syncAutoCalibration` zet of haalt de set bij het openen, in `replan` en bij een opnieuw gepland concept, met dezelfde regel in het verloop; de rij van Forge telt in `touchedInDraft` niet als de jouwe. In de rij staat "ijkset" in plaats van "eigen set"; de regel toegevoegd telt niet mee in het teken van het verloop. `#withAutoCalibration` zet de set erbij met de vaste id `<plek>:aijk` (een toegevoegde set voor `isOwnRow`, herkend met `#isCalibrationRow`), zodat het concept hem zonder nieuw veld draagt. In het verloop staat hij als toegevoegd, met "Forge zette deze ijkset erbij". Afronden (`ForgeSheets.tsx`) zet `strengthModel.calibratedAt` op de dag van het log als `#calibrationDone`.
 
 De stand staat in `strengthModel.calibrationMode`. Een oude back-up zonder dat veld leest `calibration: true` (of niets) als Vragen en `calibration: false` als Uit; `calibration` blijft meegeschreven voor oudere versies. Geen vormwijziging, dus geen migratiestap.
 
 ## Reden
 
-De eigenaar op 15 november in Forge bij de kaart IJkset: "Waarom vraagt die dit, mag van mij automatisch." Vragen blijft het advies, omdat de set moe maakt en een voorstel met Akkoord de afspraak is; wie het automatisch wil, kiest het zelf. Hij was die dag ziek; een ijkset meet dan iets anders dan je gewone kracht, dus daar komt hij in geen enkele stand.
+De eigenaar op 15 november in Forge bij de kaart IJkset: "Waarom vraagt die dit, mag van mij automatisch." Vragen blijft het advies, omdat de set moe maakt en een voorstel met Akkoord de afspraak is; wie het automatisch wil, kiest het zelf. Als je ziek bent meet een ijkset iets anders dan je gewone kracht, dus daar komt hij in geen enkele stand.
 
 ## Alternatieven
 

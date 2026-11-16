@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
 import { useDrawingsFor } from '../useExerciseArtPrefetch';
-import { restoreDropped, rowLabel, swipeDeleteOn } from '../../engine/forgeRows';
+import { restoreDropped, swipeDeleteOn } from '../../engine/forgeRows';
 import { canSwap, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
 import { learnedMinutesPerSet } from '../../engine/durationLearning';
 import { capForTemplate, capLineFor, capRemovedFor, capRemovedLine, capSlots, referenceMinutes, resolveTimeCap, roleLabel, servesMountainMuscle } from '../../engine/forgeTimeCap';
@@ -20,7 +20,7 @@ import { forgeSlotsFor } from '../../engine/forgeSlots';
 import { withoutStepSwap } from '../../engine/stepSwaps';
 import { hasMountainGoal } from '../../engine/mountainMuscles';
 import { resolveForgeLayout } from '../../engine/forgeLayout';
-import { CALIBRATION_AUTO_LINE, CALIBRATION_AUTO_FACT, calibrationBlock, calibrationSlot, isCalibrationRow, withAutoCalibration, withCalibrationTarget } from '../../engine/calibration';
+import { CALIBRATION_AUTO_LINE, calibrationBlock, calibrationSlot, hasCalibrationRow, isCalibrationRow, syncAutoCalibration, withAutoCalibration, withCalibrationTarget } from '../../engine/calibration';
 import { bodyLoadView } from '../../engine/bodyLoad';
 import { WeightSheet } from '../settings/groups/LichaamSheets';
 import { BodyLoadSheet } from './BodyLoad';
@@ -68,11 +68,11 @@ import { asksReserve, reckonAfterTick, undoRaise } from '../../engine/forgeRecko
 import { poundStackProposal } from '../../engine/poundStack';
 import { adjustText, applyLighter, fitStillOpen, noFitText as noFitLine, stillOpen, suggestLighter, suggestOwnWeights, tooHeavy, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
 import { ownWeightsFor, withMachineSetup } from '../../engine/machineWeights';
-import { appendEvents, deriveChanges, noFitEvent, setCountEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
+import { appendEvents, deriveChanges, noFitEvent, spotterEvents, underRangeEvent, unseenCount, type ForgeCause, type ForgeEvent } from '../../engine/forgeLog';
 import { makeId } from '../../utils/id';
 import { sessionIsDead } from '../../engine/forgeSession';
 import { useSessionWorld } from './useForgeSession';
-import { readSession } from '../../utils/forgeSessionStore';
+import { otherDraftHasCalibration, readSession } from '../../utils/forgeSessionStore';
 import { useWakeLock } from './useWakeLock';
 import { useRestNotice } from './useRestNotice';
 import { resolveDeviceNotices } from '../../engine/deviceNotices';
@@ -237,12 +237,29 @@ function ForgeWorkoutInner({
   const ease = useMemo(() => (easeOn ? { how: easeHow, because: easeBecause(legEase.state?.signals.reasons ?? easeReasons) } : undefined), [easeOn, easeHow, legEase.state, easeReasons]);
   const ctx = useMemo<PlanContext>(() => ({ ...baseCtx, ...(ease ? { ease } : {}) }), [baseCtx, ease]);
   const effSlots = useMemo(() => (easeOn ? easeSlots(slots, easeHow).slots : slots), [easeOn, slots, easeHow]);
-  // Waarom de ijkset nu niet kan (engine/calibration.ts): ziek, weg, zonder sportschool, recent, tocht of test.
-  const calBlocked = !!calibrationBlock({ date, lastAt: strength.calibratedAt, planned: plannedSessions, templates, illness: settings.illnessEpisodes, leave: settings.leavePeriods });
-  // IJkset Automatisch erbij: de set staat bij het openen al bij de hoofdoefening, zonder dat de sessie begint. Een
-  // heropend concept houdt wat het had (de set, of dat je hem weghaalde).
-  const [autoCal] = useState(() => (restored || readOnly || strength.calibrationMode !== 'automatisch' || calBlocked ? undefined : withAutoCalibration(planWorkout(slots, ctx))));
-  const [workout, setWorkout] = useState<WorkoutExercise[]>(() => (restored ? resumeDraft(restored.exercises, restored.eased, easeOn, planWorkout(slots, ctx)) : autoCal?.workout ?? planWorkout(slots, ctx)));
+  // Waarom de ijkset nu niet kan (engine/calibration.ts): ziek, weg, zonder sportschool, lichter, een ander concept met
+  // een ijkset, recent, tocht of test. `pendingCal` leest één keer het concept van een andere lopende training.
+  const [pendingCal] = useState(() => !readOnly && otherDraftHasCalibration(key));
+  const illnessEpisodes = settings.illnessEpisodes;
+  const leavePeriods = settings.leavePeriods;
+  const calBlockFor = useCallback((eased: boolean) => calibrationBlock({ date, lastAt: strength.calibratedAt, planned: plannedSessions, templates, illness: illnessEpisodes, leave: leavePeriods, eased, pending: pendingCal }), [date, strength.calibratedAt, plannedSessions, templates, illnessEpisodes, leavePeriods, pendingCal]);
+  const calBlocked = useMemo(() => !!calBlockFor(easeOn), [calBlockFor, easeOn]);
+  // IJkset Automatisch erbij: de set staat bij het openen al bij de hoofdoefening, zonder dat de sessie begint. Na
+  // Lichter aan of uit en bij een heropend concept dat opnieuw gepland werd geldt dezelfde regel (syncAutoCalibration);
+  // een concept dat zijn rijen houdt, houdt ook de ijkset of dat je hem weghaalde.
+  const autoCalFor = (eased: boolean) => !readOnly && strength.calibrationMode === 'automatisch' && !calBlockFor(eased);
+  const [opening] = useState(() => {
+    const plan = planWorkout(slots, ctx);
+    const replanned = !restored || (!restored.exercises.some((e) => e.rows.some((r) => r.done)) && (restored.eased ?? false) !== easeOn);
+    // Een onaangeraakte oefening krijgt in mergeDraft het plan van nu: met de ijkset erin als het concept hem had.
+    const draftCal = restored && !replanned ? restored.exercises.find((e) => hasCalibrationRow([e]))?.slot : undefined;
+    const withCal = draftCal ? withAutoCalibration(plan) : undefined;
+    const fresh = withCal && withCal.slot === draftCal ? withCal.workout : plan;
+    const w = restored ? resumeDraft(restored.exercises, restored.eased, easeOn, fresh) : plan;
+    const log = initialForgeLog(w, restored, readOnly);
+    return readOnly || !replanned ? { workout: w, log } : syncAutoCalibration(w, log, autoCalFor(easeOn), Date.now(), () => makeId('fe'));
+  });
+  const [workout, setWorkout] = useState<WorkoutExercise[]>(opening.workout);
   // De regel "Ingekort tot ongeveer 60 minuten" zegt wat er bij het openen wegviel, bij de eerste stand van de
   // sessie (een heropend concept houdt wat je al deed), en blijft dan staan.
   const [capLine] = useState(() => capLineFor(capped, workout));
@@ -270,13 +287,8 @@ function ForgeWorkoutInner({
   // Een stille tip na het invullen van de gewichten, als er dan nog steeds niets past.
   const [heavyTip, setHeavyTip] = useState<Record<string, { text: string; rowId?: string; weightKg?: number }>>({});
   // Het verloop van de training: wat Forge bijstuurde, wat doorgevoerd werd en wat jij zelf aanpaste.
-  const [forgeLog, setForgeLog] = useState<ForgeEvent[]>(() => {
-    const first = initialForgeLog(workout, restored, readOnly);
-    const ex = autoCal && workout.find((e) => e.slot === autoCal.slot);
-    const row = ex && ex.rows.find((r) => r.id === autoCal.rowId);
-    // De ijkset is een gewone toegevoegde set in het verloop, met Forge als wie hem erbij zette.
-    return ex && row ? appendEvents(first, [{ ...setCountEvent('toegevoegd', ex, row, rowLabel(ex, row.id), Date.now(), makeId('fe')), fact: CALIBRATION_AUTO_FACT }]) : first;
-  });
+  // De ijkset staat in het verloop als gewone toegevoegde set, met Forge als wie hem erbij zette.
+  const [forgeLog, setForgeLog] = useState<ForgeEvent[]>(opening.log);
   const [seenAt, setSeenAt] = useState<number>(() => (restored && typeof restored.seen === 'number' ? restored.seen : 0));
   // Waardoor de volgende verandering van de rijen kwam; zonder opgave is het geen gebeurtenis.
   // Met een tijdstempel: een handeling die niets veranderde (dezelfde rijen) laat geen reden achter voor
@@ -350,11 +362,16 @@ function ForgeWorkoutInner({
   // Opnieuw rekenen met of zonder Lichter. Alleen zolang er niets is afgevinkt.
   function replan(on: boolean) {
     const because = easeBecause(legEase.state?.signals.reasons ?? easeReasons);
-    const next = planWorkout(slots, { ...baseCtx, ...(on ? { ease: { how: easeHow, because } } : {}) });
+    const plan = planWorkout(slots, { ...baseCtx, ...(on ? { ease: { how: easeHow, because } } : {}) });
+    // De ijkset volgt de nieuwe stand: een lichtere training krijgt er geen (calibrationBlock 'eased'), Terugzetten zet
+    // hem terug, behalve als je hem zelf weghaalde (dat blijft in het verloop staan).
+    const removed = forgeLog.filter((e) => e.kind === 'weggehaald' && isCalibrationRow({ id: e.rowId }));
+    const synced = readOnly ? { workout: plan, log: [] } : syncAutoCalibration(plan, [...spotterEvents(plan, Date.now(), () => makeId('fe')), ...removed], autoCalFor(on), Date.now(), () => makeId('fe'));
+    const next = synced.workout;
     setEaseOn(on);
     markCause({ kind: 'negeer' });
     setWorkout(next);
-    if (!readOnly) setForgeLog(spotterEvents(next, Date.now(), () => makeId('fe')));
+    if (!readOnly) setForgeLog(synced.log);
     setLighter({});
     setNoFit({});
     setHeavyTip({});

@@ -418,7 +418,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Wat', text: 'bij één hoofdoefening een set erbij, zo ver als netjes gaat. Daarna kies je zoals altijd hoeveel je over had.' },
       { head: 'Vragen', text: 'het advies: een kaart met Niet nu en Akkoord. Pas na Akkoord komt de set erbij; met Niet nu blijft je training zoals hij was en vraagt Forge het de volgende keer opnieuw.' },
       { head: 'Automatisch erbij', text: 'de set staat bij het openen al in je training, met één regel uitleg boven de oefening. Wil je hem niet, haal hem weg zoals elke set. De vier weken tellen pas als je de training afrondt met die set afgevinkt.' },
-      { head: 'Wanneer niet', text: 'als je ziek bent of opbouwt na ziek, op een dag zonder sportschool, in een vakantie of op een tocht, in een week met een tocht of test, en hooguit eens per vier weken.' },
+      { head: 'Wanneer niet', text: 'als je ziek bent of opbouwt na ziek, op een dag zonder sportschool, in een vakantie of op een tocht, in een week met een tocht of test, als Forge de training lichter maakt, en hooguit eens per vier weken.' },
     ],
   },
   'forge-soort': {

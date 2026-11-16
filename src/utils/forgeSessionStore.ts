@@ -7,6 +7,8 @@
 // niet bij openen (dan wordt de wijzer pas geschreven).
 
 import { cleanPauses, parkLeft, type Pause } from '../engine/forgeSession';
+import { hasCalibrationRow } from '../engine/calibration';
+import type { WorkoutExercise } from '../engine/forgeWorkout';
 
 const POINTER_KEY = 'ascend.forge.sessie';
 const DRAFT_PREFIX = 'ascend.afvinkconcept.';
@@ -341,4 +343,18 @@ export function subscribeOpenRequest(cb: () => void): () => void {
   return () => {
     requestListeners.delete(cb);
   };
+}
+
+// IJkset (engine/calibration.ts): loopt een andere training nog als concept met een ijkset erin? Dan telt die pas bij
+// Afronden, en krijgt deze training er geen tweede (calibrationBlock 'pending'). Zonder opslag: nee.
+export function otherDraftHasCalibration(ownKey: string): boolean {
+  const pointer = readPointer();
+  if (!pointer || pointer.key === ownKey) return false;
+  try {
+    const raw = read(pointer.key);
+    const draft = raw ? (JSON.parse(raw) as { exercises?: unknown }) : undefined;
+    return Array.isArray(draft?.exercises) && hasCalibrationRow(draft.exercises as Pick<WorkoutExercise, 'rows'>[]);
+  } catch {
+    return false;
+  }
 }

@@ -5,6 +5,7 @@ import { ExerciseArtButton } from '../ExerciseArtButton';
 import { QUICK_RIR, QUICK_RIR_HINT, quickRirLabel, raiseOpen } from '../../engine/forgeReckon';
 import { barNote } from '../../engine/barCheck';
 import { canRemoveRow, droppedCount, droppedLine, isOwnRow, reasonWithOwnCount } from '../../engine/forgeRows';
+import { isCalibrationRow } from '../../engine/calibration';
 import { SwipeRow } from './SwipeRow';
 import {
   exerciseComplete,
@@ -350,7 +351,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                       {showPrevious ? (
                         <span>{prev ?? ''}</span>
                       ) : own ? (
-                        <span className="flex min-h-[44px] items-center text-sm">eigen set</span>
+                        <span className="flex min-h-[44px] items-center text-sm">{isCalibrationRow(row) ? 'ijkset' : 'eigen set'}</span>
                       ) : readOnly ? (
                         <PrescriptionText row={row} ex={ex} />
                       ) : (
