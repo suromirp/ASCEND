@@ -79,8 +79,9 @@ export interface DayFact {
   cause: DayCause;
   // Vakantie, tocht, licht, zonder sportschool, vrije dagen: de periode.
   period?: LeavePeriod;
-  // Ziek: de melding, met de soort.
-  illness?: { kind: IllnessKind; episode: IllnessEpisode; running: boolean };
+  // Ziek: de melding, met de soort. `ahead`: morgen, een dag die een lopende ziekte vasthoudt maar die nog niet in de
+  // melding valt; voor de telling is hij nog gewoon gepland (engine/illness.ts#isIllnessDay).
+  illness?: { kind: IllnessKind; episode: IllnessEpisode; running: boolean; ahead?: true };
   // Opbouw na ziek: de eerste dag dat zwaar weer mag, en de laatste dag van de opbouw.
   heavyFrom?: string;
   until?: string;
@@ -166,7 +167,7 @@ function rule(cause: DayCause, q: DayQuestion, fact: DayFact, today: string): Da
       if (step === 'place') return 'drop';
       return step === 'add' || step === 'move' || step === 'catch_up' ? 'refuse' : undefined;
     case 'ill':
-      if (step === 'count') return 'drop';
+      if (step === 'count') return fact.illness?.ahead ? undefined : 'drop';
       // Een voorbije melding zegt alleen nog iets over de telling en de ijkset (die meet dan iets anders).
       if (!fact.illness?.running) return step === 'add_set' ? 'refuse' : undefined;
       return step === 'place' ? 'drop' : 'refuse';
@@ -185,7 +186,7 @@ function rule(cause: DayCause, q: DayQuestion, fact: DayFact, today: string): Da
     case 'ill_light':
       // Neus of keel: rustig bewegen mag, niets zwaars. Wat er toch stond telt niet als gemist; voorstellen en een
       // ijkset wachten tot je beter bent.
-      if (step === 'count') return 'drop';
+      if (step === 'count') return fact.illness?.ahead ? undefined : 'drop';
       if (!fact.illness?.running) return step === 'add_set' ? 'refuse' : undefined;
       if (step === 'propose' || step === 'add' || step === 'add_set') return 'refuse';
       if (!heavyOf(t)) return undefined;
@@ -257,7 +258,7 @@ export function dayRules(state: DayState): DayRules {
   const illFact = (date: string): DayFact | undefined => {
     // Een lopende ziekte houdt vandaag en morgen vast (wat ziek melden van de planning haalde); een voorbije dag in een
     // melding is ziek tot en met de dag van beter melden, of tot vandaag (engine/illness.ts#isIllnessDay).
-    if (running && date >= running.startDate && date <= addDays(today, 1)) return { cause: running.kind === 'above_neck' ? 'ill_light' : 'ill', illness: { kind: running.kind, episode: running, running: true } };
+    if (running && date >= running.startDate && date <= addDays(today, 1)) return { cause: running.kind === 'above_neck' ? 'ill_light' : 'ill', illness: { kind: running.kind, episode: running, running: true, ...(date > today ? { ahead: true as const } : {}) } };
     const past = (episodes ?? []).find((e) => date >= e.startDate && date <= (e.endDate ?? today));
     if (past) return { cause: past.kind === 'above_neck' ? 'ill_light' : 'ill', illness: { kind: past.kind, episode: past, running: !past.endDate } };
     return undefined;

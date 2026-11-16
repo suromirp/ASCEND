@@ -17,7 +17,7 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import type { IllnessEpisode } from '../models/illness';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { idHasRole } from './templateRoles';
-import { activeIllness, isHeavySession, recoveryRamp } from './illness';
+import { dayRules } from './dayRules';
 import { MOVE_ORDER, previewBetween, type PreviewMove, type ProposalPreviewData } from './proposalPreview';
 
 export interface ReplanWeekInput {
@@ -54,15 +54,13 @@ function backToPlan(row: PlannedSession, slot: Pick<PlannedSession, 'templateId'
 
 // Ziek en opbouwen na ziekte blijven gelden: zolang je ziek bent vandaag en morgen (neus of keel zonder koorts alleen
 // wat zwaar is), tijdens het opbouwen alles wat zwaar is tot de dag dat zwaar weer mag.
+// De ene regel (engine/dayRules.ts, stap verplaatsen door ASCEND), alleen wat ziek en de opbouw zeggen.
 export function illnessHeld(episodes: IllnessEpisode[] | undefined, today: string, templates: SessionTemplate[]): (date: string, templateId: string) => boolean {
   const byId = new Map(templates.map((t) => [t.id, t]));
-  const heavy = (id: string) => { const t = byId.get(id); return !!t && isHeavySession(t); };
-  const ill = activeIllness(episodes);
-  const ramp = recoveryRamp(episodes, today);
+  const rules = dayRules({ today, illness: episodes });
   return (date, templateId) => {
-    if (ill && date >= ill.startDate && date <= addDays(today, 1)) return ill.kind === 'above_neck' ? heavy(templateId) : true;
-    if (ramp && date >= today && date < ramp.heavyFrom) return heavy(templateId);
-    return false;
+    const v = rules.may({ date, step: 'move', template: byId.get(templateId) });
+    return !v.ok && [v.cause, ...v.more.map((m) => m.cause)].some((c) => c === 'ill' || c === 'ill_light' || c === 'ramp');
   };
 }
 

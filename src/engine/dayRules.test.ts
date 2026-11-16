@@ -9,12 +9,12 @@ import type { LeavePeriod } from '../models/leave';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { addDays, isoWeekday, mondayOfWeek } from '../utils/dates';
 import { CAUSE_ORDER, DAY_CAUSE_TEXT, dayRules, mayOn, YOURS_LINE, type DayQuestion, type DayState, type DayStep } from './dayRules';
-import { activeIllness, isHeavySession, isIllnessDay } from './illness';
+import { activeIllness, isHeavySession, isIllnessDay, recoveryRamp } from './illness';
 import { isAwayFor, isLeaveBlockedDay, isPauseDay, leaveDays, lightDays } from './leave';
 import type { MoveContext } from './moveSuggestions';
 import { needsGymOn } from './noGymGuard';
 import { isTaperDay } from './raceWindow';
-import { illnessHeld } from './replanWeek';
+import { illnessHeld as replanHeld } from './replanWeek';
 import { isGymStrengthTemplate } from './templateRoles';
 
 const { templates } = buildDefaultProgramData();
@@ -53,7 +53,7 @@ describe('de feiten', () => {
   it('teksten zonder gedachtestreepjes', () => {
     for (const c of CAUSE_ORDER) {
       const t = DAY_CAUSE_TEXT[c];
-      expect(`${t.chip} ${t.kept} ${t.line('Maandag 16 november')}`).not.toMatch(/[–—]/);
+      expect(`${t.chip} ${t.kept} ${t.line('Maandag 16 november')}`).not.toMatch(/[\u2013\u2014]/);
     }
   });
 });
@@ -206,6 +206,19 @@ function oldIsPausedFor(date: string, template: SessionTemplate, leave: LeavePer
   return (!!leave.length && isAwayFor(date, template, leave)) || isIllnessDay(date, illness, today) || isTaperDay(date, races, today);
 }
 
+// illnessHeld zoals hij was voor I-67 (engine/replanWeek.ts), bevroren als maat.
+function illnessHeld(episodes: IllnessEpisode[] | undefined, today: string, list: SessionTemplate[]): (date: string, templateId: string) => boolean {
+  const ids = new Map(list.map((t) => [t.id, t]));
+  const heavy = (id: string) => { const t = ids.get(id); return !!t && isHeavySession(t); };
+  const sick = activeIllness(episodes);
+  const ramp = recoveryRamp(episodes, today);
+  return (date, templateId) => {
+    if (sick && date >= sick.startDate && date <= addDays(today, 1)) return sick.kind === 'above_neck' ? heavy(templateId) : true;
+    if (ramp && date >= today && date < ramp.heavyFrom) return heavy(templateId);
+    return false;
+  };
+}
+
 // keptDayReason zoals hij was voor I-67 (engine/moveSuggestions.ts, 16 november), bevroren als maat.
 function oldKeptDayReason(context: MoveContext, template: SessionTemplate, date: string, asOf: string): string | undefined {
   const offDays = leaveDays(context.leave);
@@ -248,7 +261,9 @@ describe('vergelijking met de oude toetsen over willekeurige standen', () => {
     for (let n = 0; n < 300; n++) {
       const state = randomState(r);
       const rules = dayRules(state);
-      for (let i = -8; i < 0; i++) {
+      // Ook vandaag en later: Week telt een training van morgen nog mee, ook als je ziek bent (tekstkaart, stand
+      // ziek-eerder).
+      for (let i = -8; i < 4; i++) {
         const date = addDays(TODAY, i);
         for (const t of SAMPLE) {
           const old = oldIsPausedFor(date, t, [...state.leave!], [...state.illness!], state.races ?? [], TODAY);
@@ -305,17 +320,19 @@ describe('vergelijking met de oude toetsen over willekeurige standen', () => {
     expect(gap6).toBeGreaterThan(0);
   });
 
-  it('ziek bij opnieuw plannen: gelijk aan illnessHeld', () => {
+  it('ziek bij opnieuw plannen: gelijk aan illnessHeld, en de nieuwe illnessHeld ook', () => {
     const r = rng(31);
     for (let n = 0; n < 300; n++) {
       const state = randomState(r);
       // Alleen ziek en de opbouw: de rest van de stand zegt hier niets over.
       const rules = dayRules({ today: TODAY, illness: state.illness });
       const held = illnessHeld([...state.illness!], TODAY, templates);
+      const newHeld = replanHeld([...state.illness!], TODAY, templates);
       for (let i = 0; i < 9; i++) {
         const date = addDays(TODAY, i);
         for (const t of SAMPLE) {
           const neu = !rules.ok({ date, step: 'move', actor: 'ascend', template: t });
+          expect(newHeld(date, t.id)).toBe(neu);
           expect(neu, `${date} ${t.id} ${JSON.stringify(state)}`).toBe(held(date, t.id));
         }
       }
