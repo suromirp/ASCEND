@@ -29,6 +29,9 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Net live
 
+### 16 november 10:20
+- Wandeling plannen: het stuk van je startpunt naar de eerste kruising telt niet meer als doodlopende tak; een lus zonder tak gaat voor. Te veel hoogtemeters en een stuk heen en terug krijgen een amber regel; een voorstel van ver onder je afstand verschijnt alleen als er niets beters is.
+
 ### 16 november 08:40
 - Eén regel voor uitzonderingen: ziek, verkouden, opbouw na ziekte, zonder sportschool, vakantie, tocht en je doel gelden nu overal hetzelfde. Verkouden of in opbouw: iets zwaars slepen vraagt eerst, rustig bewegen mag. Een eigen training op een zieke dag staat in Let op met een voorstel. Een datum kiezen weigert een dag met koorts, vakantie, tocht of na je doel.
 
