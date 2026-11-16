@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { LocateError, locateErrorMessage, locateMe } from './geolocation';
+import { LocateError, locateErrorMessage, locateMe, watchFine } from './geolocation';
+import { fineAccessOf } from '../integrations/geolocation';
 import { TimeoutError, withTimeout } from './withTimeout';
 
 afterEach(() => vi.useRealTimers());
@@ -62,5 +63,53 @@ describe('withTimeout', () => {
     const stalled = expect(withTimeout(new Promise(() => undefined), 500)).rejects.toBeInstanceOf(TimeoutError);
     await vi.advanceTimersByTimeAsync(600);
     await stalled;
+  });
+});
+
+describe('watchFine: je plek volgen (I-61)', () => {
+  it('geeft elke plek met nauwkeurigheid door, vraagt fijn en stopt met clearWatch', () => {
+    let success: PositionCallback | undefined;
+    let error: PositionErrorCallback | null | undefined;
+    let options: PositionOptions | undefined;
+    const clearWatch = vi.fn();
+    const geo = {
+      watchPosition: (s: PositionCallback, e?: PositionErrorCallback | null, o?: PositionOptions) => {
+        success = s;
+        error = e;
+        options = o;
+        return 7;
+      },
+      clearWatch,
+    };
+    const fixes: unknown[] = [];
+    const fails: unknown[] = [];
+    const stop = watchFine({ geolocation: geo })((p) => fixes.push(p), (r) => fails.push(r));
+    expect(options?.enableHighAccuracy).toBe(true);
+    success?.({ coords: { latitude: 52.1, longitude: 5.1, accuracy: 900 } } as GeolocationPosition);
+    success?.({ coords: { latitude: 52.1, longitude: 5.1, accuracy: 12 } } as GeolocationPosition);
+    error?.({ code: 1 } as GeolocationPositionError);
+    expect(fixes).toEqual([{ lat: 52.1, lon: 5.1, accuracyM: 900 }, { lat: 52.1, lon: 5.1, accuracyM: 12 }]);
+    expect(fails).toEqual(['denied']);
+    stop();
+    stop();
+    expect(clearWatch).toHaveBeenCalledTimes(1);
+    expect(clearWatch).toHaveBeenCalledWith(7);
+  });
+
+  it('zonder locatie: unsupported; een watchPosition die gooit: unavailable', () => {
+    const fails: unknown[] = [];
+    watchFine({ geolocation: undefined })(() => undefined, (r) => fails.push(r))();
+    watchFine({ geolocation: { watchPosition: () => { throw new Error('stuk'); }, clearWatch: () => undefined } })(() => undefined, (r) => fails.push(r))();
+    expect(fails).toEqual(['unsupported', 'unavailable']);
+  });
+});
+
+describe('toegang van Android voor je fijne plek (I-61)', () => {
+  it('precies, bij benadering, geweigerd of nog onbekend', () => {
+    expect(fineAccessOf({ location: 'granted', coarseLocation: 'granted' })).toBe('granted');
+    expect(fineAccessOf({ location: 'denied', coarseLocation: 'granted' })).toBe('approximate');
+    expect(fineAccessOf({ location: 'denied', coarseLocation: 'denied' })).toBe('denied');
+    expect(fineAccessOf({ location: 'prompt', coarseLocation: 'prompt' })).toBe('prompt');
+    expect(fineAccessOf({ location: 'prompt-with-rationale', coarseLocation: 'prompt-with-rationale' })).toBe('unknown');
   });
 });

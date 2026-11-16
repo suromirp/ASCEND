@@ -237,3 +237,18 @@ describe('sessionStillThere en het blad dat vanzelf opent', () => {
     expect(m.wasPrompted(m.promptKey(s, start + 2))).toBe(false);
   });
 });
+
+describe('IJkset in een ander concept', () => {
+  it('een andere lopende training met een ijkset blokkeert een tweede; de eigen training, zonder ijkset of kapot niet', async () => {
+    const m = await fresh();
+    expect(m.otherDraftHasCalibration(OTHER)).toBe(false);
+    store.setItem(POINTER, JSON.stringify(pointer));
+    store.setItem(KEY, JSON.stringify(draft()));
+    expect(m.otherDraftHasCalibration(OTHER)).toBe(false);
+    store.setItem(KEY, JSON.stringify(draft({ exercises: [{ slot: 'a', rows: [row('r1', true), row('a:aijk', false)] }] })));
+    expect(m.otherDraftHasCalibration(OTHER)).toBe(true);
+    expect(m.otherDraftHasCalibration(KEY)).toBe(false);
+    store.setItem(KEY, '{kapot');
+    expect(m.otherDraftHasCalibration(OTHER)).toBe(false);
+  });
+});

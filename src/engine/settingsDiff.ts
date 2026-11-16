@@ -255,7 +255,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthFlag('forge-netjes', 'Ging het netjes?', 'askClean'),
   strengthFlag('forge-band', 'Band bij optrekken en dip', 'askBand'),
   strengthFlag('forge-stapvoorstel', 'Stap voorstellen', 'stepProposal'),
-  strengthFlag('forge-ijkset', 'IJkset voorstellen', 'calibration'),
+  strengthChoice('forge-ijkset', 'IJkset', 'calibrationMode', 'ijkset', ['calibration']),
   strengthFlag('forge-kent-je', 'Hoe goed kent Forge je', 'knowsYou'),
   strengthFlag('forge-1rm', 'Geschatte 1RM tonen', 'showOneRm'),
   strengthChoice('forge-weergave', 'Forge toont', 'oneRmView', 'forgeWeergave'),

@@ -25,6 +25,7 @@ import { FinishSheet } from './FinishSheet';
 import { AwaySheet, DiscardSheet, ExerciseMenuSheet, RirSheet, RowMenuSheet, SpotterSheet, SwapSheet, WorkoutMenuSheet } from './ForgeMenus';
 import { reportIfGone, settleWithOwnNotice } from '../../state/logSave';
 import { forgeLogInput } from './forgeFinishLog';
+import { calibrationDone } from '../../engine/calibration';
 import { clock, type Rest } from './forgeWorkoutHelpers';
 import type { ForgeSheetState } from './useForgeSheets';
 
@@ -229,6 +230,9 @@ export function ForgeSheets(p: ForgeSheetsProps) {
             // alleen "staat al in je logboek", en dan is het concept klaar. Het blad zegt het zelf, dus geen
             // melding bovenin erbij; leest niemand het blad nog (`seen`), dan gaat de fout wel bovenin.
             const saved = await settleWithOwnNotice(logSession, input, (err) => reportIfGone(seen(), err, reportStorageError));
+            // IJkset Automatisch erbij: de vier weken tellen pas nu, als de training is afgerond met die set afgevinkt.
+            // Lukt onthouden niet, dan staat hij de volgende keer weer klaar; het log staat er al.
+            if (saved && !readOnly && calibrationDone(workout)) void updateSettings({ strengthModel: { ...settings.strengthModel, calibratedAt: extra.doneOn } }).catch(() => undefined);
             p.dropDraft();
             if (saved) onClose();
             return saved;
