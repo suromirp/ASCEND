@@ -4,6 +4,7 @@ Bijgewerkt: 16 november 2026, 03:52 Portugese tijd, door coördinator session_01
 
 ## Stand 03:52 (session_01LnDpSjgdHhfcJwGq2aAmrh)
 
+- 22:35 LIVE ec1f89c: uitleg Drempel met punt Zelf (testloop 5 km, borstband, Akkoord). Controles groen (11.499 tests, kaart gelijk).
 - 22:15 eigenaar: "dan moeten we duidelijk vermelden dat een hartslagmeter essentieel is. Ik loop zelf bij elke hardloop met hartslagmeter hrm pro plus". Borstband als eis voor elke drempeltest; doorgegeven aan Scout Drempel (borstband-eis, RR-intervallen/DFA alpha 1, loopdynamiek, gebruikers zonder borstband).
 - 22:12: eigenaar wil de drempel (LTHR) en de submaximale test tot de max onderzocht ("dit raakt de fundering"). Scout Fable effort max in eigen sessie session_01LnDpSmV4phjbWL8t65BfAK (`claude/onderzoek-drempeltest`). Daarna: zelf lezen, kort aan de eigenaar met de open vragen; bouwen pas na zijn akkoord. Kleine tekstfix Drempel-uitleg (punt Zelf: testloop 5 km stelt voor) op `claude/drempel-uitleg` in scratchpad/drempel, controles lopen; daarna squash naar main.
 - 20:12 LIVE als 23e36ab: I-63, I-80, I-49, I-81, I-66 (bouwmoment). Volle controles groen op de proefmerge (11.499 tests, kaart 110 gelijk, geen schendingen). Warden Fable I-63 en Warden Sonnet I-80/klein AKKOORD; Lookout I-80 één herstelronde (woord Week/Vandaag). Bouwers archiveren. Open: I-82 tot I-85 in de Inbox.

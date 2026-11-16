@@ -29,6 +29,9 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Net live
 
+### 16 november 22:35
+- Uitleg Drempel: zegt nu dat ASCEND zelf een drempel voorstelt na een testloop van 5 km (pas na Akkoord), met een borstband; Garmin is de tweede bron.
+
 ### 16 november 20:12 (bouwmoment)
 - Back-up kleiner: dezelfde gegevens, ruim een derde kleiner (met uw back-up 2,55 naar 1,61 MB). Oude back-ups blijven te lezen; een toestel met een oudere app vraagt om bij te werken.
 - Overgeslagen of vervallen training: het blad zegt meteen waarom; Week en Vandaag zeggen hetzelfde woord (Vervallen bij ziek); geen mint knop zolang je ziek bent.
