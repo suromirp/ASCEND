@@ -24,7 +24,7 @@ import { leaveDays, lightDays } from './leave';
 import { crowdsOwnNext } from './leaveSpacing';
 import { templateSport } from './sports';
 import { sportOfLog } from './sportOfLog';
-import { hasRole, idHasRole, idIsTestOrRace, isTestOrRace } from './templateRoles';
+import { hasRole, idHasRole, idIsTestOrRace, isGymStrengthTemplate, isTestOrRace } from './templateRoles';
 
 // --- who may touch a session ------------------------------------------------------
 // 0 history: logged, or its day has passed. 1 yours: you placed or moved it,
@@ -45,6 +45,7 @@ export type CheckRule =
   | 'GOAL-DAY' // nothing on or after the main goal's day
   | 'LEAVE-OFF' // nothing on a holiday day, nothing but the walk on a trek day (engine/leave.ts)
   | 'LEAVE-LIGHT' // the day before and after a trek stays light
+  | 'NO-GYM' // a gym session you (or a proposal) fixed on a day without a gym; reported for Week only (engine/noGymGuard.ts)
   | 'REST-DAY' // the rest day stays free
   | 'TWO-HARD-RUNS' // at most one hard run a day
   | 'HARD-DAYS' // with a hard sport of your own in the week: at most 2 or 3 hard days over all sports
@@ -246,6 +247,12 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
       const where = leaveDay.kind === 'off' ? 'in je vakantie' : 'op een dag van je tocht';
       findings.push({ rule: 'LEAVE-OFF', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} staat ${where} (${day(s.scheduledDate)}).` });
       continue;
+    }
+    // Zonder sportschool: een sportschooltraining die jij of een voorstel vastzette. De planning zelf zet alleen haar
+    // eigen training om (engine/noGym.ts) en leest deze regel niet; Week zegt het, met een voorstel
+    // (docs/beslissingen/2026-11-15-zonder-sportschool-verplaatst.md).
+    if (input.reportYours && leaveDay?.kind === 'nogym' && level(s) > 0 && isGymStrengthTemplate(t)) {
+      findings.push({ rule: 'NO-GYM', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} heeft de sportschool nodig (${day(s.scheduledDate)}).` });
     }
     // The day before and after a trek: nothing hard, nothing heavy for the legs.
     const lightDay = leave.light.get(s.scheduledDate);
@@ -463,7 +470,7 @@ const MAX_ROUNDS = 60;
 // A holiday or a trek can ask for a repair per session; those get their own rounds.
 const ROUNDS_PER_LEAVE_FINDING = 2;
 // The order repairs are tried in: what the rest are judged on first.
-const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'LEAVE-OFF', 'LEAVE-LIGHT', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'AFTER-GOAL', 'TWO-HARD-RUNS', 'HARD-DAYS', 'TEST-FRESH', 'TEST-REST', 'LEG-SPACING', 'ONE-LONG'];
+const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'LEAVE-OFF', 'LEAVE-LIGHT', 'NO-GYM', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'AFTER-GOAL', 'TWO-HARD-RUNS', 'HARD-DAYS', 'TEST-FRESH', 'TEST-REST', 'LEG-SPACING', 'ONE-LONG'];
 const key = (f: Finding) => `${f.rule}:${[...f.sessionIds].sort().join(',')}`;
 // Two findings are the same finding when this is the same.
 export const findingKey = key;
@@ -581,6 +588,8 @@ export function repairWeeks(input: CheckInput): RepairResult {
       // A test that is on the wrong day itself waits for its proposal first.
       // A sport you did only via a proposal with Akkoord, never by itself.
       .filter((f) => !f.fromSport || yours.has(f.subjectId))
+      // Zonder sportschool zet de stap zonder sportschool om (engine/noGym.ts), nooit de weekcontrole.
+      .filter((f) => f.rule !== 'NO-GYM')
       .filter((f) => (((f.level === 3 || (f.level === 1 && yours.has(f.subjectId))) && movable(byIdNow.get(f.subjectId)!)) || ((f.level === 1 || f.level === 2) && f.rule === 'TEST-FRESH' && !findings.some((o) => o !== f && o.subjectId === f.subjectId))) && !tried.has(key(f)))
       .sort((a, b) => RULE_ORDER.indexOf(a.rule) - RULE_ORDER.indexOf(b.rule) || a.date.localeCompare(b.date))[0];
     if (!next) return { sessions, repairs, remaining: findings };
@@ -719,6 +728,7 @@ export const REPAIR_REASON: Record<RepairRule, string> = {
   'GOAL-DAY': 'niets op of na de dag van je doel',
   'LEAVE-OFF': 'je bent vrij of op tocht',
   'LEAVE-LIGHT': 'de dagen voor en na je tocht blijven licht',
+  'NO-GYM': 'je zit zonder sportschool',
   'LEAVE-PLACE': 'past bij je vrije periode',
   'LEAVE-AROUND': 'het best rond je vakantie',
   'FIXED-SPORT': 'je vaste afspraak',

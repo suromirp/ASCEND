@@ -8,7 +8,7 @@
 import { AutoBackupError, NameTakenError } from '../engine/autoBackup';
 import { failedBackupText, manualBackupName, type BackupOutcome } from '../engine/manualBackup';
 import type { BackupFileAdapter } from './backupTypes';
-import { verifySettled, type AppBackupFolder, type Written } from '../integrations/backupFolder';
+import { newAttemptId, verifySettled, type AppBackupFolder, type Written } from '../integrations/backupFolder';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
 const MANUAL_BACKUP_LIMIT_MS = 20_000;
@@ -18,12 +18,21 @@ const MAX_NAMES = 20;
 
 // Een poging die al zo lang loopt antwoordt niet meer; een nieuwe tik begint dan opnieuw.
 const STALE_WRITE_MS = 60_000;
+// Afmaken (keep) en opruimen (tidy) na een gelukte back-up: nooit langer dan dit, het bestand staat er al.
+const AFTERCARE_MS = 5_000;
 
 interface Running {
   promise: Promise<{ name: string }>;
   startedAt: number;
   // De poging is opgegeven: hij begint niet meer aan een volgende naam. Wat hij al schreef blijft staan.
-  abort: { aborted: boolean };
+  abort: Abort;
+}
+
+interface Abort {
+  aborted: boolean;
+  // De naam waar de poging nu aan schrijft. Een tijdsgrens stopt de schrijfactie niet: wat daarna nog
+  // landt is van de app, dus een nieuwe poging mag die naam vervangen.
+  writing?: string;
 }
 
 // Per map hoogstens één poging tegelijk. Een tweede tik terwijl de eerste nog loopt (ook als de eerste al
@@ -43,16 +52,18 @@ export function forgetManualBackupAttempts(): void {
 export async function saveManualBackup(
   folder: AppBackupFolder,
   text: string,
-  { now = new Date(), limitMs = MANUAL_BACKUP_LIMIT_MS, staleMs = STALE_WRITE_MS, verifyPauseMs }: { now?: Date; limitMs?: number; staleMs?: number; verifyPauseMs?: number } = {},
+  { now = new Date(), limitMs = MANUAL_BACKUP_LIMIT_MS, staleMs = STALE_WRITE_MS, verifyPauseMs, aftercareMs = AFTERCARE_MS }: { now?: Date; limitMs?: number; staleMs?: number; verifyPauseMs?: number; aftercareMs?: number } = {},
 ): Promise<{ name: string }> {
   let current = running.get(folder);
   if (current && Date.now() - current.startedAt >= staleMs) {
     current.abort.aborted = true;
+    // Wat de opgegeven poging nog schrijft is van de app: de nieuwe vervangt het, zonder volgnummer.
+    if (current.abort.writing) ownNames(folder).add(current.abort.writing);
     current = undefined;
   }
   if (!current) {
-    const abort = { aborted: false };
-    const started: Running = { promise: write(folder, text, now, abort, verifyPauseMs), startedAt: Date.now(), abort };
+    const abort: Abort = { aborted: false };
+    const started: Running = { promise: write(folder, text, now, abort, verifyPauseMs, aftercareMs), startedAt: Date.now(), abort };
     const clear = () => {
       if (running.get(folder) === started) running.delete(folder);
     };
@@ -68,12 +79,17 @@ export async function saveManualBackup(
   }
 }
 
-async function write(folder: AppBackupFolder, text: string, now: Date, abort: { aborted: boolean }, verifyPauseMs?: number): Promise<{ name: string }> {
-  // Op Android 10 en ouder moet er toestemming zijn; de tik van de gebruiker is het moment om te vragen.
-  if ((await folder.access()) !== 'ready' && !(await folder.requestAccess())) throw new AutoBackupError('permission');
-  const attemptId = `${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+function ownNames(folder: AppBackupFolder): Set<string> {
   const own = orphans.get(folder) ?? new Set<string>();
   orphans.set(folder, own);
+  return own;
+}
+
+async function write(folder: AppBackupFolder, text: string, now: Date, abort: Abort, verifyPauseMs: number | undefined, aftercareMs: number): Promise<{ name: string }> {
+  // Op Android 10 en ouder moet er toestemming zijn; de tik van de gebruiker is het moment om te vragen.
+  if ((await folder.access()) !== 'ready' && !(await folder.requestAccess())) throw new AutoBackupError('permission');
+  const attemptId = newAttemptId(now);
+  const own = ownNames(folder);
   for (let n = 1; n <= MAX_NAMES; n++) {
     if (abort.aborted) throw new AutoBackupError('timeout');
     const name = manualBackupName(now, n);
@@ -81,9 +97,12 @@ async function write(folder: AppBackupFolder, text: string, now: Date, abort: { 
     const mine = own.has(name);
     if (!mine && (await folder.exists(name))) continue;
     let written: Written | void;
+    abort.writing = name;
     try {
       written = await folder.write(name, text, attemptId, { neverReplace: !mine });
     } catch (err) {
+      // Bezet door een ander bestand: die naam is nooit van de app.
+      abort.writing = undefined;
       if (err instanceof NameTakenError) continue;
       // Bleef er na een mislukte naam toch iets van deze poging staan, dan mag de volgende het vervangen.
       // Dat geldt ook voor een bestand dat na een fout bij de naam niet te lezen was (stap verify): de naam
@@ -108,8 +127,15 @@ async function write(folder: AppBackupFolder, text: string, now: Date, abort: { 
       else own.delete(name);
       throw new AutoBackupError('write', 'verify');
     }
-    if (written) await written.keep().catch(() => undefined);
-    await folder.tidy?.(name).catch(() => undefined);
+    // Een eigen grens: een map die hier blijft hangen houdt de knop niet vast, het bestand staat er al.
+    if (written) await withTimeout(written.keep(), aftercareMs).catch(() => undefined);
+    if (abort.aborted) {
+      // Opgegeven, en toch gelukt: een nieuwere poging kan op deze naam bezig zijn. Niets opruimen, en de naam
+      // blijft van de app, zodat een volgende tik hem vervangt in plaats van er -2 naast te zetten.
+      own.add(name);
+      return { name };
+    }
+    await withTimeout(Promise.resolve(folder.tidy?.(name)), aftercareMs).catch(() => undefined);
     own.delete(name);
     return { name };
   }
@@ -121,19 +147,20 @@ async function write(folder: AppBackupFolder, text: string, now: Date, abort: { 
 // (ook het klaarmaken van de tekst) heeft een tijdsgrens. Een gelukte back-up wordt nooit als mislukt
 // gemeld, ook niet als het bijwerken van Laatste back-up misgaat.
 export async function runManualBackup(deps: {
-  prepare: () => Promise<{ text: string; fileName: string }>;
+  // `logIds`: de trainingen in dit bestand, voor de telling "sinds je laatste back-up" (engine/backupSince.ts).
+  prepare: () => Promise<{ text: string; fileName: string; logIds?: string[] }>;
   adapter: Pick<BackupFileAdapter, 'saveBackup'>;
-  markMade: (at: string, where: { kind: 'folder'; label: string } | { kind: 'download' } | { kind: 'file' }) => Promise<void>;
+  markMade: (at: string, where: { kind: 'folder'; label: string } | { kind: 'download' } | { kind: 'file' }, logIds?: string[]) => Promise<void>;
   limitMs?: number;
 }): Promise<BackupOutcome> {
   let abandoned = false;
   const work = async (): Promise<BackupOutcome> => {
-    const { text, fileName } = await deps.prepare();
+    const { text, fileName, logIds } = await deps.prepare();
     const result = await deps.adapter.saveBackup(new Blob([text], { type: 'application/json' }), fileName);
     if (!result.success) return { status: 'cancelled' };
     if (!abandoned) {
       try {
-        await deps.markMade(new Date().toISOString(), result.folder ? { kind: 'folder', label: result.folder } : result.viaDownload ? { kind: 'download' } : { kind: 'file' });
+        await deps.markMade(new Date().toISOString(), result.folder ? { kind: 'folder', label: result.folder } : result.viaDownload ? { kind: 'download' } : { kind: 'file' }, logIds);
       } catch (err) {
         console.warn('Back-up gemaakt, maar Laatste back-up niet bijgewerkt', err);
       }

@@ -3,7 +3,7 @@
 // niet. Een bestaand bestand wordt nooit vervangen: de naam krijgt een volgnummer. Met een grens in
 // tijd; gooit nooit.
 
-import { appBackupFolder, APP_BACKUP_LABEL, type AppBackupFolder } from '../integrations/backupFolder';
+import { appBackupFolder, APP_BACKUP_LABEL, newAttemptId, type AppBackupFolder } from '../integrations/backupFolder';
 import { NameTakenError } from '../engine/autoBackup';
 import { gpxFileName } from '../engine/gpx';
 import type { RouteStyle } from '../models/route';
@@ -16,7 +16,7 @@ export type RouteFileResult = { ok: true; where: 'download' | 'folder'; name: st
 
 async function toFolder(folder: AppBackupFolder, text: string, style: RouteStyle, date: string): Promise<RouteFileResult> {
   if ((await folder.access()) !== 'ready' && !(await folder.requestAccess())) return { ok: false };
-  const attemptId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const attemptId = newAttemptId();
   for (let n = 1; n <= MAX_NAMES; n++) {
     const name = gpxFileName(style, date, n);
     if (await folder.exists(name)) continue;

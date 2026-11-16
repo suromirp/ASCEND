@@ -61,6 +61,11 @@ export interface RouteTarget {
   // Het tempo waarmee de tijd van een lus gerekend wordt (engine/hikeTarget.ts#walkRates); alleen bij een
   // wandeltraining, alleen in het geheugen.
   rates?: WalkRates;
+  // Een wandeling die je zelf plant (Wandeling plannen, engine/walkPlan.ts), geen training: de zinnen van de
+  // planner zeggen dan "je wandeling". Alleen in het geheugen.
+  plannedWalk?: boolean;
+  // Vlak gekozen bij Wandeling plannen: de stijging telt mee in de keuze van de lus (routePlanner.ts#missScore).
+  flat?: boolean;
 }
 
 // Het wandeltempo van een lus: vlak, omhoog en omlaag, op je eigen klimtempo of op de wandelnorm.

@@ -2202,6 +2202,13 @@
    "kern": "Eens per vier weken stelt Forge een extra set voor bij één hoofdoefening, zo ver als netjes gaat (nog één over als doel).",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-15-ijkset-automatisch.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "IJkset in drie standen: Vragen (advies), Automatisch erbij (de set staat bij het openen al in de training, de dag telt pas bij Afronden met die set) en Uit; nooit als je ziek bent of opbouwt, zonder sportschool, in een vakantie of op een tocht, met Lichter of naast een ander concept met een ijkset.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-09-overzicht-gewicht.md": {
    "onderwerpen": [
     "lichaam-en-herstel"
@@ -3163,6 +3170,16 @@
    "kern": "Vervallen betekent overal hetzelfde: een voorbije training zonder log op een dag binnen een gemelde ziekte (tot en met de dag van beter melden) of vakantie, tocht of periode zonder sportschool.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-15-waar-je-nu-bent-scherp.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Waar je nu bent volgt je plek binnen 15 s tot hij hoogstens 50 m is en neemt de eerste goede; geweigerd, alleen bij benadering (approximate) en te grof na de grens hebben elk een eigen zin, een fout van de vraag om toegang telt niet als weigering, en bij de vraag staat toch de kaart zonder lus, waarvan het midden nooit een startpunt is.",
+   "vultAan": [
+    "docs/beslissingen/2026-11-14-geen-stille-thuis.md"
+   ],
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-15-wandelen-vaste-bpm.md": {
    "onderwerpen": [
     "koppelingen-en-data",
@@ -3184,6 +3201,14 @@
     "week"
    ],
    "kern": "Gemist heeft één afleiding voor Week, de kaart, de weekterugblik en het inhaaladvies: zonder sportschool vervalt alleen wat de sportschool nodig heeft, overgeslagen is geen gemist, en het inhalen leest dezelfde weekcontrole als Let op.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-zonder-sportschool-verplaatst.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Geen weg zet nog stil een sportschooltraining op een dag zonder sportschool: de voorgestelde dagen slaan hem over, slepen, een datum kiezen en ruilen vragen eerst, voorstellen van ASCEND doen het nooit, en staat er toch een, dan zegt Let op het in amber met een voorstel voor eigen gewicht of laten vervallen.",
    "stand": "geldt"
   },
   "docs/beslissingen/_sjabloon.md": {
@@ -4202,6 +4227,22 @@
     "historie-en-logs"
    ],
    "kern": "Het oude trainingsscherm slaat op via `saveOnLogger`, met Sluiten en een wachtzin met uitweg na de grens; Vandaag en Week vinken af via `tickOff`.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-backup-telling.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "historie-en-logs"
+   ],
+   "kern": "\"Sinds je laatste back-up\" telt op id uit de laatste back-up (`engine/backupSince.ts`, `lastBackupLogs`), niet op `completedAt`; een schrijfactie die na de tijdsgrens landt is van de app en wordt bij de volgende poging vervangen, zonder -2.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-15-wandeling-plannen.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "historie-en-logs"
+   ],
+   "kern": "Wandeling plannen: één blad met afstand, hoogtewens en startpunt dat een route zoekt met de bestaande regie, zonder training, voorstel, log of opslag; ingangen zijn de + op Vandaag (Loggen of plannen) en een rij op Ascend. Losse training gaat in twee stappen: eerst de sport, dan meteen loggen met de algemeenste training.",
    "stand": "geldt"
   }
  }

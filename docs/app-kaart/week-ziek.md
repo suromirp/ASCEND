@@ -19,7 +19,7 @@ Vrij
 Vr 30 · niets gepland
 Vrij
 Za 31 · niets gepland
-[knop: Losse training toevoegen]
+[knop: Training loggen]
 Vrij
 Zo 1 · niets gepland
 

@@ -45,6 +45,9 @@ export interface AppSettings {
   // local-only (see CLAUDE.md) — this is what a weekly "you haven't backed
   // up" nudge compares against.
   lastExportedAt?: string;
+  // De ids van de trainingen in die back-up, met hetzelfde tijdstip (engine/backupSince.ts). Hoort bij dit
+  // toestel en gaat niet mee in een gewone back-up (storage/backupExport.ts). Optioneel; oud leest als leeg.
+  lastBackupLogs?: { at: string; ids: string[] };
   // ISO timestamp the export nudge was last dismissed. Tracked separately
   // from lastExportedAt so dismissing it actually snoozes for a week,
   // rather than reappearing on the very next app open.
@@ -192,6 +195,8 @@ export interface AppSettings {
   // Which loop comes first in the route proposal: one long loop past different
   // hills ('adventure', absent = adventure) or the same hill up and down ('simple').
   routeStyle?: 'simple' | 'adventure';
+  // De afstand waarmee Wandeling plannen begint (engine/walkPlan.ts#resolveWalkKm); afwezig is 5 km.
+  walkPlanKm?: 3 | 5 | 8 | 12;
   // Where a proposed loop starts (engine/routeStart.ts): where you are now, asked once per search
   // ('here', absent = here), your own fixed point, shown as Vast punt ('exact'), or about your place,
   // rounded to a kilometre ('approx'). The fixed point itself is never a

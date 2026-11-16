@@ -25,6 +25,7 @@ import type { GymProfile } from './strengthSettings';
 import { isLightWeight } from './strengthModel';
 import { barFor, candidatesFor, nearestIndex, stepFor } from './strengthWeights';
 import { isOwnRow } from './forgeRows';
+import { isCalibrationRow } from './calibration';
 import { standsFor } from './toestelStanden';
 import { r2 } from '../utils/round';
 import { kgLabel } from '../utils/kg';
@@ -470,7 +471,7 @@ function bandChosen(e: WorkoutExercise, f: WorkoutExercise): boolean {
 }
 
 function touchedInDraft(e: WorkoutExercise, f: WorkoutExercise): boolean {
-  return !!e.swappedFrom || !!e.raiseUndone || e.rows.length !== f.rows.length || (e.dropped?.length ?? 0) > 0 || e.rows.some((r) => r.done || r.edited || r.firstDoneAt !== undefined || (r.rir !== undefined && r.rirAssumed === false) || r.clean !== undefined || isOwnRow(r)) || bandChosen(e, f);
+  return !!e.swappedFrom || !!e.raiseUndone || e.rows.length !== f.rows.length || (e.dropped?.length ?? 0) > 0 || e.rows.some((r) => r.done || r.edited || r.firstDoneAt !== undefined || (r.rir !== undefined && r.rirAssumed === false) || r.clean !== undefined || (isOwnRow(r) && !isCalibrationRow(r))) || bandChosen(e, f);
 }
 
 // A training opened before its exercises changed (a renamed exercise, another

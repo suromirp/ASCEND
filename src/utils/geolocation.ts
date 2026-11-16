@@ -87,3 +87,38 @@ export function locateErrorMessage(err: unknown): string {
       return 'Je locatie is nu niet beschikbaar. Probeer het nog eens, of zoek hieronder een plaats.';
   }
 }
+
+// Je plek volgen tot hij scherp is (Waar je nu bent, Gebruik waar ik nu ben): elke nieuwe plek gaat naar
+// onFix, met zijn nauwkeurigheid; een fout naar onFail. Geeft een stop terug die altijd werkt, ook voordat
+// het toestel antwoordde. De grens in tijd houdt de aanroeper (storage/routeStart.ts#locateStartHere).
+export type WatchFn = (onFix: (pos: Position2) => void, onFail: (reason: LocateFailure) => void) => () => void;
+
+export function watchFine(options: { geolocation?: Pick<Geolocation, 'watchPosition' | 'clearWatch'> | undefined; timeoutMs?: number; maximumAge?: number } = {}): WatchFn {
+  return (onFix, onFail) => {
+    const geo = 'geolocation' in options ? options.geolocation : appGeolocationOrUndefined() ?? (typeof navigator !== 'undefined' ? navigator.geolocation : undefined);
+    if (!geo) {
+      onFail('unsupported');
+      return () => undefined;
+    }
+    let id: number | undefined;
+    try {
+      id = geo.watchPosition(
+        (pos) => onFix({ lat: pos.coords.latitude, lon: pos.coords.longitude, ...(Number.isFinite(pos.coords.accuracy) ? { accuracyM: pos.coords.accuracy } : {}) }),
+        (err) => onFail(err.code === 1 ? 'denied' : err.code === 3 ? 'timeout' : 'unavailable'),
+        { enableHighAccuracy: true, timeout: options.timeoutMs ?? LOCATE_TIMEOUT_MS, maximumAge: options.maximumAge ?? 30_000 },
+      );
+    } catch {
+      onFail('unavailable');
+    }
+    return () => {
+      if (id === undefined) return;
+      const stopId = id;
+      id = undefined;
+      try {
+        geo.clearWatch(stopId);
+      } catch {
+        // Stoppen mag nooit gooien.
+      }
+    };
+  };
+}

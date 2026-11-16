@@ -22,6 +22,7 @@ Kort en zacht. Liever iets dan niets.
 --- kaart 3 ---
 [knop: TochtenEen tocht erbij? Er komen vrije dagen omheen.]
 [knop: KrachtblokKracht staat uit in je planning]
+[knop: Wandeling plannenEen route van een paar kilometer, zonder training.]
 
 --- kaart 4 ---
 [knop: Eerdere doelen]

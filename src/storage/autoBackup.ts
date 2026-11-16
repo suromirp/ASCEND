@@ -27,9 +27,10 @@ import {
   type AutoBackupFailureReason,
   type BackupWhere,
 } from '../engine/autoBackup';
-import { APP_BACKUP_LABEL, appBackupFolder, verifySettled, type AutoBackupTarget, type Written } from '../integrations/backupFolder';
+import { APP_BACKUP_LABEL, appBackupFolder, newAttemptId, verifySettled, type AutoBackupTarget, type Written } from '../integrations/backupFolder';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
-import { buildBackupEnvelope } from './backupExport';
+import { buildBackupEnvelope, logIdsInEnvelope } from './backupExport';
+import { backupMadeSettings } from '../engine/backupSince';
 import { toISODate } from '../utils/dates';
 import { webBackupFileAdapter, webFolderTarget } from './backupFileAdapter';
 import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo } from './database';
@@ -146,6 +147,8 @@ export async function noteBackupMade(where: BackupWhere | undefined, at = new Da
 // Een andere vaste map gekozen: de oude namen horen bij de oude map en worden nooit in de nieuwe
 // opgeruimd. Een mislukte poging is daarmee ook voorbij.
 export async function forgetAutoBackupFolder(): Promise<void> {
+  // Ook de onthouden halve namen: in de nieuwe map kan een vreemd bestand met dezelfde naam staan.
+  halfWrittenByFolder.clear();
   const state = await readAutoBackupState();
   const next: AutoBackupState = { ...state, files: [] };
   delete next.failure;
@@ -180,8 +183,9 @@ const AUTO_BACKUP_ATTEMPT_MS = 120_000;
 export interface RunOptions {
   now?: Date;
   target?: AutoBackupTarget;
-  // Na een gelukte back-up: lastExportedAt bijwerken via de app-staat (anders rechtstreeks).
-  onSaved?: (at: string) => unknown;
+  // Na een gelukte back-up: lastExportedAt en de ids van de trainingen in het bestand bijwerken via de
+  // app-staat (anders rechtstreeks).
+  onSaved?: (at: string, logIds?: string[]) => unknown;
   // Tijdsgrens voor schrijven en nakijken, en voor de hele poging.
   timeoutMs?: number;
   attemptMs?: number;
@@ -190,13 +194,25 @@ export interface RunOptions {
 }
 
 let running: Promise<AutoBackupOutcome> | undefined;
-// Namen die de app zelf schreef, niet kon nakijken en niet kon weghalen: de volgende poging vervangt ze.
-// Alleen in het geheugen.
-const halfWritten = new Set<string>();
+// Namen die de app zelf schreef, niet kon nakijken en niet kon weghalen, of die na de tijdsgrens nog kunnen
+// landen: de volgende poging vervangt ze. Per map (de tekst van `where`): een onthouden naam hoort bij de map
+// waar hij geschreven is en geeft in een andere map nooit recht om een bestand te vervangen. Een andere vaste
+// map kiezen vergeet ze allemaal (forgetAutoBackupFolder). Alleen in het geheugen.
+const halfWrittenByFolder = new Map<string, Set<string>>();
+
+function halfWrittenIn(where: BackupWhere): Set<string> {
+  const key = backupWhereText(where) ?? '';
+  let names = halfWrittenByFolder.get(key);
+  if (!names) {
+    names = new Set<string>();
+    halfWrittenByFolder.set(key, names);
+  }
+  return names;
+}
 
 // Alleen voor tests.
 export function forgetHalfWritten(): void {
-  halfWritten.clear();
+  halfWrittenByFolder.clear();
 }
 
 // Kijkt of er een back-up nodig is en maakt hem als dat stil kan. Twee aanroepen tegelijk delen
@@ -262,11 +278,15 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
   let where: BackupWhere;
   let own: string[];
   let by: string | undefined;
+  let logIds: string[] | undefined;
+  let halfWritten = new Set<string>();
   try {
     // Zoals Back-up maken: eerst oude voorstellen samenvatten; lukt dat niet, dan gewoon door.
     await tidyOldProposals().catch(() => 0);
     const envelope = await buildBackupEnvelope();
+    logIds = logIdsInEnvelope(envelope);
     where = await target.where();
+    halfWritten = halfWrittenIn(where);
     by = await target.installId().catch(() => undefined);
     // Eigen bestanden: alleen de lijst van deze installatie en van deze map.
     own = by !== undefined && state.filesBy === by && state.filesIn === backupWhereText(where) ? state.files : [];
@@ -274,7 +294,7 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
     // een vrije naam toch bezet (een bestand dat de app niet ziet), dan het volgende volgnummer.
     const day = toISODate(now);
     const text = JSON.stringify(envelope, null, 2);
-    const attemptId = `${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    const attemptId = newAttemptId(now);
     let taken = 0;
     for (let n = 1; n <= 99 && !name; n++) {
       const candidate = autoBackupFileName(day, n);
@@ -283,6 +303,9 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
         written = await withTimeout(target.write(candidate, text, attemptId), timeoutMs);
         name = candidate;
       } catch (err) {
+        // Een tijdsgrens stopt de schrijfactie niet: wat na de grens nog landt is van de app. De naam was vrij
+        // of al eigen, dus de volgende poging mag hem vervangen in plaats van er een volgnummer naast te zetten.
+        if (err instanceof TimeoutError) halfWritten.add(candidate);
         if (err instanceof NameTakenError && ++taken < MAX_TAKEN) continue;
         throw err instanceof NameTakenError ? new AutoBackupError('write') : err;
       }
@@ -305,13 +328,18 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
       throw new AutoBackupError('write', 'verify');
     }
     if (written) await withTimeout(written.keep(), 5_000).catch(() => undefined);
-    await withTimeout(Promise.resolve(target.tidy?.(name)), 5_000).catch(() => undefined);
+    // Een opgegeven poging ruimt niets op: een nieuwere kan op dezelfde naam bezig zijn.
+    if (!abort.aborted) await withTimeout(Promise.resolve(target.tidy?.(name)), 5_000).catch(() => undefined);
   } catch (err) {
     if (err instanceof AutoBackupError) return fail(err.reason);
     if (err instanceof TimeoutError) return fail('timeout');
     return fail('write');
   }
-  if (abort.aborted) return 'failed';
+  if (abort.aborted) {
+    // De hele poging was al opgegeven, en toch staat het bestand er: van de app, dus de volgende vervangt het.
+    halfWritten.add(name);
+    return 'failed';
+  }
 
   halfWritten.delete(name);
   // Het bestand staat er. Wat hierna misgaat (opruimen, bijhouden) maakt de back-up niet mislukt.
@@ -330,8 +358,8 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
     console.warn('Automatische back-up gemaakt, maar niet bijgehouden', err);
   }
   try {
-    if (onSaved) await onSaved(at);
-    else await SettingsRepo.set({ lastExportedAt: at });
+    if (onSaved) await onSaved(at, logIds);
+    else await SettingsRepo.set(backupMadeSettings(at, logIds));
   } catch (err) {
     console.warn('Automatische back-up gemaakt, maar Laatste back-up niet bijgewerkt', err);
   }

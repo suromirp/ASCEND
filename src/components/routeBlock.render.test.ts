@@ -7,8 +7,9 @@ import type { RouteProposal, RouteTarget } from '../models/route';
 import type { BriefingView } from '../engine/briefing';
 import type { RouteSearchModel } from './useRouteSearch';
 import { MapPlace } from './TrainingBriefing';
+import { AskStart } from './RoutePanel';
 import { briefingRoutes, footerRoom, otherLoopLine } from '../engine/routeSheet';
-import { askStartLine, planStart, START_LINE_EXACT } from '../engine/routeStart';
+import { ASK_MAP_HINT, askStartLine, planStart, START_LINE_EXACT } from '../engine/routeStart';
 import { START_LOCATE_LIMIT_MS } from '../storage/routeStart';
 import briefingSource from './TrainingBriefing.tsx?raw';
 
@@ -110,6 +111,28 @@ describe('het blok met de route in de Briefing', () => {
     // Zonder Thuis: geen knop Thuis.
     expect(render(model({ stage: 'ask', startChips: [{ kind: 'here', label: 'Waar je nu bent' }, { kind: 'other', label: 'Andere plek' }], ask: { line: askStartLine('timeout', false), homeOffered: false }, plans: undefined, okStyles: [], picked: undefined, pickedOutcome: undefined, mapRoutes: [] }))).not.toContain('>Thuis<');
     expect(START_LOCATE_LIMIT_MS).toBeLessThanOrEqual(15_000);
+  });
+  it('je plek lukte niet: toch de kaart, zonder lus en zonder Groter; de regel zegt dat je kunt tikken (I-61)', () => {
+    const html = render(model({ stage: 'ask', ask: { line: askStartLine('coarse', true), homeOffered: true }, askCenter: { kind: 'home', point: { lat: 51.5, lon: 4.5 }, line: ASK_MAP_HINT }, plans: undefined, okStyles: [], picked: undefined, pickedOutcome: undefined, mapRoutes: [] }));
+    expect(html).toContain(askStartLine('coarse', true));
+    expect(html).toContain('>Opnieuw<');
+    expect(html).toContain(ASK_MAP_HINT);
+    // De kaart zelf (laadt in de browser), met de knoppen; geen stille kaart die Groter opent.
+    expect(html).toContain('De kaart wordt geladen.');
+    expect(html).toContain('aria-label="Naar mijn plek"');
+    expect(html).not.toContain('Groter: de kaart met je lus');
+    expect(html).not.toContain('aria-label="Hele kaart"');
+    // Een veeg over de kaart scrolt de pagina (Lookout): touch-action pan-y; slepen en knijpen via Groter.
+    expect(html).toContain('touch-action:pan-y');
+    expect(html).not.toContain('touch-action:none');
+    expect(html).toContain('>Groter<');
+  });
+  it('in het blad: dezelfde stille kaart, met Hele kaart om te slepen en te knijpen (I-61, Lookout)', () => {
+    const m = model({ stage: 'ask', ask: { line: askStartLine('denied', false), homeOffered: false }, askCenter: { kind: 'town', point: { lat: 52.09, lon: 5.12 }, line: ASK_MAP_HINT }, plans: undefined, okStyles: [], picked: undefined, pickedOutcome: undefined, mapRoutes: [] });
+    const html = renderToStaticMarkup(createElement(AskStart, { model: m, onFull: () => undefined }));
+    expect(html).toContain('touch-action:pan-y');
+    expect(html).toContain('aria-label="Hele kaart"');
+    expect(html).toContain(ASK_MAP_HINT);
   });
   it('Loopband of Afwisselen: geen kaart en geen Start bij', () => {
     expect(render(model(), { ...view, place: 'run_treadmill', map: { kind: 'place' } })).toBe('');

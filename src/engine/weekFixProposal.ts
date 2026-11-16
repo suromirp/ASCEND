@@ -27,6 +27,7 @@ import { templateSport } from './sports';
 import { dayName, weekConcerns, type CheckConcern, type WeekConcern } from './weekConcerns';
 import { findingKey, lockLevel, repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
 import { capitalize } from '../utils/capitalize';
+import { planNoGymFix } from './noGymGuard';
 
 const SOURCE = ['engine/weekFixProposal.ts'];
 const MAX_OPTIONS = 3;
@@ -246,6 +247,13 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
       if (candidates.length === 0) for (const s of may) push(viaRoom(s.id));
       break;
     }
+    case 'NO-GYM': {
+      // Zonder sportschool: eerst wat de periode zelf doet (eigen gewicht of laten vervallen, hieronder), dan een
+      // andere dag van de week buiten de periode als die schoon is.
+      const subject = sessionById(concern.finding.subjectId);
+      if (subject && level(subject) !== 0) push(viaScan(subject.id));
+      break;
+    }
     default: {
       // TWO-HARD-RUNS, TEST-DAY and AFTER-TEST: the one the rule would change, then the other of yours.
       const subject = sessionById(concern.finding.subjectId);
@@ -262,7 +270,9 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
       }
     }
   }
-  if (candidates.length === 0 && !lastResort) return null;
+  // Zonder sportschool: wat de periode zelf doet staat voorop (engine/noGymGuard.ts#planNoGymFix).
+  const noGym = concern.rule === 'NO-GYM' ? planNoGymFix(input, concern.finding.subjectId) : undefined;
+  if (candidates.length === 0 && !lastResort && !noGym) return null;
 
   // The same change twice is one option.
   const seen = new Set<string>();
@@ -314,6 +324,15 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
     createdAt: new Date().toISOString(),
   });
   const options: AdviceOption[] = unique.map((c) => ({ label: labelOf(c), effect: sentence(c), proposal: proposalOf(c) }));
+  if (noGym) {
+    const name = nameOf(concern.finding.subjectId);
+    options.unshift({
+      label: noGym.bodyweight ? `${name} wordt eigen gewicht` : `${name} laten vervallen`,
+      effect: noGym.effect,
+      proposal: { id: makeId('planchange'), trigger: 'plan_check', issue: concern.title, changes: noGym.items, alternatives: [], consequences: noGym.effect, explanation: concern.why, createdAt: new Date().toISOString() },
+    });
+    options.splice(MAX_OPTIONS);
+  }
 
   return {
     id: weekFixId(concern, input.sessions),

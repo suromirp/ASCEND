@@ -92,9 +92,22 @@ function asBackupError(err: unknown, step: BackupWriteStep): AutoBackupError {
 
 const RENAME_PAUSE_MS = 250;
 const STAT_PAUSE_MS = 300;
-// De rest van een poging: <naam>.<id van de poging>.tmp of .old. Het id is de tijd en een paar willekeurige
-// tekens, samen minstens tien; een bestand dat iemand zelf hernoemde (<naam>.kopie.old) valt er niet onder.
-const ATTEMPT_REST = /^\.[a-z0-9]{10,}\.(tmp|old)$/;
+// De rest van een poging: <naam>.<id van de poging>.tmp of .old. Het id begint altijd met hetzelfde woord
+// (ATTEMPT_PREFIX), gevolgd door de tijd en een paar willekeurige tekens. Een bestand dat iemand zelf
+// hernoemde (<naam>.kopie.old, of een eigen woord van tien tekens) valt er dus niet onder. Resten van een
+// oudere app, zonder dat begin, blijven staan: liever een overbodig bestand dan een bestand van jou weg.
+const ATTEMPT_PREFIX = 'ascpoging';
+const ATTEMPT_REST = new RegExp(`^\\.${ATTEMPT_PREFIX}[a-z0-9]{8,}\\.(tmp|old)$`);
+
+// Een id per poging, uniek genoeg dat tijdelijke bestanden van twee pogingen elkaar nooit raken.
+export function newAttemptId(now: Date = new Date()): string {
+  return `${ATTEMPT_PREFIX}${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
+// Is dit bestand een rest van een poging op precies deze naam (en dus van de app)?
+export function isAttemptRest(fileName: string, name: string): boolean {
+  return fileName.startsWith(`${name}.`) && ATTEMPT_REST.test(fileName.slice(name.length));
+}
 const pause = (ms: number) => (ms > 0 ? new Promise<void>((r) => setTimeout(r, ms)) : Promise.resolve());
 
 // Hoe vaak en hoe lang nakijken wacht op een bestand dat er net staat.
@@ -323,7 +336,7 @@ function androidFolder(): AppBackupFolder {
       const listed = await fs.Filesystem.readdir({ path: APP_BACKUP_DIR, directory: dir });
       for (const file of listed.files) {
         // Alleen resten van pogingen op precies deze naam: <naam>.<poging>.tmp of .old.
-        if (!file.name.startsWith(`${name}.`) || !ATTEMPT_REST.test(file.name.slice(name.length))) continue;
+        if (!isAttemptRest(file.name, name)) continue;
         await fs.Filesystem.deleteFile({ path: path(file.name), directory: dir }).catch(() => undefined);
       }
     },

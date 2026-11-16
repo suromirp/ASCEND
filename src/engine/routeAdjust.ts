@@ -41,12 +41,13 @@ export function searchTarget(training: RouteTarget, deltaKm: number): RouteTarge
   return { ...training, distanceKm: Math.round((training.distanceKm + deltaKm) * 10) / 10 };
 }
 
-export function stepDistance(trainingKm: number, deltaKm: number, dir: 'longer' | 'shorter'): { ok: true; deltaKm: number } | { ok: false; line: string } {
+// `plannedWalk`: een wandeling die je zelf plant; de regel zegt dan "deze wandeling".
+export function stepDistance(trainingKm: number, deltaKm: number, dir: 'longer' | 'shorter', plannedWalk = false): { ok: true; deltaKm: number } | { ok: false; line: string } {
   const step = adjustStepKm(trainingKm);
   const next = Math.round((deltaKm + (dir === 'longer' ? step : -step)) * 10) / 10;
   const total = Math.round((trainingKm + next) * 10) / 10;
   if (dir === 'shorter' && !(total >= MIN_LOOP_KM)) return { ok: false, line: `Korter dan ${formatNumberNL(MIN_LOOP_KM, 0)} km: geen lus.` };
-  if (dir === 'longer' && !(total <= maxLoopKm(trainingKm))) return { ok: false, line: `Langer dan ${kmText(maxLoopKm(trainingKm))}: niet bij deze training.` };
+  if (dir === 'longer' && !(total <= maxLoopKm(trainingKm))) return { ok: false, line: `Langer dan ${kmText(maxLoopKm(trainingKm))}: niet bij deze ${plannedWalk ? 'wandeling' : 'training'}.` };
   return { ok: true, deltaKm: next };
 }
 

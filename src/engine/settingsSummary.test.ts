@@ -178,6 +178,9 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-rir-snel', facts()).value).toBe('Bij afwijking');
     expect(rowSummary('forge-rir-snel', facts({ settings: { ...facts().settings, strengthModel: { quickRir: false } } }))).toMatchObject({ value: 'Uit', dim: true });
     expect(rowSummary('forge-rir-snel', facts({ settings: { ...facts().settings, strengthModel: { quickRirMode: 'vaker' } } })).value).toBe('Vaker vragen');
+    expect(rowSummary('forge-ijkset', facts()).value).toBe('Vragen');
+    expect(rowSummary('forge-ijkset', facts({ settings: { ...facts().settings, strengthModel: { calibration: false } } }))).toMatchObject({ value: 'Uit', dim: true });
+    expect(rowSummary('forge-ijkset', facts({ settings: { ...facts().settings, strengthModel: { calibrationMode: 'automatisch' } } })).value).toBe('Automatisch');
     expect(rowSummary('forge-1rm', facts()).checked).toBe(true);
     expect(rowSummary('forge-1rm', facts({ settings: { ...facts().settings, strengthModel: { showOneRm: false } } })).checked).toBe(false);
     expect(rowSummary('forge-doorvoeren', facts()).value).toBe('Gelijke sets');
@@ -846,6 +849,11 @@ describe('rowSummary: route voorstellen', () => {
     expect(rowSummary('route-grote-wegen', facts()).checked).toBe(true);
     expect(rowSummary('route-grote-wegen', withSettings({ routeAvoidBigRoads: false })).checked).toBe(false);
     expect(rowSummary('bundel-weer', withSettings({ routeAvoidBigRoads: false })).value).toBe('13 van 14 aan');
+  });
+
+  it('Afstand van een wandeling: het advies 5 km, de keuze in de rij', () => {
+    expect(rowSummary('wandel-afstand', facts()).value).toBe('5 km');
+    expect(rowSummary('wandel-afstand', withSettings({ walkPlanKm: 12 })).value).toBe('12 km');
   });
 
   it('volgt de keuze, en een onbekende waarde is het advies', () => {

@@ -14,7 +14,6 @@ import { hasRole } from '../engine/templateRoles';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
 import { suggestSameDayOrder } from '../engine/concurrentTraining';
 import { dayOrder, orderDay } from '../engine/dayOrder';
-import { Icon } from '../components/icons';
 import { DayOrderCard } from '../components/DayOrderCard';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
@@ -76,7 +75,7 @@ import { CoachCard } from '../components/CoachCard';
 import { LegEaseCard } from '../components/LegEaseCard';
 import { InfluenceMoveCard } from '../components/influence/InfluenceMoveCard';
 import { MorningProposalCard } from '../components/MorningProposalCard';
-import { AdHocLogSheet } from '../components/AdHocLogSheet';
+import { LogOrPlan } from '../components/LogOrPlan';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
 import { DayRow, YourDay, type YourDayEntry } from '../components/vandaag/DayRow';
@@ -91,6 +90,8 @@ import { wantsLogShortcut, withoutShortcut } from '../engine/shortcutAction';
 import { resolveQuoteLanguage } from '../engine/quoteSettings';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
+import { decideMove, dragEligibility } from '../engine/weekDrag';
+import { noGymAsk } from '../engine/noGymGuard';
 import { goalTiming } from '../engine/goalRoute';
 import { SkyBand } from '../components/SkyBand';
 import { StretchMenuButton } from '../components/StretchMenuButton';
@@ -102,6 +103,7 @@ import { planShorter, resolveShorterToday, shorterAdvice } from '../engine/short
 import type { Advice } from '../engine/adviceEngine';
 import { ProposalSheet } from '../components/ProposalSheet';
 import { RaceDayLine } from '../components/RaceDay';
+import { logsNotInLastBackup } from '../engine/backupSince';
 
 function TodayContent() {
   const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
@@ -127,8 +129,6 @@ function TodayContent() {
   const freshStart = useFreshStart();
   const missed = useMissedTraining();
   const [loggingSession, setLoggingSession] = useState<PlannedSession | null>(null);
-  const [adHocOpen, setAdHocOpen] = useState(false);
-  const [adHocTemplate, setAdHocTemplate] = useState<SessionTemplate | null>(null);
   const [loggingVariant, setLoggingVariant] = useState<SessionVariant>('full');
   // "Gedaan" opens the logger right at the how-did-it-go form.
   const [loggingAtForm, setLoggingAtForm] = useState(false);
@@ -229,7 +229,7 @@ function TodayContent() {
   };
   const backupResultProps = { busy: backupBusy, result: backupResult, onDismissResult: () => setBackupResult(undefined) };
   const showExportReminder = backupCard === 'reminder' || (backupCard === null && !!backupResult);
-  const logsSinceBackup = settings.lastExportedAt ? sessionLogs.filter((l) => l.completedAt > settings.lastExportedAt!).length : sessionLogs.length;
+  const logsSinceBackup = logsNotInLastBackup(sessionLogs, settings);
 
   const quoteLanguage = resolveQuoteLanguage(settings);
   const quote = dailyQuote(today, quoteLanguage === 'off' ? undefined : quoteLanguage);
@@ -244,9 +244,14 @@ function TodayContent() {
   // A clean move (nothing else has to shift) applies at once, with undo
   // in the notice; anything that pushes another session asks first.
   function handleMove(sessionId: string, date: string) {
-    const proposal = moveSession(sessionId, date);
-    if (proposal.resolved && proposal.changes.length === 1) void applyProposal(proposal);
-    else setPendingProposal(proposal);
+    // Een sportschooltraining naar een dag zonder sportschool: eerst de vraag, met Akkoord (engine/noGymGuard.ts).
+    // Dezelfde vraag om Akkoord als in Week (een test, wat een periode neerzette of opzij schoof).
+    const session = plannedSessions.find((s) => s.id === sessionId);
+    const tpl = session ? templateById.get(session.templateId) : undefined;
+    const eligible = session && tpl ? dragEligibility(session, tpl, { logged: sessionLogs.some((l) => l.plannedSessionId === session.id), today: todayISO(), periods: settings.leavePeriods }) : undefined;
+    const decision = decideMove(moveSession(sessionId, date), { askAlways: eligible?.ok ? eligible.askAlways : undefined, extraAsk: noGymAsk(tpl, date, settings.leavePeriods), restDay: settings.restDay ?? 1 });
+    if (decision.action === 'apply') void applyProposal(decision.proposal);
+    else if (decision.action === 'ask') setPendingProposal(decision.proposal);
   }
 
   function handleSkip(sessionId: string) {
@@ -611,10 +616,8 @@ function TodayContent() {
       <StandSummaryCard tomorrow={standTomorrow(tomorrow, !!(primary && primaryTemplate && mission))} />
 
       <div className="-mt-2 flex items-center justify-center gap-5">
-        <button onClick={() => setAdHocOpen(true)} className="inline-flex min-h-[44px] items-center text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          <Icon name="plus" size={16} className="mr-1" />
-          Losse training
-        </button>
+        {/* Eén +: Training loggen of Wandeling plannen (besluit 2026-11-15-wandeling-plannen.md). */}
+        <LogOrPlan />
         {!primary && <NotFitLink plain />}
       </div>
 
@@ -662,16 +665,6 @@ function TodayContent() {
         />
       )}
 
-      {adHocOpen && (
-        <AdHocLogSheet
-          templates={templates}
-          onPick={(t) => { setAdHocOpen(false); setAdHocTemplate(t); }}
-          onClose={() => setAdHocOpen(false)}
-        />
-      )}
-      {adHocTemplate && (
-        <ExerciseLogger template={adHocTemplate} scheduledDate={today} program={program} onClose={() => setAdHocTemplate(null)} />
-      )}
 
       {watchAskOpen && watchQuestion && (
         <WatchAskSheet

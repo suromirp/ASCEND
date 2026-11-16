@@ -8,7 +8,7 @@ import { paceLine } from '../engine/racePaces';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { showSpotsFor, spotsPageFor } from '../engine/trainingSpots';
 import { placeHasRoute, placeIsOutdoor } from '../engine/trainingPlace';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLogForm } from './logForm/useLogForm';
 import { blocksSave } from './logForm/manualLog';
 import { useMacroFactorLinked } from '../state/useMacroFactor';
@@ -70,6 +70,7 @@ function GeneralLogger({
   initialVariant = 'full',
   startAtForm = false,
   preview = false,
+  switcher,
   onClose,
 }: {
   template: SessionTemplate;
@@ -82,6 +83,8 @@ function GeneralLogger({
   // "Hoe je het doet" voor een training van een latere dag: alleen lezen. Het
   // formulier en Opslaan ontbreken, er komt geen concept, onderaan staat Sluiten.
   preview?: boolean;
+  // Losse training: Welke training precies? (AdHocLogSheet.tsx#TrainingSwitch), boven Hoe ging het?.
+  switcher?: ReactNode;
   onClose: () => void;
 }) {
   const { logSession, reportStorageError, settings, strengthExternal, templates, plannedSessions, sessionLogs } = useAppData();
@@ -413,6 +416,7 @@ function GeneralLogger({
         <>
         <div ref={formRef} className="scroll-mt-4" />
         <h2 className="mt-8 font-display text-2xl leading-tight" style={{ color: 'var(--color-ink)' }}>Hoe ging het?</h2>
+        {switcher && <div className="mt-1">{switcher}</div>}
 
         {asksDoneOn(form, plannedSessionId) && (
           <div className="mt-3"><DoneOnRow form={form} scheduledDate={scheduledDate} /></div>

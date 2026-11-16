@@ -19,7 +19,7 @@ Vrij
 Vr 30 · niets gepland
 Vrij
 Za 31 · niets gepland
-[knop: Losse training toevoegen]
+[knop: Training loggen]
 [knop: Lange duurloopZo 1·Zone 250 min· aangepast]
 [knop: Verplaats of ruil Lange duurloop, nu op zondag, aangepast. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
 

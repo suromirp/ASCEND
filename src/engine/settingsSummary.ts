@@ -27,6 +27,7 @@ import { resolveRouteStyle } from './routeTarget';
 import { resolveRouteStart } from './routeStart';
 import { resolveMapGround } from './routeMap';
 import { resolveRouteSearch } from './routeSearchSetting';
+import { resolveWalkKm } from './walkPlan';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { ADVICE_SPECS, countDifferences, fromStart } from './settingsDiff';
@@ -700,7 +701,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'forge-stapvoorstel':
       return { checked: forge.stepProposal };
     case 'forge-ijkset':
-      return { checked: forge.calibration };
+      return { value: choiceShort('ijkset', forge.calibrationMode), dim: forge.calibrationMode === 'uit' };
     case 'forge-kent-je':
       return { checked: forge.knowsYou };
     case 'forge-soort': {
@@ -1021,6 +1022,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('routeSoort', resolveRouteStyle(s.routeStyle)) };
     case 'route-start':
       return { value: choiceShort('routeStart', resolveRouteStart(s.routeStart)) };
+    case 'wandel-afstand':
+      return { value: choiceShort('wandelAfstand', resolveWalkKm(s.walkPlanKm)) };
     case 'route-grote-wegen':
       return { checked: s.routeAvoidBigRoads !== false };
     case 'plek-onthouden':
