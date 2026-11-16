@@ -24,9 +24,31 @@ describe('Losse training: eerst de sport', () => {
   });
 });
 
+describe('Losse training: de gewone Wandeling', () => {
+  const walk = demo.find((x) => x.id === 'tpl_walk')!;
+
+  it('is neutraal: geen notitie over herstel, geen vaste dag, en telt niet als training van de week', () => {
+    expect(walk.name).toBe('Wandeling');
+    expect(walk.notes ?? '').not.toMatch(/herstel/i);
+    expect(walk.defaultDayOfWeek).toBeUndefined();
+    expect(walk.type).toBe('recovery');
+  });
+
+  it('staat onder Wandelen, en de Herstelwandeling blijft kiesbaar', () => {
+    expect(adHocGroupOf(walk)).toBe('hiking');
+    expect(adHocChoices(demo, 'hiking').map((x) => x.name)).toEqual(expect.arrayContaining(['Wandeling', 'Herstelwandeling']));
+  });
+
+  it('een programma zonder Wandeling (oude back-up) valt terug op de rustigste van de sport', () => {
+    const old = demo.filter((x) => x.id !== 'tpl_walk');
+    expect(adHocDefault(old, 'hiking')).toBeDefined();
+    expect(adHocDefault(old, 'hiking')?.id).not.toBe('tpl_walk');
+  });
+});
+
 describe('Losse training: de standaard van een sport', () => {
-  it('in het demoprogramma: herstelwandeling, rustige duurloop, fietstocht; kracht zonder standaard', () => {
-    expect(adHocDefault(demo, 'hiking')?.name).toBe('Herstelwandeling');
+  it('in het demoprogramma: wandeling, rustige duurloop, fietstocht; kracht zonder standaard', () => {
+    expect(adHocDefault(demo, 'hiking')?.name).toBe('Wandeling');
     expect(adHocDefault(demo, 'running')?.name).toBe('Rustige duurloop');
     expect(adHocDefault(demo, 'cycling')?.name).toBe('Fietstocht');
     expect(adHocDefault(demo, 'strength')).toBeUndefined();
@@ -43,7 +65,7 @@ describe('Losse training: de standaard van een sport', () => {
   });
 
   it('Welke training precies?: alleen die sport, op naam', () => {
-    expect(adHocChoices(demo, 'hiking').map((x) => x.name)).toEqual(['Bergop wandelen', 'Bergtocht', 'Herstelwandeling', 'Rugzakwandeling', 'Trap af', 'Wandeldag 1 van 2']);
+    expect(adHocChoices(demo, 'hiking').map((x) => x.name)).toEqual(['Bergop wandelen', 'Bergtocht', 'Herstelwandeling', 'Rugzakwandeling', 'Trap af', 'Wandeldag 1 van 2', 'Wandeling']);
     expect(adHocChoices(demo, 'running').every((x) => adHocGroupOf(x) === 'running')).toBe(true);
   });
 });

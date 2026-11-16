@@ -173,4 +173,10 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
     stopSignals: [],
     facts: 'recovery',
   },
+  tpl_walk: {
+    styleLabel: 'wandelen',
+    purpose: 'Een gewone wandeling, zonder doel of tempo.',
+    stopSignals: [],
+    facts: 'recovery',
+  },
 };

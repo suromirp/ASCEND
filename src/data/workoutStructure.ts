@@ -363,4 +363,11 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
       { label: 'Herstel', why: 'De vermoeidheid van het weekend laten zakken voor de nieuwe week begint.' },
     ],
   },
+  tpl_walk: {
+    summary: () => 'Een gewone wandeling. Geen tempo of hartslag om op te letten.',
+    structure: [{ kind: 'walk', label: 'Wandelen', intensity: 1, noTarget: true, detail: 'Op je gemak, zo lang je wilt' }],
+    builds: [
+      { label: 'Bewegen', why: 'Elke wandeling telt, zonder dat het een training hoeft te zijn.' },
+    ],
+  },
 };

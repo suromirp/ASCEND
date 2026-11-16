@@ -21,11 +21,11 @@ export const AD_HOC_GROUP_LABEL: Record<AdHocGroupKey, string> = {
   other: 'Anders',
 };
 
-// De algemeenste training per sport, als standaard. Wandelen heeft er geen gewone "Wandeling": dan de
-// rustigste, de herstelwandeling. Hardlopen: de rustige duurloop. Fietsen: de fietstocht (de enige).
+// De algemeenste training per sport, als standaard. Wandelen: de gewone Wandeling (de herstelwandeling
+// blijft kiesbaar bij Welke training precies?). Hardlopen: de rustige duurloop. Fietsen: de fietstocht (de enige).
 // Kracht en Anders: geen, je kiest zelf.
 export const AD_HOC_DEFAULT_ID: Partial<Record<AdHocGroupKey, string>> = {
-  hiking: 'tpl_herstel',
+  hiking: 'tpl_walk',
   running: 'tpl_easy_run',
   cycling: 'tpl_bike',
 };

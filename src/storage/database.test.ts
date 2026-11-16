@@ -24,6 +24,7 @@ import {
   syncProgramHorizon,
   MetaRepo,
 } from './database';
+import { clearStore, putAll } from './databaseRepos';
 import { migrateToGoalEngine } from './goalMigration';
 import { mondayOfWeek, todayISO, addDays } from '../utils/dates';
 import type { InjuryNote } from '../models/injury';
@@ -655,5 +656,17 @@ describe('ensureDefaultTemplates: nieuwe namen van trainingen', () => {
     expect(after.find((t) => t.id === 'tpl_hills_descent')?.name).toBe('Heuvelsprints en afdalen');
     expect(after.find((t) => t.id === 'tpl_strides_run')?.name).toBe('Duurloop met versnellingen');
     expect(after.find((t) => t.id === 'tpl_long_run')?.name).toBe('Lange duurloop');
+  });
+
+  it('een bestaand programma zonder Wandeling krijgt het sjabloon erbij, zonder iets anders te veranderen', async () => {
+    const before = await SessionTemplatesRepo.getAll();
+    await clearStore('sessionTemplates');
+    await putAll('sessionTemplates', before.filter((t) => t.id !== 'tpl_walk'));
+    expect((await SessionTemplatesRepo.getAll()).some((t) => t.id === 'tpl_walk')).toBe(false);
+    await ensureDefaultTemplates();
+    const after = await SessionTemplatesRepo.getAll();
+    expect(after.find((t) => t.id === 'tpl_walk')?.name).toBe('Wandeling');
+    expect(after.find((t) => t.id === 'tpl_herstel')).toEqual(before.find((t) => t.id === 'tpl_herstel'));
+    expect(after).toHaveLength(before.length);
   });
 });
