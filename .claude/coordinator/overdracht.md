@@ -4,7 +4,7 @@ Bijgewerkt: 16 november 2026, 03:52 Portugese tijd, door coördinator session_01
 
 ## Stand 03:52 (session_01LnDpSjgdHhfcJwGq2aAmrh)
 
-- I-70: Warden op Fable loopt als helper hier (uitslag op `warden/wandeling-sjabloon-herstel`, herstel.md). Akkoord = proefmerge op nacht, volle controles, main (geen Lookout: alleen een sjabloon en standaard).
+- I-70: Warden Fable 04:10 NIET AKKOORD: M1 een Wandeling heet nog Herstel (sessionKindLabel, moment na Gedaan, feiten, Logboek), M2 besluit ontbreekt (keert 2026-11-15-wandeling-plannen om). Herstel door Sherpa sonnet als helper hier op `claude/wandeling-sjabloon` (vanaf df92445 plus main). Daarna korte Warden-herkeuring en, omdat de teksten nu zichtbaar veranderen, Lookout kort op het moment na Gedaan en Pathfinder; dan main. Mag 2 (horloge-import) werd I-73.
 - I-67: bouwer Opus high session_01LnDpSm5xGS9fRLab9QNAGo op `claude/een-regel-uitzonderingen` (gestart 03:49), meldt zich hier. Nakijken trig_01TNi8s1ZwCAJqMEyH9ntDJM (05:20 UTC). Daarna Warden op Fable met proeftests.
 - Bouwmoment maandag 19:43 Amsterdam: trig_01T9256GUSjihL8ZkTCW6kAn hier (I-63 met verse back-up, I-66 onderhoud).
 - Volgende wissel: trig_01LcLR1hSKAco1HvC2e9ogmF, 17 november 04:47 Amsterdam.
