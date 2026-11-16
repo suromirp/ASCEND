@@ -3211,6 +3211,18 @@
    "kern": "Geen weg zet nog stil een sportschooltraining op een dag zonder sportschool: de voorgestelde dagen slaan hem over, slepen, een datum kiezen en ruilen vragen eerst, voorstellen van ASCEND doen het nooit, en staat er toch een, dan zegt Let op het in amber met een voorstel voor eigen gewicht of laten vervallen.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-16-een-regel-uitzonderingen.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Of een training of stap op een dag mag zegt één functie, engine/dayRules.ts (feiten op volgorde van voorrang, een vaste tabel van oorzaak maal stap); tellen, verplaatsen, Let op (regel ILL), inhalen, de ijkset en de poort van elk voorstel lezen daar, en een scan in de tests laat elke nieuwe losse toets falen.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-15-zonder-sportschool-verplaatst.md",
+    "docs/beslissingen/2026-11-15-ijkset-automatisch.md"
+   ]
+  },
   "docs/beslissingen/_sjabloon.md": {
    "onderwerpen": [
     "werkwijze"
