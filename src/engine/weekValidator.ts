@@ -21,10 +21,12 @@ import { conflictsOnTestDay, findHeavyConflicts, freshnessAt, isHardRun, isHeavy
 import { patternSlotOf } from './programLayout';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import { leaveDays, lightDays } from './leave';
+import { DAY_CAUSE_TEXT, dayRules } from './dayRules';
+import type { IllnessEpisode } from '../models/illness';
 import { crowdsOwnNext } from './leaveSpacing';
 import { templateSport } from './sports';
 import { sportOfLog } from './sportOfLog';
-import { hasRole, idHasRole, idIsTestOrRace, isGymStrengthTemplate, isTestOrRace } from './templateRoles';
+import { hasRole, idHasRole, idIsTestOrRace, isTestOrRace } from './templateRoles';
 
 // --- who may touch a session ------------------------------------------------------
 // 0 history: logged, or its day has passed. 1 yours: you placed or moved it,
@@ -46,6 +48,7 @@ export type CheckRule =
   | 'LEAVE-OFF' // nothing on a holiday day, nothing but the walk on a trek day (engine/leave.ts)
   | 'LEAVE-LIGHT' // the day before and after a trek stays light
   | 'NO-GYM' // a gym session you (or a proposal) fixed on a day without a gym; reported for Week only (engine/noGymGuard.ts)
+  | 'ILL' // a training you fixed on a day you are ill, or a heavy one with a cold or while building back; reported for Week only (engine/dayRules.ts)
   | 'REST-DAY' // the rest day stays free
   | 'TWO-HARD-RUNS' // at most one hard run a day
   | 'HARD-DAYS' // with a hard sport of your own in the week: at most 2 or 3 hard days over all sports
@@ -102,6 +105,8 @@ export interface CheckInput {
   until?: string;
   // Periods of free days, holidays and treks (models/leave.ts).
   leave?: LeavePeriod[];
+  // Ziekmeldingen (settings.illnessEpisodes): alleen voor Let op (regel ILL, met `reportYours`); de ronde leest ze niet.
+  illness?: IllnessEpisode[];
   // Rest after a tocht (Instellingen): 'soft' (default) accepts the short
   // version of a heavy leg day from 48 hours after a tocht, 'strict' keeps 72.
   trekRest?: 'soft' | 'strict';
@@ -224,6 +229,12 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
     return own === undefined || isoWeekday(x.scheduledDate) === own;
   };
   const minutes = (s: PlannedSession) => { const t = tpl(s); return s.plannedMinutes ?? (t ? input.minutesOf?.(s, t) ?? t.durationVariants.full : 0); };
+  // Alleen voor Week (`reportYours`): de ene regel, één keer gemaakt.
+  const rules = input.reportYours ? dayRules({ today: input.today, leave: input.leave, illness: input.illness }) : undefined;
+  const daySays = (s: PlannedSession, t: SessionTemplate) => {
+    const v = rules?.may({ date: s.scheduledDate, step: 'place', template: t, session: s });
+    return v && !v.ok ? v : undefined;
+  };
 
   for (const s of active) {
     const t = tpl(s);
@@ -248,10 +259,13 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
       findings.push({ rule: 'LEAVE-OFF', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} staat ${where} (${day(s.scheduledDate)}).` });
       continue;
     }
-    // Zonder sportschool: een sportschooltraining die jij of een voorstel vastzette. De planning zelf zet alleen haar
-    // eigen training om (engine/noGym.ts) en leest deze regel niet; Week zegt het, met een voorstel
-    // (docs/beslissingen/2026-11-15-zonder-sportschool-verplaatst.md).
-    if (input.reportYours && leaveDay?.kind === 'nogym' && level(s) > 0 && isGymStrengthTemplate(t)) {
+    // Ziek en zonder sportschool via de ene regel (engine/dayRules.ts, stap plaatsen). Een training die jij of een
+    // voorstel vastzette laat de planning staan; Week zegt het altijd in Let op (eigenaar, 16 november, I-67). Ziek gaat
+    // voor: dan alleen ILL. De planning zelf leest deze twee regels niet (docs/beslissingen/2026-11-15-zonder-sportschool-verplaatst.md).
+    const said = input.reportYours ? daySays(s, t) : undefined;
+    if (said && level(s) === 1 && (said.cause === 'ill' || said.cause === 'ill_light' || said.cause === 'ramp')) {
+      findings.push({ rule: 'ILL', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} op ${day(s.scheduledDate)} ${DAY_CAUSE_TEXT[said.cause].kept}.` });
+    } else if (said && level(s) > 0 && (said.cause === 'nogym' || said.more.some((m) => m.cause === 'nogym'))) {
       findings.push({ rule: 'NO-GYM', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} heeft de sportschool nodig (${day(s.scheduledDate)}).` });
     }
     // The day before and after a trek: nothing hard, nothing heavy for the legs.
@@ -470,7 +484,7 @@ const MAX_ROUNDS = 60;
 // A holiday or a trek can ask for a repair per session; those get their own rounds.
 const ROUNDS_PER_LEAVE_FINDING = 2;
 // The order repairs are tried in: what the rest are judged on first.
-const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'LEAVE-OFF', 'LEAVE-LIGHT', 'NO-GYM', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'AFTER-GOAL', 'TWO-HARD-RUNS', 'HARD-DAYS', 'TEST-FRESH', 'TEST-REST', 'LEG-SPACING', 'ONE-LONG'];
+const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'LEAVE-OFF', 'LEAVE-LIGHT', 'ILL', 'NO-GYM', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'AFTER-GOAL', 'TWO-HARD-RUNS', 'HARD-DAYS', 'TEST-FRESH', 'TEST-REST', 'LEG-SPACING', 'ONE-LONG'];
 const key = (f: Finding) => `${f.rule}:${[...f.sessionIds].sort().join(',')}`;
 // Two findings are the same finding when this is the same.
 export const findingKey = key;
@@ -589,7 +603,7 @@ export function repairWeeks(input: CheckInput): RepairResult {
       // A sport you did only via a proposal with Akkoord, never by itself.
       .filter((f) => !f.fromSport || yours.has(f.subjectId))
       // Zonder sportschool zet de stap zonder sportschool om (engine/noGym.ts), nooit de weekcontrole.
-      .filter((f) => f.rule !== 'NO-GYM')
+      .filter((f) => f.rule !== 'NO-GYM' && f.rule !== 'ILL')
       .filter((f) => (((f.level === 3 || (f.level === 1 && yours.has(f.subjectId))) && movable(byIdNow.get(f.subjectId)!)) || ((f.level === 1 || f.level === 2) && f.rule === 'TEST-FRESH' && !findings.some((o) => o !== f && o.subjectId === f.subjectId))) && !tried.has(key(f)))
       .sort((a, b) => RULE_ORDER.indexOf(a.rule) - RULE_ORDER.indexOf(b.rule) || a.date.localeCompare(b.date))[0];
     if (!next) return { sessions, repairs, remaining: findings };
@@ -729,6 +743,7 @@ export const REPAIR_REASON: Record<RepairRule, string> = {
   'LEAVE-OFF': 'je bent vrij of op tocht',
   'LEAVE-LIGHT': 'de dagen voor en na je tocht blijven licht',
   'NO-GYM': 'je zit zonder sportschool',
+  'ILL': 'je bent ziek of bouwt op',
   'LEAVE-PLACE': 'past bij je vrije periode',
   'LEAVE-AROUND': 'het best rond je vakantie',
   'FIXED-SPORT': 'je vaste afspraak',

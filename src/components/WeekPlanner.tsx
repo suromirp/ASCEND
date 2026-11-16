@@ -361,7 +361,7 @@ export function WeekPlanner({
     const pastStatus = deriveSessionStatus(s, logs, false, { leave, templates, illness: settings.illnessEpisodes, races, openDraft: openDraftId }).status;
     const lapsedDay = pastStatus === 'away' || pastStatus === 'open';
     const catchable = eligibility && !eligibility.ok && eligibility.reason === 'history' && !lapsedDay && days.some((d) => d >= today)
-      && catchUpEligibility(s, template, { logged: loggedIds.has(s.id), today, caughtUp: caughtUp.has(s.id) }).ok;
+      && catchUpEligibility(s, template, { logged: loggedIds.has(s.id), today, caughtUp: caughtUp.has(s.id), pause: { leave, templates, illness: settings.illnessEpisodes, races } }).ok;
     const ingehaald = caughtUp.get(s.id);
     const catchNote = catchUpNoteFor(s) ?? (ingehaald && s.status === 'skipped' ? caughtUpNoteFor(ingehaald) : undefined);
     return (

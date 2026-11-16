@@ -4,7 +4,7 @@
 // droog feit eronder en een korte tekst voor de rij van elke betrokken
 // training (docs/visie/Waarschuwingen in Week.md, hoofdstuk 4).
 //
-// Negen regels: NO-GYM (zonder sportschool), REST-DAY, LEG-SPACING, TWO-HARD-RUNS, TEST-DAY, AFTER-TEST, ONE-LONG,
+// Tien regels: ILL (ziek, I-67), NO-GYM (zonder sportschool), REST-DAY, LEG-SPACING, TWO-HARD-RUNS, TEST-DAY, AFTER-TEST, ONE-LONG,
 // TEST-FRESH en TEST-REST (rust voor een test). De controle draait met `reportYours`, zodat ook een training op
 // je rustdag meetelt die jij of een geaccepteerd voorstel vastzette. Alleen
 // toekomstige dagen van de getoonde week; een verleden week meldt niets.
@@ -20,8 +20,9 @@ import { intensityOfLog, isSportLogSession, restHoursFor, sportDoneLine, sportLo
 import { anySportDefinition } from '../data/sports';
 import { sportOfLog } from './sportOfLog';
 import { NO_GYM_ASK } from './noGymGuard';
+import { DAY_CAUSE_TEXT } from './dayRules';
 
-export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'NO-GYM', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH', 'TEST-REST'];
+export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'ILL', 'NO-GYM', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH', 'TEST-REST'];
 
 interface ConcernText {
   // Dezelfde sleutel als de bevinding; verandert er iets in de week, dan verandert hij mee.
@@ -99,6 +100,22 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
             ? `Een testloop of wedstrijd schuift niet zonder jouw Akkoord. Je ziet hier alleen dat hij op een vrije dag staat.`
             : 'Je bent die dag vrij of op tocht. Je koos dit zelf of accepteerde het in een voorstel, dus eerst komt de vraag.',
           notes: { [a]: 'op een vrije dag' },
+        };
+      }
+      case 'ILL': {
+        // Een training die jij of een voorstel vastzette op een dag dat je ziek bent, of een zware training terwijl je
+        // verkouden bent of opbouwt na ziekte (engine/dayRules.ts). Ziek melden haalde alleen weg wat van het systeem
+        // was; hier staat het altijd (eigenaar, 16 november, I-67), met een voorstel.
+        const sick = f.message.includes(DAY_CAUSE_TEXT.ill.kept);
+        const ramp = f.message.includes(DAY_CAUSE_TEXT.ramp.kept);
+        const kept = DAY_CAUSE_TEXT[sick ? 'ill' : ramp ? 'ramp' : 'ill_light'].kept;
+        return {
+          ...base,
+          headline: sick ? 'Je bent ziek, en er staat een training.' : ramp ? 'Je bouwt op na ziekte, en er staat een zware training.' : 'Je bent verkouden, en er staat een zware training.',
+          fact: `${nameOf(a)} op ${dayName(dateOf(a))} ${kept}.`,
+          title: `${nameOf(a)} laten vervallen`,
+          why: 'Je zette deze training zelf hier of accepteerde hem in een voorstel, dus eerst komt de vraag. Wat je mist terwijl je ziek bent, telt niet als gemist.',
+          notes: { [a]: sick ? 'je bent ziek' : 'niets zwaars' },
         };
       }
       case 'NO-GYM': {

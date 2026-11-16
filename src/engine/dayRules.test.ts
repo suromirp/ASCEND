@@ -7,13 +7,14 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import type { PlannedSession, SessionTemplate } from '../models/training';
-import { addDays, mondayOfWeek } from '../utils/dates';
+import { addDays, isoWeekday, mondayOfWeek } from '../utils/dates';
 import { CAUSE_ORDER, DAY_CAUSE_TEXT, dayRules, mayOn, YOURS_LINE, type DayQuestion, type DayState, type DayStep } from './dayRules';
-import { isHeavySession } from './illness';
-import { isAwayFor, isLeaveBlockedDay, isPauseDay } from './leave';
-import { keptDayReason } from './moveSuggestions';
+import { activeIllness, isHeavySession, isIllnessDay } from './illness';
+import { isAwayFor, isLeaveBlockedDay, isPauseDay, leaveDays, lightDays } from './leave';
+import type { MoveContext } from './moveSuggestions';
+import { needsGymOn } from './noGymGuard';
+import { isTaperDay } from './raceWindow';
 import { illnessHeld } from './replanWeek';
-import { isPausedFor } from './sessionStatus';
 import { isGymStrengthTemplate } from './templateRoles';
 
 const { templates } = buildDefaultProgramData();
@@ -200,6 +201,25 @@ describe('de randgevallen', () => {
 
 // --- dezelfde antwoorden als de oude toetsen, behalve op de gaten --------------------------------------------------
 
+// isPausedFor zoals hij was voor I-67 (engine/sessionStatus.ts), bevroren als maat.
+function oldIsPausedFor(date: string, template: SessionTemplate, leave: LeavePeriod[], illness: IllnessEpisode[], races: readonly string[], today: string): boolean {
+  return (!!leave.length && isAwayFor(date, template, leave)) || isIllnessDay(date, illness, today) || isTaperDay(date, races, today);
+}
+
+// keptDayReason zoals hij was voor I-67 (engine/moveSuggestions.ts, 16 november), bevroren als maat.
+function oldKeptDayReason(context: MoveContext, template: SessionTemplate, date: string, asOf: string): string | undefined {
+  const offDays = leaveDays(context.leave);
+  const leave = offDays.get(date)?.kind;
+  if (leave === 'off') return 'off';
+  if (leave === 'trek') return 'trek';
+  if (isHeavySession(template) && lightDays(context.leave, offDays).has(date)) return 'light';
+  if (context.restDay && isoWeekday(date) === context.restDay) return 'rest';
+  if (context.goalDay && date >= context.goalDay) return 'goal';
+  if (activeIllness(context.illness) && date <= addDays(asOf, 1)) return 'ill';
+  if (needsGymOn(date, template, context.leave, offDays)) return 'nogym';
+  return undefined;
+}
+
 function rng(seed: number) {
   let s = seed >>> 0;
   return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 2 ** 32; };
@@ -231,7 +251,7 @@ describe('vergelijking met de oude toetsen over willekeurige standen', () => {
       for (let i = -8; i < 0; i++) {
         const date = addDays(TODAY, i);
         for (const t of SAMPLE) {
-          const old = isPausedFor({ scheduledDate: date, templateId: t.id }, { leave: [...state.leave!], templates, illness: [...state.illness!], races: state.races }, TODAY);
+          const old = oldIsPausedFor(date, t, [...state.leave!], [...state.illness!], state.races ?? [], TODAY);
           const neu = !rules.ok({ date, step: 'count', template: t });
           expect(neu, `${date} ${t.id} ${JSON.stringify(state)}`).toBe(old);
         }
@@ -270,7 +290,7 @@ describe('vergelijking met de oude toetsen over willekeurige standen', () => {
       for (let i = 0; i < 9; i++) {
         const date = addDays(TODAY, i);
         for (const t of SAMPLE) {
-          const old = keptDayReason({ leave: [...state.leave!], restDay: state.restDay, goalDay: state.goalDay, illness: [...state.illness!] }, t, date, TODAY);
+          const old = oldKeptDayReason({ leave: [...state.leave!], restDay: state.restDay, goalDay: state.goalDay, illness: [...state.illness!] }, t, date, TODAY);
           const v = rules.may({ date, step: 'move', actor: 'ascend', template: t });
           // De afbouw voor een race zegt niets over verplaatsen; races in de stand doen hier niet mee.
           if (old === 'ill' && (v.ok || (v.cause !== 'ill' && v.cause !== 'ill_light'))) { gap5++; continue; }

@@ -3,7 +3,7 @@
 // voorstel vastzette laat hij staan, dus elke weg die een training naar een andere dag zet kijkt hier:
 //
 // - een voorstel van ASCEND zet nooit een sportschooltraining op zo'n dag (`withoutGymOnNoGym`);
-// - de voorgestelde dagen, slepen en ruilen kennen zo'n dag (engine/moveSuggestions.ts#keptDayReason, 'nogym'): de
+// - de voorgestelde dagen, slepen en ruilen kennen zo'n dag via de ene regel (engine/dayRules.ts, engine/moveSuggestions.ts#keptDay, 'nogym'): de
 //   voorgestelde dagen slaan hem over, slepen en een datum kiezen vragen eerst Akkoord (`NO_GYM_ASK`);
 // - staat er toch een, dan zegt Week het in Let op, in amber (regel NO-GYM, engine/weekValidator.ts), met een
 //   voorstel dat doet wat de periode zelf doet: eigen gewicht, op dezelfde of een andere dag, of laten vervallen
@@ -15,13 +15,14 @@ import type { LeavePeriod } from '../models/leave';
 import type { PlanChangeItem } from '../models/planChange';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { mondayOfWeek } from '../utils/dates';
+import { DAY_CAUSE_TEXT } from './dayRules';
 import { leaveDays, type LeaveDay } from './leave';
 import { applyNoGymDays, BODYWEIGHT_TEMPLATE_ID } from './noGym';
 import { isGymStrengthTemplate } from './templateRoles';
 import type { CheckInput } from './weekValidator';
 
 // De vraag bij slepen, een datum kiezen en ruilen, en de kop in Let op (eigenaar, 15 november).
-export const NO_GYM_ASK = 'Sportschool nodig, en je zit zonder sportschool.';
+export const NO_GYM_ASK = DAY_CAUSE_TEXT.nogym.ask!;
 
 const SOURCE = ['engine/noGymGuard.ts'];
 
@@ -35,11 +36,6 @@ export function noGymPeriodFor(date: string, template: Pick<SessionTemplate, 'id
 
 export function needsGymOn(date: string, template: Pick<SessionTemplate, 'id' | 'type'> | undefined, periods: LeavePeriod[] | undefined, days?: Map<string, LeaveDay>): boolean {
   return !!noGymPeriodFor(date, template, periods, days);
-}
-
-// De vraag voor een verplaatsing naar `date`, of niets als de dag kan.
-export function noGymAsk(template: Pick<SessionTemplate, 'id' | 'type'> | undefined, date: string, periods: LeavePeriod[] | undefined): string | undefined {
-  return needsGymOn(date, template, periods) ? NO_GYM_ASK : undefined;
 }
 
 // Zet dit voorstel een sportschooltraining op een dag zonder sportschool? Een verplaatsing of een nieuwe rij; wat de

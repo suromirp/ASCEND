@@ -49,7 +49,7 @@ import type { ScheduleProposal } from '../engine/scheduler';
 import { catchUpEligibility, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { dragHandlesShown } from '../components/weekDragShown';
 import { decideMove, dragEligibility, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
-import { noGymAsk } from '../engine/noGymGuard';
+import { keptAsk } from '../engine/moveSuggestions';
 import { SWAP_STALE } from '../storage/weekSwap';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
@@ -395,7 +395,7 @@ export function WeekPage() {
           openBriefing={briefingFor === selected.id}
           startStep={openOnMove ? 'move' : undefined}
           caughtUpOn={!selectedLog && caughtUp.has(selected.id) ? caughtUpNoteFor(caughtUp.get(selected.id)!) : undefined}
-          catchUp={!selectedLog && selected.id !== openDraftId && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id) }).ok}
+          catchUp={!selectedLog && selected.id !== openDraftId && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id), pause: { leave: settings.leavePeriods, templates: templateById, illness: settings.illnessEpisodes, races } }).ok}
           template={templateById.get(selected.templateId)!}
           allowedPair={pairs.get(selected.id)}
           placeReason={selectedPlace}
@@ -422,8 +422,8 @@ export function WeekPage() {
             const sel = selected;
             const tpl = templateById.get(sel.templateId);
             const eligible = tpl ? dragEligibility(sel, tpl, { logged: !!selectedLog, today: todayISO(), periods: settings.leavePeriods }) : undefined;
-            // Een sportschooltraining naar een dag zonder sportschool: eerst de vraag (engine/noGymGuard.ts).
-            const extraAsk = noGymAsk(tpl, date, settings.leavePeriods);
+            // Zonder sportschool, verkouden of opbouw na ziek: eerst de vraag (de ene regel, engine/dayRules.ts).
+            const extraAsk = keptAsk({ leave: settings.leavePeriods, illness: settings.illnessEpisodes }, tpl, date, todayISO());
             void moveTo(sel.id, date, eligible?.ok ? { askAlways: eligible.askAlways, extraAsk } : extraAsk ? { extraAsk } : undefined);
             setSelected(null);
           }}

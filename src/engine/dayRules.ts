@@ -116,15 +116,18 @@ export interface DayQuestion {
   logged?: boolean;
 }
 
+// `also`: elke andere oorzaak die op die dag geldt. `more`: de andere oorzaken die ook iets over deze stap zeggen, op
+// volgorde van voorrang (slepen op je rustdag in een periode zonder sportschool vraagt beide).
 export type DayVerdict =
-  | { ok: true; also: DayCause[] }
-  | { ok: false; outcome: DayOutcome; cause: DayCause; reason: string; also: DayCause[]; yours?: true };
+  | { ok: true; also: DayCause[]; more?: undefined }
+  | { ok: false; outcome: DayOutcome; cause: DayCause; reason: string; also: DayCause[]; more: { cause: DayCause; outcome: DayOutcome }[]; yours?: true };
 
 // --- de teksten -----------------------------------------------------------------------------------------------------
 
 // Eén tabel, zodat slepen, ruilen, het blad en Let op hetzelfde woord gebruiken. `chip` hoogstens 28 tekens.
 // `line`: na de dag ("Woensdag 18 november is een vakantiedag."), `kept`: na de dag in een zin ("valt nog in je ziekte").
-export const DAY_CAUSE_TEXT: Record<DayCause, { chip: string; kept: string; line: (day: string) => string }> = {
+// `ask`: de vraag bij een stap van jou die mag na Akkoord (waarschuw), zonder de dag.
+export const DAY_CAUSE_TEXT: Record<DayCause, { chip: string; kept: string; line: (day: string) => string; ask?: string }> = {
   history: { chip: 'Dag is voorbij', kept: 'is al voorbij', line: (day) => `${day} is al voorbij.` },
   goal: { chip: 'Na je doel', kept: 'ligt op of na je doel', line: (day) => `${day} ligt op of na je doel.` },
   ill: { chip: 'Je bent ziek', kept: 'valt nog in je ziekte', line: (day) => `${day} valt nog in je ziekte.` },
@@ -132,13 +135,13 @@ export const DAY_CAUSE_TEXT: Record<DayCause, { chip: string; kept: string; line
   trek: { chip: 'Tochtdag', kept: 'is een tochtdag', line: (day) => `${day} is een tochtdag.` },
   race: { chip: 'Je wedstrijd', kept: 'is de dag van je wedstrijd', line: (day) => `${day} is de dag van je wedstrijd.` },
   taper: { chip: 'Afbouw voor je race', kept: 'valt in de afbouw voor je race', line: (day) => `${day} valt in de afbouw voor je race.` },
-  ill_light: { chip: 'Je bent verkouden', kept: 'valt in je verkoudheid, niets zwaars', line: (day) => `${day} valt in je verkoudheid. Niets zwaars.` },
-  ramp: { chip: 'Opbouw na ziek', kept: 'valt in je opbouw na ziekte, nog niets zwaars', line: (day) => `${day} valt in je opbouw na ziekte. Nog niets zwaars.` },
+  ill_light: { chip: 'Je bent verkouden', kept: 'valt in je verkoudheid, niets zwaars', line: (day) => `${day} valt in je verkoudheid. Niets zwaars.`, ask: 'Je bent verkouden. Rustig bewegen mag, niets zwaars.' },
+  ramp: { chip: 'Opbouw na ziek', kept: 'valt in je opbouw na ziekte, nog niets zwaars', line: (day) => `${day} valt in je opbouw na ziekte. Nog niets zwaars.`, ask: 'Je bouwt op na ziekte. Nog niets zwaars.' },
   light: { chip: 'Lichte dag bij je tocht', kept: 'blijft licht door je tocht', line: (day) => `${day} blijft licht door je tocht, daar past geen zware training.` },
-  nogym: { chip: 'Zonder sportschool', kept: 'valt in je periode zonder sportschool', line: () => 'Sportschool nodig, en je zit zonder sportschool.' },
+  nogym: { chip: 'Zonder sportschool', kept: 'valt in je periode zonder sportschool', line: () => 'Sportschool nodig, en je zit zonder sportschool.', ask: 'Sportschool nodig, en je zit zonder sportschool.' },
   strength_off: { chip: 'Kracht staat uit', kept: 'valt buiten je planning, kracht staat uit', line: () => 'Krachttraining staat uit.' },
   eased: { chip: 'Rustige week', kept: 'valt in een rustige week', line: (day) => `${day} valt in een rustige week.` },
-  rest: { chip: 'Je rustdag', kept: 'is je rustdag', line: () => 'Dit is je rustdag. Een rustdag is er om te herstellen.' },
+  rest: { chip: 'Je rustdag', kept: 'is je rustdag', line: () => 'Dit is je rustdag. Een rustdag is er om te herstellen.', ask: 'Dit is je rustdag. Een rustdag is er om te herstellen.' },
   fixed: { chip: 'Vaste afspraak', kept: 'is een vaste afspraak', line: () => 'Een vaste afspraak van een sport is van jou.' },
   free: { chip: 'Vrije dag', kept: 'is een vrije dag', line: (day) => `${day}. Vrije dag.` },
 };
@@ -294,12 +297,13 @@ export function dayRules(state: DayState): DayRules {
     if (!first) return { ok: true, also };
     let outcome = rule(first.cause, q, first, today)!;
     const rest = also.filter((c) => c !== first.cause);
+    const more = saying.slice(1).map((f) => ({ cause: f.cause, outcome: rule(f.cause, q, f, today)! }));
     const reason = DAY_CAUSE_TEXT[first.cause].line(q.date);
     if (first.cause !== 'history' && yoursHeld(q) && (outcome === 'drop' || outcome === 'replace' || outcome === 'move')) {
       outcome = 'warn';
-      return { ok: false, outcome, cause: first.cause, reason: `${reason} ${YOURS_LINE}`, also: rest, yours: true };
+      return { ok: false, outcome, cause: first.cause, reason: `${reason} ${YOURS_LINE}`, also: rest, more, yours: true };
     }
-    return { ok: false, outcome, cause: first.cause, reason, also: rest };
+    return { ok: false, outcome, cause: first.cause, reason, also: rest, more };
   };
 
   return {

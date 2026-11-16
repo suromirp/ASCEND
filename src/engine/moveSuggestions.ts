@@ -15,12 +15,10 @@ import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { dayHasRoomFor, findHeavyConflict, proposeMove, type ScheduleProposal } from './scheduler';
 import { resolveEffectiveFullDuration } from './substitutions';
-import { addDays, daysBetween, isoWeekday, mondayOfWeek, weekdayOf } from '../utils/dates';
+import { addDays, daysBetween, mondayOfWeek, weekdayOf } from '../utils/dates';
 import type { LeavePeriod } from '../models/leave';
 import type { IllnessEpisode } from '../models/illness';
-import { leaveDays, lightDays } from './leave';
-import { activeIllness, isHeavySession } from './illness';
-import { needsGymOn } from './noGymGuard';
+import { DAY_CAUSE_TEXT, dayRules, type DayOutcome, type DayRules } from './dayRules';
 
 const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 
@@ -50,25 +48,54 @@ export interface MoveContext {
   illness?: IllnessEpisode[];
 }
 
-// Why the planning keeps a day free for this training, or nothing when it may land there. One
-// source for the one-tap suggestions and for dragging in Week (engine/weekDrag.ts).
-// 'nogym': a training that needs the gym on a day without one (engine/noGymGuard.ts). The suggestions skip it;
-// dragging and swapping ask first, like the rest day.
-export type KeptReason = 'off' | 'trek' | 'light' | 'rest' | 'goal' | 'ill' | 'nogym';
+// Why the planning keeps a day free for this training, or nothing when it may land there. One source for the one-tap
+// suggestions and for dragging and swapping in Week (engine/weekDrag.ts, engine/weekSwap.ts): the step verplaatsen of
+// the one rule (engine/dayRules.ts). The suggestions skip every reason; dragging and swapping ask first for the reasons
+// in ASK_REASONS (Akkoord, Liever niet as the main button) and keep the day closed for the others.
+// 'nogym': a training that needs the gym on a day without one (engine/noGymGuard.ts). 'ill_light': a heavy training
+// while you have a cold, 'ramp': a heavy training while you build back after illness (gat 5 en 6 van I-67).
+export type KeptReason = 'off' | 'trek' | 'light' | 'rest' | 'goal' | 'ill' | 'nogym' | 'ill_light' | 'ramp';
+export const ASK_REASONS: readonly KeptReason[] = ['rest', 'nogym', 'ill_light', 'ramp'];
+const KEPT: readonly string[] = ['off', 'trek', 'light', 'rest', 'goal', 'ill', 'nogym', 'ill_light', 'ramp'];
 
-export function keptDayReason(context: MoveContext, template: SessionTemplate, date: string, asOf: string): KeptReason | undefined {
-  const offDays = leaveDays(context.leave);
-  const leave = offDays.get(date)?.kind;
-  if (leave === 'off') return 'off';
-  if (leave === 'trek') return 'trek';
-  if (isHeavySession(template) && lightDays(context.leave, offDays).has(date)) return 'light';
-  if (context.restDay && isoWeekday(date) === context.restDay) return 'rest';
-  if (context.goalDay && date >= context.goalDay) return 'goal';
-  if (activeIllness(context.illness) && date <= addDays(asOf, 1)) return 'ill';
-  // Only asks, so after every reason that blocks or asks itself (Warden, 16 november): on the rest day the rest day
-  // asks, and dragging and swapping add this question to it (engine/weekDrag.ts, engine/weekSwap.ts).
-  if (needsGymOn(date, template, context.leave, offDays)) return 'nogym';
-  return undefined;
+export function moveRules(context: MoveContext, asOf: string): DayRules {
+  return dayRules({ today: asOf, leave: context.leave, illness: context.illness, goalDay: context.goalDay, restDay: context.restDay });
+}
+
+export interface KeptDay {
+  reason: KeptReason;
+  // Every reason that asks, in the order of the rule; dragging and swapping say them all.
+  asks: KeptReason[];
+}
+
+export function keptDay(context: MoveContext, template: SessionTemplate, date: string, asOf: string, rules: DayRules = moveRules(context, asOf)): KeptDay | undefined {
+  const v = rules.may({ date, step: 'move', actor: 'you', template });
+  if (v.ok) return undefined;
+  const all = [{ cause: v.cause, outcome: v.outcome }, ...v.more].filter((c) => KEPT.includes(c.cause)) as { cause: KeptReason; outcome: DayOutcome }[];
+  if (all.length === 0) return undefined;
+  // Je rustdag eerst: zijn zin opent de vraag (Warden, 16 november).
+  const asks = all.filter((c) => c.outcome === 'warn').map((c) => c.cause).sort((a, b) => Number(b === 'rest') - Number(a === 'rest'));
+  const block = all.find((c) => c.outcome !== 'warn');
+  // A day that is closed stays closed; otherwise the rest day leads (its sentence comes first), then the others.
+  const reason = block?.cause ?? (asks.includes('rest') ? 'rest' : asks[0]);
+  return { reason, asks: block ? [] : asks };
+}
+
+export function keptDayReason(context: MoveContext, template: SessionTemplate, date: string, asOf: string, rules?: DayRules): KeptReason | undefined {
+  return keptDay(context, template, date, asOf, rules)?.reason;
+}
+
+// The question before Akkoord for the reasons that ask, in one go: "Dit is je rustdag. ... Sportschool nodig, ..."
+export function keptAskLine(asks: readonly KeptReason[]): string {
+  return asks.map((c) => DAY_CAUSE_TEXT[c].ask).filter(Boolean).join(' ');
+}
+
+// De vraag bij een datum kiezen (Week, Vandaag), naast je rustdag die het blad zelf noemt (DecideOptions.restDay): zonder
+// sportschool, verkouden of opbouw na ziek. Niets als de dag kan of dicht is.
+export function keptAsk(context: MoveContext, template: SessionTemplate | undefined, date: string, asOf: string): string | undefined {
+  if (!template) return undefined;
+  const asks = keptDay(context, template, date, asOf)?.asks.filter((c) => c !== 'rest') ?? [];
+  return asks.length ? keptAskLine(asks) : undefined;
 }
 
 export function suggestMoveDates(
@@ -110,7 +137,8 @@ export function suggestMoveDates(
     && !dailyTimeBudget?.[weekdayOf(date)]
     && minutesOn(date) + ownMinutes(date) <= UNSET_DAY_PAIRING_CAP_MINUTES;
 
-  const kept = (date: string) => keptDayReason(context, template, date, asOf) !== undefined;
+  const rules = moveRules(context, asOf);
+  const kept = (date: string) => keptDayReason(context, template, date, asOf, rules) !== undefined;
 
   const candidates: { date: string; score: number }[] = [];
   for (let date = firstDay; date <= lastDay; date = addDays(date, 1)) {

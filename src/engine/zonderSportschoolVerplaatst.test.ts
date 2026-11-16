@@ -303,12 +303,16 @@ describe('na Warden (16 november)', () => {
 
   it('moet 2: een dag in je ziekte en je doeldag blijven dicht, ook in een periode zonder sportschool', () => {
     const t = byId.get('tpl_upper_a')!;
-    expect(keptDayReason({ leave: [PERIOD], illness: ILL }, t, '2026-11-16', TODAY)).toBe('ill');
+    // Neus of keel houdt alleen wat zwaar is tegen, en vraagt dan (de ene regel, I-67 gat 5); koorts houdt de dag dicht.
+    const FEVER = [{ id: 'ill1', kind: 'below_neck' as const, startDate: TODAY }];
+    expect(keptDayReason({ leave: [PERIOD], illness: ILL }, t, '2026-11-16', TODAY)).toBe('ill_light');
+    expect(keptDayReason({ leave: [PERIOD], illness: FEVER }, t, '2026-11-16', TODAY)).toBe('ill');
     expect(keptDayReason({ leave: [PERIOD], goalDay: '2026-11-17' }, t, '2026-11-17', TODAY)).toBe('goal');
     expect(keptDayReason({ leave: [PERIOD], restDay: 3 }, t, '2026-11-18', TODAY)).toBe('rest');
     const { plan } = ownerPlan();
     const ctx = (move: DragContext['move']): DragContext => ({ ...drag(plan, []), move });
-    expect(dayVerdicts(ctx({ leave: [PERIOD], illness: ILL }), 'ub20', '2026-11-16').find((v) => v.date === '2026-11-16')).toMatchObject({ kind: 'blocked', droppable: false });
+    expect(dayVerdicts(ctx({ leave: [PERIOD], illness: FEVER }), 'ub20', '2026-11-16').find((v) => v.date === '2026-11-16')).toMatchObject({ kind: 'blocked', droppable: false });
+    expect(dayVerdicts(ctx({ leave: [PERIOD], illness: ILL }), 'ub20', '2026-11-16').find((v) => v.date === '2026-11-16')).toMatchObject({ kind: 'ask', droppable: true, askReason: 'Je bent verkouden. Rustig bewegen mag, niets zwaars. Sportschool nodig, en je zit zonder sportschool.' });
     expect(dayVerdicts(ctx({ leave: [PERIOD], goalDay: '2026-11-18' }), 'ub20', '2026-11-16').find((v) => v.date === '2026-11-18')).toMatchObject({ kind: 'blocked', droppable: false });
     const swapIll = checkSwap(ctx({ leave: [PERIOD], illness: ILL }), 'ub20', 'rest16');
     expect(swapIll.ok).toBe(false);

@@ -9,8 +9,8 @@ import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { dayOrder } from './dayOrder';
 import { dayHasRoomFor, findHeavyConflicts, HEAVY_AXIS_LABEL, isHeavyBeforeTest, isTestOnly, sharedHeavyAxes, testRestHours, tooCloseBeforeTest, type ScheduleProposal } from './scheduler';
-import { keptDayReason, type KeptReason, type MoveContext } from './moveSuggestions';
-import { NO_GYM_ASK, needsGymOn } from './noGymGuard';
+import { keptAskLine, keptDay, moveRules, type MoveContext } from './moveSuggestions';
+import { DAY_CAUSE_TEXT } from './dayRules';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { lockLevel } from './weekValidator';
 import { weekConcerns } from './weekConcerns';
@@ -43,7 +43,8 @@ export function dragEligibility(session: PlannedSession, template: SessionTempla
 
 // --- wat elke dag zegt -------------------------------------------------------------
 // swap: the day holds exactly one training that may move; letting go trades their days (engine/weekSwap.ts).
-type DayVerdictKind = 'origin' | 'free' | 'shared' | 'tight' | 'clash' | 'rest' | 'nogym' | 'blocked' | 'swap';
+// ask: een andere reden die eerst vraagt (verkouden, opbouw na ziek), engine/dayRules.ts.
+type DayVerdictKind = 'origin' | 'free' | 'shared' | 'tight' | 'clash' | 'rest' | 'nogym' | 'ask' | 'blocked' | 'swap';
 
 export interface DayVerdict {
   date: string;
@@ -81,16 +82,9 @@ export const dayTitle = (date: string) => `${capitalize(weekdayLongNL(date))} ${
 const fit = (...options: string[]) => options.find((o) => o.length <= CHIP_MAX) ?? options[options.length - 1].slice(0, CHIP_MAX);
 const joinNames = (names: string[]) => names.join(' en ');
 
-const BLOCKED_TEXT: Record<Exclude<KeptReason, 'rest' | 'nogym'>, { chip: string; line: (day: string) => string }> = {
-  off: { chip: 'Vakantie', line: (day) => `${day} is een vakantiedag.` },
-  trek: { chip: 'Tochtdag', line: (day) => `${day} is een tochtdag.` },
-  light: { chip: 'Lichte dag bij je tocht', line: (day) => `${day} blijft licht door je tocht, daar past geen zware training.` },
-  goal: { chip: 'Na je doel', line: (day) => `${day} ligt op of na je doel.` },
-  ill: { chip: 'Je bent ziek', line: (day) => `${day} valt nog in je ziekte.` },
-};
-
 // Voor elke dag van de week wat loslaten daar zou doen. Dezelfde functies als de voorgestelde dagen
-// van het actieblad (dayHasRoomFor, findHeavyConflicts, keptDayReason), zodat beide wegen hetzelfde zeggen.
+// van het actieblad (dayHasRoomFor, findHeavyConflicts, keptDay uit de ene regel engine/dayRules.ts), zodat beide wegen
+// hetzelfde zeggen; de teksten van een dichte dag komen uit dezelfde tabel (DAY_CAUSE_TEXT).
 export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: string): DayVerdict[] {
   const templateById = new Map(ctx.templates.map((t) => [t.id, t]));
   const session = ctx.sessions.find((s) => s.id === sessionId);
@@ -105,6 +99,7 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
     && !ctx.dailyTimeBudget?.[weekdayOf(date)]
     && minutesOn(date) + ownMinutes(date) <= UNSET_DAY_PAIRING_CAP_MINUTES;
 
+  const rules = moveRules(ctx.move, ctx.asOf);
   return weekDates(mondayOfWeek(weekStart)).map((date): DayVerdict => {
     const day = dayTitle(date);
     if (date === session.scheduledDate) {
@@ -115,9 +110,9 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
     if (date < ctx.asOf) {
       return { date, kind: 'blocked', droppable: false, tone: 'none', chip: 'Dag is voorbij', line: `${day} is al voorbij.`, ask: false };
     }
-    const kept = keptDayReason(ctx.move, template, date, ctx.asOf);
-    if (kept && kept !== 'rest' && kept !== 'nogym') {
-      const t = BLOCKED_TEXT[kept];
+    const kept = keptDay(ctx.move, template, date, ctx.asOf, rules);
+    if (kept && kept.asks.length === 0) {
+      const t = DAY_CAUSE_TEXT[kept.reason];
       return { date, kind: 'blocked', droppable: false, tone: 'none', chip: t.chip, line: t.line(day), ask: false };
     }
     const there = others.filter((s) => s.scheduledDate === date);
@@ -126,15 +121,17 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
     }
     const names = there.flatMap((s) => { const n = templateById.get(s.templateId)?.name; return n ? [n] : []; });
 
-    // Zonder sportschool: je mag, maar eerst de vraag; Week zegt het daarna in Let op (engine/noGymGuard.ts).
-    if (kept === 'nogym') {
-      return { date, kind: 'nogym', droppable: true, tone: 'warn', chip: 'Zonder sportschool', line: `${day}. ${NO_GYM_ASK} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: NO_GYM_ASK };
+    // Zonder sportschool, verkouden of opbouw na ziek: je mag, maar eerst de vraag; Week zegt het daarna in Let op
+    // (engine/noGymGuard.ts, regel ILL in engine/weekValidator.ts).
+    if (kept && kept.reason !== 'rest') {
+      const reason = keptAskLine(kept.asks);
+      return { date, kind: kept.reason === 'nogym' ? 'nogym' : 'ask', droppable: true, tone: 'warn', chip: DAY_CAUSE_TEXT[kept.reason].chip, line: `${day}. ${reason} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: reason };
     }
-    if (kept === 'rest') {
+    if (kept) {
       // Je rustdag in een periode zonder sportschool: beide vragen (Warden, 16 november).
-      const gym = needsGymOn(date, template, ctx.move.leave) ? ` ${NO_GYM_ASK}` : '';
-      const reason = `Dit is je rustdag. Een rustdag is er om te herstellen.${gym}`;
-      return { date, kind: 'rest', droppable: true, tone: 'warn', chip: 'Je rustdag', line: `${day}. Dit is je rustdag.${gym} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: reason };
+      const others = keptAskLine(kept.asks.filter((c) => c !== 'rest'));
+      const extra = others ? ` ${others}` : '';
+      return { date, kind: 'rest', droppable: true, tone: 'warn', chip: 'Je rustdag', line: `${day}. Dit is je rustdag.${extra} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: keptAskLine(kept.asks) };
     }
 
     const simulated = ctx.sessions.map((s) => (s.id === sessionId ? { ...s, scheduledDate: date } : s));
