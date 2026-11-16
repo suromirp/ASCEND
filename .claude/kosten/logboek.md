@@ -509,3 +509,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-16 | Sherpa I-63 back-up kleiner | bouwer eigen sessie | opus high | 239k ctx, $5,72 | 58 min | 1 (zes mag Warden) |
 | 2026-11-16 | Sherpa I-80 reden op het blad | bouwer eigen sessie | opus high | 333k ctx, $9,72 | 66 min | 1 (woord Week/Vandaag) |
 | 2026-11-16 | Sherpa I-49/I-81 klein | bouwer eigen sessie | sonnet | 135k ctx, $0,77 | 19 min | 0 |
+| 2026-11-16 | Scout Drempel I-79 (effort max, op verzoek eigenaar) | scout eigen sessie | fable max | 214k ctx, $41,59 | 61 min | 1 aanvulling borstband |
