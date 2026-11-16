@@ -158,7 +158,8 @@ describe('de voorbeeldweek van de eigenaar (zondag 15 november 10:40)', () => {
 
   it('Pathfinder: een gemiste rij zegt altijd gemist, met of zonder greep, zoals overgeslagen en vervallen', () => {
     // De rij krijgt het woord los van de greep; het teken rechts blijft waar er geen greep is.
-    expect(weekPlanner).toMatch(/missed: status === 'missed', lapsed: status === 'away'/);
+    // Vervallen volgt het blad (engine/skipReason.ts#shownStatus); gemist blijft de stand zelf.
+    expect(weekPlanner).toMatch(/missed: status === 'missed', lapsed: shown === 'away'/);
     expect(weekPlanner).not.toMatch(/missed: status === 'missed' && !!handle/);
     expect(rowExtra({ missed: true })?.text).toBe('gemist');
     expect(rowExtra({ skipped: true })?.text).toBe('overgeslagen');

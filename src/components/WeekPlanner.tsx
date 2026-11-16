@@ -14,6 +14,8 @@ import { useAppData } from '../state/AppDataContext';
 import { LeaveBand } from './LeaveBand';
 import { LeaveWeekPanel } from './LeaveWeekBand';
 import { WeekStatusIcon } from './WeekIcons';
+import { useSkipReason } from './useSkipReason';
+import { shownStatus } from '../engine/skipReason';
 import { IconDisc, LogDisc, SportDisc } from './SportDisc';
 import { lookOfLog } from './logbook/sportLook';
 import { zoneOfTemplate } from './vandaag/zone';
@@ -91,6 +93,10 @@ function SessionRow({
   const restMode = restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
   const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest, { leave, templates, illness: illnessEpisodes, races, openDraft: openDraftId });
+  // Teken en woord van de rij volgen het blad (engine/skipReason.ts): een overgeslagen rij die door ziekte verviel heet
+  // Vervallen. Alleen weergave; de telling leest `status`.
+  const reasonOf = useSkipReason();
+  const shown = status === 'skipped' ? shownStatus(status, reasonOf(session, template)) : status;
   // Een vaste afspraak van een sport (engine/fixedSports.ts) heeft de lengte die jij koos.
   // Gedaan: de duur van het log (engine/sessionStatus.ts#rowMinutes), niet die van het plan.
   const duration = rowMinutes(log, session.fixed && session.plannedMinutes ? session.plannedMinutes : resolveEffectiveFullDuration(template, session.scheduledDate, program));
@@ -100,7 +106,7 @@ function SessionRow({
   // met een regel in Aangepast door ASCEND, ook als hij gedaan is (engine/changeLog.ts#weekAdjustments).
   // Een rustdag houdt "bewust herstel"; alleen een punt uit Let op en "aangepast" komen erbij.
   const extra = isRest ? rowExtra({ concern, adjusted }) : rowExtra({
-    concern, missed: status === 'missed', lapsed: status === 'away', open: status === 'open', skipped: status === 'skipped', catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
+    concern, missed: status === 'missed', lapsed: shown === 'away', open: status === 'open', skipped: shown === 'skipped', catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
     doneOn: status === 'completed' ? doneOnOtherDay(session, log) : undefined,
   });
   const note = extra && [extra.text, extra.also].filter(Boolean).join(', ');
@@ -186,7 +192,7 @@ function SessionRow({
             <span className="sr-only">Gepland</span>
           </span>
         ) : (
-          <WeekStatusIcon status={status} />
+          <WeekStatusIcon status={shown} />
         )}
       </span>
     </>

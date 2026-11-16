@@ -4280,7 +4280,7 @@
     "week",
     "planning"
    ],
-   "kern": "Het blad van een overgeslagen of vervallen training zegt meteen onder de kop waarom (engine/skipReason.ts): het voorstel, jouw slot, de periode of de ene regel; bij ziekte Vervallen, Toch doen volgt dayRules (koorts niet, verkouden met zwaar eerst de vraag) en zonder mint hoofdknop zolang je ziek bent; de notitie van de week noemt geen bereik in minuten meer.",
+   "kern": "Het blad van een overgeslagen of vervallen training zegt meteen onder de kop waarom (engine/skipReason.ts): het voorstel, jouw slot, de periode of de ene regel; bij ziekte Vervallen, ook in Week en op Vandaag (alleen weergave), Toch doen volgt dayRules (koorts niet, verkouden met zwaar eerst de vraag) en een overgeslagen rij heeft zolang je ziek bent geen mint hoofdknop; de notitie van de week noemt geen bereik in minuten meer.",
    "stand": "geldt"
   }
  }

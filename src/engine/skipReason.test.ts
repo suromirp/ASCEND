@@ -1,7 +1,8 @@
 // I-80: het blad van een overgeslagen of vervallen training zegt waarom (engine/skipReason.ts). Alles nagemaakt.
 
 import { describe, expect, it } from 'vitest';
-import { backOnPlanCheck, quietWhileIll, skipReason, type SkipReasonInput } from './skipReason';
+import { backOnPlanCheck, quietWhileIll, shownStatus, skipReason, skipWord, type SkipReasonInput } from './skipReason';
+import { missedInWeek } from './weekList';
 import { planIllnessStart, planIllnessChange } from './illness';
 import { applyPlanChangeItems } from './proposalEngine';
 import { deriveSessionStatus } from './sessionStatus';
@@ -86,7 +87,7 @@ describe('skipReason: de reden uit het voorstel', () => {
 describe('skipReason: zelf, periodes en de ene regel', () => {
   it('zelf overgeslagen: jouw slot', () => {
     const row = ps('tpl_easy_run', '2026-11-18', { status: 'skipped', lock: { by: 'user', at: TODAY } });
-    expect(skipReason(input(row))).toEqual({ kind: 'yours', word: 'Overgeslagen', line: 'Je zette hem zelf op overgeslagen.' });
+    expect(skipReason(input(row))).toEqual({ kind: 'yours', word: 'Overgeslagen', line: 'Je koos dit zelf.' });
   });
 
   it('een rij die je zelf vastzette op een voorbije vakantiedag: Vervallen door de vakantie, zoals Week', () => {
@@ -188,7 +189,7 @@ describe('Toch doen zolang je ziek bent (de ene regel)', () => {
   it('niet ziek: Toch doen is gewoon de hoofdknop', () => {
     const check = backOnPlanCheck({ session: long, template: tpl('tpl_long_run'), today: TODAY, illness: [] });
     expect(check.kind).toBe('ok');
-    expect(quietWhileIll({ check, today: TODAY, illness: [], reason: { kind: 'yours', word: 'Overgeslagen', line: '' } })).toBe(false);
+    expect(quietWhileIll({ check, today: TODAY, illness: [], reason: { kind: 'yours', word: 'Overgeslagen', line: 'Je koos dit zelf.' } })).toBe(false);
     const actions = sessionSheetActions({ date: TODAY, today: TODAY, skipped: true, canComeBack: true, kind: 'log' });
     expect(actions.main).toBe('backOnPlan');
   });
@@ -220,5 +221,31 @@ describe('de minuten en de notitie van de week spreken elkaar niet tegen', () =>
         expect(note ?? '').not.toMatch(/\d+\s*-\s*\d+ min/);
       }
     }
+  });
+});
+
+describe('Week en Vandaag zeggen hetzelfde woord als het blad', () => {
+  it('een ziekmelding: Vervallen in Week en op Vandaag, en de telling van gemist beweegt niet', () => {
+    const long = ps('tpl_long_run', TODAY);
+    const other = ps('tpl_easy_run', '2026-11-13');
+    const { proposal, applied } = reportIll('above_neck', [long, other]);
+    const row = applied.find((s) => s.id === long.id)!;
+    const reason = skipReason(input(row, { proposals: [proposal], illness: [cold] }));
+    const status = deriveSessionStatus(row, [], false, { illness: [cold] }).status;
+    expect(status).toBe('skipped');
+    expect(shownStatus(status, reason)).toBe('away');
+    expect(skipWord(reason)).toBe('Vervallen');
+    // Alleen de voorbije, niet overgeslagen rij van vrijdag is gemist; de vervallen rij telt niet, voor en na.
+    const byId = new Map(templates.map((t) => [t.id, t]));
+    expect(missedInWeek(applied, [], byId, { illness: [cold] })).toBe(1);
+  });
+
+  it('zelf overgeslagen of zonder reden: Overgeslagen, zoals altijd', () => {
+    const yours = ps('tpl_easy_run', '2026-11-18', { status: 'skipped', lock: { by: 'user', at: TODAY } });
+    const r = skipReason(input(yours));
+    expect(shownStatus('skipped', r)).toBe('skipped');
+    expect(skipWord(r)).toBe('Overgeslagen');
+    expect(skipWord(undefined)).toBe('Overgeslagen');
+    expect(shownStatus('missed', undefined)).toBe('missed');
   });
 });

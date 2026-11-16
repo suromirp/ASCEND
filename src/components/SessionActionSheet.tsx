@@ -13,7 +13,7 @@
 
 import type { AllowedPair } from '../engine/allowedPair';
 import type { PlaceReason } from '../engine/placeReason';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TextButton } from './TextButton';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
@@ -54,8 +54,8 @@ import { REST_DAY_COPY } from '../data/restDayCopy';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
 import type { SwapOption } from '../engine/weekSwap';
 import { macroFactorLine, pendingMacroFactorWorkout, quietSheetActions, sessionSheetActions, strengthDoneDuration, type DoneKind, type MacroFactorSource, type SheetAction } from '../engine/sessionActions';
-import { backOnPlanCheck, quietWhileIll, skipReason } from '../engine/skipReason';
-import { raceDatesOf } from '../engine/raceWindow';
+import { backOnPlanCheck, quietWhileIll } from '../engine/skipReason';
+import { useSkipReason } from './useSkipReason';
 import { workoutToDraft } from '../engine/macrofactorLink';
 import { allProfiles } from '../engine/machineWeights';
 import { getMacroFactorState, getMapping } from '../storage/macrofactor';
@@ -157,8 +157,8 @@ export function SessionActionSheet({
   // alternative for this session (it lists a bike modality). Hill
   // intervals and long hikes deliberately don't: their point is time and
   // climbing on foot.
-  const { settings, sessionLogs, logSession, reportStorageError, refresh, planChangeLog, plannedSessions, templates, openDraftId } = useAppData();
-  const races = useMemo(() => raceDatesOf(plannedSessions, templates), [plannedSessions, templates]);
+  const { settings, sessionLogs, logSession, reportStorageError, refresh } = useAppData();
+  const reasonOf = useSkipReason();
   const restMode = settings.restDayMode ?? 'rest';
   const bikeOption = isSportEnabled('cycling', settings.enabledSports) && templateSport(template) !== 'cycling'
     && (getModalities(template.id) ?? []).some((m) => isCyclingModality(m.key));
@@ -183,10 +183,7 @@ export function SessionActionSheet({
   const skipped = session.status === 'skipped';
   // Waarom hij overgeslagen of vervallen is (engine/skipReason.ts): één regel onder de kop, nooit achter een tik. De oude
   // rij van een inhaal zegt al waar hij nu staat.
-  const reason = caughtUpOn ? undefined : skipReason({
-    session, template, today, logged: !!completedLog || sessionLogs.some((l) => l.plannedSessionId === session.id),
-    proposals: planChangeLog, leave: settings.leavePeriods, illness: settings.illnessEpisodes, races, openDraft: openDraftId,
-  });
+  const reason = caughtUpOn || completedLog ? undefined : reasonOf(session, template);
   // Toch doen zolang je ziek bent: de ene regel (engine/dayRules.ts). Koorts of buikgriep: niet; verkouden of opbouwen
   // met iets zwaars: eerst de vraag; en geen mint hoofdknop zolang je ziek bent.
   const backCheck = skipped ? backOnPlanCheck({ session, template, today, illness: settings.illnessEpisodes }) : { kind: 'ok' as const };

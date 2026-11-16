@@ -22,7 +22,7 @@ import type { PlanChangeProposal } from '../models/planChange';
 import type { LeavePeriod } from '../models/leave';
 import type { IllnessEpisode } from '../models/illness';
 import { DAY_CAUSE_TEXT, dayRules, type DayCause, type TemplateFacts } from './dayRules';
-import { isDraftOpen, pauseRules } from './sessionStatus';
+import { isDraftOpen, pauseRules, type DisplayStatus } from './sessionStatus';
 
 export type SkipReasonKind = 'proposal' | 'ill' | 'off' | 'trek' | 'nogym' | 'race' | 'yours';
 
@@ -50,6 +50,8 @@ export interface SkipReasonInput {
 }
 
 const NO_CATCH_UP = 'Inhalen hoeft niet.';
+// Naast "Overgeslagen" in de feiten, zonder de stam te herhalen. Dekt Overslaan en het antwoord Niet gedaan.
+export const YOURS_SKIP_LINE = 'Je koos dit zelf.';
 const ILL_TRIGGERS: readonly string[] = ['illness_reported', 'illness_resolved'];
 
 // De regel bij een oorzaak uit de telling of een periode. `past`: de dag is voorbij (verleden tijd waar dat telt).
@@ -113,7 +115,7 @@ export function skipReason(input: SkipReasonInput): SkipReason | undefined {
       return { kind: ill ? 'ill' : 'proposal', word: ill ? 'Vervallen' : 'Overgeslagen', line };
     }
   }
-  if (lock?.by === 'user') return { kind: 'yours', word: 'Overgeslagen', line: 'Je zette hem zelf op overgeslagen.' };
+  if (lock?.by === 'user') return { kind: 'yours', word: 'Overgeslagen', line: YOURS_SKIP_LINE };
 
   // Een periode die hem liet vallen.
   if (session.leave?.role === 'dropped') {
@@ -124,6 +126,20 @@ export function skipReason(input: SkipReasonInput): SkipReason | undefined {
   }
 
   return pauseReason(input, 'Overgeslagen');
+}
+
+// --- het woord in Week en op Vandaag -------------------------------------------------------------------------------
+
+// Het woord van een overgeslagen rij op Vandaag: hetzelfde als het blad (een ziekmelding: Vervallen).
+export function skipWord(reason: SkipReason | undefined): SkipReason['word'] {
+  return reason?.word ?? 'Overgeslagen';
+}
+
+// De stand die een rij in Week toont (teken en woord): een overgeslagen rij die door ziekte verviel heet Vervallen,
+// zoals het blad. Alleen weergave: de telling van gemist leest deriveSessionStatus zelf (weekList.ts#missedInWeek), en
+// overgeslagen en vervallen tellen daar allebei niet als gemist.
+export function shownStatus(status: DisplayStatus, reason: SkipReason | undefined): DisplayStatus {
+  return status === 'skipped' && reason?.word === 'Vervallen' ? 'away' : status;
 }
 
 // --- Toch doen zolang je ziek bent --------------------------------------------------------------------------------
