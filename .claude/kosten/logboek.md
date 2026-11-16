@@ -505,3 +505,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-16 | Onderhoudsronde I-66 | tester | sonnet | 82k | 3,5 min | 0 |
 | 2026-11-16 | Warden I-80 en I-49/I-81 | reviewer | sonnet | 58k | 9 min | 0 |
 | 2026-11-16 | Lookout I-80 | tester | sonnet | 91k | 11 min | 1 (woord Week/Vandaag) |
+| 2026-11-16 | Warden I-63 back-up | reviewer | fable | 85k | 13 min | 0 (zes mag) |
