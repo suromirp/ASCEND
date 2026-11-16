@@ -503,3 +503,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-16, Sherpa I-75 (sonnet, helper per vergissing) 124k; Warden en Lookout gestopt bij onderbreking; live e152f17.
 | 2026-11-16 | Lookout Wandeling plannen I-75 | tester | sonnet | - | - | 0 |
 | 2026-11-16 | Onderhoudsronde I-66 | tester | sonnet | 82k | 3,5 min | 0 |
+| 2026-11-16 | Warden I-80 en I-49/I-81 | reviewer | sonnet | 58k | 9 min | 0 |
+| 2026-11-16 | Lookout I-80 | tester | sonnet | 91k | 11 min | 1 (woord Week/Vandaag) |

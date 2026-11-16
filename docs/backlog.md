@@ -7,7 +7,8 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 `docs/beslissingen/`.
 
 ## Inbox
-Hoogste code: I-84. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+Hoogste code: I-85. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+- [I-85] Vervallen training in het verleden (Lookout 16 november, mag): heeft een mint hoofdknop voor iets wat je zelden doet (Gedaan bij een vervallen testloop, Training starten bij een vervallen Benen A zonder sportschool); liever Verplaatsen of geen mint. En een overgeslagen rij zonder slot of voorstel tijdens een lopende ziekmelding krijgt geen reden (`skipReason.ts#pauseReason` kijkt alleen naar voorbije dagen).
 - [I-84] Ochtend dubbel na een oude back-up (onderhoud 16 november, mag): een back-up zonder `id` per ochtend krijgt `import:<datum>` (`storage/migrationsBody.ts:219`) naast de opgehaalde `intervals.icu:<datum>`; ontkoppelen (`wellness.ts#clearWellness`) ruimt hem niet op. Eerst naspelen; opslag, Warden Fable.
 - [I-83] IJkset te diep (onderhoud 16 november; eigenaar 16 november "Ik zie die ijkset optie niet"): `forge-ijkset` staat in Bij het invullen achter Geavanceerd, vijf tikken van Vandaag. Advies: buiten Geavanceerd in Forge, en een weg vanaf de melding in de training (`components/forge/CalibrationNotice.tsx`). Pathfinder vooraf.
 - [I-82] Opruimen na de onderhoudsronde (16 november, `docs/onderhoud/2026-11-16-onderhoudsronde.md`): eerst punten 1, 2 en 4 (drie bestanden alleen voor tests, 11 dode exports, guards naar `utils/guards.ts`), daarna Zonder sportschool overal via `dayRules.ts` (punt 3, planning, Warden Fable). Geen gedragswijziging; tekstkaart gelijk.
