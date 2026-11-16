@@ -7,7 +7,7 @@
 
 import type { RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { formatNumberNL } from '../utils/number';
-import { BIG_ROAD_LEAD, BIG_ROAD_NOTE_M, LONGER_WALK_LEAD, bigRoadLine, longerWalkLine, loopMinutes, proposalFacts, proposalTitle, shortLine, tooShort, walkTooLong } from './routePlanner';
+import { BIG_ROAD_LEAD, BIG_ROAD_NOTE_M, LONGER_WALK_LEAD, ascentOverLead, ascentOverLine, bigRoadLine, deadEndLine, longerWalkLine, loopMinutes, proposalFacts, proposalTitle, shortLine, tooShort, walkTooLong } from './routePlanner';
 import { routeActionLine, type RouteFileLine, type RouteSendOutcome, type SendLine } from './routeSend';
 
 // Zoveel regels in amber hoogstens in één rij van een lus.
@@ -111,6 +111,8 @@ export function mapFallbackLine(kind: 'unsupported' | 'failed', hasRoutes: boole
 // een eigen regel in amber; de rest is uitleg. De zinnen zelf komen uit engine/routePlanner.ts.
 export function loopLines(p: RouteProposal, target: RouteTarget, notes: string[]): { warn: string[]; info: string[] } {
   const short = tooShort(p, target) ? `${formatNumberNL(Math.round(p.distanceM / 100) / 10, 1)} km, korter dan` : undefined;
+  const high = ascentOverLine(p, target) ? ascentOverLead(p) : undefined;
+  const spur = deadEndLine(p);
   const warn: string[] = [];
   const info: string[] = [];
   for (const note of notes) {
@@ -118,7 +120,7 @@ export function loopLines(p: RouteProposal, target: RouteTarget, notes: string[]
     // MAX_WARN_LINES in een rij; wat overblijft staat bij de uitleg.
     // De grote weg gaat voor: hij raakt je veiligheid en valt nooit weg.
     // Een wandeling die langer duurt dan de training is ook let op (LONGER_WALK_LEAD).
-    const isWarn = (p.notice && note === p.notice) || (short && note.startsWith(short)) || note.startsWith(BIG_ROAD_LEAD) || note.startsWith(LONGER_WALK_LEAD);
+    const isWarn = (p.notice && note === p.notice) || (short && note.startsWith(short)) || (high && note.startsWith(high)) || (spur && note === spur) || note.startsWith(BIG_ROAD_LEAD) || note.startsWith(LONGER_WALK_LEAD);
     if (isWarn) warn.push(note);
     else info.push(note);
   }
@@ -164,12 +166,17 @@ export function otherLoopLine(name: string, p: RouteProposal, target?: RouteTarg
 }
 
 // De waarschuwing in de ingeklapte rij van de andere lus, in amber zoals bij de gekozen lus: een stuk
-// langs een grote weg (dat weet je voor je op Kies tikt), anders te kort voor de training. Anders niets.
+// langs een grote weg (dat weet je voor je op Kies tikt), anders te kort voor de training, veel meer hoogtemeters
+// dan gevraagd of een stuk heen en terug. Anders niets.
 // Te lang voor de wandeling alleen als de gekozen lus dat niet al in amber zegt: de tijd staat al in de
 // regel zelf, en twee keer dezelfde waarschuwing op één kaart is ruis (Lookout, 15 november).
 export function otherLoopWarn(p: RouteProposal, target: RouteTarget, picked?: RouteProposal): string | undefined {
   if ((p.bigRoadM ?? 0) >= BIG_ROAD_NOTE_M) return bigRoadLine(p.bigRoadM as number);
   if (tooShort(p, target)) return shortLine(p, target);
+  const over = ascentOverLine(p, target);
+  if (over) return over;
+  const spur = deadEndLine(p);
+  if (spur) return spur;
   if (picked && walkTooLong(picked, target)) return undefined;
   return walkTooLong(p, target) ? longerWalkLine(loopMinutes(p, target) as number, target.minutes as number) : undefined;
 }

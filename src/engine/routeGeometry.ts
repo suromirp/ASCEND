@@ -213,6 +213,35 @@ export function withoutDeadEnds(points: RoutePoint[]): RoutePoint[] {
   return kept.length >= 2 ? kept : points;
 }
 
+// De aanloop van een lus: het stuk vanaf het startpunt dat de lus aan het eind weer terugloopt (het pad uit
+// een afgesloten terrein, een steeg naar de eerste kruising). Dat stuk twee keer lopen is onvermijdelijk, geen
+// keuze van de lus. Gemeten op de lijn zonder takken, in meters vanaf het begin.
+export function approachLength(points: RoutePoint[]): number {
+  const clean = withoutDeadEnds(points);
+  if (clean.length < 4) return 0;
+  const { at, pts } = resample(clean, SPUR_STEP_M);
+  const half = Math.floor(pts.length / 2);
+  let reach = 0;
+  for (let i = 0; i < half; i++) {
+    let near = false;
+    for (let j = half; j < pts.length && !near; j++) near = metersBetween(pts[i], pts[j]) <= SPUR_SAME_M;
+    if (!near) break;
+    reach = at[i];
+  }
+  return reach;
+}
+
+// De doodlopende stukken van een lus zelf: een tak in de aanloop (vanaf het startpunt tot de eerste kruising
+// en terug, en bij het eind van de lijn hetzelfde) telt niet mee (besluit 2026-11-16-wandelroute-vraag.md).
+export function loopDeadEnds(points: readonly RoutePoint[]): DeadEnd[] {
+  const ends = deadEnds(points);
+  if (ends.length === 0) return ends;
+  const approach = approachLength(points as RoutePoint[]);
+  if (approach <= 0) return ends;
+  const total = lineLength(points as RoutePoint[]);
+  return ends.filter((e) => e.atM - e.lengthM > approach + SPUR_NEAR_M && total - (e.atM + e.lengthM) > approach + SPUR_NEAR_M);
+}
+
 // ---------- Grote wegen ----------
 
 // Meters over een grote weg: een stap telt als beide punten op een grote weg liggen (`bigRoad`). Zo telt

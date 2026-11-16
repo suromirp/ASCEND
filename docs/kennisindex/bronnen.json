@@ -4267,6 +4267,13 @@
    "vervangenDoor": [
     "docs/beslissingen/2026-11-16-wandeling-als-standaard.md"
    ]
+  },
+  "docs/beslissingen/2026-11-16-wandelroute-vraag.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "De routevoorstellen volgen de vraag: een tak in de aanloop telt niet als doodlopend stuk, Avontuurlijk kiest eerst een lus zonder tak (tot 15 procent afstandsafwijking), hoogte meer dan het dubbele van de vraag krijgt een amber regel zoals afstand, en een voorstel onder 70 procent van de afstand komt alleen als er niets beters is.",
+   "stand": "geldt"
   }
  }
 }
