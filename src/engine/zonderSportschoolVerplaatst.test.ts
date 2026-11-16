@@ -11,6 +11,7 @@ import type { Advice } from './adviceShared';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import { catchUpRows } from './catchUp';
 import { planIllnessChange } from './illness';
+import { planLeaveChange } from './leaveProposal';
 import { keptDayReason, suggestMoveDates } from './moveSuggestions';
 import { applyNoGymDays } from './noGym';
 import { landsGymOnNoGym, NO_GYM_ASK, planNoGymFix, withoutGymOnNoGym } from './noGymGuard';
@@ -264,6 +265,86 @@ describe('de weg van de eigenaar: dinsdag 10 november, Bovenlichaam A naar wo 18
     const ctx = { today: '2026-11-10', logs: [], templates, program, blocks: [], restDay: 1, leave: [PERIOD], newId: () => 'q' };
     const after = planPass([...plan.map((s) => (s.leave ? { ...s, leave: undefined, status: 'planned' as const } : s)), ua18], ctx).sessions;
     expect(after.find((s) => s.id === 'ua18')).toMatchObject({ scheduledDate: '2026-11-18', status: 'moved' });
+  });
+});
+
+describe('na Warden (16 november)', () => {
+  const ua18 = (): PlannedSession => ps('ua18', 'tpl_upper_a', '2026-11-18', { status: 'moved', movedFromDate: '2026-11-10', lock: { by: 'user', at: '2026-11-10T20:36:00.000Z' } });
+  const LONGER: LeavePeriod = { ...PERIOD, endDate: '2026-11-20' };
+  const context = (periods: LeavePeriod[]) => ({ today: TODAY, logs: [] as SessionLog[], templates, program, blocks: [], restDay: 1, leave: periods, newId: () => 'c' });
+  // Akkoord op het voorstel in Let op, met de periode 14 t/m 20 november.
+  const accepted = () => {
+    const { plan, logs } = ownerPlan();
+    const sessions = [...plan, ua18()];
+    const input = checkInput(sessions, logs, { leave: [LONGER] });
+    const fix = planNoGymFix(input, 'ua18')!;
+    const applied = applyPlanChangeItems(fix.items, sessions, () => 'n', { by: 'proposal', proposalId: 'x', at: TODAY }).sessions;
+    expect(applied.find((s) => s.id === 'ua18')).toMatchObject({ status: 'skipped', lock: { by: 'user' }, leave: { role: 'dropped' } });
+    return { applied, logs };
+  };
+  const after = (plan: ReturnType<typeof planLeaveChange>, sessions: PlannedSession[]) =>
+    applyPlanChangeItems(plan.proposal.changes, sessions, () => 'm', { by: 'proposal', proposalId: 'y', at: TODAY }).sessions.find((s) => s.id === 'ua18')!;
+
+  it('moet 1: de periode weghalen zet Bovenlichaam A terug op wo 18, met jouw slot en "verplaatst van di 10"', () => {
+    const { applied, logs } = accepted();
+    const plan = planLeaveChange({ mode: 'remove', period: LONGER, existing: [LONGER], sessions: applied, logs, templates, today: TODAY, context });
+    expect(after(plan, applied)).toMatchObject({ status: 'moved', scheduledDate: '2026-11-18', movedFromDate: '2026-11-10', lock: { by: 'user' } });
+    expect(after(plan, applied).leave).toBeUndefined();
+  });
+
+  it('moet 1: korter maken tot di 17 zet hem terug; korter maar wo 18 nog erin laat hem vervallen', () => {
+    const { applied, logs } = accepted();
+    const shorter: LeavePeriod = { ...LONGER, endDate: '2026-11-17' };
+    const back = planLeaveChange({ mode: 'add', period: shorter, replaces: LONGER, existing: [LONGER], sessions: applied, logs, templates, today: TODAY, context });
+    expect(after(back, applied)).toMatchObject({ status: 'moved', scheduledDate: '2026-11-18', lock: { by: 'user' } });
+    const still = planLeaveChange({ mode: 'add', period: PERIOD, replaces: LONGER, existing: [LONGER], sessions: applied, logs, templates, today: TODAY, context });
+    expect(after(still, applied).status).toBe('skipped');
+  });
+
+  it('moet 2: een dag in je ziekte en je doeldag blijven dicht, ook in een periode zonder sportschool', () => {
+    const t = byId.get('tpl_upper_a')!;
+    expect(keptDayReason({ leave: [PERIOD], illness: ILL }, t, '2026-11-16', TODAY)).toBe('ill');
+    expect(keptDayReason({ leave: [PERIOD], goalDay: '2026-11-17' }, t, '2026-11-17', TODAY)).toBe('goal');
+    expect(keptDayReason({ leave: [PERIOD], restDay: 3 }, t, '2026-11-18', TODAY)).toBe('rest');
+    const { plan } = ownerPlan();
+    const ctx = (move: DragContext['move']): DragContext => ({ ...drag(plan, []), move });
+    expect(dayVerdicts(ctx({ leave: [PERIOD], illness: ILL }), 'ub20', '2026-11-16').find((v) => v.date === '2026-11-16')).toMatchObject({ kind: 'blocked', droppable: false });
+    expect(dayVerdicts(ctx({ leave: [PERIOD], goalDay: '2026-11-18' }), 'ub20', '2026-11-16').find((v) => v.date === '2026-11-18')).toMatchObject({ kind: 'blocked', droppable: false });
+    const swapIll = checkSwap(ctx({ leave: [PERIOD], illness: ILL }), 'ub20', 'rest16');
+    expect(swapIll.ok).toBe(false);
+  });
+
+  it('moet 2: op je rustdag in de periode vragen beide, de rustdag en de sportschool', () => {
+    const { plan } = ownerPlan();
+    const ctx: DragContext = { ...drag(plan, []), move: { leave: [PERIOD], restDay: 3 } };
+    const v = dayVerdicts(ctx, 'ub20', '2026-11-16').find((x) => x.date === '2026-11-18')!;
+    expect(v).toMatchObject({ kind: 'rest', ask: true });
+    expect(v.askReason).toBe(`Dit is je rustdag. Een rustdag is er om te herstellen. ${NO_GYM_ASK}`);
+    const sessions = [...plan, ps('er18', 'tpl_easy_run', '2026-11-18')];
+    const swap = checkSwap({ ...drag(sessions, []), move: { leave: [PERIOD], restDay: 3 } }, 'ub20', 'er18');
+    expect(swap.ok && swap.asks.join(' ')).toContain('is je rustdag');
+    expect(swap.ok && swap.asks.join(' ')).toContain('sportschool nodig');
+  });
+
+  it('moet 3: kracht laten vervallen met Heuvels in de buurt zegt vervallen, en de heuvelloop zit niet in dit voorstel', () => {
+    const drop: LeavePeriod = { ...PERIOD, noGym: { amount: 'light', strength: 'drop', hills: true } };
+    const { plan, logs } = ownerPlan();
+    const sessions = [...plan.filter((s) => s.id !== 'bw17'), ua18()];
+    const input = checkInput(sessions, logs, { leave: [drop] });
+    const fix = planNoGymFix(input, 'ua18')!;
+    expect(fix.bodyweight).toBe(false);
+    expect(fix.items.map((i) => i.action)).toEqual(['remove']);
+    expect(fix.effect).toBe('Geen sportschool: Bovenlichaam A vervalt.');
+    const c = weekConcerns(input, '2026-11-16').find((x) => x.rule === 'NO-GYM')!;
+    expect((planWeekFix(input, c, '2026-11-16')!.options?.[0] ?? { label: 'Bovenlichaam A laten vervallen' }).label).toBe('Bovenlichaam A laten vervallen');
+  });
+
+  it('valt de eerste keuze weg, dan volgen effect en regel de nieuwe eerste', () => {
+    const move = (to: string) => ({ changes: [{ plannedSessionId: 'ub20', action: 'move' as const, fromDate: '2026-11-20', toDate: to }] });
+    const { plan } = ownerPlan();
+    const [kept] = withoutGymOnNoGym([{ effect: 'naar wo 18', firstOptionNote: 'de kleinste verandering', proposal: move('2026-11-18'), options: [{ effect: 'naar wo 18', proposal: move('2026-11-18') }, { effect: 'naar do 19', proposal: move('2026-11-19') }] }], plan, byId, [PERIOD]);
+    expect(kept.effect).toBe('naar do 19');
+    expect(kept.firstOptionNote).toBeUndefined();
   });
 });
 

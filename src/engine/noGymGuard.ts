@@ -16,7 +16,7 @@ import type { PlanChangeItem } from '../models/planChange';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { mondayOfWeek } from '../utils/dates';
 import { leaveDays, type LeaveDay } from './leave';
-import { applyNoGymDays } from './noGym';
+import { applyNoGymDays, BODYWEIGHT_TEMPLATE_ID } from './noGym';
 import { isGymStrengthTemplate } from './templateRoles';
 import type { CheckInput } from './weekValidator';
 
@@ -60,7 +60,7 @@ export function landsGymOnNoGym(changes: readonly PlanChangeItem[], sessions: re
 
 // Het vangnet over de voorstellen van ASCEND: een keuze die een sportschooltraining op een dag zonder sportschool zet
 // valt weg; is er geen keuze meer over, dan komt het voorstel niet. Zonder proposal (alleen woorden) blijft het staan.
-export function withoutGymOnNoGym<A extends { proposal?: { changes: PlanChangeItem[] }; options?: { proposal: { changes: PlanChangeItem[] } }[] }>(
+export function withoutGymOnNoGym<A extends { proposal?: { changes: PlanChangeItem[] }; options?: { proposal: { changes: PlanChangeItem[] }; effect?: string }[]; effect?: string; firstOptionNote?: string }>(
   advice: A[], sessions: readonly PlannedSession[], templates: ReadonlyMap<string, SessionTemplate>, periods: LeavePeriod[] | undefined,
 ): A[] {
   if (!periods?.some((p) => p.kind === 'no_gym')) return advice;
@@ -71,7 +71,11 @@ export function withoutGymOnNoGym<A extends { proposal?: { changes: PlanChangeIt
     const options = a.options.filter((o) => !bad(o.proposal.changes));
     if (options.length === a.options.length) return [a];
     if (options.length === 0) return [];
-    return [{ ...a, proposal: options[0].proposal, options: options.length > 1 ? options : undefined }];
+    // De eerste keuze viel weg: het effect volgt de nieuwe eerste, en de regel onder de eerste optie gold de oude.
+    const next = { ...a, proposal: options[0].proposal, options: options.length > 1 ? options : undefined };
+    if (options[0].effect !== undefined) next.effect = options[0].effect;
+    delete next.firstOptionNote;
+    return [next];
   });
 }
 
@@ -86,8 +90,8 @@ export interface NoGymFix {
 
 // Wat de periode zelf zou doen als deze training van het systeem was: de stap zonder sportschool over de week, met
 // alleen deze rij losgemaakt. Eigen gewicht op dezelfde dag, of op een andere dag van de periode voor 48 uur tussen
-// krachtsessies; past dat nergens, dan vervalt hij. De rijen krijgen het merk van de periode, zodat weghalen van de
-// periode hem terugzet (engine/leaveProposal.ts#putBack). Niets als de rij niet (meer) op zo'n dag staat.
+// krachtsessies; past dat nergens, dan vervalt hij. De rijen krijgen het merk van de periode, zodat weghalen of korter
+// maken van de periode hem terugzet (engine/leaveProposal.ts#putBack). Niets als de rij niet (meer) op zo'n dag staat.
 export function planNoGymFix(input: CheckInput, sessionId: string): NoGymFix | undefined {
   const session = input.sessions.find((s) => s.id === sessionId);
   const byId = new Map(input.templates.map((t) => [t.id, t]));
@@ -115,13 +119,16 @@ export function planNoGymFix(input: CheckInput, sessionId: string): NoGymFix | u
   if (!drop) return undefined;
   const placedKey = (s: PlannedSession) => `${s.scheduledDate}|${s.templateId}`;
   const before = new Set(base.sessions.filter((s) => s.leave?.role === 'placed').map(placedKey));
+  // Alleen eigen gewicht hoort bij dit voorstel: wat de stap verder zou neerzetten (een rustige heuvelloop) valt erbuiten
+  // en komt bij de volgende planningsronde zelf, met zijn eigen zin (Warden, 16 november).
   const added = after.repairs
     .filter((r) => r.added)
     .map((r) => ({ r, s: after.sessions.find((s) => s.id === r.sessionId)! }))
-    .filter(({ s }) => !!s && !before.has(placedKey(s)));
+    .filter(({ s }) => !!s && s.templateId === BODYWEIGHT_TEMPLATE_ID && !before.has(placedKey(s)));
   const mark = { periodId: period.id, from: session.scheduledDate };
   const items: PlanChangeItem[] = [
-    // `restore`: zoals de periode het zelf doet, zonder slot; weghalen van de periode zet hem terug.
+    // `restore`: Akkoord zet er geen nieuw slot op. Jouw slot blijft, en weghalen of korter maken van de periode zet hem
+    // terug op jouw dag (engine/leaveProposal.ts#putBack). Eigen gewicht komt zonder slot, zoals de periode het neerzet.
     { plannedSessionId: session.id, action: 'remove', fromDate: session.scheduledDate, restore: true, leave: { ...mark, role: 'dropped' }, reason: drop.reason ?? NO_GYM_ASK, generatedBy: SOURCE },
     ...added.map(({ r, s }): PlanChangeItem => ({
       action: 'add', toDate: s.scheduledDate, restore: true,

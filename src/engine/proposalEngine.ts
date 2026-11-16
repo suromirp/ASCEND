@@ -216,9 +216,14 @@ export function applyPlanChangeItems(
             if (s !== revived) return s;
             // Back where the system had it: not fixed in place, so a later
             // change of the same period can move it again (with its own proposal).
-            const back: PlannedSession = { ...s, status: 'planned', scheduledDate: draft.scheduledDate, weekStartDate: draft.weekStartDate };
-            delete back.movedFromDate;
-            delete back.lock;
+            // A training of yours that you let go for a period with Akkoord (engine/noGymGuard.ts) keeps your lock and
+            // where it came from: it comes back as you had it (Warden, 16 november).
+            const yours = s.lock?.by === 'user';
+            const back: PlannedSession = { ...s, status: yours && s.movedFromDate ? 'moved' : 'planned', scheduledDate: draft.scheduledDate, weekStartDate: draft.weekStartDate };
+            if (!yours) {
+              delete back.movedFromDate;
+              delete back.lock;
+            }
             return withLeave(back, item);
           });
           break;

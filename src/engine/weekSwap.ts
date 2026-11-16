@@ -8,7 +8,7 @@
 import type { PlanLock, PlannedSession, SessionTemplate } from '../models/training';
 import { dayHasRoomFor, findHeavyConflicts, isHeavyBeforeTest, isLegHeavyTemplate, isTestOnly, sharedHeavyAxes, testRestHours, tooCloseBeforeTest, type ScheduleProposal } from './scheduler';
 import { keptDayReason, type KeptReason } from './moveSuggestions';
-import { NO_GYM_ASK } from './noGymGuard';
+import { NO_GYM_ASK, needsGymOn } from './noGymGuard';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { hasRole } from './templateRoles';
 import { weekConcerns } from './weekConcerns';
@@ -100,8 +100,8 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
   for (const leg of legs) {
     const kept = keptDayReason(ctx.move, leg.t, leg.to, ctx.asOf);
     if (kept === 'rest') asks.push(`${dayTitle(leg.to)} is je rustdag.`);
-    // Zonder sportschool: ruilen mag, met de vraag ervoor (engine/noGymGuard.ts).
-    if (kept === 'nogym') asks.push(`${leg.t.name} op ${dayLower(leg.to)}: ${NO_GYM_ASK.charAt(0).toLowerCase()}${NO_GYM_ASK.slice(1)}`);
+    // Zonder sportschool: ruilen mag, met de vraag ervoor (engine/noGymGuard.ts), ook op je rustdag.
+    if (kept === 'nogym' || (kept === 'rest' && needsGymOn(leg.to, leg.t, ctx.move.leave))) asks.push(`${leg.t.name} op ${dayLower(leg.to)}: ${NO_GYM_ASK.charAt(0).toLowerCase()}${NO_GYM_ASK.slice(1)}`);
   }
   // Past de tijd op de nieuwe dag?
   for (const leg of legs) {

@@ -54,7 +54,7 @@ export interface MoveContext {
 // source for the one-tap suggestions and for dragging in Week (engine/weekDrag.ts).
 // 'nogym': a training that needs the gym on a day without one (engine/noGymGuard.ts). The suggestions skip it;
 // dragging and swapping ask first, like the rest day.
-export type KeptReason = 'off' | 'trek' | 'light' | 'nogym' | 'rest' | 'goal' | 'ill';
+export type KeptReason = 'off' | 'trek' | 'light' | 'rest' | 'goal' | 'ill' | 'nogym';
 
 export function keptDayReason(context: MoveContext, template: SessionTemplate, date: string, asOf: string): KeptReason | undefined {
   const offDays = leaveDays(context.leave);
@@ -62,10 +62,12 @@ export function keptDayReason(context: MoveContext, template: SessionTemplate, d
   if (leave === 'off') return 'off';
   if (leave === 'trek') return 'trek';
   if (isHeavySession(template) && lightDays(context.leave, offDays).has(date)) return 'light';
-  if (needsGymOn(date, template, context.leave, offDays)) return 'nogym';
   if (context.restDay && isoWeekday(date) === context.restDay) return 'rest';
   if (context.goalDay && date >= context.goalDay) return 'goal';
   if (activeIllness(context.illness) && date <= addDays(asOf, 1)) return 'ill';
+  // Only asks, so after every reason that blocks or asks itself (Warden, 16 november): on the rest day the rest day
+  // asks, and dragging and swapping add this question to it (engine/weekDrag.ts, engine/weekSwap.ts).
+  if (needsGymOn(date, template, context.leave, offDays)) return 'nogym';
   return undefined;
 }
 

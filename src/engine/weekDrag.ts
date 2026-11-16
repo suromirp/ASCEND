@@ -9,7 +9,7 @@ import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../model
 import { dayOrder } from './dayOrder';
 import { dayHasRoomFor, findHeavyConflicts, HEAVY_AXIS_LABEL, isHeavyBeforeTest, isTestOnly, sharedHeavyAxes, testRestHours, tooCloseBeforeTest, type ScheduleProposal } from './scheduler';
 import { keptDayReason, type KeptReason, type MoveContext } from './moveSuggestions';
-import { NO_GYM_ASK } from './noGymGuard';
+import { NO_GYM_ASK, needsGymOn } from './noGymGuard';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { lockLevel } from './weekValidator';
 import { weekConcerns } from './weekConcerns';
@@ -128,8 +128,10 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
       return { date, kind: 'nogym', droppable: true, tone: 'warn', chip: 'Zonder sportschool', line: `${day}. ${NO_GYM_ASK} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: NO_GYM_ASK };
     }
     if (kept === 'rest') {
-      const reason = 'Dit is je rustdag. Een rustdag is er om te herstellen.';
-      return { date, kind: 'rest', droppable: true, tone: 'warn', chip: 'Je rustdag', line: `${day}. Dit is je rustdag. Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: reason };
+      // Je rustdag in een periode zonder sportschool: beide vragen (Warden, 16 november).
+      const gym = needsGymOn(date, template, ctx.move.leave) ? ` ${NO_GYM_ASK}` : '';
+      const reason = `Dit is je rustdag. Een rustdag is er om te herstellen.${gym}`;
+      return { date, kind: 'rest', droppable: true, tone: 'warn', chip: 'Je rustdag', line: `${day}. Dit is je rustdag.${gym} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: reason };
     }
 
     const simulated = ctx.sessions.map((s) => (s.id === sessionId ? { ...s, scheduledDate: date } : s));
