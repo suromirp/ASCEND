@@ -1,6 +1,13 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 16 november 2026, 03:50 Portugese tijd, door coördinator session_01LnDpSncLf13Bm9hk3D5VBF (wissel op de vaste tijd). Nieuwe coördinator: session_01LnDpSjgdHhfcJwGq2aAmrh "Coördinator ASCEND 16 november". Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
+Bijgewerkt: 16 november 2026, 03:52 Portugese tijd, door coördinator session_01LnDpSjgdHhfcJwGq2aAmrh "Coördinator ASCEND 16 november" (overgenomen 03:48). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
+
+## Stand 03:52 (session_01LnDpSjgdHhfcJwGq2aAmrh)
+
+- I-70: Warden op Fable loopt als helper hier (uitslag op `warden/wandeling-sjabloon-herstel`, herstel.md). Akkoord = proefmerge op nacht, volle controles, main (geen Lookout: alleen een sjabloon en standaard).
+- I-67: bouwer Opus high session_01LnDpSm5xGS9fRLab9QNAGo op `claude/een-regel-uitzonderingen` (gestart 03:49), meldt zich hier. Nakijken trig_01TNi8s1ZwCAJqMEyH9ntDJM (05:20 UTC). Daarna Warden op Fable met proeftests.
+- Bouwmoment maandag 19:43 Amsterdam: trig_01T9256GUSjihL8ZkTCW6kAn hier (I-63 met verse back-up, I-66 onderhoud).
+- Volgende wissel: trig_01LcLR1hSKAco1HvC2e9ogmF, 17 november 04:47 Amsterdam.
 
 ## Stand 03:50 (kort)
 
