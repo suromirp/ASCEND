@@ -4,16 +4,6 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-### Uw IJkset op Automatisch?
-- Keuzes: u zei gisteren 22:00 "mag van mij automatisch". De instelling staat live (Instellingen, Forge, Bij het invullen, IJkset). Zet u hem zelf op Automatisch erbij (advies: dan weet u waar hij staat), of laat u het zo (Vragen, het advies van de app).
-- Zonder antwoord: hij blijft op Vragen.
-- Sinds: 16 november 01:10
-
-### De Wachter op deze chat zetten
-- Keuzes: zelf in de app een taak op de chat Coördinator ASCEND 15 november avond, elk uur op :40, en "staat" zeggen (het systeem laat mij dat niet doen). Daarna gaat de oude uit.
-- Zonder antwoord: de oude blijft draaien in de vorige coördinator-chat.
-- Sinds: 15 november 21:20
-
 ### Routes wandelen: drie standaardkeuzes, gebouwd met het advies
 - Keuzes: zo laten (advies): duur gaat voor hoogtemeters, en dat is instelbaar; de wandelladder verandert alleen via Akkoord; een herstelwandeling krijgt pas een lus na een tik. Of: een van de drie anders.
 - Zonder antwoord: het blijft zoals het nu live staat.
@@ -28,11 +18,6 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 - Keuzes: geen grens (advies), het concept blijft tot je kiest. Of: na een week vanzelf weg.
 - Zonder antwoord: geen grens.
 - Sinds: 15 november 08:46
-
-### Melding in Week nadat je op Vandaag "Benen fris, blijft staan" koos
-- Keuzes: zeggen dat jij koos (advies). Of: geen melding.
-- Zonder antwoord: het blijft liggen in de backlog.
-- Sinds: 14 november
 
 ## Stuk of vast
 
