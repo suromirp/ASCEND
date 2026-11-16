@@ -286,12 +286,21 @@ export function resolveVariantDuration(
   return durationForVariant(template, variant);
 }
 
+// De notitie van de week zonder het bereik in minuten: dat bereik is de vaste tekst van de stap ("Rustweek (35-45 min)"),
+// terwijl de minuten ernaast per golf groeien (programLayout.ts#genericTarget) en door ambitie, hoeveel per soort, de rem
+// van 110% of een rustiger instap bewegen. Naast "55 min" sprak "35-45 min" dat tegen (I-80); het getal van de dag is
+// de minuten zelf. "Rustweek (35-45 min, D+ ook lager)" wordt "Rustweek, D+ ook lager".
+export function withoutMinuteRange(note: string): string {
+  return note.replace(/\s*\(\d+\s*-\s*\d+ min(?:, ([^)]*))?\)/g, (_m, rest: string | undefined) => (rest ? `, ${rest}` : '')).trim();
+}
+
 export function weeklyProgressionNote(
   template: SessionTemplate,
   scheduledDate: string,
   program: Program | null | undefined,
 ): string | undefined {
-  return progressionTarget(template, program, scheduledDate)?.step.note;
+  const note = progressionTarget(template, program, scheduledDate)?.step.note;
+  return note ? withoutMinuteRange(note) || undefined : note;
 }
 
 // Short/minimum variants trim the exercise list — meaningful only for
