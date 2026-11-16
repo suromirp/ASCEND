@@ -496,3 +496,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-16, Warden I-70 herkeuring (fable) 97k, niet akkoord op één punt (maandkop Logboek); laatste herstel naar nieuwe Sherpa (sonnet), hervatten kon niet (worktree weg: worktree van een bouwer pas na main opruimen).
 - 2026-11-16, Sherpa I-70 laatste herstel (sonnet) 48k, 22 min; I-70 live f9039a7.
 - 2026-11-16, I-67: Pathfinder (sonnet) 33k akkoord met voorwaarde (ILL-zin per soort, één woord opbouw, instelling); Lookout (sonnet) 72k groen, sleepblad lang en 'al geweest' onjuist (ook op main).
+- 2026-11-16, Warden I-67 (fable) 203k, 24 min, akkoord met 5 moet.
