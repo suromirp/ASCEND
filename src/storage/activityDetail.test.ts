@@ -204,11 +204,11 @@ describe('the profile in a backup', () => {
     await wipeAllData();
   });
 
-  it('travels with the log and the backup schema stays 5', async () => {
+  it('travels with the log; the profile did not raise the backup schema (6 since I-63)', async () => {
     await SessionLogsRepo.put(logFor(ACTIVITY, { detail }));
     const envelope = await buildBackupEnvelope();
-    expect(CURRENT_BACKUP_SCHEMA_VERSION).toBe(5);
-    expect(envelope.backupSchemaVersion).toBe(5);
+    expect(CURRENT_BACKUP_SCHEMA_VERSION).toBe(6);
+    expect(envelope.backupSchemaVersion).toBe(6);
     const file = parseBackupText(JSON.stringify(envelope));
     await wipeAllData();
     await importEnvelope(file);

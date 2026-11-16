@@ -6,6 +6,7 @@ import { longDate } from '../../../engine/settingsSummary';
 import { getPersistenceStatus, requestPersistentStorage, type PersistenceStatus } from '../../../storage/persistence';
 import { backupErrorText } from '../../../storage/backupMessage';
 import { backupFileName } from '../../../storage/backupExport';
+import { backupFileText } from '../../../storage/backupFile';
 import { listSnapshots, restoreSnapshot } from '../../../storage/backupApply';
 import { webBackupFileAdapter } from '../../../storage/backupFileAdapter';
 import { chooseBackupFolder } from '../../../storage/autoBackup';
@@ -196,7 +197,7 @@ export function SnapshotsSheet({ onChanged, onClose }: { onChanged: () => void; 
   }
 
   async function download(snapshot: PreImportSnapshot) {
-    const blob = new Blob([JSON.stringify(snapshot.envelope, null, 2)], { type: 'application/json' });
+    const blob = new Blob([backupFileText(snapshot.envelope)], { type: 'application/json' });
     await webBackupFileAdapter.saveBackup(blob, backupFileName(snapshot.createdAt));
   }
 

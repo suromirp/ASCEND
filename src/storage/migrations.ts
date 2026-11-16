@@ -29,7 +29,14 @@
 // route (counted as skipped) and never throw. The old Vast punt (`routeStartPoint`, device only) becomes the
 // place Thuis once at boot (storage/places.ts#migrateStartPointToHome), not here: it was never in a file.
 
+// Schema 6 of the envelope (I-63, 2026-11-16): the file is smaller, the data the same. Texts that repeat in
+// proposals stand once in `proposalTexts` and the proposals point to them; every record is on one line. The
+// reading step is migrationsCompact.ts#unpackProposalTexts (backupNormalize.ts runs it for schema 6 and up), so a
+// v6 file imports to exactly the database it was made from, and every v5 file or older reads as before.
+
 export { CURRENT_SCHEMA_VERSION, migrateV1toV2, migrateExport } from './migrationsSchema';
+export { packProposalTexts, unpackProposalTexts } from './migrationsCompact';
+export type { PackedProposals } from './migrationsCompact';
 export type { AscendExport } from './migrationsSchema';
 export { migrateLeavePeriods, readWeekShape, migratePlanChangeProposal, migrateDirection, migrateWaveSettings, migrateStartChoices } from './migrationsPlanning';
 export { migrateNightJudgments, migrateLegEaseDays, migrateSweatEntries, migrateSweatPre, migrateInjuryNote, migrateWeeklyHealthCheck, migrateMornings, migrateExternalOneRm, migrateWeightEntries, dedupeInfluencesByPlace, migrateInfluences } from './migrationsBody';

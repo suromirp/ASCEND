@@ -4274,6 +4274,13 @@
    ],
    "kern": "De routevoorstellen volgen de vraag: een tak in de aanloop telt niet als doodlopend stuk, Avontuurlijk kiest eerst een lus zonder tak (tot 15 procent afstandsafwijking), hoogte meer dan het dubbele van de vraag krijgt een amber regel zoals afstand, en een voorstel onder 70 procent van de afstand komt alleen als er niets beters is.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-16-back-up-kleiner.md": {
+   "onderwerpen": [
+    "historie-en-logs"
+   ],
+   "kern": "Back-up schema 6: dezelfde gegevens, kleiner opgeschreven; herhaalde uitleg van voorstellen één keer in proposalTexts met een verwijzing, één record per regel, weekcontroles blijven allemaal staan; IndexedDB verandert niet en schema 5 en ouder blijven te importeren.",
+   "stand": "geldt"
   }
  }
 }

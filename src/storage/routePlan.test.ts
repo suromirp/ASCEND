@@ -39,11 +39,11 @@ describe('etappeplan en solokaart in opslag en back-up', () => {
     expect(await SoloPlanRepo.get()).toEqual(solo);
   });
 
-  it('gaat mee in de export (schema v5) en komt terug na een volledig herstel', async () => {
+  it('gaat mee in de export (gegevens v5, back-up 6) en komt terug na een volledig herstel', async () => {
     await RoutePlanRepo.set(plan);
     await SoloPlanRepo.set(solo);
     const envelope = await buildBackupEnvelope();
-    expect(envelope.backupSchemaVersion).toBe(5);
+    expect(envelope.backupSchemaVersion).toBe(6);
     expect(envelope.payload).toMatchObject({ version: 5, routePlan: plan, soloPlan: solo });
 
     await wipeAllData();
@@ -78,7 +78,7 @@ describe('etappeplan en solokaart in opslag en back-up', () => {
   });
 
   it('weigert een back-up van een nieuwere versie', () => {
-    expect(() => normalizeBackupToCurrentModel({ backupSchemaVersion: 6, createdAt: 'x', payload: { version: 6 } })).toThrow(/nieuwere versie/);
+    expect(() => normalizeBackupToCurrentModel({ backupSchemaVersion: 7, createdAt: 'x', payload: { version: 6 } })).toThrow(/nieuwere versie/);
   });
 
   it('wist beide bij het wissen van alle gegevens', async () => {

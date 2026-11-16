@@ -35,6 +35,7 @@ import { toISODate } from '../utils/dates';
 import { webBackupFileAdapter, webFolderTarget } from './backupFileAdapter';
 import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo } from './database';
 import { tidyOldProposals } from './proposalTidy';
+import { backupFileText } from './backupFile';
 
 const STATE_KEY = 'autoBackupState';
 const AUTO_BACKUP_WRITE_MS = 30_000;
@@ -293,7 +294,7 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
     // Een vrije naam, of een eigen naam van vandaag: een vreemd bestand wordt nooit overschreven. Blijkt
     // een vrije naam toch bezet (een bestand dat de app niet ziet), dan het volgende volgnummer.
     const day = toISODate(now);
-    const text = JSON.stringify(envelope, null, 2);
+    const text = backupFileText(envelope);
     const attemptId = newAttemptId(now);
     let taken = 0;
     for (let n = 1; n <= 99 && !name; n++) {

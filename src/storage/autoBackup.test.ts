@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
+import { MetaRepo, PlanChangeProposalsRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
 import { forgetHalfWritten, forgetAutoBackupFolder, getAutoBackupStatus, noteBackupMade, readAutoBackupState, runAutoBackupIfDue } from './autoBackup';
 import { CURRENT_BACKUP_SCHEMA_VERSION } from './backupTypes';
 import { buildBackupEnvelope } from './backupExport';
@@ -91,6 +91,21 @@ describe('de automatische back-up', () => {
     const state = await readAutoBackupState();
     expect(state.where).toEqual({ kind: 'folder', label: 'Interne opslag > Documents > ASCEND' });
     expect(state.files).toEqual([file]);
+  });
+
+  it('schrijft schema 6: een herhaalde uitleg staat één keer in het bestand en komt bij import terug (I-63)', async () => {
+    const why = 'Na elke wijziging gaan je weken langs vaste regels; wat vanzelf gepland was, wordt rechtgezet.';
+    const check = (id: string, minute: number) => ({ id, trigger: 'plan_check' as const, issue: 'Weekcontrole', changes: [], alternatives: [], consequences: 'Duurloop van di 3 naar wo 4', explanation: why, createdAt: new Date(2026, 10, 1, 7, minute).toISOString() });
+    await PlanChangeProposalsRepo.put(check('pc_1', 0));
+    await PlanChangeProposalsRepo.put(check('pc_2', 5));
+    const { target, files } = fakeTarget();
+    expect(await runAutoBackupIfDue({ now: MONDAY, target })).toBe('saved');
+    const [[, text]] = [...files];
+    expect(text.split(why)).toHaveLength(2);
+    expect(text).toContain('"$tekst"');
+    const back = normalizeBackupToCurrentModel(JSON.parse(text));
+    expect(back.planChangeProposals?.map((p) => p.explanation)).toEqual([why, why]);
+    expect(back.skippedInvalid).toBe(0);
   });
 
   it('wacht als het moment er nog niet is, of als hij uit staat', async () => {

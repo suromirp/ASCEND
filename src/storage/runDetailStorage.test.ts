@@ -338,7 +338,7 @@ describe('the series in the backup', () => {
   it('go along by default as base64, and come back after "Alles verwijderen"', async () => {
     const before = (await ActivityStreamsRepo.get('log_1'))!;
     const envelope = await buildBackupEnvelope();
-    expect(envelope.backupSchemaVersion).toBe(5);
+    expect(envelope.backupSchemaVersion).toBe(6);
     const payload = envelope.payload as { activityStreams?: { logId: string; series: Record<string, { data: string }> }[] };
     expect(payload.activityStreams).toHaveLength(1);
     expect(typeof payload.activityStreams![0].series.heartRate.data).toBe('string');
