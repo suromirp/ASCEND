@@ -61,7 +61,7 @@ Bijgewerkt: 15 november 2026, 22:40 Portugese tijd. Coördinator sinds 22:35: se
 - I-64 klaar 23:54 (`claude/zonder-sportschool-verplaatst` d5818e5): Warden Fable loopt (`warden/zonder-sportschool-herstel`); daarna Lookout en Pathfinder (Week met amber punt, slepen naar wo 18).
 - briefingPerManier.test.ts werd rood vanaf 16 nov 00:00 Amsterdam ook op main (programma start op de echte maandag): de fix staat los op main als 08fef4e (00:10, alle controles groen). Zeg bouwers: rebase of cherry-pick die fix als hun commit-hook faalt.
 - I-62: om 23:44 gewekt om af te ronden.
-- I-65: Pathfinder akkoord, moet: test dat de toegevoegd-melding niet meetelt in unseenCount (forgeLog.ts:195). Lookout groen (`lookout/ijkset` e82accc0); eigen blik op afdrukken: goed, mag-punt: de ijkset-rij heet "eigen set", beter "ijkset". Wacht op Warden Fable (`warden/ijkset-herstel`), dan één herstelronde voor de bouwer met deze punten.
+- I-65: Warden Fable NIET AKKOORD (`warden/ijkset-herstel`: ijkset verdwijnt stil bij Lichter); Pathfinder en Lookout akkoord met kleine punten. Herstelronde naar de bouwer 00:15; mijn keuze: een verlichte training krijgt geen ijkset. Na het herstel: korte Warden-ronde, dan main. Na live: eigenaar vragen of zijn IJkset op Automatisch moet.
 
 ## Live vandaag
 
