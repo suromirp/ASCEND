@@ -3468,7 +3468,7 @@
     "lopen-en-tests",
     "koppelingen-en-data"
    ],
-   "kern": "Hoe je de drempelhartslag zonder lab bepaalt (de factor 0,98, drie tests samen, alleen met borstband) en hoe een korte vaste test vorm en vermoeidheid volgt, met een voorstel in vijf stappen.",
+   "kern": "Hoe je de drempelhartslag zonder lab bepaalt (de factor 0,98, drie tests samen, alleen met borstband), hoe groot de fout van de pols is, of RR-intervallen en DFA alpha 1 iets toevoegen, en hoe een korte vaste test vorm en vermoeidheid volgt, met een voorstel in vijf stappen.",
    "stand": "achtergrond"
   },
   "docs/onderzoek/Echte vervangers bij ruilen in Forge.md": {
