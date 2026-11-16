@@ -6,6 +6,7 @@ const log = (id: string, date: string, minutes: number, type: SessionLog['type']
   id, plannedSessionId: id, templateId: 'tpl_easy_run', type, completedDate: date, completedAt: `${date}T10:00:00Z`, variant: 'full', durationMinutes: minutes, source: 'manual',
 });
 const none = new Map();
+const plain = (id: string, date: string, minutes: number): SessionLog => ({ ...log(id, date, minutes, 'recovery'), templateId: 'tpl_walk' });
 
 describe('monthCompare', () => {
   const october = [log('a', '2026-10-02', 60), log('b', '2026-10-05', 60), log('c', '2026-10-09', 60), log('d', '2026-10-20', 120)];
@@ -123,5 +124,26 @@ describe('logboekkop met alleen herstel', () => {
   });
   it('blijft "nog niets" zeggen in een vroege maand zonder enig log', () => {
     expect(monthCompare({ anchor: '2026-11-01', today: '2026-11-05', logs: [], plannedById: none })).toMatchObject({ nothingYet: true, recovery: { minutes: 0, count: 0 } });
+  });
+});
+
+describe('logboekkop met een gewone wandeling', () => {
+  const walk = plain('w', '2026-11-03', 45);
+  const rest = log('h', '2026-11-04', 30, 'recovery');
+  const month = (logs: SessionLog[]) => monthCompare({ anchor: '2026-11-01', today: '2026-11-20', logs, plannedById: none });
+  const title = (logs: SessionLog[]) => { const r = month(logs); return emptyMonthTitle({ beforeFirst: false, weighings: 0, recovery: r.recovery, walks: r.walks, listLogs: logs.length }); };
+  it('telt een maand met alleen een Wandeling niet als herstel', () => {
+    const r = month([walk]);
+    expect(r.recovery).toEqual({ minutes: 0, count: 0 });
+    expect(r.walks).toEqual({ minutes: 45, count: 1 });
+    expect(r.totals.count).toBe(0);
+    expect(title([walk])).toBe('Alleen wandelen in deze maand: 45 min.');
+    expect(title([walk])).not.toMatch(/herstel/i);
+  });
+  it('houdt een herstelwandeling bij herstel', () => {
+    expect(title([rest])).toBe('Alleen herstel in deze maand: 30 min.');
+  });
+  it('noemt beide in een gemengde maand, met alle minuten', () => {
+    expect(title([walk, rest])).toBe('Alleen herstel en wandelen in deze maand: 1 uur 15 min.');
   });
 });

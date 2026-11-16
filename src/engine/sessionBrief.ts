@@ -68,7 +68,10 @@ export function buildSessionBrief(
   const sport = chosen ?? planned;
   const sportLabel = sport && template.type !== 'strength' && template.type !== 'recovery' ? SPORT_LABEL[sport] : sessionKindLabel(template);
   const sportSwitch = chosen && planned && chosen !== planned ? `Dit telt als ${SPORT_LABEL[chosen].toLowerCase()}, niet als ${SPORT_LABEL[planned].toLowerCase()}.` : undefined;
-  const headline = [sportLabel, placeBrief(template.id, options.modalityKey)?.styleLabel ?? style?.styleLabel].filter(Boolean).join(' · ').toUpperCase();
+  // Zegt de stijl hetzelfde woord als de sport (Wandeling: Wandelen · wandelen), dan staat het er één keer.
+  const headline = [sportLabel, placeBrief(template.id, options.modalityKey)?.styleLabel ?? style?.styleLabel]
+    .filter((part, i, all): part is string => !!part && !all.slice(0, i).some((p) => p?.toLowerCase() === part.toLowerCase()))
+    .join(' · ').toUpperCase();
 
   // The week: position in the phase and this week's note ("Zwaarste week").
   let weekLabel: string | undefined;

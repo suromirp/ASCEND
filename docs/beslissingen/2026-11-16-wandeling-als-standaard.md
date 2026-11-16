@@ -11,7 +11,7 @@ Onder Wandelen in Losse training is de standaard een gewone wandeling (`tpl_walk
 
 Een gewone wandeling is geen herstel: wie met zijn ouders loopt, herstelt niet. Type hiking was de verkeerde weg, want dan telt de wandeling als training in de planner, in Week en in de belasting, en bewegen de golden scenario's A en C. Type recovery laat de planner en de golden scenario's staan en telt niet als training in Week, Logboek en belasting. Het woord komt daarom uit een rol op het sjabloon in plaats van uit het type of een lijst met id's in componenten (`engine/sports.ts#sessionKindLabel`, `engine/savedMoments.ts#isRestLog`, feitenregel `walk` in `data/sessionStyle.ts`). De wandeling is ook geen kandidaat in het weekvoorschrift (`rankCandidateTemplates`).
 
-Het log bewaart `modality: 'recovery_walk'`, met het label Wandelen: `walkKind` (`engine/routeTarget.ts`) leest die sleutel om een wandeling van een herstelwandeling te onderscheiden, en historie schrijven we niet om.
+Het log bewaart `modality: 'recovery_walk'`, met het label Wandelen, en historie schrijven we niet om. `walkKind` (`engine/routeTarget.ts`) leest die sleutel niet om een wandeling van een herstelwandeling te onderscheiden: voor `tpl_walk` geeft hij net als voor de herstelwandeling 'recovery', dus een Wandeling zoekt pas een lus na een tik, niet vanzelf. Dat gedrag blijft zo.
 
 De import van het horloge (`engine/activityImport.ts`) noemt een wandeling nog Herstelwandeling; dat is een apart punt.
 
