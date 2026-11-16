@@ -112,9 +112,9 @@ const CLOTHING_RULES = {
   bikeHandsPenalty: 2,
   // Cycling overshoes below this felt temperature.
   overshoesFeels: 4,
-  // Wind: own derivation (about Beaufort 4). The weather verdict ("harde wind")
+  // Wind: own derivation (about Beaufort 4, from 20 km/u after the check of 15 November). The weather verdict ("harde wind")
   // starts much higher; a thin jacket costs little.
-  windKmh: 25,
+  windKmh: 20,
   gustKmh: 40,
   windJacketBelow: 16,
   windSkipIntervalsAbove: 8,

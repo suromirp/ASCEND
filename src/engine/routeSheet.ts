@@ -154,11 +154,20 @@ export function briefingRoutes<T extends { style: RouteStyle }>(routes: T[], pic
 // en Groter) volledig boven de knop komt. Voor de eerste meting de oude 128 px.
 export const footerRoom = (height: number | undefined): string => (height ? `${Math.ceil(height) + 16}px` : '128px');
 
+// De titel van een lus naast zijn regels: staat de amberregel over het stuk heen en terug erbij
+// (loopLines), dan noemt de titel het stuk niet nog eens.
+export function loopTitle(p: RouteProposal, target: RouteTarget, notes: string[]): string {
+  const spur = deadEndLine(p);
+  return proposalTitle(p, !!spur && loopLines(p, target, notes).warn.includes(spur));
+}
+
 // De andere lus in één regel onder de gekozen lus in de Briefing, met zijn vorm: "Simpel, heen en
 // terug: 6 km · vrijwel vlak" of "Simpel, 3 × de helling op en af: ...". Simpel is altijd over hetzelfde
 // pad terug; Avontuurlijk is een lus (besluit 2026-11-12-route-blok.md).
 export function otherLoopLine(name: string, p: RouteProposal, target?: RouteTarget): string {
-  const title = proposalTitle(p);
+  const spur = deadEndLine(p);
+  // De amberregel eronder (otherLoopWarn) zegt het stuk heen en terug al: dan de titel zonder.
+  const title = proposalTitle(p, !!spur && !!target && otherLoopWarn(p, target) === spur);
   const shape = p.style === 'simple'
     ? ((p.repeats ?? 0) > 1 ? title : (p.deadEnds ?? 0) > 1 ? title.replace(/^Heen/, 'heen') : 'heen en terug')
     : title.replace(/^Eén/, 'één').replace(/^Lus/, 'lus');

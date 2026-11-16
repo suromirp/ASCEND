@@ -639,7 +639,9 @@ const countWord = (n: number) => COUNT_WORD[n] ?? String(n);
 
 // De naam zegt de vorm: "Eén lus" alleen zonder doodlopend stuk, heen en terug over meer dan één tak zegt
 // dat erbij (de Y van 14 november).
-export function proposalTitle(p: RouteProposal): string {
+// `spurWarned`: de amberregel "Deze lus heeft ... heen en terug." staat er al bij (routeSheet.ts#loopTitle),
+// dan zegt de titel de stukken niet nog eens.
+export function proposalTitle(p: RouteProposal, spurWarned = false): string {
   const ends = p.deadEnds ?? 0;
   if (p.style === 'simple') {
     const branches = ends > 1 ? ` over ${countWord(ends)} takken` : '';
@@ -648,6 +650,7 @@ export function proposalTitle(p: RouteProposal): string {
   }
   if (ends > 0) {
     const base = !p.hills ? 'Lus' : p.hills === 1 ? 'Lus langs een helling' : `Lus langs ${p.hills} hellingen`;
+    if (spurWarned && deadEndLine(p)) return base;
     return `${base} met ${ends === 1 ? 'een stuk' : `${countWord(ends)} stukken`} heen en terug`;
   }
   if (!p.hills) return 'Eén lus';
@@ -763,7 +766,7 @@ export function proposalNotes(p: RouteProposal, target: RouteTarget, climbMarked
   const spur = deadEndLine(p);
   if (spur) notes.push(spur);
   if ((p.bigRoadM ?? 0) >= BIG_ROAD_NOTE_M) notes.push(bigRoadLine(p.bigRoadM as number));
-  if (p.style === 'adventure' && p.repeatedShare > 0.15) notes.push('Een deel loop je twee keer.');
+  if (p.style === 'adventure' && p.repeatedShare > 0.15 && !(p.deadEnds && p.deadEnds > 0)) notes.push('Een deel loop je twee keer.');
   // Een wandeling: waar de tijd op rust, en of de hoogtemeters in de duur passen (gedempt, bij de uitleg).
   if (walk) {
     const fit = walkFitLine(target);
