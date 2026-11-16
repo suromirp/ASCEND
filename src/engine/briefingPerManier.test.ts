@@ -18,7 +18,10 @@ import { missionCardView } from './missionCard';
 import { placeChoices, shortPlaceLabels } from './trainingPlace';
 import { addDays } from '../utils/dates';
 
-const { templates, program } = buildDefaultProgramData();
+// Een vaste start: buildDefaultProgramData begint op de maandag van de echte week, en de lengtes hieronder hangen
+// af van de fase (rood vanaf maandag 16 november, 00:00 Amsterdamse tijd).
+const { templates, program: base } = buildDefaultProgramData();
+const program = { ...base, startDate: '2026-11-09' };
 const byId = (id: string) => templates.find((t) => t.id === id) as SessionTemplate;
 const HILLS = byId('tpl_hill_intervals');
 const DESCENT = byId('tpl_hills_descent');
