@@ -1,7 +1,6 @@
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { IllnessEpisode } from '../models/illness';
-import { deriveSessionStatus } from './sessionStatus';
-import { isIllnessDay } from './illness';
+import { deriveSessionStatus, isPausedFor } from './sessionStatus';
 import { addDays, todayISO } from '../utils/dates';
 
 // Safety bound on the backward walk below — a real program never runs this
@@ -40,7 +39,9 @@ export function computeCurrentStreak(plannedSessions: PlannedSession[], logs: Se
   const logged = new Set(logs.map((l) => l.plannedSessionId));
   const neutral = (s: PlannedSession) =>
     (programStart !== undefined && s.scheduledDate < programStart) ||
-    (illnessEpisodes !== undefined && !logged.has(s.id) && isIllnessDay(s.scheduledDate, illnessEpisodes, today)) ||
+    // Ziek via de ene regel (engine/dayRules.ts, stap tellen); vakantie, tocht, zonder sportschool en de afbouw komen
+    // via `leftOut`, dezelfde telling als Week.
+    (illnessEpisodes !== undefined && !logged.has(s.id) && isPausedFor(s, { illness: illnessEpisodes }, today)) ||
     (s.status === 'skipped' && s.leave?.role === 'dropped') ||
     (leftOut?.(s.id) ?? false);
   const statusOf = (s: PlannedSession) => deriveSessionStatus(s, logs, isRest(s)).status;

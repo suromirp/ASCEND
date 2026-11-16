@@ -11,6 +11,7 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
+- 2026-11-16 [Eén regel voor alle uitzonderingen](../beslissingen/2026-11-16-een-regel-uitzonderingen.md): Of een training of stap op een dag mag zegt één functie, engine/dayRules.ts (feiten op volgorde van voorrang, een vaste tabel van oorzaak maal stap); tellen, verplaatsen, Let op (regel ILL), inhalen, de ijkset en de poort van elk voorstel lezen daar, en een scan in de tests laat elke nieuwe losse toets falen.
 - 2026-11-15 [Een sportschooltraining die in een periode zonder sportschool belandt](../beslissingen/2026-11-15-zonder-sportschool-verplaatst.md): Geen weg zet nog stil een sportschooltraining op een dag zonder sportschool: de voorgestelde dagen slaan hem over, slepen, een datum kiezen en ruilen vragen eerst, voorstellen van ASCEND doen het nooit, en staat er toch een, dan zegt Let op het in amber met een voorstel voor eigen gewicht of laten vervallen.
 - 2026-11-15 [Week telt gemist op één manier, ook zonder sportschool](../beslissingen/2026-11-15-week-telling-zonder-sportschool.md): Gemist heeft één afleiding voor Week, de kaart, de weekterugblik en het inhaaladvies: zonder sportschool vervalt alleen wat de sportschool nodig heeft, overgeslagen is geen gemist, en het inhalen leest dezelfde weekcontrole als Let op. Aangevuld door: 2026-11-15-gemist-en-opnieuw-plannen.
 - 2026-11-15 [Vervallen heeft één bron](../beslissingen/2026-11-15-vervallen-een-bron.md): Vervallen betekent overal hetzelfde: een voorbije training zonder log op een dag binnen een gemelde ziekte (tot en met de dag van beter melden) of vakantie, tocht of periode zonder sportschool.
@@ -55,6 +56,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 
 - [visie/Ontwerp Je week tot nu.md](../visie/Ontwerp%20Je%20week%20tot%20nu.md): Ontwerpvoorstel van 12 november 2026 voor het blad Je week tot nu; besloten in `docs/beslissingen/2026-11-12-je-week-tot-nu.md`.
 - [visie/Ontwerp Week minimaal.md](../visie/Ontwerp%20Week%20minimaal.md): Ontwerpvoorstel van 12 november 2026 voor de tab Week; besloten in `docs/beslissingen/2026-11-12-week-minimaal.md`.
+- [visie/Ontwerp een regel voor uitzonderingen.md](../visie/Ontwerp%20een%20regel%20voor%20uitzonderingen.md): Ontwerpvoorstel van 15 november 2026 voor één functie in `engine/` die zegt of een training of stap op een dag mag (ziek, periodes, afbouw, rustdag), met twaalf gevonden gaten en de migratie in vijf stappen; backlogpunt I-67.
 - [visie/Slepen in Week.md](../visie/Slepen%20in%20Week.md): Ontwerp voor het slepen van een training in Week; besloten in `docs/beslissingen/2026-10-28-slepen-in-week.md`.
 - [visie/Waarschuwingen in Week.md](../visie/Waarschuwingen%20in%20Week.md): Ontwerp voor waarschuwingen in woorden in Week; besloten in `docs/beslissingen/2026-10-28-waarschuwingen-in-week.md`.
 

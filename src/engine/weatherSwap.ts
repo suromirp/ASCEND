@@ -19,7 +19,7 @@
 import type { Advice, AdviceInputs, AdviceOption } from './adviceEngine';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionTemplate } from '../models/training';
-import { activeIllness, recoveryRamp } from './illness';
+import { mayPropose } from './dayRules';
 import { leaveLabelOn } from './leave';
 import { RACE_TEMPLATE_ID } from './raceBlock';
 import { respectsHeavySpacing, dayHasRoomFor } from './scheduler';
@@ -52,7 +52,7 @@ interface Candidate {
 export function weatherAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
   const wx = inputs.weather;
   if (!wx) return [];
-  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  if (!mayPropose(inputs.asOf, inputs.illnessEpisodes)) return [];
   const leavePeriods = wx.leave;
   const logged = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const open = (s: PlannedSession) => s.status !== 'skipped' && !logged.has(s.id);

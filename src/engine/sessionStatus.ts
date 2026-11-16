@@ -1,10 +1,8 @@
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { todayISO } from '../utils/dates';
 import type { LeavePeriod } from '../models/leave';
-import { isAwayFor } from './leave';
 import type { IllnessEpisode } from '../models/illness';
-import { isIllnessDay } from './illness';
-import { isTaperDay } from './raceWindow';
+import { dayRules, type DayRules } from './dayRules';
 
 // 'away': voorbij en niet gedaan op een dag van een vakantie of tocht die je meldde, of zonder sportschool als de
 // training de sportschool nodig heeft (engine/leave.ts#isAwayFor), of op een dag dat je ziek gemeld was (engine/illness.ts#isIllnessDay). Heet
@@ -86,10 +84,14 @@ export function isDraftOpen(session: Pick<PlannedSession, 'id' | 'scheduledDate'
 // (engine/leave.ts#isAwayFor: vakantie en tocht alles, zonder sportschool alleen wat de sportschool nodig heeft), of
 // uit de afbouw van een race die er al was. De ene toets voor Vervallen; wie een voorbije dag toont, geeft
 // { leave, templates, illness, races } mee.
-export function isPausedFor(session: Pick<PlannedSession, 'scheduledDate' | 'templateId'>, pause: PauseContext | undefined, today: string): boolean {
-  const date = session.scheduledDate;
-  return (!!pause?.leave?.length && isAwayFor(date, templateIn(pause.templates, session.templateId), pause.leave))
-    || isIllnessDay(date, pause?.illness, today) || isTaperDay(date, pause?.races, today);
+// Via de ene regel (engine/dayRules.ts, stap tellen). Wie veel rijen telt, maakt de regel één keer (`pauseRules`).
+export function isPausedFor(session: Pick<PlannedSession, 'scheduledDate' | 'templateId'>, pause: PauseContext | undefined, today: string, rules: DayRules = pauseRules(pause, today)): boolean {
+  return !rules.ok({ date: session.scheduledDate, step: 'count', template: templateIn(pause?.templates, session.templateId) });
+}
+
+// De regel voor de telling: vakantie, tocht en zonder sportschool, ziek, en de afbouw van een race die er al was.
+export function pauseRules(pause: Pick<PauseBase, 'illness' | 'races'> & { leave?: readonly LeavePeriod[] } | undefined, today: string): DayRules {
+  return dayRules({ today, leave: pause?.leave, illness: pause?.illness, races: pause?.races });
 }
 
 // Gemist: voorbij (vandaag telt nog niet, ook niet als de dag bijna om is), zonder log, niet overgeslagen, niet in

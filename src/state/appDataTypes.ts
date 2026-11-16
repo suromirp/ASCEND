@@ -17,7 +17,7 @@ import type { IllnessChange, IllnessPlan } from '../engine/illness';
 import type { LeavePeriod } from '../models/leave';
 import type { LeavePlan } from '../engine/leaveProposal';
 import type { RestDayPlan } from '../engine/restDayProposal';
-import type { MoveSuggestion } from '../engine/moveSuggestions';
+import type { MoveContext, MoveSuggestion } from '../engine/moveSuggestions';
 import type { DayVerdict, MoveDecision } from '../engine/weekDrag';
 import type { SwapOption } from '../engine/weekSwap';
 import type { HorizonApplyStatus, HorizonChangeInput, HorizonPlan } from '../storage/horizonPlan';
@@ -150,6 +150,9 @@ export interface AppData {
   moveSession: (sessionId: string, targetDate: string) => ScheduleProposal;
   // One-tap move: the best few days for this session (engine/moveSuggestions.ts).
   suggestMoves: (sessionId: string) => MoveSuggestion[];
+  // Wat een dag dicht houdt of laat vragen, voor de datumkiezer in Week en op Vandaag: dezelfde context als slepen en
+  // de voorgestelde dagen (doel, ziek, periodes, rustdag; engine/dayRules.ts).
+  moveContext: () => MoveContext;
   // Slepen in Week (engine/weekDrag.ts): what each day of the week says about this training, and
   // the new week concerns a move to a day would cause (skipRules: those the day already says itself).
   dragVerdicts: (sessionId: string, weekStart: string) => DayVerdict[];

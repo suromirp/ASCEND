@@ -247,6 +247,12 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
       if (candidates.length === 0) for (const s of may) push(viaRoom(s.id));
       break;
     }
+    case 'ILL': {
+      // Ziek: wat ziek melden doet, alleen voor deze rij van jou. Laten vervallen; telt niet als gemist.
+      const subject = sessionById(concern.finding.subjectId);
+      if (subject && level(subject) === 1) push([{ id: subject.id, from: subject.scheduledDate, removed: true }]);
+      break;
+    }
     case 'NO-GYM': {
       // Zonder sportschool: eerst wat de periode zelf doet (eigen gewicht of laten vervallen, hieronder), dan een
       // andere dag van de week buiten de periode als die schoon is.

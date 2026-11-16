@@ -16,12 +16,9 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import { addDays } from '../utils/dates';
 import type { IllnessEpisode } from '../models/illness';
 import type { PlanChangeProposal } from '../models/planChange';
-import { isIllnessDay } from './illness';
-import { isAwayFor, leaveDays } from './leave';
 import type { LeavePeriod } from '../models/leave';
 import { logDay, type PlannedById } from './logDay';
-import { isTaperDay } from './raceWindow';
-import { isDraftOpen, templateIn, type TemplateLookup } from './sessionStatus';
+import { isDraftOpen, isPausedFor, pauseRules, type TemplateLookup } from './sessionStatus';
 
 type TemplateTypes = Map<string, Pick<SessionTemplate, 'type'>>;
 
@@ -93,16 +90,15 @@ export function leftOutOfCount(
   // als de weekterugblik.
   const movedOn = new Set<string>();
   for (const s of plannedSessions) if (s.catchUp?.fromId && s.status !== 'skipped') movedOn.add(s.catchUp.fromId);
-  const awayDays = away.periods?.length ? leaveDays(away.periods) : undefined;
+  // Ziek, weg en de afbouw: de ene regel voor de telling (engine/dayRules.ts, stap tellen).
+  const rules = pauseRules({ leave: away.periods, illness: illnessEpisodes, races: away.races }, asOf);
   return (id) => {
     const s = byId.get(id);
     if (!s) return false;
     if (programStart && s.scheduledDate < programStart) return true;
-    if (illnessEpisodes && !away.loggedIds.has(s.id) && isIllnessDay(s.scheduledDate, illnessEpisodes, asOf)) return true;
-    if (awayDays && !away.loggedIds.has(s.id) && isAwayFor(s.scheduledDate, templateIn(away.templates, s.templateId ?? ''), away.periods, awayDays)) return true;
+    if (!away.loggedIds.has(s.id) && isPausedFor({ scheduledDate: s.scheduledDate, templateId: s.templateId ?? '' }, { templates: away.templates }, asOf, rules)) return true;
     // Wat een periode liet vallen (de rest van de lopen bij Licht, een krachttraining zonder dag): telt niet.
     if (s.status === 'skipped' && s.leave?.role === 'dropped') return true;
-    if (away.races?.length && !away.loggedIds.has(s.id) && isTaperDay(s.scheduledDate, away.races, asOf)) return true;
     if (!away.loggedIds.has(s.id) && isDraftOpen(s, away.openDraft, asOf)) return true;
     if (s.status !== 'skipped') return false;
     if (movedOn.has(id)) return true;

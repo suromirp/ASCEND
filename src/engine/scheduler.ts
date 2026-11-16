@@ -469,6 +469,8 @@ export interface ScheduleProposal {
   // candidatePlacement.ts#weekCandidatesToAlternatives. Leeg wanneer er geen
   // cascade nodig was (geen conflict) of geen alternatieven overleefden.
   alternatives?: WeekPlacementCandidate[];
+  // De botsing in één korte zin, voor een blad dat ook een eigen reden van de dag noemt (engine/weekDrag.ts#decideMove).
+  short?: string;
   // A question instead of Akkoord: the dialog shows `reason` and these two buttons (engine/weekDrag.ts#decideMove).
   confirm?: { yes: string; no: string };
   // Two trainings of one week that trade days (engine/weekSwap.ts): always exactly two changes, written
@@ -598,9 +600,14 @@ export function proposeMove(
 
   const history = conflicts.find((c) => c.scheduledDate < asOf || recentLogs.some((l) => l.plannedSessionId === c.id));
   if (history) {
+    // "Al geweest" alleen als de dag voorbij is; een training van vandaag of later die al gelogd is, heb je gedaan
+    // (Lookout, 16 november: de Lange duurloop van zondag moest nog komen).
+    const past = history.scheduledDate < asOf;
+    const name = templateName(templateMap, history.templateId);
     return {
       changes,
-      reason: `Let op: dit valt dicht op ${templateName(templateMap, history.templateId)}, ook zwaar voor ${musclesWith(history)}. Die is al geweest, dus die blijft staan. Liefst ongeveer 48 uur ertussen.`,
+      reason: `Let op: dit valt dicht op ${name}, ook zwaar voor ${musclesWith(history)}. ${past ? 'Die is al geweest' : 'Die heb je al gedaan'}, dus die blijft staan. Liefst ongeveer 48 uur ertussen.`,
+      short: `Dicht op ${name}, liefst 48 uur ertussen.`,
       resolved: false,
     };
   }

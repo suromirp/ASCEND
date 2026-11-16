@@ -178,7 +178,8 @@ export function useWeekDrag({ weekStart, enabled, moveTo, onOpenMove }: {
   const current = drag?.target ? drag.verdicts.find((v) => v.date === drag.target) : undefined;
   // Een ruil zegt zelf wat er botst (engine/weekSwap.ts); de meldingen van één verplaatsing gelden dan niet.
   const checked = drag && current && current.droppable && current.kind !== 'origin' && current.kind !== 'swap' ? current : undefined;
-  const skipRules = checked?.kind === 'clash' ? ['LEG-SPACING'] : checked?.kind === 'rest' ? ['REST-DAY'] : checked?.kind === 'nogym' ? ['NO-GYM'] : [];
+  // Wat de dag zelf al zegt (engine/weekDrag.ts#dayVerdicts, `skipRules`): het voorbeeld noemt het niet nog eens.
+  const skipRules: string[] = checked?.skipRules ?? [];
   const dragId = drag?.id;
   const checkedDate = checked?.date;
   const extras = useMemo(

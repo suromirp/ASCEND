@@ -7,15 +7,18 @@
 import type { PlanLock, PlannedSession, SessionTemplate } from '../models/training';
 import type { ScheduleChange } from './scheduler';
 import { hasRole } from './templateRoles';
+import { isPausedFor, type PauseContext } from './sessionStatus';
 import { addDays, mondayOfWeek, weekdayShortNL } from '../utils/dates';
 
-type CatchUpRefusal = 'logged' | 'future' | 'old' | 'skipped' | 'rest' | 'race' | 'test' | 'leave' | 'done' | 'fixed';
+type CatchUpRefusal = 'logged' | 'future' | 'old' | 'skipped' | 'rest' | 'race' | 'test' | 'leave' | 'done' | 'fixed' | 'paused';
 export type CatchUpEligibility = { ok: true } | { ok: false; reason: CatchUpRefusal };
 
 // Een gemiste training: de dag is voorbij, er is geen log, hij is niet overgeslagen en nog niet ingehaald.
 // Tot en met de week voor de huidige week. Een herstelwandeling, wedstrijd, test en wat een vakantie of
-// tocht neerzette niet (die gaan via hun eigen weg), en een vaste afspraak van een sport ook niet.
-export function catchUpEligibility(session: PlannedSession, template: SessionTemplate, args: { logged: boolean; today: string; caughtUp: boolean }): CatchUpEligibility {
+// tocht neerzette niet (die gaan via hun eigen weg), en een vaste afspraak van een sport ook niet. Wat verviel (ziek,
+// vakantie, tocht, zonder sportschool, de afbouw van een race die er al was) haal je niet in: `pause`, de ene regel
+// (engine/dayRules.ts via engine/sessionStatus.ts#isPausedFor, I-67 gat 10).
+export function catchUpEligibility(session: PlannedSession, template: SessionTemplate, args: { logged: boolean; today: string; caughtUp: boolean; pause?: PauseContext }): CatchUpEligibility {
   if (args.logged) return { ok: false, reason: 'logged' };
   if (session.scheduledDate >= args.today) return { ok: false, reason: 'future' };
   if (session.status === 'skipped') return { ok: false, reason: 'skipped' };
@@ -27,11 +30,12 @@ export function catchUpEligibility(session: PlannedSession, template: SessionTem
   if (session.leave) return { ok: false, reason: 'leave' };
   // Een vaste afspraak van een sport (engine/fixedSports.ts) haalt ASCEND nooit in: die is van jou.
   if (session.fixed) return { ok: false, reason: 'fixed' };
+  if (args.pause && isPausedFor(session, args.pause, args.today)) return { ok: false, reason: 'paused' };
   return { ok: true };
 }
 
 // Hoort deze verandering van een voorstel bij een inhaal: een gemiste rij die naar vandaag of later gaat.
-export function qualifiesForCatchUp(session: PlannedSession, template: SessionTemplate, change: ScheduleChange, args: { logged: boolean; today: string; caughtUp: boolean }): boolean {
+export function qualifiesForCatchUp(session: PlannedSession, template: SessionTemplate, change: ScheduleChange, args: { logged: boolean; today: string; caughtUp: boolean; pause?: PauseContext }): boolean {
   if (change.restore || change.toDate < args.today || change.toDate === change.fromDate) return false;
   return catchUpEligibility(session, template, args).ok;
 }

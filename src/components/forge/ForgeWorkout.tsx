@@ -52,6 +52,8 @@ import { isLegHeavyTemplate } from '../../engine/scheduler';
 import { exercisesForVariant } from '../../engine/substitutions';
 import { resolveStrengthSettings } from '../../engine/strengthSettings';
 import type { Program } from '../../models/program';
+import { quietWeeks } from '../../engine/quietWeeks';
+import { strengthTrainingOn } from '../../engine/strengthTraining';
 import type { SessionTemplate, SessionVariant } from '../../models/training';
 import { useAppData } from '../../state/AppDataContext';
 import { todayISO } from '../../utils/dates';
@@ -242,7 +244,10 @@ function ForgeWorkoutInner({
   const [pendingCal] = useState(() => !readOnly && otherDraftHasCalibration(key));
   const illnessEpisodes = settings.illnessEpisodes;
   const leavePeriods = settings.leavePeriods;
-  const calBlockFor = useCallback((eased: boolean) => calibrationBlock({ date, lastAt: strength.calibratedAt, planned: plannedSessions, templates, illness: illnessEpisodes, leave: leavePeriods, eased, pending: pendingCal }), [date, strength.calibratedAt, plannedSessions, templates, illnessEpisodes, leavePeriods, pendingCal]);
+  // De rustige weken en kracht uit: de ene regel (engine/dayRules.ts) houdt de ijkset ook daar tegen (I-67).
+  const quiet = useMemo(() => quietWeeks({ program, reentryWeeks: settings.reentryWeeks, around: date }), [program, settings.reentryWeeks, date]);
+  const strengthOff = !strengthTrainingOn(settings);
+  const calBlockFor = useCallback((eased: boolean) => calibrationBlock({ date, lastAt: strength.calibratedAt, planned: plannedSessions, templates, illness: illnessEpisodes, leave: leavePeriods, eased, pending: pendingCal, quietWeeks: quiet, strengthOff }), [date, strength.calibratedAt, plannedSessions, templates, illnessEpisodes, leavePeriods, pendingCal, quiet, strengthOff]);
   const calBlocked = useMemo(() => !!calBlockFor(easeOn), [calBlockFor, easeOn]);
   // IJkset Automatisch erbij: de set staat bij het openen al bij de hoofdoefening, zonder dat de sessie begint. Na
   // Lichter aan of uit en bij een heropend concept dat opnieuw gepland werd geldt dezelfde regel (syncAutoCalibration);

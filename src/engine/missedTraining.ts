@@ -14,15 +14,15 @@
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { IllnessEpisode } from '../models/illness';
-import { activeIllness, isIllnessDay } from './illness';
+import { activeIllness } from './illness';
 import { idHasRole, isTestOrRace } from './templateRoles';
-import { awayPeriods, isAwayFor, leaveDays } from './leave';
+import { awayPeriods } from './leave';
 import type { LeavePeriod } from '../models/leave';
 import { lockLevel } from './weekValidator';
 import { isHandLog } from './activityImport';
 import { fitsChosenWayLog, isLooseSourceLog, sameLinkKind, templateKind } from './looseLog';
 import { daysBetween, formatDateNL, weekdayLongNL } from '../utils/dates';
-import { isDraftOpen, isPausedFor } from './sessionStatus';
+import { isDraftOpen, isPausedFor, pauseRules } from './sessionStatus';
 import { isTaperDay, raceDatesOf } from './raceWindow';
 
 type MissedChoice = 'ask' | 'auto' | 'off';
@@ -143,8 +143,8 @@ function pauseOn(m: MissedSession, today: string, illnessEpisodes: IllnessEpisod
   const date = m.session.scheduledDate;
   if (!isPausedFor(m.session, { leave: leavePeriods, templates: [m.template], illness: illnessEpisodes }, today)) return undefined;
   const pauses: PauseSince[] = [
-    ...(illnessEpisodes ?? []).filter((e) => isIllnessDay(date, [e], today)).map((e) => ({ kind: 'ill' as const, start: e.startDate, running: !e.endDate || e.endDate >= today })),
-    ...awayPeriods(leavePeriods).filter((p) => date >= p.startDate && date <= p.endDate && isAwayFor(date, m.template, [p])).map((p) => ({ kind: 'away' as const, start: p.startDate, running: p.endDate >= today })),
+    ...(illnessEpisodes ?? []).filter((e) => !pauseRules({ illness: [e] }, today).ok({ date, step: 'count', template: m.template })).map((e) => ({ kind: 'ill' as const, start: e.startDate, running: !e.endDate || e.endDate >= today })),
+    ...awayPeriods(leavePeriods).filter((p) => !pauseRules({ leave: [p] }, today).ok({ date, step: 'count', template: m.template })).map((p) => ({ kind: 'away' as const, start: p.startDate, running: p.endDate >= today })),
   ];
   return pauses.sort((a, b) => b.start.localeCompare(a.start))[0];
 }
@@ -225,7 +225,9 @@ export function planMissed(input: MissedInput): MissedPlan {
   const templateById = new Map(input.templates.map((t) => [t.id, t]));
   const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
   const age = (s: PlannedSession) => daysBetween(s.scheduledDate, today);
-  const awayDays = leaveDays(awayPeriods(leavePeriods));
+  // Ziek en weg via de ene regel (engine/dayRules.ts, stap tellen); de afbouw apart hieronder, want een log van je
+  // horloge mag daar nog gekoppeld worden.
+  const pausedNoRace = pauseRules({ leave: leavePeriods, illness: illnessEpisodes }, today);
 
   // Nog zonder log en niet overgeslagen, met een soort; dat kan bij een log horen. Een training die nog loopt (een
   // concept in Forge) doet niet mee: daar valt niets te vragen.
@@ -238,7 +240,7 @@ export function planMissed(input: MissedInput): MissedPlan {
   // een dag dat je weg was.
   const recent = unlogged
     .filter((m) => age(m.session) >= 1 && age(m.session) <= MISSED_MAX_AGE_DAYS)
-    .filter((m) => !isIllnessDay(m.session.scheduledDate, illnessEpisodes, today) && !isAwayFor(m.session.scheduledDate, m.template, leavePeriods, awayDays))
+    .filter((m) => pausedNoRace.ok({ date: m.session.scheduledDate, step: 'count', template: m.template }))
     .sort((a, b) => a.session.scheduledDate.localeCompare(b.session.scheduledDate) || a.session.order - b.session.order || a.session.id.localeCompare(b.session.id));
   // Een training uit de afbouw voor een race die er al was, vervalt: geen vraag en niets vanzelf (engine/raceWindow.ts).
   // Een log van je horloge die erbij hoort mag nog gekoppeld worden.

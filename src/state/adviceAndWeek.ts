@@ -209,7 +209,7 @@ export function useAdviceAndWeek(deps: {
       dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
       slotDays: patternDays(templates, settings, restDay),
       minutesOf: (s: PlannedSession, t: SessionTemplate) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
-      leave: settings.leavePeriods, trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
+      leave: settings.leavePeriods, illness: settings.illnessEpisodes, trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding,
     };
   }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
   // Koos je vandaag Benen fris, dan zegt de melding in Week dat jij koos (engine/weekKept.ts). Alleen tekst.

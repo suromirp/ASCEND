@@ -8,7 +8,7 @@ import { weekPositionLabel } from '../engine/weekLabel';
 import { waveHeader } from '../engine/programLayout';
 import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL, localDateOf } from '../utils/dates';
 import { deriveSessionStatus, loggedMinutes, rowMinutes } from '../engine/sessionStatus';
-import { activeIllness, isHeavySession, recoveryRamp } from '../engine/illness';
+import { activeIllness, recoveryRamp } from '../engine/illness';
 import { QUIET_TODAY_LINES, capAboveMission, isSafetyCard, placeTodayCards, resolveAboveMission, type TodayCardId } from '../engine/todayCards';
 import { hasRole } from '../engine/templateRoles';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
@@ -91,7 +91,8 @@ import { resolveQuoteLanguage } from '../engine/quoteSettings';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { decideMove, dragEligibility } from '../engine/weekDrag';
-import { noGymAsk } from '../engine/noGymGuard';
+import { keptAsk, keptRefusal } from '../engine/moveSuggestions';
+import { dayRules } from '../engine/dayRules';
 import { goalTiming } from '../engine/goalRoute';
 import { SkyBand } from '../components/SkyBand';
 import { StretchMenuButton } from '../components/StretchMenuButton';
@@ -106,7 +107,7 @@ import { RaceDayLine } from '../components/RaceDay';
 import { logsNotInLastBackup } from '../engine/backupSince';
 
 function TodayContent() {
-  const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
+  const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones, showFailure, moveContext } = useAppData();
   // Afvinken met één tik: grens in tijd en de melding bovenin (state/logSave.ts#tickOff).
   const tickNotice = { report: reportStorageError, withdraw: withdrawStorageNotice, refresh };
   const today = todayISO();
@@ -168,12 +169,13 @@ function TodayContent() {
   // While ill, today's mission follows the illness for as long as it lasts,
   // not only the two days cleared when it was reported: nothing with fever
   // or stomach flu, only light sessions with a cold above the neck.
+  // De ene regel (engine/dayRules.ts, stap doen): met koorts of buikgriep niets, verkouden niets zwaars.
   const illness = activeIllness(settings.illnessEpisodes);
+  const illRules = dayRules({ today, illness: settings.illnessEpisodes });
   const allowedWhileIll = (s: PlannedSession) => {
     if (!illness) return true;
-    if (illness.kind !== 'above_neck') return false;
     const t = templateById.get(s.templateId);
-    return !!t && !isHeavySession(t);
+    return !!t && illRules.ok({ date: today, step: 'do', template: t });
   };
   // A rest day is no training to start or tick off (production feedback:
   // "een herstelmoment ga je niet los loggen"). It gets its own quiet card
@@ -249,7 +251,11 @@ function TodayContent() {
     const session = plannedSessions.find((s) => s.id === sessionId);
     const tpl = session ? templateById.get(session.templateId) : undefined;
     const eligible = session && tpl ? dragEligibility(session, tpl, { logged: sessionLogs.some((l) => l.plannedSessionId === session.id), today: todayISO(), periods: settings.leavePeriods }) : undefined;
-    const decision = decideMove(moveSession(sessionId, date), { askAlways: eligible?.ok ? eligible.askAlways : undefined, extraAsk: noGymAsk(tpl, date, settings.leavePeriods), restDay: settings.restDay ?? 1 });
+    const context = moveContext();
+    // Een dag die dicht is (koorts, vakantie, tocht): niet verplaatsen, met dezelfde zin als slepen in Week.
+    const refused = keptRefusal(context, tpl, date, todayISO());
+    if (refused) { showFailure('Niet verplaatst.', refused); return; }
+    const decision = decideMove(moveSession(sessionId, date), { askAlways: eligible?.ok ? eligible.askAlways : undefined, extraAsk: keptAsk(context, tpl, date, todayISO()), restDay: settings.restDay ?? 1 });
     if (decision.action === 'apply') void applyProposal(decision.proposal);
     else if (decision.action === 'ask') setPendingProposal(decision.proposal);
   }

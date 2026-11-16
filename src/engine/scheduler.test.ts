@@ -155,7 +155,16 @@ describe('proposeMove', () => {
     // move comes with a warning instead of a cascade.
     expect(withHeavyLog.resolved).toBe(false);
     expect(withHeavyLog.changes).toHaveLength(1);
-    expect(withHeavyLog.reason).toMatch(/al geweest/);
+    // Vandaag gelogd, niet voorbij: "al gedaan", niet "al geweest" (Lookout, 16 november).
+    expect(withHeavyLog.reason).toMatch(/Die heb je al gedaan/);
+    expect(withHeavyLog.short).toBe(`Dicht op ${templates.find((t) => t.id === 'tpl_lower_a')!.name}, liefst 48 uur ertussen.`);
+  });
+
+  it('zegt "al geweest" alleen als de dag van de andere training voorbij is', () => {
+    const recentLogs = [log({ plannedSessionId: 'a', completedDate: MON, rpe: 9 })];
+    const week = [session('a', 'tpl_lower_a', MON, MON), session('c', 'tpl_lower_b', THU, MON)];
+    expect(proposeMove(week, templates, 'c', WED, recentLogs, undefined, undefined, undefined, TUE).reason).toMatch(/Die is al geweest/);
+    expect(proposeMove(week, templates, 'c', WED, recentLogs, undefined, undefined, undefined, MON).reason).not.toMatch(/al geweest/);
   });
 
   // Time-budget scheduling redesign (Fase 3): the cascade's free-day

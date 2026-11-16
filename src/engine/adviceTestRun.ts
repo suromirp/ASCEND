@@ -3,7 +3,8 @@
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
-import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
+import { isIllnessDay } from './illness';
+import { mayPropose } from './dayRules';
 import { findHeavyConflicts, freshnessAt, respectsHeavySpacing, dayHasRoomFor, isHeavyBeforeTest, isLegHeavyTemplate, testRestHours, withTestRestHours } from './scheduler';
 import { addDays, daysBetween, mondayOfWeek, formatWeekdayDateNL } from '../utils/dates';
 import { type AdviceInputs, type Advice, isDone, inProgram, leavesNextHardFresh, proposal, MAX_OPTIONS, recoveryWeekGuard } from './adviceShared';
@@ -55,7 +56,7 @@ interface RetryAgain {
 }
 
 export function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>, forced?: ForcedTestMove, again?: RetryAgain): Advice[] {
-  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  if (!mayPropose(inputs.asOf, inputs.illnessEpisodes)) return [];
   // De herstelweek na een race: geen testloop inhalen en geen herkansing (engine/raceWindow.ts). Een test die je
   // avond ervoor verschuift (`forced`) is geen inhalen en blijft.
   if (!forced && recoveryWeekGuard(inputs)) return [];

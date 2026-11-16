@@ -7,8 +7,9 @@
 
 import type { PlanLock, PlannedSession, SessionTemplate } from '../models/training';
 import { dayHasRoomFor, findHeavyConflicts, isHeavyBeforeTest, isLegHeavyTemplate, isTestOnly, sharedHeavyAxes, testRestHours, tooCloseBeforeTest, type ScheduleProposal } from './scheduler';
-import { keptDayReason, type KeptReason } from './moveSuggestions';
-import { NO_GYM_ASK, needsGymOn } from './noGymGuard';
+import { keptDay, moveRules } from './moveSuggestions';
+import { NO_GYM_ASK } from './noGymGuard';
+import { DAY_CAUSE_TEXT } from './dayRules';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { hasRole } from './templateRoles';
 import { weekConcerns } from './weekConcerns';
@@ -28,14 +29,6 @@ const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 
 const dayLower = (date: string) => `${weekdayLongNL(date)} ${formatDateNL(date)}`;
 const fit = (...options: string[]) => options.find((o) => o.length <= CHIP_MAX) ?? options[options.length - 1].slice(0, CHIP_MAX);
-
-const KEPT_LINE: Record<Exclude<KeptReason, 'rest' | 'nogym'>, string> = {
-  off: 'is een vakantiedag',
-  trek: 'is een tochtdag',
-  light: 'blijft licht door je tocht',
-  goal: 'ligt op of na je doel',
-  ill: 'valt nog in je ziekte',
-};
 
 export type SwapCheck =
   | { ok: false; line: string }
@@ -68,9 +61,11 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
     { s: b, t: tb, to: a.scheduledDate, ask: eb.askAlways },
   ];
   const rest = ctx.sessions.filter((s) => s.id !== a.id && s.id !== b.id && s.status !== 'skipped');
+  // De ene regel (engine/dayRules.ts): een dichte dag zegt zijn reden uit dezelfde tabel als slepen.
+  const rules = moveRules(ctx.move, ctx.asOf);
   for (const leg of legs) {
-    const kept = keptDayReason(ctx.move, leg.t, leg.to, ctx.asOf);
-    if (kept && kept !== 'rest' && kept !== 'nogym') return { ok: false, line: `${dayTitle(leg.to)} ${KEPT_LINE[kept]}.` };
+    const kept = keptDay(ctx.move, leg.t, leg.to, ctx.asOf, rules);
+    if (kept && kept.asks.length === 0) return { ok: false, line: `${dayTitle(leg.to)} ${DAY_CAUSE_TEXT[kept.reason].kept}.` };
     if (rest.filter((s) => s.scheduledDate === leg.to).length >= 2) return { ok: false, line: `${dayTitle(leg.to)} zit vol.` };
   }
 
@@ -107,10 +102,13 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
     asks.push(`${leg.t.name} op ${dayLower(leg.to)} valt dicht op ${otherNames.join(' en ')}.${rule}`);
   }
   for (const leg of legs) {
-    const kept = keptDayReason(ctx.move, leg.t, leg.to, ctx.asOf);
-    if (kept === 'rest') asks.push(`${dayTitle(leg.to)} is je rustdag.`);
-    // Zonder sportschool: ruilen mag, met de vraag ervoor (engine/noGymGuard.ts), ook op je rustdag.
-    if (kept === 'nogym' || (kept === 'rest' && needsGymOn(leg.to, leg.t, ctx.move.leave))) asks.push(`${leg.t.name} op ${dayLower(leg.to)}: ${NO_GYM_ASK.charAt(0).toLowerCase()}${NO_GYM_ASK.slice(1)}`);
+    const kept = keptDay(ctx.move, leg.t, leg.to, ctx.asOf, rules);
+    if (kept?.asks.includes('rest')) asks.push(`${dayTitle(leg.to)} is je rustdag.`);
+    // Zonder sportschool, verkouden of opbouw na ziekte: ruilen mag, met de vraag ervoor, ook op je rustdag.
+    for (const c of kept?.asks ?? []) {
+      const ask = c === 'rest' ? undefined : DAY_CAUSE_TEXT[c].ask;
+      if (ask) asks.push(`${leg.t.name} op ${dayLower(leg.to)}: ${ask.charAt(0).toLowerCase()}${ask.slice(1)}`);
+    }
   }
   // Past de tijd op de nieuwe dag?
   for (const leg of legs) {
