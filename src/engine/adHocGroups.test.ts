@@ -25,8 +25,9 @@ describe('Losse training: eerst de sport', () => {
 });
 
 describe('Losse training: de standaard van een sport', () => {
-  it('in het demoprogramma: herstelwandeling, rustige duurloop, fietstocht; kracht zonder standaard', () => {
-    expect(adHocDefault(demo, 'hiking')?.name).toBe('Herstelwandeling');
+  it('in het demoprogramma: wandeling, rustige duurloop, fietstocht; kracht zonder standaard', () => {
+    expect(adHocDefault(demo, 'hiking')?.name).toBe('Wandeling');
+    expect(adHocDefault(demo, 'hiking')?.notes).toBeUndefined();
     expect(adHocDefault(demo, 'running')?.name).toBe('Rustige duurloop');
     expect(adHocDefault(demo, 'cycling')?.name).toBe('Fietstocht');
     expect(adHocDefault(demo, 'strength')).toBeUndefined();
@@ -43,7 +44,7 @@ describe('Losse training: de standaard van een sport', () => {
   });
 
   it('Welke training precies?: alleen die sport, op naam', () => {
-    expect(adHocChoices(demo, 'hiking').map((x) => x.name)).toEqual(['Bergop wandelen', 'Bergtocht', 'Herstelwandeling', 'Rugzakwandeling', 'Trap af', 'Wandeldag 1 van 2']);
+    expect(adHocChoices(demo, 'hiking').map((x) => x.name)).toEqual(['Bergop wandelen', 'Bergtocht', 'Herstelwandeling', 'Rugzakwandeling', 'Trap af', 'Wandeldag 1 van 2', 'Wandeling']);
     expect(adHocChoices(demo, 'running').every((x) => adHocGroupOf(x) === 'running')).toBe(true);
   });
 });

@@ -167,6 +167,12 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
     stopSignals: ['je niet meer kunt praten: lichter schakelen'],
     facts: 'steady',
   },
+  tpl_walk: {
+    styleLabel: 'wandelen',
+    purpose: 'Een gewone wandeling, zonder doel of tempo.',
+    stopSignals: [],
+    facts: 'recovery',
+  },
   tpl_herstel: {
     styleLabel: 'rust of wandelen',
     purpose: 'De vermoeidheid van het weekend laten zakken voor de nieuwe week begint.',
