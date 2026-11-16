@@ -47,13 +47,15 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Stuk of vast
 
-- Week: Bovenlichaam A staat op woensdag 18 november, binnen uw periode zonder sportschool. Wordt uitgezocht en hersteld.
 - Back-up: de oplossing staat live (17:45). Graag een test op uw toestel: Gedwongen stoppen, openen, meteen Back-up maken, drie keer; kijk in Documents/ASCEND of er een bestand zonder -2 staat.
 
 ## Loopt
 
 
 ## Net live
+
+### 16 november 02:45
+- Zonder sportschool: een sportschooltraining op een dag in je periode zonder sportschool geeft nu een punt in Let op met een voorstel (eigen gewicht of laten vervallen). Slepen of een datum kiezen naar zo'n dag vraagt eerst. Uw Bovenlichaam A op woensdag 18 krijgt dat punt zodra u Week opent.
 
 ### 16 november 02:10
 - Op Vandaag staat nu "Loggen of plannen": een training loggen die niet op de planning stond, of een wandeling plannen met een route van een paar kilometer. Wandeling plannen staat ook in de tab Ascend.
