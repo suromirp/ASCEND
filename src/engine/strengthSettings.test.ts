@@ -140,6 +140,8 @@ describe('het workoutscherm', () => {
     expect(strengthModelKey({ carryMode: 'off' })).toBe(strengthModelKey({}));
     // Hoeveel over? en de schijvenregel raken alleen het scherm (besluit 2026-11-11-forge-kern-zichtbaar).
     expect(strengthModelKey({ quickRir: false, quickRirMode: 'vaker', showPlates: true })).toBe(strengthModelKey({}));
+    // De stand van de ijkset raakt alleen het scherm.
+    expect(strengthModelKey({ calibration: false, calibrationMode: 'automatisch' })).toBe(strengthModelKey({}));
   });
   it('de keuze tussen 1RM en werkgewicht en de MacroFactor-1RM: advies 1RM en aan, rommel valt weg', () => {
     expect(resolveStrengthSettings(undefined)).toMatchObject({ oneRmView: 'one_rm', showMacroFactorOneRm: true });

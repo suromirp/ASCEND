@@ -178,6 +178,9 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-rir-snel', facts()).value).toBe('Bij afwijking');
     expect(rowSummary('forge-rir-snel', facts({ settings: { ...facts().settings, strengthModel: { quickRir: false } } }))).toMatchObject({ value: 'Uit', dim: true });
     expect(rowSummary('forge-rir-snel', facts({ settings: { ...facts().settings, strengthModel: { quickRirMode: 'vaker' } } })).value).toBe('Vaker vragen');
+    expect(rowSummary('forge-ijkset', facts()).value).toBe('Vragen');
+    expect(rowSummary('forge-ijkset', facts({ settings: { ...facts().settings, strengthModel: { calibration: false } } }))).toMatchObject({ value: 'Uit', dim: true });
+    expect(rowSummary('forge-ijkset', facts({ settings: { ...facts().settings, strengthModel: { calibrationMode: 'automatisch' } } })).value).toBe('Automatisch');
     expect(rowSummary('forge-1rm', facts()).checked).toBe(true);
     expect(rowSummary('forge-1rm', facts({ settings: { ...facts().settings, strengthModel: { showOneRm: false } } })).checked).toBe(false);
     expect(rowSummary('forge-doorvoeren', facts()).value).toBe('Gelijke sets');
