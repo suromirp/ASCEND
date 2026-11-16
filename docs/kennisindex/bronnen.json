@@ -3239,6 +3239,13 @@
    "kern": "Pathfinder op 12 november 2026 over verborgen pagina's en wat anders kan; opgevolgd in `docs/beslissingen/2026-11-14-verborgen-schermen.md`.",
    "stand": "achtergrond"
   },
+  "docs/onderhoud/2026-11-16-onderhoudsronde.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Onderhoudsronde 16 november 2026: grootte, dubbele en dode code, top tien om op te ruimen, ochtenden en IJkset.",
+   "stand": "geldt"
+  },
   "docs/onderhoud/reflectie-2026-11-01.md": {
    "onderwerpen": [
     "werkwijze"

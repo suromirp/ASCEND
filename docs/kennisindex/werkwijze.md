@@ -7,6 +7,7 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 - Geen werkbriefje. Hoe er aan ASCEND gewerkt wordt: rollen, poorten, kosten en het open werk.
 - [backlog.md](../backlog.md): Het open werk van ASCEND: de Inbox met wat de eigenaar meldt en de bouwrij, bijgehouden door de coördinator.
 - [beslissingen/_sjabloon.md](../beslissingen/_sjabloon.md): Het sjabloon voor een nieuw besluit: besluit, reden, alternatieven, bron, vervangt en terugdraaien.
+- [onderhoud/2026-11-16-onderhoudsronde.md](../onderhoud/2026-11-16-onderhoudsronde.md): Onderhoudsronde 16 november 2026: grootte, dubbele en dode code, top tien om op te ruimen, ochtenden en IJkset.
 - [werkbriefjes/README.md](../werkbriefjes/README.md): Wat een werkbriefje is, de vaste vorm en hoe het wordt bijgehouden.
 
 ## Besluiten die gelden
