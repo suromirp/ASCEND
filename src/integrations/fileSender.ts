@@ -11,7 +11,7 @@
 // Gooit bij een fout; het venster wegtikken is geen fout ('cancelled').
 
 import { Capacitor, registerPlugin } from '@capacitor/core';
-import { writeThroughTemp, type TempFs } from './backupFolder';
+import { newAttemptId, writeThroughTemp, type TempFs } from './backupFolder';
 
 // 'offered': het venster stond open, wat de gebruiker koos weet ASCEND niet. 'shared': de browser meldt
 // dat er gedeeld is. 'cancelled': het venster is weggetikt.
@@ -48,7 +48,7 @@ export function cacheSender(share: CacheShare): FileSender {
     platform: 'app',
     async send(name, text, mimeType, title, signal) {
       await share.clear().catch(() => undefined);
-      const attemptId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      const attemptId = newAttemptId();
       await writeThroughTemp(share.fs, name, text, attemptId);
       // Een grens in tijd stopt ook het werk erachter: na de grens opent de keuzelijst niet meer.
       if (signal?.aborted) throw new SendStoppedError();

@@ -4196,6 +4196,14 @@
    "kern": "Het oude trainingsscherm slaat op via `saveOnLogger`, met Sluiten en een wachtzin met uitweg na de grens; Vandaag en Week vinken af via `tickOff`.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-15-backup-telling.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "historie-en-logs"
+   ],
+   "kern": "\"Sinds je laatste back-up\" telt op id uit de laatste back-up (`engine/backupSince.ts`, `lastBackupLogs`), niet op `completedAt`; een schrijfactie die na de tijdsgrens landt is van de app en wordt bij de volgende poging vervangen, zonder -2.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-15-wandeling-plannen.md": {
    "onderwerpen": [
     "koppelingen-en-data",
