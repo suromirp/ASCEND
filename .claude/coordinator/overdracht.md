@@ -56,7 +56,7 @@ Bijgewerkt: 15 november 2026, 22:40 Portugese tijd. Coördinator sinds 22:35: se
 ## Graphify-proef (gestart 02:05, 16 november)
 
 - Taak I-70 (neutraal sjabloon Wandeling) twee keer op Sonnet met dezelfde opdracht: zonder Graphify session_01LnDpSkeCxdN8DGXZkSTxji (`claude/proef-graphify-zonder`), met Graphify zoals bedoeld (install, hook, CLAUDE.md-regel alleen op de proefbranch, aparte commit) session_01LnDpSnUqhYDz4jXqUJ1Mke (`claude/proef-graphify-met`).
-- Zonder klaar 02:17: 11 min, $0,59, output 13,4k, ~42 aanroepen, 10 zoekacties (df92445). Meting staat ook in scratchpad/proef-meting.txt.
+- Uitslag 02:25: met graaf 12,5 min, $0,86 (+45 %), hetzelfde resultaat; install/hook geweigerd door de bouwer (instellingen alleen op vraag eigenaar). Vastgelegd als aanvulling in docs/onderzoek/Ponytail en Graphify.md; vraag aan eigenaar in eigenaar.md. Beide proefbouwers archiveren; I-70 gaat later met de zonder-versie (df92445) door de poorten. Zonder klaar 02:17: 11 min, $0,59, output 13,4k, ~42 aanroepen, 10 zoekacties (df92445). Meting staat ook in scratchpad/proef-meting.txt.
 - Meten: cost_usd en tokens uit get_session (usage), tijd (created tot laatste push), tool-aanroepen, zoekacties, en de kwaliteit (Warden Sonnet op allebei kort). Uitslag in `docs/onderzoek/Ponytail en Graphify.md` als aanvulling (nieuwe kop, niet herschrijven) en op de Werkkaart; advies houden of schrappen. Nooit de Graphify-commit naar main; de betere bouw gaat daarna via de gewone poorten als I-70.
 
 ## Stand 23:45 (session_01LnDpSncLf13Bm9hk3D5VBF)

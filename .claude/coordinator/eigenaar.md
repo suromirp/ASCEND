@@ -4,6 +4,12 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
+### Graphify: de koppeling nog proberen?
+- Uitslag: dezelfde taak met Graphify kostte 45 procent meer (0,86 tegen 0,59 dollar) en duurde iets langer, met hetzelfde resultaat. De koppeling die elke chat de kaart laat gebruiken is niet getest: de bouwer weigerde die, omdat hij de instellingen van Claude Code raakt en alleen u dat mag vragen.
+- Keuzes: laten (advies), of u zegt zelf "probeer de Graphify-hook" en dan doe ik één proef met de koppeling.
+- Zonder antwoord: Graphify blijft weg.
+- Sinds: 16 november 02:30
+
 ### Uw IJkset op Automatisch?
 - Keuzes: u zei gisteren 22:00 "mag van mij automatisch". De instelling staat live (Instellingen, Forge, Bij het invullen, IJkset). Zet u hem zelf op Automatisch erbij (advies: dan weet u waar hij staat), of laat u het zo (Vragen, het advies van de app).
 - Zonder antwoord: hij blijft op Vragen.
@@ -46,7 +52,6 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Loopt
 
-- Graphify eerlijk opnieuw: gestart om 02:05. Dezelfde kleine taak (een gewone Wandeling loggen) twee keer gebouwd, met en zonder Graphify; de vergelijking staat morgenochtend hier.
 
 ## Net live
 

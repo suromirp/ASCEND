@@ -37,3 +37,15 @@ De cijfers in de posts (94 procent minder code, 80 procent minder tokens) zijn h
 ## Niet gecontroleerd
 
 De hooks van Ponytail zelf (geweigerd door de rechten), de standen full en ultra (bewust niet), het MCP-deel en de AI-stap van Graphify, en de twee bouwerbranches: die hebben nog geen Warden, Lookout, Pathfinder of screenshot gehad en gaan zonder die poorten niet naar main.
+
+## Herkansing Graphify, 16 november
+
+Op vraag van de eigenaar ("Waarom niet eerder?", "Prima, doe maar zo") is dezelfde taak twee keer gebouwd: I-70, een neutraal sjabloon Wandeling als standaard onder Wandelen. Allebei op sonnet, met dezelfde opdracht, vanaf dezelfde main.
+
+- Zonder graaf (`claude/proef-graphify-zonder`, df92445): 11 minuten, $0,59, 13k uitvoertokens, ongeveer 42 tool-aanroepen, 10 zoekacties. Controles groen.
+- Met graaf (`claude/proef-graphify-met`, 46fdcd5): 12,5 minuten, $0,86, 16k uitvoertokens, ongeveer 30 tool-aanroepen, waarvan 6 voor het installeren en bouwen (46 seconden, 23140 knopen). Drie vragen aan de graaf, twee nuttig (aanroepers met regelnummer), één zonder treffer; daarna toch zes keer grep, want de graaf vindt een tekst-id als `tpl_herstel` niet. Controles groen.
+- Beide bouwden hetzelfde: zelfde sjabloon, geen migratiestap nodig omdat de bootstap ontbrekende standaardsjablonen aanvult, vergelijkbare tests.
+
+Niet getest: `graphify install` (de hook en de regel in CLAUDE.md die elke chat de graaf laten gebruiken). De bouwer weigerde die stap op grond van de afspraak dat instellingen van Claude Code nooit veranderen op verzoek van een helper. Dat deel van de proef staat dus nog open.
+
+Uitslag: met de graaf 45 procent duurder en iets trager, met hetzelfde resultaat. De werkbriefjes en grep wezen de weg al. Advies: niet invoeren. Alleen opnieuw als de eigenaar zelf de hook wil laten proberen.
