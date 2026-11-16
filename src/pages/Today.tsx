@@ -105,9 +105,13 @@ import type { Advice } from '../engine/adviceEngine';
 import { ProposalSheet } from '../components/ProposalSheet';
 import { RaceDayLine } from '../components/RaceDay';
 import { logsNotInLastBackup } from '../engine/backupSince';
+import { skipWord } from '../engine/skipReason';
+import { useSkipReason } from '../components/useSkipReason';
 
 function TodayContent() {
   const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones, showFailure, moveContext } = useAppData();
+  // Het woord van een overgeslagen training volgt het blad (engine/skipReason.ts): een ziekmelding heet Vervallen.
+  const skipReasonOf = useSkipReason();
   // Afvinken met één tik: grens in tijd en de melding bovenin (state/logSave.ts#tickOff).
   const tickNotice = { report: reportStorageError, withdraw: withdrawStorageNotice, refresh };
   const today = todayISO();
@@ -400,7 +404,7 @@ function TodayContent() {
           trailing={rest ? REST_DAY_COPY[restMode].badge : minutes !== undefined ? `${minutes} min` : undefined}
         >
           {rest ? REST_DAY_COPY[restMode].title : t.name}
-          {skipped ? <span> · overgeslagen</span> : wasMoved && !done ? <span> · verplaatst</span> : null}
+          {skipped ? <span> · {skipWord(skipReasonOf(s, t)).toLowerCase()}</span> : wasMoved && !done ? <span> · verplaatst</span> : null}
         </DayRow>
       ),
     });

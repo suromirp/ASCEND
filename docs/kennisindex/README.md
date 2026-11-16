@@ -11,7 +11,7 @@ Een nieuw document in `docs/` krijgt een regel in `bronnen.json`, en haalt het e
 oudere besluit de stand deels of vervangen. Daarna `npm run kennisindex`; de test
 `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 544 documenten: 329 gelden, 82 deels ingehaald, 3 vervangen, 3 verouderd, 127 achtergrond.
+Stand van de 548 documenten: 333 gelden, 82 deels ingehaald, 3 vervangen, 3 verouderd, 127 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; deels ingehaald geldt alleen nog voor wat achter "Geldt nog" staat, de
@@ -30,7 +30,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 - Werkbriefje: [werkbriefjes/koppelingen-en-data.md](../werkbriefjes/koppelingen-en-data.md)
 - [android-sleutel.md](../android-sleutel.md): De Android-app wordt altijd met dezelfde sleutel ondertekend, anders kan een nieuwe versie niet over de oude heen; hier staat hoe de workflow dat doet.
 - [architectuur/koppelingen-en-data.md](../architectuur/koppelingen-en-data.md): Wat ASCEND van Garmin leert (intensiteit, zweet, bergschoenen) en de tekst voor Strava.
-- Alles over dit onderwerp: [koppelingen-en-data.md](koppelingen-en-data.md) (68 besluiten die gelden, 19 deels ingehaald, 18 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
+- Alles over dit onderwerp: [koppelingen-en-data.md](koppelingen-en-data.md) (69 besluiten die gelden, 19 deels ingehaald, 18 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
 
 ## Lopen en tests
 
@@ -48,13 +48,13 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/planning.md](../werkbriefjes/planning.md)
 - [architectuur/planning.md](../architectuur/planning.md): Het lange verhaal bij planning: hoofddoel en rollen, scheduler, wie een sessie mag aanraken, labels, eerst vragen, ziek, vrij, tochten en de rugzakladder.
-- Alles over dit onderwerp: [planning.md](planning.md) (60 besluiten die gelden, 13 deels ingehaald, 28 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [planning.md](planning.md) (61 besluiten die gelden, 13 deels ingehaald, 28 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Week
 
 - Werkbriefje: [werkbriefjes/week.md](../werkbriefjes/week.md)
 - [architectuur/week.md](../architectuur/week.md): Het lange verhaal bij de Week-tab: waarschuwingen, slepen en inhalen.
-- Alles over dit onderwerp: [week.md](week.md) (27 besluiten die gelden, 8 deels ingehaald, 5 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [week.md](week.md) (28 besluiten die gelden, 8 deels ingehaald, 5 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Lichaam en herstel
 
@@ -66,7 +66,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/historie-en-logs.md](../werkbriefjes/historie-en-logs.md)
 - [architectuur/historie-en-logs.md](../architectuur/historie-en-logs.md): De volledige regel dat historie nooit herschreven wordt, met de uitzonderingen op verzoek van de eigenaar en het append-only patroon.
-- Alles over dit onderwerp: [historie-en-logs.md](historie-en-logs.md) (24 besluiten die gelden, 6 deels ingehaald, 3 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [historie-en-logs.md](historie-en-logs.md) (25 besluiten die gelden, 6 deels ingehaald, 3 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Bediening en beweging
 
@@ -81,6 +81,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 - Geen werkbriefje. Hoe er aan ASCEND gewerkt wordt: rollen, poorten, kosten en het open werk.
 - [backlog.md](../backlog.md): Het open werk van ASCEND: de Inbox met wat de eigenaar meldt en de bouwrij, bijgehouden door de coördinator.
 - [beslissingen/_sjabloon.md](../beslissingen/_sjabloon.md): Het sjabloon voor een nieuw besluit: besluit, reden, alternatieven, bron, vervangt en terugdraaien.
+- [onderhoud/2026-11-16-onderhoudsronde.md](../onderhoud/2026-11-16-onderhoudsronde.md): Onderhoudsronde 16 november 2026: grootte, dubbele en dode code, top tien om op te ruimen, ochtenden en IJkset.
 - [werkbriefjes/README.md](../werkbriefjes/README.md): Wat een werkbriefje is, de vaste vorm en hoe het wordt bijgehouden.
 - Alles over dit onderwerp: [werkwijze.md](werkwijze.md) (4 besluiten die gelden, 0 deels ingehaald, 15 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
 

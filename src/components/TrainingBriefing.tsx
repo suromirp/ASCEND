@@ -27,8 +27,8 @@ import { drinkLine } from '../engine/eveningBefore';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { modalitySport } from '../data/modalities';
-import { climbStretch, failureLine, MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes, proposalTitle } from '../engine/routePlanner';
-import { BRIEFING_MAP_HEIGHT, briefingRoutes, footerRoom, loopLines, otherLoopLine, otherLoopWarn, routeOutcomeLine } from '../engine/routeSheet';
+import { climbStretch, failureLine, MIN_ASCENT_TARGET_M, proposalFacts, proposalNotes } from '../engine/routePlanner';
+import { BRIEFING_MAP_HEIGHT, briefingRoutes, footerRoom, loopLines, loopTitle, otherLoopLine, otherLoopWarn, routeOutcomeLine } from '../engine/routeSheet';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import type { RouteSendOutcome } from '../engine/routeSend';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
@@ -543,7 +543,7 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
         <div className="flex min-h-[44px] items-start justify-between gap-3">
           <div className="min-w-0">
             <Eyebrow tone="var(--color-ink-dim)">{STYLE_NAME[picked]}</Eyebrow>
-            <p className="text-sm tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalTitle(pickedOutcome.proposal)} · {proposalFacts(pickedOutcome.proposal, target)}</p>
+            <p className="text-sm tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{loopTitle(pickedOutcome.proposal, target, proposalNotes(pickedOutcome.proposal, target))} · {proposalFacts(pickedOutcome.proposal, target)}</p>
             {loopLines(pickedOutcome.proposal, target, proposalNotes(pickedOutcome.proposal, target)).warn.map((note) => (
               <p key={note} className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{note}</p>
             ))}

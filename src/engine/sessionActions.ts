@@ -101,6 +101,12 @@ function sheetActions({ date, today, skipped, canComeBack, kind, workoutWaiting,
   return { main: 'move', rows: [...swap, 'preview', 'doToday', 'skip'] };
 }
 
+// Zolang je ziek bent (engine/skipReason.ts#quietWhileIll): geen mint hoofdknop. De keuze die de hoofdknop was, staat
+// bovenaan de stille rijen; de volgorde blijft die van sessionSheetActions.
+export function quietSheetActions(actions: SheetActions): { main?: SheetAction; rows: SheetAction[] } {
+  return { rows: [actions.main, ...actions.rows.filter((a) => a !== actions.main)] };
+}
+
 // The line over a training screen opened ahead ("Hoe je het doet"): the day and
 // week of the training itself, never today's. "Donderdag 29 oktober · Week 6 van
 // 12, opbouwfase"; without a program (or outside it) only the day.

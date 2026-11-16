@@ -285,8 +285,8 @@ function daylightPhrase(d: Daylight, short = false): string {
   return `licht tot ${clockNL(d.sunset)}`;
 }
 
-// From this wind (km/u, highest hour) the line names the wind. Own choice, under the 25 of the
-// clothing advice (which stays); a bit of wind is not worth a word.
+// From this wind (km/u, highest hour) the line names the wind. Own choice, under the 20 of the
+// clothing advice; a bit of wind is not worth a word.
 export const LINE_WIND_KMH = 15;
 
 // The start of the line: the temperature, with the felt temperature and a breeze under "harde wind".

@@ -3312,6 +3312,13 @@
    "kern": "Pathfinder op 12 november 2026 over verborgen pagina's en wat anders kan; opgevolgd in `docs/beslissingen/2026-11-14-verborgen-schermen.md`.",
    "stand": "achtergrond"
   },
+  "docs/onderhoud/2026-11-16-onderhoudsronde.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Onderhoudsronde 16 november 2026: grootte, dubbele en dode code, top tien om op te ruimen, ochtenden en IJkset.",
+   "stand": "geldt"
+  },
   "docs/onderhoud/reflectie-2026-11-01.md": {
    "onderwerpen": [
     "werkwijze"
@@ -4273,6 +4280,28 @@
     "koppelingen-en-data"
    ],
    "kern": "De routevoorstellen volgen de vraag: een tak in de aanloop telt niet als doodlopend stuk, Avontuurlijk kiest eerst een lus zonder tak (tot 15 procent afstandsafwijking), hoogte meer dan het dubbele van de vraag krijgt een amber regel zoals afstand, en een voorstel onder 70 procent van de afstand komt alleen als er niets beters is.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-16-back-up-kleiner.md": {
+   "onderwerpen": [
+    "historie-en-logs"
+   ],
+   "kern": "Back-up schema 6: dezelfde gegevens, kleiner opgeschreven; herhaalde uitleg van voorstellen één keer in proposalTexts met een verwijzing, één record per regel, weekcontroles blijven allemaal staan; IndexedDB verandert niet en schema 5 en ouder blijven te importeren.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-16-reden-op-het-blad.md": {
+   "onderwerpen": [
+    "week",
+    "planning"
+   ],
+   "kern": "Het blad van een overgeslagen of vervallen training zegt meteen onder de kop waarom (engine/skipReason.ts): het voorstel, jouw slot, de periode of de ene regel; bij ziekte Vervallen, ook in Week en op Vandaag (alleen weergave), Toch doen volgt dayRules (koorts niet, verkouden met zwaar eerst de vraag) en een overgeslagen rij heeft zolang je ziek bent geen mint hoofdknop; de notitie van de week noemt geen bereik in minuten meer.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-16-windjack-en-een-keer-heen-en-terug.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Het kledingadvies noemt een windjack vanaf 20 km/u in plaats van 25 (aanvulling bij het besluit van 13 november), en een Avontuurlijk-lus met een stuk heen en terug zegt dat één keer, in amber.",
    "stand": "geldt"
   }
  }

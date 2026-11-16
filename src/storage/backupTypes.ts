@@ -39,7 +39,10 @@ import type { AppSettings } from './database';
 
 // --- Backup envelope & versioned payload -----------------------------------
 
-export const CURRENT_BACKUP_SCHEMA_VERSION = 5;
+// 6 (I-63): the same payload (version 5), written smaller: texts that repeat in proposals as a reference to
+// `proposalTexts` (storage/migrationsCompact.ts) and one record per line (storage/backupFile.ts). An older app
+// says "werk de app bij" instead of reading a reference as a text.
+export const CURRENT_BACKUP_SCHEMA_VERSION = 6;
 
 interface AscendBackupPayloadV1 {
   version: 1;

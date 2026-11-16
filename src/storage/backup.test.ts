@@ -6,6 +6,7 @@ import { buildImportPreview } from './backupPreview';
 import { createImportPlan, createPreImportSnapshot, applyImportPlan, listSnapshots, restoreSnapshot } from './backupApply';
 import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import { backupErrorText } from './backupMessage';
+import { CURRENT_BACKUP_SCHEMA_VERSION } from './backupTypes';
 import type { SessionLog, PlannedSession } from '../models/training';
 import { migrateInfluences, migrateLegEaseDays, migrateNightJudgments } from './migrations';
 import type { InfluenceEntry } from '../models/influence';
@@ -845,7 +846,7 @@ describe('vrije periodes in een back-up', () => {
     await SettingsRepo.set({ leavePeriods: periods });
     await PlannedSessionsRepo.put({ id: 'walk', templateId: 'tpl_mountain_hike', scheduledDate: '2027-05-15', weekStartDate: '2027-05-10', status: 'planned', order: 0, leave: { periodId: 'leave_b', role: 'placed', from: '2027-05-15' } });
     const envelope = await buildBackupEnvelope();
-    expect(envelope.backupSchemaVersion).toBe(5);
+    expect(envelope.backupSchemaVersion).toBe(CURRENT_BACKUP_SCHEMA_VERSION);
     expect((envelope.payload.settings as { leavePeriods?: LeavePeriod[] }).leavePeriods).toEqual(periods);
 
     await wipeAllData();
@@ -900,8 +901,8 @@ describe('vrije periodes in een back-up', () => {
     expect(backup.skippedInvalid).toBe(1);
   });
 
-  it('a file from a newer app than schema 5 says to update', () => {
-    expect(() => normalizeBackupToCurrentModel({ backupSchemaVersion: 6, createdAt: '2027-01-01T00:00:00.000Z', payload: { version: 6 } })).toThrow(/nieuwere versie/);
+  it('a file from a newer app than this one says to update', () => {
+    expect(() => normalizeBackupToCurrentModel({ backupSchemaVersion: CURRENT_BACKUP_SCHEMA_VERSION + 1, createdAt: '2027-01-01T00:00:00.000Z', payload: { version: 6 } })).toThrow(/nieuwere versie/);
   });
 });
 

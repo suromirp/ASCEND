@@ -336,9 +336,9 @@ describe('opschonen bij het inlezen', () => {
 });
 
 describe('export en import', () => {
-  it('de versies bewegen niet: schema 2 en back-up 5', () => {
+  it('de versies bewegen niet door plekken: schema 2 en back-up 6 (6 sinds I-63)', () => {
     expect(CURRENT_SCHEMA_VERSION).toBe(2);
-    expect(CURRENT_BACKUP_SCHEMA_VERSION).toBe(5);
+    expect(CURRENT_BACKUP_SCHEMA_VERSION).toBe(6);
   });
 
   it('plekken en routes gaan mee in de back-up en komen terug op een leeg toestel', async () => {
@@ -346,7 +346,7 @@ describe('export en import', () => {
     await savePlace(hill);
     await saveRoute(loop);
     const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
-    expect(envelope.backupSchemaVersion).toBe(5);
+    expect(envelope.backupSchemaVersion).toBe(CURRENT_BACKUP_SCHEMA_VERSION);
     expect(envelope.payload.places).toHaveLength(2);
     expect(envelope.payload.savedRoutes).toEqual([loop]);
     await wipeAllData();

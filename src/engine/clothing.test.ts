@@ -109,10 +109,10 @@ describe('de vaste volgorde en de afvalregel', () => {
 });
 
 describe('wind, regen en zon', () => {
-  it('geeft een dun windjack bij wind van 25 of vlagen van 40 en T onder 16', () => {
-    expect(text({ kind: 'easy_run', feelsC: 3, windKmh: 25 })).toContain('windjack');
+  it('geeft een dun windjack bij wind van 20 of vlagen van 40 en T onder 16', () => {
+    expect(text({ kind: 'easy_run', feelsC: 3, windKmh: 20 })).toContain('windjack');
     expect(text({ kind: 'easy_run', feelsC: 3, gustKmh: 40 })).toContain('windjack');
-    expect(text({ kind: 'easy_run', feelsC: 3, windKmh: 24, gustKmh: 39 })).not.toContain('windjack');
+    expect(text({ kind: 'easy_run', feelsC: 3, windKmh: 19, gustKmh: 39 })).not.toContain('windjack');
   });
 
   it('laat het windjack weg bij intervallen met T boven 8', () => {

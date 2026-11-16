@@ -7,7 +7,7 @@ import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { RouteFn, RoutePoint, RouteProposal, RouteTarget } from '../models/route';
 import { approachLength, deadEnds, lineLength, loopDeadEnds, metersBetween, offsetPoint } from './routeGeometry';
 import { ASCENT_OVER_FACTOR, FAR_OFF, FLAT_ASCENT_NOTE_M, SPUR_FREE_MARGIN, ascentOverLine, deadEndLine, failureLine, proposalNotes, proposalTitle, proposeAdventure, proposeRoutes } from './routePlanner';
-import { loopLines, otherLoopWarn } from './routeSheet';
+import { loopLines, loopTitle, otherLoopLine, otherLoopWarn } from './routeSheet';
 import { walkPlanTarget } from './walkPlan';
 
 const START: RoutePoint = { lat: 52.1, lon: 5.9 };
@@ -147,6 +147,55 @@ describe('Avontuurlijk: eerst een lus zonder tak, ook als de afstand tot 15 proc
     expect(deadEndLine({ ...p, deadEnds: 1 })).toBe('Deze lus heeft een stuk heen en terug.');
     expect(deadEndLine({ ...p, deadEnds: 2 })).toBe('Deze lus heeft twee stukken heen en terug.');
     expect(deadEndLine({ ...p, style: 'simple', deadEnds: 1 })).toBeUndefined();
+  });
+});
+
+// Eén keer zeggen (I-81): het stuk heen en terug staat in de amberregel; titel, uitleg en andere lus herhalen het niet.
+describe('een stuk heen en terug wordt één keer gezegd', () => {
+  const base: RouteProposal = { style: 'adventure', source: 'brouter', points: [], distanceM: 5000, ascentM: 0, repeatedShare: 0.3 };
+  const target: RouteTarget = { distanceKm: 5, ascentM: 0 };
+  const twice = 'Een deel loop je twee keer.';
+
+  it('zonder stuk (0): titel, geen amberregel, en twee keer lopen blijft', () => {
+    expect(proposalTitle(base)).toBe('Eén lus');
+    expect(deadEndLine(base)).toBeUndefined();
+    expect(proposalNotes(base, target)).toContain(twice);
+  });
+
+  it.each([[1, 'een stuk'], [2, 'twee stukken']])('Avontuurlijk met %i: amberregel ja, titel en twee keer lopen nee', (n, words) => {
+    const p = { ...base, deadEnds: n };
+    const notes = proposalNotes(p, target);
+    const line = `Deze lus heeft ${words} heen en terug.`;
+    expect(loopLines(p, target, notes).warn).toContain(line);
+    expect(notes).not.toContain(twice);
+    expect(loopTitle(p, target, notes)).toBe('Lus');
+    expect(loopTitle({ ...p, hills: 1 }, target, notes)).toBe('Lus langs een helling');
+    expect(loopTitle({ ...p, hills: 2 }, target, notes)).toBe('Lus langs 2 hellingen');
+  });
+
+  it('zonder amberregel in beeld blijft de titel het stuk noemen', () => {
+    const p = { ...base, deadEnds: 2 };
+    expect(proposalTitle(p)).toBe('Lus met twee stukken heen en terug');
+    expect(proposalTitle({ ...p, deadEnds: 1 })).toBe('Lus met een stuk heen en terug');
+  });
+
+  it('Simpel houdt zijn titel, zonder amberregel', () => {
+    const p: RouteProposal = { ...base, style: 'simple', deadEnds: 2, repeatedShare: 1 };
+    expect(loopTitle(p, target, proposalNotes(p, target))).toBe('Heen en terug over 2 takken'.replace('2', 'twee'));
+    expect(deadEndLine(p)).toBeUndefined();
+  });
+
+  it('andere lus: de regel noemt de stukken niet als de amberregel ze noemt, anders wel', () => {
+    const p = { ...base, deadEnds: 2 };
+    expect(otherLoopWarn(p, target)).toBe('Deze lus heeft twee stukken heen en terug.');
+    expect(otherLoopLine('Avontuurlijk', p, target)).toBe('Avontuurlijk, lus: 5 km · vrijwel vlak');
+    // Een andere waarschuwing gaat voor (te veel hoogtemeters): dan is de amberregel niet het stuk, en de titel houdt het.
+    const high = { ...p, ascentM: 400 };
+    const flat: RouteTarget = { distanceKm: 5, ascentM: 0, flat: true };
+    expect(otherLoopWarn(high, flat)).not.toBe('Deze lus heeft twee stukken heen en terug.');
+    expect(otherLoopLine('Avontuurlijk', high, flat)).toContain('met twee stukken heen en terug');
+    // Zonder stuk verandert er niets.
+    expect(otherLoopLine('Avontuurlijk', base, target)).toContain('één lus');
   });
 });
 

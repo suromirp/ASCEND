@@ -15,7 +15,7 @@ import type { SessionTemplate } from '../models/training';
 import type { RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { targetText } from '../engine/routeTarget';
 import { walkPlanText } from '../engine/walkPlan';
-import { MIN_ASCENT_TARGET_M, climbStretch, failureLine, proposalFacts, proposalNotes, proposalTitle, type PlanOutcome } from '../engine/routePlanner';
+import { MIN_ASCENT_TARGET_M, climbStretch, failureLine, proposalFacts, proposalNotes, type PlanOutcome } from '../engine/routePlanner';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import { SEND_LABEL, type RouteSendOutcome } from '../engine/routeSend';
 import { RouteSearching } from './RouteSearching';
@@ -26,7 +26,7 @@ import { OSM_COPYRIGHT } from '../integrations/overpass';
 import { TextButton } from './TextButton';
 import { RouteMap } from './RouteMap';
 import type { MapRoute } from '../engine/routeMap';
-import { NO_PLACE_LINE, OFFLINE_LINE, ROUTE_MAP_HEIGHT, TIMEOUT_LINE, loopLines, pickTransition, routeOutcomeLine, type RouteSheetPart } from '../engine/routeSheet';
+import { NO_PLACE_LINE, OFFLINE_LINE, ROUTE_MAP_HEIGHT, TIMEOUT_LINE, loopLines, loopTitle, pickTransition, routeOutcomeLine, type RouteSheetPart } from '../engine/routeSheet';
 import { useMotionMode } from './motion';
 import { Icon } from './icons';
 import { Chip, Eyebrow, PrimaryButton } from './ui';
@@ -159,7 +159,7 @@ export function LoopRow({ style, outcome, picked, onMap, target, motion, onChoos
     >
       <span className="min-w-0 flex-1">
         <span className="block"><Eyebrow as="span" tone="var(--color-ink-dim)">{onMap ? `${STYLE_NAME[style]} · ${picked ? 'doorgetrokken' : 'gestreept'}` : STYLE_NAME[style]}</Eyebrow></span>
-        <span className="block text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{proposalTitle(outcome.proposal)}</span>
+        <span className="block text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{loopTitle(outcome.proposal, target, proposalNotes(outcome.proposal, target))}</span>
         <span className="block text-sm tabular-nums leading-snug" style={dim}>{proposalFacts(outcome.proposal, target)}</span>
         {loopLines(outcome.proposal, target, proposalNotes(outcome.proposal, target)).warn.map((note) => (
           <span key={note} className="block text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{note}</span>

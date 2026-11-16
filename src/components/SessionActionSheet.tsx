@@ -53,7 +53,9 @@ import { isLegHeavyTemplate } from '../engine/scheduler';
 import { REST_DAY_COPY } from '../data/restDayCopy';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
 import type { SwapOption } from '../engine/weekSwap';
-import { macroFactorLine, pendingMacroFactorWorkout, sessionSheetActions, strengthDoneDuration, type DoneKind, type MacroFactorSource, type SheetAction } from '../engine/sessionActions';
+import { macroFactorLine, pendingMacroFactorWorkout, quietSheetActions, sessionSheetActions, strengthDoneDuration, type DoneKind, type MacroFactorSource, type SheetAction } from '../engine/sessionActions';
+import { backOnPlanCheck, quietWhileIll } from '../engine/skipReason';
+import { useSkipReason } from './useSkipReason';
 import { workoutToDraft } from '../engine/macrofactorLink';
 import { allProfiles } from '../engine/machineWeights';
 import { getMacroFactorState, getMapping } from '../storage/macrofactor';
@@ -156,6 +158,7 @@ export function SessionActionSheet({
   // intervals and long hikes deliberately don't: their point is time and
   // climbing on foot.
   const { settings, sessionLogs, logSession, reportStorageError, refresh } = useAppData();
+  const reasonOf = useSkipReason();
   const restMode = settings.restDayMode ?? 'rest';
   const bikeOption = isSportEnabled('cycling', settings.enabledSports) && templateSport(template) !== 'cycling'
     && (getModalities(template.id) ?? []).some((m) => isCyclingModality(m.key));
@@ -178,7 +181,15 @@ export function SessionActionSheet({
   const navigate = useNavigate();
   const today = todayISO();
   const skipped = session.status === 'skipped';
-  const canComeBack = skipped && !!onBackOnPlan && session.scheduledDate >= today;
+  // Waarom hij overgeslagen of vervallen is (engine/skipReason.ts): één regel onder de kop, nooit achter een tik. De oude
+  // rij van een inhaal zegt al waar hij nu staat.
+  const reason = caughtUpOn || completedLog ? undefined : reasonOf(session, template);
+  // Toch doen zolang je ziek bent: de ene regel (engine/dayRules.ts). Koorts of buikgriep: niet; verkouden of opbouwen
+  // met iets zwaars: eerst de vraag; en geen mint hoofdknop zolang je ziek bent.
+  const backCheck = skipped ? backOnPlanCheck({ session, template, today, illness: settings.illnessEpisodes }) : { kind: 'ok' as const };
+  const [askingBack, setAskingBack] = useState(false);
+  const canComeBack = skipped && !!onBackOnPlan && session.scheduledDate >= today && backCheck.kind !== 'refuse';
+  const quiet = skipped && quietWhileIll({ reason, check: backCheck, today, illness: settings.illnessEpisodes });
   const kind: DoneKind = quickComplete ? 'quick' : template.type === 'strength' ? 'inApp' : 'log';
 
   // Strength kept in MacroFactor: the workouts of the last file read. A workout
@@ -208,7 +219,8 @@ export function SessionActionSheet({
   // Spoor 1 (docs/visie/Ontwerp trainingsscherm minimaal.md): voor een training te voet bestaat Hoe je
   // het doet niet meer, ook niet op een dag die voorbij is; die rij opent de Briefing. De keuzes en hun
   // volgorde blijven die van engine/sessionActions.ts.
-  const actions = { main: entryAction(planned.main, template), rows: planned.rows.map((a) => entryAction(a, template)) };
+  const entered = { main: entryAction(planned.main, template), rows: planned.rows.map((a) => entryAction(a, template)) };
+  const actions: { main?: SheetAction; rows: SheetAction[] } = quiet ? quietSheetActions(entered) : entered;
   const duration = strengthDoneDuration({ scheduledDate: doneToday ? today : session.scheduledDate }, template, fullDuration, macroFactor, sessionLogs);
 
   const info = guide ? <InfoButton onClick={() => setShowGuide(true)} label="Waarom deze training" /> : undefined;
@@ -295,7 +307,7 @@ export function SessionActionSheet({
             suggestions={suggestions}
             onPick={(sug) => onPickSuggestion?.(sug)}
             onPickDate={onMove}
-            onSameDay={canComeBack ? onBackOnPlan : undefined}
+            onSameDay={canComeBack && backCheck.kind === 'ok' ? onBackOnPlan : undefined}
             catchUp={catchUp}
           />
         </div>
@@ -335,7 +347,9 @@ export function SessionActionSheet({
       case 'preview': return setShowPreview(true);
       case 'briefing': return setShowBriefing(true);
       case 'skip': return onSkip();
-      case 'backOnPlan': return onBackOnPlan?.();
+      case 'backOnPlan':
+        if (backCheck.kind === 'ask' && !askingBack) return setAskingBack(true);
+        return onBackOnPlan?.();
       case 'doToday':
         if (kind === 'quick') { setDoneToday(true); setStep('done'); }
         // Een training te voet: meteen het invullen (engine/briefing.ts#doTodayOpens), niet het oude scherm.
@@ -383,13 +397,14 @@ export function SessionActionSheet({
   // De rij Je horloge staat direct na Hoe je het doet, of bovenaan als die er niet is.
   const afterRow = actions.rows.findIndex((a) => a === 'start' || a === 'preview' || a === 'briefing');
   const watchRow = showWatchRow ? <SheetRow key="horloge" title={WATCH_SHEET_TEXT.row} sub={watchView.rowSub} sheetFrom onClick={() => setShowWatch(true)} /> : null;
-  const facts = [skipped ? 'Overgeslagen' : null, sessionKindLabel(template), `${minutes} min`, note].filter(Boolean).join(' · ');
+  const facts = [reason?.word ?? (skipped ? 'Overgeslagen' : null), sessionKindLabel(template), `${minutes} min`, note].filter(Boolean).join(' · ');
   // Short and minimum versions (when switched on): one strip that the gold
   // button and "Training starten" both follow.
   const showVariants = due && !skipped && kind !== 'quick' && variants.length > 1;
 
   return (
     <SheetFrame closing={closing} sheetRef={sheetRef} onClose={requestClose} label={template.name} scrollKey="main" head={<SheetHeader eyebrow={eyebrow} title={template.name} info={info} facts={facts} onClose={requestClose} />}>
+      {reason && <p className="mt-2 text-[15px] leading-relaxed" style={{ color: 'var(--color-ink)' }} data-skip-reason={reason.kind}>{reason.line}</p>}
       {guideSheet}
       {showWatch && watchView.hasWatchSheet && (
         <WatchSheet
@@ -468,7 +483,15 @@ export function SessionActionSheet({
           <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             Deze training is {caughtUpOn}. Daar staat hij nu in je week.
           </p>
+        ) : askingBack && backCheck.kind === 'ask' ? (
+          // Eerst de vraag, zoals bij slepen (engine/dayRules.ts, waarschuw): hier laten is de standaard.
+          <div className="flex flex-col gap-3">
+            <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink)' }}>{backCheck.line}</p>
+            <PrimaryButton onClick={() => setAskingBack(false)}>Liever niet</PrimaryButton>
+            <SecondaryButton onClick={run('backOnPlan')}>Toch doen</SecondaryButton>
+          </div>
         ) : (<>
+        {actions.main && (
         <div>
           <PrimaryButton onClick={run(actions.main)} disabled={saving}>{label[actions.main]}</PrimaryButton>
           {saveNote && actions.main === 'saveWorkout' && (
@@ -478,6 +501,7 @@ export function SessionActionSheet({
             <p className="mt-2 text-center text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>{SETS_FROM_MACROFACTOR}</p>
           )}
         </div>
+        )}
         {(actions.rows.length > 0 || watchRow) && (
           <SheetRows label="Andere keuzes">
             {afterRow < 0 && watchRow}

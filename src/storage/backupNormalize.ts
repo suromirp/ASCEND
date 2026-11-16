@@ -11,7 +11,7 @@ import type { AppSettings } from './database';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigration';
-import { migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateLogZone2Pieces, migrateActivityStreams, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSetAsked, migrateLogSetSkill, migrateLogSetRow, migrateLogSourceSync, migrateLogTrim, migrateTrainingGoals, migratePlanChangeProposal, migrateMornings, migrateSkillGoals, migratePlaces, migrateSavedRoutes, routesOfPlaces, type AscendExport } from './migrations';
+import { migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateLogZone2Pieces, migrateActivityStreams, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSetAsked, migrateLogSetSkill, migrateLogSetRow, migrateLogSourceSync, migrateLogTrim, migrateTrainingGoals, migratePlanChangeProposal, migrateMornings, migrateSkillGoals, migratePlaces, migrateSavedRoutes, routesOfPlaces, unpackProposalTexts, type AscendExport } from './migrations';
 import { sanitizeRoutePlan, sanitizeSoloPlan } from '../engine/routePlan';
 import { CURRENT_BACKUP_SCHEMA_VERSION, type NormalizedBackupData } from './backupTypes';
 import { BackupMessageError } from './backupMessage';
@@ -193,7 +193,9 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
         `Deze back-up komt van een nieuwere versie van ASCEND (schema v${obj.backupSchemaVersion}). Werk de app bij voordat je hem importeert.`,
       );
     }
-    const payload = obj.payload;
+    // Schema 6 (I-63): the texts of the proposals come back from the table in the file
+    // (storage/migrationsCompact.ts). An older file has no table and goes through unchanged.
+    const payload = obj.backupSchemaVersion >= 6 ? unpackProposalTexts(obj.payload) : obj.payload;
     const createdAt = typeof obj.createdAt === 'string' ? obj.createdAt : new Date().toISOString();
     const version = payload.version;
     if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5) {
