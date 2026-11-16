@@ -54,7 +54,7 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Net live
 
-### 16 november 06:40
+### 16 november 05:10
 - Losse training, Wandelen: de standaard is nu een gewone Wandeling. Ze heet Wandelen, krijgt Gedaan en telt niet als training; de Herstelwandeling blijft kiesbaar en blijft Herstel heten.
 
 ### 16 november 02:45
