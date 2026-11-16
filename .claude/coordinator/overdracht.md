@@ -1,6 +1,6 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 16 november 2026, 03:50 Portugese tijd, door coördinator session_01LnDpSncLf13Bm9hk3D5VBF (wissel op de vaste tijd). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
+Bijgewerkt: 16 november 2026, 03:50 Portugese tijd, door coördinator session_01LnDpSncLf13Bm9hk3D5VBF (wissel op de vaste tijd). Nieuwe coördinator: session_01LnDpSjgdHhfcJwGq2aAmrh "Coördinator ASCEND 16 november". Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
 
 ## Stand 03:50 (kort)
 
