@@ -10,7 +10,7 @@
 // Alleen Annuleren gooit een ingevuld concept weg; het kruis, de achtergrond, wegslepen, de terugknop
 // en herladen laten het staan (een leeg concept gaat altijd weg). De terugknop gaat in stap 2 eerst terug naar stap 1 (laag voor laag).
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, type ReactNode } from 'react';
 import type { Program } from '../models/program';
 import type { SessionTemplate, SessionVariant } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
@@ -38,6 +38,7 @@ export function HowDidItGoSheet({
   initialVariant = 'full',
   onClose,
   onSaved,
+  switcher,
 }: {
   template: SessionTemplate;
   plannedSessionId?: string;
@@ -47,6 +48,8 @@ export function HowDidItGoSheet({
   onClose: () => void;
   // Na Opslaan, voor onClose: het blad lag over de Briefing, die gaat dan ook dicht.
   onSaved?: () => void;
+  // Losse training: Welke training precies? (AdHocLogSheet.tsx#TrainingSwitch), bovenaan stap 1.
+  switcher?: ReactNode;
 }) {
   const { logSession, reportStorageError, settings, sessionLogs } = useAppData();
   const form = useLogForm({ template, plannedSessionId, scheduledDate, program, initialVariant, startAtForm: true });
@@ -146,6 +149,7 @@ export function HowDidItGoSheet({
   return (
     <SheetFrame closing={closing} sheetRef={sheetRef} onClose={close} label={`${template.name}, ${HOW_TEXT.title.toLowerCase()}`} scrollKey="main" foot={footer}
       head={<SheetHeader eyebrow={HOW_TEXT.title} title={template.name} facts={dayLine} onClose={close} />}>
+      {switcher && foot !== 'already' && <div className="mt-2">{switcher}</div>}
       {foot !== 'already' && <StepOne form={form} template={template} plannedSessionId={plannedSessionId} scheduledDate={scheduledDate} onDuration={() => setConfirmLong(false)} onMore={() => setStep(2)} />}
     </SheetFrame>
   );

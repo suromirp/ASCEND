@@ -25,7 +25,7 @@ Vrij
 Vr 30 · niets gepland
 Vrij
 Za 31 · niets gepland
-[knop: Losse training toevoegen]
+[knop: Training loggen]
 [knop: Testloop 5 kmZo 1·45 min]
 [knop: Verplaats of ruil Testloop 5 km, nu op zondag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
 [knop: Lange duurloopZo 1·Zone 250 min· zelfde dag als je testloop]

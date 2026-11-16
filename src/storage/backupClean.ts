@@ -362,6 +362,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.routeStyle;
     skipped.n++;
   }
+  // Afstand van een wandeling: 3, 5, 8 of 12 km; iets anders valt weg (het advies geldt dan).
+  if ('walkPlanKm' in s && ![3, 5, 8, 12].includes(s.walkPlanKm as number)) {
+    delete s.walkPlanKm;
+    skipped.n++;
+  }
   // Startpunt van je lus: Waar je nu bent, Vast punt ('exact') of Ongeveer. Iets anders valt weg, en
   // dan geldt de standaard (Waar je nu bent). Het punt zelf staat nooit in een back-up.
   if ('routeStart' in s && s.routeStart !== 'here' && s.routeStart !== 'approx' && s.routeStart !== 'exact') {

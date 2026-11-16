@@ -362,6 +362,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('route-soort', 'Welke lus eerst', 'vandaag', 'routeStyle', 'adventure', 'routeSoort'),
   choice('route-start', 'Startpunt van je lus', 'vandaag', 'routeStart', 'here', 'routeStart'),
   choice('route-zoeken', 'Lus zoeken', 'vandaag', 'routeSearch', 'open', 'routeZoeken'),
+  choice('wandel-afstand', 'Afstand van een wandeling', 'vandaag', 'walkPlanKm', 5, 'wandelAfstand'),
   flag('route-grote-wegen', 'Grote wegen mijden', 'vandaag', 'routeAvoidBigRoads'),
   flag('plek-onthouden', 'Gekozen plek onthouden', 'vandaag', 'rememberStartPlace'),
   {

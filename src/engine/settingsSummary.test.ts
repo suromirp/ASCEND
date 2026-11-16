@@ -851,6 +851,11 @@ describe('rowSummary: route voorstellen', () => {
     expect(rowSummary('bundel-weer', withSettings({ routeAvoidBigRoads: false })).value).toBe('13 van 14 aan');
   });
 
+  it('Afstand van een wandeling: het advies 5 km, de keuze in de rij', () => {
+    expect(rowSummary('wandel-afstand', facts()).value).toBe('5 km');
+    expect(rowSummary('wandel-afstand', withSettings({ walkPlanKm: 12 })).value).toBe('12 km');
+  });
+
   it('volgt de keuze, en een onbekende waarde is het advies', () => {
     expect(rowSummary('route-soort', withSettings({ routeStyle: 'simple' })).value).toBe('Simpel');
     expect(rowSummary('route-soort', withSettings({ routeStyle: 'onzin' })).value).toBe('Avontuurlijk');

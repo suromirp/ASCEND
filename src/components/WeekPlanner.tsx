@@ -438,7 +438,7 @@ export function WeekPlanner({
               <div className="flex min-h-[40px] items-center gap-3 px-3 py-2" style={isToday ? todayStyle : undefined}>
                 <span className="min-w-0 flex-1 pl-12 text-[13px] leading-4 tabular-nums" style={{ color: isToday ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>{dayLabel(date)} · {quietWord}</span>
                 {isToday && onAddFree && (
-                  <button type="button" onClick={onAddFree} aria-label="Losse training toevoegen" className="-my-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-ink-dim)' }}>
+                  <button type="button" onClick={onAddFree} aria-label="Training loggen" className="-my-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-ink-dim)' }}>
                     <Icon name="plus" size={20} />
                   </button>
                 )}
@@ -460,7 +460,7 @@ export function WeekPlanner({
                   <span className="block text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{dayLabel(date)} · {empty.line}</span>
                 </span>
                 {isToday && onAddFree && (
-                  <button type="button" onClick={onAddFree} aria-label="Losse training toevoegen" className="-my-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-ink-dim)' }}>
+                  <button type="button" onClick={onAddFree} aria-label="Training loggen" className="-my-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-ink-dim)' }}>
                     <Icon name="plus" size={20} />
                   </button>
                 )}

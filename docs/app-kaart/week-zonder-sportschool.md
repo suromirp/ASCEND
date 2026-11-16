@@ -21,7 +21,7 @@ Adres: `#/week`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 [knop: Bovenlichaam BVr 30·75 min· overgeslagenOvergeslagen]
 Rustdag deze week
 Za 31 · je rustdag op maandag is bezet
-[knop: Losse training toevoegen]
+[knop: Training loggen]
 [knop: Lange duurloopZo 1·Zone 250 min· zware benen]
 [knop: Verplaats of ruil Lange duurloop, nu op zondag, zware benen. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
 

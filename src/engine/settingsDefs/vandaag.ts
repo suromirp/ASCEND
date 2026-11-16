@@ -180,6 +180,18 @@ export const VANDAAG_CHOICES = {
       { value: 'simple', label: 'Simpel', note: 'Dezelfde helling op en af tot de hoogtemeters er zijn', short: 'Simpel' },
     ],
   }),
+  wandelAfstand: def({
+    group: 'Vandaag en meldingen',
+    title: 'Afstand van een wandeling',
+    line: 'Waar Wandeling plannen mee begint. Je kiest er daar altijd een andere.',
+    advice: 5 as 3 | 5 | 8 | 12,
+    options: [
+      { value: 3, label: '3 km', note: 'Ongeveer 45 minuten op de wandelnorm', short: '3 km' },
+      { value: 5, label: '5 km', note: 'Ongeveer 1 uur 15 op de wandelnorm', short: '5 km' },
+      { value: 8, label: '8 km', note: 'Ongeveer 2 uur op de wandelnorm', short: '8 km' },
+      { value: 12, label: '12 km', note: 'Ongeveer 3 uur op de wandelnorm', short: '12 km' },
+    ],
+  }),
   routeStart: def({
     group: 'Vandaag en meldingen',
     title: 'Startpunt van je lus',
@@ -673,6 +685,16 @@ export const VANDAAG: SettingDef[] = [
     help: true,
     helpKey: 'routeZoeken',
     choice: { key: 'routeZoeken', def: VANDAAG_CHOICES.routeZoeken },
+    showWhen: [B.route],
+  },
+  {
+    id: 'wandel-afstand',
+    page: 'vandaag',
+    place: { in: 'bundel-weer' },
+    title: 'Afstand van een wandeling',
+    note: 'De afstand waarmee Wandeling plannen op Vandaag begint: 3, 5, 8 of 12 km. Het advies is 5 km. Wat je daar kiest wordt niet onthouden.',
+    keywords: ['wandeling', 'wandelen', 'afstand', 'km', 'route', 'lus', 'plannen', 'ouders', 'samen'],
+    choice: { key: 'wandelAfstand', def: VANDAAG_CHOICES.wandelAfstand },
     showWhen: [B.route],
   },
   {

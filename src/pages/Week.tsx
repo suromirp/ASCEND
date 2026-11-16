@@ -42,7 +42,7 @@ import { useBriefingReturn } from '../utils/briefingReturn';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { Card, Eyebrow, Num } from '../components/ui';
-import { AdHocLogSheet } from '../components/AdHocLogSheet';
+import { AdHocLogFlow } from '../components/AdHocLogSheet';
 import { LogDetailSheet } from '../components/LogDetailSheet';
 import { WeekLoadRow } from '../components/WeekLoadCards';
 import type { ScheduleProposal } from '../engine/scheduler';
@@ -96,7 +96,6 @@ export function WeekPage() {
   const [reviewOpen, setReviewOpen] = useState(false);
   // De plus op een vrije dag van vandaag: dezelfde "Losse training" als op Vandaag.
   const [adHocOpen, setAdHocOpen] = useState(false);
-  const [adHocTemplate, setAdHocTemplate] = useState<SessionTemplate | null>(null);
 
   // What is wrong in this week, for the card and the lines in the rows (engine/weekFixProposal.ts).
   const notice = useMemo(() => weekNoticeFor(weekStart), [weekNoticeFor, weekStart]);
@@ -237,7 +236,7 @@ export function WeekPage() {
   }
 
   // Slepen (components/useWeekDrag.ts): niet in het jaaroverzicht en niet terwijl er een blad of scherm open is.
-  const dragOn = settings.dragWeek !== false && !monthView && !selected && !openLog && !logging && !pendingProposal && !adHocOpen && !adHocTemplate && !reviewOpen;
+  const dragOn = settings.dragWeek !== false && !monthView && !selected && !openLog && !logging && !pendingProposal && !adHocOpen && !reviewOpen;
   // De grepen blijven staan terwijl een blad open is of sluit: alleen het oppakken is dan uit
   // (`enabled`). Zo wisselen ze niet kort naar lege cirkels bij het sluiten (components/weekDragShown.ts).
   const dragHandles = dragHandlesShown({ setting: settings.dragWeek !== false, monthView });
@@ -380,9 +379,8 @@ export function WeekPage() {
       )}
 
       {adHocOpen && (
-        <AdHocLogSheet templates={templates} onPick={(t) => { setAdHocOpen(false); setAdHocTemplate(t); }} onClose={() => setAdHocOpen(false)} />
+        <AdHocLogFlow templates={templates} program={program} date={todayISO()} onClose={() => setAdHocOpen(false)} />
       )}
-      {adHocTemplate && <ExerciseLogger template={adHocTemplate} scheduledDate={todayISO()} program={program} onClose={() => setAdHocTemplate(null)} />}
 
       {reviewOpen && review && <WeekReviewSheet review={review} onClose={() => setReviewOpen(false)} />}
 

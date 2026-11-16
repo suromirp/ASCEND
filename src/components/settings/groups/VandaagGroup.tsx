@@ -23,6 +23,7 @@ import { resolveRouteStyle } from '../../../engine/routeTarget';
 import { resolveRouteStart } from '../../../engine/routeStart';
 import { groundSettings, resolveMapGround } from '../../../engine/routeMap';
 import { resolveRouteSearch } from '../../../engine/routeSearchSetting';
+import { resolveWalkKm } from '../../../engine/walkPlan';
 import { RouteStartFooter } from './RouteStartFooter';
 import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
@@ -190,6 +191,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="route-start" title="Startpunt van je lus" facts={facts} onClick={() => setInner('route-start')} />
           <SummaryRow id="je-plekken" title="Je plekken" facts={facts} onClick={() => { close(); navigate(PLACES_ROUTE); }} />
           <SummaryRow id="route-zoeken" title="Lus zoeken" facts={facts} info="routeZoeken" onClick={() => setInner('route-zoeken')} />
+          <SummaryRow id="wandel-afstand" title="Afstand van een wandeling" facts={facts} onClick={() => setInner('wandel-afstand')} />
           <SummaryRow id="route-grote-wegen" title="Grote wegen mijden" facts={facts} info="routeGroteWegen" onChange={(on) => void updateSettings({ routeAvoidBigRoads: on })} />
           <SummaryRow id="plek-onthouden" title="Gekozen plek onthouden" facts={facts} onChange={(on) => { void updateSettings({ rememberStartPlace: on }); if (!on) void clearStartPlaceChoices(); }} />
           <SummaryRow id="route-kaart" title="Ondergrond van de kaart" facts={facts} info="routeKaart" onClick={() => setInner('route-kaart')} />
@@ -201,6 +203,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         </BundleSheet>
       )}
       {inner === 'route-soort' && <ChoiceFromDef def={CHOICES.routeSoort} value={resolveRouteStyle(settings.routeStyle)} onPick={(v) => void updateSettings({ routeStyle: v })} onClose={closeInner} />}
+      {inner === 'wandel-afstand' && <ChoiceFromDef def={CHOICES.wandelAfstand} value={resolveWalkKm(settings.walkPlanKm)} onPick={(v) => void updateSettings({ walkPlanKm: v })} onClose={closeInner} />}
       {inner === 'route-zoeken' && <ChoiceFromDef def={CHOICES.routeZoeken} value={resolveRouteSearch(settings.routeSearch)} onPick={(v) => void updateSettings({ routeSearch: v })} onClose={closeInner} />}
       {inner === 'route-kaart' && <ChoiceFromDef def={CHOICES.routeKaart} value={resolveMapGround(settings)} onPick={(v) => void updateSettings(groundSettings(v, settings))} onClose={closeInner} />}
       {inner === 'route-start' && <ChoiceFromDef def={CHOICES.routeStart} value={resolveRouteStart(settings.routeStart)} onPick={(v) => void updateSettings({ routeStart: v })} onClose={closeInner} keepOpen footer={<RouteStartFooter mode={resolveRouteStart(settings.routeStart)} />} />}

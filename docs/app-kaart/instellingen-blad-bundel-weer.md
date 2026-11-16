@@ -39,6 +39,9 @@ Bekijken
 Lus zoeken
 [knop: Uitleg: Lus zoeken]
 Bij het openen
+[knop: Afstand van een wandeling, 5 km]
+Afstand van een wandeling
+5 km
 [knop: Grote wegen mijden]
 Grote wegen mijden
 [knop: Uitleg: Grote wegen mijden]
