@@ -423,7 +423,7 @@ export function WeekPage() {
             // Dezelfde vraag om Akkoord als bij de greep (test, wat een periode neerzette of opzij schoof).
             const sel = selected;
             const tpl = templateById.get(sel.templateId);
-            const eligible = tpl ? dragEligibility(sel, tpl, { logged: !!selectedLog, today: todayISO() }) : undefined;
+            const eligible = tpl ? dragEligibility(sel, tpl, { logged: !!selectedLog, today: todayISO(), periods: settings.leavePeriods }) : undefined;
             // Een sportschooltraining naar een dag zonder sportschool: eerst de vraag (engine/noGymGuard.ts).
             const extraAsk = noGymAsk(tpl, date, settings.leavePeriods);
             void moveTo(sel.id, date, eligible?.ok ? { askAlways: eligible.askAlways, extraAsk } : extraAsk ? { extraAsk } : undefined);

@@ -23,6 +23,14 @@ Zonder sportschool vervalt wat de sportschool nodig heeft, of het wordt eigen ge
 - Valt in een voorstel van ASCEND de eerste keuze weg, dan volgt het effect de nieuwe eerste.
 - Een datum kiezen op Vandaag vraagt dezelfde Akkoord als in Week (een test, wat een periode neerzette).
 - De instelling Voorstel bij een probleem in de week is te vinden met "zonder sportschool".
+- Het terughalen houdt jouw slot alleen als de training op dezelfde dag terugkomt; op een andere dag komt hij zonder slot.
+
+## Aanvulling na Lookout (16 november)
+
+- Een training die een periode verschoof of korter maakte, noemt bij slepen en ruilen de soort periode: "Deze training werd korter door je periode zonder sportschool." in plaats van "schoof opzij voor je vakantie" (`engine/weekDrag.ts#leaveAskReason`). Bij een vakantie blijft de zin zoals hij was.
+- Staan er twee trainingen met dezelfde naam in de week, dan krijgt de andere zijn dag erbij: "valt dicht op Bovenlichaam A van donderdag 19". Lookout las het als dicht op zichzelf.
+- De regel onder de vinger bij ruilen noemt hoogstens de twee belangrijkste feiten en dan "Als je loslaat, komt eerst de vraag of je dat echt wilt."; het blad met Akkoord noemt ze allemaal.
+- Laten vervallen staat er als eigen gewicht niet past (48 uur tussen krachtsessies) of als de periode kracht laat vallen; anders wordt het eigen gewicht. Lookout zag eigen gewicht omdat er in zijn stand ruimte was.
 
 De stand van de eigenaar (de training staat er al): de rustigste weg is het punt in Let op met het voorstel, geen nieuwe kaart op Vandaag. Week opent, het amber punt staat er, één tik op het voorstel. Voor zijn week is dat "Geen sportschool: Bovenlichaam A vervalt. Een sessie met je eigen gewicht past niet, want tussen twee krachtsessies zit minstens 48 uur.": Eigen gewicht staat al op dinsdag 17.
 

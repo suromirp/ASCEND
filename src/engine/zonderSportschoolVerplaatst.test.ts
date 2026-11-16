@@ -18,8 +18,8 @@ import { landsGymOnNoGym, NO_GYM_ASK, planNoGymFix, withoutGymOnNoGym } from './
 import { leaveDays } from './leave';
 import { planPass } from './planPass';
 import { applyPlanChangeItems } from './proposalEngine';
-import { dayVerdicts, decideMove, type DragContext } from './weekDrag';
-import { checkSwap } from './weekSwap';
+import { dayVerdicts, decideMove, dragEligibility, LEAVE_ASK_REASON, type DragContext } from './weekDrag';
+import { checkSwap, withSwapVerdicts } from './weekSwap';
 import { rowNotes, weekConcerns } from './weekConcerns';
 import { planWeekFix } from './weekFixProposal';
 import { lockLevel, validateWeeks, type CheckInput } from './weekValidator';
@@ -345,6 +345,90 @@ describe('na Warden (16 november)', () => {
     const [kept] = withoutGymOnNoGym([{ effect: 'naar wo 18', firstOptionNote: 'de kleinste verandering', proposal: move('2026-11-18'), options: [{ effect: 'naar wo 18', proposal: move('2026-11-18') }, { effect: 'naar do 19', proposal: move('2026-11-19') }] }], plan, byId, [PERIOD]);
     expect(kept.effect).toBe('naar do 19');
     expect(kept.firstOptionNote).toBeUndefined();
+  });
+});
+
+describe('na Lookout (16 november)', () => {
+  const lock = { by: 'user' as const, at: '2026-11-10T20:36:00.000Z' };
+  const RUN_LEAVE = { periodId: 'p1', role: 'moved' as const, from: '2026-11-18', shortened: true as const };
+
+  it('a: de reden noemt de soort periode, niet altijd je vakantie', () => {
+    const run = ps('er18', 'tpl_easy_run', '2026-11-18', { plannedMinutes: 30, leave: RUN_LEAVE });
+    const t = byId.get('tpl_easy_run')!;
+    expect(dragEligibility(run, t, { logged: false, today: TODAY, periods: [PERIOD] })).toEqual({ ok: true, askAlways: 'Deze training werd korter door je periode zonder sportschool. Verplaats je hem, dan blijft hij op de nieuwe dag staan.' });
+    const holiday: LeavePeriod = { id: 'p1', kind: 'no_training', startDate: '2026-11-14', endDate: '2026-11-18' };
+    expect(dragEligibility({ ...run, leave: { periodId: 'p1', role: 'moved', from: '2026-11-17' } }, t, { logged: false, today: TODAY, periods: [holiday] })).toEqual({ ok: true, askAlways: LEAVE_ASK_REASON });
+    const { plan } = ownerPlan();
+    const sessions = [...plan.filter((x) => x.id !== 'bw17'), ps('ua17b', 'tpl_upper_a', '2026-11-17', { status: 'moved', lock }), run];
+    const swap = checkSwap(drag(sessions, []), 'ua17b', 'er18');
+    expect(swap.ok && swap.asks.join(' ')).toContain('Deze training werd korter door je periode zonder sportschool. Ruil je hem');
+    expect(swap.ok && swap.asks.join(' ')).not.toContain('vakantie');
+  });
+
+  it('b: twee keer Bovenlichaam A in een week: de andere heeft zijn dag erbij, nooit dicht op zichzelf', () => {
+    const { plan } = ownerPlan();
+    const sessions = [...plan.filter((x) => x.id !== 'bw17'), ps('ua17b', 'tpl_upper_a', '2026-11-17', { status: 'moved', lock }), ps('er18', 'tpl_easy_run', '2026-11-18'), ps('ua19', 'tpl_upper_a', '2026-11-19', { status: 'moved', lock })];
+    const swap = checkSwap(drag(sessions, []), 'ua17b', 'er18');
+    const text = swap.ok ? swap.asks.join(' ') : '';
+    expect(text).not.toMatch(/valt dicht op Bovenlichaam A\./);
+    expect(text).toContain('valt dicht op Bovenlichaam A van donderdag 19.');
+    // Alleen: geen tweede Bovenlichaam A, dan ook geen "dicht op".
+    const alone = checkSwap(drag(sessions.filter((x) => x.id !== 'ua19'), []), 'ua17b', 'er18');
+    expect(alone.ok && alone.asks.join(' ')).not.toContain('valt dicht op Bovenlichaam A');
+  });
+
+  it('c: de sleepregel bij ruilen noemt hoogstens twee feiten en dan de vraag; het blad noemt alles', () => {
+    const { plan } = ownerPlan();
+    const run = ps('er18', 'tpl_easy_run', '2026-11-18', { plannedMinutes: 30, leave: RUN_LEAVE });
+    const sessions = [...plan.filter((x) => x.id !== 'bw17'), ps('ua17b', 'tpl_upper_a', '2026-11-17', { status: 'moved', lock }), run, ps('ua19', 'tpl_upper_a', '2026-11-19', { status: 'moved', lock })];
+    const ctx = drag(sessions, []);
+    const check = checkSwap(ctx, 'ua17b', 'er18');
+    expect(check.ok && check.asks.length).toBeGreaterThanOrEqual(3);
+    const v = withSwapVerdicts(ctx, 'ua17b', dayVerdicts(ctx, 'ua17b', '2026-11-16')).find((x) => x.date === '2026-11-18')!;
+    expect(v.kind).toBe('swap');
+    const facts = v.line.replace(/^.*?die gaat naar [a-z]+ \d+ [a-z]+\. /, '').replace(' Als je loslaat, komt eerst de vraag of je dat echt wilt.', '');
+    expect(check.ok && facts).toBe(check.ok ? check.asks.slice(0, 2).join(' ') : '');
+    expect(v.line.endsWith('Als je loslaat, komt eerst de vraag of je dat echt wilt.')).toBe(true);
+    expect(v.askReason).toBe(check.ok ? check.asks.join(' ') : '');
+  });
+
+  it('e: laten vervallen staat er als eigen gewicht niet past (48 uur) of als de periode kracht laat vallen; anders eigen gewicht', () => {
+    const { plan, logs } = ownerPlan();
+    const ua18 = ps('ua18', 'tpl_upper_a', '2026-11-18', { status: 'moved', movedFromDate: '2026-11-10', lock });
+    // Eigen gewicht staat op di 17: binnen 48 uur, dus vervallen.
+    // Met één keuze toont het blad het effect en de wijzigingen; de naam van de keuze staat alleen bij meer keuzes.
+    const near = checkInput([...plan, ua18], logs);
+    const dropFix = planWeekFix(near, weekConcerns(near, '2026-11-16').find((c) => c.rule === 'NO-GYM')!, '2026-11-16')!;
+    expect(dropFix.effect).toBe('Geen sportschool: Bovenlichaam A vervalt. Een sessie met je eigen gewicht past niet, want tussen twee krachtsessies zit minstens 48 uur.');
+    expect(dropFix.proposal!.changes.map((c) => c.action)).toEqual(['remove']);
+    // Geen kracht in de buurt: eigen gewicht op die dag (wat Lookout zag).
+    const free = checkInput([...plan.filter((x) => x.id !== 'bw17'), ua18], logs);
+    const fix = planWeekFix(free, weekConcerns(free, '2026-11-16').find((c) => c.rule === 'NO-GYM')!, '2026-11-16')!;
+    expect(fix.effect).toBe('Geen sportschool: Bovenlichaam A wordt een korte sessie met je eigen gewicht.');
+    expect(fix.proposal!.changes.map((c) => [c.action, c.newSessionDraft?.templateId])).toEqual([['remove', undefined], ['add', 'tpl_bodyweight']]);
+  });
+
+  it('Warden klein 1: een rij van jou die op een andere dag terugkomt, komt zonder slot', () => {
+    const row = ps('ua18', 'tpl_upper_a', '2026-11-18', { status: 'skipped', movedFromDate: '2026-11-10', lock, leave: { periodId: 'p1', role: 'dropped', from: '2026-11-18' } });
+    const add = (date: string) => applyPlanChangeItems([{ plannedSessionId: 'ua18', action: 'add', toDate: date, newSessionDraft: { templateId: 'tpl_upper_a', scheduledDate: date, weekStartDate: mondayOfWeek(date) }, leave: null }], [row]).sessions[0];
+    expect(add('2026-11-18')).toMatchObject({ status: 'moved', lock: { by: 'user' }, movedFromDate: '2026-11-10' });
+    const elsewhere = add('2026-11-19');
+    expect(elsewhere.status).toBe('planned');
+    expect(elsewhere.lock).toBeUndefined();
+    expect(elsewhere.movedFromDate).toBeUndefined();
+  });
+
+  it('Warden klein 2: weghalen van de periode laat een voorbije of gelogde vervallen rij staan', () => {
+    const { plan, logs } = ownerPlan();
+    const LONGER: LeavePeriod = { ...PERIOD, endDate: '2026-11-20' };
+    const dropped = (id: string, date: string) => ps(id, 'tpl_upper_a', date, { status: 'skipped', movedFromDate: '2026-11-10', lock, leave: { periodId: 'p1', role: 'dropped', from: date } });
+    const past = dropped('uaPast', '2026-11-14');
+    const done = dropped('uaDone', '2026-11-19');
+    const sessions = [...plan, past, done];
+    const context = (periods: LeavePeriod[]) => ({ today: TODAY, logs, templates, program, blocks: [], restDay: 1, leave: periods, newId: () => 'c' });
+    const remove = planLeaveChange({ mode: 'remove', period: LONGER, existing: [LONGER], sessions, logs: [...logs, log(done)], templates, today: TODAY, context });
+    const touched = remove.proposal.changes.filter((c) => c.plannedSessionId === 'uaPast' || c.plannedSessionId === 'uaDone');
+    expect(touched.filter((c) => c.action === 'add')).toEqual([]);
   });
 });
 

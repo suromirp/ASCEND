@@ -4,6 +4,7 @@
 // geen IndexedDB.
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
+import type { LeaveKind, LeavePeriod, PlannedLeaveMark } from '../models/leave';
 import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { dayOrder } from './dayOrder';
@@ -25,7 +26,9 @@ export type DragEligibility = { ok: true; askAlways: boolean | string } | { ok: 
 
 // Nooit: wat gelogd of voorbij is (lockLevel 0), een overgeslagen training, een rustdag of
 // herstelwandeling, een wedstrijd (die gaat via het doel op Ascend). Wat een periode neerzette mag wel, met Akkoord. Een test mag, maar loslaten vraagt altijd om Akkoord.
-export function dragEligibility(session: PlannedSession, template: SessionTemplate, args: { logged: boolean; today: string }): DragEligibility {
+// `periods`: the stored periods, so the sentence names the period that moved it (Lookout, 16 november). Without them
+// it says "je vakantie", as before.
+export function dragEligibility(session: PlannedSession, template: SessionTemplate, args: { logged: boolean; today: string; periods?: LeavePeriod[] }): DragEligibility {
   const loggedIds = new Set<string | undefined>(args.logged ? [session.id] : []);
   if (lockLevel(session, loggedIds, args.today) === 0) return { ok: false, reason: 'history' };
   if (session.status === 'skipped') return { ok: false, reason: 'skipped' };
@@ -34,7 +37,7 @@ export function dragEligibility(session: PlannedSession, template: SessionTempla
   // Een training die je periode neerzette of die opzij schoof voor je vakantie mag je slepen, altijd met
   // Akkoord (het blad toont wat er gebeurt). Het merkteken van de periode blijft staan: de periode blijft de
   // reden en haalt hem weg als de periode weggaat. Wat de periode liet vervallen is overgeslagen en heeft geen greep.
-  if (session.leave) return { ok: true, askAlways: session.leave.role === 'placed' ? PLACED_ASK_REASON : LEAVE_ASK_REASON };
+  if (session.leave) return { ok: true, askAlways: session.leave.role === 'placed' ? PLACED_ASK_REASON : leaveAskReason(session.leave, args.periods) };
   return { ok: true, askAlways: hasRole(template, 'test') };
 }
 
@@ -139,7 +142,8 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
     if (conflicts.length > 0) {
       const first = conflicts[0];
       const firstTemplate = templateById.get(first.templateId);
-      const conflictNames = conflicts.flatMap((c) => { const n = templateById.get(c.templateId)?.name; return n ? [n] : []; });
+      // Dezelfde naam als de gesleepte training: met de dag erbij (Lookout, 16 november).
+      const conflictNames = conflicts.flatMap((c) => { const n = templateById.get(c.templateId)?.name; return n ? [n === template.name ? `${n} van ${weekdayLongNL(c.scheduledDate)} ${Number(c.scheduledDate.slice(8, 10))}` : n] : []; });
       const shared = firstTemplate ? sharedHeavyAxes(template, firstTemplate) : [];
       const axes = shared.map((a) => HEAVY_AXIS_LABEL[a]).join(' en ');
       // De 48 uur gelden voor twee zware beendagen; een test vraagt frisse benen; anders alleen het feit.
@@ -216,6 +220,17 @@ export type MoveDecision = { action: 'none' | 'apply' | 'ask'; proposal: Schedul
 export const TEST_ASK_REASON = 'Een testloop verplaats je alleen met Akkoord.';
 export const PLACED_ASK_REASON = 'Je periode zette deze training hier neer. Hij blijft bij je periode horen: haal je die weg, dan gaat hij mee.';
 export const LEAVE_ASK_REASON = 'Deze training schoof opzij voor je vakantie. Verplaats je hem, dan blijft hij op de nieuwe dag staan.';
+
+// Waarom een training die een periode verschoof of korter maakte eerst om Akkoord vraagt, met de soort periode erin:
+// een periode zonder sportschool is geen vakantie (Lookout, 16 november). `verb` is "Verplaats" of "Ruil".
+const PERIOD_WORD: Record<LeaveKind, string> = { no_training: 'je vakantie', trek: 'je tocht', free_days: 'je vrije dagen', no_gym: 'je periode zonder sportschool' };
+export function leaveAskReason(mark: PlannedLeaveMark, periods: LeavePeriod[] | undefined, verb: 'Verplaats' | 'Ruil' = 'Verplaats'): string {
+  const kind = periods?.find((p) => p.id === mark.periodId)?.kind;
+  if (!kind && verb === 'Verplaats') return LEAVE_ASK_REASON;
+  const where = kind ? PERIOD_WORD[kind] : 'je vakantie';
+  const what = mark.shortened ? `Deze training werd korter door ${where}.` : `Deze training schoof opzij voor ${where}.`;
+  return `${what} ${verb} je hem, dan blijft hij op de nieuwe dag staan.`;
+}
 
 // Het ene besluit voor het slepen en het actieblad. Dezelfde dag: niets. Een schoon voorstel met één
 // wijziging gaat meteen (met Ongedaan maken in de melding). Een cascade of een botsing die niet op te

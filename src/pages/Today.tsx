@@ -251,7 +251,7 @@ function TodayContent() {
     // Dezelfde vraag om Akkoord als in Week (een test, wat een periode neerzette of opzij schoof).
     const session = plannedSessions.find((s) => s.id === sessionId);
     const tpl = session ? templateById.get(session.templateId) : undefined;
-    const eligible = session && tpl ? dragEligibility(session, tpl, { logged: sessionLogs.some((l) => l.plannedSessionId === session.id), today: todayISO() }) : undefined;
+    const eligible = session && tpl ? dragEligibility(session, tpl, { logged: sessionLogs.some((l) => l.plannedSessionId === session.id), today: todayISO(), periods: settings.leavePeriods }) : undefined;
     const decision = decideMove(moveSession(sessionId, date), { askAlways: eligible?.ok ? eligible.askAlways : undefined, extraAsk: noGymAsk(tpl, date, settings.leavePeriods) });
     if (decision.action === 'apply') void applyProposal(decision.proposal);
     else if (decision.action === 'ask') setPendingProposal(decision.proposal);

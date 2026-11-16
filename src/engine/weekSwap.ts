@@ -14,7 +14,7 @@ import { hasRole } from './templateRoles';
 import { weekConcerns } from './weekConcerns';
 import type { CheckInput } from './weekValidator';
 import { dayOrder } from './dayOrder';
-import { dayTitle, dragEligibility, PLACED_ASK_REASON, type DayVerdict, type DragContext, type MoveDecision } from './weekDrag';
+import { dayTitle, dragEligibility, leaveAskReason, PLACED_ASK_REASON, type DayVerdict, type DragContext, type MoveDecision } from './weekDrag';
 import { addDays, formatDateNL, mondayOfWeek, weekdayLongNL, weekdayOf } from '../utils/dates';
 
 export const SWAP_TEST = 'Een testloop ruil je alleen met Akkoord.';
@@ -57,8 +57,8 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
   if (a.scheduledDate === b.scheduledDate) return { ok: false, line: 'Die twee staan al op dezelfde dag.' };
   if (mondayOfWeek(a.scheduledDate) !== mondayOfWeek(b.scheduledDate)) return { ok: false, line: 'Ruilen kan alleen binnen één week.' };
   const logged = new Set(ctx.logs.map((l) => l.plannedSessionId));
-  const ea = dragEligibility(a, ta, { logged: logged.has(a.id), today: ctx.asOf });
-  const eb = dragEligibility(b, tb, { logged: logged.has(b.id), today: ctx.asOf });
+  const ea = dragEligibility(a, ta, { logged: logged.has(a.id), today: ctx.asOf, periods: ctx.move.leave });
+  const eb = dragEligibility(b, tb, { logged: logged.has(b.id), today: ctx.asOf, periods: ctx.move.leave });
   if (!ea.ok || !eb.ok) return { ok: false, line: 'Deze training kan niet van dag ruilen.' };
 
   // Waar elk van de twee heen gaat, en wat daar al staat (zonder de twee zelf).
@@ -95,7 +95,15 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
       return !!ct && ((isTestOnly(leg.t) && isHeavyBeforeTest(ct) && tooCloseBeforeTest(cDate, leg.to)) || (isTestOnly(ct) && isHeavyBeforeTest(leg.t) && tooCloseBeforeTest(leg.to, cDate)));
     });
     const rule = restClash ? ` Liefst ${testRestHours()} uur tussen een zware dag en je test.` : test ? ' Je test heeft frisse benen nodig.' : legsBoth ? ' Liefst 48 uur ertussen.' : '';
-    asks.push(`${leg.t.name} op ${dayLower(leg.to)} valt dicht op ${others.map((t) => t.name).join(' en ')}.${rule}`);
+    // Dezelfde naam als de training zelf (twee keer Bovenlichaam A in een week): met de dag erbij, anders leest het als
+    // dicht op zichzelf (Lookout, 16 november).
+    const otherNames = conflicts.flatMap((c) => {
+      const t = templateById.get(c.templateId);
+      if (!t) return [];
+      const d = simulated.find((x) => x.id === c.id)?.scheduledDate ?? c.scheduledDate;
+      return [t.name === leg.t.name ? `${t.name} van ${weekdayLongNL(d)} ${Number(d.slice(8, 10))}` : t.name];
+    });
+    asks.push(`${leg.t.name} op ${dayLower(leg.to)} valt dicht op ${otherNames.join(' en ')}.${rule}`);
   }
   for (const leg of legs) {
     const kept = keptDayReason(ctx.move, leg.t, leg.to, ctx.asOf);
@@ -127,7 +135,7 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
   }
   for (const leg of legs) {
     if (leg.ask === true) { if (!asks.includes(SWAP_TEST)) asks.push(SWAP_TEST); }
-    else if (leg.ask) { const text = leg.ask === PLACED_ASK_REASON ? SWAP_PLACED : SWAP_LEAVE; if (!asks.includes(text)) asks.push(text); }
+    else if (leg.ask) { const text = leg.ask === PLACED_ASK_REASON ? SWAP_PLACED : leg.s.leave ? leaveAskReason(leg.s.leave, ctx.move.leave, 'Ruil') : SWAP_LEAVE; if (!asks.includes(text)) asks.push(text); }
   }
 
   const proposal: ScheduleProposal = {
@@ -198,6 +206,9 @@ export function withSwapVerdicts(ctx: DragContext, sessionId: string, verdicts: 
     const check = checkSwap(ctx, a.id, b.id);
     if (!check.ok) return v;
     const asks = check.asks.join(' ');
+    // De regel onder de vinger: hoogstens de twee belangrijkste feiten, dan de vraag; het blad met Akkoord noemt ze
+    // allemaal (Lookout, 16 november).
+    const said = check.asks.slice(0, 2).join(' ');
     const hints = check.hints.length > 0 ? ` ${check.hints.join(' ')}` : '';
     return {
       date: v.date,
@@ -205,7 +216,7 @@ export function withSwapVerdicts(ctx: DragContext, sessionId: string, verdicts: 
       droppable: true,
       tone: asks ? 'warn' : 'ok',
       chip: fit(`Ruilen met ${tb.name}`, 'Ruilen'),
-      line: `${dayTitle(v.date)}. Ruilen met ${tb.name}, die gaat naar ${dayLower(a.scheduledDate)}.${asks ? ` ${asks} ${SWAP_ASK_TAIL}` : hints}`,
+      line: `${dayTitle(v.date)}. Ruilen met ${tb.name}, die gaat naar ${dayLower(a.scheduledDate)}.${asks ? ` ${said} ${SWAP_ASK_TAIL}` : hints}`,
       ask: !!asks,
       ...(asks ? { askReason: asks } : {}),
       swapWithId: b.id,
