@@ -26,11 +26,11 @@ import { addDays, formatWeekdayDateNL, mondayOfWeek, weekDates } from '../utils/
 import { makeId } from '../utils/id';
 import { isDone } from './adviceShared';
 import type { IllnessEpisode } from '../models/illness';
-import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
-import { isTaperDay, raceDatesOf } from './raceWindow';
-import { isDraftOpen } from './sessionStatus';
+import { activeIllness, recoveryRamp } from './illness';
+import { raceDatesOf } from './raceWindow';
+import { isDraftOpen, pauseRules } from './sessionStatus';
 import { isKeyFor, type KeyFocus } from './keySession';
-import { isAwayFor, leaveDays } from './leave';
+import { leaveDays } from './leave';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
 import { logSport, templateSport } from './sports';
 import { hasRole, isTestOrRace } from './templateRoles';
@@ -110,7 +110,8 @@ export function weekLoss(input: FullWeekInput): WeekLoss[] {
   const races = raceDatesOf(input.sessions, input.templates);
   // Weg: een vakantie- of tochtdag, of zonder sportschool wat de sportschool nodig heeft (engine/leave.ts#isAwayFor),
   // dezelfde toets als gemist in Week.
-  const away = (d: string, t?: SessionTemplate) => isAwayFor(d, t, input.leave, ctx.days) || isIllnessDay(d, input.illnessEpisodes, today) || isTaperDay(d, races, today);
+  const pause = pauseRules({ leave: input.leave, illness: input.illnessEpisodes, races }, today);
+  const away = (d: string, t?: SessionTemplate) => !pause.ok({ date: d, step: 'count', template: t });
   const inWeek = (d: string) => d >= monday && d <= sunday;
   const usedDay = (d: string, except: string) => input.sessions.some((o) => o.id !== except && o.status !== 'skipped' && o.scheduledDate === d && ctx.trains(o))
     || input.logs.some((l) => l.completedDate === d && l.type !== 'recovery');
