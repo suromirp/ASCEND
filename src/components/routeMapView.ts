@@ -29,6 +29,7 @@ export interface MapLike {
   queryRenderedFeatures(point: unknown, options: { layers: string[] }): { properties?: Record<string, unknown> | null }[];
   remove(): void;
   resize?(): unknown;
+  unproject?(point: [number, number]): { lat: number; lng: number; wrap?: () => { lat: number; lng: number } };
   touchZoomRotate?: { disableRotation(): void };
   keyboard?: { disableRotation(): void };
 }
@@ -66,6 +67,9 @@ export interface MapViewDeps {
   clearTimer?: (id: unknown) => void;
   // De rand rond de lussen bij Alles in beeld; standaard FIT_PADDING (ruimte voor de knoppen rechtsboven).
   padding?: { top: number; bottom: number; left: number; right: number };
+  // Een stille kaart in de pagina (de kaart zonder lus bij de vraag): geen slepen, knijpen of dubbeltik-zoom,
+  // zodat een veeg de pagina scrolt; een tik kiest nog wel een punt. Slepen en knijpen in Hele kaart.
+  still?: boolean;
   // Het stijlbestand van OpenFreeMap; standaard fetch. Gooit bij een fout of een stop.
   fetchStyle?: (url: string, signal: AbortSignal) => Promise<unknown>;
 }
@@ -90,6 +94,8 @@ export interface RouteMapView {
   // Het vak veranderde van maat (de telefoon draaide, Groter): de kaart rekent opnieuw en zet alles in beeld.
   resize(): void;
   goTo(point: RoutePoint): void;
+  // De stille kaart: een tik op de laag erboven, in pixels binnen de kaart, wordt een tik op de kaart.
+  tapAt(x: number, y: number): void;
   destroy(): void;
 }
 
@@ -243,6 +249,7 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
         rollEnabled: false,
         maxPitch: 0,
         fadeDuration: deps.motion() === 'full' ? 300 : 0,
+        ...(deps.still ? { dragPan: false, touchZoomRotate: false, doubleClickZoom: false, scrollZoom: false } : {}),
       });
       map.touchZoomRotate?.disableRotation();
       map.keyboard?.disableRotation();
@@ -320,6 +327,16 @@ export function createRouteMapView(container: HTMLElement, base: MapBase, data: 
         // Zonder maat: de volgende keer.
       }
       fit(false);
+    },
+    tapAt(x, y) {
+      if (!map?.unproject) return;
+      try {
+        const raw = map.unproject([x, y]);
+        const p = typeof raw.wrap === 'function' ? raw.wrap() : raw;
+        if (Number.isFinite(p.lat) && Number.isFinite(p.lng)) events.onMapTap({ lat: p.lat, lon: p.lng });
+      } catch {
+        // Zonder maat geen punt.
+      }
     },
     goTo(point) {
       if (!map) return;

@@ -29,6 +29,7 @@ Het midden van de kaart (`engine/routeStart.ts#askMapCenter`): de laatste grove 
 - Een watch van de plugin kan pas beginnen nadat de app hem stopte (het venster van Android stond nog open, of `clearWatch` kwam net eerder); de plugin kende het id toen nog niet. Een plek voor een handle die al gestopt is, stopt de plugin nu nog een keer (`integrations/geolocation.ts`). Getest met een nagemaakte plugin die "WatchId not found." geeft zolang het volgen niet begon (`src/integrations/geolocationWatch.test.ts`).
 - Een fout van de plugin wordt gelezen op zijn code (`OS-PLUG-GLOC-0003` geweigerd, `-0010` te laat), de Engelse tekst alleen als terugval.
 - Thuis als midden van de kaart gaat ook afgerond op drie decimalen, zoals de grove plek.
+- Na Lookout: de kaart zonder lus in de pagina (Briefing en blad) is stil. Een veeg scrolt de pagina; slepen, knijpen en dubbeltik-zoom staan uit en een laag over de kaart vangt de tik, die de ring zet. Slepen en knijpen doe je in Hele kaart: in het blad de knop op de kaart, in de Briefing eerst Groter. Oorzaak van het oude gedrag: `touch-action: none` en `overscroll-behavior: contain` op het vak van de kaart; dat laatste hield ook een veeg vast die MapLibre niet nam.
 - Nog open: bij `approximate` geeft Android wel een grove plek, maar die wordt nog niet gevraagd voor het midden van de kaart.
 
 ## Reden

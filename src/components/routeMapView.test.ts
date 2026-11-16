@@ -459,10 +459,10 @@ describe('Groter: draaien en een stuk', () => {
 });
 
 describe('de kaart zonder lus: alleen een midden (I-61, je plek lukte niet)', () => {
-  function bare(center?: { lat: number; lon: number }) {
+  function bare(center?: { lat: number; lon: number }, still = false) {
     FakeMap.made = [];
     const c = clock();
-    const deps: MapViewDeps = { load: () => Promise.resolve(lib), colors: () => readMapColors((t) => t), online: () => true, webgl: () => true, motion: () => 'off', setTimer: c.setTimer, clearTimer: c.clearTimer, fetchStyle: async () => OFM_STYLE };
+    const deps: MapViewDeps = { load: () => Promise.resolve(lib), colors: () => readMapColors((t) => t), online: () => true, webgl: () => true, motion: () => 'off', setTimer: c.setTimer, clearTimer: c.clearTimer, fetchStyle: async () => OFM_STYLE, ...(still ? { still: true } : {}) };
     const taps: unknown[] = [];
     const view = createRouteMapView({} as HTMLElement, 'dark', { routes: [], chosen: undefined, dots: {}, ...(center ? { center } : {}) }, { onState: () => undefined, onRouteTap: () => undefined, onMapTap: (p) => taps.push(p) }, deps);
     return { view, taps, map: () => FakeMap.made[0] };
@@ -488,6 +488,22 @@ describe('de kaart zonder lus: alleen een midden (I-61, je plek lukte niet)', ()
     expect((m.data['ascend-dots'] as { features: unknown[] }).features).toHaveLength(1);
     t.view.fitAll();
     expect(m.eases.at(-1)).toMatchObject({ center: [B.lon, B.lat], zoom: 15 });
+  });
+
+  it('stil (in de pagina): geen slepen, knijpen of dubbeltik-zoom, en een tik kiest nog een punt (Lookout)', async () => {
+    const t = bare(A, true);
+    await flush();
+    const m = t.map();
+    expect(m.options).toMatchObject({ dragPan: false, touchZoomRotate: false, doubleClickZoom: false, scrollZoom: false });
+    m.emit('click', { point: {}, lngLat: { lat: 50.75, lng: 6.02 } });
+    expect(t.taps).toEqual([{ lat: 50.75, lon: 6.02 }]);
+  });
+
+  it('niet stil (blad en Hele kaart): slepen en knijpen blijven aan', async () => {
+    const t = bare(A);
+    await flush();
+    expect(t.map().options).not.toHaveProperty('dragPan');
+    expect(t.map().options).not.toHaveProperty('touchZoomRotate');
   });
 
   it('zonder iets: een overzicht', async () => {

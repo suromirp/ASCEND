@@ -476,6 +476,8 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
       <div className="flex flex-col gap-2">
         {start}
         <AskStart model={model} height={BRIEFING_MAP_HEIGHT} />
+        {/* De kaart hier is stil (een veeg scrolt de pagina); slepen en knijpen in het blad en Hele kaart. */}
+        {model.askCenter && <div><TextButton tone="dim" icon="verder" onClick={onBigger} data-sheet-from="">{BIGGER}</TextButton></div>}
         {targetLine}
       </div>
     );

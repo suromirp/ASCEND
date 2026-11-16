@@ -107,7 +107,8 @@ export function RouteFailure({ kind, onRetry, height, line }: { kind: 'offline' 
 // kaart is geen startpunt: geen ring en geen zoektocht tot je tikt. Thuis en Andere plek zijn de chips
 // erboven; ze staan hier niet nog eens. Nooit stil terug op Thuis (besluit 2026-11-14-geen-stille-thuis.md,
 // 2026-11-15-waar-je-nu-bent-scherp.md).
-export function AskStart({ model, height }: { model: RouteSearchModel; height?: string }) {
+// De kaart is stil: een veeg scrolt de pagina, een tik zet de ring; slepen en knijpen in Hele kaart (`onFull`).
+export function AskStart({ model, height, onFull }: { model: RouteSearchModel; height?: string; onFull?: () => void }) {
   if (!model.ask) return null;
   const line = <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{model.ask.line}</p>;
   // Een gewone tekstknop in inkt, geen mint (dat is de knop onderaan) en niet gedempt: dit is de keuze hier.
@@ -126,7 +127,7 @@ export function AskStart({ model, height }: { model: RouteSearchModel; height?: 
       {line}
       <div>{again}</div>
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{center.line}</p>
-      <RouteMap routes={NO_ROUTES} chosen={undefined} center={center.kind === 'overview' ? undefined : center.point} base={model.base} onChoose={ignoreChoice} onStart={model.startOnMap} onNoMap={model.markNoMap} photo={model.photo} onPhoto={model.setPhoto} me={model.mePoint} tapped={model.tapPoint} hasHome={model.hasHome} onMakeHome={model.makeHome} {...(height ? { height } : {})} />
+      <RouteMap routes={NO_ROUTES} chosen={undefined} center={center.kind === 'overview' ? undefined : center.point} base={model.base} onChoose={ignoreChoice} onStart={model.startOnMap} onNoMap={model.markNoMap} photo={model.photo} onPhoto={model.setPhoto} me={model.mePoint} tapped={model.tapPoint} hasHome={model.hasHome} onMakeHome={model.makeHome} still {...(onFull ? { onBigger: onFull } : {})} {...(height ? { height } : {})} />
     </div>
   );
 }
@@ -268,7 +269,7 @@ export function RoutePanelView({ model, date, onDecline }: { model: RouteSearchM
       case 'searching':
         return <RouteSearching key={`${p}-${model.searchKey}`} steps={model.steps} current={model.currentStep} limitLine={model.limitLine} limitMs={model.limitMs} />;
       case 'ask':
-        return <AskStart key={p} model={model} />;
+        return <AskStart key={p} model={model} onFull={() => setBigger(true)} />;
       case 'failure':
         return <RouteFailure key={p} kind={stage === 'offline' ? 'offline' : 'timeout'} onRetry={model.retry} line={model.failLine} />;
       case 'map':
