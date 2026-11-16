@@ -15,7 +15,8 @@ import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { dayHasRoomFor, findHeavyConflict, proposeMove, type ScheduleProposal } from './scheduler';
 import { resolveEffectiveFullDuration } from './substitutions';
-import { addDays, daysBetween, mondayOfWeek, weekdayOf } from '../utils/dates';
+import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekdayLongNL, weekdayOf } from '../utils/dates';
+import { capitalize } from '../utils/capitalize';
 import type { LeavePeriod } from '../models/leave';
 import type { IllnessEpisode } from '../models/illness';
 import { DAY_CAUSE_TEXT, dayRules, type DayOutcome, type DayRules } from './dayRules';
@@ -64,7 +65,7 @@ export function moveRules(context: MoveContext, asOf: string): DayRules {
 
 export interface KeptDay {
   reason: KeptReason;
-  // Every reason that asks, in the order of the rule; dragging and swapping say them all.
+  // Every reason that asks, strongest first (the order of the rule); the sheet says at most two.
   asks: KeptReason[];
 }
 
@@ -73,8 +74,8 @@ export function keptDay(context: MoveContext, template: SessionTemplate, date: s
   if (v.ok) return undefined;
   const all = [{ cause: v.cause, outcome: v.outcome }, ...v.more].filter((c) => KEPT.includes(c.cause)) as { cause: KeptReason; outcome: DayOutcome }[];
   if (all.length === 0) return undefined;
-  // Je rustdag eerst: zijn zin opent de vraag (Warden, 16 november).
-  const asks = all.filter((c) => c.outcome === 'warn').map((c) => c.cause).sort((a, b) => Number(b === 'rest') - Number(a === 'rest'));
+  // De sterkste reden eerst, in de volgorde van de regel (verkouden, opbouw, zonder sportschool, rustdag).
+  const asks = all.filter((c) => c.outcome === 'warn').map((c) => c.cause);
   const block = all.find((c) => c.outcome !== 'warn');
   // A day that is closed stays closed; otherwise the rest day leads (its sentence comes first), then the others.
   const reason = block?.cause ?? (asks.includes('rest') ? 'rest' : asks[0]);
@@ -86,12 +87,27 @@ export function keptDayReason(context: MoveContext, template: SessionTemplate, d
 }
 
 // The question before Akkoord for the reasons that ask, in one go: "Dit is je rustdag. ... Sportschool nodig, ..."
+// Hoogstens twee zinnen, het droge feit eerst (Lookout op 360, 16 november): de twee sterkste redenen, elk in één zin;
+// je rustdag alleen houdt zijn tweede zin.
 export function keptAskLine(asks: readonly KeptReason[]): string {
-  return asks.map((c) => DAY_CAUSE_TEXT[c].ask).filter(Boolean).join(' ');
+  const said = asks.filter((c) => DAY_CAUSE_TEXT[c].ask).slice(0, 2);
+  if (said.length === 1) return DAY_CAUSE_TEXT[said[0]].ask!;
+  return said.map((c) => firstSentence(DAY_CAUSE_TEXT[c].ask!)).join(' ');
+}
+
+export const firstSentence = (text: string) => { const i = text.indexOf('. '); return i < 0 ? text : text.slice(0, i + 1); };
+
+// Een datum kiezen (Week, Vandaag) op een dag die dicht is: dezelfde zin als slepen ("Dinsdag 17 november valt nog in je
+// ziekte."), en de verplaatsing gaat niet door (Warden, 16 november). Niets als de dag kan of eerst vraagt.
+export function keptRefusal(context: MoveContext, template: SessionTemplate | undefined, date: string, asOf: string): string | undefined {
+  if (!template) return undefined;
+  const kept = keptDay(context, template, date, asOf);
+  if (!kept || kept.asks.length > 0) return undefined;
+  return DAY_CAUSE_TEXT[kept.reason].line(`${capitalize(weekdayLongNL(date))} ${formatDateNL(date)}`);
 }
 
 // De vraag bij een datum kiezen (Week, Vandaag), naast je rustdag die het blad zelf noemt (DecideOptions.restDay): zonder
-// sportschool, verkouden of opbouw na ziek. Niets als de dag kan of dicht is.
+// sportschool, verkouden of opbouw na ziekte. Niets als de dag kan of dicht is.
 export function keptAsk(context: MoveContext, template: SessionTemplate | undefined, date: string, asOf: string): string | undefined {
   if (!template) return undefined;
   const asks = keptDay(context, template, date, asOf)?.asks.filter((c) => c !== 'rest') ?? [];

@@ -15,10 +15,11 @@ import { morningProposalCause } from './morningProposal';
 import { layoutPhasesForGoal, PHASE_BASIS } from './programLayout';
 import { catchUpEligibility } from './catchUp';
 import { quietWeeks } from './quietWeeks';
-import { keptAsk, keptDayReason, suggestMoveDates } from './moveSuggestions';
+import { keptAsk, keptDayReason, keptRefusal, suggestMoveDates } from './moveSuggestions';
+import { proposeMove } from './scheduler';
 import { deriveSessionStatus } from './sessionStatus';
 import { computeCurrentStreak } from './streak';
-import { dayVerdicts, type DragContext } from './weekDrag';
+import { dayVerdicts, decideMove, type DragContext } from './weekDrag';
 import { checkSwap } from './weekSwap';
 import { weekConcerns } from './weekConcerns';
 import { planWeekFix } from './weekFixProposal';
@@ -123,7 +124,7 @@ describe('gat 5: ziek in één versie', () => {
   it('met neus of keel mag een rustige loop naar morgen, een zware vraagt eerst', () => {
     expect(keptDayReason({ illness: COLD }, byId.get('tpl_easy_run')!, addDays(TODAY, 1), TODAY)).toBeUndefined();
     expect(verdictOn(drag(week(), { illness: COLD }), 'er17', TODAY)).toMatchObject({ kind: 'free', ask: false });
-    expect(verdictOn(drag(week(), { illness: COLD }), 'hi19', addDays(TODAY, 1))).toMatchObject({ kind: 'ask', ask: true, askReason: 'Je bent verkouden. Rustig bewegen mag, niets zwaars.' });
+    expect(verdictOn(drag(week(), { illness: COLD }), 'hi19', addDays(TODAY, 1))).toMatchObject({ kind: 'ask', ask: true, askReason: 'Je bent verkouden, dus niets zwaars.', skipRules: ['ILL'] });
     // De voorgestelde dagen van ASCEND zetten er niets zwaars neer.
     const days = suggestMoveDates(week(), templates, 'hi19', [], program, undefined, 'automatic', TODAY, 7, { illness: COLD }).map((d) => d.date);
     expect(days).not.toContain(TODAY);
@@ -136,11 +137,11 @@ describe('gat 5: ziek in één versie', () => {
   });
 });
 
-describe('gat 6: opbouw na ziek bij verplaatsen en in Let op', () => {
+describe('gat 6: opbouw na ziekte bij verplaatsen en in Let op', () => {
   // Drie dagen koorts, vandaag beter: zwaar pas weer na de eerste helft van de opbouw.
   const RAMP = [ill('below_neck', addDays(TODAY, -3), TODAY)];
   it('een zware training voor heavyFrom vraagt eerst; ASCEND stelt die dag niet voor', () => {
-    expect(verdictOn(drag(week(), { illness: RAMP }), 'hi19', addDays(TODAY, 1))).toMatchObject({ kind: 'ask', askReason: 'Je bouwt op na ziekte. Nog niets zwaars.' });
+    expect(verdictOn(drag(week(), { illness: RAMP }), 'hi19', addDays(TODAY, 1))).toMatchObject({ kind: 'ask', askReason: 'Je bouwt op na ziekte, dus nog niets zwaars.', skipRules: ['ILL'] });
     const days = suggestMoveDates(week(), templates, 'hi19', [], program, undefined, 'automatic', TODAY, 7, { illness: RAMP }).map((d) => d.date);
     expect(days).not.toContain(addDays(TODAY, 1));
   });
@@ -252,7 +253,7 @@ describe('gat 9: het weekvoorschrift kent ziek', () => {
   });
 });
 
-describe('gat 11: de opbouw na ziek in elke poort', () => {
+describe('gat 11: de opbouw na ziekte in elke poort', () => {
   it('mayPropose is de oude poort van de elf voorstellen', () => {
     expect(mayPropose(TODAY, [])).toBe(true);
     expect(mayPropose(TODAY, [ill('above_neck', TODAY)])).toBe(false);
@@ -267,5 +268,64 @@ describe('gat 11: de opbouw na ziek in elke poort', () => {
     });
     expect(morning([])?.session.id).toBe('h');
     expect(morning(RAMP)).toBeUndefined();
+  });
+});
+
+// --- na Warden, Lookout en Pathfinder (16 november) -----------------------------------------------------------------
+
+describe('het sleepblad: hoogstens twee zinnen, en Let op niet dubbel', () => {
+  // Verkouden; Benen A vandaag gedaan; Benen B van donderdag naar dinsdag, je rustdag.
+  const COLD = [ill('above_neck', TODAY)];
+  const plan = [ps('la16', 'tpl_lower_a', TODAY), ps('lb19', 'tpl_lower_b', addDays(TODAY, 3))];
+  const logs = [log(plan[0])];
+  it('de sterkste reden en de 48 uur kort, met "al gedaan" en niet "al geweest"', () => {
+    const ctx: DragContext = { sessions: plan, templates, logs, program, asOf: TODAY, sameDayPairingPreference: 'automatic', move: { illness: COLD, restDay: 2 } };
+    const verdict = dayVerdicts(ctx, 'lb19', MONDAY).find((v) => v.date === addDays(TODAY, 1))!;
+    expect(verdict).toMatchObject({ kind: 'rest', askReason: 'Je bent verkouden, dus niets zwaars. Dit is je rustdag.', skipRules: ['REST-DAY', 'ILL'] });
+    const proposal = proposeMove(plan, templates, 'lb19', addDays(TODAY, 1), logs, program, undefined, 'automatic', TODAY);
+    expect(proposal.reason).not.toMatch(/al geweest/);
+    const decision = decideMove(proposal, { verdict });
+    expect(decision.action).toBe('ask');
+    expect(decision.proposal.reason).toBe(`Je bent verkouden, dus niets zwaars. Dicht op ${byId.get('tpl_lower_a')!.name}, liefst 48 uur ertussen.`);
+    expect(decision.proposal.reason.split('. ').length).toBeLessThanOrEqual(2);
+  });
+  it('een dag die al zegt wat Let op zou zeggen, slaat die melding over', () => {
+    const ctx = drag(week(), { illness: [ill('below_neck', addDays(TODAY, -3), TODAY)], leave: [period('no_gym', addDays(TODAY, 1), addDays(TODAY, 1))] });
+    expect(verdictOn(ctx, 'ua18', addDays(TODAY, 1)).skipRules).toEqual(['NO-GYM', 'ILL']);
+  });
+});
+
+describe('de datumkiezer weigert een dag die dicht is, met de zin van slepen', () => {
+  const t = byId.get('tpl_easy_run')!;
+  const tomorrow = addDays(TODAY, 1);
+  it('koorts', () => {
+    expect(keptRefusal({ illness: [ill('below_neck', TODAY)] }, t, tomorrow, TODAY)).toBe('Dinsdag 17 november valt nog in je ziekte.');
+  });
+  it('vakantie en tocht', () => {
+    expect(keptRefusal({ leave: [period('no_training', tomorrow, tomorrow)] }, t, tomorrow, TODAY)).toBe('Dinsdag 17 november is een vakantiedag.');
+    expect(keptRefusal({ leave: [period('trek', tomorrow, tomorrow)] }, t, tomorrow, TODAY)).toBe('Dinsdag 17 november is een tochtdag.');
+  });
+  it('een dag die eerst vraagt of kan: geen weigering', () => {
+    expect(keptRefusal({ illness: [ill('above_neck', TODAY)] }, t, tomorrow, TODAY)).toBeUndefined();
+    expect(keptRefusal({ illness: [ill('above_neck', TODAY)] }, byId.get('tpl_hill_intervals')!, tomorrow, TODAY)).toBeUndefined();
+    expect(keptRefusal({}, t, tomorrow, TODAY)).toBeUndefined();
+  });
+});
+
+describe('ILL in Let op: de tweede zin hoort bij de soort', () => {
+  const mine = (id: string, date: string) => week().map((s) => (s.id === id ? { ...s, scheduledDate: date, lock: LOCK } : s));
+  const why = (illness: IllnessEpisode[], id: string) => weekConcerns(check(mine(id, addDays(TODAY, 1)), { illness }), MONDAY).find((c) => c.rule === 'ILL')!;
+  it('ziek: wat je mist telt niet als gemist', () => {
+    const c = why([ill('stomach', TODAY)], 'er17');
+    expect(c.finding.illness).toBe('ill');
+    expect(c.why).toBe('Je zette deze training zelf hier of accepteerde hem in een voorstel, dus eerst komt de vraag. Wat je mist terwijl je ziek bent, telt niet als gemist.');
+  });
+  it('verkouden en opbouw: rustig bewegen mag wel', () => {
+    const cold = why([ill('above_neck', TODAY)], 'hi19');
+    expect(cold.finding.illness).toBe('ill_light');
+    expect(cold.why).toBe('Je zette deze training zelf hier of accepteerde hem in een voorstel, dus eerst komt de vraag. Rustig bewegen mag wel, niets zwaars.');
+    const ramp = why([ill('below_neck', addDays(TODAY, -3), TODAY)], 'hi19');
+    expect(ramp.finding.illness).toBe('ramp');
+    expect(ramp.headline).toBe('Je bouwt op na ziekte, en er staat een zware training.');
   });
 });

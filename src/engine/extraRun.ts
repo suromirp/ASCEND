@@ -84,7 +84,7 @@ export interface ExtraRunVerdict {
 export function extraRunEarned(inputs: Omit<ExtraRunInputs, 'newId' | 'anchor' | 'raceDates' | 'restDay'>, weekStart: string): ExtraRunVerdict {
   const { today, program, plannedSessions, logs, templates, planChangeLog, illnessEpisodes, ambition } = inputs;
   if (ambition === 'rustig') return { earned: false, reason: 'Je ambitie staat op Rustig.' };
-  // De poort van elk voorstel (engine/dayRules.ts#mayPropose): ziek, en ook de opbouw na ziek (I-67 gat 11).
+  // De poort van elk voorstel (engine/dayRules.ts#mayPropose): ziek, en ook de opbouw na ziekte (I-67 gat 11).
   if (!mayPropose(today, illnessEpisodes)) return { earned: false, reason: 'Je bent ziek gemeld of bouwt op na ziekte.' };
 
   const since = addDays(today, -SIGNAL_DAYS);

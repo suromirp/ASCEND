@@ -5,7 +5,7 @@
 // Eens per vier weken stelt Forge daarom een set erbij voor bij één hoofdoefening: zo ver als netjes gaat. Het is een
 // voorstel met Akkoord; zonder Akkoord verandert de training niet. Niet in een week met een tocht, een test of een
 // wedstrijd, en niet in de drie dagen ervoor, want de set maakt moe. Met de stand Automatisch erbij staat de set er bij
-// het openen al (docs/beslissingen/2026-11-15-ijkset-automatisch.md). Nooit als je ziek bent of opbouwt na ziek, op een
+// het openen al (docs/beslissingen/2026-11-15-ijkset-automatisch.md). Nooit als je ziek bent of opbouwt na ziekte, op een
 // dag zonder sportschool, in een vakantie of op een tocht. Puur: geen React, geen opslag.
 
 import type { PlannedSession, SessionTemplate } from '../models/training';

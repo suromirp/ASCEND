@@ -91,7 +91,7 @@ import { resolveQuoteLanguage } from '../engine/quoteSettings';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { decideMove, dragEligibility } from '../engine/weekDrag';
-import { keptAsk } from '../engine/moveSuggestions';
+import { keptAsk, keptRefusal } from '../engine/moveSuggestions';
 import { dayRules } from '../engine/dayRules';
 import { goalTiming } from '../engine/goalRoute';
 import { SkyBand } from '../components/SkyBand';
@@ -107,7 +107,7 @@ import { RaceDayLine } from '../components/RaceDay';
 import { logsNotInLastBackup } from '../engine/backupSince';
 
 function TodayContent() {
-  const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
+  const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones, showFailure } = useAppData();
   // Afvinken met één tik: grens in tijd en de melding bovenin (state/logSave.ts#tickOff).
   const tickNotice = { report: reportStorageError, withdraw: withdrawStorageNotice, refresh };
   const today = todayISO();
@@ -251,7 +251,11 @@ function TodayContent() {
     const session = plannedSessions.find((s) => s.id === sessionId);
     const tpl = session ? templateById.get(session.templateId) : undefined;
     const eligible = session && tpl ? dragEligibility(session, tpl, { logged: sessionLogs.some((l) => l.plannedSessionId === session.id), today: todayISO(), periods: settings.leavePeriods }) : undefined;
-    const decision = decideMove(moveSession(sessionId, date), { askAlways: eligible?.ok ? eligible.askAlways : undefined, extraAsk: keptAsk({ leave: settings.leavePeriods, illness: settings.illnessEpisodes }, tpl, date, todayISO()), restDay: settings.restDay ?? 1 });
+    const context = { leave: settings.leavePeriods, illness: settings.illnessEpisodes };
+    // Een dag die dicht is (koorts, vakantie, tocht): niet verplaatsen, met dezelfde zin als slepen in Week.
+    const refused = keptRefusal(context, tpl, date, todayISO());
+    if (refused) { showFailure('Niet verplaatst.', refused); return; }
+    const decision = decideMove(moveSession(sessionId, date), { askAlways: eligible?.ok ? eligible.askAlways : undefined, extraAsk: keptAsk(context, tpl, date, todayISO()), restDay: settings.restDay ?? 1 });
     if (decision.action === 'apply') void applyProposal(decision.proposal);
     else if (decision.action === 'ask') setPendingProposal(decision.proposal);
   }

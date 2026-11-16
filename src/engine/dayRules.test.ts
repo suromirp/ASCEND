@@ -188,7 +188,7 @@ describe('de randgevallen', () => {
     expect(after.ok({ date: race, step: 'count', template: EASY })).toBe(true);
   });
 
-  it('opbouw na ziek: zwaar pas vanaf heavyFrom, en in de hele opbouw niets erbij', () => {
+  it('opbouw na ziekte: zwaar pas vanaf heavyFrom, en in de hele opbouw niets erbij', () => {
     const r = dayRules({ today: TODAY, illness: [ill('below_neck', addDays(TODAY, -4), TODAY)] });
     const ramp = r.facts(TODAY).find((f) => f.cause === 'ramp')!;
     expect(ramp.heavyFrom! > TODAY).toBe(true);
@@ -295,7 +295,7 @@ describe('vergelijking met de oude toetsen over willekeurige standen', () => {
     }
   });
 
-  it('verplaatsen: gelijk aan keptDayReason, behalve gat 5 en gat 6 (ziek in vier versies, opbouw na ziek)', () => {
+  it('verplaatsen: gelijk aan keptDayReason, behalve gat 5 en gat 6 (ziek in vier versies, opbouw na ziekte)', () => {
     const r = rng(23);
     let gap5 = 0;
     let gap6 = 0;

@@ -78,8 +78,10 @@ const findingKey = (f: { rule: string; sessionIds: string[] }) => `${f.rule}:${[
 
 // Erbij via de ene regel (engine/dayRules.ts): geen vakantie- of tochtdag, en zonder sportschool train je bewust minder
 // (engine/noGym.ts), dus ook daar komt niets bij.
-function blockedByLeave(date: string, leave: readonly LeavePeriod[] | undefined, today: string): boolean {
-  return !dayRules({ today, leave }).ok({ date, step: 'add' });
+// Eén keer per ronde gemaakt (applyKindAmounts), niet per dag.
+function leaveBlocker(leave: readonly LeavePeriod[] | undefined, today: string): (date: string) => boolean {
+  const rules = dayRules({ today, leave });
+  return (date) => !rules.ok({ date, step: 'add' });
 }
 
 export function applyKindAmounts(all: readonly PlannedSession[], amounts: KindAmountMap | undefined, ctx: KindAmountContext): { sessions: PlannedSession[]; repairs: Repair[] } {
@@ -87,6 +89,7 @@ export function applyKindAmounts(all: readonly PlannedSession[], amounts: KindAm
   const logged = new Set(ctx.check.logs.map((l) => l.plannedSessionId).filter(Boolean));
   const open = (s: PlannedSession) => s.scheduledDate >= ctx.today && !logged.has(s.id);
   const repairs: Repair[] = [];
+  const blockedByLeave = leaveBlocker(ctx.leave, ctx.today);
   let sessions = [...all];
 
   // Normaal weer: wat Meer erbij zette gaat weg, wat Minder wegliet komt terug. Alleen open rijen.
@@ -129,7 +132,7 @@ export function applyKindAmounts(all: readonly PlannedSession[], amounts: KindAm
       const model = ofKind[0];
       if (!model) continue;
       const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i))
-        .filter((d) => d >= ctx.today && d <= last && isoWeekday(d) !== ctx.check.restDay && !blockedByLeave(d, ctx.leave, ctx.today) && !sessions.some((s) => s.scheduledDate === d && isTraining(s)))
+        .filter((d) => d >= ctx.today && d <= last && isoWeekday(d) !== ctx.check.restDay && !blockedByLeave(d) && !sessions.some((s) => s.scheduledDate === d && isTraining(s)))
         .sort((a, b) => Math.abs(isoWeekday(a) - 3) - Math.abs(isoWeekday(b) - 3) || a.localeCompare(b));
       // Alleen de beste vrije dag: past het daar niet, dan blijft het die week bij langer. Zo kost een ronde
       // hoogstens twee keer de weekcheck per week en soort.

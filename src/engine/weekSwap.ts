@@ -104,7 +104,7 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
   for (const leg of legs) {
     const kept = keptDay(ctx.move, leg.t, leg.to, ctx.asOf, rules);
     if (kept?.asks.includes('rest')) asks.push(`${dayTitle(leg.to)} is je rustdag.`);
-    // Zonder sportschool, verkouden of opbouw na ziek: ruilen mag, met de vraag ervoor, ook op je rustdag.
+    // Zonder sportschool, verkouden of opbouw na ziekte: ruilen mag, met de vraag ervoor, ook op je rustdag.
     for (const c of kept?.asks ?? []) {
       const ask = c === 'rest' ? undefined : DAY_CAUSE_TEXT[c].ask;
       if (ask) asks.push(`${leg.t.name} op ${dayLower(leg.to)}: ${ask.charAt(0).toLowerCase()}${ask.slice(1)}`);

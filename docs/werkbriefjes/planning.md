@@ -4,7 +4,7 @@ Hoe het plan ontstaat en wie een geplande sessie mag aanraken: hoofddoel, rollen
 
 ## Bestanden
 - `src/engine/planPass.ts#planPass` de ronde die elke planning afsluit: vaste sporten en hoeveel per soort, dan tot 4 keer raceblok, vrije-dagenblokken en weekcontrole tot niets meer verandert (`MAX_TURNS`)
-- `src/engine/weekValidator.ts#lockLevel` wie een sessie mag aanraken, en `repairWeeks` voor de reparaties; `src/engine/dayRules.ts#dayRules` de ene regel of een training of stap op een dag mag (ziek, opbouw, vakantie, tocht, licht, zonder sportschool, afbouw, doel, rustdag, vaste afspraak, kracht uit, rustige week), `mayPropose` de poort van elk voorstel; een nieuwe toets gaat hierdoor, anders faalt `src/engine/dayRulesScan.test.ts` (`docs/beslissingen/2026-11-16-een-regel-uitzonderingen.md`)
+- `src/engine/weekValidator.ts#lockLevel` wie een sessie mag aanraken, en `repairWeeks` voor de reparaties; `src/engine/dayRules.ts#dayRules` de ene regel of een training of stap op een dag mag (ziek, opbouw, vakantie, tocht, licht, zonder sportschool, afbouw, doel, rustdag, vaste afspraak, kracht uit, rustige week), `mayPropose` de poort van elk voorstel; een nieuwe toets gaat hierdoor, anders faalt `src/engine/dayRulesScan.test.ts` (die ziet namen, geen zelfgeschreven toets op een periode) (`docs/beslissingen/2026-11-16-een-regel-uitzonderingen.md`)
 - `src/engine/scheduler.ts#legSpacingDays` de 48 uur tussen zware beendagen
 - `src/engine/mainGoal.ts#mainGoal` het hoofddoel, op één plek
 - `src/engine/templateRoles.ts#hasRole` een training herken je aan een rol, nooit aan een id

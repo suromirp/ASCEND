@@ -1,7 +1,7 @@
 // ASCEND: één regel voor alle uitzonderingen (I-67, docs/visie/Ontwerp een regel voor uitzonderingen.md,
 // docs/beslissingen/2026-11-16-een-regel-uitzonderingen.md).
 //
-// Mag deze training of deze stap op deze dag, en zo niet, wat dan? Eén plek die ziek, de opbouw na ziek, vakantie,
+// Mag deze training of deze stap op deze dag, en zo niet, wat dan? Eén plek die ziek, de opbouw na ziekte, vakantie,
 // tocht, de lichte dagen rond een tocht, zonder sportschool, de afbouw voor een race, de dag van je doel, je rustdag,
 // een vaste afspraak, kracht uit en de rustige weken kent. Elke stap die vroeger zelf toetste, leest hier.
 //
@@ -64,7 +64,7 @@ export const CAUSE_ORDER = [
   'race', // de racedag zelf
   'taper', // de zeven dagen voor een race
   'ill_light', // ziek met neus of keel: alleen wat zwaar is
-  'ramp', // opbouw na ziek
+  'ramp', // opbouw na ziekte
   'light', // licht rond een tocht: alleen wat zwaar is
   'nogym', // zonder sportschool: alleen wat de sportschool nodig heeft
   'strength_off', // krachttraining uit: alleen kracht
@@ -82,7 +82,7 @@ export interface DayFact {
   // Ziek: de melding, met de soort. `ahead`: morgen, een dag die een lopende ziekte vasthoudt maar die nog niet in de
   // melding valt; voor de telling is hij nog gewoon gepland (engine/illness.ts#isIllnessDay).
   illness?: { kind: IllnessKind; episode: IllnessEpisode; running: boolean; ahead?: true };
-  // Opbouw na ziek: de eerste dag dat zwaar weer mag, en de laatste dag van de opbouw.
+  // Opbouw na ziekte: de eerste dag dat zwaar weer mag, en de laatste dag van de opbouw.
   heavyFrom?: string;
   until?: string;
   // Afbouw: de dag van de race.
@@ -127,7 +127,8 @@ export type DayVerdict =
 
 // Eén tabel, zodat slepen, ruilen, het blad en Let op hetzelfde woord gebruiken. `chip` hoogstens 28 tekens.
 // `line`: na de dag ("Woensdag 18 november is een vakantiedag."), `kept`: na de dag in een zin ("valt nog in je ziekte").
-// `ask`: de vraag bij een stap van jou die mag na Akkoord (waarschuw), zonder de dag.
+// `ask`: de vraag bij een stap van jou die mag na Akkoord (waarschuw), zonder de dag, in één zin (je rustdag alleen heeft
+// er twee, zoals voor I-67; samen met een andere reden alleen de eerste).
 export const DAY_CAUSE_TEXT: Record<DayCause, { chip: string; kept: string; line: (day: string) => string; ask?: string }> = {
   history: { chip: 'Dag is voorbij', kept: 'is al voorbij', line: (day) => `${day} is al voorbij.` },
   goal: { chip: 'Na je doel', kept: 'ligt op of na je doel', line: (day) => `${day} ligt op of na je doel.` },
@@ -136,8 +137,8 @@ export const DAY_CAUSE_TEXT: Record<DayCause, { chip: string; kept: string; line
   trek: { chip: 'Tochtdag', kept: 'is een tochtdag', line: (day) => `${day} is een tochtdag.` },
   race: { chip: 'Je wedstrijd', kept: 'is de dag van je wedstrijd', line: (day) => `${day} is de dag van je wedstrijd.` },
   taper: { chip: 'Afbouw voor je race', kept: 'valt in de afbouw voor je race', line: (day) => `${day} valt in de afbouw voor je race.` },
-  ill_light: { chip: 'Je bent verkouden', kept: 'valt in je verkoudheid, niets zwaars', line: (day) => `${day} valt in je verkoudheid. Niets zwaars.`, ask: 'Je bent verkouden. Rustig bewegen mag, niets zwaars.' },
-  ramp: { chip: 'Opbouw na ziek', kept: 'valt in je opbouw na ziekte, nog niets zwaars', line: (day) => `${day} valt in je opbouw na ziekte. Nog niets zwaars.`, ask: 'Je bouwt op na ziekte. Nog niets zwaars.' },
+  ill_light: { chip: 'Je bent verkouden', kept: 'valt in je verkoudheid, niets zwaars', line: (day) => `${day} valt in je verkoudheid. Niets zwaars.`, ask: 'Je bent verkouden, dus niets zwaars.' },
+  ramp: { chip: 'Opbouw na ziekte', kept: 'valt in je opbouw na ziekte, nog niets zwaars', line: (day) => `${day} valt in je opbouw na ziekte. Nog niets zwaars.`, ask: 'Je bouwt op na ziekte, dus nog niets zwaars.' },
   light: { chip: 'Lichte dag bij je tocht', kept: 'blijft licht door je tocht', line: (day) => `${day} blijft licht door je tocht, daar past geen zware training.` },
   nogym: { chip: 'Zonder sportschool', kept: 'valt in je periode zonder sportschool', line: () => 'Sportschool nodig, en je zit zonder sportschool.', ask: 'Sportschool nodig, en je zit zonder sportschool.' },
   strength_off: { chip: 'Kracht staat uit', kept: 'valt buiten je planning, kracht staat uit', line: () => 'Krachttraining staat uit.' },
@@ -321,7 +322,7 @@ export function mayOn(q: DayQuestion, state: DayState): DayVerdict {
   return dayRules(state).may(q);
 }
 
-// Mag ASCEND vandaag iets voorstellen? Niet zolang je ziek bent of opbouwt na ziek: de poort van elk voorstel (stap
+// Mag ASCEND vandaag iets voorstellen? Niet zolang je ziek bent of opbouwt na ziekte: de poort van elk voorstel (stap
 // voorstellen), op één plek in plaats van elf keer `activeIllness(...) || recoveryRamp(...)`.
 export function mayPropose(today: string, illness: readonly IllnessEpisode[] | undefined): boolean {
   return dayRules({ today, illness }).ok({ date: today, step: 'propose' });

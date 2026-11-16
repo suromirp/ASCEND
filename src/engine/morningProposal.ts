@@ -51,7 +51,7 @@ export interface MorningCauseInput {
 export function morningProposalCause(input: MorningCauseInput): MorningProposalCause | undefined {
   const { today, rule } = input;
   if (!input.enabled || !rule || rule.date !== today || !rule.askTired) return undefined;
-  // Ziek of opbouwen na ziek: de poort van elk voorstel (engine/dayRules.ts#mayPropose, I-67 gat 11).
+  // Ziek of opbouwen na ziekte: de poort van elk voorstel (engine/dayRules.ts#mayPropose, I-67 gat 11).
   if (!mayPropose(today, input.illnessEpisodes)) return undefined;
   const checkIn = input.checkIns?.find((c) => c.date === today);
   if (checkIn?.allNormal || checkIn?.energy === 'gewoon') return undefined;

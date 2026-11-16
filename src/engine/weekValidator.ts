@@ -74,6 +74,9 @@ export interface Finding {
   // Caused by a sport you did that counts (engine/sportDays.ts): never repaired by itself, only as a
   // proposal with Akkoord (weekFixProposal.ts), which lets the repair move its subject via `mayMove`.
   fromSport?: true;
+  // ILL only: which part of the illness holds the day (engine/dayRules.ts): ill (koorts, buikgriep), ill_light
+  // (neus of keel, alleen zwaar) or ramp (opbouw na ziekte, alleen zwaar).
+  illness?: 'ill' | 'ill_light' | 'ramp';
   // TEST-FRESH only: the leg index on the test day and the line it is held to.
   legIndex?: number;
   limit?: number;
@@ -264,7 +267,7 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
     // voor: dan alleen ILL. De planning zelf leest deze twee regels niet (docs/beslissingen/2026-11-15-zonder-sportschool-verplaatst.md).
     const said = input.reportYours ? daySays(s, t) : undefined;
     if (said && level(s) === 1 && (said.cause === 'ill' || said.cause === 'ill_light' || said.cause === 'ramp')) {
-      findings.push({ rule: 'ILL', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} op ${day(s.scheduledDate)} ${DAY_CAUSE_TEXT[said.cause].kept}.` });
+      findings.push({ rule: 'ILL', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), illness: said.cause, message: `${name} op ${day(s.scheduledDate)} ${DAY_CAUSE_TEXT[said.cause].kept}.` });
     } else if (said && level(s) > 0 && (said.cause === 'nogym' || said.more.some((m) => m.cause === 'nogym'))) {
       findings.push({ rule: 'NO-GYM', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} heeft de sportschool nodig (${day(s.scheduledDate)}).` });
     }

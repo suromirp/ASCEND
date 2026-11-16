@@ -312,7 +312,7 @@ describe('na Warden (16 november)', () => {
     const { plan } = ownerPlan();
     const ctx = (move: DragContext['move']): DragContext => ({ ...drag(plan, []), move });
     expect(dayVerdicts(ctx({ leave: [PERIOD], illness: FEVER }), 'ub20', '2026-11-16').find((v) => v.date === '2026-11-16')).toMatchObject({ kind: 'blocked', droppable: false });
-    expect(dayVerdicts(ctx({ leave: [PERIOD], illness: ILL }), 'ub20', '2026-11-16').find((v) => v.date === '2026-11-16')).toMatchObject({ kind: 'ask', droppable: true, askReason: 'Je bent verkouden. Rustig bewegen mag, niets zwaars. Sportschool nodig, en je zit zonder sportschool.' });
+    expect(dayVerdicts(ctx({ leave: [PERIOD], illness: ILL }), 'ub20', '2026-11-16').find((v) => v.date === '2026-11-16')).toMatchObject({ kind: 'ask', droppable: true, askReason: 'Je bent verkouden, dus niets zwaars. Sportschool nodig, en je zit zonder sportschool.', skipRules: ['NO-GYM', 'ILL'] });
     expect(dayVerdicts(ctx({ leave: [PERIOD], goalDay: '2026-11-18' }), 'ub20', '2026-11-16').find((v) => v.date === '2026-11-18')).toMatchObject({ kind: 'blocked', droppable: false });
     const swapIll = checkSwap(ctx({ leave: [PERIOD], illness: ILL }), 'ub20', 'rest16');
     expect(swapIll.ok).toBe(false);
@@ -323,7 +323,9 @@ describe('na Warden (16 november)', () => {
     const ctx: DragContext = { ...drag(plan, []), move: { leave: [PERIOD], restDay: 3 } };
     const v = dayVerdicts(ctx, 'ub20', '2026-11-16').find((x) => x.date === '2026-11-18')!;
     expect(v).toMatchObject({ kind: 'rest', ask: true });
-    expect(v.askReason).toBe(`Dit is je rustdag. Een rustdag is er om te herstellen. ${NO_GYM_ASK}`);
+    // Beide, hoogstens twee zinnen, de sterkste reden eerst (I-67, Lookout op 360).
+    expect(v.askReason).toBe(`${NO_GYM_ASK} Dit is je rustdag.`);
+    expect(v.skipRules).toEqual(['REST-DAY', 'NO-GYM']);
     const sessions = [...plan, ps('er18', 'tpl_easy_run', '2026-11-18')];
     const swap = checkSwap({ ...drag(sessions, []), move: { leave: [PERIOD], restDay: 3 } }, 'ub20', 'er18');
     expect(swap.ok && swap.asks.join(' ')).toContain('is je rustdag');

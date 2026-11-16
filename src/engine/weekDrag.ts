@@ -9,12 +9,12 @@ import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { dayOrder } from './dayOrder';
 import { dayHasRoomFor, findHeavyConflicts, HEAVY_AXIS_LABEL, isHeavyBeforeTest, isTestOnly, sharedHeavyAxes, testRestHours, tooCloseBeforeTest, type ScheduleProposal } from './scheduler';
-import { keptAskLine, keptDay, moveRules, type MoveContext } from './moveSuggestions';
+import { firstSentence, keptAskLine, keptDay, moveRules, type KeptReason, type MoveContext } from './moveSuggestions';
 import { DAY_CAUSE_TEXT } from './dayRules';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { lockLevel } from './weekValidator';
 import { weekConcerns } from './weekConcerns';
-import type { CheckInput } from './weekValidator';
+import type { CheckInput, CheckRule } from './weekValidator';
 import { hasRole } from './templateRoles';
 import { addDays, isoWeekday, mondayOfWeek, weekdayLongNL, weekdayOf, formatDateNL, weekDates } from '../utils/dates';
 import { capitalize } from '../utils/capitalize';
@@ -43,7 +43,7 @@ export function dragEligibility(session: PlannedSession, template: SessionTempla
 
 // --- wat elke dag zegt -------------------------------------------------------------
 // swap: the day holds exactly one training that may move; letting go trades their days (engine/weekSwap.ts).
-// ask: een andere reden die eerst vraagt (verkouden, opbouw na ziek), engine/dayRules.ts.
+// ask: een andere reden die eerst vraagt (verkouden, opbouw na ziekte), engine/dayRules.ts.
 type DayVerdictKind = 'origin' | 'free' | 'shared' | 'tight' | 'clash' | 'rest' | 'nogym' | 'ask' | 'blocked' | 'swap';
 
 export interface DayVerdict {
@@ -61,6 +61,18 @@ export interface DayVerdict {
   askReason?: string;
   // kind 'swap': the training that goes the other way.
   swapWithId?: string;
+  // De meldingen van Let op die deze dag al zelf zegt; het voorbeeld na loslaten noemt ze niet nog eens (Warden,
+  // 16 november: de kop van ILL stond achter de vraag).
+  skipRules?: CheckRule[];
+}
+
+// Welke meldingen de vraag van de dag al noemt.
+function skipFor(asks: readonly KeptReason[]): CheckRule[] {
+  const out: CheckRule[] = [];
+  if (asks.includes('rest')) out.push('REST-DAY');
+  if (asks.includes('nogym')) out.push('NO-GYM');
+  if (asks.includes('ill_light') || asks.includes('ramp')) out.push('ILL');
+  return out;
 }
 
 export interface DragContext {
@@ -121,17 +133,17 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
     }
     const names = there.flatMap((s) => { const n = templateById.get(s.templateId)?.name; return n ? [n] : []; });
 
-    // Zonder sportschool, verkouden of opbouw na ziek: je mag, maar eerst de vraag; Week zegt het daarna in Let op
+    // Zonder sportschool, verkouden of opbouw na ziekte: je mag, maar eerst de vraag; Week zegt het daarna in Let op
     // (engine/noGymGuard.ts, regel ILL in engine/weekValidator.ts).
     if (kept && kept.reason !== 'rest') {
       const reason = keptAskLine(kept.asks);
-      return { date, kind: kept.reason === 'nogym' ? 'nogym' : 'ask', droppable: true, tone: 'warn', chip: DAY_CAUSE_TEXT[kept.reason].chip, line: `${day}. ${reason} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: reason };
+      return { date, kind: kept.reason === 'nogym' ? 'nogym' : 'ask', droppable: true, tone: 'warn', chip: DAY_CAUSE_TEXT[kept.reason].chip, line: `${day}. ${reason} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: reason, skipRules: skipFor(kept.asks) };
     }
     if (kept) {
-      // Je rustdag in een periode zonder sportschool: beide vragen (Warden, 16 november).
-      const others = keptAskLine(kept.asks.filter((c) => c !== 'rest'));
-      const extra = others ? ` ${others}` : '';
-      return { date, kind: 'rest', droppable: true, tone: 'warn', chip: 'Je rustdag', line: `${day}. Dit is je rustdag.${extra} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: keptAskLine(kept.asks) };
+      // Je rustdag in een periode zonder sportschool: beide vragen (Warden, 16 november), de sterkste eerst.
+      const reason = keptAskLine(kept.asks);
+      const line = kept.asks.length === 1 ? 'Dit is je rustdag.' : reason;
+      return { date, kind: 'rest', droppable: true, tone: 'warn', chip: 'Je rustdag', line: `${day}. ${line} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: reason, skipRules: skipFor(kept.asks) };
     }
 
     const simulated = ctx.sessions.map((s) => (s.id === sessionId ? { ...s, scheduledDate: date } : s));
@@ -156,7 +168,7 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
       const alsoHeavy = axes ? `, ook zwaar voor ${axes}` : '';
       const named = joinNames(conflictNames);
       return {
-        date, kind: 'clash', droppable: true, tone: 'warn', ask: true,
+        date, kind: 'clash', droppable: true, tone: 'warn', ask: true, skipRules: ['LEG-SPACING'],
         chip: fit(`Dicht op ${named}`, `Dicht op ${conflictNames[0] ?? 'een zware dag'}`, 'Dicht op een zware dag'),
         line: `${day}. Dicht op ${named}${alsoHeavy}.${rule} Als je loslaat, krijg je een voorstel.`,
         askReason: undefined,
@@ -278,6 +290,11 @@ export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {})
     resolved = false;
   }
   if (reasons.length === 0) return { action: clean ? 'apply' : 'ask', proposal };
+  // Een dag die zelf vraagt en ook dicht op een zware dag valt: hoogstens twee zinnen, de sterkste reden en de 48 uur
+  // kort (Lookout op 360, 16 november).
+  if (opts.verdict?.ask && opts.verdict.askReason && !clean && proposal.short) {
+    return { action: 'ask', proposal: { ...proposal, resolved, reason: `${firstSentence(reasons[0])} ${proposal.short}` } };
+  }
   // Een cascade of botsing houdt zijn eigen reden, met de nieuwe er vooraan.
   const kept = clean ? [] : [proposal.reason];
   return { action: 'ask', proposal: { ...proposal, resolved, reason: [...reasons, ...kept].join(' '), ...(legs && reasons.length === 1 ? { confirm: { ...LEGS_CONFIRM } } : {}) } };

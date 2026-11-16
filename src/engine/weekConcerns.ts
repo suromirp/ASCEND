@@ -106,15 +106,18 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
         // Een training die jij of een voorstel vastzette op een dag dat je ziek bent, of een zware training terwijl je
         // verkouden bent of opbouwt na ziekte (engine/dayRules.ts). Ziek melden haalde alleen weg wat van het systeem
         // was; hier staat het altijd (eigenaar, 16 november, I-67), met een voorstel.
-        const sick = f.message.includes(DAY_CAUSE_TEXT.ill.kept);
-        const ramp = f.message.includes(DAY_CAUSE_TEXT.ramp.kept);
-        const kept = DAY_CAUSE_TEXT[sick ? 'ill' : ramp ? 'ramp' : 'ill_light'].kept;
+        const cause = f.illness ?? 'ill';
+        const sick = cause === 'ill';
+        const ramp = cause === 'ramp';
+        const kept = DAY_CAUSE_TEXT[cause].kept;
         return {
           ...base,
           headline: sick ? 'Je bent ziek, en er staat een training.' : ramp ? 'Je bouwt op na ziekte, en er staat een zware training.' : 'Je bent verkouden, en er staat een zware training.',
           fact: `${nameOf(a)} op ${dayName(dateOf(a))} ${kept}.`,
           title: `${nameOf(a)} laten vervallen`,
-          why: 'Je zette deze training zelf hier of accepteerde hem in een voorstel, dus eerst komt de vraag. Wat je mist terwijl je ziek bent, telt niet als gemist.',
+          // De tweede zin hoort bij de soort: alleen bij ziek telt wat je mist niet als gemist; verkouden en in de opbouw
+          // mag rustig bewegen wel (Pathfinder en Warden, 16 november).
+          why: `Je zette deze training zelf hier of accepteerde hem in een voorstel, dus eerst komt de vraag. ${sick ? 'Wat je mist terwijl je ziek bent, telt niet als gemist.' : 'Rustig bewegen mag wel, niets zwaars.'}`,
           notes: { [a]: sick ? 'je bent ziek' : 'niets zwaars' },
         };
       }
