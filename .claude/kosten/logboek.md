@@ -491,3 +491,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-15, coördinator 15 november: Pathfinder Q+StairMaster (sonnet) 41k; Lookout Q (sonnet) 110k; Warden back-up (opus) 104k, niet akkoord; Lookout kracht (sonnet) 57k; Warden Week herreview (opus) 56k, akkoord; Pathfinder Week (sonnet) 54k, akkoord.
 - 2026-11-15, Sherpa weekbudget-kracht: Warden I-39 (sonnet) 41k, 36 s; punt 1 hersteld, punt 2 open.
 - 2026-11-16, coördinator 16 november: Warden I-70 (fable) 89k, 20 min, niet akkoord (Herstel-woord op vier plekken, besluit ontbreekt); herstel naar Sherpa (sonnet).
+- 2026-11-16, Sherpa I-70 herstel (sonnet) 67k, 20 min, M1 en M2 dicht; Warden-herkeuring (fable), Lookout en Pathfinder (sonnet) lopen.
