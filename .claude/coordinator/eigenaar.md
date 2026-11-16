@@ -4,6 +4,15 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
+### Drempel en korte test (I-79, 16 november 23:30)
+Onderzoek staat op main (`docs/onderzoek/Drempel en submaximale test.md`). Vier keuzes, advies voorop; zonder antwoord bouwt woensdag stap 1 en 2 met het advies, de korte test wacht.
+1. Factor: 98 procent houden als instelling, met Zoals Friel (100) als tweede keuze (advies), of Friel standaard.
+2. Drempel volgt het midden van je laatste drie tests (advies) of alleen de laatste.
+3. Korte test: 4 minuten op drempeltempo plus 1 minuut stilstaan, wekelijks (advies); zonder stilstaan; zoals intervals.icu; of nog niet.
+4. Zonder borstband: standaard telt een test niet voor de drempel, keuze met ruime marge blijft, armband telt als band, en één vraag "Had je hem om?" (advies); nooit zonder band; of niet vragen.
+Zonder antwoord het advies: praattest later, test van 30 minuten later, DFA alpha 1 niet bouwen.
+
+
 ### Routes wandelen: drie standaardkeuzes, gebouwd met het advies
 - Keuzes: zo laten (advies): duur gaat voor hoogtemeters, en dat is instelbaar; de wandelladder verandert alleen via Akkoord; een herstelwandeling krijgt pas een lus na een tik. Of: een van de drie anders.
 - Zonder antwoord: het blijft zoals het nu live staat.
