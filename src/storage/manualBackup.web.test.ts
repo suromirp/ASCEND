@@ -22,12 +22,12 @@ describe('Back-up maken in de browser', () => {
     });
     const markMade = vi.fn(async () => undefined);
     const outcome = await runManualBackup({
-      prepare: async () => ({ text: '{}', fileName: 'ascend-2026-11-02.ascend-backup.json' }),
+      prepare: async () => ({ text: '{}', fileName: 'ascend-2026-11-02.ascend-backup.json', logIds: ['log_a'] }),
       adapter: webBackupFileAdapter,
       markMade,
     });
     expect(click).toHaveBeenCalledTimes(1);
     expect(outcome).toEqual({ status: 'downloaded' });
-    expect(markMade).toHaveBeenCalledWith(expect.any(String), { kind: 'download' });
+    expect(markMade).toHaveBeenCalledWith(expect.any(String), { kind: 'download' }, ['log_a']);
   });
 });

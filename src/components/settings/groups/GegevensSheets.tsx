@@ -18,6 +18,7 @@ import { SettingsList } from '../SettingsList';
 import { ActivityStreamsRepo } from '../../../storage/database';
 import { formatBytes } from '../../../engine/streamPack';
 import { Sheet } from '../Sheet';
+import { logsNotInLastBackup } from '../../../engine/backupSince';
 
 // Back-up: maken en terugzetten. "Back-up maken" is de ene gouden knop van het blad.
 export function BackupSheet({ onClose, onImport }: { onClose: () => void; onImport: () => void }) {
@@ -26,8 +27,7 @@ export function BackupSheet({ onClose, onImport }: { onClose: () => void; onImpo
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const age = backupAge(settings.lastExportedAt, todayISO());
-  const last = settings.lastExportedAt;
-  const since = last ? sessionLogs.filter((l) => l.completedAt > last).length : sessionLogs.length;
+  const since = logsNotInLastBackup(sessionLogs, settings);
   const line = age.days === null
     ? 'Nog nooit gemaakt. Alles staat alleen op deze telefoon.'
     : `Laatste op ${longDate(localDateOf(settings.lastExportedAt!))}, ${age.days === 0 ? 'vandaag' : age.days === 1 ? 'gisteren' : `${age.days} dagen geleden`}.`;

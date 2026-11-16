@@ -58,7 +58,8 @@ import { mondayOfWeek, todayISO } from '../utils/dates';
 import { withProgramExercises } from '../engine/macrofactorProgram';
 import { withCountingSports } from '../engine/sportTemplate';
 import { makeId } from '../utils/id';
-import { buildBackupEnvelope, backupFileName } from '../storage/backupExport';
+import { buildBackupEnvelope, backupFileName, logIdsInEnvelope } from '../storage/backupExport';
+import { backupMadeSettings } from '../engine/backupSince';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
 import { runManualBackup } from '../storage/manualBackup';
 import { AppDataContext } from './useAppData';
@@ -394,12 +395,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           // gaat de back-up gewoon door.
           await tidyOldProposals().catch(() => 0);
           const envelope = await buildBackupEnvelope();
-          return { text: JSON.stringify(envelope, null, 2), fileName: backupFileName(envelope.createdAt) };
+          return { text: JSON.stringify(envelope, null, 2), fileName: backupFileName(envelope.createdAt), logIds: logIdsInEnvelope(envelope) };
         },
         // Pas na een gelukte schrijfactie. Wanneer en waar, voor Laatste back-up; een mislukte
         // automatische back-up is daarmee opgelost.
-        markMade: async (at, where) => {
-          await updateSettings({ lastExportedAt: at });
+        markMade: async (at, where, logIds) => {
+          await updateSettings(backupMadeSettings(at, logIds));
           await noteBackupMade(where, at).catch(() => undefined);
         },
       }),

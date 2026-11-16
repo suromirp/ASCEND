@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AutoBackupError } from '../engine/autoBackup';
+import { AutoBackupError, NameTakenError } from '../engine/autoBackup';
 
 // Een nagebouwde Android-map in het geheugen, achter de nagebootste plugin Filesystem.
 const mem = vi.hoisted(() => ({
@@ -120,7 +120,7 @@ vi.mock('@capacitor/filesystem', async () => {
 
 import { webBackupFileAdapter } from './backupFileAdapter';
 import { forgetManualBackupAttempts, runManualBackup, saveManualBackup } from './manualBackup';
-import { APP_BACKUP_LABEL, appBackupFolder } from '../integrations/backupFolder';
+import { APP_BACKUP_LABEL, appBackupFolder, type AppBackupFolder } from '../integrations/backupFolder';
 
 const NOW = new Date(2026, 10, 2, 14, 30);
 const NAME = 'ascend-2026-11-02-14u30.ascend-backup.json';
@@ -195,14 +195,14 @@ describe('Back-up maken in de Android-app', () => {
 });
 
 describe('uitkomst en Laatste back-up', () => {
-  const prepare = async () => ({ text: TEXT, fileName: 'x.ascend-backup.json' });
+  const prepare = async () => ({ text: TEXT, fileName: 'x.ascend-backup.json', logIds: ['log_a', 'log_b'] });
 
-  it('gelukt: zichtbare uitkomst en Laatste back-up bijgewerkt', async () => {
+  it('gelukt: zichtbare uitkomst en Laatste back-up bijgewerkt, met de trainingen in het bestand', async () => {
     const markMade = vi.fn(async () => undefined);
     const outcome = await runManualBackup({ prepare, adapter: webBackupFileAdapter, markMade });
     expect(outcome.status).toBe('saved');
     expect(markMade).toHaveBeenCalledTimes(1);
-    expect(markMade.mock.calls[0]).toMatchObject([expect.any(String), { kind: 'folder', label: APP_BACKUP_LABEL }]);
+    expect(markMade.mock.calls[0]).toEqual([expect.any(String), { kind: 'folder', label: APP_BACKUP_LABEL }, ['log_a', 'log_b']]);
   });
 
   it('mislukt: een fout met reden en Laatste back-up blijft onaangeraakt', async () => {
@@ -402,16 +402,15 @@ describe('de eerste tik na het openen', () => {
   });
 
   it('na een gelukte back-up gaan eigen resten van die naam weg, en verder niets', async () => {
-    mem.files.set(`ASCEND/${NAME}.mi0abc12x9k3.tmp`, 'half');
-    mem.files.set(`ASCEND/${NAME}.mi0abc12x9k3.old`, 'opzij');
+    mem.files.set(`ASCEND/${NAME}.ascpogingmi0abc12x9k3.tmp`, 'half');
+    mem.files.set(`ASCEND/${NAME}.ascpogingmi0abc12x9k3.old`, 'opzij');
     mem.files.set('ASCEND/notities.txt', 'van jou');
-    // Geen rest van een poging: iemand hernoemde zelf een back-up. Die blijft.
-    mem.files.set(`ASCEND/${NAME}.old`, 'zelf hernoemd');
-    mem.files.set(`ASCEND/${NAME}.mijn kopie.old`, 'zelf hernoemd');
-    mem.files.set(`ASCEND/${NAME}.kopie.old`, 'zelf hernoemd');
-    mem.files.set('ASCEND/ascend-2026-11-01-09u00.ascend-backup.json.x.old', 'andere naam');
+    // Geen rest van een poging: iemand hernoemde zelf een back-up, ook met een eigen woord van tien tekens of
+    // meer. Die blijft. Een rest van een oudere app (zonder het vaste begin) blijft ook staan.
+    const yours = [`${NAME}.old`, `${NAME}.mijn kopie.old`, `${NAME}.kopie.old`, `${NAME}.mijnkopie1.old`, `${NAME}.zondagavond2.tmp`, `${NAME}.mi0abc12x9k3.old`, 'ascend-2026-11-01-09u00.ascend-backup.json.x.old'].map((n) => `ASCEND/${n}`);
+    for (const n of yours) mem.files.set(n, 'van jou');
     expect(await saveManualBackup(appBackupFolder()!, TEXT, fast)).toEqual({ name: NAME });
-    expect(names().sort()).toEqual(['ASCEND/ascend-2026-11-01-09u00.ascend-backup.json.x.old', `ASCEND/${NAME}`, `ASCEND/${NAME}.old`, `ASCEND/${NAME}.mijn kopie.old`, `ASCEND/${NAME}.kopie.old`, 'ASCEND/notities.txt'].sort());
+    expect(names().sort()).toEqual([...yours, `ASCEND/${NAME}`, 'ASCEND/notities.txt'].sort());
   });
 
   it('het tijdelijke bestand lukt niet: de zin over ruimte, en er blijft niets achter', async () => {
@@ -448,5 +447,74 @@ describe('de eerste tik na het openen', () => {
     mem.hang = false;
     expect(await saveManualBackup(folder, TEXT, { ...fast, staleMs: 0 })).toEqual({ name: NAME });
     expect(names()).toEqual([`ASCEND/${NAME}`]);
+  });
+
+  it('een opgegeven poging die in dezelfde minuut alsnog landt: de nieuwe tik vervangt haar, één bestand en geen -2', async () => {
+    mem.writeDelayMs = 60;
+    const folder = appBackupFolder()!;
+    await expect(saveManualBackup(folder, TEXT, { ...fast, limitMs: 10 })).rejects.toMatchObject({ reason: 'timeout' });
+    // De eerste poging telt als opgegeven (staleMs 0) en schrijft nog; de tweede valt in dezelfde minuut.
+    const text2 = JSON.stringify({ backupSchemaVersion: 5, payload: { tweede: true } });
+    expect(await saveManualBackup(folder, text2, { ...fast, staleMs: 0 })).toEqual({ name: NAME });
+    await new Promise((r) => setTimeout(r, 150));
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+  });
+
+  it('de opgegeven poging landt pas na de nieuwe: ze zet er niets naast en ruimt niets op', async () => {
+    const folder = appBackupFolder()!;
+    mem.writeDelayMs = 80;
+    await expect(saveManualBackup(folder, TEXT, { ...fast, limitMs: 10 })).rejects.toMatchObject({ reason: 'timeout' });
+    mem.writeDelayMs = 0;
+    const text2 = JSON.stringify({ backupSchemaVersion: 5, payload: { tweede: true } });
+    expect(await saveManualBackup(folder, text2, { ...fast, staleMs: 0 })).toEqual({ name: NAME });
+    await new Promise((r) => setTimeout(r, 150));
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+    expect(mem.files.get(`ASCEND/${NAME}`)).toBe(text2);
+  });
+
+  it('een opgegeven poging die een vreemd bestand tegenkwam: de nieuwe tik vervangt dat bestand nooit', async () => {
+    const NAME2 = NAME.replace('.ascend-backup', '-2.ascend-backup');
+    const stored = new Map<string, string>();
+    const replacedForeign: string[] = [];
+    let hangLook = true;
+    const folder: AppBackupFolder = {
+      platform: 'app',
+      access: async () => 'ready',
+      requestAccess: async () => true,
+      where: async () => ({ kind: 'folder', label: APP_BACKUP_LABEL }),
+      installId: async () => 'installatie',
+      // De eerste naam is bezet door een bestand dat de app niet ziet; de blik op de tweede blijft eerst hangen.
+      exists: async (n) => (n === NAME2 && hangLook ? new Promise<boolean>(() => undefined) : stored.has(n)),
+      write: async (n, text, _id, opts) => {
+        if (n === NAME) {
+          if (!opts?.neverReplace) replacedForeign.push(n);
+          throw new NameTakenError(n);
+        }
+        stored.set(n, text);
+      },
+      verify: async () => 'ok',
+      remove: async () => undefined,
+    };
+    await expect(saveManualBackup(folder, TEXT, { ...fast, limitMs: 20 })).rejects.toMatchObject({ reason: 'timeout' });
+    hangLook = false;
+    expect(await saveManualBackup(folder, TEXT, { ...fast, staleMs: 0 })).toEqual({ name: NAME2 });
+    expect(replacedForeign).toEqual([]);
+  });
+
+  it('afmaken (keep) blijft hangen: na een eigen grens is de back-up gewoon gelukt', async () => {
+    const real = appBackupFolder()!;
+    const folder = { ...real, write: async (...args: Parameters<typeof real.write>) => {
+      const w = await real.write(...args);
+      return { keep: () => new Promise<void>(() => undefined), undo: w ? w.undo : async () => undefined };
+    } };
+    expect(await saveManualBackup(folder, TEXT, { ...fast, aftercareMs: 10, limitMs: 2_000 })).toEqual({ name: NAME });
+    expect(names()).toEqual([`ASCEND/${NAME}`]);
+  });
+
+  it('opruimen (tidy) blijft hangen: na een eigen grens is de back-up gewoon gelukt, en een volgende tik kan weer', async () => {
+    const real = appBackupFolder()!;
+    const folder = { ...real, tidy: () => new Promise<void>(() => undefined) };
+    expect(await saveManualBackup(folder, TEXT, { ...fast, aftercareMs: 10, limitMs: 2_000 })).toEqual({ name: NAME });
+    expect(await saveManualBackup(folder, TEXT, { ...fast, aftercareMs: 10, limitMs: 2_000 })).toEqual({ name: NAME.replace('.ascend-backup', '-2.ascend-backup') });
   });
 });

@@ -102,6 +102,7 @@ import { planShorter, resolveShorterToday, shorterAdvice } from '../engine/short
 import type { Advice } from '../engine/adviceEngine';
 import { ProposalSheet } from '../components/ProposalSheet';
 import { RaceDayLine } from '../components/RaceDay';
+import { logsNotInLastBackup } from '../engine/backupSince';
 
 function TodayContent() {
   const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
@@ -229,7 +230,7 @@ function TodayContent() {
   };
   const backupResultProps = { busy: backupBusy, result: backupResult, onDismissResult: () => setBackupResult(undefined) };
   const showExportReminder = backupCard === 'reminder' || (backupCard === null && !!backupResult);
-  const logsSinceBackup = settings.lastExportedAt ? sessionLogs.filter((l) => l.completedAt > settings.lastExportedAt!).length : sessionLogs.length;
+  const logsSinceBackup = logsNotInLastBackup(sessionLogs, settings);
 
   const quoteLanguage = resolveQuoteLanguage(settings);
   const quote = dailyQuote(today, quoteLanguage === 'off' ? undefined : quoteLanguage);
