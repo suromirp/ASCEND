@@ -15,11 +15,6 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 - Zonder antwoord: hij blijft op Vragen.
 - Sinds: 16 november 01:10
 
-### Eén regel voor uitzonderingen: twee keuzes
-- Keuzes: (1) een training die u zelf vastzette op een dag met ziek of zonder sportschool: altijd een melding in Let op (advies), of alleen als u dat aanzet. (2) iets erbij (extra loop, meer kracht) in een periode zonder sportschool: niets erbij (advies, zoals nu op één plek), of wel.
-- Zonder antwoord: allebei het advies.
-- Sinds: 15 november 22:20
-
 ### De Wachter op deze chat zetten
 - Keuzes: zelf in de app een taak op de chat Coördinator ASCEND 15 november avond, elk uur op :40, en "staat" zeggen (het systeem laat mij dat niet doen). Daarna gaat de oude uit.
 - Zonder antwoord: de oude blijft draaien in de vorige coördinator-chat.
@@ -53,6 +48,9 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 
 ## Net live
+
+### 16 november 08:40
+- Eén regel voor uitzonderingen: ziek, verkouden, opbouw na ziekte, zonder sportschool, vakantie, tocht en je doel gelden nu overal hetzelfde. Verkouden of in opbouw: iets zwaars slepen vraagt eerst, rustig bewegen mag. Een eigen training op een zieke dag staat in Let op met een voorstel. Een datum kiezen weigert een dag met koorts, vakantie, tocht of na je doel.
 
 ### 16 november 05:10
 - Losse training, Wandelen: de standaard is nu een gewone Wandeling. Ze heet Wandelen, krijgt Gedaan en telt niet als training; de Herstelwandeling blijft kiesbaar en blijft Herstel heten.
