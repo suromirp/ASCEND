@@ -54,6 +54,9 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Net live
 
+### 16 november 06:40
+- Losse training, Wandelen: de standaard is nu een gewone Wandeling. Ze heet Wandelen, krijgt Gedaan en telt niet als training; de Herstelwandeling blijft kiesbaar en blijft Herstel heten.
+
 ### 16 november 02:45
 - Zonder sportschool: een sportschooltraining op een dag in je periode zonder sportschool geeft nu een punt in Let op met een voorstel (eigen gewicht of laten vervallen). Slepen of een datum kiezen naar zo'n dag vraagt eerst. Uw Bovenlichaam A op woensdag 18 krijgt dat punt zodra u Week opent.
 
