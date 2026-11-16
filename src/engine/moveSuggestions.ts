@@ -8,7 +8,7 @@
 // day in the past). Deterministic, no guessing: nearest good day first,
 // the session's own week before the next one. Never a day the planning keeps
 // free: a holiday or trek day, the rest day, the main goal's day or later, or
-// the days you are ill (MoveContext).
+// the days you are ill (MoveContext). Never a day without a gym for a training that needs one.
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
@@ -20,6 +20,7 @@ import type { LeavePeriod } from '../models/leave';
 import type { IllnessEpisode } from '../models/illness';
 import { leaveDays, lightDays } from './leave';
 import { activeIllness, isHeavySession } from './illness';
+import { needsGymOn } from './noGymGuard';
 
 const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 
@@ -51,7 +52,9 @@ export interface MoveContext {
 
 // Why the planning keeps a day free for this training, or nothing when it may land there. One
 // source for the one-tap suggestions and for dragging in Week (engine/weekDrag.ts).
-export type KeptReason = 'off' | 'trek' | 'light' | 'rest' | 'goal' | 'ill';
+// 'nogym': a training that needs the gym on a day without one (engine/noGymGuard.ts). The suggestions skip it;
+// dragging and swapping ask first, like the rest day.
+export type KeptReason = 'off' | 'trek' | 'light' | 'rest' | 'goal' | 'ill' | 'nogym';
 
 export function keptDayReason(context: MoveContext, template: SessionTemplate, date: string, asOf: string): KeptReason | undefined {
   const offDays = leaveDays(context.leave);
@@ -62,6 +65,9 @@ export function keptDayReason(context: MoveContext, template: SessionTemplate, d
   if (context.restDay && isoWeekday(date) === context.restDay) return 'rest';
   if (context.goalDay && date >= context.goalDay) return 'goal';
   if (activeIllness(context.illness) && date <= addDays(asOf, 1)) return 'ill';
+  // Only asks, so after every reason that blocks or asks itself (Warden, 16 november): on the rest day the rest day
+  // asks, and dragging and swapping add this question to it (engine/weekDrag.ts, engine/weekSwap.ts).
+  if (needsGymOn(date, template, context.leave, offDays)) return 'nogym';
   return undefined;
 }
 

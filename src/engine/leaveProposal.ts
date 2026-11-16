@@ -326,6 +326,14 @@ function putBack(sessions: PlannedSession[], periodId: string, today: string, lo
       const yours: PlannedSession = { ...s };
       delete yours.leave;
       if (shortBack) delete yours.plannedMinutes;
+      // A training of yours that you let go for this period with Akkoord (Let op, engine/noGymGuard.ts#planNoGymFix):
+      // back on the plan on your day, with your lock (Warden, 16 november). A changed period that still has no gym on
+      // that day keeps it let go, with its own mark.
+      // Only a row let go on the day you put it (the mark says that day); one you moved since keeps only losing its mark.
+      if (mark.role === 'dropped' && s.status === 'skipped' && mark.from === s.scheduledDate) {
+        if (change?.stillShort(s)) { out.push({ ...s, leave: { ...mark, periodId: change.periodId } }); continue; }
+        yours.status = s.movedFromDate ? 'moved' : 'planned';
+      }
       out.push(yours);
       continue;
     }

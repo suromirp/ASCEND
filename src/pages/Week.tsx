@@ -49,6 +49,7 @@ import type { ScheduleProposal } from '../engine/scheduler';
 import { catchUpEligibility, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { dragHandlesShown } from '../components/weekDragShown';
 import { decideMove, dragEligibility, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
+import { noGymAsk } from '../engine/noGymGuard';
 import { SWAP_STALE } from '../storage/weekSwap';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
@@ -199,7 +200,7 @@ export function WeekPage() {
   async function moveTo(sessionId: string, date: string, opts?: DecideOptions): Promise<MoveDecision['action']> {
     // Losgelaten op een dag met precies één training die mag bewegen: de twee ruilen (engine/weekSwap.ts).
     if (opts?.verdict?.kind === 'swap' && opts.verdict.swapWithId) return swapWith(sessionId, opts.verdict.swapWithId);
-    const decision = decideMove(moveSession(sessionId, date), { ...opts, legsClose: legsCloseAt(sessionId, date) });
+    const decision = decideMove(moveSession(sessionId, date), { ...opts, legsClose: legsCloseAt(sessionId, date), restDay: settings.restDay ?? 1 });
     if (decision.action === 'apply') await applyProposal(decision.proposal);
     else if (decision.action === 'ask') setPendingProposal(decision.proposal);
     return decision.action;
@@ -420,8 +421,10 @@ export function WeekPage() {
             // Dezelfde vraag om Akkoord als bij de greep (test, wat een periode neerzette of opzij schoof).
             const sel = selected;
             const tpl = templateById.get(sel.templateId);
-            const eligible = tpl ? dragEligibility(sel, tpl, { logged: !!selectedLog, today: todayISO() }) : undefined;
-            void moveTo(sel.id, date, eligible?.ok ? { askAlways: eligible.askAlways } : undefined);
+            const eligible = tpl ? dragEligibility(sel, tpl, { logged: !!selectedLog, today: todayISO(), periods: settings.leavePeriods }) : undefined;
+            // Een sportschooltraining naar een dag zonder sportschool: eerst de vraag (engine/noGymGuard.ts).
+            const extraAsk = noGymAsk(tpl, date, settings.leavePeriods);
+            void moveTo(sel.id, date, eligible?.ok ? { askAlways: eligible.askAlways, extraAsk } : extraAsk ? { extraAsk } : undefined);
             setSelected(null);
           }}
           swapOptions={swapOptionsFor(selected.id)}

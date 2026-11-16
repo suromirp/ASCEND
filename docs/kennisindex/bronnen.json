@@ -3203,6 +3203,14 @@
    "kern": "Gemist heeft één afleiding voor Week, de kaart, de weekterugblik en het inhaaladvies: zonder sportschool vervalt alleen wat de sportschool nodig heeft, overgeslagen is geen gemist, en het inhalen leest dezelfde weekcontrole als Let op.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-15-zonder-sportschool-verplaatst.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Geen weg zet nog stil een sportschooltraining op een dag zonder sportschool: de voorgestelde dagen slaan hem over, slepen, een datum kiezen en ruilen vragen eerst, voorstellen van ASCEND doen het nooit, en staat er toch een, dan zegt Let op het in amber met een voorstel voor eigen gewicht of laten vervallen.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/_sjabloon.md": {
    "onderwerpen": [
     "werkwijze"

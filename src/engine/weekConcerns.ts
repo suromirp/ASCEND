@@ -4,7 +4,7 @@
 // droog feit eronder en een korte tekst voor de rij van elke betrokken
 // training (docs/visie/Waarschuwingen in Week.md, hoofdstuk 4).
 //
-// Acht regels: REST-DAY, LEG-SPACING, TWO-HARD-RUNS, TEST-DAY, AFTER-TEST, ONE-LONG,
+// Negen regels: NO-GYM (zonder sportschool), REST-DAY, LEG-SPACING, TWO-HARD-RUNS, TEST-DAY, AFTER-TEST, ONE-LONG,
 // TEST-FRESH en TEST-REST (rust voor een test). De controle draait met `reportYours`, zodat ook een training op
 // je rustdag meetelt die jij of een geaccepteerd voorstel vastzette. Alleen
 // toekomstige dagen van de getoonde week; een verleden week meldt niets.
@@ -19,8 +19,9 @@ import { freeDaysOfWeek, validateWeeks, type CheckInput, type CheckRule, type Fi
 import { intensityOfLog, isSportLogSession, restHoursFor, sportDoneLine, sportLogIdOf } from './sportDays';
 import { anySportDefinition } from '../data/sports';
 import { sportOfLog } from './sportOfLog';
+import { NO_GYM_ASK } from './noGymGuard';
 
-export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH', 'TEST-REST'];
+export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'NO-GYM', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH', 'TEST-REST'];
 
 interface ConcernText {
   // Dezelfde sleutel als de bevinding; verandert er iets in de week, dan verandert hij mee.
@@ -98,6 +99,18 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
             ? `Een testloop of wedstrijd schuift niet zonder jouw Akkoord. Je ziet hier alleen dat hij op een vrije dag staat.`
             : 'Je bent die dag vrij of op tocht. Je koos dit zelf of accepteerde het in een voorstel, dus eerst komt de vraag.',
           notes: { [a]: 'op een vrije dag' },
+        };
+      }
+      case 'NO-GYM': {
+        // Een sportschooltraining die jij of een voorstel vastzette op een dag zonder sportschool. De periode zet alleen
+        // haar eigen training om; hier staat het, met een voorstel (docs/beslissingen/2026-11-15-zonder-sportschool-verplaatst.md).
+        return {
+          ...base,
+          headline: NO_GYM_ASK,
+          fact: `${nameOf(a)} staat op ${dayName(dateOf(a))}, in je periode zonder sportschool.`,
+          title: `${nameOf(a)} zonder sportschool`,
+          why: 'Zonder sportschool wordt kracht een korte sessie met je eigen gewicht, of hij vervalt. Je koos deze dag zelf of accepteerde hem in een voorstel, dus eerst komt de vraag.',
+          notes: { [a]: 'geen sportschool' },
         };
       }
       case 'LEG-SPACING': {

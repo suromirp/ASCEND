@@ -4,17 +4,19 @@
 // geen IndexedDB.
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
+import type { LeaveKind, LeavePeriod, PlannedLeaveMark } from '../models/leave';
 import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { dayOrder } from './dayOrder';
 import { dayHasRoomFor, findHeavyConflicts, HEAVY_AXIS_LABEL, isHeavyBeforeTest, isTestOnly, sharedHeavyAxes, testRestHours, tooCloseBeforeTest, type ScheduleProposal } from './scheduler';
 import { keptDayReason, type KeptReason, type MoveContext } from './moveSuggestions';
+import { NO_GYM_ASK, needsGymOn } from './noGymGuard';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { lockLevel } from './weekValidator';
 import { weekConcerns } from './weekConcerns';
 import type { CheckInput } from './weekValidator';
 import { hasRole } from './templateRoles';
-import { addDays, mondayOfWeek, weekdayLongNL, weekdayOf, formatDateNL, weekDates } from '../utils/dates';
+import { addDays, isoWeekday, mondayOfWeek, weekdayLongNL, weekdayOf, formatDateNL, weekDates } from '../utils/dates';
 import { capitalize } from '../utils/capitalize';
 
 // --- wie mag slepen ----------------------------------------------------------------
@@ -24,7 +26,9 @@ export type DragEligibility = { ok: true; askAlways: boolean | string } | { ok: 
 
 // Nooit: wat gelogd of voorbij is (lockLevel 0), een overgeslagen training, een rustdag of
 // herstelwandeling, een wedstrijd (die gaat via het doel op Ascend). Wat een periode neerzette mag wel, met Akkoord. Een test mag, maar loslaten vraagt altijd om Akkoord.
-export function dragEligibility(session: PlannedSession, template: SessionTemplate, args: { logged: boolean; today: string }): DragEligibility {
+// `periods`: the stored periods, so the sentence names the period that moved it (Lookout, 16 november). Without them
+// it says "je vakantie", as before.
+export function dragEligibility(session: PlannedSession, template: SessionTemplate, args: { logged: boolean; today: string; periods?: LeavePeriod[] }): DragEligibility {
   const loggedIds = new Set<string | undefined>(args.logged ? [session.id] : []);
   if (lockLevel(session, loggedIds, args.today) === 0) return { ok: false, reason: 'history' };
   if (session.status === 'skipped') return { ok: false, reason: 'skipped' };
@@ -33,13 +37,13 @@ export function dragEligibility(session: PlannedSession, template: SessionTempla
   // Een training die je periode neerzette of die opzij schoof voor je vakantie mag je slepen, altijd met
   // Akkoord (het blad toont wat er gebeurt). Het merkteken van de periode blijft staan: de periode blijft de
   // reden en haalt hem weg als de periode weggaat. Wat de periode liet vervallen is overgeslagen en heeft geen greep.
-  if (session.leave) return { ok: true, askAlways: session.leave.role === 'placed' ? PLACED_ASK_REASON : LEAVE_ASK_REASON };
+  if (session.leave) return { ok: true, askAlways: session.leave.role === 'placed' ? PLACED_ASK_REASON : leaveAskReason({ ...session, leave: session.leave }, template, args.periods) };
   return { ok: true, askAlways: hasRole(template, 'test') };
 }
 
 // --- wat elke dag zegt -------------------------------------------------------------
 // swap: the day holds exactly one training that may move; letting go trades their days (engine/weekSwap.ts).
-type DayVerdictKind = 'origin' | 'free' | 'shared' | 'tight' | 'clash' | 'rest' | 'blocked' | 'swap';
+type DayVerdictKind = 'origin' | 'free' | 'shared' | 'tight' | 'clash' | 'rest' | 'nogym' | 'blocked' | 'swap';
 
 export interface DayVerdict {
   date: string;
@@ -77,7 +81,7 @@ export const dayTitle = (date: string) => `${capitalize(weekdayLongNL(date))} ${
 const fit = (...options: string[]) => options.find((o) => o.length <= CHIP_MAX) ?? options[options.length - 1].slice(0, CHIP_MAX);
 const joinNames = (names: string[]) => names.join(' en ');
 
-const BLOCKED_TEXT: Record<Exclude<KeptReason, 'rest'>, { chip: string; line: (day: string) => string }> = {
+const BLOCKED_TEXT: Record<Exclude<KeptReason, 'rest' | 'nogym'>, { chip: string; line: (day: string) => string }> = {
   off: { chip: 'Vakantie', line: (day) => `${day} is een vakantiedag.` },
   trek: { chip: 'Tochtdag', line: (day) => `${day} is een tochtdag.` },
   light: { chip: 'Lichte dag bij je tocht', line: (day) => `${day} blijft licht door je tocht, daar past geen zware training.` },
@@ -112,7 +116,7 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
       return { date, kind: 'blocked', droppable: false, tone: 'none', chip: 'Dag is voorbij', line: `${day} is al voorbij.`, ask: false };
     }
     const kept = keptDayReason(ctx.move, template, date, ctx.asOf);
-    if (kept && kept !== 'rest') {
+    if (kept && kept !== 'rest' && kept !== 'nogym') {
       const t = BLOCKED_TEXT[kept];
       return { date, kind: 'blocked', droppable: false, tone: 'none', chip: t.chip, line: t.line(day), ask: false };
     }
@@ -122,9 +126,15 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
     }
     const names = there.flatMap((s) => { const n = templateById.get(s.templateId)?.name; return n ? [n] : []; });
 
+    // Zonder sportschool: je mag, maar eerst de vraag; Week zegt het daarna in Let op (engine/noGymGuard.ts).
+    if (kept === 'nogym') {
+      return { date, kind: 'nogym', droppable: true, tone: 'warn', chip: 'Zonder sportschool', line: `${day}. ${NO_GYM_ASK} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: NO_GYM_ASK };
+    }
     if (kept === 'rest') {
-      const reason = 'Dit is je rustdag. Een rustdag is er om te herstellen.';
-      return { date, kind: 'rest', droppable: true, tone: 'warn', chip: 'Je rustdag', line: `${day}. Dit is je rustdag. Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: reason };
+      // Je rustdag in een periode zonder sportschool: beide vragen (Warden, 16 november).
+      const gym = needsGymOn(date, template, ctx.move.leave) ? ` ${NO_GYM_ASK}` : '';
+      const reason = `Dit is je rustdag. Een rustdag is er om te herstellen.${gym}`;
+      return { date, kind: 'rest', droppable: true, tone: 'warn', chip: 'Je rustdag', line: `${day}. Dit is je rustdag.${gym} Als je loslaat, komt eerst de vraag of je dat echt wilt.`, ask: true, askReason: reason };
     }
 
     const simulated = ctx.sessions.map((s) => (s.id === sessionId ? { ...s, scheduledDate: date } : s));
@@ -132,7 +142,8 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
     if (conflicts.length > 0) {
       const first = conflicts[0];
       const firstTemplate = templateById.get(first.templateId);
-      const conflictNames = conflicts.flatMap((c) => { const n = templateById.get(c.templateId)?.name; return n ? [n] : []; });
+      // Dezelfde naam als de gesleepte training: met de dag erbij (Lookout, 16 november).
+      const conflictNames = conflicts.flatMap((c) => { const n = templateById.get(c.templateId)?.name; return n ? [n === template.name ? `${n} van ${weekdayLongNL(c.scheduledDate)} ${Number(c.scheduledDate.slice(8, 10))}` : n] : []; });
       const shared = firstTemplate ? sharedHeavyAxes(template, firstTemplate) : [];
       const axes = shared.map((a) => HEAVY_AXIS_LABEL[a]).join(' en ');
       // De 48 uur gelden voor twee zware beendagen; een test vraagt frisse benen; anders alleen het feit.
@@ -210,6 +221,21 @@ export const TEST_ASK_REASON = 'Een testloop verplaats je alleen met Akkoord.';
 export const PLACED_ASK_REASON = 'Je periode zette deze training hier neer. Hij blijft bij je periode horen: haal je die weg, dan gaat hij mee.';
 export const LEAVE_ASK_REASON = 'Deze training schoof opzij voor je vakantie. Verplaats je hem, dan blijft hij op de nieuwe dag staan.';
 
+// Waarom een training die een periode verschoof of korter maakte eerst om Akkoord vraagt, met de soort periode erin:
+// een periode zonder sportschool is geen vakantie (Lookout, 16 november). `verb` is "Verplaats" of "Ruil".
+const PERIOD_WORD: Record<LeaveKind, string> = { no_training: 'je vakantie', trek: 'je tocht', free_days: 'je vrije dagen', no_gym: 'je periode zonder sportschool' };
+// "werd korter" alleen als de rij het merk shortened heeft en nu echt korter staat dan zijn volle lengte (Lookout,
+// 16 november); anders "schoof opzij".
+export function leaveAskReason(session: Pick<PlannedSession, 'leave' | 'plannedMinutes'> & { leave: PlannedLeaveMark }, template: Pick<SessionTemplate, 'durationVariants'> | undefined, periods: LeavePeriod[] | undefined, verb: 'Verplaats' | 'Ruil' = 'Verplaats'): string {
+  const mark = session.leave;
+  const kind = periods?.find((p) => p.id === mark.periodId)?.kind;
+  if (!kind && verb === 'Verplaats') return LEAVE_ASK_REASON;
+  const where = kind ? PERIOD_WORD[kind] : 'je vakantie';
+  const short = !!mark.shortened && session.plannedMinutes !== undefined && !!template && session.plannedMinutes < template.durationVariants.full;
+  const what = short ? `Deze training werd korter door ${where}.` : `Deze training schoof opzij voor ${where}.`;
+  return `${what} ${verb} je hem, dan blijft hij op de nieuwe dag staan.`;
+}
+
 // Het ene besluit voor het slepen en het actieblad. Dezelfde dag: niets. Een schoon voorstel met één
 // wijziging gaat meteen (met Ongedaan maken in de melding). Een cascade of een botsing die niet op te
 // lossen is, een rustdag, een dag waar de tijd niet past en een test vragen het bestaande blad.
@@ -218,7 +244,11 @@ export const LEAVE_ASK_REASON = 'Deze training schoof opzij voor je vakantie. Ve
 // (a pair that belongs together on its own days, engine/weekValidator.ts). A clean move then asks first,
 // with "Toch hier" and "Annuleren" when that is the only reason; with another reason too (a rest day, a test)
 // the sentence comes first and the usual buttons stay. A cascade or clash keeps its own question.
-export interface DecideOptions { askAlways?: boolean | string; verdict?: DayVerdict; legsClose?: boolean }
+// `extraAsk`: een vraag van de dag zelf zonder verdict (een datum uit het actieblad op een dag zonder sportschool,
+// engine/noGymGuard.ts#noGymAsk).
+// `restDay` (1 to 7, Monday first): a training that the move pushes onto your rest day is named in the sheet (Lookout,
+// 16 november).
+export interface DecideOptions { askAlways?: boolean | string; verdict?: DayVerdict; legsClose?: boolean; extraAsk?: string; restDay?: number }
 
 export const LEGS_ASK = 'Twee zware beendagen achter elkaar. Toch hier?';
 const LEGS_CONFIRM = { yes: 'Toch hier', no: 'Annuleren' } as const;
@@ -237,6 +267,14 @@ export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {})
     resolved = false;
   }
   if (opts.askAlways) reasons.push(typeof opts.askAlways === 'string' ? opts.askAlways : TEST_ASK_REASON);
+  if (opts.extraAsk && !reasons.includes(opts.extraAsk)) {
+    reasons.push(opts.extraAsk);
+    resolved = false;
+  }
+  // Een andere training die door deze verplaatsing op je rustdag komt: het blad zegt het.
+  for (const c of proposal.changes.slice(1)) {
+    if (opts.restDay && c.toDate !== c.fromDate && isoWeekday(c.toDate) === opts.restDay) reasons.push(`${c.templateName} gaat naar ${weekdayLongNL(c.toDate)} ${Number(c.toDate.slice(8, 10))}, je rustdag.`);
+  }
   const legs = !!opts.legsClose && clean;
   if (legs) {
     reasons.unshift(LEGS_ASK);

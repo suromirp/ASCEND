@@ -415,7 +415,7 @@ export const PLANNING: SettingDef[] = [
     place: { in: 'bundel-weekmelding' },
     title: 'Voorstel bij een probleem in de week',
     note: 'Klopt er iets niet in je week bij een training die je zelf vastzette, dan krijg je een voorstel met Akkoord.',
-    keywords: ['week', 'melding', 'probleem', 'rustdag', 'voorstel', 'waarschuwing', 'let op', 'zware beendag', 'te dicht'],
+    keywords: ['week', 'melding', 'probleem', 'rustdag', 'voorstel', 'waarschuwing', 'let op', 'zware beendag', 'te dicht', 'zonder sportschool'],
     help: true,
     helpKey: 'weekVoorstel',
   },

@@ -353,7 +353,7 @@ export function WeekPlanner({
   // die dag blijft voor andere trainingen dicht, dus je kon hem er niet meer terug zetten.
   const rowFor = (s: PlannedSession, template: SessionTemplate, date: string, extra: { ghost?: boolean } = {}): ReactNode => {
     const onTrek = s.leave?.role === 'placed' && (leave ?? []).some((p) => p.kind === 'trek' && p.startDate <= s.scheduledDate && p.endDate >= s.scheduledDate);
-    const eligibility = dragEnabled && weekDrag && !onTrek ? dragEligibility(s, template, { logged: loggedIds.has(s.id), today }) : undefined;
+    const eligibility = dragEnabled && weekDrag && !onTrek ? dragEligibility(s, template, { logged: loggedIds.has(s.id), today, periods: leave }) : undefined;
     // Een gemiste training heeft ook een greep, als er in deze week nog een dag is om naartoe te slepen
     // (vandaag of later): loslaten haalt hem in (engine/catchUp.ts). Een andere week gaat via het blad.
     // Vervallen (een gemelde vakantie of ziekte, of de afbouw voor een race die er al was) haal je niet in: geen greep.
