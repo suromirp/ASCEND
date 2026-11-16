@@ -5,7 +5,7 @@ Status: aangenomen
 
 ## Besluit
 
-Een back-up heet voortaan schema 6. Het bestand bevat dezelfde gegevens als schema 5, alleen kleiner opgeschreven: uitleg die in voorstellen steeds terugkomt staat één keer in `proposalTexts` en de voorstellen verwijzen ernaar (`{ "$tekst": "t3" }`), en elk record (een log, een voorstel, de reeksen van één loop, een ochtend, één instelling) staat op één regel. Weekcontroles blijven allemaal staan. Wat in IndexedDB staat verandert niet, ook de kopieën van voor een import niet.
+Een back-up heet voortaan schema 6. Het bestand bevat dezelfde gegevens als schema 5, alleen kleiner opgeschreven: uitleg die in voorstellen steeds terugkomt staat één keer in `proposalTexts` en de voorstellen verwijzen ernaar (`{ "$tekst": "t3" }`), en elk record (een log, een voorstel, de reeksen van één loop, een ochtend, één instelling) staat op één regel. Weekcontroles blijven allemaal staan. Wat in IndexedDB staat verandert niet, ook de kopieën van voor een import niet. Gevolg: een toestel met een oudere app weigert een bestand van schema 6 met "Werk de app bij"; de oudere app kan een verwijzing niet als tekst lezen. Een verwijzing die niet in de tabel staat wordt een lege tekst; het voorstel blijft staan.
 
 ## Reden
 
@@ -13,7 +13,7 @@ Een echte back-up was 2,5 MB, waarvan ongeveer 0,7 MB alleen inspringing. Die za
 
 Weekcontroles zonder wijziging worden gelezen door de lijst Aangepast door ASCEND (`engine/changeLog.ts`, de soort `plan_check` telt als vanzelf) en door naspelen (of iets bij elke opening terugkomt, met tijdstip en de regels die rechtgezet werden). Een teller per dag zou het id, het tijdstip en die regels kwijtraken, en dan importeert een bestand niet meer terug naar precies dezelfde database. Hun vaste uitleg en herhaalde regels gaan wel mee in de tabel, dus ze zijn nu klein.
 
-Op een nagemaakte back-up van echte omvang (`src/storage/backupCompact.test.ts`) wordt het bestand 21 procent kleiner; logs en voorstellen halveren. Met de verhouding van de echte back-up (de helft reeksen) is dat ongeveer een kwart, van 2,5 naar ongeveer 1,9 MB.
+Op een nagemaakte back-up van echte omvang (`src/storage/backupCompact.test.ts`) wordt het bestand 21 procent kleiner; logs en voorstellen halveren. Nagespeeld met een echte back-up: van 2,55 naar 1,61 MB, en heen en terug elke store gelijk aan de oude vorm.
 
 ## Alternatieven
 

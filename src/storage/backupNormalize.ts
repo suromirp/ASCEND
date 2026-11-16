@@ -57,12 +57,10 @@ interface RawSource {
   hasCapability: boolean;
   hasV4Extras: boolean;
   hasV5Extras: boolean;
-  // Already counted while reading the file shape (schema 6: a proposal text that could not be read).
-  skippedBefore?: number;
 }
 
-function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoals, hasCapability, hasV4Extras, hasV5Extras, skippedBefore = 0 }: RawSource): NormalizedBackupData {
-  const skipped: Counter = { n: skippedBefore };
+function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoals, hasCapability, hasV4Extras, hasV5Extras }: RawSource): NormalizedBackupData {
+  const skipped: Counter = { n: 0 };
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
   const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped)?.map(cleanPlannedCatchUp).map(migratePlannedFixed).map(migratePlannedAmount);
   const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogSetTimes).map(migrateLogSetAsked).map(migrateLogSetSkill).map(migrateLogSetRow).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogFileDuration).map(migrateLogForgeLog).map(migrateLogBestEffort).map(migrateLogRunDetail).map(migrateLogZone2Pieces).map(migrateLogRpeAssumed).map(migrateLogCountedSport).map(migrateLogCustomSport).map(migrateLogLinkedLater);
@@ -197,8 +195,7 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
     }
     // Schema 6 (I-63): the texts of the proposals come back from the table in the file
     // (storage/migrationsCompact.ts). An older file has no table and goes through unchanged.
-    const unpacked = obj.backupSchemaVersion >= 6 ? unpackProposalTexts(obj.payload) : { payload: obj.payload, skipped: 0 };
-    const payload = unpacked.payload;
+    const payload = obj.backupSchemaVersion >= 6 ? unpackProposalTexts(obj.payload) : obj.payload;
     const createdAt = typeof obj.createdAt === 'string' ? obj.createdAt : new Date().toISOString();
     const version = payload.version;
     if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5) {
@@ -214,7 +211,6 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
       hasCapability: version >= 3,
       hasV4Extras: version >= 4,
       hasV5Extras: version >= 5,
-      skippedBefore: unpacked.skipped,
     });
   }
 

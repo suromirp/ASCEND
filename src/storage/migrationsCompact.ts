@@ -65,41 +65,37 @@ function refKey(value: unknown): string | undefined {
   return keys.length === 1 && keys[0] === REF && typeof value[REF] === 'string' ? value[REF] : undefined;
 }
 
-function unpackValue(value: unknown, texts: Record<string, string>, missing: { n: number }): unknown {
+function resolve(value: unknown, texts: Record<string, string>): unknown {
   const key = refKey(value);
-  if (key !== undefined) {
-    const text = Object.prototype.hasOwnProperty.call(texts, key) ? texts[key] : undefined;
-    if (typeof text === 'string') return text;
-    // Een sleutel die niet in de tabel staat (een beschadigd bestand): de tekst is weg, het voorstel blijft
-    // leesbaar met een lege tekst en telt als beschadigd.
-    missing.n++;
-    return '';
-  }
-  if (Array.isArray(value)) return value.map((v) => unpackValue(v, texts, missing));
+  if (key === undefined) return value;
+  // Een sleutel die niet in de tabel staat (een beschadigd bestand): de tekst is weg, het voorstel blijft leesbaar
+  // met een lege tekst. Het voorstel zelf is ingelezen en telt dus niet als overgeslagen.
+  return Object.prototype.hasOwnProperty.call(texts, key) && typeof texts[key] === 'string' ? texts[key] : '';
+}
+
+// Alleen onder de velden die packProposalTexts verpakt (TEXT_KEYS en TEXT_LIST_KEYS) is een object met alleen
+// `$tekst` een verwijzing; elders blijft alles zoals het in het bestand staat.
+function unpackValue(value: unknown, texts: Record<string, string>): unknown {
+  if (Array.isArray(value)) return value.map((v) => unpackValue(v, texts));
   if (!isRecord(value)) return value;
   const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(value)) out[k] = unpackValue(v, texts, missing);
+  for (const [key, v] of Object.entries(value)) {
+    if (TEXT_KEYS.has(key)) out[key] = resolve(v, texts);
+    else if (TEXT_LIST_KEYS.has(key) && Array.isArray(v)) out[key] = v.map((s) => resolve(s, texts));
+    else out[key] = unpackValue(v, texts);
+  }
   return out;
 }
 
 // De leesstap van schema 6 naar het model: elke verwijzing wordt weer de tekst, de tabel gaat eruit. Gooit nooit;
 // een payload zonder verwijzingen (schema 5 of ouder, of een kopie van voor een import) komt ongewijzigd terug.
-// `skipped` telt de voorstellen met een verwijzing die niet te lezen was.
-export function unpackProposalTexts(payload: Record<string, unknown>): { payload: Record<string, unknown>; skipped: number } {
-  const hasTable = 'proposalTexts' in payload;
-  if (!hasTable && !Array.isArray(payload.planChangeProposals)) return { payload, skipped: 0 };
+export function unpackProposalTexts(payload: Record<string, unknown>): Record<string, unknown> {
+  if (!('proposalTexts' in payload) && !Array.isArray(payload.planChangeProposals)) return payload;
   const { proposalTexts, ...rest } = payload;
   const texts: Record<string, string> = {};
   if (isRecord(proposalTexts)) {
     for (const [k, v] of Object.entries(proposalTexts)) if (typeof v === 'string') texts[k] = v;
   }
-  if (!Array.isArray(rest.planChangeProposals)) return { payload: rest, skipped: 0 };
-  let skipped = 0;
-  rest.planChangeProposals = rest.planChangeProposals.map((p) => {
-    const missing = { n: 0 };
-    const out = unpackValue(p, texts, missing);
-    if (missing.n > 0) skipped++;
-    return out;
-  });
-  return { payload: rest, skipped };
+  if (Array.isArray(rest.planChangeProposals)) rest.planChangeProposals = rest.planChangeProposals.map((p) => unpackValue(p, texts));
+  return rest;
 }

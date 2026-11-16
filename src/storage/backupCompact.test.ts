@@ -278,7 +278,7 @@ describe('back-up kleiner zonder dataverlies (I-63)', () => {
     expect(v1.sourceBackupSchemaVersion).toBe(1);
   });
 
-  it('een onbekende sleutel: geen fout, het voorstel blijft met een lege tekst en telt als beschadigd', () => {
+  it('een onbekende sleutel: geen fout, het voorstel blijft met een lege tekst en telt niet als overgeslagen', () => {
     const proposal = (id: string) => ({ id, trigger: 'plan_check', issue: 'Weekcontrole', changes: [], alternatives: [], consequences: 'Duurloop van di 12 naar wo 13', explanation: WEEKCHECK_WHY, createdAt: at(0, 9) });
     const { proposals, texts } = packProposalTexts([proposal('a'), proposal('b')]);
     expect(texts).toEqual({ t1: 'Duurloop van di 12 naar wo 13', t2: WEEKCHECK_WHY });
@@ -286,10 +286,29 @@ describe('back-up kleiner zonder dataverlies (I-63)', () => {
     const backup = normalizeBackupToCurrentModel({ backupSchemaVersion: 6, createdAt: at(0, 9), payload: { version: 5, proposalTexts: texts, planChangeProposals: proposals } });
     expect(backup.planChangeProposals?.map((p) => p.explanation)).toEqual([WEEKCHECK_WHY, '']);
     expect(backup.planChangeProposals?.[1].consequences).toBe('Duurloop van di 12 naar wo 13');
-    expect(backup.skippedInvalid).toBe(1);
+    expect(backup.planChangeProposals).toHaveLength(2);
+    expect(backup.skippedInvalid).toBe(0);
     // Zonder tabel of met een kapotte tabel: ook geen fout.
     expect(() => normalizeBackupToCurrentModel({ backupSchemaVersion: 6, createdAt: at(0, 9), payload: { version: 5, proposalTexts: 'kapot', planChangeProposals: proposals } })).not.toThrow();
-    expect(unpackProposalTexts({ proposalTexts: { t1: 5 }, planChangeProposals: [{ explanation: { $tekst: 't1' } }] })).toEqual({ payload: { planChangeProposals: [{ explanation: '' }] }, skipped: 1 });
+    expect(unpackProposalTexts({ proposalTexts: { t1: 5 }, planChangeProposals: [{ explanation: { $tekst: 't1' } }] })).toEqual({ planChangeProposals: [{ explanation: '' }] });
+  });
+
+  it('alleen een object met precies de sleutel $tekst onder een tekstveld is een verwijzing', () => {
+    const texts = { t1: 'Een tekst die in de tabel van het bestand staat.' };
+    const proposal = {
+      id: 'p1', trigger: 'plan_check', issue: { $tekst: 't1' }, changes: [{ action: 'keep', reason: { $tekst: 't1', ook: 'iets' }, generatedBy: [{ $tekst: 't1' }, 'engine/x.ts'] }], alternatives: [],
+      consequences: '', explanation: 'x', createdAt: at(0, 9),
+      // Buiten de tekstvelden: blijft precies zoals het in het bestand staat.
+      extra: { $tekst: 't1' }, meer: [{ $tekst: 't1' }],
+    };
+    const backup = normalizeBackupToCurrentModel({ backupSchemaVersion: 6, createdAt: at(0, 9), payload: { version: 5, proposalTexts: texts, planChangeProposals: [proposal] } });
+    const p = (backup.planChangeProposals ?? [])[0] as unknown as Record<string, unknown> & { changes: Record<string, unknown>[] };
+    expect(p.issue).toBe(texts.t1);
+    expect(p.changes[0].reason).toEqual({ $tekst: 't1', ook: 'iets' });
+    expect(p.changes[0].generatedBy).toEqual([texts.t1, 'engine/x.ts']);
+    expect(p.extra).toEqual({ $tekst: 't1' });
+    expect(p.meer).toEqual([{ $tekst: 't1' }]);
+    expect(backup.skippedInvalid).toBe(0);
   });
 
   it('een tekst die één keer voorkomt of kort is, blijft gewoon staan', () => {

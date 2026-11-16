@@ -14,6 +14,9 @@ import { packProposalTexts } from './migrationsCompact';
 // Tot en met deze diepte staat elk onderdeel op een eigen regel; dieper is één regel per record.
 const READABLE_DEPTH = 3;
 
+// Boven READABLE_DEPTH schrijft dit zelf, niet JSON.stringify: het kent daar geen `toJSON` (een Date) en geen
+// gaten in een lijst. Een envelop heeft geen van beide (datums zijn tekst, lijsten zijn dicht); daaronder doet
+// JSON.stringify het werk en klopt alles vanzelf.
 function write(value: unknown, depth: number, indent: string): string | undefined {
   if (depth >= READABLE_DEPTH || value === null || typeof value !== 'object') return JSON.stringify(value);
   const inner = indent + '  ';
