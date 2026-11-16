@@ -201,7 +201,7 @@ export function WeekPage() {
   async function moveTo(sessionId: string, date: string, opts?: DecideOptions): Promise<MoveDecision['action']> {
     // Losgelaten op een dag met precies één training die mag bewegen: de twee ruilen (engine/weekSwap.ts).
     if (opts?.verdict?.kind === 'swap' && opts.verdict.swapWithId) return swapWith(sessionId, opts.verdict.swapWithId);
-    const decision = decideMove(moveSession(sessionId, date), { ...opts, legsClose: legsCloseAt(sessionId, date) });
+    const decision = decideMove(moveSession(sessionId, date), { ...opts, legsClose: legsCloseAt(sessionId, date), restDay: settings.restDay ?? 1 });
     if (decision.action === 'apply') await applyProposal(decision.proposal);
     else if (decision.action === 'ask') setPendingProposal(decision.proposal);
     return decision.action;

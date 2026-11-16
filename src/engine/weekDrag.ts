@@ -16,7 +16,7 @@ import { lockLevel } from './weekValidator';
 import { weekConcerns } from './weekConcerns';
 import type { CheckInput } from './weekValidator';
 import { hasRole } from './templateRoles';
-import { addDays, mondayOfWeek, weekdayLongNL, weekdayOf, formatDateNL, weekDates } from '../utils/dates';
+import { addDays, isoWeekday, mondayOfWeek, weekdayLongNL, weekdayOf, formatDateNL, weekDates } from '../utils/dates';
 import { capitalize } from '../utils/capitalize';
 
 // --- wie mag slepen ----------------------------------------------------------------
@@ -37,7 +37,7 @@ export function dragEligibility(session: PlannedSession, template: SessionTempla
   // Een training die je periode neerzette of die opzij schoof voor je vakantie mag je slepen, altijd met
   // Akkoord (het blad toont wat er gebeurt). Het merkteken van de periode blijft staan: de periode blijft de
   // reden en haalt hem weg als de periode weggaat. Wat de periode liet vervallen is overgeslagen en heeft geen greep.
-  if (session.leave) return { ok: true, askAlways: session.leave.role === 'placed' ? PLACED_ASK_REASON : leaveAskReason(session.leave, args.periods) };
+  if (session.leave) return { ok: true, askAlways: session.leave.role === 'placed' ? PLACED_ASK_REASON : leaveAskReason({ ...session, leave: session.leave }, template, args.periods) };
   return { ok: true, askAlways: hasRole(template, 'test') };
 }
 
@@ -224,11 +224,15 @@ export const LEAVE_ASK_REASON = 'Deze training schoof opzij voor je vakantie. Ve
 // Waarom een training die een periode verschoof of korter maakte eerst om Akkoord vraagt, met de soort periode erin:
 // een periode zonder sportschool is geen vakantie (Lookout, 16 november). `verb` is "Verplaats" of "Ruil".
 const PERIOD_WORD: Record<LeaveKind, string> = { no_training: 'je vakantie', trek: 'je tocht', free_days: 'je vrije dagen', no_gym: 'je periode zonder sportschool' };
-export function leaveAskReason(mark: PlannedLeaveMark, periods: LeavePeriod[] | undefined, verb: 'Verplaats' | 'Ruil' = 'Verplaats'): string {
+// "werd korter" alleen als de rij het merk shortened heeft en nu echt korter staat dan zijn volle lengte (Lookout,
+// 16 november); anders "schoof opzij".
+export function leaveAskReason(session: Pick<PlannedSession, 'leave' | 'plannedMinutes'> & { leave: PlannedLeaveMark }, template: Pick<SessionTemplate, 'durationVariants'> | undefined, periods: LeavePeriod[] | undefined, verb: 'Verplaats' | 'Ruil' = 'Verplaats'): string {
+  const mark = session.leave;
   const kind = periods?.find((p) => p.id === mark.periodId)?.kind;
   if (!kind && verb === 'Verplaats') return LEAVE_ASK_REASON;
   const where = kind ? PERIOD_WORD[kind] : 'je vakantie';
-  const what = mark.shortened ? `Deze training werd korter door ${where}.` : `Deze training schoof opzij voor ${where}.`;
+  const short = !!mark.shortened && session.plannedMinutes !== undefined && !!template && session.plannedMinutes < template.durationVariants.full;
+  const what = short ? `Deze training werd korter door ${where}.` : `Deze training schoof opzij voor ${where}.`;
   return `${what} ${verb} je hem, dan blijft hij op de nieuwe dag staan.`;
 }
 
@@ -242,7 +246,9 @@ export function leaveAskReason(mark: PlannedLeaveMark, periods: LeavePeriod[] | 
 // the sentence comes first and the usual buttons stay. A cascade or clash keeps its own question.
 // `extraAsk`: een vraag van de dag zelf zonder verdict (een datum uit het actieblad op een dag zonder sportschool,
 // engine/noGymGuard.ts#noGymAsk).
-export interface DecideOptions { askAlways?: boolean | string; verdict?: DayVerdict; legsClose?: boolean; extraAsk?: string }
+// `restDay` (1 to 7, Monday first): a training that the move pushes onto your rest day is named in the sheet (Lookout,
+// 16 november).
+export interface DecideOptions { askAlways?: boolean | string; verdict?: DayVerdict; legsClose?: boolean; extraAsk?: string; restDay?: number }
 
 export const LEGS_ASK = 'Twee zware beendagen achter elkaar. Toch hier?';
 const LEGS_CONFIRM = { yes: 'Toch hier', no: 'Annuleren' } as const;
@@ -264,6 +270,10 @@ export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {})
   if (opts.extraAsk && !reasons.includes(opts.extraAsk)) {
     reasons.push(opts.extraAsk);
     resolved = false;
+  }
+  // Een andere training die door deze verplaatsing op je rustdag komt: het blad zegt het.
+  for (const c of proposal.changes.slice(1)) {
+    if (opts.restDay && c.toDate !== c.fromDate && isoWeekday(c.toDate) === opts.restDay) reasons.push(`${c.templateName} gaat naar ${weekdayLongNL(c.toDate)} ${Number(c.toDate.slice(8, 10))}, je rustdag.`);
   }
   const legs = !!opts.legsClose && clean;
   if (legs) {

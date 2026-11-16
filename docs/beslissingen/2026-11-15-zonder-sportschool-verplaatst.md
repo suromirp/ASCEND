@@ -29,7 +29,9 @@ Zonder sportschool vervalt wat de sportschool nodig heeft, of het wordt eigen ge
 
 - Een training die een periode verschoof of korter maakte, noemt bij slepen en ruilen de soort periode: "Deze training werd korter door je periode zonder sportschool." in plaats van "schoof opzij voor je vakantie" (`engine/weekDrag.ts#leaveAskReason`). Bij een vakantie blijft de zin zoals hij was.
 - Staan er twee trainingen met dezelfde naam in de week, dan krijgt de andere zijn dag erbij: "valt dicht op Bovenlichaam A van donderdag 19". Lookout las het als dicht op zichzelf.
-- De regel onder de vinger bij ruilen noemt hoogstens de twee belangrijkste feiten en dan "Als je loslaat, komt eerst de vraag of je dat echt wilt."; het blad met Akkoord noemt ze allemaal.
+- De regel onder de vinger bij een ruil die eerst vraagt, is de dag, één feit en "Als je loslaat, komt eerst de vraag.". Sportschool nodig gaat voor afstand; de chip zegt al met wie je ruilt. Het blad na loslaten noemt alle feiten. Een ruil zonder vraag zegt zoals eerst met wie en waarheen (tweede ronde Lookout: op 360 waren het acht regels).
+- "werd korter door je periode" alleen als de rij het merk shortened heeft en nu echt korter staat dan zijn volle lengte; anders "schoof opzij voor".
+- Schuift een andere training door een verplaatsing naar je rustdag, dan zegt het blad het: "Bovenlichaam A gaat naar maandag 16, je rustdag." (`DecideOptions.restDay`).
 - Laten vervallen staat er als eigen gewicht niet past (48 uur tussen krachtsessies) of als de periode kracht laat vallen; anders wordt het eigen gewicht. Lookout zag eigen gewicht omdat er in zijn stand ruimte was.
 
 De stand van de eigenaar (de training staat er al): de rustigste weg is het punt in Let op met het voorstel, geen nieuwe kaart op Vandaag. Week opent, het amber punt staat er, één tik op het voorstel. Voor zijn week is dat "Geen sportschool: Bovenlichaam A vervalt. Een sessie met je eigen gewicht past niet, want tussen twee krachtsessies zit minstens 48 uur.": Eigen gewicht staat al op dinsdag 17.

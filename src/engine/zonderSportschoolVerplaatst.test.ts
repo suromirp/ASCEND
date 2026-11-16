@@ -377,7 +377,7 @@ describe('na Lookout (16 november)', () => {
     expect(alone.ok && alone.asks.join(' ')).not.toContain('valt dicht op Bovenlichaam A');
   });
 
-  it('c: de sleepregel bij ruilen noemt hoogstens twee feiten en dan de vraag; het blad noemt alles', () => {
+  it('c: de sleepregel bij ruilen is één feit (sportschool nodig voorop) en de korte vraag; het blad noemt alles', () => {
     const { plan } = ownerPlan();
     const run = ps('er18', 'tpl_easy_run', '2026-11-18', { plannedMinutes: 30, leave: RUN_LEAVE });
     const sessions = [...plan.filter((x) => x.id !== 'bw17'), ps('ua17b', 'tpl_upper_a', '2026-11-17', { status: 'moved', lock }), run, ps('ua19', 'tpl_upper_a', '2026-11-19', { status: 'moved', lock })];
@@ -386,10 +386,41 @@ describe('na Lookout (16 november)', () => {
     expect(check.ok && check.asks.length).toBeGreaterThanOrEqual(3);
     const v = withSwapVerdicts(ctx, 'ua17b', dayVerdicts(ctx, 'ua17b', '2026-11-16')).find((x) => x.date === '2026-11-18')!;
     expect(v.kind).toBe('swap');
-    const facts = v.line.replace(/^.*?die gaat naar [a-z]+ \d+ [a-z]+\. /, '').replace(' Als je loslaat, komt eerst de vraag of je dat echt wilt.', '');
-    expect(check.ok && facts).toBe(check.ok ? check.asks.slice(0, 2).join(' ') : '');
-    expect(v.line.endsWith('Als je loslaat, komt eerst de vraag of je dat echt wilt.')).toBe(true);
+    expect(v.line).toBe('Woensdag 18 november. Bovenlichaam A op woensdag 18 november: sportschool nodig, en je zit zonder sportschool. Als je loslaat, komt eerst de vraag.');
     expect(v.askReason).toBe(check.ok ? check.asks.join(' ') : '');
+  });
+
+  it('c: zonder vraag blijft de regel de ruil zelf', () => {
+    const { plan } = ownerPlan();
+    const ctx = drag(plan, []);
+    const clean = withSwapVerdicts(ctx, 'er19', dayVerdicts(ctx, 'er19', '2026-11-16')).filter((x) => x.kind === 'swap' && !x.ask);
+    expect(clean.length).toBeGreaterThan(0);
+    for (const v of clean) expect(v.line).toMatch(/^[A-Z][a-z]+ \d+ november\. Ruilen met .+, die gaat naar /);
+  });
+
+  it('2: "werd korter" alleen bij een rij die echt korter staat; anders "schoof opzij"', () => {
+    const t = byId.get('tpl_easy_run')!;
+    const reason = (over: Partial<PlannedSession>) => {
+      const e = dragEligibility(ps('er18', 'tpl_easy_run', '2026-11-18', over), t, { logged: false, today: TODAY, periods: [PERIOD] });
+      return e.ok ? e.askAlways : undefined;
+    };
+    expect(reason({ plannedMinutes: t.durationVariants.short, leave: RUN_LEAVE })).toBe('Deze training werd korter door je periode zonder sportschool. Verplaats je hem, dan blijft hij op de nieuwe dag staan.');
+    // Het merk zegt korter, maar de rij staat op volle lengte (of zonder eigen lengte): niets is korter.
+    expect(reason({ leave: RUN_LEAVE })).toBe('Deze training schoof opzij voor je periode zonder sportschool. Verplaats je hem, dan blijft hij op de nieuwe dag staan.');
+    expect(reason({ plannedMinutes: t.durationVariants.full, leave: RUN_LEAVE })).toContain('schoof opzij');
+    expect(reason({ leave: { periodId: 'p1', role: 'moved', from: '2026-11-17' } })).toContain('schoof opzij');
+  });
+
+  it('3: schuift een andere training door de verplaatsing naar je rustdag, dan zegt het blad het', () => {
+    const proposal = { resolved: false, reason: 'Bovenlichaam A schuift op.', changes: [
+      { sessionId: 'ua17b', templateId: 'tpl_upper_a', templateName: 'Bovenlichaam A', fromDate: '2026-11-17', toDate: '2026-11-19' },
+      { sessionId: 'ua19', templateId: 'tpl_upper_a', templateName: 'Bovenlichaam A', fromDate: '2026-11-19', toDate: '2026-11-16' },
+    ] };
+    const d = decideMove(proposal, { extraAsk: NO_GYM_ASK, restDay: 1 });
+    expect(d.action).toBe('ask');
+    expect(d.proposal.reason).toContain('Bovenlichaam A gaat naar maandag 16, je rustdag.');
+    // Geen rustdag geraakt: geen regel.
+    expect(decideMove(proposal, { extraAsk: NO_GYM_ASK, restDay: 3 }).proposal.reason).not.toContain('je rustdag');
   });
 
   it('e: laten vervallen staat er als eigen gewicht niet past (48 uur) of als de periode kracht laat vallen; anders eigen gewicht', () => {

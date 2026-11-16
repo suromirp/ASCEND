@@ -21,7 +21,8 @@ export const SWAP_TEST = 'Een testloop ruil je alleen met Akkoord.';
 const SWAP_LEAVE = 'Deze training schoof opzij voor je vakantie. Ruil je hem, dan blijft hij op de nieuwe dag staan.';
 const SWAP_PLACED = 'Je periode zette deze training hier neer. Ruil je hem, dan blijft hij bij je periode horen: haal je die weg, dan gaat hij mee.';
 export const SWAP_LEGS = 'Twee zware beendagen achter elkaar.';
-const SWAP_ASK_TAIL = 'Als je loslaat, komt eerst de vraag of je dat echt wilt.';
+// De korte vraag onder de vinger bij een ruil die eerst vraagt; de chip zegt al met wie je ruilt (Lookout, 16 november).
+const SWAP_DROP_ASK = 'Als je loslaat, komt eerst de vraag.';
 const CHIP_MAX = 28;
 const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 
@@ -135,7 +136,7 @@ export function checkSwap(ctx: DragContext, aId: string, bId: string): SwapCheck
   }
   for (const leg of legs) {
     if (leg.ask === true) { if (!asks.includes(SWAP_TEST)) asks.push(SWAP_TEST); }
-    else if (leg.ask) { const text = leg.ask === PLACED_ASK_REASON ? SWAP_PLACED : leg.s.leave ? leaveAskReason(leg.s.leave, ctx.move.leave, 'Ruil') : SWAP_LEAVE; if (!asks.includes(text)) asks.push(text); }
+    else if (leg.ask) { const text = leg.ask === PLACED_ASK_REASON ? SWAP_PLACED : leg.s.leave ? leaveAskReason({ ...leg.s, leave: leg.s.leave }, leg.t, ctx.move.leave, 'Ruil') : SWAP_LEAVE; if (!asks.includes(text)) asks.push(text); }
   }
 
   const proposal: ScheduleProposal = {
@@ -206,9 +207,9 @@ export function withSwapVerdicts(ctx: DragContext, sessionId: string, verdicts: 
     const check = checkSwap(ctx, a.id, b.id);
     if (!check.ok) return v;
     const asks = check.asks.join(' ');
-    // De regel onder de vinger: hoogstens de twee belangrijkste feiten, dan de vraag; het blad met Akkoord noemt ze
-    // allemaal (Lookout, 16 november).
-    const said = check.asks.slice(0, 2).join(' ');
+    // De regel onder de vinger: het ene belangrijkste feit (sportschool nodig gaat voor afstand) en de vraag; het blad
+    // na loslaten noemt ze allemaal (Lookout, 16 november: op 360 waren het acht regels).
+    const said = check.asks.find((x) => x.toLowerCase().includes(NO_GYM_ASK.toLowerCase().slice(0, -1))) ?? check.asks[0];
     const hints = check.hints.length > 0 ? ` ${check.hints.join(' ')}` : '';
     return {
       date: v.date,
@@ -216,7 +217,7 @@ export function withSwapVerdicts(ctx: DragContext, sessionId: string, verdicts: 
       droppable: true,
       tone: asks ? 'warn' : 'ok',
       chip: fit(`Ruilen met ${tb.name}`, 'Ruilen'),
-      line: `${dayTitle(v.date)}. Ruilen met ${tb.name}, die gaat naar ${dayLower(a.scheduledDate)}.${asks ? ` ${said} ${SWAP_ASK_TAIL}` : hints}`,
+      line: asks ? `${dayTitle(v.date)}. ${said} ${SWAP_DROP_ASK}` : `${dayTitle(v.date)}. Ruilen met ${tb.name}, die gaat naar ${dayLower(a.scheduledDate)}.${hints}`,
       ask: !!asks,
       ...(asks ? { askReason: asks } : {}),
       swapWithId: b.id,
