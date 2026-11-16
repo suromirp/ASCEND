@@ -68,6 +68,7 @@ Eén ladder een stap hoger dan op 20 okt.
 --- kaart 4 ---
 [knop: TochtenEen tocht erbij? Er komen vrije dagen omheen.]
 [knop: KrachtblokHoe kracht in je week past]
+[knop: Wandeling plannenEen route van een paar kilometer, zonder training.]
 
 --- kaart 5 ---
 [knop: Eerdere doelen]

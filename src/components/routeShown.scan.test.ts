@@ -8,6 +8,8 @@ import logForm from './logForm/useLogForm.ts?raw';
 import evening from './useEveningBefore.ts?raw';
 import today from '../pages/Today.tsx?raw';
 import walkSheet from './WalkPlanSheet.tsx?raw';
+import logOrPlan from './LogOrPlan.tsx?raw';
+import ascend from '../pages/Ascend.tsx?raw';
 
 // Route alleen buiten en te voet, op elke plek (Pathfinder, 11 november): Loopband gekozen geeft geen route
 // op Vandaag, in het blad achter de i, op het trainingsscherm of in De avond ervoor. Alle plekken lopen
@@ -21,16 +23,21 @@ describe('de route volgt de keuze Waar train je? overal', () => {
     expect(line).toContain('if (!places) return null;');
   });
   // Bewust aangepast (15 november, docs/beslissingen/2026-11-15-wandeling-plannen.md): een route bij een
-  // training op Vandaag gaat nog steeds alleen via RouteProposalLine. Daarnaast is er een tweede ingang zonder
-  // training, Wandeling plannen (WalkPlanSheet): die kent geen training en dus geen keuze Waar train je?, en
-  // zoekt met dezelfde regie (useRouteSearch met `walk`). Vandaag zelf tekent nergens een eigen RoutePanel.
-  it('Vandaag toont een route bij een training alleen via RouteProposalLine, en zonder training alleen via Wandeling plannen', () => {
+  // training op Vandaag gaat nog steeds alleen via RouteProposalLine. Een route zonder training heeft twee
+  // ingangen naar hetzelfde blad Wandeling plannen (WalkPlanSheet): de + op Vandaag (LogOrPlan) en een rij op
+  // Ascend. Dat blad kent geen training en dus geen keuze Waar train je?, en zoekt met dezelfde regie
+  // (useRouteSearch met `walk`). Vandaag en Ascend tekenen nergens een eigen RoutePanel.
+  it('een route bij een training alleen via RouteProposalLine, zonder training alleen via Wandeling plannen', () => {
     expect(missionCard).toContain('<RouteProposalLine');
     expect(missionCard).not.toMatch(/wantsRoute(At)?\(/);
     expect(missionCard).not.toContain('<RoutePanel');
-    expect(today).not.toContain('<RoutePanel');
-    expect(today).not.toMatch(/useRouteSearch\(/);
-    expect(today).toContain('<WalkPlanSheet');
+    for (const page of [today, ascend, logOrPlan]) {
+      expect(page).not.toContain('<RoutePanel');
+      expect(page).not.toMatch(/useRouteSearch\(/);
+    }
+    expect(today).toContain('<LogOrPlan');
+    expect(logOrPlan).toContain('<WalkPlanSheet');
+    expect(ascend).toContain('<WalkPlanSheet');
   });
   it('Wandeling plannen zoekt met de bestaande regie en plant of logt niets', () => {
     expect(walkSheet).toMatch(/useRouteSearch\(\{ walk,/);

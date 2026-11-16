@@ -35,8 +35,7 @@ Je dag
 
 --- kaart 6 ---
 [knop: BenenFris] (aria: Benen: Fris)
-[knop: Losse training]
-[knop: Wandeling plannen]
+[knop: Loggen of plannen]
 
 --- kaart 7 ---
 Advies, planning

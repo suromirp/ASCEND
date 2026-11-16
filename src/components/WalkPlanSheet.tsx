@@ -1,4 +1,4 @@
-// ASCEND: Wandeling plannen, het blad achter de tekstknop op Vandaag naast Losse training. Een afstand, hooguit
+// ASCEND: Wandeling plannen, het blad achter de + op Vandaag (LogOrPlan.tsx) en de rij op Ascend. Een afstand, hooguit
 // een wens voor de hoogtemeters en waar je begint; Stel route voor zoekt met de bestaande regie
 // (useRouteSearch met `walk`) en tekent met RoutePanelView: geen tweede zoektocht. De wandeling is geen
 // training: geen geplande sessie, geen voorstel, geen log; de laatst gekozen afstand wordt niet onthouden
@@ -78,7 +78,7 @@ export function WalkPlanSheet({ onClose }: { onClose: () => void }) {
         <div ref={sheetRef} className={`relative h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <SheetGrip />
           <Card className="flex min-h-full flex-col gap-4 rounded-b-none border-b-0 pb-[max(var(--rand-onder),32px)]">
-            <div className="-mt-2"><SheetHeader eyebrow="Vandaag" title="Wandeling plannen" info={<InfoButton label="Zo werkt de kaart" onClick={() => setInfo(true)} />} onClose={requestClose} /></div>
+            <div className="-mt-2"><SheetHeader eyebrow="Wandelen" title="Wandeling plannen" info={<InfoButton label="Zo werkt de kaart" onClick={() => setInfo(true)} />} onClose={requestClose} /></div>
 
             <div className="flex flex-col gap-1">
               <Eyebrow tone="var(--color-ink-dim)">Afstand</Eyebrow>

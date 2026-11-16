@@ -14,7 +14,6 @@ import { hasRole } from '../engine/templateRoles';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
 import { suggestSameDayOrder } from '../engine/concurrentTraining';
 import { dayOrder, orderDay } from '../engine/dayOrder';
-import { Icon } from '../components/icons';
 import { DayOrderCard } from '../components/DayOrderCard';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
@@ -76,8 +75,7 @@ import { CoachCard } from '../components/CoachCard';
 import { LegEaseCard } from '../components/LegEaseCard';
 import { InfluenceMoveCard } from '../components/influence/InfluenceMoveCard';
 import { MorningProposalCard } from '../components/MorningProposalCard';
-import { AdHocLogSheet } from '../components/AdHocLogSheet';
-import { WalkPlanSheet } from '../components/WalkPlanSheet';
+import { LogOrPlan } from '../components/LogOrPlan';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
 import { DayRow, YourDay, type YourDayEntry } from '../components/vandaag/DayRow';
@@ -128,9 +126,6 @@ function TodayContent() {
   const freshStart = useFreshStart();
   const missed = useMissedTraining();
   const [loggingSession, setLoggingSession] = useState<PlannedSession | null>(null);
-  const [adHocOpen, setAdHocOpen] = useState(false);
-  const [walkOpen, setWalkOpen] = useState(false);
-  const [adHocTemplate, setAdHocTemplate] = useState<SessionTemplate | null>(null);
   const [loggingVariant, setLoggingVariant] = useState<SessionVariant>('full');
   // "Gedaan" opens the logger right at the how-did-it-go form.
   const [loggingAtForm, setLoggingAtForm] = useState(false);
@@ -613,17 +608,8 @@ function TodayContent() {
       <StandSummaryCard tomorrow={standTomorrow(tomorrow, !!(primary && primaryTemplate && mission))} />
 
       <div className="-mt-2 flex items-center justify-center gap-5">
-        <button onClick={() => setAdHocOpen(true)} className="inline-flex min-h-[44px] items-center text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          <Icon name="plus" size={16} className="mr-1" />
-          Losse training
-        </button>
-        {/* Een wandeling zonder training, met een route (besluit 2026-11-15-wandeling-plannen.md); uit met Route voorstellen. */}
-        {settings.routeProposal !== false && (
-          <button onClick={() => setWalkOpen(true)} className="inline-flex min-h-[44px] items-center text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-            <Icon name="wandelen" size={16} className="mr-1" />
-            Wandeling plannen
-          </button>
-        )}
+        {/* Eén +: Training loggen of Wandeling plannen (besluit 2026-11-15-wandeling-plannen.md). */}
+        <LogOrPlan />
         {!primary && <NotFitLink plain />}
       </div>
 
@@ -671,17 +657,6 @@ function TodayContent() {
         />
       )}
 
-      {adHocOpen && (
-        <AdHocLogSheet
-          templates={templates}
-          onPick={(t) => { setAdHocOpen(false); setAdHocTemplate(t); }}
-          onClose={() => setAdHocOpen(false)}
-        />
-      )}
-      {walkOpen && <WalkPlanSheet onClose={() => setWalkOpen(false)} />}
-      {adHocTemplate && (
-        <ExerciseLogger template={adHocTemplate} scheduledDate={today} program={program} onClose={() => setAdHocTemplate(null)} />
-      )}
 
       {watchAskOpen && watchQuestion && (
         <WatchAskSheet

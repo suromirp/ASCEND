@@ -60,6 +60,7 @@ Nog 2 stappen tot Pull-Up.
 --- kaart 4 ---
 [knop: TochtenEen tocht erbij? Er komen vrije dagen omheen.]
 [knop: KrachtblokHoe kracht in je week past]
+[knop: Wandeling plannenEen route van een paar kilometer, zonder training.]
 
 --- kaart 5 ---
 [knop: Eerdere doelen]

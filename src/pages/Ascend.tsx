@@ -11,6 +11,7 @@ import { TrekGoalsCard } from '../components/TrekGoals';
 import { strengthBlockRowLine } from '../engine/strengthTraining';
 import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { Sheet } from '../components/settings/Sheet';
+import { WalkPlanSheet } from '../components/WalkPlanSheet';
 import { usePageState } from '../components/usePageState';
 import { APPLIED_NOTE, useHorizonChange } from '../components/useHorizonChange';
 import { SeasonStripCard } from '../components/ascend/SeasonStrip';
@@ -105,6 +106,7 @@ export function AscendPage() {
   const [labelId, setLabelId] = useState<string | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [extra, setExtra] = useState<'treks' | 'strength' | null>(null);
+  const [walkOpen, setWalkOpen] = useState(false);
   const [adding, setAdding] = useState<{ tile?: AddTileId; details?: GoalDetails } | null>(null);
   const [earlierOpen, setEarlierOpen] = useState(false);
   const [weekSheet, setWeekSheet] = useState<'week' | 'direction' | null>(null);
@@ -290,8 +292,9 @@ export function AscendPage() {
       {(!emptyList || week) && <SecondaryButton onClick={() => startAdd()}>Doel toevoegen</SecondaryButton>}
 
       <Card className="flex flex-col p-0! overflow-hidden">
-        {([['treks', 'Tochten', 'Een tocht erbij? Er komen vrije dagen omheen.'] as const, ...(strengthLine ? [['strength', 'Krachtblok', strengthLine] as const] : [])]).map(([id, title, line]) => (
-          <button key={id} type="button" onClick={() => setExtra(id)} className="flex min-h-[56px] items-center justify-between gap-3 border-b px-4 py-2 text-left last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
+        {/* Wandeling plannen: een route zonder training, onderaan en zonder mint (besluit 2026-11-15-wandeling-plannen.md). */}
+        {([['treks', 'Tochten', 'Een tocht erbij? Er komen vrije dagen omheen.'] as const, ...(strengthLine ? [['strength', 'Krachtblok', strengthLine] as const] : []), ...(settings.routeProposal !== false ? [['walk', 'Wandeling plannen', 'Een route van een paar kilometer, zonder training.'] as const] : [])]).map(([id, title, line]) => (
+          <button key={id} type="button" onClick={() => (id === 'walk' ? setWalkOpen(true) : setExtra(id))} className="flex min-h-[56px] items-center justify-between gap-3 border-b px-4 py-2 text-left last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
             <span className="min-w-0">
               <span className="block text-base" style={{ color: 'var(--color-ink)' }}>{title}</span>
               <span className="block text-sm" style={{ color: 'var(--color-ink-dim)' }}>{line}</span>
@@ -503,6 +506,8 @@ export function AscendPage() {
           {extra === 'treks' ? <TrekGoalsCard /> : <StrengthProgramCard />}
         </Sheet>
       )}
+
+      {walkOpen && <WalkPlanSheet onClose={() => setWalkOpen(false)} />}
 
       {archiving && (
         <ImpactSheet

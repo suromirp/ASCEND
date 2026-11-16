@@ -22,6 +22,7 @@ Een vaste week die je kunt volhouden. Geen opbouw, geen eindpunt.
 --- kaart 3 ---
 [knop: TochtenEen tocht erbij? Er komen vrije dagen omheen.]
 [knop: KrachtblokHoe kracht in je week past]
+[knop: Wandeling plannenEen route van een paar kilometer, zonder training.]
 
 --- kaart 4 ---
 [knop: Eerdere doelen]

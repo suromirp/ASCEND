@@ -2,7 +2,7 @@
 // trainingen, logs en tempo's; geen echte data.
 (globalThis as unknown as { process: { env: Record<string, string> } }).process.env.TZ = 'Europe/Amsterdam';
 
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { WORKOUTS } from '../data/workoutStructure';
@@ -18,6 +18,10 @@ import { missionCardView } from './missionCard';
 import { placeChoices, shortPlaceLabels } from './trainingPlace';
 import { addDays } from '../utils/dates';
 
+// Het demoprogramma begint in de week van vandaag: de vaste data hieronder rekenden met de klok van 12 november.
+// Zonder vaste klok faalde dit bestand vanaf maandag 16 november (een week later, een andere stap).
+vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-11-12T12:00:00') });
+afterAll(() => vi.useRealTimers());
 const { templates, program } = buildDefaultProgramData();
 const byId = (id: string) => templates.find((t) => t.id === id) as SessionTemplate;
 const HILLS = byId('tpl_hill_intervals');

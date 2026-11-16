@@ -4201,7 +4201,7 @@
     "koppelingen-en-data",
     "historie-en-logs"
    ],
-   "kern": "Wandeling plannen op Vandaag: een blad met afstand, hoogtewens en startpunt dat een route zoekt met de bestaande regie, zonder training, voorstel, log of opslag; Losse training in kopjes per sport, Wandelen bovenaan.",
+   "kern": "Wandeling plannen: één blad met afstand, hoogtewens en startpunt dat een route zoekt met de bestaande regie, zonder training, voorstel, log of opslag; ingangen zijn de + op Vandaag (Loggen of plannen) en een rij op Ascend. Losse training gaat in twee stappen: eerst de sport, dan meteen loggen met de algemeenste training.",
    "stand": "geldt"
   }
  }

@@ -86,4 +86,4 @@ export const validWalkKm = (km: number | undefined): km is number => km !== unde
 export const validWalkAscent = (m: number | undefined): m is number => m !== undefined && Number.isFinite(m) && m >= 0 && m <= MAX_WALK_ASCENT_M;
 
 // Onder de route: een wandeling is geen training en komt niet vanzelf in je logboek.
-export const WALK_LOG_LINE = 'Gelopen? Log hem achteraf bij Losse training, Wandelen.';
+export const WALK_LOG_LINE = 'Gelopen? Log hem achteraf met de + op Vandaag: Training loggen, Wandelen.';
