@@ -59,7 +59,7 @@ Bijgewerkt: 15 november 2026, 22:40 Portugese tijd. Coördinator sinds 22:35: se
 - I-61: Warden Fable NIET AKKOORD (`warden/waar-je-nu-bent-herstel`: blokkerend 1 late watch stopt nooit, moet 2, 3, 8, mag 5, 6). Herstel naar de bouwer om 23:44, plus push van zijn tikfix. Lookout I-61 heeft nooit iets gepusht (helper in de vorige chat, verloren): na het herstel opnieuw Lookout starten.
 - Back-up telling: Warden AKKOORD; bouwer bouwt Moet 1 (B4, halfWritten per map). Moet 2 (B2: lastExportedAt springt terug bij Terugzetten) en Mag 3 (B3: laat antwoord na tweede poging) worden nieuwe Inboxpunten. Daarna main zonder Lookout.
 - I-64 klaar 23:54 (`claude/zonder-sportschool-verplaatst` d5818e5): Warden Fable loopt (`warden/zonder-sportschool-herstel`); daarna Lookout en Pathfinder (Week met amber punt, slepen naar wo 18).
-- briefingPerManier.test.ts werd rood vanaf 16 nov 00:00 Amsterdam ook op main (programma start op de echte maandag): de fix uit d5818e5 gaat los naar main (controles lopen in scratchpad/wt-main-fix). Zeg bouwers: rebase of cherry-pick die fix als hun commit-hook faalt.
+- briefingPerManier.test.ts werd rood vanaf 16 nov 00:00 Amsterdam ook op main (programma start op de echte maandag): de fix staat los op main als 08fef4e (00:10, alle controles groen). Zeg bouwers: rebase of cherry-pick die fix als hun commit-hook faalt.
 - I-62: om 23:44 gewekt om af te ronden.
 - I-65: Pathfinder akkoord, moet: test dat de toegevoegd-melding niet meetelt in unseenCount (forgeLog.ts:195). Lookout groen (`lookout/ijkset` e82accc0); eigen blik op afdrukken: goed, mag-punt: de ijkset-rij heet "eigen set", beter "ijkset". Wacht op Warden Fable (`warden/ijkset-herstel`), dan één herstelronde voor de bouwer met deze punten.
 
