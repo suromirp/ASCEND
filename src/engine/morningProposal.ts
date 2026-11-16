@@ -20,7 +20,7 @@ import type { MorningCheckIn } from '../models/checkIn';
 import type { IllnessEpisode } from '../models/illness';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { laterMoveAdvice, legCardSessionOf, testMoveAdvice, type Advice, type AdviceInputs } from './adviceEngine';
-import { activeIllness } from './illness';
+import { mayPropose } from './dayRules';
 import { checkInFor, morningSignals } from './wellbeing';
 import type { MorningRule, MorningSignal } from './morningRule';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
@@ -51,7 +51,8 @@ export interface MorningCauseInput {
 export function morningProposalCause(input: MorningCauseInput): MorningProposalCause | undefined {
   const { today, rule } = input;
   if (!input.enabled || !rule || rule.date !== today || !rule.askTired) return undefined;
-  if (activeIllness(input.illnessEpisodes)) return undefined;
+  // Ziek of opbouwen na ziek: de poort van elk voorstel (engine/dayRules.ts#mayPropose, I-67 gat 11).
+  if (!mayPropose(today, input.illnessEpisodes)) return undefined;
   const checkIn = input.checkIns?.find((c) => c.date === today);
   if (checkIn?.allNormal || checkIn?.energy === 'gewoon') return undefined;
   const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter(Boolean));

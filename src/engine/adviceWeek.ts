@@ -5,7 +5,8 @@ import { keyPhrase, weekKeySession } from './keySession';
 
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { PlanChangeItem } from '../models/planChange';
-import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
+import { isIllnessDay } from './illness';
+import { mayPropose } from './dayRules';
 import { respectsHeavySpacing } from './scheduler';
 import { isTemplatePlannable } from './sports';
 import { addDays, daysBetween, formatDateNL, formatWeekdayDateNL, mondayOfWeek } from '../utils/dates';
@@ -36,7 +37,7 @@ export function weekWord(date: string, asOf: string): string {
 // double up. Effect: a move (or skip) proposal.
 export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
   // Ill or building back up: nothing gets caught up (engine/illness.ts).
-  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  if (!mayPropose(inputs.asOf, inputs.illnessEpisodes)) return [];
   // De afbouw voor een race, de racedag en de herstelweek erna: niets inhalen. Weg (vakantie, tocht): ook niet.
   // Zonder sportschool loop je door: een lange duurloop haal je dan gewoon in
   // (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md).
@@ -164,7 +165,7 @@ export function missedAdvice(inputs: AdviceInputs, templateById: Map<string, Ses
 // heavy sessions. Not when ill, and not when the missed-session advice
 // already uses this rest day for a catch-up.
 export function restSwapAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
-  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  if (!mayPropose(inputs.asOf, inputs.illnessEpisodes)) return [];
   // Weg (vakantie, tocht): geen ruil. Zonder sportschool loop je door, dus de ruil kan (Warden, 15 november).
   if (raceWeekGuard(inputs) || isPauseDay(inputs.asOf, inputs.leave)) return [];
   const today = inputs.asOf;
@@ -204,7 +205,7 @@ export function restSwapAdvice(inputs: AdviceInputs, templateById: Map<string, S
 // takes the rest day, under the same conditions as MISSED-CATCH-UP. Shown
 // straight away, the evening of the skip, not only the next morning.
 export function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
-  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  if (!mayPropose(inputs.asOf, inputs.illnessEpisodes)) return [];
   // Ook de herstelweek na een race: een overgeslagen sleuteltraining wordt dan niet op een rustdag ingehaald. Weg
   // (vakantie, tocht) ook niet; zonder sportschool wel, zoals bij het inhalen.
   if (raceWeekGuard(inputs) || recoveryWeekGuard(inputs) || isPauseDay(inputs.asOf, inputs.leave)) return [];
@@ -244,7 +245,7 @@ export function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string,
 // spacing between heavy sessions. If none fits, say that two rest days in
 // a row are fine too.
 export function restPullAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
-  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  if (!mayPropose(inputs.asOf, inputs.illnessEpisodes)) return [];
   const today = inputs.asOf;
   const tomorrow = addDays(today, 1);
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));

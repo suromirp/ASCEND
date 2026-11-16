@@ -48,7 +48,7 @@ import { awayPeriods, isAwayDay, leaveDays } from './leave';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { PHASE_TAPER, WAVE_LENGTH, progressionTarget } from './programLayout';
 import { phaseWaveLength } from '../models/program';
-import { activeIllness, recoveryRamp } from './illness';
+import { mayPropose } from './dayRules';
 import { buildWeekReview } from './weekReview';
 import { currentChoices, loadChange, type LoadChange, type WeekLoadContext } from './weekLoadChange';
 import { weekKeySession, type KeyFocus } from './keySession';
@@ -233,7 +233,7 @@ export function proposeRepeatWeek(inputs: RepeatWeekInputs): RepeatWeekProposal 
 
   // The week before was not a rest week and not an ill week; the way back
   // from an illness has its own schedule (engine/illness.ts).
-  if (illBetween(illnessEpisodes, previousWeek, addDays(previousWeek, 6), today) || activeIllness(illnessEpisodes) || recoveryRamp(illnessEpisodes, today)) return undefined;
+  if (illBetween(illnessEpisodes, previousWeek, addDays(previousWeek, 6), today) || !mayPropose(today, illnessEpisodes)) return undefined;
   // Een week met een vakantie of tocht die je zelf meldde is geen tegenvallende week: geen "0 van 5" en geen
   // herhaling. Na zo'n pauze stelt ASCEND een rustiger instap voor (engine/reentry.ts).
   const awayDays = leaveDays(awayPeriods(inputs.leavePeriods));

@@ -7,7 +7,12 @@ import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { addDays, mondayOfWeek } from '../utils/dates';
+import type { Program } from '../models/program';
 import { calibrationBlock } from './calibration';
+import { dayRules, mayPropose } from './dayRules';
+import { extraRunEarned, proposeExtraSession, type ExtraAdviceInputs } from './extraRun';
+import { morningProposalCause } from './morningProposal';
+import { layoutPhasesForGoal, PHASE_BASIS } from './programLayout';
 import { catchUpEligibility } from './catchUp';
 import { quietWeeks } from './quietWeeks';
 import { keptAsk, keptDayReason, suggestMoveDates } from './moveSuggestions';
@@ -205,5 +210,62 @@ describe('gat 3 en 4: de ijkset kent ziek, de week voor een race en de rustige w
   });
   it('gat 12: niet met krachttraining uit', () => {
     expect(calibrationBlock({ ...base, strengthOff: true })).toBe('off');
+  });
+});
+
+// --- stap 4: wat ASCEND voorstelt en erbij zet -----------------------------------------------------------------------
+
+describe('gat 8: iets erbij in een periode zonder sportschool, één antwoord', () => {
+  const START = '2026-09-28';
+  const prog: Program = { id: 'p', name: 'P', startDate: START, phases: layoutPhasesForGoal(START, '2027-08-01', { [PHASE_BASIS]: 4 })! };
+  const DAYS: [string, number][] = [['tpl_herstel', 0], ['tpl_upper_a', 1], ['tpl_lower_a', 2], ['tpl_easy_run', 3], ['tpl_upper_b', 4], ['tpl_hill_intervals', 5], ['tpl_long_run', 6]];
+  const planned: PlannedSession[] = [];
+  for (let w = 0; w < 10; w++) {
+    const monday = addDays(START, w * 7);
+    for (const [templateId, d] of DAYS) planned.push(ps(`${monday}-${templateId}`, templateId, addDays(monday, d), { order: d }));
+  }
+  const logs = (before: string) => planned.filter((s) => s.scheduledDate < before && s.templateId !== 'tpl_herstel').map(log);
+  const extra = (today: string, over: Partial<ExtraAdviceInputs> = {}) => proposeExtraSession({ today, program: prog, plannedSessions: planned, logs: logs(today), templates, planChangeLog: [], restDay: 1, gaps: [], respondedIds: new Set(), ...over })?.date;
+
+  it('de extra training komt niet op een dag zonder sportschool (eigenaar: er komt niets bij)', () => {
+    expect(extra('2026-11-02')).toBe('2026-11-03');
+    expect(extra('2026-11-02', { leave: [period('no_gym', '2026-11-02', '2026-11-08')] })).not.toBe('2026-11-03');
+    const days = extra('2026-11-02', { leave: [period('no_gym', '2026-11-02', '2026-11-08')] });
+    expect(days === undefined || days > '2026-11-08').toBe(true);
+  });
+  it('hoeveel per soort en het weekvoorschrift zeggen hetzelfde: de stap erbij', () => {
+    const rules = dayRules({ today: TODAY, leave: [period('no_gym', TODAY, addDays(TODAY, 2))] });
+    for (const t of [byId.get('tpl_easy_run')!, byId.get('tpl_upper_a')!, undefined]) expect(rules.may({ date: addDays(TODAY, 1), step: 'add', template: t })).toMatchObject({ ok: false, cause: 'nogym' });
+    expect(rules.ok({ date: addDays(TODAY, 3), step: 'add' })).toBe(true);
+  });
+});
+
+describe('gat 9: het weekvoorschrift kent ziek', () => {
+  it('erbij weigert de dagen van je ziekte en je opbouw', () => {
+    const sick = dayRules({ today: TODAY, illness: [ill('above_neck', TODAY)] });
+    expect(sick.ok({ date: addDays(TODAY, 1), step: 'add' })).toBe(false);
+    expect(sick.ok({ date: addDays(TODAY, 2), step: 'add' })).toBe(true);
+    const ramp = dayRules({ today: TODAY, illness: [ill('below_neck', addDays(TODAY, -3), TODAY)] });
+    const until = ramp.facts(TODAY).find((f) => f.cause === 'ramp')!.until!;
+    expect(ramp.ok({ date: until, step: 'add' })).toBe(false);
+    expect(ramp.ok({ date: addDays(until, 1), step: 'add' })).toBe(true);
+  });
+});
+
+describe('gat 11: de opbouw na ziek in elke poort', () => {
+  it('mayPropose is de oude poort van de elf voorstellen', () => {
+    expect(mayPropose(TODAY, [])).toBe(true);
+    expect(mayPropose(TODAY, [ill('above_neck', TODAY)])).toBe(false);
+    expect(mayPropose(TODAY, [ill('stomach', addDays(TODAY, -3), addDays(TODAY, -1))])).toBe(false);
+    expect(mayPropose(TODAY, [ill('stomach', addDays(TODAY, -30), addDays(TODAY, -28))])).toBe(true);
+  });
+  it('de extra training en het voorstel bij een slechte ochtend wachten ook tijdens de opbouw', () => {
+    const RAMP = [ill('below_neck', addDays(TODAY, -3), addDays(TODAY, -1))];
+    expect(extraRunEarned({ today: TODAY, program: null as unknown as Program, plannedSessions: [], logs: [], templates, planChangeLog: [], gaps: [], respondedIds: new Set(), illnessEpisodes: RAMP } as unknown as ExtraAdviceInputs, MONDAY)).toEqual({ earned: false, reason: 'Je bent ziek gemeld of bouwt op na ziekte.' });
+    const morning = (illnessEpisodes: IllnessEpisode[]) => morningProposalCause({
+      today: TODAY, rule: { date: TODAY, signals: [], offCount: 2, askTired: true, line: '' }, plannedSessions: [ps('h', 'tpl_hill_intervals', TODAY)], templates, logs: [], illnessEpisodes, enabled: true,
+    });
+    expect(morning([])?.session.id).toBe('h');
+    expect(morning(RAMP)).toBeUndefined();
   });
 });

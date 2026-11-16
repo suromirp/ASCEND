@@ -42,7 +42,7 @@ import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { askBeforeApplying } from '../engine/changeImpact';
 import { planEndDay } from '../engine/programLayout';
-import { isLeaveBlockedDay } from '../engine/leave';
+import { dayRules } from '../engine/dayRules';
 import { isTemplatePlannable, fixedFrequencySports, templateSport, type Sport } from '../engine/sports';
 import { strengthAllows } from '../engine/strengthTraining';
 
@@ -129,9 +129,16 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
   // 2027", the GR5 start), nor next to a tussendoel's race on its day.
   const anchorDay = planEndDay(goals, await GoalMilestonesRepo.getAll(), asOf, appSettings.afterMainGoal);
   const raceDays = new Set(planned.filter((s) => s.templateId === 'tpl_race').map((s) => s.scheduledDate));
-  // Nor on a day of a holiday or a trek (engine/leave.ts).
+  // Nor on a day the one rule keeps free of anything extra (engine/dayRules.ts, stap erbij): a holiday or a trek, a
+  // period without a gym (owner, 16 November: nothing is added there), and while ill or building back (I-67 gat 8, 9).
   // A remove that belongs to an add on such a day goes with it (engine/weeklyPrescriptionDiff.ts#changesOnAllowedDays).
-  const blockedDay = (date: string) => (!!anchorDay && date >= anchorDay) || raceDays.has(date) || isLeaveBlockedDay(appSettings.leavePeriods, date);
+  const addRules = dayRules({ today: asOf, leave: appSettings.leavePeriods, illness: appSettings.illnessEpisodes });
+  // A day already past keeps the old answer: only a holiday, a trek or a period without a gym holds it.
+  const addBlocked = (date: string) => {
+    const v = addRules.may({ date, step: 'add' });
+    return !v.ok && (v.cause !== 'history' || v.also.some((c) => c === 'off' || c === 'trek' || c === 'nogym'));
+  };
+  const blockedDay = (date: string) => (!!anchorDay && date >= anchorDay) || raceDays.has(date) || addBlocked(date);
   const allowedChanges = changesOnAllowedDays(proposal.changes, blockedDay);
 
   // Alleen wat inhoudelijk anders is dan wat er ligt. De engine geeft elke

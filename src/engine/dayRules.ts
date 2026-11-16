@@ -319,3 +319,9 @@ export function dayRules(state: DayState): DayRules {
 export function mayOn(q: DayQuestion, state: DayState): DayVerdict {
   return dayRules(state).may(q);
 }
+
+// Mag ASCEND vandaag iets voorstellen? Niet zolang je ziek bent of opbouwt na ziek: de poort van elk voorstel (stap
+// voorstellen), op één plek in plaats van elf keer `activeIllness(...) || recoveryRamp(...)`.
+export function mayPropose(today: string, illness: readonly IllnessEpisode[] | undefined): boolean {
+  return dayRules({ today, illness }).ok({ date: today, step: 'propose' });
+}

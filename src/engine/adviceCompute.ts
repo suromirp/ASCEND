@@ -6,7 +6,8 @@ import { withoutGymOnNoGym } from './noGymGuard';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
-import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
+import { isIllnessDay } from './illness';
+import { mayPropose } from './dayRules';
 import { findHeavyConflicts, freshnessAt, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, testRestHours } from './scheduler';
 import { LEG_EASE_INDEX, legEaseCardSession } from './legDayEase';
 import { addDays, daysBetween, formatShortDayNL, mondayOfWeek, weekdayLongNL, formatWeekdayDateNL } from '../utils/dates';
@@ -51,7 +52,7 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
   if (inputs.newTestOnStops === false) return [];
   // TEST-MAKE-ROOM already speaks about a test: one voice for the same test.
   if (testRoom.length > 0) return [];
-  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  if (!mayPropose(inputs.asOf, inputs.illnessEpisodes)) return [];
   // De herstelweek na een race: geen nieuwe testpoging (engine/raceWindow.ts).
   if (recoveryWeekGuard(inputs)) return [];
   const test = templateById.get(TEST_RUN_ID);

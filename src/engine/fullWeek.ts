@@ -26,7 +26,7 @@ import { addDays, formatWeekdayDateNL, mondayOfWeek, weekDates } from '../utils/
 import { makeId } from '../utils/id';
 import { isDone } from './adviceShared';
 import type { IllnessEpisode } from '../models/illness';
-import { activeIllness, recoveryRamp } from './illness';
+import { mayPropose } from './dayRules';
 import { raceDatesOf } from './raceWindow';
 import { isDraftOpen, pauseRules } from './sessionStatus';
 import { isKeyFor, type KeyFocus } from './keySession';
@@ -320,7 +320,7 @@ export function fullWeekAdvice(input: FullWeekAdviceInput): Advice[] {
   const id = fullWeekId(input.today);
   if (input.respondedIds.has(id)) return [];
   // Ziek of net beter: eerst herstellen, dan pas de vraag over de week.
-  if (activeIllness(input.illnessEpisodes) || recoveryRamp(input.illnessEpisodes, input.today)) return [];
+  if (!mayPropose(input.today, input.illnessEpisodes)) return [];
   const state = fullWeek(input);
   if (!state) return [];
   const ctx = contextOf(input);

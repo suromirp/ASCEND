@@ -16,6 +16,7 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import { addDays, isoWeekday, mondayOfWeek } from '../utils/dates';
 import { scaledMinutes, trainingKindOf } from './trainingKind';
 import { lockLevel, validateWeeks, type CheckInput, type Repair } from './weekValidator';
+import { dayRules } from './dayRules';
 export { scaledMinutes, trainingKindOf };
 
 // Defensief gelezen: alleen bekende soorten met Minder of Meer. Normaal staat er niet in.
@@ -75,9 +76,10 @@ export interface KindAmountContext {
 
 const findingKey = (f: { rule: string; sessionIds: string[] }) => `${f.rule}:${[...f.sessionIds].sort().join(',')}`;
 
-function blockedByLeave(date: string, leave: readonly LeavePeriod[] | undefined): boolean {
-  // Without a gym you train less on purpose (engine/noGym.ts): nothing is added there either.
-  return (leave ?? []).some((p) => (p.kind === 'no_training' || p.kind === 'trek' || p.kind === 'no_gym') && date >= p.startDate && date <= p.endDate);
+// Erbij via de ene regel (engine/dayRules.ts): geen vakantie- of tochtdag, en zonder sportschool train je bewust minder
+// (engine/noGym.ts), dus ook daar komt niets bij.
+function blockedByLeave(date: string, leave: readonly LeavePeriod[] | undefined, today: string): boolean {
+  return !dayRules({ today, leave }).ok({ date, step: 'add' });
 }
 
 export function applyKindAmounts(all: readonly PlannedSession[], amounts: KindAmountMap | undefined, ctx: KindAmountContext): { sessions: PlannedSession[]; repairs: Repair[] } {
@@ -127,7 +129,7 @@ export function applyKindAmounts(all: readonly PlannedSession[], amounts: KindAm
       const model = ofKind[0];
       if (!model) continue;
       const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i))
-        .filter((d) => d >= ctx.today && d <= last && isoWeekday(d) !== ctx.check.restDay && !blockedByLeave(d, ctx.leave) && !sessions.some((s) => s.scheduledDate === d && isTraining(s)))
+        .filter((d) => d >= ctx.today && d <= last && isoWeekday(d) !== ctx.check.restDay && !blockedByLeave(d, ctx.leave, ctx.today) && !sessions.some((s) => s.scheduledDate === d && isTraining(s)))
         .sort((a, b) => Math.abs(isoWeekday(a) - 3) - Math.abs(isoWeekday(b) - 3) || a.localeCompare(b));
       // Alleen de beste vrije dag: past het daar niet, dan blijft het die week bij langer. Zo kost een ronde
       // hoogstens twee keer de weekcheck per week en soort.

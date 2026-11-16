@@ -25,7 +25,7 @@ import type { Program } from '../models/program';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import type { DurationAdjustment } from './substitutions';
-import { activeIllness, recoveryRamp } from './illness';
+import { mayPropose } from './dayRules';
 import { awayPeriods, isAwayDay } from './leave';
 import { isTestOrRace } from './templateRoles';
 import { raceWeekGuard } from './adviceShared';
@@ -122,7 +122,7 @@ function askedRecently(today: string, respondedIds: ReadonlySet<string>, weeks: 
 export function proposeReentry(inputs: ReentryInputs): ReentryProposal | undefined {
   const { program, today, illnessEpisodes: illness, leavePeriods: leave } = inputs;
   if (!program || inputs.choice === 'off') return undefined;
-  if (activeIllness(illness) || recoveryRamp(illness, today) || isAwayDay(today, leave)) return undefined;
+  if (!mayPropose(today, illness) || isAwayDay(today, leave)) return undefined;
   const back = returnDay(today, illness, leave);
   if (!back || daysBetween(back.day, today) > OFFER_DAYS) return undefined;
   const from = back.day;

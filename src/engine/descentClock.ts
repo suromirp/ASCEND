@@ -24,7 +24,8 @@ import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../model
 import { addDays, daysBetween, formatWeekdayDateNL, isoWeekday, localDateOf, mondayOfWeek, weekDates, weekdayOf } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { goalKindOf } from './goalLabels';
-import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
+import { isIllnessDay } from './illness';
+import { mayPropose } from './dayRules';
 import { leaveDays, lightDays } from './leave';
 import { mainGoal, type Ladder } from './mainGoal';
 import { MOUNTAIN_KINDS, hasMountainGoal } from './mountainMuscles';
@@ -273,7 +274,7 @@ export function descentAdvice(input: DescentAdviceInput): Advice[] {
   const template = input.templates.find((t) => t.id === STAIRS_TEMPLATE_ID);
   if (!template) return [];
   // Ziek, of net beter: eerst herstellen. Op vakantie zonder training: stil tot je terug bent.
-  if (activeIllness(input.illnessEpisodes) || recoveryRamp(input.illnessEpisodes, today)) return [];
+  if (!mayPropose(today, input.illnessEpisodes)) return [];
   if (leaveDays(input.leave).get(today)?.kind === 'off') return [];
 
   const clock = descentClock(input.logs, input.templates, today, input.leave);

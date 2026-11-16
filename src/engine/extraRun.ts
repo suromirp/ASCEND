@@ -43,7 +43,7 @@ import { buildWeekReview } from './weekReview';
 import { plannedRpeTop } from './coach';
 import { isLegHeavyTemplate, respectsHeavySpacing } from './scheduler';
 import { templateSport } from './sports';
-import { isLeaveBlockedDay } from './leave';
+import { dayRules, mayPropose } from './dayRules';
 import type { LeavePeriod } from '../models/leave';
 import { idHasRole } from './templateRoles';
 import { fullWithExtra } from './fullWeek';
@@ -84,7 +84,8 @@ export interface ExtraRunVerdict {
 export function extraRunEarned(inputs: Omit<ExtraRunInputs, 'newId' | 'anchor' | 'raceDates' | 'restDay'>, weekStart: string): ExtraRunVerdict {
   const { today, program, plannedSessions, logs, templates, planChangeLog, illnessEpisodes, ambition } = inputs;
   if (ambition === 'rustig') return { earned: false, reason: 'Je ambitie staat op Rustig.' };
-  if ((illnessEpisodes ?? []).some((e) => !e.endDate || e.endDate >= today)) return { earned: false, reason: 'Je bent ziek gemeld.' };
+  // De poort van elk voorstel (engine/dayRules.ts#mayPropose): ziek, en ook de opbouw na ziek (I-67 gat 11).
+  if (!mayPropose(today, illnessEpisodes)) return { earned: false, reason: 'Je bent ziek gemeld of bouwt op na ziekte.' };
 
   const since = addDays(today, -SIGNAL_DAYS);
   const recent = logs.filter((l) => l.completedDate >= since && l.completedDate <= today);
@@ -130,11 +131,14 @@ function extraRunDay(weekStart: string, weekSessions: PlannedSession[], byId: Ma
   const active = weekSessions.filter((s) => s.status !== 'skipped');
   const on = (date: string) => active.filter((s) => s.scheduledDate === date).map((s) => byId.get(s.templateId));
   let best: { date: string; score: number } | undefined;
+  // Erbij (engine/dayRules.ts): geen vakantie- of tochtdag, niets zwaars op een lichte dag rond een tocht en niets in een
+  // periode zonder sportschool (eigenaar, 16 november: daar komt niets bij, I-67 gat 8).
+  const rules = dayRules({ today: opts.today, leave: opts.leave });
   for (let d = 0; d < 7; d++) {
     const date = addDays(weekStart, d);
     if (date < opts.today || (opts.anchor && date >= opts.anchor)) continue;
     if (isoWeekday(date) === (opts.restDay ?? 1)) continue;
-    if (isLeaveBlockedDay(opts.leave, date)) continue;
+    if (!rules.ok({ date, step: 'add', template: opts.template })) continue;
     const here = on(date);
     if (here.some((t) => !!t && (isRun(t) || t.type === 'hiking' || isLegHeavyTemplate(t)))) continue;
     // A hard extra (fartlek, progressive run) not within 48 hours after heavy legs.
