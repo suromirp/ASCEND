@@ -4,6 +4,7 @@ Bijgewerkt: 17 november 2026, 02:10 Portugese tijd, door coördinator session_01
 
 ## Stand 17 november 02:10 (lees dit eerst)
 - Coördinator nu session_01LnDpSmmU3SaaZSu99Nn2YX (sinds 01:06 Portugese tijd). Wachter staat hier (trig_017Nvn7aCSCigcdKwsTzVv9Q). Volgende wissel: send_later trig_01PxzB1fnuiVi2sdyarZ4PTH op wo 18 nov 04:47 Amsterdam.
+- 09:40: eigenaar meldt Week opnieuw plannen (dubbele Heuvelsprints zo 22, lange duurloop vervalt); nagespeeld en bevestigd, I-88. Advies aan hem: Liever niet.
 - 09:20: eigenaar zag niets van Drempel; naspelen met zijn back-up (scratchpad/backup.json, 600): test 2 nov = 180, drempel 179, verschil < 3, dus stil; 27 okt afgewezen (stopped). Eigenaar: ja, I-86 (regel bij geen voorstel) woensdag mee met I-79 stap 3. I-87 = Lookout-resten.
 - 06:20: I-79 stap 1+2 LIVE op main 3651a77 (Warden 2 rondes, Lookout groen 360/390/412, controles groen 11551 tests). I-79 blijft open voor stap 3 (wo bouwmoment). Sherpa Drempel kan gearchiveerd. Kleine resten Lookout: i-knoppen 20 px in instellingenrijen (bestaand), vier mint Straks-regels plus mint knoppen in voorstelkaart (bestaand): Inbox.
 - (oud) 03:56: Sherpa Drempel klaar, Warden Fable niet akkoord (3 moet: teststuk bij stop, tijdgrens reeksen, tests strapWorn). Herstel gestuurd (trig_01CgYuJkfQUY47zJfab5UbMx); daarna opnieuw controles, korte herreview, Lookout op 412, dan main.
