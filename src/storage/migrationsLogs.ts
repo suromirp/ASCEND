@@ -232,9 +232,32 @@ export function migrateZoneAnswers(raw: unknown): { list: ZoneAnswer[] | undefin
       skipped++;
       continue;
     }
-    byLog.set(item.logId, { logId: item.logId, answer: item.answer, date, ...(hr(item.lthrFrom) ? { lthrFrom: Math.round(item.lthrFrom) } : {}), lthrTo: Math.round(item.lthrTo) });
+    // Eén antwoord per test en getal (engine/zoneUpdate.ts#recordZoneAnswer); het laatste telt.
+    const key = `${item.logId}|${Math.round(item.lthrTo)}`;
+    byLog.delete(key);
+    byLog.set(key, { logId: item.logId, answer: item.answer, date, ...(hr(item.lthrFrom) ? { lthrFrom: Math.round(item.lthrFrom) } : {}), lthrTo: Math.round(item.lthrTo) });
   }
   return { list: [...byLog.values()].slice(-MAX_ZONE_ANSWERS), skipped };
+}
+
+// --- "Ik had hem wel om": settings.strapWorn --------------------------------------------------
+// De tests waarbij je zei dat je je borstband om had (engine/thresholdEstimate.ts). Optioneel en
+// additief: een oudere back-up heeft er geen. Alleen een lijst van niet-lege log-id's tot 80 tekens,
+// dubbele eruit, hoogstens de laatste MAX_ZONE_ANSWERS; een fout item valt weg en wordt geteld.
+export function migrateStrapWorn(raw: unknown): { list: string[] | undefined; skipped: number } {
+  if (raw === undefined || raw === null) return { list: undefined, skipped: 0 };
+  if (!Array.isArray(raw)) return { list: undefined, skipped: 1 };
+  const seen = new Set<string>();
+  let skipped = 0;
+  for (const item of raw) {
+    if (typeof item !== 'string' || item.trim() === '' || item.length > 80) {
+      skipped++;
+      continue;
+    }
+    seen.delete(item);
+    seen.add(item);
+  }
+  return { list: [...seen].slice(-MAX_ZONE_ANSWERS), skipped };
 }
 
 // --- meer per set: SetLog.rir, SetLog.kind en SetLog.rirAssumed -------------------

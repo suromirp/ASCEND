@@ -21,6 +21,7 @@ import type { Weekday } from '../models/goalEngineConfig';
 import type { HealthConnectErrorKind } from '../models/healthConnect';
 import type { WatchUse } from './watchUse';
 import { choiceShort } from '../data/settingsChoices';
+import { resolveLthrFactor, resolveNoStrapTest } from './thresholdEstimate';
 import { resolveStravaTextParts } from './activityText';
 import { resolveWatchModel, watchFieldsShown } from './watchFields';
 import { resolveRouteStyle } from './routeTarget';
@@ -858,6 +859,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('testRust', resolveTestRest(s.testRest)) };
     case 'test-stilstaan':
       return { value: choiceShort('testStilstaan', resolveTestStops(s.testStops)) };
+    case 'drempel-uit-test':
+      return { value: choiceShort('drempelUitTest', resolveLthrFactor(s.lthrFactor)) };
+    case 'test-zonder-band':
+      return { value: choiceShort('testZonderBand', resolveNoStrapTest(s.noStrapTest)) };
     case 'twijfeltest':
       return { checked: s.askDoubtTest !== false };
     case 'nieuwe-test':
@@ -1203,6 +1208,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.morningProposal !== false };
     case 'ochtendregel':
       return { checked: s.morningRule !== false };
+    case 'test-klaar-melden':
+      return { checked: s.testReadyLine !== false };
     case 'horloge-stil':
       return { checked: s.watchSilence !== false };
     case 'horloge-soort':

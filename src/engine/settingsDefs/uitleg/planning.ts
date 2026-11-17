@@ -110,6 +110,33 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Je tempo\'s', text: 'veranderen niet vanzelf. Verandert er door het stilstaan een tempo, dan komt eerst de vraag om Akkoord in het logblad.' },
     ],
   },
+  'drempel-uit-test': {
+    title: 'Drempel uit je test',
+    lead: 'Je hartslag loopt in een halfuur voluit hoger op dan in een stappentest; ASCEND trekt er 2 procent af.',
+    points: [
+      { head: 'Voorzichtig', text: '98 procent van je gemiddelde hartslag over de laatste 20 minuten van je test. Liever iets te rustig dan te hard.' },
+      { head: 'Zoals Friel', text: '100 procent, zoals in de test van 30 minuten van Friel en in TrainingPeaks.' },
+      { head: 'Een keuze, geen meting', text: 'het verschil is 3 tot 4 slagen, zo groot als de ruis van één test. Een andere keuze verandert niets stil; hoogstens krijg je een nieuw voorstel.' },
+    ],
+  },
+  'test-zonder-band': {
+    title: 'Test zonder borstband',
+    lead: 'Aan de pols zit een horloge er bij hard lopen 5 tot 15 slagen naast, een borstband 1 tot 2.',
+    points: [
+      { head: 'Telt niet voor je drempel', text: 'zag ASCEND je band niet tijdens het teststuk, dan tellen je tempo\'s wel en blijft je drempel staan. Was je band er bij je laatste lopen meestal wel, dan vraagt ASCEND of je hem om had.' },
+      { head: 'Telt met ruime marge', text: 'een test aan de pols telt met een marge van 10 slagen, en pas als twee tests binnen 5 slagen van elkaar liggen.' },
+      { head: 'Hoe ASCEND je band ziet', text: 'aan de balans van je grondcontact, die alleen een band op je romp meet. Een band van een ander merk ziet ASCEND niet; zeg dan bij de test dat je hem om had.' },
+    ],
+  },
+  'test-klaar-melden': {
+    title: 'Melden op een testdag',
+    lead: 'ASCEND leest uit je laatste loop of je klaar bent voor een test: je borstband, elke seconde opslaan en de RR-reeks van je band.',
+    points: [
+      { head: 'Wat je ziet', text: 'onder Klaar voor je test in Instellingen bij Koppelingen staan de drie feiten van je laatste loop, zonder iets af te vinken.' },
+      { head: 'Op een testdag', text: 'mist je band of slaat je horloge niet elke seconde op, dan één regel in de Briefing. Anders niets.' },
+      { head: 'Waarom', text: 'zonder borstband telt een test niet voor je drempel; aan de pols zit een horloge er bij hard lopen 5 tot 15 slagen naast.' },
+    ],
+  },
   'nieuwe-test': {
     title: 'Nieuwe test voorstellen bij stilstand',
     lead: 'Stond je veel stil tijdens je testloop, dan krijg je een nieuwe poging als voorstel.',
@@ -241,8 +268,9 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
     lead: 'Na een testloop die meetelt krijg je een nieuwe drempelhartslag als voorstel, als die duidelijk anders is.',
     points: [
       { head: 'Wat je ziet', text: 'per zone het oude en het nieuwe getal, voor je hartslag en je tempo\'s. Je tempo\'s volgen je test al.' },
-      { head: 'Een schatting', text: '98 procent van je gemiddelde hartslag over kilometer 2 tot en met 5. Geen labtest.' },
-      { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet krijg je er voor deze test geen vraag meer over.' },
+      { head: 'Een schatting', text: '98 procent van je hartslag over de laatste 20 minuten van je test, met een marge van 5 slagen. Alleen bij een test van 24 tot 40 minuten met je borstband om. Geen labtest.' },
+      { head: 'Drie tests samen', text: 'je drempel volgt het midden van je laatste drie tests van het afgelopen jaar. Eén test schommelt 3 tot 4 slagen; drie samen zijn rustiger.' },
+      { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet krijg je voor dit getal geen vraag meer; een volgende test kan een nieuw voorstel geven.' },
     ],
   },
 };

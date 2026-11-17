@@ -423,6 +423,18 @@ export interface AppSettings {
   // De antwoorden op dat voorstel, per test (logId). Optional and additive
   // (storage/migrations.ts#migrateZoneAnswers).
   zoneAnswers?: ZoneAnswer[];
+  // "Drempel uit je test" (engine/thresholdEstimate.ts): 'careful' (advice, absent = careful) neemt
+  // 98 procent van je hartslag over de laatste 20 minuten, 'friel' 100 procent. Optional and additive.
+  lthrFactor?: 'careful' | 'friel';
+  // "Test zonder borstband": 'skip' (advice, absent = skip) laat zo'n test niet meetellen voor je
+  // drempel, 'margin' wel, met 10 slagen marge en pas als twee tests het eens zijn. Optional and additive.
+  noStrapTest?: 'skip' | 'margin';
+  // De tests (logId) waarbij je zei "Ik had hem wel om". Een lijst naast de logs, hoogstens 60.
+  // Optional and additive (storage/migrationsLogs.ts#migrateStrapWorn).
+  strapWorn?: string[];
+  // "Melden op een testdag" (engine/testReadiness.ts): mist er iets voor je test, één regel in de
+  // Briefing. Absent = on. Optional and additive.
+  testReadyLine?: boolean;
   // "Volledige reeks bewaren": keep the full series of a run or tocht on this device
   // (activityStreams). Absent = on. Off keeps only the derived profile and kilometres.
   // Optional and additive.

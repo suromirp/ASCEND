@@ -19,6 +19,7 @@ import type { GroupProps } from './types';
 import { FAST_GROWTH_WARNING, resolveLongRunGrowth } from '../../../engine/runGrowth';
 import { resolveTestStops } from '../../../engine/bestEffort';
 import { resolveTestRest } from '../../../engine/testRest';
+import { resolveLthrFactor, resolveNoStrapTest } from '../../../engine/thresholdEstimate';
 import { REST_DAY_OPTIONS } from '../../../engine/restDay';
 import { resolveMissedSettings } from '../../../engine/missedTraining';
 import { ChoiceList, ChoiceSheet } from '../Sheet';
@@ -200,10 +201,19 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="test-stilstaan" title="Stilstaan bij een testloop" facts={facts} info="testStilstaan" onClick={() => setInner('test-stilstaan')} />
           <SummaryRow id="nieuwe-test" title="Nieuwe test voorstellen bij stilstand" facts={facts} info="nieuweTest" onChange={(on) => void updateSettings({ newTestOnStops: on })} />
           <SummaryRow id="test-rust" title="Rust voor een test" facts={facts} info="testRust" onClick={() => setInner('test-rust')} />
+          <SummaryRow id="drempel-uit-test" title="Drempel uit je test" facts={facts} info="drempelUitTest" onClick={() => setInner('drempel-uit-test')} />
+          <SummaryRow id="test-zonder-band" title="Test zonder borstband" facts={facts} info="testZonderBand" onClick={() => setInner('test-zonder-band')} />
+          <SummaryRow id="test-klaar-melden" title="Melden op een testdag" facts={facts} info="testKlaarMelden" onChange={(on) => void updateSettings({ testReadyLine: on })} />
         </BundleSheet>
       )}
       {inner === 'test-rust' && (
         <ChoiceFromDef def={CHOICES.testRust} value={resolveTestRest(settings.testRest)} onPick={(v) => { if (v !== resolveTestRest(settings.testRest)) void plan.changeSetting(`Rust voor een test: ${choiceShort('testRust', v)}`, { testRest: v }, `Een testloop staat nu minstens ${v} uur na een zware loop- of beendag.`); }} onClose={closeInner} />
+      )}
+      {inner === 'drempel-uit-test' && (
+        <ChoiceFromDef def={CHOICES.drempelUitTest} value={resolveLthrFactor(settings.lthrFactor)} onPick={(v) => void updateSettings({ lthrFactor: v })} onClose={closeInner} />
+      )}
+      {inner === 'test-zonder-band' && (
+        <ChoiceFromDef def={CHOICES.testZonderBand} value={resolveNoStrapTest(settings.noStrapTest)} onPick={(v) => void updateSettings({ noStrapTest: v })} onClose={closeInner} />
       )}
       {inner === 'test-stilstaan' && (
         <ChoiceFromDef def={CHOICES.testStilstaan} value={resolveTestStops(settings.testStops)} onPick={(v) => void updateSettings({ testStops: v })} onClose={closeInner} />

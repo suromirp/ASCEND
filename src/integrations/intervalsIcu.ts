@@ -202,6 +202,9 @@ export const STREAM_NAMES: Record<StreamKind, string> = {
   respiration: 'respiration',
   temperature: 'temp',
   verticalSpeed: 'vertical_speed',
+  // The RR intervals of a chest strap, as intervals.icu offers them (seen in the owner's backup,
+  // 17 November 2026). Not aligned to the clock: one number per heartbeat.
+  rr: 'hrv',
 };
 
 // Series that ASCEND computes itself (gradient, standing still) or that are no measurement:
@@ -342,7 +345,7 @@ export function streamsUrl(activityId: string, kinds: StreamKind[]): string {
 export const WANTED_STREAMS: StreamKind[] = [
   'time', 'distance', 'heartRate', 'speed', 'altitude', 'cadence', 'position', 'power',
   'stanceTime', 'stanceBalance', 'verticalOscillation', 'verticalRatio', 'stepLength',
-  'respiration', 'temperature', 'verticalSpeed',
+  'respiration', 'temperature', 'verticalSpeed', 'rr',
 ];
 
 export function streamsToRequest(available: StreamKind[] | undefined): StreamKind[] {
@@ -367,6 +370,25 @@ const median = (values: number[]): number => {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 };
 
+// The RR intervals, beat after beat, in milliseconds. The shape at the source is not documented:
+// a flat list, or per reading a list (or null), in milliseconds or in seconds. Everything is
+// flattened in order; a value that is no heartbeat (below 200 or above 3000 ms) is dropped.
+const MAX_RR_BEATS = 100_000;
+export function rrOf(data: unknown): number[] | undefined {
+  if (!Array.isArray(data)) return undefined;
+  const out: number[] = [];
+  const add = (v: unknown) => {
+    if (typeof v !== 'number' || !Number.isFinite(v) || out.length >= MAX_RR_BEATS) return;
+    const ms = v > 0 && v < 10 ? v * 1000 : v;
+    if (ms >= 200 && ms <= 3000) out.push(Math.round(ms));
+  };
+  for (const item of data) {
+    if (Array.isArray(item)) item.forEach(add);
+    else add(item);
+  }
+  return out.length > 0 ? out : undefined;
+}
+
 // The answer of the streams request -> the general StreamSet. Nothing else of
 // the answer is kept, and of the position only the first point, rounded to two
 // decimals (about a kilometre), for the weather lookup.
@@ -379,7 +401,8 @@ export function mapIntervalsStreams(raw: unknown, kind: ExternalActivityKind = '
   }
   const get = (kindName: StreamKind) => byType.get(STREAM_NAMES[kindName]);
   const timeRaw = get('time')?.data as unknown[] | undefined;
-  const length = Math.max(0, ...[...byType.values()].map((s) => (s.data as unknown[]).length));
+  // The RR series has one number per heartbeat, not per reading: it does not set the length.
+  const length = Math.max(0, ...[...byType.entries()].filter(([name]) => name !== STREAM_NAMES.rr).map(([, s]) => (s.data as unknown[]).length));
   if (length === 0) return undefined;
   const timeSec = Array.isArray(timeRaw) && timeRaw.length === length && timeRaw.every((v) => typeof v === 'number' && Number.isFinite(v))
     ? (timeRaw as number[])
@@ -409,6 +432,7 @@ export function mapIntervalsStreams(raw: unknown, kind: ExternalActivityKind = '
   put('respirationRpm', toSeries(get('respiration')?.data, length, (v) => (v > 0 && v <= 150 ? v : null)));
   put('temperatureC', toSeries(get('temperature')?.data, length, (v) => (v >= -50 && v <= 80 ? v : null)));
   put('verticalSpeedMs', toSeries(get('verticalSpeed')?.data, length, (v) => (v >= -10 && v <= 10 ? v : null)));
+  put('rrMs', rrOf(get('rr')?.data));
 
   const position = get('position');
   if (position && Array.isArray(position.data) && Array.isArray(position.data2)) {

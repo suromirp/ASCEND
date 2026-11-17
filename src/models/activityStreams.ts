@@ -90,6 +90,9 @@ export interface ActivityStreams {
   laps?: StoredLap[];
   // The names (not the values) of series the source has that ASCEND does not know.
   unknownKinds?: string[];
+  // The time between heartbeats, milliseconds, one per beat (not aligned to `time`), as unsigned
+  // 16-bit numbers: about 2 bytes per heartbeat. Optional and additive: an older backup has none.
+  rrMs?: ArrayBuffer;
 }
 
 // The same, as it travels in a backup file: the binary data as base64 text.
@@ -100,6 +103,8 @@ export interface SerializedSeries {
   data: string;
 }
 
-export interface SerializedActivityStreams extends Omit<ActivityStreams, 'series'> {
+export interface SerializedActivityStreams extends Omit<ActivityStreams, 'series' | 'rrMs'> {
   series: Partial<Record<StreamKindStored, SerializedSeries>>;
+  // base64 of the 16-bit numbers.
+  rrMs?: string;
 }

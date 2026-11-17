@@ -4311,6 +4311,14 @@
    ],
    "kern": "Het kledingadvies noemt een windjack vanaf 20 km/u in plaats van 25 (aanvulling bij het besluit van 13 november), en een Avontuurlijk-lus met een stuk heen en terug zegt dat één keer, in amber.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-17-drempel-uit-je-tests.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "koppelingen-en-data"
+   ],
+   "kern": "De drempel uit een test is 98 procent van de laatste 20 minuten, alleen met borstband en bij 24 tot 40 minuten, en volgt het midden van je laatste drie tests via Akkoord; de RR-reeks wordt bewaard en Klaar voor je test leest band, opslag en RR uit je laatste loop.",
+   "stand": "geldt"
   }
  }
 }

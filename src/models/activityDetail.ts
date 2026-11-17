@@ -48,7 +48,9 @@ export type StreamKind =
   | 'stepLength'
   | 'respiration'
   | 'temperature'
-  | 'verticalSpeed';
+  | 'verticalSpeed'
+  // The time between two heartbeats (RR), only from a chest strap. Not aligned to the clock.
+  | 'rr';
 
 // --- the series of one activity, in ASCEND's units -----------------------------------
 //
@@ -78,6 +80,10 @@ export interface StreamSet {
   temperatureC?: (number | null)[];
   // Rate of climb or descent, metres per second.
   verticalSpeedMs?: (number | null)[];
+  // The time between heartbeats in milliseconds, beat after beat, as the strap sent them. NOT
+  // aligned to `timeSec` (one per beat, not per reading). Kept, nothing is computed from it yet
+  // (I-79: a later trial with DFA alpha 1).
+  rrMs?: number[];
   start?: { lat: number; lon: number };
   // The track, only while a run is being processed (the heading per kilometre for the
   // wind). It is never stored, never put on a log and never packed: whoever has read what
