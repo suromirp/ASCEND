@@ -337,6 +337,9 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('racedag', 'Racedag-blad', 'doel', 'raceDay'),
   choice('test-rust', 'Rust voor een test', 'planning', 'testRest', 72, 'testRust', true),
   choice('test-stilstaan', 'Stilstaan bij een testloop', 'planning', 'testStops', 'skip', 'testStilstaan'),
+  choice('drempel-uit-test', 'Drempel uit je test', 'planning', 'lthrFactor', 'careful', 'drempelUitTest'),
+  choice('test-zonder-band', 'Test zonder borstband', 'planning', 'noStrapTest', 'skip', 'testZonderBand'),
+  flag('test-klaar-melden', 'Melden op een testdag', 'planning', 'testReadyLine'),
   flag('korte-nacht', 'Vragen bij een korte nacht', 'vandaag', 'askShortNight'),
   overviewFlag('weekterugblik', 'Weekterugblik', 'weekReview'),
   overviewSpec('weekterugblik-dag', 'Dag van de terugblik', 'weekReviewDay', (v: string) => choiceShort('terugblikDag', v)),
@@ -478,6 +481,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('etappetijd-eigen', 'Etappetijd op je eigen tempo', 'lichaam', 'stageOwnPace'),
   flag('klimtempo', 'Je klimtempo', 'lichaam', 'climbPace'),
   flag('horloge-stil', 'Melden als je horloge stilvalt', 'koppelingen', 'watchSilence'),
+
   flag('horloge-soort', 'Soort van een loop toetsen', 'koppelingen', 'watchKindCheck'),
   flag('ochtend-backup', 'Ochtendgetallen in back-up', 'gegevens', 'morningInBackup'),
   {

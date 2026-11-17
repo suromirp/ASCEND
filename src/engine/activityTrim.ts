@@ -245,7 +245,8 @@ export function sliceStreams(streams: StreamSet, startSec: number, endSec: numbe
   const origin = keep.length > 0 ? t[keep[0]] : 0;
   const out: StreamSet = { timeSec: keep.map((i) => t[i] - origin) };
   for (const [key, value] of Object.entries(streams)) {
-    if (key === 'timeSec') continue;
+    // The RR series is one number per heartbeat, not per reading: it cannot be cut by index.
+    if (key === 'timeSec' || key === 'rrMs') continue;
     if (Array.isArray(value)) (out as unknown as Record<string, unknown>)[key] = keep.map((i) => (value as unknown[])[i]);
     else if (value !== undefined) (out as unknown as Record<string, unknown>)[key] = value;
   }

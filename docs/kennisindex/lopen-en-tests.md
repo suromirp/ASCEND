@@ -11,6 +11,7 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
+- 2026-11-17 [Drempel uit je tests: eerlijk en rustig](../beslissingen/2026-11-17-drempel-uit-je-tests.md): De drempel uit een test is 98 procent van de laatste 20 minuten, alleen met borstband en bij 24 tot 40 minuten, en volgt het midden van je laatste drie tests via Akkoord; de RR-reeks wordt bewaard en Klaar voor je test leest band, opslag en RR uit je laatste loop.
 - 2026-11-15 [Wandelen en StairMaster: vaste bpm uit je hardloopzones, geen zone](../beslissingen/2026-11-15-wandelen-vaste-bpm.md): Een wandelworkout naar het horloge krijgt geen zonedoel maar een regel met vaste bpm uit je hardloopzones in de beschrijving, omdat intervals.icu voor wandelen geen eigen zones heeft.
 - 2026-11-15 [Hitte bij je tempo: trager, kleiner bij alleen vocht, geen band bij herhalingen](../beslissingen/2026-11-15-hitte-bij-herhalingen.md): De hitteregel zegt trager, nooit lager; alleen vochtig onder 22 graden gevoel geeft 5 tot 10 seconden per km; bij intervallen en heuvelherhalingen geen tempoband of hartslag maar meer rust.
 - 2026-11-14 [Hoogtemeters na stap 1: elke regel leest het merk](../beslissingen/2026-11-14-hoogtemeters-na-stap-1.md): De regels die na stap 1 het merk van de teller nog niet lazen, lezen het nu, via één plek: `engine/elevation.ts` (`counterMark`, `climbLimitFor`, `sameCounter`).

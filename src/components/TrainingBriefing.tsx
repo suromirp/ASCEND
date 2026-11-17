@@ -53,6 +53,9 @@ import { WatchSheet } from './WatchSheet';
 import { useWatchSheet } from './useWatchSheet';
 import { useBriefingInput } from './useBriefingView';
 import { usePlaceWeather } from './usePlaceWeather';
+import { useTestReadiness } from './useTestReadiness';
+import { testReadyLine } from '../engine/testReadiness';
+import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
 import type { WeatherForecast } from '../models/weather';
 import { briefingWeather, placeWeatherTarget } from '../engine/placeWeather';
 import { weatherPageLink } from '../engine/weatherPageLink';
@@ -102,6 +105,8 @@ export function TrainingBriefing({
   origin?: BriefingOrigin;
 }) {
   const { settings } = useAppData();
+  const readiness = useTestReadiness(template.id === TEST_TEMPLATE_ID && settings.testReadyLine !== false);
+  const readyLine = readiness ? testReadyLine(readiness) : undefined;
   const navigate = useNavigate();
   const { pathname, key: entry } = useLocation();
   const motion = useMotionMode();
@@ -285,6 +290,8 @@ export function TrainingBriefing({
             )}
             <div className="flex flex-col items-start">
               {view.stand.kind !== 'watch' && view.stand.line && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{view.stand.line}</p>}
+              {/* Klaar voor je test (engine/testReadiness.ts): alleen op een testdag, alleen als er iets mist. */}
+              {readyLine && <p className="mt-1 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }} data-row="klaar-voor-test">{readyLine}</p>}
               {/* Zelf invullen: met een horloge dat afvinkt, of zonder als de knop onderaan de route is. */}
               {view.stand.kind === 'watch' && manual && <TextButton tone="dim" onClick={manual}>{view.stand.manualLabel}</TextButton>}
               {view.stand.kind === 'manual' && manual && footerKind === 'route' && <TextButton tone="dim" onClick={manual}>{BRIEFING_TEXT.manual}</TextButton>}

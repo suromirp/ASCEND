@@ -133,6 +133,15 @@ export interface PackMeta {
   unknownKinds?: string[];
 }
 
+// The RR intervals as they are kept: unsigned 16-bit milliseconds, beat after beat.
+const MAX_RR_BEATS = 100_000;
+function packRr(values: readonly number[] | undefined): ArrayBuffer | undefined {
+  if (!values || values.length === 0) return undefined;
+  const ok = values.filter((v) => isNum(v) && v >= 200 && v <= 3000).slice(0, MAX_RR_BEATS);
+  if (ok.length === 0) return undefined;
+  return Uint16Array.from(ok, (v) => Math.round(v)).buffer as ArrayBuffer;
+}
+
 // The series of a run as they are kept. `time` always comes along (every other series is
 // aligned to it); a series with no reading at all is left out. Undefined when there is no
 // time or nothing else to keep.
@@ -162,6 +171,8 @@ export function packStreams(set: StreamSet, meta: PackMeta): ActivityStreams | u
   if (meta.headwindKmh && meta.headwindKmh.length > 0) out.headwindKmh = meta.headwindKmh;
   if (meta.laps && meta.laps.length > 0) out.laps = meta.laps;
   if (meta.unknownKinds && meta.unknownKinds.length > 0) out.unknownKinds = meta.unknownKinds;
+  const rr = packRr(set.rrMs);
+  if (rr) out.rrMs = rr;
   return out;
 }
 
@@ -179,6 +190,7 @@ export function unpackStreams(stored: ActivityStreams): StreamSet | undefined {
     if (values.length !== timeSec.length) continue;
     (set as unknown as Record<string, unknown>)[spec.field] = values;
   }
+  if (stored.rrMs && stored.rrMs.byteLength >= 2) set.rrMs = Array.from(new Uint16Array(stored.rrMs));
   return set;
 }
 
@@ -186,7 +198,7 @@ export function unpackStreams(stored: ActivityStreams): StreamSet | undefined {
 export function streamsBytes(stored: ActivityStreams): number {
   let n = 0;
   for (const s of Object.values(stored.series)) n += s?.data.byteLength ?? 0;
-  return n;
+  return n + (stored.rrMs?.byteLength ?? 0);
 }
 
 // --- base64, for the backup file --------------------------------------------------------
@@ -216,7 +228,8 @@ export function serializeStreams(stored: ActivityStreams): SerializedActivityStr
     // NaN is not JSON: a float gap is written as null.
     series[kind] = { type: s.type, scale: s.scale, missing: Number.isFinite(s.missing) ? s.missing : null, data: toBase64(s.data) };
   }
-  return { ...stored, series };
+  const { rrMs, ...rest } = stored;
+  return { ...rest, series, ...(rrMs && rrMs.byteLength > 0 ? { rrMs: toBase64(rrMs) } : {}) };
 }
 
 const TYPES: PackType[] = ['u8', 'u16', 'i16', 'u32', 'f32'];
@@ -308,6 +321,14 @@ export function deserializeStreams(raw: unknown): ActivityStreams | undefined {
   if (Array.isArray(r.unknownKinds)) {
     const names = r.unknownKinds.filter((n): n is string => typeof n === 'string' && n.length > 0 && n.length <= 40).slice(0, 30);
     if (names.length > 0) out.unknownKinds = names;
+  }
+  // The RR intervals: read defensively, an older backup has none and a damaged one is dropped alone.
+  if (typeof r.rrMs === 'string' && r.rrMs.length > 0) {
+    const rr = fromBase64(r.rrMs);
+    if (rr && rr.byteLength >= 2 && rr.byteLength % 2 === 0 && rr.byteLength / 2 <= MAX_RR_BEATS) {
+      const beats = new Uint16Array(rr);
+      if (beats.every((v) => v >= 200 && v <= 3000)) out.rrMs = rr;
+    }
   }
   return out;
 }

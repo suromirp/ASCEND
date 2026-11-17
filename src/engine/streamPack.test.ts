@@ -194,3 +194,40 @@ describe('sizes as a person reads them', () => {
     expect(formatBytes(42_000_000)).toBe('42 MB');
   });
 });
+
+describe('de RR-reeks in de opslag en de back-up', () => {
+  const set = fastStartTest();
+  // Nagemaakt: een halfuur op 170 slagen per minuut, rond 353 ms per slag.
+  const beats = Array.from({ length: 30 * 170 }, (_, i) => 353 + (i % 7) - 3);
+  const withRr = packStreams({ ...set, rrMs: beats }, META)!;
+  const without = packStreams(set, META)!;
+
+  it('bewaart elke slag als twee bytes en geeft dezelfde getallen terug', () => {
+    expect(withRr.rrMs!.byteLength).toBe(beats.length * 2);
+    expect(unpackStreams(withRr)!.rrMs).toEqual(beats);
+    expect(streamsBytes(withRr) - streamsBytes(without)).toBe(beats.length * 2);
+  });
+
+  it('gaat door de back-up en komt gelijk terug; de groei is gemeten', () => {
+    const text = JSON.stringify(serializeStreams(withRr));
+    const back = deserializeStreams(JSON.parse(text))!;
+    expect(unpackStreams(back)!.rrMs).toEqual(beats);
+    const growth = text.length - JSON.stringify(serializeStreams(without)).length;
+    // 5.100 slagen: 10,2 KB als bytes, ongeveer 13,6 KB als base64 in de back-up.
+    expect(growth).toBeGreaterThan(13_000);
+    expect(growth).toBeLessThan(14_000);
+  });
+
+  it('een oude back-up zonder rrMs, of een beschadigde, leest gewoon', () => {
+    const file = JSON.parse(JSON.stringify(serializeStreams(without)));
+    expect(file.rrMs).toBeUndefined();
+    const old = deserializeStreams(file)!;
+    expect(old.rrMs).toBeUndefined();
+    expect(unpackStreams(old)!.rrMs).toBeUndefined();
+    for (const bad of ['%%%', 'AAA', 'AAAA', 123]) {
+      const back = deserializeStreams({ ...file, rrMs: bad })!;
+      expect(back.rrMs).toBeUndefined();
+      expect(back.series.heartRate).toBeDefined();
+    }
+  });
+});

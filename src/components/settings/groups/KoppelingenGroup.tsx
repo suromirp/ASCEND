@@ -17,6 +17,7 @@ import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
+import { useTestReadiness } from '../../useTestReadiness';
 
 // Koppelingen: Garmin via intervals.icu, Health Connect (alleen in de Android-app) en MacroFactor. De
 // schakelaars van wat ASCEND van je horloge gebruikt staan hier; koppelen en inlezen blijven hun eigen
@@ -24,6 +25,8 @@ import type { GroupProps } from './types';
 export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   const navigate = useNavigate();
   const { settings, updateSettings } = useAppData();
+  // Klaar voor je test: drie feiten uit je laatste loop, alleen met Garmin gekoppeld (I-79, Pathfinder vooraf).
+  const readiness = useTestReadiness(facts.watch?.linked === true);
   const [note, setNote] = useState<string | null>(null);
   // Een keuze in het blad Trainingen naar je horloge opent haar onderblad bovenop dat blad.
   const [inner, setInner] = useState<string | null>(null);
@@ -128,6 +131,18 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
         <SummaryRow id="horloge-stil" title="Melden als je horloge stilvalt" facts={facts} info="horlogeStil" onChange={(on) => void updateSettings({ watchSilence: on })} />
         <SummaryRow id="bundel-horloge-sturen" title="Trainingen naar je horloge" facts={facts} info="naarHorloge" onClick={() => setSheet('bundel-horloge-sturen')} />
       </SettingsSection>
+
+      {facts.watch?.linked === true && (
+        <SettingsSection title="Klaar voor je test">
+          <div className="flex flex-col gap-1.5 px-4 py-3" role="status" aria-live="polite" data-row="klaar-voor-test">
+            {!readiness && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Even kijken naar je laatste loop…</p>}
+            {readiness?.empty && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{readiness.empty}</p>}
+            {readiness?.facts.map((f) => (
+              <p key={f.id} className="text-sm leading-snug" style={{ color: f.ok ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>{f.line}</p>
+            ))}
+          </div>
+        </SettingsSection>
+      )}
 
       <SettingsSection title="Health Connect">
         {/* In de browser gedimd met uitleg, zonder schakelaar (engine/settingsSummary.ts#healthConnectRow). */}

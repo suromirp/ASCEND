@@ -136,3 +136,27 @@ describe('the weather of a training that is done', () => {
     expect(() => mapPastConditions({}, '2026-10-18T08:12:03', 3000)).toThrow();
   });
 });
+
+describe('de RR-reeks (hrv) van een borstband', () => {
+  it('wordt gevraagd als de activiteit hem heeft, en staat niet meer bij de onbekende reeksen', () => {
+    expect(STREAM_NAMES.rr).toBe('hrv');
+    expect(streamKindsOf(['time', 'heartrate', 'hrv'])).toContain('rr');
+    expect(streamsToRequest(['time', 'heartRate', 'rr'])).toContain('rr');
+  });
+
+  it('bepaalt de lengte van de reeks niet en komt plat binnen, in milliseconden', () => {
+    const raw = [
+      { type: 'time', data: [0, 1, 2] },
+      { type: 'heartrate', data: [150, 151, 152] },
+      { type: 'hrv', data: [400, 401, [398, 402], null, 0.405, 50, 5000, 'x'] },
+    ];
+    const set = mapIntervalsStreams(raw)!;
+    expect(set.timeSec).toEqual([0, 1, 2]);
+    expect(set.heartRate).toEqual([150, 151, 152]);
+    expect(set.rrMs).toEqual([400, 401, 398, 402, 405]);
+  });
+
+  it('zonder hrv geen rrMs', () => {
+    expect(mapIntervalsStreams([{ type: 'time', data: [0, 1] }, { type: 'heartrate', data: [150, 151] }])!.rrMs).toBeUndefined();
+  });
+});

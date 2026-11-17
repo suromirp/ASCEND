@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SessionLog } from '../models/training';
 import type { RunDetail, RunKm } from '../models/runDetail';
 import { TEST_TEMPLATE_ID } from './raceBlock';
-import { LTHR_FROM_5K, lthrFromTest, recordZoneAnswer, zoneOffer } from './zoneUpdate';
+import { recordStrapWorn, recordZoneAnswer, zoneNotice, zoneOffer } from './zoneUpdate';
 import { MAX_ZONE_ANSWERS, type ZoneAnswer } from '../models/zoneAnswer';
 
 // Nagemaakte testlopen: 5 km op het horloge, met de hartslag per kilometer.
@@ -19,33 +19,16 @@ function detail(totalKm: number, minutes: number, hrs: (number | undefined)[]): 
   };
 }
 
-function test(id: string, date: string, minutes: number, hrs?: (number | undefined)[]): SessionLog {
+function test(id: string, date: string, minutes: number, hrs?: (number | undefined)[], strap = true): SessionLog {
   return {
     id, templateId: TEST_TEMPLATE_ID, type: 'cardio', completedDate: date, completedAt: `${date}T09:00:00.000Z`, variant: 'full', durationMinutes: minutes,
     cardioData: { distanceKm: 5, durationMinutes: minutes },
     ...(hrs ? { runDetail: detail(5, minutes, hrs) } : {}),
-  } as SessionLog;
+    ...(strap ? { detail: { quality: { chestStrapSeen: true } } } : {}),
+  } as unknown as SessionLog;
 }
 
 const opts = { judgments: [], ask: true };
-
-describe('drempelhartslag uit een testloop', () => {
-  it('neemt kilometer 2 tot en met 5 van de snelste 5 km, keer 0,98', () => {
-    const t = test('t1', '2026-10-20', 25, [160, 172, 174, 176, 178]);
-    expect(lthrFromTest(t)).toBe(Math.round(175 * LTHR_FROM_5K));
-  });
-
-  it('zonder hartslag of met te weinig kilometers geen schatting', () => {
-    expect(lthrFromTest(test('t1', '2026-10-20', 25))).toBeUndefined();
-    expect(lthrFromTest(test('t1', '2026-10-20', 25, [160, 172, undefined, undefined, undefined]))).toBeUndefined();
-  });
-
-  it('een kilometertabel van andere totalen (een correctie bij de bron) telt niet', () => {
-    const t = test('t1', '2026-10-20', 25, [160, 172, 174, 176, 178]);
-    const stale = { ...t, cardioData: { ...t.cardioData!, distanceKm: 5.4, durationMinutes: 27 } };
-    expect(lthrFromTest(stale)).toBeUndefined();
-  });
-});
 
 describe('zones bijwerken na een test', () => {
   const older = test('t0', '2026-09-20', 26);
@@ -75,6 +58,15 @@ describe('zones bijwerken na een test', () => {
     expect(zoneOffer({ logId: 't1', logs: [fresh], options: opts, heartRate: { lthr: 160 }, enabled: true, answers })).toBeUndefined();
   });
 
+  it('een antwoord geldt voor het getal: een andere stand van de factor geeft hoogstens een nieuw voorstel', () => {
+    const answers: ZoneAnswer[] = [{ logId: 't1', answer: 'accepted', date: '2026-10-21', lthrFrom: 160, lthrTo: 172 }];
+    expect(zoneOffer({ logId: 't1', logs: [fresh], options: opts, heartRate: { lthr: 172 }, enabled: true, answers })).toBeUndefined();
+    const friel = zoneOffer({ logId: 't1', logs: [fresh], options: opts, heartRate: { lthr: 172 }, enabled: true, answers, factor: 'friel' });
+    expect(friel!.lthrTo).toBe(175);
+    expect(friel!.basis).toBe('Gemeten met je borstband, over kilometer 2 tot en met 5 van je test, want de reeks van het horloge ontbrak.');
+    expect([friel!.low, friel!.high]).toEqual([170, 180]);
+  });
+
   it('zonder drempelhartslag: de zones van nu uit je maximale hartslag, of nog geen', () => {
     const none = zoneOffer({ logId: 't1', logs: [fresh], options: opts, heartRate: undefined, enabled: true });
     expect(none!.lthrFrom).toBeUndefined();
@@ -95,5 +87,62 @@ describe('zones bijwerken na een test', () => {
     for (let i = 0; i < MAX_ZONE_ANSWERS + 5; i++) many = recordZoneAnswer(many, { logId: `t${i}`, answer: 'declined', date: '2026-10-21', lthrTo: 170 });
     expect(many).toHaveLength(MAX_ZONE_ANSWERS);
     expect(many![0].logId).toBe('t5');
+  });
+});
+
+describe('drie tests samen in het voorstel', () => {
+  // Kilometer 2 tot en met 5 op `hr`: keer 0,98 geeft de schatting.
+  const at = (id: string, date: string, hr: number, strap = true) => test(id, date, 25, [150, hr, hr, hr, hr], strap);
+  const a = at('a', '2026-06-01', 178); // 174
+  const b = at('b', '2026-08-01', 181); // 177
+  const c = at('c', '2026-10-01', 180); // 176
+  const today = '2026-11-17';
+
+  it('het voorstel noemt de tests en het midden', () => {
+    const offer = zoneOffer({ logId: 'c', logs: [a, b, c], options: opts, heartRate: { lthr: 170 }, enabled: true, today });
+    expect(offer!.lthrTo).toBe(176);
+    expect(offer!.tests).toBe('Je laatste drie tests: 174, 177 en 176. Het midden is 176.');
+  });
+
+  it('met terugwerkende kracht: een test die je al beantwoordde met één getal krijgt het midden als nieuw voorstel', () => {
+    const answers: ZoneAnswer[] = [{ logId: 'c', answer: 'accepted', date: '2026-10-02', lthrFrom: 168, lthrTo: 172 }];
+    const offer = zoneOffer({ logId: 'c', logs: [a, b, c], options: opts, heartRate: { lthr: 172 }, enabled: true, answers, today });
+    expect(offer!.lthrFrom).toBe(172);
+    expect(offer!.lthrTo).toBe(176);
+    // Minder dan 3 slagen van wat er staat: niets.
+    expect(zoneOffer({ logId: 'c', logs: [a, b, c], options: opts, heartRate: { lthr: 174 }, enabled: true, today })).toBeUndefined();
+  });
+
+  it('een test die Telt niet mee kreeg, telt ook niet voor je drempel', () => {
+    const judged = { judgments: [{ logId: 'b', verdict: 'ignore' as const, date: '2026-08-02' }], ask: true };
+    const offer = zoneOffer({ logId: 'c', logs: [a, b, c], options: judged, heartRate: { lthr: 170 }, enabled: true, today });
+    expect(offer!.tests).toBe('Je laatste twee tests: 174 en 176. Het gemiddelde is 175.');
+  });
+
+  it('Liever niet en daarna een nieuwe test: de nieuwe krijgt een voorstel, de afgewezen test telt mee', () => {
+    const answers: ZoneAnswer[] = [{ logId: 'c', answer: 'declined', date: '2026-10-02', lthrFrom: 170, lthrTo: 176 }];
+    expect(zoneOffer({ logId: 'c', logs: [a, b, c], options: opts, heartRate: { lthr: 170 }, enabled: true, answers, today })).toBeUndefined();
+    const d = at('d', '2026-11-10', 184); // 180
+    const offer = zoneOffer({ logId: 'd', logs: [a, b, c, d], options: opts, heartRate: { lthr: 170 }, enabled: true, answers, today });
+    expect(offer!.tests).toBe('Je laatste drie tests: 177, 176 en 180. Het midden is 177.');
+  });
+
+  it('een test zonder band telt niet; de laatste test zegt waarom en vraagt het als de band er meestal was', () => {
+    const wrist = at('d', '2026-11-10', 190, false);
+    expect(zoneOffer({ logId: 'd', logs: [a, b, c, wrist], options: opts, heartRate: { lthr: 170 }, enabled: true, today })).toBeUndefined();
+    const notice = zoneNotice({ logId: 'd', logs: [a, b, c, wrist], options: opts, heartRate: { lthr: 176 }, enabled: true, today });
+    expect(notice!.line).toBe("Bij deze test zag ASCEND geen borstband. Je tempo's tellen. Je drempel blijft 176.");
+    expect(notice!.askStrap).toBe(true);
+    // Na "Ik had hem wel om" telt hij: midden van 177, 176 en 186.
+    const worn = recordStrapWorn(undefined, 'd');
+    const offer = zoneOffer({ logId: 'd', logs: [a, b, c, wrist], options: opts, heartRate: { lthr: 170 }, enabled: true, today, strapWorn: worn });
+    expect(offer!.lthrTo).toBe(177);
+    expect(zoneNotice({ logId: 'd', logs: [a, b, c, wrist], options: opts, heartRate: { lthr: 176 }, enabled: true, today, strapWorn: worn })).toBeUndefined();
+  });
+
+  it('geen vraag als de band er bij je lopen meestal niet was', () => {
+    const logs = [at('a', '2026-06-01', 178, false), at('b', '2026-08-01', 181, false), at('d', '2026-11-10', 190, false)];
+    const notice = zoneNotice({ logId: 'd', logs, options: opts, heartRate: { lthr: 176 }, enabled: true, today });
+    expect(notice!.askStrap).toBe(false);
   });
 });
