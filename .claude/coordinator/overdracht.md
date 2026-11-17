@@ -1,6 +1,17 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 16 november 2026, 03:52 Portugese tijd, door coördinator session_01LnDpSjgdHhfcJwGq2aAmrh "Coördinator ASCEND 16 november" (overgenomen 03:48). Oudere versies: git-geschiedenis van dit bestand. Vragen, stuk en live voor de eigenaar: `eigenaar.md`.
+Bijgewerkt: 17 november 2026, 02:10 Portugese tijd, door coördinator session_01LnDpSjgdHhfcJwGq2aAmrh (16 november). Oudere versies: git-geschiedenis.
+
+## Stand 17 november 02:10 (lees dit eerst)
+
+- ZUINIG: weeklimiet 43% (Fable 37%), app zei "op dit tempo morgenavond op" (reset zo 17:59). Kijk alleen per uur (Wachter), geen effort max, korte berichten. Wissel vroeg als de chat lang wordt.
+- Loopt: Sherpa Drempel stap 1 en 2 (I-79) session_01LnDpSikmnoYH7GfJYzgzGc, branch `claude/drempel-schatting`, Opus high (gestart 01:56 UTC). Doet zelf Pathfinder vooraf. Als klaar: Warden Fable (helper), proefmerge vanaf origin/main in scratchpad, volle controles (tsc, lint, vitest, build, kennisindex:vergelijk, kaart:vergelijk), eigen blik op afdrukken 412 px, squash naar main (`git commit-tree $(git write-tree) -p origin/main`), `npm run backlog:bij` op nacht, eigenaar.md Net live, Werkkaart-ronde, pushmelding (niet 's nachts). Commit zegt `Deel: I-79` (I-79 blijft open tot de korte test live is).
+- Woensdag 18 nov bouwmoment 19:43 Amsterdam: korte test (I-79 stap 3, besluiten in backlog I-79) plus hoogstens twee kleine Inboxpunten. Rest naar vrijdag.
+- Besluiten eigenaar I-79 (17 nov): factor 98%, midden van drie tests (ook terugwerkend, via Akkoord), zonder borstband telt niet + vraag "Had je hem om?", korte test 4 min drempeltempo + 1 min stil wekelijks, "Klaar voor je test" in de app, hrv-reeks bewaren (geen DFA). Onderzoek: `docs/onderzoek/Drempel en submaximale test.md` (op main).
+- Horloge eigenaar: ANT+ aan, Log HRV aan, Data Recording nu Every Second. Hij is verkouden: geen testloop tot hij beter is.
+- Vandaag live: f9039a7, 4f5d722, e152f17, 23e36ab (I-63 back-up kleiner, I-80 reden overgeslagen, I-49, I-81, I-66), ec1f89c (uitleg Drempel), f87fe39 (onderzoek).
+- Inbox open: I-73, I-74, I-76, I-77, I-78, I-82 tot I-85. Graphify-proef na zo 22 nov 18:00.
+- Tijden aan de eigenaar in Portugese tijd tot woensdag 18 november, daarna Amsterdam. Bouwers altijd in eigen sessie (create_session). Nooit een API-sleutel van de eigenaar gebruiken.
 
 ## Stand 03:52 (session_01LnDpSjgdHhfcJwGq2aAmrh)
 
