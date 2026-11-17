@@ -3,6 +3,7 @@
 Bijgewerkt: 17 november 2026, 02:10 Portugese tijd, door coördinator session_01LnDpSjgdHhfcJwGq2aAmrh (16 november). Oudere versies: git-geschiedenis.
 
 ## Stand 17 november 02:10 (lees dit eerst)
+- Coördinator nu session_01LnDpSmmU3SaaZSu99Nn2YX (sinds 01:06 Portugese tijd). Wachter staat hier (trig_017Nvn7aCSCigcdKwsTzVv9Q). Volgende wissel: send_later trig_01PxzB1fnuiVi2sdyarZ4PTH op wo 18 nov 04:47 Amsterdam.
 
 - ZUINIG: weeklimiet 43% (Fable 37%), app zei "op dit tempo morgenavond op" (reset zo 17:59). Kijk alleen per uur (Wachter), geen effort max, korte berichten. Wissel vroeg als de chat lang wordt.
 - Loopt: Sherpa Drempel stap 1 en 2 (I-79) session_01LnDpSikmnoYH7GfJYzgzGc, branch `claude/drempel-schatting`, Opus high (gestart 01:56 UTC). Doet zelf Pathfinder vooraf. Als klaar: Warden Fable (helper), proefmerge vanaf origin/main in scratchpad, volle controles (tsc, lint, vitest, build, kennisindex:vergelijk, kaart:vergelijk), eigen blik op afdrukken 412 px, squash naar main (`git commit-tree $(git write-tree) -p origin/main`), `npm run backlog:bij` op nacht, eigenaar.md Net live, Werkkaart-ronde, pushmelding (niet 's nachts). Commit zegt `Deel: I-79` (I-79 blijft open tot de korte test live is).
