@@ -4,6 +4,7 @@ Bijgewerkt: 16 november 2026, 03:52 Portugese tijd, door coördinator session_01
 
 ## Stand 03:52 (session_01LnDpSjgdHhfcJwGq2aAmrh)
 
+- 17 nov 02:10: horloge eigenaar: ANT+ en Log HRV stonden aan, Data Recording nu Every Second (was Smart). In de back-up: band gezien bij alle 7 lopen met reeksen; intervals.icu levert al een `hrv`-reeks die ASCEND overslaat (unknownKinds). Bouwer stap 1+2 mag `hrv` bewaren als append-only afgeleide reeks (geen DFA bouwen, wel klaarzetten voor een proef).
 - 17 nov 02:00 eigenaar: korte test (stap 3 I-79) ook woensdag bouwen, volgens advies. Woensdag dus twee bouwers voor I-79: stap 1+2 (drempel) en stap 3 (korte test), Fable, Warden Fable; plus de rest van de Inbox naar ruimte.
 - 17 nov 01:50 eigenaar I-79 besluiten: factor 98% ("beter te langzaam dan te snel"), midden van drie tests, borstband-regel zoals advies (zonder band telt niet, vraag 'Had je hem om?'). Vraagt of het met terugwerkende kracht werkt: ja, oude testlopen opnieuw doorrekenen, met voorstel en Akkoord. Korte test: uitgelegd, nog geen besluit (blijft uit). Uitleg horloge-instellingen gegeven (ANT+, Every Second, Log HRV).
 - 17 nov 00:00 eigenaar over I-79: drempel volgt het midden van de laatste drie tests ("Denk middel toch?"), vastgelegd. Factor: uitleg gegeven, advies 98% (vast tenzij hij bezwaar maakt). Korte test: hij snapte hem niet, uitgelegd; advies voorlopig uit. Borstband: app ziet hem via de balans van grondcontact (ANT+); advies zonder band telt niet, één vraag 'Had je hem om?'. Zonder antwoord woensdag bouwen met dit advies.
