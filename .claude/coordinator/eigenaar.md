@@ -38,6 +38,9 @@ Zonder antwoord het advies: praattest later, test van 30 minuten later, DFA alph
 
 ## Net live
 
+### 17 november 06:20
+- Drempel uit je tests (I-79 stap 1 en 2): na een testloop met borstband rekent ASCEND je drempel uit de laatste 20 minuten (98%), het midden van je laatste drie tests; alleen als voorstel met Akkoord. Zonder borstband telt de test niet en vraagt de app "Had je hem om?". In de Briefing staat "Klaar voor je test"; drie instellingen in het blad Testloop. De korte test (stap 3) komt woensdag.
+
 ### 16 november 22:35
 - Uitleg Drempel: zegt nu dat ASCEND zelf een drempel voorstelt na een testloop van 5 km (pas na Akkoord), met een borstband; Garmin is de tweede bron.
 
