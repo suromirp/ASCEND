@@ -510,3 +510,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-16 | Sherpa I-80 reden op het blad | bouwer eigen sessie | opus high | 333k ctx, $9,72 | 66 min | 1 (woord Week/Vandaag) |
 | 2026-11-16 | Sherpa I-49/I-81 klein | bouwer eigen sessie | sonnet | 135k ctx, $0,77 | 19 min | 0 |
 | 2026-11-16 | Scout Drempel I-79 (effort max, op verzoek eigenaar) | scout eigen sessie | fable max | 214k ctx, $41,59 | 61 min | 1 aanvulling borstband |
+| 2026-11-17 | Warden Drempel I-79 | reviewer helper | fable | 91k tok | 14 min | n.v.t. (3 moet, 6 mag) |
+| 2026-11-17 | Sherpa Drempel I-79 stap 1+2 | bouwer eigen sessie | opus high | 332k ctx, $11,21 | 56 min | 1 herstelronde na Warden |
