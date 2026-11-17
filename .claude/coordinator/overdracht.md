@@ -2,6 +2,13 @@
 
 Bijgewerkt: 17 november 2026, 10:00 Portugese tijd, door coördinator session_01LnDpSjgdHhfcJwGq2aAmrh (16 november). Oudere versies: git-geschiedenis.
 
+## Stand 17 november 09:50 Portugese tijd (lees dit eerst)
+
+- Coördinator nu session_01LnDpSmrC4jEAYcmy76fXNp ("Coördinator ASCEND 17 november"), op claude/nacht.
+- HARDE GRENS: deze sessie zit op lineage-diepte 8 van 8. Ze kan geen sessies starten en geen send_later of triggers maken, aanzetten of afvuren. De wissel van 18 nov 04:47 is dus NIET gepland, en de Wachter kan hier niet aan. De volgende coördinator moet de eigenaar zelf starten (nieuwe sessie in de app, zelfde prompt, branch claude/nacht); die begint weer op diepte 0.
+- Volgende coördinator: een bouwer of wissel start je liefst met create_trigger (create_new_session_on_fire), zodat de keten niet weer vol raakt; check de diepte met get_session (lineage).
+- Verder ongewijzigd: geen bouwer, Wachter uit, woensdag bouwmoment (eigen geplande taak) met I-79 stap 3, I-86, I-88.
+
 ## Stand 17 november 10:00 Portugese tijd (lees dit eerst)
 
 - Vorige coördinator session_01LnDpSmmU3SaaZSu99Nn2YX droeg vroeg over op verzoek van de eigenaar (context 55%, weeklimiet 47% om 09:45, app: "op dit tempo donderdagochtend op"; reset zo 17:59). ZUINIG.
