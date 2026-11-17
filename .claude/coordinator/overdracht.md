@@ -1,8 +1,18 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 17 november 2026, 02:10 Portugese tijd, door coördinator session_01LnDpSjgdHhfcJwGq2aAmrh (16 november). Oudere versies: git-geschiedenis.
+Bijgewerkt: 17 november 2026, 10:00 Portugese tijd, door coördinator session_01LnDpSjgdHhfcJwGq2aAmrh (16 november). Oudere versies: git-geschiedenis.
 
-## Stand 17 november 02:10 (lees dit eerst)
+## Stand 17 november 10:00 Portugese tijd (lees dit eerst)
+
+- Vorige coördinator session_01LnDpSmmU3SaaZSu99Nn2YX droeg vroeg over op verzoek van de eigenaar (context 55%, weeklimiet 47% om 09:45, app: "op dit tempo donderdagochtend op"; reset zo 17:59). ZUINIG.
+- Wachter (trig_017Nvn7aCSCigcdKwsTzVv9Q) staat UIT. Eigenaar 17 nov: een Wachter zonder lopende bouwer is nutteloos. Nieuwe afspraak: zet hem aan (update_trigger enabled=true, persistent_session_id = jouw sessie) zodra er een bouwer loopt, en weer uit als die is afgehandeld. De Werkkaart heeft zijn eigen uurtaak.
+- Er loopt geen bouwer. Sherpa Drempel is afgehandeld (main 3651a77) en gearchiveerd.
+- Woensdag 18 nov bouwmoment 19:43 Amsterdam: I-79 stap 3 (korte test), I-86, I-88. Pas I-56 erbij als het tempo na de wissel duidelijk zakt.
+- Bij elke push naar main gaan backlog, overdracht, eigenaar.md en kostenlogboek van claude/nacht mee (besluit eigenaar 17 nov). Main stond op I-67.
+- Geen open vragen aan de eigenaar. Volgende wissel: zelf plannen met send_later op 04:47 Amsterdam.
+- Back-up van de eigenaar van vandaag 09:07 stond in de scratchpad van de vorige coördinator; niet overgedragen (naspelen vraagt opnieuw om een back-up).
+
+## Stand 17 november 02:10
 - Coördinator nu session_01LnDpSmmU3SaaZSu99Nn2YX (sinds 01:06 Portugese tijd). Wachter staat hier (trig_017Nvn7aCSCigcdKwsTzVv9Q). Volgende wissel: send_later trig_01PxzB1fnuiVi2sdyarZ4PTH op wo 18 nov 04:47 Amsterdam.
 - 10:45 besluiten eigenaar: (1) I-88 woensdag mee op het bouwmoment, naast I-79 stap 3 en I-86 (dan geen ander klein punt). (2) Bij elke push naar main gaan docs/backlog.md, .claude/coordinator/overdracht.md, .claude/coordinator/eigenaar.md en .claude/kosten/logboek.md van claude/nacht mee in dezelfde squash-commit (git checkout origin/claude/nacht -- <bestanden> in de proefmerge, dan kennisindex:vergelijk). Main stond op I-67.
 - 09:40: eigenaar meldt Week opnieuw plannen (dubbele Heuvelsprints zo 22, lange duurloop vervalt); nagespeeld en bevestigd, I-88. Advies aan hem: Liever niet.
