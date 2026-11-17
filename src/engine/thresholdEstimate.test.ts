@@ -5,7 +5,7 @@ import type { StreamSet } from '../models/activityDetail';
 import type { TestResult } from './racePrediction';
 import { TEST_TEMPLATE_ID } from './raceBlock';
 import {
-  basisLine, combinedLthr, lthrFromEffort, notForThresholdLine, strapDuring, strapExpected, testsLine,
+  basisLine, combinedLthr, lthrFromEffort, monthsBefore, notForThresholdLine, strapDuring, strapExpected, testsLine,
   type EffortEstimate, type EffortRejected,
 } from './thresholdEstimate';
 
@@ -38,11 +38,19 @@ function testLog(id: string, date: string, effortSec: number, opts: { hrs?: (num
 
 const result = (log: SessionLog, effortSec: number): TestResult => ({ date: log.completedDate, km: 5, minutes: effortSec / 60, logId: log.id, basis: 'effort' });
 
-// Hartslag `hr(t)` en balans `bal(t)` per seconde over de hele loop.
-function streams(effortSec: number, hr: (t: number) => number | null, bal: (t: number) => number | null = () => 50): StreamSet {
-  const n = WARM + effortSec + 300;
+// Hartslag `hr(t)` en balans `bal(t)` per seconde over de hele loop. De afstand: 1 km inlopen, dan het
+// teststuk van 5 km in `effortSec` (bewegend), dan uitlopen. Een stop staat de klok stil op afstand.
+function streams(effortSec: number, hr: (t: number) => number | null, bal: (t: number) => number | null = () => 50, stop?: { at: number; sec: number }): StreamSet {
+  const n = WARM + effortSec + 300 + (stop?.sec ?? 0);
   const timeSec = Array.from({ length: n }, (_, i) => i);
-  return { timeSec, heartRate: timeSec.map(hr), stanceBalanceLeftPct: timeSec.map(bal) };
+  const distanceM = timeSec.map((t) => {
+    let moving = t;
+    if (stop && t > stop.at) moving = t - Math.min(stop.sec, t - stop.at);
+    if (moving <= WARM) return (moving / WARM) * 1000;
+    if (moving <= WARM + effortSec) return 1000 + ((moving - WARM) / effortSec) * 5000;
+    return 6000 + (moving - WARM - effortSec) * 3;
+  });
+  return { timeSec, distanceM, heartRate: timeSec.map(hr), stanceBalanceLeftPct: timeSec.map(bal) };
 }
 
 // De laatste 20 minuten op 180, het begin van het teststuk lager: het venster telt alleen het eind.
@@ -60,6 +68,25 @@ describe('lthrFromEffort: de schatting uit één test', () => {
     expect(basisLine(e)).toBe('Gemeten met je borstband, over de laatste 20 minuten van je test.');
   });
 
+  it('het einde komt op afstand uit de reeks: een stop van 60 s in het venster wijst de test af', () => {
+    const log = testLog('t1', '2026-10-20', 1500);
+    // Stop 20 minuten na de start van het teststuk: de klok loopt 60 s door, bestFive.sec blijft 1500.
+    const stopped = streams(1500, () => 175, () => 50, { at: WARM + 1200, sec: 60 });
+    const r = lthrFromEffort(log, result(log, 1500), { streams: stopped }) as EffortRejected;
+    expect(r.reason).toBe('stopped');
+    expect(notForThresholdLine(r, 176)).toBe("Je stond tijdens je test langer dan 30 seconden stil. Je tempo's tellen. Je drempel blijft 176.");
+  });
+
+  it('een stop voor het venster schuift het einde op: de laatste 20 minuten liggen echt aan het eind', () => {
+    const log = testLog('t1', '2026-10-20', 1500);
+    // Stop van 60 s in minuut 2 van het teststuk; het echte einde ligt op WARM + 1560 in de klok.
+    const end = WARM + 1560;
+    const set = streams(1500, (t) => (t >= end - 1200 && t < end ? 180 : 150), () => 50, { at: WARM + 100, sec: 60 });
+    const e = lthrFromEffort(log, result(log, 1500), { streams: set }) as EffortEstimate;
+    expect(e.ok).toBe(true);
+    expect(e.lthr).toBe(Math.round(180 * 0.98));
+  });
+
   it('Zoals Friel: 100 procent', () => {
     const log = testLog('t1', '2026-10-20', 1500);
     const e = lthrFromEffort(log, result(log, 1500), { streams: streams(1500, rising(1500)), factor: 'friel' }) as EffortEstimate;
@@ -71,8 +98,7 @@ describe('lthrFromEffort: de schatting uit één test', () => {
     const e = lthrFromEffort(log, result(log, 1500)) as EffortEstimate;
     expect(e.lthr).toBe(Math.round(175 * 0.98));
     expect(e.window).toBe('km');
-    expect(basisLine(e)).toContain('kilometer 2 tot en met 5');
-    expect(basisLine(e)).toContain('reeks van het horloge ontbrak');
+    expect(basisLine(e)).toBe('Gemeten over kilometer 2 tot en met 5 van je test, want de reeks van het horloge ontbrak. ASCEND zag je borstband in je loop; of hij het hele teststuk om zat, is zonder reeks niet te zien.');
   });
 
   it('23:59 telt niet, 24:00 wel; 40:00 telt, 40:01 niet', () => {
@@ -176,9 +202,15 @@ describe('combinedLthr: het midden van je laatste drie', () => {
     expect(testsLine(c)).toBeUndefined();
   });
 
-  it('aan de pols pas een uitkomst als twee tests het eens zijn', () => {
+  it('een test aan de pols telt alleen met een eigen partner binnen 5 slagen', () => {
     expect(combinedLthr([est('a', '2026-10-01', 176, 'wrist')], '2026-11-17')).toBeUndefined();
-    expect(combinedLthr([est('a', '2026-09-01', 168, 'wrist'), est('b', '2026-10-01', 180)], '2026-11-17')).toBeUndefined();
+    // De polstest ligt 12 slagen van de bandtest: hij valt weg, de bandtest telt alleen.
+    const alone = combinedLthr([est('a', '2026-09-01', 168, 'wrist'), est('b', '2026-10-01', 180)], '2026-11-17')!;
+    expect(alone.used.map((e) => e.logId)).toEqual(['b']);
+    expect(alone.high - alone.lthr).toBe(5);
+    // Twee bandtests die het eens zijn maken een verre polstest niet geldig.
+    const far = combinedLthr([est('a', '2026-08-01', 175), est('b', '2026-09-01', 176), est('w', '2026-10-01', 190, 'wrist')], '2026-11-17')!;
+    expect(far.used.map((e) => e.logId)).toEqual(['a', 'b']);
     const c = combinedLthr([est('a', '2026-09-01', 174, 'wrist'), est('b', '2026-10-01', 178)], '2026-11-17')!;
     expect(c.lthr).toBe(176);
     expect(c.high - c.lthr).toBe(10);
@@ -202,5 +234,13 @@ describe('strapExpected: was de band er bij de meeste lopen', () => {
     expect(strapExpected([run('a', 1, true), run('b', 2, true)])).toBe(false);
     const runs = [run('a', 1, true), run('b', 2, true), run('c', 3, true), run('t', 4, false)];
     expect(strapExpected(runs, 't')).toBe(true);
+  });
+});
+
+describe('12 maanden terug', () => {
+  it('29 februari wordt 28 februari, 31 maart min een maand eind februari', () => {
+    expect(monthsBefore('2028-02-29', 12)).toBe('2027-02-28');
+    expect(monthsBefore('2028-03-31', 1)).toBe('2028-02-29');
+    expect(monthsBefore('2026-11-17', 12)).toBe('2025-11-17');
   });
 });

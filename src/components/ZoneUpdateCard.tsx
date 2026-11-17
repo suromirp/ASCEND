@@ -17,6 +17,7 @@ import { SecondaryButton } from './ui';
 import { TextButton } from './TextButton';
 
 const SAVE_LIMIT_MS = 10_000;
+const STREAMS_UNREAD = 'De reeksen van je tests waren niet op tijd gelezen, dus er is nog geen voorstel voor je drempel.';
 
 export function ZoneUpdateCard({ logId }: { logId: string }) {
   const { sessionLogs, settings, updateSettings } = useAppData();
@@ -24,28 +25,32 @@ export function ZoneUpdateCard({ logId }: { logId: string }) {
   const [problem, setProblem] = useState<string | null>(null);
   const today = todayISO();
   const ids = useMemo(() => thresholdLogIds(sessionLogs, judgmentOptions(settings), today).join(','), [sessionLogs, settings, today]);
-  // De reeksen van je tests (alleen gelezen); tot ze er zijn, of na de tijdgrens zonder, rekent niets.
-  const [streams, setStreams] = useState<{ ids: string; map: Map<string, StreamSet> } | undefined>(undefined);
+  // De reeksen van je tests (alleen gelezen). Tot ze er zijn rekent niets; niet op tijd gelezen geeft geen
+  // voorstel maar één regel met Opnieuw proberen, nooit een stille terugval op de kilometers.
+  const [streams, setStreams] = useState<{ ids: string; map: Map<string, StreamSet>; complete: boolean } | undefined>(undefined);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let live = true;
     const wanted = new Set(ids.split(',').filter(Boolean));
-    void streamsForLogs(sessionLogs.filter((l) => wanted.has(l.id))).then((map) => {
-      if (live) setStreams({ ids, map });
+    void streamsForLogs(sessionLogs.filter((l) => wanted.has(l.id))).then(({ map, complete }) => {
+      if (live) setStreams({ ids, map, complete });
     });
     return () => {
       live = false;
     };
-    // Alleen opnieuw lezen als de tests veranderen.
+    // Alleen opnieuw lezen als de tests veranderen of je Opnieuw proberen tikt.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ids]);
+  }, [ids, attempt]);
   const args = useMemo(() => ({
     logId, logs: sessionLogs, options: judgmentOptions(settings), heartRate: settings.heartRate, enabled: settings.zonesAfterTest !== false, answers: settings.zoneAnswers,
     today, streams: streams?.map, factor: resolveLthrFactor(settings.lthrFactor), noStrap: resolveNoStrapTest(settings.noStrapTest), strapWorn: settings.strapWorn,
   }), [logId, sessionLogs, settings, today, streams]);
-  const ready = streams?.ids === ids;
+  const ready = streams?.ids === ids && streams.complete;
+  // Alleen bij de laatste test die meetelt: daar zou het voorstel staan.
+  const unread = streams?.ids === ids && !streams.complete && ids.split(',').at(-1) === logId;
   const offer = useMemo(() => (ready ? zoneOffer(args) : undefined), [ready, args]);
   const notice = useMemo(() => (ready && !offer ? zoneNotice(args) : undefined), [ready, offer, args]);
-  const accepted = settings.zoneAnswers?.find((a) => a.logId === logId && a.answer === 'accepted');
+  const accepted = settings.zoneAnswers?.find((a) => a.logId === logId && a.answer === 'accepted' && a.lthrTo === settings.heartRate?.lthr);
   const dim = { color: 'var(--color-ink-dim)' };
   const ink = { color: 'var(--color-ink)' };
 
@@ -74,6 +79,14 @@ export function ZoneUpdateCard({ logId }: { logId: string }) {
           zoneAnswers: recordZoneAnswer(settings.zoneAnswers, { ...accepted, answer: 'declined', date: todayISO() }),
         })}>Ongedaan maken</TextButton>
         {problem && <p className="text-xs" style={{ color: 'var(--color-warning)' }}>{problem}</p>}
+      </div>
+    );
+  }
+  if (unread) {
+    return (
+      <div className="mt-3" role="status">
+        <p className="text-xs leading-relaxed" style={dim}>{STREAMS_UNREAD}</p>
+        <TextButton tone="dim" size="xs" onClick={() => { setStreams(undefined); setAttempt((n) => n + 1); }}>Opnieuw proberen</TextButton>
       </div>
     );
   }

@@ -22,7 +22,7 @@ import type { Intensity } from '../data/workoutStructure';
 import { countedTests, type TestJudgmentOptions, type TestResult } from './racePrediction';
 import type { StreamSet } from '../models/activityDetail';
 import {
-  basisLine, combinedLthr, lthrFromEffort, notForThresholdLine, strapExpected, testsLine,
+  basisLine, combinedLthr, lthrFromEffort, monthsBefore, notForThresholdLine, strapExpected, testsLine, THRESHOLD_RULES,
   type EffortEstimate, type EffortRejected, type LthrFactorChoice, type NoStrapChoice, type NotForThreshold,
 } from './thresholdEstimate';
 import { racePaces } from './racePaces';
@@ -44,9 +44,9 @@ export interface ThresholdInputs {
   strapWorn?: readonly string[];
 }
 
-// De tests waarvan de reeks nodig is: die meetellen en binnen het venster van 12 maanden kunnen vallen.
+// De tests waarvan de reeks nodig is: die meetellen en binnen het venster van 12 maanden vallen.
 export function thresholdLogIds(logs: SessionLog[], options: TestJudgmentOptions, today: string): string[] {
-  const from = `${Number(today.slice(0, 4)) - 1}${today.slice(4, 10)}`;
+  const from = monthsBefore(today, THRESHOLD_RULES.monthsBack);
   return countedTests(logs, options).tests.filter((t) => t.logId && t.date >= from).map((t) => t.logId!);
 }
 
@@ -162,7 +162,8 @@ export function recordStrapWorn(list: readonly string[] | undefined, logId: stri
   return [...(list ?? []).filter((id) => id !== logId), logId].slice(-MAX_ZONE_ANSWERS);
 }
 
-// Eén antwoord per test; het nieuwste vervangt een ouder, de lijst houdt de laatste MAX_ZONE_ANSWERS.
+// Eén antwoord per test en getal; het nieuwste vervangt een ouder voor hetzelfde getal, zodat een afgewezen
+// getal na de factor heen en terug niet terugkomt. De lijst houdt de laatste MAX_ZONE_ANSWERS.
 export function recordZoneAnswer(list: ZoneAnswer[] | undefined, entry: ZoneAnswer): ZoneAnswer[] {
-  return [...(list ?? []).filter((a) => a.logId !== entry.logId), entry].slice(-MAX_ZONE_ANSWERS);
+  return [...(list ?? []).filter((a) => a.logId !== entry.logId || a.lthrTo !== entry.lthrTo), entry].slice(-MAX_ZONE_ANSWERS);
 }

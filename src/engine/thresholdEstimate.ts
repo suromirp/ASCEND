@@ -18,7 +18,7 @@ import type { SessionLog } from '../models/training';
 import type { StreamSet } from '../models/activityDetail';
 import type { TestResult } from './racePrediction';
 import { isStaleRunDetail, isUsableRunDetail } from './runDetail';
-import { testTotals } from './bestEffort';
+import { distancePoints, testTotals } from './bestEffort';
 import { isNum } from '../utils/guards';
 
 export const THRESHOLD_RULES = {
@@ -29,6 +29,10 @@ export const THRESHOLD_RULES = {
   windowSec: 20 * 60,
   // Zoveel kilometers met hartslag (van 2 tot en met 5) zijn nodig zonder reeks.
   minKms: 3,
+  // Een stop langer dan dit in het venster, en de test telt niet (de klok liep door, de hartslag zakte).
+  maxStopSec: 30,
+  // Minder vooruit dan dit in een stuk tijd is stilstaan.
+  stopMetres: 3,
   // Een gat in de hartslag langer dan dit, of minder dan dit deel gedekt, en de test telt niet.
   maxHrGapSec: 30,
   minHrCover: 0.9,
@@ -60,7 +64,7 @@ export type EffortWindow = 'stream' | 'km';
 // Hoe de band er was: gezien in de reeks, door jou gezegd, of niet (aan de pols, met ruime marge).
 export type StrapBasis = 'seen' | 'said' | 'wrist';
 // Waarom een test niet telt voor je drempel. De eerste drie zijn stil: er is niets te meten.
-export type NotForThreshold = 'noData' | 'stale' | 'noHr' | 'short' | 'long' | 'hrGap' | 'noStrap' | 'strapLost';
+export type NotForThreshold = 'noData' | 'stale' | 'noHr' | 'short' | 'long' | 'hrGap' | 'stopped' | 'noStrap' | 'strapLost';
 
 export interface EffortEstimate {
   ok: true;
@@ -140,17 +144,30 @@ export function strapDuring(set: StreamSet, from: number, to: number): boolean {
   return n > 0 && seen / n >= THRESHOLD_RULES.strapCover;
 }
 
-// Het teststuk in de klok van de reeks: de snelste 5 km als die er is, anders de hele reeks.
+// Het teststuk in de klok van de reeks. `bestFive.startSec` is kloktijd, maar `bestFive.sec` is zonder
+// stilstaan: die tel je nooit op. Begin en einde worden daarom op afstand uit de reeks gelezen (het eerste
+// punt waar de afstand startM en endM haalt). Zonder snelste 5 km de hele reeks.
 function stretchOf(log: SessionLog, set: StreamSet): [number, number] | undefined {
   const t = set.timeSec;
   if (t.length < 2) return undefined;
-  const t0 = t[0];
   const rd = log.runDetail;
-  if (isUsableRunDetail(rd) && rd.bestFive) {
-    const from = t0 + rd.bestFive.startSec;
-    return [from, from + rd.bestFive.sec];
+  if (!isUsableRunDetail(rd) || !rd.bestFive) return [t[0], t[t.length - 1]];
+  const p = distancePoints(set);
+  const from = p.find((q) => q.d >= rd.bestFive!.startM);
+  const to = p.find((q) => q.d >= rd.bestFive!.endM);
+  if (!from || !to || to.t <= from.t) return undefined;
+  return [from.t, to.t];
+}
+
+// Of je in [from, to] langer dan de grens stilstond: minder dan een paar meter vooruit in meer dan 30 s.
+export function stoodStill(set: StreamSet, from: number, to: number): boolean {
+  const p = distancePoints(set).filter((q) => q.t >= from && q.t <= to);
+  let a = 0;
+  for (let i = 1; i < p.length; i++) {
+    if (p[i].d - p[a].d >= THRESHOLD_RULES.stopMetres) a = i;
+    else if (p[i].t - p[a].t > THRESHOLD_RULES.maxStopSec) return true;
   }
-  return [t0, t[t.length - 1]];
+  return false;
 }
 
 // Kilometer 2 tot en met 5 van de snelste 5 km, gewogen naar tijd (de oude schatting, zonder reeks).
@@ -186,7 +203,9 @@ export function lthrFromEffort(log: SessionLog, test: TestResult, ctx: EffortCon
   const stretch = set ? stretchOf(log, set) : undefined;
   if (set && stretch && set.heartRate) {
     const [from, to] = stretch;
-    const hr = windowHr(set, Math.max(from, to - THRESHOLD_RULES.windowSec), to);
+    const start = Math.max(from, to - THRESHOLD_RULES.windowSec);
+    if (stoodStill(set, start, to)) return reject('stopped');
+    const hr = windowHr(set, start, to);
     if (hr.gap) return reject('hrGap');
     avg = hr.avg;
     window = 'stream';
@@ -221,7 +240,7 @@ export interface CombinedLthr {
 }
 
 // De dag precies `months` maanden voor `today` (31 maart min een maand wordt 28 of 29 februari).
-function monthsBefore(today: string, months: number): string {
+export function monthsBefore(today: string, months: number): string {
   const [y, m, d] = today.slice(0, 10).split('-').map(Number);
   const total = y * 12 + (m - 1) - months;
   const yy = Math.floor(total / 12);
@@ -237,20 +256,18 @@ const median = (values: number[]): number => {
 };
 
 // Het midden van je laatste drie geldige schattingen binnen 12 maanden. Undefined zonder geldige
-// schatting, of aan de pols zonder twee tests die het eens zijn. De volgorde van binnenkomen telt niet:
+// schatting; een test aan de pols zonder een andere binnen 5 slagen telt niet. De volgorde van binnenkomen telt niet:
 // er wordt op datum (en log) gesorteerd.
 export function combinedLthr(estimates: EffortEstimate[], today: string): CombinedLthr | undefined {
   const from = monthsBefore(today, THRESHOLD_RULES.monthsBack);
-  const valid = estimates
-    .filter((e) => e.date >= from && e.date <= today.slice(0, 10))
+  const inWindow = estimates.filter((e) => e.date >= from && e.date <= today.slice(0, 10));
+  // Een test aan de pols telt alleen als hij zelf een andere test binnen 5 slagen naast zich heeft.
+  const valid = inWindow
+    .filter((e) => e.strap !== 'wrist' || inWindow.some((o) => o !== e && Math.abs(o.lthr - e.lthr) <= THRESHOLD_RULES.wristAgree))
     .sort((a, b) => a.date.localeCompare(b.date) || a.logId.localeCompare(b.logId));
   const used = valid.slice(-THRESHOLD_RULES.take);
   if (used.length === 0) return undefined;
   const wrist = used.some((e) => e.strap === 'wrist');
-  if (wrist) {
-    const agree = used.some((a, i) => used.some((b, j) => i !== j && Math.abs(a.lthr - b.lthr) <= THRESHOLD_RULES.wristAgree));
-    if (!agree) return undefined;
-  }
   const lthr = median(used.map((e) => e.lthr));
   const m = wrist ? THRESHOLD_RULES.wideMargin : THRESHOLD_RULES.margin;
   return { lthr, low: lthr - m, high: lthr + m, used };
@@ -285,9 +302,14 @@ export function testsLine(c: CombinedLthr): string | undefined {
 
 // "Gemeten met je borstband, over de laatste 20 minuten van je test."
 export function basisLine(e: EffortEstimate): string {
+  if (e.window === 'km') {
+    const strap = e.strap === 'seen'
+      ? ' ASCEND zag je borstband in je loop; of hij het hele teststuk om zat, is zonder reeks niet te zien.'
+      : e.strap === 'said' ? ' Met de band die je om had.' : ' Gemeten aan je pols, dus met ruime marge.';
+    return `Gemeten over kilometer 2 tot en met 5 van je test, want de reeks van het horloge ontbrak.${strap}`;
+  }
   const strap = e.strap === 'seen' ? 'Gemeten met je borstband' : e.strap === 'said' ? 'Gemeten met de band die je om had' : 'Gemeten aan je pols, dus met ruime marge';
-  const over = e.window === 'stream' ? 'over de laatste 20 minuten van je test' : 'over kilometer 2 tot en met 5 van je test, want de reeks van het horloge ontbrak';
-  return `${strap}, ${over}.`;
+  return `${strap}, over de laatste 20 minuten van je test.`;
 }
 
 const minutesText = (minutes: number, reason: 'short' | 'long') => {
@@ -310,6 +332,8 @@ export function notForThresholdLine(r: EffortRejected, current: number | undefin
       return `Je borstband viel weg tijdens je test. Je tempo's tellen. ${stays}`;
     case 'hrGap':
       return `In je hartslag zit een gat tijdens je test. Je tempo's tellen. ${stays}`;
+    case 'stopped':
+      return `Je stond tijdens je test langer dan 30 seconden stil. Je tempo's tellen. ${stays}`;
     default:
       return undefined;
   }

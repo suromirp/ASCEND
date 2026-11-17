@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SessionLog } from '../models/training';
 import type { RunDetail, RunKm } from '../models/runDetail';
 import { TEST_TEMPLATE_ID } from './raceBlock';
-import { recordStrapWorn, recordZoneAnswer, zoneNotice, zoneOffer } from './zoneUpdate';
+import { recordStrapWorn, recordZoneAnswer, thresholdLogIds, zoneNotice, zoneOffer } from './zoneUpdate';
 import { MAX_ZONE_ANSWERS, type ZoneAnswer } from '../models/zoneAnswer';
 
 // Nagemaakte testlopen: 5 km op het horloge, met de hartslag per kilometer.
@@ -63,7 +63,7 @@ describe('zones bijwerken na een test', () => {
     expect(zoneOffer({ logId: 't1', logs: [fresh], options: opts, heartRate: { lthr: 172 }, enabled: true, answers })).toBeUndefined();
     const friel = zoneOffer({ logId: 't1', logs: [fresh], options: opts, heartRate: { lthr: 172 }, enabled: true, answers, factor: 'friel' });
     expect(friel!.lthrTo).toBe(175);
-    expect(friel!.basis).toBe('Gemeten met je borstband, over kilometer 2 tot en met 5 van je test, want de reeks van het horloge ontbrak.');
+    expect(friel!.basis).toBe('Gemeten over kilometer 2 tot en met 5 van je test, want de reeks van het horloge ontbrak. ASCEND zag je borstband in je loop; of hij het hele teststuk om zat, is zonder reeks niet te zien.');
     expect([friel!.low, friel!.high]).toEqual([170, 180]);
   });
 
@@ -77,6 +77,15 @@ describe('zones bijwerken na een test', () => {
 
   it('een drempel boven je maximale hartslag stelt hij niet voor', () => {
     expect(zoneOffer({ logId: 't1', logs: [fresh], options: opts, heartRate: { maxHr: 170 }, enabled: true })).toBeUndefined();
+  });
+
+  it('een afgewezen getal komt niet terug na de factor heen en terug; een ander getal blijft apart staan', () => {
+    let list = recordZoneAnswer(undefined, { logId: 't1', answer: 'declined', date: '2026-10-21', lthrFrom: 160, lthrTo: 172 });
+    list = recordZoneAnswer(list, { logId: 't1', answer: 'declined', date: '2026-10-22', lthrFrom: 160, lthrTo: 175 });
+    expect(list.map((a) => a.lthrTo)).toEqual([172, 175]);
+    // Terug op Voorzichtig: 172 is al afgewezen, geen voorstel.
+    expect(zoneOffer({ logId: 't1', logs: [fresh], options: opts, heartRate: { lthr: 160 }, enabled: true, answers: list })).toBeUndefined();
+    expect(zoneOffer({ logId: 't1', logs: [fresh], options: opts, heartRate: { lthr: 160 }, enabled: true, answers: list, factor: 'friel' })).toBeUndefined();
   });
 
   it('het antwoord per test, de nieuwste vervangt de oude, hoogstens de grens', () => {
@@ -144,5 +153,12 @@ describe('drie tests samen in het voorstel', () => {
     const logs = [at('a', '2026-06-01', 178, false), at('b', '2026-08-01', 181, false), at('d', '2026-11-10', 190, false)];
     const notice = zoneNotice({ logId: 'd', logs, options: opts, heartRate: { lthr: 176 }, enabled: true, today });
     expect(notice!.askStrap).toBe(false);
+  });
+});
+
+describe('de tests waarvan de reeks gelezen wordt', () => {
+  it('dezelfde 12 maanden als het midden, ook op 29 februari', () => {
+    const logs = [test('old', '2027-02-27', 25, [150, 175, 175, 175, 175]), test('edge', '2027-02-28', 25, [150, 175, 175, 175, 175]), test('new', '2028-02-20', 25, [150, 175, 175, 175, 175])];
+    expect(thresholdLogIds(logs, opts, '2028-02-29')).toEqual(['edge', 'new']);
   });
 });

@@ -13,9 +13,17 @@ import { withTimeout } from '../utils/withTimeout';
 const LIMIT_MS = 4000;
 
 // De reeksen van deze logs, alleen als ze bij de totalen van het log passen en het log niet is ingekort.
-// Wat niet te lezen is, ontbreekt: de schatting valt dan terug op de kilometers.
-export async function streamsForLogs(logs: SessionLog[], timeoutMs = LIMIT_MS): Promise<Map<string, StreamSet>> {
-  const out = new Map<string, StreamSet>();
+// `complete` zegt of alles gelezen is: een log zonder bewaarde reeks is gelezen (de schatting valt dan
+// terug op de kilometers), een log dat niet op tijd of niet te lezen was niet. Zonder `complete` hoort er
+// geen voorstel te komen: een halve kaart zou stil op een andere rekenwijze terugvallen.
+export interface TestStreamsRead {
+  map: Map<string, StreamSet>;
+  complete: boolean;
+}
+
+export async function streamsForLogs(logs: SessionLog[], timeoutMs = LIMIT_MS): Promise<TestStreamsRead> {
+  const map = new Map<string, StreamSet>();
+  let failed = false;
   const work = async () => {
     for (const log of logs) {
       if (log.trim) continue;
@@ -24,18 +32,18 @@ export async function streamsForLogs(logs: SessionLog[], timeoutMs = LIMIT_MS): 
         const { km, minutes } = testTotals(log);
         if (!stored || isStaleRunDetail(stored, km, minutes)) continue;
         const set = unpackStreams(stored);
-        if (set) out.set(log.id, set);
+        if (set) map.set(log.id, set);
       } catch {
-        // De volgende.
+        failed = true;
       }
     }
   };
   try {
     await withTimeout(work(), timeoutMs);
   } catch {
-    // Wat binnen de tijd gelezen is, telt.
+    return { map, complete: false };
   }
-  return out;
+  return { map, complete: !failed };
 }
 
 // De feiten van je laatste loop met een bewaarde reeks, voor "Klaar voor je test".

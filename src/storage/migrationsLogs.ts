@@ -232,7 +232,10 @@ export function migrateZoneAnswers(raw: unknown): { list: ZoneAnswer[] | undefin
       skipped++;
       continue;
     }
-    byLog.set(item.logId, { logId: item.logId, answer: item.answer, date, ...(hr(item.lthrFrom) ? { lthrFrom: Math.round(item.lthrFrom) } : {}), lthrTo: Math.round(item.lthrTo) });
+    // Eén antwoord per test en getal (engine/zoneUpdate.ts#recordZoneAnswer); het laatste telt.
+    const key = `${item.logId}|${Math.round(item.lthrTo)}`;
+    byLog.delete(key);
+    byLog.set(key, { logId: item.logId, answer: item.answer, date, ...(hr(item.lthrFrom) ? { lthrFrom: Math.round(item.lthrFrom) } : {}), lthrTo: Math.round(item.lthrTo) });
   }
   return { list: [...byLog.values()].slice(-MAX_ZONE_ANSWERS), skipped };
 }
