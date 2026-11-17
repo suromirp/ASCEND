@@ -87,6 +87,32 @@ describe('lthrFromEffort: de schatting uit één test', () => {
     expect(e.lthr).toBe(Math.round(180 * 0.98));
   });
 
+  it('een opname die op het einde stopt: endM is naar boven afgerond, het laatste punt binnen 1 m telt als einde', () => {
+    const log = testLog('t1', '2026-10-20', 1500);
+    const full = streams(1500, () => 175);
+    const n = WARM + 1500;
+    // De reeks houdt op bij 5999,6 m; bestFive.endM is 6000.
+    const cut: StreamSet = {
+      timeSec: full.timeSec.slice(0, n),
+      distanceM: full.distanceM!.slice(0, n).map((d, i) => (i === n - 1 ? 5999.6 : Math.min(d!, 5999.5))),
+      heartRate: full.heartRate!.slice(0, n),
+      stanceBalanceLeftPct: full.stanceBalanceLeftPct!.slice(0, n),
+    };
+    const e = lthrFromEffort(log, result(log, 1500), { streams: cut }) as EffortEstimate;
+    expect(e.ok).toBe(true);
+    expect(e.window).toBe('stream');
+  });
+
+  it('een reeks die er is maar niet bij de snelste 5 km past, wijst af en valt niet terug op de kilometers', () => {
+    const log = testLog('t1', '2026-10-20', 1500);
+    const full = streams(1500, () => 175);
+    // Alleen de eerste 4 km: endM wordt nooit gehaald.
+    const short: StreamSet = { ...full, distanceM: full.distanceM!.map((d) => Math.min(d!, 4000)) };
+    const r = lthrFromEffort(log, result(log, 1500), { streams: short }) as EffortRejected;
+    expect(r).toMatchObject({ ok: false, reason: 'noData' });
+    expect(notForThresholdLine(r, 176)).toBeUndefined();
+  });
+
   it('Zoals Friel: 100 procent', () => {
     const log = testLog('t1', '2026-10-20', 1500);
     const e = lthrFromEffort(log, result(log, 1500), { streams: streams(1500, rising(1500)), factor: 'friel' }) as EffortEstimate;
@@ -208,6 +234,9 @@ describe('combinedLthr: het midden van je laatste drie', () => {
     const alone = combinedLthr([est('a', '2026-09-01', 168, 'wrist'), est('b', '2026-10-01', 180)], '2026-11-17')!;
     expect(alone.used.map((e) => e.logId)).toEqual(['b']);
     expect(alone.high - alone.lthr).toBe(5);
+    // De partner moet in de laatste drie liggen: een oude test buiten die drie telt niet als partner.
+    const outside = combinedLthr([est('o', '2026-05-01', 190), est('a', '2026-08-01', 175), est('b', '2026-09-01', 176), est('w', '2026-10-01', 189, 'wrist')], '2026-11-17')!;
+    expect(outside.used.map((e) => e.logId)).toEqual(['a', 'b']);
     // Twee bandtests die het eens zijn maken een verre polstest niet geldig.
     const far = combinedLthr([est('a', '2026-08-01', 175), est('b', '2026-09-01', 176), est('w', '2026-10-01', 190, 'wrist')], '2026-11-17')!;
     expect(far.used.map((e) => e.logId)).toEqual(['a', 'b']);

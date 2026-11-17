@@ -47,7 +47,10 @@ export function ZoneUpdateCard({ logId }: { logId: string }) {
   }), [logId, sessionLogs, settings, today, streams]);
   const ready = streams?.ids === ids && streams.complete;
   // Alleen bij de laatste test die meetelt: daar zou het voorstel staan.
-  const unread = streams?.ids === ids && !streams.complete && ids.split(',').at(-1) === logId;
+  const isLatest = ids.split(',').at(-1) === logId;
+  const unread = streams?.ids === ids && !streams.complete && isLatest;
+  // Na Opnieuw proberen: zeggen dat er gelezen wordt tot de uitkomst er is.
+  const reading = streams?.ids !== ids && attempt > 0 && isLatest;
   const offer = useMemo(() => (ready ? zoneOffer(args) : undefined), [ready, args]);
   const notice = useMemo(() => (ready && !offer ? zoneNotice(args) : undefined), [ready, offer, args]);
   const accepted = settings.zoneAnswers?.find((a) => a.logId === logId && a.answer === 'accepted' && a.lthrTo === settings.heartRate?.lthr);
@@ -81,6 +84,9 @@ export function ZoneUpdateCard({ logId }: { logId: string }) {
         {problem && <p className="text-xs" style={{ color: 'var(--color-warning)' }}>{problem}</p>}
       </div>
     );
+  }
+  if (reading) {
+    return <p className="mt-3 text-xs leading-relaxed" style={dim} role="status">Bezig met lezen…</p>;
   }
   if (unread) {
     return (

@@ -149,6 +149,15 @@ describe('drie tests samen in het voorstel', () => {
     expect(zoneNotice({ logId: 'd', logs: [a, b, c, wrist], options: opts, heartRate: { lthr: 176 }, enabled: true, today, strapWorn: worn })).toBeUndefined();
   });
 
+  it('valt de eigen polstest weg zonder partner, dan de basiszin van een test die echt meetelde', () => {
+    // De nieuwste test aan de pols, 14 slagen boven de andere: hij telt niet, het midden komt uit a, b en c.
+    const wrist = at('d', '2026-11-10', 194, false);
+    const offer = zoneOffer({ logId: 'd', logs: [a, b, c, wrist], options: opts, heartRate: { lthr: 170 }, enabled: true, today, noStrap: 'margin' });
+    expect(offer!.lthrTo).toBe(177);
+    expect(offer!.basis).not.toContain('pols');
+    expect(offer!.basis).toContain('borstband');
+  });
+
   it('geen vraag als de band er bij je lopen meestal niet was', () => {
     const logs = [at('a', '2026-06-01', 178, false), at('b', '2026-08-01', 181, false), at('d', '2026-11-10', 190, false)];
     const notice = zoneNotice({ logId: 'd', logs, options: opts, heartRate: { lthr: 176 }, enabled: true, today });

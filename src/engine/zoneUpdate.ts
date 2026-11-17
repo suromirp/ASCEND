@@ -130,7 +130,8 @@ export function zoneOffer(args: OfferArgs): ZoneOffer | undefined {
     lthrTo: next,
     low: combined.low,
     high: combined.high,
-    basis: basisLine(own),
+    // De zin van de nieuwste test die echt meetelt (een polstest zonder partner valt weg).
+    basis: basisLine(combined.used.includes(own) ? own : combined.used[combined.used.length - 1]),
     ...(tests ? { tests } : {}),
     hrRows: ZONES.map((z) => ({ label: `Zone ${z}`, from: bpm(zoneBpm(z, heartRate)), to: bpm(zoneBpm(z, after)) })),
     paceRows: paceChangeRows(racePaces(counted.slice(0, at)), racePaces(counted)),

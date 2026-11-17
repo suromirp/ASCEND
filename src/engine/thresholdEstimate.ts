@@ -33,6 +33,8 @@ export const THRESHOLD_RULES = {
   maxStopSec: 30,
   // Minder vooruit dan dit in een stuk tijd is stilstaan.
   stopMetres: 3,
+  // Speling bij het zoeken van begin en einde: startM en endM zijn afgerond op hele meters.
+  edgeSlackM: 1,
   // Een gat in de hartslag langer dan dit, of minder dan dit deel gedekt, en de test telt niet.
   maxHrGapSec: 30,
   minHrCover: 0.9,
@@ -146,15 +148,18 @@ export function strapDuring(set: StreamSet, from: number, to: number): boolean {
 
 // Het teststuk in de klok van de reeks. `bestFive.startSec` is kloktijd, maar `bestFive.sec` is zonder
 // stilstaan: die tel je nooit op. Begin en einde worden daarom op afstand uit de reeks gelezen (het eerste
-// punt waar de afstand startM en endM haalt). Zonder snelste 5 km de hele reeks.
+// punt waar de afstand startM en endM haalt, met een meter speling: ze zijn op hele meters afgerond, en een
+// opname die op het einde stopt haalt een naar boven afgerond endM anders nooit). Zonder snelste 5 km de
+// hele reeks. Undefined als de reeks niet bij de snelste 5 km past.
 function stretchOf(log: SessionLog, set: StreamSet): [number, number] | undefined {
   const t = set.timeSec;
   if (t.length < 2) return undefined;
   const rd = log.runDetail;
   if (!isUsableRunDetail(rd) || !rd.bestFive) return [t[0], t[t.length - 1]];
   const p = distancePoints(set);
-  const from = p.find((q) => q.d >= rd.bestFive!.startM);
-  const to = p.find((q) => q.d >= rd.bestFive!.endM);
+  const slack = THRESHOLD_RULES.edgeSlackM;
+  const from = p.find((q) => q.d >= rd.bestFive!.startM - slack);
+  const to = p.find((q) => q.d >= rd.bestFive!.endM - slack);
   if (!from || !to || to.t <= from.t) return undefined;
   return [from.t, to.t];
 }
@@ -200,8 +205,11 @@ export function lthrFromEffort(log: SessionLog, test: TestResult, ctx: EffortCon
   let seen: boolean;
   let lost = false;
   const set = ctx.streams;
-  const stretch = set ? stretchOf(log, set) : undefined;
-  if (set && stretch && set.heartRate) {
+  if (set) {
+    // Een reeks die er is, wordt gebruikt of wijst af; hij valt nooit terug op de kilometers.
+    const stretch = stretchOf(log, set);
+    if (!stretch) return reject('noData');
+    if (!set.heartRate) return reject('noHr');
     const [from, to] = stretch;
     const start = Math.max(from, to - THRESHOLD_RULES.windowSec);
     if (stoodStill(set, start, to)) return reject('stopped');
@@ -256,16 +264,16 @@ const median = (values: number[]): number => {
 };
 
 // Het midden van je laatste drie geldige schattingen binnen 12 maanden. Undefined zonder geldige
-// schatting; een test aan de pols zonder een andere binnen 5 slagen telt niet. De volgorde van binnenkomen telt niet:
+// schatting; een test aan de pols zonder een andere binnen 5 slagen in die laatste drie telt niet. De volgorde van binnenkomen telt niet:
 // er wordt op datum (en log) gesorteerd.
 export function combinedLthr(estimates: EffortEstimate[], today: string): CombinedLthr | undefined {
   const from = monthsBefore(today, THRESHOLD_RULES.monthsBack);
-  const inWindow = estimates.filter((e) => e.date >= from && e.date <= today.slice(0, 10));
-  // Een test aan de pols telt alleen als hij zelf een andere test binnen 5 slagen naast zich heeft.
-  const valid = inWindow
-    .filter((e) => e.strap !== 'wrist' || inWindow.some((o) => o !== e && Math.abs(o.lthr - e.lthr) <= THRESHOLD_RULES.wristAgree))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.logId.localeCompare(b.logId));
-  const used = valid.slice(-THRESHOLD_RULES.take);
+  const last = estimates
+    .filter((e) => e.date >= from && e.date <= today.slice(0, 10))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.logId.localeCompare(b.logId))
+    .slice(-THRESHOLD_RULES.take);
+  // Een test aan de pols telt alleen als hij binnen die laatste drie een andere test binnen 5 slagen heeft.
+  const used = last.filter((e) => e.strap !== 'wrist' || last.some((o) => o !== e && Math.abs(o.lthr - e.lthr) <= THRESHOLD_RULES.wristAgree));
   if (used.length === 0) return undefined;
   const wrist = used.some((e) => e.strap === 'wrist');
   const lthr = median(used.map((e) => e.lthr));
