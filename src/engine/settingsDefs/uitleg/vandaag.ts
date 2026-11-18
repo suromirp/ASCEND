@@ -391,9 +391,10 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
   },
   'korte-nacht': {
     title: 'Vragen bij een korte nacht',
-    lead: 'Zag je horloge maar een deel van de nacht, dan komt de vraag of dat klopt, in plaats van de aanname dat je slecht sliep.',
+    lead: 'Zag je horloge maar een deel van de nacht, dan komt de vraag of dat klopt, in plaats van de aanname dat je slecht sliep. Twijfel je zelf bij een andere nacht, dan kun je dat ook zeggen.',
     points: [
       { head: 'Wanneer', text: 'minder dan 4 uur slaap, of minder dan de helft van jouw gemiddelde (na een week van je eigen nachten). Dat gebeurt als je horloge in de nacht van je pols gaat.' },
+      { head: 'Zelf zeggen', text: 'bij elke gemeten nacht kun je zelf Slaap niet goed gemeten kiezen: met een tik op Slaap op de ochtendkaart of in het blad Energie, slaap of pijn. Je krijgt dezelfde vraag en dezelfde uurkeuze. De getallen van je horloge blijven staan.' },
       { head: 'Niet goed gemeten', text: 'die nacht telt niet mee voor een voorstel en niet in jouw gemiddelden van slaap en HRV. Je rusthartslag blijft meetellen. Je kunt zelf zeggen hoe lang je ongeveer sliep. Ongedaan maken zet alles terug.' },
       { head: 'Uit', text: 'een korte nacht is een let op, zoals altijd.' },
     ],

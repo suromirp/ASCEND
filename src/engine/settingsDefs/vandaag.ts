@@ -1026,7 +1026,7 @@ export const VANDAAG: SettingDef[] = [
     page: 'vandaag',
     place: { row: true, advanced: true },
     title: 'Vragen bij een korte nacht',
-    note: 'Zag je horloge maar een stukje van de nacht, dan vraagt de ochtendcheck of dat klopt, in plaats van te waarschuwen.',
+    note: 'Zag je horloge maar een stukje van de nacht, dan vraagt de ochtendcheck of dat klopt, in plaats van te waarschuwen. Bij elke andere nacht kun je zelf zeggen dat hij niet goed gemeten is.',
     keywords: ['slaap', 'nacht', 'kort', 'horloge', 'pols', 'af', 'garmin', 'ochtendcheck', 'slecht geslapen', 'niet goed gemeten'],
     help: true,
     helpKey: 'korteNacht',
