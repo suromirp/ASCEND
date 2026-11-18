@@ -4,7 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import type { EnergyFeeling, LegFeeling, MorningCheckIn } from '../models/checkIn';
 import { checkInFor, recentPainSpot } from '../engine/wellbeing';
-import { LEGS, SOURCE_TEXT, isCompactAsk, morningCardView, morningConsequence } from '../engine/morningCard';
+import { LEGS, SOURCE_TEXT, isCompactAsk, morningCardView, morningConsequence, sleepFetchView } from '../engine/morningCard';
+import { quietJudgeable } from '../engine/shortNight';
 import { resolveLegEase } from '../engine/legEaseSettings';
 import { NO_SLEEP_TEXT } from '../engine/wellnessCheck';
 import { MORNING_RULE_QUESTION, TIRED_CHOICES, ruleWord } from '../engine/morningRule';
@@ -75,7 +76,7 @@ function MorningChoice({ children, onClick, disabled, selected }: { children: st
 export function MorningCard() {
   const today = todayISO();
   const { settings, updateSettings, sessionLogs, plannedSessions, templates, program, goalEngineConfig, answeredAdviceIds, injuryNotes } = useAppData();
-  const { prefill, afterEffort, reading, rule: watchRule, linked, sleepOn } = useMorningPrefill(today);
+  const { prefill, afterEffort, reading, rule: watchRule, linked, sleepOn, lookedAt } = useMorningPrefill(today);
   const rule = signalOn(settings, 'morningRule') ? watchRule : undefined;
   // Je antwoord op "Ben je moe?" van de ochtendregel: de energie van deze ochtend.
   const [tired, setTired] = useState<EnergyFeeling | undefined>(undefined);
@@ -169,11 +170,18 @@ export function MorningCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, held, hasProposal]);
 
-  // Wel iets van het horloge, geen slaap: die komt via Garmin Connect soms later bij intervals.icu.
-  const missingSleep = !!reading && sleepOn && !reading.lines.some((l) => l.key === 'sleep');
+  // Geen slaap van het horloge, wel een horloge: die komt via Garmin Connect soms later bij intervals.icu.
+  // De knop staat er ook als er die ochtend helemaal niets kwam (engine/morningCard.ts#sleepFetchView).
+  const [attemptAt, setAttemptAt] = useState<string | undefined>(undefined);
+  const { showButton: missingSleep, lastLooked } = sleepFetchView({ reading, linked, sleepOn, lookedAt: [...lookedAt, attemptAt], now: new Date() });
+  // De stille weg naar "Niet goed gemeten": een tik op Slaap, bij een nacht waar de app niet naar vraagt.
+  const quietNight = quietJudgeable(reading);
+  const [askQuiet, setAskQuiet] = useState(false);
+  const askingQuiet = askQuiet && !!quietNight;
   const [fetching, setFetching] = useState<'busy' | 'tried' | 'failed' | 'slow' | null>(null);
   async function fetchAgain() {
     setFetching('busy');
+    setAttemptAt(new Date().toISOString());
     const limit = new Promise<'slow'>((r) => setTimeout(() => r('slow'), 15000));
     try {
       const result = await Promise.race([syncWatchActivities({ force: true }), limit]);
@@ -184,6 +192,32 @@ export function MorningCard() {
   }
   const fetchNote = fetching === 'busy' ? 'Even kijken bij intervals.icu...' : fetching === 'tried' ? 'Nog geen slaap bij intervals.icu' : fetching === 'failed' ? 'Ophalen lukte niet. Probeer het straks nog eens.' : fetching === 'slow' ? 'Dit duurt te lang. Probeer het straks nog eens.' : '';
   const suggestedText = suggested ? LEGS.find(([k]) => k === suggested.value)?.[1] : undefined;
+  // Een getal van de kaart; het Slaap-getal is een tik naar "Niet goed gemeten" als de app niet zelf vraagt.
+  // Onder dat getal staat "Klopt dit?", of het woord van de ochtendregel met ", klopt dit?" erachter (alleen bij Slaap).
+  const renderStat = (st: (typeof stats)[number], first: boolean) => {
+    const word = st.from === 'horloge' ? ruleWord(rule, st.key) : undefined;
+    const tap = !!quietNight && st.key === 'sleep' && st.from === 'horloge';
+    return (
+      <div key={st.label} className={`min-w-0 ${first ? '' : 'pl-4'}`} style={{ borderColor: 'var(--color-card-border)' }}>
+        <SleepTap on={tap} value={`${st.value}${st.unit ?? ''}`} onTap={() => { rememberHeight(); setAskQuiet(true); }}>
+          <Stat as="span" label={st.label} value={st.value} unit={st.unit} />
+          {tap && <StatWord word={word ? { word: `${word.word}, klopt dit?`, off: word.off } : { word: 'Klopt dit?', off: false }} />}
+        </SleepTap>
+        {!tap && st.from === 'horloge' && <StatWord word={word} />}
+      </div>
+    );
+  };
+  // Opnieuw ophalen met de laatste poging eronder (I-89).
+  const fetchRow = missingSleep && (
+    <>
+      <div className="-my-2 flex flex-wrap items-center gap-x-3">
+        {stats.length > 0 && <span className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{NO_SLEEP_TEXT}</span>}
+        <TextButton size="xs" disabled={fetching === 'busy'} onClick={() => void fetchAgain()}>Opnieuw ophalen</TextButton>
+        {fetchNote && <span className="text-xs leading-snug" role="status" style={{ color: 'var(--color-ink-dim)' }}>{fetchNote}</span>}
+      </div>
+      {lastLooked && <p className="-mt-1.5 text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{lastLooked}</p>}
+    </>
+  );
   const sheetEl = sheet && <MorningCheckInSheet initialLegs={sheet.legs} initialEnergy={tired} onClose={() => setSheet(null)} onSaved={onSheetSaved} />;
 
   // Ingeklapt: één rij met wat je koos en wat het doet, Wijzigen en Ongedaan maken altijd binnen één tik.
@@ -255,7 +289,9 @@ export function MorningCard() {
   // Compact: met een voorstel van je beenindex is de vraag één rij met Klopt en Anders, zodat de
   // missiekaart op een klein scherm in beeld blijft. De ochtendregel, de vraag "Ben je moe?" en de
   // andere keuzes staan achter Anders. Zonder voorstel staat de volle vraag er meteen.
-  const compact = !!suggested && !!suggestedText && isCompactAsk({ hasSuggestion: true, shortNight: !!reading?.night, missingSleep, opened });
+  // Zonder enig getal (de Garmin heeft nog niet gesynchroniseerd) blijft de compacte rij staan; alleen
+  // een horloge dat wel iets gaf maar geen slaap, krijgt de volle vraag.
+  const compact = !!suggested && !!suggestedText && isCompactAsk({ hasSuggestion: true, shortNight: !!reading?.night || askingQuiet, missingSleep: missingSleep && !!reading, opened });
   const anyOff = stats.some((st) => st.from === 'horloge' && ruleWord(rule, st.key)?.off);
   if (compact) {
     return (
@@ -266,13 +302,12 @@ export function MorningCard() {
             {stats.length > 0 && (
               <div className="grid divide-x" style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))`, borderColor: 'var(--color-card-border)' }}>
                 {stats.map((st, i) => (
-                  <div key={st.label} className={`min-w-0 ${i > 0 ? 'pl-4' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
-                    <Stat label={st.label} value={st.value} unit={st.unit} />
-                    {st.from === 'horloge' && <StatWord word={ruleWord(rule, st.key)} />}
-                  </div>
+                  renderStat(st, i === 0)
                 ))}
               </div>
             )}
+            {stats.length === 0 && missingSleep && line && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>}
+            {stats.length === 0 && fetchRow}
             <div className="flex items-center gap-2">
               <SecondaryButton className="flex min-w-0 flex-1 items-center justify-center gap-2" disabled={saving} onClick={() => void answer(suggested.value)}>
                 <Icon name="vinkje" size={18} />
@@ -291,20 +326,17 @@ export function MorningCard() {
 
   return (
     <>
-      <HeightMorph key="vol" from={opened ? bodyHeight : 0}><Card className="flex flex-col gap-3">
+      <HeightMorph key="vol" from={opened || askingQuiet ? bodyHeight : 0}><Card className="flex flex-col gap-3">
         <div ref={bodyRef} className="flex flex-col gap-3">
           <Header heading={heading} />
           <p className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>Hoe voelen je benen?</p>
           {afterEffort && <p className="-mt-1 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{afterEffort.line}</p>}
           {(stats.length > 0 || line || linked) && (
-            <div style={{ minHeight: linked ? 48 : undefined }}>
+            <div style={{ minHeight: linked && stats.length > 0 ? 48 : undefined }}>
               {stats.length > 0 ? (
                 <div className="grid divide-x" style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))`, borderColor: 'var(--color-card-border)' }}>
                   {stats.map((st, i) => (
-                    <div key={st.label} className={`min-w-0 ${i > 0 ? 'pl-4' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
-                      <Stat label={st.label} value={st.value} unit={st.unit} />
-                      {st.from === 'horloge' && <StatWord word={ruleWord(rule, st.key)} />}
-                    </div>
+                    renderStat(st, i === 0)
                   ))}
                 </div>
               ) : (
@@ -312,14 +344,8 @@ export function MorningCard() {
               )}
             </div>
           )}
-          {reading?.night && <ShortNightAsk reading={reading} today={today} />}
-          {missingSleep && (
-            <div className="-my-2 flex flex-wrap items-center gap-x-3">
-              {stats.length > 0 && <span className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{NO_SLEEP_TEXT}</span>}
-              <TextButton size="xs" disabled={fetching === 'busy'} onClick={() => void fetchAgain()}>Opnieuw ophalen</TextButton>
-              {fetchNote && <span className="text-xs leading-snug" role="status" style={{ color: 'var(--color-ink-dim)' }}>{fetchNote}</span>}
-            </div>
-          )}
+          {reading && (reading.night || askingQuiet) && <ShortNightAsk reading={reading} today={today} quiet onCancel={() => setAskQuiet(false)} />}
+          {fetchRow}
           {rule?.askTired && (
             <div className="flex items-center gap-2">
               <p className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{MORNING_RULE_QUESTION}</p>
@@ -364,6 +390,17 @@ function HeightMorph({ from, innerRef, children }: { from: number; innerRef?: Re
     <div ref={ref}>
       <div ref={innerRef}>{children}</div>
     </div>
+  );
+}
+
+// Een tik op het Slaap-getal opent de vraag "Klopt dat?" bij een nacht waar de app zelf niet naar vraagt.
+// Een tikvlak van minstens 44 px; zonder `on` blijft het gewoon het getal.
+function SleepTap({ on, value, onTap, children }: { on: boolean; value: string; onTap: () => void; children: React.ReactNode }) {
+  if (!on) return <>{children}</>;
+  return (
+    <button type="button" onClick={onTap} aria-label={`Slaap ${value}. Tik als dit niet goed gemeten is.`} className="-my-2 min-h-[44px] w-full py-2 text-left active:opacity-70">
+      {children}
+    </button>
   );
 }
 

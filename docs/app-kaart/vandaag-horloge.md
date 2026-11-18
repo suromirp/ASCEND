@@ -19,9 +19,7 @@ Morgen: Lange duurloop, 50 min
 --- kaart 3 ---
 Hoe voelen je benen?
 Beenindex: fris
-Slaap
-6:35u
-korter
+[knop: Slaap6:35ukorter, klopt dit?] (aria: Slaap 6:35u. Tik als dit niet goed gemeten is.)
 Rusthart
 55bpm
 hoger

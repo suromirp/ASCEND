@@ -16,7 +16,7 @@
 import type { RecoveryMetric } from '../models/metrics';
 import type { EnergyFeeling, SleepFeeling } from '../models/checkIn';
 import { addDays } from '../utils/dates';
-import { ignoredNightDates, judgmentFor, nightInfo, type NightInfo, type NightOptions } from './shortNight';
+import { ignoredNightDates, judgeableNight, judgmentFor, nightInfo, type NightInfo, type NightOptions } from './shortNight';
 import { mean, stdev } from '../utils/stats';
 import { capitalize } from '../utils/capitalize';
 
@@ -53,6 +53,9 @@ export interface WellnessReading {
   // A doubtfully short night: still to ask, confirmed or left out. Absent for a
   // normal night, and when "Vragen bij een korte nacht" is off.
   night?: NightInfo;
+  // Elke gemeten nacht (met "Vragen bij een korte nacht" aan): waar je zelf "Niet goed gemeten"
+  // kunt zeggen, ook als de app niet twijfelde. Zonder `night` is het een nacht die ASCEND niet vraagt.
+  judgeable?: NightInfo;
   // A soft suggestion for energy, only when resting heart rate AND HRV both
   // point the same clear way against your own average; otherwise left out.
   suggestedEnergy?: EnergyFeeling;
@@ -189,6 +192,7 @@ export function todayWellness(today: string, metrics: RecoveryMetric[], options:
   const sleepBase = baselineValues(today, metrics, (m) => m.sleepMinutes, skip);
   const night = options.ask === true ? nightInfo(record.sleepMinutes, sleepBase, judgmentFor(today, judgments)) : undefined;
   const ignored = night?.state === 'ignored';
+  const judgeable = options.ask === true ? judgeableNight(record.sleepMinutes, sleepBase, judgmentFor(today, judgments)) : undefined;
   const lines: WellnessLine[] = [];
   const sleep = sleepLine(record, sleepBase, night);
   if (sleep) lines.push(sleep);
@@ -214,6 +218,7 @@ export function todayWellness(today: string, metrics: RecoveryMetric[], options:
     suggestedSleep,
     ...(suggestedSleepFrom ? { suggestedSleepFrom } : {}),
     ...(night ? { night } : {}),
+    ...(judgeable ? { judgeable } : {}),
     suggestedEnergy: ignored ? undefined : suggestEnergyFeeling(record, today, metrics, skip, excluded),
   };
 }

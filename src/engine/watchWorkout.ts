@@ -58,7 +58,7 @@ import { placeBrief } from '../data/placeBrief';
 import type { HeartRateSettings } from './heartRateZones';
 import { walkBpm, walkBpmText } from './walkHeartRate';
 import { stringHashKey } from '../utils/stringHash';
-import { SHORT_TEST_RUN_ID, shortTestFits } from './shortTest';
+import { SHORT_TEST_RUN_ID, shortTestFits, shortTestWay } from './shortTest';
 import { SHORT_TEST_RULES } from './shortTestRules';
 
 export const WATCH_EXTERNAL_PREFIX = 'ascend:';
@@ -332,7 +332,10 @@ export function buildWatchWorkout(
   const bpm = walking ? walkBpm(plan, options.walkHr) : undefined;
   const bpmLine = bpm ? walkBpmText(bpm) : undefined;
   const planSec = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
-  const shortTest = !place && type === 'Run' && template.id === SHORT_TEST_RUN_ID && options.shortTest?.ids.has(session.id) && shortTestFits(planSec / 60) ? options.shortTest : undefined;
+  // The short test: the same conditions as the Briefing (engine/shortTest.ts#shortTestBriefing), so the watch never
+  // gets a test the Briefing does not show. The way is read from the stored choice even with placeWorkout off.
+  const testWay = shortTestWay(resolvePlace(template, options.places?.[session.id]));
+  const shortTest = !place && testWay && type === 'Run' && template.id === SHORT_TEST_RUN_ID && options.shortTest?.ids.has(session.id) && shortTestFits(planSec / 60) ? options.shortTest : undefined;
   const built = shortTest
     ? shortTestWorkoutText(planSec, shortTest.paceSecKm)
     : intervalsWorkoutText(plan, template, place ? undefined : paces, type === 'Run' ? options.hr : walking && options.walkHr ? 'none' : undefined);

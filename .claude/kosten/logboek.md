@@ -521,3 +521,8 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-18 | Warden Korte test + herkeuring | reviewer helper | fable | 171k tok | 18 min | 1 blokkerend, daarna akkoord |
 | 2026-11-18 | Lookout bouwmoment | tester helper | sonnet | 123k tok | 15 min | groen |
 | 2026-11-18 | Pathfinder bouwmoment | pathfinder helper | sonnet | 37k tok | 1 min | akkoord, 4 mag |
+| 2026-11-18 | Sherpa Ochtend I-89 + I-90 | ontwikkelaar helper worktree | sonnet | 228k tok | 39 min | 1 herstelronde (9 punten) |
+| 2026-11-18 | Sherpa Korte test I-91 deel 1+3 | ontwikkelaar helper worktree | opus | 72k tok | 11 min | akkoord, 1 kleine fix coördinator |
+| 2026-11-18 | Warden I-91 + Ochtend | reviewer helper | fable + opus | 180k tok | 27 min | 0 blokkerend, 3 voor main |
+| 2026-11-18 | Lookout Ochtend + herkeuring | tester helper | sonnet | 168k tok | 23 min | groen, 1 fout gevonden bij herkeuring |
+| 2026-11-18 | Pathfinder Ochtend | pathfinder helper | sonnet | 33k tok | 1 min | 1 moet (ontdekbaarheid) |

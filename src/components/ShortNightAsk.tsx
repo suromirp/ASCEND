@@ -3,7 +3,7 @@ import { useAppData } from '../state/AppDataContext';
 import type { NightJudgment } from '../models/checkIn';
 import type { WellnessReading } from '../engine/wellnessCheck';
 import { reviseCheckInSleep } from '../engine/morningCard';
-import { HOUR_CHOICES, nightQuestionText, removeJudgment, upsertJudgment } from '../engine/shortNight';
+import { HOUR_CHOICES, nightAskChoices, nightQuestionText, removeJudgment, upsertJudgment } from '../engine/shortNight';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { SecondaryButton, Segmented } from './ui';
 import { TextButton } from './TextButton';
@@ -16,7 +16,9 @@ import { TextButton } from './TextButton';
 
 const SAVE_LIMIT_MS = 8000;
 
-export function ShortNightAsk({ reading, today }: { reading: WellnessReading; today: string }) {
+// `quiet`: je vroeg het zelf bij een nacht waar de app niet naar vraagt (tik op Slaap, of de regel in het
+// blad); de stap is dezelfde. `onCancel` sluit die vraag weer zonder iets te bewaren.
+export function ShortNightAsk({ reading, today, quiet = false, onCancel }: { reading: WellnessReading; today: string; quiet?: boolean; onCancel?: () => void }) {
   const { settings, updateSettings } = useAppData();
   const [busy, setBusy] = useState(false);
   // De melding hoort bij de stand waarin ze kwam: verandert de stand (het opslaan lukte
@@ -30,7 +32,8 @@ export function ShortNightAsk({ reading, today }: { reading: WellnessReading; to
     };
   }, []);
 
-  const night = reading.night;
+  const asked = !reading.night && quiet;
+  const night = reading.night ?? (quiet ? reading.judgeable : undefined);
   const stateKey = `${night?.state}|${night?.hours}|${night?.hoursSkipped}`;
   const failed = failure?.key === stateKey ? failure.text : '';
   if (!night) return null;
@@ -48,6 +51,8 @@ export function ShortNightAsk({ reading, today }: { reading: WellnessReading; to
     const patch = mine && revised && revised !== mine ? { nightJudgments: next, morningCheckIns: checkIns.map((c) => (c.date === today ? revised : c)) } : { nightJudgments: next };
     try {
       await withTimeout(updateSettings(patch), SAVE_LIMIT_MS, 'Opslaan');
+      // Na Ongedaan maken is er niets meer te beoordelen: een zelf geopende vraag sluit dan ook.
+      if (!judgment) onCancel?.();
     } catch (err) {
       // Na een time-out loopt het opslaan door en kan het nog lukken: dan verdwijnt deze regel vanzelf.
       if (alive.current) setFailure({ key: stateKey, text: err instanceof TimeoutError ? 'Nog niet bevestigd. Kijk zo of het staat.' : 'Opslaan lukte niet. Probeer het nog eens.' });
@@ -68,11 +73,16 @@ export function ShortNightAsk({ reading, today }: { reading: WellnessReading; to
   if (night.state === 'ask') {
     body = (
       <>
-        <p className="text-sm leading-snug" style={ink}>{nightQuestionText(night.minutes)}</p>
+        <p className="text-sm leading-snug" style={ink}>{nightQuestionText(night.minutes, asked)}</p>
         <div className="mt-2 flex gap-2">
-          <SecondaryButton disabled={busy} onClick={() => void store({ date: today, verdict: 'klopt', minutes: night.minutes })}>Klopt</SecondaryButton>
+          {nightAskChoices(asked).includes('klopt') && <SecondaryButton disabled={busy} onClick={() => void store({ date: today, verdict: 'klopt', minutes: night.minutes })}>Klopt</SecondaryButton>}
           <SecondaryButton disabled={busy} onClick={() => void store({ date: today, verdict: 'niet_goed', minutes: night.minutes })}>Niet goed gemeten</SecondaryButton>
         </div>
+        {asked && onCancel && (
+          <div className="flex justify-end">
+            <TextButton tone="dim" disabled={busy} onClick={onCancel}>Annuleren</TextButton>
+          </div>
+        )}
       </>
     );
   } else if (night.state === 'klopt') {

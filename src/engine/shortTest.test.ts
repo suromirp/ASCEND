@@ -6,7 +6,7 @@ import type { StreamSet } from '../models/activityDetail';
 import type { RacePaces } from './racePaces';
 import {
   findShortTest, seriesPaceOf, shortTestBaseline, shortTestBrief, shortTestFits, shortTestLogIds, shortTestOf, shortTestOffer,
-  shortTestBriefing, shortTestSessionIds, shortTestWay, watchShortTest, shortTestVerdict, shortTestView, type ShortTestResult,
+  shortTestBriefing, shortTestSessionIds, shortTestWay, nextShortTestRun, watchShortTest, shortTestVerdict, shortTestView, type ShortTestResult,
 } from './shortTest';
 
 // Nagemaakte rustige lopen van 40 minuten, één punt per seconde: rustig op 6:30 per km, op `start` 4 minuten
@@ -264,6 +264,36 @@ describe('het voorstel en de dag', () => {
     expect(shortTestBriefing({ ...base, session: sessions[2], series: undefined })).toBeUndefined();
     expect(shortTestBriefing({ ...base, session: sessions[0], series: accepted, minutes: 20 })).toBeUndefined();
     expect(shortTestBriefing({ ...base, session: sessions[0], series: accepted, on: false })).toBeUndefined();
+  });
+
+  it('het voorstel staat alleen op de loop die na Akkoord van vandaag als eerste de test krijgt', () => {
+    const base = { minutes: 40, sessions, on: true, paces: paces(311, 327), series: undefined, logged: new Set<string>() };
+    // Vandaag 16 november: e1 (17 november) krijgt hem, niet e2 later die week of e4 de week erna.
+    expect(shortTestBriefing({ ...base, today: '2026-11-16', session: sessions[0] })?.kind).toBe('offer');
+    expect(shortTestBriefing({ ...base, today: '2026-11-16', session: sessions[1] })).toBeUndefined();
+    expect(shortTestBriefing({ ...base, today: '2026-11-16', session: sessions[4] })).toBeUndefined();
+    // Vandaag 18 november: e1 ligt achter je, e2 is de eerste vanaf vandaag.
+    expect(shortTestBriefing({ ...base, today: '2026-11-18', session: sessions[1] })?.kind).toBe('offer');
+    expect(nextShortTestRun(sessions, 320, { today: '2026-11-18', logged: new Set() })?.id).toBe('e2');
+    // Vandaag 20 november: e2 is voorbij, de volgende is e4 (e3 is overgeslagen).
+    expect(shortTestBriefing({ ...base, today: '2026-11-20', session: sessions[4] })?.kind).toBe('offer');
+    expect(shortTestBriefing({ ...base, today: '2026-11-20', session: sessions[5] })).toBeUndefined();
+  });
+
+  it('geen voorstel op een loop die je vandaag al liep', () => {
+    const base = { minutes: 40, sessions, on: true, paces: paces(311, 327), series: undefined, today: '2026-11-18', session: sessions[1] };
+    expect(shortTestBriefing({ ...base, logged: new Set<string>() })?.kind).toBe('offer');
+    expect(shortTestBriefing({ ...base, logged: new Set<string>([sessions[1].id]) })).toBeUndefined();
+  });
+
+  it('Akkoord op het voorstel geeft de test aan dezelfde loop', () => {
+    const today = '2026-11-18';
+    const next = nextShortTestRun(sessions, 320, { today, logged: new Set() })!;
+    const ids = shortTestSessionIds(sessions, { answer: 'accepted', date: today, paceSecKm: 320 }, true, { today, logged: new Set() });
+    expect(ids.has(next.id)).toBe(true);
+    const base = { minutes: 40, sessions, on: true, paces: paces(311, 327), today, logged: new Set<string>(), session: next };
+    expect(shortTestBriefing({ ...base, series: undefined })?.kind).toBe('offer');
+    expect(shortTestBriefing({ ...base, series: { answer: 'accepted', date: today, paceSecKm: 320 } })?.kind).toBe('brief');
   });
 
   it('de Briefing: alleen bij hardlopen, niet op de StairMaster', () => {

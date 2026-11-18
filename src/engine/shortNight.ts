@@ -35,8 +35,16 @@ export function shortSleepLabel(minutes: number): string {
   return m === 0 ? `${h} u` : `${h} u ${m}`;
 }
 
-export function nightQuestionText(minutes: number): string {
+export function nightQuestionText(minutes: number, quiet = false): string {
+  // Zelf gevraagd bij een gewone nacht: geen "maar", want de app twijfelde niet.
+  if (quiet) return `Je horloge zag ${shortSleepLabel(minutes)} slaap. Was het meer?`;
   return `Je horloge zag maar ${shortSleepLabel(minutes)} slaap. Klopt dat?`;
+}
+
+// De keuzes van de vraag. Een vraag die je zelf opent bewaart nooit "Klopt": dat liet een blijvende
+// nachtregel achter en liet de compacte vraag wegvallen; "Annuleren" doet hetzelfde zonder gevolgen.
+export function nightAskChoices(quiet: boolean): ('klopt' | 'niet_goed')[] {
+  return quiet ? ['niet_goed'] : ['klopt', 'niet_goed'];
 }
 
 // Waar deze ochtend staat met de korte nacht: nog te vragen, bevestigd of genegeerd.
@@ -60,6 +68,20 @@ export function nightInfo(minutes: number | undefined, ownMinutes: number[], raw
   if (judgment?.verdict === 'klopt') return { state: 'klopt', minutes };
   if (judgment?.verdict === 'niet_goed') return { state: 'ignored', minutes, hours: judgment.hours, hoursSkipped: judgment.hoursSkipped };
   return isDoubtfulShortNight(minutes, ownMinutes) ? { state: 'ask', minutes } : undefined;
+}
+
+// De stille weg naar hetzelfde oordeel: bij elke gemeten nacht kun je zelf zeggen dat het
+// horloge niet goed mat, ook als de app niet twijfelde (4:05 na een wakker moment). Geeft de
+// stand van de nacht zoals de vraag hem kent: een bestaand oordeel, anders 'ask'.
+export function judgeableNight(minutes: number | undefined, ownMinutes: number[], rawJudgment: NightJudgment | undefined): NightInfo | undefined {
+  if (minutes === undefined) return undefined;
+  return nightInfo(minutes, ownMinutes, rawJudgment) ?? { state: 'ask', minutes };
+}
+
+// Een nacht die je zelf kunt beoordelen maar waar de app niet naar vraagt: alleen dan is er een
+// tik op Slaap en een regel in het blad nodig; bij een vraag of een oordeel staat de stap er al.
+export function quietJudgeable(reading: { night?: NightInfo; judgeable?: NightInfo } | undefined): NightInfo | undefined {
+  return reading && !reading.night ? reading.judgeable : undefined;
 }
 
 export function judgmentFor(date: string, judgments: NightJudgment[] | undefined): NightJudgment | undefined {

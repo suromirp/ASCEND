@@ -11,6 +11,8 @@ import { SettingsLinkRow } from './settings/SettingsLink';
 import { NotFitLink } from './IllnessCard';
 import { WellnessLines } from './WellnessLines';
 import { ShortNightAsk } from './ShortNightAsk';
+import { TextButton } from './TextButton';
+import { quietJudgeable } from '../engine/shortNight';
 import { useMorningPrefill } from './useMorningPrefill';
 import { PrimaryButton } from './ui';
 
@@ -58,6 +60,9 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, initialEner
   const [draft, setDraft] = useState<MorningCheckIn>(() => existing ? { ...existing, sleep: existing.sleepSuggested ? undefined : existing.sleep } : { date: today, legs: initialLegs, energy: initialEnergy, spot: spot ? { area: spot.area, score: spot.lastScore } : undefined });
   const { prefill, afterEffort, reading } = useMorningPrefill(today);
   const wellness = painOnly ? undefined : reading;
+  // De stille weg: een gemeten nacht waar de app niet naar vraagt, kun je zelf als niet goed gemeten melden.
+  const [askQuiet, setAskQuiet] = useState(false);
+  const quietNight = quietJudgeable(wellness);
 
   // Wat je zelf koos gaat voor; anders staat het voorstel erin (de cijfers van het
   // horloge kunnen na het openen nog binnenkomen). Een ochtend die er al is, krijgt
@@ -104,7 +109,10 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, initialEner
           Gaat goed
         </button>}
         {wellness && <WellnessLines reading={wellness} />}
-        {wellness?.night && <ShortNightAsk reading={wellness} today={today} />}
+        {wellness && (wellness.night || (askQuiet && quietNight)) && <ShortNightAsk reading={wellness} today={today} quiet onCancel={() => setAskQuiet(false)} />}
+        {wellness && quietNight && !askQuiet && (
+          <TextButton tone="dim" size="xs" className="self-start" onClick={() => setAskQuiet(true)}>Slaap niet goed gemeten</TextButton>
+        )}
         {!painOnly && afterEffort && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{afterEffort.line}</p>}
         {!painOnly && <ChoiceRow label="Benen" from={legsFrom} options={LEGS} value={legs} set={(v) => setDraft({ ...draft, legs: v, soreWhere: v === 'spierpijn' || v === 'flink' ? draft.soreWhere : undefined })} />}
         {!painOnly && (legs === 'spierpijn' || legs === 'flink') && (
