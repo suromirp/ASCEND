@@ -193,7 +193,7 @@ export function MorningCard() {
   const fetchNote = fetching === 'busy' ? 'Even kijken bij intervals.icu...' : fetching === 'tried' ? 'Nog geen slaap bij intervals.icu' : fetching === 'failed' ? 'Ophalen lukte niet. Probeer het straks nog eens.' : fetching === 'slow' ? 'Dit duurt te lang. Probeer het straks nog eens.' : '';
   const suggestedText = suggested ? LEGS.find(([k]) => k === suggested.value)?.[1] : undefined;
   // Een getal van de kaart; het Slaap-getal is een tik naar "Niet goed gemeten" als de app niet zelf vraagt.
-  // Heeft de ochtendregel er geen woord onder, dan staat daar "Klopt dit?" (de plek van StatWord).
+  // Onder dat getal staat "Klopt dit?", of het woord van de ochtendregel met ", klopt dit?" erachter (alleen bij Slaap).
   const renderStat = (st: (typeof stats)[number], first: boolean) => {
     const word = st.from === 'horloge' ? ruleWord(rule, st.key) : undefined;
     const tap = !!quietNight && st.key === 'sleep' && st.from === 'horloge';
@@ -201,9 +201,9 @@ export function MorningCard() {
       <div key={st.label} className={`min-w-0 ${first ? '' : 'pl-4'}`} style={{ borderColor: 'var(--color-card-border)' }}>
         <SleepTap on={tap} value={`${st.value}${st.unit ?? ''}`} onTap={() => { rememberHeight(); setAskQuiet(true); }}>
           <Stat as="span" label={st.label} value={st.value} unit={st.unit} />
-          {!word && <StatWord word={{ word: 'Klopt dit?', off: false }} />}
+          {tap && <StatWord word={word ? { word: `${word.word}, klopt dit?`, off: word.off } : { word: 'Klopt dit?', off: false }} />}
         </SleepTap>
-        {(!tap || word) && st.from === 'horloge' && <StatWord word={word} />}
+        {!tap && st.from === 'horloge' && <StatWord word={word} />}
       </div>
     );
   };
