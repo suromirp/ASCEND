@@ -176,7 +176,7 @@ export function shortTestBriefing(input: {
   if (pace !== undefined) {
     return shortTestSessionIds(input.sessions, input.series, input.on, { today: input.today, logged: input.logged }).has(session.id) ? { kind: 'brief', brief: shortTestBrief(pace) } : undefined;
   }
-  if (session.scheduledDate < input.today || session.status === 'skipped') return undefined;
+  if (session.scheduledDate < input.today || session.status === 'skipped' || input.logged.has(session.id)) return undefined;
   const offer = shortTestOffer({ on: input.on, series: input.series, paces: input.paces });
   if (!offer) return undefined;
   // Alleen op de loop die na Akkoord van vandaag als eerste de test krijgt, anders geeft Akkoord op een latere

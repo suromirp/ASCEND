@@ -40,6 +40,8 @@ Bijgewerkt 18 november (I-91, deel 1 en 3):
 - Manier: `buildWatchWorkout` toetst nu dezelfde `shortTestWay` als de Briefing, op de manier zoals de Briefing hem leest (`resolvePlace`), ook met "Eigen workout bij een andere manier" uit. Met de fiets (buiten of binnen) krijgt het horloge de gewone rustige loop, zonder test. Getoetst per manier aan beide kanten en met status Verstuurd na versturen. Alleen de rustige loop met de test en een manier die geen hardlopen is krijgt een andere vingerafdruk; bij hardlopen (buiten, loopband, wandelen en dribbelen) blijft elke workout byte voor byte gelijk.
 - Plek van het voorstel: het voorstel staat alleen in de Briefing van de loop die na Akkoord van vandaag als eerste de test krijgt (`shortTestBriefing` via `nextShortTestRun`, dezelfde keuze als `shortTestSessionIds` met vandaag en de logs). Gekozen boven de dag noemen in de voorstelregel: het is één toets, geen nieuwe tekst, en Akkoord geeft de test dan aan de loop waar je naar kijkt.
 
+- De Briefing toetst de 25 minuten op `plannedMinutes`, het horloge op de duur van het workoutplan; bij een vaste duur in de dagen van terugkomen na ziekte of verlof kan de Briefing de test tonen terwijl het horloge de gewone loop krijgt (herkeuring Warden 18 november).
+- Is de rustige loop van vandaag al gelogd, dan staat het voorstel die dag nergens; morgen staat het op de volgende loop.
 ## Bron
 
 `docs/onderzoek/Drempel en submaximale test.md` (hoofdstuk 3, hoofdstuk 4 en stap 3); de eigenaar 17 november (backlog I-79).

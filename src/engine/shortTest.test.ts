@@ -280,6 +280,12 @@ describe('het voorstel en de dag', () => {
     expect(shortTestBriefing({ ...base, today: '2026-11-20', session: sessions[5] })).toBeUndefined();
   });
 
+  it('geen voorstel op een loop die je vandaag al liep', () => {
+    const base = { minutes: 40, sessions, on: true, paces: paces(311, 327), series: undefined, today: '2026-11-18', session: sessions[1] };
+    expect(shortTestBriefing({ ...base, logged: new Set<string>() })?.kind).toBe('offer');
+    expect(shortTestBriefing({ ...base, logged: new Set<string>([sessions[1].id]) })).toBeUndefined();
+  });
+
   it('Akkoord op het voorstel geeft de test aan dezelfde loop', () => {
     const today = '2026-11-18';
     const next = nextShortTestRun(sessions, 320, { today, logged: new Set() })!;
