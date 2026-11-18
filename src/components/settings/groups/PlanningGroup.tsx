@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { OrderSheet } from '../../stand/OrderSheet';
 import { useAppData } from '../../../state/AppDataContext';
+import { syncWatchWorkouts } from '../../../storage/watchWorkouts';
 import { ProposalSheet } from '../../ProposalSheet';
 import type { RestDayPlan } from '../../../engine/restDayProposal';
 import { addDays, mondayOfWeek, todayISO } from '../../../utils/dates';
@@ -30,7 +31,7 @@ const WEEKDAYS_NL = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag'];
 
 // Planning: je week, je sporten en hoe ASCEND plant. Alles wat de planning verandert gaat via
 // een voorstel met Akkoord of een melding met ongedaan maken (usePlanSettingChange).
-export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
+export function PlanningGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   const { settings, updateSettings, goalEngineConfig, refresh, planRestDay, applyRestDay, planPreviewPass } = useAppData();
   const [restPlan, setRestPlan] = useState<RestDayPlan | null>(null);
   const [restNote, setRestNote] = useState<string | null>(null);
@@ -42,6 +43,16 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
   const [advancedGrowth, setAdvancedGrowth] = useState(false);
   const navigate = useNavigate();
   const restDay = settings.restDay ?? 1;
+  // Korte test aan of uit verandert de rustige loop op het horloge: zoals changeHr in KoppelingenGroup meteen een
+  // ronde als het sturen aan staat. Aan na Liever niet: het voorstel komt terug.
+  async function changeShortTest(on: boolean) {
+    try {
+      await updateSettings(on && settings.shortTestSeries?.answer === 'declined' ? { shortTest: on, shortTestSeries: undefined } : { shortTest: on });
+      if (facts.watch?.sendEnabled) await syncWatchWorkouts({ force: true });
+    } finally {
+      reload();
+    }
+  }
   const missed = resolveMissedSettings(settings);
 
   // Een andere rustdag is altijd een voorstel met Akkoord (engine/restDayProposal.ts).
@@ -204,6 +215,8 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="drempel-uit-test" title="Drempel uit je test" facts={facts} info="drempelUitTest" onClick={() => setInner('drempel-uit-test')} />
           <SummaryRow id="test-zonder-band" title="Test zonder borstband" facts={facts} info="testZonderBand" onClick={() => setInner('test-zonder-band')} />
           <SummaryRow id="test-klaar-melden" title="Melden op een testdag" facts={facts} info="testKlaarMelden" onChange={(on) => void updateSettings({ testReadyLine: on })} />
+          {/* Aan na Liever niet: het voorstel komt terug. Uit: geen voorstel en geen test in je loop; je reeks blijft bewaard. */}
+          <SummaryRow id="korte-test" title="Korte test" facts={facts} info="korteTest" onChange={(on) => void changeShortTest(on)} />
         </BundleSheet>
       )}
       {inner === 'test-rust' && (

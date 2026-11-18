@@ -54,6 +54,7 @@ import { useWatchSheet } from './useWatchSheet';
 import { useBriefingInput } from './useBriefingView';
 import { usePlaceWeather } from './usePlaceWeather';
 import { useTestReadiness } from './useTestReadiness';
+import { ShortTestBlock } from './ShortTestBlock';
 import { testReadyLine } from '../engine/testReadiness';
 import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
 import type { WeatherForecast } from '../models/weather';
@@ -243,6 +244,9 @@ export function TrainingBriefing({
               ) : null}
               {heart.tomorrow && <p className="-mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{heart.tomorrow}</p>}
             </Card>
+
+            {/* De korte test (engine/shortTest.ts): het blok op de testdag, of het voorstel met Akkoord; alleen bij hardlopen. */}
+            <ShortTestBlock session={session} minutes={minutes} place={view.place} />
 
             {places.length > 1 && (
               // Eén rij van hoogstens drie chips met korte namen, zonder schuiven: op 360 px valt er niets af (zoals

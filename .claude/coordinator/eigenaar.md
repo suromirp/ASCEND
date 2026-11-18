@@ -4,6 +4,15 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
+### Drempel en korte test (I-79, 16 november 23:30)
+Onderzoek staat op main (`docs/onderzoek/Drempel en submaximale test.md`). Vier keuzes, advies voorop; zonder antwoord bouwt woensdag stap 1 en 2 met het advies, de korte test wacht.
+1. Factor: 98 procent houden als instelling, met Zoals Friel (100) als tweede keuze (advies), of Friel standaard.
+2. Drempel volgt het midden van je laatste drie tests (advies) of alleen de laatste.
+3. Korte test: 4 minuten op drempeltempo plus 1 minuut stilstaan, wekelijks (advies); zonder stilstaan; zoals intervals.icu; of nog niet.
+4. Zonder borstband: standaard telt een test niet voor de drempel, keuze met ruime marge blijft, armband telt als band, en één vraag "Had je hem om?" (advies); nooit zonder band; of niet vragen.
+Zonder antwoord het advies: praattest later, test van 30 minuten later, DFA alpha 1 niet bouwen.
+
+
 ### Routes wandelen: drie standaardkeuzes, gebouwd met het advies
 - Keuzes: zo laten (advies): duur gaat voor hoogtemeters, en dat is instelbaar; de wandelladder verandert alleen via Akkoord; een herstelwandeling krijgt pas een lus na een tik. Of: een van de drie anders.
 - Zonder antwoord: het blijft zoals het nu live staat.
@@ -19,16 +28,72 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 - Zonder antwoord: geen grens.
 - Sinds: 15 november 08:46
 
-### Melding in Week nadat je op Vandaag "Benen fris, blijft staan" koos
-- Keuzes: zeggen dat jij koos (advies). Of: geen melding.
-- Zonder antwoord: het blijft liggen in de backlog.
-- Sinds: 14 november
-
 ## Stuk of vast
 
-- Back-up maken mislukt de eerste keer na het openen, de tweede keer lukt hij (het bestand krijgt dan -2). Een bouwer zoekt de oorzaak sinds 11:54.
+
+## Loopt
+
+- Graphify, eerlijke proef: na de reset van de weeklimiet (zondag 22 november 18:00 Portugese tijd). De graaf één keer bouwen (kosten apart), de koppeling en de regel in CLAUDE.md alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
+
 
 ## Net live
+
+### 17 november 06:20
+- Drempel uit je tests (I-79 stap 1 en 2): na een testloop met borstband rekent ASCEND je drempel uit de laatste 20 minuten (98%), het midden van je laatste drie tests; alleen als voorstel met Akkoord. Zonder borstband telt de test niet en vraagt de app "Had je hem om?". In de Briefing staat "Klaar voor je test"; drie instellingen in het blad Testloop. De korte test (stap 3) komt woensdag.
+
+### 16 november 22:35
+- Uitleg Drempel: zegt nu dat ASCEND zelf een drempel voorstelt na een testloop van 5 km (pas na Akkoord), met een borstband; Garmin is de tweede bron.
+
+### 16 november 20:12 (bouwmoment)
+- Back-up kleiner: dezelfde gegevens, ruim een derde kleiner (met uw back-up 2,55 naar 1,61 MB). Oude back-ups blijven te lezen; een toestel met een oudere app vraagt om bij te werken.
+- Overgeslagen of vervallen training: het blad zegt meteen waarom; Week en Vandaag zeggen hetzelfde woord (Vervallen bij ziek); geen mint knop zolang je ziek bent.
+- Windjack vanaf 20 km/u; Wandeling plannen zegt een stuk heen en terug nog maar één keer.
+- Onderhoudsronde: rapport in docs/onderhoud/2026-11-16-onderhoudsronde.md; opruimen staat als I-82, IJkset dieper dan nodig als I-83.
+
+### 16 november 10:20
+- Wandeling plannen: het stuk van je startpunt naar de eerste kruising telt niet meer als doodlopende tak; een lus zonder tak gaat voor. Te veel hoogtemeters en een stuk heen en terug krijgen een amber regel; een voorstel van ver onder je afstand verschijnt alleen als er niets beters is.
+
+### 16 november 08:40
+- Eén regel voor uitzonderingen: ziek, verkouden, opbouw na ziekte, zonder sportschool, vakantie, tocht en je doel gelden nu overal hetzelfde. Verkouden of in opbouw: iets zwaars slepen vraagt eerst, rustig bewegen mag. Een eigen training op een zieke dag staat in Let op met een voorstel. Een datum kiezen weigert een dag met koorts, vakantie, tocht of na je doel.
+
+### 16 november 05:10
+- Losse training, Wandelen: de standaard is nu een gewone Wandeling. Ze heet Wandelen, krijgt Gedaan en telt niet als training; de Herstelwandeling blijft kiesbaar en blijft Herstel heten.
+
+### 16 november 02:45
+- Zonder sportschool: een sportschooltraining op een dag in je periode zonder sportschool geeft nu een punt in Let op met een voorstel (eigen gewicht of laten vervallen). Slepen of een datum kiezen naar zo'n dag vraagt eerst. Uw Bovenlichaam A op woensdag 18 krijgt dat punt zodra u Week opent.
+
+### 16 november 02:10
+- Op Vandaag staat nu "Loggen of plannen": een training loggen die niet op de planning stond, of een wandeling plannen met een route van een paar kilometer. Wandeling plannen staat ook in de tab Ascend.
+- Een losse training log je in twee stappen: eerst de sport, daarna eventueel de precieze training.
+
+### 16 november 01:40
+- Waar je nu bent: de Briefing wacht tot je plek scherp is (hooguit 15 seconden) en zegt anders waarom, met Opnieuw, Andere plek of een tik op de kaart. De kaart in de Briefing blokkeert het scrollen niet meer; slepen en knijpen in de grote kaart.
+
+### 16 november 01:10
+- IJkset heeft drie standen: Vragen, Automatisch erbij en Uit. Automatisch zet eens per vier weken een set erbij die je weg kunt halen; nooit als je ziek bent, weg bent, zonder sportschool zit of Forge de training lichter maakt.
+
+### 16 november 00:30
+- Back-up: de teller van wat nog niet in een back-up staat telt nu ook een training van gisteren die je na je laatste back-up bewaarde.
+- Een automatische back-up die laat antwoordt, laat geen dubbel bestand of rest meer achter, ook niet als je intussen een andere map kiest.
+
+### 15 november 22:45
+- Week zegt overal hetzelfde: een training die je op een andere dag deed zegt "gedaan di 27", de weekterugblik noemt ook overgeslagen en vervallen, en bij gemist is er één advies: niet dubbel doen, zet de rest terug.
+- Forge: Training afronden stelt de dag van je laatste set voor, met het tijdstip van die set.
+- Een back-up terugzetten schrijft alleen wat nieuw is; een fout halverwege laat niets half staan.
+- Het oude trainingsscherm en afvinken op Vandaag en Week: een tijdgrens, een uitweg en nooit een tweede log.
+- Weer van de plek: de plek die je in de Briefing kiest, geldt voor die training, ook voor het weer de avond ervoor. Instelling Gekozen plek onthouden in Weer en kleding.
+
+### 15 november 20:50
+- Ziek melden: de keuzes heten "Neus of keel, zonder koorts" en "Koorts, ook als je verkouden bent".
+- Back-up: opruimen raakt alleen bestanden van de app zelf.
+
+### 15 november 20:00
+- Beginnersstart heel licht: de eerste weken wandel en dribbel je om de beurt op de plek van de rustige en de lange duurloop; dat komt eerst als voorstel met Akkoord. Instelling Opbouw van de start in Doel en tochten.
+- Routes op reis: een trage kaart of routeplanner stopt de zoektocht niet meer; wat er al gevonden is blijft staan.
+
+### 15 november 17:45
+- Back-up maken lukt de eerste keer; een leesfout haalt nooit meer een goed bestand weg en er komt geen -2 meer bij een lege map.
+- Kracht uit: Je week, Weekbudget en Zonder doel noemen alleen nog minuten; de rij Krachtblok verdwijnt zonder blok.
 
 ### 15 november 16:20
 - Week telt zoals hij toont: gemist, overgeslagen en vervallen zijn overal hetzelfde, en het inhaaladvies rekent met je periode Zonder sportschool.

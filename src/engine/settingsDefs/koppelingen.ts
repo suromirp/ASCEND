@@ -277,6 +277,18 @@ export const KOPPELINGEN: SettingDef[] = [
     showWhen: [B.garmin, B.send],
   },
   {
+    id: 'korte-test-horloge',
+    page: 'koppelingen',
+    place: { in: 'bundel-horloge-sturen' },
+    title: 'Korte test als workout',
+    note: 'De rustige loop met de korte test gaat als tempoworkout naar je horloge: de test op tempo, de rest zonder doel.',
+    keywords: ['korte test', 'test', 'tempo', 'tempoworkout', 'rustige loop', 'stilstaan', 'horloge', 'garmin', 'trainingen naar je horloge'],
+    route: '/koppelen/garmin',
+    help: true,
+    helpKey: 'korteTestHorloge',
+    showWhen: [B.garmin, B.send],
+  },
+  {
     id: 'horloge-gedaan-weghalen',
     page: 'koppelingen',
     place: { in: 'bundel-horloge-sturen' },

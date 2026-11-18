@@ -4319,6 +4319,14 @@
    ],
    "kern": "De drempel uit een test is 98 procent van de laatste 20 minuten, alleen met borstband en bij 24 tot 40 minuten, en volgt het midden van je laatste drie tests via Akkoord; de RR-reeks wordt bewaard en Klaar voor je test leest band, opslag en RR uit je laatste loop.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-18-korte-test.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "koppelingen-en-data"
+   ],
+   "kern": "Na Akkoord elke week een korte test aan het begin van je eerste rustige loop (4 minuten op een vast testtempo, 1 minuut stilstaan), op het horloge als tempoworkout met de rest zonder doel; na vier geldige tests Normaal, Beter of Let op als tekst, zonder band geen oordeel, en nooit andere zones.",
+   "stand": "geldt"
   }
  }
 }

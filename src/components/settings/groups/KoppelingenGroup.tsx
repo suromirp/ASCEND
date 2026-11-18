@@ -94,7 +94,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
   }
 
   // De slagen op het horloge veranderen bij de volgende ronde; staat het sturen aan, dan draait die meteen.
-  async function changeHr(patch: { watchHeartRate?: 'ascend' | 'intervals'; watchCalmRun?: boolean; watchPlaceWorkout?: boolean; watchWalkBpm?: boolean }) {
+  async function changeHr(patch: { watchHeartRate?: 'ascend' | 'intervals'; watchCalmRun?: boolean; watchPlaceWorkout?: boolean; watchWalkBpm?: boolean; shortTestWatch?: boolean }) {
     setNote(null);
     try {
       await updateSettings(patch);
@@ -225,6 +225,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
           <SummaryRow id="horloge-rustige-loop" title="Rustige loop: ruime grens" facts={facts} info="horlogeRustigeLoop" onChange={(on) => void changeCalm(on)} />
           <SummaryRow id="horloge-eigen-workout" title="Eigen workout bij een andere manier" facts={facts} info="horlogeEigenWorkout" onChange={(on) => void changePlaceWorkout(on)} />
           <SummaryRow id="horloge-wandel-hartslag" title="Hartslag bij wandelen" facts={facts} info="horlogeWandelHartslag" onChange={(on) => void changeWalkBpm(on)} />
+          <SummaryRow id="korte-test-horloge" title="Korte test als workout" facts={facts} info="korteTestHorloge" onChange={(on) => void changeHr({ shortTestWatch: on })} />
           <SummaryRow id="horloge-gedaan-weghalen" title="Gedane trainingen weghalen" facts={facts} info="horlogeGedaanWeghalen" onChange={(on) => void updateSettings({ watchRemoveDone: on })} />
           <SummaryRow id="horloge-status" title="Laten zien of het gelukt is" facts={facts} info="horlogeStatus" onChange={(on) => void updateSettings({ showWatchStatus: on, showWatchStatusOnWeek: on })} />
         </BundleSheet>

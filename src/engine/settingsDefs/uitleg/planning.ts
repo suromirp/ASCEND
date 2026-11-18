@@ -137,6 +137,17 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Waarom', text: 'zonder borstband telt een test niet voor je drempel; aan de pols zit een horloge er bij hard lopen 5 tot 15 slagen naast.' },
     ],
   },
+  'korte-test': {
+    title: 'Korte test',
+    lead: 'Elke week 4 minuten op je drempeltempo aan het begin van een rustige loop. Een losse test zegt weinig, een reeks wel.',
+    points: [
+      { head: 'Eerst een voorstel', text: 'in de Briefing van een rustige loop. Pas na Akkoord staat de test elke week aan het begin van je eerste rustige loop, met een vast testtempo.' },
+      { head: 'Wat je doet', text: '10 minuten inlopen, 4 minuten op je testtempo, 1 minuut rechtop stilstaan, daarna je gewone loop. Met je borstband om, op een vlak stuk.' },
+      { head: 'Wat je ziet', text: 'bij die loop je hartslag in de laatste minuut, je tempo en hoeveel je hartslag zakte. Na vier tests één woord: Normaal, Beter of Let op.' },
+      { head: 'Alleen tekst', text: 'je zones en je drempel veranderen er nooit door. Dat doet alleen je testloop.' },
+      { head: 'Uit', text: 'geen voorstel en geen test in je loop. Zet je hem weer aan na Liever niet, dan komt het voorstel terug.' },
+    ],
+  },
   'nieuwe-test': {
     title: 'Nieuwe test voorstellen bij stilstand',
     lead: 'Stond je veel stil tijdens je testloop, dan krijg je een nieuwe poging als voorstel.',

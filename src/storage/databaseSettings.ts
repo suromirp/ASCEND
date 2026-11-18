@@ -2,6 +2,7 @@
 
 import type { WatchFieldStore } from '../engine/watchFields';
 import type { ZoneAnswer } from '../models/zoneAnswer';
+import type { ShortTestSeries } from '../models/shortTest';
 import type { AboveMission } from '../engine/todayCards';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
@@ -435,6 +436,15 @@ export interface AppSettings {
   // "Melden op een testdag" (engine/testReadiness.ts): mist er iets voor je test, één regel in de
   // Briefing. Absent = on. Optional and additive.
   testReadyLine?: boolean;
+  // "Korte test" (engine/shortTest.ts): elke week een korte test aan het begin van je eerste rustige loop,
+  // pas na Akkoord op het voorstel. Absent = on. Optional and additive.
+  shortTest?: boolean;
+  // "Korte test als workout": de rustige loop met de test gaat als tempoworkout naar je horloge. Absent = on.
+  // Optional and additive.
+  shortTestWatch?: boolean;
+  // Je antwoord op het voorstel van de korte test, met het vaste testtempo van de reeks. Optional and
+  // additive (storage/migrationsSettings.ts#migrateShortTestSeries).
+  shortTestSeries?: ShortTestSeries;
   // "Volledige reeks bewaren": keep the full series of a run or tocht on this device
   // (activityStreams). Absent = on. Off keeps only the derived profile and kilometres.
   // Optional and additive.

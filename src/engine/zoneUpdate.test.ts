@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SessionLog } from '../models/training';
 import type { RunDetail, RunKm } from '../models/runDetail';
 import { TEST_TEMPLATE_ID } from './raceBlock';
-import { recordStrapWorn, recordZoneAnswer, thresholdLogIds, zoneNotice, zoneOffer } from './zoneUpdate';
+import { recordStrapWorn, recordZoneAnswer, thresholdLogIds, zoneNotice, zoneOffer, zoneSteady } from './zoneUpdate';
 import { MAX_ZONE_ANSWERS, type ZoneAnswer } from '../models/zoneAnswer';
 
 // Nagemaakte testlopen: 5 km op het horloge, met de hartslag per kilometer.
@@ -58,6 +58,17 @@ describe('zones bijwerken na een test', () => {
     expect(zoneOffer({ logId: 't1', logs: [fresh], options: opts, heartRate: { lthr: 160 }, enabled: true, answers })).toBeUndefined();
   });
 
+  it('bij een klein verschil geen voorstel maar één droge regel; bij een voorstel of een test die niet telt geen regel', () => {
+    const base = { logId: 't1', logs: [fresh], options: opts, enabled: true };
+    expect(zoneSteady({ ...base, heartRate: { lthr: 171 } })?.line).toBe('Je test wijst op 172, je drempel blijft 171: het verschil is te klein.');
+    expect(zoneSteady({ ...base, heartRate: { lthr: 172 } })?.line).toBe('Je test wijst op 172, net als je drempel.');
+    expect(zoneSteady({ ...base, heartRate: { lthr: 165 } })).toBeUndefined();
+    expect(zoneSteady({ ...base, heartRate: { lthr: 171 }, enabled: false })).toBeUndefined();
+    expect(zoneSteady({ ...base, heartRate: undefined })).toBeUndefined();
+    const ignored = { judgments: [{ logId: 't1', verdict: 'ignore' as const, date: '2026-10-21' }], ask: true };
+    expect(zoneSteady({ ...base, options: ignored, heartRate: { lthr: 171 } })).toBeUndefined();
+  });
+
   it('een antwoord geldt voor het getal: een andere stand van de factor geeft hoogstens een nieuw voorstel', () => {
     const answers: ZoneAnswer[] = [{ logId: 't1', answer: 'accepted', date: '2026-10-21', lthrFrom: 160, lthrTo: 172 }];
     expect(zoneOffer({ logId: 't1', logs: [fresh], options: opts, heartRate: { lthr: 172 }, enabled: true, answers })).toBeUndefined();
@@ -111,6 +122,12 @@ describe('drie tests samen in het voorstel', () => {
     const offer = zoneOffer({ logId: 'c', logs: [a, b, c], options: opts, heartRate: { lthr: 170 }, enabled: true, today });
     expect(offer!.lthrTo).toBe(176);
     expect(offer!.tests).toBe('Je laatste drie tests: 174, 177 en 176. Het midden is 176.');
+  });
+
+  it('bij een klein verschil spreekt de regel van de tests samen, niet van deze test', () => {
+    const base = { logId: 'c', logs: [a, b, c], options: opts, enabled: true, today };
+    expect(zoneSteady({ ...base, heartRate: { lthr: 174 } })?.line).toBe('Je tests wijzen samen op 176, je drempel blijft 174: het verschil is te klein.');
+    expect(zoneSteady({ ...base, heartRate: { lthr: 176 } })?.line).toBe('Je tests wijzen samen op 176, net als je drempel.');
   });
 
   it('met terugwerkende kracht: een test die je al beantwoordde met één getal krijgt het midden als nieuw voorstel', () => {

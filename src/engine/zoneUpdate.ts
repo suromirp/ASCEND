@@ -138,6 +138,32 @@ export function zoneOffer(args: OfferArgs): ZoneOffer | undefined {
   };
 }
 
+export interface ZoneSteady {
+  logId: string;
+  line: string;
+}
+
+// Telt de laatste test wel, maar ligt de schatting minder dan MIN_LTHR_CHANGE van je drempel, dan komt er
+// geen voorstel en zegt één droge regel waarom (I-86). Een test die niet telt zegt hier niets (zie zoneNotice).
+export function zoneSteady(args: OfferArgs): ZoneSteady | undefined {
+  const current = args.heartRate?.lthr;
+  if (!args.enabled || current === undefined) return undefined;
+  const found = latest(args);
+  if (!found || !found.own.ok) return undefined;
+  const valid = found.estimates.filter((e): e is EffortEstimate => e.ok);
+  const combined = combinedLthr(valid, args.today ?? found.own.date);
+  if (!combined) return undefined;
+  const next = combined.lthr;
+  if (Math.abs(next - current) >= MIN_LTHR_CHANGE) return undefined;
+  // Het getal is het midden van je laatste tests (combinedLthr): bij meer dan één test zeg je dat ook.
+  const many = combined.used.length > 1;
+  const who = many ? 'Je tests wijzen samen op' : 'Je test wijst op';
+  const line = next === current
+    ? `${who} ${next}, net als je drempel.`
+    : `${who} ${next}, je drempel blijft ${current}: het verschil is te klein.`;
+  return { logId: args.logId, line };
+}
+
 export interface ZoneNotice {
   logId: string;
   reason: NotForThreshold;

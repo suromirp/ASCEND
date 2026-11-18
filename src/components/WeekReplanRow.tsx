@@ -51,7 +51,7 @@ export function WeekReplanRow({ weekStart, sub = REPLAN_SUB }: { weekStart: stri
         <ProposalSheet
           advice={advice}
           eyebrow="Week"
-          summary={replanSummary({ changes, caughtUp: plan.caughtUp, nextWeek: plan.nextWeek, testMove: plan.testMove && { name: plan.testMove.name, toLabel: formatShortDayNL(plan.testMove.to) } })}
+          summary={replanSummary({ changes, yours: plan.hadYours, caughtUp: plan.caughtUp, nextWeek: plan.nextWeek, testMove: plan.testMove && { name: plan.testMove.name, toLabel: formatShortDayNL(plan.testMove.to) } })}
           emptyText={REPLAN_NO_CHANGE}
           answerless={changes === 0}
           notes={changes > 0 ? plan.notes : undefined}

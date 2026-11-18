@@ -446,6 +446,16 @@ export const PLANNING: SettingDef[] = [
     helpKey: 'testKlaarMelden',
   },
   {
+    id: 'korte-test',
+    page: 'planning',
+    place: { in: 'bundel-testloop' },
+    title: 'Korte test',
+    note: 'Elke week 4 minuten op je drempeltempo aan het begin van een rustige loop. Een losse test zegt weinig, een reeks wel.',
+    keywords: ['korte test', 'submaximaal', 'submax', 'test', 'hartslag', 'vorm', 'vermoeidheid', 'fitter', 'moe', 'rustige loop', 'drempeltempo', 'stilstaan', 'herstel'],
+    help: true,
+    helpKey: 'korteTest',
+  },
+  {
     id: 'rustdag-terug',
     page: 'planning',
     place: { row: true },

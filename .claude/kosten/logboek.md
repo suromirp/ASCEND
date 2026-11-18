@@ -490,4 +490,34 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 15 november 11:20, Pathfinder Q en StairMaster (sonnet, medium): 41k tokens, 37 s, akkoord, vijf punten later.
 - 2026-11-15, coördinator 15 november: Pathfinder Q+StairMaster (sonnet) 41k; Lookout Q (sonnet) 110k; Warden back-up (opus) 104k, niet akkoord; Lookout kracht (sonnet) 57k; Warden Week herreview (opus) 56k, akkoord; Pathfinder Week (sonnet) 54k, akkoord.
 - 2026-11-15, Sherpa weekbudget-kracht: Warden I-39 (sonnet) 41k, 36 s; punt 1 hersteld, punt 2 open.
-- 2026-11-15, Sherpa Week samenhang (I-40 t/m I-43): Warden review (sonnet) 52k, 80 s, niet akkoord op één punt (vervallen naast een open concept), hersteld.
+- 2026-11-16, coördinator 16 november: Warden I-70 (fable) 89k, 20 min, niet akkoord (Herstel-woord op vier plekken, besluit ontbreekt); herstel naar Sherpa (sonnet).
+- 2026-11-16, Sherpa I-70 herstel (sonnet) 67k, 20 min, M1 en M2 dicht; Warden-herkeuring (fable), Lookout en Pathfinder (sonnet) lopen.
+- 2026-11-16, Pathfinder I-70 (sonnet) 40k niet akkoord (maanicoon, rustblad, Logboek); Lookout I-70 (sonnet) 66k groen op de vier punten, maandzin zegt nog herstel.
+- 2026-11-16, Warden I-70 herkeuring (fable) 97k, niet akkoord op één punt (maandkop Logboek); laatste herstel naar nieuwe Sherpa (sonnet), hervatten kon niet (worktree weg: worktree van een bouwer pas na main opruimen).
+- 2026-11-16, Sherpa I-70 laatste herstel (sonnet) 48k, 22 min; I-70 live f9039a7.
+- 2026-11-16, I-67: Pathfinder (sonnet) 33k akkoord met voorwaarde (ILL-zin per soort, één woord opbouw, instelling); Lookout (sonnet) 72k groen, sleepblad lang en 'al geweest' onjuist (ook op main).
+- 2026-11-16, Warden I-67 (fable) 203k, 24 min, akkoord met 5 moet.
+- 2026-11-16, Lookout I-67 herkeuring (sonnet) 65k groen.
+- 2026-11-16, Warden I-67 herkeuring (fable) 122k, niet akkoord op 3 kleine moet (doeldag datumkiezer, askAlways in korte zin, twee zinnen eerlijk).
+- 2026-11-16, I-67: bouwer Opus high $21 in drie rondes; Warden herkeuringen (fable) 46k en 124k; live 4f5d722.
+- 2026-11-16, Sherpa I-75 (sonnet, helper per vergissing) 124k; Warden en Lookout gestopt bij onderbreking; live e152f17.
+| 2026-11-16 | Lookout Wandeling plannen I-75 | tester | sonnet | - | - | 0 |
+| 2026-11-16 | Onderhoudsronde I-66 | tester | sonnet | 82k | 3,5 min | 0 |
+| 2026-11-16 | Warden I-80 en I-49/I-81 | reviewer | sonnet | 58k | 9 min | 0 |
+| 2026-11-16 | Lookout I-80 | tester | sonnet | 91k | 11 min | 1 (woord Week/Vandaag) |
+| 2026-11-16 | Warden I-63 back-up | reviewer | fable | 85k | 13 min | 0 (zes mag) |
+| 2026-11-16 | Sherpa I-63 back-up kleiner | bouwer eigen sessie | opus high | 239k ctx, $5,72 | 58 min | 1 (zes mag Warden) |
+| 2026-11-16 | Sherpa I-80 reden op het blad | bouwer eigen sessie | opus high | 333k ctx, $9,72 | 66 min | 1 (woord Week/Vandaag) |
+| 2026-11-16 | Sherpa I-49/I-81 klein | bouwer eigen sessie | sonnet | 135k ctx, $0,77 | 19 min | 0 |
+| 2026-11-16 | Scout Drempel I-79 (effort max, op verzoek eigenaar) | scout eigen sessie | fable max | 214k ctx, $41,59 | 61 min | 1 aanvulling borstband |
+| 2026-11-17 | Warden Drempel I-79 | reviewer helper | fable | 91k tok | 14 min | n.v.t. (3 moet, 6 mag) |
+| 2026-11-17 | Sherpa Drempel I-79 stap 1+2 | bouwer eigen sessie | opus high | 332k ctx, $11,21 | 56 min | 1 herstelronde na Warden |
+| 2026-11-17 | Warden herreview Drempel | reviewer helper | fable | 55k tok | 3 min | 1 nieuw blokkerend |
+| 2026-11-17 | Lookout Drempel | tester helper | sonnet | 112k tok | 15 min | groen |
+| 2026-11-18 | Sherpa Week I-88 | ontwikkelaar helper worktree | opus | 190k tok | 43 min | 1 herstelronde na Warden |
+| 2026-11-18 | Sherpa Drempel I-86 | ontwikkelaar helper worktree | sonnet | 89k tok | 40 min | 1 herstelronde na Warden |
+| 2026-11-18 | Sherpa Korte test I-79 stap 3 | ontwikkelaar helper worktree | opus | 543k tok | 81 min | 1 herstelronde (1 blokkerend) |
+| 2026-11-18 | Warden I-88 + I-86 | reviewer helper | fable | 107k tok | 19 min | 3 voor main |
+| 2026-11-18 | Warden Korte test + herkeuring | reviewer helper | fable | 171k tok | 18 min | 1 blokkerend, daarna akkoord |
+| 2026-11-18 | Lookout bouwmoment | tester helper | sonnet | 123k tok | 15 min | groen |
+| 2026-11-18 | Pathfinder bouwmoment | pathfinder helper | sonnet | 37k tok | 1 min | akkoord, 4 mag |

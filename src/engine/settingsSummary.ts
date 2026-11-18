@@ -1136,6 +1136,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.watchPlaceWorkout !== false };
     case 'horloge-wandel-hartslag':
       return { checked: s.watchWalkBpm !== false };
+    case 'korte-test-horloge':
+      return { checked: s.shortTestWatch !== false };
     case 'horloge-gedaan-weghalen':
       return { checked: s.watchRemoveDone !== false };
     case 'horloge-status':
@@ -1210,6 +1212,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.morningRule !== false };
     case 'test-klaar-melden':
       return { checked: s.testReadyLine !== false };
+    case 'korte-test':
+      return { checked: s.shortTest !== false };
     case 'horloge-stil':
       return { checked: s.watchSilence !== false };
     case 'horloge-soort':

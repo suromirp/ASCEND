@@ -18,6 +18,8 @@ import type { IllnessEpisode } from '../models/illness';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { idHasRole } from './templateRoles';
 import { dayRules } from './dayRules';
+import { patternSlotOf } from './programLayout';
+import { validCatchUp } from './catchUp';
 import { MOVE_ORDER, previewBetween, type PreviewMove, type ProposalPreviewData } from './proposalPreview';
 
 export interface ReplanWeekInput {
@@ -82,7 +84,12 @@ export function replanWeek(input: ReplanWeekInput): ReplanWeekResult {
   const testIds = kept.filter((s) => isTest(s.templateId) && s.status !== 'skipped' && !logged.has(s.id) && s.scheduledDate >= today).map((s) => s.id);
 
   // Wat blijft neemt zijn plek in het patroon in: dezelfde training, eerst op dezelfde dag, dan de
-  // dichtstbijzijnde. Een test neemt, als het patroon geen test heeft, de plek van een harde loop in.
+  // dichtstbijzijnde. Een variant die zelf niet in het patroon staat neemt de plek van zijn training in
+  // (Heuvelsprints en afdalen die van de heuvelintervallen, engine/programLayout.ts#patternSlotOf); rustig,
+  // tempo en wandelen en dribbelen delen één plek, dus een training die wel in het patroon staat pakt nooit
+  // de plek van een andere. Een test neemt, als het patroon geen test
+  // heeft, de plek van een harde loop in. Een inhaal van een vorige week hoort bij die week en neemt hier
+  // geen plek in (I-88).
   const slots = [...input.fresh].sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.order - b.order);
   const taken = new Set<PlannedSession>();
   const nearest = (date: string, match: (slot: PlannedSession) => boolean) => slots
@@ -90,8 +97,12 @@ export function replanWeek(input: ReplanWeekInput): ReplanWeekResult {
     .sort((a, b) => Math.abs(daysBetween(date, a.scheduledDate)) - Math.abs(daysBetween(date, b.scheduledDate)) || a.scheduledDate.localeCompare(b.scheduledDate))[0];
   const keptOrdered = [...kept].sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.id.localeCompare(b.id));
   for (const row of keptOrdered) {
+    if (validCatchUp(row.catchUp) && row.catchUp.fromDate < weekStart) continue;
     const slot = nearest(row.scheduledDate, (x) => x.templateId === row.templateId)
-      ?? (isTest(row.templateId) ? nearest(row.scheduledDate, (x) => idHasRole(x.templateId, 'hard_run', templates)) : undefined);
+      ?? (isTest(row.templateId)
+        ? nearest(row.scheduledDate, (x) => idHasRole(x.templateId, 'hard_run', templates))
+        : slots.some((x) => x.templateId === row.templateId) ? undefined
+          : nearest(row.scheduledDate, (x) => patternSlotOf(x.templateId) === patternSlotOf(row.templateId)));
     if (slot) taken.add(slot);
   }
 
@@ -194,9 +205,11 @@ export const REPLAN_TITLE = 'Week opnieuw plannen';
 export const REPLAN_NO_CHANGE = 'Je week staat al zoals het plan hem maakt.';
 const REPLAN_YOURS = 'Ook wat je zelf verplaatste gaat terug naar het plan.';
 
-export function replanSummary(opts: { changes: number; testMove?: { name: string; toLabel: string }; caughtUp?: string[]; nextWeek?: boolean }): string | undefined {
+// De zin over wat je zelf verplaatste staat er alleen als er echt iets van jou teruggaat (`yours`,
+// storage/weekReplan.ts#hadYours); anders klopt de kop niet met de lijst eronder (I-88).
+export function replanSummary(opts: { changes: number; yours?: boolean; testMove?: { name: string; toLabel: string }; caughtUp?: string[]; nextWeek?: boolean }): string | undefined {
   if (opts.changes === 0) return undefined;
-  const parts = [`De rest van deze week gaat terug naar hoe het plan hem maakt, vanaf vandaag. ${REPLAN_YOURS}`];
+  const parts = [`De rest van deze week gaat terug naar hoe het plan hem maakt, vanaf vandaag.${opts.yours ? ` ${REPLAN_YOURS}` : ''}`];
   const caught = opts.caughtUp ?? [];
   if (caught.length > 0) parts.push(`Dat geldt ook voor wat je inhaalde: ${caught.length === 1 ? caught[0] : `${caught.slice(0, -1).join(', ')} en ${caught.at(-1)}`}.`);
   if (opts.testMove) parts.push(`${opts.testMove.name} blijft in de week en gaat naar ${opts.testMove.toLabel}: daar past hij beter.`);

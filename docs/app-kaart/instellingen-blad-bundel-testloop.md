@@ -31,3 +31,6 @@ Telt niet
 [knop: Melden op een testdag]
 Melden op een testdag
 [knop: Uitleg: Melden op een testdag]
+[knop: Korte test]
+Korte test
+[knop: Uitleg: Korte test]

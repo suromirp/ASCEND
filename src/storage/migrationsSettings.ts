@@ -10,6 +10,7 @@ import { isRecord } from '../utils/guards';
 import type { ExternalActivity } from '../engine/activityImport';
 import type { HealthConnectErrorKind, HealthKind, HealthRoundFound } from '../models/healthConnect';
 import type { HealthConnectState } from './healthConnect';
+import type { ShortTestSeries } from '../models/shortTest';
 
 // --- terugknop en hervatten (optionele instellingen) ---------------------------
 // `settings.tabBack` en `settings.resumeMinutes` (engine/navigationSettings.ts)
@@ -143,4 +144,20 @@ export function migrateHealthConnectState(raw: unknown): HealthConnectState {
     ...(lastRound ? { lastRound } : {}),
     activities,
   };
+}
+
+// --- de korte test (2026-11-18) -------------------------------------------------------------------
+// `settings.shortTestSeries` (engine/shortTest.ts): je antwoord op het voorstel, met het vaste testtempo.
+// Optioneel en additief: een back-up van ervoor heeft het niet en krijgt later het voorstel. Staat er iets,
+// dan blijft het alleen heel: een bekend antwoord, een dag, en bij Akkoord een tempo tussen 2:30 en 15:00
+// per km. Anders valt het weg en wordt het geteld; het voorstel komt dan opnieuw.
+export function migrateShortTestSeries(raw: unknown): { value: ShortTestSeries | undefined; skipped: number } {
+  if (raw === undefined || raw === null) return { value: undefined, skipped: 0 };
+  if (!isRecord(raw)) return { value: undefined, skipped: 1 };
+  const date = typeof raw.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.date.slice(0, 10)) ? raw.date.slice(0, 10) : undefined;
+  if (!date || (raw.answer !== 'accepted' && raw.answer !== 'declined')) return { value: undefined, skipped: 1 };
+  if (raw.answer === 'declined') return { value: { answer: 'declined', date }, skipped: 0 };
+  const pace = raw.paceSecKm;
+  if (typeof pace !== 'number' || !Number.isFinite(pace) || pace < 150 || pace > 900) return { value: undefined, skipped: 1 };
+  return { value: { answer: 'accepted', date, paceSecKm: Math.round(pace) }, skipped: 0 };
 }

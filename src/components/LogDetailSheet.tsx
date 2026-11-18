@@ -20,6 +20,8 @@ import { useAppData } from '../state/AppDataContext';
 import { SportFeltBlock } from './sports/SportFeltBlock';
 import { TestVerdictCard } from './TestVerdictCard';
 import { ZoneUpdateCard } from './ZoneUpdateCard';
+import { ShortTestCard } from './ShortTestCard';
+import { SHORT_TEST_RUN_ID } from '../engine/shortTest';
 import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
 import { ensureBestEffort, ensureOutcomeText, ensureRunDetail, type EnsureOutcome } from '../storage/activityDetail';
 import { wantsBestEffort } from '../engine/testJudgment';
@@ -259,6 +261,8 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
           <SportFeltBlock log={log} />
 
           {log.templateId === TEST_TEMPLATE_ID && <div className="mt-3"><TestVerdictCard logId={log.id} /><ZoneUpdateCard logId={log.id} /></div>}
+          {/* De korte test in een rustige loop (engine/shortTest.ts): alleen als er een in zat. */}
+          {log.templateId === SHORT_TEST_RUN_ID && <ShortTestCard logId={log.id} />}
 
           {ensureOutcome && (ensureOutcome === 'no-series' || ensureOutcome === 'failed' || ensureOutcome === 'timeout') && !hasRunDetail && (
             <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{ensureOutcomeText(ensureOutcome)}</p>

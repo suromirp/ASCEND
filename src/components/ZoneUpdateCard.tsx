@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { StreamSet } from '../models/activityDetail';
 import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions } from '../engine/testJudgment';
-import { recordStrapWorn, recordZoneAnswer, thresholdLogIds, zoneNotice, zoneOffer } from '../engine/zoneUpdate';
+import { recordStrapWorn, recordZoneAnswer, thresholdLogIds, zoneNotice, zoneOffer, zoneSteady } from '../engine/zoneUpdate';
 import { resolveLthrFactor, resolveNoStrapTest } from '../engine/thresholdEstimate';
 import { streamsForLogs } from '../storage/testStreams';
 import { todayISO } from '../utils/dates';
@@ -53,6 +53,7 @@ export function ZoneUpdateCard({ logId }: { logId: string }) {
   const reading = streams?.ids !== ids && attempt > 0 && isLatest;
   const offer = useMemo(() => (ready ? zoneOffer(args) : undefined), [ready, args]);
   const notice = useMemo(() => (ready && !offer ? zoneNotice(args) : undefined), [ready, offer, args]);
+  const steady = useMemo(() => (ready && !offer && !notice ? zoneSteady(args) : undefined), [ready, offer, notice, args]);
   const accepted = settings.zoneAnswers?.find((a) => a.logId === logId && a.answer === 'accepted' && a.lthrTo === settings.heartRate?.lthr);
   const dim = { color: 'var(--color-ink-dim)' };
   const ink = { color: 'var(--color-ink)' };
@@ -107,6 +108,7 @@ export function ZoneUpdateCard({ logId }: { logId: string }) {
       </div>
     );
   }
+  if (!offer && steady) return <p className="mt-3 text-xs leading-relaxed" style={dim} role="status">{steady.line}</p>;
   if (!offer) return null;
 
   const answer = (kind: 'accepted' | 'declined') => {

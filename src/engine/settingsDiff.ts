@@ -340,6 +340,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('drempel-uit-test', 'Drempel uit je test', 'planning', 'lthrFactor', 'careful', 'drempelUitTest'),
   choice('test-zonder-band', 'Test zonder borstband', 'planning', 'noStrapTest', 'skip', 'testZonderBand'),
   flag('test-klaar-melden', 'Melden op een testdag', 'planning', 'testReadyLine'),
+  flag('korte-test', 'Korte test', 'planning', 'shortTest'),
   flag('korte-nacht', 'Vragen bij een korte nacht', 'vandaag', 'askShortNight'),
   overviewFlag('weekterugblik', 'Weekterugblik', 'weekReview'),
   overviewSpec('weekterugblik-dag', 'Dag van de terugblik', 'weekReviewDay', (v: string) => choiceShort('terugblikDag', v)),
@@ -436,6 +437,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('horloge-gedaan-weghalen', 'Gedane trainingen weghalen', 'koppelingen', 'watchRemoveDone'),
   flag('horloge-eigen-workout', 'Eigen workout bij een andere manier', 'koppelingen', 'watchPlaceWorkout'),
   flag('horloge-wandel-hartslag', 'Hartslag bij wandelen', 'koppelingen', 'watchWalkBpm'),
+  flag('korte-test-horloge', 'Korte test als workout', 'koppelingen', 'shortTestWatch'),
   {
     id: 'horloge-status', title: 'Status van het versturen', page: 'koppelingen',
     differs: (s) => s.showWatchStatus === false || s.showWatchStatusOnWeek === false,

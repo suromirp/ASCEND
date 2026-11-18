@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { migrateStrapWorn, migrateZoneAnswers } from './migrations';
+import { migrateShortTestSeries, migrateStrapWorn, migrateZoneAnswers } from './migrations';
 import { cleanSettings } from './backupClean';
 import { MAX_ZONE_ANSWERS } from '../models/zoneAnswer';
 
@@ -61,6 +61,23 @@ describe('cleanSettings: de nieuwe sleutels van de drempel', () => {
     const skipped = { n: 0 };
     const out = cleanSettings({ lthrFactor: 1, noStrapTest: 'soms' }, skipped);
     expect([out?.lthrFactor, out?.noStrapTest, skipped.n]).toEqual([undefined, undefined, 2]);
+  });
+
+  it('de korte test: shortTest en shortTestWatch alleen waar of onwaar, de reeks alleen heel', () => {
+    const fine = { n: 0 };
+    const ok = cleanSettings({ shortTest: false, shortTestWatch: false, shortTestSeries: { answer: 'accepted', date: '2026-11-18', paceSecKm: 320.4 } }, fine);
+    expect([ok?.shortTest, ok?.shortTestWatch, ok?.shortTestSeries, fine.n]).toEqual([false, false, { answer: 'accepted', date: '2026-11-18', paceSecKm: 320 }, 0]);
+    const bad = { n: 0 };
+    const out = cleanSettings({ shortTest: 'ja', shortTestSeries: { answer: 'accepted', date: '2026-11-18' } }, bad);
+    expect([out?.shortTest, out?.shortTestSeries, bad.n]).toEqual([undefined, undefined, 2]);
+  });
+
+  it('de reeks van de korte test: een oudere back-up zonder reeks blijft zoals hij was', () => {
+    expect(migrateShortTestSeries(undefined)).toEqual({ value: undefined, skipped: 0 });
+    expect(migrateShortTestSeries({ answer: 'declined', date: '2026-11-18T10:00:00Z', paceSecKm: 'x' })).toEqual({ value: { answer: 'declined', date: '2026-11-18' }, skipped: 0 });
+    expect(migrateShortTestSeries({ answer: 'misschien', date: '2026-11-18' })).toEqual({ value: undefined, skipped: 1 });
+    expect(migrateShortTestSeries({ answer: 'accepted', date: '2026-11-18', paceSecKm: 40 })).toEqual({ value: undefined, skipped: 1 });
+    expect(migrateShortTestSeries('aan')).toEqual({ value: undefined, skipped: 1 });
   });
 
   it('testReadyLine: alleen waar of onwaar', () => {

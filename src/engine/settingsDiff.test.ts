@@ -92,6 +92,8 @@ const everything: AppSettings = {
   lthrFactor: 'friel',
   noStrapTest: 'margin',
   testReadyLine: false,
+  shortTest: false,
+  shortTestWatch: false,
   shorterToday: 'volume',
   zonesAfterTest: false,
   readinessWeighting: 'equal',

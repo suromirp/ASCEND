@@ -13,6 +13,7 @@ import { watchHrPlanFromSettings } from '../engine/watchHeartRate';
 import { walkHrFromSettings } from '../engine/walkHeartRate';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { todayISO } from '../utils/dates';
+import { watchShortTest } from '../engine/shortTest';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { useTrainingPlaces } from './useTrainingPlaces';
 
@@ -32,7 +33,7 @@ async function readSnapshot(): Promise<Snapshot | null> {
 }
 
 export function useWatchStatuses(): { statusOf: (session: PlannedSession, template: SessionTemplate) => WatchStatus; ready: boolean; reload: () => Promise<void> } {
-  const { sessionLogs, program, settings } = useAppData();
+  const { sessionLogs, plannedSessions, program, settings } = useAppData();
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   // De keuze Waar train je? per training: dezelfde die het versturen leest, anders klopt de stand niet.
   const places = useTrainingPlaces();
@@ -59,6 +60,9 @@ export function useWatchStatuses(): { statusOf: (session: PlannedSession, templa
 
   const paces = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces, [sessionLogs, settings]);
   const logged = useMemo(() => new Set(sessionLogs.map((l) => l.plannedSessionId).filter((id): id is string => !!id)), [sessionLogs]);
+  // De korte test: dezelfde regel als het versturen (storage/watchWorkouts.ts), anders klopt de stand niet.
+  const today = todayISO();
+  const shortTest = useMemo(() => watchShortTest(settings, plannedSessions, { today, logged }), [settings, plannedSessions, today, logged]);
 
   const statusOf = useCallback(
     (session: PlannedSession, template: SessionTemplate): WatchStatus => {
@@ -77,10 +81,11 @@ export function useWatchStatuses(): { statusOf: (session: PlannedSession, templa
         places,
         placeWorkout: settings.watchPlaceWorkout,
         walkHr: walkHrFromSettings(settings),
+        ...(shortTest ? { shortTest } : {}),
         logged,
       });
     },
-    [snapshot, program, paces, logged, settings, places],
+    [snapshot, program, paces, logged, settings, places, shortTest],
   );
 
   return { statusOf, ready: snapshot !== null, reload };

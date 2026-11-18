@@ -156,6 +156,79 @@ describe('replanWeek', () => {
     const findings = validateWeeks({ sessions: settled, logs: doneLogs, templates, today: TODAY, restDay: 1, program }, new Set([MON]));
     expect(findings.filter((f) => f.rule === 'ONE-LONG' || f.rule === 'LEG-SPACING')).toEqual([]);
   });
+
+  // I-88, nagemaakt: de week van maandag 16 november, vandaag woensdag 18. De lange duurloop van za 14 is
+  // zelf ingehaald op di 17, een vakantie schoof Heuvelsprints en afdalen naar vr 20 en Bovenlichaam B naar
+  // za 21, de lange duurloop van deze week staat op zo 22. Het patroon heeft op zaterdag de heuvelintervallen.
+  it('een ingehaalde training van vorige week en een verschoven zaterdagvariant maken geen dubbele heuvels', () => {
+    const W = '2026-11-16';
+    const e = (i: number) => `2026-11-${16 + i}`;
+    const row = (id: string, templateId: string, date: string, extra: Partial<PlannedSession> = {}): PlannedSession => ({ ...s(id, templateId, date, extra), weekStartDate: W });
+    const pattern = [
+      row('p1', 'tpl_lower_a', e(0)), row('p2', 'tpl_easy_run', e(1)), row('p3', 'tpl_tempo_run', e(2)),
+      row('p4', 'tpl_upper_a', e(3)), row('p5', 'tpl_upper_b', e(4)), row('p6', 'tpl_hill_intervals', e(5)), row('p7', 'tpl_long_run', e(6)),
+    ];
+    const leave = (from: string) => ({ periodId: 'v1', role: 'moved', from }) as never;
+    const rows = [
+      row('lower', 'tpl_lower_a', e(0)),
+      row('longCatch', 'tpl_long_run', e(1), { lock: yours, catchUp: { fromId: 'longPrev', fromDate: '2026-11-14' } }),
+      row('tempo', 'tpl_tempo_run', e(2)),
+      row('upperA', 'tpl_upper_a', e(3)),
+      row('hills', 'tpl_hills_descent', e(4), { status: 'moved', movedFromDate: e(5), leave: leave(e(5)) }),
+      row('upperB', 'tpl_upper_b', e(5), { status: 'moved', movedFromDate: e(4), leave: leave(e(4)) }),
+      row('long', 'tpl_long_run', e(6)),
+    ];
+    const out = replanWeek({ sessions: rows, fresh: pattern, weekStart: W, today: e(2), logs: [log('lower', 'tpl_lower_a', e(0)), log('longCatch', 'tpl_long_run', e(1))], templates }).sessions;
+    const openRows = out.filter((x) => x.scheduledDate >= e(2) && x.status !== 'skipped');
+    // Elke training uit het patroon één keer: de verschoven heuvels tellen als de zaterdag.
+    expect(openRows.filter((x) => ['tpl_hill_intervals', 'tpl_hills_descent'].includes(x.templateId)).map((x) => x.id)).toEqual(['hills']);
+    // De lange duurloop van deze week blijft; de inhaal van vorige week neemt zijn plek niet in.
+    expect(openRows.filter((x) => x.templateId === 'tpl_long_run').map((x) => x.id)).toEqual(['long']);
+    // Er verandert niets: wat er staat is al het plan.
+    expect(weekDiff(rows, out, W)).toMatchObject({ writes: [], removedIds: [] });
+  });
+
+  // I-88 met het patroon zoals patternSessions het maakt: maandag rust, di bovenlichaam A, wo benen, rustig op
+  // donderdag, vr bovenlichaam B, heuvels op zaterdag, lang op zondag. Vandaag woensdag 18.
+  it('met het echte patroon: de verschoven heuvels en de inhaal van vorige week geven geen extra rij', () => {
+    const W = '2026-11-16';
+    const e = (i: number) => `2026-11-${16 + i}`;
+    const row = (id: string, templateId: string, date: string, extra: Partial<PlannedSession> = {}): PlannedSession => ({ ...s(id, templateId, date, extra), weekStartDate: W });
+    const pattern = [
+      row('p2', 'tpl_upper_a', e(1)), row('p3', 'tpl_lower_a', e(2)), row('p4', 'tpl_easy_run', e(3)),
+      row('p5', 'tpl_upper_b', e(4)), row('p6', 'tpl_hill_intervals', e(5)), row('p7', 'tpl_long_run', e(6)),
+    ];
+    const leave = (from: string) => ({ periodId: 'v1', role: 'moved', from }) as never;
+    const rows = [
+      row('longCatch', 'tpl_long_run', e(1), { lock: yours, catchUp: { fromId: 'longPrev', fromDate: '2026-11-14' } }),
+      row('upperA', 'tpl_upper_a', e(1)),
+      row('lower', 'tpl_lower_a', e(2)),
+      row('easy', 'tpl_easy_run', e(3)),
+      row('hills', 'tpl_hills_descent', e(4), { status: 'moved', movedFromDate: e(5), leave: leave(e(5)) }),
+      row('upperB', 'tpl_upper_b', e(5), { status: 'moved', movedFromDate: e(4), leave: leave(e(4)) }),
+      row('long', 'tpl_long_run', e(6)),
+    ];
+    const out = replanWeek({ sessions: rows, fresh: pattern, weekStart: W, today: e(2), logs: [log('longCatch', 'tpl_long_run', e(1))], templates }).sessions;
+    expect(weekDiff(rows, out, W)).toMatchObject({ writes: [], removedIds: [] });
+    expect(out.filter((x) => x.scheduledDate >= e(2)).map((x) => x.id).sort()).toEqual(['easy', 'hills', 'long', 'lower', 'upperB']);
+  });
+
+  // Warden: rustig en tempo delen één patroonplek. De rustige van dinsdag is op woensdag ingehaald en gelogd,
+  // het tempo van woensdag staat nog open: het tempo blijft.
+  it('een ingehaalde rustige loop neemt nooit de plek van het tempo in', () => {
+    const rows = [
+      s('lower', 'tpl_lower_a', d(0)),
+      s('easyOld', 'tpl_easy_run', d(1), { status: 'skipped', lock: yours }),
+      s('easyNew', 'tpl_easy_run', d(2), { lock: yours, catchUp: { fromId: 'easyOld', fromDate: d(1) } }),
+      s('tempo', 'tpl_tempo_run', d(2)),
+      s('upper', 'tpl_upper_a', d(3)),
+      s('hills', 'tpl_hill_intervals', d(5)),
+      s('long', 'tpl_long_run', d(6)),
+    ];
+    const out = run(rows, { logs: [log('lower', 'tpl_lower_a', d(0)), log('easyNew', 'tpl_easy_run', d(2))] }).sessions;
+    expect(out.filter((x) => x.templateId === 'tpl_tempo_run' && x.status !== 'skipped').map((x) => x.id)).toEqual(['tempo']);
+    expect(weekDiff(rows, out, MON).removedIds).toEqual([]);
+  });
 });
 
 describe('weekDiff', () => {
@@ -191,8 +264,10 @@ describe('betterTestDay', () => {
 });
 
 describe('replanSummary', () => {
-  it('zegt dat ook wat je zelf verplaatste teruggaat, en niets zonder verschil', () => {
-    expect(replanSummary({ changes: 2 })).toContain('Ook wat je zelf verplaatste gaat terug naar het plan.');
+  it('zegt dat ook wat je zelf verplaatste teruggaat alleen als dat zo is, en niets zonder verschil', () => {
+    expect(replanSummary({ changes: 2, yours: true })).toContain('Ook wat je zelf verplaatste gaat terug naar het plan.');
+    expect(replanSummary({ changes: 2 })).not.toContain('zelf verplaatste');
+    expect(replanSummary({ changes: 2, yours: false })).toBe('De rest van deze week gaat terug naar hoe het plan hem maakt, vanaf vandaag.');
     expect(replanSummary({ changes: 0 })).toBeUndefined();
     expect(replanSummary({ changes: 1, caughtUp: ['Bovenlichaam A'] })).toContain('Dat geldt ook voor wat je inhaalde: Bovenlichaam A.');
     expect(replanSummary({ changes: 1, nextWeek: true })).toContain('week erna');

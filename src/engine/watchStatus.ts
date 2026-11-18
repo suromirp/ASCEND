@@ -65,13 +65,15 @@ export interface WatchStatusContext {
   placeWorkout?: boolean;
   // The same heart rate for a walking workout the send uses (engine/walkHeartRate.ts), or the fingerprint differs.
   walkHr?: HeartRateSettings;
+  // The same short test the send uses (engine/shortTest.ts#watchShortTest), or the fingerprint differs.
+  shortTest?: { ids: ReadonlySet<string>; paceSecKm: number };
   // The ids of planned sessions that have a log.
   logged: Set<string>;
 }
 
 export function watchStatusFor(session: PlannedSession, template: SessionTemplate, ctx: WatchStatusContext): WatchStatus {
   if (session.status === 'skipped' || ctx.logged.has(session.id) || session.scheduledDate < ctx.today) return { kind: 'none' };
-  const workout = buildWatchWorkout(session, template, ctx.program, ctx.paces, { namePrefix: ctx.namePrefix, hr: ctx.hr, places: ctx.places, placeWorkout: ctx.placeWorkout, walkHr: ctx.walkHr });
+  const workout = buildWatchWorkout(session, template, ctx.program, ctx.paces, { namePrefix: ctx.namePrefix, hr: ctx.hr, places: ctx.places, placeWorkout: ctx.placeWorkout, walkHr: ctx.walkHr, ...(ctx.shortTest ? { shortTest: ctx.shortTest } : {}) });
   if (!workout) return { kind: 'none' };
   if (!ctx.linked) return { kind: 'unlinked' };
 

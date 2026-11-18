@@ -41,6 +41,9 @@
 //   the steps instead (engine/walkHeartRate.ts, docs/beslissingen/2026-11-15-wandelen-vaste-bpm.md).
 // - The 5 km test is sent as warm-up, "5km" without a target and cool-down:
 //   a test is run by feel and a beep on a "target" would spoil it.
+// - The short test (engine/shortTest.ts, only after Akkoord and with "Korte test als workout" on): the easy
+//   run of that day goes as warm-up, the test on pace, one minute standing still and the rest of the run
+//   WITHOUT a target. The whole workout is then a pace workout, never heart rate and pace mixed.
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
@@ -55,6 +58,8 @@ import { placeBrief } from '../data/placeBrief';
 import type { HeartRateSettings } from './heartRateZones';
 import { walkBpm, walkBpmText } from './walkHeartRate';
 import { stringHashKey } from '../utils/stringHash';
+import { SHORT_TEST_RUN_ID, shortTestFits } from './shortTest';
+import { SHORT_TEST_RULES } from './shortTestRules';
 
 export const WATCH_EXTERNAL_PREFIX = 'ascend:';
 // intervals.icu sends about the next 7 days to the watch, so that is as far
@@ -88,6 +93,9 @@ export interface WatchBuildOptions {
   // is on. A walking workout (Walk or Hike) then gets no zone target on a step, and a line with fixed beats per
   // minute from your running zones above the steps. Absent = the walking workout as before.
   walkHr?: HeartRateSettings;
+  // The short test (engine/shortTest.ts#shortTestSessionIds): the planned easy runs that carry it and the fixed
+  // pace of the series. Absent = every easy run as before.
+  shortTest?: { ids: ReadonlySet<string>; paceSecKm: number };
 }
 
 export type WatchSport = 'Run' | 'Walk' | 'Hike' | 'Ride';
@@ -203,6 +211,21 @@ function intervalsWorkoutText(plan: WorkoutPlan, template: SessionTemplate, pace
   return { text: blocks.join('\n\n'), target };
 }
 
+// The easy run with the short test in front: warm-up, the test on pace (two percent either way), one minute
+// standing still and the rest of the run without a target. One kind of target for the whole workout: pace.
+function shortTestWorkoutText(totalSec: number, paceSecKm: number): WorkoutText {
+  const r = SHORT_TEST_RULES;
+  const band = { fast: paceSecKm * (1 - r.paceTolerance), slow: paceSecKm * (1 + r.paceTolerance) };
+  const rest = totalSec - r.warmupSec - r.testSec - r.standSec;
+  const blocks = [
+    `Warming-up\n- Inlopen ${formatStepDuration(r.warmupSec)}`,
+    `- Korte test ${formatStepDuration(r.testSec)} ${paceTarget(band)}`,
+    `- Stilstaan ${formatStepDuration(r.standSec)}`,
+    `- Hardlopen ${formatStepDuration(rest)}`,
+  ];
+  return { text: blocks.join('\n\n'), target: 'PACE' };
+}
+
 // The sport of the workout ASCEND sends for this training; the Briefing compares it with the chosen way of
 // training (engine/briefing.ts#watchPlaceLine).
 export function watchSportOf(template: SessionTemplate): WatchSport | undefined {
@@ -308,14 +331,18 @@ export function buildWatchWorkout(
   const walking = type === 'Walk' || type === 'Hike';
   const bpm = walking ? walkBpm(plan, options.walkHr) : undefined;
   const bpmLine = bpm ? walkBpmText(bpm) : undefined;
-  const built = intervalsWorkoutText(plan, template, place ? undefined : paces, type === 'Run' ? options.hr : walking && options.walkHr ? 'none' : undefined);
+  const planSec = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
+  const shortTest = !place && type === 'Run' && template.id === SHORT_TEST_RUN_ID && options.shortTest?.ids.has(session.id) && shortTestFits(planSec / 60) ? options.shortTest : undefined;
+  const built = shortTest
+    ? shortTestWorkoutText(planSec, shortTest.paceSecKm)
+    : intervalsWorkoutText(plan, template, place ? undefined : paces, type === 'Run' ? options.hr : walking && options.walkHr ? 'none' : undefined);
   const target = built.target;
   const prefix = WATCH_NAME_PREFIXES[options.namePrefix ?? DEFAULT_WATCH_NAME_PREFIX];
   const marked = options.namePrefix !== 'none';
   const note = [place ? walkingNote(plan, template.id, place) : undefined, bpmLine].filter(Boolean).join(' ');
   const steps = note ? `${note}\n\n${built.text}` : built.text;
   const text = marked ? `Gepland door ASCEND voor ${formatWeekdayDayMonthNL(session.scheduledDate)}\n\n${steps}` : steps;
-  const movingTimeSec = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
+  const movingTimeSec = planSec;
   const base0 = { plannedId: session.id, externalId: externalIdFor(session.id), date: session.scheduledDate, name: `${prefix}${template.name}`, type, description: text, movingTimeSec, target };
   return { ...base0, fingerprint: fingerprintOf(JSON.stringify([base0.date, base0.name, base0.type, base0.description, base0.movingTimeSec, base0.target])) };
 }

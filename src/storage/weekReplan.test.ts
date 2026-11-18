@@ -192,3 +192,44 @@ describe('Week opnieuw plannen', () => {
     expect(applyPlanChangeItems(proposal.items, proposal.stored).unsupported).toEqual([]);
   });
 });
+
+// I-88, nagemaakt: de week van maandag 16 november, vandaag woensdag 18. De lange duurloop van za 14 is zelf
+// ingehaald op di 17 en gelogd; een vakantie schoof de heuvels (Heuvelsprints en afdalen) naar vr 20 en
+// Bovenlichaam B naar za 21. Opnieuw plannen geeft geen extra heuvels en laat de lange duurloop van zo 22 staan.
+describe('Week opnieuw plannen na een inhaal en een vakantie (I-88)', () => {
+  const NOW = '2026-11-18';
+  const W = '2026-11-16';
+  const inW = (s: PlannedSession) => s.scheduledDate >= W && s.scheduledDate <= '2026-11-22';
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(`${NOW}T08:00:00`));
+    await wipeAllData();
+    await seedIfEmpty();
+    await runBootMigrations({ build: 'test-replan-i88' });
+    const g0 = (await TrainingGoalsRepo.getAll())[0];
+    await TrainingGoalsRepo.put({ ...g0, status: 'active', targetDate: '2027-08-01' } as TrainingGoal);
+    await syncProgramHorizon();
+    await syncProgramHorizon();
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('geen tweede heuvelsessie en de lange duurloop blijft', async () => {
+    const rows = (await PlannedSessionsRepo.getAll()).filter(inW);
+    const hills = rows.find((s) => s.templateId === 'tpl_hill_intervals' && s.scheduledDate === '2026-11-21')!;
+    const upperB = rows.find((s) => s.templateId === 'tpl_upper_b' && s.scheduledDate === '2026-11-20')!;
+    const long = rows.find((s) => s.templateId === 'tpl_long_run' && s.scheduledDate === '2026-11-22')!;
+    expect(hills && upperB && long).toBeTruthy();
+    const leave = (from: string) => ({ periodId: 'v1', role: 'moved', from }) as never;
+    await PlannedSessionsRepo.put({ ...hills, templateId: 'tpl_hills_descent', scheduledDate: '2026-11-20', status: 'moved', movedFromDate: '2026-11-21', leave: leave('2026-11-21') });
+    await PlannedSessionsRepo.put({ ...upperB, scheduledDate: '2026-11-21', status: 'moved', movedFromDate: '2026-11-20', leave: leave('2026-11-20') });
+    await PlannedSessionsRepo.put({ id: 'longCatch', templateId: 'tpl_long_run', scheduledDate: '2026-11-17', weekStartDate: W, status: 'planned', order: 0, lock: { by: 'user', at: '2026-11-15T08:00:00.000Z' }, catchUp: { fromId: 'longPrev', fromDate: '2026-11-14' } });
+    await SessionLogsRepo.put({ id: 'logLong', plannedSessionId: 'longCatch', templateId: 'tpl_long_run', type: 'cardio', completedDate: '2026-11-17', variant: 'full', durationMinutes: 75 } as SessionLog);
+    const proposal = (await planWeekReplan(W))!;
+    const open = proposal.after.filter((s) => inW(s) && s.scheduledDate >= NOW && s.status !== 'skipped');
+    expect(open.filter((s) => ['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_intervals'].includes(s.templateId)).map((s) => s.id)).toEqual([hills.id]);
+    expect(open.filter((s) => s.templateId === 'tpl_long_run').map((s) => s.id)).toEqual([long.id]);
+    expect(proposal.diff.addedIds).toEqual([]);
+    expect(proposal.diff.removedIds).toEqual([]);
+    expect(proposal.hadYours).toBe(false);
+  });
+});

@@ -106,6 +106,15 @@ export const KOPPELINGEN_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'geen getallen, je wandelt op gevoel zoals voorheen.' },
     ],
   },
+  'korte-test-horloge': {
+    title: 'Korte test als workout',
+    lead: 'Op de dag van je korte test gaat je rustige loop als tempoworkout naar je horloge.',
+    points: [
+      { head: 'Wat je ziet', text: '10 minuten inlopen, 4 minuten op je testtempo, 1 minuut stilstaan en de rest van je loop zonder doel.' },
+      { head: 'Waarom zonder doel', text: 'een workout stuurt op tempo of op hartslag, nooit allebei. De test gaat op tempo, dus de rest loop je op gevoel.' },
+      { head: 'Uit', text: 'je rustige loop blijft op je horloge zoals hij was; de test doe je dan zelf, met het blok in de Briefing.' },
+    ],
+  },
   'horloge-gedaan-weghalen': {
     title: 'Gedane trainingen weghalen',
     lead: 'Een training die je deed of oversloeg, verdwijnt weer uit je agenda.',
