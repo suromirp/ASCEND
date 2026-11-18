@@ -321,7 +321,7 @@ describe('stille weg naar "Niet goed gemeten"', () => {
   });
 
   it('de vraag bij een stille nacht zegt geen "maar"', () => {
-    expect(nightQuestionText(245, true)).toBe('Je horloge zag 4 u 5 slaap. Klopt dat niet met hoe je sliep?');
+    expect(nightQuestionText(245, true)).toBe('Je horloge zag 4 u 5 slaap. Was het meer?');
     expect(nightQuestionText(190)).toBe('Je horloge zag maar 3 u 10 slaap. Klopt dat?');
   });
 

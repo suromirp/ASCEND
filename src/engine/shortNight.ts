@@ -37,7 +37,7 @@ export function shortSleepLabel(minutes: number): string {
 
 export function nightQuestionText(minutes: number, quiet = false): string {
   // Zelf gevraagd bij een gewone nacht: geen "maar", want de app twijfelde niet.
-  if (quiet) return `Je horloge zag ${shortSleepLabel(minutes)} slaap. Klopt dat niet met hoe je sliep?`;
+  if (quiet) return `Je horloge zag ${shortSleepLabel(minutes)} slaap. Was het meer?`;
   return `Je horloge zag maar ${shortSleepLabel(minutes)} slaap. Klopt dat?`;
 }
 
