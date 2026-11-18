@@ -105,6 +105,15 @@ export function shortTestSessionIds(sessions: readonly PlannedSession[], series:
   return out;
 }
 
+// De rustige loop die de test als eerste krijgt na Akkoord van vandaag: dezelfde keuze als shortTestSessionIds
+// met een reeks die vandaag begint. Undefined zonder rustige loop vanaf vandaag.
+export function nextShortTestRun(sessions: readonly PlannedSession[], paceSecKm: number, done: ShortTestDone): PlannedSession | undefined {
+  const ids = shortTestSessionIds(sessions, { answer: 'accepted', date: done.today, paceSecKm }, true, done);
+  let next: PlannedSession | undefined;
+  for (const s of sessions) if (ids.has(s.id) && (!next || startsBefore(s, next) < 0)) next = s;
+  return next;
+}
+
 // Wat naar het horloge gaat (WatchBuildOptions.shortTest): dezelfde regel voor het versturen
 // (storage/watchWorkouts.ts) en voor de stand op het horloge (components/useWatchStatus.ts), anders blijft
 // een verstuurde loop op "Wijziging nog niet verstuurd" staan. Undefined zonder Akkoord of met
@@ -169,7 +178,10 @@ export function shortTestBriefing(input: {
   }
   if (session.scheduledDate < input.today || session.status === 'skipped') return undefined;
   const offer = shortTestOffer({ on: input.on, series: input.series, paces: input.paces });
-  return offer ? { kind: 'offer', offer } : undefined;
+  if (!offer) return undefined;
+  // Alleen op de loop die na Akkoord van vandaag als eerste de test krijgt, anders geeft Akkoord op een latere
+  // loop de test aan een eerdere (Pathfinder, 18 november).
+  return nextShortTestRun(input.sessions, offer.paceSecKm, { today: input.today, logged: input.logged })?.id === session.id ? { kind: 'offer', offer } : undefined;
 }
 
 // --- het teststuk in de reeks -------------------------------------------------------------------

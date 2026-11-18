@@ -34,7 +34,11 @@ Hoe het werkt:
 
 - Elke loop met het sjabloon rustige loop kan als test tellen, ook een losse horlogeloop zonder vaste plek; later alleen lopen uit `shortTestSessionIds` laten meetellen voor het midden (review Warden 18 november).
 - Een import met een onmogelijke of verre datum in `shortTestSeries` wordt aangenomen; later een echte datum eisen, niet later dan vandaag (`storage/migrationsSettings.ts`).
-- Met de fiets als manier voor de rustige loop toont de Briefing geen blok, maar het horloge krijgt wel de tempoworkout met de test: `buildWatchWorkout` moet dezelfde `shortTestWay` toetsen (herkeuring Warden 18 november). Ook: een los horlogelog telt niet als gedaan, en de eerste loop van de week wordt gekozen zonder naar duur of manier te kijken.
+- Een los horlogelog telt niet als gedaan, en de eerste loop van de week wordt gekozen zonder naar duur of manier te kijken: is dat een loop op de fiets of korter dan 25 minuten, dan krijgt die week geen test en staat het voorstel nergens tot die dag voorbij is.
+
+Bijgewerkt 18 november (I-91, deel 1 en 3):
+- Manier: `buildWatchWorkout` toetst nu dezelfde `shortTestWay` als de Briefing, op de manier zoals de Briefing hem leest (`resolvePlace`), ook met "Eigen workout bij een andere manier" uit. Met de fiets (buiten of binnen) krijgt het horloge de gewone rustige loop, zonder test. Getoetst per manier aan beide kanten en met status Verstuurd na versturen. Alleen de rustige loop met de test en een manier die geen hardlopen is krijgt een andere vingerafdruk; bij hardlopen (buiten, loopband, wandelen en dribbelen) blijft elke workout byte voor byte gelijk.
+- Plek van het voorstel: het voorstel staat alleen in de Briefing van de loop die na Akkoord van vandaag als eerste de test krijgt (`shortTestBriefing` via `nextShortTestRun`, dezelfde keuze als `shortTestSessionIds` met vandaag en de logs). Gekozen boven de dag noemen in de voorstelregel: het is één toets, geen nieuwe tekst, en Akkoord geeft de test dan aan de loop waar je naar kijkt.
 
 ## Bron
 

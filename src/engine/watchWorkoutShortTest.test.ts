@@ -2,10 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { racePaces } from './racePaces';
 import { buildWatchWorkout, selectWatchWorkouts } from './watchWorkout';
-import { shortTestSessionIds, watchShortTest } from './shortTest';
+import { shortTestBriefing, shortTestSessionIds, watchShortTest } from './shortTest';
 import { watchStatusFor } from './watchStatus';
 import { WATCH_DAYS } from './watchWorkout';
 import { addDays } from '../utils/dates';
+import { resolvePlace } from './trainingPlace';
 
 // De korte test op het horloge (I-79 stap 3): alleen de rustige loop met de test verandert, en die is dan
 // helemaal een tempoworkout, nooit hartslag en tempo door elkaar.
@@ -69,5 +70,47 @@ describe('de korte test op het horloge', () => {
     expect(watchStatusFor(s, tpl('tpl_easy_run'), { ...ctx, shortTest: st }).kind).toBe('sent');
     // Zonder de korte test in de stand zou hij blijvend op een wijziging wachten: dat was de fout.
     expect(watchStatusFor(s, tpl('tpl_easy_run'), ctx).kind).toBe('stale');
+  });
+
+  // Briefing en horloge lezen dezelfde voorwaarden (shortTestFits, shortTestWay): elke manier van de rustige
+  // loop aan beide kanten, ook met "Eigen workout bij een andere manier" uit (Warden, 18 november).
+  const ways: [string | undefined, boolean][] = [
+    [undefined, true], ['run_outdoor', true], ['run_treadmill', true], ['run_walk', true],
+    ['bike_outdoor', false], ['bike_indoor', false], ['stairmaster', true],
+  ];
+  for (const [way, test] of ways) {
+    for (const placeWorkout of [undefined, false]) {
+      it(`manier ${way ?? 'standaard'}${placeWorkout === false ? ', eigen workout uit' : ''}: ${test ? 'test' : 'geen test'} in Briefing en op het horloge, en na versturen sent`, () => {
+        const today = program.startDate;
+        const done = { today, logged: new Set<string>() };
+        const st = watchShortTest({ shortTestSeries: series }, plannedSessions, done)!;
+        const s = plannedSessions.find((p) => st.ids.has(p.id) && p.scheduledDate <= addDays(today, WATCH_DAYS - 1))!;
+        const places = way ? { [s.id]: way } : undefined;
+        const options = { shortTest: st, ...(places ? { places } : {}), ...(placeWorkout === false ? { placeWorkout } : {}) };
+        const sent = selectWatchWorkouts({ sessions: plannedSessions, logs: [], templates, program, paces, today, options }).find((w) => w.plannedId === s.id)!;
+        const onWatch = sent.description.includes('Korte test');
+        // De Briefing krijgt de manier zoals TrainingBriefing hem leest (engine/briefing.ts: resolvePlace); een
+        // manier die de rustige loop niet kent (StairMaster) wordt de standaard, hardlopen.
+        const brief = shortTestBriefing({ session: s, minutes: sent.movingTimeSec / 60, sessions: plannedSessions, on: true, series, paces, today, logged: done.logged, place: resolvePlace(tpl('tpl_easy_run'), way) });
+        expect(onWatch).toBe(test);
+        expect(brief?.kind === 'brief').toBe(test);
+        const items = { [s.id]: { externalId: sent.externalId, date: sent.date, fingerprint: sent.fingerprint, sentAt: `${today}T08:00:00.000Z` } };
+        const ctx = { linked: true, items, today, program, paces, logged: new Set<string>(), shortTest: st, ...(places ? { places } : {}), ...(placeWorkout === false ? { placeWorkout } : {}) };
+        expect(watchStatusFor(s, tpl('tpl_easy_run'), ctx).kind).toBe('sent');
+      });
+    }
+  }
+
+  it('alleen de rustige loop met de test en een manier die geen hardlopen is krijgt een andere vingerafdruk', () => {
+    const days = 7 * 8;
+    const today = program.startDate;
+    // Elke training op de fiets waar dat een keuze is; de rest blijft hardlopen.
+    const places = Object.fromEntries(plannedSessions.filter((p) => p.templateId === 'tpl_easy_run').map((p) => [p.id, 'bike_indoor']));
+    const plain = selectWatchWorkouts({ sessions: plannedSessions, logs: [], templates, program, paces, today, days, options: { places } });
+    const withTest = selectWatchWorkouts({ sessions: plannedSessions, logs: [], templates, program, paces, today, days, options: { places, shortTest } });
+    expect(withTest).toEqual(plain);
+    // Zonder gekozen manier krijgt de rustige loop met de test hem wel.
+    const run = selectWatchWorkouts({ sessions: plannedSessions, logs: [], templates, program, paces, today, days, options: { shortTest } });
+    expect(run.filter((w) => w.description.includes('Korte test')).length).toBe([...ids].filter((id) => run.some((w) => w.plannedId === id)).length);
   });
 });
