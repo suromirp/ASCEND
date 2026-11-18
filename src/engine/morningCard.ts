@@ -254,6 +254,34 @@ export function morningConsequence(entry: MorningCheckIn, ctx: { inputs: AdviceI
   }
 }
 
+// --- Opnieuw ophalen en teken van leven ---------------------------------------------
+
+const MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+
+// "Laatst gekeken 07:52" in de tijd van het toestel; van gisteren of eerder met de dag erbij.
+// Het laatste van de tijden telt (laatste poging of laatste geslaagde ronde). Zonder tijd: niets.
+export function lastLookedText(times: (string | undefined)[], now: Date): string | undefined {
+  const latest = times
+    .map((t) => (t ? new Date(t) : undefined))
+    .filter((d): d is Date => !!d && !Number.isNaN(d.getTime()))
+    .sort((a, b) => b.getTime() - a.getTime())[0];
+  if (!latest) return undefined;
+  const hm = `${String(latest.getHours()).padStart(2, '0')}:${String(latest.getMinutes()).padStart(2, '0')}`;
+  const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  if (sameDay(latest, now)) return `Laatst gekeken ${hm}`;
+  if (sameDay(latest, new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))) return `Laatst gekeken gisteren ${hm}`;
+  return `Laatst gekeken ${latest.getDate()} ${MONTHS[latest.getMonth()]} ${hm}`;
+}
+
+// Staat "Opnieuw ophalen" er, en wat staat eronder. De knop staat er zodra de slaap van vannacht
+// ontbreekt en er een horloge is: of er is wel iets van het horloge (reading), of het horloge is
+// gekoppeld, ook als er die ochtend helemaal niets kwam. Zonder koppeling of met slaap uit: niets.
+export function sleepFetchView(p: { reading: WellnessReading | undefined; linked: boolean; sleepOn: boolean; lookedAt: (string | undefined)[]; now: Date }): { showButton: boolean; lastLooked: string | undefined } {
+  const hasSleep = !!p.reading?.lines.some((l) => l.key === 'sleep');
+  const showButton = p.sleepOn && !hasSleep && (!!p.reading || p.linked);
+  return { showButton, lastLooked: showButton ? lastLookedText(p.lookedAt, p.now) : undefined };
+}
+
 // De compacte vraag (één rij met Klopt en Anders) staat er alleen bij een voorstel, zolang er niets bij
 // moet dat je zonder tik moet zien: de vraag over een korte nacht en de melding dat de slaap ontbreekt
 // (met Opnieuw ophalen). Dan staat de volle vraag er meteen.

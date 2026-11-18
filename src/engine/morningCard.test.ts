@@ -3,7 +3,7 @@ import type { MorningCheckIn } from '../models/checkIn';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import type { AdviceInputs } from './adviceEngine';
-import { LEG_CARD_TARGET, isCompactAsk, MORNING_CARD_UNTIL_HOUR, NOTHING_PLANNED_TEXT, legsShortText, maxEffortYesterday, morningConsequence, morningPrefill, showMorningCard, suggestLegs } from './morningCard';
+import { LEG_CARD_TARGET, isCompactAsk, MORNING_CARD_UNTIL_HOUR, NOTHING_PLANNED_TEXT, lastLookedText, legsShortText, maxEffortYesterday, morningConsequence, morningPrefill, showMorningCard, sleepFetchView, suggestLegs } from './morningCard';
 import type { SessionLog } from '../models/training';
 
 const TODAY = '2026-10-22';
@@ -214,4 +214,39 @@ describe('isCompactAsk', () => {
   });
   it('toont de korte-nachtvraag zonder tik', () => { expect(isCompactAsk({ ...base, shortNight: true })).toBe(false); });
   it('toont Opnieuw ophalen zonder tik bij ontbrekende slaap', () => { expect(isCompactAsk({ ...base, missingSleep: true })).toBe(false); });
+});
+
+describe('sleepFetchView', () => {
+  const now = new Date(2026, 10, 18, 9, 0);
+  const at = (h: number, m: number, d = 18) => new Date(2026, 10, d, h, m).toISOString();
+  const withoutSleep = { date: '2026-11-18', lines: [{ key: 'hrv' as const, label: 'HRV', value: '70 ms', short: 'HRV 70 ms', note: '', tone: 'normal' as const }] };
+  const withSleep = { date: '2026-11-18', lines: [{ key: 'sleep' as const, label: 'Slaap', value: '7 uur', short: 'slaap 7 uur', note: '', tone: 'normal' as const }] };
+
+  it('zonder enig horlogegetal maar gekoppeld: knop en laatste poging', () => {
+    const v = sleepFetchView({ reading: undefined, linked: true, sleepOn: true, lookedAt: [at(7, 40), at(7, 52)], now });
+    expect(v).toEqual({ showButton: true, lastLooked: 'Laatst gekeken 07:52' });
+  });
+
+  it('niet gekoppeld en niets: geen knop en geen regel', () => {
+    expect(sleepFetchView({ reading: undefined, linked: false, sleepOn: true, lookedAt: [at(7, 52)], now })).toEqual({ showButton: false, lastLooked: undefined });
+  });
+
+  it('slaap uit: geen knop', () => {
+    expect(sleepFetchView({ reading: undefined, linked: true, sleepOn: false, lookedAt: [at(7, 52)], now }).showButton).toBe(false);
+    expect(sleepFetchView({ reading: withoutSleep, linked: true, sleepOn: false, lookedAt: [], now }).showButton).toBe(false);
+  });
+
+  it('wel iets van het horloge maar geen slaap: knop zoals voorheen', () => {
+    expect(sleepFetchView({ reading: withoutSleep, linked: false, sleepOn: true, lookedAt: [], now })).toEqual({ showButton: true, lastLooked: undefined });
+  });
+
+  it('met slaap: geen knop', () => {
+    expect(sleepFetchView({ reading: withSleep, linked: true, sleepOn: true, lookedAt: [at(7, 52)], now }).showButton).toBe(false);
+  });
+
+  it('de tijd van gisteren of eerder krijgt de dag erbij', () => {
+    expect(lastLookedText([at(21, 5, 17)], now)).toBe('Laatst gekeken gisteren 21:05');
+    expect(lastLookedText([at(21, 5, 12)], now)).toBe('Laatst gekeken 12 nov 21:05');
+    expect(lastLookedText([undefined, 'geen datum'], now)).toBeUndefined();
+  });
 });

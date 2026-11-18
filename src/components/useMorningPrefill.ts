@@ -12,7 +12,7 @@ import { useLegFatigueInputs } from './LegFatigueCard';
 import { useTodayWatch } from './useWellness';
 
 // De ochtend na een test of wedstrijd (`afterEffort`): je benen open gevraagd, zonder voorstel uit de beenindex.
-export function useMorningPrefill(today: string): { prefill: MorningPrefill; afterEffort: MaxEffortMorning | undefined; reading: WellnessReading | undefined; rule: MorningRule | undefined; linked: boolean; sleepOn: boolean } {
+export function useMorningPrefill(today: string): { prefill: MorningPrefill; afterEffort: MaxEffortMorning | undefined; reading: WellnessReading | undefined; rule: MorningRule | undefined; linked: boolean; sleepOn: boolean; lookedAt: (string | undefined)[] } {
   const { sessionLogs, templates, settings } = useAppData();
   const watch = useTodayWatch(today);
   const inputs = useLegFatigueInputs();
