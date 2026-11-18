@@ -6,7 +6,7 @@ import { ignoredNightDates, isDoubtfulShortNight, judgmentFor, nightQuestionText
 import { baselineValues, todayWellness } from './wellnessCheck';
 import { morningCardView, morningPrefill, reviseCheckInSleep } from './morningCard';
 import { watchSummaryLine } from './wellnessCheck';
-import { nightInfo } from './shortNight';
+import { nightInfo, quietJudgeable } from './shortNight';
 
 const TODAY = '2026-10-22';
 
@@ -265,5 +265,69 @@ describe('het slaapantwoord volgt je oordeel zolang je het niet zelf koos', () =
     const own = { date: TODAY, sleep: 'matig' as const };
     expect(reviseCheckInSleep(own, { verdict: 'niet_goed', hours: 8 })).toBe(own);
     expect(reviseCheckInSleep(saved, { verdict: 'klopt' })).toBe(saved);
+  });
+});
+
+describe('stille weg naar "Niet goed gemeten"', () => {
+  // 4:05 slaap: net boven de grens van 4 uur, dus geen vraag van de app.
+  const almost = (): RecoveryMetric => day(0, { sleepMinutes: 245, sleepScore: 60, restingHeartRate: 47, hrv: 75 });
+
+  it('een nacht zonder twijfel vraagt de app niet, maar is wel te beoordelen', () => {
+    const reading = todayWellness(TODAY, [...ordinary(), almost()], { ask: true, judgments: [] });
+    expect(reading?.night).toBeUndefined();
+    expect(reading?.judgeable).toEqual({ state: 'ask', minutes: 245 });
+    expect(quietJudgeable(reading)).toEqual({ state: 'ask', minutes: 245 });
+  });
+
+  it('met de instelling uit is er geen stille weg', () => {
+    expect(todayWellness(TODAY, [...ordinary(), almost()], { ask: false })?.judgeable).toBeUndefined();
+  });
+
+  it('zonder slaap is er niets te beoordelen', () => {
+    const reading = todayWellness(TODAY, [...ordinary(), day(0, { restingHeartRate: 50, hrv: 60 })], { ask: true, judgments: [] });
+    expect(reading?.judgeable).toBeUndefined();
+  });
+
+  it('de vraag onder 4 uur blijft zoals hij was en de stille weg doet dan niets extra', () => {
+    const reading = todayWellness(TODAY, [...ordinary(), short(190)], { ask: true, judgments: [] });
+    expect(reading?.night?.state).toBe('ask');
+    expect(quietJudgeable(reading)).toBeUndefined();
+  });
+
+  it('een oordeel bij een niet-twijfelachtige nacht wordt bewaard en gelezen', () => {
+    const judgments = upsertJudgment([], { date: TODAY, verdict: 'niet_goed', minutes: 245, hours: 7 });
+    expect(judgmentFor(TODAY, judgments)?.hours).toBe(7);
+    const reading = todayWellness(TODAY, [...ordinary(), almost()], { ask: true, judgments });
+    expect(reading?.night).toMatchObject({ state: 'ignored', minutes: 245, hours: 7 });
+    expect(quietJudgeable(reading)).toBeUndefined();
+    expect(reading?.lines.find((l) => l.key === 'sleep')?.value).toBe('4 uur 5');
+  });
+
+  it('die nacht telt dan niet mee in de gemiddelden van de dagen erna', () => {
+    const judgments = upsertJudgment([], { date: TODAY, verdict: 'niet_goed', minutes: 245 });
+    const metrics = [...ordinary(), almost()];
+    expect(ignoredNightDates(judgments, metrics).has(TODAY)).toBe(true);
+    const tomorrow = addDays(TODAY, 1);
+    expect(baselineValues(tomorrow, metrics, (m) => m.sleepMinutes, ignoredNightDates(judgments, metrics))).not.toContain(245);
+    expect(baselineValues(tomorrow, metrics, (m) => m.sleepMinutes)).toContain(245);
+  });
+
+  it('Klopt bij een gewone nacht laat hem meetellen en is terug te draaien', () => {
+    const judgments = upsertJudgment([], { date: TODAY, verdict: 'klopt', minutes: 245 });
+    expect(todayWellness(TODAY, [...ordinary(), almost()], { ask: true, judgments })?.night?.state).toBe('klopt');
+    expect(ignoredNightDates(judgments).size).toBe(0);
+    const undone = removeJudgment(judgments, TODAY);
+    expect(todayWellness(TODAY, [...ordinary(), almost()], { ask: true, judgments: undone })?.night).toBeUndefined();
+  });
+
+  it('de vraag bij een stille nacht zegt geen "maar"', () => {
+    expect(nightQuestionText(245, true)).toBe('Je horloge zag 4 u 5 slaap. Klopt dat?');
+    expect(nightQuestionText(190)).toBe('Je horloge zag maar 3 u 10 slaap. Klopt dat?');
+  });
+
+  it('een oordeel vervalt als het horloge later andere minuten laat zien', () => {
+    const judgments = upsertJudgment([], { date: TODAY, verdict: 'niet_goed', minutes: 245 });
+    const later = day(0, { sleepMinutes: 400, restingHeartRate: 47, hrv: 75 });
+    expect(todayWellness(TODAY, [...ordinary(), later], { ask: true, judgments })?.night).toBeUndefined();
   });
 });

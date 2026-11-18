@@ -10,7 +10,7 @@ import { morningRule, type MorningRule } from '../engine/morningRule';
 import { ignoredNightDates } from '../engine/shortNight';
 import { filterRecovery } from '../engine/watchUse';
 import { excludedMornings as excludedMorningsOf } from '../engine/influence';
-import { getConnection, getWatchState, onWatchChange } from '../storage/externalActivities';
+import { getConnection, getWatchState, lastWatchAttemptAt, onWatchChange } from '../storage/externalActivities';
 import { getRecoveryMetrics } from '../storage/wellness';
 import { useAppData } from '../state/AppDataContext';
 
@@ -19,10 +19,12 @@ import { useAppData } from '../state/AppDataContext';
 // card stays quiet about the watch.
 // `rule`: de ochtendregel twee van drie (engine/morningRule.ts) uit dezelfde getallen; of de kaart
 // hem toont hangt aan de instelling "Twee van drie".
-export function useTodayWatch(today: string): { reading: WellnessReading | undefined; rule: MorningRule | undefined; linked: boolean; sleepOn: boolean } {
+// `lookedAt`: de laatste geslaagde ronde en de laatste poging bij intervals.icu (voor "Laatst gekeken").
+export function useTodayWatch(today: string): { reading: WellnessReading | undefined; rule: MorningRule | undefined; linked: boolean; sleepOn: boolean; lookedAt: (string | undefined)[] } {
   const [metrics, setMetrics] = useState<RecoveryMetric[]>([]);
   const [linked, setLinked] = useState(false);
   const [sleepOn, setSleepOn] = useState(true);
+  const [lookedAt, setLookedAt] = useState<(string | undefined)[]>([]);
   useEffect(() => {
     let alive = true;
     // What is switched off on the link screen is left out here too, so it is
@@ -34,6 +36,7 @@ export function useTodayWatch(today: string): { reading: WellnessReading | undef
           setMetrics(filterRecovery(m, state.use));
           setLinked(!!connection);
           setSleepOn(state.use.sleep);
+          setLookedAt([state.fetchedAt, lastWatchAttemptAt()]);
         })
         .catch(() => undefined);
     load();
@@ -54,5 +57,5 @@ export function useTodayWatch(today: string): { reading: WellnessReading | undef
     () => morningRule(today, metrics, { ignoredNights: ask ? ignoredNightDates(judgments, metrics) : undefined, excludedMornings }),
     [today, metrics, ask, judgments, excludedMornings],
   );
-  return { reading, rule, linked, sleepOn };
+  return { reading, rule, linked, sleepOn, lookedAt };
 }

@@ -16,7 +16,9 @@ import { TextButton } from './TextButton';
 
 const SAVE_LIMIT_MS = 8000;
 
-export function ShortNightAsk({ reading, today }: { reading: WellnessReading; today: string }) {
+// `quiet`: je vroeg het zelf bij een nacht waar de app niet naar vraagt (tik op Slaap, of de regel in het
+// blad); de stap is dezelfde. `onCancel` sluit die vraag weer zonder iets te bewaren.
+export function ShortNightAsk({ reading, today, quiet = false, onCancel }: { reading: WellnessReading; today: string; quiet?: boolean; onCancel?: () => void }) {
   const { settings, updateSettings } = useAppData();
   const [busy, setBusy] = useState(false);
   // De melding hoort bij de stand waarin ze kwam: verandert de stand (het opslaan lukte
@@ -30,7 +32,8 @@ export function ShortNightAsk({ reading, today }: { reading: WellnessReading; to
     };
   }, []);
 
-  const night = reading.night;
+  const asked = !reading.night && quiet;
+  const night = reading.night ?? (quiet ? reading.judgeable : undefined);
   const stateKey = `${night?.state}|${night?.hours}|${night?.hoursSkipped}`;
   const failed = failure?.key === stateKey ? failure.text : '';
   if (!night) return null;
@@ -68,11 +71,16 @@ export function ShortNightAsk({ reading, today }: { reading: WellnessReading; to
   if (night.state === 'ask') {
     body = (
       <>
-        <p className="text-sm leading-snug" style={ink}>{nightQuestionText(night.minutes)}</p>
+        <p className="text-sm leading-snug" style={ink}>{nightQuestionText(night.minutes, asked)}</p>
         <div className="mt-2 flex gap-2">
           <SecondaryButton disabled={busy} onClick={() => void store({ date: today, verdict: 'klopt', minutes: night.minutes })}>Klopt</SecondaryButton>
           <SecondaryButton disabled={busy} onClick={() => void store({ date: today, verdict: 'niet_goed', minutes: night.minutes })}>Niet goed gemeten</SecondaryButton>
         </div>
+        {asked && onCancel && (
+          <div className="flex justify-end">
+            <TextButton tone="dim" disabled={busy} onClick={onCancel}>Annuleren</TextButton>
+          </div>
+        )}
       </>
     );
   } else if (night.state === 'klopt') {
