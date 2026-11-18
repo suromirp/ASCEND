@@ -335,21 +335,24 @@ export function Stat({
   unit,
   size = 's',
   className = '',
+  as: Tag = 'div',
 }: {
   label?: ReactNode;
   value: ReactNode;
   unit?: ReactNode;
   size?: keyof typeof STAT_SIZE;
   className?: string;
+  // 'span' als de Stat in een knop staat (een div in een button is geen geldige HTML).
+  as?: 'div' | 'span';
 }) {
   return (
-    <div className={`flex min-w-0 flex-col gap-1 ${className}`}>
+    <Tag className={`flex min-w-0 flex-col gap-1 ${className}`}>
       {label && <span className="text-xs font-medium leading-4" style={{ color: 'var(--color-ink-dim)' }}>{label}</span>}
       <span className={`whitespace-nowrap font-sans font-semibold leading-none tabular-nums tracking-[-0.02em] ${STAT_SIZE[size]}`} style={{ color: 'var(--color-ink)' }}>
         {(size === 'l' || size === 'xl') && typeof value === 'number' && Number.isInteger(value) && value >= 0 ? <CountUp value={value} /> : value}
         {unit && <span className="ml-[3px] text-sm font-medium tracking-normal" style={{ color: 'var(--color-ink-dim)' }}>{unit}</span>}
       </span>
-    </div>
+    </Tag>
   );
 }
 
