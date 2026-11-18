@@ -3,7 +3,7 @@ import { useAppData } from '../state/AppDataContext';
 import type { NightJudgment } from '../models/checkIn';
 import type { WellnessReading } from '../engine/wellnessCheck';
 import { reviseCheckInSleep } from '../engine/morningCard';
-import { HOUR_CHOICES, nightQuestionText, removeJudgment, upsertJudgment } from '../engine/shortNight';
+import { HOUR_CHOICES, nightAskChoices, nightQuestionText, removeJudgment, upsertJudgment } from '../engine/shortNight';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { SecondaryButton, Segmented } from './ui';
 import { TextButton } from './TextButton';
@@ -51,6 +51,8 @@ export function ShortNightAsk({ reading, today, quiet = false, onCancel }: { rea
     const patch = mine && revised && revised !== mine ? { nightJudgments: next, morningCheckIns: checkIns.map((c) => (c.date === today ? revised : c)) } : { nightJudgments: next };
     try {
       await withTimeout(updateSettings(patch), SAVE_LIMIT_MS, 'Opslaan');
+      // Na Ongedaan maken is er niets meer te beoordelen: een zelf geopende vraag sluit dan ook.
+      if (!judgment) onCancel?.();
     } catch (err) {
       // Na een time-out loopt het opslaan door en kan het nog lukken: dan verdwijnt deze regel vanzelf.
       if (alive.current) setFailure({ key: stateKey, text: err instanceof TimeoutError ? 'Nog niet bevestigd. Kijk zo of het staat.' : 'Opslaan lukte niet. Probeer het nog eens.' });
@@ -73,7 +75,7 @@ export function ShortNightAsk({ reading, today, quiet = false, onCancel }: { rea
       <>
         <p className="text-sm leading-snug" style={ink}>{nightQuestionText(night.minutes, asked)}</p>
         <div className="mt-2 flex gap-2">
-          <SecondaryButton disabled={busy} onClick={() => void store({ date: today, verdict: 'klopt', minutes: night.minutes })}>Klopt</SecondaryButton>
+          {nightAskChoices(asked).includes('klopt') && <SecondaryButton disabled={busy} onClick={() => void store({ date: today, verdict: 'klopt', minutes: night.minutes })}>Klopt</SecondaryButton>}
           <SecondaryButton disabled={busy} onClick={() => void store({ date: today, verdict: 'niet_goed', minutes: night.minutes })}>Niet goed gemeten</SecondaryButton>
         </div>
         {asked && onCancel && (

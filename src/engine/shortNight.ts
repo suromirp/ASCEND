@@ -37,8 +37,14 @@ export function shortSleepLabel(minutes: number): string {
 
 export function nightQuestionText(minutes: number, quiet = false): string {
   // Zelf gevraagd bij een gewone nacht: geen "maar", want de app twijfelde niet.
-  if (quiet) return `Je horloge zag ${shortSleepLabel(minutes)} slaap. Klopt dat?`;
+  if (quiet) return `Je horloge zag ${shortSleepLabel(minutes)} slaap. Klopt dat niet met hoe je sliep?`;
   return `Je horloge zag maar ${shortSleepLabel(minutes)} slaap. Klopt dat?`;
+}
+
+// De keuzes van de vraag. Een vraag die je zelf opent bewaart nooit "Klopt": dat liet een blijvende
+// nachtregel achter en liet de compacte vraag wegvallen; "Annuleren" doet hetzelfde zonder gevolgen.
+export function nightAskChoices(quiet: boolean): ('klopt' | 'niet_goed')[] {
+  return quiet ? ['niet_goed'] : ['klopt', 'niet_goed'];
 }
 
 // Waar deze ochtend staat met de korte nacht: nog te vragen, bevestigd of genegeerd.

@@ -6,7 +6,7 @@ import { ignoredNightDates, isDoubtfulShortNight, judgmentFor, nightQuestionText
 import { baselineValues, todayWellness } from './wellnessCheck';
 import { morningCardView, morningPrefill, reviseCheckInSleep } from './morningCard';
 import { watchSummaryLine } from './wellnessCheck';
-import { nightInfo, quietJudgeable } from './shortNight';
+import { nightAskChoices, nightInfo, quietJudgeable } from './shortNight';
 
 const TODAY = '2026-10-22';
 
@@ -321,8 +321,13 @@ describe('stille weg naar "Niet goed gemeten"', () => {
   });
 
   it('de vraag bij een stille nacht zegt geen "maar"', () => {
-    expect(nightQuestionText(245, true)).toBe('Je horloge zag 4 u 5 slaap. Klopt dat?');
+    expect(nightQuestionText(245, true)).toBe('Je horloge zag 4 u 5 slaap. Klopt dat niet met hoe je sliep?');
     expect(nightQuestionText(190)).toBe('Je horloge zag maar 3 u 10 slaap. Klopt dat?');
+  });
+
+  it('stille vraag bewaart geen klopt', () => {
+    expect(nightAskChoices(true)).toEqual(['niet_goed']);
+    expect(nightAskChoices(false)).toEqual(['klopt', 'niet_goed']);
   });
 
   it('een oordeel vervalt als het horloge later andere minuten laat zien', () => {
