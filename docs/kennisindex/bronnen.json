@@ -3766,6 +3766,13 @@
    "kern": "Hoe teams die vooral met AI bouwen zonder mens opleveren, met de lessen voor ASCEND en wat altijd een mens nodig heeft.",
    "stand": "achtergrond"
   },
+  "docs/onderzoek/Lange chat of verse chats.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Of een lange coördinator-chat of verse chats beter is: samenvatten, kwaliteit bij volle context, cachekosten, hoe anderen het doen en advies voor de wissel.",
+   "stand": "achtergrond"
+  },
   "docs/onderzoek/Zweetverlies en water.md": {
    "onderwerpen": [
     "lichaam-en-herstel"
