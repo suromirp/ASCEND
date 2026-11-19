@@ -2,6 +2,15 @@
 
 Bijgewerkt: 17 november 2026, 10:00 Portugese tijd, door coördinator session_01LnDpSjgdHhfcJwGq2aAmrh (16 november). Oudere versies: git-geschiedenis.
 
+## Stand 19 november (lees dit eerst)
+
+- Eigenaar 19 november: het geplande bouwmoment is weg (taak trig_01JDroCyzgfatU8c7MiK26Ei verwijderd; besluit 2026-11-19-geen-gepland-bouwmoment.md). De coördinator bouwt de Inbox zelf in rondes met helpers in een eigen worktree (skill bouwmoment als werkwijze), met Warden, Lookout, Pathfinder en een eigen blik op de screenshots, één squash per ronde.
+- Live 18 november: I-79 stap 3 (korte test), I-86, I-88, I-89, I-90 en I-91 deel 1+3. Rest in I-91 en I-92.
+- Volgende rondes, voorstel in deze volgorde: I-68 (back-up terugzetten, moet), I-91 rest, I-92, I-84 (ochtend dubbel na oude back-up), I-83 (ijkset te diep). Zet hoogstens drie sporen tegelijk die elkaars bestanden niet raken.
+- Vorige coördinator session_01LnDpSmrC4jEAYcmy76fXNp zat op lineage 8/8 en kon geen taken of sessies maken. Start bouwers als helper (Agent met isolation worktree), niet met create_session, tenzij get_session een lage diepte toont.
+- Wachter blijft uit zolang er geen bouwer in een eigen sessie loopt.
+- Volgende wissel: plan met send_later op 04:47 Amsterdam (lukt dat niet door de diepte, meld het de eigenaar).
+
 ## Stand 17 november 09:50 Portugese tijd (lees dit eerst)
 
 - Coördinator nu session_01LnDpSmrC4jEAYcmy76fXNp ("Coördinator ASCEND 17 november"), op claude/nacht.
