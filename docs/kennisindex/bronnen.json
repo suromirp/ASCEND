@@ -880,6 +880,13 @@
     "docs/beslissingen/2026-11-12-stand-minimaal.md"
    ]
   },
+  "docs/beslissingen/2026-11-19-geen-gepland-bouwmoment.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "De geplande taak Bouwmoment is weg; de coördinator bouwt de Inbox zelf in bouwrondes met helpers, met dezelfde poorten en één squash per ronde.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-18-slaap-zelf-niet-goed-gemeten.md": {
    "onderwerpen": [
     "lichaam-en-herstel"
