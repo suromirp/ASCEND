@@ -550,3 +550,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Lookout vraagzin I-92 | tester helper | sonnet | 44k tok | 2 min | groen 360/390/412, zelf bekeken |
 | 2026-11-20 | Warden Korte test (I-91) | reviewer helper | fable | ~110k tok | ~30 min | niet akkoord: M1 laat log haalt geplande test uit midden; 5 mag; betere fix gekozen, herstel naar zelfde Sherpa |
 | 2026-11-20 | Sherpa Ochtend dubbel herstel (I-84) | ontwikkelaar losse chat | fable | ~3,8M cache-read, $4,79 | ~25 min | M1 en G1-G4 af, controles groen |
+| 2026-11-20 | Warden herstel I-84 | reviewer helper | fable | 51k tok | 1 min | akkoord, 3 mag (valkuil zelf, rest I-97) |
+| 2026-11-20 | Sherpa Korte test herstel (I-91) | ontwikkelaar helper | fable | 84k tok | ~30 min | M1 betere fix, G1-G3, keuze 2 terug: vroegste geldige |
