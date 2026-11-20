@@ -529,3 +529,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Pathfinder IJkset vooraf (I-83) | pathfinder helper | sonnet | 44k tok | 1 min | advies plek en sprong vanuit de melding |
 | 2026-11-20 | Warden weekkam | reviewer helper | sonnet | 26k tok | - | akkoord |
 | 2026-11-20 | claude-code-guide haken-docs | claude-code-guide | - | 47k tok | - | antwoord bruikbaar |
+| 2026-11-20 | Sherpa Back-up telling (I-68) | ontwikkelaar helper | fable | 112k tok | 30 min | gebouwd, alle controles groen, Warden loopt |
