@@ -25,6 +25,24 @@ export function backupMadeSettings(at: string, logIds: readonly string[] | undef
   return { lastExportedAt: at, ...(logIds ? { lastBackupLogs: { at, ids: [...logIds] } } : {}) };
 }
 
+// Na volledig terugzetten (docs/beslissingen/2026-11-20-backup-terugzetten.md). Laatste back-up en de lijst
+// horen bij het toestel en gaan altijd als paar. In het bestand staat het tijdstip van de back-up daarvoor,
+// dus dat lees je nooit over. Is het paar van het toestel even oud als of nieuwer dan het bestand, dan blijft
+// het staan. Anders is het bestand zelf de laatste back-up: zijn tijdstip, met de trainingen die erin staan.
+// Een bestand zonder bruikbaar tijdstip verandert niets.
+export function backupPairAfterRestore(
+  device: { lastExportedAt?: string; lastBackupLogs?: unknown },
+  fileAt: string | undefined,
+  fileLogIds: readonly string[],
+): { lastExportedAt?: string; lastBackupLogs?: unknown } {
+  const own = { lastExportedAt: device.lastExportedAt, lastBackupLogs: device.lastBackupLogs };
+  const fileMs = typeof fileAt === 'string' ? Date.parse(fileAt) : NaN;
+  if (!Number.isFinite(fileMs)) return own;
+  const deviceMs = typeof device.lastExportedAt === 'string' ? Date.parse(device.lastExportedAt) : NaN;
+  if (Number.isFinite(deviceMs) && deviceMs >= fileMs) return own;
+  return backupMadeSettings(new Date(fileMs).toISOString(), fileLogIds);
+}
+
 // Trainingen op deze telefoon die niet in de laatste back-up staan. Nog nooit een back-up: alles.
 export function logsNotInLastBackup(
   logs: readonly { id: string; completedAt: string }[],

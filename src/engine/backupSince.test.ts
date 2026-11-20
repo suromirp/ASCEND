@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { backupMadeSettings, logsNotInLastBackup, readLastBackupLogs } from './backupSince';
+import { backupMadeSettings, backupPairAfterRestore, logsNotInLastBackup, readLastBackupLogs } from './backupSince';
 
 // Nagemaakte logs. De back-up is van vandaag 20:00; "gisteren" is een Forge-log die pas na de back-up is
 // afgerond, op de dag van de laatste set.
@@ -42,5 +42,49 @@ describe('trainingen die niet in je laatste back-up staan', () => {
 
   it('zonder ids na een back-up alleen het tijdstip', () => {
     expect(backupMadeSettings(BACKUP_AT, undefined)).toEqual({ lastExportedAt: BACKUP_AT });
+  });
+});
+
+// Het paar na volledig terugzetten (docs/beslissingen/2026-11-20-backup-terugzetten.md).
+describe('backupPairAfterRestore', () => {
+  const OLDER = '2026-11-08T19:00:00.000Z';
+  const device = backupMadeSettings(BACKUP_AT, ['log_oud']);
+
+  it('het toestel is nieuwer dan het bestand: het paar van het toestel blijft', () => {
+    expect(backupPairAfterRestore(device, OLDER, ['x'])).toEqual(device);
+  });
+
+  it('het toestel is even oud als het bestand: het paar van het toestel blijft', () => {
+    expect(backupPairAfterRestore(device, BACKUP_AT, ['x'])).toEqual(device);
+  });
+
+  it('het bestand is nieuwer: zijn tijdstip, met de trainingen die erin staan', () => {
+    const old = backupMadeSettings(OLDER, ['log_oud']);
+    expect(backupPairAfterRestore(old, BACKUP_AT, ['log_oud', 'log_morgen'])).toEqual(backupMadeSettings(BACKUP_AT, ['log_oud', 'log_morgen']));
+  });
+
+  it('een toestel zonder back-up: het bestand is de laatste back-up, ook als het leeg is', () => {
+    expect(backupPairAfterRestore({}, BACKUP_AT, [])).toEqual({ lastExportedAt: BACKUP_AT, lastBackupLogs: { at: BACKUP_AT, ids: [] } });
+  });
+
+  it('een bestand zonder bruikbaar tijdstip verandert niets', () => {
+    for (const at of [undefined, '', 'geen datum']) {
+      expect(backupPairAfterRestore(device, at, ['x'])).toEqual(device);
+      expect(backupPairAfterRestore({}, at, ['x'])).toEqual({ lastExportedAt: undefined, lastBackupLogs: undefined });
+    }
+  });
+
+  it('vergelijkt het moment, niet de tekst: een tijdstip met een tijdzone telt goed en wordt als UTC bewaard', () => {
+    // 21:00 in +02:00 is 19:00 UTC, gelijk aan het toestel.
+    expect(backupPairAfterRestore(device, '2026-11-15T21:00:00+02:00', ['x'])).toEqual(device);
+    expect(backupPairAfterRestore({}, '2026-11-15T21:00:00+02:00', ['x'])).toEqual(backupMadeSettings(BACKUP_AT, ['x']));
+  });
+
+  it('een toestel met alleen een tijdstip (een oudere app) houdt dat, zonder lijst', () => {
+    expect(backupPairAfterRestore({ lastExportedAt: BACKUP_AT }, OLDER, ['x'])).toEqual({ lastExportedAt: BACKUP_AT, lastBackupLogs: undefined });
+  });
+
+  it('een kapot tijdstip op het toestel telt als geen back-up: het bestand wint', () => {
+    expect(backupPairAfterRestore({ lastExportedAt: 'kapot', lastBackupLogs: 7 }, OLDER, ['x'])).toEqual(backupMadeSettings(OLDER, ['x']));
   });
 });

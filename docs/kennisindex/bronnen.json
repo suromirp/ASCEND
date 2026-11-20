@@ -880,6 +880,14 @@
     "docs/beslissingen/2026-11-12-stand-minimaal.md"
    ]
   },
+  "docs/beslissingen/2026-11-20-backup-terugzetten.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "historie-en-logs"
+   ],
+   "kern": "Bij volledig terugzetten komt Laatste back-up nooit uit de instellingen in het bestand: `lastExportedAt` en `lastBackupLogs` horen bij het toestel en gaan als paar (`engine/backupSince.ts#backupPairAfterRestore`); het toestel wint als het even oud of nieuwer is, anders wordt het bestand zelf de laatste back-up.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-20-lange-chat-en-kosten.md": {
    "onderwerpen": [
     "werkwijze"
@@ -4289,8 +4297,11 @@
     "koppelingen-en-data",
     "historie-en-logs"
    ],
-   "kern": "\"Sinds je laatste back-up\" telt op id uit de laatste back-up (`engine/backupSince.ts`, `lastBackupLogs`), niet op `completedAt`; een schrijfactie die na de tijdsgrens landt is van de app en wordt bij de volgende poging vervangen, zonder -2.",
-   "stand": "geldt"
+   "kern": "\"Sinds je laatste back-up\" telt op id uit de laatste back-up (`engine/backupSince.ts`, `lastBackupLogs`), niet op `completedAt`; een schrijfactie die na de tijdsgrens landt is van de app en wordt bij de volgende poging vervangen, zonder -2. Geldt nog: tellen op id, de lijst buiten een gewone back-up en de regels voor een laat antwoord; ingehaald is dat de telling na volledig terugzetten op tijd terugvalt.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-20-backup-terugzetten.md"
+   ]
   },
   "docs/beslissingen/2026-11-16-wandeling-als-standaard.md": {
    "onderwerpen": [

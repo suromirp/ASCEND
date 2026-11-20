@@ -146,6 +146,10 @@ export interface AscendBackupEnvelope {
 // marathon goal progress just because the on-disk shape has moved on.
 export interface NormalizedBackupData {
   createdAt: string;
+  // Het tijdstip zoals het in het bestand stond. Ontbreekt het daar, dan is `createdAt` het moment van
+  // inlezen en blijft dit veld leeg: wie wil weten hoe oud het bestand is, leest dit veld
+  // (engine/backupSince.ts#backupPairAfterRestore). Alleen in het geheugen, nooit opgeslagen.
+  fileCreatedAt?: string;
   // 0 means the source was a pre-v0.3.2 legacy AscendExport file (no
   // envelope at all) — distinct from a real backupSchemaVersion, which
   // starts at 1. Only used for ImportPreview.backupMeta.isFromOlderVersion.
