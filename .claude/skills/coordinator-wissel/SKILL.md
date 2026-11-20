@@ -14,6 +14,6 @@ Waarom (eigenaar, 9 november): een lange coördinator-chat leest bij elke meldin
 3. Stuur de eigenaar een pushmelding en één regel: de titel van de nieuwe chat, en dat hij daar verder praat.
 4. Zet geen nieuwe controles of bouwers meer in gang. Meldingen die daarna nog binnenkomen: kort doorsturen naar de nieuwe coördinator kan niet, dus alleen de eigenaar wijzen op de nieuwe chat; de nieuwe coördinator ziet de bouwer zelf via get_session.
 
-## Vaste tijd
+## Wanneer
 
-Elke dag om 04:47 Amsterdamse tijd (stil moment), of eerder als de chat erg lang wordt. De nieuwe coördinator plant zelf de volgende wissel met send_later (`at` 04:47 met [Europe/Amsterdam]).
+Op lengte, niet op de klok (besluit `2026-11-20-lange-chat-en-kosten.md`): bij ongeveer 250k tot 300k context (`get_session`, `context_usage`) en na elke afgeronde bouwronde. Een send_later op 04:47 [Europe/Amsterdam] mag als vangnet blijven; is de chat dan nog kort, sla de wissel over en plan de volgende. Houd de overdracht onder 10 KB.
