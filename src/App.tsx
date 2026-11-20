@@ -34,7 +34,7 @@ import { WeekPage } from './pages/Week';
 import { AscendPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
 import { SessionPillSlot } from './components/forge/SessionPill';
-import { useOpenRequest, useSessionHousekeeping, useSessionPill } from './components/forge/useForgeSession';
+import { useOpenRequest, useSessionHousekeeping, useSessionPill, useTrainingReturn } from './components/forge/useForgeSession';
 import { TrekOnly } from './components/reis/TrekOnly';
 // Pages you open now and then load on demand, so the first start only
 // downloads what Today needs. The service worker precaches every chunk, so
@@ -281,6 +281,7 @@ function AppShell() {
   useSessionHousekeeping();
   const pill = useSessionPill();
   const openSession = useOpenRequest();
+  useTrainingReturn();
 
   if (bootError) {
     return (
