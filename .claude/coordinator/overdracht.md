@@ -4,6 +4,7 @@ Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmMeaf189k5coPifuH 
 
 ## Stand 20 november (lees dit eerst)
 
+- 16:00 Amsterdam (17:00): I-84 herstel gepusht (6e92e28d, M1 en G1-G4, controles groen); Warden tweede blik (Fable) loopt. Dan squash zonder verslag-I-84.md. I-92 controles in sq92 lopen (tsc, lint, kaart groen). I-91 herstel bij helper loopt. Na de samenvatting: Warden schrijft nooit zelf, opdracht altijd "schrijf geen bestanden".
 - 15:30 Amsterdam: coördinator session_01LnDpSkaRVqid7Ra5MiwW8Z ("Coördinator ASCEND 20 november (2)") draait. Bouwers: I-91 rest als helper (branch claude/korte-test-rest, Fable), I-92 als helper (claude/niet-goed-gemeten-rest, Fable), I-84 als losse chat session_01LnDpSm9g1QVRNT32BmQG61 (claude/ochtend-dubbel, Fable). Pushmelding gestuurd.
 - Vorige coördinator session_01LnDpSmMeaf189k5coPifuH gearchiveerd (klaar, niets lopend). I-92 gebouwd op claude/niet-goed-gemeten-rest (2a46eff4); Pathfinder akkoord, Warden (Fable) en Lookout lopen. Kaart op main mist de IJkset-verplaatsing van 9c9e2dce: meenemen bij de squash. Mag van Pathfinder: ziek en slecht slapen (Niet goed gemeten breekt de reeks) hoort bij I-78.
 - I-84 gebouwd op claude/ochtend-dubbel; Warden niet akkoord (herstel.md op warden/ochtend-dubbel-herstel; Warden schreef hem niet zelf, zijn rolinstructie verbiedt dat: de coördinator committe hem). Herstel M1, G1-G4 in losse chat session_01LnDpSmCdcFHQeZrkMHHgF8; eerste bouwer gearchiveerd. Bij de squash verslag-I-84.md weglaten (M2).
