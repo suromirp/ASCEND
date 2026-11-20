@@ -532,3 +532,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Sherpa Back-up telling (I-68) | ontwikkelaar helper | fable | 112k tok | 30 min | gebouwd, alle controles groen, Warden loopt |
 | 2026-11-20 | Warden Back-up telling (I-68) | reviewer helper | fable | 118k tok | 12 min | akkoord na herbasis, 1 moet (toekomst), 4 mag |
 | 2026-11-20 | Sherpa Back-up telling herstel (I-68) | ontwikkelaar helper hervat | fable | 133k tok | 7 min | alle punten, controles groen, live |
+| 2026-11-20 | Sherpa IJkset (I-83) met eigen Lookout | ontwikkelaar helper | sonnet | 153k tok | 54 min | gebouwd, controles groen, Warden en Pathfinder lopen |
