@@ -49,6 +49,8 @@ function migrateLegacyObjectives(
 
 interface RawSource {
   createdAt: string;
+  // Alleen als het tijdstip echt in het bestand stond (NormalizedBackupData.fileCreatedAt).
+  fileCreatedAt?: string;
   sourceBackupSchemaVersion: number;
   raw: Record<string, unknown>;
   // V1 and the legacy flat export carry objectives/milestoneProgress
@@ -59,7 +61,7 @@ interface RawSource {
   hasV5Extras: boolean;
 }
 
-function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoals, hasCapability, hasV4Extras, hasV5Extras }: RawSource): NormalizedBackupData {
+function buildNormalized({ createdAt, fileCreatedAt, sourceBackupSchemaVersion, raw, legacyGoals, hasCapability, hasV4Extras, hasV5Extras }: RawSource): NormalizedBackupData {
   const skipped: Counter = { n: 0 };
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
   const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped)?.map(cleanPlannedCatchUp).map(migratePlannedFixed).map(migratePlannedAmount);
@@ -88,6 +90,7 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
 
   const normalized: NormalizedBackupData = {
     createdAt,
+    ...(fileCreatedAt !== undefined ? { fileCreatedAt } : {}),
     sourceBackupSchemaVersion,
     program,
     templates: templates ?? [],
@@ -203,6 +206,7 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
     }
     return buildNormalized({
       createdAt,
+      fileCreatedAt: typeof obj.createdAt === 'string' ? obj.createdAt : undefined,
       sourceBackupSchemaVersion: obj.backupSchemaVersion,
       raw: payload,
       legacyGoals: version === 1,
@@ -219,6 +223,7 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
     const migrated = migrateExport(obj as unknown as AscendExport) as unknown as Record<string, unknown> & { exportDate: string };
     return buildNormalized({
       createdAt: migrated.exportDate,
+      fileCreatedAt: migrated.exportDate,
       sourceBackupSchemaVersion: 0,
       raw: migrated,
       legacyGoals: true,
