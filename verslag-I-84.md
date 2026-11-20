@@ -47,7 +47,7 @@ Gewijzigd: `src/engine/sourcePrecedence.ts`, `src/engine/morningBackup.ts`, `src
 - `npx vitest run`: groen, 776 bestanden, 11701 tests. Eerst vier rood, alle verklaard: de lijst opstartstappen in `bootMigrations.test.ts` kreeg een stap erbij (drie tests) en het werkbriefje had een regel te veel (grens 45).
 - `npm run build`: groen.
 - `npm run kennisindex:vergelijk`: "Geen verschil met docs/kennisindex/."
-- `npm run kaart:vergelijk`: liep nog bij deze commit; de uitslag volgt in een tweede commit.
+- `npm run kaart:vergelijk`: 107 schermen gelijk, invarianten zonder schendingen, één verschil, verklaard en niet van deze wijziging. Op `instellingen-blad-bundel-invullen` ontbreekt de rij IJkset (vier regels). Commit `9c9e2dc` op main ("IJkset op de Forge-pagina") haalde die rij uit dit blad en werkte dit kaartbestand niet bij; mijn wijziging raakt geen instellingen of componenten. Ik heb de kaart niet bijgewerkt, dat hoort bij dat werk: een punt voor de coördinator.
 - Proef op de tests: met de leesvolgorde teruggezet vallen er vier, met een opruimstap die alles zonder bron weghaalt vallen er zes.
 
 ## Eigen keuzes
