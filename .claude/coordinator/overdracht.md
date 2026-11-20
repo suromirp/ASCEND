@@ -1,8 +1,16 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSkaRVqid7Ra5MiwW8Z. Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
+Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S. Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
 
-## Stand 20 november avond (lees dit eerst)
+## Stand 20 november avond, ronde 2 (lees dit eerst)
+
+- 18:00 Amsterdam: nieuwe coördinator session_01LnDpSmhQECnxdG9gnj4X2S draait. Ronde gestart:
+  - I-93 en I-97 (opslag, back-up import): losse chat session_01LnDpSnhGZjC8AaNw6gB9My op Fable, branch claude/backup-import.
+  - I-95 (koppelvoorstel noemt verschuiving testloop): helper Sherpa op Fable, branch claude/koppel-testloop.
+  - I-94 en I-96 (ijksetkaart Akkoord, tests en uitleg niet goed gemeten): helper Sherpa op Sonnet, branch claude/klein-94-96.
+- Daarna: Warden (opslag en I-95 op Fable), Lookout en Pathfinder voor I-94; één squash naar main voor de bundel.
+
+## Stand 20 november avond, ronde 1
 
 - 17:55 Amsterdam: ronde klaar. Live vandaag: I-68, I-83, I-92 (0daf3afa), I-84 (16f634ac), I-91 (ad2e4b99); backlog op main bijgewerkt (629d3b43). Geen lopende bouwers, helpers of worktrees. Coördinator session_01LnDpSkaRVqid7Ra5MiwW8Z vroeg de wissel aan bij de chat ASCEND.
 - Volgende ronde, voorstel: I-93 (back-up, kopie van voor een import), I-95 (koppelvoorstel noemt verschuiving testloop), I-96 (tests en uitleg niet goed gemeten), I-97 (back-up import en ochtend zonder bron), I-94 (Akkoord sterker op de ijksetkaart). Klein werk als helper; opslag (I-93, I-97) in een losse chat.
