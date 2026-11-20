@@ -183,7 +183,7 @@ export interface EffectsInput {
   templates: SessionTemplate[];
   program: Program | null | undefined;
   // Je oordeel over nachten die niet goed gemeten zijn: die tellen niet mee in de band van slaap en HRV.
-  nightJudgments?: NightJudgment[];
+  nightJudgments?: readonly NightJudgment[];
   // De ziekmeldingen: een feit dat ASCEND zelf weet en vanzelf meetelt.
   illness?: readonly IllnessEpisode[];
   // De feiten als notities die nooit worden opgeslagen (influence.ts#derivedFactEntries), als de

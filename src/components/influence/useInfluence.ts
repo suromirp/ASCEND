@@ -1,8 +1,8 @@
 // "Wat speelde er": de haakjes tussen de schermen en engine/influence.ts. Geen rekenwerk
 // hier: de hooks halen op wat de engine nodig heeft en geven het resultaat terug.
 
-import { judgmentsInUse } from '../../engine/shortNight';
 import { useEffect, useMemo, useState } from 'react';
+import { judgmentsInUse } from '../../engine/shortNight';
 import { useAppData } from '../../state/AppDataContext';
 import { useDetailsOn } from '../useRunInsight';
 import { useExcludedLogIds } from './useExcludedLogIds';

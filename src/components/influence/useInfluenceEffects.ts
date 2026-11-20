@@ -2,8 +2,8 @@
 // Leest alleen (settings.influences); schrijft niets. Alle rekenwerk staat in
 // engine/influenceEffects.ts.
 
-import { judgmentsInUse } from '../../engine/shortNight';
 import { useMemo } from 'react';
+import { judgmentsInUse } from '../../engine/shortNight';
 import { useAppData } from '../../state/AppDataContext';
 import { resolveRunInsight } from '../../engine/runInsightSettings';
 import { createFactsCache } from '../../engine/factsCache';

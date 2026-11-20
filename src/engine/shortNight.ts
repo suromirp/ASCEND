@@ -84,14 +84,14 @@ export function quietJudgeable(reading: { night?: NightInfo; judgeable?: NightIn
   return reading && !reading.night ? reading.judgeable : undefined;
 }
 
-export function judgmentFor(date: string, judgments: NightJudgment[] | undefined): NightJudgment | undefined {
+export function judgmentFor(date: string, judgments: readonly NightJudgment[] | undefined): NightJudgment | undefined {
   return (judgments ?? []).find((j) => j.date === date);
 }
 
 // De datums waarvan slaapduur, slaapscore en HRV niet meetellen in je gemiddelden.
 // Met `metrics` telt een oordeel alleen zolang de gemeten slaap van die dag nog gelijk is
 // aan wat je zag.
-export function ignoredNightDates(judgments: NightJudgment[] | undefined, metrics?: readonly Pick<RecoveryMetric, 'date' | 'sleepMinutes'>[]): ReadonlySet<string> {
+export function ignoredNightDates(judgments: readonly NightJudgment[] | undefined, metrics?: readonly Pick<RecoveryMetric, 'date' | 'sleepMinutes'>[]): ReadonlySet<string> {
   const sleepOf = (date: string) => metrics?.find((m) => m.date === date && m.sleepMinutes !== undefined)?.sleepMinutes;
   return new Set((judgments ?? []).filter((j) => j.verdict === 'niet_goed' && (!metrics || judgmentHolds(j, sleepOf(j.date)))).map((j) => j.date));
 }
@@ -101,23 +101,23 @@ export function ignoredNightDates(judgments: NightJudgment[] | undefined, metric
 // niet op de ochtendkaart, niet in Wat speelde er en niet bij Vroeg ziek zien. De oordelen blijven
 // bewaard: zet je de instelling weer aan, dan gelden ze weer. Altijd dezelfde lege lijst terug,
 // zodat een useMemo er niet van opnieuw rekent.
-const NO_JUDGMENTS: NightJudgment[] = [];
-export function judgmentsInUse(settings: { askShortNight?: boolean; nightJudgments?: NightJudgment[] }): NightJudgment[] {
+const NO_JUDGMENTS: readonly NightJudgment[] = Object.freeze([]);
+export function judgmentsInUse(settings: { askShortNight?: boolean; nightJudgments?: readonly NightJudgment[] }): readonly NightJudgment[] {
   return settings.askShortNight === false ? NO_JUDGMENTS : settings.nightJudgments ?? NO_JUDGMENTS;
 }
 
-export function upsertJudgment(list: NightJudgment[] | undefined, judgment: NightJudgment): NightJudgment[] {
+export function upsertJudgment(list: readonly NightJudgment[] | undefined, judgment: NightJudgment): NightJudgment[] {
   return [...(list ?? []).filter((j) => j.date !== judgment.date), judgment].sort((a, b) => a.date.localeCompare(b.date)).slice(-MAX_JUDGMENTS);
 }
 
-export function removeJudgment(list: NightJudgment[] | undefined, date: string): NightJudgment[] {
+export function removeJudgment(list: readonly NightJudgment[] | undefined, date: string): NightJudgment[] {
   return (list ?? []).filter((j) => j.date !== date);
 }
 
 export interface NightOptions {
   // "Vragen bij een korte nacht" staat aan. Zonder opties werkt alles zoals voorheen.
   ask?: boolean;
-  judgments?: NightJudgment[];
+  judgments?: readonly NightJudgment[];
   // "Deze nacht niet meetellen" (engine/influence.ts#excludedMornings): these mornings
   // stay out of your own averages of resting heart rate and HRV.
   excludedMornings?: ReadonlySet<string>;
