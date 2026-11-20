@@ -7,6 +7,7 @@ import { useRecoveryMetrics } from './useRecoveryMetrics';
 import { illnessSign } from '../engine/illnessSigns';
 import { activeIllness } from '../engine/illness';
 import { affectedMorning } from '../engine/influence';
+import { ignoredNightDates, judgmentsInUse } from '../engine/shortNight';
 import { MetaRepo } from '../storage/database';
 import { todayISO } from '../utils/dates';
 
@@ -30,7 +31,10 @@ export function useIllnessSign() {
   const off = settings.illnessSigns === false;
   const ill = !!activeIllness(settings.illnessEpisodes);
   const explained = useMemo(() => new Set((settings.influences ?? []).filter((e) => e.reasons.length > 0 || e.excludeHeartRate).map(affectedMorning)), [settings.influences]);
-  const sign = useMemo(() => (off ? undefined : illnessSign({ today, metrics, explained, ill })), [off, today, metrics, explained, ill]);
+  // De HRV van een nacht die je "Niet goed gemeten" noemde telt niet mee (engine/illnessSigns.ts).
+  const judgments = judgmentsInUse(settings);
+  const ignoredNights = useMemo(() => ignoredNightDates(judgments, metrics), [judgments, metrics]);
+  const sign = useMemo(() => (off ? undefined : illnessSign({ today, metrics, explained, ignoredNights, ill })), [off, today, metrics, explained, ignoredNights, ill]);
   const shown = !!sign && !!seen && seen.goodFrom !== sign.from && seen.notNowOn !== today;
   const remember = (next: Seen) => {
     setSeen(next);

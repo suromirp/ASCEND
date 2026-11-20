@@ -96,6 +96,16 @@ export function ignoredNightDates(judgments: NightJudgment[] | undefined, metric
   return new Set((judgments ?? []).filter((j) => j.verdict === 'niet_goed' && (!metrics || judgmentHolds(j, sleepOf(j.date)))).map((j) => j.date));
 }
 
+// De ene regel voor elke plek die een oordeel leest (docs/beslissingen/2026-11-20-niet-goed-gemeten-
+// rest.md): staat "Vragen bij een korte nacht" uit, dan telt een eerder oordeel nergens meer mee,
+// niet op de ochtendkaart, niet in Wat speelde er en niet bij Vroeg ziek zien. De oordelen blijven
+// bewaard: zet je de instelling weer aan, dan gelden ze weer. Altijd dezelfde lege lijst terug,
+// zodat een useMemo er niet van opnieuw rekent.
+const NO_JUDGMENTS: NightJudgment[] = [];
+export function judgmentsInUse(settings: { askShortNight?: boolean; nightJudgments?: NightJudgment[] }): NightJudgment[] {
+  return settings.askShortNight === false ? NO_JUDGMENTS : settings.nightJudgments ?? NO_JUDGMENTS;
+}
+
 export function upsertJudgment(list: NightJudgment[] | undefined, judgment: NightJudgment): NightJudgment[] {
   return [...(list ?? []).filter((j) => j.date !== judgment.date), judgment].sort((a, b) => a.date.localeCompare(b.date)).slice(-MAX_JUDGMENTS);
 }

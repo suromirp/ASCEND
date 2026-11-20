@@ -9,7 +9,10 @@
 //   ervoor, en je HRV onder je gewone bereik (dezelfde marge als de ochtendkaart);
 // - minstens twee ochtenden op rij, tot en met vandaag;
 // - niet als je zelf al iets vastlegde bij "Wat speelde er" voor een van die ochtenden, of een
-//   nacht niet liet meetellen, en niet als je al ziek gemeld bent.
+//   nacht niet liet meetellen, en niet als je al ziek gemeld bent;
+// - de HRV van een nacht die je "Niet goed gemeten" noemde telt niet: die ochtend is geen ochtend
+//   van de reeks en zijn HRV blijft uit je gemiddelde. Zijn rusthartslag blijft in je gemiddelde
+//   (docs/beslissingen/2026-11-20-niet-goed-gemeten-rest.md).
 //
 // Het is een vraag, geen waarschuwing en geen diagnose. Het verandert niets aan de planning; wie
 // "Word ziek" kiest, komt in de gewone ziekmelding, die zelf een voorstel met Akkoord is.
@@ -40,16 +43,19 @@ export interface IllnessSignInput {
   metrics: readonly RecoveryMetric[];
   // Ochtenden waar je zelf iets bij vastlegde, of die je niet liet meetellen.
   explained?: ReadonlySet<string>;
+  // Nachten die je "Niet goed gemeten" noemde (engine/shortNight.ts#ignoredNightDates): alleen de HRV.
+  ignoredNights?: ReadonlySet<string>;
   ill?: boolean;
 }
 
 // De stijging van de rusthartslag op deze ochtend als beide signalen afwijken, anders undefined.
-function offMorning(day: string, metrics: RecoveryMetric[], explained: ReadonlySet<string>): number | undefined {
-  if (explained.has(day)) return undefined;
+function offMorning(day: string, metrics: RecoveryMetric[], explained: ReadonlySet<string>, hrvSkip: ReadonlySet<string>): number | undefined {
+  // Zonder een HRV die telt zijn er geen twee signalen: hrvSkip is explained plus de nachten die niet goed gemeten zijn.
+  if (hrvSkip.has(day)) return undefined;
   const r = dayRecord(day, metrics);
   if (r?.restingHeartRate === undefined || r.hrv === undefined) return undefined;
   const rhrBase = baselineValues(day, metrics, (m) => m.restingHeartRate, explained);
-  const hrvBase = baselineValues(day, metrics, (m) => m.hrv, explained);
+  const hrvBase = baselineValues(day, metrics, (m) => m.hrv, hrvSkip);
   if (rhrBase.length < MIN_BASELINE_DAYS || hrvBase.length < MIN_BASELINE_DAYS) return undefined;
   const rise = r.restingHeartRate - Math.round(mean(rhrBase));
   const hrvAvg = mean(hrvBase);
@@ -62,14 +68,16 @@ const COUNT_WORD = ['nul', 'een', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven'
 export function illnessSign(input: IllnessSignInput): IllnessSign | undefined {
   if (input.ill) return undefined;
   const explained = input.explained ?? new Set<string>();
+  const ignored = input.ignoredNights;
+  const hrvSkip = ignored && ignored.size > 0 ? new Set([...explained, ...ignored]) : explained;
   const metrics = [...input.metrics];
-  const todayRise = offMorning(input.today, metrics, explained);
+  const todayRise = offMorning(input.today, metrics, explained, hrvSkip);
   if (todayRise === undefined) return undefined;
   let mornings = 1;
   let from = input.today;
   for (let i = 1; i < LOOKBACK; i++) {
     const day = addDays(input.today, -i);
-    if (offMorning(day, metrics, explained) === undefined) break;
+    if (offMorning(day, metrics, explained, hrvSkip) === undefined) break;
     mornings++;
     from = day;
   }

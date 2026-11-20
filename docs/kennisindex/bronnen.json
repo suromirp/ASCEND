@@ -923,6 +923,13 @@
    "kern": "Bij elke gemeten nacht kun je zelf zeggen dat het horloge hem niet goed mat, met een tik op Slaap op de ochtendkaart of een regel in het blad; dezelfde stap en opslag als de vraag bij een korte nacht, zonder Klopt.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-20-niet-goed-gemeten-rest.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel"
+   ],
+   "kern": "Staat Vragen bij een korte nacht uit, dan telt een eerder oordeel Niet goed gemeten nergens mee en blijft het bewaard; Vroeg ziek zien telt de HRV van zo'n nacht niet, de rusthartslag wel.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-10-25-korte-nacht-vragen.md": {
    "onderwerpen": [
     "lichaam-en-herstel"

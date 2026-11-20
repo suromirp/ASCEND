@@ -12,7 +12,7 @@ import { MORNING_RULE_QUESTION, TIRED_CHOICES, ruleWord } from '../engine/mornin
 import { signalOn } from '../engine/signalSettings';
 import { wantsMorningLink, withoutShortcut } from '../engine/shortcutAction';
 import { todayISO } from '../utils/dates';
-import { withTimeout } from '../utils/withTimeout';
+import { timeLimit, withTimeout } from '../utils/withTimeout';
 import { Card, Eyebrow, SecondaryButton, Stat } from './ui';
 import { TextButton } from './TextButton';
 import { Icon } from './icons';
@@ -36,6 +36,8 @@ import { useHeightMorph, useScrollToAdvice } from './motion';
 // bent, naast de keuzes; het antwoord wordt de energie van deze ochtend. Geen voorstel, geen planning.
 
 const SAVE_LIMIT_MS = 8000;
+// Opnieuw ophalen bij intervals.icu wacht niet langer dan dit.
+const FETCH_LIMIT_MS = 15000;
 const SAVE_FAILED = 'Opslaan lukte niet. Probeer het nog eens.';
 const UNDO_FAILED = 'Ongedaan maken lukte niet. Probeer het nog eens.';
 const FOLD_MS = 6000;
@@ -179,12 +181,17 @@ export function MorningCard() {
   const [askQuiet, setAskQuiet] = useState(false);
   const askingQuiet = askQuiet && !!quietNight;
   const [fetching, setFetching] = useState<'busy' | 'tried' | 'failed' | 'slow' | null>(null);
+  // De tijdgrens van het ophalen: gewist als de ronde eerder klaar is (utils/withTimeout.ts#timeLimit) en als de kaart weggaat.
+  const stopFetchLimit = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => () => stopFetchLimit.current?.(), []);
   async function fetchAgain() {
     setFetching('busy');
     setAttemptAt(new Date().toISOString());
-    const limit = new Promise<'slow'>((r) => setTimeout(() => r('slow'), 15000));
+    stopFetchLimit.current?.();
+    const limit = timeLimit(syncWatchActivities({ force: true }), FETCH_LIMIT_MS);
+    stopFetchLimit.current = limit.cancel;
     try {
-      const result = await Promise.race([syncWatchActivities({ force: true }), limit]);
+      const result = await limit.result;
       setFetching(result === 'slow' ? 'slow' : result.status === 'error' ? 'failed' : 'tried');
     } catch {
       setFetching('failed');

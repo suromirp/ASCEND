@@ -1,6 +1,7 @@
 // "Wat speelde er": de haakjes tussen de schermen en engine/influence.ts. Geen rekenwerk
 // hier: de hooks halen op wat de engine nodig heeft en geven het resultaat terug.
 
+import { judgmentsInUse } from '../../engine/shortNight';
 import { useEffect, useMemo, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { useDetailsOn } from '../useRunInsight';
@@ -75,11 +76,13 @@ export function useKnownFacts(target: FactTarget | undefined): KnownFact[] {
   const { sessionLogs, templates, settings } = useAppData();
   const recovery = useRecoveryRecords();
   const cause: InfluenceCause = settings.influenceCause ?? 'patroon';
+  // Staat "Vragen bij een korte nacht" uit, dan telt een eerder oordeel niet mee (engine/shortNight.ts).
+  const judgments = judgmentsInUse(settings);
   const targetLog = target?.kind === 'log' ? target.log : undefined;
   const targetDate = target?.kind === 'day' ? target.date : undefined;
   return useMemo(() => {
     const t: FactTarget | undefined = targetLog ? { kind: 'log', log: targetLog } : targetDate ? { kind: 'day', date: targetDate } : undefined;
     if (!t) return [];
-    return knownFacts({ target: t, logs: sessionLogs, templates, recovery, illness: settings.illnessEpisodes, judgments: settings.nightJudgments, cause });
-  }, [targetLog, targetDate, sessionLogs, templates, recovery, settings.illnessEpisodes, settings.nightJudgments, cause]);
+    return knownFacts({ target: t, logs: sessionLogs, templates, recovery, illness: settings.illnessEpisodes, judgments, cause });
+  }, [targetLog, targetDate, sessionLogs, templates, recovery, settings.illnessEpisodes, judgments, cause]);
 }

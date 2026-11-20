@@ -2,6 +2,7 @@
 // Leest alleen (settings.influences); schrijft niets. Alle rekenwerk staat in
 // engine/influenceEffects.ts.
 
+import { judgmentsInUse } from '../../engine/shortNight';
 import { useMemo } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { resolveRunInsight } from '../../engine/runInsightSettings';
@@ -23,7 +24,7 @@ const factsMemo = createFactsCache();
 
 function useFactEntries(metrics: RecoveryMetric[]): InfluenceEntry[] {
   const { settings, sessionLogs, templates } = useAppData();
-  return factsMemo.get({ logs: sessionLogs, templates, recovery: metrics, illness: settings.illnessEpisodes, judgments: settings.nightJudgments });
+  return factsMemo.get({ logs: sessionLogs, templates, recovery: metrics, illness: settings.illnessEpisodes, judgments: judgmentsInUse(settings) });
 }
 
 // `entries` are your own notes, `all` your notes plus the facts.
@@ -31,6 +32,7 @@ export function useInfluenceEffects(): { entries: InfluenceEntry[]; all: Influen
   const { settings, sessionLogs, templates, program } = useAppData();
   const metrics = useRecoveryMetrics();
   const facts = useFactEntries(metrics);
+  const judgments = judgmentsInUse(settings);
   const legs = useLegFatigueInputs();
   const detailsOn = useDetailsOn();
   const entries = settings.influences ?? NONE;
@@ -43,14 +45,14 @@ export function useInfluenceEffects(): { entries: InfluenceEntry[]; all: Influen
         facts,
         illness: settings.illnessEpisodes,
         metrics,
-        nightJudgments: settings.nightJudgments,
+        nightJudgments: judgments,
         logs: sessionLogs,
         templates,
         program,
         run: detailsOn ? { hr: settings.heartRate, legs, chestStrap } : undefined,
       })
       : []),
-    [all, entries, facts, settings.illnessEpisodes, metrics, settings.nightJudgments, sessionLogs, templates, program, detailsOn, settings.heartRate, legs, chestStrap],
+    [all, entries, facts, settings.illnessEpisodes, metrics, judgments, sessionLogs, templates, program, detailsOn, settings.heartRate, legs, chestStrap],
   );
   return { entries, all, effects };
 }
@@ -64,6 +66,7 @@ export function useLooksLike(date: string, measure: InfluenceMeasure): LooksLike
   const detailsOn = useDetailsOn();
   const entries = settings.influences ?? NONE;
   const facts = useFactEntries(metrics);
+  const judgments = judgmentsInUse(settings);
   const cause = settings.influenceCause;
   const chestStrap = resolveRunInsight(settings.runInsight).chestStrap;
   return useMemo(
@@ -73,7 +76,7 @@ export function useLooksLike(date: string, measure: InfluenceMeasure): LooksLike
         facts,
         illness: settings.illnessEpisodes,
         metrics,
-        nightJudgments: settings.nightJudgments,
+        nightJudgments: judgments,
         logs: sessionLogs,
         templates,
         program,
@@ -83,6 +86,6 @@ export function useLooksLike(date: string, measure: InfluenceMeasure): LooksLike
         date,
       })
       : undefined),
-    [entries, facts, settings.illnessEpisodes, cause, metrics, settings.nightJudgments, sessionLogs, templates, program, detailsOn, settings.heartRate, legs, chestStrap, measure, date],
+    [entries, facts, settings.illnessEpisodes, cause, metrics, judgments, sessionLogs, templates, program, detailsOn, settings.heartRate, legs, chestStrap, measure, date],
   );
 }
