@@ -537,3 +537,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Warden IJkset (I-83) | reviewer helper | sonnet | 50k tok | 4 min | 2 moet (terugweg blijft hangen, geen gedragstest), 4 mag |
 | 2026-11-20 | Sherpa IJkset herstel (I-83) | ontwikkelaar helper hervat | sonnet | 22k tok | 14 min | alle punten, controles groen, live |
 | 2026-11-20 | Sherpa Niet goed gemeten (I-92) | ontwikkelaar helper | fable | 120k tok | 28 min | 3 punten, controles groen, kaart toont 2 IJkset-verschillen van main |
+| 2026-11-20 | Pathfinder Niet goed gemeten (I-92) | pathfinder helper | sonnet | 32k tok | 1 min | akkoord, 3 mag (kaart verdwijnt zonder regel, ziek en slecht slapen naar I-78, telefoontoets) |
