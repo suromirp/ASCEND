@@ -5,10 +5,11 @@ Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmMeaf189k5coPifuH 
 ## Stand 20 november (lees dit eerst)
 
 - Middag 20 november, nieuwe coördinator session_01LnDpSmMeaf189k5coPifuH (vastgezet). Haken: beide scripts getest, geven de juiste uitvoer; of de harness ze afvuurt blijkt pas bij de eerste samenvatting.
+- Van de vorige coördinator (20 november 14:15): de SessionStart-haak vuurde na zijn samenvatting om 14:13, dus de harness vuurt hem af. Main 20 november: 5454c411, 5c849cfa, 58be4f52, 9a4cccd6. Later, Warden: een bewust paar in omgekeerde volgorde (lang op zaterdag, heuvel op zondag) telt in de kamzin nog als bewust; `isIntendedOrder` meenemen.
+- Doorgestuurd uit "ASCEND" (14:12) over vastzetten bij de wissel: ingehaald door de afspraak van 13:25 hieronder; de chat "ASCEND" zet de nieuwe coördinator vast en haalt de oude pin weg.
 - Loopt: Sherpa Back-up telling (Fable, helper in worktree) bouwt I-68 op `claude/backup-terugzetten`. Regel van de coördinator: `lastExportedAt` en `lastBackupLogs` gaan als paar; is het paar van het toestel nieuwer dan `exportDate` van het bestand, dan blijft het staan, anders wordt het `exportDate` plus de ids van de logs in het bestand. Daarna Warden op Fable.
 - Loopt: Pathfinder IJkset vooraf voor I-83; daarna Sherpa op Sonnet. Daarna I-91 rest, I-92, I-84.
-- Van de vorige coördinator (20 november 14:15): de SessionStart-haak vuurde na zijn samenvatting om 14:13, dus de harness vuurt hem af. Main 20 november: 5454c411, 5c849cfa, 58be4f52, 9a4cccd6. Later, Warden: een bewust paar in omgekeerde volgorde (lang op zaterdag, heuvel op zondag) telt in de kamzin nog als bewust; `isIntendedOrder` meenemen.
-- Doorgestuurd uit de chat "ASCEND" (14:12), bij de vorige coördinator beland: bij elke wissel zet de nieuwe coördinator zichzelf vast (tag `ui:pinned`, set_session_tags) en haalt de vorige los; "ASCEND" blijft vast; pushmelding "Nieuwe coördinator vastgezet: <titel>". Niet in de skill gezet: doorgegeven instructie. Wacht op bevestiging van de eigenaar zelf.
+- Eigenaar 20 november "Ja gemengd, doe jouw advies" (via de chat ASCEND): bouwers langer dan een half uur of aan planner, opslag of migraties in een losse chat (`create_session`), klein werk als helper; de coördinator start zijn opvolger niet zelf maar meldt de wissel met create_trigger aan de chat "ASCEND" (skill coordinator-wissel, besluit `2026-11-20-gemengde-bouwers-en-wissel.md`). Deze coördinator staat op stap 1. De send_later-wissel van 04:47 is weggehaald.
 - claude/nacht loopt in de code ver achter op main (alleen .claude en docs volgen main); bouwers takken af van origin/main.
 
 - Live 20 november: de zin onder de weekkam zegt "bewust achter elkaar, op vermoeide benen" alleen nog bij twee beendagen direct na elkaar (melding eigenaar, main 5454c411).
@@ -22,9 +23,7 @@ Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmMeaf189k5coPifuH 
 - Eigenaar 19 november: het geplande bouwmoment is weg (taak trig_01JDroCyzgfatU8c7MiK26Ei verwijderd; besluit 2026-11-19-geen-gepland-bouwmoment.md). De coördinator bouwt de Inbox zelf in rondes met helpers in een eigen worktree (skill bouwmoment als werkwijze), met Warden, Lookout, Pathfinder en een eigen blik op de screenshots, één squash per ronde.
 - Live 18 november: I-79 stap 3 (korte test), I-86, I-88, I-89, I-90 en I-91 deel 1+3. Rest in I-91 en I-92.
 - Volgende rondes, voorstel in deze volgorde: I-68 (back-up terugzetten, moet), I-91 rest, I-92, I-84 (ochtend dubbel na oude back-up), I-83 (ijkset te diep). Zet hoogstens drie sporen tegelijk die elkaars bestanden niet raken.
-- Vorige coördinator session_01LnDpSmrC4jEAYcmy76fXNp zat op lineage 8/8 en kon geen taken of sessies maken. Start bouwers als helper (Agent met isolation worktree), niet met create_session, tenzij get_session een lage diepte toont.
 - Wachter blijft uit zolang er geen bouwer in een eigen sessie loopt.
-- Volgende wissel: plan met send_later op 04:47 Amsterdam (lukt dat niet door de diepte, meld het de eigenaar).
 
 ## Vaste afspraken
 
