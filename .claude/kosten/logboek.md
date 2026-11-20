@@ -542,3 +542,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Warden Ochtend dubbel (I-84) | reviewer helper | fable | 109k tok | 14 min | niet akkoord: M1 import:-ochtend weg bij ontkoppelen, 400 dagen, soort uit; M2 verslag uit root; 5 mag |
 | 2026-11-20 | Lookout Niet goed gemeten (I-92) | tester helper | sonnet | 72k tok | 22 min | groen op 360, 390, 412; screenshots zelf bekeken |
 | 2026-11-20 | Sherpa Korte test (I-91 rest) | ontwikkelaar helper | fable | 217k tok | 54 min | 4 punten, controles groen, eigen doorloop 360/390 |
+| 2026-11-20 | Pathfinder Korte test (I-91) | pathfinder helper | sonnet | ~30k tok | 2 min | akkoord, 1 moet (zin unplanned zegt niet: koppelen), 2 mag |
