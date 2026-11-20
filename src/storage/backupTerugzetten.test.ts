@@ -8,6 +8,9 @@ import { buildImportPreview } from './backupPreview';
 import { applyImportPlan, createImportPlan, createPreImportSnapshot, restoreSnapshot } from './backupApply';
 import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import { backupMadeSettings, logsNotInLastBackup } from '../engine/backupSince';
+import { isAutoBackupDue } from '../engine/autoBackup';
+import { backupAge } from '../engine/settingsAttention';
+import { addDays, localDateOf } from '../utils/dates';
 import type { SessionLog } from '../models/training';
 
 type Bestand = { createdAt?: unknown; payload: { settings: { lastExportedAt?: string; lastBackupLogs?: unknown }; sessionLogs: { id: string }[]; injuryNotes: unknown[] } };
@@ -246,6 +249,63 @@ describe('volledig terugzetten: Laatste back-up en de lijst gaan als paar', () =
     await restore(bestand);
 
     expect(await pair()).toEqual({ lastExportedAt: NOV15, lastBackupLogs: { at: NOV15, ids: ['a', 'b'] } });
+    expect(await unsaved()).toEqual([]);
+  });
+
+  it('een bestand met een tijdstip in de toekomst: Laatste back-up is nu, en de automatische back-up en de herinnering lopen door', async () => {
+    const { second } = await twoBackups();
+    const start = Date.now();
+
+    await restore({ ...second, createdAt: '2099-11-20T12:00:00.000Z' });
+
+    const p = await pair();
+    const at = Date.parse(p.lastExportedAt!);
+    expect(at).toBeGreaterThanOrEqual(start);
+    expect(at).toBeLessThanOrEqual(Date.now());
+    expect(p.lastBackupLogs).toEqual({ at: p.lastExportedAt, ids: ['a', 'b'] });
+    expect(await unsaved()).toEqual([]);
+    // De volgende dag is de dagelijkse back-up weer aan de beurt, en een maand later is de back-up oud.
+    const day = new Date(at);
+    const tomorrow = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1, 23, 59);
+    expect(isAutoBackupDue({ frequency: 'daily', now: tomorrow, lastBackupAt: '2099-11-20T12:00:00.000Z', hasData: true })).toBe(false);
+    expect(isAutoBackupDue({ frequency: 'daily', now: tomorrow, lastBackupAt: p.lastExportedAt, hasData: true })).toBe(true);
+    expect(backupAge(p.lastExportedAt, addDays(localDateOf(p.lastExportedAt!), 35)).days).toBe(35);
+  });
+
+  it('het voorbeeld voor Akkoord: je eigen back-up op hetzelfde toestel toont geen bijgewerkte instelling', async () => {
+    await twoBackups();
+    // Een bestand van 12 november met 8 november in de instellingen, verder gelijk aan het toestel.
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope())) as Bestand;
+    envelope.createdAt = '2026-11-12T19:00:00.000Z';
+    envelope.payload.settings.lastExportedAt = NOV8;
+    const backup = normalizeBackupToCurrentModel(envelope);
+    const preview = await buildImportPreview(backup, defaultActionsForMode('full_restore'), defaultPlanPolicyForMode('full_restore'));
+    expect(preview.settingsChanges).toEqual([]);
+    expect(preview.diffByCategory.find((d) => d.category === 'app_settings')?.toReplace).toBe(0);
+  });
+
+  it('het voorbeeld telt het paar ook niet als het bestand de lijst zelf draagt (een gedownloade kopie)', async () => {
+    await twoBackups();
+    const kopie = await createPreImportSnapshot();
+    const envelope = JSON.parse(JSON.stringify(kopie.envelope)) as Bestand;
+    envelope.payload.settings.lastExportedAt = NOV8;
+    envelope.payload.settings.lastBackupLogs = { at: NOV8, ids: ['a'] };
+    const preview = await buildImportPreview(normalizeBackupToCurrentModel(envelope), defaultActionsForMode('full_restore'), defaultPlanPolicyForMode('full_restore'));
+    expect(preview.settingsChanges.map((c) => c.key)).toEqual([]);
+  });
+
+  it('Ongedaan maken op een toestel dat voor de import nog geen back-up had: het paar van de import blijft staan', async () => {
+    const { second } = await twoBackups();
+    await wipeAllData();
+    const kopie = await restore(second);
+    expect(await pair()).toEqual({ lastExportedAt: NOV15, lastBackupLogs: { at: NOV15, ids: ['a', 'b'] } });
+
+    await restoreSnapshot(kopie.id);
+
+    // De kopie heeft de twee velden niet, en een ontbrekend veld betekent niet aanraken. De trainingen
+    // blijven op het toestel en staan in dat bestand, dus het klopt.
+    expect(await pair()).toEqual({ lastExportedAt: NOV15, lastBackupLogs: { at: NOV15, ids: ['a', 'b'] } });
+    expect(await logIds()).toEqual(['a', 'b']);
     expect(await unsaved()).toEqual([]);
   });
 });

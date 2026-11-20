@@ -147,7 +147,7 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
       // "Laatste back-up" and its list belong to the device and travel as a pair: the time inside the
       // file is that of the back-up before it, so it is never copied over. Read here, at the moment of
       // writing (docs/beslissingen/2026-11-20-backup-terugzetten.md).
-      const pair = backupPairAfterRestore(now, backup.fileCreatedAt, backup.sessionLogs.map((l) => l.id));
+      const pair = backupPairAfterRestore(now, backup.fileCreatedAt, backup.sessionLogs.map((l) => l.id), Date.now());
       for (const key of ['lastExportedAt', 'lastBackupLogs'] as const) {
         if (pair[key] === undefined) delete next[key];
         else Object.assign(next, { [key]: pair[key] });

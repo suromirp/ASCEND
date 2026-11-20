@@ -17,7 +17,12 @@ De regel, in `engine/backupSince.ts#backupPairAfterRestore`:
 2. Anders wordt het paar het tijdstip van het bestand, met de ids van de trainingen die in het bestand staan. Alles in dat bestand is bewaard, ook op een leeg toestel.
 3. Een bestand zonder tijdstip, of met een tijdstip dat niet te lezen is, verandert niets aan het paar. Het moment van inlezen telt niet als tijdstip van het bestand; daarvoor onthoudt het inlezen apart of het tijdstip echt in het bestand stond (`NormalizedBackupData.fileCreatedAt`, alleen in het geheugen).
 4. Samenvoegen verandert niet: de instellingen van het toestel blijven, het paar ook.
-5. Een kopie van voor een import terugzetten (Ongedaan maken, of een kopie uit de lijst) verandert niet: die kopie is van dit toestel, draagt het paar zelf en brengt het terug zoals het was (`restoreSnapshot` geeft `deviceCopy` mee).
+5. Een kopie van voor een import terugzetten (Ongedaan maken, of een kopie uit de lijst) verandert niet: die kopie is van dit toestel, draagt het paar zelf en brengt het terug zoals het was (`restoreSnapshot` geeft `deviceCopy` mee). Had het toestel toen nog geen back-up, dan heeft de kopie de twee velden niet en blijft het paar van de import staan: een ontbrekend veld betekent niet aanraken, en de trainingen blijven op het toestel en staan in dat bestand.
+6. Een tijdstip in de toekomst telt als nu. Een tijdstip uit een bestand is van een andere klok; zonder grens zou Laatste back-up in de toekomst staan, en dan maakt de app tot die datum geen automatische back-up, herinnert hij niet, en wint het toestel van elk later bestand. Het bestand is dan "net teruggezet": Laatste back-up is nu, met de trainingen uit het bestand. De engine krijgt het moment mee (`nowMs`) en heeft zelf geen klok. Een tijdstip dat al in de toekomst op een toestel staat blijft staan tot de volgende back-up; dat is een eigen punt.
+
+De regel hangt aan het vervangen van de instellingen. Een bestand zonder instellingen laat het paar dus zoals het is, en bij Eigen keuze met instellingen vervangen maar trainingen laten staan wordt het bestand toch de laatste back-up. In beide gevallen telt de app hoogstens te veel, nooit te weinig.
+
+Het voorbeeld voor Akkoord telt de twee velden niet mee bij Instellingen (`storage/backupPreview.ts`): Laatste back-up is geen keuze van de gebruiker en de import bepaalt hem pas bij het schrijven. Het voorbeeld rekent de regel niet zelf na, want dat antwoord kan tussen voorbeeld en Akkoord veranderen.
 
 De vergelijking gaat op het moment, niet op de tekst, en het nieuwe tijdstip wordt als UTC bewaard, omdat de telling op tijd teksten vergelijkt. De regel draait binnen de transactie van de import, op de instellingen zoals ze op dat moment zijn opgeslagen: een back-up die tussen het voorbeeld en Akkoord wordt gemaakt telt mee, en een import die halverwege mislukt laat het paar zoals het was.
 
@@ -31,7 +36,7 @@ Er is geen migratiestap. De vorm van een back-up verandert niet: er komt geen ve
 
 ## Bron
 
-Herstelopdracht van Warden van 15 november (Moet 2, B2) met zijn proeftest, I-68 in `docs/backlog.md`, `docs/beslissingen/2026-11-15-backup-telling.md`.
+Herstelopdracht van Warden van 15 november (Moet 2, B2) met zijn proeftest, zijn review van 20 november (de grens op nu, het voorbeeld), I-68 in `docs/backlog.md`, `docs/beslissingen/2026-11-15-backup-telling.md`.
 
 ## Vervangt
 
