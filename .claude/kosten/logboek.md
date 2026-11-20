@@ -548,3 +548,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Sherpa Niet goed gemeten herstel (I-92) | ontwikkelaar helper hervat | fable | 138k tok | 12 min | moet en 4 mag, controles groen |
 | 2026-11-20 | Warden herstel I-92 | reviewer helper | fable | 51k tok | 2 min | akkoord, 4 mag (briefje en besluit te stellig: zelf hersteld) |
 | 2026-11-20 | Lookout vraagzin I-92 | tester helper | sonnet | 44k tok | 2 min | groen 360/390/412, zelf bekeken |
+| 2026-11-20 | Warden Korte test (I-91) | reviewer helper | fable | ~110k tok | ~30 min | niet akkoord: M1 laat log haalt geplande test uit midden; 5 mag; betere fix gekozen, herstel naar zelfde Sherpa |
