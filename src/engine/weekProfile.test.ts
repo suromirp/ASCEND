@@ -165,6 +165,19 @@ describe('ridgeSentence', () => {
     expect(s).not.toContain('Let op');
   });
 
+  it('noemt een bewuste combinatie met een dag ertussen niet achter elkaar of op vermoeide benen (eigenaar 20 november)', () => {
+    const d = days([], [planned('tpl_hill_intervals', '2026-10-23', { plannedMinutes: 35 }), planned('tpl_long_run', '2026-10-25', { plannedMinutes: 50 })]);
+    const s = ridgeSentence(d, TODAY);
+    expect(s).not.toContain('bewust achter elkaar');
+    expect(s).not.toContain('vermoeide benen');
+    expect(s).toMatch(/Tussen Heuvelintervallen en Lange duurloop zit één dag, (ruim|net) genoeg\.$/);
+  });
+
+  it('een overgeslagen eerste training telt niet als beendag, dus ook geen vermoeide benen', () => {
+    const d = days([], [planned('tpl_hill_intervals', '2026-10-24', { plannedMinutes: 35, status: 'skipped' }), planned('tpl_long_run', '2026-10-25', { plannedMinutes: 50 })]);
+    expect(ridgeSentence(d, TODAY)).not.toContain('vermoeide benen');
+  });
+
   it('waarschuwt niet tussen twee tochtdagen: een tocht ligt bewust aaneen (Doorloop, punt 13)', () => {
     const trek = { periodId: 't', role: 'placed' as const };
     const d = days([], [
