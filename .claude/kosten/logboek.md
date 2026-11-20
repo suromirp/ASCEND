@@ -526,3 +526,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-18 | Warden I-91 + Ochtend | reviewer helper | fable + opus | 180k tok | 27 min | 0 blokkerend, 3 voor main |
 | 2026-11-18 | Lookout Ochtend + herkeuring | tester helper | sonnet | 168k tok | 23 min | groen, 1 fout gevonden bij herkeuring |
 | 2026-11-18 | Pathfinder Ochtend | pathfinder helper | sonnet | 33k tok | 1 min | 1 moet (ontdekbaarheid) |
+| 2026-11-20 | Pathfinder IJkset vooraf (I-83) | pathfinder helper | sonnet | 44k tok | 1 min | advies plek en sprong vanuit de melding |
