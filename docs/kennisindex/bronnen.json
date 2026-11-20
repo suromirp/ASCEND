@@ -880,6 +880,13 @@
     "docs/beslissingen/2026-11-12-stand-minimaal.md"
    ]
   },
+  "docs/beslissingen/2026-11-20-gemengde-bouwers-en-wissel.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Lange of zware bouwers (planner, opslag, migraties) in een eigen chat, klein werk als helper; de coördinator start zijn opvolger niet zelf maar meldt de wissel aan de vaste chat ASCEND, die hem start en vastzet, zodat de keten nooit vol raakt.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-20-lange-chat-en-kosten.md": {
    "onderwerpen": [
     "werkwijze"
