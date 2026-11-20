@@ -131,7 +131,9 @@ export function shortTestSessionIds(sessions: readonly PlannedSession[], series:
   if (!on || seriesPace(series) === undefined) return out;
   const first = new Map<string, { s: PlannedSession; day: string }>();
   for (const s of sessions) {
-    if (s.templateId !== SHORT_TEST_RUN_ID || s.status === 'skipped') continue;
+    // Overgeslagen telt niet, tenzij er toch een log aan hangt: dan is hij gedaan (het log wint, zoals in
+    // engine/sessionStatus.ts#deriveSessionStatus).
+    if (s.templateId !== SHORT_TEST_RUN_ID || (s.status === 'skipped' && !done?.logged.has(s.id))) continue;
     // De dag die telt: die van het plan, of bij een achteraf gekoppelde loop de dag dat je echt liep.
     const day = (done?.logged.has(s.id) ? done.ranOn?.get(s.id) : undefined) ?? s.scheduledDate;
     if (day < series!.date) continue;
@@ -366,7 +368,7 @@ export function findShortTest(set: StreamSet, targetSecKm: number): ShortTestFac
 // --- één test -----------------------------------------------------------------------------------
 
 // Waarom een test geen oordeel krijgt en niet meetelt in je eigen midden.
-export type ShortTestReason = 'unplanned' | 'noHr' | 'hrGap' | 'start' | 'stopped' | 'pace' | 'noStrap';
+export type ShortTestReason = 'loose' | 'second' | 'noHr' | 'hrGap' | 'start' | 'stopped' | 'pace' | 'noStrap';
 export type ShortTestStrap = 'seen' | 'said' | 'wrist';
 export type DayPart = 'morning' | 'later';
 
@@ -389,9 +391,6 @@ export interface ShortTestContext {
   noStrap?: NoStrapChoice;
   // Je zei bij deze loop "Ik had hem wel om" (settings.strapWorn).
   strapSaid?: boolean;
-  // Deze loop was de geplande testloop van zijn week (plannedTestLogIds). Alleen die telt voor je eigen
-  // midden en krijgt een oordeel; `false` geeft de feiten met de reden. Leeg telt als gepland.
-  planned?: boolean;
 }
 
 // Ochtend of later: voor of na 12 uur begonnen (zoals legDayEase.ts).
@@ -411,7 +410,6 @@ export function shortTestOf(log: SessionLog, set: StreamSet | undefined, ctx: Sh
     ...(isNum(log.rpe) && !log.rpeAssumed ? { rpe: log.rpe } : {}),
   };
   const reject = (reason: ShortTestReason): ShortTestResult => ({ ...base, valid: false, reason });
-  if (ctx.planned === false) return reject('unplanned');
   if (facts.noHr) return reject('noHr');
   if (facts.hrGap || facts.hrEnd === undefined) return reject('hrGap');
   if (facts.startSec < R.validFromSec || facts.startSec > R.validToSec) return reject('start');
@@ -495,26 +493,36 @@ export function shortTestVerdict(current: ShortTestResult, baseline: ShortTestBa
 
 // --- wat het logblad laat zien ------------------------------------------------------------------
 
-// De logs van de geplande testlopen: per week de rustige loop die de korte test droeg (shortTestSessionIds,
-// met de logs zoals ze nu zijn). Alleen die tellen voor je eigen midden. Een losse horlogeloop hoort er niet
-// bij, tot je hem aan zijn training koppelt; na ontkoppelen is hij er weer uit. De instelling Korte test
-// telt hier niet mee: wat je liep blijft staan, ook als je hem later uitzet.
-export function plannedTestLogIds(logs: readonly SessionLog[], sessions: readonly PlannedSession[], series: ShortTestSeries | undefined, today: string): Set<string> {
-  const out = new Set<string>();
-  if (seriesPace(series) === undefined) return out;
-  const ids = shortTestSessionIds(sessions, series, true, shortTestDone(today, logs));
-  for (const l of logs) if (l.plannedSessionId && ids.has(l.plannedSessionId)) out.add(l.id);
-  return out;
+// Welke tests achteraf tellen voor je eigen midden: per week (maandag tot zondag, op de dag van het log) de
+// vroegste loop met een teststuk, onder de logs die aan een geplande training hangen (gewoon gelogd of
+// achteraf gekoppeld). Eén per week. Een losse loop telt niet ('loose'), tot je hem koppelt; een latere loop
+// met een teststuk in dezelfde week ook niet ('second'). Bewust niet shortTestSessionIds: welke loop de test
+// vooruit krijgt beweegt met elk later log, en wat achteraf telt mag daar niet op meebewegen. Een eerdere
+// loop van dezelfde week die je pas later afvinkt of koppelt verdringt alleen als hij zelf een teststuk heeft.
+export function countedShortTests(found: readonly ShortTestResult[], logs: readonly Pick<SessionLog, 'id' | 'plannedSessionId'>[]): ShortTestResult[] {
+  const linked = new Set(logs.filter((l) => !!l.plannedSessionId).map((l) => l.id));
+  const firstOfWeek = new Map<string, string>();
+  for (const r of [...found].sort(order)) {
+    const week = mondayOfWeek(r.date);
+    if (linked.has(r.logId) && !firstOfWeek.has(week)) firstOfWeek.set(week, r.logId);
+  }
+  const out = (r: ShortTestResult, reason: ShortTestReason): ShortTestResult => {
+    const { strap: _strap, ...rest } = r;
+    void _strap;
+    return { ...rest, valid: false, reason };
+  };
+  return found.map((r) => (!linked.has(r.logId) ? out(r, 'loose') : firstOfWeek.get(mondayOfWeek(r.date)) !== r.logId ? out(r, 'second') : r));
 }
 
-// De logs die een korte test kunnen hebben: rustige lopen vanaf de eerste dag van de reeks, niet ingekort.
-// Met `planned` alleen de geplande testlopen, plus de loop waar je naar kijkt (`upTo`): die laat zijn feiten
-// zien, ook als hij niet meetelt.
-export function shortTestLogIds(logs: readonly SessionLog[], series: ShortTestSeries | undefined, upTo?: string, planned?: ReadonlySet<string>): string[] {
+// De logs die een korte test kunnen hebben: rustige lopen vanaf de eerste dag van de reeks, niet ingekort,
+// die aan een geplande training hangen, plus de loop waar je naar kijkt (`upTo`): die laat zijn feiten zien,
+// ook als hij los is en niet meetelt.
+export function shortTestLogIds(logs: readonly SessionLog[], series: ShortTestSeries | undefined, upTo?: string): string[] {
   if (seriesPace(series) === undefined) return [];
   const runs = logs
-    .filter((l) => l.templateId === SHORT_TEST_RUN_ID && !l.trim && l.completedDate >= series!.date && (!planned || planned.has(l.id) || l.id === upTo))
-    .sort((a, b) => a.completedDate.localeCompare(b.completedDate) || a.id.localeCompare(b.id));
+    .filter((l) => l.templateId === SHORT_TEST_RUN_ID && !l.trim && l.completedDate >= series!.date && (!!l.plannedSessionId || l.id === upTo))
+    // Dezelfde volgorde als `order`: dag, klok, id. Zo valt een eerdere loop van dezelfde dag binnen het venster.
+    .sort((a, b) => a.completedDate.localeCompare(b.completedDate) || (Date.parse(a.completedAt) || 0) - (Date.parse(b.completedAt) || 0) || a.id.localeCompare(b.id));
   const end = upTo ? runs.findIndex((l) => l.id === upTo) : runs.length - 1;
   if (end < 0) return [];
   // Genoeg voor zes geldige tests ervoor, met ruimte voor lopen zonder test.
@@ -522,7 +530,9 @@ export function shortTestLogIds(logs: readonly SessionLog[], series: ShortTestSe
 }
 
 const REASON_LINE: Record<ShortTestReason, string> = {
-  unplanned: 'Deze loop stond niet als korte test in je week. Je ziet de feiten, zonder oordeel.',
+  // Koppelen kan niet op het logblad: het gaat via de vraag "Hoort die bij elkaar?" op Vandaag, met Akkoord.
+  loose: 'Deze loop stond niet in je week. Zeg je op Vandaag Akkoord op de vraag of hij bij je geplande loop hoort, dan telt hij mee.',
+  second: 'Deze week telde al een korte test. Je ziet de feiten, zonder oordeel.',
   noHr: 'Deze loop heeft geen hartslag, dus er is geen oordeel.',
   hrGap: 'In je hartslag zit een gat in de laatste minuut van je test, dus er is geen oordeel.',
   start: 'Je test begon niet tussen minuut 8 en 15. Dan is hij niet te vergelijken, dus er is geen oordeel.',
@@ -544,9 +554,6 @@ export interface ShortTestViewInput {
   logs: readonly SessionLog[];
   streams: ReadonlyMap<string, StreamSet>;
   series: ShortTestSeries | undefined;
-  // De geplande trainingen en vandaag: daaruit volgt welke lopen de geplande testlopen waren.
-  sessions: readonly PlannedSession[];
-  today: string;
   noStrap?: NoStrapChoice;
   strapWorn?: readonly string[];
 }
@@ -555,14 +562,15 @@ export interface ShortTestViewInput {
 export function shortTestView(input: ShortTestViewInput): ShortTestView | undefined {
   const pace = seriesPace(input.series);
   if (pace === undefined) return undefined;
-  const planned = plannedTestLogIds(input.logs, input.sessions, input.series, input.today);
-  const ids = new Set(shortTestLogIds(input.logs, input.series, input.logId, planned));
-  const results: ShortTestResult[] = [];
+  const ids = new Set(shortTestLogIds(input.logs, input.series, input.logId));
+  const found: ShortTestResult[] = [];
   for (const log of input.logs) {
     if (!ids.has(log.id)) continue;
-    const r = shortTestOf(log, input.streams.get(log.id), { paceSecKm: pace, noStrap: input.noStrap, strapSaid: input.strapWorn?.includes(log.id), planned: planned.has(log.id) });
-    if (r) results.push(r);
+    const r = shortTestOf(log, input.streams.get(log.id), { paceSecKm: pace, noStrap: input.noStrap, strapSaid: input.strapWorn?.includes(log.id) });
+    if (r) found.push(r);
   }
+  // Eén per week, alleen lopen die aan een geplande training hangen (countedShortTests).
+  const results = countedShortTests(found, input.logs);
   const current = results.find((r) => r.logId === input.logId);
   if (!current) return undefined;
   const f = current.facts;

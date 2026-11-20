@@ -95,6 +95,7 @@ describe('cleanSettings: de nieuwe sleutels van de drempel', () => {
     // Zonder reeks blijft een oudere back-up zoals hij was, en via cleanSettings valt een onmogelijke dag weg.
     const count = { n: 0 };
     expect(cleanSettings({ shortTestSeries: { answer: 'accepted', date: '2026-02-31', paceSecKm: 320 } }, count)?.shortTestSeries).toBeUndefined();
+    expect(count.n).toBe(1);
     expect('shortTestSeries' in (cleanSettings({ shortTestSeries: { answer: 'accepted', date: '2026-02-31', paceSecKm: 320 } }, { n: 0 }) ?? {})).toBe(false);
   });
 

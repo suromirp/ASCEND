@@ -5,7 +5,7 @@ import type { PlannedSession, SessionLog } from '../models/training';
 import type { StreamSet } from '../models/activityDetail';
 import { linkLog, unlinkLog } from './missedTraining';
 import {
-  plannedTestLogIds, shortTestBriefing, shortTestDone, shortTestLogIds, shortTestRunMinutes, shortTestSessionIds, shortTestView, watchShortTest,
+  countedShortTests, findShortTest, shortTestBriefing, shortTestDone, shortTestLogIds, shortTestRunMinutes, shortTestSessionIds, shortTestView, watchShortTest,
 } from './shortTest';
 
 // I-91, de rest van de korte test (docs/beslissingen/2026-11-20-korte-test-rest.md). Alles nagemaakt.
@@ -117,6 +117,16 @@ describe('een losse loop, koppelen achteraf en ontkoppelen (punt 1)', () => {
     expect(idsOf([s('vr', '2026-11-20'), s('wo2', '2026-11-25')], [], '2026-11-18')).toEqual(['vr', 'wo2']);
   });
 
+  it('een overgeslagen loop die je toch liep telt als gedaan: het log wint', () => {
+    const week = [s('di', '2026-11-17', { status: 'skipped' }), s('do', '2026-11-19'), s('wo2', '2026-11-25')];
+    // Zonder log is dinsdag overgeslagen en krijgt donderdag de test.
+    expect(idsOf(week, [], '2026-11-18')).toEqual(['do', 'wo2']);
+    // Met een log aan dinsdag is hij gedaan, net als in de rest van de app.
+    expect(idsOf(week, [log('d', '2026-11-17', { plannedSessionId: 'di' })], '2026-11-18')).toEqual(['di', 'wo2']);
+    // Een los log maakt een overgeslagen loop niet gedaan.
+    expect(idsOf(week, [log('los', '2026-11-17')], '2026-11-18')).toEqual(['do', 'wo2']);
+  });
+
   it('Briefing en horloge lezen dezelfde dag', () => {
     const two = [s('zo', '2026-11-15'), s('wo', '2026-11-18'), s('wo2', '2026-11-25')];
     const linked = linkLog(log('los', '2026-11-16'), 'zo', '2026-11-17T09:00:00.000Z')!;
@@ -143,20 +153,33 @@ function run(hrEnd: number): StreamSet {
   return { timeSec, distanceM, heartRate, stanceBalanceLeftPct: timeSec.map(() => 50) };
 }
 
-describe('alleen geplande testlopen tellen voor je midden (punt 3)', () => {
+// Een rustige loop zonder teststuk: 40 minuten gelijk tempo.
+function plain(): StreamSet {
+  const timeSec: number[] = [];
+  for (let t = 0; t <= 2400; t++) timeSec.push(t);
+  return { timeSec, distanceM: timeSec.map((t) => (t * 1000) / 390), heartRate: timeSec.map(() => 140), stanceBalanceLeftPct: timeSec.map(() => 50) };
+}
+
+describe('wat achteraf telt voor je midden (punt 3)', () => {
   const series = { answer: 'accepted' as const, date: '2026-10-01', paceSecKm: 320 };
   const dates = ['2026-10-05', '2026-10-12', '2026-10-19', '2026-10-26', '2026-11-02'];
-  const sessions = [...dates.map((d, i) => s(`p${i}`, d)), s('p3b', '2026-10-29'), s('p5', '2026-11-10')];
   const planned = dates.map((d, i) => log(`r${i}`, d, { plannedSessionId: `p${i}` }));
-  const today = '2026-11-20';
-  const view = (logId: string, logs: SessionLog[], hr: Record<string, number> = {}) =>
-    shortTestView({ logId, logs, streams: new Map(logs.map((l) => [l.id, run(hr[l.id] ?? 165)])), series, sessions, today });
+  const LOOSE = 'Deze loop stond niet in je week. Zeg je op Vandaag Akkoord op de vraag of hij bij je geplande loop hoort, dan telt hij mee.';
+  const SECOND = 'Deze week telde al een korte test. Je ziet de feiten, zonder oordeel.';
+  // `hr` de hartslag aan het eind van het teststuk per log (standaard 165); `noTest` de lopen zonder teststuk.
+  const view = (logId: string, logs: SessionLog[], hr: Record<string, number> = {}, noTest: string[] = []) =>
+    shortTestView({ logId, logs, streams: new Map(logs.map((l) => [l.id, noTest.includes(l.id) ? plain() : run(hr[l.id] ?? 165)])), series });
 
-  it('een losse loop met een test erin: de feiten met de reden, geen oordeel', () => {
+  it('de nagemaakte loop zonder teststuk heeft er ook geen', () => {
+    expect(findShortTest(plain(), 320)).toBeUndefined();
+    expect(findShortTest(run(165), 320)).toBeDefined();
+  });
+
+  it('een losse loop met een test erin: de feiten, en wat je doet om hem te laten tellen', () => {
     const loose = log('los', '2026-11-04');
     const v = view('los', [...planned, loose])!;
     expect(v.word).toBeUndefined();
-    expect(v.line).toBe('Deze loop stond niet als korte test in je week. Je ziet de feiten, zonder oordeel.');
+    expect(v.line).toBe(LOOSE);
     expect(v.askStrap).toBe(false);
     expect(v.facts[0]).toBe('Je liep 5:20 per km; je testtempo is 5:20.');
   });
@@ -167,35 +190,90 @@ describe('alleen geplande testlopen tellen voor je midden (punt 3)', () => {
     const hr = Object.fromEntries(loose.map((l) => [l.id, 150]));
     expect(view('r4', planned)).toMatchObject({ word: 'Normaal' });
     expect(view('r4', [...planned, ...loose], hr)).toMatchObject({ word: 'Normaal' });
-    expect(plannedTestLogIds([...planned, ...loose], sessions, series, today)).toEqual(new Set(['r0', 'r1', 'r2', 'r3', 'r4']));
-    expect(shortTestLogIds([...planned, ...loose], series, 'r4', new Set(['r0', 'r1', 'r2', 'r3', 'r4']))).toEqual(['r0', 'r1', 'r2', 'r3', 'r4']);
+    expect(shortTestLogIds([...planned, ...loose], series, 'r4')).toEqual(['r0', 'r1', 'r2', 'r3', 'r4']);
+    // De loop waar je naar kijkt komt mee, ook als hij los is.
+    expect(shortTestLogIds([...planned, ...loose], series, 'los1')).toContain('los1');
   });
 
-  it('de tweede rustige loop van een week is geen geplande testloop', () => {
-    // p3 (26 oktober) droeg de test; p3b (29 oktober) is de tweede loop van die week.
+  it('twee lopen met een teststuk in een week: de vroegste telt, de tweede krijgt de feiten', () => {
+    // r3 (26 oktober) en een tweede geplande loop op 29 oktober, allebei met een teststuk.
     const second = log('tweede', '2026-10-29', { plannedSessionId: 'p3b' });
-    expect(view('tweede', [...planned, second])?.line).toBe('Deze loop stond niet als korte test in je week. Je ziet de feiten, zonder oordeel.');
+    expect(view('tweede', [...planned, second])?.line).toBe(SECOND);
+    expect(view('tweede', [...planned, second])?.word).toBeUndefined();
+    expect(view('r3', [...planned, second])?.line).not.toBe(SECOND);
     expect(view('r4', [...planned, second], { tweede: 150 })).toMatchObject({ word: 'Normaal' });
+    // De volgorde van de logs doet er niet toe.
+    expect(view('tweede', [second, ...planned])?.line).toBe(SECOND);
   });
 
-  it('koppelen achteraf laat de loop meetellen op zijn echte dag, ontkoppelen haalt hem er weer uit', () => {
+  it('een losse loop telt niet, na koppelen wel, na ontkoppelen weer niet', () => {
     // De geplande loop van 10 november (p5) liep je op 11 november met het horloge, los.
     const loose = log('los', '2026-11-11');
-    expect(view('los', [...planned, loose], { los: 150 })?.word).toBeUndefined();
+    expect(view('los', [...planned, loose], { los: 150 })).toMatchObject({ line: LOOSE });
     const linked = linkLog(loose, 'p5', '2026-11-13T09:00:00.000Z')!;
-    const logs = [...planned, linked];
-    expect(plannedTestLogIds(logs, sessions, series, today).has('los')).toBe(true);
     // Vijf geplande tests op 165 ervoor, deze op 150 met dezelfde zwaarte: Beter.
-    expect(view('los', logs, { los: 150 })).toMatchObject({ word: 'Beter' });
-    const back = [...planned, unlinkLog(linked)];
-    expect(plannedTestLogIds(back, sessions, series, today).has('los')).toBe(false);
-    expect(view('los', back, { los: 150 })?.word).toBeUndefined();
+    expect(view('los', [...planned, linked], { los: 150 })).toMatchObject({ word: 'Beter' });
+    const back = view('los', [...planned, unlinkLog(linked)], { los: 150 })!;
+    expect(back.word).toBeUndefined();
+    expect(back.line).toBe(LOOSE);
   });
 
-  it('een geplande testloop houdt zijn oordeel, ook met de instelling Korte test later uit', () => {
-    // plannedTestLogIds leest de instelling niet: wat je liep blijft staan.
-    expect(plannedTestLogIds(planned, sessions, series, today).size).toBe(5);
-    expect(plannedTestLogIds(planned, sessions, { answer: 'declined', date: '2026-10-01' }, today).size).toBe(0);
+  describe('een eerdere loop van dezelfde week die pas later een log krijgt (Warden, 20 november)', () => {
+    // Rustige lopen op dinsdag 17 en donderdag 19 november. Dinsdag had geen log, dus donderdag droeg de
+    // test en je liep hem (hartslag 150 tegen een midden van 165: Beter).
+    const thu = log('do', '2026-11-19', { plannedSessionId: 'do' });
+    const base = [...planned, thu];
+
+    it('donderdag telt', () => {
+      expect(view('do', base, { do: 150 })).toMatchObject({ word: 'Beter' });
+    });
+
+    it('dinsdag later afgevinkt zonder teststuk: donderdag blijft tellen', () => {
+      const tue = log('di', '2026-11-17', { plannedSessionId: 'di', source: 'manual' });
+      for (const logs of [[...base, tue], [tue, ...base]]) {
+        expect(view('do', logs, { do: 150 }, ['di'])).toMatchObject({ word: 'Beter' });
+      }
+    });
+
+    it('een losse dinsdagloop later gekoppeld, zonder teststuk: donderdag blijft tellen', () => {
+      const tue = linkLog(log('di', '2026-11-17'), 'di', '2026-11-20T09:00:00.000Z')!;
+      expect(view('do', [...base, tue], { do: 150 }, ['di'])).toMatchObject({ word: 'Beter' });
+      expect(view('do', [...base, unlinkLog(tue)], { do: 150 }, ['di'])).toMatchObject({ word: 'Beter' });
+    });
+
+    it('had de dinsdagloop zelf een teststuk, dan telt hij: de vroegste van de week', () => {
+      const tue = linkLog(log('di', '2026-11-17'), 'di', '2026-11-20T09:00:00.000Z')!;
+      expect(view('di', [...base, tue], { do: 150, di: 150 })).toMatchObject({ word: 'Beter' });
+      expect(view('do', [...base, tue], { do: 150, di: 150 })).toMatchObject({ line: SECOND });
+      // Ontkoppel je hem weer, dan telt donderdag als voorheen.
+      expect(view('do', [...base, unlinkLog(tue)], { do: 150, di: 150 })).toMatchObject({ word: 'Beter' });
+    });
+
+    it('de week heeft nooit geen test als er een gelopen is', () => {
+      const tue = log('di', '2026-11-17', { plannedSessionId: 'di', source: 'manual' });
+      // Een test in de week erna leest donderdag in zijn midden: vier op 165 en een op 150 is nog 165,
+      // maar het aantal tests waar hij op leunt is zes, niet vijf.
+      const next = log('wo2', '2026-11-25', { plannedSessionId: 'wo2' });
+      const logs = [...base, tue, next];
+      const found = logs.filter((l) => l.id !== 'di').map((l) => ({ logId: l.id, date: l.completedDate, at: l.completedAt, valid: true }));
+      const counted = countedShortTests(found as never, logs);
+      expect(counted.filter((r) => r.valid).map((r) => r.logId)).toEqual(['r0', 'r1', 'r2', 'r3', 'r4', 'do', 'wo2']);
+    });
+  });
+
+  it('per week, op de dag van het log: zondag en maandag zijn twee weken', () => {
+    const sun = log('zo', '2026-11-08', { plannedSessionId: 'a' });
+    const mon = log('ma', '2026-11-09', { plannedSessionId: 'b' });
+    expect(view('ma', [...planned, sun, mon])?.line).not.toBe(SECOND);
+    // Twee op een dag: de vroegste op de klok telt.
+    const late = log('laat', '2026-11-09', { plannedSessionId: 'c', completedAt: '2026-11-09T18:00:00' });
+    expect(view('laat', [...planned, mon, late])?.line).toBe(SECOND);
+    expect(view('ma', [...planned, late, mon])?.line).not.toBe(SECOND);
+  });
+
+  it('zonder aangenomen reeks is er niets te lezen', () => {
+    expect(shortTestLogIds(planned, { answer: 'declined', date: '2026-10-01' })).toEqual([]);
+    expect(shortTestLogIds(planned, series)).toEqual(['r0', 'r1', 'r2', 'r3', 'r4']);
   });
 });
 
