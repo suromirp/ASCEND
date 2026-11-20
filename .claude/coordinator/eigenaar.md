@@ -38,6 +38,9 @@ Zonder antwoord het advies: praattest later, test van 30 minuten later, DFA alph
 
 ## Net live
 
+### 20 november 18:15
+- Niet goed gemeten (I-92): een ochtend die je niet goed gemeten noemt, met een rusthartslag minstens 6 boven je gewone, breekt de reeks van Vroeg ziek zien niet meer; hij wordt overgeslagen. De vraag komt dus niet meer te laat.
+
 ### 20 november 17:00
 - IJkset dichterbij (I-83): de instelling staat nu in Instellingen, Forge, onder Voorstellen, twee tikken van Vandaag. Op de ijksetkaart voor de training staat IJkset aanpassen; terug brengt je weer in de training.
 
