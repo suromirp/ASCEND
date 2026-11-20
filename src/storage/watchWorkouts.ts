@@ -32,7 +32,7 @@ import { planWatchSync, selectWatchWorkouts, type TrackedWorkout, type WatchWork
 import { walkHrFromSettings } from '../engine/walkHeartRate';
 import { hasAscendHeartRate, resolveWatchHrMode, watchHrPlanFromSettings, type IntervalsHrBasis } from '../engine/watchHeartRate';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
-import { watchShortTest } from '../engine/shortTest';
+import { shortTestDone, watchShortTest } from '../engine/shortTest';
 import { addDays, todayISO } from '../utils/dates';
 import { getTrainingPlaces, saveTrainingPlace } from './trainingPlace';
 
@@ -137,7 +137,8 @@ async function loadDesired(
   const basis = refresh ? await refreshHrBasis(state, settings, connection, options, now) : state.hrBasis;
   const hr = watchHrPlanFromSettings(settings, basis);
   // De korte test (engine/shortTest.ts): alleen na Akkoord en met "Korte test als workout" aan.
-  const shortTest = watchShortTest(settings, sessions, { today, logged: new Set(logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id)) });
+  // Wat er al gebeurde leest dezelfde functie als de Briefing en de stand (shortTestDone).
+  const shortTest = watchShortTest(settings, sessions, shortTestDone(today, logs));
   const build = { namePrefix: settings.watchNamePrefix, hr, places, placeWorkout: settings.watchPlaceWorkout, walkHr: walkHrFromSettings(settings), ...(shortTest ? { shortTest } : {}) };
   const desired = selectWatchWorkouts({ sessions, logs, templates, program: programs[0], paces: pacesFromLogs(logs, judgmentOptions(settings)).paces, today, options: build });
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));

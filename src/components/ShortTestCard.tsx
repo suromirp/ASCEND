@@ -19,6 +19,7 @@ const SAVE_LIMIT_MS = 10_000;
 export function ShortTestCard({ logId }: { logId: string }) {
   const { sessionLogs, settings, updateSettings } = useAppData();
   const series = settings.shortTestSeries;
+  // De rustige lopen die aan een geplande training hangen, plus de loop waar je naar kijkt.
   const ids = useMemo(() => (seriesPace(series) === undefined ? '' : shortTestLogIds(sessionLogs, series, logId).join(',')), [sessionLogs, series, logId]);
   const [streams, setStreams] = useState<{ ids: string; map: Map<string, StreamSet> } | undefined>(undefined);
   const [busy, setBusy] = useState(false);

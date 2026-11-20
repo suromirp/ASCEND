@@ -18,7 +18,7 @@ export function useWatchSheet({
   hasZonesNote,
 }: {
   template: SessionTemplate;
-  garmin?: { sport: string; lines: string[] };
+  garmin?: { sport: string; lines: string[]; tag?: string };
   session?: PlannedSession;
   hasZonesNote: boolean;
 }): WatchSheetView {

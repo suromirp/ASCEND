@@ -31,6 +31,7 @@ import { formatDateNL, weekdayShortNL } from '../utils/dates';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { WatchSheet } from './WatchSheet';
 import { useWatchSheet } from './useWatchSheet';
+import { useShortTestManual } from './useShortTestManual';
 import { StopSignals } from './SessionHeader';
 import { SkyBand } from './SkyBand';
 import { CheckGlyph } from './vandaag/glyphs';
@@ -191,7 +192,8 @@ function GeneralLogger({
   // Het blad Je horloge (engine/watchSheet.ts): de knop onderaan heet Horloge als het blad iets te tonen
   // heeft, anders Waarom deze training als er een gids is, anders Annuleren. Hetzelfde blad staat ook achter de i
   // in de lucht; knop, i en blad dragen één naam (Info-blad, rest, 14 november).
-  const watchView = useWatchSheet({ template, garmin: plan?.garmin, session: plannedSession, hasZonesNote: !!guide?.garminNote });
+  const garmin = useShortTestManual(template, plannedSession) ?? plan?.garmin;
+  const watchView = useWatchSheet({ template, garmin, session: plannedSession, hasZonesNote: !!guide?.garminNote });
   const restChosen = selectedModality?.environment === 'rest';
   // Onder 1 minuut is geen training: Opslaan uit, de zin staat onder het veld Duur (punt B).
   // Alleen waar het veld Duur te zien is: bij Afvinken (quickComplete) zou de knop anders uit staan zonder uitweg.
@@ -506,7 +508,7 @@ function GeneralLogger({
           view={watchView}
           template={template}
           session={plannedSession}
-          garmin={plan?.garmin}
+          garmin={garmin}
           dayLabel={guideDayLabel(template, scheduledDate ?? today)}
           onClose={() => setShowWatch(false)}
           // Naar een pagina: eerst het trainingsscherm dicht. Het concept blijft bewaard (geen clearDraft).

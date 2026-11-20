@@ -7,6 +7,7 @@ import { todayISO } from '../utils/dates';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { WatchSheet } from './WatchSheet';
 import { useWatchSheet } from './useWatchSheet';
+import { useShortTestManual } from './useShortTestManual';
 import { WATCH_SHEET_TEXT } from '../engine/watchSheet';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { useAppData } from '../state/AppDataContext';
@@ -138,7 +139,8 @@ export function TodayMissionCard({
   // Terug vanaf een pagina die je uit deze Briefing opende: de Briefing gaat weer open.
   useBriefingReturn('mission', () => setShowBriefing(true), (m) => m.templateId === template.id && m.date === todayISO());
   const [showManual, setShowManual] = useState(false);
-  const garmin = buildWorkoutPlan(template, todayISO(), program)?.garmin;
+  const shortManual = useShortTestManual(template, session);
+  const garmin = shortManual ?? buildWorkoutPlan(template, todayISO(), program)?.garmin;
   const watchView = useWatchSheet({ template, garmin, session, hasZonesNote: !!guide?.garminNote });
   const kind = sessionKindLabel(template).toLowerCase();
 

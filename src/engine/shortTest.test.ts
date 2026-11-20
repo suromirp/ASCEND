@@ -99,7 +99,7 @@ describe('het teststuk in de reeks', () => {
     const cut = { timeSec: set.timeSec.slice(0, n), distanceM: set.distanceM!.slice(0, n), heartRate: set.heartRate!.slice(0, n), stanceBalanceLeftPct: set.stanceBalanceLeftPct!.slice(0, n) };
     const f = findShortTest(cut, PACE)!;
     expect([f.standRead, f.stood, f.dropBpm]).toEqual([false, false, undefined]);
-    const v = shortTestView({ logId: 'c', logs: [log('c', '2026-11-02')], streams: new Map([['c', cut]]), series: { answer: 'accepted', date: '2026-10-01', paceSecKm: PACE } })!;
+    const v = shortTestView({ logId: 'c', logs: [log('c', '2026-11-02', { plannedSessionId: 'pc' })], streams: new Map([['c', cut]]), series: { answer: 'accepted', date: '2026-10-01', paceSecKm: PACE } })!;
     expect(v.facts[2]).toBe('De daling na de test is niet te lezen.');
   });
 
@@ -325,7 +325,8 @@ describe('het voorstel en de dag', () => {
 describe('het logblad', () => {
   const series = { answer: 'accepted' as const, date: '2026-10-01', paceSecKm: PACE };
   const dates = ['2026-10-05', '2026-10-12', '2026-10-19', '2026-10-26', '2026-11-02'];
-  const logs = dates.map((d, i) => log(`r${i}`, d));
+  // Elke loop hangt aan een geplande rustige loop: alleen die tellen voor je midden (I-91).
+  const logs = dates.map((d, i) => log(`r${i}`, d, { plannedSessionId: `p${i}` }));
   const streams = new Map(logs.map((l, i) => [l.id, run({ hrEnd: i === 4 ? 158 : 165 })]));
 
   it('de vijfde test: feiten, woord en zin', () => {

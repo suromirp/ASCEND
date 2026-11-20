@@ -4404,7 +4404,19 @@
     "lopen-en-tests",
     "koppelingen-en-data"
    ],
-   "kern": "Na Akkoord elke week een korte test aan het begin van je eerste rustige loop (4 minuten op een vast testtempo, 1 minuut stilstaan), op het horloge als tempoworkout met de rest zonder doel; na vier geldige tests Normaal, Beter of Let op als tekst, zonder band geen oordeel, en nooit andere zones.",
+   "kern": "Na Akkoord elke week een korte test aan het begin van je eerste rustige loop (4 minuten op een vast testtempo, 1 minuut stilstaan), op het horloge als tempoworkout met de rest zonder doel; na vier geldige tests Normaal, Beter of Let op als tekst, zonder band geen oordeel, en nooit andere zones. Geldt nog: de vorm van de test, het voorstel met Akkoord, het teststuk, het oordeel en de instellingen; ingehaald zijn welke lopen voor het midden tellen, de dag bij een import, de toets op 25 minuten en dat de test niet in het blad Je horloge staat.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-20-korte-test-rest.md"
+   ]
+  },
+  "docs/beslissingen/2026-11-20-korte-test-rest.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "koppelingen-en-data",
+    "historie-en-logs"
+   ],
+   "kern": "Een achteraf gekoppelde loop telt voor de korte test op de dag dat je hem echt liep en ontkoppelen zet dat terug; voor je midden telt per week de vroegste geldige test van een loop die aan een geplande training hangt, een losse loop niet; een import eist een echte dag; Briefing en horloge toetsen de 25 minuten met één regel (de kortste van planning en workout); en de test staat in het blad Je horloge bij Zelf nabouwen.",
    "stand": "geldt"
   }
  }

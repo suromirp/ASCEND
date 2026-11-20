@@ -13,7 +13,7 @@ import { watchHrPlanFromSettings } from '../engine/watchHeartRate';
 import { walkHrFromSettings } from '../engine/walkHeartRate';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { todayISO } from '../utils/dates';
-import { watchShortTest } from '../engine/shortTest';
+import { shortTestDone, watchShortTest } from '../engine/shortTest';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { useTrainingPlaces } from './useTrainingPlaces';
 
@@ -62,7 +62,7 @@ export function useWatchStatuses(): { statusOf: (session: PlannedSession, templa
   const logged = useMemo(() => new Set(sessionLogs.map((l) => l.plannedSessionId).filter((id): id is string => !!id)), [sessionLogs]);
   // De korte test: dezelfde regel als het versturen (storage/watchWorkouts.ts), anders klopt de stand niet.
   const today = todayISO();
-  const shortTest = useMemo(() => watchShortTest(settings, plannedSessions, { today, logged }), [settings, plannedSessions, today, logged]);
+  const shortTest = useMemo(() => watchShortTest(settings, plannedSessions, shortTestDone(today, sessionLogs)), [settings, plannedSessions, today, sessionLogs]);
 
   const statusOf = useCallback(
     (session: PlannedSession, template: SessionTemplate): WatchStatus => {

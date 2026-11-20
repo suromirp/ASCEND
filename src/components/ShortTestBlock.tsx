@@ -1,12 +1,13 @@
 // De korte test in de Briefing van een rustige loop (engine/shortTest.ts#shortTestBriefing, I-79 stap 3):
 // op de dag van de test het blok met de stappen, en zolang er geen antwoord is het voorstel met Liever niet
 // en Akkoord. Akkoord legt het testtempo van de reeks vast; Liever niet laat alles staan. Geen rekenwerk hier.
+// `minutes`: de minuten van de ene regel voor Briefing en horloge (engine/shortTest.ts#shortTestRunMinutes).
 // docs/beslissingen/2026-11-18-korte-test.md
 
 import { useMemo, useState } from 'react';
 import type { PlannedSession } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
-import { shortTestBriefing, shortTestOn } from '../engine/shortTest';
+import { shortTestBriefing, shortTestDone, shortTestOn } from '../engine/shortTest';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { syncWatchWorkouts } from '../storage/watchWorkouts';
 import { todayISO } from '../utils/dates';
@@ -22,8 +23,8 @@ export function ShortTestBlock({ session, minutes, place }: { session: PlannedSe
   const today = todayISO();
   const view = useMemo(() => shortTestBriefing({
     session, minutes, sessions: plannedSessions, on: shortTestOn(settings.shortTest), series: settings.shortTestSeries,
-    paces: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces, today, place,
-    logged: new Set(sessionLogs.map((l) => l.plannedSessionId).filter((id): id is string => !!id)),
+    paces: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces, place,
+    ...shortTestDone(today, sessionLogs),
   }), [session, minutes, plannedSessions, settings, sessionLogs, today, place]);
   if (!view) return null;
   const dim = { color: 'var(--color-ink-dim)' };

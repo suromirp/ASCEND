@@ -21,7 +21,9 @@ import {
 export interface WatchSheetInput {
   template: Pick<SessionTemplate, 'id' | 'type' | 'roles'>;
   // De workout om zelf na te bouwen (WorkoutPlan.garmin), als die er is.
-  garmin?: { sport: string; lines: string[] };
+  // `tag`: wat er achter de sport en de stappen in de rij komt, zoals "met de korte test"
+  // (engine/watchWorkout.ts#shortTestManualFor).
+  garmin?: { sport: string; lines: string[]; tag?: string };
   // De stand op het horloge van de geplande training; leeg bij een losse training of zolang hij laadt.
   status?: WatchStatusKind;
   // Instelling "Laten zien of het gelukt is" (settings.showWatchStatus).
@@ -105,7 +107,7 @@ function workoutGroup(input: WatchSheetInput): WatchWorkoutGroup {
   const { garmin, status, showStatus } = input;
   const linked = !!status && LINKED.has(status);
   const manual: WatchWorkoutPart | undefined = garmin
-    ? { kind: 'manual', title: WATCH_SHEET_TEXT.manual, sub: `${garmin.sport}, ${stepCount(garmin.lines)} ${stepCount(garmin.lines) === 1 ? 'stap' : 'stappen'}` }
+    ? { kind: 'manual', title: WATCH_SHEET_TEXT.manual, sub: `${garmin.sport}, ${stepCount(garmin.lines)} ${stepCount(garmin.lines) === 1 ? 'stap' : 'stappen'}${garmin.tag ? `, ${garmin.tag}` : ''}` }
     : undefined;
   const parts: WatchWorkoutPart[] = [];
   // De weg via intervals.icu staat altijd bovenaan, zelf nabouwen in Garmin Connect eronder als tweede weg

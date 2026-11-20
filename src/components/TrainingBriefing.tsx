@@ -55,6 +55,8 @@ import { useBriefingInput } from './useBriefingView';
 import { usePlaceWeather } from './usePlaceWeather';
 import { useTestReadiness } from './useTestReadiness';
 import { ShortTestBlock } from './ShortTestBlock';
+import { useShortTestManual } from './useShortTestManual';
+import { shortTestRunMinutes } from '../engine/shortTest';
 import { testReadyLine } from '../engine/testReadiness';
 import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
 import type { WeatherForecast } from '../models/weather';
@@ -131,7 +133,9 @@ export function TrainingBriefing({
   // Het plan zoals het naar je horloge gaat; de stappen op het scherm volgen de gekozen manier (`plan` hieronder).
   const workout = buildWorkoutPlan(template, date, program);
   // Het blad Je horloge: met de StairMaster gekozen de wandelworkout, met de stapnamen van de manier.
-  const watchManual = watchManualFor(template, workout, stored, settings.watchPlaceWorkout, walkHrFromSettings(settings));
+  // De rustige loop met de korte test krijgt de stappen van de test (dezelfde regel als wat verstuurd wordt).
+  const shortManual = useShortTestManual(template, session);
+  const watchManual = shortManual ?? watchManualFor(template, workout, stored, settings.watchPlaceWorkout, walkHrFromSettings(settings));
   const watchView = useWatchSheet({ template, garmin: watchManual, session, hasZonesNote: !!guide?.garminNote });
   const input = useBriefingInput({ template, session, date, program, storedPlace: stored });
   // Met het weer van huis; de plek van Start bij is pas bekend na de regie van de route hieronder.
@@ -246,7 +250,7 @@ export function TrainingBriefing({
             </Card>
 
             {/* De korte test (engine/shortTest.ts): het blok op de testdag, of het voorstel met Akkoord; alleen bij hardlopen. */}
-            <ShortTestBlock session={session} minutes={minutes} place={view.place} />
+            <ShortTestBlock session={session} minutes={shortTestRunMinutes(session, workout)} place={view.place} />
 
             {places.length > 1 && (
               // Eén rij van hoogstens drie chips met korte namen, zonder schuiven: op 360 px valt er niets af (zoals
