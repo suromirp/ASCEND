@@ -38,6 +38,9 @@ Zonder antwoord het advies: praattest later, test van 30 minuten later, DFA alph
 
 ## Net live
 
+### 20 november 17:00
+- IJkset dichterbij (I-83): de instelling staat nu in Instellingen, Forge, onder Voorstellen, twee tikken van Vandaag. Op de ijksetkaart voor de training staat IJkset aanpassen; terug brengt je weer in de training.
+
 ### 20 november 15:30
 - Back-up terugzetten (I-68): zet je je eigen back-up terug, dan springt Laatste back-up niet meer terug in de tijd en telt een training die in de back-up staat als bewaard. Een tijdstip in de toekomst uit een bestand wordt begrensd op nu.
 

@@ -535,3 +535,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Sherpa IJkset (I-83) met eigen Lookout | ontwikkelaar helper | sonnet | 153k tok | 54 min | gebouwd, controles groen, Warden en Pathfinder lopen |
 | 2026-11-20 | Pathfinder IJkset doorloop (I-83) | pathfinder helper | sonnet | 28k tok | 1 min | akkoord, 2 mag (wrap op 360, Akkoord sterker later) |
 | 2026-11-20 | Warden IJkset (I-83) | reviewer helper | sonnet | 50k tok | 4 min | 2 moet (terugweg blijft hangen, geen gedragstest), 4 mag |
+| 2026-11-20 | Sherpa IJkset herstel (I-83) | ontwikkelaar helper hervat | sonnet | 22k tok | 14 min | alle punten, controles groen, live |
