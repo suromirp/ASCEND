@@ -888,6 +888,13 @@
    "kern": "Bij volledig terugzetten komt Laatste back-up nooit uit de instellingen in het bestand: `lastExportedAt` en `lastBackupLogs` horen bij het toestel en gaan als paar (`engine/backupSince.ts#backupPairAfterRestore`); het toestel wint als het even oud of nieuwer is, anders wordt het bestand zelf de laatste back-up.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-20-gemengde-bouwers-en-wissel.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Lange of zware bouwers (planner, opslag, migraties) in een eigen chat, klein werk als helper; de coördinator start zijn opvolger niet zelf maar meldt de wissel aan de vaste chat ASCEND, die hem start en vastzet, zodat de keten nooit vol raakt.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-20-lange-chat-en-kosten.md": {
    "onderwerpen": [
     "werkwijze"
