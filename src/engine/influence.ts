@@ -248,7 +248,7 @@ export interface KnownFactsInput {
   templates: readonly SessionTemplate[];
   recovery: readonly RecoveryMetric[];
   illness: readonly IllnessEpisode[] | undefined;
-  judgments?: NightJudgment[];
+  judgments?: readonly NightJudgment[];
   // The nights that are "niet goed gemeten", when the caller has them ready for many targets.
   ignoredNights?: ReadonlySet<string>;
   // Lookups built once by `buildFactIndex`, for many targets.
@@ -375,7 +375,7 @@ export interface DerivedFactsInput {
   templates: readonly SessionTemplate[];
   recovery: readonly RecoveryMetric[];
   illness: readonly IllnessEpisode[] | undefined;
-  judgments?: NightJudgment[];
+  judgments?: readonly NightJudgment[];
 }
 
 // How far back the overview reads (the mornings from intervals.icu are kept as long, storage/wellness.ts).

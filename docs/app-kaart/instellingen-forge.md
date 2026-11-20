@@ -29,6 +29,10 @@ Per spiergroep
 Weergave op Forge
 Vergelijkt met 4 en 8 weken
 1RM
+[knop: IJkset, Vragen]
+IJkset
+[knop: Uitleg: IJkset]
+Vragen
 In de sportschool
 [knop: Rusttimer, Geluid en trillen]
 Rusttimer
