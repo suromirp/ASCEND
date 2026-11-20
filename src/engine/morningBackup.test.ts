@@ -69,6 +69,18 @@ describe('wat uitzetten opruimt', () => {
     expect(archiveToClear(records, { connected: true, fetchedPrefix: 'intervals.icu:', today }).map((r) => r.id)).toEqual(['intervals.icu:2025-09-26']);
   });
 
+  it('een ochtend zonder bron uit een oud bestand staat er nooit bij: die is niet opgehaald', () => {
+    // docs/beslissingen/2026-11-20-ochtend-zonder-bron.md
+    const fromFile: RecoveryMetric[] = [
+      { id: 'import:2025-01-10', date: '2025-01-10', source: 'import', hrv: 66 },
+      { id: 'import:2026-10-20', date: '2026-10-20', source: 'import', restingHeartRate: 58 },
+    ];
+    const all = [...records, ...fromFile];
+    for (const connected of [false, true]) {
+      expect(archiveToClear(all, { connected, fetchedPrefix: 'intervals.icu:', today })).toEqual(archiveToClear(records, { connected, fetchedPrefix: 'intervals.icu:', today }));
+    }
+  });
+
   it('met een koppeling en niets ouds: niets', () => {
     expect(archiveToClear([m('2026-10-20', { hrv: 50 })], { connected: true, fetchedPrefix: 'intervals.icu:', today })).toEqual([]);
   });

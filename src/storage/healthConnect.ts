@@ -25,6 +25,7 @@ import { planRetire, resolveMorningBackup } from '../engine/morningBackup';
 import { KEEP_DAYS } from '../engine/wellnessRange';
 import { filterRecovery } from '../engine/watchUse';
 import { getWatchState } from './externalActivities';
+import { tidyDoubleMorningsQuietly } from './wellness';
 import type { ExternalActivity } from '../engine/activityImport';
 import type { BodyMetric, RecoveryMetric, WeightEntry } from '../models/metrics';
 import type { AppSettings } from './databaseSettings';
@@ -244,6 +245,8 @@ async function runRound(options: HealthSyncOptions): Promise<HealthSyncResult> {
       },
     );
     if (!stored) return { status: 'off' };
+    // Een ochtend zonder bron die nu gedekt is, gaat weg (storage/wellness.ts#tidyDoubleMornings).
+    await tidyDoubleMorningsQuietly();
     notifyHealthConnectChange();
     if (weights > 0) notifyHealthWeightChange();
     return { status: 'ok', activities: fetched.activities.length, mornings: mornings.length, weights, found };

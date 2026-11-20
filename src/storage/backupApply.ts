@@ -1,6 +1,7 @@
 // Back-up terugzetten: momentopnames, het plan en het schrijven.
 
 import { filterRecovery } from '../engine/watchUse';
+import { morningsToImport } from '../engine/morningDouble';
 import { getWatchState } from './externalActivities';
 import type { RecoveryMetric } from '../models/metrics';
 import type { ActivityStreams } from '../models/activityStreams';
@@ -127,12 +128,12 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   }
 
   // The mornings that came with the file: only those the device does not have yet, never over a
-  // morning the device fetched itself (its own is the newer reading). What is switched off under
-  // "Wat ASCEND van je horloge gebruikt" stays out (engine/watchUse.ts#filterRecovery).
+  // morning the device fetched itself (its own is the newer reading), and no morning without a source
+  // that adds nothing to one with a source on the same day (engine/morningDouble.ts#morningsToImport).
+  // What is switched off under "Wat ASCEND van je horloge gebruikt" stays out (engine/watchUse.ts#filterRecovery).
   let morningPuts: RecoveryMetric[] = [];
   if (touches(historyAction) && backup.mornings && backup.mornings.length > 0) {
-    const have = new Set((await RecoveryMetricsRepo.getAll()).map((m) => m.id));
-    morningPuts = filterRecovery(backup.mornings.filter((m) => !have.has(m.id)), (await getWatchState()).use);
+    morningPuts = filterRecovery(morningsToImport(await RecoveryMetricsRepo.getAll(), backup.mornings), (await getWatchState()).use);
   }
 
   // What merges with the device (the history lists in settings, the skill goals, the routes

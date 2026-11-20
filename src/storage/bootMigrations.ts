@@ -18,6 +18,7 @@ import { mergeDuplicateWeeklyPrescriptionLines } from './planLogCleanup';
 import { releaseSystemMoves } from './systemMovesStep';
 import { tidyOldProposals } from './proposalTidy';
 import { migrateStartPointToHome } from './places';
+import { tidyDoubleMornings } from './wellness';
 import { withTimeout } from '../utils/withTimeout';
 import type { BootRunResult } from './bootLock';
 import { BOOT_MIGRATIONS, BOOT_MIGRATIONS_KEY, BOOT_STEP_LIMIT_MS, migrationsToRun, recordAfter, type BootMigrationRecord } from '../engine/bootWatch';
@@ -44,6 +45,8 @@ const STEPS: Record<string, () => Promise<unknown>> = {
   migrateGoalKinds,
   // Oude, besliste voorstellen samenvatten (instelling "Oude voorstellen opruimen").
   tidyOldProposals: () => tidyOldProposals(),
+  // Een dubbele ochtend uit een oude back-up die al in de opslag zit (docs/beslissingen/2026-11-20-ochtend-dubbel.md).
+  tidyDoubleMornings,
 };
 
 function currentBuild(): string {
