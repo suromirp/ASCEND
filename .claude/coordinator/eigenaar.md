@@ -38,6 +38,9 @@ Zonder antwoord het advies: praattest later, test van 30 minuten later, DFA alph
 
 ## Net live
 
+### 20 november 19:15
+- Ochtenden (I-84): na een oude back-up staat er weer één ochtend per dag. Een ochtend uit je back-up zonder bron blijft van jou: hij gaat alleen weg als een ochtend van je koppeling elk getal ook heeft, nooit bij ontkoppelen.
+
 ### 20 november 18:15
 - Niet goed gemeten (I-92): een ochtend die je niet goed gemeten noemt, met een rusthartslag minstens 6 boven je gewone, breekt de reeks van Vroeg ziek zien niet meer; hij wordt overgeslagen. De vraag komt dus niet meer te laat.
 
