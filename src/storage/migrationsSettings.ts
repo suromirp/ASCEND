@@ -7,6 +7,7 @@ import { PROPOSAL_TIDY_OPTIONS, type ProposalTidyMonths } from '../engine/propos
 import { AUTO_BACKUP_CHOICES, AUTO_BACKUP_KEEP_CHOICES, type AutoBackupFrequency, type AutoBackupKeep } from '../engine/autoBackup';
 import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engine/navigationSettings';
 import { isRecord } from '../utils/guards';
+import { addDays, todayISO } from '../utils/dates';
 import type { ExternalActivity } from '../engine/activityImport';
 import type { HealthConnectErrorKind, HealthKind, HealthRoundFound } from '../models/healthConnect';
 import type { HealthConnectState } from './healthConnect';
@@ -151,10 +152,22 @@ export function migrateHealthConnectState(raw: unknown): HealthConnectState {
 // Optioneel en additief: een back-up van ervoor heeft het niet en krijgt later het voorstel. Staat er iets,
 // dan blijft het alleen heel: een bekend antwoord, een dag, en bij Akkoord een tempo tussen 2:30 en 15:00
 // per km. Anders valt het weg en wordt het geteld; het voorstel komt dan opnieuw.
-export function migrateShortTestSeries(raw: unknown): { value: ShortTestSeries | undefined; skipped: number } {
+// De dag is een echte dag van de kalender (geen 31 februari, geen lege tekst) en niet later dan morgen
+// (I-91, besluit 2026-11-20-korte-test-rest.md): een antwoord geef je niet in de toekomst, en een reeks die
+// pas over jaren begint zou stil nooit een test geven. Morgen mag, voor een back-up uit een andere tijdzone.
+function realDay(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const day = raw.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return undefined;
+  const at = new Date(`${day}T12:00:00Z`);
+  return !Number.isNaN(at.getTime()) && at.toISOString().slice(0, 10) === day ? day : undefined;
+}
+
+export function migrateShortTestSeries(raw: unknown, today: string = todayISO()): { value: ShortTestSeries | undefined; skipped: number } {
   if (raw === undefined || raw === null) return { value: undefined, skipped: 0 };
   if (!isRecord(raw)) return { value: undefined, skipped: 1 };
-  const date = typeof raw.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.date.slice(0, 10)) ? raw.date.slice(0, 10) : undefined;
+  const day = realDay(raw.date);
+  const date = day && day <= addDays(today, 1) ? day : undefined;
   if (!date || (raw.answer !== 'accepted' && raw.answer !== 'declined')) return { value: undefined, skipped: 1 };
   if (raw.answer === 'declined') return { value: { answer: 'declined', date }, skipped: 0 };
   const pace = raw.paceSecKm;

@@ -58,7 +58,7 @@ import { placeBrief } from '../data/placeBrief';
 import type { HeartRateSettings } from './heartRateZones';
 import { walkBpm, walkBpmText } from './walkHeartRate';
 import { stringHashKey } from '../utils/stringHash';
-import { SHORT_TEST_RUN_ID, shortTestFits, shortTestWay } from './shortTest';
+import { SHORT_TEST_RUN_ID, clockPace, shortTestFits, shortTestRunMinutes, shortTestWay } from './shortTest';
 import { SHORT_TEST_RULES } from './shortTestRules';
 
 export const WATCH_EXTERNAL_PREFIX = 'ascend:';
@@ -226,6 +226,56 @@ function shortTestWorkoutText(totalSec: number, paceSecKm: number): WorkoutText 
   return { text: blocks.join('\n\n'), target: 'PACE' };
 }
 
+// Whether this planned easy run carries the short test, for the workout that is sent and for the steps to build
+// by hand (the sheet Je horloge): one rule. The same conditions as the Briefing
+// (engine/shortTest.ts#shortTestBriefing): the run is the one of its week, the chosen way is running (read from
+// the stored choice even with placeWorkout off) and the test fits in the minutes of the one rule
+// (shortTestRunMinutes: the shorter of the planned minutes and the workout).
+function carriedShortTest(
+  session: Pick<PlannedSession, 'id' | 'plannedMinutes'>,
+  template: SessionTemplate,
+  raw: WorkoutPlan,
+  stored: unknown,
+  placeWorkout: boolean | undefined,
+  shortTest: WatchBuildOptions['shortTest'],
+): { paceSecKm: number } | undefined {
+  if (!shortTest || template.id !== SHORT_TEST_RUN_ID || sportOf(template) !== 'Run' || !shortTest.ids.has(session.id)) return undefined;
+  if (watchPlaceOf(template, stored, placeWorkout) || !shortTestWay(resolvePlace(template, stored))) return undefined;
+  return shortTestFits(shortTestRunMinutes(session, raw)) ? shortTest : undefined;
+}
+
+// The easy run with the short test, to build by hand in Garmin Connect: the same four steps as the workout
+// that is sent (shortTestWorkoutText), in the words of the other workouts in the sheet Je horloge. Undefined
+// when this run does not carry the test; then the workout of the training stands (watchManualFor).
+export function shortTestManualFor(
+  session: Pick<PlannedSession, 'id' | 'plannedMinutes'> | undefined,
+  template: SessionTemplate,
+  plan: WorkoutPlan | undefined,
+  stored: unknown,
+  placeWorkout: boolean | undefined,
+  shortTest: WatchBuildOptions['shortTest'],
+): WatchManual | undefined {
+  if (!session || !plan?.garmin) return undefined;
+  const test = carriedShortTest(session, template, plan, stored, placeWorkout, shortTest);
+  if (!test) return undefined;
+  const r = SHORT_TEST_RULES;
+  const totalSec = plan.timeline.reduce((sum, step) => sum + step.seconds, 0);
+  const rest = totalSec - r.warmupSec - r.testSec - r.standSec;
+  const fast = clockPace(test.paceSecKm * (1 - r.paceTolerance));
+  const slow = clockPace(test.paceSecKm * (1 + r.paceTolerance));
+  return {
+    sport: plan.garmin.sport,
+    lines: [
+      `Warming-up · ${formatClock(r.warmupSec)} · geen doel`,
+      `Hardlopen · ${formatClock(r.testSec)} · doel: tempo ${fast} tot ${slow} per km`,
+      `Herstel · ${formatClock(r.standSec)} · stilstaan`,
+      `Hardlopen · ${formatClock(rest)} · geen doel`,
+    ],
+    note: `Met de korte test aan het begin: 4 minuten op ${clockPace(test.paceSecKm)} per km, daarna 1 minuut rechtop stilstaan.`,
+    tag: 'met de korte test',
+  };
+}
+
 // The sport of the workout ASCEND sends for this training; the Briefing compares it with the chosen way of
 // training (engine/briefing.ts#watchPlaceLine).
 export function watchSportOf(template: SessionTemplate): WatchSport | undefined {
@@ -275,6 +325,8 @@ export interface WatchManual {
   lines: string[];
   // Above the steps: how hard, in words.
   note?: string;
+  // Behind the sport and the number of steps in the row (engine/watchSheet.ts): "met de korte test".
+  tag?: string;
 }
 // `walkHr`: as WatchBuildOptions.walkHr, so a walking workout shows the same beats as the one on the watch.
 export function watchManualFor(template: SessionTemplate, plan: WorkoutPlan | undefined, stored: unknown, placeWorkout?: boolean, walkHr?: HeartRateSettings): WatchManual | undefined {
@@ -333,9 +385,8 @@ export function buildWatchWorkout(
   const bpmLine = bpm ? walkBpmText(bpm) : undefined;
   const planSec = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
   // The short test: the same conditions as the Briefing (engine/shortTest.ts#shortTestBriefing), so the watch never
-  // gets a test the Briefing does not show. The way is read from the stored choice even with placeWorkout off.
-  const testWay = shortTestWay(resolvePlace(template, options.places?.[session.id]));
-  const shortTest = !place && testWay && type === 'Run' && template.id === SHORT_TEST_RUN_ID && options.shortTest?.ids.has(session.id) && shortTestFits(planSec / 60) ? options.shortTest : undefined;
+  // gets a test the Briefing does not show (carriedShortTest).
+  const shortTest = carriedShortTest(session, template, raw, options.places?.[session.id], options.placeWorkout, options.shortTest);
   const built = shortTest
     ? shortTestWorkoutText(planSec, shortTest.paceSecKm)
     : intervalsWorkoutText(plan, template, place ? undefined : paces, type === 'Run' ? options.hr : walking && options.walkHr ? 'none' : undefined);

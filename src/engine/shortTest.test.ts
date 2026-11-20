@@ -99,7 +99,7 @@ describe('het teststuk in de reeks', () => {
     const cut = { timeSec: set.timeSec.slice(0, n), distanceM: set.distanceM!.slice(0, n), heartRate: set.heartRate!.slice(0, n), stanceBalanceLeftPct: set.stanceBalanceLeftPct!.slice(0, n) };
     const f = findShortTest(cut, PACE)!;
     expect([f.standRead, f.stood, f.dropBpm]).toEqual([false, false, undefined]);
-    const v = shortTestView({ logId: 'c', logs: [log('c', '2026-11-02')], streams: new Map([['c', cut]]), series: { answer: 'accepted', date: '2026-10-01', paceSecKm: PACE } })!;
+    const v = shortTestView({ logId: 'c', logs: [log('c', '2026-11-02')], streams: new Map([['c', cut]]), series: { answer: 'accepted', date: '2026-10-01', paceSecKm: PACE }, sessions: [], today: '2026-11-20' })!;
     expect(v.facts[2]).toBe('De daling na de test is niet te lezen.');
   });
 
@@ -325,11 +325,14 @@ describe('het voorstel en de dag', () => {
 describe('het logblad', () => {
   const series = { answer: 'accepted' as const, date: '2026-10-01', paceSecKm: PACE };
   const dates = ['2026-10-05', '2026-10-12', '2026-10-19', '2026-10-26', '2026-11-02'];
-  const logs = dates.map((d, i) => log(`r${i}`, d));
+  // Elke loop was de geplande rustige loop van zijn week: alleen die tellen voor je midden (I-91).
+  const logs = dates.map((d, i) => log(`r${i}`, d, { plannedSessionId: `p${i}` }));
+  const sessions = dates.map((d, i) => ({ id: `p${i}`, templateId: 'tpl_easy_run', scheduledDate: d, weekStartDate: d, status: 'planned', order: 0 } as PlannedSession));
+  const today = '2026-11-20';
   const streams = new Map(logs.map((l, i) => [l.id, run({ hrEnd: i === 4 ? 158 : 165 })]));
 
   it('de vijfde test: feiten, woord en zin', () => {
-    const v = shortTestView({ logId: 'r4', logs, streams, series })!;
+    const v = shortTestView({ logId: 'r4', logs, streams, series, sessions, today })!;
     expect(v.word).toBe('Beter');
     expect(v.facts[0]).toBe('Je liep 5:20 per km; je testtempo is 5:20.');
     expect(v.facts[1]).toBe('Je hartslag in de laatste minuut: 158.');
@@ -337,18 +340,18 @@ describe('het logblad', () => {
   });
 
   it('de tweede test: nog geen oordeel', () => {
-    expect(shortTestView({ logId: 'r1', logs, streams, series })).toMatchObject({ line: 'Nog 3 tests tot een eerste oordeel.', askStrap: false });
+    expect(shortTestView({ logId: 'r1', logs, streams, series, sessions, today })).toMatchObject({ line: 'Nog 3 tests tot een eerste oordeel.', askStrap: false });
   });
 
   it('zonder band: de vraag of je hem om had', () => {
-    const v = shortTestView({ logId: 'r4', logs, streams: new Map([...streams, ['r4', run({ strap: false })]]), series })!;
+    const v = shortTestView({ logId: 'r4', logs, streams: new Map([...streams, ['r4', run({ strap: false })]]), series, sessions, today })!;
     expect([v.word, v.askStrap]).toEqual([undefined, true]);
   });
 
   it('een loop zonder test, of zonder reeks: niets', () => {
-    expect(shortTestView({ logId: 'r4', logs, streams: new Map([...streams, ['r4', run({ noTest: true })]]), series })).toBeUndefined();
-    expect(shortTestView({ logId: 'r4', logs, streams: new Map(), series })).toBeUndefined();
-    expect(shortTestView({ logId: 'r4', logs, streams, series: undefined })).toBeUndefined();
+    expect(shortTestView({ logId: 'r4', logs, streams: new Map([...streams, ['r4', run({ noTest: true })]]), series, sessions, today })).toBeUndefined();
+    expect(shortTestView({ logId: 'r4', logs, streams: new Map(), series, sessions, today })).toBeUndefined();
+    expect(shortTestView({ logId: 'r4', logs, streams, series: undefined, sessions, today })).toBeUndefined();
   });
 
   it('alleen rustige lopen vanaf de reeks', () => {

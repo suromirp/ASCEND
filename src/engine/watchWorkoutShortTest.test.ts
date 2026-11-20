@@ -1,8 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { racePaces } from './racePaces';
-import { buildWatchWorkout, selectWatchWorkouts } from './watchWorkout';
-import { shortTestBriefing, shortTestSessionIds, watchShortTest } from './shortTest';
+import { buildWatchWorkout, selectWatchWorkouts, shortTestManualFor } from './watchWorkout';
+import { buildWorkoutPlan } from './workoutPlan';
+import { watchSheet } from './watchSheet';
+import { resolveWatchModel } from './watchFields';
+import { shortTestBriefing, shortTestRunMinutes, shortTestSessionIds, watchShortTest } from './shortTest';
 import { watchStatusFor } from './watchStatus';
 import { WATCH_DAYS } from './watchWorkout';
 import { addDays } from '../utils/dates';
@@ -100,6 +103,78 @@ describe('de korte test op het horloge', () => {
       });
     }
   }
+
+  // I-91 punt 4: één regel voor de 25 minuten (shortTestRunMinutes), aan beide kanten dezelfde uitkomst.
+  for (const [plannedMinutes, test] of [[undefined, true], [20, false], [24, false], [25, true], [90, true]] as [number | undefined, boolean][]) {
+    it(`vaste duur ${plannedMinutes ?? 'geen'}: ${test ? 'test' : 'geen test'} in Briefing en op het horloge`, () => {
+      const today = program.startDate;
+      const first = plannedSessions.find((p) => ids.has(p.id))!;
+      const s = { ...first, ...(plannedMinutes !== undefined ? { plannedMinutes } : {}) };
+      const sessions = plannedSessions.map((p) => (p.id === s.id ? s : p));
+      const w = buildWatchWorkout(s, tpl('tpl_easy_run'), program, paces, { shortTest })!;
+      const minutes = shortTestRunMinutes(s, buildWorkoutPlan(tpl('tpl_easy_run'), s.scheduledDate, program));
+      const brief = shortTestBriefing({ session: s, minutes, sessions, on: true, series, paces, today, logged: new Set<string>() });
+      expect(w.description.includes('Korte test')).toBe(test);
+      expect(brief?.kind === 'brief').toBe(test);
+    });
+  }
+
+  it('zonder vaste duur verandert de ene regel niets: geen geplande training in het demoprogramma heeft er een', () => {
+    // Daarom is elke workout van het demoprogramma byte voor byte gelijk aan die van voor I-91.
+    expect(plannedSessions.some((p) => p.plannedMinutes !== undefined)).toBe(false);
+    const s = plannedSessions.find((p) => ids.has(p.id))!;
+    const w = buildWatchWorkout(s, tpl('tpl_easy_run'), program, paces, { shortTest })!;
+    expect(shortTestRunMinutes(s, buildWorkoutPlan(tpl('tpl_easy_run'), s.scheduledDate, program))).toBe(w.movingTimeSec / 60);
+  });
+
+  // I-91 punt 2: de korte test in het blad Je horloge, bij Zelf nabouwen in Garmin Connect.
+  describe('zelf nabouwen in het blad Je horloge', () => {
+    const easy = tpl('tpl_easy_run');
+    const s = plannedSessions.find((p) => ids.has(p.id))!;
+    const plan = buildWorkoutPlan(easy, s.scheduledDate, program)!;
+    const total = plan.timeline.reduce((sum, step) => sum + step.seconds, 0);
+
+    it('dezelfde vier stappen als de workout die verstuurd wordt', () => {
+      const manual = shortTestManualFor(s, easy, plan, undefined, undefined, shortTest)!;
+      expect(manual.sport).toBe('Hardlopen');
+      expect(manual.lines).toEqual([
+        'Warming-up · 10:00 · geen doel',
+        'Hardlopen · 4:00 · doel: tempo 6:12 tot 6:28 per km',
+        'Herstel · 1:00 · stilstaan',
+        `Hardlopen · ${Math.floor((total - 900) / 60)}:00 · geen doel`,
+      ]);
+      expect(manual.note).toBe('Met de korte test aan het begin: 4 minuten op 6:20 per km, daarna 1 minuut rechtop stilstaan.');
+      // De stappen tellen op tot de duur van de workout.
+      const w = buildWatchWorkout(s, easy, program, paces, { shortTest })!;
+      expect(600 + 240 + 60 + (total - 900)).toBe(w.movingTimeSec);
+    });
+
+    it('de rij zegt dat de korte test erin zit', () => {
+      const manual = shortTestManualFor(s, easy, plan, undefined, undefined, shortTest)!;
+      const base = { template: easy, showStatus: true, fieldsShown: false, model: resolveWatchModel(undefined), hasZonesNote: false };
+      const part = watchSheet({ ...base, garmin: manual }).workout.parts.find((p) => p.kind === 'manual')!;
+      expect(part).toMatchObject({ title: 'Zelf nabouwen in Garmin Connect', sub: 'Hardlopen, 4 stappen, met de korte test' });
+      // Zonder de test de rij zoals hij was.
+      const plain = watchSheet({ ...base, garmin: plan.garmin }).workout.parts.find((p) => p.kind === 'manual')!;
+      expect(plain).toMatchObject({ sub: 'Hardlopen, 1 stap' });
+    });
+
+    it('alleen waar het horloge de test ook krijgt', () => {
+      // Een rustige loop die de test van zijn week niet draagt.
+      const other = { ...s, id: 'andere_rustige_loop' };
+      for (const [session, stored, placeWorkout, st] of [
+        [s, undefined, undefined, shortTest], [s, 'run_treadmill', undefined, shortTest], [s, 'bike_indoor', undefined, shortTest], [s, 'bike_outdoor', false, shortTest],
+        [other, undefined, undefined, shortTest], [s, undefined, undefined, undefined], [{ ...s, plannedMinutes: 20 }, undefined, undefined, shortTest],
+      ] as const) {
+        const onWatch = buildWatchWorkout(session, easy, program, paces, { shortTest: st, ...(stored ? { places: { [session.id]: stored } } : {}), ...(placeWorkout === false ? { placeWorkout } : {}) })!.description.includes('Korte test');
+        const sessionPlan = buildWorkoutPlan(easy, session.scheduledDate, program);
+        expect(!!shortTestManualFor(session, easy, sessionPlan, stored, placeWorkout, st)).toBe(onWatch);
+      }
+      expect(shortTestManualFor(undefined, easy, plan, undefined, undefined, shortTest)).toBeUndefined();
+      // Een andere training dan de rustige loop nooit.
+      expect(shortTestManualFor(s, tpl('tpl_intervals'), buildWorkoutPlan(tpl('tpl_intervals'), s.scheduledDate, program), undefined, undefined, shortTest)).toBeUndefined();
+    });
+  });
 
   it('alleen de rustige loop met de test en een manier die geen hardlopen is krijgt een andere vingerafdruk', () => {
     const days = 7 * 8;

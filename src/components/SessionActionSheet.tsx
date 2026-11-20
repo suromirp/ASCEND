@@ -31,6 +31,7 @@ import { useWatchLink } from './useWatchLink';
 import { useTrainingPlaces } from './useTrainingPlaces';
 import { WatchSheet } from './WatchSheet';
 import { useWatchSheet } from './useWatchSheet';
+import { useShortTestManual } from './useShortTestManual';
 import { WATCH_SHEET_TEXT } from '../engine/watchSheet';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { useSheetClose } from '../utils/useSheetClose';
@@ -176,7 +177,8 @@ export function SessionActionSheet({
   // Het blad Je horloge (engine/watchSheet.ts): een rij in Andere keuzes, alleen voor een training die
   // nog moet komen en waarvoor het blad iets heeft (docs/visie/Ontwerp Info-blad.md, spoor 2).
   const [showWatch, setShowWatch] = useState(false);
-  const garmin = buildWorkoutPlan(template, session.scheduledDate, program)?.garmin;
+  const shortManual = useShortTestManual(template, session);
+  const garmin = shortManual ?? buildWorkoutPlan(template, session.scheduledDate, program)?.garmin;
   const watchView = useWatchSheet({ template, garmin, session, hasZonesNote: !!guide?.garminNote });
   const navigate = useNavigate();
   const today = todayISO();

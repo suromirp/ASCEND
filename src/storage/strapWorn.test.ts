@@ -80,6 +80,24 @@ describe('cleanSettings: de nieuwe sleutels van de drempel', () => {
     expect(migrateShortTestSeries('aan')).toEqual({ value: undefined, skipped: 1 });
   });
 
+  it('de reeks van de korte test: alleen een echte dag, niet later dan morgen (I-91)', () => {
+    const today = '2026-11-20';
+    const ok = (date: unknown) => migrateShortTestSeries({ answer: 'accepted', date, paceSecKm: 320 }, today);
+    expect(ok('2026-11-18')).toEqual({ value: { answer: 'accepted', date: '2026-11-18', paceSecKm: 320 }, skipped: 0 });
+    // De dag zelf en morgen (een back-up uit een andere tijdzone) mogen.
+    expect(ok('2026-11-20').value?.date).toBe('2026-11-20');
+    expect(ok('2026-11-21').value?.date).toBe('2026-11-21');
+    // Leeg, geen dag van de kalender, of verder in de toekomst: weg, en geteld.
+    for (const bad of ['', '   ', '2026-02-31', '2026-13-01', '2026-00-10', '0000-00-00', '2026-11-22', '2031-01-01', 20261118, null, undefined]) {
+      expect(ok(bad)).toEqual({ value: undefined, skipped: 1 });
+    }
+    expect(migrateShortTestSeries({ answer: 'declined', date: '2026-02-30' }, today)).toEqual({ value: undefined, skipped: 1 });
+    // Zonder reeks blijft een oudere back-up zoals hij was, en via cleanSettings valt een onmogelijke dag weg.
+    const count = { n: 0 };
+    expect(cleanSettings({ shortTestSeries: { answer: 'accepted', date: '2026-02-31', paceSecKm: 320 } }, count)?.shortTestSeries).toBeUndefined();
+    expect('shortTestSeries' in (cleanSettings({ shortTestSeries: { answer: 'accepted', date: '2026-02-31', paceSecKm: 320 } }, { n: 0 }) ?? {})).toBe(false);
+  });
+
   it('testReadyLine: alleen waar of onwaar', () => {
     const fine = { n: 0 };
     expect(cleanSettings({ testReadyLine: false }, fine)?.testReadyLine).toBe(false);

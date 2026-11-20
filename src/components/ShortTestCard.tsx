@@ -6,20 +6,26 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { StreamSet } from '../models/activityDetail';
 import { useAppData } from '../state/AppDataContext';
-import { seriesPace, shortTestLogIds, shortTestView } from '../engine/shortTest';
+import { plannedTestLogIds, seriesPace, shortTestLogIds, shortTestView } from '../engine/shortTest';
 import { resolveNoStrapTest, strapExpected } from '../engine/thresholdEstimate';
 import { recordStrapWorn } from '../engine/zoneUpdate';
 import { streamsForLogs } from '../storage/testStreams';
 import { withTimeout } from '../utils/withTimeout';
+import { todayISO } from '../utils/dates';
 import { Eyebrow } from './ui';
 import { TextButton } from './TextButton';
 
 const SAVE_LIMIT_MS = 10_000;
 
 export function ShortTestCard({ logId }: { logId: string }) {
-  const { sessionLogs, settings, updateSettings } = useAppData();
+  const { sessionLogs, plannedSessions, settings, updateSettings } = useAppData();
   const series = settings.shortTestSeries;
-  const ids = useMemo(() => (seriesPace(series) === undefined ? '' : shortTestLogIds(sessionLogs, series, logId).join(',')), [sessionLogs, series, logId]);
+  const today = todayISO();
+  // Alleen de geplande testlopen tellen voor je midden, plus de loop waar je naar kijkt.
+  const ids = useMemo(
+    () => (seriesPace(series) === undefined ? '' : shortTestLogIds(sessionLogs, series, logId, plannedTestLogIds(sessionLogs, plannedSessions, series, today)).join(',')),
+    [sessionLogs, plannedSessions, series, logId, today],
+  );
   const [streams, setStreams] = useState<{ ids: string; map: Map<string, StreamSet> } | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -37,8 +43,8 @@ export function ShortTestCard({ logId }: { logId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ids]);
   const view = useMemo(() => (streams && streams.ids === ids
-    ? shortTestView({ logId, logs: sessionLogs, streams: streams.map, series, noStrap: resolveNoStrapTest(settings.noStrapTest), strapWorn: settings.strapWorn })
-    : undefined), [streams, ids, logId, sessionLogs, series, settings.noStrapTest, settings.strapWorn]);
+    ? shortTestView({ logId, logs: sessionLogs, streams: streams.map, series, sessions: plannedSessions, today, noStrap: resolveNoStrapTest(settings.noStrapTest), strapWorn: settings.strapWorn })
+    : undefined), [streams, ids, logId, sessionLogs, plannedSessions, today, series, settings.noStrapTest, settings.strapWorn]);
   if (!view) return null;
   const dim = { color: 'var(--color-ink-dim)' };
   const ink = { color: 'var(--color-ink)' };
