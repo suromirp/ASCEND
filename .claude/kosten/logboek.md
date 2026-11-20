@@ -553,3 +553,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Warden herstel I-84 | reviewer helper | fable | 51k tok | 1 min | akkoord, 3 mag (valkuil zelf, rest I-97) |
 | 2026-11-20 | Sherpa Korte test herstel (I-91) | ontwikkelaar helper | fable | 84k tok | ~30 min | M1 betere fix, G1-G3, keuze 2 terug: vroegste geldige |
 | 2026-11-20 | Pathfinder zinnen I-91 | pathfinder helper | sonnet | klein | ~3 min | akkoord, 3 mag; zin losse loop voorwaardelijk gemaakt door coördinator |
+| 2026-11-20 | Warden herstel I-91 | reviewer helper | fable | 79k tok | 2,5 min | akkoord, 4 mag (zin, besluit, venster: zelf in de squash) |
