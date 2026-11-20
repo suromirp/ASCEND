@@ -1,8 +1,13 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmrC4jEAYcmy76fXNp. Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
+Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmMeaf189k5coPifuH (opvolger van session_01LnDpSmrC4jEAYcmy76fXNp). Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
 
 ## Stand 20 november (lees dit eerst)
+
+- Middag 20 november, nieuwe coördinator session_01LnDpSmMeaf189k5coPifuH (vastgezet). Haken: beide scripts getest, geven de juiste uitvoer; of de harness ze afvuurt blijkt pas bij de eerste samenvatting.
+- Loopt: Sherpa Back-up telling (Fable, helper in worktree) bouwt I-68 op `claude/backup-terugzetten`. Regel van de coördinator: `lastExportedAt` en `lastBackupLogs` gaan als paar; is het paar van het toestel nieuwer dan `exportDate` van het bestand, dan blijft het staan, anders wordt het `exportDate` plus de ids van de logs in het bestand. Daarna Warden op Fable.
+- Loopt: Pathfinder IJkset vooraf voor I-83; daarna Sherpa op Sonnet. Daarna I-91 rest, I-92, I-84.
+- claude/nacht loopt in de code ver achter op main (alleen .claude en docs volgen main); bouwers takken af van origin/main.
 
 - Live 20 november: de zin onder de weekkam zegt "bewust achter elkaar, op vermoeide benen" alleen nog bij twee beendagen direct na elkaar (melding eigenaar, main 5454c411).
 - Haken rond het samenvatten staan in `.claude/settings.json` (eigenaar 20 november "Ja, bouwen"): PreCompact geeft de samenvatting een opdracht mee, SessionStart met matcher compact zet de bovenste stand van deze overdracht terug. Werkt pas in een sessie die na deze wijziging start.
