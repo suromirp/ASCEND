@@ -17,7 +17,7 @@ export function ForgeIntro({ templateId, date, program, preview, readOnly, mount
   readOnly: boolean;
   mountainNotice: boolean;
   stepNotice: boolean;
-  calibration?: { name: string; phase: 'open' | 'added' | 'failed'; onAccept: () => Promise<void>; onLater: () => void };
+  calibration?: { name: string; phase: 'open' | 'added' | 'failed'; onAccept: () => Promise<void>; onLater: () => void; onSettings: () => void };
   capLine: string | undefined;
   legLine: string | undefined;
   legPanel: ReactNode;

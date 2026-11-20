@@ -11,6 +11,9 @@ const NOT_SEARCHABLE: string[] = [];
 // (docs/beslissingen/2026-10-26-instellingen-opruimen.md).
 // De rij Geavanceerd zelf telt niet mee: ze is geen instelling maar de deur naar een eigen pagina.
 const MAX_ROWS = 12;
+// Forge 13: de ijkset staat op de pagina zelf, zodat de kaart in de training er heen kan springen
+// (docs/beslissingen/2026-11-20-ijkset-op-de-pagina.md).
+const ROWS_FOR: Partial<Record<string, number>> = { forge: 13 };
 const MAX_ADVANCED = 6;
 const MIN_ADVANCED = 2;
 
@@ -117,7 +120,7 @@ describe('het plafond per groep', () => {
   for (const page of SETTINGS_PAGES) {
     it(`${page.title}: hoogstens ${MAX_ROWS} rijen en hoogstens ${MAX_ADVANCED} onder Geavanceerd, dat er alleen is bij minstens ${MIN_ADVANCED}`, () => {
       const { rows, advanced } = PAGE_ROWS[page.id];
-      expect(rows.length, `${page.id} heeft ${rows.length} rijen`).toBeLessThanOrEqual(MAX_ROWS);
+      expect(rows.length, `${page.id} heeft ${rows.length} rijen`).toBeLessThanOrEqual(ROWS_FOR[page.id] ?? MAX_ROWS);
       expect(advanced.length, `${page.id} heeft ${advanced.length} rijen onder Geavanceerd`).toBeLessThanOrEqual(MAX_ADVANCED);
       if (advanced.length > 0) expect(advanced.length, `${page.id}: Geavanceerd met een rij`).toBeGreaterThanOrEqual(MIN_ADVANCED);
     });

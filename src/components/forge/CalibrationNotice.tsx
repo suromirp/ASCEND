@@ -3,8 +3,9 @@
 // zoals hij was en de kaart komt de volgende keer terug.
 
 import { Eyebrow, SecondaryButton } from '../ui';
+import { TextButton } from '../TextButton';
 
-export function CalibrationNotice({ name, phase: state, onAccept, onLater }: { name: string; phase: 'open' | 'added' | 'failed'; onAccept: () => Promise<void>; onLater: () => void }) {
+export function CalibrationNotice({ name, phase: state, onAccept, onLater, onSettings }: { name: string; phase: 'open' | 'added' | 'failed'; onAccept: () => Promise<void>; onLater: () => void; onSettings: () => void }) {
   const ink = { color: 'var(--color-ink)' };
   const accept = () => void onAccept();
   return (
@@ -15,9 +16,10 @@ export function CalibrationNotice({ name, phase: state, onAccept, onLater }: { n
           <>
             <p className="text-sm leading-relaxed" style={ink}>Eens per vier weken ijk je je gevoel voor wat je over hebt. Nog één set bij {name}, zo ver als netjes gaat?</p>
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Er komt een set bij met nog één over als doel. Daarna kies je zoals altijd hoeveel je over had.</p>
-            <div className="mt-1 flex gap-3">
+            <div className="mt-1 flex items-center gap-3">
               <SecondaryButton onClick={onLater}>Niet nu</SecondaryButton>
               <SecondaryButton onClick={accept}>Akkoord</SecondaryButton>
+              <TextButton tone="dim" onClick={onSettings}>IJkset aanpassen</TextButton>
             </div>
           </>
         ) : (

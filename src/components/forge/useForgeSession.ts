@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useLocation, useNavigationType } from 'react-router-dom';
+import { settingsPageRoute } from '../../data/settingsLayout';
 import { useAppData } from '../../state/AppDataContext';
 import { draftsToPrune, leftSession, resolveLeftAfter, sessionIsDead, type LeftSession, type SessionWorld } from '../../engine/forgeSession';
 import { todayISO, toISODate } from '../../utils/dates';
 import { clearDraft } from '../../utils/loggerDraft';
 import {
-  clearSessionPointer, forgeDraftKeys, forgeOpenSnapshot, openRequestSnapshot, readPointer, readSession, removeDraftKey, sessionSnapshot, subscribeForgeOpen,
-  subscribeOpenRequest, subscribeSession, type SessionState,
+  clearSessionPointer, forgeDraftKeys, forgeOpenSnapshot, openRequestSnapshot, readPointer, readSession, rememberTrainingReturn, removeDraftKey, requestOpenSession, sessionSnapshot, subscribeForgeOpen,
+  subscribeOpenRequest, subscribeSession, trainingReturn, type SessionState,
 } from '../../utils/forgeSessionStore';
 
 // Wat er bestaat: de training, de geplande sessie en of die al gelogd is.
@@ -110,4 +112,27 @@ export function useLeftCheck(): (session: SessionState, now: number) => LeftSess
     const skipped = !!fresh.pointer.plannedSessionId && world.skippedIds.has(fresh.pointer.plannedSessionId);
     return leftSession(fresh, now, { afterHours, dayOf, skipped });
   };
+}
+
+// Na de sprong van de kaart IJkset naar Instellingen: de terugknop (en alleen die) opent de training weer. Een andere
+// weg weg van Instellingen, of de pagina niet bereikt, laat hem met rust en vergeet de terugweg.
+export function useTrainingReturn(): void {
+  const { pathname } = useLocation();
+  const type = useNavigationType();
+  const seen = useRef(false);
+  useEffect(() => {
+    const pending = trainingReturn();
+    if (!pending) {
+      seen.current = false;
+      return;
+    }
+    if (pathname === settingsPageRoute('forge')) {
+      seen.current = true;
+      return;
+    }
+    if (!seen.current) return;
+    seen.current = false;
+    if (type === 'POP') requestOpenSession();
+    else rememberTrainingReturn(undefined);
+  }, [pathname, type]);
 }

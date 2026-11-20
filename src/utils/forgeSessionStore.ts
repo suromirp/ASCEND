@@ -358,3 +358,22 @@ export function otherDraftHasCalibration(ownKey: string): boolean {
     return false;
   }
 }
+
+// --- Terug naar de training na een sprong naar Instellingen (de kaart IJkset). ----------------------------------------
+// Alleen in het geheugen: er is nog geen sessie (die begint bij de eerste handeling), dus geen wijzer in de opslag en
+// geen pil. De terugknop vanuit Instellingen opent hem opnieuw (App.tsx), één keer.
+
+export interface TrainingReturn {
+  templateId: string;
+  plannedSessionId?: string;
+  scheduledDate?: string;
+  variant?: string;
+}
+let returnTo: TrainingReturn | undefined;
+export const rememberTrainingReturn = (r: TrainingReturn | undefined): void => { returnTo = r; };
+export const trainingReturn = (): TrainingReturn | undefined => returnTo;
+export function takeTrainingReturn(): TrainingReturn | undefined {
+  const r = returnTo;
+  returnTo = undefined;
+  return r;
+}

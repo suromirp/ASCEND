@@ -12,6 +12,7 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
+- 2026-11-20 [De ijkset staat op de Forge-pagina](../beslissingen/2026-11-20-ijkset-op-de-pagina.md): De ijkset staat als rij op de Forge-pagina (13 rijen, plafond van Forge verruimd) en de kaart in de training springt ernaartoe; de terugknop brengt je terug in de training.
 - 2026-11-15 [De ijkset automatisch erbij](../beslissingen/2026-11-15-ijkset-automatisch.md): IJkset in drie standen: Vragen (advies), Automatisch erbij (de set staat bij het openen al in de training, de dag telt pas bij Afronden met die set) en Uit; nooit als je ziek bent of opbouwt, zonder sportschool, in een vakantie of op een tocht, met Lichter of naast een ander concept met een ijkset.
 - 2026-11-15 [De dag van een afgeronde training in Forge](../beslissingen/2026-11-15-dag-van-afronden.md): Afronden in Forge geeft het log de dag van je laatst afgevinkte set, ook bij een geplande training die je een dag eerder of later deed. Aangevuld door: 2026-11-15-dag-van-afronden-opnieuw-afvinken.
 - 2026-11-15 [Een set opnieuw afvinken verzet de dag van Afronden niet](../beslissingen/2026-11-15-dag-van-afronden-opnieuw-afvinken.md): Een set die je uit en weer aan zet telt bij Afronden op de eerste keer afvinken: de voorgestelde dag volgt het laatste echte werk, niet de laatste tik; het tijdstip van het nieuwe log hoort bij die dag (laatste set of 12:00), nooit nu.

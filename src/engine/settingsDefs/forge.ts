@@ -1016,7 +1016,7 @@ export const FORGE: SettingDef[] = [
   {
     id: 'forge-ijkset',
     page: 'forge',
-    place: { in: 'bundel-invullen' },
+    place: { row: true },
     title: 'IJkset',
     note: 'Eens per vier weken een set erbij bij één hoofdoefening, zo ver als netjes gaat, om je gevoel voor hoeveel je over hebt te ijken. Vragen met Akkoord, of automatisch erbij. Niet als je ziek bent, weg bent of geen sportschool hebt, en niet in een week met een tocht of test.',
     keywords: ['forge', 'ijkset', 'ijken', 'rir', 'hoeveel over', 'topset', 'extra set', 'set erbij', 'vier weken', 'voorstel', 'akkoord', 'automatisch', 'vragen', 'bij het invullen'],

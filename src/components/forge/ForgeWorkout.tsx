@@ -74,7 +74,12 @@ import { appendEvents, deriveChanges, noFitEvent, spotterEvents, underRangeEvent
 import { makeId } from '../../utils/id';
 import { sessionIsDead } from '../../engine/forgeSession';
 import { useSessionWorld } from './useForgeSession';
-import { otherDraftHasCalibration, readSession } from '../../utils/forgeSessionStore';
+import { otherDraftHasCalibration, readSession, rememberTrainingReturn } from '../../utils/forgeSessionStore';
+import { useNavigate } from 'react-router-dom';
+import { jumpRoute } from '../settings/jump';
+
+// Zoals AFTER_SHEET_MS in YourWeek: eerst sluit het scherm, dan pas de sprong.
+const AFTER_SCREEN_MS = 280;
 import { useWakeLock } from './useWakeLock';
 import { useRestNotice } from './useRestNotice';
 import { resolveDeviceNotices } from '../../engine/deviceNotices';
@@ -154,6 +159,7 @@ function ForgeWorkoutInner({
   onClose,
 }: ForgeWorkoutProps) {
   const { settings, updateSettings, strengthExternal, templates, plannedSessions, sessionLogs, injuryNotes, trainingGoals, goalMilestones } = useAppData();
+  const navigate = useNavigate();
   const today = todayISO();
   const date = scheduledDate ?? today;
   // Met MacroFactor als bron en bij alleen kijken is dit het voorschrift zonder invulvelden.
@@ -689,7 +695,7 @@ function ForgeWorkoutInner({
   const calSlot = !readOnly && !startedAt && !calLater && strength.calibrationMode === 'vragen' && !calBlocked
     ? calibrationSlot(workout) : undefined;
   const calEx = calSlot ? workout.find((w) => w.slot === calSlot) : undefined;
-  const calibration = calState.phase !== 'open' ? { name: calState.name, phase: calState.phase, onAccept: async () => undefined, onLater: () => undefined }
+  const calibration = calState.phase !== 'open' ? { name: calState.name, phase: calState.phase, onAccept: async () => undefined, onLater: () => undefined, onSettings: () => undefined }
     : calEx ? {
       name: calEx.name,
       phase: 'open' as const,
@@ -704,6 +710,16 @@ function ForgeWorkoutInner({
         }
       },
       onLater: () => setCalLater(true),
+      // Naar de instelling en met de terugknop weer in deze training (App.tsx). Eerst het scherm sluiten, dan pas
+      // navigeren: de terugstap van het scherm mag de sprong niet inhalen.
+      onSettings: () => {
+        rememberTrainingReturn({ templateId: template.id, plannedSessionId, scheduledDate, variant: initialVariant });
+        onClose();
+        window.setTimeout(() => {
+          const r = jumpRoute('forge', { jumpTo: 'forge-ijkset', openSheet: true });
+          navigate(r.to, { state: r.state });
+        }, AFTER_SCREEN_MS);
+      },
     } : undefined;
   const intro = <ForgeIntro templateId={template.id} date={date} program={program} preview={preview} readOnly={readOnly} mountainNotice={mountainNotice} stepNotice={stepNotice} calibration={calibration} capLine={capLine} legLine={legLine} legPanel={legPanel} />;
   const exerciseBlock = (ex: WorkoutExercise, i: number) => {
