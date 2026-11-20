@@ -9,6 +9,12 @@ Vaste vragen per ronde:
 - Gereedschap: welke skill, plugin of helper werkte, en waar zit potentie (ook wat we nog niet gebruiken).
 - Werkstijl: welke aanpak past bij welk soort werk (tekst, engine, opslag, scherm, onderzoek).
 
+## 15 november 17:40 (Wachter, Portugese tijd)
+- Check-in: 8cce377 live (back-up eerste keer, kracht uit); dertien sessies los op verzoek van de eigenaar (weeklimiet 87% voor de reset van 17:59).
+- Beter: Back-up diff-check als subagent op Fable in vijf minuten; Weekbudget en Back-up samen in één proef en één squash.
+- Slechter: een merge-conflict per branch in de kennisindex of de kaartscripts; de bouwers mergen nacht niet zelf vlak voor ze zich melden.
+- Werkstijl: bij "alle trossen los" eerst kiezen op bestanden die niemand deelt; read-only sessies (Pathfinder, onderhoud) op Fable vullen de rest.
+
 ## 15 november 16:40 (Wachter, Portugese tijd)
 - Check-in: 49eca57 live (Week, Afbreker, hitte), deploy en Android groen. Back-up, Beginner en Weekbudget elk een herstelronde na Warden of Pathfinder.
 - Beter: melding van de eigenaar (hitte) binnen het uur gebouwd, nagekeken en live, samen met wat al klaarstond.

@@ -38,6 +38,21 @@ Zonder antwoord het advies: praattest later, test van 30 minuten later, DFA alph
 
 ## Net live
 
+### 20 november 19:50
+- Korte test (I-91): per week telt de vroegste geldige test voor je midden; een laat afgevinkte of later gekoppelde loop verdringt hem niet meer. Een losse loop zegt dat hij niet meetelt en wijst naar de vraag op Vandaag.
+
+### 20 november 19:15
+- Ochtenden (I-84): na een oude back-up staat er weer één ochtend per dag. Een ochtend uit je back-up zonder bron blijft van jou: hij gaat alleen weg als een ochtend van je koppeling elk getal ook heeft, nooit bij ontkoppelen.
+
+### 20 november 18:15
+- Niet goed gemeten (I-92): een ochtend die je niet goed gemeten noemt, met een rusthartslag minstens 6 boven je gewone, breekt de reeks van Vroeg ziek zien niet meer; hij wordt overgeslagen. De vraag komt dus niet meer te laat.
+
+### 20 november 17:00
+- IJkset dichterbij (I-83): de instelling staat nu in Instellingen, Forge, onder Voorstellen, twee tikken van Vandaag. Op de ijksetkaart voor de training staat IJkset aanpassen; terug brengt je weer in de training.
+
+### 20 november 15:30
+- Back-up terugzetten (I-68): zet je je eigen back-up terug, dan springt Laatste back-up niet meer terug in de tijd en telt een training die in de back-up staat als bewaard. Een tijdstip in de toekomst uit een bestand wordt begrensd op nu.
+
 ### 17 november 06:20
 - Drempel uit je tests (I-79 stap 1 en 2): na een testloop met borstband rekent ASCEND je drempel uit de laatste 20 minuten (98%), het midden van je laatste drie tests; alleen als voorstel met Akkoord. Zonder borstband telt de test niet en vraagt de app "Had je hem om?". In de Briefing staat "Klaar voor je test"; drie instellingen in het blad Testloop. De korte test (stap 3) komt woensdag.
 

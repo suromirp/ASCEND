@@ -526,3 +526,32 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-18 | Warden I-91 + Ochtend | reviewer helper | fable + opus | 180k tok | 27 min | 0 blokkerend, 3 voor main |
 | 2026-11-18 | Lookout Ochtend + herkeuring | tester helper | sonnet | 168k tok | 23 min | groen, 1 fout gevonden bij herkeuring |
 | 2026-11-18 | Pathfinder Ochtend | pathfinder helper | sonnet | 33k tok | 1 min | 1 moet (ontdekbaarheid) |
+| 2026-11-20 | Pathfinder IJkset vooraf (I-83) | pathfinder helper | sonnet | 44k tok | 1 min | advies plek en sprong vanuit de melding |
+| 2026-11-20 | Warden weekkam | reviewer helper | sonnet | 26k tok | - | akkoord |
+| 2026-11-20 | claude-code-guide haken-docs | claude-code-guide | - | 47k tok | - | antwoord bruikbaar |
+| 2026-11-20 | Sherpa Back-up telling (I-68) | ontwikkelaar helper | fable | 112k tok | 30 min | gebouwd, alle controles groen, Warden loopt |
+| 2026-11-20 | Warden Back-up telling (I-68) | reviewer helper | fable | 118k tok | 12 min | akkoord na herbasis, 1 moet (toekomst), 4 mag |
+| 2026-11-20 | Sherpa Back-up telling herstel (I-68) | ontwikkelaar helper hervat | fable | 133k tok | 7 min | alle punten, controles groen, live |
+| 2026-11-20 | Sherpa IJkset (I-83) met eigen Lookout | ontwikkelaar helper | sonnet | 153k tok | 54 min | gebouwd, controles groen, Warden en Pathfinder lopen |
+| 2026-11-20 | Pathfinder IJkset doorloop (I-83) | pathfinder helper | sonnet | 28k tok | 1 min | akkoord, 2 mag (wrap op 360, Akkoord sterker later) |
+| 2026-11-20 | Warden IJkset (I-83) | reviewer helper | sonnet | 50k tok | 4 min | 2 moet (terugweg blijft hangen, geen gedragstest), 4 mag |
+| 2026-11-20 | Sherpa IJkset herstel (I-83) | ontwikkelaar helper hervat | sonnet | 22k tok | 14 min | alle punten, controles groen, live |
+| 2026-11-20 | Sherpa Niet goed gemeten (I-92) | ontwikkelaar helper | fable | 120k tok | 28 min | 3 punten, controles groen, kaart toont 2 IJkset-verschillen van main |
+| 2026-11-20 | Pathfinder Niet goed gemeten (I-92) | pathfinder helper | sonnet | 32k tok | 1 min | akkoord, 3 mag (kaart verdwijnt zonder regel, ziek en slecht slapen naar I-78, telefoontoets) |
+| 2026-11-20 | Sherpa Ochtend dubbel (I-84) | ontwikkelaar losse chat | fable | ~.8, 211k ctx | 28 min | gebouwd, controles groen, open: zelfde id (I-78), ontkoppelen met HC aan |
+| 2026-11-20 | Warden Ochtend dubbel (I-84) | reviewer helper | fable | 109k tok | 14 min | niet akkoord: M1 import:-ochtend weg bij ontkoppelen, 400 dagen, soort uit; M2 verslag uit root; 5 mag |
+| 2026-11-20 | Lookout Niet goed gemeten (I-92) | tester helper | sonnet | 72k tok | 22 min | groen op 360, 390, 412; screenshots zelf bekeken |
+| 2026-11-20 | Sherpa Korte test (I-91 rest) | ontwikkelaar helper | fable | 217k tok | 54 min | 4 punten, controles groen, eigen doorloop 360/390 |
+| 2026-11-20 | Pathfinder Korte test (I-91) | pathfinder helper | sonnet | ~30k tok | 2 min | akkoord, 1 moet (zin unplanned zegt niet: koppelen), 2 mag |
+| 2026-11-20 | Warden Niet goed gemeten (I-92) | reviewer helper | fable | 108k tok | 26 min | niet akkoord: M1 reeks Vroeg ziek zien breekt op niet goed gemeten ochtend; 4 mag; herstel naar zelfde Sherpa |
+| 2026-11-20 | Lookout Korte test (I-91) | tester helper | sonnet | 79k tok | 8 min | groen op 360/390/412; zelf bekeken; bestaand: 'Pagina' rechts in GuideRow |
+| 2026-11-20 | Sherpa Niet goed gemeten herstel (I-92) | ontwikkelaar helper hervat | fable | 138k tok | 12 min | moet en 4 mag, controles groen |
+| 2026-11-20 | Warden herstel I-92 | reviewer helper | fable | 51k tok | 2 min | akkoord, 4 mag (briefje en besluit te stellig: zelf hersteld) |
+| 2026-11-20 | Lookout vraagzin I-92 | tester helper | sonnet | 44k tok | 2 min | groen 360/390/412, zelf bekeken |
+| 2026-11-20 | Warden Korte test (I-91) | reviewer helper | fable | ~110k tok | ~30 min | niet akkoord: M1 laat log haalt geplande test uit midden; 5 mag; betere fix gekozen, herstel naar zelfde Sherpa |
+| 2026-11-20 | Sherpa Ochtend dubbel herstel (I-84) | ontwikkelaar losse chat | fable | ~3,8M cache-read, $4,79 | ~25 min | M1 en G1-G4 af, controles groen |
+| 2026-11-20 | Warden herstel I-84 | reviewer helper | fable | 51k tok | 1 min | akkoord, 3 mag (valkuil zelf, rest I-97) |
+| 2026-11-20 | Sherpa Korte test herstel (I-91) | ontwikkelaar helper | fable | 84k tok | ~30 min | M1 betere fix, G1-G3, keuze 2 terug: vroegste geldige |
+| 2026-11-20 | Pathfinder zinnen I-91 | pathfinder helper | sonnet | klein | ~3 min | akkoord, 3 mag; zin losse loop voorwaardelijk gemaakt door coördinator |
+| 2026-11-20 | Warden herstel I-91 | reviewer helper | fable | 79k tok | 2,5 min | akkoord, 4 mag (zin, besluit, venster: zelf in de squash) |
+| 2026-11-20 | Lookout zinnen I-91 | tester helper | sonnet | 59k tok | 3 min | groen 360/390/412, zelf bekeken |

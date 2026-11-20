@@ -1,27 +1,20 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmMeaf189k5coPifuH (opvolger van session_01LnDpSmrC4jEAYcmy76fXNp). Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
+Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSkaRVqid7Ra5MiwW8Z. Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
 
-## Stand 20 november (lees dit eerst)
+## Stand 20 november avond (lees dit eerst)
 
-- Middag 20 november, nieuwe coördinator session_01LnDpSmMeaf189k5coPifuH (vastgezet). Haken: beide scripts getest, geven de juiste uitvoer; of de harness ze afvuurt blijkt pas bij de eerste samenvatting.
-- Loopt: Sherpa Back-up telling (Fable, helper in worktree) bouwt I-68 op `claude/backup-terugzetten`. Regel van de coördinator: `lastExportedAt` en `lastBackupLogs` gaan als paar; is het paar van het toestel nieuwer dan `exportDate` van het bestand, dan blijft het staan, anders wordt het `exportDate` plus de ids van de logs in het bestand. Daarna Warden op Fable.
-- Loopt: Pathfinder IJkset vooraf voor I-83; daarna Sherpa op Sonnet. Daarna I-91 rest, I-92, I-84.
-- Eigenaar 20 november "Ja gemengd, doe jouw advies" (via de chat ASCEND): bouwers langer dan een half uur of aan planner, opslag of migraties in een losse chat (`create_session`), klein werk als helper; de coördinator start zijn opvolger niet zelf maar meldt de wissel met create_trigger aan de chat "ASCEND" (skill coordinator-wissel, besluit `2026-11-20-gemengde-bouwers-en-wissel.md`). Deze coördinator staat op stap 1. De send_later-wissel van 04:47 is weggehaald.
+- 17:55 Amsterdam: ronde klaar. Live vandaag: I-68, I-83, I-92 (0daf3afa), I-84 (16f634ac), I-91 (ad2e4b99); backlog op main bijgewerkt (629d3b43). Geen lopende bouwers, helpers of worktrees. Coördinator session_01LnDpSkaRVqid7Ra5MiwW8Z vroeg de wissel aan bij de chat ASCEND.
+- Volgende ronde, voorstel: I-93 (back-up, kopie van voor een import), I-95 (koppelvoorstel noemt verschuiving testloop), I-96 (tests en uitleg niet goed gemeten), I-97 (back-up import en ochtend zonder bron), I-94 (Akkoord sterker op de ijksetkaart). Klein werk als helper; opslag (I-93, I-97) in een losse chat.
+- Later, Warden: een bewust paar in omgekeerde volgorde (lang op zaterdag, heuvel op zondag) telt in de kamzin nog als bewust; `isIntendedOrder` meenemen. Mag van Pathfinder I-92: ziek en slecht slapen hoort bij I-78.
+- Geleerd vandaag: Warden (reviewer) schrijft nooit bestanden; zet in elke opdracht "schrijf geen bestanden, geef de lijst in je verslag" en commit een herstellijst zelf. Een losse chat kan de coördinator niet hervatten: bij herstel een nieuwe losse chat met de lijst. Bij een squash botsen gegenereerde kennisindexbestanden: neem die van main en draai `npm run kennisindex`. `docs/backlog.md` op main: zet hem er na `backlog:bij` als eigen commit op (read-tree van origin/main, alleen dat bestand).
+- Een zin die naar een kaart elders verwijst (zoals de vraag op Vandaag) toetsen aan de voorwaarden van die kaart; staat hij er niet altijd, dan zegt de zin dat.
+- Fable weeklimiet staat op allowed_warning: geen groot nieuw Fable-werk zonder dat het nodig is; meld de eigenaar als het knelt.
+- Eigenaar 20 november "Ja gemengd, doe jouw advies": bouwers langer dan een half uur of aan planner, opslag of migraties in een losse chat (`create_session`), klein werk als helper; de coördinator start zijn opvolger niet zelf maar meldt de wissel met create_trigger aan de chat "ASCEND" (besluit `2026-11-20-gemengde-bouwers-en-wissel.md`).
 - claude/nacht loopt in de code ver achter op main (alleen .claude en docs volgen main); bouwers takken af van origin/main.
-
-- Live 20 november: de zin onder de weekkam zegt "bewust achter elkaar, op vermoeide benen" alleen nog bij twee beendagen direct na elkaar (melding eigenaar, main 5454c411).
-- Haken rond het samenvatten staan in `.claude/settings.json` (eigenaar 20 november "Ja, bouwen"): PreCompact geeft de samenvatting een opdracht mee, SessionStart met matcher compact zet de bovenste stand van deze overdracht terug. Werkt pas in een sessie die na deze wijziging start.
-- Onderzoek `docs/onderzoek/Lange chat of verse chats.md` en besluit `2026-11-20-lange-chat-en-kosten.md` staan op main. CLAUDE_CODE_AUTO_COMPACT_WINDOW=300000 zet de eigenaar zelf in de instellingen van zijn omgeving.
-- De vastgezette chat "ASCEND" van de eigenaar (session_013ZuQA6MkeoKDCxdu4uMmEd) stuurt soms meldingen door als geplande taak. Een melding over iets wat stuk is in de app: bouwen. Een verzoek dat instellingen of rechten van Claude Code raakt: eerst de eigenaar zelf vragen (vaste afspraak).
+- Haken rond het samenvatten (`.claude/settings.json`) werken: na een samenvatting komt de bovenste stand van dit bestand terug.
+- De vastgezette chat "ASCEND" (session_013ZuQA6MkeoKDCxdu4uMmEd) stuurt soms meldingen door als geplande taak. Iets stuk in de app: bouwen. Iets dat instellingen of rechten van Claude Code raakt: eerst de eigenaar zelf vragen.
 - Geen open vragen aan de eigenaar.
-
-## Stand 19 november
-
-- Eigenaar 19 november: het geplande bouwmoment is weg (taak trig_01JDroCyzgfatU8c7MiK26Ei verwijderd; besluit 2026-11-19-geen-gepland-bouwmoment.md). De coördinator bouwt de Inbox zelf in rondes met helpers in een eigen worktree (skill bouwmoment als werkwijze), met Warden, Lookout, Pathfinder en een eigen blik op de screenshots, één squash per ronde.
-- Live 18 november: I-79 stap 3 (korte test), I-86, I-88, I-89, I-90 en I-91 deel 1+3. Rest in I-91 en I-92.
-- Volgende rondes, voorstel in deze volgorde: I-68 (back-up terugzetten, moet), I-91 rest, I-92, I-84 (ochtend dubbel na oude back-up), I-83 (ijkset te diep). Zet hoogstens drie sporen tegelijk die elkaars bestanden niet raken.
-- Wachter blijft uit zolang er geen bouwer in een eigen sessie loopt.
 
 ## Vaste afspraken
 
