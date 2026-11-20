@@ -1,8 +1,14 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmrC4jEAYcmy76fXNp. Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
+Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmMeaf189k5coPifuH (opvolger van session_01LnDpSmrC4jEAYcmy76fXNp). Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
 
 ## Stand 20 november (lees dit eerst)
+
+- Middag 20 november, nieuwe coördinator session_01LnDpSmMeaf189k5coPifuH (vastgezet). Haken: beide scripts getest, geven de juiste uitvoer; of de harness ze afvuurt blijkt pas bij de eerste samenvatting.
+- Loopt: Sherpa Back-up telling (Fable, helper in worktree) bouwt I-68 op `claude/backup-terugzetten`. Regel van de coördinator: `lastExportedAt` en `lastBackupLogs` gaan als paar; is het paar van het toestel nieuwer dan `exportDate` van het bestand, dan blijft het staan, anders wordt het `exportDate` plus de ids van de logs in het bestand. Daarna Warden op Fable.
+- Loopt: Pathfinder IJkset vooraf voor I-83; daarna Sherpa op Sonnet. Daarna I-91 rest, I-92, I-84.
+- Eigenaar 20 november "Ja gemengd, doe jouw advies" (via de chat ASCEND): bouwers langer dan een half uur of aan planner, opslag of migraties in een losse chat (`create_session`), klein werk als helper; de coördinator start zijn opvolger niet zelf maar meldt de wissel met create_trigger aan de chat "ASCEND" (skill coordinator-wissel, besluit `2026-11-20-gemengde-bouwers-en-wissel.md`). Deze coördinator staat op stap 1. De send_later-wissel van 04:47 is weggehaald.
+- claude/nacht loopt in de code ver achter op main (alleen .claude en docs volgen main); bouwers takken af van origin/main.
 
 - Live 20 november: de zin onder de weekkam zegt "bewust achter elkaar, op vermoeide benen" alleen nog bij twee beendagen direct na elkaar (melding eigenaar, main 5454c411).
 - Haken rond het samenvatten staan in `.claude/settings.json` (eigenaar 20 november "Ja, bouwen"): PreCompact geeft de samenvatting een opdracht mee, SessionStart met matcher compact zet de bovenste stand van deze overdracht terug. Werkt pas in een sessie die na deze wijziging start.
@@ -15,9 +21,7 @@ Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmrC4jEAYcmy76fXNp.
 - Eigenaar 19 november: het geplande bouwmoment is weg (taak trig_01JDroCyzgfatU8c7MiK26Ei verwijderd; besluit 2026-11-19-geen-gepland-bouwmoment.md). De coördinator bouwt de Inbox zelf in rondes met helpers in een eigen worktree (skill bouwmoment als werkwijze), met Warden, Lookout, Pathfinder en een eigen blik op de screenshots, één squash per ronde.
 - Live 18 november: I-79 stap 3 (korte test), I-86, I-88, I-89, I-90 en I-91 deel 1+3. Rest in I-91 en I-92.
 - Volgende rondes, voorstel in deze volgorde: I-68 (back-up terugzetten, moet), I-91 rest, I-92, I-84 (ochtend dubbel na oude back-up), I-83 (ijkset te diep). Zet hoogstens drie sporen tegelijk die elkaars bestanden niet raken.
-- Vorige coördinator session_01LnDpSmrC4jEAYcmy76fXNp zat op lineage 8/8 en kon geen taken of sessies maken. Start bouwers als helper (Agent met isolation worktree), niet met create_session, tenzij get_session een lage diepte toont.
 - Wachter blijft uit zolang er geen bouwer in een eigen sessie loopt.
-- Volgende wissel: plan met send_later op 04:47 Amsterdam (lukt dat niet door de diepte, meld het de eigenaar).
 
 ## Vaste afspraken
 

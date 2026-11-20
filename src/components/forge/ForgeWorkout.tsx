@@ -711,7 +711,9 @@ function ForgeWorkoutInner({
       },
       onLater: () => setCalLater(true),
       // Naar de instelling en met de terugknop weer in deze training (App.tsx). Eerst het scherm sluiten, dan pas
-      // navigeren: de terugstap van het scherm mag de sprong niet inhalen.
+      // navigeren: de terugstap van het scherm mag de sprong niet inhalen. De timer wordt bewust niet opgeruimd (dit
+      // scherm is dan weg, `navigate` blijft werken, zoals in YourWeek.tsx) en een tweede tik kan niet: onClose haalt
+      // het scherm weg. De terugweg vervalt na twee minuten (forgeSessionStore.ts#RETURN_VALID_MS).
       onSettings: () => {
         rememberTrainingReturn({ templateId: template.id, plannedSessionId, scheduledDate, variant: initialVariant });
         onClose();

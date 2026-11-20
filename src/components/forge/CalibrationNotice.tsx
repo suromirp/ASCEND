@@ -16,7 +16,7 @@ export function CalibrationNotice({ name, phase: state, onAccept, onLater, onSet
           <>
             <p className="text-sm leading-relaxed" style={ink}>Eens per vier weken ijk je je gevoel voor wat je over hebt. Nog één set bij {name}, zo ver als netjes gaat?</p>
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Er komt een set bij met nog één over als doel. Daarna kies je zoals altijd hoeveel je over had.</p>
-            <div className="mt-1 flex items-center gap-3">
+            <div className="mt-1 flex flex-wrap items-center gap-x-3">
               <SecondaryButton onClick={onLater}>Niet nu</SecondaryButton>
               <SecondaryButton onClick={accept}>Akkoord</SecondaryButton>
               <TextButton tone="dim" onClick={onSettings}>IJkset aanpassen</TextButton>

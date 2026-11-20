@@ -40,7 +40,7 @@ describe('de telling sinds je laatste back-up', () => {
     expect((whole.payload.settings as { lastBackupLogs?: unknown }).lastBackupLogs).toEqual({ at: '2026-11-15T19:00:00.000Z', ids: ['log_a'] });
   });
 
-  it('een oude back-up zonder het veld: terugzetten lukt en de telling gaat zoals eerst, op tijd', async () => {
+  it('een oude back-up zonder het veld: terugzetten lukt; op een leeg toestel is dat bestand de laatste back-up (besluit 2026-11-20-backup-terugzetten.md)', async () => {
     // Zoals een back-up van een oudere app: alleen lastExportedAt in de instellingen.
     const old = {
       backupSchemaVersion: 5,
@@ -49,20 +49,23 @@ describe('de telling sinds je laatste back-up', () => {
     };
     await restore(JSON.parse(JSON.stringify(old)));
     const settings = await SettingsRepo.get();
-    expect(settings.lastBackupLogs).toBeUndefined();
-    await SessionLogsRepo.put(log('log_b', '2026-11-11T10:00:00.000Z'));
+    // Niet het tijdstip uit de instellingen in het bestand (9 november), maar dat van het bestand zelf.
+    expect(settings.lastExportedAt).toBe('2026-11-10T19:00:00.000Z');
+    expect(settings.lastBackupLogs).toEqual({ at: '2026-11-10T19:00:00.000Z', ids: ['log_a'] });
+    await SessionLogsRepo.put(log('log_b', '2026-11-08T10:00:00.000Z'));
     expect(logsNotInLastBackup(await SessionLogsRepo.getAll(), settings)).toBe(1);
   });
 
-  it('terugzetten met de instellingen van de back-up: de lijst van dit toestel hoort niet bij dat tijdstip en telt niet', async () => {
+  it('terugzetten met de instellingen van de back-up: het tijdstip uit het bestand komt niet over dat van dit toestel (besluit 2026-11-20-backup-terugzetten.md)', async () => {
     await SessionLogsRepo.put(log('log_a', '2026-11-14T10:00:00.000Z'));
     await SettingsRepo.set(backupMadeSettings('2026-11-08T19:00:00.000Z', ['log_a']));
-    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
-    await SettingsRepo.set(backupMadeSettings('2026-11-15T19:00:00.000Z', []));
+    const envelope = { ...JSON.parse(JSON.stringify(await buildBackupEnvelope())), createdAt: '2026-11-12T19:00:00.000Z' };
+    expect(envelope.payload.settings.lastExportedAt).toBe('2026-11-08T19:00:00.000Z');
+    await SettingsRepo.set(backupMadeSettings('2026-11-15T19:00:00.000Z', ['log_a']));
     await restore(envelope);
     const settings = await SettingsRepo.get();
-    expect(settings.lastExportedAt).toBe('2026-11-08T19:00:00.000Z');
-    // Op tijd: log_a (14 november) ligt na 8 november.
-    expect(logsNotInLastBackup(await SessionLogsRepo.getAll(), settings)).toBe(1);
+    expect(settings.lastExportedAt).toBe('2026-11-15T19:00:00.000Z');
+    expect(settings.lastBackupLogs).toEqual({ at: '2026-11-15T19:00:00.000Z', ids: ['log_a'] });
+    expect(logsNotInLastBackup(await SessionLogsRepo.getAll(), settings)).toBe(0);
   });
 });

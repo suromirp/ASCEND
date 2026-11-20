@@ -13,7 +13,7 @@ De eigenaar vond de instelling niet: ze zat vijf tikken diep, achter Geavanceerd
 
 ## Alternatieven
 
-Een rij uit Forge naar een blad verplaatsen om op 12 te blijven: er is geen rij die minder vaak gezocht wordt dan een voorstel dat je telkens ziet. Gekozen is één rij extra, alleen voor deze groep.
+Een rij uit Forge naar een blad verplaatsen om op 12 te blijven: er is geen rij die minder vaak gezocht wordt dan een voorstel dat je telkens ziet. Gekozen is één rij extra, alleen voor deze groep. Een veertiende rij in Forge moet wel naar een blad.
 
 ## Bron
 

@@ -369,11 +369,12 @@ export interface TrainingReturn {
   scheduledDate?: string;
   variant?: string;
 }
-let returnTo: TrainingReturn | undefined;
-export const rememberTrainingReturn = (r: TrainingReturn | undefined): void => { returnTo = r; };
-export const trainingReturn = (): TrainingReturn | undefined => returnTo;
-export function takeTrainingReturn(): TrainingReturn | undefined {
-  const r = returnTo;
-  returnTo = undefined;
-  return r;
-}
+// De terugweg vervalt na twee minuten: wie niet snel terugkomt, krijgt geen training waar hij niet om vroeg.
+export const RETURN_VALID_MS = 2 * 60 * 1000;
+let returnTo: { value: TrainingReturn; at: number } | undefined;
+export const rememberTrainingReturn = (r: TrainingReturn | undefined, now: number = Date.now()): void => {
+  returnTo = r ? { value: r, at: now } : undefined;
+};
+// Alleen lezen; een verlopen waarde is leeg.
+export const trainingReturn = (now: number = Date.now()): TrainingReturn | undefined =>
+  returnTo && now - returnTo.at <= RETURN_VALID_MS ? returnTo.value : undefined;

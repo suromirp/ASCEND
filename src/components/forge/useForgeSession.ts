@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
+import { decideReturn } from '../../utils/trainingReturn';
 import { settingsPageRoute } from '../../data/settingsLayout';
 import { useAppData } from '../../state/AppDataContext';
 import { draftsToPrune, leftSession, resolveLeftAfter, sessionIsDead, type LeftSession, type SessionWorld } from '../../engine/forgeSession';
@@ -121,18 +122,10 @@ export function useTrainingReturn(): void {
   const type = useNavigationType();
   const seen = useRef(false);
   useEffect(() => {
-    const pending = trainingReturn();
-    if (!pending) {
-      seen.current = false;
-      return;
-    }
-    if (pathname === settingsPageRoute('forge')) {
-      seen.current = true;
-      return;
-    }
-    if (!seen.current) return;
-    seen.current = false;
-    if (type === 'POP') requestOpenSession();
-    else rememberTrainingReturn(undefined);
+    const d = decideReturn({ pending: trainingReturn() !== undefined, seen: seen.current, onSettings: pathname === settingsPageRoute('forge'), type });
+    seen.current = d.seen;
+    if (d.action === 'openen') requestOpenSession();
+    // Bij openen wist de Host hem na het lezen (ForgeSessionHost.tsx); hier alleen bij wissen.
+    if (d.action === 'wissen') rememberTrainingReturn(undefined);
   }, [pathname, type]);
 }

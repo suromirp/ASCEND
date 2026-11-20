@@ -247,6 +247,12 @@ De eigenaar: "efficiënt gebruik van de modellen per taak en agent; we hebben de
 - De rolbestanden in `.claude/agents/` hebben het lichtste model dat voor die rol gewoon is. Geef bij een helper (`model`) en bij `create_session` altijd het model mee als de taak zwaarder is dan dat.
 - Knip een onderwerp zo dat het zware deel klein is: de regel in de engine op Opus of Fable, het scherm, de tekst en de instelling eromheen op Sonnet.
 
+## Losse chat of helper (eigenaar 20 november)
+
+- Een losse chat (`create_session`) voor een bouwer die naar verwachting langer dan een half uur duurt, of die planner, opslag of migraties raakt. Hij meldt zich met `create_trigger` bij de coördinator van dat moment (zie hieronder).
+- Een helper in de chat van de coördinator (Agent, `isolation: worktree`) voor kleine klussen.
+- Het model volgt wat het werk raakt, zoals in de tabel. De coördinator start zijn opvolger nooit zelf (skill `coordinator-wissel`), zodat de keten van sessies niet volloopt.
+
 ## Bouwers melden zich zelf (9 november)
 
 Elke bouwer die de coördinator met `create_session` start, krijgt als laatste regel van de opdracht: meld je als je klaar bent of vastloopt met `create_trigger` (claude-code-remote), `persistent_session_id` de sessie van de coördinator, `run_once_at` één à twee minuten vooruit, `initiation` `own_followup`, met in de prompt titel, sessie-id, wat live staat, de controles en vragen. De coördinator start dan meteen de volgende; een check elke twee uur is alleen nog een vangnet.
