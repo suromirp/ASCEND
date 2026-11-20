@@ -39,6 +39,7 @@ Geen.
 - [onderhoud/2026-11-12-pathfinder-verborgen-schermen.md](../onderhoud/2026-11-12-pathfinder-verborgen-schermen.md): Pathfinder op 12 november 2026 over verborgen pagina's en wat anders kan; opgevolgd in `docs/beslissingen/2026-11-14-verborgen-schermen.md`.
 - [onderhoud/reflectie-2026-11-01.md](../onderhoud/reflectie-2026-11-01.md): Terugblik per ronde op de backlogavond van 1 november 2026.
 - [onderzoek/Dode code 2026-10-28.md](../onderzoek/Dode%20code%202026-10-28.md): Welke ongebruikte componenten en engine-bestanden op 28 oktober 2026 zijn verwijderd en wat bewust bleef.
+- [onderzoek/Lange chat of verse chats.md](../onderzoek/Lange%20chat%20of%20verse%20chats.md): Of een lange coördinator-chat of verse chats beter is: samenvatten, kwaliteit bij volle context, cachekosten, hoe anderen het doen en advies voor de wissel.
 - [onderzoek/Ponytail en Graphify.md](../onderzoek/Ponytail%20en%20Graphify.md): Proef van 13 november 2026 met twee hulpmiddelen voor agents; niets ervan staat in main.
 - [onderzoek/Werkwijze autonome agents.md](../onderzoek/Werkwijze%20autonome%20agents.md): Hoe teams die vooral met AI bouwen zonder mens opleveren, met de lessen voor ASCEND en wat altijd een mens nodig heeft.
 - [visie/Techniek en kwaliteit.md](../visie/Techniek%20en%20kwaliteit.md): Meting van 21 oktober 2026 van techniek en kwaliteit op commit 66641e4.
