@@ -23,6 +23,9 @@ import { DEFAULT_WATCH_USE, filterRecovery, wellnessWanted, type WatchUse } from
 import type { RecoveryMetric } from '../models/metrics';
 import { addDays, todayISO } from '../utils/dates';
 import { orderBySource } from '../engine/sourcePrecedence';
+import { belongsToLink, doubleMornings } from '../engine/morningDouble';
+
+const ofLink = (m: RecoveryMetric): boolean => belongsToLink(m.id, `${INTERVALS_ADAPTER_ID}:`);
 
 // Records are kept for KEEP_DAYS (engine/wellnessRange.ts): "Wat speelde er" compares a noted
 // morning with the 28 days before it, which can lie months back. Everything that reads them picks
@@ -52,6 +55,26 @@ async function retire(records: readonly RecoveryMetric[], keepMornings: boolean)
   if (plan.put.length > 0) await RecoveryMetricsRepo.putAll(plan.put);
 }
 
+// Eén ochtend per dag (engine/morningDouble.ts, docs/beslissingen/2026-11-20-ochtend-dubbel.md): een
+// ochtend zonder bron uit een oude back-up die niets toevoegt aan een ochtend met een bron op dezelfde
+// dag gaat weg, in één transactie. Loopt na elke geslaagde ronde ophalen, na ontkoppelen en één keer
+// bij het openen (storage/bootMigrations.ts). Leest alleen de opslag, nooit een bron: een koppeling
+// die niet antwoordt haalt dus nooit iets weg. Geeft het aantal dat wegging.
+export async function tidyDoubleMornings(): Promise<number> {
+  const gone = doubleMornings(await RecoveryMetricsRepo.getAll());
+  await RecoveryMetricsRepo.deleteMany(gone.map((m) => m.id));
+  return gone.length;
+}
+
+// Opruimen is een bijzaak van de ronde: mislukt het, dan is de ronde nog steeds gelukt.
+export async function tidyDoubleMorningsQuietly(): Promise<void> {
+  try {
+    await tidyDoubleMornings();
+  } catch {
+    // De volgende ronde of de volgende start probeert het opnieuw.
+  }
+}
+
 // Never throws: wellness is a bonus on top of the activities, and a hiccup
 // here must not make the activity fetch look like it failed.
 //
@@ -73,8 +96,9 @@ export async function syncWellness(connection: IntervalsConnection, options: Fet
     const metrics = filterRecovery(await fetchIntervalsWellness(connection, plan.normal, { fetchImpl: options.fetchImpl }), use);
     const cutoff = addDays(today, -KEEP_DAYS);
     const existing = await RecoveryMetricsRepo.getAll();
-    await retire(existing.filter((old) => old.id.startsWith(`${INTERVALS_ADAPTER_ID}:`) && old.date < cutoff), resolveMorningBackup(settings));
+    await retire(existing.filter((old) => ofLink(old) && old.date < cutoff), resolveMorningBackup(settings));
     if (metrics.length > 0) await RecoveryMetricsRepo.putAll(metrics);
+    await tidyDoubleMorningsQuietly();
     const covered = await MetaRepo.get<string>(COVERED_KEY);
     if (covered === undefined || covered > plan.normal.from) await MetaRepo.set(COVERED_KEY, plan.normal.from);
     await fetchLongStretch(connection, plan.long, use, today, options.fetchImpl);
@@ -96,6 +120,7 @@ async function fetchLongStretch(connection: IntervalsConnection, parts: DateSpan
       if (records.length > 0) await RecoveryMetricsRepo.putAll(records);
       await MetaRepo.set(COVERED_KEY, part.from);
     }
+    await tidyDoubleMorningsQuietly();
   } catch {
     // The next day tries again from where this stopped.
   }
@@ -103,11 +128,15 @@ async function fetchLongStretch(connection: IntervalsConnection, parts: DateSpan
 
 // Unlinking: what came from intervals.icu goes, what you entered yourself stays. With
 // "Ochtendgetallen in back-up" on the mornings stay as the backup keeps them (`retire`).
+// A morning without a source (an old backup, `import:<datum>`) belongs to the link too
+// (engine/morningDouble.ts#belongsToLink): with the setting off it goes, with it on it stays
+// unless a fetched morning of that day already has its numbers.
 export async function clearWellness(): Promise<void> {
   await MetaRepo.set(COVERED_KEY, undefined);
   await MetaRepo.set(TRIED_KEY, undefined);
-  const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith(`${INTERVALS_ADAPTER_ID}:`));
+  const ours = (await RecoveryMetricsRepo.getAll()).filter(ofLink);
   await retire(ours, resolveMorningBackup(await SettingsRepo.get()));
+  await tidyDoubleMornings();
 }
 
 // A kind was switched off: it leaves what is stored, so nothing keeps using it.
@@ -115,8 +144,8 @@ export async function clearWellness(): Promise<void> {
 export async function pruneWellness(use: WatchUse): Promise<void> {
   await MetaRepo.set(COVERED_KEY, undefined);
   await MetaRepo.set(TRIED_KEY, undefined);
-  // Ook de ochtenden uit Health Connect: dezelfde keuzes gelden daar (storage/healthConnect.ts).
-  const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith(`${INTERVALS_ADAPTER_ID}:`) || m.id.startsWith('health-connect:'));
+  // Ook de ochtenden uit Health Connect en die zonder bron uit een oude back-up: dezelfde keuzes gelden daar (storage/healthConnect.ts).
+  const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => ofLink(m) || m.id.startsWith('health-connect:'));
   const kept = filterRecovery(ours, use);
   const keptIds = new Set(kept.map((m) => m.id));
   for (const m of ours) if (!keptIds.has(m.id)) await RecoveryMetricsRepo.delete(m.id);

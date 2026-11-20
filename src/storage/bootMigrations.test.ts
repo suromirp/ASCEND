@@ -77,12 +77,12 @@ describe('opstartstappen', () => {
     const hangs = () => new Promise<never>(() => undefined);
     const { skipped } = await runBootMigrations({ build: 'v1', stepLimitMs: 50, overrides: { ...quickRepairs, restorePatternSessionsRemovedByPrescription: async () => undefined, normalizePlannedSessionWeeks: async () => undefined, mergeDuplicateWeeklyPrescriptionLines: hangs } });
     warn.mockRestore();
-    expect(skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines', 'releaseSystemMoves', 'migrateGoalKinds', 'tidyOldProposals']);
+    expect(skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines', 'releaseSystemMoves', 'migrateGoalKinds', 'tidyOldProposals', 'tidyDoubleMornings']);
     const record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
     expect(record?.done.some((k) => k.startsWith('mergeDuplicateWeeklyPrescriptionLines@'))).toBe(false);
     const seen: string[] = [];
     await runBootMigrations({ build: 'v1', onStep: (id) => seen.push(id) });
-    expect(seen).toEqual([BOOT_MIGRATIONS_KEY, 'mergeDuplicateWeeklyPrescriptionLines', 'releaseSystemMoves', 'migrateGoalKinds', 'tidyOldProposals']);
+    expect(seen).toEqual([BOOT_MIGRATIONS_KEY, 'mergeDuplicateWeeklyPrescriptionLines', 'releaseSystemMoves', 'migrateGoalKinds', 'tidyOldProposals', 'tidyDoubleMornings']);
   });
 });
 
@@ -143,7 +143,7 @@ describe('een herstelstap die een fout gooit', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const hangs = () => new Promise<never>(() => undefined);
     const result = await runBootMigrations({ build: 'v1', stepLimitMs: 30, overrides: { ...quickRepairs, restorePatternSessionsRemovedByPrescription: async () => undefined, normalizePlannedSessionWeeks: async () => undefined, mergeDuplicateWeeklyPrescriptionLines: fails, releaseSystemMoves: hangs } });
-    expect(result.skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines', 'releaseSystemMoves', 'migrateGoalKinds', 'tidyOldProposals']);
+    expect(result.skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines', 'releaseSystemMoves', 'migrateGoalKinds', 'tidyOldProposals', 'tidyDoubleMornings']);
     expect(result.pending).toBeDefined();
   });
 });
@@ -201,7 +201,7 @@ describe('een onmisbare stap', () => {
     const hangs = () => new Promise<never>(() => undefined);
     const { skipped } = await runBootMigrations({ build: 'v1', stepLimitMs: 20, overrides: { ...quickRepairs, restorePatternSessionsRemovedByPrescription: hangs } });
     warn.mockRestore();
-    expect(skipped).toEqual(['restorePatternSessionsRemovedByPrescription', 'normalizePlannedSessionWeeks', 'mergeDuplicateWeeklyPrescriptionLines', 'releaseSystemMoves', 'migrateGoalKinds', 'tidyOldProposals']);
+    expect(skipped).toEqual(['restorePatternSessionsRemovedByPrescription', 'normalizePlannedSessionWeeks', 'mergeDuplicateWeeklyPrescriptionLines', 'releaseSystemMoves', 'migrateGoalKinds', 'tidyOldProposals', 'tidyDoubleMornings']);
   });
 });
 

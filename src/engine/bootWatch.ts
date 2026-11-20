@@ -93,6 +93,8 @@ export const BOOT_MIGRATIONS: readonly BootMigration[] = [
   { id: 'migrateGoalKinds', essential: false, version: 1 },
   // Oude, besliste voorstellen samenvatten (engine/proposalTidy.ts); verandert de planning niet.
   { id: 'tidyOldProposals', essential: false, version: 1 },
+  // Eén ochtend per dag: een ochtend zonder bron naast een opgehaalde gaat weg (engine/morningDouble.ts).
+  { id: 'tidyDoubleMornings', essential: false, version: 1 },
 ];
 
 export const BOOT_STEP_LIMIT_MS = 8_000;

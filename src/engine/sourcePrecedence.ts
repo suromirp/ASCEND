@@ -117,9 +117,15 @@ export function offeredActivities(
   return [...keptPrimary, ...keptSecondary];
 }
 
+// Een ochtend zonder bron: het id dat storage/migrationsBody.ts#migrateMornings maakt voor een
+// ochtend uit een back-up zonder id en zonder bron ("import:<datum>").
+export const isSourcelessMorning = (id: string): boolean => sourcePrefix(id) === 'import';
+
 // De ochtendgetallen in de volgorde waarin ze tellen: wie een dag leest neemt het eerste getal
-// (engine/wellnessCheck.ts#dayRecord, #baselineValues), dus een aanvullende bron komt achteraan.
+// (engine/wellnessCheck.ts#dayRecord, #baselineValues), dus een aanvullende bron komt achteraan,
+// en een ochtend zonder bron helemaal als laatste (docs/beslissingen/2026-11-20-ochtend-dubbel.md).
 // Een nieuwe lijst; de volgorde binnen elke groep blijft.
 export function orderBySource(metrics: readonly RecoveryMetric[]): RecoveryMetric[] {
-  return [...metrics.filter((m) => !isSecondary(m.id)), ...metrics.filter((m) => isSecondary(m.id))];
+  const rank = (m: RecoveryMetric): number => (isSourcelessMorning(m.id) ? 2 : isSecondary(m.id) ? 1 : 0);
+  return [0, 1, 2].flatMap((n) => metrics.filter((m) => rank(m) === n));
 }

@@ -888,6 +888,14 @@
    "kern": "Bij volledig terugzetten komt Laatste back-up nooit uit de instellingen in het bestand: `lastExportedAt` en `lastBackupLogs` horen bij het toestel en gaan als paar (`engine/backupSince.ts#backupPairAfterRestore`); het toestel wint als het even oud of nieuwer is, anders wordt het bestand zelf de laatste back-up.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-20-ochtend-dubbel.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Een ochtend uit een oude back-up zonder id (`import:<datum>`) is een ochtend zonder bron: bij het lezen komt hij als laatste (`orderBySource`), in de opslag gaat hij weg zodra een ochtend met een bron op dezelfde dag elk getal ook heeft (`engine/morningDouble.ts`, `storage/wellness.ts#tidyDoubleMornings`), en bij ontkoppelen hoort hij bij de koppeling. Een leesfout haalt nooit iets weg; geen uitzondering op logs nooit herschrijven.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-20-gemengde-bouwers-en-wissel.md": {
    "onderwerpen": [
     "werkwijze"

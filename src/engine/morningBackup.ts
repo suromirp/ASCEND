@@ -11,6 +11,7 @@ import type { AppSettings } from '../storage/database';
 import type { RecoveryMetric } from '../models/metrics';
 import { KEEP_DAYS } from './wellnessRange';
 import { addDays } from '../utils/dates';
+import { belongsToLink } from './morningDouble';
 
 export type BackupMorning = Pick<RecoveryMetric, 'id' | 'date' | 'source' | 'restingHeartRate' | 'hrv' | 'sleepMinutes' | 'sleepScore'>;
 
@@ -68,7 +69,8 @@ export function archiveToClear(
   records: readonly RecoveryMetric[],
   { connected, fetchedPrefix, today }: { connected: boolean; fetchedPrefix: string; today: string },
 ): RecoveryMetric[] {
-  const fetched = records.filter((r) => r.id.startsWith(fetchedPrefix));
+  // Ook een ochtend zonder bron uit een oude back-up (engine/morningDouble.ts#belongsToLink).
+  const fetched = records.filter((r) => belongsToLink(r.id, fetchedPrefix));
   if (!connected) return fetched;
   const cutoff = addDays(today, -KEEP_DAYS);
   return fetched.filter((r) => r.date < cutoff);
