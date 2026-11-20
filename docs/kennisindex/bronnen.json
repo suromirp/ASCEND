@@ -880,6 +880,13 @@
     "docs/beslissingen/2026-11-12-stand-minimaal.md"
    ]
   },
+  "docs/beslissingen/2026-11-20-lange-chat-en-kosten.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "De coördinator wisselt op lengte (250k tot 300k context of na een bouwronde), de overdracht blijft onder 10 KB, haken rond het samenvatten bewaren de stand, en de kosten gaan omlaag met plan-eerst bij planner en opslag, het model naar het werk en gebundelde kleine punten.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-19-geen-gepland-bouwmoment.md": {
    "onderwerpen": [
     "werkwijze"

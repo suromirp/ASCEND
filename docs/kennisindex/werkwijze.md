@@ -14,6 +14,7 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
+- 2026-11-20 [Lange chat of verse chats, en waar de kosten zitten](../beslissingen/2026-11-20-lange-chat-en-kosten.md): De coördinator wisselt op lengte (250k tot 300k context of na een bouwronde), de overdracht blijft onder 10 KB, haken rond het samenvatten bewaren de stand, en de kosten gaan omlaag met plan-eerst bij planner en opslag, het model naar het werk en gebundelde kleine punten.
 - 2026-11-19 [Geen gepland bouwmoment meer](../beslissingen/2026-11-19-geen-gepland-bouwmoment.md): De geplande taak Bouwmoment is weg; de coördinator bouwt de Inbox zelf in bouwrondes met helpers, met dezelfde poorten en één squash per ronde.
 - 2026-11-11 [Pathfinder: een poort voor samenhang en UX](../beslissingen/2026-11-11-pathfinder.md): Er komt een zesde rol, Pathfinder (`.claude/agents/pathfinder.md`, skill `pathfinder`), die de app als geheel bewaakt vanuit de gebruiker.
 - 2026-10-31 [Tekstkaart van de app als standaardcontrole](../beslissingen/2026-10-31-app-kaart.md): Data en teksten controleren we met de tekstkaart in `docs/app-kaart/` (`npm run kaart:vergelijk`), niet met screenshots.
