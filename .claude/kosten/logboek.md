@@ -543,3 +543,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Lookout Niet goed gemeten (I-92) | tester helper | sonnet | 72k tok | 22 min | groen op 360, 390, 412; screenshots zelf bekeken |
 | 2026-11-20 | Sherpa Korte test (I-91 rest) | ontwikkelaar helper | fable | 217k tok | 54 min | 4 punten, controles groen, eigen doorloop 360/390 |
 | 2026-11-20 | Pathfinder Korte test (I-91) | pathfinder helper | sonnet | ~30k tok | 2 min | akkoord, 1 moet (zin unplanned zegt niet: koppelen), 2 mag |
+| 2026-11-20 | Warden Niet goed gemeten (I-92) | reviewer helper | fable | 108k tok | 26 min | niet akkoord: M1 reeks Vroeg ziek zien breekt op niet goed gemeten ochtend; 4 mag; herstel naar zelfde Sherpa |
