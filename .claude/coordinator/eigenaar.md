@@ -38,6 +38,9 @@ Zonder antwoord het advies: praattest later, test van 30 minuten later, DFA alph
 
 ## Net live
 
+### 20 november 15:30
+- Back-up terugzetten (I-68): zet je je eigen back-up terug, dan springt Laatste back-up niet meer terug in de tijd en telt een training die in de back-up staat als bewaard. Een tijdstip in de toekomst uit een bestand wordt begrensd op nu.
+
 ### 17 november 06:20
 - Drempel uit je tests (I-79 stap 1 en 2): na een testloop met borstband rekent ASCEND je drempel uit de laatste 20 minuten (98%), het midden van je laatste drie tests; alleen als voorstel met Akkoord. Zonder borstband telt de test niet en vraagt de app "Had je hem om?". In de Briefing staat "Klaar voor je test"; drie instellingen in het blad Testloop. De korte test (stap 3) komt woensdag.
 
