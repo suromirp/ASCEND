@@ -154,6 +154,14 @@ Een sessie die lang loopt wordt bij elke beurt duurder. Begin na een groot onder
 paar dagen een nieuwe sessie; zet wat de volgende sessie moet weten in de takenlijst of in
 `docs/onderhoud/`, niet alleen in het gesprek.
 
+## Kosten omlaag (besluit 2026-11-20-lange-chat-en-kosten.md)
+
+- Planner, opslag en migraties: Warden beoordeelt eerst het plan van de bouwer, dan pas bouwen. Elke opdracht volgt het sjabloon met eisen en randgevallen vooraf.
+- Model naar wat het werk raakt: planner, opslag en migraties op Opus of Fable; teksten, schermen en kleine fixes op Sonnet. Maximaal denkwerk alleen op verzoek van de eigenaar.
+- Kleine punten bundelen: één bouwer, één keer naar main. Een kleine wijziging krijgt één gecombineerde Warden en Lookout.
+- Herstel naar dezelfde bouwer alleen binnen een paar minuten; anders een verse Sherpa met alleen de lijst en het briefje.
+- In het logboek per coördinatorsessie de context bij de wissel en de kosten; wekelijks per soort werk kosten, herstelrondes en wat de eigenaar merkt.
+
 ## Het kostenlogboek
 
 Na elke afgeronde helper schrijft de coördinator één regel in `.claude/kosten/logboek.md`:

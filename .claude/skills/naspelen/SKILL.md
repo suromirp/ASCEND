@@ -19,3 +19,6 @@ Waarom zo (5 november): zonder `primePlanningRegisters()` rekent de planning met
 fout niet; de tijdzone en het tijdstip bepalen wat vandaag is. De lijst met wat de weekcontrole schreef
 (`planChangeProposals` met `trigger: 'plan_check'`) laat in de back-up zelf zien of iets bij elke opening terugkomt.
 Een snelle eerste blik kan ook zonder app: `python3 -I` over de back-up, alleen lezen.
+Vanaf back-up schema 6 (16 november, I-63) staat herhaalde uitleg van voorstellen één keer in `payload.proposalTexts`
+en staat in het voorstel `{"$tekst": "t3"}`; zoek in Python de tekst daar op. De probe leest via de app en ziet de
+volle tekst.
