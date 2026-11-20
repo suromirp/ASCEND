@@ -494,24 +494,25 @@ export function shortTestVerdict(current: ShortTestResult, baseline: ShortTestBa
 // --- wat het logblad laat zien ------------------------------------------------------------------
 
 // Welke tests achteraf tellen voor je eigen midden: per week (maandag tot zondag, op de dag van het log) de
-// vroegste loop met een teststuk, onder de logs die aan een geplande training hangen (gewoon gelogd of
-// achteraf gekoppeld). Eén per week. Een losse loop telt niet ('loose'), tot je hem koppelt; een latere loop
-// met een teststuk in dezelfde week ook niet ('second'). Bewust niet shortTestSessionIds: welke loop de test
-// vooruit krijgt beweegt met elk later log, en wat achteraf telt mag daar niet op meebewegen. Een eerdere
-// loop van dezelfde week die je pas later afvinkt of koppelt verdringt alleen als hij zelf een teststuk heeft.
+// vroegste geldige test, onder de logs die aan een geplande training hangen (gewoon gelogd of achteraf
+// gekoppeld). Eén per week. Een losse loop telt niet ('loose'), tot je hem koppelt; een latere geldige test
+// in dezelfde week ook niet ('second'). Een ongeldige test (gestopt, verkeerd tempo, geen band) telt niet,
+// verdringt niets en houdt zijn eigen reden. Bewust niet shortTestSessionIds: welke loop de test vooruit
+// krijgt beweegt met elk later log, en wat achteraf telt mag daar niet op meebewegen. Een eerdere loop van
+// dezelfde week die je pas later afvinkt of koppelt verdringt alleen als hij zelf een geldige test heeft.
 export function countedShortTests(found: readonly ShortTestResult[], logs: readonly Pick<SessionLog, 'id' | 'plannedSessionId'>[]): ShortTestResult[] {
   const linked = new Set(logs.filter((l) => !!l.plannedSessionId).map((l) => l.id));
   const firstOfWeek = new Map<string, string>();
   for (const r of [...found].sort(order)) {
     const week = mondayOfWeek(r.date);
-    if (linked.has(r.logId) && !firstOfWeek.has(week)) firstOfWeek.set(week, r.logId);
+    if (r.valid && linked.has(r.logId) && !firstOfWeek.has(week)) firstOfWeek.set(week, r.logId);
   }
   const out = (r: ShortTestResult, reason: ShortTestReason): ShortTestResult => {
     const { strap: _strap, ...rest } = r;
     void _strap;
     return { ...rest, valid: false, reason };
   };
-  return found.map((r) => (!linked.has(r.logId) ? out(r, 'loose') : firstOfWeek.get(mondayOfWeek(r.date)) !== r.logId ? out(r, 'second') : r));
+  return found.map((r) => (!linked.has(r.logId) ? out(r, 'loose') : r.valid && firstOfWeek.get(mondayOfWeek(r.date)) !== r.logId ? out(r, 'second') : r));
 }
 
 // De logs die een korte test kunnen hebben: rustige lopen vanaf de eerste dag van de reeks, niet ingekort,

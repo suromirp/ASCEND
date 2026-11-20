@@ -261,6 +261,27 @@ describe('wat achteraf telt voor je midden (punt 3)', () => {
     });
   });
 
+  it('een ongeldige eerste test en een geldige latere in een week: de latere telt', () => {
+    // Dinsdag 17 november zonder borstband (ongeldig), donderdag 19 november geldig op 150.
+    const tue = log('di', '2026-11-17', { plannedSessionId: 'di' });
+    const thu = log('do', '2026-11-19', { plannedSessionId: 'do' });
+    const logs = [...planned, tue, thu];
+    const { stanceBalanceLeftPct: _band, ...noStrap } = run(165);
+    void _band;
+    const streams = new Map<string, StreamSet>(logs.map((l) => [l.id, l.id === 'di' ? noStrap : run(l.id === 'do' ? 150 : 165)]));
+    const of = (logId: string) => shortTestView({ logId, logs, streams, series })!;
+    expect(of('do')).toMatchObject({ word: 'Beter' });
+    // De ongeldige houdt zijn eigen reden, niet "Deze week telde al een korte test".
+    expect(of('di').word).toBeUndefined();
+    expect(of('di').line).not.toBe(SECOND);
+    expect(of('di').line).not.toBe(LOOSE);
+    expect(of('di').askStrap).toBe(true);
+    // Ook andersom: een ongeldige latere test krijgt zijn eigen reden, niet de zin van de tweede.
+    const streams2 = new Map<string, StreamSet>(logs.map((l) => [l.id, l.id === 'do' ? noStrap : run(l.id === 'di' ? 150 : 165)]));
+    expect(shortTestView({ logId: 'di', logs, streams: streams2, series })).toMatchObject({ word: 'Beter' });
+    expect(shortTestView({ logId: 'do', logs, streams: streams2, series })?.askStrap).toBe(true);
+  });
+
   it('per week, op de dag van het log: zondag en maandag zijn twee weken', () => {
     const sun = log('zo', '2026-11-08', { plannedSessionId: 'a' });
     const mon = log('ma', '2026-11-09', { plannedSessionId: 'b' });

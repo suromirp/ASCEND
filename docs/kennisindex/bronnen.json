@@ -4390,7 +4390,7 @@
     "koppelingen-en-data",
     "historie-en-logs"
    ],
-   "kern": "Een achteraf gekoppelde loop telt voor de korte test op de dag dat je hem echt liep en ontkoppelen zet dat terug; voor je midden telt per week de vroegste loop met een teststuk die aan een geplande training hangt, een losse loop niet; een import eist een echte dag; Briefing en horloge toetsen de 25 minuten met één regel (de kortste van planning en workout); en de test staat in het blad Je horloge bij Zelf nabouwen.",
+   "kern": "Een achteraf gekoppelde loop telt voor de korte test op de dag dat je hem echt liep en ontkoppelen zet dat terug; voor je midden telt per week de vroegste geldige test van een loop die aan een geplande training hangt, een losse loop niet; een import eist een echte dag; Briefing en horloge toetsen de 25 minuten met één regel (de kortste van planning en workout); en de test staat in het blad Je horloge bij Zelf nabouwen.",
    "stand": "geldt"
   }
  }
