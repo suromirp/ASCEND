@@ -18,6 +18,7 @@ import { SAVED_ROUTES_KEY } from './places';
 import { readSavedRouteList, routesOfPlaces } from './migrationsPlaces';
 import { readSkillGoalStore } from './migrationsSkill';
 import { mergeSkillStores } from '../engine/skillGoal';
+import { backupPairAfterRestore } from '../engine/backupSince';
 import { loadCurrentData, computeDiff } from './backupPreview';
 
 // --- plan & apply ---------------------------------------------------------
@@ -55,7 +56,7 @@ export async function restoreSnapshot(id: string): Promise<void> {
   const before = await createPreImportSnapshot();
   const selections = defaultActionsForMode('full_restore');
   const plan = createImportPlan(backup, 'full_restore', selections, 'restore_backup_plan', [], before.id);
-  await applyImportPlan(backup, plan);
+  await applyImportPlan(backup, plan, { deviceCopy: true });
 }
 
 export function createImportPlan(
@@ -84,7 +85,10 @@ export function createImportPlan(
 // output (pure, deterministic) and issues the writes. A snapshot must
 // already exist (created by createPreImportSnapshot before the user ever
 // saw the confirmation step) so an import can always be undone.
-export async function applyImportPlan(backup: NormalizedBackupData, plan: ImportPlan): Promise<void> {
+//
+// `deviceCopy`: the file is a pre-import copy of this device (restoreSnapshot). It carries the device's own
+// "Laatste back-up" and list, and those come back as they were.
+export async function applyImportPlan(backup: NormalizedBackupData, plan: ImportPlan, options: { deviceCopy?: boolean } = {}): Promise<void> {
   const current = await loadCurrentData();
   const { resolved, effective } = computeDiff(current, backup, plan.categorySelections, plan.planPolicy);
 
@@ -138,7 +142,17 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   const settingsWrite = resolved.settings && effective.app_settings === 'replace' && backup.settings
     ? (stored: unknown): AppSettings => {
       const now: AppSettings = { ...DEFAULT_SETTINGS, ...(stored as Partial<AppSettings> | undefined) };
-      return { ...now, ...mergeSettingsHistory(now, backup.settings) };
+      const next: AppSettings = { ...now, ...mergeSettingsHistory(now, backup.settings) };
+      if (options.deviceCopy) return next;
+      // "Laatste back-up" and its list belong to the device and travel as a pair: the time inside the
+      // file is that of the back-up before it, so it is never copied over. Read here, at the moment of
+      // writing (docs/beslissingen/2026-11-20-backup-terugzetten.md).
+      const pair = backupPairAfterRestore(now, backup.fileCreatedAt, backup.sessionLogs.map((l) => l.id), Date.now());
+      for (const key of ['lastExportedAt', 'lastBackupLogs'] as const) {
+        if (pair[key] === undefined) delete next[key];
+        else Object.assign(next, { [key]: pair[key] });
+      }
+      return next;
     }
     : resolved.settings;
   const metaWrites: Record<string, unknown> = { ...resolved.meta, ...restoredMeta };

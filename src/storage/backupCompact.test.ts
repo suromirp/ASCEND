@@ -249,8 +249,15 @@ describe('back-up kleiner zonder dataverlies (I-63)', () => {
     await wipeAllData();
     await importText(first);
     const second = backupFileText(await buildBackupEnvelope({ streams: true }));
-    const strip = (t: string) => ({ ...JSON.parse(t), createdAt: '' });
+    // Het tijdstip van het bestand, en Laatste back-up: dat hoort bij het toestel en is na terugzetten op een
+    // leeg toestel het tijdstip van het bestand zelf (docs/beslissingen/2026-11-20-backup-terugzetten.md).
+    const strip = (t: string) => {
+      const file = JSON.parse(t) as { payload: { settings: Record<string, unknown> } };
+      const { lastExportedAt: _device, ...settings } = file.payload.settings;
+      return { ...file, createdAt: '', payload: { ...file.payload, settings } };
+    };
     expect(strip(second)).toEqual(strip(first));
+    expect((JSON.parse(second) as { payload: { settings: { lastExportedAt?: string } } }).payload.settings.lastExportedAt).toBe((JSON.parse(first) as { createdAt: string }).createdAt);
   });
 
   it('een oude back-up (schema 5) zonder tabel leest zoals altijd', async () => {

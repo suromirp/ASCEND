@@ -196,6 +196,9 @@ export function computeDiff(
     const incoming = mergeSettingsHistory(current.settings, backup.settings);
     resolvedSettings = { ...current.settings, ...incoming };
     for (const key of Object.keys(incoming) as (keyof AppSettings)[]) {
+      // Laatste back-up en de lijst zijn geen keuze van de gebruiker: de import bepaalt ze zelf, op het
+      // moment van schrijven (backupApply.ts, settingsWrite). Ze tellen hier dus niet mee.
+      if (key === 'lastExportedAt' || key === 'lastBackupLogs') continue;
       if (!shallowEqual(current.settings[key], incoming[key])) {
         settingsChanges.push({ key, current: current.settings[key], incoming: incoming[key] });
       }
