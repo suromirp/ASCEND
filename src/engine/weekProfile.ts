@@ -149,7 +149,8 @@ export function ridgeSentence(days: DayLoad[], today: string): string {
       need: Math.max(legSpacingDays(first.legTemplate!, second.legTemplate!), i >= 2 && daysBetween(legs[i - 2].date, first.date) === 1 ? 1 : 0),
       // Two days of one tocht follow each other by design.
       trek: !!first.trekDay && !!second.trekDay,
-      intended: isIntentionalBackToBack(first.legTemplate!, second.legTemplate!) || (!!first.trekDay && !!second.trekDay),
+      // Bewust achter elkaar is alleen echt achter elkaar: met een dag ertussen geldt de gewone regel (eigenaar 20 november).
+      intended: (daysBetween(first.date, second.date) === 1 && isIntentionalBackToBack(first.legTemplate!, second.legTemplate!)) || (!!first.trekDay && !!second.trekDay),
     });
   }
   const names = (p: Pair) => `${shortName(p.first.legTemplate!)} en ${shortName(p.second.legTemplate!)}`;
