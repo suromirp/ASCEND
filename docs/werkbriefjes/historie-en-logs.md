@@ -8,7 +8,7 @@ De regel dat historie nooit herschreven wordt, de vijf uitzonderingen op verzoek
 - `src/engine/watchAlign.ts#restoreManual` handgemaakt log over horlogecijfers (`manualMeasured`), ook voor MacroFactor-kracht
 - `src/engine/trimLog.ts#undoTrim` horlogelog bij begin en einde ingekort (`trim`) en weer terug
 - `src/engine/sourceCorrection.ts#restoreSourceUpdate` log volgt correcties uit intervals.icu (`sourceSync`)
-- `src/engine/missedTraining.ts#linkLog` los log achteraf aan een geplande training na Akkoord (`linkedLater`), `unlinkLog` haalt alleen dat weg
+- `src/engine/missedTraining.ts#linkLog` los log achteraf aan een geplande training na Akkoord (`linkedLater`), `unlinkLog` haalt alleen dat weg; `src/engine/linkShortTest.ts#linkShortTestShift` zegt vooraf in het voorstel of de korte test van de week daardoor verschuift (alleen lezen)
 - `src/storage/missedTraining.ts#linkLogNow` schrijft die koppeling
 - `src/engine/logDay.ts#logDay` op welke dag een log wordt getoond; alleen weergave; `src/engine/forgeSession.ts#finishDayDefault` welke `completedDate` een nieuw Forge-log krijgt (de dag van de laatste set); raakt geen bestaand log; `finishCompletedAt` in hetzelfde bestand geeft het tijdstip erbij. Wie `completedDate` kiest, geeft ook `completedAt` mee; de twee mogen nooit een dag of meer uit elkaar lopen
 - `src/engine/macrofactorDuration.ts#withChosenDuration` duur van een nieuw MacroFactor-log dat te lang is, bij het maken

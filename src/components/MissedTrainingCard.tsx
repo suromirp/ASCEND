@@ -1,7 +1,8 @@
 // ASCEND: een training die niet doorging, op Vandaag (engine/missedTraining.ts,
 // docs/beslissingen/2026-11-01-niet-doorgegaan.md). Hoogstens één kaart, de oudste training eerst:
 // - een log van je horloge of MacroFactor die erbij kan horen: "Hoort die bij elkaar?" met Akkoord en
-//   Liever niet. Pas na Akkoord hangt de log aan de training, met Ongedaan maken in de melding;
+//   Liever niet. Pas na Akkoord hangt de log aan de training, met Ongedaan maken in de melding. Verschuift
+//   daardoor de korte test van de week, dan staat dat er in één zin bij (engine/linkShortTest.ts);
 // - anders, na de gekozen dagen, "Niet gedaan?" met Niet gedaan (op overgeslagen), Toch gedaan (het
 //   gewone invullen) en Niet nu;
 // - met Zelf overslaan zet ASCEND hem zelf op overgeslagen en zegt het in de meldingsbalk.
@@ -11,6 +12,7 @@ import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { askLine, declinedKey, lapsedLine, linkEyebrow, linkLine } from '../engine/missedTraining';
 import type { MissedTrainingState } from './useMissedTraining';
+import { useLinkShortTest } from './useLinkShortTest';
 import type { PlannedSession } from '../models/training';
 import { todayISO } from '../utils/dates';
 import { withTimeout } from '../utils/withTimeout';
@@ -26,6 +28,8 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const { item, lapsed, missedSettings } = state;
+  // Verandert de koppeling welke korte test van de week telt, dan staat dat in het voorstel (I-95).
+  const shortTestLine = useLinkShortTest(item?.kind === 'link' ? item.log : undefined, item?.kind === 'link' ? item.session.id : undefined, today);
   if (!item && lapsed) {
     return (
       <Card data-missed-lapsed="">
@@ -53,6 +57,7 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
         <Eyebrow>{linkEyebrow(item.log)}</Eyebrow>
         <p className="mt-1 text-base" style={{ color: 'var(--color-ink)' }}>{linkLine(item.session, item.template, item.log, today)}</p>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Met Akkoord telt die training als gedaan. Alleen de koppeling is nieuw, de cijfers blijven zoals ze waren.</p>
+        {shortTestLine && <p className="mt-1 text-sm" data-link-short-test="" style={{ color: 'var(--color-ink)' }}>{shortTestLine}</p>}
         <div className="mt-3 flex gap-2">
           <SecondaryButton disabled={busy} onClick={() => remember((m) => ({ ...m, declined: [...m.declined, declinedKey(item.log.id, item.session.id)], declinedOn: { ...m.declinedOn, [declinedKey(item.log.id, item.session.id)]: today } }))}>Liever niet</SecondaryButton>
           <SecondaryButton disabled={busy} onClick={() => run(() => linkMissedLog(item.log.id, item.session.id))}>{busy ? 'Bezig…' : 'Akkoord'}</SecondaryButton>

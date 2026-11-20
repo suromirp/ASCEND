@@ -559,17 +559,29 @@ export interface ShortTestViewInput {
   strapWorn?: readonly string[];
 }
 
+// De korte tests in deze logs, uit hun bewaarde reeksen: de ene lezing voor het logblad (shortTestView) en
+// voor het koppelvoorstel (engine/linkShortTest.ts). Nog niet geteld per week; dat doet countedShortTests.
+export function shortTestsFound(
+  logs: readonly SessionLog[],
+  ids: readonly string[],
+  streams: ReadonlyMap<string, StreamSet>,
+  ctx: { paceSecKm: number; noStrap?: NoStrapChoice; strapWorn?: readonly string[] },
+): ShortTestResult[] {
+  const wanted = new Set(ids);
+  const found: ShortTestResult[] = [];
+  for (const log of logs) {
+    if (!wanted.has(log.id)) continue;
+    const r = shortTestOf(log, streams.get(log.id), { paceSecKm: ctx.paceSecKm, noStrap: ctx.noStrap, strapSaid: ctx.strapWorn?.includes(log.id) });
+    if (r) found.push(r);
+  }
+  return found;
+}
+
 // Wat het logblad van een rustige loop zegt over de korte test erin, of undefined als er geen in zat.
 export function shortTestView(input: ShortTestViewInput): ShortTestView | undefined {
   const pace = seriesPace(input.series);
   if (pace === undefined) return undefined;
-  const ids = new Set(shortTestLogIds(input.logs, input.series, input.logId));
-  const found: ShortTestResult[] = [];
-  for (const log of input.logs) {
-    if (!ids.has(log.id)) continue;
-    const r = shortTestOf(log, input.streams.get(log.id), { paceSecKm: pace, noStrap: input.noStrap, strapSaid: input.strapWorn?.includes(log.id) });
-    if (r) found.push(r);
-  }
+  const found = shortTestsFound(input.logs, shortTestLogIds(input.logs, input.series, input.logId), input.streams, { paceSecKm: pace, noStrap: input.noStrap, strapWorn: input.strapWorn });
   // Eén per week, alleen lopen die aan een geplande training hangen (countedShortTests).
   const results = countedShortTests(found, input.logs);
   const current = results.find((r) => r.logId === input.logId);

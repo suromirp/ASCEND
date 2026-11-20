@@ -11,7 +11,7 @@ Een nieuw document in `docs/` krijgt een regel in `bronnen.json`, en haalt het e
 oudere besluit de stand deels of vervangen. Daarna `npm run kennisindex`; de test
 `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 562 documenten: 342 gelden, 85 deels ingehaald, 3 vervangen, 3 verouderd, 129 achtergrond.
+Stand van de 563 documenten: 343 gelden, 85 deels ingehaald, 3 vervangen, 3 verouderd, 129 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; deels ingehaald geldt alleen nog voor wat achter "Geldt nog" staat, de
@@ -36,7 +36,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/lopen-en-tests.md](../werkbriefjes/lopen-en-tests.md)
 - [architectuur/lopen-en-tests.md](../architectuur/lopen-en-tests.md): Het lange verhaal bij lopen: hartslag op het horloge, run in detail en de testloop met de tempo's.
-- Alles over dit onderwerp: [lopen-en-tests.md](lopen-en-tests.md) (31 besluiten die gelden, 11 deels ingehaald, 12 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [lopen-en-tests.md](lopen-en-tests.md) (32 besluiten die gelden, 11 deels ingehaald, 12 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Doelen
 
@@ -66,7 +66,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/historie-en-logs.md](../werkbriefjes/historie-en-logs.md)
 - [architectuur/historie-en-logs.md](../architectuur/historie-en-logs.md): De volledige regel dat historie nooit herschreven wordt, met de uitzonderingen op verzoek van de eigenaar en het append-only patroon.
-- Alles over dit onderwerp: [historie-en-logs.md](historie-en-logs.md) (26 besluiten die gelden, 7 deels ingehaald, 3 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [historie-en-logs.md](historie-en-logs.md) (27 besluiten die gelden, 7 deels ingehaald, 3 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Bediening en beweging
 
