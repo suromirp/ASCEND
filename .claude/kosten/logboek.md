@@ -546,3 +546,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Warden Niet goed gemeten (I-92) | reviewer helper | fable | 108k tok | 26 min | niet akkoord: M1 reeks Vroeg ziek zien breekt op niet goed gemeten ochtend; 4 mag; herstel naar zelfde Sherpa |
 | 2026-11-20 | Lookout Korte test (I-91) | tester helper | sonnet | 79k tok | 8 min | groen op 360/390/412; zelf bekeken; bestaand: 'Pagina' rechts in GuideRow |
 | 2026-11-20 | Sherpa Niet goed gemeten herstel (I-92) | ontwikkelaar helper hervat | fable | 138k tok | 12 min | moet en 4 mag, controles groen |
+| 2026-11-20 | Warden herstel I-92 | reviewer helper | fable | 51k tok | 2 min | akkoord, 4 mag (briefje en besluit te stellig: zelf hersteld) |
+| 2026-11-20 | Lookout vraagzin I-92 | tester helper | sonnet | 44k tok | 2 min | groen 360/390/412, zelf bekeken |
