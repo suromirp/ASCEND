@@ -38,6 +38,9 @@ Zonder antwoord het advies: praattest later, test van 30 minuten later, DFA alph
 
 ## Net live
 
+### 20 november 19:50
+- Korte test (I-91): per week telt de vroegste geldige test voor je midden; een laat afgevinkte of later gekoppelde loop verdringt hem niet meer. Een losse loop zegt dat hij niet meetelt en wijst naar de vraag op Vandaag.
+
 ### 20 november 19:15
 - Ochtenden (I-84): na een oude back-up staat er weer één ochtend per dag. Een ochtend uit je back-up zonder bron blijft van jou: hij gaat alleen weg als een ochtend van je koppeling elk getal ook heeft, nooit bij ontkoppelen.
 

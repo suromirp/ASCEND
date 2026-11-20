@@ -4,6 +4,7 @@ Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmMeaf189k5coPifuH 
 
 ## Stand 20 november (lees dit eerst)
 
+- Live 20 november: I-91 (main ad2e4b99). Ronde I-91, I-92, I-84 klaar. Inbox open o.a. I-93 tot I-97.
 - Live 20 november: I-84 (main 16f634ac, backlog 86ad8bf1). I-91: Lookout groen, main erin in sq91, controles lopen (scratchpad/chk91.log), dan squash met Klaar: I-91. Daarna: Werkkaart, worktrees opruimen (sq84, sq91, agent-aa130904dc7efb612), wissel aanvragen bij de chat ASCEND.
 - 18:40 Amsterdam: I-91 Warden en Pathfinder akkoord; squash-worktree scratchpad/sq91 (zin losse loop voorwaardelijk: "Deze loop stond niet in je week, dus hij telt niet mee. Vraagt Vandaag of hij bij een geplande loop hoort, zeg dan Akkoord.", besluit recht, valkuil). Volgorde: eerst I-84 (sq84, kaartvergelijking loopt), dan main in sq91, controles, Lookout op de zin, squash.
 - Live 20 november: I-92 (main 0daf3afa, overslaan bij hoge rusthartslag, kaart ververst). I-84 Warden tweede blik akkoord; squash-worktree scratchpad/sq84 (zonder verslag, valkuil filterRecovery erbij) volgt. I-91: keuzes 1, 3, 4 van de Sherpa akkoord (zin losse loop wijst naar Akkoord op Vandaag), keuze 2 anders: vroegste GELDIGE test telt; terug naar dezelfde helper. Inbox: I-95, I-96, I-97 nieuw.
