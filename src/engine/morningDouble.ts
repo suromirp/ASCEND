@@ -40,11 +40,3 @@ export function morningsToImport(device: readonly RecoveryMetric[], incoming: re
   const drop = new Set(doubleMornings(fresh, device).map((m) => m.id));
   return fresh.filter((m) => !drop.has(m.id));
 }
-
-// Hoort deze ochtend bij de koppeling met je horloge? Wat daar opgehaald is, en een ochtend zonder
-// bron: ASCEND heeft geen scherm om een ochtend in te vullen, dus die kwam ooit ook van een
-// koppeling. Een ochtend die je met de hand invulde (`manual:`) of van een andere bron hoort er
-// nooit bij.
-export function belongsToLink(id: string, fetchedPrefix: string): boolean {
-  return id.startsWith(fetchedPrefix) || isSourcelessMorning(id);
-}

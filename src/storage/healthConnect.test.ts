@@ -13,7 +13,7 @@ import {
   askHealthConnectWeight,
 } from './healthConnect';
 import { migrateHealthConnectState } from './migrations';
-import { setWatchUse } from './externalActivities';
+import { clearConnection, saveConnection, setWatchUse } from './externalActivities';
 import type { HealthConnectState } from './healthConnect';
 import { getRecoveryMetrics } from './wellness';
 import { buildBackupEnvelope } from './backupExport';
@@ -199,6 +199,53 @@ describe('een ronde', () => {
     await syncHealthConnect({ port: fake({ samples: { restingHeartRate: [rhr(21, 50)], heartRateVariability: [hrv] } }), now: later(4), force: true });
     await setWatchUse({ hrv: false });
     expect(await RecoveryMetricsRepo.getAll()).toEqual([{ id: 'health-connect:2026-10-21', date: '2026-10-21', source: 'health-connect', restingHeartRate: 50 }]);
+  });
+
+  // Eén ochtend per dag (docs/beslissingen/2026-11-20-ochtend-dubbel.md en -ochtend-zonder-bron.md).
+  describe('een ochtend zonder bron uit een oude back-up', () => {
+    const covered: RecoveryMetric = { id: 'import:2026-10-21', date: '2026-10-21', source: 'import', restingHeartRate: 58 };
+    const extra: RecoveryMetric = { id: 'import:2026-10-20', date: '2026-10-20', source: 'import', restingHeartRate: 57, hrv: 66 };
+    const alone: RecoveryMetric = { id: 'import:2026-10-19', date: '2026-10-19', source: 'import', sleepMinutes: 300 };
+    const ids = async () => (await RecoveryMetricsRepo.getAll()).map((m) => m.id).sort();
+    const giving = () => fake({ samples: { restingHeartRate: [rhr(21, 50), rhr(20, 51)] } });
+
+    it('een geslaagde ronde ruimt alleen de gedekte op', async () => {
+      await turnOn(fake());
+      await RecoveryMetricsRepo.putAll([covered, extra, alone]);
+      expect(await syncHealthConnect({ port: giving(), now: later(4), force: true })).toMatchObject({ status: 'ok', mornings: 2 });
+      // 21 oktober is gedekt; 20 oktober heeft een HRV die Health Connect niet gaf; 19 oktober staat alleen.
+      expect(await ids()).toEqual(['health-connect:2026-10-20', 'health-connect:2026-10-21', 'import:2026-10-19', 'import:2026-10-20']);
+      expect((await RecoveryMetricsRepo.getAll()).find((m) => m.id === extra.id)).toEqual(extra);
+    });
+
+    it('een mislukte ronde laat alles staan', async () => {
+      await turnOn(giving());
+      await RecoveryMetricsRepo.putAll([covered, extra, alone]);
+      const before = await RecoveryMetricsRepo.getAll();
+      const broken = fake({ samples: { restingHeartRate: async () => { throw new Error('Health Connect antwoordt niet'); } } });
+      expect(await syncHealthConnect({ port: broken, now: later(4), force: true })).toMatchObject({ status: 'error' });
+      expect(await RecoveryMetricsRepo.getAll()).toEqual(before);
+    });
+
+    it('een ronde terwijl Health Connect uit staat laat alles staan', async () => {
+      await RecoveryMetricsRepo.putAll([covered, extra, alone, { id: 'manual:2026-10-21', date: '2026-10-21', source: 'manual', restingHeartRate: 49 }]);
+      const before = await RecoveryMetricsRepo.getAll();
+      expect(await syncHealthConnect({ port: giving(), now: later(4), force: true })).toEqual({ status: 'off' });
+      expect(await RecoveryMetricsRepo.getAll()).toEqual(before);
+    });
+
+    it('intervals.icu ontkoppelen met Health Connect aan en "Ochtendgetallen in back-up" uit laat hem staan', async () => {
+      await SettingsRepo.set({ morningInBackup: false });
+      await turnOn(fake({ samples: { restingHeartRate: [rhr(18, 52)] } }));
+      await saveConnection({ athleteId: 'i12345', apiKey: 'nagemaakte-sleutel-0123' });
+      await RecoveryMetricsRepo.putAll([extra, alone, { id: 'intervals.icu:2026-10-20', date: '2026-10-20', source: 'import', restingHeartRate: 50, hrv: 60 }]);
+      await clearConnection();
+      expect(await ids()).toEqual(['health-connect:2026-10-18', 'import:2026-10-19', 'import:2026-10-20']);
+      expect((await RecoveryMetricsRepo.getAll()).find((m) => m.id === extra.id)).toEqual(extra);
+      // Ook de volgende ronde van Health Connect, die deze dagen niet geeft, haalt hem niet weg.
+      await syncHealthConnect({ port: fake({ samples: { restingHeartRate: [rhr(18, 52)] } }), now: later(4), force: true });
+      expect(await ids()).toEqual(['health-connect:2026-10-18', 'import:2026-10-19', 'import:2026-10-20']);
+    });
   });
 
   it('een koppeling die verlopen is (alles ingetrokken): een zichtbare fout, de stand blijft aan en niets verdwijnt', async () => {

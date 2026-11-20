@@ -893,7 +893,18 @@
     "koppelingen-en-data",
     "lichaam-en-herstel"
    ],
-   "kern": "Een ochtend uit een oude back-up zonder id (`import:<datum>`) is een ochtend zonder bron: bij het lezen komt hij als laatste (`orderBySource`), in de opslag gaat hij weg zodra een ochtend met een bron op dezelfde dag elk getal ook heeft (`engine/morningDouble.ts`, `storage/wellness.ts#tidyDoubleMornings`), en bij ontkoppelen hoort hij bij de koppeling. Een leesfout haalt nooit iets weg; geen uitzondering op logs nooit herschrijven.",
+   "kern": "Een ochtend uit een oude back-up zonder id (`import:<datum>`) is een ochtend zonder bron: bij het lezen komt hij als laatste (`orderBySource`) en in de opslag gaat hij weg zodra een ochtend met een bron op dezelfde dag elk getal ook heeft (`engine/morningDouble.ts`, `storage/wellness.ts#tidyDoubleMornings`). Een leesfout haalt nooit iets weg; geen uitzondering op logs nooit herschrijven. Geldt nog: lezen als laatste, weg zodra gedekt, de import, opruimen na een geslaagde ronde en bij de start; dat hij bij ontkoppelen bij de koppeling hoort geldt niet meer.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-20-ochtend-zonder-bron.md"
+   ]
+  },
+  "docs/beslissingen/2026-11-20-ochtend-zonder-bron.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Een ochtend zonder bron (`import:<datum>`) is van de gebruiker, niet van een koppeling: hij gaat alleen weg als hij gedekt is, nooit bij ontkoppelen, de grens van 400 dagen, \"Ochtendgetallen in back-up\" uitzetten of een uitgezette soort (die filtert het lezen, `engine/watchUse.ts#filterRecovery`). Bekende grens: een gedekt getal is weg als de bron het later niet meer geeft.",
    "stand": "geldt"
   },
   "docs/beslissingen/2026-11-20-gemengde-bouwers-en-wissel.md": {

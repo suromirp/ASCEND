@@ -14,7 +14,7 @@
 // the backup (`retire`), so a backup made later still has them. Only switching that setting off
 // without a link clears them (storage/morningArchive.ts, docs/beslissingen/2026-11-01-ochtenden-archief.md).
 
-import { MetaRepo, RecoveryMetricsRepo, SettingsRepo } from './database';
+import { getDB, MetaRepo, RecoveryMetricsRepo, SettingsRepo } from './database';
 import { KEEP_DAYS, wellnessPlan, type DateSpan } from '../engine/wellnessRange';
 import { morningOf } from '../engine/influenceEffects';
 import { planRetire, resolveMorningBackup } from '../engine/morningBackup';
@@ -23,9 +23,12 @@ import { DEFAULT_WATCH_USE, filterRecovery, wellnessWanted, type WatchUse } from
 import type { RecoveryMetric } from '../models/metrics';
 import { addDays, todayISO } from '../utils/dates';
 import { orderBySource } from '../engine/sourcePrecedence';
-import { belongsToLink, doubleMornings } from '../engine/morningDouble';
+import { doubleMornings } from '../engine/morningDouble';
 
-const ofLink = (m: RecoveryMetric): boolean => belongsToLink(m.id, `${INTERVALS_ADAPTER_ID}:`);
+// Alleen wat hier opgehaald is hoort bij de koppeling. Een ochtend zonder bron (`import:<datum>`) is
+// van de gebruiker en gaat alleen weg als hij gedekt is (docs/beslissingen/2026-11-20-ochtend-zonder-bron.md).
+const FETCHED = `${INTERVALS_ADAPTER_ID}:`;
+const ofLink = (m: RecoveryMetric): boolean => m.id.startsWith(FETCHED);
 
 // Records are kept for KEEP_DAYS (engine/wellnessRange.ts): "Wat speelde er" compares a noted
 // morning with the 28 days before it, which can lie months back. Everything that reads them picks
@@ -57,13 +60,34 @@ async function retire(records: readonly RecoveryMetric[], keepMornings: boolean)
 
 // Eén ochtend per dag (engine/morningDouble.ts, docs/beslissingen/2026-11-20-ochtend-dubbel.md): een
 // ochtend zonder bron uit een oude back-up die niets toevoegt aan een ochtend met een bron op dezelfde
-// dag gaat weg, in één transactie. Loopt na elke geslaagde ronde ophalen, na ontkoppelen en één keer
-// bij het openen (storage/bootMigrations.ts). Leest alleen de opslag, nooit een bron: een koppeling
-// die niet antwoordt haalt dus nooit iets weg. Geeft het aantal dat wegging.
+// dag gaat weg. Lezen, beslissen en weghalen in één readwrite-transactie, zodat er niets tussen kan
+// komen (een ronde die de dekkende ochtend net overschrijft). Loopt na elke geslaagde ronde ophalen,
+// na ontkoppelen en één keer bij het openen (storage/bootMigrations.ts). Leest alleen de opslag, nooit
+// een bron: een koppeling die niet antwoordt haalt dus nooit iets weg. Geeft het aantal dat wegging.
 export async function tidyDoubleMornings(): Promise<number> {
-  const gone = doubleMornings(await RecoveryMetricsRepo.getAll());
-  await RecoveryMetricsRepo.deleteMany(gone.map((m) => m.id));
-  return gone.length;
+  const db = await getDB();
+  const tx = db.transaction('recoveryMetrics', 'readwrite');
+  const done = tx.done;
+  done.catch(() => undefined);
+  try {
+    const gone = doubleMornings((await tx.store.getAll()) as RecoveryMetric[]);
+    const requests = gone.map((m) => {
+      const request = tx.store.delete(m.id);
+      request.catch(() => undefined);
+      return request;
+    });
+    await Promise.all(requests);
+    await done;
+    return gone.length;
+  } catch (err) {
+    // Een fout halverwege: de hele transactie terug, ook wat al gewist was.
+    try {
+      tx.abort();
+    } catch {
+      // Al afgebroken.
+    }
+    throw err;
+  }
 }
 
 // Opruimen is een bijzaak van de ronde: mislukt het, dan is de ronde nog steeds gelukt.
@@ -128,23 +152,26 @@ async function fetchLongStretch(connection: IntervalsConnection, parts: DateSpan
 
 // Unlinking: what came from intervals.icu goes, what you entered yourself stays. With
 // "Ochtendgetallen in back-up" on the mornings stay as the backup keeps them (`retire`).
-// A morning without a source (an old backup, `import:<datum>`) belongs to the link too
-// (engine/morningDouble.ts#belongsToLink): with the setting off it goes, with it on it stays
-// unless a fetched morning of that day already has its numbers.
+// A morning without a source (an old backup, `import:<datum>`) is the user's, not the link's: it
+// only goes when it is covered (`tidyDoubleMornings`). With the archive on the kept fetched morning
+// covers it, with the archive off it stays (docs/beslissingen/2026-11-20-ochtend-zonder-bron.md).
+// Tidying is quiet: the key is already gone by now, so a hiccup here must not fail the unlinking.
 export async function clearWellness(): Promise<void> {
   await MetaRepo.set(COVERED_KEY, undefined);
   await MetaRepo.set(TRIED_KEY, undefined);
   const ours = (await RecoveryMetricsRepo.getAll()).filter(ofLink);
   await retire(ours, resolveMorningBackup(await SettingsRepo.get()));
-  await tidyDoubleMornings();
+  await tidyDoubleMorningsQuietly();
 }
 
 // A kind was switched off: it leaves what is stored, so nothing keeps using it.
 // Records of other origin are not touched. Switching it on again fetches it anew.
+// A morning without a source cannot be fetched anew, so its record is left alone: every reader
+// filters what is switched off (engine/watchUse.ts#filterRecovery), and switching on brings it back.
 export async function pruneWellness(use: WatchUse): Promise<void> {
   await MetaRepo.set(COVERED_KEY, undefined);
   await MetaRepo.set(TRIED_KEY, undefined);
-  // Ook de ochtenden uit Health Connect en die zonder bron uit een oude back-up: dezelfde keuzes gelden daar (storage/healthConnect.ts).
+  // Ook de ochtenden uit Health Connect: dezelfde keuzes gelden daar (storage/healthConnect.ts).
   const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => ofLink(m) || m.id.startsWith('health-connect:'));
   const kept = filterRecovery(ours, use);
   const keptIds = new Set(kept.map((m) => m.id));

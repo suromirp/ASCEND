@@ -5,12 +5,13 @@ import { buildBackupEnvelope } from './backupExport';
 import { buildImportPreview } from './backupPreview';
 import { defaultActionsForMode, defaultPlanPolicyForMode } from './backupMerge';
 import { normalizeBackupToCurrentModel } from './backupNormalize';
-import { clearConnection, saveConnection } from './externalActivities';
+import { clearConnection, getWatchState, saveConnection, setWatchUse } from './externalActivities';
 import { clearWellness, getRecoveryMetrics, syncWellness, tidyDoubleMornings } from './wellness';
 import { archivedMornings } from './morningArchive';
 import { missingBootSteps, runBootMigrations } from './bootMigrations';
 import { BOOT_MIGRATIONS } from '../engine/bootWatch';
 import { dayRecord } from '../engine/wellnessCheck';
+import { filterRecovery } from '../engine/watchUse';
 import type { RecoveryMetric } from '../models/metrics';
 import { addDays } from '../utils/dates';
 
@@ -180,6 +181,8 @@ describe('een dubbele ochtend die al in de opslag zit', () => {
   });
 });
 
+// Herstel na Warden (docs/beslissingen/2026-11-20-ochtend-zonder-bron.md): een ochtend zonder bron is
+// van de gebruiker, niet van de koppeling. Hij gaat alleen weg als hij gedekt is.
 describe('ontkoppelen', () => {
   const manual: RecoveryMetric = { id: 'manual:2026-11-12', date: '2026-11-12', source: 'manual', restingHeartRate: 49, hrv: 70 };
   const health: RecoveryMetric = { id: 'health-connect:2026-11-13', date: '2026-11-13', source: 'health-connect', sleepMinutes: 400 };
@@ -189,22 +192,28 @@ describe('ontkoppelen', () => {
     manual, sourceless('2026-11-12', { sleepMinutes: undefined }),
     health,
   ]);
+  // De dag met een opgehaalde ochtend verliest die bij ontkoppelen; de ochtend uit het bestand blijft.
+  const afterOff = ['health-connect:2026-11-13', 'import:2026-11-10', 'import:2026-11-11', 'manual:2026-11-12'];
 
-  it('met "Ochtendgetallen in back-up" aan: per dag één ochtend, niets wat je zelf invulde weg', async () => {
+  it('met "Ochtendgetallen in back-up" aan: de bewaarde opgehaalde ochtend dekt, de rest blijft', async () => {
     await seed();
     await clearWellness();
     expect(await stored()).toEqual(['health-connect:2026-11-13', 'import:2026-11-11', 'intervals.icu:2026-11-10', 'manual:2026-11-12']);
     const all = await RecoveryMetricsRepo.getAll();
     expect(all.find((m) => m.id === 'intervals.icu:2026-11-10')!.bodyBattery).toBeUndefined();
     expect(all.find((m) => m.id === manual.id)).toEqual(manual);
+    expect(all.find((m) => m.id === 'import:2026-11-11')).toEqual(sourceless('2026-11-11'));
   });
 
-  it('met die instelling uit: ook de ochtenden zonder bron gaan weg, met de hand ingevuld blijft', async () => {
+  it('met die instelling uit: alleen de opgehaalde ochtenden gaan weg, een ochtend zonder bron blijft', async () => {
     await SettingsRepo.set({ morningInBackup: false });
     await seed();
     await clearWellness();
-    expect(await stored()).toEqual(['health-connect:2026-11-13', 'manual:2026-11-12']);
-    expect((await RecoveryMetricsRepo.getAll()).find((m) => m.id === manual.id)).toEqual(manual);
+    // import:2026-11-12 was al gedekt door wat je met de hand invulde; dat is de enige die weggaat.
+    expect(await stored()).toEqual(afterOff);
+    const all = await RecoveryMetricsRepo.getAll();
+    expect(all.find((m) => m.id === 'import:2026-11-10')).toEqual(sourceless('2026-11-10'));
+    expect(all.find((m) => m.id === manual.id)).toEqual(manual);
   });
 
   it('via de knop Ontkoppelen (clearConnection) loopt dezelfde weg', async () => {
@@ -212,14 +221,89 @@ describe('ontkoppelen', () => {
     await saveConnection(CONNECTION);
     await seed();
     await clearConnection();
-    expect(await stored()).toEqual(['health-connect:2026-11-13', 'manual:2026-11-12']);
+    expect(await stored()).toEqual(afterOff);
     expect(await MetaRepo.get('wellnessCoveredFrom')).toBeUndefined();
   });
 
-  it('"Ochtendgetallen in back-up" uitzetten zonder koppeling noemt ook de ochtenden zonder bron', async () => {
+  it('"Ochtendgetallen in back-up" uitzetten noemt nooit een ochtend zonder bron, met of zonder koppeling', async () => {
     await seed();
-    const { linked, list } = await archivedMornings(TODAY);
-    expect(linked).toBe(false);
-    expect(list.map((m) => m.id).sort()).toEqual(['import:2026-11-10', 'import:2026-11-11', 'import:2026-11-12', 'intervals.icu:2026-11-10']);
+    await RecoveryMetricsRepo.putAll([sourceless('2025-01-10'), fetched('2025-01-10')]);
+    const without = await archivedMornings(TODAY);
+    expect(without.linked).toBe(false);
+    expect(without.list.map((m) => m.id).sort()).toEqual(['intervals.icu:2025-01-10', 'intervals.icu:2026-11-10']);
+    await saveConnection(CONNECTION);
+    const linked = await archivedMornings(TODAY);
+    expect(linked.linked).toBe(true);
+    expect(linked.list.map((m) => m.id)).toEqual(['intervals.icu:2025-01-10']);
+  });
+});
+
+describe('de grens van 400 dagen', () => {
+  // 2025-01-10 ligt ruim voor de grens; de bron geeft die dag niet meer.
+  const OLD = '2025-01-10';
+  const seed = () => RecoveryMetricsRepo.putAll([sourceless(OLD, { hrv: 66 }), fetched(OLD, { hrv: undefined }), sourceless('2025-01-11')]);
+
+  it('met "Ochtendgetallen in back-up" uit: de opgehaalde ochtend gaat, die zonder bron blijft zoals hij was', async () => {
+    await SettingsRepo.set({ morningInBackup: false });
+    await seed();
+    const result = await syncWellness(CONNECTION, { fetchImpl: wellnessFetch([row(TODAY)]), today: TODAY });
+    expect(result.status).toBe('ok');
+    expect(await stored()).toEqual(['import:2025-01-10', 'import:2025-01-11', `intervals.icu:${TODAY}`]);
+    expect((await RecoveryMetricsRepo.getAll()).find((m) => m.id === `import:${OLD}`)).toEqual(sourceless(OLD, { hrv: 66 }));
+  });
+
+  it('met die instelling aan: beide blijven, want die zonder bron heeft een getal dat de andere mist', async () => {
+    await seed();
+    await syncWellness(CONNECTION, { fetchImpl: wellnessFetch([row(TODAY)]), today: TODAY });
+    expect(await stored()).toEqual(['import:2025-01-10', 'import:2025-01-11', 'intervals.icu:2025-01-10', `intervals.icu:${TODAY}`]);
+  });
+});
+
+describe('een soort uitzetten onder "Wat ASCEND van je horloge gebruikt"', () => {
+  const OLD = '2025-01-10';
+  const shown = async (date: string) => dayRecord(date, filterRecovery(await getRecoveryMetrics(), (await getWatchState()).use));
+
+  it('laat de opslag van een ochtend zonder bron gelijk, de dag toont de soort niet, en aanzetten brengt hem terug', async () => {
+    const onlyHrv: RecoveryMetric = { id: `import:${OLD}`, date: OLD, source: 'import', hrv: 66 };
+    const mixed = sourceless('2026-11-10', { hrv: 71 });
+    await RecoveryMetricsRepo.putAll([onlyHrv, mixed, fetched('2026-11-12')]);
+    await setWatchUse({ hrv: false });
+    const all = await RecoveryMetricsRepo.getAll();
+    expect(all.find((m) => m.id === onlyHrv.id)).toEqual(onlyHrv);
+    expect(all.find((m) => m.id === mixed.id)).toEqual(mixed);
+    // Wat opgehaald is verliest de soort wel in de opslag: de bron levert hem opnieuw.
+    expect(all.find((m) => m.id === 'intervals.icu:2026-11-12')!.hrv).toBeUndefined();
+    // Het scherm leest door het filter (useWellness, useRecoveryMetrics, useInfluence).
+    expect(await shown(OLD)).toBeUndefined();
+    expect(await shown('2026-11-10')).toEqual({ ...mixed, hrv: undefined });
+    expect((await shown('2026-11-10'))!.hrv).toBeUndefined();
+    await setWatchUse({ hrv: true });
+    expect(await shown(OLD)).toEqual(onlyHrv);
+    expect((await shown('2026-11-10'))!.hrv).toBe(71);
+  });
+
+  it('slaap uit: ook dan blijft de ochtend zonder bron heel in de opslag en in de back-up', async () => {
+    await RecoveryMetricsRepo.putAll([sourceless('2026-11-10')]);
+    await setWatchUse({ sleep: false });
+    expect(await RecoveryMetricsRepo.getAll()).toEqual([sourceless('2026-11-10')]);
+    expect((await shown('2026-11-10'))!.sleepMinutes).toBeUndefined();
+    expect((JSON.parse(JSON.stringify(await buildBackupEnvelope())) as { payload: { mornings: unknown } }).payload.mornings).toEqual([{ id: 'import:2026-11-10', date: '2026-11-10', source: 'import', restingHeartRate: 58, sleepMinutes: 300 }]);
+  });
+});
+
+describe('opruimen in één transactie', () => {
+  it('leest en wist niet in twee losse stappen', async () => {
+    await RecoveryMetricsRepo.putAll([sourceless('2026-11-10'), fetched('2026-11-10'), sourceless('2026-11-11')]);
+    const read = vi.spyOn(RecoveryMetricsRepo, 'getAll');
+    const wipe = vi.spyOn(RecoveryMetricsRepo, 'deleteMany');
+    try {
+      expect(await tidyDoubleMornings()).toBe(1);
+      expect(read).not.toHaveBeenCalled();
+      expect(wipe).not.toHaveBeenCalled();
+    } finally {
+      read.mockRestore();
+      wipe.mockRestore();
+    }
+    expect(await stored()).toEqual(['import:2026-11-11', 'intervals.icu:2026-11-10']);
   });
 });

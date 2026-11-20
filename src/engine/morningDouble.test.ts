@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { belongsToLink, doubleMornings, morningsToImport } from './morningDouble';
+import { doubleMornings, morningsToImport } from './morningDouble';
 import { isSourcelessMorning, orderBySource } from './sourcePrecedence';
 import { baselineValues, dayRecord } from './wellnessCheck';
 import type { RecoveryMetric } from '../models/metrics';
@@ -11,13 +11,6 @@ describe('een ochtend zonder bron', () => {
   it('is alleen het id dat de import zelf maakte', () => {
     expect(isSourcelessMorning('import:2026-11-10')).toBe(true);
     for (const id of ['intervals.icu:2026-11-10', 'health-connect:2026-11-10', 'manual:2026-11-10', 'garmin:2026-11-10', 'important:2026-11-10', 'eigen-id']) expect(isSourcelessMorning(id)).toBe(false);
-  });
-
-  it('hoort bij de koppeling, net als wat opgehaald is; met de hand ingevuld nooit', () => {
-    expect(belongsToLink('intervals.icu:2026-11-10', 'intervals.icu:')).toBe(true);
-    expect(belongsToLink('import:2026-11-10', 'intervals.icu:')).toBe(true);
-    expect(belongsToLink('manual:2026-11-10', 'intervals.icu:')).toBe(false);
-    expect(belongsToLink('health-connect:2026-11-10', 'intervals.icu:')).toBe(false);
   });
 });
 

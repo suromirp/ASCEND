@@ -201,6 +201,24 @@ describe('the long stretch for "Wat speelde er"', () => {
     expect((await getRecoveryMetrics()).map((m) => m.date)).toEqual([todayISO()]);
   });
 
+  // Eén ochtend per dag (docs/beslissingen/2026-11-20-ochtend-dubbel.md): het oude stuk ruimt ook op.
+  it('a morning without a source in the long stretch goes once the stretch covers it, and stays when the stretch fails', async () => {
+    const day = addDays(todayISO(), -249 - 28);
+    const fromFile = { id: `import:${day}`, date: day, source: 'import' as const, restingHeartRate: 58 };
+    const richer = { id: `import:${addDays(day, 28)}`, date: addDays(day, 28), source: 'import' as const, restingHeartRate: 58, hrv: 66 };
+    await SettingsRepo.set({ influences: [note(250)] });
+    await RecoveryMetricsRepo.putAll([fromFile, richer]);
+    await syncWellness(conn, { fetchImpl: asFetch(answering(false)) });
+    expect((await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith('import:'))).toEqual([fromFile, richer]);
+    // De volgende dag lukt het oude stuk wel.
+    await MetaRepo.set('wellnessLongTriedOn', undefined);
+    await syncWellness(conn, { fetchImpl: asFetch(answering()) });
+    const all = await RecoveryMetricsRepo.getAll();
+    expect(all.map((m) => m.id)).toContain(`intervals.icu:${day}`);
+    // De ene is gedekt en weg; de andere heeft een HRV die de bron niet gaf en blijft.
+    expect(all.filter((m) => m.id.startsWith('import:'))).toEqual([richer]);
+  });
+
   it('is not fetched again once it is covered', async () => {
     await SettingsRepo.set({ influences: [note(250)] });
     await syncWellness(conn, { fetchImpl: asFetch(answering()) });

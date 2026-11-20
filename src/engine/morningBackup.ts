@@ -11,7 +11,6 @@ import type { AppSettings } from '../storage/database';
 import type { RecoveryMetric } from '../models/metrics';
 import { KEEP_DAYS } from './wellnessRange';
 import { addDays } from '../utils/dates';
-import { belongsToLink } from './morningDouble';
 
 export type BackupMorning = Pick<RecoveryMetric, 'id' | 'date' | 'source' | 'restingHeartRate' | 'hrv' | 'sleepMinutes' | 'sleepScore'>;
 
@@ -64,13 +63,14 @@ export function planRetire(records: readonly RecoveryMetric[], keepMornings: boo
 // Zonder koppeling bleven de opgehaalde ochtenden alleen voor de back-up bewaard, en die gaan
 // dan alle weg. Met een koppeling (ook met een verlopen sleutel) blijft het recente deel, want de
 // bron levert het opnieuw, maar wat ouder is dan KEEP_DAYS haalt de volgende keer ophalen weg
-// (storage/wellness.ts#syncWellness, dezelfde grens). Wat je zelf invulde wordt nooit opgeruimd.
+// (storage/wellness.ts#syncWellness, dezelfde grens). Wat je zelf invulde wordt nooit opgeruimd, en
+// een ochtend zonder bron uit een oud bestand (`import:<datum>`) ook niet: die is niet opgehaald
+// (docs/beslissingen/2026-11-20-ochtend-zonder-bron.md).
 export function archiveToClear(
   records: readonly RecoveryMetric[],
   { connected, fetchedPrefix, today }: { connected: boolean; fetchedPrefix: string; today: string },
 ): RecoveryMetric[] {
-  // Ook een ochtend zonder bron uit een oude back-up (engine/morningDouble.ts#belongsToLink).
-  const fetched = records.filter((r) => belongsToLink(r.id, fetchedPrefix));
+  const fetched = records.filter((r) => r.id.startsWith(fetchedPrefix));
   if (!connected) return fetched;
   const cutoff = addDays(today, -KEEP_DAYS);
   return fetched.filter((r) => r.date < cutoff);

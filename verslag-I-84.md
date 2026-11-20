@@ -65,3 +65,51 @@ Gewijzigd: `src/engine/sourcePrecedence.ts`, `src/engine/morningBackup.ts`, `src
 - Niet nagespeeld met de back-up van de eigenaar (die heb ik niet). Of zijn opslag `import:` rijen heeft, weet ik dus niet.
 - Niet opgelost, hoort bij I-78: in zijn back-up zou elke ochtend twee keer staan met hetzelfde id, één zonder HRV. Dat is een ander geval (zelfde id); `migrateMornings` houdt dan de laatste. Als de rij zonder HRV als laatste staat, verliest de import de HRV.
 - Een ochtend zonder bron gaat bij het ontkoppelen van intervals.icu ook weg als Health Connect nog aan staat (met de instelling uit). Health Connect haalt vier weken opnieuw op, wat ouder is niet.
+
+## Herstel
+
+Na de review van Warden (`origin/warden/ochtend-dubbel-herstel:herstel.md`), 20 november 2026. Gedaan: M1, G1, G2, G3, G4. Niet gedaan, zoals opgedragen: M2 (dit bestand haalt de coördinator bij de squash weg) en G5.
+
+### Per punt
+
+- M1: `belongsToLink` is weg. `syncWellness` (400 dagen), `clearWellness`, `pruneWellness` en `archiveToClear` kijken weer alleen naar `intervals.icu:` (en `pruneWellness` naar `health-connect:`), zoals op main. Een ochtend zonder bron gaat alleen nog weg via `doubleMornings`, dus als hij gedekt is.
+- M1, een uitgezette soort: de opslag van `import:` blijft gelijk. Elk scherm leest de ochtenden al door `filterRecovery` (`useWellness`, `useRecoveryMetrics`, `useInfluence`, `useSleepRefetch`), dus er was geen nieuwe code voor het lezen nodig, alleen een test die het vastlegt.
+- M1, `archiveToClear`: gekozen voor de weg zonder `import:` in de lijst. Er verandert geen zichtbare tekst.
+- M1, besluit: `docs/beslissingen/2026-11-20-ochtend-zonder-bron.md` vervangt de regel Ontkoppelen, de Reden en de laatste eigen keuze van `2026-11-20-ochtend-dubbel.md`. Dat bestand is niet aangeraakt; in `bronnen.json` staat het nu op "deels" met `vervangenDoor`.
+- G1: de bekende grens (een gedekt getal en een bron die later minder geeft) staat in het nieuwe besluit.
+- G2: `tidyDoubleMornings` leest, beslist en wist in één readwrite-transactie op `recoveryMetrics`.
+- G3: `clearWellness` roept `tidyDoubleMorningsQuietly` aan. Een opruimstap die gooit laat ontkoppelen slagen.
+- G4: tests voor de ronde van Health Connect (geslaagd, mislukt, uit) en voor het oude stuk van `fetchLongStretch` (mislukt en geslaagd).
+- Werkbriefje `koppelingen-en-data`: de zin over `belongsToLink` is vervangen door de twee valkuilregels van Warden. Het blijft 44 regels.
+
+### Tests per eis
+
+- Een leesfout haalt nooit iets weg: de bestaande vier gevallen bij intervals.icu, plus een mislukte en een uitgezette ronde van Health Connect en een mislukt oud stuk.
+- Ontkoppelen met archief aan en uit, en via `clearConnection`: `ochtendDubbel.test.ts`, blok ontkoppelen. Met Health Connect aan: `healthConnect.test.ts`, ook de ronde erna.
+- De grens van 400 dagen, met de instelling aan en uit: `ochtendDubbel.test.ts`.
+- Een uitgezette soort: opslag gelijk, de dag toont de soort niet, weer aanzetten brengt hem terug, en de back-up heeft de hele ochtend nog: `ochtendDubbel.test.ts`.
+- `archiveToClear` noemt nooit een ochtend zonder bron, met en zonder koppeling: `morningBackup.test.ts` en `ochtendDubbel.test.ts`.
+- Opruimen dat gooit: `ochtendDubbelStil.test.ts` (ontkoppelen en een ronde slagen, de opslag blijft).
+- Proef op de tests: met de opruimstap uit `fetchLongStretch` of uit de ronde van Health Connect weg valt de bijbehorende test; met `clearWellness` weer op de luide variant valt de test op ontkoppelen; met `import:` weer bij de koppeling vallen er zes.
+
+### Bestanden
+
+Nieuw: `docs/beslissingen/2026-11-20-ochtend-zonder-bron.md`, `src/storage/ochtendDubbelStil.test.ts`.
+
+Gewijzigd: `src/engine/morningDouble.ts`, `src/engine/morningDouble.test.ts`, `src/engine/morningBackup.ts`, `src/engine/morningBackup.test.ts`, `src/storage/wellness.ts`, `src/storage/ochtendDubbel.test.ts`, `src/storage/healthConnect.test.ts`, `src/storage/watchWellness.test.ts`, `docs/werkbriefjes/koppelingen-en-data.md`, `docs/architectuur/historie-en-logs.md` (verwijzing naar het nieuwe besluit erbij), `docs/kennisindex/` (bronnen.json en de gemaakte bestanden), `verslag-I-84.md`.
+
+### Controles
+
+- `npx tsc -p tsconfig.app.json --noEmit`: groen.
+- `npm run lint`: groen (de bestaande waarschuwing in `LegFatigueCard.tsx`).
+- `npx vitest run`: groen, 777 bestanden, 11714 tests.
+- `npm run build`: groen.
+- `npm run kennisindex:vergelijk`: "Geen verschil met docs/kennisindex/."
+- `npm run kaart:vergelijk`: 107 schermen gelijk, invarianten zonder schendingen, drie verschillen, alle drie niet van deze wijziging. `instellingen-blad-bundel-invullen` (de rij IJkset weg) en `instellingen-forge` (de rij IJkset erbij) zijn het bekende verschil van main `9c9e2dce`. Het derde staat op `gegevens`: "Van de 3,2 GB die beschikbaar is" werd "Van de 11 GB die beschikbaar is". Dat getal komt van `navigator.storage.estimate` (`src/engine/storageUse.ts`) en is de vrije ruimte van de machine waarop de kaart draait, niet iets uit de code. De kaart is niet bijgewerkt.
+
+### Eigen keuzes
+
+- `archiveToClear` zonder `import:` en dus zonder nieuwe tekst, in plaats van een extra zin in de vraag. De instelling gaat over wat een koppeling ophaalde.
+- Geen filter in `getRecoveryMetrics` of `orderBySource`: alle vier de lezers filteren al, een tweede filter op een andere plek zou dezelfde regel twee keer vastleggen. De test leest zoals de schermen lezen.
+- De import zelf schrijft een ochtend uit een bestand nog steeds zonder de soorten die op dat moment uit staan (`backupApply.ts`, stond al zo op main). Niet aangeraakt, het viel buiten de punten van Warden. Wie dat ook wil omdraaien: een punt voor de coördinator.
+- Niet gecontroleerd: een doorloop in Chromium. Er verandert geen scherm en geen tekst.
