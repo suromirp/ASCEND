@@ -19,6 +19,7 @@ import { releaseSystemMoves } from './systemMovesStep';
 import { tidyOldProposals } from './proposalTidy';
 import { migrateStartPointToHome } from './places';
 import { tidyDoubleMornings } from './wellness';
+import { straightenBackupTime } from './backupTime';
 import { withTimeout } from '../utils/withTimeout';
 import type { BootRunResult } from './bootLock';
 import { BOOT_MIGRATIONS, BOOT_MIGRATIONS_KEY, BOOT_STEP_LIMIT_MS, migrationsToRun, recordAfter, type BootMigrationRecord } from '../engine/bootWatch';
@@ -149,6 +150,10 @@ export async function runBootMigrations(
   // die niet antwoordt houdt het openen niet langer tegen dan een herstelstap.
   const home = await withTimeout(migrateStartPointToHome(), limit).catch(() => 'failed' as const);
   if (home === 'failed') console.warn('Vast punt is nog niet Thuis geworden; de volgende start probeert het opnieuw.');
+  // Laatste back-up hoogstens nu (storage/backupTime.ts). Ook niet in de lijst: de klok hoort niet bij een
+  // versie van de app, dus dit kijkt bij elke start, met één leesactie. Gooit nooit.
+  const backupTime = await withTimeout(straightenBackupTime(), limit).catch(() => 'failed' as const);
+  if (backupTime === 'failed') console.warn('Laatste back-up is niet nagekeken; de volgende start probeert het opnieuw.');
   return pending ? { skipped, pending } : { skipped };
 }
 

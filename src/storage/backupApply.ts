@@ -2,6 +2,7 @@
 
 import { filterRecovery } from '../engine/watchUse';
 import { morningsToImport } from '../engine/morningDouble';
+import { isSourcelessMorning } from '../engine/sourcePrecedence';
 import { getWatchState } from './externalActivities';
 import type { RecoveryMetric } from '../models/metrics';
 import type { ActivityStreams } from '../models/activityStreams';
@@ -19,7 +20,7 @@ import { SAVED_ROUTES_KEY } from './places';
 import { readSavedRouteList, routesOfPlaces } from './migrationsPlaces';
 import { readSkillGoalStore } from './migrationsSkill';
 import { mergeSkillStores } from '../engine/skillGoal';
-import { backupPairAfterRestore } from '../engine/backupSince';
+import { backupPairAfterRestore, newestBackupPair } from '../engine/backupSince';
 import { loadCurrentData, computeDiff } from './backupPreview';
 
 // --- plan & apply ---------------------------------------------------------
@@ -88,7 +89,7 @@ export function createImportPlan(
 // saw the confirmation step) so an import can always be undone.
 //
 // `deviceCopy`: the file is a pre-import copy of this device (restoreSnapshot). It carries the device's own
-// "Laatste back-up" and list, and those come back as they were.
+// "Laatste back-up" and list; the newest of that pair and the device's own stays.
 export async function applyImportPlan(backup: NormalizedBackupData, plan: ImportPlan, options: { deviceCopy?: boolean } = {}): Promise<void> {
   const current = await loadCurrentData();
   const { resolved, effective } = computeDiff(current, backup, plan.categorySelections, plan.planPolicy);
@@ -130,10 +131,15 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   // The mornings that came with the file: only those the device does not have yet, never over a
   // morning the device fetched itself (its own is the newer reading), and no morning without a source
   // that adds nothing to one with a source on the same day (engine/morningDouble.ts#morningsToImport).
-  // What is switched off under "Wat ASCEND van je horloge gebruikt" stays out (engine/watchUse.ts#filterRecovery).
+  // What is switched off under "Wat ASCEND van je horloge gebruikt" stays out of a morning with a source
+  // (engine/watchUse.ts#filterRecovery), as storage/wellness.ts#pruneWellness keeps it. A morning without
+  // a source is written whole: a kind that is off never changes its record, every reader filters
+  // (docs/beslissingen/2026-11-20-ochtend-zonder-bron.md).
   let morningPuts: RecoveryMetric[] = [];
   if (touches(historyAction) && backup.mornings && backup.mornings.length > 0) {
-    morningPuts = filterRecovery(morningsToImport(await RecoveryMetricsRepo.getAll(), backup.mornings), (await getWatchState()).use);
+    const fresh = morningsToImport(await RecoveryMetricsRepo.getAll(), backup.mornings);
+    const withSource = new Map(filterRecovery(fresh.filter((m) => !isSourcelessMorning(m.id)), (await getWatchState()).use).map((m) => [m.id, m]));
+    morningPuts = fresh.flatMap((m) => (isSourcelessMorning(m.id) ? [m] : withSource.has(m.id) ? [withSource.get(m.id)!] : []));
   }
 
   // What merges with the device (the history lists in settings, the skill goals, the routes
@@ -144,11 +150,13 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
     ? (stored: unknown): AppSettings => {
       const now: AppSettings = { ...DEFAULT_SETTINGS, ...(stored as Partial<AppSettings> | undefined) };
       const next: AppSettings = { ...now, ...mergeSettingsHistory(now, backup.settings) };
-      if (options.deviceCopy) return next;
       // "Laatste back-up" and its list belong to the device and travel as a pair: the time inside the
       // file is that of the back-up before it, so it is never copied over. Read here, at the moment of
-      // writing (docs/beslissingen/2026-11-20-backup-terugzetten.md).
-      const pair = backupPairAfterRestore(now, backup.fileCreatedAt, backup.sessionLogs.map((l) => l.id), Date.now());
+      // writing (docs/beslissingen/2026-11-20-backup-terugzetten.md). A pre-import copy carries its own
+      // pair: the newest of the two stays (docs/beslissingen/2026-11-20-backup-kopie-en-toekomst.md).
+      const pair = options.deviceCopy
+        ? newestBackupPair(now, backup.settings, Date.now())
+        : backupPairAfterRestore(now, backup.fileCreatedAt, backup.sessionLogs.map((l) => l.id), Date.now());
       for (const key of ['lastExportedAt', 'lastBackupLogs'] as const) {
         if (pair[key] === undefined) delete next[key];
         else Object.assign(next, { [key]: pair[key] });

@@ -291,6 +291,73 @@ describe('een soort uitzetten onder "Wat ASCEND van je horloge gebruikt"', () =>
   });
 });
 
+// I-97: een import schrijft een ochtend zonder bron heel, ook met een soort uit. Het lezen filtert.
+describe('een back-up importeren met een soort uit', () => {
+  const OLD = '2025-01-10';
+  const shown = async (date: string) => dayRecord(date, filterRecovery(await getRecoveryMetrics(), (await getWatchState()).use));
+  const byId = async (id: string) => (await RecoveryMetricsRepo.getAll()).find((m) => m.id === id);
+  const whole: RecoveryMetric = { id: `import:${OLD}`, date: OLD, source: 'import', restingHeartRate: 58, hrv: 66, sleepMinutes: 300 };
+
+  it('een oud bestand (ochtenden zonder id): de ochtend zonder bron komt heel in de opslag, de dag toont de soort niet, aanzetten brengt hem terug', async () => {
+    await setWatchUse({ hrv: false });
+    await importEnvelope(await oldBackup([oldRow(OLD, { restingHeartRate: 58, hrv: 66, sleepMinutes: 300 })]));
+    expect(await byId(`import:${OLD}`)).toEqual(whole);
+    // Het lezen filtert: de dag heeft geen HRV zolang de soort uit staat.
+    expect((await shown(OLD))!.hrv).toBeUndefined();
+    expect((await shown(OLD))!.restingHeartRate).toBe(58);
+    await setWatchUse({ hrv: true });
+    expect(await shown(OLD)).toEqual(whole);
+  });
+
+  it('een ochtend zonder bron met alleen de uitgezette soort valt niet meer weg bij de import', async () => {
+    await setWatchUse({ hrv: false });
+    await importEnvelope(await oldBackup([oldRow(OLD, { hrv: 66 })]));
+    expect(await stored()).toEqual([`import:${OLD}`]);
+    expect(await shown(OLD)).toBeUndefined();
+    await setWatchUse({ hrv: true });
+    expect((await shown(OLD))!.hrv).toBe(66);
+  });
+
+  it('slaap uit: slaapduur en slaapscore blijven in de opslag en gaan weer mee in de volgende back-up', async () => {
+    await setWatchUse({ sleep: false });
+    await importEnvelope(await oldBackup([oldRow(OLD, { restingHeartRate: 58, sleepMinutes: 300, sleepScore: 70 })]));
+    expect(await byId(`import:${OLD}`)).toEqual({ id: `import:${OLD}`, date: OLD, source: 'import', restingHeartRate: 58, sleepMinutes: 300, sleepScore: 70 });
+    expect((await shown(OLD))!.sleepMinutes).toBeUndefined();
+    const again = JSON.parse(JSON.stringify(await buildBackupEnvelope())) as { payload: { mornings: unknown[] } };
+    expect(again.payload.mornings).toEqual([{ id: `import:${OLD}`, date: OLD, source: 'import', restingHeartRate: 58, sleepMinutes: 300, sleepScore: 70 }]);
+  });
+
+  it('een ochtend met een bron uit het bestand verliest de uitgezette soort wel: de bron levert hem opnieuw', async () => {
+    await setWatchUse({ hrv: false });
+    await importEnvelope(await oldBackup([fetched('2026-11-12'), { id: 'intervals.icu:2026-11-13', date: '2026-11-13', source: 'import', hrv: 61 }, oldRow(OLD, { hrv: 66 })]));
+    expect((await byId('intervals.icu:2026-11-12'))!.hrv).toBeUndefined();
+    expect((await byId('intervals.icu:2026-11-12'))!.restingHeartRate).toBe(50);
+    // Alleen de uitgezette soort: die ochtend met een bron komt niet, die zonder bron wel.
+    expect(await stored()).toEqual([`import:${OLD}`, 'intervals.icu:2026-11-12']);
+  });
+
+  it('de dag zelf: een ochtend zonder bron van vandaag komt heel, en een opgehaalde van vandaag gaat bij het lezen voor', async () => {
+    await RecoveryMetricsRepo.putAll([fetched(TODAY, { sleepMinutes: undefined, sleepScore: undefined, hrv: undefined })]);
+    await setWatchUse({ hrv: false });
+    await importEnvelope(await oldBackup([oldRow(TODAY, { restingHeartRate: 58, hrv: 66 })]));
+    // Hij heeft een getal (HRV) dat de opgehaalde mist, dus hij blijft als aanvulling, heel.
+    expect(await byId(`import:${TODAY}`)).toEqual({ id: `import:${TODAY}`, date: TODAY, source: 'import', restingHeartRate: 58, hrv: 66 });
+    expect((await shown(TODAY))!.restingHeartRate).toBe(50);
+    expect((await shown(TODAY))!.hrv).toBeUndefined();
+  });
+
+  it('een fout halverwege: geen ochtend geschreven, de kopie van voor de import blijft', async () => {
+    await setWatchUse({ hrv: false });
+    await RecoveryMetricsRepo.putAll([sourceless('2026-11-10')]);
+    const { backup, plan } = await planFor(await oldBackup([oldRow(OLD, { hrv: 66 })]));
+    (backup.mornings![0] as unknown as Record<string, unknown>).note = () => 'geen kloon';
+    await expect(applyImportPlan(backup, plan)).rejects.toThrow('Er is niets gewijzigd');
+    expect(await RecoveryMetricsRepo.getAll()).toEqual([sourceless('2026-11-10')]);
+    expect((await getWatchState()).use.hrv).toBe(false);
+    expect((await listSnapshots()).some((s) => s.id === plan.preImportSnapshotId)).toBe(true);
+  });
+});
+
 describe('opruimen in één transactie', () => {
   it('leest en wist niet in twee losse stappen', async () => {
     await RecoveryMetricsRepo.putAll([sourceless('2026-11-10'), fetched('2026-11-10'), sourceless('2026-11-11')]);
