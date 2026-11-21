@@ -187,80 +187,24 @@ Elke maandag (samen met de weekbriefing) kijkt de coördinator naar het logboek 
 - past de tabel hierboven aan als het logboek dat laat zien, met de reden in de commit.
 
 
-## Inspanning per soort werk (eigenaar 14 november: "Ja, zoals geadviseerd")
-
-- `effort: high` bij create_session voor bouwers aan planner, opslag, horloge en routes, en voor Warden als hij op Opus invalt.
-- Standaard (geen effort meegeven) voor schermen, tekst, Lookout en Pathfinder, en voor Warden op Fable.
-- De coördinator blijft op medium.
-- Meet het in het kostenlogboek: herstelrondes per bouwer met en zonder high. Dalen ze na een week niet, zet het terug en meld het de eigenaar.
-
-## Check-in en reflectie (eigenaar 14 november)
-
-Elke ronde van de Wachter schrijft een blok in `.claude/coordinator/reflectie.md` (check-in, beter, slechter, gereedschap met potentie, werkstijl per soort werk) en zet de check-in als zin `melding` op de werkkaart (skill werkkaart). Bij de wissel vat de coördinator de dag samen onder Wat werkt hieronder.
-
-## Wat werkt, per soort werk (bijwerken bij de wissel)
-
-- Tekst en schermen: opus, één ronde plus één herstelronde; Lookout laat ontbrekende standen zelf namaken; eigen blik op elke afdruk.
-- Engine, opslag, races: bouwen op opus, Warden op fable met mutatietests en een proeftest voor races (sinds 14 november avond; eerst op fable).
-- Alleen tests of docs: sonnet.
-- In elke bouwopdracht (14 november, twee moet-punten): welk scherm opent deze training (Briefing, trainingsscherm of Forge), en welke precisie heeft elk getal dat je toont (een log bewaart minuten, geen seconden).
-- Gereedschap: Ponytail alleen als audit-prompt in onderhoud; Graphify niet, wel het idee van een graaf (werkkaart).
-
-## Limiet van vijf uur (eigenaar 12 november: "mag niet nog een keer gebeuren")
-
-In de nacht van 12 november raakte het account om ongeveer 03:00 UTC het limiet van vijf uur; het ging om 03:20 weer open, maar niets maakte de coördinator of de bouwers wakker tot 06:33. Ruim drie uur stilstand. Het limiet zelf is soms niet te vermijden; de stilstand wel.
-
-- De Wachter: een terugkerende taak elk uur in de sessie van de coördinator (trig_01RfcpL1mKyjAquMVbctRoGN, minuut 40). Hij kijkt naar de coördinator en elke lopende bouwer en port een stilgevallen bouwer met create_trigger (persistent_session_id die bouwer). Een terugkerende taak, geen eenmalige: valt één beurt in het limiet, dan komt het uur erna vanzelf.
-- Bij de wissel zet de nieuwe coördinator de Wachter op zijn eigen sessie (update_trigger kan geen sessie wisselen: de oude wissen met delete_trigger en een nieuwe maken met dezelfde prompt).
-- Vooraf remmen: get_session geeft `rate_limit_info`. Staat die op `allowed_warning` bij de coördinator of een bouwer, start dan geen nieuwe helper of bouwer, maak af wat loopt, en plan met send_later een beurt op `resetsAt` plus vijf minuten.
-- Raakt een helper het limiet: kijk eerst wat hij al maakte (afdrukken, commits) voor je hem opnieuw start.
-- Hoogstens drie bouwers op Opus of Fable tegelijk, plus de helpers van de coördinator; met een waarschuwing hoogstens twee.
-
 ## Lessen uit het onderzoek naar autonome agents (11 november, `docs/onderzoek/Werkwijze autonome agents.md`)
 
-- Zelfreview vóór Warden: elke bouwer laat voor hij zich meldt een frisse helper `reviewer` op sonnet zijn eigen diff naast de eisen van de opdracht leggen, en herstelt wat die vindt. Kost ongeveer $1, een herstelronde $3 tot $5. Zet dit in elke opdracht onder Opleveren.
 - Een bestaande test, `planGolden.test.ts` of een invariant aanpassen om groen te worden mag een bouwer nooit stil: dan stopt hij en meldt het, met de reden. Een test die bewust meebeweegt staat met naam in de melding. Zet dit in elke opdracht onder Mag niet bewegen.
 - Elke bevinding "blokkerend" of "moet" van Warden of Pathfinder wordt na het herstel een test, invariant, lintregel of valkuil in een briefje, zodat geen reviewer hem nog hoeft te vangen. De coördinator controleert dat bij de merge.
 - Knip klein: een opdracht raakt liefst één scherm of één regel in de engine. Kleine wijzigingen komen vaker in één keer door de review.
 - Drie getallen per week in het kostenlogboek, bij de maandagronde: het aandeel bouwers dat in één keer akkoord krijgt van Warden, de kosten per functie (bouwer plus reviews), en het aantal punten dat de eigenaar daarna nog vindt. Dat laatste is de echte maat voor "groen maar fout".
 - Niet doen: live zetten zonder mens, een AI als blokkerende poort voor UX (Pathfinder wijst aan, beslist niet alleen), een proefversie op hetzelfde adres als de echte app (IndexedDB en de service worker zijn per origin), meer bouwers of reviewers tegelijk dan de coördinator kan nakijken.
 
-## Modellen per taak (eigenaar, 10 november middag)
-
-De eigenaar: "efficiënt gebruik van de modellen per taak en agent; we hebben de keuze uit Fable, Sonnet, Haiku en Opus". Dit vervangt "Alles op Fable" van 10 november ochtend. De kolom Model in de tabel bovenaan lees je zo:
-
-- Haiku (claude-haiku-5-5): zoeken in de code (`Explore`), een lijst of telling maken, het kostenlogboek, een idee naar een issue als het doel al helder is.
-- Sonnet (claude-sonnet-5-5): de standaard. Bouwen van een scherm, een tekst, een instelling of een afgebakende wijziging; Cartographer; Lookout; review van UI, tekst of stijl; een bouwer-sessie voor zulk werk.
-- Opus (claude-opus-5-5): de coördinator en de sessie van het bouwmoment; review van engine en opslag; lastig onderzoek (Scout); een keuze tussen bronnen of aanpakken; bouwen in de engine dat de planning niet raakt.
-- Fable (claude-fable-5-2): bouwen en review die de planning, de scheduler, opslag met migraties of historie raken, en een fout die Opus na één ronde niet vond. Met de weeklimiet hoef je geen rekening te houden (eigenaar, 10 november middag): geen grens aan het aantal tegelijk. Raakt een sessie toch een harde limiet, dan meldt ze dat en gaat het werk verder op Opus.
-- Kies op wat de taak raakt, niet op de omvang, en begin zo licht als kan. Opschalen gaat één stap (Haiku, Sonnet, Opus, Fable) en alleen met een reden uit "Opschalen en afschalen".
-- De rolbestanden in `.claude/agents/` hebben het lichtste model dat voor die rol gewoon is. Geef bij een helper (`model`) en bij `create_session` altijd het model mee als de taak zwaarder is dan dat.
-- Knip een onderwerp zo dat het zware deel klein is: de regel in de engine op Opus of Fable, het scherm, de tekst en de instelling eromheen op Sonnet.
-
 ## Losse chat of helper (eigenaar 20 november)
 
-- Een losse chat (`create_session`) voor een bouwer die naar verwachting langer dan een half uur duurt, of die planner, opslag of migraties raakt. Hij meldt zich met `create_trigger` bij de coördinator van dat moment (zie hieronder).
+- Een losse chat (`create_session`) alleen voor een bouwer aan opslag of migraties (zuinige stand). Hij meldt zich met `create_trigger` bij de coördinator van dat moment (zie hieronder).
 - Een helper in de chat van de coördinator (Agent, `isolation: worktree`) voor kleine klussen.
 - Het model volgt wat het werk raakt, zoals in de tabel. De coördinator start zijn opvolger nooit zelf (skill `coordinator-wissel`), zodat de keten van sessies niet volloopt.
-
-## Bouwers melden zich zelf (9 november)
-
-Elke bouwer die de coördinator met `create_session` start, krijgt als laatste regel van de opdracht: meld je als je klaar bent of vastloopt met `create_trigger` (claude-code-remote), `persistent_session_id` de sessie van de coördinator, `run_once_at` één à twee minuten vooruit, `initiation` `own_followup`, met in de prompt titel, sessie-id, wat live staat, de controles en vragen. De coördinator start dan meteen de volgende; een check elke twee uur is alleen nog een vangnet.
-
-## Lessen van de nacht van 9 november
-
-- Uitkomst tonen, niet alleen groene tests: een planner-bouwer sluit af met de echte weekindeling van zijn voorbeeld, per dag. Tests toetsten de regels, maar niet of de week verstandig was (beenkracht viel twee weken weg).
-- Een sessie per één of twee rondes: een sessie die lang doorloopt wordt duur doordat de context groeit; een verse sessie per ronde is goedkoper.
-- Elke bouwer merget main terug in de werkbranch en pusht die; anders loopt de werkbranch achter en botst alles bij de volgende start.
-- Elke bouwer zet zelf naar main en meldt de commit; de coördinator controleert in de melding of dat echt gebeurde.
-- Vragen aan de eigenaar in gewone woorden met een voorbeeld en het advies erbij, nooit in vaktaal (de vragen over lichaamsgewicht en de ijkset waren onduidelijk).
-- Elke melding naar de eigenaar noemt wat hij zelf op zijn telefoon kan nakijken, want echte apparaten en echte netwerkaanroepen ziet geen helper.
-- Voor een ronde die een akkoord van de eigenaar nodig heeft (zoals een stemgids) eerst dat akkoord vragen, dan pas de sessie starten.
 
 ## Afgeronde bouwers archiveren (eigenaar 9 november)
 
 Komt de melding "Bouwer klaar" binnen en staat het werk op main, dan archiveert de coördinator die sessie meteen met `archive_session` (claude-code-remote). Een bouwer die vastliep of nog een vraag heeft blijft open tot dat is opgelost. Nooit archiveren: de vaste sessie van het bouwmoment en het onderhoud, en de sessie van de coördinator zelf.
 
-## Bouwers zetten niet zelf naar main (9 november)
+## Bouwers en main
 
-Bouwers bleven steeds vaker vlak voor main staan met de vraag om bevestiging, omdat ze de opdracht als doorgegeven zagen. Vanaf nu: een bouwer pusht alleen zijn eigen branch (met tests, review en afdrukken) en meldt zich; de coördinator merget, draait de controles en zet het naar main via de squash. In de opdracht staat dus geen squash naar main meer.
+Een bouwer pusht alleen zijn eigen branch en zet in zijn laatste bericht de commit en de uitslag van de controles; de coördinator kijkt zelf, doet de squash naar main en archiveert een losse chat zodra het werk op main staat. Een planner-bouwer sluit af met de echte weekindeling van zijn voorbeeld, per dag.

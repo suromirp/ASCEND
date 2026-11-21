@@ -7,6 +7,7 @@ Bijgewerkt: 21 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S.
 - Eigenaar via de chat ASCEND: zuinige stand, vastgelegd in skill `werkverdeling` (bovenaan) en besluit `2026-11-21-zuinige-stand.md`, op main 68eca8b1. Kort: Sonnet voor bouwer en Warden, Opus alleen planner/opslag/migraties/historie, nooit Fable tenzij de eigenaar vraagt; poorten naar risico; één Warden en één Lookout per bouwmoment; bouwen alleen ma/wo/vr; Mag naar de backlog; wissel rond 150k of na elke bouwronde; geen wakeups zonder reden.
 - Toegepast op deze ronde: geen Pathfinder (geen nieuw scherm of flow); één Lookout op Haiku over I-94 en I-95; Mag-punten van Warden I-94/96 die nog niet gestuurd waren gaan naar de backlog. Het Mag-herstel voor StepProposalNotice was al gestuurd voor de zuinige stand; laten afmaken.
 - Na de squash van deze bundel: wissel (ronde klaar).
+- Aanvulling (mandaat eigenaar, main e7f61702): poortregel naar risico in CLAUDE.md en besluit; CLAUDE.md 15 naar 8 KB; Werkkaart-taak trig_01JoRN6XzHJ17frpcWQAdEzB van elk uur naar 8:20, 13:20, 20:20; uit werkverdeling weg: Fable-standaard, effort high, Wachter, zelfreview, check-in. Worktree wt-zuinig in de scratchpad opruimen.
 
 ## Stand 20 november avond, ronde 2
 
@@ -22,20 +23,6 @@ Bijgewerkt: 21 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S.
 - Nieuw voor de Inbox (I-98 tot I-101): import filtert `manual:`, `garmin:`, `macrofactor:` nog (alleen filteren wat `pruneWellness` raakt, `backupApply.ts:140-142`); koppelvoorstel zegt niet dat een loop later in de week zijn korte test verliest (`shortTestSessionIds`, sinds I-91); gedeelde hook `useShortTestStreams`; strengere variant: zonder bijpassende lijst het paar weghalen.
 - Geleerd: geef elke helper een eigen mapnaam in de scratchpad. Een Warden zette de hoofdmap /home/user/ascend op een andere branch (detached): zeg in elke opdracht "geen checkout in de hoofdmap, gebruik git diff of git show". `src/state/logSave.test.ts` wankelde één keer onder volle last; bij de laatste controle voor main op letten.
 - Gemeld aan de eigenaar: 20 november live I-68, I-83, I-92, I-84, I-91, weekkamzin en twee werkwijzebesluiten; na de wissel nog niets live. Vorige coördinator gearchiveerd ($46).
-
-## Stand 20 november avond, ronde 1
-
-- 17:55 Amsterdam: ronde klaar. Live vandaag: I-68, I-83, I-92 (0daf3afa), I-84 (16f634ac), I-91 (ad2e4b99); backlog op main bijgewerkt (629d3b43). Geen lopende bouwers, helpers of worktrees. Coördinator session_01LnDpSkaRVqid7Ra5MiwW8Z vroeg de wissel aan bij de chat ASCEND.
-- Volgende ronde, voorstel: I-93 (back-up, kopie van voor een import), I-95 (koppelvoorstel noemt verschuiving testloop), I-96 (tests en uitleg niet goed gemeten), I-97 (back-up import en ochtend zonder bron), I-94 (Akkoord sterker op de ijksetkaart). Klein werk als helper; opslag (I-93, I-97) in een losse chat.
-- Later, Warden: een bewust paar in omgekeerde volgorde (lang op zaterdag, heuvel op zondag) telt in de kamzin nog als bewust; `isIntendedOrder` meenemen. Mag van Pathfinder I-92: ziek en slecht slapen hoort bij I-78.
-- Geleerd vandaag: Warden (reviewer) schrijft nooit bestanden; zet in elke opdracht "schrijf geen bestanden, geef de lijst in je verslag" en commit een herstellijst zelf. Een losse chat kan de coördinator niet hervatten: bij herstel een nieuwe losse chat met de lijst. Bij een squash botsen gegenereerde kennisindexbestanden: neem die van main en draai `npm run kennisindex`. `docs/backlog.md` op main: zet hem er na `backlog:bij` als eigen commit op (read-tree van origin/main, alleen dat bestand).
-- Een zin die naar een kaart elders verwijst (zoals de vraag op Vandaag) toetsen aan de voorwaarden van die kaart; staat hij er niet altijd, dan zegt de zin dat.
-- Fable weeklimiet staat op allowed_warning: geen groot nieuw Fable-werk zonder dat het nodig is; meld de eigenaar als het knelt.
-- Eigenaar 20 november "Ja gemengd, doe jouw advies": bouwers langer dan een half uur of aan planner, opslag of migraties in een losse chat (`create_session`), klein werk als helper; de coördinator start zijn opvolger niet zelf maar meldt de wissel met create_trigger aan de chat "ASCEND" (besluit `2026-11-20-gemengde-bouwers-en-wissel.md`).
-- claude/nacht loopt in de code ver achter op main (alleen .claude en docs volgen main); bouwers takken af van origin/main.
-- Haken rond het samenvatten (`.claude/settings.json`) werken: na een samenvatting komt de bovenste stand van dit bestand terug.
-- De vastgezette chat "ASCEND" (session_013ZuQA6MkeoKDCxdu4uMmEd) stuurt soms meldingen door als geplande taak. Iets stuk in de app: bouwen. Iets dat instellingen of rechten van Claude Code raakt: eerst de eigenaar zelf vragen.
-- Geen open vragen aan de eigenaar.
 
 ## Vaste afspraken
 
@@ -55,6 +42,9 @@ Bijgewerkt: 21 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S.
 - Helpers in de coördinator-chat: zeg in elke opdracht dat ze alleen in een eigen worktree werken en /home/user/ascend nooit van branch wisselen (een Pathfinder deed dat om 22:35).
 
 ## Werkwijze, geleerd
+
+- De vastgezette chat "ASCEND" (session_013ZuQA6MkeoKDCxdu4uMmEd) stuurt opdrachten van de eigenaar door als geplande taak; daar start ook de wissel (create_trigger, naam "Wissel coördinator").
+- Warden schrijft nooit bestanden: herstel naar de bouwer of zelf. Bij een squash botsen gegenereerde kennisindexbestanden: neem die van main en draai `npm run kennisindex`. claude/nacht loopt in code achter op main; bouwers takken af van origin/main; docs voor main maak je op een tak van origin/main.
 
 - Twee branches die elk een instelling toevoegen botsen in `src/engine/__snapshots__/instellingen-foto.json`: kies een kant en maak hem opnieuw met `npx vitest run -u src/engine/settingsFoto.test.ts`.
 - Draai `kaart:vergelijk` nooit midden in een merge-conflict.

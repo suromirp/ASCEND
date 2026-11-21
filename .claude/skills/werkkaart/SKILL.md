@@ -9,7 +9,7 @@ Waarom (eigenaar, 14 en 15 november): een dashboard dat vanzelf bijwerkt en in t
 
 ## Wie het doet
 
-De sessie "Werkkaart ASCEND (elk uur)" op Sonnet, elk uur op :20. De coördinator werkt hem daarnaast bij na elke push naar main. De Wachter kijkt alleen of hij vers is (niet ouder dan 90 minuten). De coördinator houdt `.claude/coordinator/eigenaar.md` bij; daar komen de vier blokken vandaan.
+De sessie "Werkkaart ASCEND" op Sonnet, drie keer per dag (8:20, 13:20 en 20:20 Amsterdam; zuinige stand, 21 november). De coördinator werkt hem daarnaast bij na elke push naar main. De Wachter kijkt alleen of hij vers is (niet ouder dan zes uur). De coördinator houdt `.claude/coordinator/eigenaar.md` bij; daar komen de vier blokken vandaan.
 
 ## Wat waar vandaan komt
 
@@ -20,7 +20,7 @@ De sessie "Werkkaart ASCEND (elk uur)" op Sonnet, elk uur op :20. De coördinato
 - Stroom: Inbox uit `## Inbox` van `docs/backlog.md` (alleen de titel, zonder de code `[I-n]`), Bouwen en Controle uit de bouwers, Live de laatste vijf commits op main.
 - Kaart van de app: knooppunten zijn de werkbriefjes, hun bestanden de paden onder `## Bestanden`, lijnen de imports tussen die bestanden in `src/`. Een onderwerp waar een bouwer bestanden wijzigt (branch tegen origin/main) pulseert met de naam van de bouwer.
 
-## Stappen (elk uur op :20, en na elke push naar main)
+## Stappen (drie keer per dag, en na elke push naar main)
 
 1. `git fetch origin` en werk op de nieuwste `origin/claude/nacht` (daar staan `bouw.py` en `eigenaar.md`; main krijgt ze bij de volgende squash).
 2. `list_sessions` met `mine: true`, limit 50 (het filter op tags werkt niet: filter zelf). Neem elke sessie met tag `ascend:builder` waarvan `session_status` niet `SESSION_STATUS_ARCHIVED` is. Schrijf `stand.json` in de scratchpad:
