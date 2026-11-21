@@ -1,6 +1,12 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 21 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S. Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
+Bijgewerkt: 22 november 2026 door coördinator session_01LnDpSip9wpY6fuZXMm2yqw (opvolger van session_01LnDpSmhQECnxdG9gnj4X2S). Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
+
+## Stand 22 november 00:55 (nieuwe coördinator)
+
+- Coördinator nu session_01LnDpSip9wpY6fuZXMm2yqw, vastgezet door de chat ASCEND. Geen bouwers, geen open poorten. Weeklimiet staat op waarschuwing tot zondag 22 november 18:00 UTC: tot dan niets starten.
+- Gepland: send_later zondag 18:10 Lisbon voor de Graphify-proef (zie Vaste afspraken). Bouwmoment maandag start vanzelf in de sessie Bouwmoment ASCEND.
+- Worktree wt-zuinig stond in de scratchpad van de vorige coördinator; die container is niet de mijne, er is niets op te ruimen.
 
 ## Zuinige stand (21 november 00:10, lees dit eerst)
 
