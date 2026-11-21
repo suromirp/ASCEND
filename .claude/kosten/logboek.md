@@ -555,3 +555,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Pathfinder zinnen I-91 | pathfinder helper | sonnet | klein | ~3 min | akkoord, 3 mag; zin losse loop voorwaardelijk gemaakt door coördinator |
 | 2026-11-20 | Warden herstel I-91 | reviewer helper | fable | 79k tok | 2,5 min | akkoord, 4 mag (zin, besluit, venster: zelf in de squash) |
 | 2026-11-20 | Lookout zinnen I-91 | tester helper | sonnet | 59k tok | 3 min | groen 360/390/412, zelf bekeken |
+- 2026-11-21, I-94/96 ijksetkaart en uitleg, Sherpa, sonnet (ontwikkelaar), 129k (61k + 68k), ongeveer 25 min, 1 (Mag van Warden, voor de zuinige stand gestuurd)
+- 2026-11-21, I-94/96 review, Warden, sonnet (reviewer), 28k, 1 min, 0, akkoord zonder Moet
