@@ -36,10 +36,16 @@ function weekAfterLink(input: LinkShortTestInput): { after: SessionLog[]; ids: s
   const after = input.logs.filter((l) => mondayOfWeek(l.completedDate) === week).map((l) => (l.id === linked.id ? linked : l));
   const ids = shortTestLogIds(after, input.series);
   // De losse loop zelf kan geen korte test hebben: geen rustige loop, ingekort, of van voor de reeks.
-  return ids.includes(linked.id) ? { after, ids } : undefined;
+  const at = ids.indexOf(linked.id);
+  if (at < 0) return undefined;
+  // Zonder gekoppelde rustige loop later in de week (shortTestLogIds geeft alleen gekoppelde lopen, op dag,
+  // klok en id) is er geen
+  // test die kan verschuiven: dan is er niets te lezen en hoeft het voorstel nergens op te wachten.
+  return at < ids.length - 1 ? { after, ids } : undefined;
 }
 
-// De logs waarvan de reeks gelezen moet worden om het te weten; leeg als er niets te vragen valt.
+// De logs waarvan de reeks gelezen moet worden om het te weten; leeg als er niets kan verschuiven. Alleen
+// met een niet-lege lijst wacht de koppelkaart op de lezing.
 export function linkShortTestLogIds(input: LinkShortTestInput): string[] {
   return weekAfterLink(input)?.ids ?? [];
 }
@@ -67,8 +73,32 @@ export function linkShortTestShift(input: LinkShortTestInput & { streams: Readon
   return { logId: now.logId, date: now.date, sameDay: now.date === input.log.completedDate };
 }
 
+// Wat de koppelkaart over de korte test weet. `busy`: de reeksen worden nog gelezen, de knoppen staan uit.
+// `line`: de zin staat erbij. `none`: niets te zeggen. Na de lezing nooit meer `busy`, ook niet als hij
+// mislukte of zijn grens haalde.
+export type LinkShortTestState = { stand: 'busy' } | { stand: 'line'; line: string } | { stand: 'none' };
+
+// De lezing van de reeksen: undefined zolang hij loopt; `complete` false bij een fout of de tijdgrens.
+export interface LinkShortTestRead {
+  streams: ReadonlyMap<string, StreamSet>;
+  complete: boolean;
+}
+
+export function linkShortTestState(
+  input: (LinkShortTestInput & { noStrap?: NoStrapChoice; strapWorn?: readonly string[] }) | undefined,
+  read: LinkShortTestRead | undefined,
+  today: string,
+): LinkShortTestState {
+  if (!input || linkShortTestLogIds(input).length === 0) return { stand: 'none' };
+  if (!read) return { stand: 'busy' };
+  // Niet alles gelezen: geen uitspraak over een teststuk dat niet te zien is.
+  const line = read.complete ? linkShortTestLine(linkShortTestShift({ ...input, streams: read.streams }), today) : undefined;
+  return line ? { stand: 'line', line } : { stand: 'none' };
+}
+
 // De ene zin in het koppelvoorstel. "Korte test" is het woord van het logblad en de Briefing.
 export function linkShortTestLine(shift: LinkShortTestShift | undefined, today: string): string | undefined {
   if (!shift) return undefined;
-  return `Je ${shift.sameDay ? 'latere ' : ''}korte test van ${nearDay(shift.date, today)} telt dan niet meer, die uit deze loop wel.`;
+  const day = shift.date === today ? 'vandaag' : nearDay(shift.date, today);
+  return `Je ${shift.sameDay ? 'latere ' : ''}korte test van ${day} telt dan niet meer, die uit deze loop wel.`;
 }

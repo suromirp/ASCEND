@@ -5,7 +5,7 @@ import type { SessionLog } from '../models/training';
 import type { StreamSet } from '../models/activityDetail';
 import { linkLog, unlinkLog } from './missedTraining';
 import { shortTestView } from './shortTest';
-import { linkShortTestLine, linkShortTestLogIds, linkShortTestShift } from './linkShortTest';
+import { linkShortTestLine, linkShortTestLogIds, linkShortTestShift, linkShortTestState } from './linkShortTest';
 
 // I-95: het koppelvoorstel zegt het als de koppeling verandert welke korte test van de week telt. Alles nagemaakt.
 
@@ -65,6 +65,9 @@ describe('verandert de koppeling welke korte test van de week telt', () => {
     expect(linkShortTestLine({ logId: 'do', date: '2026-11-17', sameDay: true }, today)).toBe('Je latere korte test van dinsdag telt dan niet meer, die uit deze loop wel.');
     // Een week of verder terug: met de datum.
     expect(linkShortTestLine({ logId: 'do', date: '2026-11-12', sameDay: false }, today)).toBe('Je korte test van donderdag 12 november telt dan niet meer, die uit deze loop wel.');
+    // De test die nu telt is van vandaag.
+    expect(linkShortTestLine({ logId: 'do', date: '2026-11-20', sameDay: false }, today)).toBe('Je korte test van vandaag telt dan niet meer, die uit deze loop wel.');
+    expect(linkShortTestLine({ logId: 'do', date: '2026-11-20', sameDay: true }, today)).toBe('Je latere korte test van vandaag telt dan niet meer, die uit deze loop wel.');
     expect(linkShortTestLine(undefined, today)).toBeUndefined();
   });
 
@@ -100,6 +103,14 @@ describe('verandert de koppeling welke korte test van de week telt', () => {
     const sun = log('los', '2026-11-15');
     const mon = log('ma', '2026-11-16', { plannedSessionId: 'p_ma' });
     expect(shift(sun, [mon, thu, sun], [], 'p_zo')).toBeUndefined();
+    // Ook met de zondagloop vooraan: de tests van de week erna horen niet bij zijn week.
+    expect(shift(sun, [sun, mon, thu], [], 'p_zo')).toBeUndefined();
+    expect(linkShortTestLogIds({ log: sun, sessionId: 'p_zo', logs: [sun, mon, thu], series })).toEqual([]);
+    // Met een test later in zijn eigen week verschuift alleen die, niet die van de week erna.
+    const sat = log('za', '2026-11-14', { plannedSessionId: 'p_za' });
+    const wed = log('los', '2026-11-11');
+    expect(shift(wed, [wed, sat, mon, thu], [], 'p_wo')).toEqual({ logId: 'za', date: '2026-11-14', sameDay: false });
+    expect(linkShortTestLogIds({ log: wed, sessionId: 'p_wo', logs: [wed, sat, mon, thu], series })).toEqual(['los', 'za']);
     // De week telt op de dag van het log, niet op die van het plan: een losse loop van maandag bij de
     // geplande loop van zondag verdringt de test van donderdag wel.
     const looseMon = log('los', '2026-11-16');
@@ -139,6 +150,48 @@ describe('verandert de koppeling welke korte test van de week telt', () => {
     // Een losse loop die geen rustige loop is: niets te lezen.
     const walk = log('los', '2026-11-17', { templateId: 'tpl_walk' });
     expect(linkShortTestLogIds({ log: walk, sessionId: 'p_di', logs: [thu, walk], series })).toEqual([]);
+  });
+
+  it('niets te lezen als er geen gekoppelde rustige loop later in de week is', () => {
+    const ask = (loose: SessionLog, logs: SessionLog[]) => linkShortTestLogIds({ log: loose, sessionId: 'p_x', logs, series });
+    expect(ask(tue, [tue])).toEqual([]);
+    // De andere loop is eerder, of later maar zelf los.
+    const fri = log('los', '2026-11-20');
+    expect(ask(fri, [thu, fri])).toEqual([]);
+    expect(ask(tue, [tue, log('do', '2026-11-19')])).toEqual([]);
+    // Zelfde dag: alleen een latere op de klok.
+    const late = log('los', '2026-11-19', { completedAt: '2026-11-19T18:00:00' });
+    expect(ask(late, [thu, late])).toEqual([]);
+  });
+
+  describe('de drie standen van de kaart', () => {
+    const today = '2026-11-20';
+    const input = { log: tue, sessionId: 'p_di', logs: [thu, tue], series };
+    it('bezig tot de reeksen gelezen zijn, daarna de zin', () => {
+      expect(linkShortTestState(input, undefined, today)).toEqual({ stand: 'busy' });
+      expect(linkShortTestState(input, { streams: both(), complete: true }, today)).toEqual({ stand: 'line', line: 'Je korte test van donderdag telt dan niet meer, die uit deze loop wel.' });
+    });
+    it('gelezen en er verschuift niets: niets', () => {
+      expect(linkShortTestState(input, { streams: new Map<string, StreamSet>([['do', run()], ['los', plain()]]), complete: true }, today)).toEqual({ stand: 'none' });
+    });
+    it('een fout of de tijdgrens: niets, nooit blijvend bezig', () => {
+      expect(linkShortTestState(input, { streams: new Map(), complete: false }, today)).toEqual({ stand: 'none' });
+      expect(linkShortTestState(input, { streams: both(), complete: false }, today)).toEqual({ stand: 'none' });
+    });
+    it('geen kandidaat: meteen niets, zonder te wachten', () => {
+      expect(linkShortTestState(undefined, undefined, today)).toEqual({ stand: 'none' });
+      expect(linkShortTestState({ ...input, logs: [tue] }, undefined, today)).toEqual({ stand: 'none' });
+      const fri = log('los', '2026-11-20');
+      expect(linkShortTestState({ ...input, log: fri, logs: [thu, fri] }, undefined, today)).toEqual({ stand: 'none' });
+      expect(linkShortTestState({ ...input, series: undefined }, undefined, today)).toEqual({ stand: 'none' });
+    });
+    it('de keuze voor de pols telt mee, zoals op het logblad', () => {
+      const { stanceBalanceLeftPct: _band, ...noStrap } = run();
+      void _band;
+      const streams = new Map<string, StreamSet>([['do', run()], ['los', noStrap]]);
+      expect(linkShortTestState(input, { streams, complete: true }, today).stand).toBe('none');
+      expect(linkShortTestState({ ...input, noStrap: 'margin' }, { streams, complete: true }, today).stand).toBe('line');
+    });
   });
 
   it('leest alleen: geen log verandert', () => {

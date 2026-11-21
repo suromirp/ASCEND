@@ -29,7 +29,7 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
   const [note, setNote] = useState<string | null>(null);
   const { item, lapsed, missedSettings } = state;
   // Verandert de koppeling welke korte test van de week telt, dan staat dat in het voorstel (I-95).
-  const shortTestLine = useLinkShortTest(item?.kind === 'link' ? item.log : undefined, item?.kind === 'link' ? item.session.id : undefined, today);
+  const shortTest = useLinkShortTest(item?.kind === 'link' ? item.log : undefined, item?.kind === 'link' ? item.session.id : undefined, today);
   if (!item && lapsed) {
     return (
       <Card data-missed-lapsed="">
@@ -52,15 +52,18 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
   };
 
   if (item.kind === 'link') {
+    // Zolang de korte test gelezen wordt staan de knoppen uit: de zin komt nooit boven knoppen die al te tikken zijn.
+    const reading = shortTest.stand === 'busy';
     return (
       <Card data-missed={item.session.id}>
         <Eyebrow>{linkEyebrow(item.log)}</Eyebrow>
         <p className="mt-1 text-base" style={{ color: 'var(--color-ink)' }}>{linkLine(item.session, item.template, item.log, today)}</p>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Met Akkoord telt die training als gedaan. Alleen de koppeling is nieuw, de cijfers blijven zoals ze waren.</p>
-        {shortTestLine && <p className="mt-1 text-sm" data-link-short-test="" style={{ color: 'var(--color-ink)' }}>{shortTestLine}</p>}
+        {shortTest.stand === 'line' && <p className="mt-1 text-sm" data-link-short-test="" style={{ color: 'var(--color-ink)' }}>{shortTest.line}</p>}
+        {reading && <p className="mt-1 text-sm" role="status" data-link-short-test="bezig" style={{ color: 'var(--color-ink-dim)' }}>Even kijken wat dit met je korte test doet.</p>}
         <div className="mt-3 flex gap-2">
-          <SecondaryButton disabled={busy} onClick={() => remember((m) => ({ ...m, declined: [...m.declined, declinedKey(item.log.id, item.session.id)], declinedOn: { ...m.declinedOn, [declinedKey(item.log.id, item.session.id)]: today } }))}>Liever niet</SecondaryButton>
-          <SecondaryButton disabled={busy} onClick={() => run(() => linkMissedLog(item.log.id, item.session.id))}>{busy ? 'Bezig…' : 'Akkoord'}</SecondaryButton>
+          <SecondaryButton disabled={busy || reading} onClick={() => remember((m) => ({ ...m, declined: [...m.declined, declinedKey(item.log.id, item.session.id)], declinedOn: { ...m.declinedOn, [declinedKey(item.log.id, item.session.id)]: today } }))}>Liever niet</SecondaryButton>
+          <SecondaryButton disabled={busy || reading} onClick={() => run(() => linkMissedLog(item.log.id, item.session.id))}>{busy ? 'Bezig…' : 'Akkoord'}</SecondaryButton>
         </div>
         {note && <p className="mt-2 text-sm" role="status" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}
       </Card>
