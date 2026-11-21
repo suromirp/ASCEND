@@ -202,7 +202,7 @@ describe('volledig terugzetten: Laatste back-up en de lijst gaan als paar', () =
     expect(await pair()).toEqual({ lastExportedAt: undefined, lastBackupLogs: undefined });
   });
 
-  it('Ongedaan maken na een gelukte import: de kopie brengt het paar van voor de import terug, logs blijven', async () => {
+  it('Ongedaan maken na een gelukte import: het nieuwste paar blijft, Laatste back-up springt niet terug, logs blijven (I-93)', async () => {
     await SessionLogsRepo.put(log('a', '2026-11-01T10:00:00.000Z'));
     const first = await makeBackup(NOV8);
     // Een nieuwer bestand, van een ander toestel, met twee trainingen erbij.
@@ -215,13 +215,14 @@ describe('volledig terugzetten: Laatste back-up en de lijst gaan als paar', () =
 
     await restoreSnapshot(kopie.id);
 
-    expect(await pair()).toEqual({ lastExportedAt: NOV8, lastBackupLogs: { at: NOV8, ids: ['a'] } });
-    // Historie groeit alleen: b en c blijven, en tellen weer mee (te veel, nooit te weinig).
+    // De kopie draagt 8 november met [a], het toestel 15 november met [a, b, c]: het toestel is nieuwer.
+    expect(await pair()).toEqual({ lastExportedAt: NOV15, lastBackupLogs: { at: NOV15, ids: ['a', 'b', 'c'] } });
+    // Historie groeit alleen: b en c blijven. Ze staan in het bestand van 15 november, dus ze tellen als bewaard.
     expect(await logIds()).toEqual(['a', 'b', 'c']);
-    expect(await unsaved()).toEqual(['b', 'c']);
+    expect(await unsaved()).toEqual([]);
   });
 
-  it('een kopie van voor een import, gemaakt voor de laatste back-up: tijdstip en lijst komen samen terug zoals eerst', async () => {
+  it('een kopie van voor een import, gemaakt voor de laatste back-up: het paar van het toestel blijft (I-93)', async () => {
     await SessionLogsRepo.put(log('a', '2026-11-01T10:00:00.000Z'));
     await makeBackup(NOV8);
     const kopie = await createPreImportSnapshot(); // 8 november met [a]
@@ -231,9 +232,9 @@ describe('volledig terugzetten: Laatste back-up en de lijst gaan als paar', () =
 
     await restoreSnapshot(kopie.id);
 
-    expect(await pair()).toEqual({ lastExportedAt: NOV8, lastBackupLogs: { at: NOV8, ids: ['a'] } });
+    expect(await pair()).toEqual({ lastExportedAt: NOV15, lastBackupLogs: { at: NOV15, ids: ['a', 'b'] } });
     expect(await logIds()).toEqual(['a', 'b']);
-    expect(await unsaved()).toEqual(['b']);
+    expect(await unsaved()).toEqual([]);
   });
 
   it('een gedownloade kopie op een ander toestel: de lijst van het eerste toestel komt niet mee, het bestand zelf telt', async () => {

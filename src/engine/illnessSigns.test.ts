@@ -90,6 +90,26 @@ describe('vroeg ziek zien', () => {
       expect(illnessSign({ today, metrics: weeks([bad, bad, bad]), explained: new Set(['2026-10-30']), ignoredNights: new Set(['2026-10-30']) })).toBeUndefined();
     });
 
+    it('twee niet goed gemeten ochtenden achter elkaar met een hoge rusthartslag: overgeslagen, de zin telt dagen', () => {
+      const sign = illnessSign({ today, metrics: weeks([bad, high, high, bad]), ignoredNights: new Set(['2026-10-29', '2026-10-30']) });
+      expect(sign?.mornings).toBe(2);
+      expect(sign?.from).toBe('2026-10-28');
+      expect(sign?.text).toBe('Je rusthartslag ligt al vier dagen boven je gewone, vandaag 6 slagen, en je HRV lag op twee ochtenden eronder. Voel je je goed?');
+    });
+
+    it('twee gaten achter elkaar, waarvan één met een gewone rusthartslag: niets', () => {
+      const mid = { rhr: 50, hrv: 48 };
+      expect(illnessSign({ today, metrics: weeks([bad, bad, high, mid, bad]), ignoredNights: new Set(['2026-10-29', '2026-10-30']) })).toBeUndefined();
+    });
+
+    it('een gat zonder rusthartslag breekt de reeks, met of zonder meting van die dag', () => {
+      const ignoredNights = new Set(['2026-10-30']);
+      const noRhr = weeks([bad, bad, bad]).map((m) => (m.date === '2026-10-30' ? { ...m, restingHeartRate: undefined } : m));
+      const noDay = weeks([bad, bad, bad]).filter((m) => m.date !== '2026-10-30');
+      expect(illnessSign({ today, metrics: noRhr, ignoredNights })).toBeUndefined();
+      expect(illnessSign({ today, metrics: noDay, ignoredNights })).toBeUndefined();
+    });
+
     it('zonder gat blijft de zin zoals hij was', () => {
       const sign = illnessSign({ today, metrics: weeks([bad, bad, bad, bad]), ignoredNights: new Set(['2026-10-28']) });
       expect(sign?.mornings).toBe(3);

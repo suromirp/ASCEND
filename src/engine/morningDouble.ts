@@ -1,4 +1,7 @@
-// ASCEND: één ochtend per dag (docs/beslissingen/2026-11-20-ochtend-dubbel.md).
+// ASCEND: één ochtend per dag (docs/beslissingen/2026-11-20-ochtend-dubbel.md), en een ochtend zonder bron
+// is van de gebruiker (docs/beslissingen/2026-11-20-ochtend-zonder-bron.md): hij gaat alleen weg als hij
+// gedekt is, nooit bij ontkoppelen, de grens van 400 dagen of een uitgezette soort. Een uitgezette soort
+// verandert zijn opslag niet, ook niet bij een import; het lezen filtert (engine/watchUse.ts#filterRecovery).
 //
 // Een back-up zonder id per ochtend krijgt bij het inlezen `import:<datum>`
 // (storage/migrationsBody.ts#migrateMornings). Dat is een ochtend zonder bron: niemand weet waar
