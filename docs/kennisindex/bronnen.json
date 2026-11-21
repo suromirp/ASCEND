@@ -304,8 +304,11 @@
    "onderwerpen": [
     "werkwijze"
    ],
-   "kern": "Niets gaat naar main voordat het door vier poorten is: de vier controles, een review door Warden, een doorloop door Lookout op 360 en 390 px en een screenshot dat de coördinator zelf bekijkt.",
-   "stand": "geldt"
+   "kern": "Niets gaat naar main voordat het door vier poorten is: de vier controles, een review door Warden, een doorloop door Lookout op 360 en 390 px en een screenshot dat de coördinator zelf bekijkt. Geldt nog: de vier controles groen voor main, een tijdsgrens met zichtbare uitkomst, nooit een leeg scherm.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-21-zuinige-stand.md"
+   ]
   },
   "docs/beslissingen/2026-10-22-lege-velden-aanvullen.md": {
    "onderwerpen": [

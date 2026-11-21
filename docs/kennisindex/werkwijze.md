@@ -18,7 +18,6 @@ Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 - 2026-11-19 [Geen gepland bouwmoment meer](../beslissingen/2026-11-19-geen-gepland-bouwmoment.md): De geplande taak Bouwmoment is weg; de coördinator bouwt de Inbox zelf in bouwrondes met helpers, met dezelfde poorten en één squash per ronde.
 - 2026-11-11 [Pathfinder: een poort voor samenhang en UX](../beslissingen/2026-11-11-pathfinder.md): Er komt een zesde rol, Pathfinder (`.claude/agents/pathfinder.md`, skill `pathfinder`), die de app als geheel bewaakt vanuit de gebruiker.
 - 2026-10-31 [Tekstkaart van de app als standaardcontrole](../beslissingen/2026-10-31-app-kaart.md): Data en teksten controleren we met de tekstkaart in `docs/app-kaart/` (`npm run kaart:vergelijk`), niet met screenshots.
-- 2026-10-22 [Kwaliteitspoort voor alles wat live gaat](../beslissingen/2026-10-22-kwaliteitspoort.md): Niets gaat naar main voordat het door vier poorten is: de vier controles, een review door Warden, een doorloop door Lookout op 360 en 390 px en een screenshot dat de coördinator zelf bekijkt. Aangevuld door: 2026-11-11-pathfinder.
 - 2026-10-21 [Werkwijze met Claude](../beslissingen/2026-10-21-werkwijze.md): Claude werkt aan ASCEND met een vaste set specialisten, vaste werkinstructies en een besluitenlogboek in de repo. Aangevuld door: 2026-10-22-kwaliteitspoort.
 
 ## Deels ingehaald
@@ -27,6 +26,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 
 - 2026-11-20 [Lange chat of verse chats, en waar de kosten zitten](../beslissingen/2026-11-20-lange-chat-en-kosten.md): De coördinator wisselt op lengte (250k tot 300k context of na een bouwronde), de overdracht blijft onder 10 KB, haken rond het samenvatten bewaren de stand, en de kosten gaan omlaag met plan-eerst bij planner en opslag, het model naar het werk en gebundelde kleine punten. Geldt nog: de overdracht onder 10 KB, de haken rond het samenvatten, plan-eerst bij planner en opslag. Deels ingehaald door: [2026-11-21-zuinige-stand](../beslissingen/2026-11-21-zuinige-stand.md).
 - 2026-11-20 [Gemengde bouwers en wissel via de chat ASCEND](../beslissingen/2026-11-20-gemengde-bouwers-en-wissel.md): Lange of zware bouwers (planner, opslag, migraties) in een eigen chat, klein werk als helper; de coördinator start zijn opvolger niet zelf maar meldt de wissel aan de vaste chat ASCEND, die hem start en vastzet, zodat de keten nooit vol raakt. Geldt nog: de wissel via de chat ASCEND, kleine klussen als helper. Deels ingehaald door: [2026-11-21-zuinige-stand](../beslissingen/2026-11-21-zuinige-stand.md).
+- 2026-10-22 [Kwaliteitspoort voor alles wat live gaat](../beslissingen/2026-10-22-kwaliteitspoort.md): Niets gaat naar main voordat het door vier poorten is: de vier controles, een review door Warden, een doorloop door Lookout op 360 en 390 px en een screenshot dat de coördinator zelf bekijkt. Geldt nog: de vier controles groen voor main, een tijdsgrens met zichtbare uitkomst, nooit een leeg scherm. Deels ingehaald door: [2026-11-21-zuinige-stand](../beslissingen/2026-11-21-zuinige-stand.md). Aangevuld door: 2026-11-11-pathfinder.
 
 ## Onderzoek, ontwerpen en verslagen
 
