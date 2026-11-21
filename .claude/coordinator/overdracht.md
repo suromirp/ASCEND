@@ -1,6 +1,6 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S. Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
+Bijgewerkt: 21 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S. Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
 
 ## Stand 20 november avond, ronde 2 (lees dit eerst)
 
@@ -9,7 +9,13 @@ Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S.
   - I-95 (koppelvoorstel noemt verschuiving testloop): helper Sherpa op Fable, branch claude/koppel-testloop.
   - I-94 en I-96 (ijksetkaart Akkoord, tests en uitleg niet goed gemeten): helper Sherpa op Sonnet, branch claude/klein-94-96.
 - 21 november 23:55: limiet per vijf uur (Fable en Sonnet) stopte drie helpers op 20 november rond 18:40; de werker herstartte. Back-up import: alle controles groen door coördinator (11811 tests, kaart gelijk). I-95 klaar op b1bbd8a1. Drie helpers hervat (twee Wardens, Sherpa I-94/96).
-- Daarna: Warden (opslag en I-95 op Fable), Lookout en Pathfinder voor I-94; één squash naar main voor de bundel.
+- 21 november: Warden back-up import en Warden I-95: geen Moet. Back-up: Mag-punten in de docs door coördinator gedaan (fdc93a33 op claude/backup-import); Mag 5 (wedloop met dezelfde waarde) blijft liggen. Losse chat back-up (session_01LnDpSnhGZjC8AaNw6gB9My) archiveren na de squash. Worktrees wt-backup en wt-nacht in de scratchpad opruimen.
+- I-95: herstelronde loopt bij dezelfde Sherpa (drie standen bezig/zin/niets, knoppen uit tot 4 s, valkuil, test weekgrens, "van vandaag", zin in besluit).
+- I-94/96 klaar op e5646a90 (Akkoord als SecondaryButton met 18% mint, want Afronden is al de gevulde mint). Warden Sonnet loopt. Screenshot bekeken: leesbaar.
+- Daarna: Lookout en Pathfinder samen voor I-94 en I-95; één squash naar main voor de bundel I-93 tot I-97.
+- Nieuw voor de Inbox (I-98 tot I-101): import filtert `manual:`, `garmin:`, `macrofactor:` nog (alleen filteren wat `pruneWellness` raakt, `backupApply.ts:140-142`); koppelvoorstel zegt niet dat een loop later in de week zijn korte test verliest (`shortTestSessionIds`, sinds I-91); gedeelde hook `useShortTestStreams`; strengere variant: zonder bijpassende lijst het paar weghalen.
+- Geleerd: geef elke helper een eigen mapnaam in de scratchpad. Een Warden zette de hoofdmap /home/user/ascend op een andere branch (detached): zeg in elke opdracht "geen checkout in de hoofdmap, gebruik git diff of git show". `src/state/logSave.test.ts` wankelde één keer onder volle last; bij de laatste controle voor main op letten.
+- Gemeld aan de eigenaar: 20 november live I-68, I-83, I-92, I-84, I-91, weekkamzin en twee werkwijzebesluiten; na de wissel nog niets live. Vorige coördinator gearchiveerd ($46).
 
 ## Stand 20 november avond, ronde 1
 
