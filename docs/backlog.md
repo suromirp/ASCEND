@@ -7,12 +7,13 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 `docs/beslissingen/`.
 
 ## Inbox
-Hoogste code: I-97. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
-- [I-97] Back-up importeren haalt uitgezette soorten voorgoed uit een ochtend zonder bron (Warden 20 november, mag, stond al zo op main): `src/storage/backupApply.ts` (rond regel 136) filtert bij een import de uitgezette soorten weg uit een `import:`-ochtend. Dat wringt met besluit `2026-11-20-ochtend-zonder-bron.md` (een uitgezette soort verandert de opslag niet, het lezen filtert). Ook: de kop van `src/engine/morningDouble.ts` noemt alleen het oude besluit.
-- [I-96] Niet goed gemeten, tests en uitleg (Warden 20 november, mag na I-92): tests voor twee gaten achter elkaar en voor een gat zonder rusthartslag in `illnessSigns.ts`; de uitleg "twee ochtenden op rij" klopt niet meer helemaal als een ochtend wordt overgeslagen; valkuil over `from` bij achteraf oordelen.
-- [I-95] Koppelvoorstel noemt niet dat de testloop verschuift (Warden 20 november, G4 bij I-91): koppel je een losse loop met teststuk aan een geplande rustige loop eerder in de week, dan wordt die de korte test van de week en telt de latere niet meer. Het voorstel zegt dat nu niet.
-- [I-94] IJksetkaart, Akkoord als hoofdknop (Pathfinder 20 november, mag, bestond al): Niet nu en Akkoord zijn twee gelijke omlijnde knoppen in `CalibrationNotice.tsx`; Akkoord mag een tint sterker, binnen één mint accent per scherm.
-- [I-93] Back-up, kopie van voor een import (Warden 20 november, mag): terugzetten van zo'n kopie zet Laatste back-up terug in de tijd; dezelfde regel als bij I-68 (het nieuwste paar `lastExportedAt` en `lastBackupLogs` blijft) kan hier ook gelden. En een `lastExportedAt` dat al in de toekomst op een toestel staat, wordt niet rechtgezet. Telt hoogstens te veel, nooit te weinig. Herstel op `warden/backup-terugzetten-herstel`, Mag 5.
+Hoogste code: I-103. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+- [I-103] Token voor de zachte mint vulling (Warden 21 november, mag): de 18%-vulling van Akkoord staat nu in StepProposalNotice en CalibrationNotice; komt hij een derde keer terug, maak dan een token `--color-action-soft` in `src/index.css`.
+- [I-102] Koppelkaart springt als de knoppen aangaan (Lookout 21 november, mag): de knoppen schuiven 20 tot 24 px als de wachtregel verdwijnt; geef de wachtregel een vaste hoogte (`MissedTrainingCard.tsx`, `useLinkShortTest.ts`).
+- [I-101] Strengere variant voor een tijdstip zonder bijpassende lijst (Warden 21 november, mag): nu telt een tijdstip in de toekomst zonder lijst 0, zodat de herinnering zeven dagen zwijgt; liever het paar weghalen. Zie `docs/beslissingen/2026-11-20-backup-kopie-en-toekomst.md`, Bekende grens.
+- [I-100] Gedeelde hook `useShortTestStreams` (Warden 21 november, mag): `useLinkShortTest` en `ShortTestCard` laden dezelfde stromen elk op hun eigen manier.
+- [I-99] Koppelvoorstel zegt niet dat een loop later in de week zijn korte test verliest (Warden 21 november, mag): sinds I-91 kan `shortTestSessionIds` verschuiven; de zin van I-95 noemt alleen de test van de gekoppelde dag.
+- [I-98] Import filtert `manual:`, `garmin:` en `macrofactor:` nog (Warden 21 november, mag): alleen filteren wat `pruneWellness` raakt (`intervals.icu:` en `health-connect:`), zie `src/storage/backupApply.ts:140-142`. Opslag, Warden op Opus.
 - [I-87] Lookout Drempel 17 november (mag, bestaand): de uitlegknoppen (i) in de rijen van het blad Testloop zijn 20 bij 20 px (de rij zelf 44 px), en de voorstelkaart heeft vier mint Straks-regels naast de mint knoppen. Bij een volgende ronde in die rij en kaart meenemen.
 - [I-85] Vervallen training in het verleden (Lookout 16 november, mag): heeft een mint hoofdknop voor iets wat je zelden doet (Gedaan bij een vervallen testloop, Training starten bij een vervallen Benen A zonder sportschool); liever Verplaatsen of geen mint. En een overgeslagen rij zonder slot of voorstel tijdens een lopende ziekmelding krijgt geen reden (`skipReason.ts#pauseReason` kijkt alleen naar voorbije dagen).
 - [I-82] Opruimen na de onderhoudsronde (16 november, `docs/onderhoud/2026-11-16-onderhoudsronde.md`): eerst punten 1, 2 en 4 (drie bestanden alleen voor tests, 11 dode exports, guards naar `utils/guards.ts`), daarna Zonder sportschool overal via `dayRules.ts` (punt 3, planning, Warden Fable). Geen gedragswijziging; tekstkaart gelijk.
@@ -94,6 +95,11 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-97] Back-up importeren haalt uitgezette soorten voorgoed uit een ochtend zonder bron (22 november, 223614f)
+- [I-96] Niet goed gemeten, tests en uitleg (22 november, 223614f)
+- [I-95] Koppelvoorstel noemt niet dat de testloop verschuift (22 november, 223614f)
+- [I-94] IJksetkaart, Akkoord als hoofdknop (22 november, 223614f)
+- [I-93] Back-up, kopie van voor een import (22 november, 223614f)
 - [I-91] Korte test, rest na de bouw van 18 november (20 november, ad2e4b9)
 - [I-84] Ochtend dubbel na een oude back-up (20 november, 16f634a)
 - [I-92] Niet goed gemeten, restpunten (20 november, 0daf3af)
