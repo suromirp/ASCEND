@@ -18,7 +18,9 @@ export function CalibrationNotice({ name, phase: state, onAccept, onLater, onSet
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Er komt een set bij met nog één over als doel. Daarna kies je zoals altijd hoeveel je over had.</p>
             <div className="mt-1 flex flex-wrap items-center gap-x-3">
               <SecondaryButton onClick={onLater}>Niet nu</SecondaryButton>
-              <SecondaryButton onClick={accept}>Akkoord</SecondaryButton>
+              {/* Akkoord is de hoofdkeuze van de kaart. De gevulde mint knop is hier al van Afronden in de kop (één mint accent
+                per scherm), dus een tint sterker: dezelfde omlijnde knop met een zachte mint vulling. */}
+              <SecondaryButton onClick={accept} className="bg-[color-mix(in_srgb,var(--color-action)_18%,transparent)]">Akkoord</SecondaryButton>
               <TextButton tone="dim" onClick={onSettings}>IJkset aanpassen</TextButton>
             </div>
           </>

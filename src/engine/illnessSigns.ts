@@ -7,7 +7,9 @@
 //
 // - twee signalen tegelijk: je rusthartslag minstens 6 slagen boven je gemiddelde van de 28 dagen
 //   ervoor, en je HRV onder je gewone bereik (dezelfde marge als de ochtendkaart);
-// - minstens twee ochtenden op rij, tot en met vandaag;
+// - minstens twee ochtenden met beide signalen, tot en met vandaag, binnen een reeks zonder onderbreking: een
+//   ochtend die je niet kunt beoordelen wordt overgeslagen en telt niet, maar een gewone, ontbrekende of
+//   uitgelegde ochtend breekt de reeks;
 // - niet als je zelf al iets vastlegde bij "Wat speelde er" voor een van die ochtenden, of een
 //   nacht niet liet meetellen, en niet als je al ziek gemeld bent;
 // - de HRV van een nacht die je "Niet goed gemeten" noemde telt niet en blijft uit je gemiddelde.
