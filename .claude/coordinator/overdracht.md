@@ -13,7 +13,7 @@ Bijgewerkt: 21 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S.
 
 - Main 223614f0 (bundel, squash) en ec171b9f (backlog: I-93 tot I-97 onder Pas live, I-98 tot I-103 in de Inbox, hoogste code I-103). Alle controles groen: 11831 tests, kaart gelijk, kennisindex gelijk.
 - Poorten gehaald: Warden back-up en I-95 (geen Moet), Warden I-94/96 (Sonnet, geen Moet), één Lookout (Sonnet in plaats van Haiku: de kit dekt de wachtstand van de koppelkaart niet) groen op 360/390/412, eigen blik op de afdrukken.
-- Nog te doen door de opvolger als het niet gedaan is: losse chat back-up session_01LnDpSnhGZjC8AaNw6gB9My archiveren; worktrees opruimen (scratchpad wt-backup, wt-bundel, wt-nacht, wt-zuinig; `.claude/worktrees/agent-adade0e10bce0a641` en `agent-a79dc055e776d8c45`); branches claude/backup-import, claude/koppel-testloop, claude/klein-94-96, claude/bundel-93-97 en claude/backlog-bij mogen weg na controle.
+- Opgeruimd: losse chat back-up gearchiveerd, alle worktrees weg. Branches claude/backup-import, claude/koppel-testloop, claude/klein-94-96, claude/bundel-93-97 en claude/backlog-bij zijn gesquasht en mogen weg. Werkkaart-ronde gepland (trig_01Rf4bAHmxs26o8YtR4xpc2b), wissel aangevraagd (trig_015Bv75ndPBH2jZcjUcGajgT).
 - Vangnet-taak trig_017XyDyhXCk5qFayfNhbYfeS: delete_trigger werd door de classifier geweigerd; de taak vuurde 23:16 UTC en is genegeerd. Gemeld aan de eigenaar.
 - Volgende bouwmoment: maandag (zuinige stand: ma, wo, vr). Kandidaten: I-98 (opslag, Opus), I-102 (klein), I-99.
 - Geleerd: geef elke helper een eigen mapnaam in de scratchpad en zeg "geen checkout in /home/user/ascend". `src/state/logSave.test.ts` wankelde één keer onder volle last.
