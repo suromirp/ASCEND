@@ -2,7 +2,13 @@
 
 Bijgewerkt: 21 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S. Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
 
-## Stand 20 november avond, ronde 2 (lees dit eerst)
+## Zuinige stand (21 november 00:10, lees dit eerst)
+
+- Eigenaar via de chat ASCEND: zuinige stand, vastgelegd in skill `werkverdeling` (bovenaan) en besluit `2026-11-21-zuinige-stand.md`, op main 68eca8b1. Kort: Sonnet voor bouwer en Warden, Opus alleen planner/opslag/migraties/historie, nooit Fable tenzij de eigenaar vraagt; poorten naar risico; één Warden en één Lookout per bouwmoment; bouwen alleen ma/wo/vr; Mag naar de backlog; wissel rond 150k of na elke bouwronde; geen wakeups zonder reden.
+- Toegepast op deze ronde: geen Pathfinder (geen nieuw scherm of flow); één Lookout op Haiku over I-94 en I-95; Mag-punten van Warden I-94/96 die nog niet gestuurd waren gaan naar de backlog. Het Mag-herstel voor StepProposalNotice was al gestuurd voor de zuinige stand; laten afmaken.
+- Na de squash van deze bundel: wissel (ronde klaar).
+
+## Stand 20 november avond, ronde 2
 
 - 18:00 Amsterdam: nieuwe coördinator session_01LnDpSmhQECnxdG9gnj4X2S draait. Ronde gestart:
   - I-93 en I-97 (opslag, back-up import): losse chat session_01LnDpSnhGZjC8AaNw6gB9My op Fable, branch claude/backup-import.
@@ -12,7 +18,7 @@ Bijgewerkt: 21 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S.
 - 21 november: Warden back-up import en Warden I-95: geen Moet. Back-up: Mag-punten in de docs door coördinator gedaan (fdc93a33 op claude/backup-import); Mag 5 (wedloop met dezelfde waarde) blijft liggen. Losse chat back-up (session_01LnDpSnhGZjC8AaNw6gB9My) archiveren na de squash. Worktrees wt-backup en wt-nacht in de scratchpad opruimen.
 - I-95: herstelronde loopt bij dezelfde Sherpa (drie standen bezig/zin/niets, knoppen uit tot 4 s, valkuil, test weekgrens, "van vandaag", zin in besluit).
 - I-94/96 klaar op e5646a90 (Akkoord als SecondaryButton met 18% mint, want Afronden is al de gevulde mint). Warden Sonnet loopt. Screenshot bekeken: leesbaar.
-- Daarna: Lookout en Pathfinder samen voor I-94 en I-95; één squash naar main voor de bundel I-93 tot I-97.
+- Daarna: één Lookout (Haiku) voor I-94 en I-95; één squash naar main voor de bundel I-93 tot I-97.
 - Nieuw voor de Inbox (I-98 tot I-101): import filtert `manual:`, `garmin:`, `macrofactor:` nog (alleen filteren wat `pruneWellness` raakt, `backupApply.ts:140-142`); koppelvoorstel zegt niet dat een loop later in de week zijn korte test verliest (`shortTestSessionIds`, sinds I-91); gedeelde hook `useShortTestStreams`; strengere variant: zonder bijpassende lijst het paar weghalen.
 - Geleerd: geef elke helper een eigen mapnaam in de scratchpad. Een Warden zette de hoofdmap /home/user/ascend op een andere branch (detached): zeg in elke opdracht "geen checkout in de hoofdmap, gebruik git diff of git show". `src/state/logSave.test.ts` wankelde één keer onder volle last; bij de laatste controle voor main op letten.
 - Gemeld aan de eigenaar: 20 november live I-68, I-83, I-92, I-84, I-91, weekkamzin en twee werkwijzebesluiten; na de wissel nog niets live. Vorige coördinator gearchiveerd ($46).
