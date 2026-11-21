@@ -557,3 +557,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Lookout zinnen I-91 | tester helper | sonnet | 59k tok | 3 min | groen 360/390/412, zelf bekeken |
 - 2026-11-21, I-94/96 ijksetkaart en uitleg, Sherpa, sonnet (ontwikkelaar), 129k (61k + 68k), ongeveer 25 min, 1 (Mag van Warden, voor de zuinige stand gestuurd)
 - 2026-11-21, I-94/96 review, Warden, sonnet (reviewer), 28k, 1 min, 0, akkoord zonder Moet
+- 2026-11-21, I-95 koppelvoorstel korte test, Sherpa, fable (ontwikkelaar), ongeveer 125k in de herstelronde (plus de eerste ronde), 27 min, 1 (Warden-punten)
