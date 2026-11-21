@@ -294,7 +294,7 @@ export function planMissed(input: MissedInput): MissedPlan {
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const fullDay = (iso: string) => `${weekdayLongNL(iso)} ${formatDateNL(iso)}`;
 // Deze week alleen de dag ("dinsdag"), verder terug met de datum.
-const nearDay = (iso: string, today: string) => (daysBetween(iso, today) < 7 ? weekdayLongNL(iso) : fullDay(iso));
+export const nearDay = (iso: string, today: string) => (daysBetween(iso, today) < 7 ? weekdayLongNL(iso) : fullDay(iso));
 
 // "Rustige duurloop van maandag 26 oktober".
 export function askLine(session: PlannedSession, template: SessionTemplate): string {
