@@ -8,6 +8,7 @@ Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S.
   - I-93 en I-97 (opslag, back-up import): losse chat session_01LnDpSnhGZjC8AaNw6gB9My op Fable, branch claude/backup-import.
   - I-95 (koppelvoorstel noemt verschuiving testloop): helper Sherpa op Fable, branch claude/koppel-testloop.
   - I-94 en I-96 (ijksetkaart Akkoord, tests en uitleg niet goed gemeten): helper Sherpa op Sonnet, branch claude/klein-94-96.
+- 21 november 23:55: limiet per vijf uur (Fable en Sonnet) stopte drie helpers op 20 november rond 18:40; de werker herstartte. Back-up import: alle controles groen door coördinator (11811 tests, kaart gelijk). I-95 klaar op b1bbd8a1. Drie helpers hervat (twee Wardens, Sherpa I-94/96).
 - Daarna: Warden (opslag en I-95 op Fable), Lookout en Pathfinder voor I-94; één squash naar main voor de bundel.
 
 ## Stand 20 november avond, ronde 1
