@@ -38,6 +38,12 @@ Zonder antwoord het advies: praattest later, test van 30 minuten later, DFA alph
 
 ## Net live
 
+### 21 november 00:55
+- Back-up terugzetten: voor een import bewaart ASCEND eerst een kopie van wat er stond; een tijdstip in de toekomst uit een bestand telt niet meer als nu. Uitgezette soorten komen niet terug bij een import (I-93, I-97).
+- Koppelvoorstel: zegt nu of je korte test van die week verschuift als je een loop koppelt; de knoppen wachten tot dat bekend is (I-95).
+- IJksetkaart en volgende stap: Akkoord valt meer op, Afronden blijft de enige gevulde knop (I-94). Niet goed gemeten heeft tests en uitleg (I-96).
+- Werkwijze zuiniger: Sonnet als standaard, poorten naar risico, bouwen op maandag, woensdag en vrijdag.
+
 ### 20 november 19:50
 - Korte test (I-91): per week telt de vroegste geldige test voor je midden; een laat afgevinkte of later gekoppelde loop verdringt hem niet meer. Een losse loop zegt dat hij niet meetelt en wijst naar de vraag op Vandaag.
 

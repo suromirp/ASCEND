@@ -6,23 +6,17 @@ Bijgewerkt: 21 november 2026 door coördinator session_01LnDpSmhQECnxdG9gnj4X2S.
 
 - Eigenaar via de chat ASCEND: zuinige stand, vastgelegd in skill `werkverdeling` (bovenaan) en besluit `2026-11-21-zuinige-stand.md`, op main 68eca8b1. Kort: Sonnet voor bouwer en Warden, Opus alleen planner/opslag/migraties/historie, nooit Fable tenzij de eigenaar vraagt; poorten naar risico; één Warden en één Lookout per bouwmoment; bouwen alleen ma/wo/vr; Mag naar de backlog; wissel rond 150k of na elke bouwronde; geen wakeups zonder reden.
 - Toegepast op deze ronde: geen Pathfinder (geen nieuw scherm of flow); één Lookout op Haiku over I-94 en I-95; Mag-punten van Warden I-94/96 die nog niet gestuurd waren gaan naar de backlog. Het Mag-herstel voor StepProposalNotice was al gestuurd voor de zuinige stand; laten afmaken.
-- Na de squash van deze bundel: wissel (ronde klaar).
+- Bundel is live; wissel via de chat ASCEND aangevraagd.
 - Aanvulling (mandaat eigenaar, main e7f61702): poortregel naar risico in CLAUDE.md en besluit; CLAUDE.md 15 naar 8 KB; Werkkaart-taak trig_01JoRN6XzHJ17frpcWQAdEzB van elk uur naar 8:20, 13:20, 20:20; uit werkverdeling weg: Fable-standaard, effort high, Wachter, zelfreview, check-in. Worktree wt-zuinig in de scratchpad opruimen.
 
-## Stand 20 november avond, ronde 2
+## Stand na ronde 2 (bundel I-93 tot I-97 live)
 
-- 18:00 Amsterdam: nieuwe coördinator session_01LnDpSmhQECnxdG9gnj4X2S draait. Ronde gestart:
-  - I-93 en I-97 (opslag, back-up import): losse chat session_01LnDpSnhGZjC8AaNw6gB9My op Fable, branch claude/backup-import.
-  - I-95 (koppelvoorstel noemt verschuiving testloop): helper Sherpa op Fable, branch claude/koppel-testloop.
-  - I-94 en I-96 (ijksetkaart Akkoord, tests en uitleg niet goed gemeten): helper Sherpa op Sonnet, branch claude/klein-94-96.
-- 21 november 23:55: limiet per vijf uur (Fable en Sonnet) stopte drie helpers op 20 november rond 18:40; de werker herstartte. Back-up import: alle controles groen door coördinator (11811 tests, kaart gelijk). I-95 klaar op b1bbd8a1. Drie helpers hervat (twee Wardens, Sherpa I-94/96).
-- 21 november: Warden back-up import en Warden I-95: geen Moet. Back-up: Mag-punten in de docs door coördinator gedaan (fdc93a33 op claude/backup-import); Mag 5 (wedloop met dezelfde waarde) blijft liggen. Losse chat back-up (session_01LnDpSnhGZjC8AaNw6gB9My) archiveren na de squash. Worktrees wt-backup en wt-nacht in de scratchpad opruimen.
-- I-95: herstelronde loopt bij dezelfde Sherpa (drie standen bezig/zin/niets, knoppen uit tot 4 s, valkuil, test weekgrens, "van vandaag", zin in besluit).
-- I-94/96 klaar op e5646a90 (Akkoord als SecondaryButton met 18% mint, want Afronden is al de gevulde mint). Warden Sonnet loopt. Screenshot bekeken: leesbaar.
-- Daarna: één Lookout (Haiku) voor I-94 en I-95; één squash naar main voor de bundel I-93 tot I-97.
-- Nieuw voor de Inbox (I-98 tot I-101): import filtert `manual:`, `garmin:`, `macrofactor:` nog (alleen filteren wat `pruneWellness` raakt, `backupApply.ts:140-142`); koppelvoorstel zegt niet dat een loop later in de week zijn korte test verliest (`shortTestSessionIds`, sinds I-91); gedeelde hook `useShortTestStreams`; strengere variant: zonder bijpassende lijst het paar weghalen.
-- Geleerd: geef elke helper een eigen mapnaam in de scratchpad. Een Warden zette de hoofdmap /home/user/ascend op een andere branch (detached): zeg in elke opdracht "geen checkout in de hoofdmap, gebruik git diff of git show". `src/state/logSave.test.ts` wankelde één keer onder volle last; bij de laatste controle voor main op letten.
-- Gemeld aan de eigenaar: 20 november live I-68, I-83, I-92, I-84, I-91, weekkamzin en twee werkwijzebesluiten; na de wissel nog niets live. Vorige coördinator gearchiveerd ($46).
+- Main 223614f0 (bundel, squash) en ec171b9f (backlog: I-93 tot I-97 onder Pas live, I-98 tot I-103 in de Inbox, hoogste code I-103). Alle controles groen: 11831 tests, kaart gelijk, kennisindex gelijk.
+- Poorten gehaald: Warden back-up en I-95 (geen Moet), Warden I-94/96 (Sonnet, geen Moet), één Lookout (Sonnet in plaats van Haiku: de kit dekt de wachtstand van de koppelkaart niet) groen op 360/390/412, eigen blik op de afdrukken.
+- Nog te doen door de opvolger als het niet gedaan is: losse chat back-up session_01LnDpSnhGZjC8AaNw6gB9My archiveren; worktrees opruimen (scratchpad wt-backup, wt-bundel, wt-nacht, wt-zuinig; `.claude/worktrees/agent-adade0e10bce0a641` en `agent-a79dc055e776d8c45`); branches claude/backup-import, claude/koppel-testloop, claude/klein-94-96, claude/bundel-93-97 en claude/backlog-bij mogen weg na controle.
+- Vangnet-taak trig_017XyDyhXCk5qFayfNhbYfeS: delete_trigger werd door de classifier geweigerd; de taak vuurde 23:16 UTC en is genegeerd. Gemeld aan de eigenaar.
+- Volgende bouwmoment: maandag (zuinige stand: ma, wo, vr). Kandidaten: I-98 (opslag, Opus), I-102 (klein), I-99.
+- Geleerd: geef elke helper een eigen mapnaam in de scratchpad en zeg "geen checkout in /home/user/ascend". `src/state/logSave.test.ts` wankelde één keer onder volle last.
 
 ## Vaste afspraken
 
