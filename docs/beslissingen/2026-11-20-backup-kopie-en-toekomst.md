@@ -27,7 +27,7 @@ Laatste back-up in de toekomst, in `engine/backupSince.ts#straightBackupPair`:
 2. Nu of eerder, geen tijdstip of een onleesbaar tijdstip: er verandert niets en er wordt niets geschreven. Een back-up van eerder vandaag blijft dus staan; later vandaag is ook de toekomst.
 3. De app kijkt bij elke start (`storage/backupTime.ts#straightenBackupTime`, aangeroepen uit `storage/bootMigrations.ts`) en bij elke import, voor de vergelijking met het bestand of de kopie. De stap bij de start staat niet in de lijst van opstartstappen, want de klok hoort niet bij een versie van de app. Hij kost één leesactie, gooit nooit en houdt het openen niet tegen.
 
-Een ochtend zonder bron bij een import: `storage/backupApply.ts` schrijft hem heel. Het filter op uitgezette soorten (`engine/watchUse.ts#filterRecovery`) geldt bij een import alleen nog voor ochtenden met een bron, net als `pruneWellness`: die kan de bron opnieuw leveren. Elk scherm leest de ochtenden al door hetzelfde filter, dus de dag toont de soort niet, en aanzetten brengt het getal terug.
+Een ochtend zonder bron bij een import: `storage/backupApply.ts` schrijft hem heel. Het filter op uitgezette soorten (`engine/watchUse.ts#filterRecovery`) geldt bij een import alleen nog voor ochtenden met een bron. Bij `intervals.icu:` en `health-connect:` doet `pruneWellness` hetzelfde en kan de koppeling ze opnieuw leveren; `manual:`, `garmin:` en `macrofactor:` kan geen koppeling opnieuw leveren, en dat de import die nog filtert staat open in de Inbox. Elk scherm leest de ochtenden al door hetzelfde filter, dus de dag toont de soort niet, en aanzetten brengt het getal terug.
 
 ## Reden
 
@@ -35,7 +35,7 @@ Een kopie van 8 november terugzetten nadat op 15 november een back-up is gemaakt
 
 Een tijdstip in de toekomst zet alles stil wat op "sinds" rekent: de automatische back-up komt niet, de herinnering ook niet, en het toestel wint van elk later bestand. Sinds I-68 kan een bestand dat niet meer veroorzaken, maar een toestel waar het al stond (een klok die voorliep, of een oudere versie die het tijdstip uit een bestand overnam) bleef zo tot de volgende back-up met de hand.
 
-In beide gevallen telt de app hoogstens te veel, nooit te weinig. Een id staat alleen in de lijst als de training in een echt bestand staat: de back-up van het toestel zelf, of het bestand dat is ingelezen. Rechtzetten verandert de lijst niet, alleen het tijdstip.
+Met een bijpassende lijst telt de app hoogstens te veel, nooit te weinig. Een id staat alleen in de lijst als de training in een echt bestand staat: de back-up van het toestel zelf, of het bestand dat is ingelezen. Rechtzetten verandert de lijst niet, alleen het tijdstip.
 
 Het filteren bij de import haalde een uitgezette soort voorgoed uit een ochtend die geen bron opnieuw kan leveren, en liet een ochtend met alleen die soort helemaal weg. Dat is verlies van gegevens van de gebruiker en wringt met het besluit dat een uitgezette soort de opslag van zo'n ochtend niet verandert.
 
@@ -51,6 +51,12 @@ Er is geen migratiestap. Geen opgeslagen vorm verandert: `AppSettings`, de envel
 ## Bekende grens
 
 Zet iemand de klok van het toestel tijdelijk terug, dan ligt een echte Laatste back-up even in de toekomst en wordt hij bij de start op dat vroegere moment gezet. De lijst blijft, dus de telling klopt; de automatische back-up komt hoogstens een keer te vroeg.
+
+Rechtzetten toont Laatste back-up vandaag, dus de automatische back-up komt hoogstens één periode later.
+
+Een klok die achterloopt geeft een te vroeg tijdstip; daardoor kan later een ouder bestand winnen bij de vergelijking. Dat telt te veel, niet te weinig.
+
+Een tijdstip in de toekomst zonder bijpassende lijst telt na rechtzetten op tijd en dus 0: de herinnering zwijgt zeven dagen en de automatische back-up slaat een periode over. Hier telt de app te weinig. Een strengere variant (zonder bijpassende lijst het paar weghalen) staat in de Inbox.
 
 Na Ongedaan maken blijft een nieuwer paar van de import staan. De trainingen uit dat bestand blijven ook op het toestel (historie groeit alleen) en staan in dat bestand, dus dat ze als bewaard tellen is waar.
 
