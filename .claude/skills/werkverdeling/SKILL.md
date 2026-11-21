@@ -9,24 +9,37 @@ De coördinator kiest met deze tabel, niet op gevoel en niet met een aparte keuz
 weer tokens). Start een helper altijd als zijn rol (`subagent_type`), nooit als `general-purpose`:
 die erft het model van de coördinator.
 
+## Zuinige stand (eigenaar 21 november, gaat voor alles hieronder)
+
+Besluit `docs/beslissingen/2026-11-21-zuinige-stand.md`. De eigenaar ging te snel door zijn abonnement.
+
+- Modellen: bouwer en Warden op Sonnet, denkwerk laag of medium. Opus alleen voor planner, opslag, migraties en historie. Fable nooit, tenzij de eigenaar erom vraagt. Lookout en Pathfinder op Haiku waar de vaste kit volstaat, anders Sonnet.
+- Poorten naar risico. Tekst, kleine UI-fix of kleine bug: de coördinator zelf, zonder helpers, met de vier controles en één screenshot. UI-wijziging: bouwer plus Lookout, geen Warden. Engine, opslag, planner: bouwer plus Warden plus Lookout. Pathfinder alleen bij een nieuw scherm of een nieuwe flow.
+- Bundelen: per bouwmoment één Warden en één Lookout over alle features samen.
+- Ritme: bouwen alleen op het bouwmoment (maandag, woensdag, vrijdag). Tussendoor alleen wat nu stuk is.
+- Herstel voorkomen: een korte opdracht met harde criteria en de bestanden erbij. Alleen Moet-punten herstellen; Mag-punten gaan naar de backlog, niet in dezelfde ronde. Na een herstel kijkt de coördinator zelf naar de diff, geen nieuwe keuring.
+- De bouwer draait zelf tsc, lint, vitest, build en kaart:vergelijk; geen aparte tester voor die controles.
+- Losse chats (`create_session`) alleen voor opslag of migraties; de rest als helper.
+- Coördinator: wissel rond 150k context of na elke bouwronde; overdracht kort; uit de backlog alleen lezen wat nodig is; geen wachtlussen of wakeups zonder reden (een helper meldt zich vanzelf).
+- Kostenlogboek: per feature het totaal (bouwer plus poorten); na een week vergelijken met 18 tot 20 november.
+
 ## De tabel
 
 | Soort taak | Rol (`subagent_type`) | Model | Denkwerk |
 |---|---|---|---|
-| Een tekst, een label, een kleur, één regel | coördinator zelf | (eigen) | laag |
-| Bouwen van een afgebakende wijziging | `ontwikkelaar` (Sherpa) | sonnet | medium |
-| Bouwen dat planning, opslag of migraties raakt | `ontwikkelaar` (Sherpa) | fable | medium |
+| Tekst, kleine UI-fix, kleine bug | coördinator zelf | (eigen) | laag |
+| Bouwen van een afgebakende wijziging | `ontwikkelaar` (Sherpa) | sonnet | laag of medium |
+| Bouwen aan planner, opslag, migraties of historie | `ontwikkelaar` (Sherpa) | opus | medium |
 | Ontwerpvoorstel voor een scherm | `ontwerper` (Cartographer) | sonnet | medium |
-| Idee naar issue met criteria | `productmanager` | sonnet | laag |
-| Doorloop in Chromium (skill `lookout`) | `tester` (Lookout) | sonnet | laag |
-| Review van UI, tekst of stijl | `reviewer` (Warden) | sonnet | medium |
-| Review van engine, planning, opslag, migraties | `reviewer` (Warden) | fable | medium |
-| Lastig onderzoek, formules in de engine | `sportwetenschapper` (Scout) | fable | medium |
+| Idee naar issue met criteria | `productmanager` | haiku | laag |
+| Doorloop in Chromium (skill `lookout`) | `tester` (Lookout) | haiku, sonnet als de kit niet volstaat | laag |
+| Review (één per bouwmoment) | `reviewer` (Warden) | sonnet | laag of medium |
+| Review van planner, opslag, migraties of historie | `reviewer` (Warden) | opus | medium |
+| Lastig onderzoek, formules in de engine | `sportwetenschapper` (Scout) | sonnet, opus als het moet | medium |
 | Iets zoeken in de code | `Explore` | haiku | laag |
-| Samenhang en UX: plek vooraf, doorloop van de dag voor main | `pathfinder` (Pathfinder) | sonnet | medium |
-| Samenhang wekelijks, het totaalplaatje | `pathfinder` (Pathfinder) | fable | medium |
+| Samenhang, alleen bij een nieuw scherm of nieuwe flow | `pathfinder` (Pathfinder) | haiku, sonnet als de kit niet volstaat | laag |
 
-Zwaar werk op Fable in plaats van Opus (eigenaar, 9 november): waar deze skill of een oudere les "opus" zegt, lees Fable. Licht werk blijft op Sonnet. Meldt een sessie dat de limiet van Fable dichtbij is, maak dan alleen af wat loopt en meld het de eigenaar.
+Fable nooit, tenzij de eigenaar er zelf om vraagt (zuinige stand, 21 november). Waar verderop nog "fable" staat, lees opus voor planner, opslag, migraties en historie en anders sonnet.
 
 Tabellen staan hier omdat dit een werkinstructie is; in teksten voor de eigenaar en in de app geen tabellen.
 
@@ -174,35 +187,12 @@ Elke maandag (samen met de weekbriefing) kijkt de coördinator naar het logboek 
 - past de tabel hierboven aan als het logboek dat laat zien, met de reden in de commit.
 
 
-## Deze week: limieten opnieuw gezet (eigenaar 11 november, geldt tot en met zondag 15 november)
-
-Gaat voor "Modellen per taak" hieronder, tot en met 15 november of tot de eigenaar iets anders zegt; daarna terug naar de gewone verdeling. De eigenaar wil de reset maximaal benutten. Fable is grondiger maar trager, Opus sneller en veelzijdiger.
-
-- Fable (nieuwste die create_session aanneemt, nu claude-fable-5-2): Warden bij alles wat engine, opslag of planning raakt (met proefmerge en mutaties), onderzoek van Scout, ontwerp van Cartographer.
-- Opus (claude-opus-5-5): de coördinator en al het bouwen, ook in de engine en opslag (eigenaar 14 november: "Wat jij adviseert"). Reden uit het logboek van 12 tot 14 november: Fable als bouwer had niet minder rondes (Nee van logSession vijf, StairMaster drie) en elke ronde kost Fable-ruimte; Warden op Fable vangt wat Opus mist (opwarmset volgde het plan). Uitzondering: een fout die Opus na twee rondes niet oplost gaat naar een bouwer op Fable.
-- Sonnet of Haiku: alleen licht werk (teksten, Lookout, zoeken).
-- Bouwen buiten het bouwmoment mag deze week (eigenaar 11 november: "in principe mag je nu gaan bouwen"); hoogstens drie bouwers tegelijk, nooit twee aan dezelfde bestanden, bouwers in een eigen chat (create_session) die zich bij de coördinator meldt. Kort onderzoek of ontwerp (onder een uur, alleen docs) mag als helper binnen de coördinator-chat.
-- Wat de eigenaar in de coördinator-chat zelf zegt, gaat voor een doorgestuurd bericht van een andere chat.
-
-
 ## Inspanning per soort werk (eigenaar 14 november: "Ja, zoals geadviseerd")
 
 - `effort: high` bij create_session voor bouwers aan planner, opslag, horloge en routes, en voor Warden als hij op Opus invalt.
 - Standaard (geen effort meegeven) voor schermen, tekst, Lookout en Pathfinder, en voor Warden op Fable.
 - De coördinator blijft op medium.
 - Meet het in het kostenlogboek: herstelrondes per bouwer met en zonder high. Dalen ze na een week niet, zet het terug en meld het de eigenaar.
-
-## Bouwplekken vol houden (eigenaar 14 november: "Wrm ga je niet verder")
-
-Op 14 november liep een half uur maar één bouwer terwijl de coördinator wachtte op een review en een herstelronde. De eigenaar zag stilstand. Wachten op een helper is geen reden om niets te starten.
-
-- Elke beurt van de coördinator eindigt met dezelfde vraag: zijn alle drie de bouwplekken bezet? Zo niet, start meteen de volgende uit de Bouwrij of de Inbox die geen bestanden deelt met wat loopt (noem in de opdracht welke bestanden niet aangeraakt mogen worden). Een bouwer in review of herstelronde houdt zijn plek bezet, maar zijn bestanden zijn dan het enige wat geblokkeerd is.
-- Na elke start van een bouwer een send_later van 30 minuten: bouwers melden zich niet vanzelf (14 november: drie klare bouwers stonden een half uur stil).
-- Bouwers kunnen zich niet bij de coördinator melden (15 november: create_trigger naar een andere sessie lukt hun niet). Vraag in de opdracht dus geen melding, maar: "Zet in je laatste bericht de commit en de uitslag van de controles; de coördinator kijkt zelf." De coördinator kijkt elk half uur (Wachter op :40, Bouwers nakijken op :10).
-- Elke send_later voor een check-in noemt ook: "start bij een vrije plek de volgende die geen bestanden deelt".
-- Uitzondering alleen bij de Wachter-regels hierboven of als de eigenaar zegt te wachten. Een `allowed_warning` in rate_limit_info is geen reden om af te schalen (eigenaar 14 november: "Je hebt genoeg ruimte, je hoeft niet af te schalen"). Alleen Fable is krap: houd Fable voor het werk waar de tabel het vraagt, en meld het de eigenaar zodra Fable bijna vol is (of een Fable-sessie geweigerd wordt); hij heeft dan nog een reset.
-- Meld de eigenaar welke bouwers lopen en wanneer je weer kijkt; zeg het als een plek bewust leeg blijft, met de reden.
-- Hoogstens zes sessies tegelijk (tot acht als de eigenaar zegt maximaal door te gaan, zoals in de nacht van 14 november), helpers van de coördinator meegeteld: drie bouwers plus drie profielen, reviewers of Lookouts (14 november: negen tegelijk liep de vijfuurslimiet in anderhalf uur vol, 45 minuten stilstand). Profielen in rondes van hoogstens drie.
 
 ## Check-in en reflectie (eigenaar 14 november)
 
