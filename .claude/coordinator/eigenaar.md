@@ -16,6 +16,9 @@ Geen open vragen. De vier oude vragen (drempel en korte test, routes wandelen, h
 
 ## Net live
 
+### 22 november 07:10
+- Back-up: ook het toestel telt een tijdstip in de toekomst zonder lijst niet meer bij het terugzetten van een kopie; nu getest (I-106).
+
 ### 22 november 06:40
 - Koppelvoorstel: een rustige loop die al voorbij is krijgt niet meer de zin over de korte test; de plek voor die zin hoort bij het voorstel (I-107).
 
