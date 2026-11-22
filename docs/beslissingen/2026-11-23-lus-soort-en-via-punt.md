@@ -21,6 +21,10 @@ Het via-punt en de gekozen soort staan alleen in het geheugen: niet bewaard, gee
 - **Een mislukte Via-lus krijgt geen Opnieuw:** een nieuwe poging met hetzelfde punt geeft hetzelfde antwoord.
 - **De lus langs een punt wordt niet op de wind gedraaid:** het punt bepaalt de vorm.
 
+## Instellingen bij route-info (I-120)
+
+Terug voor het donker (`routeBackBeforeDark`) krijgt een uitleg achter de i, zoals Wind bepaalt de richting. Hoogteprofiel, ondergrond en afhaken blijven zonder instelling, omdat ze feiten over de lus zijn die uit de lus zelf komen en geen keuze van de app: ze veranderen de lus niet, kosten geen aanroep en lieten bij uitzetten alleen minder zien (`2026-11-22-route-info.md`); Terug voor het donker is een oordeel over jouw uur, dat je mag uitzetten.
+
 ## Reden
 
 De eigenaar vroeg in het besluit Andere lus al om Via een punt en Soort terrein, later (I-112). Een lus langs water of bos, of langs een plek die je zelf aanwijst, is wat een loper zelf zou kiezen.

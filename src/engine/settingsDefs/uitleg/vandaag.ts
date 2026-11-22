@@ -276,6 +276,15 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Altijd', text: 'bij wind onder 12 km/u (ongeveer 3 Beaufort) of zonder windgegevens verandert er niets. De wind komt uit het weer dat de app al ophaalt; er gaat niets nieuws de deur uit.' },
     ],
   },
+  'route-donker': {
+    title: 'Terug voor het donker',
+    lead: 'Bij een lus zegt een regel hoe laat je ongeveer terug bent, als dat binnen een uur voor zonsondergang of later is. Het advies is aan.',
+    points: [
+      { head: 'Aan', text: 'de terugkomst is nu plus de duur van de lus, want ASCEND kent geen geplande starttijd. De regel staat er alleen bij een training van vandaag.' },
+      { head: 'Uit', text: 'er staat geen regel over de zon bij de lus.' },
+      { head: 'Altijd', text: 'de zon rekent ASCEND zelf uit op je afgeronde startpunt; er gaat niets nieuws de deur uit.' },
+    ],
+  },
   'route-kaart': {
     title: 'Ondergrond van de kaart',
     lead: 'De kaart in Route voorstellen toont je lussen, je startpunt en je plek. Dit kiest wat eronder ligt. Rechtsboven op de kaart wissel je ook snel tussen de kaart en de luchtfoto; wat je het laatst koos, blijft staan.',
