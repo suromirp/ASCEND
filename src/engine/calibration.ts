@@ -19,6 +19,7 @@ import { rowLabel } from './forgeRows';
 import { addRow } from './forgeWorkout';
 import { exerciseById } from '../data/exercises';
 import { isCompound } from './warmup';
+import type { CalibrationMode } from './strengthSettings';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import { leaveDays } from './leave';
@@ -145,6 +146,14 @@ export function withAutoCalibration(workout: WorkoutExercise[]): { workout: Work
   return { workout: next, slot, rowId };
 }
 
+// Hoort de ijkset in de training? Uit: nooit, ook niet in een concept dat hem nog had (het concept volgt de stand).
+// Automatisch erbij: als niets hem tegenhoudt. Vragen: alleen als je Akkoord gaf (de set staat er dan al) en niets hem
+// tegenhoudt, zodat Lichter aan en weer uit de set die je aannam niet kwijtraakt.
+export function calibrationWanted(mode: CalibrationMode, blocked: boolean, hasRow: boolean): boolean {
+  if (mode === 'uit' || blocked) return false;
+  return mode === 'automatisch' ? true : hasRow;
+}
+
 // De dag telt pas als de training is afgerond met de ijkset afgevinkt.
 export function calibrationDone(workout: WorkoutExercise[]): boolean {
   return workout.some((ex) => ex.rows.some((r) => r.done && r.kind === 'work' && isCalibrationRow(r)));
@@ -152,6 +161,9 @@ export function calibrationDone(workout: WorkoutExercise[]): boolean {
 
 // In het verloop: wie de set erbij zette.
 export const CALIBRATION_AUTO_FACT = 'Forge zette deze ijkset erbij (IJkset: Automatisch erbij).';
+
+// In het verloop na Akkoord op de kaart IJkset (IJkset: Vragen).
+export const CALIBRATION_ACCEPT_FACT = 'Je nam de ijkset aan (Akkoord op de kaart).';
 
 // De regel boven de oefening met de ijkset.
 export const CALIBRATION_AUTO_LINE = 'IJkset, eens per vier weken: de laatste set zo ver als netjes gaat, met nog één over. Wil je hem niet, haal hem weg.';
@@ -170,7 +182,7 @@ export function calibrationRemoved(log: readonly ForgeEvent[]): boolean {
 // daarmee gelijk: bij het openen, na Lichter aan of uit (`replan`) en na een heropend concept dat opnieuw werd
 // gepland. `want` is de stand Automatisch zonder blok; een set die je zelf weghaalde komt nooit terug. Een
 // afgevinkte ijkset blijft altijd staan. Een regel "toegevoegd" van een ijkset die er niet meer staat valt weg.
-export function syncAutoCalibration(workout: WorkoutExercise[], log: ForgeEvent[], want: boolean, at: number, newId: () => string): { workout: WorkoutExercise[]; log: ForgeEvent[] } {
+export function syncAutoCalibration(workout: WorkoutExercise[], log: ForgeEvent[], want: boolean, at: number, newId: () => string, fact: string = CALIBRATION_AUTO_FACT): { workout: WorkoutExercise[]; log: ForgeEvent[] } {
   let next = workout;
   if (!want || calibrationRemoved(log)) {
     next = workout.map((ex) => (ex.rows.some((r) => isCalibrationRow(r) && !r.done) ? { ...ex, rows: ex.rows.filter((r) => !(isCalibrationRow(r) && !r.done)) } : ex));
@@ -183,7 +195,7 @@ export function syncAutoCalibration(workout: WorkoutExercise[], log: ForgeEvent[
   for (const ex of next) {
     const row = ex.rows.find(isCalibrationRow);
     if (row && !nextLog.some((e) => added(e) && e.rowId === row.id)) {
-      nextLog = [...nextLog, { ...setCountEvent('toegevoegd', ex, row, rowLabel(ex, row.id), at, newId()), fact: CALIBRATION_AUTO_FACT }];
+      nextLog = [...nextLog, { ...setCountEvent('toegevoegd', ex, row, rowLabel(ex, row.id), at, newId()), fact }];
     }
   }
   return { workout: next, log: nextLog };
