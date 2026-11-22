@@ -4,7 +4,7 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-Geen open vragen.
+- Route-ideeën: welke erbij? 1 wind bepaalt de richting, 2 terug voor het donker, 3 hoogteprofiel, 4 ondergrond, 5 waar je kunt afhaken. Advies 1, 2 en 3. Zonder antwoord gaan 1, 2 en 3 in de backlog, na I-111 en I-112.
 
 ## Stuk of vast
 
@@ -15,6 +15,11 @@ Geen open vragen.
 
 
 ## Net live
+
+### 22 november 15:15
+- Back-up: een late poging overschrijft geen nieuwere back-up meer (I-69).
+- Week: een training van voor de start heet Voor de start en telt niet als gemist (I-57); Ruilen-chip boven de gesleepte rij (I-108).
+- Forge: de ijkset telt pas bij Afronden; Terugzetten na Lichter zet hem terug (I-71).
 
 ### 22 november 09:30
 - Richting: met krachttraining uit staat Sterker worden niet meer in het richtingblad; al gekozen blijft het zichtbaar met een zin (I-110, I-47, uw keuze).
