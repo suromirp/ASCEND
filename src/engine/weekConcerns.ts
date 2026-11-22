@@ -273,7 +273,7 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
   // Op je rustdag in een periode zonder sportschool staat één training twee keer in Let op: houd het belangrijkste punt.
   // Een test of wedstrijd (REST-DAY niveau 2) gaat voor; anders is het geen sportschool het zwaarst.
   const noGymOn = new Set(concerns.filter((c) => c.rule === 'NO-GYM').map((c) => c.finding.sessionIds[0]));
-  const restOn = new Set(concerns.filter((c) => c.rule === 'REST-DAY' && c.finding.level >= 2).map((c) => c.finding.sessionIds[0]));
+  const restOn = new Set(concerns.filter((c) => c.rule === 'REST-DAY' && c.finding.level === 2).map((c) => c.finding.sessionIds[0]));
   return concerns.filter((c) => {
     const id = c.finding.sessionIds[0];
     if (c.rule === 'REST-DAY') return !(noGymOn.has(id) && !restOn.has(id));
