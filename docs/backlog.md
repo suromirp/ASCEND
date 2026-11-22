@@ -8,8 +8,7 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 
 ## Inbox
 Hoogste code: I-108. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
-- [I-108] Na bundel 22 november, Week (Warden en Lookout, mag): een test voor het ontdubbelen van REST-DAY en NO-GYM in `weekConcerns.ts` (alleen NO-GYM, REST-DAY niveau 2 wint, ander punt blijft); `SWAP_CHIP_MAX = 16` laat "Ruilen met <naam>" bijna nooit toe: variant weg of in het briefje; de chip van de doeldag ligt bij slepen onder de opgetilde rij (360 px, ook met touch). Valkuil voor week.md: een filter op Let op toetst `lockLevel` exact (2 test of race, 3 systeem), nooit `>= 2`.
-- [I-107] Koppelkaart, na bundel 22 november (Warden, mag): `linkShortTest.ts:419-422` toetst niet op `scheduledDate >= today`, zodat een eerder gemiste rustige loop in dezelfde week de zin kan krijgen; `reserve` in `MissedTrainingCard.tsx:31` gaat niet terug als de kaart een ander item krijgt (koppelen aan log- en sessie-id).
+- [I-108] (22 november deels gebouwd, 74855bb: test voor het ontdubbelen en de valkuil; over: SWAP_CHIP_MAX en de chip onder de opgetilde rij) Na bundel 22 november, Week (Warden en Lookout, mag): een test voor het ontdubbelen van REST-DAY en NO-GYM in `weekConcerns.ts` (alleen NO-GYM, REST-DAY niveau 2 wint, ander punt blijft); `SWAP_CHIP_MAX = 16` laat "Ruilen met <naam>" bijna nooit toe: variant weg of in het briefje; de chip van de doeldag ligt bij slepen onder de opgetilde rij (360 px, ook met touch). Valkuil voor week.md: een filter op Let op toetst `lockLevel` exact (2 test of race, 3 systeem), nooit `>= 2`.
 - [I-106] Back-up, na I-101 (Warden, mag): `straightImportedPair` raakt ook het paar van het toestel bij een kopie (`newestBackupPair`); één zin in het besluit `2026-11-20-backup-kopie-en-toekomst.md` en een test.
 - [I-105] Label "Ziek gemeld: koorts" (I-56) niet op 360 px gezien: Lookout vond het voorstel met die titel niet in de testdata. Bij de volgende Lookout meenemen.
 - [I-104] Zin "Je rustige loop van <dag> krijgt dan geen korte test meer." (I-99) niet op het scherm gezien; alleen in tests. Bij de volgende Lookout meenemen.
@@ -93,6 +92,7 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-107] Koppelkaart, na bundel 22 november (22 november, 74855bb)
 - [I-85] Vervallen training in het verleden (22 november, 2950cb7)
 - [I-56] Ziek gemeld-melding (22 november, 2950cb7)
 - [I-102] Koppelkaart springt als de knoppen aangaan (22 november, 2950cb7)
