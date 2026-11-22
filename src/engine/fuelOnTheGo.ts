@@ -23,6 +23,7 @@ import type { SessionTemplate } from '../models/training';
 import type { LeavePeriod } from '../models/leave';
 import { templateSport } from './sports';
 import { dayCount } from './leave';
+import { isNum } from '../utils/guards';
 
 // ---- de instelling ---------------------------------------------------------------------------
 
@@ -90,12 +91,11 @@ export interface FuelEstimate {
   grams: [number, number];
 }
 
-const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const round5 = (g: number) => Math.round(g / 5) * 5;
 
 // Het bereik voor een duur, of niets: zonder duur, onder de grens of met een onzinnige waarde.
 export function fuelFor(minutes: number | undefined | null, activity: FuelActivity, intensity: FuelIntensity = 'easy'): FuelEstimate | undefined {
-  if (!finite(minutes) || minutes < FUEL_FROM_MINUTES) return undefined;
+  if (!isNum(minutes) || minutes < FUEL_FROM_MINUTES) return undefined;
   const perHour = PER_HOUR[activity][intensity];
   const hours = minutes / 60;
   return { activity, intensity, minutes, perHour, grams: [round5(perHour[0] * hours), round5(perHour[1] * hours)] };
@@ -129,10 +129,10 @@ export interface TrekFuel extends FuelEstimate {
 }
 
 export function fuelForTrekDay(minutes?: number | null, days = 1): TrekFuel | undefined {
-  const known = finite(minutes) && minutes > 0;
+  const known = isNum(minutes) && minutes > 0;
   const est = fuelFor(known ? minutes : TREK_DAY_HOURS * 60, 'walk', 'easy');
   if (!est) return undefined;
-  return { ...est, hoursAssumed: !known, days: finite(days) && days >= 1 ? Math.floor(days) : 1 };
+  return { ...est, hoursAssumed: !known, days: isNum(days) && days >= 1 ? Math.floor(days) : 1 };
 }
 
 // Hoeveel stuks van iets voor het bereik, afgerond op hele stuks en minstens één.

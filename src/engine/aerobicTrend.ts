@@ -134,8 +134,6 @@ function flatFactor(rd: RunDetail): number | undefined {
   }
   return real > 0 ? flat / real : undefined;
 }
-// Below this a change is within the normal day-to-day noise.
-export const MEANINGFUL_CHANGE_SEC = 5;
 
 export function formatPace(sec: number): string {
   const s = Math.round(sec);

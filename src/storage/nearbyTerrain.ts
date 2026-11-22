@@ -133,15 +133,3 @@ export function clearExactTerrain(): Promise<void> {
     }
   });
 }
-
-// Wist de bewaarde plekken (bij uitzetten of een nieuw begin); de eerste vraag blijft.
-export function clearNearbyTerrain(): Promise<void> {
-  clears.all++;
-  return inQueue(async () => {
-    try {
-      await MetaRepo.set(KEY, {});
-    } catch {
-      // niets te wissen
-    }
-  });
-}

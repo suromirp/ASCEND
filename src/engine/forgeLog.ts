@@ -19,6 +19,7 @@ import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
 import type { ExerciseSetLog, SetLog } from '../models/training';
 import { kgLabel } from '../utils/kg';
 import { formatClock } from '../utils/clock';
+import { isNum as isNumber } from '../utils/guards';
 
 export { FORGE_EVENT_KINDS };
 export type { ForgeEvent, ForgeEventKind, ForgeSetState };
@@ -239,9 +240,6 @@ export function becauseText(ev: ForgeEvent): string {
   }
 }
 
-// De titel van een gebeurtenis: oefening en set.
-export const eventTitle = (ev: ForgeEvent): string => (ev.set ? `${ev.exercise}, set ${ev.set}` : ev.exercise);
-
 // --- een regel per set -------------------------------------------------------------------------
 // Besluit: docs/beslissingen/2026-11-11-forge-verloop.md. Het verloop zelf (de lijst gebeurtenissen) blijft
 // zoals het is; hier wordt het alleen per set samengevoegd tot een regel met het eindresultaat en alle redenen.
@@ -359,7 +357,6 @@ function loggedLabels(sets: SetLog[]): string[] {
   return sets.map((s) => (s.kind === 'warmup' ? `W${++w}` : String(++k)));
 }
 
-const isNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 interface Draft {
   line: SetLine;

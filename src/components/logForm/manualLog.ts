@@ -80,11 +80,6 @@ export function elevationOf(values: Pick<LogFormValues, 'distanceKm' | 'inclineP
   return { estimated, gainM: estimated ? inclineEstimate : values.elevationGainM };
 }
 
-// De minuten die worden opgeslagen: een rustdag 0, leeg of 0 is geen duur.
-export function loggedMinutesOf(values: Pick<LogFormValues, 'duration' | 'guidanceMode' | 'modalityKey'>, template: SessionTemplate): number {
-  return logFormShape(template, values.guidanceMode, values.modalityKey).isRest ? 0 : entryMinutes(values.duration);
-}
-
 // Opslaan staat uit zolang de duur onder 1 minuut is; een rustdag vraagt geen duur (punt B).
 export function blocksSave(values: Pick<LogFormValues, 'duration' | 'guidanceMode' | 'modalityKey'>, template: SessionTemplate): boolean {
   return !logFormShape(template, values.guidanceMode, values.modalityKey).isRest && durationTooShort(values.duration);

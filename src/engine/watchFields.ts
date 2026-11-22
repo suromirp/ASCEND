@@ -12,6 +12,7 @@
 import { DEFAULT_WATCH_MODEL_ID, WATCH_MODELS, type WatchCell, type WatchFieldDef, type WatchModel } from '../data/watchModels';
 import type { SessionTemplate } from '../models/training';
 import { hasRole } from './templateRoles';
+import { isRecord } from '../utils/guards';
 
 export type WatchKindId = 'zone2' | 'hills' | 'intervals' | 'longRun' | 'packHike';
 
@@ -187,7 +188,6 @@ export function watchKindOf(template: Pick<SessionTemplate, 'id' | 'type' | 'rol
 // ---------------------------------------------------------------------------------------------
 // De bewaarde versies: defensief lezen
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 function cleanVersion(raw: unknown): WatchVersion | undefined {
   if (!isRecord(raw) || !Array.isArray(raw.pages)) return undefined;

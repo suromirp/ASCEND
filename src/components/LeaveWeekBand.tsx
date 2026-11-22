@@ -5,7 +5,6 @@ import { periodSpan, type WeekLeaveBand } from '../engine/leaveWeek';
 // Een periode in de weeklijst (engine/leaveWeek.ts). IJsblauw, want het is status; geen mint. Een tik op de kop opent
 // het blad van de periode.
 
-const SIZE = 44;
 
 // Eén lijn, 1,6 breed, op 24 bij 24, zoals de pictogrammen van de weeklijst (WeekIcons.tsx).
 const GLYPH: Record<LeaveKind, ReactNode> = {
@@ -18,20 +17,6 @@ const GLYPH: Record<LeaveKind, ReactNode> = {
   // Kalender: vrije dagen.
   free_days: (<><rect x="4" y="5.5" width="16" height="14" rx="3" /><path d="M4 10.5h16M8.5 3.5v3M15.5 3.5v3" /></>),
 };
-
-export function LeaveKindDisc({ kind, size = SIZE }: { kind: LeaveKind; size?: number }) {
-  return (
-    <span
-      aria-hidden="true"
-      className="inline-flex shrink-0 items-center justify-center rounded-full"
-      style={{ width: size, height: size, background: 'color-mix(in srgb, var(--color-status) 16%, transparent)', color: 'var(--color-status)' }}
-    >
-      <svg viewBox="0 0 24 24" width={Math.round(size * 0.52)} height={Math.round(size * 0.52)} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        {GLYPH[kind]}
-      </svg>
-    </span>
-  );
-}
 
 // De periode als eigen paneel in de weeklijst (variant A, gekozen door de eigenaar, docs/beslissingen/2026-11-09-week-paneel.md):
 // een afgerond vlak met een lichte ijsblauwe tint, een kop op één regel (pictogram, soort, de dagen van de hele periode)

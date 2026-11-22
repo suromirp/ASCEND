@@ -26,6 +26,7 @@ import { sliceStreams, trimmedNumbers, type TrimCurrent, type TrimSuggestion } f
 import { fromIntervals } from './logSource';
 import { isIndoorLog } from './sports';
 import { blockKeyOf } from './watchAlign';
+import { isNum } from '../utils/guards';
 
 type Block = CardioMetric | OutdoorMetric;
 
@@ -37,7 +38,6 @@ export function isTrimmable(log: SessionLog): boolean {
   return fromIntervals(log) && log.type !== 'strength' && !!(log.cardioData ?? log.outdoorData);
 }
 
-const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 // The climb of a treadmill is an estimate, not altitude.
 function noAltitude(log: SessionLog, block: Block): boolean {
@@ -52,7 +52,7 @@ function currentTrimNumbers(log: SessionLog): TrimCurrent | undefined {
   const current: TrimCurrent = { durationMinutes: log.durationMinutes };
   for (const field of TRIM_FIELDS) {
     const v = (block as unknown as Record<string, unknown>)[field];
-    if (!finite(v)) continue;
+    if (!isNum(v)) continue;
     if (indoor && (field === 'elevationGainM' || field === 'elevationLossM')) continue;
     current[field] = v;
   }

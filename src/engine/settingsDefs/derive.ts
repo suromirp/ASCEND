@@ -3,7 +3,7 @@
 // PAGE_ROWS, MOVED, LINKS en SHOW_WHEN (data/settingsLayout.ts) hier, sinds stap 3 ook de sleutels van de
 // uitleg (de tekst bouwt data/settingsHelp.ts uit uitleg/<groep>.ts).
 
-import type { PageRows, SettingPlacement, SettingsPageId } from '../../data/settingsLayout';
+import type { PageRows, SettingsPageId } from '../../data/settingsLayout';
 import type { SettingsIndexItem } from '../../data/settingsIndex';
 import type { Blocker, ChoiceDef, SettingDef } from './types';
 import { ALL_DEFS, PAGE_ORDER } from './index';
@@ -57,17 +57,6 @@ export function deriveMoved(defs: readonly SettingDef[] = ALL_DEFS): Record<stri
 
 export function deriveShowWhen(defs: readonly SettingDef[] = ALL_DEFS): Record<string, Blocker[]> {
   return Object.fromEntries(defs.flatMap((d) => (d.showWhen ? [[d.id, d.showWhen]] : [])));
-}
-
-// Dezelfde regels als placementOf in data/settingsLayout.ts.
-export function derivePlacement(id: string, defs: readonly SettingDef[] = ALL_DEFS): SettingPlacement | undefined {
-  const link = deriveLinks(defs)[id];
-  if (link) return { page: link, row: id, link: true };
-  const moved = deriveMoved(defs)[id];
-  const row = moved?.row ?? id;
-  const rowDef = defs.find((d) => d.id === row && 'row' in d.place);
-  if (!rowDef) return undefined;
-  return { page: rowDef.page, row, ...(moved?.sheet ? { sheet: true } : {}) };
 }
 
 // De sleutel van de uitleg van een verklaring: de eigen sleutel, of die van de verklaring waar hij hem van leent.
