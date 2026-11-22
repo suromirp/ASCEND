@@ -20,13 +20,14 @@ import { forgeSlotsFor } from '../../engine/forgeSlots';
 import { withoutStepSwap } from '../../engine/stepSwaps';
 import { hasMountainGoal } from '../../engine/mountainMuscles';
 import { resolveForgeLayout } from '../../engine/forgeLayout';
-import { CALIBRATION_AUTO_LINE, calibrationBlock, calibrationSlot, hasCalibrationRow, isCalibrationRow, syncAutoCalibration, withAutoCalibration, withCalibrationTarget } from '../../engine/calibration';
+import { CALIBRATION_ACCEPT_FACT, CALIBRATION_AUTO_LINE, calibrationBlock, calibrationWanted, calibrationSlot, hasCalibrationRow, isCalibrationRow, syncAutoCalibration, withAutoCalibration } from '../../engine/calibration';
 import { bodyLoadView } from '../../engine/bodyLoad';
 import { WeightSheet } from '../settings/groups/LichaamSheets';
 import { BodyLoadSheet } from './BodyLoad';
 import { loadBodyKg, loadWeight } from '../../engine/weightTrend';
 import {
   activeRow,
+  draftReplanned,
   resumeDraft,
   exerciseComplete,
   makeSnap,
@@ -258,17 +259,19 @@ function ForgeWorkoutInner({
   // IJkset Automatisch erbij: de set staat bij het openen al bij de hoofdoefening, zonder dat de sessie begint. Na
   // Lichter aan of uit en bij een heropend concept dat opnieuw gepland werd geldt dezelfde regel (syncAutoCalibration);
   // een concept dat zijn rijen houdt, houdt ook de ijkset of dat je hem weghaalde.
-  const autoCalFor = (eased: boolean) => !readOnly && strength.calibrationMode === 'automatisch' && !calBlockFor(eased);
+  const autoCalFor = (eased: boolean, hasRow: boolean) => !readOnly && calibrationWanted(strength.calibrationMode, !!calBlockFor(eased), hasRow);
   const [opening] = useState(() => {
     const plan = planWorkout(slots, ctx);
-    const replanned = !restored || (!restored.exercises.some((e) => e.rows.some((r) => r.done)) && (restored.eased ?? false) !== easeOn);
+    const replanned = draftReplanned(restored?.exercises, restored?.eased, easeOn);
     // Een onaangeraakte oefening krijgt in mergeDraft het plan van nu: met de ijkset erin als het concept hem had.
     const draftCal = restored && !replanned ? restored.exercises.find((e) => hasCalibrationRow([e]))?.slot : undefined;
     const withCal = draftCal ? withAutoCalibration(plan) : undefined;
     const fresh = withCal && withCal.slot === draftCal ? withCal.workout : plan;
     const w = restored ? resumeDraft(restored.exercises, restored.eased, easeOn, fresh) : plan;
     const log = initialForgeLog(w, restored, readOnly);
-    return readOnly || !replanned ? { workout: w, log } : syncAutoCalibration(w, log, autoCalFor(easeOn), Date.now(), () => makeId('fe'));
+    // Een heropend concept volgt de stand: staat IJkset op Uit, dan gaat een ijkset die nog open staat eruit.
+    if (readOnly || (!replanned && strength.calibrationMode !== 'uit')) return { workout: w, log };
+    return syncAutoCalibration(w, log, autoCalFor(easeOn, hasCalibrationRow(restored?.exercises)), Date.now(), () => makeId('fe'));
   });
   const [workout, setWorkout] = useState<WorkoutExercise[]>(opening.workout);
   // De regel "Ingekort tot ongeveer 60 minuten" zegt wat er bij het openen wegviel, bij de eerste stand van de
@@ -377,7 +380,7 @@ function ForgeWorkoutInner({
     // De ijkset volgt de nieuwe stand: een lichtere training krijgt er geen (calibrationBlock 'eased'), Terugzetten zet
     // hem terug, behalve als je hem zelf weghaalde (dat blijft in het verloop staan).
     const removed = forgeLog.filter((e) => e.kind === 'weggehaald' && isCalibrationRow({ id: e.rowId }));
-    const synced = readOnly ? { workout: plan, log: [] } : syncAutoCalibration(plan, [...spotterEvents(plan, Date.now(), () => makeId('fe')), ...removed], autoCalFor(on), Date.now(), () => makeId('fe'));
+    const synced = readOnly ? { workout: plan, log: [] } : syncAutoCalibration(plan, [...spotterEvents(plan, Date.now(), () => makeId('fe')), ...removed], autoCalFor(on, hasCalibrationRow(workout)), Date.now(), () => makeId('fe'));
     const next = synced.workout;
     setEaseOn(on);
     markCause({ kind: 'negeer' });
@@ -701,13 +704,12 @@ function ForgeWorkoutInner({
       phase: 'open' as const,
       onAccept: async () => {
         setCalState({ phase: 'added', name: calEx.name });
-        addSetLogged(calEx.slot, 'work');
-        setExercise(calEx.slot, withCalibrationTarget);
-        try {
-          await updateSettings({ strengthModel: { ...settings.strengthModel, calibratedAt: today } });
-        } catch {
-          setCalState({ phase: 'failed', name: calEx.name });
-        }
+        // De set krijgt de vaste id van de ijkset: de dag telt pas bij Afronden met hem afgevinkt (calibrationDone),
+        // zodat Lichter aan de set mag weghalen zonder dat de vier weken al tellen.
+        const synced = syncAutoCalibration(workout, forgeLog, true, Date.now(), () => makeId('fe'), CALIBRATION_ACCEPT_FACT);
+        begin();
+        setWorkout(synced.workout);
+        setForgeLog(synced.log);
       },
       onLater: () => setCalLater(true),
       // Naar de instelling en met de terugknop weer in deze training (App.tsx). Eerst het scherm sluiten, dan pas
