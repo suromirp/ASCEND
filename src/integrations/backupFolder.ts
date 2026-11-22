@@ -42,7 +42,9 @@ export interface AutoBackupTarget {
   // Met `neverReplace` wordt een bestaande naam nooit vervangen (NameTakenError).
   // Geeft, als de map dat kan, terug hoe het af te maken is: een eigen bestand dat opzij ging blijft staan
   // tot het nieuwe is nagekeken (`keep`), en komt terug als het nieuwe kapot is (`undo`).
-  write(name: string, text: string, attemptId: string, opts?: { neverReplace?: boolean }): Promise<void | Written>;
+  // `stillWanted`: vraagt de aanroeper of deze poging nog telt. Na een tijdsgrens zegt hij nee; een laat
+  // antwoord van de telefoon raakt dan nooit meer de naam (een nieuwere poging kan er al staan).
+  write(name: string, text: string, attemptId: string, opts?: WriteOptions): Promise<void | Written>;
   // Na een gelukte back-up: eigen resten van eerdere pogingen op deze naam (`.tmp`, `.old`) weghalen.
   tidy?(name: string): Promise<void>;
   // Staat het bestand er heel (zoveel bytes, en in de app een back-up die te lezen is)?
@@ -67,6 +69,11 @@ type FilesystemModule = typeof import('@capacitor/filesystem');
 // In de map van de app zelf (files/), die niet in de back-up van Android zit (res/xml/backup_rules.xml
 // en data_extraction_rules.xml nemen alleen app_webview/ mee). Een nieuwe telefoon krijgt dus een nieuw id.
 const INSTALL_FILE = 'ascend-installatie.txt';
+
+export interface WriteOptions {
+  neverReplace?: boolean;
+  stillWanted?: () => boolean;
+}
 
 // Het deel van de map dat schrijven nodig heeft, los te testen (backupFolder.test.ts).
 export interface TempFs {
@@ -165,7 +172,10 @@ async function holdsSettled(fs: TempFs, name: string, text: string): Promise<Hel
 // bezet door een bestand dat de app niet ziet (NameTakenError).
 // Met `neverReplace` (Back-up maken met de hand) gaat een bestaand bestand nooit opzij: een bestaande naam
 // geeft meteen een NameTakenError en er wordt niets geschreven.
-export async function writeThroughTemp(fs: TempFs, name: string, text: string, attemptId: string, opts: { neverReplace?: boolean } = {}): Promise<Written> {
+// Met `stillWanted` kijkt de laag vlak voor ze de naam aanraakt of de poging nog telt. Zo niet (de aanroeper
+// gaf haar op na een tijdsgrens en een nieuwere poging kan de naam al hebben), dan gaat het tijdelijke bestand
+// weg en blijft de naam onaangeroerd (AutoBackupError met stap `temp`).
+export async function writeThroughTemp(fs: TempFs, name: string, text: string, attemptId: string, opts: WriteOptions = {}): Promise<Written> {
   const taken = () => fs.exists(name).catch(() => true);
   if (opts.neverReplace && (await taken())) throw new NameTakenError(name);
   const tmp = `${name}.${attemptId}.tmp`;
@@ -177,7 +187,15 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
     throw asBackupError(err, 'temp');
   }
   let moved = false;
-  if (await taken()) {
+  const isTaken = await taken();
+  // Telt deze poging niet meer, dan blijft de naam onaangeroerd: een nieuwere poging kan er al staan.
+  const unwanted = () => opts.stillWanted !== undefined && !opts.stillWanted();
+  const giveUp = async (): Promise<never> => {
+    await fs.remove(tmp).catch(() => undefined);
+    throw new AutoBackupError('write', 'temp');
+  };
+  if (unwanted()) await giveUp();
+  if (isTaken) {
     // Tussen de eerste blik en nu kwam er iets onder de naam, of de blik lukte niet: nooit vervangen.
     if (opts.neverReplace) {
       await fs.remove(tmp).catch(() => undefined);
@@ -202,6 +220,9 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
     } catch (err) {
       failure = err;
       const held = await holdsSettled(fs, name, text);
+      // Een rename die laat een fout meldt: wat er nu onder de naam staat kan een nieuwere back-up zijn.
+      // Niets weghalen en `.old` niet terugzetten.
+      if (unwanted()) await giveUp();
       if (held === 'same') {
         done = true;
       } else if (held === 'unknown') {
@@ -220,6 +241,7 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
   }
   await fs.remove(tmp).catch(() => undefined);
   if (!done) {
+    if (unwanted()) await giveUp();
     if (moved) await fs.rename(old, name).catch(() => undefined);
     if (moved || sawHalf) throw asBackupError(failure, 'rename');
     console.warn('Back-up: de naam lukte niet, het volgende volgnummer', failure);

@@ -300,10 +300,14 @@ async function attempt({ now = new Date(), target = autoBackupTarget(), onSaved,
     for (let n = 1; n <= 99 && !name; n++) {
       const candidate = autoBackupFileName(day, n);
       if (!own.includes(candidate) && !halfWritten.has(candidate) && (await target.exists(candidate))) continue;
+      // Na de tijdsgrens (of als de hele poging is opgegeven) telt deze schrijfactie niet meer: een laat
+      // antwoord mag een nieuwere back-up onder dezelfde naam nooit opzij zetten (I-69).
+      let wanted = true;
       try {
-        written = await withTimeout(target.write(candidate, text, attemptId), timeoutMs);
+        written = await withTimeout(target.write(candidate, text, attemptId, { stillWanted: () => wanted && !abort.aborted }), timeoutMs);
         name = candidate;
       } catch (err) {
+        wanted = false;
         // Een tijdsgrens stopt de schrijfactie niet: wat na de grens nog landt is van de app. De naam was vrij
         // of al eigen, dus de volgende poging mag hem vervangen in plaats van er een volgnummer naast te zetten.
         if (err instanceof TimeoutError) halfWritten.add(candidate);

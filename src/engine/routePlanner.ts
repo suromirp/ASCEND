@@ -278,6 +278,7 @@ export function cutAt(points: RoutePoint[], meters: number): RoutePoint[] {
   const mid: RoutePoint = { lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t };
   if (a.ele !== undefined && b.ele !== undefined) mid.ele = a.ele + (b.ele - a.ele) * t;
   if (b.bigRoad) mid.bigRoad = true;
+  if (b.surface) mid.surface = b.surface;
   return [...points.slice(0, i), mid];
 }
 

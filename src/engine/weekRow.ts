@@ -21,6 +21,8 @@ export interface RowFacts {
   // Vervallen: voorbij en niet gedaan op een dag van een gemelde vakantie of ziekte, of in de afbouw voor een race die
   // er al was (engine/sessionStatus.ts, 'away').
   lapsed?: boolean;
+  // Voor de start van het programma: rustig, zonder het woord vervallen (engine/sessionStatus.ts, 'before').
+  before?: boolean;
   // Loopt nog: voorbij, niet gedaan, en er ligt nog een concept van in Forge (engine/sessionStatus.ts, 'open').
   open?: boolean;
   // Overgeslagen: hetzelfde woord als op Vandaag, zodat de rij niet als gemist leest (engine/sessionStatus.ts, 'skipped').
@@ -66,6 +68,7 @@ export function rowExtra(f: RowFacts): RowExtra | undefined {
   if (f.adjusted) return f.missed ? { text: 'gemist', warn: false, also: 'aangepast' } : { text: 'aangepast', warn: false };
   if (f.missed) return { text: 'gemist', warn: false };
   if (f.lapsed) return { text: 'vervallen', warn: false };
+  if (f.before) return { text: 'voor de start', warn: false };
   if (f.open) return { text: 'loopt nog', warn: false };
   if (f.skipped) return { text: 'overgeslagen', warn: false };
   if (!f.done && f.catchNote) return { text: f.catchNote, warn: false, ...dayTail(f.catchNote) };

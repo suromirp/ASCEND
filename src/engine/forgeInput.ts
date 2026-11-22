@@ -494,8 +494,12 @@ export function mergeDraft(draft: WorkoutExercise[], fresh: WorkoutExercise[]): 
 // herstart) en is er nog geen set afgevinkt, dan wordt er opnieuw gepland zoals bij Lichter in
 // het scherm zelf, zodat concept en keuze niet uit elkaar lopen. Een afgevinkte set blijft altijd
 // staan: dan geldt het concept zoals het is. `draftEased` ontbreekt bij een concept van voor deze keuze.
+export function draftReplanned(draft: WorkoutExercise[] | undefined, draftEased: boolean | undefined, easeOn: boolean): boolean {
+  if (!draft) return true;
+  return !draft.some((e) => e.rows.some((r) => r.done)) && (draftEased ?? false) !== easeOn;
+}
+
 export function resumeDraft(draft: WorkoutExercise[], draftEased: boolean | undefined, easeOn: boolean, fresh: WorkoutExercise[]): WorkoutExercise[] {
-  const started = draft.some((e) => e.rows.some((r) => r.done));
-  if (!started && (draftEased ?? false) !== easeOn) return fresh;
+  if (draftReplanned(draft, draftEased, easeOn)) return fresh;
   return mergeDraft(draft, fresh);
 }

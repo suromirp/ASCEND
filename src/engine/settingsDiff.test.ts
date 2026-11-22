@@ -133,6 +133,7 @@ const everything: AppSettings = {
   routeProposal: false,
   routeAvoidBigRoads: false,
   routeWind: false,
+  routeBackBeforeDark: false,
   rememberStartPlace: false,
   routeStyle: 'simple',
   walkPlanKm: 8,

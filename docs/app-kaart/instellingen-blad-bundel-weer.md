@@ -45,6 +45,8 @@ Afstand van een wandeling
 [knop: Grote wegen mijden]
 Grote wegen mijden
 [knop: Uitleg: Grote wegen mijden]
+[knop: Terug voor het donker]
+Terug voor het donker
 [knop: Gekozen plek onthouden]
 Gekozen plek onthouden
 [knop: Ondergrond van de kaart, Donker]

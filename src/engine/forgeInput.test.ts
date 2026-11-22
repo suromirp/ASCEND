@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
 import {
   mergeDraft,
+  draftReplanned,
   resumeDraft,
   activeRow,
   applyReps,
@@ -544,5 +545,17 @@ describe('standJump en makeSnap volgen de standen van het toestel', () => {
     expect(makeSnap(machine, met, undefined, 20)(20)).toBe(23);
     expect(makeSnap(machine, met, undefined, 12)(12)).toBe(14);
     expect(makeSnap(machine, gym(), undefined, 21)(21)).toBe(20);
+  });
+});
+
+describe('draftReplanned', () => {
+  const mk = (done: boolean) => [{ rows: [{ done }] }] as unknown as Parameters<typeof draftReplanned>[0];
+  it('zonder concept is het altijd nieuw', () => {
+    expect(draftReplanned(undefined, false, false)).toBe(true);
+  });
+  it('plant opnieuw alleen als de stand veranderde en niets is afgevinkt', () => {
+    expect(draftReplanned(mk(false), false, true)).toBe(true);
+    expect(draftReplanned(mk(false), undefined, false)).toBe(false);
+    expect(draftReplanned(mk(true), false, true)).toBe(false);
   });
 });

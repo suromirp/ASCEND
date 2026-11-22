@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlannedSession, SessionTemplate } from '../models/training';
-import { calibrationBlock, calibrationDone, calibrationRemoved, calibrationSlot, isCalibrationRow, syncAutoCalibration, withAutoCalibration, withCalibrationTarget, CALIBRATION_AUTO_FACT, CALIBRATION_RIR } from './calibration';
+import { calibrationBlock, calibrationDone, calibrationRemoved, calibrationSlot, calibrationWanted, syncCalibrationFor, CALIBRATION_ACCEPT_FACT, isCalibrationRow, syncAutoCalibration, withAutoCalibration, withCalibrationTarget, CALIBRATION_AUTO_FACT, CALIBRATION_RIR } from './calibration';
 import { mergeDraft, resumeDraft } from './forgeInput';
 import { setCountEvent, unseenCount } from './forgeLog';
 import type { ForgeEvent } from '../models/forgeLog';
@@ -172,5 +172,68 @@ describe('syncAutoCalibration: Lichter aan of uit en een heropend concept', () =
   it('de regel toegevoegd telt niet mee in het teken van het verloop', () => {
     const open = syncAutoCalibration(plan(), [], true, 1, id);
     expect(unseenCount(open.log, 0, open.workout)).toBe(0);
+  });
+});
+
+describe('calibrationWanted: de stand beslist, ook voor een concept', () => {
+  it('Uit wil nooit een ijkset, ook niet als het concept hem nog had', () => {
+    expect(calibrationWanted('uit', false, true)).toBe(false);
+  });
+  it('Automatisch wil hem als niets hem tegenhoudt', () => {
+    expect(calibrationWanted('automatisch', false, false)).toBe(true);
+    expect(calibrationWanted('automatisch', true, false)).toBe(false);
+  });
+  it('Vragen houdt alleen een set die je aannam', () => {
+    expect(calibrationWanted('vragen', false, false)).toBe(false);
+    expect(calibrationWanted('vragen', false, true)).toBe(true);
+    expect(calibrationWanted('vragen', true, true)).toBe(false);
+  });
+});
+
+describe('Akkoord op de ijkset en dan Lichter', () => {
+  let n = 0;
+  const id = () => `fe${++n}`;
+  const plan = () => [ex('b', 'bench-press', [row('b1'), row('b2')])];
+  it('de aangenomen set gaat met Lichter weg en komt met Terugzetten terug, met een eigen regel', () => {
+    const accepted = syncAutoCalibration(plan(), [], true, 1, id, CALIBRATION_ACCEPT_FACT);
+    expect(accepted.log[0].fact).toBe(CALIBRATION_ACCEPT_FACT);
+    const eased = syncAutoCalibration(plan(), accepted.log, calibrationWanted('vragen', true, true), 2, id);
+    expect(eased.workout[0].rows.some(isCalibrationRow)).toBe(false);
+    const back = syncAutoCalibration(plan(), eased.log, calibrationWanted('vragen', false, true), 3, id);
+    expect(back.workout[0].rows.some(isCalibrationRow)).toBe(true);
+  });
+  it('de dag telt alleen met de set afgevinkt, niet na Akkoord', () => {
+    const accepted = syncAutoCalibration(plan(), [], true, 1, id, CALIBRATION_ACCEPT_FACT);
+    expect(calibrationDone(accepted.workout)).toBe(false);
+  });
+  it('een concept met een open ijkset verliest hem als de stand Uit is', () => {
+    const open = syncAutoCalibration(plan(), [], true, 1, id);
+    const off = syncAutoCalibration(open.workout, open.log, calibrationWanted('uit', false, true), 2, id);
+    expect(off.workout[0].rows.some(isCalibrationRow)).toBe(false);
+    expect(off.log.some((e) => e.kind === 'toegevoegd')).toBe(false);
+  });
+});
+
+describe('Akkoord, Lichter aan, Terugzetten als één pad (zoals het scherm)', () => {
+  it('de aangenomen set komt terug, met de Akkoord-zin in het verloop', () => {
+    let n = 0;
+    const id = () => `fe${++n}`;
+    const plan = () => [ex('b', 'bench-press', [row('b1'), row('b2')])];
+    const free = { mode: 'vragen' as const, blocked: false, accepted: true };
+    const accepted = syncAutoCalibration(plan(), [], true, 1, id, CALIBRATION_ACCEPT_FACT);
+    const eased = syncCalibrationFor(plan(), accepted.log, { ...free, blocked: true }, 2, id);
+    expect(eased.workout[0].rows.some(isCalibrationRow)).toBe(false);
+    const back = syncCalibrationFor(plan(), eased.log, free, 3, id);
+    expect(back.workout[0].rows.filter(isCalibrationRow)).toHaveLength(1);
+    expect(back.workout[0].rows).toHaveLength(3);
+    expect(back.log.find((e) => e.kind === 'toegevoegd')?.fact).toBe(CALIBRATION_ACCEPT_FACT);
+  });
+  it('zonder Akkoord komt er bij Vragen niets bij', () => {
+    const none = syncCalibrationFor([ex('b', 'bench-press', [row('b1')])], [], { mode: 'vragen', blocked: false, accepted: false }, 1, () => 'x');
+    expect(none.workout[0].rows.some(isCalibrationRow)).toBe(false);
+  });
+  it('Automatisch houdt zijn eigen zin', () => {
+    const auto = syncCalibrationFor([ex('b', 'bench-press', [row('b1')])], [], { mode: 'automatisch', blocked: false, accepted: false }, 1, () => 'x');
+    expect(auto.log[0].fact).toBe(CALIBRATION_AUTO_FACT);
   });
 });

@@ -13,7 +13,10 @@ import { dayRules, type DayRules } from './dayRules';
 // 'open': voorbij en niet gedaan, maar er ligt nog een concept van in Forge (een training die bleef liggen,
 // engine/forgeSession.ts#leftSession). Heet "loopt nog": niet gemist en niet gedaan, tot je hem afrondt (dan is er
 // een log) of verwijdert (dan geldt weer gewoon gemist). Zie isDraftOpen.
-export type DisplayStatus = 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' | 'rest' | 'away' | 'open';
+// 'before': een rij van voor de start van het programma (een restje van een eerdere planning). Geen pauze en geen
+// Vervallen: neutraal, nooit gemist, geen Inhalen, geen Niet gedaan. De weekterugblik laat hem weg, Week toont hem rustig
+// als "Voor de start" (I-57).
+export type DisplayStatus = 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' | 'rest' | 'away' | 'open' | 'before';
 
 export interface DisplaySessionState {
   status: DisplayStatus;
@@ -56,6 +59,9 @@ interface PauseBase {
   races?: readonly string[];
   // De geplande sessie waar nog een concept van in Forge ligt (openDraftId), of niets.
   openDraft?: string;
+  // De startdatum van het programma: een rij van daarvoor (een restje van een eerdere planning) telt nergens als gemist,
+  // net als in de weekterugblik (engine/weekLogs.ts#leftOutOfCount, I-57).
+  programStart?: string;
 }
 // Wie de periodes meegeeft, geeft ook de sjablonen mee: zonder sportschool telt alleen wat de sportschool nodig heeft
 // als weg (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md). Verplicht, zodat geen scherm stil een
@@ -80,6 +86,10 @@ export function isDraftOpen(session: Pick<PlannedSession, 'id' | 'scheduledDate'
   return !!openDraft && session.id === openDraft && session.status !== 'skipped' && session.scheduledDate < today;
 }
 
+export function isBeforeStart(session: Pick<PlannedSession, 'scheduledDate'>, programStart: string | undefined): boolean {
+  return !!programStart && session.scheduledDate < programStart;
+}
+
 // Een training binnen een pauze die je meldde: ziek (tot en met de dag van beter melden, of tot vandaag), weg
 // (engine/leave.ts#isAwayFor: vakantie en tocht alles, zonder sportschool alleen wat de sportschool nodig heeft), of
 // uit de afbouw van een race die er al was. De ene toets voor Vervallen; wie een voorbije dag toont, geeft
@@ -98,7 +108,7 @@ export function pauseRules(pause: Pick<PauseBase, 'illness' | 'races'> & { leave
 // een pauze en niet lopend in Forge. Dezelfde afleiding als de stand 'missed' hieronder; Week telt er de kaart
 // "Je hebt n training gemist" mee (engine/weekList.ts#missedInWeek).
 export function isMissedSession(session: PlannedSession, loggedIds: ReadonlySet<string | undefined>, today: string, pause?: PauseContext): boolean {
-  if (loggedIds.has(session.id) || session.status === 'skipped' || session.scheduledDate >= today) return false;
+  if (loggedIds.has(session.id) || session.status === 'skipped' || session.scheduledDate >= today || isBeforeStart(session, pause?.programStart)) return false;
   return !isDraftOpen(session, pause?.openDraft, today) && !isPausedFor(session, pause, today);
 }
 
@@ -108,6 +118,7 @@ export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[],
   if (log) return { status: 'completed', wasMoved, log };
   if (isRest) return { status: 'rest', wasMoved };
   if (session.status === 'skipped') return { status: 'skipped', wasMoved };
+  if (isBeforeStart(session, pause?.programStart)) return { status: 'before', wasMoved: false };
   if (session.scheduledDate === todayISO()) return { status: 'today', wasMoved };
   if (isDraftOpen(session, pause?.openDraft, todayISO())) return { status: 'open', wasMoved };
   if (session.scheduledDate < todayISO()) {

@@ -12,6 +12,9 @@ export interface RoutePoint {
   // engine/routeGeometry.ts#bigRoadMeters alleen als beide punten het hebben. Alleen in het geheugen: een
   // bewaarde route en het GPX-bestand nemen alleen plek en hoogte mee.
   bigRoad?: true;
+  // De ondergrond van het stuk dat op dit punt eindigt, als de bron die zei (nu alleen BRouter, uit
+  // dezelfde WayTags). Afwezig: onbekend. Alleen in het geheugen, net als `bigRoad`.
+  surface?: 'paved' | 'unpaved';
 }
 
 export type RouteSource = 'brouter' | 'valhalla';
