@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeDirection, parseDirection, parseDirectionStart, planDirection, startMinutes } from './direction';
+import { activeDirection, parseDirection, parseDirectionStart, planDirection, startMinutes, directionChoices } from './direction';
 import type { TrainingGoal } from '../models/goals';
 import { DIRECTIONS, DIRECTION_IDS } from '../data/directions';
 
@@ -117,5 +117,19 @@ describe('planDirection', () => {
 
   it('een doel Fit blijven is zelf de richting', () => {
     expect(planDirection({}, [full({ kind: 'fit' })], new Set(), TODAY, undefined)).toEqual({ free: true, direction: { id: 'maintain' } });
+  });
+});
+
+// I-110: met kracht uit belooft Sterker worden iets wat de planning niet geeft.
+describe('directionChoices', () => {
+  it('kracht aan: alle vier', () => {
+    expect(directionChoices(true, undefined)).toEqual(['maintain', 'improve', 'stronger', 'easy']);
+  });
+  it('kracht uit: zonder Sterker worden', () => {
+    expect(directionChoices(false, 'easy')).toEqual(['maintain', 'improve', 'easy']);
+    expect(directionChoices(false, undefined)).toEqual(['maintain', 'improve', 'easy']);
+  });
+  it('kracht uit maar Sterker worden al gekozen: het blijft zichtbaar', () => {
+    expect(directionChoices(false, 'stronger')).toEqual(['maintain', 'improve', 'stronger', 'easy']);
   });
 });

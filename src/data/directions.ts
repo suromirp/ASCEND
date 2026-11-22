@@ -31,6 +31,8 @@ export interface DirectionSpec {
   effect: string;
   // Dezelfde regel als Krachttraining uit staat (zonder keren kracht). Zonder: effect geldt altijd.
   effectNoStrength?: string;
+  // De zin als Krachttraining uit staat en deze richting toch gekozen is. Zonder: line geldt altijd.
+  lineNoStrength?: string;
   // Tel-minuten per week (een matige minuut telt 1, een pittige 2). Bij Fitter worden is dit
   // de ondergrens zonder geschiedenis; de start volgt anders uit je laatste vier weken.
   minutes: Sourced<number>;
@@ -71,6 +73,8 @@ export const DIRECTIONS: Readonly<Record<DirectionId, DirectionSpec>> = {
     line: 'Kracht staat voorop, duur loopt rustig mee.',
     effect: '3 keer kracht en 120 minuten rustige duur. In de vierde week loop je minder.',
     effectNoStrength: '120 minuten rustige duur. In de vierde week loop je minder.',
+    // Alleen te zien als Sterker worden al gekozen is en kracht daarna uit ging.
+    lineNoStrength: 'Je kracht staat uit, dus dit is nu vooral rustige duur.',
     minutes: sourced(120, 'afgeleid', 'deel 3, onderhouden is goedkoop'),
     strength: sourced(3, 'matig', 'deel 3, onderhouden is goedkoop'),
     hardShare: sourced(0.1, 'afgeleid', 'deel 3, sporten combineren'),

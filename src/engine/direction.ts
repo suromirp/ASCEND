@@ -16,6 +16,13 @@ export function parseDirection(raw: unknown): DirectionId | undefined {
   return DIRECTION_IDS.find((id) => id === raw);
 }
 
+// De richtingen die het richtingblad aanbiedt. Met kracht uit belooft Sterker worden iets wat de planning niet
+// geeft, dus het staat er dan niet bij; staat het al gekozen, dan blijft het zichtbaar zodat je ziet wat je hebt
+// (docs/beslissingen/2026-11-22-sterker-worden-zonder-kracht.md, I-110).
+export function directionChoices(strengthOn: boolean, current: DirectionId | undefined): DirectionId[] {
+  return DIRECTION_IDS.filter((id) => strengthOn || id !== 'stronger' || current === 'stronger');
+}
+
 // De startdatum van je richting: een echte datum die een maandag is, anders niets.
 export function parseDirectionStart(raw: unknown): string | undefined {
   if (typeof raw !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return undefined;

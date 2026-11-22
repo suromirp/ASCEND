@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../state/AppDataContext';
-import { DIRECTIONS, DIRECTION_IDS, type DirectionId } from '../../data/directions';
+import { DIRECTIONS, type DirectionId } from '../../data/directions';
+import { directionChoices } from '../../engine/direction';
 import type { YourWeek } from '../../engine/yourWeek';
 import { formatDateNL } from '../../utils/dates';
 import { Card, Eyebrow, Meter, PrimaryButton, Ring } from '../ui';
@@ -151,7 +152,7 @@ export function DirectionSheet({
   const strengthOn = strengthTrainingOn(settings);
   const [picked, setPicked] = useState<DirectionId | undefined>(current);
   const options: ChoiceOption<string>[] = [
-    ...DIRECTION_IDS.map((id) => ({ value: id, label: DIRECTIONS[id].label, note: `${DIRECTIONS[id].line} ${(!strengthOn && DIRECTIONS[id].effectNoStrength) || DIRECTIONS[id].effect}` })),
+    ...directionChoices(strengthOn, current).map((id) => ({ value: id, label: DIRECTIONS[id].label, note: `${(!strengthOn && DIRECTIONS[id].lineNoStrength) || DIRECTIONS[id].line} ${(!strengthOn && DIRECTIONS[id].effectNoStrength) || DIRECTIONS[id].effect}` })),
     ...(onGoal ? [{ value: GOAL_ROW, label: 'Naar een doel', note: 'Kies een tocht of wedstrijd.' }] : []),
   ];
   return (
@@ -167,6 +168,9 @@ export function DirectionSheet({
               setPicked(v as DirectionId);
             }}
           />
+          {!strengthOn && current !== 'stronger' && (
+            <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Sterker worden staat er weer bij zodra krachttraining aan staat.</p>
+          )}
           <PrimaryButton
             disabled={!picked || (picked === current && !hasPlan)}
             onClick={() => {
