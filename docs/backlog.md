@@ -7,7 +7,11 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 `docs/beslissingen/`.
 
 ## Inbox
-Hoogste code: I-118. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+Hoogste code: I-123. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+- [I-123] (22 november, Warden ronde 22e, mag) Wind bij de lus: de voorspelling hoort bij de weerplek; ligt de start meer dan ongeveer 25 km daarvandaan, dan geen windoordeel. Voor vandaag het uur van nu nemen als het gebruikelijke startuur al voorbij is, en de wind per zoeksleutel vastzetten zodat een nieuwe voorspelling de lus niet onder je hand omdraait.
+- [I-122] (22 november, Warden ronde 22e, mag) Na het omdraaien van de lus (wind of Andersom) blijft de amber regel "Deze lus stijgt X m" op de oude hoogtemeters staan terwijl de feiten opnieuw zijn uitgerekend; `notedOutcome` opnieuw toepassen. Ook de labels ondergrond en grote weg één stuk verschuiven bij omkeren.
+- [I-121] (22 november, Warden ronde 22e, mag) Andere lus, een richting waar niets ligt: nu volgt een volledige zoektocht die dezelfde lus teruggeeft; de vorige lus hergebruiken zonder aanroep. Plus een opslagtest voor `findOtherLoop` (cache, tijdgrens, afbreken na sluiten, offline).
+- [I-120] (22 november, Lookout en Warden ronde 22e, mag) Instelling Terug voor het donker heeft nog geen uitleg-knop; één zin uitleg erbij. In het besluit route-info één zin waarom profiel, ondergrond en afhaken niet instelbaar zijn.
 - [I-118] (22 november, eigenaar "Ja doe al die punten klinkt goed" op de route-ideeën van de coördinator) Afhaken: op de kaart het punt waar je het snelst terug bij de start bent, voor als het onderweg tegenvalt. Alleen rekenwerk.
 - [I-117] (22 november, eigenaar "Ja doe al die punten klinkt goed" op de route-ideeën van de coördinator) Ondergrond: verdeling verhard en onverhard van de lus in één regel, als de routeplanner dat per stuk geeft; anders het droge feit dat het niet bekend is.
 - [I-116] (22 november, eigenaar "Ja doe al die punten klinkt goed" op de route-ideeën van de coördinator) Hoogteprofiel onder de kaart van de lus, steile stukken in amber, uit de hoogtes die de lus al heeft.
