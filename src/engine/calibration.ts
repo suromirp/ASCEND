@@ -200,3 +200,11 @@ export function syncAutoCalibration(workout: WorkoutExercise[], log: ForgeEvent[
   }
   return { workout: next, log: nextLog };
 }
+
+// Wat het scherm doet bij het openen, bij Lichter aan of uit en bij een heropend concept: de ijkset volgt de stand.
+// `accepted` is je Akkoord op de kaart, een feit van deze training; lees het nooit uit de rijen van nu, want Lichter
+// haalt de set eruit en Terugzetten moet hem terugzetten. Bij Vragen staat in het verloop de Akkoord-zin.
+export function syncCalibrationFor(workout: WorkoutExercise[], log: ForgeEvent[], i: { mode: CalibrationMode; blocked: boolean; accepted: boolean; readOnly?: boolean }, at: number, newId: () => string): { workout: WorkoutExercise[]; log: ForgeEvent[] } {
+  const want = !i.readOnly && calibrationWanted(i.mode, i.blocked, i.accepted || hasCalibrationRow(workout));
+  return syncAutoCalibration(workout, log, want, at, newId, i.mode === 'vragen' ? CALIBRATION_ACCEPT_FACT : CALIBRATION_AUTO_FACT);
+}
