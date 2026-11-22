@@ -173,9 +173,6 @@ function ForgeWorkoutInner({
   const [weightOpen, setWeightOpen] = useState(false);
   const [calLater, setCalLater] = useState(false);
   const [calState, setCalState] = useState<{ phase: 'open' | 'added'; name: string }>({ phase: 'open', name: '' });
-  // Je Akkoord op de kaart IJkset is een feit van deze training, niet af te leiden uit de rij: Lichter haalt de rij weg en
-  // Terugzetten zet hem terug. Een heropend concept met de set erin telt als aangenomen.
-  const [calAccepted, setCalAccepted] = useState(() => hasCalibrationRow(restored?.exercises));
   // De standen van een toestel (engine/toestelStanden.ts): onthouden bij het afvinken, met Terugdraaien.
   const stands = useForgeStands({ remember: strength.learnStands, readOnly, profile: strength.profile, logs: sessionLogs });
   // "Forge rekent mee" (engine/forgeReckon.ts): dezelfde rekening als het bijsturen.
@@ -200,6 +197,9 @@ function ForgeWorkoutInner({
   // Een ladderstap die je in deze sessie met Akkoord koos (StepProposalNotice.tsx) geldt vanaf de volgende sessie:
   // deze sessie houdt de stappen van het openen, ook in het concept (forgeDraft.ts#sessionStepSwaps), anders wisselt
   // mergeDraft na herladen een onaangeraakte plek midden in de sessie.
+  // Je Akkoord op de kaart IJkset is een feit van deze training, niet af te leiden uit de rij: Lichter haalt de rij weg en
+  // Terugzetten zet hem terug. Een heropend concept met de set erin telt als aangenomen.
+  const [calAccepted, setCalAccepted] = useState(() => hasCalibrationRow(restored?.exercises));
   const [sessionSwaps] = useState(() => sessionStepSwaps(restored, settings.strengthModel?.stepSwaps));
   const allSlots = useMemo(() => forgeSlotsFor(template, { ...settings.strengthModel, stepSwaps: sessionSwaps }, date), [template, settings.strengthModel, sessionSwaps, date]);
   // Hoogstens per krachttraining (engine/forgeTimeCap.ts): met de geleerde tijd per set gaat er eerst bijwerk af
