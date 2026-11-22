@@ -47,6 +47,19 @@ export function straightBackupPair<T extends BackupPair>(pair: T, nowMs: number)
   return next;
 }
 
+// Bij een import: zoals `straightBackupPair`, maar een tijdstip in de toekomst zonder lijst die erbij hoort
+// wordt weggelaten (tijdstip en lijst). Rechtgezet zou het als nu tellen met een lege lijst, en dan zwijgt de
+// herinnering zeven dagen terwijl er niets bewaard is. Weggelaten telt alles als nog niet bewaard: te veel, niet
+// te weinig (docs/beslissingen/2026-11-20-backup-kopie-en-toekomst.md, Bekende grens).
+function straightImportedPair(pair: BackupPair, nowMs: number): BackupPair {
+  const ms = momentMs(pair.lastExportedAt);
+  if (Number.isFinite(ms) && ms > nowMs) {
+    const known = readLastBackupLogs(pair.lastBackupLogs);
+    if (!known || known.at !== pair.lastExportedAt) return {};
+  }
+  return straightBackupPair(pair, nowMs);
+}
+
 // Na volledig terugzetten (docs/beslissingen/2026-11-20-backup-terugzetten.md). Laatste back-up en de lijst
 // horen bij het toestel en gaan altijd als paar. In het bestand staat het tijdstip van de back-up daarvoor,
 // dus dat lees je nooit over. Is het paar van het toestel even oud als of nieuwer dan het bestand, dan blijft
@@ -60,7 +73,7 @@ export function backupPairAfterRestore(
   fileLogIds: readonly string[],
   nowMs: number,
 ): BackupPair {
-  const own = straightBackupPair({ lastExportedAt: device.lastExportedAt, lastBackupLogs: device.lastBackupLogs }, nowMs);
+  const own = straightImportedPair({ lastExportedAt: device.lastExportedAt, lastBackupLogs: device.lastBackupLogs }, nowMs);
   const readMs = momentMs(fileAt);
   if (!Number.isFinite(readMs)) return own;
   const fileMs = Math.min(readMs, nowMs);
@@ -74,8 +87,8 @@ export function backupPairAfterRestore(
 // paar. Het nieuwste van de twee paren blijft: Laatste back-up springt nooit terug in de tijd. Bij gelijke
 // tijd blijft het toestel. Een kopie zonder leesbaar tijdstip verandert niets. Beide tellen hoogstens als nu.
 export function newestBackupPair(device: BackupPair, copy: BackupPair, nowMs: number): BackupPair {
-  const own = straightBackupPair({ lastExportedAt: device.lastExportedAt, lastBackupLogs: device.lastBackupLogs }, nowMs);
-  const theirs = straightBackupPair({ lastExportedAt: copy.lastExportedAt, lastBackupLogs: copy.lastBackupLogs }, nowMs);
+  const own = straightImportedPair({ lastExportedAt: device.lastExportedAt, lastBackupLogs: device.lastBackupLogs }, nowMs);
+  const theirs = straightImportedPair({ lastExportedAt: copy.lastExportedAt, lastBackupLogs: copy.lastBackupLogs }, nowMs);
   const copyMs = momentMs(theirs.lastExportedAt);
   if (!Number.isFinite(copyMs)) return own;
   const deviceMs = momentMs(own.lastExportedAt);

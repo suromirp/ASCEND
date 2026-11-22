@@ -190,3 +190,28 @@ describe('newestBackupPair', () => {
     expect(newestBackupPair(newer, { lastExportedAt: '2026-11-15T20:30:00+02:00' }, NOW)).toEqual(newer);
   });
 });
+
+describe('een tijdstip in de toekomst zonder lijst, bij een import (I-101)', () => {
+  const NOW = Date.parse('2026-11-20T12:00:00.000Z');
+  const FUTURE = '2099-01-01T00:00:00.000Z';
+
+  it('het paar van het toestel wordt weggelaten: de herinnering zwijgt niet', () => {
+    expect(backupPairAfterRestore({ lastExportedAt: FUTURE }, undefined, [], NOW)).toEqual({});
+    expect(backupPairAfterRestore({ lastExportedAt: FUTURE, lastBackupLogs: { at: '2098-01-01T00:00:00.000Z', ids: ['a'] } }, undefined, [], NOW)).toEqual({});
+  });
+
+  it('het bestand wint dan van een weggelaten paar', () => {
+    const next = backupPairAfterRestore({ lastExportedAt: FUTURE }, '2026-11-10T10:00:00.000Z', ['a'], NOW);
+    expect(next).toEqual(backupMadeSettings('2026-11-10T10:00:00.000Z', ['a']));
+  });
+
+  it('met een lijst die erbij hoort wordt het nog steeds nu, met de lijst', () => {
+    const at = new Date(NOW).toISOString();
+    expect(backupPairAfterRestore(backupMadeSettings(FUTURE, ['a']), undefined, [], NOW)).toEqual(backupMadeSettings(at, ['a']));
+  });
+
+  it('een kopie zonder lijst in de toekomst verandert niets aan het paar van het toestel', () => {
+    const device = backupMadeSettings('2026-11-15T19:00:00.000Z', ['a']);
+    expect(newestBackupPair(device, { lastExportedAt: FUTURE }, NOW)).toEqual(device);
+  });
+});

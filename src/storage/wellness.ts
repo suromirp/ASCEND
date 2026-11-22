@@ -29,6 +29,9 @@ import { doubleMornings } from '../engine/morningDouble';
 // van de gebruiker en gaat alleen weg als hij gedekt is (docs/beslissingen/2026-11-20-ochtend-zonder-bron.md).
 const FETCHED = `${INTERVALS_ADAPTER_ID}:`;
 const ofLink = (m: RecoveryMetric): boolean => m.id.startsWith(FETCHED);
+// What pruneWellness filters and a backup import filters the same way: a morning from intervals.icu or
+// Health Connect. Mornings from elsewhere (manual:, garmin:, macrofactor:) are left whole.
+export const isPrunedMorning = (m: RecoveryMetric): boolean => ofLink(m) || m.id.startsWith('health-connect:');
 
 // Records are kept for KEEP_DAYS (engine/wellnessRange.ts): "Wat speelde er" compares a noted
 // morning with the 28 days before it, which can lie months back. Everything that reads them picks
@@ -172,7 +175,7 @@ export async function pruneWellness(use: WatchUse): Promise<void> {
   await MetaRepo.set(COVERED_KEY, undefined);
   await MetaRepo.set(TRIED_KEY, undefined);
   // Ook de ochtenden uit Health Connect: dezelfde keuzes gelden daar (storage/healthConnect.ts).
-  const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => ofLink(m) || m.id.startsWith('health-connect:'));
+  const ours = (await RecoveryMetricsRepo.getAll()).filter(isPrunedMorning);
   const kept = filterRecovery(ours, use);
   const keptIds = new Set(kept.map((m) => m.id));
   for (const m of ours) if (!keptIds.has(m.id)) await RecoveryMetricsRepo.delete(m.id);
