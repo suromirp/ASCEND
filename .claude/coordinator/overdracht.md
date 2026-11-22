@@ -1,20 +1,19 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSkaRVqid7Ra5MiwW8Z. Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
+Bijgewerkt: 22 november 2026 door coördinator session_01LnDpSip9wpY6fuZXMm2yqw (opvolger van session_01LnDpSmhQECnxdG9gnj4X2S). Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
 
-## Stand 20 november avond (lees dit eerst)
+## Stand 22 november 17:45 (wissel aangevraagd)
 
-- 17:55 Amsterdam: ronde klaar. Live vandaag: I-68, I-83, I-92 (0daf3afa), I-84 (16f634ac), I-91 (ad2e4b99); backlog op main bijgewerkt (629d3b43). Geen lopende bouwers, helpers of worktrees. Coördinator session_01LnDpSkaRVqid7Ra5MiwW8Z vroeg de wissel aan bij de chat ASCEND.
-- Volgende ronde, voorstel: I-93 (back-up, kopie van voor een import), I-95 (koppelvoorstel noemt verschuiving testloop), I-96 (tests en uitleg niet goed gemeten), I-97 (back-up import en ochtend zonder bron), I-94 (Akkoord sterker op de ijksetkaart). Klein werk als helper; opslag (I-93, I-97) in een losse chat.
-- Later, Warden: een bewust paar in omgekeerde volgorde (lang op zaterdag, heuvel op zondag) telt in de kamzin nog als bewust; `isIntendedOrder` meenemen. Mag van Pathfinder I-92: ziek en slecht slapen hoort bij I-78.
-- Geleerd vandaag: Warden (reviewer) schrijft nooit bestanden; zet in elke opdracht "schrijf geen bestanden, geef de lijst in je verslag" en commit een herstellijst zelf. Een losse chat kan de coördinator niet hervatten: bij herstel een nieuwe losse chat met de lijst. Bij een squash botsen gegenereerde kennisindexbestanden: neem die van main en draai `npm run kennisindex`. `docs/backlog.md` op main: zet hem er na `backlog:bij` als eigen commit op (read-tree van origin/main, alleen dat bestand).
-- Een zin die naar een kaart elders verwijst (zoals de vraag op Vandaag) toetsen aan de voorwaarden van die kaart; staat hij er niet altijd, dan zegt de zin dat.
-- Fable weeklimiet staat op allowed_warning: geen groot nieuw Fable-werk zonder dat het nodig is; meld de eigenaar als het knelt.
-- Eigenaar 20 november "Ja gemengd, doe jouw advies": bouwers langer dan een half uur of aan planner, opslag of migraties in een losse chat (`create_session`), klein werk als helper; de coördinator start zijn opvolger niet zelf maar meldt de wissel met create_trigger aan de chat "ASCEND" (besluit `2026-11-20-gemengde-bouwers-en-wissel.md`).
-- claude/nacht loopt in de code ver achter op main (alleen .claude en docs volgen main); bouwers takken af van origin/main.
-- Haken rond het samenvatten (`.claude/settings.json`) werken: na een samenvatting komt de bovenste stand van dit bestand terug.
-- De vastgezette chat "ASCEND" (session_013ZuQA6MkeoKDCxdu4uMmEd) stuurt soms meldingen door als geplande taak. Iets stuk in de app: bouwen. Iets dat instellingen of rechten van Claude Code raakt: eerst de eigenaar zelf vragen.
-- Geen open vragen aan de eigenaar.
+- Eigenaar 22 november: "Ga weer verder en start met nieuwe coördinator". Dus: doorbouwen volgens de werkwijze (zuinige stand, skill `werkverdeling`, poorten naar risico, één Warden en één Lookout per ronde, squash naar main). Eerder vandaag: "alles mag op, ga gwn door tot er niks meer is".
+- Geen lopende helpers, geen open worktrees. Main 1109c07a plus Net live en kosten: ronde 22e live als ef1a92bb (I-111 andere lus, I-114 wind, I-115 tot I-118 route-info). Vandaag ook live: 22d d64572ca (I-69, I-57, I-108, I-71), I-106, I-107, I-109, I-110, I-46, I-82 1/2/4, bundel-22. Werktak `claude/nacht` loopt ver achter op main: niet als basis gebruiken, werk vanaf origin/main.
+- Plan volgende ronde, in deze volgorde:
+  - I-112 (route, Sonnet, plus Lookout): blad Andere lus krijgt Soort terrein (Langs water, Door bos of groen, Meer onverhard) en een rij Via een punt. Pathfinder-advies: Via een punt zet de kaart Groter in kiesstand ("Tik waar de lus langs moet"), speld, "Lus erlangs" en Annuleren, "Zonder punt" om terug; buiten kiesstand blijft tik Start hier (besluit route-kaart bijwerken); punt alleen in geheugen; geen woorden Simpel/Avontuurlijk in het blad; Plekken niet als via-punt.
+  - I-120 tot I-123 (Mag van 22e: uitleg Terug voor het donker, notice na omkeren, richting zonder lus zonder aanroep plus test findOtherLoop, wind bij verre weerplek). Past bij I-112 in hetzelfde spoor.
+  - Daarna I-113, I-82 punt 3 (planning, Opus), I-73, I-74, I-60, I-54 (opslag, Opus), I-35. Over in Inbox: I-104, I-105 (Lookout niet bereikt), I-72 rest. I-119 bestaat niet (overgeslagen).
+- Open vraag, staat nog niet in `eigenaar.md`: I-58, tellen de minuten van een training die in een andere week gedaan is in de week van uitvoeren (advies, geplande week blijft gelijk) of gaan ze mee naar de geplande week? Gesteld onder Vraag aan u, geen antwoord. Zonder antwoord bouwen met het advies.
+- Geplande taak trig_01Y51Apkj25Cb19ifriWdA36 (Graphify-proef, 19:10 Lisbon, gebonden aan de vorige coördinator) staat op pauze sinds de stop van de eigenaar. De proef zelf staat onder Vaste afspraken; plan hem opnieuw vanuit je eigen sessie als de ronde klaar is.
+- Lessen van vandaag: na het samenvoegen van takken die elk een instelling toevoegen ook `npm run kaart` (de app-kaart werd van één tak overgenomen; Warden-Moet in 22e). kaart:vergelijk lukt niet in worktrees van helpers (ERR_CONNECTION_REFUSED), wel bij de coördinator. Werkbriefjes blijven onder 46 regels. `npm run backlog:bij` in een worktree met symlink naar node_modules.
+- Besluiten van vandaag (alle in docs/beslissingen/2026-11-22-*): ijkset-dag bij afronden, sterker worden zonder kracht, andere lus, wind en lus, route-info. Rij van vóór de start heet "Voor de start" (eigen neutrale stand).
 
 ## Vaste afspraken
 
@@ -34,6 +33,9 @@ Bijgewerkt: 20 november 2026 door coördinator session_01LnDpSkaRVqid7Ra5MiwW8Z.
 - Helpers in de coördinator-chat: zeg in elke opdracht dat ze alleen in een eigen worktree werken en /home/user/ascend nooit van branch wisselen (een Pathfinder deed dat om 22:35).
 
 ## Werkwijze, geleerd
+
+- De vastgezette chat "ASCEND" (session_013ZuQA6MkeoKDCxdu4uMmEd) stuurt opdrachten van de eigenaar door als geplande taak; daar start ook de wissel (create_trigger, naam "Wissel coördinator").
+- Warden schrijft nooit bestanden: herstel naar de bouwer of zelf. Bij een squash botsen gegenereerde kennisindexbestanden: neem die van main en draai `npm run kennisindex`. claude/nacht loopt in code achter op main; bouwers takken af van origin/main; docs voor main maak je op een tak van origin/main.
 
 - Twee branches die elk een instelling toevoegen botsen in `src/engine/__snapshots__/instellingen-foto.json`: kies een kant en maak hem opnieuw met `npx vitest run -u src/engine/settingsFoto.test.ts`.
 - Draai `kaart:vergelijk` nooit midden in een merge-conflict.
