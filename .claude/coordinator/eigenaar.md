@@ -38,6 +38,9 @@ Zonder antwoord het advies: praattest later, test van 30 minuten later, DFA alph
 
 ## Net live
 
+### 22 november 17:30
+- Route (I-111, I-114 tot I-118): knop Andere lus (Andersom, een andere kant op, vier richtingen, zonder heen en terug), de wind bepaalt de richting, en onder de kaart een hoogteprofiel, de ondergrond, een afhaakpunt en terug voor het donker. Eigenaar daarna: even stoppen.
+
 ### 20 november 19:50
 - Korte test (I-91): per week telt de vroegste geldige test voor je midden; een laat afgevinkte of later gekoppelde loop verdringt hem niet meer. Een losse loop zegt dat hij niet meetelt en wijst naar de vraag op Vandaag.
 

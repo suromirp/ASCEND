@@ -555,3 +555,8 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-20 | Pathfinder zinnen I-91 | pathfinder helper | sonnet | klein | ~3 min | akkoord, 3 mag; zin losse loop voorwaardelijk gemaakt door coördinator |
 | 2026-11-20 | Warden herstel I-91 | reviewer helper | fable | 79k tok | 2,5 min | akkoord, 4 mag (zin, besluit, venster: zelf in de squash) |
 | 2026-11-20 | Lookout zinnen I-91 | tester helper | sonnet | 59k tok | 3 min | groen 360/390/412, zelf bekeken |
+| 2026-11-22 | Sherpa route I-111 | ontwikkelaar helper | sonnet | middel | ~25 min | gebouwd, besluit andere-lus |
+| 2026-11-22 | Sherpa wind I-114 | ontwikkelaar helper | sonnet | middel | ~20 min | gebouwd, besluit wind-en-lus |
+| 2026-11-22 | Sherpa route-info I-115 tot I-118 | ontwikkelaar helper | sonnet | middel | ~30 min | gebouwd, besluit route-info |
+| 2026-11-22 | Warden ronde 22e | reviewer helper | opus | 117k tok | 20 min | 1 moet (app-kaart, zelf vastgelegd), 7 mag naar I-120 tot I-123 |
+| 2026-11-22 | Lookout ronde 22e | tester helper | sonnet | 141k tok | 12 min | groen 360/412, uitleg donker naar I-120 |
