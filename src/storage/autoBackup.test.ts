@@ -6,7 +6,7 @@ import { buildBackupEnvelope } from './backupExport';
 import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { migrateAutoBackupSettings } from './migrations';
 import { AutoBackupError, NameTakenError, type AutoBackupFailureReason } from '../engine/autoBackup';
-import type { AutoBackupTarget, FolderAccess } from '../integrations/backupFolder';
+import { isAttemptRest, writeThroughTemp, type AutoBackupTarget, type FolderAccess, type TempFs } from '../integrations/backupFolder';
 import type { PlannedSession, SessionLog } from '../models/training';
 
 // Nagemaakte gegevens: één geplande training, zodat er iets te bewaren is. 2 november 2026 is een maandag.
@@ -546,6 +546,100 @@ describe('de automatische back-up', () => {
     const [text] = [...files.values()];
     expect(text).not.toContain('autoBackupState');
     expect(text).not.toContain('Documents > ASCEND');
+  });
+});
+
+// Een map in het geheugen die schrijft zoals de app (tijdelijk bestand, dan hernoemen; het doel gaat eerst
+// weg). Met `hang` blijft het schrijven van het tijdelijke bestand staan tot `release`.
+function tempTarget() {
+  const files = new Map<string, string>();
+  let gate: Promise<void> | undefined;
+  let open: (() => void) | undefined;
+  const fs: TempFs = {
+    exists: async (n) => files.has(n),
+    writeFile: async (n, t) => {
+      const waitFor = gate;
+      if (waitFor) await waitFor;
+      files.set(n, t);
+    },
+    rename: async (from, to) => {
+      if (!files.has(from)) throw new Error('File does not exist');
+      files.set(to, files.get(from)!);
+      files.delete(from);
+    },
+    remove: async (n) => {
+      files.delete(n);
+    },
+    holds: async (n, t) => (!files.has(n) ? 'absent' : files.get(n) === t ? 'same' : 'different'),
+    pauseMs: 0,
+  };
+  const target: AutoBackupTarget = {
+    platform: 'app',
+    access: async () => 'ready',
+    where: async () => ({ kind: 'folder', label: 'Documenten > ASCEND' }),
+    exists: fs.exists,
+    write: (n, t, id, opts) => writeThroughTemp(fs, n, t, id, opts),
+    tidy: async (n) => {
+      for (const f of [...files.keys()]) if (isAttemptRest(f, n)) files.delete(f);
+    },
+    verify: async (n, bytes) => (!files.has(n) ? 'unknown' : new TextEncoder().encode(files.get(n)!).length === bytes ? 'ok' : 'broken'),
+    remove: async (n) => {
+      files.delete(n);
+    },
+    installId: async () => INSTALL,
+  };
+  return {
+    target,
+    files,
+    hang: () => {
+      gate = new Promise((r) => {
+        open = r;
+      });
+    },
+    // Laat alleen de schrijfactie los die al hing; nieuwe schrijfacties wachten niet.
+    unhang: () => {
+      gate = undefined;
+    },
+    release: () => open?.(),
+  };
+}
+
+describe('een laat antwoord na de tweede poging (I-69)', () => {
+  beforeEach(async () => {
+    forgetHalfWritten();
+    await wipeAllData();
+    await PlannedSessionsRepo.put(session);
+  });
+
+  it('de eerste schrijfactie antwoordt pas na de gelukte tweede: de nieuwere back-up blijft onder de naam, zonder rest', async () => {
+    const t = tempTarget();
+    t.hang();
+    expect(await runAutoBackupIfDue({ now: MONDAY, target: t.target, timeoutMs: 20, verifyPauseMs: 0 })).toBe('failed');
+    // Tussen de twee pogingen train je.
+    await SessionLogsRepo.put({ id: 'log_tussendoor', plannedSessionId: 'ps_a', completedAt: new Date(2026, 10, 2, 9).toISOString() } as SessionLog);
+    t.unhang();
+    expect(await runAutoBackupIfDue({ now: new Date(MONDAY.getTime() + 2 * 3_600_000), target: t.target, verifyPauseMs: 0 })).toBe('saved');
+    const nieuwer = t.files.get(name('2026-11-02'));
+    expect(nieuwer).toContain('log_tussendoor');
+    // Nu antwoordt de telefoon alsnog op de eerste schrijfactie.
+    t.release();
+    await new Promise((r) => setTimeout(r, 30));
+    expect([...t.files.keys()]).toEqual([name('2026-11-02')]);
+    expect(t.files.get(name('2026-11-02'))).toBe(nieuwer);
+    expect((await SettingsRepo.get()).lastBackupLogs?.ids).toContain('log_tussendoor');
+  });
+
+  it('het gewone pad zonder haperen is ongewijzigd: één bestand per keer, geen resten', async () => {
+    const t = tempTarget();
+    expect(await runAutoBackupIfDue({ now: MONDAY, target: t.target, verifyPauseMs: 0 })).toBe('saved');
+    expect([...t.files.keys()]).toEqual([name('2026-11-02')]);
+    const eerste = t.files.get(name('2026-11-02'));
+    await SessionLogsRepo.put({ id: 'log_later', plannedSessionId: 'ps_a', completedAt: new Date(2026, 10, 2, 9).toISOString() } as SessionLog);
+    // Een week later is de volgende nodig.
+    expect(await runAutoBackupIfDue({ now: new Date(2026, 10, 9, 8), target: t.target, verifyPauseMs: 0 })).toBe('saved');
+    expect([...t.files.keys()].sort()).toEqual([name('2026-11-02'), name('2026-11-09')].sort());
+    expect(t.files.get(name('2026-11-02'))).toBe(eerste);
+    expect(t.files.get(name('2026-11-09'))).toContain('log_later');
   });
 });
 
