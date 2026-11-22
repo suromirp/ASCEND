@@ -24,8 +24,6 @@ const SWAP_PLACED = 'Je periode zette deze training hier neer. Ruil je hem, dan 
 export const SWAP_LEGS = 'Twee zware beendagen achter elkaar.';
 // De korte vraag onder de vinger bij een ruil die eerst vraagt; de chip zegt al met wie je ruilt (Lookout, 16 november).
 const SWAP_DROP_ASK = 'Als je loslaat, komt eerst de vraag.';
-// Korter dan de andere chips: hij hangt rechtsboven op de rij en mag de titel van de rij op 360 px niet raken.
-const SWAP_CHIP_MAX = 16;
 const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 
 const dayLower = (date: string) => `${weekdayLongNL(date)} ${formatDateNL(date)}`;
@@ -221,7 +219,8 @@ export function withSwapVerdicts(ctx: DragContext, sessionId: string, verdicts: 
       kind: 'swap',
       droppable: true,
       tone: asks ? 'warn' : 'ok',
-      chip: `Ruilen met ${tb.name}`.length <= SWAP_CHIP_MAX ? `Ruilen met ${tb.name}` : 'Ruilen',
+      // Altijd kort: de chip hangt rechtsboven op de rij en raakt de titel op 360 px niet; de naam staat in de regel en het ruilblad.
+      chip: 'Ruilen',
       line: asks ? `${onceOn(said, v.date)} ${SWAP_DROP_ASK}` : `${dayTitle(v.date)}. Ruilen met ${tb.name}, die gaat naar ${dayLower(a.scheduledDate)}.${hints}`,
       ask: !!asks,
       ...(asks ? { askReason: asks } : {}),

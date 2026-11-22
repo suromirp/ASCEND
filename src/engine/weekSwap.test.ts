@@ -168,7 +168,7 @@ describe('withSwapVerdicts', () => {
     const v = withSwapVerdicts(c, 'easy', dayVerdicts(c, 'easy', MON));
     const sat = v.find((x) => x.date === '2026-10-03')!;
     expect(sat).toMatchObject({ kind: 'swap', droppable: true, tone: 'ok', swapWithId: 'upperA' });
-    expect(sat.chip.length).toBeLessThanOrEqual(28);
+    expect(sat.chip).toBe('Ruilen');
     expect(sat.line).toMatch(/^Zaterdag 3 oktober\. Ruilen met /);
     // Een vrije dag blijft een vrije dag.
     expect(v.find((x) => x.date === '2026-10-02')?.kind).toBe('free');
@@ -178,7 +178,7 @@ describe('withSwapVerdicts', () => {
     const c = ctx(week());
     const sat = withSwapVerdicts(c, 'lowerA', dayVerdicts(c, 'lowerA', MON)).find((x) => x.date === '2026-10-03')!;
     expect(sat).toMatchObject({ kind: 'swap', tone: 'warn', ask: true });
-    // Eén feit en de korte vraag; de chip zegt met wie je ruilt (Lookout, 16 november).
+    // Eén feit en de korte vraag; de chip is altijd kort, de naam staat in het ruilblad.
     expect(sat.line).toMatch(/^Zaterdag 3 oktober\. [^.]+\.(?: [^.]+\.)? Als je loslaat, komt eerst de vraag\.$/);
   });
 
