@@ -32,6 +32,12 @@ export function deriveIndex(defs: readonly SettingDef[] = ALL_DEFS): SettingsInd
   }));
 }
 
+// De zin van een instelling; met Krachttraining uit de variant zonder kracht, als die er is.
+export function noteFor(id: string, strengthOn: boolean, defs: readonly SettingDef[] = ALL_DEFS): string {
+  const d = defs.find((x) => x.id === id);
+  return (!strengthOn && d?.noteNoStrength) || d?.note || '';
+}
+
 export function derivePageRows(defs: readonly SettingDef[] = ALL_DEFS): Record<SettingsPageId, PageRows> {
   const out = {} as Record<SettingsPageId, PageRows>;
   for (const page of PAGE_ORDER) {

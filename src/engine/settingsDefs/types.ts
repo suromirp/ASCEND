@@ -88,6 +88,8 @@ export interface SettingDef {
   adviceTitle?: string;
   // De ene zin en de trefwoorden uit de index; niet bij een rij die niet in de index staat.
   note?: string;
+  // Dezelfde zin als Krachttraining uit staat en de zin dan anders moet luiden (zie noteFor in derive.ts).
+  noteNoStrength?: string;
   keywords?: string[];
   route?: string;
   // Een rij die niet in de index staat (de bundelrijen behalve bundel-sporten-tellen, Versie).

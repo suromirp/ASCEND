@@ -190,6 +190,7 @@ export const DOEL: SettingDef[] = [
     place: { in: 'bundel-zonder-doel' },
     title: 'Weekbudget',
     note: 'Hoeveel minuten en hoeveel keer kracht een week vraagt als je geen doel hebt. Het advies is 150 minuten en 2 keer kracht.',
+    noteNoStrength: 'Hoeveel minuten een week vraagt als je geen doel hebt. Het advies is 150 minuten.',
     keywords: ['week', 'minuten', 'budget', 'kracht', 'keer', 'richtlijn', '150', 'beweegrichtlijn', 'zonder doel', 'richting', 'fit blijven', 'fitter worden', 'sterker worden', 'rustig aan', 'pittig', 'dubbel'],
     help: true,
     showWhen: [B.noGoal],
