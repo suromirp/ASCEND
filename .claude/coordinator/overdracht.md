@@ -2,6 +2,21 @@
 
 Bijgewerkt: 23 november 2026 door coördinator session_01LnDpSkRtYRz7771kuLPf2T (opvolger van session_01LnDpSip9wpY6fuZXMm2yqw). Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
 
+## Nachtlijst 23 november (opdracht Nachtronde ASCEND via chat ASCEND, maandag = bouwmoment)
+
+Max twee bouwers tegelijk, nooit op dezelfde bestanden. Warden en Lookout per twee of drie bundels. Squash per bundel. Wissel na drie bundels of rond 150k. Stop bij lege lijst, vraag aan eigenaar of limietwaarschuwing. Ochtend één pushmelding, niet tussendoor.
+
+1. Route (sonnet, loopt): I-112, I-120 tot I-123. Lookout.
+2. Week weergave (opus, planning): I-58 (week van uitvoeren), I-59, I-72 rest (TAKEN_LINE). Warden opus.
+3. Forge en logs (sonnet): I-113, I-60, I-30, I-73 (raakt afvinken: Warden). Lookout.
+4. dayRules (opus, planning): I-74, I-82 punt 3. Warden opus. Na bundel 2 (zelfde weekbestanden).
+5. Opslag (opus): I-54 twee tabbladen, I-35 grens intervals. Warden opus.
+6. Klein, coördinator zelf: I-87 tikdoelen Testloop, I-20 Jaaroverzicht, I-51 zin. Plus I-104 en I-105 in de eerstvolgende Lookout.
+7. Route vervolg (sonnet): I-53. I-76 eerst Scout (onderzoek).
+Niet vannacht: I-77, I-33, I-78 (back-up van de eigenaar nodig, skill naspelen); I-14, I-18, I-23, I-34 (groot, ontwerp eerst); I-103 (pas bij derde keer).
+
+Beter kan (één regel per bundel):
+
 ## Stand 23 november 00:40
 
 - Nieuwe coördinator session_01LnDpSkRtYRz7771kuLPf2T. Sherpa route (sonnet, helper in worktree) bouwt I-112 en I-120 tot I-123 op `claude/route-lus-soort`, één commit per punt, nieuw besluit 2026-11-23-lus-soort-en-via-punt. Daarna één Warden (sonnet) en één Lookout, dan squash.
