@@ -4,7 +4,7 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-- Route-ideeën: welke erbij? 1 wind bepaalt de richting, 2 terug voor het donker, 3 hoogteprofiel, 4 ondergrond, 5 waar je kunt afhaken. Advies 1, 2 en 3. Zonder antwoord gaan 1, 2 en 3 in de backlog, na I-111 en I-112.
+Geen open vragen.
 
 ## Stuk of vast
 
