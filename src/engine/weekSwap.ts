@@ -22,7 +22,7 @@ export const SWAP_TEST = 'Een testloop ruil je alleen met Akkoord.';
 const SWAP_LEAVE = 'Deze training schoof opzij voor je vakantie. Ruil je hem, dan blijft hij op de nieuwe dag staan.';
 const SWAP_PLACED = 'Je periode zette deze training hier neer. Ruil je hem, dan blijft hij bij je periode horen: haal je die weg, dan gaat hij mee.';
 export const SWAP_LEGS = 'Twee zware beendagen achter elkaar.';
-// De korte vraag onder de vinger bij een ruil die eerst vraagt; de chip zegt al met wie je ruilt (Lookout, 16 november).
+// De korte vraag onder de vinger bij een ruil die eerst vraagt; de chip zegt alleen Ruilen, de regel en het ruilblad noemen de ander.
 const SWAP_DROP_ASK = 'Als je loslaat, komt eerst de vraag.';
 const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 

@@ -395,7 +395,7 @@ export function WeekPage() {
           openBriefing={briefingFor === selected.id}
           startStep={openOnMove ? 'move' : undefined}
           caughtUpOn={!selectedLog && caughtUp.has(selected.id) ? caughtUpNoteFor(caughtUp.get(selected.id)!) : undefined}
-          catchUp={!selectedLog && selected.id !== openDraftId && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id), pause: { leave: settings.leavePeriods, templates: templateById, illness: settings.illnessEpisodes, races } }).ok}
+          catchUp={!selectedLog && selected.id !== openDraftId && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id), pause: { leave: settings.leavePeriods, templates: templateById, illness: settings.illnessEpisodes, races, programStart: program?.startDate } }).ok}
           template={templateById.get(selected.templateId)!}
           allowedPair={pairs.get(selected.id)}
           placeReason={selectedPlace}
