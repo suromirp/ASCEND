@@ -99,7 +99,7 @@ async function write(folder: AppBackupFolder, text: string, now: Date, abort: Ab
     let written: Written | void;
     abort.writing = name;
     try {
-      written = await folder.write(name, text, attemptId, { neverReplace: !mine });
+      written = await folder.write(name, text, attemptId, { neverReplace: !mine, stillWanted: () => !abort.aborted });
     } catch (err) {
       // Bezet door een ander bestand: die naam is nooit van de app.
       abort.writing = undefined;
