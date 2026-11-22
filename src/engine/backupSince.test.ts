@@ -171,6 +171,16 @@ describe('newestBackupPair', () => {
     expect(newestBackupPair(own, newer, NOW)).toEqual(own);
   });
 
+  it('ook het toestel: een tijdstip in de toekomst zonder bijpassende lijst valt weg (I-106)', () => {
+    // Te veel als nog niet bewaard tellen is veiliger dan een herinnering die zeven dagen zwijgt.
+    const future = { lastExportedAt: '2026-12-01T10:00:00.000Z', lastBackupLogs: { at: '2026-11-01T10:00:00.000Z', ids: ['a'] } };
+    expect(newestBackupPair(future, older, NOW)).toEqual(older);
+    expect(newestBackupPair(future, {}, NOW)).toEqual({});
+    // Met de lijst die erbij hoort telt het als nu, zoals bij een gewone import.
+    const withList = backupMadeSettings('2026-12-01T10:00:00.000Z', ['a', 'b']);
+    expect(newestBackupPair(withList, older, NOW)).toEqual(backupMadeSettings(NOW_AT, ['a', 'b']));
+  });
+
   it('een toestel zonder back-up krijgt het paar van de kopie; een kopie zonder back-up verandert niets', () => {
     expect(newestBackupPair({}, older, NOW)).toEqual(older);
     expect(newestBackupPair(newer, {}, NOW)).toEqual(newer);
