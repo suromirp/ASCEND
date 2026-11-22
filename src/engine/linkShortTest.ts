@@ -15,7 +15,8 @@ import type { SessionLog } from '../models/training';
 import type { StreamSet } from '../models/activityDetail';
 import type { ShortTestSeries } from '../models/shortTest';
 import type { NoStrapChoice } from './thresholdEstimate';
-import { countedShortTests, seriesPace, shortTestLogIds, shortTestsFound } from './shortTest';
+import type { PlannedSession } from '../models/training';
+import { countedShortTests, seriesPace, shortTestDone, shortTestLogIds, shortTestSessionIds, shortTestsFound } from './shortTest';
 import { linkLog, nearDay } from './missedTraining';
 import { mondayOfWeek } from '../utils/dates';
 
@@ -84,16 +85,66 @@ export interface LinkShortTestRead {
   complete: boolean;
 }
 
+// Wat de koppeling kan doen met de planning vooruit (I-99): de loop die nu de test van zijn week krijgt
+// (shortTestSessionIds) kan na Akkoord een andere zijn, want een gekoppelde loop telt op de dag dat je liep.
+// Dezelfde regel als de Briefing en het horloge, één keer met de logs zoals ze zijn en één keer met de
+// koppeling erbij. Alleen een nog niet gelopen loop: een gelopen loop met een test staat in de andere zin.
+export interface LinkShortTestLostRun {
+  sessionId: string;
+  date: string;
+}
+
+export interface LinkShortTestPlanInput extends LinkShortTestInput {
+  sessions: readonly PlannedSession[];
+  today: string;
+  // "Korte test als workout" en de test zelf aan: de instelling `shortTest`.
+  on: boolean;
+}
+
+export function linkShortTestLostRun(input: LinkShortTestPlanInput): LinkShortTestLostRun | undefined {
+  const linked = linkLog(input.log, input.sessionId, input.log.completedAt || input.log.completedDate);
+  if (!linked) return undefined;
+  const after = input.logs.map((l) => (l.id === linked.id ? linked : l));
+  const before = shortTestSessionIds(input.sessions, input.series, input.on, shortTestDone(input.today, input.logs));
+  const now = shortTestSessionIds(input.sessions, input.series, input.on, shortTestDone(input.today, after));
+  const ranBefore = shortTestDone(input.today, input.logs).logged;
+  const week = mondayOfWeek(input.log.completedDate);
+  for (const s of input.sessions) {
+    if (!before.has(s.id) || now.has(s.id) || s.id === input.sessionId || ranBefore.has(s.id)) continue;
+    if (mondayOfWeek(s.scheduledDate) !== week) continue;
+    return { sessionId: s.id, date: s.scheduledDate };
+  }
+  return undefined;
+}
+
+// "Je rustige loop van donderdag krijgt dan geen korte test meer." De naam komt uit het sjabloon.
+export function linkShortTestLostRunLine(lost: LinkShortTestLostRun | undefined, name: string, today: string): string | undefined {
+  if (!lost) return undefined;
+  const day = lost.date === today ? 'vandaag' : nearDay(lost.date, today);
+  return `Je ${name.charAt(0).toLowerCase() + name.slice(1)} van ${day} krijgt dan geen korte test meer.`;
+}
+
+// Wat de koppelkaart over de korte test weet.
+export interface LinkShortTestPlan {
+  sessions: readonly PlannedSession[];
+  name: string;
+  on: boolean;
+}
+
 export function linkShortTestState(
-  input: (LinkShortTestInput & { noStrap?: NoStrapChoice; strapWorn?: readonly string[] }) | undefined,
+  input: (LinkShortTestInput & { noStrap?: NoStrapChoice; strapWorn?: readonly string[]; plan?: LinkShortTestPlan }) | undefined,
   read: LinkShortTestRead | undefined,
   today: string,
 ): LinkShortTestState {
-  if (!input || linkShortTestLogIds(input).length === 0) return { stand: 'none' };
+  if (!input) return { stand: 'none' };
+  // Een latere loop die zijn test verliest staat vast uit de planning: geen reeksen nodig, geen wachten.
+  const planLine = input.plan ? linkShortTestLostRunLine(linkShortTestLostRun({ ...input, ...input.plan, today }), input.plan.name, today) : undefined;
+  if (linkShortTestLogIds(input).length === 0) return planLine ? { stand: 'line', line: planLine } : { stand: 'none' };
   if (!read) return { stand: 'busy' };
   // Niet alles gelezen: geen uitspraak over een teststuk dat niet te zien is.
   const line = read.complete ? linkShortTestLine(linkShortTestShift({ ...input, streams: read.streams }), today) : undefined;
-  return line ? { stand: 'line', line } : { stand: 'none' };
+  const lines = [line, planLine].filter((l): l is string => !!l);
+  return lines.length ? { stand: 'line', line: lines.join(' ') } : { stand: 'none' };
 }
 
 // De ene zin in het koppelvoorstel. "Korte test" is het woord van het logblad en de Briefing.
