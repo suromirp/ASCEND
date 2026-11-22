@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlannedSession, SessionTemplate } from '../models/training';
-import { calibrationBlock, calibrationDone, calibrationRemoved, calibrationSlot, calibrationWanted, CALIBRATION_ACCEPT_FACT, isCalibrationRow, syncAutoCalibration, withAutoCalibration, withCalibrationTarget, CALIBRATION_AUTO_FACT, CALIBRATION_RIR } from './calibration';
+import { calibrationBlock, calibrationDone, calibrationRemoved, calibrationSlot, calibrationWanted, syncCalibrationFor, CALIBRATION_ACCEPT_FACT, isCalibrationRow, syncAutoCalibration, withAutoCalibration, withCalibrationTarget, CALIBRATION_AUTO_FACT, CALIBRATION_RIR } from './calibration';
 import { mergeDraft, resumeDraft } from './forgeInput';
 import { setCountEvent, unseenCount } from './forgeLog';
 import type { ForgeEvent } from '../models/forgeLog';
@@ -211,5 +211,29 @@ describe('Akkoord op de ijkset en dan Lichter', () => {
     const off = syncAutoCalibration(open.workout, open.log, calibrationWanted('uit', false, true), 2, id);
     expect(off.workout[0].rows.some(isCalibrationRow)).toBe(false);
     expect(off.log.some((e) => e.kind === 'toegevoegd')).toBe(false);
+  });
+});
+
+describe('Akkoord, Lichter aan, Terugzetten als één pad (zoals het scherm)', () => {
+  it('de aangenomen set komt terug, met de Akkoord-zin in het verloop', () => {
+    let n = 0;
+    const id = () => `fe${++n}`;
+    const plan = () => [ex('b', 'bench-press', [row('b1'), row('b2')])];
+    const free = { mode: 'vragen' as const, blocked: false, accepted: true };
+    const accepted = syncAutoCalibration(plan(), [], true, 1, id, CALIBRATION_ACCEPT_FACT);
+    const eased = syncCalibrationFor(plan(), accepted.log, { ...free, blocked: true }, 2, id);
+    expect(eased.workout[0].rows.some(isCalibrationRow)).toBe(false);
+    const back = syncCalibrationFor(plan(), eased.log, free, 3, id);
+    expect(back.workout[0].rows.filter(isCalibrationRow)).toHaveLength(1);
+    expect(back.workout[0].rows).toHaveLength(3);
+    expect(back.log.find((e) => e.kind === 'toegevoegd')?.fact).toBe(CALIBRATION_ACCEPT_FACT);
+  });
+  it('zonder Akkoord komt er bij Vragen niets bij', () => {
+    const none = syncCalibrationFor([ex('b', 'bench-press', [row('b1')])], [], { mode: 'vragen', blocked: false, accepted: false }, 1, () => 'x');
+    expect(none.workout[0].rows.some(isCalibrationRow)).toBe(false);
+  });
+  it('Automatisch houdt zijn eigen zin', () => {
+    const auto = syncCalibrationFor([ex('b', 'bench-press', [row('b1')])], [], { mode: 'automatisch', blocked: false, accepted: false }, 1, () => 'x');
+    expect(auto.log[0].fact).toBe(CALIBRATION_AUTO_FACT);
   });
 });
