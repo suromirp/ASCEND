@@ -12,14 +12,8 @@ Hoogste code: I-123. Een nieuw punt krijgt het volgende nummer (zet het getal hi
 - [I-122] (22 november, Warden ronde 22e, mag) Na het omdraaien van de lus (wind of Andersom) blijft de amber regel "Deze lus stijgt X m" op de oude hoogtemeters staan terwijl de feiten opnieuw zijn uitgerekend; `notedOutcome` opnieuw toepassen. Ook de labels ondergrond en grote weg één stuk verschuiven bij omkeren.
 - [I-121] (22 november, Warden ronde 22e, mag) Andere lus, een richting waar niets ligt: nu volgt een volledige zoektocht die dezelfde lus teruggeeft; de vorige lus hergebruiken zonder aanroep. Plus een opslagtest voor `findOtherLoop` (cache, tijdgrens, afbreken na sluiten, offline).
 - [I-120] (22 november, Lookout en Warden ronde 22e, mag) Instelling Terug voor het donker heeft nog geen uitleg-knop; één zin uitleg erbij. In het besluit route-info één zin waarom profiel, ondergrond en afhaken niet instelbaar zijn.
-- [I-118] (22 november, eigenaar "Ja doe al die punten klinkt goed" op de route-ideeën van de coördinator) Afhaken: op de kaart het punt waar je het snelst terug bij de start bent, voor als het onderweg tegenvalt. Alleen rekenwerk.
-- [I-117] (22 november, eigenaar "Ja doe al die punten klinkt goed" op de route-ideeën van de coördinator) Ondergrond: verdeling verhard en onverhard van de lus in één regel, als de routeplanner dat per stuk geeft; anders het droge feit dat het niet bekend is.
-- [I-116] (22 november, eigenaar "Ja doe al die punten klinkt goed" op de route-ideeën van de coördinator) Hoogteprofiel onder de kaart van de lus, steile stukken in amber, uit de hoogtes die de lus al heeft.
-- [I-115] (22 november, eigenaar "Ja doe al die punten klinkt goed" op de route-ideeën van de coördinator) Terug voor het donker: een regel met hoe laat je ongeveer terug bent tegenover zonsondergang, en een seintje bij veel onverlicht onverhard pad. Instelbaar.
-- [I-114] (22 november, eigenaar "Ja doe al die punten klinkt goed" op de route-ideeën van de coördinator) Wind bepaalt de richting: begin tegen de wind in, terug met de wind mee; de lus (en Andersom uit I-111) volgt dat, met één regel. Wind uit de weerbron die er al is, niets nieuws de deur uit.
 - [I-113] (22 november, Warden en Sherpa forge, mag) Heropen je een training terwijl Lichter aan staat en de aangenomen ijkset al weg is, dan weet het scherm het Akkoord niet meer (`calAccepted` leeft in het geheugen van `ForgeWorkout.tsx`); de set blijft dan weg. Klein, kost hooguit één ijkset.
 - [I-112] (22 november, eigenaar na I-111) Op de vraag of er ook langs water of bos en meer onverhard bij moet: "Ja als dat kan zeker. Miss ook een waypoint zetten en daaromheen een hele route maken?" Plan coördinator, na I-111: in het blad Andere lus een tweede groep Soort met Langs water, Door bos of groen en Meer onverhard (uit dezelfde OpenStreetMap-vraag, op dezelfde afronding, niets nieuws de deur uit behalve het soort terrein), en Via een punt: tik op de kaart (Groter) een punt, de lus gaat erlangs en komt terug bij de start. Het punt gaat naar de routeplanner zoals de start; niet bewaard. Pathfinder vooraf (nieuwe flow op de kaart), besluit, Lookout.
-- [I-111] (22 november, eigenaar met een afdruk van het routescherm) "Ik mis hier een knop om een alternatieve andere route te maken ... in het geval dat ik anders wil lopen, misschien qua richting." Eigenaar op het advies: "windrichting is top maar er moeten ook andere opties zijn". Plan coördinator: onder de lus een knop Andere lus die een klein blad opent met: Andersom (zelfde lus omgekeerd, zonder aanroep), Een andere kant op (de planner kiest een kant die de vorige lus overslaat), een richting kiezen (Noord, Oost, Zuid, West: de lus gaat die kant op) en Zonder heen en terug (een lus die geen stuk twee keer loopt, als dat kan). Ligt een richting zonder paden, dan het droge feit en de beste lus die er wel is. Binnen MAX_ROUTE_CALLS en de tijdgrens, alles in `routePlanner.ts`, blad via useSheetClose. Besluit nodig, Lookout erbij. Op dezelfde afdruk: Avontuurlijk stijgt 10 m bij 300 m en heeft een stuk heen en terug.
 - [I-105] Label "Ziek gemeld: koorts" (I-56) niet op 360 px gezien: Lookout vond het voorstel met die titel niet in de testdata. Bij de volgende Lookout meenemen.
 - [I-104] Zin "Je rustige loop van <dag> krijgt dan geen korte test meer." (I-99) niet op het scherm gezien; alleen in tests. Bij de volgende Lookout meenemen.
 - [I-103] Token voor de zachte mint vulling (Warden 21 november, mag): de 18%-vulling van Akkoord staat nu in StepProposalNotice en CalibrationNotice; komt hij een derde keer terug, maak dan een token `--color-action-soft` in `src/index.css`.
@@ -97,6 +91,12 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-118] Afhaken (22 november, ef1a92b)
+- [I-117] Ondergrond (22 november, ef1a92b)
+- [I-116] Hoogteprofiel onder de kaart van de lus, steile stukken in amber, uit de hoogtes die de lus al heeft (22 november, ef1a92b)
+- [I-115] Terug voor het donker (22 november, ef1a92b)
+- [I-114] Wind bepaalt de richting (22 november, ef1a92b)
+- [I-111] "Ik mis hier een knop om een alternatieve andere route te maken  (22 november, ef1a92b)
 - [I-71] IJkset Vragen en Lichter (22 november, d64572c)
 - [I-108] Na bundel 22 november, Week (22 november, d64572c)
 - [I-57] Week, rij van voor de start van het programma (22 november, d64572c)
