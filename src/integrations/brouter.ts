@@ -16,6 +16,31 @@ export const BROUTER_PROFILE_PARAMS = '&profile:consider_noise=1';
 // Wat ASCEND een grote weg noemt in de regel bij een lus (de snelweg is voor lopen al verboden).
 const BIG_ROAD = /(^|\s)highway=(motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link)(\s|$)/;
 
+// De ondergrond van een stuk uit dezelfde WayTags, zonder extra aanroep (besluit 2026-11-22-route-info.md).
+// Een `surface` wint; zonder `surface` zegt het soort weg (een pad of een grindweg is onverhard, een weg of
+// een fietspad verhard). Onbekend blijft onbekend: dan geen oordeel.
+const PAVED = new Set(['asphalt', 'paved', 'concrete', 'concrete:plates', 'concrete:lanes', 'paving_stones', 'sett', 'cobblestone', 'metal', 'wood', 'bricks', 'tartan', 'rubber']);
+const UNPAVED = new Set(['unpaved', 'gravel', 'fine_gravel', 'compacted', 'dirt', 'ground', 'earth', 'grass', 'sand', 'mud', 'pebblestone', 'grass_paver', 'rock', 'woodchips', 'clay', 'salt', 'snow', 'ice']);
+const PAVED_WAYS = new Set(['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'living_street', 'service', 'pedestrian', 'footway', 'cycleway', 'steps', 'road', 'platform']);
+const UNPAVED_WAYS = new Set(['path', 'bridleway', 'track']);
+
+export function surfaceOfTags(tags: string): 'paved' | 'unpaved' | undefined {
+  const get = (key: string) => new RegExp(`(?:^|\\s)${key}=(\\S+)`).exec(tags)?.[1]?.replace(/_link$/, '');
+  const surface = get('surface');
+  if (surface !== undefined) {
+    if (PAVED.has(surface)) return 'paved';
+    if (UNPAVED.has(surface)) return 'unpaved';
+  }
+  const highway = get('highway');
+  if (highway === 'track') {
+    const grade = get('tracktype');
+    return grade === 'grade1' ? 'paved' : 'unpaved';
+  }
+  if (highway === undefined) return undefined;
+  if (UNPAVED_WAYS.has(highway)) return 'unpaved';
+  return PAVED_WAYS.has(highway) ? 'paved' : undefined;
+}
+
 const c5 = (v: number) => (Math.round(v * 100_000) / 100_000).toString();
 
 // Een stuk vermijden: BRouter kent `nogos` als lon,lat,straal in meters, gescheiden door |.
@@ -51,14 +76,15 @@ export function mapBrouter(raw: unknown): RoutePoint[] | undefined {
     points.push(ele === undefined ? { lat, lon } : { lat, lon, ele });
   }
   if (points.length < 2) return undefined;
-  markBigRoads(points, feature?.properties?.messages);
+  markWays(points, feature?.properties?.messages);
   return points;
 }
 
 // De rijen van `messages` (na de kop): lengtegraad en breedtegraad maal een miljoen waar het stuk eindigt,
 // en de wegsoort. Elk punt tot en met dat eind hoort bij die rij. Vindt een eind geen punt, dan geen
-// markering: liever niets zeggen dan iets verkeerds.
-function markBigRoads(points: RoutePoint[], messages: unknown): void {
+// markering: liever niets zeggen dan iets verkeerds. Dezelfde rij geeft de grote weg (`bigRoad`) en de
+// ondergrond (`surface`).
+function markWays(points: RoutePoint[], messages: unknown): void {
   if (!Array.isArray(messages) || messages.length < 2 || !Array.isArray(messages[0])) return;
   const head = messages[0] as unknown[];
   const lonAt = head.indexOf('Longitude');
@@ -69,6 +95,7 @@ function markBigRoads(points: RoutePoint[], messages: unknown): void {
   const step = (i: number) => metersApart(points[i - 1], points[i]);
   const key = (lon: number, lat: number) => `${Math.round(lon * 1e6)},${Math.round(lat * 1e6)}`;
   const flags: boolean[] = new Array(points.length).fill(false);
+  const surfaces: ('paved' | 'unpaved' | undefined)[] = new Array(points.length).fill(undefined);
   let from = 1;
   for (const row of messages.slice(1)) {
     if (!Array.isArray(row)) return;
@@ -90,11 +117,17 @@ function markBigRoads(points: RoutePoint[], messages: unknown): void {
       if (to < points.length) walked += step(to);
     }
     const big = typeof row[tagsAt] === 'string' && BIG_ROAD.test(row[tagsAt] as string);
-    for (let i = from; i <= to; i++) flags[i] = big;
+    const surface = typeof row[tagsAt] === 'string' ? surfaceOfTags(row[tagsAt] as string) : undefined;
+    for (let i = from; i <= to; i++) {
+      flags[i] = big;
+      surfaces[i] = surface;
+    }
     from = to + 1;
   }
   flags.forEach((big, i) => {
     if (big) points[i].bigRoad = true;
+    const surface = surfaces[i];
+    if (surface) points[i].surface = surface;
   });
 }
 

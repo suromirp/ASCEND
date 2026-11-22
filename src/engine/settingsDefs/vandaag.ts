@@ -709,6 +709,15 @@ export const VANDAAG: SettingDef[] = [
     showWhen: [B.route],
   },
   {
+    id: 'route-donker',
+    page: 'vandaag',
+    place: { in: 'bundel-weer' },
+    title: 'Terug voor het donker',
+    note: 'Bij een lus staat hoe laat je ongeveer terug bent, als dat binnen een uur voor zonsondergang of later is. De zon rekent ASCEND zelf uit; er gaat niets de deur uit. Het advies is aan.',
+    keywords: ['route', 'lus', 'donker', 'zonsondergang', 'zon', 'terug', 'licht', 'lamp', 'schemer'],
+    showWhen: [B.route],
+  },
+  {
     id: 'plek-onthouden',
     page: 'vandaag',
     place: { in: 'bundel-weer' },

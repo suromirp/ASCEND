@@ -35,6 +35,7 @@ import { NewPlaceSheet } from './NewPlaceSheet';
 import { startTrio } from '../engine/places';
 import { RouteAdjust } from './RouteAdjust';
 import { RouteMapFull } from './RouteMapFull';
+import { RouteInfo } from './RouteInfo';
 
 const STYLE_NAME: Record<RouteStyle, string> = { simple: 'Simpel', adventure: 'Avontuurlijk' };
 const STYLE_LINE: Record<RouteStyle, string> = {
@@ -278,6 +279,7 @@ export function RoutePanelView({ model, date, onDecline, startAbove = false }: {
         return model.mapStartPoint ? (
           <div key={p} className="flex flex-col gap-1">
             <RouteMap routes={model.mapRoutes} chosen={picked} start={model.mapStartPoint} base={model.base} onChoose={model.setChosen} onStart={model.startOnMap} onNoMap={model.markNoMap} photo={model.photo} onPhoto={model.setPhoto} me={model.mePoint} tapped={model.tapPoint} hasHome={model.hasHome} onMakeHome={model.makeHome} keepName={model.keepName} onKeep={model.keepPlace} piece={bigger ? undefined : piecePoints} onBigger={() => setBigger(true)} />
+            {pickedOutcome?.ok && <RouteInfo proposal={pickedOutcome.proposal} target={target} paceSecKm={model.paceSecKm} date={date} />}
           </div>
         ) : null;
       case 'chosen':

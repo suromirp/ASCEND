@@ -132,6 +132,7 @@ const everything: AppSettings = {
   stravaTextParts: 'title',
   routeProposal: false,
   routeAvoidBigRoads: false,
+  routeBackBeforeDark: false,
   rememberStartPlace: false,
   routeStyle: 'simple',
   walkPlanKm: 8,

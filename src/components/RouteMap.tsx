@@ -11,6 +11,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RoutePoint, RouteStyle } from '../models/route';
+import { bailPoint } from '../engine/routeInfo';
 import { groundLine, MAKE_HOME_MOVE, MAKE_HOME_NEW, mapStatusLine, photoOffered, quietAttribution, readMapColors, type MapBase, type MapPhoto, type MapRoute } from '../engine/routeMap';
 import { ROUTE_MAP_HEIGHT, mapFallbackLine } from '../engine/routeSheet';
 import { hasWebGL2, loadMapLibre } from '../integrations/mapLibre';
@@ -123,6 +124,9 @@ export function RouteMap({ routes, chosen, start, center: centerIn, base, onChoo
   // Naar mijn plek (een tik) mag een grove plek zijn; anders de plek die de zoektocht vond.
   const [asked, setAsked] = useState<RoutePoint | undefined>();
   const me = asked ?? found;
+  // Waar je onderweg kunt afhaken: alleen op de gekozen lus (of de enige), een kleine ring, geen tikdoel.
+  const bailRoute = routes.find((r) => r.style === chosen) ?? (routes.length === 1 ? routes[0] : undefined);
+  const bail = useMemo(() => (bailRoute ? bailPoint({ points: bailRoute.points })?.point : undefined), [bailRoute]);
   const [busy, setBusy] = useState<'me' | 'tap' | 'home' | 'keep' | undefined>();
   // Bewaar als plek is open: de zin en Maak dit Thuis.
   const [saving, setSaving] = useState(false);
@@ -130,9 +134,9 @@ export function RouteMap({ routes, chosen, start, center: centerIn, base, onChoo
   const [fullCredit, setFullCredit] = useState(false);
   const alive = useRef(true);
   // Wat de kaart nodig heeft, ook binnen de callbacks van de kaart zelf.
-  const latest = useRef({ routes, chosen, dots: { start, me, pick }, piece, center, motion, onChoose, photo });
+  const latest = useRef({ routes, chosen, dots: { start, me, pick, bail }, piece, center, motion, onChoose, photo });
   useEffect(() => {
-    latest.current = { routes, chosen, dots: { start, me, pick }, piece, center, motion, onChoose, photo };
+    latest.current = { routes, chosen, dots: { start, me, pick, bail }, piece, center, motion, onChoose, photo };
   });
   // De keuze geldt meteen op het scherm; het bewaren (onPhoto) volgt, en lukt dat niet, dan wisselt hij toch.
   const [picked, setPicked] = useState<MapPhoto>(photo);
@@ -179,8 +183,8 @@ export function RouteMap({ routes, chosen, start, center: centerIn, base, onChoo
   }, [base]);
 
   useEffect(() => {
-    view.current?.update({ routes, chosen, dots: { start, me, pick }, piece, center });
-  }, [routes, chosen, start, me, pick, piece, center]);
+    view.current?.update({ routes, chosen, dots: { start, me, pick, bail }, piece, center });
+  }, [routes, chosen, start, me, pick, bail, piece, center]);
 
   // De vergrote kaart: draait de telefoon (of verandert het vak anders van maat), dan rekent de kaart
   // opnieuw en staat de lus weer in beeld, ook terug naar staand.

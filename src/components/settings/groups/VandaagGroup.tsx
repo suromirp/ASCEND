@@ -193,6 +193,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="route-zoeken" title="Lus zoeken" facts={facts} info="routeZoeken" onClick={() => setInner('route-zoeken')} />
           <SummaryRow id="wandel-afstand" title="Afstand van een wandeling" facts={facts} onClick={() => setInner('wandel-afstand')} />
           <SummaryRow id="route-grote-wegen" title="Grote wegen mijden" facts={facts} info="routeGroteWegen" onChange={(on) => void updateSettings({ routeAvoidBigRoads: on })} />
+          <SummaryRow id="route-donker" title="Terug voor het donker" facts={facts} onChange={(on) => void updateSettings({ routeBackBeforeDark: on })} />
           <SummaryRow id="plek-onthouden" title="Gekozen plek onthouden" facts={facts} onChange={(on) => { void updateSettings({ rememberStartPlace: on }); if (!on) void clearStartPlaceChoices(); }} />
           <SummaryRow id="route-kaart" title="Ondergrond van de kaart" facts={facts} info="routeKaart" onClick={() => setInner('route-kaart')} />
           <SummaryRow id="maanstand" title="Maanstand bij een avondtocht" facts={facts} onChange={(on) => set({ moonLine: on })} />

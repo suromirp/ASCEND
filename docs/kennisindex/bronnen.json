@@ -4469,6 +4469,14 @@
    "kern": "Een achteraf gekoppelde loop telt voor de korte test op de dag dat je hem echt liep en ontkoppelen zet dat terug; voor je midden telt per week de vroegste geldige test van een loop die aan een geplande training hangt, een losse loop niet; een import eist een echte dag; Briefing en horloge toetsen de 25 minuten met één regel (de kortste van planning en workout); en de test staat in het blad Je horloge bij Zelf nabouwen.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-22-route-info.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "koppelingen-en-data"
+   ],
+   "kern": "Bij de gekozen lus: terug voor het donker (nu plus duur tegenover zonsondergang, instelbaar), een hoogteprofiel met stukken boven 8 procent in amber, de ondergrond uit BRouter-WayTags (Valhalla niets) en een afhaakring op de kaart tussen 35 en 65 procent van de lus; alles uit de lus zelf, geen extra aanroep.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-20-koppelvoorstel-korte-test.md": {
    "onderwerpen": [
     "lopen-en-tests",

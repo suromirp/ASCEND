@@ -20,7 +20,7 @@ import type { RoutePoint, RouteStyle, RouteTarget } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { loadBodyKg } from '../engine/weightTrend';
-import { resolveRouteStyle, roundStart, routeTarget } from '../engine/routeTarget';
+import { resolveRouteStyle, roundStart, routeTarget, runPaceSecKm, walkKind } from '../engine/routeTarget';
 import { searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
 import { askMapCenter, locateAnswerCounts, locateNow, maySearch, planStart, startView, resolveRouteStart, type AskMapCenter, roundExact, roundHere, startFailureReason, type RouteStartMode, type StartPick } from '../engine/routeStart';
@@ -122,6 +122,8 @@ export interface RouteSearchModel {
   sender: FileSender | null;
   // Wat de training vraagt; `target` is wat er nu gezocht wordt (na Langer of Korter).
   trainingTarget: RouteTarget;
+  // Het tempo waarop de afstand van een looptraining is bepaald, voor de tijd van de lus (engine/routeInfo.ts); niet bij wandelen.
+  paceSecKm?: number;
   // Bijsturen (engine/routeAdjust.ts): geldt voor deze lus zolang het blad open is, plant en bewaart niets.
   adjust: LoopAdjust;
   adjustLine: string;
@@ -195,6 +197,11 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   const trainingTarget = useMemo(
     () => walk ?? routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy, bodyKg: loadBodyKg(settings) }),
     [walk, template, date, program, sessionLogs, settings],
+  );
+
+  const paceSecKm = useMemo(
+    () => (walk || !template || walkKind(template) ? undefined : runPaceSecKm(sessionLogs, template.id, date, pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy)),
+    [walk, template, date, sessionLogs, settings],
   );
 
   useEffect(() => {
@@ -528,6 +535,7 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     failLine: search !== 'busy' && search.kind !== 'plans' ? searchFailLine(search.kind, step?.key === key ? step.step : undefined, !isOffline()) : '',
     sender,
     trainingTarget,
+    paceSecKm,
     adjust,
     adjustLine: isAdjusted(adjust) ? adjustSummary(adjust, trainingTarget.distanceKm, picked) : '',
     adjustFail: failLineFor(searchState, key),
