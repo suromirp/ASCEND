@@ -4,14 +4,15 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-### Minuten in een andere week (I-58, 22 november)
-Je deed een training in een andere week dan gepland. Advies: de minuten tellen in de week waarin je hem deed, de geplande week blijft gelijk. Andere keuze: de minuten gaan mee naar de geplande week. Zonder antwoord bouwt de coördinator het advies.
+Geen open vragen.
 
 ## Stuk of vast
 
 
 ## Loopt
 
+- Route: soort terrein en via een punt in Andere lus (I-112) plus vier kleine verbeteringen aan de lus (I-120 tot I-123). Bouwer bezig.
+- Minuten in een andere week (I-58): u koos de week van uitvoeren. Komt in de volgende planning-ronde.
 - Graphify, eerlijke proef: na de reset van de weeklimiet (zondag 22 november 18:00 Portugese tijd). De graaf één keer bouwen (kosten apart), de koppeling en de regel in CLAUDE.md alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 
