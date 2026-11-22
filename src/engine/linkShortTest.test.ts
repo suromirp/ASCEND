@@ -5,7 +5,8 @@ import type { SessionLog } from '../models/training';
 import type { StreamSet } from '../models/activityDetail';
 import { linkLog, unlinkLog } from './missedTraining';
 import { shortTestView } from './shortTest';
-import { linkShortTestLine, linkShortTestLogIds, linkShortTestShift, linkShortTestState } from './linkShortTest';
+import type { PlannedSession } from '../models/training';
+import { linkShortTestLine, linkShortTestLogIds, linkShortTestLostRun, linkShortTestLostRunLine, linkShortTestShift, linkShortTestState } from './linkShortTest';
 
 // I-95: het koppelvoorstel zegt het als de koppeling verandert welke korte test van de week telt. Alles nagemaakt.
 
@@ -198,5 +199,52 @@ describe('verandert de koppeling welke korte test van de week telt', () => {
     const logs = Object.freeze([Object.freeze(thu), Object.freeze(tue)]) as readonly SessionLog[];
     expect(linkShortTestShift({ log: logs[1], sessionId: 'p_di', logs, streams: both(), series })).toBeDefined();
     expect(logs[1].plannedSessionId).toBeUndefined();
+  });
+});
+
+// I-99: een latere geplande loop van dezelfde week verliest zijn korte test als je een eerdere loop koppelt.
+describe('een latere loop verliest zijn korte test', () => {
+  const today = '2026-11-18';
+  const plan = (id: string, date: string, extra: Partial<PlannedSession> = {}): PlannedSession =>
+    ({ id, templateId: 'tpl_easy_run', scheduledDate: date, weekStartDate: '2026-11-16', status: 'planned', order: 0, ...extra }) as PlannedSession;
+  // Dinsdag (p_di) heeft nog geen log; donderdag en zaterdag zijn gepland, de loop van donderdag nog niet gelopen.
+  const sessions = [plan('p_di', '2026-11-17'), plan('p_do', '2026-11-19'), plan('p_za', '2026-11-21')];
+  const loose = log('los', '2026-11-17');
+  const base = { log: loose, sessionId: 'p_di', logs: [loose], sessions, today, on: true, series };
+  const card = (b: typeof base) => ({ log: b.log, sessionId: b.sessionId, logs: b.logs, series: b.series, plan: { sessions: b.sessions, name: 'Rustige loop', on: b.on } });
+
+  it('verschuiving naar een latere loop: de nieuwe zin', () => {
+    // Zonder koppeling heeft p_di de test niet (gemist, geen log) en krijgt donderdag hem; met koppeling dinsdag.
+    const lost = linkShortTestLostRun(base);
+    expect(lost).toEqual({ sessionId: 'p_do', date: '2026-11-19' });
+    expect(linkShortTestLostRunLine(lost, 'Rustige loop', today)).toBe('Je rustige loop van donderdag krijgt dan geen korte test meer.');
+  });
+
+  it('geen verschuiving: niets', () => {
+    // De loop van dinsdag is al gedaan en hoort al bij de week; de koppeling verandert niets voor donderdag.
+    const done = log('al', '2026-11-17', { plannedSessionId: 'p_di' });
+    expect(linkShortTestLostRun({ ...base, logs: [done, loose] })).toBeUndefined();
+    expect(linkShortTestLostRunLine(undefined, 'Rustige loop', today)).toBeUndefined();
+  });
+
+  it('een loop zonder korte test in die week: niets', () => {
+    expect(linkShortTestLostRun({ ...base, on: false })).toBeUndefined();
+    expect(linkShortTestLostRun({ ...base, series: undefined })).toBeUndefined();
+    // Een losse loop die geen rustige loop is, of een andere sessie dan een rustige loop.
+    expect(linkShortTestLostRun({ ...base, sessions: [plan('p_di', '2026-11-17', { templateId: 'tpl_walk' }), plan('p_do', '2026-11-19', { templateId: 'tpl_walk' })] })).toBeUndefined();
+    // Een loop die al gelopen is verliest niets op deze manier (zijn test staat in de andere zin).
+    expect(linkShortTestLostRun({ ...base, logs: [loose, log('do', '2026-11-19', { plannedSessionId: 'p_do' })] })).toBeUndefined();
+  });
+
+  it('de kaart: een loop die zijn test verliest hoeft niet te wachten op reeksen', () => {
+    expect(linkShortTestState(card(base), undefined, today)).toEqual({ stand: 'line', line: 'Je rustige loop van donderdag krijgt dan geen korte test meer.' });
+  });
+
+  it('de kaart: een al gelopen latere loop houdt de zin van de test, zonder tweede zin', () => {
+    // Donderdag is gelopen met een test: dat zegt de eerste zin; een ongelopen loop kan er niet naast verliezen.
+    const withThu = { ...base, logs: [thu, loose] };
+    expect(linkShortTestLostRun(withThu)).toBeUndefined();
+    expect(linkShortTestState(card(withThu), undefined, today)).toEqual({ stand: 'busy' });
+    expect(linkShortTestState(card(withThu), { streams: both(), complete: true }, today)).toEqual({ stand: 'line', line: 'Je korte test van donderdag telt dan niet meer, die uit deze loop wel.' });
   });
 });

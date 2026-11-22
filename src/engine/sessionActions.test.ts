@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { macroFactorLine, pendingMacroFactorWorkout, previewDayLine, sessionSheetActions, strengthDoneDuration, QUICK_RPE_SCALE } from './sessionActions';
+import { macroFactorLine, pendingMacroFactorWorkout, previewDayLine, quietLapsed, sessionSheetActions, strengthDoneDuration, QUICK_RPE_SCALE } from './sessionActions';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { resolveProgramWeek } from '../utils/dates';
 import type { SessionLog } from '../models/training';
@@ -163,5 +163,17 @@ describe('Week met een horloge dat afvinkt (herstel spoor 5 en 6)', () => {
     expect(past.main).toBe('done');
     expect(past.rows).toContain('start');
     expect(past.rows).not.toContain('briefing');
+  });
+});
+
+describe('quietLapsed (I-85)', () => {
+  it('een voorbije vervallen training zonder log is stil', () => {
+    expect(quietLapsed({ reasonWord: 'Vervallen', scheduledDate: '2026-03-02', today: '2026-03-04', logged: false })).toBe(true);
+  });
+  it('vandaag, gelogd of overgeslagen blijft gewoon', () => {
+    expect(quietLapsed({ reasonWord: 'Vervallen', scheduledDate: '2026-03-04', today: '2026-03-04', logged: false })).toBe(false);
+    expect(quietLapsed({ reasonWord: 'Vervallen', scheduledDate: '2026-03-02', today: '2026-03-04', logged: true })).toBe(false);
+    expect(quietLapsed({ reasonWord: 'Overgeslagen', scheduledDate: '2026-03-02', today: '2026-03-04', logged: false })).toBe(false);
+    expect(quietLapsed({ scheduledDate: '2026-03-02', today: '2026-03-04', logged: false })).toBe(false);
   });
 });

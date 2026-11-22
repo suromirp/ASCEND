@@ -103,6 +103,12 @@ function sheetActions({ date, today, skipped, canComeBack, kind, workoutWaiting,
 
 // Zolang je ziek bent (engine/skipReason.ts#quietWhileIll): geen mint hoofdknop. De keuze die de hoofdknop was, staat
 // bovenaan de stille rijen; de volgorde blijft die van sessionSheetActions.
+// I-85: een voorbije training die vervallen is (ziek, pauze) en niet gelogd, krijgt geen mint hoofdknop:
+// Gedaan of Training starten doe je daar zelden, dus alle keuzes staan als stille rijen.
+export function quietLapsed(input: { reasonWord?: 'Vervallen' | 'Overgeslagen'; scheduledDate: string; today: string; logged: boolean }): boolean {
+  return !input.logged && input.reasonWord === 'Vervallen' && input.scheduledDate < input.today;
+}
+
 export function quietSheetActions(actions: SheetActions): { main?: SheetAction; rows: SheetAction[] } {
   return { rows: [actions.main, ...actions.rows.filter((a) => a !== actions.main)] };
 }

@@ -88,9 +88,15 @@ const PERIOD_CAUSE: Record<LeavePeriod['kind'], DayCause | undefined> = { no_tra
 // de ene regel, stap tellen.
 function pauseReason(input: SkipReasonInput, word: SkipReason['word']): SkipReason | undefined {
   const { session, today } = input;
-  const v = pauseRules({ leave: input.leave, illness: input.illness, races: input.races }, today).may({ date: session.scheduledDate, step: 'count', template: input.template });
-  if (v.ok) return undefined;
-  return fromCause(v.cause, session.scheduledDate < today, word);
+  const rules = pauseRules({ leave: input.leave, illness: input.illness, races: input.races }, today);
+  const v = rules.may({ date: session.scheduledDate, step: 'count', template: input.template });
+  if (!v.ok) return fromCause(v.cause, session.scheduledDate < today, word);
+  // Een lopende ziekmelding houdt ook vandaag en morgen vast, waar de telling nog niets zegt: de rij die erin
+  // overgeslagen staat, krijgt dezelfde reden (alleen voor een overgeslagen rij, nooit voor een open training).
+  if (session.status !== 'skipped') return undefined;
+  const placed = rules.may({ date: session.scheduledDate, step: 'place', template: input.template });
+  if (placed.ok || (placed.cause !== 'ill' && placed.cause !== 'ill_light')) return undefined;
+  return fromCause(placed.cause, false, word);
 }
 
 export function skipReason(input: SkipReasonInput): SkipReason | undefined {

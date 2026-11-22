@@ -69,7 +69,7 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
   // Een dag zonder training (of met alleen Herstel) is een vrije dag; dezelfde opvatting als de controle.
   const freeDays = freeDaysOfWeek(monday, input.sessions, input.logs, new Map(input.templates.map((t) => [t.id, t])));
 
-  return findings.map((f): CheckConcern => {
+  const concerns = findings.map((f): CheckConcern => {
     const base = { key: `${f.rule}:${[...f.sessionIds].sort().join(',')}`, rule: f.rule, finding: f };
     const [a, b] = f.sessionIds;
     switch (f.rule) {
@@ -269,6 +269,16 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
         };
       }
     }
+  });
+  // Op je rustdag in een periode zonder sportschool staat één training twee keer in Let op: houd het belangrijkste punt.
+  // Een test of wedstrijd (REST-DAY niveau 2) gaat voor; anders is het geen sportschool het zwaarst.
+  const noGymOn = new Set(concerns.filter((c) => c.rule === 'NO-GYM').map((c) => c.finding.sessionIds[0]));
+  const restOn = new Set(concerns.filter((c) => c.rule === 'REST-DAY' && c.finding.level === 2).map((c) => c.finding.sessionIds[0]));
+  return concerns.filter((c) => {
+    const id = c.finding.sessionIds[0];
+    if (c.rule === 'REST-DAY') return !(noGymOn.has(id) && !restOn.has(id));
+    if (c.rule === 'NO-GYM') return !restOn.has(id);
+    return true;
   });
 }
 

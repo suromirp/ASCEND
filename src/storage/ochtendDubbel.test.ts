@@ -374,3 +374,24 @@ describe('opruimen in één transactie', () => {
     expect(await stored()).toEqual(['import:2026-11-11', 'intervals.icu:2026-11-10']);
   });
 });
+
+// I-98: de import filtert alleen wat pruneWellness ook raakt (intervals.icu en Health Connect).
+describe('import met een uitgezette soort', () => {
+  it('bewaart manual:, garmin: en macrofactor: en laat intervals.icu: van die soort weg', async () => {
+    await setWatchUse({ hrv: false });
+    const row = (id: string, date: string) => ({ id, date, source: 'import', restingHeartRate: 50, hrv: 60 });
+    await importEnvelope(await oldBackup([
+      row('manual:2026-11-01', '2026-11-01'),
+      row('garmin:2026-11-02', '2026-11-02'),
+      row('macrofactor:2026-11-03', '2026-11-03'),
+      row('intervals.icu:2026-11-04', '2026-11-04'),
+      row('health-connect:2026-11-05', '2026-11-05'),
+      { id: 'import:2026-11-06', date: '2026-11-06', source: 'import', restingHeartRate: 50, hrv: 60 },
+    ]));
+    const all = await RecoveryMetricsRepo.getAll();
+    const byId = new Map(all.map((m) => [m.id, m]));
+    for (const id of ['manual:2026-11-01', 'garmin:2026-11-02', 'macrofactor:2026-11-03', 'import:2026-11-06']) expect(byId.get(id)?.hrv).toBe(60);
+    for (const id of ['intervals.icu:2026-11-04', 'health-connect:2026-11-05']) expect(byId.get(id)?.hrv).toBeUndefined();
+  });
+});
+

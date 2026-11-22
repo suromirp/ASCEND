@@ -27,6 +27,8 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
   const today = todayISO();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  // Is er gelezen, dan blijft de plek van de regel gereserveerd (I-102).
+  const [reserve, setReserve] = useState(false);
   const { item, lapsed, missedSettings } = state;
   // Verandert de koppeling welke korte test van de week telt, dan staat dat in het voorstel (I-95).
   const shortTest = useLinkShortTest(item?.kind === 'link' ? item.log : undefined, item?.kind === 'link' ? item.session.id : undefined, today);
@@ -54,13 +56,17 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
   if (item.kind === 'link') {
     // Zolang de korte test gelezen wordt staan de knoppen uit: de zin komt nooit boven knoppen die al te tikken zijn.
     const reading = shortTest.stand === 'busy';
+    if (reading && !reserve) setReserve(true);
     return (
       <Card data-missed={item.session.id}>
         <Eyebrow>{linkEyebrow(item.log)}</Eyebrow>
         <p className="mt-1 text-base" style={{ color: 'var(--color-ink)' }}>{linkLine(item.session, item.template, item.log, today)}</p>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Met Akkoord telt die training als gedaan. Alleen de koppeling is nieuw, de cijfers blijven zoals ze waren.</p>
-        {shortTest.stand === 'line' && <p className="mt-1 text-sm" data-link-short-test="" style={{ color: 'var(--color-ink)' }}>{shortTest.line}</p>}
-        {reading && <p className="mt-1 text-sm" role="status" data-link-short-test="bezig" style={{ color: 'var(--color-ink-dim)' }}>Even kijken wat dit met je korte test doet.</p>}
+        {/* Vaste hoogte (I-102): zodra er gelezen werd, houdt de plek zijn drie regels, ook als de zin kort is of ontbreekt, zodat de knoppen niet verschuiven als ze aangaan. */}
+        <div className={reserve ? 'mt-1 min-h-15' : 'mt-1'} data-link-short-test-slot={reserve ? '' : undefined}>
+          {shortTest.stand === 'line' && <p className="text-sm" data-link-short-test="" style={{ color: 'var(--color-ink)' }}>{shortTest.line}</p>}
+          {reading && <p className="text-sm" role="status" data-link-short-test="bezig" style={{ color: 'var(--color-ink-dim)' }}>Even kijken wat dit met je korte test doet.</p>}
+        </div>
         <div className="mt-3 flex gap-2">
           <SecondaryButton disabled={busy || reading} onClick={() => remember((m) => ({ ...m, declined: [...m.declined, declinedKey(item.log.id, item.session.id)], declinedOn: { ...m.declinedOn, [declinedKey(item.log.id, item.session.id)]: today } }))}>Liever niet</SecondaryButton>
           <SecondaryButton disabled={busy || reading} onClick={() => run(() => linkMissedLog(item.log.id, item.session.id))}>{busy ? 'Bezig…' : 'Akkoord'}</SecondaryButton>

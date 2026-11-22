@@ -3,16 +3,15 @@
 // Leest de bewaarde reeksen (alleen lezen); tot ze er zijn, of als ze niet op tijd gelezen zijn, staat er
 // niets. Geen rekenwerk hier. docs/beslissingen/2026-11-18-korte-test.md
 
-import { useEffect, useMemo, useState } from 'react';
-import type { StreamSet } from '../models/activityDetail';
+import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { seriesPace, shortTestLogIds, shortTestView } from '../engine/shortTest';
 import { resolveNoStrapTest, strapExpected } from '../engine/thresholdEstimate';
 import { recordStrapWorn } from '../engine/zoneUpdate';
-import { streamsForLogs } from '../storage/testStreams';
 import { withTimeout } from '../utils/withTimeout';
 import { Eyebrow } from './ui';
 import { TextButton } from './TextButton';
+import { useShortTestStreams } from './useShortTestStreams';
 
 const SAVE_LIMIT_MS = 10_000;
 
@@ -21,24 +20,13 @@ export function ShortTestCard({ logId }: { logId: string }) {
   const series = settings.shortTestSeries;
   // De rustige lopen die aan een geplande training hangen, plus de loop waar je naar kijkt.
   const ids = useMemo(() => (seriesPace(series) === undefined ? '' : shortTestLogIds(sessionLogs, series, logId).join(',')), [sessionLogs, series, logId]);
-  const [streams, setStreams] = useState<{ ids: string; map: Map<string, StreamSet> } | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  useEffect(() => {
-    if (!ids) return;
-    let live = true;
-    const wanted = new Set(ids.split(','));
-    void streamsForLogs(sessionLogs.filter((l) => wanted.has(l.id))).then(({ map, complete }) => {
-      if (live && complete) setStreams({ ids, map });
-    });
-    return () => {
-      live = false;
-    };
-    // Alleen opnieuw lezen als de lopen veranderen.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ids]);
+  const read = useShortTestStreams(ids);
+  // Alleen een volledige lezing; tot dan, of na een fout of de tijdgrens, staat er niets.
+  const streams = read?.complete ? read : undefined;
   const view = useMemo(() => (streams && streams.ids === ids
-    ? shortTestView({ logId, logs: sessionLogs, streams: streams.map, series, noStrap: resolveNoStrapTest(settings.noStrapTest), strapWorn: settings.strapWorn })
+    ? shortTestView({ logId, logs: sessionLogs, streams: streams.streams, series, noStrap: resolveNoStrapTest(settings.noStrapTest), strapWorn: settings.strapWorn })
     : undefined), [streams, ids, logId, sessionLogs, series, settings.noStrapTest, settings.strapWorn]);
   if (!view) return null;
   const dim = { color: 'var(--color-ink-dim)' };

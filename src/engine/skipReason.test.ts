@@ -84,6 +84,22 @@ describe('skipReason: de reden uit het voorstel', () => {
   });
 });
 
+describe('skipReason: een lopende ziekmelding', () => {
+  it('een overgeslagen rij van vandaag of morgen zonder slot of voorstel krijgt de reden van de ziekmelding', () => {
+    for (const date of [TODAY, addDays(TODAY, 1)]) {
+      const row = ps('tpl_easy_run', date, { status: 'skipped' });
+      const r = skipReason(input(row, { illness: [fever] }));
+      expect(r).toEqual({ kind: 'ill', word: 'Vervallen', line: 'Je meldde ziekte. Inhalen hoeft niet.' });
+    }
+  });
+
+  it('zonder lopende ziekmelding, of ver na morgen, of niet overgeslagen: geen reden', () => {
+    expect(skipReason(input(ps('tpl_easy_run', TODAY, { status: 'skipped' })))).toBeUndefined();
+    expect(skipReason(input(ps('tpl_easy_run', addDays(TODAY, 4), { status: 'skipped' }), { illness: [fever] }))).toBeUndefined();
+    expect(skipReason(input(ps('tpl_easy_run', addDays(TODAY, 1)), { illness: [fever] }))).toBeUndefined();
+  });
+});
+
 describe('skipReason: zelf, periodes en de ene regel', () => {
   it('zelf overgeslagen: jouw slot', () => {
     const row = ps('tpl_easy_run', '2026-11-18', { status: 'skipped', lock: { by: 'user', at: TODAY } });

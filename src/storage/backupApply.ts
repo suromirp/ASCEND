@@ -2,8 +2,8 @@
 
 import { filterRecovery } from '../engine/watchUse';
 import { morningsToImport } from '../engine/morningDouble';
-import { isSourcelessMorning } from '../engine/sourcePrecedence';
 import { getWatchState } from './externalActivities';
+import { isPrunedMorning } from './wellness';
 import type { RecoveryMetric } from '../models/metrics';
 import type { ActivityStreams } from '../models/activityStreams';
 import { BackupSnapshotsRepo, ActivityStreamsRepo, RecoveryMetricsRepo, applyBackupWrites } from './database';
@@ -132,14 +132,14 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   // morning the device fetched itself (its own is the newer reading), and no morning without a source
   // that adds nothing to one with a source on the same day (engine/morningDouble.ts#morningsToImport).
   // What is switched off under "Wat ASCEND van je horloge gebruikt" stays out of a morning with a source
-  // (engine/watchUse.ts#filterRecovery), as storage/wellness.ts#pruneWellness keeps it. A morning without
-  // a source is written whole: a kind that is off never changes its record, every reader filters
+  // (engine/watchUse.ts#filterRecovery), as storage/wellness.ts#pruneWellness keeps it: only the mornings
+  // it touches (isPrunedMorning: intervals.icu and Health Connect). Any other morning is written whole: a kind that is off never changes its record, every reader filters
   // (docs/beslissingen/2026-11-20-ochtend-zonder-bron.md).
   let morningPuts: RecoveryMetric[] = [];
   if (touches(historyAction) && backup.mornings && backup.mornings.length > 0) {
     const fresh = morningsToImport(await RecoveryMetricsRepo.getAll(), backup.mornings);
-    const withSource = new Map(filterRecovery(fresh.filter((m) => !isSourcelessMorning(m.id)), (await getWatchState()).use).map((m) => [m.id, m]));
-    morningPuts = fresh.flatMap((m) => (isSourcelessMorning(m.id) ? [m] : withSource.has(m.id) ? [withSource.get(m.id)!] : []));
+    const withSource = new Map(filterRecovery(fresh.filter(isPrunedMorning), (await getWatchState()).use).map((m) => [m.id, m]));
+    morningPuts = fresh.flatMap((m) => (!isPrunedMorning(m) ? [m] : withSource.has(m.id) ? [withSource.get(m.id)!] : []));
   }
 
   // What merges with the device (the history lists in settings, the skill goals, the routes

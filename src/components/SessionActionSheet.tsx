@@ -54,7 +54,7 @@ import { isLegHeavyTemplate } from '../engine/scheduler';
 import { REST_DAY_COPY } from '../data/restDayCopy';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
 import type { SwapOption } from '../engine/weekSwap';
-import { macroFactorLine, pendingMacroFactorWorkout, quietSheetActions, sessionSheetActions, strengthDoneDuration, type DoneKind, type MacroFactorSource, type SheetAction } from '../engine/sessionActions';
+import { macroFactorLine, pendingMacroFactorWorkout, quietLapsed, quietSheetActions, sessionSheetActions, strengthDoneDuration, type DoneKind, type MacroFactorSource, type SheetAction } from '../engine/sessionActions';
 import { backOnPlanCheck, quietWhileIll } from '../engine/skipReason';
 import { useSkipReason } from './useSkipReason';
 import { workoutToDraft } from '../engine/macrofactorLink';
@@ -191,7 +191,8 @@ export function SessionActionSheet({
   const backCheck = skipped ? backOnPlanCheck({ session, template, today, illness: settings.illnessEpisodes }) : { kind: 'ok' as const };
   const [askingBack, setAskingBack] = useState(false);
   const canComeBack = skipped && !!onBackOnPlan && session.scheduledDate >= today && backCheck.kind !== 'refuse';
-  const quiet = skipped && quietWhileIll({ reason, check: backCheck, today, illness: settings.illnessEpisodes });
+  const quiet = (skipped && quietWhileIll({ reason, check: backCheck, today, illness: settings.illnessEpisodes }))
+    || quietLapsed({ reasonWord: reason?.word, scheduledDate: session.scheduledDate, today, logged: !!completedLog });
   const kind: DoneKind = quickComplete ? 'quick' : template.type === 'strength' ? 'inApp' : 'log';
 
   // Strength kept in MacroFactor: the workouts of the last file read. A workout

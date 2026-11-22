@@ -71,3 +71,5 @@ Uit `2026-11-20-backup-terugzetten.md` punt 5 (een kopie brengt het paar terug z
 ## Terugdraaien
 
 Zet in `settingsWrite` in `src/storage/backupApply.ts` `if (options.deviceCopy) return next;` terug en haal de aanroep van `straightenBackupTime` uit `src/storage/bootMigrations.ts`. Voor de ochtenden: laat `filterRecovery` weer over alle ochtenden van `morningsToImport` lopen. Er is geen opgeslagen vorm om terug te zetten; een tijdstip dat is rechtgezet blijft rechtgezet.
+
+Aangevuld 22 november (I-101): de strengere variant is gebouwd. Bij een import wordt een tijdstip in de toekomst zonder bijpassende lijst met het paar weggelaten (`straightImportedPair` in `src/engine/backupSince.ts`), zodat de herinnering niet zeven dagen zwijgt en alles als nog niet bewaard telt. Bij het opstarten (`straightenBackupTime`) blijft rechtzetten zoals het was. Aangevuld 22 november (I-98): het ochtendfilter bij een import raakt alleen intervals.icu en Health Connect (`isPrunedMorning` in `src/storage/wellness.ts`, dezelfde lijst als `pruneWellness`).
