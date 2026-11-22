@@ -8,6 +8,7 @@ import { Card, Eyebrow, Meter, PrimaryButton, Ring } from '../ui';
 import { TextButton } from '../TextButton';
 import { ChoiceList, Sheet, type ChoiceOption } from '../settings/Sheet';
 import { jumpRoute } from '../settings/jump';
+import { strengthTrainingOn } from '../../engine/strengthTraining';
 
 // "Je week" zonder doel (docs/beslissingen/2026-10-27-zonder-doel-stap-1.md): de kaart op de
 // lucht van Ascend, het blad met wat er telde en het richtingblad. Een richting kiezen gaat via een
@@ -146,9 +147,11 @@ export function DirectionSheet({
   onGoal?: () => void;
   onClose: () => void;
 }) {
+  const { settings } = useAppData();
+  const strengthOn = strengthTrainingOn(settings);
   const [picked, setPicked] = useState<DirectionId | undefined>(current);
   const options: ChoiceOption<string>[] = [
-    ...DIRECTION_IDS.map((id) => ({ value: id, label: DIRECTIONS[id].label, note: `${DIRECTIONS[id].line} ${DIRECTIONS[id].effect}` })),
+    ...DIRECTION_IDS.map((id) => ({ value: id, label: DIRECTIONS[id].label, note: `${DIRECTIONS[id].line} ${(!strengthOn && DIRECTIONS[id].effectNoStrength) || DIRECTIONS[id].effect}` })),
     ...(onGoal ? [{ value: GOAL_ROW, label: 'Naar een doel', note: 'Kies een tocht of wedstrijd.' }] : []),
   ];
   return (

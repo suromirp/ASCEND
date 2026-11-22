@@ -81,7 +81,7 @@ function inQueue<T>(step: () => Promise<T>): Promise<T> {
 // Telt elk wissen, op het moment dat het gevraagd wordt. De wachtrij alleen is niet genoeg voor de plek van
 // een zoektocht die al liep: na de wis is die plek weg uit de lezing, en zonder deze telling zette de
 // zoektocht hem er gewoon weer bij.
-const clears = { exact: 0, all: 0 };
+const clears = { exact: 0 };
 
 // Wat er bewaard is als het vers genoeg is, anders een nieuwe zoektocht. Bij een fout blijft het
 // oude resultaat van dezelfde plek staan, zonder het te vernieuwen.
@@ -101,7 +101,7 @@ export function refreshNearbyTerrain(place: WeatherPlace, options: OverpassOptio
     // meer in die lezing en komt dus niet terug. Werd de plek van deze zoektocht zelf gewist terwijl hij
     // liep (het startpunt weg of vervangen), dan bewaren we hem niet.
     await inQueue(async () => {
-      if (clears.all !== clearsAtStart.all || (isExactKey(key) && clears.exact !== clearsAtStart.exact)) return;
+      if (isExactKey(key) && clears.exact !== clearsAtStart.exact) return;
       const fresh = await readAll();
       fresh[key] = next;
       const newest = Object.entries(fresh).sort((a, b) => Date.parse(b[1].fetchedAt) - Date.parse(a[1].fetchedAt)).slice(0, TERRAIN_MAX_PLACES);
