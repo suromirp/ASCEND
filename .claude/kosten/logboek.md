@@ -561,3 +561,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 2026-11-21, bundel I-94/I-95 UI, Lookout, sonnet (tester), 119k, 8 min, 0, groen 360/390/412; Mag sprong koppelkaart naar I-102
 - 2026-11-21, totaal per feature: I-93/97 back-up import losse chat fable plus Warden; I-95 fable Sherpa (2 rondes) plus Warden; I-94/96 sonnet Sherpa 129k plus Warden 28k; Lookout gedeeld 119k
 - 2026-11-22, bundel 22 november (I-98/101 opslag, I-99/100/102 koppel, I-56/72/85 week), 3 Sherpa's sonnet (ontwikkelaar), Warden opus (reviewer), Lookout sonnet (tester), plus herstel I-85 door coördinator; volle controles groen (11845 tests), main 2950cb7
+- 2026-11-22, I-107 en test I-108, coördinator zelf (opus), geen helper, volle controles groen, main 74855bb

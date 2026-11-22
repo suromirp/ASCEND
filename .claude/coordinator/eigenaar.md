@@ -16,6 +16,9 @@ Geen open vragen. De vier oude vragen (drempel en korte test, routes wandelen, h
 
 ## Net live
 
+### 22 november 06:40
+- Koppelvoorstel: een rustige loop die al voorbij is krijgt niet meer de zin over de korte test; de plek voor die zin hoort bij het voorstel (I-107).
+
 ### 22 november 05:50
 - Import: het ochtendfilter raakt alleen intervals.icu en Health Connect; je eigen invoer, Garmin en MacroFactor blijven staan (I-98, I-101).
 - Koppelvoorstel: zegt nu ook dat een rustige loop later in de week zijn korte test verliest; de kaart springt niet meer (I-99, I-100, I-102).
