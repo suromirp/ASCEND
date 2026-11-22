@@ -16,6 +16,9 @@ Geen open vragen. De vier oude vragen (drempel en korte test, routes wandelen, h
 
 ## Net live
 
+### 22 november 08:00
+- Weekbudget: met kracht uit noemen de notitie en de uitleg geen kracht meer (I-46). Code opgeruimd zonder gedragswijziging (deel van I-82).
+
 ### 22 november 07:10
 - Back-up: ook het toestel telt een tijdstip in de toekomst zonder lijst niet meer bij het terugzetten van een kopie; nu getest (I-106).
 
