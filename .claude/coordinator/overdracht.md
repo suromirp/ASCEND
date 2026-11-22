@@ -6,6 +6,8 @@ Bijgewerkt: 22 november 2026 door coördinator session_01LnDpSip9wpY6fuZXMm2yqw 
 
 - Coördinator nu session_01LnDpSip9wpY6fuZXMm2yqw, vastgezet door de chat ASCEND. Geen bouwers, geen open poorten. Weeklimiet staat op waarschuwing tot zondag 22 november 18:00 UTC: tot dan niets starten.
 - Gepland: send_later zondag 18:10 Lisbon voor de Graphify-proef (zie Vaste afspraken). Bouwmoment maandag start vanzelf in de sessie Bouwmoment ASCEND.
+- Vraag aan u in `eigenaar.md` leeggemaakt: I-79 (drempel en korte test) is op 17 en 18 november met het advies gebouwd (3651a77d, 5ecd92cd); routes wandelen, horlogetoets en Forge-concept staan sinds 15 november met het advies live. Besloten met het advies volgens CLAUDE.md; alles blijft instelbaar.
+- Inbox gecontroleerd voor maandag: I-98 tot I-103 zijn nog niet gebouwd (git log en `backupApply.ts:140` filtert nog via filterRecovery).
 - Worktree wt-zuinig stond in de scratchpad van de vorige coördinator; die container is niet de mijne, er is niets op te ruimen.
 
 ## Zuinige stand (21 november 00:10, lees dit eerst)

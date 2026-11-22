@@ -4,29 +4,7 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-### Drempel en korte test (I-79, 16 november 23:30)
-Onderzoek staat op main (`docs/onderzoek/Drempel en submaximale test.md`). Vier keuzes, advies voorop; zonder antwoord bouwt woensdag stap 1 en 2 met het advies, de korte test wacht.
-1. Factor: 98 procent houden als instelling, met Zoals Friel (100) als tweede keuze (advies), of Friel standaard.
-2. Drempel volgt het midden van je laatste drie tests (advies) of alleen de laatste.
-3. Korte test: 4 minuten op drempeltempo plus 1 minuut stilstaan, wekelijks (advies); zonder stilstaan; zoals intervals.icu; of nog niet.
-4. Zonder borstband: standaard telt een test niet voor de drempel, keuze met ruime marge blijft, armband telt als band, en één vraag "Had je hem om?" (advies); nooit zonder band; of niet vragen.
-Zonder antwoord het advies: praattest later, test van 30 minuten later, DFA alpha 1 niet bouwen.
-
-
-### Routes wandelen: drie standaardkeuzes, gebouwd met het advies
-- Keuzes: zo laten (advies): duur gaat voor hoogtemeters, en dat is instelbaar; de wandelladder verandert alleen via Akkoord; een herstelwandeling krijgt pas een lus na een tik. Of: een van de drie anders.
-- Zonder antwoord: het blijft zoals het nu live staat.
-- Sinds: 15 november 08:46
-
-### Horlogetoets: de regels kort, hard en wandeltempo staan altijd aan
-- Keuzes: zo laten (advies). Of: per regel een eigen schakelaar.
-- Zonder antwoord: het blijft zo.
-- Sinds: 15 november 08:46
-
-### Een Forge-concept heeft geen grens in tijd
-- Keuzes: geen grens (advies), het concept blijft tot je kiest. Of: na een week vanzelf weg.
-- Zonder antwoord: geen grens.
-- Sinds: 15 november 08:46
+Geen open vragen. De vier oude vragen (drempel en korte test, routes wandelen, horlogetoets, Forge-concept) zijn met het advies gebouwd en blijven instelbaar.
 
 ## Stuk of vast
 
