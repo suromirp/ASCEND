@@ -26,6 +26,9 @@ export interface WeatherHour {
   // fetched before these fields. The forecast is a cache, never in a backup.
   dewPointC?: number;
   humidityPct?: number;
+  // Waar de wind vandaan komt, in graden (0 is noord, 90 oost); ontbreekt in een voorspelling van voor dit veld
+  // (engine/routeWind.ts). Een cache, nooit in een back-up.
+  windDirDeg?: number;
 }
 
 // Sunrise and sunset of one day, local time: 'YYYY-MM-DDTHH:MM'.

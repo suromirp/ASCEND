@@ -709,6 +709,17 @@ export const VANDAAG: SettingDef[] = [
     showWhen: [B.route],
   },
   {
+    id: 'route-wind',
+    page: 'vandaag',
+    place: { in: 'bundel-weer' },
+    title: 'Wind bepaalt de richting',
+    note: 'Bij een lus begin je tegen de wind in en heb je hem op de terugweg mee, uit het weer dat de app al heeft. Het advies is aan. Bij wind onder 12 km/u of zonder windgegevens verandert er niets.',
+    keywords: ['route', 'lus', 'wind', 'richting', 'tegenwind', 'meewind', 'andersom', 'draairichting', 'rondje'],
+    help: true,
+    helpKey: 'routeWind',
+    showWhen: [B.route],
+  },
+  {
     id: 'plek-onthouden',
     page: 'vandaag',
     place: { in: 'bundel-weer' },

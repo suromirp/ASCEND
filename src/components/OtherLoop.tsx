@@ -73,6 +73,7 @@ export function OtherLoop({ model }: { model: RouteSearchModel }) {
   return (
     <div className="flex flex-col items-start">
       <TextButton tone="dim" icon="verder" disabled={other.busy} onClick={() => setOpen(true)}>Andere lus</TextButton>
+      {other.windLine && <p className="text-xs leading-snug" style={dim}>{other.windLine}</p>}
       {other.busy && <p role="status" className="text-xs leading-snug" style={dim}>{`Een andere lus zoeken. ${searchLimitLine(undefined, PROPOSAL_LIMIT_MS)}`}</p>}
       {!other.busy && other.failLine && (
         <>

@@ -22,7 +22,7 @@ function model(over: Partial<RouteSearchModel> = {}): RouteSearchModel {
     setChosen: () => undefined, mapRoutes: [], mapStartPoint: undefined, base: 'none', photo: 'map', setPhoto: () => undefined, hereMode: false, noMap: false, markNoMap: () => undefined,
     startOnMap: async () => ({ ok: false, line: '' }), steps: ['terrain', 'routes'], currentStep: 'terrain', limitLine: 'Hoogstens een halve minuut.', limitMs: 30_000, searchKey: 'k',
     foundLines: [], sources: [], parts: [], retry: () => undefined, sender: null,
-    trainingTarget: target, adjust: { deltaKm: 0, avoid: [], reversed: [] }, adjustLine: '', adjustFail: '', canReverse: false, reverse: () => undefined, stepLength: () => undefined, avoidStretch: () => undefined, resetAdjust: () => undefined, other: { available: false, busy: false, failLine: '', note: '', pick: () => undefined, retry: undefined }, pieces: [], ask: undefined, retryHere: () => undefined, failLine: '', ...over,
+    trainingTarget: target, adjust: { deltaKm: 0, avoid: [], reversed: [] }, adjustLine: '', adjustFail: '', canReverse: false, reverse: () => undefined, stepLength: () => undefined, avoidStretch: () => undefined, resetAdjust: () => undefined, other: { available: false, windLine: '', busy: false, failLine: '', note: '', pick: () => undefined, retry: undefined }, pieces: [], ask: undefined, retryHere: () => undefined, failLine: '', ...over,
   };
 }
 

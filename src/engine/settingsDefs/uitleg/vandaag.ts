@@ -267,6 +267,15 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Altijd', text: 'loopt er 300 m of meer langs een grote weg, dan zegt een regel bij de lus dat.' },
     ],
   },
+  'route-wind': {
+    title: 'Wind bepaalt de richting',
+    lead: 'Bij een lus begin je tegen de wind in en heb je hem op de terugweg mee. Het advies is aan.',
+    points: [
+      { head: 'Aan', text: 'de app draait de lus zo dat het eerste derde het meest tegen de wind in gaat. Het zijn dezelfde punten achterstevoren, dus de afstand blijft. Eén regel bij de lus zegt wat je tegenkomt; kies je Andersom, dan zegt die regel dat je nu met de wind mee begint.' },
+      { head: 'Uit', text: 'de lus blijft zoals de routeplanner hem maakt.' },
+      { head: 'Altijd', text: 'bij wind onder 12 km/u (ongeveer 3 Beaufort) of zonder windgegevens verandert er niets. De wind komt uit het weer dat de app al ophaalt; er gaat niets nieuws de deur uit.' },
+    ],
+  },
   'route-kaart': {
     title: 'Ondergrond van de kaart',
     lead: 'De kaart in Route voorstellen toont je lussen, je startpunt en je plek. Dit kiest wat eronder ligt. Rechtsboven op de kaart wissel je ook snel tussen de kaart en de luchtfoto; wat je het laatst koos, blijft staan.',

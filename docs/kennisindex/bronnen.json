@@ -4473,6 +4473,13 @@
    ],
    "kern": "Onder de gekozen lus staat een knop Andere lus met Andersom (nul aanroepen), Een andere kant op, Noord, Oost, Zuid en West, en Zonder heen en terug; elke keuze behalve Andersom is één zoektocht binnen MAX_ROUTE_CALLS, de gekozen variant is een eenmalige afwijking die niet bewaard wordt.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-22-wind-en-lus.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Bij een Avontuurlijke lus begin je tegen de wind in en heb je hem op de terugweg mee: de app draait de lus (reverseProposal, geen aanroep) op de windrichting van het startuur uit de voorspelling die er al is, gemeten over het eerste en laatste derde; zwakker dan 12 km/u of onbekend doet niets; één regel bij de lus, ook eerlijk na Andersom; instelling routeWind, standaard aan.",
+   "stand": "geldt"
   }
  }
 }

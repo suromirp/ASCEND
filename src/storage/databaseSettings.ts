@@ -190,6 +190,8 @@ export interface AppSettings {
   routeProposal?: boolean;
   // Grote wegen mijden bij Route voorstellen; afwezig is aan (besluit 2026-11-14-routes-vorm.md).
   routeAvoidBigRoads?: boolean;
+  // De lus begint tegen de wind in (engine/routeWind.ts); afwezig is aan (besluit 2026-11-22-wind-en-lus.md). Optioneel en erbij, dus geen migratiestap.
+  routeWind?: boolean;
   // De plek van Start bij blijft per geplande training staan tot de dag voorbij is; afwezig is aan
   // (besluit 2026-11-15-avond-ervoor-kent-de-plek.md). Optioneel en erbij, dus geen migratiestap.
   rememberStartPlace?: boolean;

@@ -848,7 +848,9 @@ describe('rowSummary: route voorstellen', () => {
     expect(rowSummary('route-soort', facts()).value).toBe('Avontuurlijk');
     expect(rowSummary('route-grote-wegen', facts()).checked).toBe(true);
     expect(rowSummary('route-grote-wegen', withSettings({ routeAvoidBigRoads: false })).checked).toBe(false);
-    expect(rowSummary('bundel-weer', withSettings({ routeAvoidBigRoads: false })).value).toBe('13 van 14 aan');
+    expect(rowSummary('bundel-weer', withSettings({ routeAvoidBigRoads: false })).value).toBe('14 van 15 aan');
+    expect(rowSummary('route-wind', facts()).checked).toBe(true);
+    expect(rowSummary('route-wind', withSettings({ routeWind: false })).checked).toBe(false);
   });
 
   it('Afstand van een wandeling: het advies 5 km, de keuze in de rij', () => {
@@ -863,7 +865,7 @@ describe('rowSummary: route voorstellen', () => {
 
   it('uit: de rij zegt Uit en de keuze is weg', () => {
     expect(rowSummary('route-voorstel', withSettings({ routeProposal: false })).checked).toBe(false);
-    expect(rowSummary('bundel-weer', withSettings({ routeProposal: false })).value).toBe('13 van 14 aan');
+    expect(rowSummary('bundel-weer', withSettings({ routeProposal: false })).value).toBe('14 van 15 aan');
     expect(rowSummary('route-soort', withSettings({ routeProposal: false })).hidden).toBe(true);
   });
 });
@@ -1029,10 +1031,10 @@ describe('rowSummary: rijen met een blad', () => {
   });
 
   it('Weer en kleding, Inzicht na een training en Gebruik van je horloge', () => {
-    expect(rowSummary('bundel-weer', facts()).value).toBe('14 van 14 aan');
-    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('12 van 14 aan');
+    expect(rowSummary('bundel-weer', facts()).value).toBe('15 van 15 aan');
+    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('13 van 15 aan');
     // Weerwaarschuwingen en lawinegevaar tellen mee (docs/beslissingen/2026-11-09-gr5-waarschuwingen.md).
-    expect(rowSummary('bundel-weer', withSettings({ weatherWarnings: false, avalancheBulletin: false })).value).toBe('12 van 14 aan');
+    expect(rowSummary('bundel-weer', withSettings({ weatherWarnings: false, avalancheBulletin: false })).value).toBe('13 van 15 aan');
     expect(rowSummary('weeralarm', facts()).checked).toBe(true);
     expect(rowSummary('weeralarm', withSettings({ weatherWarnings: false })).checked).toBe(false);
     expect(rowSummary('lawinegevaar', withSettings({ avalancheBulletin: false })).checked).toBe(false);

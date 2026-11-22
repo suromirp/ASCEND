@@ -56,7 +56,7 @@ export function forecastUrl(place: WeatherPlace): string {
   const query = new URLSearchParams({
     latitude: String(roundCoordinate(place.lat)),
     longitude: String(roundCoordinate(place.lon)),
-    hourly: 'temperature_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,weather_code,uv_index,dew_point_2m,relative_humidity_2m',
+    hourly: 'temperature_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code,uv_index,dew_point_2m,relative_humidity_2m',
     daily: 'sunrise,sunset',
     timezone: 'auto',
     forecast_days: String(FORECAST_DAYS),
@@ -88,6 +88,7 @@ export function mapForecast(raw: unknown, place: WeatherPlace, fetchedAt: string
   const prob = col('precipitation_probability');
   const wind = col('wind_speed_10m');
   const gust = col('wind_gusts_10m');
+  const windDir = col('wind_direction_10m');
   const code = col('weather_code');
   const uv = col('uv_index');
   const dew = col('dew_point_2m');
@@ -111,6 +112,7 @@ export function mapForecast(raw: unknown, place: WeatherPlace, fetchedAt: string
       precipProb: num(prob[i]),
       windKmh,
       gustKmh: num(gust[i]) ?? windKmh,
+      ...(num(windDir[i]) !== undefined ? { windDirDeg: ((num(windDir[i])! % 360) + 360) % 360 } : {}),
       code: num(code[i]) ?? 0,
       uvIndex: (() => { const u = num(uv[i]); return u === undefined ? undefined : Math.max(0, u); })(),
       ...(num(dew[i]) !== undefined ? { dewPointC: num(dew[i]) } : {}),

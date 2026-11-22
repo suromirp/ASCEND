@@ -45,6 +45,8 @@ import { INITIAL_SEARCH_STATE, answerFor, currentAdjust, failLineFor, needsSearc
 import { adjustKey, adjustSummary, avoidPiece, canReverse, isAdjusted, loopPieces, reverseProposal, searchTarget, stepDistance, type AdjustAction, type LoopAdjust, type LoopPiece } from '../engine/routeAdjust';
 
 import { reverseLoop, type OtherLoopChoice } from '../engine/routeOtherLoop';
+import { orientByWind, windForStart, windLine } from '../engine/routeWind';
+import { usualStartHour } from '../engine/weather';
 
 const CONSENT_LIMIT_MS = 3000;
 export const SOURCE_NAME = { brouter: 'BRouter', valhalla: 'Valhalla' } as const;
@@ -140,6 +142,8 @@ export interface RouteSearchModel {
   other: {
     // Alleen bij een lus over paden; heen en terug over hetzelfde pad heeft geen andere kant.
     available: boolean;
+    // Eén regel over de wind bij de lus die nu staat (engine/routeWind.ts#windLine); leeg bij zwakke of onbekende wind of de instelling uit.
+    windLine: string;
     busy: boolean;
     // De regel als het niet lukte (de lus bleef zoals hij was); leeg als alles goed ging.
     failLine: string;
@@ -153,7 +157,7 @@ export interface RouteSearchModel {
 export type RouteSearchFor = { template: SessionTemplate; walk?: undefined } | { template?: undefined; walk: RouteTarget };
 
 export function useRouteSearch({ template, walk, date, closing = false, enabled = true, sessionId }: RouteSearchFor & { date: string; closing?: boolean; enabled?: boolean; sessionId?: string }): RouteSearchModel {
-  const { settings, program, sessionLogs, updateSettings } = useAppData();
+  const { settings, program, sessionLogs, updateSettings, weather } = useAppData();
   const place = settings.homeLocation;
   const lat = place?.lat;
   const lon = place?.lon;
@@ -461,10 +465,18 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   const order: RouteStyle[] = first === 'simple' ? ['simple', 'adventure'] : ['adventure', 'simple'];
   const rawPlans = search !== 'busy' && search.kind === 'plans' ? search.plans : undefined;
 
-  // Andere kant op: dezelfde punten achterstevoren, zonder nieuwe zoektocht.
-  const reversedPlans: typeof rawPlans = rawPlans && adjust.reversed.length > 0
-    ? { ...rawPlans, ...Object.fromEntries(adjust.reversed.map((st) => { const o = rawPlans[st]; return [st, o.ok && canReverse(o.proposal) ? { ok: true, proposal: reverseProposal(o.proposal) } : o]; })) }
+  // Wind (engine/routeWind.ts): de lus begint tegen de wind in, uit het weer dat er al is; zwak of onbekend is niets.
+  // De wind van het uur waarop je meestal begint; een wandeling die je zelf plant begint nu.
+  const startHour = template ? usualStartHour(template, sessionLogs, date).hour : undefined;
+  const loopWind = settings.routeWind !== false ? windForStart(weather.forecast, date, startHour, new Date()) : undefined;
+  const windPlans: typeof rawPlans = rawPlans && loopWind && rawPlans.adventure.ok
+    ? { ...rawPlans, adventure: { ok: true, proposal: orientByWind(rawPlans.adventure.proposal, loopWind) } }
     : rawPlans;
+
+  // Andere kant op: dezelfde punten achterstevoren, zonder nieuwe zoektocht.
+  const reversedPlans: typeof rawPlans = windPlans && adjust.reversed.length > 0
+    ? { ...windPlans, ...Object.fromEntries(adjust.reversed.map((st) => { const o = windPlans[st]; return [st, o.ok && canReverse(o.proposal) ? { ok: true, proposal: reverseProposal(o.proposal) } : o]; })) }
+    : windPlans;
   // Andere lus: de gekozen variant staat op de plek van de lus waar hij bij hoort.
   const plans: typeof rawPlans = reversedPlans && variant?.key === key && reversedPlans[variant.style].ok
     ? { ...reversedPlans, [variant.style]: { ok: true, proposal: variant.proposal } }
@@ -524,7 +536,7 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
       setOtherBusy(undefined);
       // Een lus die bij een andere zoektocht hoort (intussen Langer of een andere plek) telt niet.
       if (keyNow.current !== forKey) return;
-      if (result.ok) setVariant({ key: forKey, style: otherStyle, proposal: result.proposal, ...(result.note ? { note: result.note } : {}) });
+      if (result.ok) setVariant({ key: forKey, style: otherStyle, proposal: orientByWind(result.proposal, loopWind), ...(result.note ? { note: result.note } : {}) });
       else setOtherFail({ key: forKey, line: result.line, choice });
     });
   }
@@ -600,6 +612,7 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     pieces,
     other: {
       available: otherStyle !== undefined,
+      windLine: otherStyle && pickedOutcome?.ok ? windLine(pickedOutcome.proposal, loopWind) : '',
       busy: otherBusy === key,
       failLine: otherFail?.key === key ? otherFail.line : '',
       note: variant?.key === key && variant.style === picked ? variant.note ?? '' : '',
