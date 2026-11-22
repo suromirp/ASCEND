@@ -12,7 +12,9 @@ import { attentionLines, weekCountLine, weekRestLines } from './weekGlance';
 import { missedInWeek } from './weekList';
 import { deriveSessionStatus } from './sessionStatus';
 import { doneOnOtherDay, rowExtra } from './weekRow';
-import { caughtUpMap } from './catchUp';
+import { caughtUpMap, catchUpEligibility } from './catchUp';
+import { weekLoss } from './fullWeek';
+import { MISSED_ADVICE, planMissed } from './missedTraining';
 import { raceDatesOf } from './raceWindow';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import { dayLoads } from './weekProfile';
@@ -181,16 +183,45 @@ describe('afbouw voor een race en de start van het programma', () => {
 });
 
 describe('een rij van voor de start van het programma (I-57)', () => {
-  it('Week en de kaart volgen de terugblik: hij is niet gemist, een rij na de start wel', () => {
-    const late: Program = { ...program, startDate: '2026-10-08' };
-    const plan = [ps('a', 'tpl_upper_a', '2026-10-06'), ps('b', 'tpl_easy_run', '2026-10-09')];
+  const late: Program = { ...program, startDate: '2026-10-08' };
+  const plan = [ps('a', 'tpl_upper_a', '2026-10-06'), ps('b', 'tpl_easy_run', '2026-10-09')];
+  const pause = { leave: undefined, templates: byId, programStart: late.startDate };
+
+  it('Week en de kaart volgen de terugblik: niet gemist, eigen stand, een rij na de start blijft gemist', () => {
     const r = buildWeekReview({ weekStart: W, plannedSessions: plan, logs: [], templates, program: late, planChangeLog: [], asOf: '2026-10-10' })!;
     clock('2026-10-10');
     expect(r.missed).toEqual(['Rustige duurloop']);
-    const pause = { leave: undefined, templates: byId, programStart: late.startDate };
+    expect(r.lapsed ?? []).toEqual([]);
     expect(missedInWeek(plan, [], byId, pause)).toBe(1);
-    expect(deriveSessionStatus(plan[0], [], false, pause).status).not.toBe('missed');
+    expect(deriveSessionStatus(plan[0], [], false, pause).status).toBe('before');
     expect(deriveSessionStatus(plan[1], [], false, pause).status).toBe('missed');
+  });
+
+  it('de rij zegt "voor de start", niet vervallen', () => {
+    expect(rowExtra({ before: true } as Parameters<typeof rowExtra>[0])?.text).toBe('voor de start');
+  });
+
+  it('geen Inhalen, wel voor een rij na de start', () => {
+    clock('2026-10-10');
+    const a = catchUpEligibility(plan[0], templates.find((t) => t.id === 'tpl_upper_a')!, { logged: false, today: '2026-10-10', caughtUp: false, pause });
+    const b = catchUpEligibility(plan[1], templates.find((t) => t.id === 'tpl_easy_run')!, { logged: false, today: '2026-10-10', caughtUp: false, pause });
+    expect(a).toEqual({ ok: false, reason: 'before' });
+    expect(b.ok).toBe(true);
+  });
+
+  it('weekLoss telt hem niet, een rij na de start wel', () => {
+    clock('2026-10-10');
+    const sessions = [ps('a', 'tpl_upper_a', '2026-10-06'), ps('b', 'tpl_upper_b', '2026-10-09')];
+    const inp = { today: '2026-10-10', sessions, logs: [], templates };
+    expect(weekLoss({ ...inp, programStart: late.startDate }).map((l) => l.name)).toEqual(['Bovenlichaam B']);
+    expect(weekLoss(inp)).toHaveLength(2);
+  });
+
+  it('Niet gedaan? vraagt er niet over, wel over een rij na de start', () => {
+    const sessions = [ps('a', 'tpl_easy_run', '2026-10-06'), ps('b', 'tpl_easy_run', '2026-10-08')];
+    const mi = { plannedSessions: sessions, logs: [], templates, today: '2026-10-12', settings: MISSED_ADVICE, memory: {} };
+    expect(planMissed({ ...mi, programStart: late.startDate }).item).toMatchObject({ session: { id: 'b' } });
+    expect(planMissed({ ...mi, plannedSessions: [sessions[0]], programStart: late.startDate }).item).toBeUndefined();
   });
 });
 

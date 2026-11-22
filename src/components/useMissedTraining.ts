@@ -13,7 +13,7 @@ const AUTO_DELAY_MS = 1500;
 // De stand van de kaart, los van waar hij staat: Vandaag vraagt of er een kaart is (engine/todayCards.ts) en
 // zet hem op zijn plek. Zelf overslaan loopt hier, ook als de kaart onder de missie staat.
 export function useMissedTraining() {
-  const { plannedSessions, sessionLogs, templates, settings, advice, skipMissed, missedMemory: memory, rememberMissed, openDraftId } = useAppData();
+  const { plannedSessions, sessionLogs, templates, settings, advice, skipMissed, missedMemory: memory, rememberMissed, openDraftId, program } = useAppData();
   const today = todayISO();
   const autoRunning = useRef(false);
 
@@ -25,7 +25,7 @@ export function useMissedTraining() {
     [advice],
   );
   const plan = useMemo(
-    () => (memory ? planMissed({ plannedSessions, logs: sessionLogs, templates, today, settings: missedSettings, memory, busy: busyIds, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, places, openDraftId }) : undefined),
+    () => (memory ? planMissed({ plannedSessions, logs: sessionLogs, templates, today, settings: missedSettings, memory, busy: busyIds, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, places, openDraftId, programStart: program?.startDate }) : undefined),
     // missedSettings komt uit settings.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [memory, plannedSessions, sessionLogs, templates, today, settings, busyIds, places, openDraftId],

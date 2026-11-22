@@ -101,13 +101,13 @@ function SessionRow({
   // Een vaste afspraak van een sport (engine/fixedSports.ts) heeft de lengte die jij koos.
   // Gedaan: de duur van het log (engine/sessionStatus.ts#rowMinutes), niet die van het plan.
   const duration = rowMinutes(log, session.fixed && session.plannedMinutes ? session.plannedMinutes : resolveEffectiveFullDuration(template, session.scheduledDate, program));
-  const dim = status === 'skipped' || status === 'missed' || status === 'away';
+  const dim = status === 'skipped' || status === 'missed' || status === 'away' || status === 'before';
   const legs = !isRest && isLegHeavyTemplate(template);
   // Na de dag en de duur hoogstens één ding (engine/weekRow.ts#rowExtra). "aangepast" staat op precies de rijen
   // met een regel in Aangepast door ASCEND, ook als hij gedaan is (engine/changeLog.ts#weekAdjustments).
   // Een rustdag houdt "bewust herstel"; alleen een punt uit Let op en "aangepast" komen erbij.
   const extra = isRest ? rowExtra({ concern, adjusted }) : rowExtra({
-    concern, missed: status === 'missed', lapsed: shown === 'away', open: status === 'open', skipped: shown === 'skipped', catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
+    concern, missed: status === 'missed', lapsed: shown === 'away', before: status === 'before', open: status === 'open', skipped: shown === 'skipped', catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
     doneOn: status === 'completed' ? doneOnOtherDay(session, log) : undefined,
   });
   const note = extra && [extra.text, extra.also].filter(Boolean).join(', ');
@@ -366,9 +366,9 @@ export function WeekPlanner({
     // Vervallen (een gemelde vakantie of ziekte, of de afbouw voor een race die er al was) haal je niet in: geen greep.
     // Een training die nog loopt (een concept in Forge) haal je ook niet in: rond hem af of verwijder hem eerst.
     const pastStatus = deriveSessionStatus(s, logs, false, { leave, templates, illness: settings.illnessEpisodes, races, openDraft: openDraftId, programStart: program?.startDate }).status;
-    const lapsedDay = pastStatus === 'away' || pastStatus === 'open';
+    const lapsedDay = pastStatus === 'away' || pastStatus === 'open' || pastStatus === 'before';
     const catchable = eligibility && !eligibility.ok && eligibility.reason === 'history' && !lapsedDay && days.some((d) => d >= today)
-      && catchUpEligibility(s, template, { logged: loggedIds.has(s.id), today, caughtUp: caughtUp.has(s.id), pause: { leave, templates, illness: settings.illnessEpisodes, races } }).ok;
+      && catchUpEligibility(s, template, { logged: loggedIds.has(s.id), today, caughtUp: caughtUp.has(s.id), pause: { leave, templates, illness: settings.illnessEpisodes, races, programStart: program?.startDate } }).ok;
     const ingehaald = caughtUp.get(s.id);
     const catchNote = catchUpNoteFor(s) ?? (ingehaald && s.status === 'skipped' ? caughtUpNoteFor(ingehaald) : undefined);
     return (
@@ -513,8 +513,15 @@ function DropTarget({ tone, chip }: { tone: 'ok' | 'warn' | 'none'; chip?: strin
   const ref = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<{ top: number; right: number } | null>(null);
   useLayoutEffect(() => {
-    const r = ref.current?.getBoundingClientRect();
-    if (r) setBox({ top: r.top, right: r.right });
+    const measure = () => {
+      const r = ref.current?.getBoundingClientRect();
+      if (r) setBox((b) => (b && b.top === r.top && b.right === r.right ? b : { top: r.top, right: r.right }));
+    };
+    measure();
+    // Scrollt de pagina tijdens het slepen, dan meet de chip opnieuw.
+    window.addEventListener('scroll', measure, { capture: true, passive: true });
+    window.addEventListener('resize', measure);
+    return () => { window.removeEventListener('scroll', measure, { capture: true }); window.removeEventListener('resize', measure); };
   }, []);
   const color = tone === 'ok' ? 'var(--color-action)' : tone === 'warn' ? 'var(--color-warning)' : 'var(--color-control-border)';
   return (

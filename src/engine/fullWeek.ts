@@ -28,7 +28,7 @@ import { isDone } from './adviceShared';
 import type { IllnessEpisode } from '../models/illness';
 import { mayPropose } from './dayRules';
 import { raceDatesOf } from './raceWindow';
-import { isDraftOpen, pauseRules } from './sessionStatus';
+import { isBeforeStart, isDraftOpen, pauseRules } from './sessionStatus';
 import { isKeyFor, type KeyFocus } from './keySession';
 import { leaveDays } from './leave';
 import { isHardRun, isLegHeavyTemplate } from './scheduler';
@@ -66,6 +66,8 @@ export interface FullWeekInput {
   removedByPlanIds?: ReadonlySet<string>;
   // De geplande sessie waar nog een concept van in Forge ligt (engine/sessionStatus.ts#openDraftId): loopt nog, geen verlies.
   openDraft?: string;
+  // De start van het programma: een rij daarvoor is geen verlies (engine/sessionStatus.ts#isBeforeStart).
+  programStart?: string;
   // Wat de weekcontrole verder nodig heeft (rustdag, tijd per dag, twee trainingen op een dag).
   check?: Partial<Omit<CheckInput, 'sessions' | 'logs' | 'templates' | 'today'>>;
 }
@@ -118,6 +120,7 @@ export function weekLoss(input: FullWeekInput): WeekLoss[] {
   for (const s of input.sessions) {
     const from = s.movedFromDate;
     if (!inWeek(s.scheduledDate) && !(from && inWeek(from))) continue;
+    if (isBeforeStart(s, input.programStart)) continue;
     if (!ctx.trains(s) || s.amount?.change === 'left_out' || s.leave?.role === 'dropped' || input.removedByPlanIds?.has(s.id)) continue;
     if (inWeek(s.scheduledDate) && s.scheduledDate < today && !away(s.scheduledDate, ctx.tpl(s)) && !ctx.done(s) && !isDraftOpen(s, input.openDraft, today)) out.push({ date: s.scheduledDate, name: nameOf(s), how: 'missed' });
     if (from && s.lock && s.status !== 'skipped' && inWeek(from) && from < today && s.scheduledDate > from && !away(from, ctx.tpl(s)) && !usedDay(from, s.id)) out.push({ date: from, name: nameOf(s), how: 'moved' });

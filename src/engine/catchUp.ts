@@ -7,10 +7,10 @@
 import type { PlanLock, PlannedSession, SessionTemplate } from '../models/training';
 import type { ScheduleChange } from './scheduler';
 import { hasRole } from './templateRoles';
-import { isPausedFor, type PauseContext } from './sessionStatus';
+import { isBeforeStart, isPausedFor, type PauseContext } from './sessionStatus';
 import { addDays, mondayOfWeek, weekdayShortNL } from '../utils/dates';
 
-type CatchUpRefusal = 'logged' | 'future' | 'old' | 'skipped' | 'rest' | 'race' | 'test' | 'leave' | 'done' | 'fixed' | 'paused';
+type CatchUpRefusal = 'logged' | 'future' | 'old' | 'skipped' | 'rest' | 'race' | 'test' | 'leave' | 'done' | 'fixed' | 'paused' | 'before';
 export type CatchUpEligibility = { ok: true } | { ok: false; reason: CatchUpRefusal };
 
 // Een gemiste training: de dag is voorbij, er is geen log, hij is niet overgeslagen en nog niet ingehaald.
@@ -30,6 +30,7 @@ export function catchUpEligibility(session: PlannedSession, template: SessionTem
   if (session.leave) return { ok: false, reason: 'leave' };
   // Een vaste afspraak van een sport (engine/fixedSports.ts) haalt ASCEND nooit in: die is van jou.
   if (session.fixed) return { ok: false, reason: 'fixed' };
+  if (isBeforeStart(session, args.pause?.programStart)) return { ok: false, reason: 'before' };
   if (args.pause && isPausedFor(session, args.pause, args.today)) return { ok: false, reason: 'paused' };
   return { ok: true };
 }
