@@ -90,7 +90,7 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 
 ## Pas live
 - [I-47] Richting Sterker worden met kracht uit (22 november, 40634d8)
-- [I-110] Sterker worden met kracht uit (Sherpa 22 november, vraag): het Richting-blad zegt bij Sterker worden "Kracht staat voorop, duur loopt rustig mee.", ook als kracht uit staat. Advies: met kracht uit Sterker worden niet aanbieden of grijs met één zin; hangt samen met I-47 (Richting Sterker worden met kracht uit, besluitpunt). Niet zonder de eigenaar.
+- [I-110] Sterker worden met kracht uit (22 november, 40634d8)
 - [I-109] Na I-46 en I-82 (22 november, 4302e8b)
 - [I-46] Vaste notitie en uitleg bij de rij Weekbudget zeggen "2 keer kracht", ook met kracht uit; vraagt… (22 november, c19bfb5)
 - [I-106] Back-up, na I-101 (22 november, 0eb7bce)
