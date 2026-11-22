@@ -105,7 +105,7 @@ Voorstel:
 - Daarna de verandering uit één rechte lijn door de lopen van de laatste 8 weken, gewogen naar het gewicht uit hoofdstuk 6, uitgedrukt als verandering per 4 weken (gok voor de keuze van de lijn; waarschijnlijk beter dan twee vensters, omdat elke loop meetelt en een gat van een week de uitkomst niet laat vallen). Deterministisch, zonder toeval.
 - De marge: een 80-procentband uit de spreiding van jouw eigen lopen rond die lijn, met als ondergrens 2 procent spreiding per loop, zodat een paar toevallig gelijke lopen geen schijnzekerheid geven (gok). 80 procent en niet 95, omdat een band van "10 tot 20 seconden" voor een gewone lezer bruikbaar moet zijn; de uitleg achter de i zegt "waarschijnlijk", niet "zeker".
 - Afronden op 5 seconden ("ongeveer 10 tot 20 seconden sneller"). Ligt de band over nul: "nog geen duidelijke verandering", eventueel met de band erbij ("tussen 5 langzamer en 10 sneller"). Is de band breder dan 30 seconden: alleen "nog te veel verschil tussen je lopen om iets te zeggen" (gok).
-- Getal in tekst en lijn in grafiek komen uit dezelfde functie (backlog, zeker als eis). `progressMoment` leest de ondergrens van de band (de kant het dichtst bij nul), niet het midden, en viert alleen als die minstens 5 seconden sneller is (gok; dat maakt `MEANINGFUL_CHANGE_SEC` overbodig voor dit doel).
+- Getal in tekst en lijn in grafiek komen uit dezelfde functie (backlog, zeker als eis). `progressMoment` leest de ondergrens van de band (de kant het dichtst bij nul), niet het midden, en viert alleen als die minstens 5 seconden sneller is (gok; dat maakt `MEANINGFUL_CHANGE_SEC` overbodig voor dit doel; die naam is op 22 november weggehaald, ongebruikt).
 
 ## 8. Bouwvoorstel
 

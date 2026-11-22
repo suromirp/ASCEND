@@ -83,7 +83,7 @@ Het blad (`MachineListSheet` in `ToestelSheets.tsx`), van boven naar beneden:
 
 1. Titel "Standen per toestel", regel "Voor {sportschool}."
 2. Een uitleg van één zin: "Forge onthoudt wat je op een toestel intikt. Hier zie je het en pas je het aan."
-3. Een rij per toestel dat standen heeft, alfabetisch zoals nu, met `SettingsRow`. Waarde: de standen als "7, 14, 23, 32" (via `machineSummary`, bij meer dan zes "7 tot 109 kg"), met erachter ", alleen deze" als de keuze "Alleen deze standen" aan staat. Een tik opent het blad hierboven in Instellingen-vorm.
+3. Een rij per toestel dat standen heeft, alfabetisch zoals nu, met `SettingsRow`. Waarde: de standen als "7, 14, 23, 32" (via `machineSummary`; die naam is op 22 november weggehaald, ongebruikt, en moet opnieuw gemaakt worden als dit gebouwd wordt; bij meer dan zes "7 tot 109 kg"), met erachter ", alleen deze" als de keuze "Alleen deze standen" aan staat. Een tik opent het blad hierboven in Instellingen-vorm.
 4. "Toestel toevoegen" onderaan, zoals nu, voor wie standen vooraf wil invullen (via de Lijst of het Bereik).
 5. Leeg: "Nog geen toestel met standen. Voeg er een toe, of tik een gewicht in tijdens een training."
 

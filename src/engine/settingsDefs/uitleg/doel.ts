@@ -221,6 +221,15 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
 
 // Dezelfde uitleg als Krachttraining uit staat: het budget telt dan geen kracht (engine/strengthTraining.ts).
 export const DOEL_ZONDER_KRACHT: Record<string, SettingsHelp> = {
+  richting: {
+    title: 'Richting',
+    lead: 'Zonder doel volgen je weken een richting, in golven van vier weken. Een bergtocht en een rugzak komen pas met een tocht als doel.',
+    points: [
+      { head: 'Fit blijven', text: 'het advies. 150 minuten, elke vierde week wat lichter.' },
+      { head: 'Fitter of sterker worden', text: 'Fitter worden begint bij wat je de laatste vier weken deed en bouwt op.' },
+      { head: 'Rustig aan', text: '90 minuten, nooit een harde training. Een andere richting is eerst een voorstel, pas na Akkoord verandert er iets.' },
+    ],
+  },
   weekbudget: {
     title: 'Weekbudget',
     lead: 'Zonder doel telt je week tegen een budget in minuten.',

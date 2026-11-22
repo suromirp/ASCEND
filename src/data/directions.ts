@@ -29,6 +29,8 @@ export interface DirectionSpec {
   line: string;
   // Wat het in je week doet, één regel.
   effect: string;
+  // Dezelfde regel als Krachttraining uit staat (zonder keren kracht). Zonder: effect geldt altijd.
+  effectNoStrength?: string;
   // Tel-minuten per week (een matige minuut telt 1, een pittige 2). Bij Fitter worden is dit
   // de ondergrens zonder geschiedenis; de start volgt anders uit je laatste vier weken.
   minutes: Sourced<number>;
@@ -46,6 +48,7 @@ export const DIRECTIONS: Readonly<Record<DirectionId, DirectionSpec>> = {
     label: 'Fit blijven',
     line: 'Een vaste week die je kunt volhouden. Geen opbouw, geen eindpunt.',
     effect: '150 minuten en 2 keer kracht. Elke vierde week is lichter.',
+    effectNoStrength: '150 minuten. Elke vierde week is lichter.',
     minutes: sourced(150, 'sterk', 'deel 3, de ondergrens van fit'),
     strength: sourced(2, 'sterk', 'deel 3, de ondergrens van fit'),
     hardShare: sourced(0.2, 'expert', 'deel 3, een standaardschema'),
@@ -67,6 +70,7 @@ export const DIRECTIONS: Readonly<Record<DirectionId, DirectionSpec>> = {
     label: 'Sterker worden',
     line: 'Kracht staat voorop, duur loopt rustig mee.',
     effect: '3 keer kracht en 120 minuten rustige duur. In de vierde week loop je minder.',
+    effectNoStrength: '120 minuten rustige duur. In de vierde week loop je minder.',
     minutes: sourced(120, 'afgeleid', 'deel 3, onderhouden is goedkoop'),
     strength: sourced(3, 'matig', 'deel 3, onderhouden is goedkoop'),
     hardShare: sourced(0.1, 'afgeleid', 'deel 3, sporten combineren'),
@@ -77,6 +81,7 @@ export const DIRECTIONS: Readonly<Record<DirectionId, DirectionSpec>> = {
     label: 'Rustig aan',
     line: 'Kort en zacht. Liever iets dan niets.',
     effect: '90 minuten en 1 keer kracht, elke week hetzelfde.',
+    effectNoStrength: '90 minuten, elke week hetzelfde.',
     minutes: sourced(90, 'afgeleid', 'deel 3, de ondergrens van fit (minder doen heeft ook nut)'),
     strength: sourced(1, 'afgeleid', 'deel 3, onderhouden is goedkoop'),
     hardShare: sourced(0, 'afgeleid', 'deel 3, een standaardschema'),
