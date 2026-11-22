@@ -28,10 +28,10 @@ Weer
 Plaats
 [knop: Uitleg: Plaats]
 Niet gekozen
-[knop: Weer en kleding, 15 van 15 aan]
+[knop: Weer en kleding, 16 van 16 aan]
 Weer en kleding
 [knop: Uitleg: Weer en kleding]
-15 van 15 aan
+16 van 16 aan
 Na een training
 [knop: Zweetverlies vragen]
 Zweetverlies vragen
