@@ -68,6 +68,8 @@ import { showPlaceWeather } from '../engine/overviewSettings';
 import { useMotionMode } from './motion';
 import { RouteMap } from './RouteMap';
 import { RouteSearching } from './RouteSearching';
+import { OtherLoop } from './OtherLoop';
+import { RouteInfo } from './RouteInfo';
 import { AskStart, RouteFailure, RouteFirstQuestion, RoutePanelView, StartChips } from './RoutePanel';
 import { useRouteSearch, type RouteSearchModel } from './useRouteSearch';
 import { IntervalProfile, KeyNumbers, StepList } from './duur/DuurParts';
@@ -278,7 +280,7 @@ export function TrainingBriefing({
 
             {/* De plek van de kaart: verschijnt of verdwijnt bij een andere keuze, in Vol met een korte overgang. */}
             <div key={view.map.kind} style={{ animation: placeTransition(motion) }}>
-              <MapPlace view={view} model={model} searchOn={searchOn} declined={declined} onTap={() => { setDeclined(false); setTapped(true); }} onDecline={() => setDeclined(true)} onBigger={() => setSheet('route')} onPlace={() => toPage('/weer')} />
+              <MapPlace view={view} model={model} searchOn={searchOn} declined={declined} onTap={() => { setDeclined(false); setTapped(true); }} onDecline={() => setDeclined(true)} onBigger={() => setSheet('route')} onPlace={() => toPage('/weer')} date={date} />
             </div>
 
             {view.rows.length > 0 && <BriefingRows rows={view.rows} onOpen={openRow} />}
@@ -424,7 +426,7 @@ function PlaceList({ places, chosen, onPick }: { places: BriefingView['places'];
 }
 
 // Op de plek van de kaart, per stand van de engine en van de zoektocht.
-export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, onBigger, onPlace }: {
+export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, onBigger, onPlace, date }: {
   view: BriefingView;
   model: RouteSearchModel;
   searchOn: boolean;
@@ -434,6 +436,8 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
   onBigger: () => void;
   // Nog geen plaats: naar de pagina Weer, waar je hem kiest (dezelfde weg als op de missiekaart).
   onPlace?: () => void;
+  // De dag van de training, voor de regels bij de lus (RouteInfo).
+  date?: string;
 }) {
   const dim = { color: 'var(--color-ink-dim)' };
   const map = view.map;
@@ -509,13 +513,13 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
   return (
     <div className="flex flex-col gap-2">
       {start}
-      <LoopPlace model={model} target={map.target} onBigger={onBigger} />
+      <LoopPlace model={model} target={map.target} onBigger={onBigger} date={date} />
     </div>
   );
 }
 
 // De kaart in de lagere stand, de gekozen lus, en de andere als één regel met Kies.
-function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; target: RouteSearchModel['target']; onBigger: () => void }) {
+function LoopPlace({ model, target, onBigger, date }: { model: RouteSearchModel; target: RouteSearchModel['target']; onBigger: () => void; date?: string }) {
   const dim = { color: 'var(--color-ink-dim)' };
   const { plans, order, okStyles, picked, pickedOutcome } = model;
   if (!plans) return null;
@@ -566,6 +570,8 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
           <div className="-mt-2 shrink-0">{bigger}</div>
         </div>
       )}
+      {pickedOutcome?.ok && picked && <div className="-mt-2"><OtherLoop model={model} /></div>}
+      {date && pickedOutcome?.ok && <RouteInfo proposal={pickedOutcome.proposal} target={target} paceSecKm={model.paceSecKm} date={date} compact />}
       {other && otherOutcome?.ok && (
         // Direct onder de gekozen lus: Kies is 44 px hoog, de rij schuift 4 px op zodat er geen gat valt.
         <div className="-mt-1 flex items-center justify-between gap-3">

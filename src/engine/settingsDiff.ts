@@ -368,6 +368,8 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('route-zoeken', 'Lus zoeken', 'vandaag', 'routeSearch', 'open', 'routeZoeken'),
   choice('wandel-afstand', 'Afstand van een wandeling', 'vandaag', 'walkPlanKm', 5, 'wandelAfstand'),
   flag('route-grote-wegen', 'Grote wegen mijden', 'vandaag', 'routeAvoidBigRoads'),
+  flag('route-wind', 'Wind bepaalt de richting', 'vandaag', 'routeWind'),
+  flag('route-donker', 'Terug voor het donker', 'vandaag', 'routeBackBeforeDark'),
   flag('plek-onthouden', 'Gekozen plek onthouden', 'vandaag', 'rememberStartPlace'),
   {
     // Eén instelling in twee velden (engine/routeMap.ts#resolveMapGround).

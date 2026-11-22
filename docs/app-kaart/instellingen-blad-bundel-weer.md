@@ -45,6 +45,11 @@ Afstand van een wandeling
 [knop: Grote wegen mijden]
 Grote wegen mijden
 [knop: Uitleg: Grote wegen mijden]
+[knop: Wind bepaalt de richting]
+Wind bepaalt de richting
+[knop: Uitleg: Wind bepaalt de richting]
+[knop: Terug voor het donker]
+Terug voor het donker
 [knop: Gekozen plek onthouden]
 Gekozen plek onthouden
 [knop: Ondergrond van de kaart, Donker]

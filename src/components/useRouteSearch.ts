@@ -16,13 +16,13 @@
 
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { SessionTemplate } from '../models/training';
-import type { RoutePoint, RouteStyle, RouteTarget } from '../models/route';
+import type { RoutePoint, RouteProposal, RouteStyle, RouteTarget } from '../models/route';
 import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { loadBodyKg } from '../engine/weightTrend';
-import { resolveRouteStyle, roundStart, routeTarget } from '../engine/routeTarget';
+import { resolveRouteStyle, roundStart, routeTarget, runPaceSecKm, walkKind } from '../engine/routeTarget';
 import { searchLines, type PlanOutcome } from '../engine/routePlanner';
-import { findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
+import { findOtherLoop, findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
 import { askMapCenter, locateAnswerCounts, locateNow, maySearch, planStart, startView, resolveRouteStart, type AskMapCenter, roundExact, roundHere, startFailureReason, type RouteStartMode, type StartPick } from '../engine/routeStart';
 import { getRouteStartPoint, locateStartHere, saveRouteStartPoint, START_LOCATE_LIMIT_MS, startFromMap, type StartLocation } from '../storage/routeStart';
 import { homeFromStartPoint, savedStartChips, startChoices, type StartChip } from '../engine/places';
@@ -43,6 +43,10 @@ import { resolveMapBase, resolveMapPhoto, type MapBase, type MapPhoto, type MapR
 import { routeSheetParts, routeSheetStage, searchFailLine, type RouteSheetPart, type RouteSheetStage } from '../engine/routeSheet';
 import { INITIAL_SEARCH_STATE, answerFor, currentAdjust, failLineFor, needsSearch, pendingStale, searchKey, searchReducer } from '../engine/routeSearchState';
 import { adjustKey, adjustSummary, avoidPiece, canReverse, isAdjusted, loopPieces, reverseProposal, searchTarget, stepDistance, type AdjustAction, type LoopAdjust, type LoopPiece } from '../engine/routeAdjust';
+
+import { reverseLoop, type OtherLoopChoice } from '../engine/routeOtherLoop';
+import { orientByWind, windForStart, windLine } from '../engine/routeWind';
+import { usualStartHour } from '../engine/weather';
 
 const CONSENT_LIMIT_MS = 3000;
 export const SOURCE_NAME = { brouter: 'BRouter', valhalla: 'Valhalla' } as const;
@@ -122,6 +126,8 @@ export interface RouteSearchModel {
   sender: FileSender | null;
   // Wat de training vraagt; `target` is wat er nu gezocht wordt (na Langer of Korter).
   trainingTarget: RouteTarget;
+  // Het tempo waarop de afstand van een looptraining is bepaald, voor de tijd van de lus (engine/routeInfo.ts); niet bij wandelen.
+  paceSecKm?: number;
   // Bijsturen (engine/routeAdjust.ts): geldt voor deze lus zolang het blad open is, plant en bewaart niets.
   adjust: LoopAdjust;
   adjustLine: string;
@@ -134,12 +140,26 @@ export interface RouteSearchModel {
   resetAdjust: () => void;
   // De gekozen lus in stukken, met afstand en hoogtemeters.
   pieces: LoopPiece[];
+  // Andere lus (engine/routeOtherLoop.ts): een eenmalige afwijking van de lus die nu staat, zonder de instelling Soort lus te raken.
+  other: {
+    // Alleen bij een lus over paden; heen en terug over hetzelfde pad heeft geen andere kant.
+    available: boolean;
+    // Eén regel over de wind bij de lus die nu staat (engine/routeWind.ts#windLine); leeg bij zwakke of onbekende wind of de instelling uit.
+    windLine: string;
+    busy: boolean;
+    // De regel als het niet lukte (de lus bleef zoals hij was); leeg als alles goed ging.
+    failLine: string;
+    // Wat er anders is aan de lus die nu staat (bijvoorbeeld dat er die kant op niets ligt); leeg als niets.
+    note: string;
+    pick: (choice: OtherLoopChoice) => void;
+    retry: (() => void) | undefined;
+  };
 }
 
 export type RouteSearchFor = { template: SessionTemplate; walk?: undefined } | { template?: undefined; walk: RouteTarget };
 
 export function useRouteSearch({ template, walk, date, closing = false, enabled = true, sessionId }: RouteSearchFor & { date: string; closing?: boolean; enabled?: boolean; sessionId?: string }): RouteSearchModel {
-  const { settings, program, sessionLogs, updateSettings } = useAppData();
+  const { settings, program, sessionLogs, updateSettings, weather } = useAppData();
   const place = settings.homeLocation;
   const lat = place?.lat;
   const lon = place?.lon;
@@ -172,6 +192,11 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   const [step, setStep] = useState<{ key: string; step: RouteSearchStep } | undefined>();
   // De kaart kon bij deze zoektocht niet tekenen: de rijen zeggen dan niet doorgetrokken of gestreept.
   const [noMapKey, setNoMapKey] = useState<string | undefined>();
+  // Andere lus: de gekozen variant (geldt voor één zoektocht, de sleutel), of hij zoekt, en de regel als het niet lukte.
+  const [variant, setVariant] = useState<{ key: string; style: RouteStyle; proposal: RouteProposal; note?: string } | undefined>();
+  const [otherBusy, setOtherBusy] = useState<string | undefined>();
+  const [otherFail, setOtherFail] = useState<{ key: string; line: string; choice: OtherLoopChoice } | undefined>();
+  const otherStop = useRef<AbortController | undefined>(undefined);
   const mounted = useRef(true);
   const locateStop = useRef(new AbortController());
   // De poging waarvoor je plek al gevraagd is: nooit een tweede vraag in dezelfde poging, ook niet na een tik op een chip.
@@ -185,6 +210,7 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     return () => {
       mounted.current = false;
       stop.abort();
+      otherStop.current?.abort();
     };
   }, []);
   const first = resolveRouteStyle(settings.routeStyle);
@@ -195,6 +221,11 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   const trainingTarget = useMemo(
     () => walk ?? routeTarget({ template, date, program, logs: sessionLogs, testPace: pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy, bodyKg: loadBodyKg(settings) }),
     [walk, template, date, program, sessionLogs, settings],
+  );
+
+  const paceSecKm = useMemo(
+    () => (walk || !template || walkKind(template) ? undefined : runPaceSecKm(sessionLogs, template.id, date, pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces?.easy)),
+    [walk, template, date, sessionLogs, settings],
   );
 
   useEffect(() => {
@@ -299,6 +330,10 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   // Sluiten stopt ook een vraag om je plek die nog loopt: daarna gaat er niets meer uit.
   useEffect(() => {
     if (closing) locateStop.current.abort();
+  }, [closing]);
+  // Sluiten stopt ook een Andere lus die nog zoekt.
+  useEffect(() => {
+    if (closing) otherStop.current?.abort();
   }, [closing]);
 
   useEffect(() => {
@@ -437,10 +472,22 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   const order: RouteStyle[] = first === 'simple' ? ['simple', 'adventure'] : ['adventure', 'simple'];
   const rawPlans = search !== 'busy' && search.kind === 'plans' ? search.plans : undefined;
 
-  // Andere kant op: dezelfde punten achterstevoren, zonder nieuwe zoektocht.
-  const plans: typeof rawPlans = rawPlans && adjust.reversed.length > 0
-    ? { ...rawPlans, ...Object.fromEntries(adjust.reversed.map((st) => { const o = rawPlans[st]; return [st, o.ok && canReverse(o.proposal) ? { ok: true, proposal: reverseProposal(o.proposal) } : o]; })) }
+  // Wind (engine/routeWind.ts): de lus begint tegen de wind in, uit het weer dat er al is; zwak of onbekend is niets.
+  // De wind van het uur waarop je meestal begint; een wandeling die je zelf plant begint nu.
+  const startHour = template ? usualStartHour(template, sessionLogs, date).hour : undefined;
+  const loopWind = settings.routeWind !== false ? windForStart(weather.forecast, date, startHour, new Date()) : undefined;
+  const windPlans: typeof rawPlans = rawPlans && loopWind && rawPlans.adventure.ok
+    ? { ...rawPlans, adventure: { ok: true, proposal: orientByWind(rawPlans.adventure.proposal, loopWind) } }
     : rawPlans;
+
+  // Andere kant op: dezelfde punten achterstevoren, zonder nieuwe zoektocht.
+  const reversedPlans: typeof rawPlans = windPlans && adjust.reversed.length > 0
+    ? { ...windPlans, ...Object.fromEntries(adjust.reversed.map((st) => { const o = windPlans[st]; return [st, o.ok && canReverse(o.proposal) ? { ok: true, proposal: reverseProposal(o.proposal) } : o]; })) }
+    : windPlans;
+  // Andere lus: de gekozen variant staat op de plek van de lus waar hij bij hoort.
+  const plans: typeof rawPlans = reversedPlans && variant?.key === key && reversedPlans[variant.style].ok
+    ? { ...reversedPlans, [variant.style]: { ok: true, proposal: variant.proposal } }
+    : reversedPlans;
   const sources = plans ? [...new Set(order.flatMap((s) => { const o = plans[s]; return o.ok ? [SOURCE_NAME[o.proposal.source]] : []; }))] : [];
   const okStyles = plans ? order.filter((s) => plans[s].ok) : [];
   const picked = chosen && okStyles.includes(chosen) ? chosen : okStyles[0];
@@ -452,7 +499,10 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   const startAdjust = (next: LoopAdjust, action: AdjustAction) => dispatch({ type: 'adjust', base: adjustBase, attempt, keyBase, next, action, style: picked });
   const setAdjustFail = (line: string) => dispatch({ type: 'failLine', line, key });
   const reverse = () => {
-    if (picked) dispatch({ type: 'reverse', base: adjustBase, style: picked });
+    if (!picked) return;
+    // Staat er een variant van Andere lus, dan draait Andere kant op die om: één lus op de kaart.
+    if (variant?.key === key && variant.style === picked) setVariant({ ...variant, proposal: reverseLoop(variant.proposal) });
+    else dispatch({ type: 'reverse', base: adjustBase, style: picked });
   };
   const stepLength = (dir: 'longer' | 'shorter') => {
     const next = stepDistance(trainingTarget.distanceKm, adjust.deltaKm, dir, trainingTarget.plannedWalk === true);
@@ -466,7 +516,37 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     if (!next.ok) return setAdjustFail(next.line);
     startAdjust({ ...adjust, avoid: [...adjust.avoid, next.area] }, 'avoid');
   };
-  const resetAdjust = () => dispatch({ type: 'reset', base: adjustBase });
+  const resetAdjust = () => {
+    setVariant(undefined);
+    setOtherFail(undefined);
+    dispatch({ type: 'reset', base: adjustBase });
+  };
+
+  // Andere lus. Andersom is nul aanroepen; elke andere keuze is één zoektocht met dezelfde bronnen en grens in tijd.
+  const otherStyle: RouteStyle | undefined = picked === 'adventure' && pickedOutcome?.ok ? picked : undefined;
+  function pickOther(choice: OtherLoopChoice) {
+    if (!otherStyle || !pickedOutcome?.ok || lat === undefined || lon === undefined) return;
+    const previous = pickedOutcome.proposal;
+    setOtherFail(undefined);
+    if (choice === 'reverse') {
+      setVariant({ key, style: otherStyle, proposal: reverseLoop(previous) });
+      return;
+    }
+    otherStop.current?.abort();
+    const stop = new AbortController();
+    otherStop.current = stop;
+    const forKey = key;
+    setOtherBusy(forKey);
+    const terrainPoint = terrainLat !== undefined && terrainLon !== undefined ? { lat: terrainLat, lon: terrainLon } : undefined;
+    void findOtherLoop({ lat, lon }, target, choice, previous, { signal: stop.signal, terrainAt: terrainPoint, avoidBigRoads, ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
+      if (stop.signal.aborted || !mounted.current) return;
+      setOtherBusy(undefined);
+      // Een lus die bij een andere zoektocht hoort (intussen Langer of een andere plek) telt niet.
+      if (keyNow.current !== forKey) return;
+      if (result.ok) setVariant({ key: forKey, style: otherStyle, proposal: orientByWind(result.proposal, loopWind), ...(result.note ? { note: result.note } : {}) });
+      else setOtherFail({ key: forKey, line: result.line, choice });
+    });
+  }
 
   const mapStartPoint = pickedRoute?.points[0] ?? exactPoint ?? (lat !== undefined && lon !== undefined ? roundStart({ lat, lon }) : undefined);
 
@@ -528,6 +608,7 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     failLine: search !== 'busy' && search.kind !== 'plans' ? searchFailLine(search.kind, step?.key === key ? step.step : undefined, !isOffline()) : '',
     sender,
     trainingTarget,
+    paceSecKm,
     adjust,
     adjustLine: isAdjusted(adjust) ? adjustSummary(adjust, trainingTarget.distanceKm, picked) : '',
     adjustFail: failLineFor(searchState, key),
@@ -537,5 +618,14 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     avoidStretch,
     resetAdjust,
     pieces,
+    other: {
+      available: otherStyle !== undefined,
+      windLine: otherStyle && pickedOutcome?.ok ? windLine(pickedOutcome.proposal, loopWind) : '',
+      busy: otherBusy === key,
+      failLine: otherFail?.key === key ? otherFail.line : '',
+      note: variant?.key === key && variant.style === picked ? variant.note ?? '' : '',
+      pick: pickOther,
+      retry: otherFail?.key === key ? () => pickOther(otherFail.choice) : undefined,
+    },
   };
 }

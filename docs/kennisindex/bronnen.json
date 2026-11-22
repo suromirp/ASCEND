@@ -4469,12 +4469,34 @@
    "kern": "Een achteraf gekoppelde loop telt voor de korte test op de dag dat je hem echt liep en ontkoppelen zet dat terug; voor je midden telt per week de vroegste geldige test van een loop die aan een geplande training hangt, een losse loop niet; een import eist een echte dag; Briefing en horloge toetsen de 25 minuten met één regel (de kortste van planning en workout); en de test staat in het blad Je horloge bij Zelf nabouwen.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-22-route-info.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "koppelingen-en-data"
+   ],
+   "kern": "Bij de gekozen lus: terug voor het donker (nu plus duur tegenover zonsondergang, instelbaar), een hoogteprofiel met stukken boven 8 procent in amber, de ondergrond uit BRouter-WayTags (Valhalla niets) en een afhaakring op de kaart tussen 35 en 65 procent van de lus; alles uit de lus zelf, geen extra aanroep.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-20-koppelvoorstel-korte-test.md": {
    "onderwerpen": [
     "lopen-en-tests",
     "historie-en-logs"
    ],
    "kern": "Verandert een koppeling achteraf welke korte test van de week telt, dan zegt het koppelvoorstel op Vandaag dat in één zichtbare zin; de toets gebruikt dezelfde telling als het logblad en bewaart niets.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-22-andere-lus.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Onder de gekozen lus staat een knop Andere lus met Andersom (nul aanroepen), Een andere kant op, Noord, Oost, Zuid en West, en Zonder heen en terug; elke keuze behalve Andersom is één zoektocht binnen MAX_ROUTE_CALLS, de gekozen variant is een eenmalige afwijking die niet bewaard wordt.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-22-wind-en-lus.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Bij een Avontuurlijke lus begin je tegen de wind in en heb je hem op de terugweg mee: de app draait de lus (reverseProposal, geen aanroep) op de windrichting van het startuur uit de voorspelling die er al is, gemeten over het eerste en laatste derde; zwakker dan 12 km/u of onbekend doet niets; één regel bij de lus, ook eerlijk na Andersom; instelling routeWind, standaard aan.",
    "stand": "geldt"
   }
  }

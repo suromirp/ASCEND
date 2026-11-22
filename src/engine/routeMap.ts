@@ -136,7 +136,8 @@ export interface MapRoute {
 
 type LineFeature = { type: 'Feature'; properties: { style: RouteStyle; chosen: boolean }; geometry: { type: 'LineString'; coordinates: [number, number][] } };
 type PointFeature = { type: 'Feature'; properties: { kind: MapDot }; geometry: { type: 'Point'; coordinates: [number, number] } };
-export type MapDot = 'start' | 'me' | 'pick';
+// 'bail': waar je onderweg kunt afhaken (engine/routeInfo.ts#bailPoint); een kleine ring in inkt, geen tikdoel.
+export type MapDot = 'start' | 'me' | 'pick' | 'bail';
 
 // Een lijn met minder dan twee punten is geen lijn. De gekozen lus komt als laatste, dan ligt hij bovenop.
 export function routeFeatures(routes: MapRoute[], chosen: RouteStyle | undefined): { type: 'FeatureCollection'; features: LineFeature[] } {
@@ -148,7 +149,7 @@ export function routeFeatures(routes: MapRoute[], chosen: RouteStyle | undefined
 }
 
 export function dotFeatures(dots: Partial<Record<MapDot, RoutePoint>>): { type: 'FeatureCollection'; features: PointFeature[] } {
-  const order: MapDot[] = ['pick', 'start', 'me'];
+  const order: MapDot[] = ['pick', 'bail', 'start', 'me'];
   return {
     type: 'FeatureCollection',
     features: order.flatMap((kind) => {
@@ -228,10 +229,10 @@ export function overlayLayers(colors: ReturnType<typeof overlayColors>): Json[] 
     {
       id: 'ascend-dots', type: 'circle', source: DOT_SOURCE,
       paint: {
-        'circle-radius': ['match', ['get', 'kind'], 'me', 6, 7],
+        'circle-radius': ['match', ['get', 'kind'], 'me', 6, 'bail', 5, 7],
         'circle-color': ['match', ['get', 'kind'], 'me', colors.status, colors.ring],
         'circle-stroke-width': 3,
-        'circle-stroke-color': ['match', ['get', 'kind'], 'me', colors.ring, 'pick', colors.pick, colors.status],
+        'circle-stroke-color': ['match', ['get', 'kind'], 'me', colors.ring, 'pick', colors.pick, 'bail', colors.pick, colors.status],
       },
     },
   ];

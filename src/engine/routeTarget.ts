@@ -108,15 +108,19 @@ const clampKm = (km: number) => Math.min(MAX_ROUTE_KM, Math.max(MIN_ROUTE_KM, Ma
 export const MIN_WALK_KM = 1;
 const clampWalkKm = (km: number) => Math.min(MAX_ROUTE_KM, Math.max(MIN_WALK_KM, Math.round(km * 2) / 2));
 
+// Het tempo waarop de afstand van een looptraining is bepaald: je laatste lopen, anders je test, anders het standaardtempo.
+export function runPaceSecKm(logs: SessionLog[], templateId: string, date: string, testPace?: PaceRange): number {
+  const range = recentRunPace(logs, templateId, date)?.range ?? testPace;
+  return range && range.fast > 0 && range.slow > 0 ? (range.fast + range.slow) / 2 : DEFAULT_PACE_SEC_KM;
+}
+
 export function routeTarget(input: RouteTargetInput): RouteTarget {
   if (walkKind(input.template)) return walkRouteTarget(input);
   const { template, date, program, logs = [], testPace } = input;
   const step = progressionTarget(template, program, date);
   const minutes = step?.minutes ?? template.durationVariants.full;
   const fixedKm = template.cardioTarget?.targetDistanceKm ?? template.outdoorTarget?.targetDistanceKm;
-  const recent = recentRunPace(logs, template.id, date)?.range;
-  const range = recent ?? testPace;
-  const pace = range && range.fast > 0 && range.slow > 0 ? (range.fast + range.slow) / 2 : DEFAULT_PACE_SEC_KM;
+  const pace = runPaceSecKm(logs, template.id, date, testPace);
   const rawKm = fixedKm ?? (minutes * 60) / pace;
   const distanceKm = clampKm(rawKm);
   const asked = step?.step.elevationGainM ?? template.outdoorTarget?.targetElevationM;

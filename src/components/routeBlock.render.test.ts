@@ -29,7 +29,7 @@ function model(over: Partial<RouteSearchModel> = {}): RouteSearchModel {
     order: ['adventure', 'simple'], plans: { adventure: { ok: true, proposal: a }, simple: { ok: true, proposal: s } }, okStyles: ['adventure', 'simple'], picked: 'adventure', pickedOutcome: { ok: true, proposal: a },
     setChosen: () => undefined, mapRoutes: [{ style: 'adventure', points: a.points }, { style: 'simple', points: s.points }], mapStartPoint: { lat: 0, lon: 0 }, base: 'dark', photo: 'map', setPhoto: () => undefined, hereMode: false, noMap: false, markNoMap: () => undefined,
     startOnMap: async () => ({ ok: false, line: '' }), steps: ['terrain', 'routes'], currentStep: 'terrain', limitLine: '', limitMs: 30_000, searchKey: 'k',
-    foundLines: [], sources: [], parts: [], retry: () => undefined, sender: null, ...over,
+    foundLines: [], sources: [], parts: [], retry: () => undefined, sender: null, other: { available: false, busy: false, failLine: '', note: '', pick: () => undefined, retry: undefined }, ...over,
   } as RouteSearchModel;
 }
 

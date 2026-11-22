@@ -485,7 +485,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'bundel-signalen':
       return { value: `${signalsOnCount(s)} van ${SIGNAL_KEYS.length} aan` };
     case 'bundel-weer':
-      return { value: `${countOn([o.weatherLine, o.bestMoment, o.placeWeather, s.weatherWarnings !== false, s.avalancheBulletin !== false, o.rainSoon, o.hillsNearby, s.routeProposal !== false, s.routeAvoidBigRoads !== false, s.rememberStartPlace !== false, o.moonLine, o.uvAltitude, o.weatherSwap, o.clothingAdvice])} van 14 aan` };
+      return { value: `${countOn([o.weatherLine, o.bestMoment, o.placeWeather, s.weatherWarnings !== false, s.avalancheBulletin !== false, o.rainSoon, o.hillsNearby, s.routeProposal !== false, s.routeAvoidBigRoads !== false, s.routeWind !== false, s.routeBackBeforeDark !== false, s.rememberStartPlace !== false, o.moonLine, o.uvAltitude, o.weatherSwap, o.clothingAdvice])} van 16 aan` };
     case 'bundel-run-detail': {
       const d = resolveRunInsight(s.runInsight).detail;
       return d.show ? { value: 'Aan', sub: `Loopvorm: ${formSwitchesLine(d.form)}` } : { value: 'Uit', dim: true };
@@ -1031,6 +1031,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('wandelAfstand', resolveWalkKm(s.walkPlanKm)) };
     case 'route-grote-wegen':
       return { checked: s.routeAvoidBigRoads !== false };
+    case 'route-wind':
+      return { checked: s.routeWind !== false };
+    case 'route-donker':
+      return { checked: s.routeBackBeforeDark !== false };
     case 'plek-onthouden':
       return { checked: s.rememberStartPlace !== false };
     case 'route-zoeken':
