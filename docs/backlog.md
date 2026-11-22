@@ -14,13 +14,7 @@ Hoogste code: I-108. Een nieuw punt krijgt het volgende nummer (zet het getal hi
 - [I-105] Label "Ziek gemeld: koorts" (I-56) niet op 360 px gezien: Lookout vond het voorstel met die titel niet in de testdata. Bij de volgende Lookout meenemen.
 - [I-104] Zin "Je rustige loop van <dag> krijgt dan geen korte test meer." (I-99) niet op het scherm gezien; alleen in tests. Bij de volgende Lookout meenemen.
 - [I-103] Token voor de zachte mint vulling (Warden 21 november, mag): de 18%-vulling van Akkoord staat nu in StepProposalNotice en CalibrationNotice; komt hij een derde keer terug, maak dan een token `--color-action-soft` in `src/index.css`.
-- [I-102] Koppelkaart springt als de knoppen aangaan (Lookout 21 november, mag): de knoppen schuiven 20 tot 24 px als de wachtregel verdwijnt; geef de wachtregel een vaste hoogte (`MissedTrainingCard.tsx`, `useLinkShortTest.ts`).
-- [I-101] Strengere variant voor een tijdstip zonder bijpassende lijst (Warden 21 november, mag): nu telt een tijdstip in de toekomst zonder lijst 0, zodat de herinnering zeven dagen zwijgt; liever het paar weghalen. Zie `docs/beslissingen/2026-11-20-backup-kopie-en-toekomst.md`, Bekende grens.
-- [I-100] Gedeelde hook `useShortTestStreams` (Warden 21 november, mag): `useLinkShortTest` en `ShortTestCard` laden dezelfde stromen elk op hun eigen manier.
-- [I-99] Koppelvoorstel zegt niet dat een loop later in de week zijn korte test verliest (Warden 21 november, mag): sinds I-91 kan `shortTestSessionIds` verschuiven; de zin van I-95 noemt alleen de test van de gekoppelde dag.
-- [I-98] Import filtert `manual:`, `garmin:` en `macrofactor:` nog (Warden 21 november, mag): alleen filteren wat `pruneWellness` raakt (`intervals.icu:` en `health-connect:`), zie `src/storage/backupApply.ts:140-142`. Opslag, Warden op Opus.
 - [I-87] Lookout Drempel 17 november (mag, bestaand): de uitlegknoppen (i) in de rijen van het blad Testloop zijn 20 bij 20 px (de rij zelf 44 px), en de voorstelkaart heeft vier mint Straks-regels naast de mint knoppen. Bij een volgende ronde in die rij en kaart meenemen.
-- [I-85] Vervallen training in het verleden (Lookout 16 november, mag): heeft een mint hoofdknop voor iets wat je zelden doet (Gedaan bij een vervallen testloop, Training starten bij een vervallen Benen A zonder sportschool); liever Verplaatsen of geen mint. En een overgeslagen rij zonder slot of voorstel tijdens een lopende ziekmelding krijgt geen reden (`skipReason.ts#pauseReason` kijkt alleen naar voorbije dagen).
 - [I-82] Opruimen na de onderhoudsronde (16 november, `docs/onderhoud/2026-11-16-onderhoudsronde.md`): eerst punten 1, 2 en 4 (drie bestanden alleen voor tests, 11 dode exports, guards naar `utils/guards.ts`), daarna Zonder sportschool overal via `dayRules.ts` (punt 3, planning, Warden Fable). Geen gedragswijziging; tekstkaart gelijk.
 - [I-78] Vroeg zien dat je ziek wordt, scherper (eigenaar 16 november 09:05, "ja"): de regel in `engine/illnessSigns.ts` sloeg bij de verkoudheid van 15 november terecht niet aan (rusthartslag 46/51/50 tegen 49, HRV één ochtend 58 tegen 72 na 3,5 uur slaap). Uitzoeken (Scout, `docs/onderzoek/Kansen met gegevens.md` kans B): slaapduur als derde signaal of als ruisfilter; één ochtend met een heel duidelijke afwijking; welke extra velden via intervals.icu wel komen (avgSleepingHR, respiration) op een Forerunner 255. Ook (eigenaar 09:05): welke extra velden van intervals.icu we per training en per ochtend nog niet lezen en wat ze opleveren (tijd per zone, belasting, hartslagherstel `icu_hrr`, temperatuur van het horloge, beste tempo's, avgSleepingHR); Body Battery, stress, ademhaling, SpO2 en VO2max komen niet door (Garmin filtert). Daarnaast: in de back-up staat elke ochtend twee keer (`mornings`, zelfde id, één zonder HRV): nakijken in de onderhoudsronde of dat de telling van de gemiddelden raakt.
 - [I-77] Hoogtemeters van één loop: twee getallen (eigenaar 16 november 08:53, naspelen met zijn back-up van 08:45): een lange duurloop toont in het logblad Stijging 133 m (samenvatting van het horloge via intervals.icu, `outdoorData.elevationGainM`), maar de km's in Run in detail (`runDetail.kms[].gainM`) en `detail.slices` tellen samen 85 m; bij afronden zag de eigenaar het lagere getal. De reeks is gladgestreken of grover bemonsterd en mist kleine klimmetjes. Voorstel: overal het getal van het horloge als totaal; de km's naar verhouding schalen of zeggen dat ze uit de reeks komen; één bron per getal, en een invariant in de tekstkaart dat totaal en som van de km's niet meer dan 10 procent uit elkaar liggen. Uitzoeken waar Training afronden het getal vandaan haalt. Opslag niet herschrijven (historie).
@@ -38,7 +32,6 @@ Hoogste code: I-108. Een nieuw punt krijgt het volgende nummer (zet het getal hi
 - [I-52] Eerste week bij heel licht (Lookout 15 november): Herstelwandeling 45 min staat langer dan de lange wandeling van 30 min, en kracht 75 min past slecht bij "alleen makkelijk"; de wandelkaart op Vandaag heeft het etiket "Vandaag · Hardlopen". Hoort bij I-18 stap 3.
 - [I-53] Routes op reis (Pathfinder 15 november, later): zoekt hij zonder actuele kaart, zeg dat in één regel (`routeProposal.ts:135`); bij een time-out een snelle weg naar een andere plek naast Opnieuw.
 - [I-54] Twee tabbladen (Warden 15 november): dezelfde geplande training tegelijk opslaan of afvinken in twee tabbladen schrijft twee logs (`src/state/logSession.ts:92-127`, kijken en schrijven niet in één transactie). Opslag, Warden op Fable.
-- [I-56] Ziek gemeld-melding (Lookout 15 november, mag): "Ziek gemeld: koorts, ook als je verkouden…" wordt op 390 px afgekapt; korter label in de melding.
 - [I-47] Richting Sterker worden met kracht uit (Pathfinder 15 november, besluitpunt): de richting belooft "Kracht staat voorop" terwijl de planning lopen geeft. Kiezen: de richting verbergen bij kracht uit, of zeggen dat het lopen wordt. Geen tekstfix.
 - [I-46] Vaste notitie en uitleg bij de rij Weekbudget zeggen "2 keer kracht", ook met kracht uit (`settingsDefs/doel.ts` regel 181, `settingsDefs/uitleg/doel.ts`); vraagt een notitie die van een instelling afhangt.
 
@@ -100,6 +93,13 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-85] Vervallen training in het verleden (22 november, 2950cb7)
+- [I-56] Ziek gemeld-melding (22 november, 2950cb7)
+- [I-102] Koppelkaart springt als de knoppen aangaan (22 november, 2950cb7)
+- [I-101] Strengere variant voor een tijdstip zonder bijpassende lijst (22 november, 2950cb7)
+- [I-100] Gedeelde hook useShortTestStreams (22 november, 2950cb7)
+- [I-99] Koppelvoorstel zegt niet dat een loop later in de week zijn korte test verliest (22 november, 2950cb7)
+- [I-98] Import filtert manual:, garmin (22 november, 2950cb7)
 - [I-97] Back-up importeren haalt uitgezette soorten voorgoed uit een ochtend zonder bron (22 november, 223614f)
 - [I-96] Niet goed gemeten, tests en uitleg (22 november, 223614f)
 - [I-95] Koppelvoorstel noemt niet dat de testloop verschuift (22 november, 223614f)
