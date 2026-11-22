@@ -1,6 +1,10 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 22 november 2026 door coördinator session_01LnDpSip9wpY6fuZXMm2yqw (opvolger van session_01LnDpSmhQECnxdG9gnj4X2S). Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
+Bijgewerkt: 23 november 2026 door coördinator session_01LnDpSkRtYRz7771kuLPf2T (opvolger van session_01LnDpSip9wpY6fuZXMm2yqw). Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
+
+## Stand 23 november 00:40
+
+- Nieuwe coördinator session_01LnDpSkRtYRz7771kuLPf2T. Sherpa route (sonnet, helper in worktree) bouwt I-112 en I-120 tot I-123 op `claude/route-lus-soort`, één commit per punt, nieuw besluit 2026-11-23-lus-soort-en-via-punt. Daarna één Warden (sonnet) en één Lookout, dan squash.
 
 ## Stand 22 november 17:45 (wissel aangevraagd)
 
