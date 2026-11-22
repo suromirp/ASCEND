@@ -11,7 +11,7 @@
 
 import { ALL_DEFS } from '../engine/settingsDefs/index';
 import { PLANNING_UITLEG } from '../engine/settingsDefs/uitleg/planning';
-import { DOEL_UITLEG } from '../engine/settingsDefs/uitleg/doel';
+import { DOEL_UITLEG, DOEL_ZONDER_KRACHT } from '../engine/settingsDefs/uitleg/doel';
 import { FORGE_UITLEG } from '../engine/settingsDefs/uitleg/forge';
 import { LICHAAM_UITLEG, LICHAAM_ZONDER_NAMEN } from '../engine/settingsDefs/uitleg/lichaam';
 import { VANDAAG_UITLEG } from '../engine/settingsDefs/uitleg/vandaag';
@@ -29,6 +29,7 @@ export interface SettingsHelp {
 export const UITLEG: Record<string, SettingsHelp> = {
   ...PLANNING_UITLEG, ...DOEL_UITLEG, ...FORGE_UITLEG, ...LICHAAM_UITLEG, ...VANDAAG_UITLEG, ...KOPPELINGEN_UITLEG, ...GEGEVENS_UITLEG, ...GIDSEN_UITLEG,
 };
+const ZONDER_KRACHT: Record<string, SettingsHelp> = { ...DOEL_ZONDER_KRACHT };
 const ZONDER_NAMEN: Record<string, SettingsHelp> = { ...LICHAAM_ZONDER_NAMEN };
 
 // Elke uitleg onder zijn sleutel: `helpKey ?? id` van de verklaring met `help: true`.
@@ -43,6 +44,7 @@ const NEUTRAL_HELP: Record<string, SettingsHelp> = Object.fromEntries(
 );
 
 // De uitleg bij een instelling; `named` is de instelling "Voorbeelden bij naam noemen".
-export function settingsHelp(key: string, named: boolean = true): SettingsHelp | undefined {
-  return (!named && NEUTRAL_HELP[key]) || SETTINGS_HELP[key];
+// `strengthOn` is Krachttraining (uit: een uitleg zonder kracht, als die er is).
+export function settingsHelp(key: string, named: boolean = true, strengthOn: boolean = true): SettingsHelp | undefined {
+  return (!strengthOn && ZONDER_KRACHT[key]) || (!named && NEUTRAL_HELP[key]) || SETTINGS_HELP[key];
 }

@@ -218,3 +218,16 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
     ],
   },
 };
+
+// Dezelfde uitleg als Krachttraining uit staat: het budget telt dan geen kracht (engine/strengthTraining.ts).
+export const DOEL_ZONDER_KRACHT: Record<string, SettingsHelp> = {
+  weekbudget: {
+    title: 'Weekbudget',
+    lead: 'Zonder doel telt je week tegen een budget in minuten.',
+    points: [
+      { head: 'Advies', text: '150 minuten per week, de beweegrichtlijn. Rustig aan is 90 minuten, Sterker worden 120 minuten.' },
+      { head: 'Wat telt', text: 'een matige minuut telt 1, een pittige 2. Minder dan de richtlijn mag.' },
+      { head: 'Planning', text: 'met een richting bepaalt het budget hoe lang je duurtrainingen zijn. Eerst een voorstel, pas na Akkoord verandert er iets.' },
+    ],
+  },
+};
