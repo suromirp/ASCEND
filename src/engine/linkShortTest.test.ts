@@ -220,6 +220,11 @@ describe('een latere loop verliest zijn korte test', () => {
     expect(linkShortTestLostRunLine(lost, 'Rustige loop', today)).toBe('Je rustige loop van donderdag krijgt dan geen korte test meer.');
   });
 
+  it('een eerder gemiste loop krijgt de zin niet (I-107)', () => {
+    // Vrijdag: de loop van donderdag is voorbij en niet gelopen; die verliest niets meer. Zaterdag wel.
+    expect(linkShortTestLostRun({ ...base, today: '2026-11-20' })).toEqual({ sessionId: 'p_za', date: '2026-11-21' });
+  });
+
   it('geen verschuiving: niets', () => {
     // De loop van dinsdag is al gedaan en hoort al bij de week; de koppeling verandert niets voor donderdag.
     const done = log('al', '2026-11-17', { plannedSessionId: 'p_di' });

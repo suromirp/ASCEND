@@ -270,8 +270,13 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
       }
     }
   });
-  // Op je rustdag in een periode zonder sportschool staat één training twee keer in Let op: houd het belangrijkste punt.
-  // Een test of wedstrijd (REST-DAY niveau 2) gaat voor; anders is het geen sportschool het zwaarst.
+  return dedupeRestNoGym(concerns);
+}
+
+// Op je rustdag in een periode zonder sportschool staat één training twee keer in Let op: houd het belangrijkste punt.
+// Een test of wedstrijd (REST-DAY niveau 2) gaat voor; anders is het geen sportschool het zwaarst.
+// Toets het niveau exact: 3 is een systeemregel en gaat hier niet voor (I-108).
+export function dedupeRestNoGym<T extends { rule: string; finding: { level: number; sessionIds: readonly string[] } }>(concerns: T[]): T[] {
   const noGymOn = new Set(concerns.filter((c) => c.rule === 'NO-GYM').map((c) => c.finding.sessionIds[0]));
   const restOn = new Set(concerns.filter((c) => c.rule === 'REST-DAY' && c.finding.level === 2).map((c) => c.finding.sessionIds[0]));
   return concerns.filter((c) => {

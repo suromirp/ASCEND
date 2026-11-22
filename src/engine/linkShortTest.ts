@@ -111,7 +111,8 @@ export function linkShortTestLostRun(input: LinkShortTestPlanInput): LinkShortTe
   const week = mondayOfWeek(input.log.completedDate);
   for (const s of input.sessions) {
     if (!before.has(s.id) || now.has(s.id) || s.id === input.sessionId || ranBefore.has(s.id)) continue;
-    if (mondayOfWeek(s.scheduledDate) !== week) continue;
+    // Alleen een loop die nog komt: een eerder gemiste loop verliest niets meer (I-107).
+    if (mondayOfWeek(s.scheduledDate) !== week || s.scheduledDate < input.today) continue;
     return { sessionId: s.id, date: s.scheduledDate };
   }
   return undefined;

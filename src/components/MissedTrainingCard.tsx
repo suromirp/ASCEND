@@ -27,8 +27,8 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
   const today = todayISO();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
-  // Is er gelezen, dan blijft de plek van de regel gereserveerd (I-102).
-  const [reserve, setReserve] = useState(false);
+  // Is er gelezen, dan blijft de plek van de regel gereserveerd (I-102), alleen voor dit voorstel (I-107).
+  const [reservedFor, setReservedFor] = useState<string | null>(null);
   const { item, lapsed, missedSettings } = state;
   // Verandert de koppeling welke korte test van de week telt, dan staat dat in het voorstel (I-95).
   const shortTest = useLinkShortTest(item?.kind === 'link' ? item.log : undefined, item?.kind === 'link' ? item.session.id : undefined, today);
@@ -56,7 +56,9 @@ export function MissedTrainingCard({ state, onLogNow }: { state: MissedTrainingS
   if (item.kind === 'link') {
     // Zolang de korte test gelezen wordt staan de knoppen uit: de zin komt nooit boven knoppen die al te tikken zijn.
     const reading = shortTest.stand === 'busy';
-    if (reading && !reserve) setReserve(true);
+    const key = `${item.log.id}|${item.session.id}`;
+    if (reading && reservedFor !== key) setReservedFor(key);
+    const reserve = reservedFor === key;
     return (
       <Card data-missed={item.session.id}>
         <Eyebrow>{linkEyebrow(item.log)}</Eyebrow>

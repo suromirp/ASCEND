@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import { addDays } from '../utils/dates';
-import { noticeHeadline, rowNotes, weekConcerns } from './weekConcerns';
+import { dedupeRestNoGym, noticeHeadline, rowNotes, weekConcerns } from './weekConcerns';
 import { validateWeeks, type CheckInput } from './weekValidator';
 
 const { templates } = buildDefaultProgramData();
@@ -112,5 +112,20 @@ describe('weekConcerns', () => {
   it('een week die klopt meldt niets', () => {
     const ok = fullWeek(MONDAY, ['tpl_easy_run', 'tpl_upper_a', 'tpl_lower_a', 'tpl_herstel', 'tpl_upper_b', 'tpl_hills_descent', 'tpl_long_run']);
     expect(weekConcerns(input(ok), MONDAY)).toEqual([]);
+  });
+});
+
+// I-108: één training op je rustdag in een periode zonder sportschool staat maar één keer in Let op.
+describe('dedupeRestNoGym', () => {
+  const c = (rule: string, id: string, level = 1) => ({ rule, finding: { level, sessionIds: [id] } });
+  it('alleen zonder sportschool: het rustdagpunt valt weg', () => {
+    expect(dedupeRestNoGym([c('REST-DAY', 'p1', 1), c('NO-GYM', 'p1')]).map((x) => x.rule)).toEqual(['NO-GYM']);
+  });
+  it('een test of wedstrijd op je rustdag (niveau 2) wint', () => {
+    expect(dedupeRestNoGym([c('REST-DAY', 'p1', 2), c('NO-GYM', 'p1')]).map((x) => x.rule)).toEqual(['REST-DAY']);
+  });
+  it('niveau 3 gaat niet voor, een ander punt of een andere training blijft', () => {
+    expect(dedupeRestNoGym([c('REST-DAY', 'p1', 3), c('NO-GYM', 'p1')]).map((x) => x.rule)).toEqual(['NO-GYM']);
+    expect(dedupeRestNoGym([c('REST-DAY', 'p2', 1), c('NO-GYM', 'p1'), c('LEG-SPACING', 'p1')]).map((x) => x.rule)).toEqual(['REST-DAY', 'NO-GYM', 'LEG-SPACING']);
   });
 });
