@@ -258,6 +258,37 @@ describe('schrijven via een tijdelijk bestand', () => {
   });
 });
 
+describe('een poging die niet meer telt (I-69)', () => {
+  it('niet meer gewenst: het tijdelijke bestand gaat weg en de nieuwere back-up onder de naam blijft onaangeroerd', async () => {
+    const { fs, files } = memoryFs({ [NAME]: 'nieuwer' });
+    const err = await writeThroughTemp(fs, NAME, 'ouder', 'p1', { stillWanted: () => false }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(AutoBackupError);
+    expect([...files]).toEqual([[NAME, 'nieuwer']]);
+  });
+
+  it('niet meer gewenst op een vrije naam: er komt niets onder de naam', async () => {
+    const { fs, files } = memoryFs();
+    await expect(writeThroughTemp(fs, NAME, 'ouder', 'p1', { stillWanted: () => false })).rejects.toBeInstanceOf(AutoBackupError);
+    expect(files.size).toBe(0);
+  });
+
+  it('de vraag wordt pas gesteld na het tijdelijke bestand, vlak voor de naam', async () => {
+    const { fs, files } = memoryFs({ [NAME]: 'nieuwer' });
+    let wanted = true;
+    const slow: TempFs = { ...fs, writeFile: async (n, t) => { await fs.writeFile(n, t); wanted = false; } };
+    await expect(writeThroughTemp(slow, NAME, 'ouder', 'p1', { stillWanted: () => wanted })).rejects.toBeInstanceOf(AutoBackupError);
+    expect([...files]).toEqual([[NAME, 'nieuwer']]);
+  });
+
+  it('nog gewenst: het gewone pad, met het oude bestand opzij tot keep', async () => {
+    const { fs, files } = memoryFs({ [NAME]: 'oud' });
+    const written = await writeThroughTemp(fs, NAME, 'nieuw', 'p1', { stillWanted: () => true });
+    expect(Object.fromEntries(files)).toEqual({ [NAME]: 'nieuw', [`${NAME}.p1.old`]: 'oud' });
+    await written.keep();
+    expect([...files]).toEqual([[NAME, 'nieuw']]);
+  });
+});
+
 describe('nakijken geeft niet te vroeg op', () => {
   it('de eerste keer nog niet te lezen, de tweede keer wel: goed', async () => {
     let calls = 0;

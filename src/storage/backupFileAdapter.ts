@@ -23,7 +23,7 @@ const INSTALL_ID_KEY = 'autoBackupInstallId';
 // (whose availability varies by TS version) so this compiles regardless of
 // whether those globals exist.
 interface FSFileHandleLike {
-  createWritable(): Promise<{ write(data: Blob): Promise<void>; close(): Promise<void> }>;
+  createWritable(): Promise<{ write(data: Blob): Promise<void>; close(): Promise<void>; abort?(): Promise<void> }>;
   getFile(): Promise<File>;
 }
 
@@ -205,15 +205,22 @@ export const webFolderTarget: AutoBackupTarget = {
     const handle = await getStoredDirectoryHandle().catch(() => undefined);
     return { kind: 'folder', label: handle?.name ?? 'je vaste map' };
   },
-  async write(name, text) {
+  async write(name, text, _attemptId, opts) {
     const handle = await getStoredDirectoryHandle().catch(() => undefined);
     if (!handle) throw new AutoBackupError('folder');
     try {
       const file = await handle.getFileHandle(name, { create: true });
       const writable = await file.createWritable();
       await writable.write(new Blob([text], { type: 'application/json' }));
+      // Pas bij close krijgt het bestand de nieuwe tekst. Telt deze poging niet meer (tijdsgrens), dan
+      // afbreken: een laat antwoord mag een nieuwere back-up nooit overschrijven (I-69).
+      if (opts?.stillWanted && !opts.stillWanted()) {
+        await writable.abort?.().catch(() => undefined);
+        throw new AutoBackupError('write');
+      }
       await writable.close();
     } catch (err) {
+      if (err instanceof AutoBackupError) throw err;
       throw new AutoBackupError(domReason(err));
     }
   },
