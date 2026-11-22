@@ -322,7 +322,7 @@ export function RoutePanelView({ model, date, onDecline, startAbove = false }: {
       <p className="text-sm leading-snug" style={dim}>{model.trainingTarget.plannedWalk ? walkPlanText(model.trainingTarget) : `Je training: ${targetText(model.trainingTarget)}.`}{model.startLine ? ` ${model.startLine}` : ''}</p>
       {parts.map(part)}
       {/* Groter staat buiten de delen: een nieuwe zoektocht (Langer, een andere chip) sluit hem niet. */}
-      {bigger && <RouteMapFull model={model} piece={piecePoints} onClose={() => setBigger(false)} />}
+      {(bigger || model.other.choosing) && <RouteMapFull model={model} piece={piecePoints} onClose={() => { setBigger(false); model.other.cancelVia(); }} />}
     </div>
   );
 }

@@ -153,6 +153,14 @@ export interface RouteSearchModel {
     note: string;
     pick: (choice: OtherLoopChoice) => void;
     retry: (() => void) | undefined;
+    // Via een punt: de kaart staat in kiesstand tot er een punt is of je annuleert. Het punt staat alleen in het geheugen.
+    choosing: boolean;
+    beginVia: () => void;
+    cancelVia: () => void;
+    applyVia: (point: RoutePoint) => void;
+    // De lus die nu staat gaat langs een punt; Zonder punt brengt hem terug naar de gewone lus.
+    viaActive: boolean;
+    clearVia: () => void;
   };
 }
 
@@ -193,7 +201,8 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   // De kaart kon bij deze zoektocht niet tekenen: de rijen zeggen dan niet doorgetrokken of gestreept.
   const [noMapKey, setNoMapKey] = useState<string | undefined>();
   // Andere lus: de gekozen variant (geldt voor één zoektocht, de sleutel), of hij zoekt, en de regel als het niet lukte.
-  const [variant, setVariant] = useState<{ key: string; style: RouteStyle; proposal: RouteProposal; note?: string } | undefined>();
+  const [variant, setVariant] = useState<{ key: string; style: RouteStyle; proposal: RouteProposal; note?: string; via?: true } | undefined>();
+  const [viaChoosing, setViaChoosing] = useState(false);
   const [otherBusy, setOtherBusy] = useState<string | undefined>();
   const [otherFail, setOtherFail] = useState<{ key: string; line: string; choice: OtherLoopChoice } | undefined>();
   const otherStop = useRef<AbortController | undefined>(undefined);
@@ -524,7 +533,7 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
 
   // Andere lus. Andersom is nul aanroepen; elke andere keuze is één zoektocht met dezelfde bronnen en grens in tijd.
   const otherStyle: RouteStyle | undefined = picked === 'adventure' && pickedOutcome?.ok ? picked : undefined;
-  function pickOther(choice: OtherLoopChoice) {
+  function pickOther(choice: OtherLoopChoice, via?: RoutePoint) {
     if (!otherStyle || !pickedOutcome?.ok || lat === undefined || lon === undefined) return;
     const previous = pickedOutcome.proposal;
     setOtherFail(undefined);
@@ -538,12 +547,12 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     const forKey = key;
     setOtherBusy(forKey);
     const terrainPoint = terrainLat !== undefined && terrainLon !== undefined ? { lat: terrainLat, lon: terrainLon } : undefined;
-    void findOtherLoop({ lat, lon }, target, choice, previous, { signal: stop.signal, terrainAt: terrainPoint, avoidBigRoads, ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
+    void findOtherLoop({ lat, lon }, target, choice, previous, { signal: stop.signal, terrainAt: terrainPoint, avoidBigRoads, ...(via ? { via } : {}), ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
       if (stop.signal.aborted || !mounted.current) return;
       setOtherBusy(undefined);
       // Een lus die bij een andere zoektocht hoort (intussen Langer of een andere plek) telt niet.
       if (keyNow.current !== forKey) return;
-      if (result.ok) setVariant({ key: forKey, style: otherStyle, proposal: orientByWind(result.proposal, loopWind), ...(result.note ? { note: result.note } : {}) });
+      if (result.ok) setVariant({ key: forKey, style: otherStyle, proposal: choice === 'via' ? result.proposal : orientByWind(result.proposal, loopWind), ...(result.note ? { note: result.note } : {}), ...(choice === 'via' ? { via: true as const } : {}) });
       else setOtherFail({ key: forKey, line: result.line, choice });
     });
   }
@@ -625,7 +634,16 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
       failLine: otherFail?.key === key ? otherFail.line : '',
       note: variant?.key === key && variant.style === picked ? variant.note ?? '' : '',
       pick: pickOther,
-      retry: otherFail?.key === key ? () => pickOther(otherFail.choice) : undefined,
+      retry: otherFail?.key === key && otherFail.choice !== 'via' ? () => pickOther(otherFail.choice) : undefined,
+      choosing: viaChoosing,
+      beginVia: () => setViaChoosing(true),
+      cancelVia: () => setViaChoosing(false),
+      applyVia: (point) => {
+        setViaChoosing(false);
+        pickOther('via', point);
+      },
+      viaActive: variant?.key === key && variant.style === picked && variant.via === true,
+      clearVia: () => setVariant(undefined),
     },
   };
 }

@@ -85,7 +85,8 @@ const clears = { exact: 0 };
 
 // Wat er bewaard is als het vers genoeg is, anders een nieuwe zoektocht. Bij een fout blijft het
 // oude resultaat van dezelfde plek staan, zonder het te vernieuwen.
-export function refreshNearbyTerrain(place: WeatherPlace, options: OverpassOptions = {}): Promise<NearbyTerrain | undefined> {
+// `needScenery` (Andere lus, Soort): een bewaarde plek van voor water en bos telt dan niet als vers.
+export function refreshNearbyTerrain(place: WeatherPlace, options: OverpassOptions & { needScenery?: boolean } = {}): Promise<NearbyTerrain | undefined> {
   const key = terrainKey(place, options.exact);
   const running = inFlight.get(key);
   if (running) return running;
@@ -94,7 +95,7 @@ export function refreshNearbyTerrain(place: WeatherPlace, options: OverpassOptio
     const clearsAtStart = { ...clears };
     const all = await inQueue(readAll);
     const have = all[key];
-    if (have && now.getTime() - Date.parse(have.fetchedAt) < TERRAIN_FETCH_DAYS * 86_400_000) return have;
+    if (have && now.getTime() - Date.parse(have.fetchedAt) < TERRAIN_FETCH_DAYS * 86_400_000 && (!options.needScenery || have.scenery)) return have;
     const next = await fetchNearbyTerrain(place, { ...options, now });
     if (!next) return have;
     // Bewaren in de wachtrij: opnieuw lezen en de nieuwe plek erbij. Wat intussen gewist is, staat niet

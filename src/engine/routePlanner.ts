@@ -416,14 +416,22 @@ const perimeter = (start: RoutePoint, vias: RoutePoint[]) => lineLength([start, 
 // het startpunt (zo kruist de lus zichzelf niet), en uitgedund tot de geschatte lengte past. Een
 // helling weegt zwaarder dan een pad, een hoge zwaarder dan een lage. `reach`: hoe ver van het
 // startpunt, als deel van de afstand van de training. Zonder iets in de buurt: drie punten op een cirkel.
-export function adventureVias(input: PlanInput, reach = 0.25, arc?: Arc): Via[] {
+// Andere lus, Soort (engine/routeOtherLoop.ts): alleen punten van die soort uit dezelfde kaartvraag.
+export type LoopKind = 'water' | 'wood' | 'unpaved';
+const KIND_FEATURES: Record<LoopKind, (f: TerrainFeature) => boolean> = {
+  water: (f) => f.kind === 'water',
+  wood: (f) => f.kind === 'wood',
+  unpaved: (f) => f.kind === 'dirt_path',
+};
+
+export function adventureVias(input: PlanInput, reach = 0.25, arc?: Arc, kind?: LoopKind): Via[] {
   const { start, target, terrain } = input;
   const d = target.distanceKm * 1000;
   // De lengte waar de schatting op mikt: de afstand van de training, na een te korte of te lange
   // lus naar verhouding meer of minder.
   const aim = d * (reach / 0.25);
   const all: Via[] = (terrain?.features ?? [])
-    .filter((f) => usableHill(f) || f.kind === 'dirt_path')
+    .filter((f) => (kind ? KIND_FEATURES[kind](f) : usableHill(f) || f.kind === 'dirt_path'))
     .filter((f) => {
       const crow = metersBetween(start, f);
       return crow >= NEAR_START_M && crow <= d * reach && (!arc || inArc(bearing(start, f), arc));
@@ -578,6 +586,34 @@ export function viaAtDeadEnd(p: RouteProposal, vias: readonly RoutePoint[]): num
 export interface AdventureShape {
   arc?: Arc;
   noRepeat?: boolean;
+  // Alleen water, bos of onverharde paden als punten (Soort).
+  kind?: LoopKind;
+  // Een punt waar de lus langs moet (Via een punt); begint en eindigt bij de start.
+  via?: RoutePoint;
+}
+// Een lus gaat langs het gekozen punt als hij er zo dichtbij komt; de routeplanner zet het punt op het dichtstbijzijnde pad.
+export const VIA_TOUCH_M = 250;
+const VIA_SIDE_DEG = 70;
+
+// De punten voor een lus langs één punt: het punt zelf en een aanvulpunt opzij, zo ver dat de geschatte
+// lengte op de afstand uitkomt. Ligt het punt al zo ver dat heen en terug de afstand haalt, dan alleen het punt.
+export function viaLoopVias(start: RoutePoint, via: RoutePoint, aim: number): Via[] {
+  const angle = bearing(start, via);
+  const point: Via = { lat: via.lat, lon: via.lon, hill: false, value: 1, angle };
+  const estimate = (list: RoutePoint[]) => DETOUR * perimeter(start, list);
+  if (estimate([point]) >= aim * (1 - SHORT_LIMIT)) return [point];
+  const side = (radius: number): Via => {
+    const a = (angle + VIA_SIDE_DEG) % 360;
+    return { ...offsetPoint(start, a, radius), hill: false, value: 1, angle: a, pad: true };
+  };
+  let lo = NEAR_START_M;
+  let hi = Math.max(NEAR_START_M, aim / 2);
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2;
+    if (estimate([point, side(mid)]) < aim) lo = mid;
+    else hi = mid;
+  }
+  return [point, side((lo + hi) / 2)];
 }
 // Tot dit deel van de lus over een stuk dat je eerder liep, telt hij als zonder heen en terug.
 export const REPEAT_OK = 0.03;
@@ -591,7 +627,9 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn, shape: 
       ? a.repeatedShare < b.repeatedShare
       : better(a, b, input.target, score);
   let reach = 0.25;
-  const viasAt = (r: number) => adventureVias(input, r, shape.arc).filter((v) => !insideAny(v, input.avoid));
+  const viasAt = (r: number) => (shape.via ? viaLoopVias(input.start, shape.via, d * (r / 0.25)) : adventureVias(input, r, shape.arc, shape.kind)).filter((v) => !insideAny(v, input.avoid));
+  const isVia = (v: RoutePoint) => !!shape.via && v.lat === shape.via.lat && v.lon === shape.via.lon;
+  const touches = (p: RouteProposal) => !shape.via || p.points.some((pt) => metersBetween(pt, shape.via as RoutePoint) <= VIA_TOUCH_M);
   let vias = viasAt(reach);
   let best: RouteProposal | undefined;
   let lastFailure: RouteFailure | undefined;
@@ -607,6 +645,8 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn, shape: 
       if (answer.reason === 'unmapped' && (answer.waypoint === 0 || answer.waypoint === vias.length + 1)) return { ok: false, reason: 'unmapped', at: 'start' };
       // Een punt zonder pad in de buurt valt weg; zegt de bron niet welk, dan het laatste.
       const i = answer.reason === 'unmapped' && answer.waypoint !== undefined && answer.waypoint >= 1 && answer.waypoint <= vias.length ? answer.waypoint - 1 : vias.length - 1;
+      // Het punt dat de gebruiker koos laat de planner niet vallen: zonder pad erbij geen lus langs dat punt.
+      if (isVia(vias[i])) return { ok: false, reason: 'unmapped' };
       dropped.push(vias[i]);
       vias = vias.filter((_, j) => j !== i);
       continue;
@@ -616,14 +656,14 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn, shape: 
     // Door een vermeden stuk: de routeplanner vond er geen weg omheen; nog een keer vragen geeft hetzelfde.
     if (crossesAny(made.points, input.avoid)) break;
     if (anchored.gapM >= START_GAP_NOTE_M) made.startGapM = anchored.gapM;
-    if (!tooTiny(made) && prefer(made, best)) best = made;
+    if (!tooTiny(made) && touches(made) && prefer(made, best)) best = made;
     const fits = fitsDistance(made, input.target);
     const repeats = !!shape.noRepeat && made.repeatedShare > REPEAT_OK;
     if (fits || ((extraDeadEnds(made) > 0 || repeats) && withinMargin(made, input.target))) {
       // Past de afstand (of ligt hij binnen SPUR_FREE_MARGIN) maar loopt de lus een doodlopend stuk in, dan nog
       // een poging zonder het punt dat daar ligt; de oude lus blijft als er niets beters komt.
       const loose = viaAtDeadEnd(made, vias);
-      if (loose >= 0) {
+      if (loose >= 0 && !isVia(vias[loose])) {
         dropped.push(vias[loose]);
         vias = vias.filter((_, j) => j !== loose);
         continue;

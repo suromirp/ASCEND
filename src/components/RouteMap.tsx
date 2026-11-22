@@ -18,6 +18,7 @@ import { hasWebGL2, loadMapLibre } from '../integrations/mapLibre';
 import { AERIAL_SOURCES } from '../integrations/aerialImagery';
 import { OSM_COPYRIGHT } from '../integrations/overpass';
 import { createRouteMapView, QUIET_FIT_PADDING, whereAmI, type MapViewState, type RouteMapView } from './routeMapView';
+import { VIA_PICK_LINE } from '../engine/routeOtherLoop';
 import { useMotionMode } from './motion';
 import { TextButton } from './TextButton';
 import { Icon } from './icons';
@@ -69,7 +70,7 @@ function PhotoSwitch({ value, onPick }: { value: MapPhoto; onPick: (v: MapPhoto)
 // Bij Bewaar als plek: wat er gebeurt, in één zin (engine/routeMap.ts).
 export { MAKE_HOME_MOVE, MAKE_HOME_NEW };
 
-export function RouteMap({ routes, chosen, start, center: centerIn, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep, onOpen, piece, onBigger, full = false, still = false }: {
+export function RouteMap({ routes, chosen, start, center: centerIn, base, onChoose, onStart, onNoMap, height, photo = 'map', onPhoto, me: found, tapped, hasHome = false, onMakeHome, keepName, onKeep, onOpen, piece, onBigger, full = false, still = false, viaPick }: {
   routes: MapRoute[];
   chosen: RouteStyle | undefined;
   // Waar de lus begint (of waar het paneel zoekt, zolang er nog geen lus is). Zonder start: de kaart zonder lus.
@@ -110,6 +111,9 @@ export function RouteMap({ routes, chosen, start, center: centerIn, base, onChoo
   // De kaart zonder lus in de pagina: een veeg scrolt de pagina, een tik kiest een punt; slepen en knijpen
   // alleen in Hele kaart (Lookout, I-61).
   still?: boolean;
+  // Kiesstand van Andere lus, Via een punt: een tik zet een speld, Lus erlangs zoekt de lus, Annuleren herstelt.
+  // Zolang dit staat doet een tik geen Start hier.
+  viaPick?: { onApply: (point: RoutePoint) => void; onCancel: () => void };
 }) {
   const quiet = onOpen !== undefined;
   // Het midden op zijn getallen: een nieuw object met dezelfde plek zet de kaart niet opnieuw.
@@ -366,7 +370,16 @@ export function RouteMap({ routes, chosen, start, center: centerIn, base, onChoo
           <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void keepPlace()}>Bewaar als plek</TextButton>
         </div>
       )}
-      {!quiet && (pick || (keepable && onMakeHome)) && (
+      {!quiet && viaPick && (
+        <div className="flex flex-col gap-1">
+          <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{VIA_PICK_LINE}</p>
+          <div className="flex flex-wrap gap-x-5">
+            {pick && <TextButton tone="dim" onClick={() => viaPick.onApply(pick)}>Lus erlangs</TextButton>}
+            <TextButton tone="dim" onClick={viaPick.onCancel}>Annuleren</TextButton>
+          </div>
+        </div>
+      )}
+      {!quiet && !viaPick && (pick || (keepable && onMakeHome)) && (
         <div className="flex flex-wrap gap-x-5">
           {pick && !saving && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => void startAt({ tap: pick })}>Start hier</TextButton>}
           {keepable && onMakeHome && !saving && <TextButton tone="dim" disabled={busy !== undefined} onClick={() => { setLine(''); setSaving(true); }}>Bewaar als plek</TextButton>}

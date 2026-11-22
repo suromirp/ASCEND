@@ -4,7 +4,8 @@
 
 import type { WeatherPlace } from './weather';
 
-export type TerrainKind = 'hill' | 'steps' | 'dirt_path' | 'sports_ground' | 'track';
+// 'water' en 'wood' (bos, park of groen) komen uit hetzelfde verzoek en dienen alleen Andere lus, Soort.
+export type TerrainKind = 'hill' | 'steps' | 'dirt_path' | 'sports_ground' | 'track' | 'water' | 'wood';
 
 export interface TerrainFeature {
   kind: TerrainKind;
@@ -22,4 +23,6 @@ export interface NearbyTerrain {
   place: WeatherPlace; // afgerond op twee decimalen, zoals bij het weer
   radiusM: number;
   features: TerrainFeature[];
+  // Gezocht met water en bos in hetzelfde verzoek. Een oudere bewaarde plek mist dat en wordt voor Soort opnieuw gevraagd.
+  scenery?: true;
 }

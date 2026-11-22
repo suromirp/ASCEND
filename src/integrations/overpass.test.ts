@@ -49,6 +49,20 @@ describe('mapOverpass', () => {
     expect(f.every((x) => x.distanceM <= DEFAULT_RADIUS_M * 1.1)).toBe(true);
   });
 
+  it('kent water en bos, uit dezelfde vraag, voor Andere lus Soort', () => {
+    const f = mapOverpass({ elements: [
+      { type: 'way', id: 11, center: { lat: 52.121, lon: 5.651 }, tags: { natural: 'water' } },
+      { type: 'way', id: 12, center: { lat: 52.122, lon: 5.652 }, tags: { waterway: 'canal' } },
+      { type: 'way', id: 13, center: { lat: 52.123, lon: 5.653 }, tags: { landuse: 'forest' } },
+      { type: 'way', id: 14, center: { lat: 52.124, lon: 5.654 }, tags: { leisure: 'park' } },
+    ] }, rounded);
+    expect(f.map((x) => x.kind).sort()).toEqual(['water', 'water', 'wood', 'wood']);
+    const q = overpassQuery({ name: '', lat: 52.12, lon: 5.65 });
+    expect(q).toContain('"natural"="water"');
+    expect(q).toContain('"landuse"="forest"');
+    expect(q.match(/\[out:json\]/g)).toHaveLength(1);
+  });
+
   it('een leeg antwoord is een lege lijst, een kapot antwoord een fout', () => {
     expect(mapOverpass({ elements: [] }, rounded)).toEqual([]);
     expect(() => mapOverpass({ remark: 'te druk' }, rounded)).toThrow();

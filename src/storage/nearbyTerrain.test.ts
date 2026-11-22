@@ -26,6 +26,18 @@ describe('heuvels in de buurt in de opslag', () => {
     expect(f).toHaveBeenCalledTimes(2);
   });
 
+  it('een plek van voor water en bos wordt voor Soort eenmalig opnieuw gevraagd, daarna niet meer', async () => {
+    const now = new Date('2026-11-08T08:00:00.000Z');
+    await MetaRepo.set('nearbyTerrain', { [terrainKey(place)]: { source: 'osm', fetchedAt: now.toISOString(), place: { name: '', lat: 52.12, lon: 5.65 }, radiusM: 3000, features: [] } });
+    const f = ok();
+    await refreshNearbyTerrain(place, { fetchImpl: as(f), now });
+    expect(f).toHaveBeenCalledTimes(0);
+    expect((await refreshNearbyTerrain(place, { fetchImpl: as(f), now, needScenery: true }))?.scenery).toBe(true);
+    expect(f).toHaveBeenCalledTimes(1);
+    await refreshNearbyTerrain(place, { fetchImpl: as(f), now, needScenery: true });
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+
   it('houdt het oude resultaat bij een fout en zonder netwerk is er niets nieuws', async () => {
     await refreshNearbyTerrain(place, { fetchImpl: as(ok()), now: new Date('2026-09-01T08:00:00.000Z') });
     const fail = vi.fn(async () => new Response('', { status: 500 }));

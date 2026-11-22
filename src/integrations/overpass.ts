@@ -48,6 +48,14 @@ export function overpassQuery(place: WeatherPlace, radiusM = DEFAULT_RADIUS_M, e
     `nwr["leisure"="track"]["sport"~"athletics|running"]${at};`,
     `nwr["leisure"~"^(pitch|sports_ground)$"]${at};`,
     ');out center tags 300;',
+    // Water en bos of groen voor Andere lus, Soort: dezelfde vraag, een eigen limiet zodat ze de hellingen niet verdringen.
+    '(',
+    `nwr["natural"="water"]${at};`,
+    `way["waterway"~"^(river|canal)$"]${at};`,
+    `nwr["landuse"="forest"]${at};`,
+    `nwr["natural"="wood"]${at};`,
+    `nwr["leisure"~"^(park|nature_reserve)$"]${at};`,
+    ');out center tags 200;',
   ].join('');
 }
 
@@ -69,6 +77,8 @@ function kindOf(tags: Record<string, unknown>): TerrainKind | undefined {
   if (t('highway') === 'steps') return 'steps';
   if (t('highway') && t('incline')) return 'hill';
   if (t('leisure') === 'pitch' || t('leisure') === 'sports_ground') return 'sports_ground';
+  if (t('natural') === 'water' || /^(river|canal)$/.test(t('waterway'))) return 'water';
+  if (t('landuse') === 'forest' || t('natural') === 'wood' || t('leisure') === 'park' || t('leisure') === 'nature_reserve') return 'wood';
   if (t('highway') && new RegExp(UNPAVED).test(t('surface'))) return 'dirt_path';
   return undefined;
 }
@@ -166,5 +176,5 @@ export async function fetchNearbyTerrain(place: WeatherPlace, options: OverpassO
   }
   features = await addHeights(rounded, features, doFetch, exact);
   // De naam van de plek wordt niet in het resultaat bewaard, alleen de positie.
-  return { source: 'osm', fetchedAt: (options.now ?? new Date()).toISOString(), place: rounded, radiusM, features };
+  return { source: 'osm', fetchedAt: (options.now ?? new Date()).toISOString(), place: rounded, radiusM, features, scenery: true };
 }

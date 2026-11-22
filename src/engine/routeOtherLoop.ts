@@ -7,13 +7,13 @@
 
 import type { RoutePoint, RouteFn, RouteProposal } from '../models/route';
 import { formatNumberNL } from '../utils/number';
-import { reverseProposal } from './routeAdjust';
+import { insideAny, reverseProposal } from './routeAdjust';
 import { bearing, metersBetween } from './routeGeometry';
-import { REPEAT_OK, adventureVias, notedOutcome, proposeAdventure, terrainFound, type Arc, type PlanInput } from './routePlanner';
+import { REPEAT_OK, adventureVias, notedOutcome, proposeAdventure, terrainFound, type Arc, type LoopKind, type PlanInput } from './routePlanner';
 
 const DIRECTION_LINE = 'Een nieuwe lus die die kant op gaat. Ligt daar niets, dan staat dat erbij.';
 
-export type OtherLoopChoice = 'reverse' | 'otherSide' | 'north' | 'east' | 'south' | 'west' | 'noRepeat';
+export type OtherLoopChoice = 'reverse' | 'otherSide' | 'north' | 'east' | 'south' | 'west' | 'noRepeat' | LoopKind | 'via';
 
 // De keuzes in het blad, met één regel uitleg per rij. De vier richtingen delen één regel (`DIRECTION_LINE`).
 export const OTHER_LOOP_CHOICES: { choice: OtherLoopChoice; label: string; line: string }[] = [
@@ -24,7 +24,23 @@ export const OTHER_LOOP_CHOICES: { choice: OtherLoopChoice; label: string; line:
   { choice: 'south', label: 'Zuid', line: DIRECTION_LINE },
   { choice: 'west', label: 'West', line: DIRECTION_LINE },
   { choice: 'noRepeat', label: 'Zonder heen en terug', line: 'Een nieuwe lus met zo min mogelijk stukken die je twee keer loopt.' },
+  { choice: 'water', label: 'Langs water', line: 'Een nieuwe lus langs rivieren, kanalen en plassen.' },
+  { choice: 'wood', label: 'Door bos of groen', line: 'Een nieuwe lus langs bos en parken.' },
+  { choice: 'unpaved', label: 'Meer onverhard', line: 'Een nieuwe lus over zoveel mogelijk onverharde paden.' },
+  { choice: 'via', label: 'Via een punt', line: 'Je tikt op de kaart waar de lus langs moet. Hij komt terug bij de start.' },
 ];
+
+export const LOOP_KINDS: LoopKind[] = ['water', 'wood', 'unpaved'];
+export const isLoopKind = (c: OtherLoopChoice): c is LoopKind => c === 'water' || c === 'wood' || c === 'unpaved';
+
+// De kiesstand van Via een punt: de regel boven de kaart en de knoppen.
+export const VIA_PICK_LINE = 'Tik waar de lus langs moet';
+export const VIA_NOTE = 'Deze lus gaat langs het punt dat je koos.';
+const NOTHING_OF_KIND: Record<LoopKind, string> = {
+  water: 'ligt geen water',
+  wood: 'ligt geen bos of park',
+  unpaved: 'liggen geen onverharde paden',
+};
 
 // Een nieuwe zoektocht gaat naar dezelfde routeplanner en dezelfde kaartbron als de lus zelf.
 export const OTHER_LOOP_SOURCES_LINE = 'Een nieuwe lus vraagt dezelfde routeplanner en dezelfde kaartgegevens als de eerste, met dezelfde afgeronde plek.';
@@ -83,13 +99,29 @@ export function otherLoopFailLine(reason: string): string {
 // Een nieuwe lus voor een keuze, met één zoektocht van de planner (hoogstens MAX_ROUTE_CALLS aanroepen).
 // `previous` is de lus die nu staat: Een andere kant op en Zonder heen en terug lezen hem. Andersom gebruikt
 // reverseLoop en komt hier niet.
-export async function proposeOtherLoop(input: PlanInput, route: RouteFn, choice: Exclude<OtherLoopChoice, 'reverse'>, previous: RouteProposal): Promise<OtherLoopResult> {
+export async function proposeOtherLoop(input: PlanInput, route: RouteFn, choice: Exclude<OtherLoopChoice, 'reverse'>, previous: RouteProposal, via?: RoutePoint): Promise<OtherLoopResult> {
   const found = terrainFound(input.terrain);
   const finish = (o: Awaited<ReturnType<typeof proposeAdventure>>, note?: string): OtherLoopResult => {
     const noted = notedOutcome(o, input.target, found);
     if (!noted.ok) return { ok: false, line: otherLoopFailLine(noted.reason) };
     return { ok: true, proposal: noted.proposal, ...(note ? { note } : {}) };
   };
+
+  if (choice === 'via') {
+    if (!via) return { ok: false, line: otherLoopFailLine('error') };
+    if (insideAny(via, input.avoid)) return { ok: false, line: `Dat punt ligt in een stuk dat je vermijdt. ${STAYS}` };
+    const out = await proposeAdventure(input, route, { via });
+    if (!out.ok && (out.reason === 'unmapped' || out.reason === 'nothing')) return { ok: false, line: `Bij dat punt ligt geen pad dat de routeplanner kent. ${STAYS}` };
+    return finish(out, VIA_NOTE);
+  }
+
+  if (isLoopKind(choice)) {
+    // Een bewaarde plek van voor water en bos kent ze niet: dan eerlijk dat ze er niet zijn, niet dat er niets ligt.
+    if (!input.terrain || (choice !== 'unpaved' && input.terrain.scenery !== true)) return { ok: false, line: `Water en bos rond deze plek zijn nog niet opgehaald. ${STAYS}` };
+    const radius = km(input.target.distanceKm * 1000 * FIRST_REACH);
+    if (adventureVias(input, FIRST_REACH, undefined, choice).every((v) => v.pad)) return { ok: false, line: `Binnen ${radius} ${NOTHING_OF_KIND[choice]}. ${STAYS}` };
+    return finish(await proposeAdventure(input, route, { kind: choice }));
+  }
 
   if (choice === 'noRepeat') {
     // Deze lus loopt al niets dubbel: een nieuwe zoektocht geeft dezelfde lus, dus er gaat niets de deur uit.
