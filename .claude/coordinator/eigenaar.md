@@ -4,7 +4,7 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-Sterker worden met kracht uit (I-110, samen met I-47): het Richting-blad zegt dan nog "Kracht staat voorop". Keuzes: (1) Sterker worden niet tonen als kracht uit staat, met één zin waarom (advies); (2) wel tonen, met een andere zin; (3) laten zoals het is. Zonder antwoord: het bouwmoment kiest het advies, want het verandert geen doel en blijft instelbaar via kracht aan.
+Geen open vragen. I-110 en I-47 (Sterker worden met kracht uit): uw keuze 22 november was het advies, in aanbouw.
 
 ## Stuk of vast
 
