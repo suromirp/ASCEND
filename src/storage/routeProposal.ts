@@ -14,7 +14,8 @@ import { isOffline, routeWithFallback } from '../integrations/routing';
 import { proposeRoutes, type RoutePlans } from '../engine/routePlanner';
 import { roundStart } from '../engine/routeTarget';
 import type { NearbyTerrain } from '../models/nearbyTerrain';
-import type { AvoidArea, RouteAnswer, RouteFn, RoutePoint, RouteTarget } from '../models/route';
+import { otherLoopFailLine, proposeOtherLoop, type OtherLoopChoice, type OtherLoopResult } from '../engine/routeOtherLoop';
+import type { AvoidArea, RouteAnswer, RouteFn, RoutePoint, RouteProposal, RouteTarget } from '../models/route';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
 const CONSENT_KEY = 'routeProposalAsked';
@@ -78,15 +79,42 @@ export async function findRoutes(place: { lat: number; lon: number }, target: Ro
   const limitMs = deps.limitMs ?? PROPOSAL_LIMIT_MS;
   const budget = searchBudget(limitMs);
   const began = Date.now();
-  // Na de tijdgrens of na sluiten stopt ook het werk erachter, niet alleen het wachten.
+  const guarded = guardedRoute(deps, began, budget.routesUntilMs);
+  const { route } = guarded;
+  const terrainOf = deps.terrain ?? ((p, exact) => refreshNearbyTerrain(p, { exact }).catch(() => getNearbyTerrain(p, exact)));
+  const cachedOf = deps.cachedTerrain ?? getNearbyTerrain;
+  const search = (async (): Promise<RouteSearch> => {
+    // Zonder heuvels en paden zoekt de planner nog steeds een lus, op punten rond het startpunt.
+    deps.onStep?.('terrain');
+    const terrainPlace = { name: '', ...(exactStart ? deps.terrainAt ?? exactStart : rounded) };
+    const terrain = await withTimeout(terrainOf(terrainPlace, !!exactStart), budget.terrainMs).catch(() =>
+      withTimeout(cachedOf(terrainPlace, !!exactStart), budget.cacheMs).catch(() => undefined),
+    );
+    if (!guarded.stopped()) deps.onStep?.('routes');
+    const plans = await proposeRoutes({ start, target, terrain, anchor: !!exactStart, ...(deps.avoid && deps.avoid.length > 0 ? { avoid: deps.avoid } : {}) }, route);
+    const reasons = [plans.simple, plans.adventure].map((o) => (o.ok ? undefined : o.reason));
+    if (reasons.every((r) => r === 'offline')) return { kind: 'offline' };
+    // Geen enkele lus en de tijd was op: dan is het de regel van de tijdgrens, met de stap erbij.
+    if (reasons.every((r) => r === 'timeout')) return { kind: 'timeout' };
+    return { kind: 'plans', plans };
+  })();
+  try {
+    return await withTimeout(search, limitMs);
+  } catch {
+    guarded.stop();
+    return { kind: 'timeout' };
+  }
+}
+
+// De routeplanner met de grens in tijd: na de grens of na sluiten stopt ook het werk erachter, en vlak voor de
+// grens antwoordt een aanroep die nog loopt als "niet op tijd", zodat de planner de beste lus houdt die er al is.
+function guardedRoute(deps: RouteSearchDeps, began: number, routesUntilMs: number): { route: RouteFn; stopped: () => boolean; stop: () => void } {
   let over = false;
   const stopped = () => over || deps.signal?.aborted === true;
   const inner = deps.route ?? routeWithFallback([brouterRoute({ quiet: deps.avoidBigRoads !== false }), valhallaRoute({ quiet: deps.avoidBigRoads !== false })], undefined, stopped);
-  // Vlak voor de grens antwoordt een aanroep die nog loopt als "niet op tijd": de planner houdt dan de
-  // beste lus die er al is, in plaats van dat de grens alles weggooit.
   const route: RouteFn = (waypoints, options) => {
     if (stopped()) return Promise.resolve({ ok: false, reason: 'timeout' });
-    const left = began + budget.routesUntilMs - Date.now();
+    const left = began + routesUntilMs - Date.now();
     if (left <= 0) {
       over = true;
       return Promise.resolve({ ok: false, reason: 'timeout' });
@@ -98,28 +126,40 @@ export async function findRoutes(place: { lat: number; lon: number }, target: Ro
       return { ok: false, reason: 'timeout' };
     });
   };
+  return { route, stopped, stop: () => { over = true; } };
+}
+
+// Andere lus (engine/routeOtherLoop.ts): één nieuwe zoektocht voor een keuze behalve Andersom, met dezelfde
+// bronnen, dezelfde afronding van de plek en dezelfde grens in tijd als findRoutes. Heuvels en paden komen
+// eerst uit wat er al bewaard lag; alleen zonder dat vraagt het opnieuw. Gooit nooit: de uitkomst is een lus
+// of een regel, en de lus die er stond blijft staan.
+export async function findOtherLoop(
+  place: { lat: number; lon: number },
+  target: RouteTarget,
+  choice: Exclude<OtherLoopChoice, 'reverse'>,
+  previous: RouteProposal,
+  deps: RouteSearchDeps = {},
+  exactStart?: RoutePoint,
+): Promise<OtherLoopResult> {
+  if ((deps.offline ?? isOffline)()) return { ok: false, line: otherLoopFailLine('offline') };
+  const rounded = roundStart(exactStart ?? place);
+  const start = exactStart ?? rounded;
+  const limitMs = deps.limitMs ?? PROPOSAL_LIMIT_MS;
+  const budget = searchBudget(limitMs);
+  const guarded = guardedRoute(deps, Date.now(), budget.routesUntilMs);
   const terrainOf = deps.terrain ?? ((p, exact) => refreshNearbyTerrain(p, { exact }).catch(() => getNearbyTerrain(p, exact)));
   const cachedOf = deps.cachedTerrain ?? getNearbyTerrain;
-  const search = (async (): Promise<RouteSearch> => {
-    // Zonder heuvels en paden zoekt de planner nog steeds een lus, op punten rond het startpunt.
-    deps.onStep?.('terrain');
+  const search = (async (): Promise<OtherLoopResult> => {
     const terrainPlace = { name: '', ...(exactStart ? deps.terrainAt ?? exactStart : rounded) };
-    const terrain = await withTimeout(terrainOf(terrainPlace, !!exactStart), budget.terrainMs).catch(() =>
-      withTimeout(cachedOf(terrainPlace, !!exactStart), budget.cacheMs).catch(() => undefined),
-    );
-    if (!stopped()) deps.onStep?.('routes');
-    const plans = await proposeRoutes({ start, target, terrain, anchor: !!exactStart, ...(deps.avoid && deps.avoid.length > 0 ? { avoid: deps.avoid } : {}) }, route);
-    const reasons = [plans.simple, plans.adventure].map((o) => (o.ok ? undefined : o.reason));
-    if (reasons.every((r) => r === 'offline')) return { kind: 'offline' };
-    // Geen enkele lus en de tijd was op: dan is het de regel van de tijdgrens, met de stap erbij.
-    if (reasons.every((r) => r === 'timeout')) return { kind: 'timeout' };
-    return { kind: 'plans', plans };
+    const terrain = (await withTimeout(cachedOf(terrainPlace, !!exactStart), budget.cacheMs).catch(() => undefined))
+      ?? (await withTimeout(terrainOf(terrainPlace, !!exactStart), budget.terrainMs).catch(() => undefined));
+    return proposeOtherLoop({ start, target, terrain, anchor: !!exactStart, ...(deps.avoid && deps.avoid.length > 0 ? { avoid: deps.avoid } : {}) }, guarded.route, choice, previous);
   })();
   try {
-    return await withTimeout(search, limitMs);
+    return await withTimeout(search.catch((): OtherLoopResult => ({ ok: false, line: otherLoopFailLine('error') })), limitMs);
   } catch {
-    over = true;
-    return { kind: 'timeout' };
+    guarded.stop();
+    return { ok: false, line: otherLoopFailLine('timeout') };
   }
 }
 

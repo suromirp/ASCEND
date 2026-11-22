@@ -68,6 +68,7 @@ import { showPlaceWeather } from '../engine/overviewSettings';
 import { useMotionMode } from './motion';
 import { RouteMap } from './RouteMap';
 import { RouteSearching } from './RouteSearching';
+import { OtherLoop } from './OtherLoop';
 import { AskStart, RouteFailure, RouteFirstQuestion, RoutePanelView, StartChips } from './RoutePanel';
 import { useRouteSearch, type RouteSearchModel } from './useRouteSearch';
 import { IntervalProfile, KeyNumbers, StepList } from './duur/DuurParts';
@@ -566,6 +567,7 @@ function LoopPlace({ model, target, onBigger }: { model: RouteSearchModel; targe
           <div className="-mt-2 shrink-0">{bigger}</div>
         </div>
       )}
+      {pickedOutcome?.ok && picked && <div className="-mt-2"><OtherLoop model={model} /></div>}
       {other && otherOutcome?.ok && (
         // Direct onder de gekozen lus: Kies is 44 px hoog, de rij schuift 4 px op zodat er geen gat valt.
         <div className="-mt-1 flex items-center justify-between gap-3">

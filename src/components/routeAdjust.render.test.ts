@@ -15,7 +15,7 @@ const line = Array.from({ length: 65 }, (_, i) => ({ ...offsetPoint(START, 0, i 
 
 const model = (over: Partial<RouteSearchModel> = {}) => ({
   canReverse: true, adjustLine: '', adjustFail: '', pieces: loopPieces(line),
-  reverse: () => undefined, stepLength: () => undefined, avoidStretch: () => undefined, resetAdjust: () => undefined, ...over,
+  reverse: () => undefined, stepLength: () => undefined, avoidStretch: () => undefined, resetAdjust: () => undefined, other: { available: false, busy: false, failLine: '', note: '', pick: () => undefined, retry: undefined }, ...over,
 }) as unknown as RouteSearchModel;
 
 const render = (m: RouteSearchModel, selected?: number, piecesOpen = true) => renderToStaticMarkup(createElement(RouteAdjust, { model: m, selected, onSelect: () => undefined, motion: 'full', piecesOpen }));

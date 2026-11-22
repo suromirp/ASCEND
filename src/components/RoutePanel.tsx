@@ -34,6 +34,7 @@ import { useRouteSearch, type RouteSearchModel } from './useRouteSearch';
 import { NewPlaceSheet } from './NewPlaceSheet';
 import { startTrio } from '../engine/places';
 import { RouteAdjust } from './RouteAdjust';
+import { OtherLoop } from './OtherLoop';
 import { RouteMapFull } from './RouteMapFull';
 
 const STYLE_NAME: Record<RouteStyle, string> = { simple: 'Simpel', adventure: 'Avontuurlijk' };
@@ -281,7 +282,12 @@ export function RoutePanelView({ model, date, onDecline, startAbove = false }: {
           </div>
         ) : null;
       case 'chosen':
-        return picked && pickedOutcome?.ok ? <ChosenLoop key={`chosen-${picked}`} style={picked} proposal={pickedOutcome.proposal} date={date} target={target} sender={sender} climbMarked={selected === undefined} /> : null;
+        return picked && pickedOutcome?.ok ? (
+          <div key={`chosen-${picked}`} className="flex flex-col gap-1">
+            <ChosenLoop style={picked} proposal={pickedOutcome.proposal} date={date} target={target} sender={sender} climbMarked={selected === undefined} />
+            <OtherLoop model={model} />
+          </div>
+        ) : null;
       case 'adjust':
         return picked && pickedOutcome?.ok ? <RouteAdjust key={p} model={model} selected={selected} onSelect={(i) => setPieceAt(i === undefined ? undefined : { sig: pieceSig, index: i })} motion={motion} /> : null;
       case 'loops':

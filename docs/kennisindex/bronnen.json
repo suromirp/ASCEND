@@ -4466,6 +4466,13 @@
    ],
    "kern": "Verandert een koppeling achteraf welke korte test van de week telt, dan zegt het koppelvoorstel op Vandaag dat in één zichtbare zin; de toets gebruikt dezelfde telling als het logblad en bewaart niets.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-22-andere-lus.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Onder de gekozen lus staat een knop Andere lus met Andersom (nul aanroepen), Een andere kant op, Noord, Oost, Zuid en West, en Zonder heen en terug; elke keuze behalve Andersom is één zoektocht binnen MAX_ROUTE_CALLS, de gekozen variant is een eenmalige afwijking die niet bewaard wordt.",
+   "stand": "geldt"
   }
  }
 }

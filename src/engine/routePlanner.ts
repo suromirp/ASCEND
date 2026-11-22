@@ -391,11 +391,23 @@ export function climbStretch(p: RouteProposal): RoutePoint[] | undefined {
 
 // ---------- Avontuurlijk ----------
 
-interface Via extends RoutePoint {
+export interface Via extends RoutePoint {
   hill: boolean;
   value: number;
   angle: number;
+  // Een aanvulpunt (geen helling of pad van de kaart): alleen om de lus de lengte te geven.
+  pad?: true;
 }
+
+// Een deel van de kompasroos waar de lus heen mag (Andere lus, engine/routeOtherLoop.ts): vanaf `from` graden,
+// met de klok mee, `span` graden breed. In een boog is `angle` van een punt de hoek vanaf `from`, zodat de lus
+// van het begin naar het eind van de boog loopt en terug, ook als de boog over noord heen gaat.
+export interface Arc {
+  from: number;
+  span: number;
+}
+export const relativeAngle = (angle: number, arc: Arc): number => (((angle - arc.from) % 360) + 360) % 360;
+export const inArc = (angle: number, arc: Arc): boolean => relativeAngle(angle, arc) <= arc.span;
 
 const perimeter = (start: RoutePoint, vias: RoutePoint[]) => lineLength([start, ...vias, start]);
 
@@ -403,7 +415,7 @@ const perimeter = (start: RoutePoint, vias: RoutePoint[]) => lineLength([start, 
 // het startpunt (zo kruist de lus zichzelf niet), en uitgedund tot de geschatte lengte past. Een
 // helling weegt zwaarder dan een pad, een hoge zwaarder dan een lage. `reach`: hoe ver van het
 // startpunt, als deel van de afstand van de training. Zonder iets in de buurt: drie punten op een cirkel.
-export function adventureVias(input: PlanInput, reach = 0.25): Via[] {
+export function adventureVias(input: PlanInput, reach = 0.25, arc?: Arc): Via[] {
   const { start, target, terrain } = input;
   const d = target.distanceKm * 1000;
   // De lengte waar de schatting op mikt: de afstand van de training, na een te korte of te lange
@@ -413,17 +425,17 @@ export function adventureVias(input: PlanInput, reach = 0.25): Via[] {
     .filter((f) => usableHill(f) || f.kind === 'dirt_path')
     .filter((f) => {
       const crow = metersBetween(start, f);
-      return crow >= NEAR_START_M && crow <= d * reach;
+      return crow >= NEAR_START_M && crow <= d * reach && (!arc || inArc(bearing(start, f), arc));
     })
     // Een helling zonder bekende hoogte weegt net boven een pad, niet als een helling van twintig meter.
-    .map((f) => ({ lat: f.lat, lon: f.lon, hill: knownHill(f), value: knownHill(f) ? 2 + (f.heightM as number) / 20 : unknownHill(f) ? 1.5 : 1, angle: bearing(start, f) }))
+    .map((f) => ({ lat: f.lat, lon: f.lon, hill: knownHill(f), value: knownHill(f) ? 2 + (f.heightM as number) / 20 : unknownHill(f) ? 1.5 : 1, angle: arc ? relativeAngle(bearing(start, f), arc) : bearing(start, f) }))
     .sort((a, b) => b.value - a.value || a.lat - b.lat || a.lon - b.lon);
   // Twee dingen op dezelfde plek: de waardevolste blijft.
   const spread: Via[] = [];
   for (const v of all) {
     if (!spread.some((s) => metersBetween(s, v) < SAME_SPOT_M)) spread.push(v);
   }
-  if (spread.length === 0) return ring(start, aim);
+  if (spread.length === 0) return arc ? padInArc(start, [], aim, arc) : ring(start, aim);
 
   let vias = spread.sort((a, b) => a.angle - b.angle || a.lat - b.lat);
   const tooLong = () => vias.length > MAX_VIAS || DETOUR * perimeter(start, vias) > aim;
@@ -441,7 +453,7 @@ export function adventureVias(input: PlanInput, reach = 0.25): Via[] {
     });
     vias = vias.filter((_, i) => i !== drop);
   }
-  return startAtWidestGap(padVias(start, vias, aim));
+  return arc ? padInArc(start, vias, aim, arc) : startAtWidestGap(padVias(start, vias, aim));
 }
 
 // Liggen de punten te dicht bij het startpunt om de afstand te halen, dan komen er in het grootste
@@ -474,8 +486,39 @@ function padVias(start: RoutePoint, vias: Via[], aim: number): Via[] {
   const count = gap >= 180 ? 2 : 1;
   const angles = Array.from({ length: count }, (_, i) => (from + (gap * (i + 1)) / (count + 1)) % 360);
   const withPad = (radius: number): Via[] =>
-    [...vias, ...angles.map((angle) => ({ ...offsetPoint(start, angle, radius), hill: false, value: 1, angle }))].sort((a, b) => a.angle - b.angle || a.lat - b.lat);
+    [...vias, ...angles.map((angle) => ({ ...offsetPoint(start, angle, radius), hill: false, value: 1, angle, pad: true as const }))].sort((a, b) => a.angle - b.angle || a.lat - b.lat);
   // De straal waarbij de schatting op de afstand uitkomt, door halveren (vast aantal stappen).
+  let lo = NEAR_START_M;
+  let hi = Math.max(NEAR_START_M, aim / 2);
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2;
+    if (estimate(withPad(mid)) < aim) lo = mid;
+    else hi = mid;
+  }
+  return withPad((lo + hi) / 2);
+}
+
+// Als padVias, maar binnen een boog: de aanvulpunten komen in het grootste gat van de boog (zonder punten op een
+// kwart en driekwart), nooit erbuiten. Zo gaat een lus die één kant op moet ook echt die kant op, ook zonder paden.
+function padInArc(start: RoutePoint, vias: Via[], aim: number, arc: Arc): Via[] {
+  const estimate = (list: RoutePoint[]) => DETOUR * perimeter(start, list);
+  if (vias.length > 0 && estimate(vias) >= aim * (1 - SHORT_LIMIT)) return vias;
+  if (vias.length > MAX_VIAS - 1) {
+    const keep = [...vias].sort((a, b) => b.value - a.value || a.angle - b.angle).slice(0, MAX_VIAS - 1);
+    vias = vias.filter((v) => keep.includes(v));
+  }
+  const edges = [0, ...vias.map((v) => v.angle), arc.span];
+  let from = 0;
+  let gap = -1;
+  for (let i = 1; i < edges.length; i++) {
+    if (edges[i] - edges[i - 1] > gap) {
+      gap = edges[i] - edges[i - 1];
+      from = edges[i - 1];
+    }
+  }
+  const rels = vias.length === 0 ? [arc.span / 4, (arc.span * 3) / 4] : [from + gap / 2];
+  const withPad = (radius: number): Via[] =>
+    [...vias, ...rels.map((rel) => ({ ...offsetPoint(start, (arc.from + rel) % 360, radius), hill: false, value: 1, angle: rel, pad: true as const }))].sort((a, b) => a.angle - b.angle || a.lat - b.lat);
   let lo = NEAR_START_M;
   let hi = Math.max(NEAR_START_M, aim / 2);
   for (let i = 0; i < 24; i++) {
@@ -506,7 +549,7 @@ function startAtWidestGap(vias: Via[]): Via[] {
 function ring(start: RoutePoint, distanceM: number): Via[] {
   const radius = distanceM / (2 * Math.PI * DETOUR);
   const centre = offsetPoint(start, 0, radius);
-  return [270, 0, 90].map((angle) => ({ ...offsetPoint(centre, angle, radius), hill: false, value: 1, angle }));
+  return [270, 0, 90].map((angle) => ({ ...offsetPoint(centre, angle, radius), hill: false, value: 1, angle, pad: true as const }));
 }
 
 // Zo dicht bij het keerpunt van een doodlopend stuk ligt het punt dat de lus daarheen trok.
@@ -529,11 +572,25 @@ export function viaAtDeadEnd(p: RouteProposal, vias: readonly RoutePoint[]): num
   return at;
 }
 
-export async function proposeAdventure(input: PlanInput, route: RouteFn): Promise<PlanOutcome> {
+// Hoe een andere lus eruit moet zien (engine/routeOtherLoop.ts): binnen een boog van de kompasroos, en/of met zo
+// min mogelijk stukken twee keer gelopen. Zonder dit is het de gewone Avontuurlijke lus.
+export interface AdventureShape {
+  arc?: Arc;
+  noRepeat?: boolean;
+}
+// Tot dit deel van de lus over een stuk dat je eerder liep, telt hij als zonder heen en terug.
+export const REPEAT_OK = 0.03;
+
+export async function proposeAdventure(input: PlanInput, route: RouteFn, shape: AdventureShape = {}): Promise<PlanOutcome> {
   const d = input.target.distanceKm * 1000;
   const score = (p: RouteProposal) => missScore(p, input.target) * (input.target.ascentM >= MIN_ASCENT_TARGET_M ? 0.75 : 1) + 0.5 * p.repeatedShare;
+  // Zonder heen en terug: bij lussen die allebei binnen de marge van de afstand vallen wint de kleinste herhaling.
+  const prefer = (a: RouteProposal, b: RouteProposal | undefined) =>
+    shape.noRepeat && b && Math.abs(a.repeatedShare - b.repeatedShare) > REPEAT_OK && withinMargin(a, input.target) && withinMargin(b, input.target)
+      ? a.repeatedShare < b.repeatedShare
+      : better(a, b, input.target, score);
   let reach = 0.25;
-  const viasAt = (r: number) => adventureVias(input, r).filter((v) => !insideAny(v, input.avoid));
+  const viasAt = (r: number) => adventureVias(input, r, shape.arc).filter((v) => !insideAny(v, input.avoid));
   let vias = viasAt(reach);
   let best: RouteProposal | undefined;
   let lastFailure: RouteFailure | undefined;
@@ -558,9 +615,10 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn): Promis
     // Door een vermeden stuk: de routeplanner vond er geen weg omheen; nog een keer vragen geeft hetzelfde.
     if (crossesAny(made.points, input.avoid)) break;
     if (anchored.gapM >= START_GAP_NOTE_M) made.startGapM = anchored.gapM;
-    if (!tooTiny(made) && better(made, best, input.target, score)) best = made;
+    if (!tooTiny(made) && prefer(made, best)) best = made;
     const fits = fitsDistance(made, input.target);
-    if (fits || (extraDeadEnds(made) > 0 && withinMargin(made, input.target))) {
+    const repeats = !!shape.noRepeat && made.repeatedShare > REPEAT_OK;
+    if (fits || ((extraDeadEnds(made) > 0 || repeats) && withinMargin(made, input.target))) {
       // Past de afstand (of ligt hij binnen SPUR_FREE_MARGIN) maar loopt de lus een doodlopend stuk in, dan nog
       // een poging zonder het punt dat daar ligt; de oude lus blijft als er niets beters komt.
       const loose = viaAtDeadEnd(made, vias);
@@ -569,7 +627,7 @@ export async function proposeAdventure(input: PlanInput, route: RouteFn): Promis
         vias = vias.filter((_, j) => j !== loose);
         continue;
       }
-      if (fits) break;
+      if (fits && !repeats) break;
     }
     // Iets boven de afstand mikken: te kort telt als mislukt, iets te lang niet.
     const off = made.distanceM / d;
@@ -599,19 +657,22 @@ export const NO_PATH_AT_START = 'Bij je startpunt ligt geen pad of weg die de ro
 // ingekorte getal als wat de training vraagt.
 export const askedAscent = (target: RouteTarget): number => target.askedAscentM ?? target.ascentM;
 
+// Een lus met zijn melding over de hoogtemeters en het getal dat de training vraagt.
+export function notedOutcome(o: PlanOutcome, target: RouteTarget, found?: TerrainFound): PlanOutcome {
+  if (!o.ok) return o;
+  const notice = ascentNotice(o.proposal, target, found);
+  // Vraagt de training hoogtemeters, dan weet de lus dat: zijn getal staat er dan altijd bij.
+  const asked = askedAscent(target);
+  const asks = asked >= MIN_ASCENT_TARGET_M ? { targetAscentM: asked } : {};
+  return notice || asks.targetAscentM !== undefined ? { ok: true, proposal: { ...o.proposal, ...asks, ...(notice ? { notice } : {}) } } : o;
+}
+
 // Beide lussen, de avontuurlijke eerst (zijn lijn is de reserve voor Simpel). Gooit nooit: elke
 // uitkomst is een lus of een reden.
 export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<RoutePlans> {
   const safe = (p: Promise<PlanOutcome>) => p.catch((): PlanOutcome => ({ ok: false, reason: 'error' }));
   const found = terrainFound(input.terrain);
-  const noted = (o: PlanOutcome): PlanOutcome => {
-    if (!o.ok) return o;
-    const notice = ascentNotice(o.proposal, input.target, found);
-    // Vraagt de training hoogtemeters, dan weet de lus dat: zijn getal staat er dan altijd bij.
-    const asked = askedAscent(input.target);
-    const asks = asked >= MIN_ASCENT_TARGET_M ? { targetAscentM: asked } : {};
-    return notice || asks.targetAscentM !== undefined ? { ok: true, proposal: { ...o.proposal, ...asks, ...(notice ? { notice } : {}) } } : o;
-  };
+  const noted = (o: PlanOutcome): PlanOutcome => notedOutcome(o, input.target, found);
   const adventure = await safe(proposeAdventure(input, route));
   // Geen pad bij het startpunt: Simpel vraagt hetzelfde punt en krijgt hetzelfde antwoord.
   const noStart = !adventure.ok && adventure.at === 'start';
