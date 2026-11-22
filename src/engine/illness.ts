@@ -28,6 +28,13 @@ export const ILLNESS_LABEL: Record<IllnessKind, string> = {
   stomach: 'Buikgriep',
 };
 
+// Kort genoeg voor de titel van een voorstel op 360 px.
+export const ILLNESS_SHORT: Record<IllnessKind, string> = {
+  above_neck: 'neus of keel',
+  below_neck: 'koorts',
+  stomach: 'buikgriep',
+};
+
 export const ILLNESS_HINT: Record<IllnessKind, string> = {
   above_neck: 'Rustig bewegen mag als je je goed voelt, niets zwaars.',
   below_neck: 'Ook bij spierpijn, hoesten of benauwd. Rust, niet trainen.',
@@ -128,7 +135,7 @@ export function planIllnessStart(
     }));
   return proposal(
     'illness_reported',
-    `Ziek gemeld: ${ILLNESS_LABEL[kind].toLowerCase()}`,
+    `Ziek gemeld: ${ILLNESS_SHORT[kind]}`,
     changes,
     ILLNESS_GUIDANCE[kind],
     'Vuistregel: neus of keel zonder koorts is licht bewegen, koorts of klachten op je borst is rust. Gemiste trainingen tijdens ziekte worden niet ingehaald.',

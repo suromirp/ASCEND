@@ -367,7 +367,7 @@ describe('na Lookout (16 november)', () => {
     const { plan } = ownerPlan();
     const sessions = [...plan.filter((x) => x.id !== 'bw17'), ps('ua17b', 'tpl_upper_a', '2026-11-17', { status: 'moved', lock }), run];
     const swap = checkSwap(drag(sessions, []), 'ua17b', 'er18');
-    expect(swap.ok && swap.asks.join(' ')).toContain('Deze training werd korter door je periode zonder sportschool. Ruil je hem');
+    expect(swap.ok && swap.asks.join(' ')).toContain('Rustige duurloop werd korter door je periode zonder sportschool. Ruil je hem');
     expect(swap.ok && swap.asks.join(' ')).not.toContain('vakantie');
   });
 
@@ -392,7 +392,7 @@ describe('na Lookout (16 november)', () => {
     expect(check.ok && check.asks.length).toBeGreaterThanOrEqual(3);
     const v = withSwapVerdicts(ctx, 'ua17b', dayVerdicts(ctx, 'ua17b', '2026-11-16')).find((x) => x.date === '2026-11-18')!;
     expect(v.kind).toBe('swap');
-    expect(v.line).toBe('Woensdag 18 november. Bovenlichaam A op woensdag 18 november: sportschool nodig, en je zit zonder sportschool. Als je loslaat, komt eerst de vraag.');
+    expect(v.line).toBe('Woensdag 18 november. Bovenlichaam A: sportschool nodig, en je zit zonder sportschool. Als je loslaat, komt eerst de vraag.');
     expect(v.askReason).toBe(check.ok ? check.asks.join(' ') : '');
   });
 
