@@ -7,8 +7,7 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 `docs/beslissingen/`.
 
 ## Inbox
-Hoogste code: I-109. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
-- [I-109] Na I-46 en I-82 (Sherpa's en Warden 22 november, mag): de rij-uitleg bij Richting (Fit blijven, Rustig aan) zegt ook "2 keer kracht" met kracht uit, zelfde variant als Weekbudget; docs noemen nog weggehaalde namen (`MEANINGFUL_CHANGE_SEC` in twee onderzoeksstukken, `machineSummary` in `docs/visie/Toestelstanden in Forge.md`): een regel dat ze weg zijn; teller `clears.all` in de buurt van `clearNearbyTerrain` wordt niet meer opgehoogd.
+Hoogste code: I-110. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
 - [I-108] (22 november deels gebouwd, 74855bb: test voor het ontdubbelen en de valkuil; over: SWAP_CHIP_MAX en de chip onder de opgetilde rij) Na bundel 22 november, Week (Warden en Lookout, mag): een test voor het ontdubbelen van REST-DAY en NO-GYM in `weekConcerns.ts` (alleen NO-GYM, REST-DAY niveau 2 wint, ander punt blijft); `SWAP_CHIP_MAX = 16` laat "Ruilen met <naam>" bijna nooit toe: variant weg of in het briefje; de chip van de doeldag ligt bij slepen onder de opgetilde rij (360 px, ook met touch). Valkuil voor week.md: een filter op Let op toetst `lockLevel` exact (2 test of race, 3 systeem), nooit `>= 2`.
 - [I-105] Label "Ziek gemeld: koorts" (I-56) niet op 360 px gezien: Lookout vond het voorstel met die titel niet in de testdata. Bij de volgende Lookout meenemen.
 - [I-104] Zin "Je rustige loop van <dag> krijgt dan geen korte test meer." (I-99) niet op het scherm gezien; alleen in tests. Bij de volgende Lookout meenemen.
@@ -91,6 +90,8 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-110] Sterker worden met kracht uit (Sherpa 22 november, vraag): het Richting-blad zegt bij Sterker worden "Kracht staat voorop, duur loopt rustig mee.", ook als kracht uit staat. Advies: met kracht uit Sterker worden niet aanbieden of grijs met één zin; hangt samen met I-47 (Richting Sterker worden met kracht uit, besluitpunt). Niet zonder de eigenaar.
+- [I-109] Na I-46 en I-82 (22 november, 4302e8b)
 - [I-46] Vaste notitie en uitleg bij de rij Weekbudget zeggen "2 keer kracht", ook met kracht uit; vraagt… (22 november, c19bfb5)
 - [I-106] Back-up, na I-101 (22 november, 0eb7bce)
 - [I-107] Koppelkaart, na bundel 22 november (22 november, 74855bb)
