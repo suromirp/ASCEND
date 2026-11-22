@@ -188,10 +188,10 @@ describe('R: de afbouw telt niet als gemist', () => {
 
   it('elk scherm dat gemist toont, geeft de races mee', () => {
     expect(weekPage).toMatch(/raceDatesOf\(/);
-    // Na de races mag het concept van Forge volgen (openDraft, besluit 2026-11-15-concept-loopt-nog.md).
-    expect(weekPage).toMatch(/illness: settings\.illnessEpisodes, races(, openDraft: openDraftId)? \}/);
-    expect(weekPlanner).toMatch(/illness: illnessEpisodes, races(, openDraft: openDraftId)? \}/);
-    expect(weekPlanner).toMatch(/illness: settings\.illnessEpisodes, races(, openDraft: openDraftId)? \}/);
+    // Na de races mag het concept van Forge volgen (openDraft, besluit 2026-11-15-concept-loopt-nog.md), daarna de start van het programma (I-57).
+    expect(weekPage).toMatch(/illness: settings\.illnessEpisodes, races(, openDraft: openDraftId)?(, programStart: program\?\.startDate)? \}/);
+    expect(weekPlanner).toMatch(/illness: illnessEpisodes, races(, openDraft: openDraftId)?(, programStart: program\?\.startDate)? \}/);
+    expect(weekPlanner).toMatch(/illness: settings\.illnessEpisodes, races(, openDraft: openDraftId)?(, programStart: program\?\.startDate)? \}/);
     expect(weekPage).toMatch(/loggedIds: new Set\(sessionLogs\.map\(\(l\) => l\.plannedSessionId\)\), races(, openDraft: openDraftId)? \}\)\);/);
     expect(weekPlanner).toMatch(/races=\{races\}/);
     expect(standData).toMatch(/races: raceDatesOf\(/);

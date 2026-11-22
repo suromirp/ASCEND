@@ -3,7 +3,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { CalibrationNotice } from './CalibrationNotice';
 
 // I-83: de kaart IJkset heeft een weg naar de instelling, alleen in de stand open. Nagemaakte naam.
-type Phase = 'open' | 'added' | 'failed';
+type Phase = 'open' | 'added' | 'gone';
 type Found = { label: string; onClick?: () => void };
 const tree = (phase: Phase, onSettings: () => void): ReactElement =>
   CalibrationNotice({ name: 'Barbell Bench Press', phase, onAccept: async () => undefined, onLater: () => undefined, onSettings }) as ReactElement;
@@ -25,7 +25,7 @@ describe('CalibrationNotice, de weg naar de instelling', () => {
     open[2].onClick?.();
     expect(jump).toHaveBeenCalledTimes(1);
     expect(buttons(tree('added', jump))).toEqual([]);
-    expect(buttons(tree('failed', jump))).toEqual([]);
+    expect(buttons(tree('gone', jump))).toEqual([]);
   });
 
   it('ForgeWorkout sluit eerst, springt naar de rij in Forge en onthoudt de terugweg', () => {

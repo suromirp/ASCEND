@@ -153,7 +153,7 @@ export function WeekPage() {
   const { box, waiting } = weekBox({ notice: notice.concerns.length > 0, rest: restCard, extra: extraAdvice });
   // Gemist in de lopende week (afgeleid uit de logs, engine/sessionStatus.ts): dan staat Week opnieuw plannen direct
   // onder de dagen, met hoeveel er gemist is. De oude rij van een inhaal telt niet: die is overgeslagen.
-  const missed = current ? missedInWeek(sessions, sessionLogs, templateById, { leave: leavePeriods, templates: templateById, illness: settings.illnessEpisodes, races, openDraft: openDraftId }) : 0;
+  const missed = current ? missedInWeek(sessions, sessionLogs, templateById, { leave: leavePeriods, templates: templateById, illness: settings.illnessEpisodes, races, openDraft: openDraftId, programStart: program?.startDate }) : 0;
   const replanOn = !!program && trainings > 0 && addDays(weekStart, 6) >= today;
   const replanRow = replanOn && <WeekReplanRow key={weekStart} weekStart={weekStart} sub={replanSub(missed)} />;
   // Aangepast door ASCEND: één uitkomst voor de rij, het blad en het woord op de dagrij (engine/changeLog.ts).
@@ -395,7 +395,7 @@ export function WeekPage() {
           openBriefing={briefingFor === selected.id}
           startStep={openOnMove ? 'move' : undefined}
           caughtUpOn={!selectedLog && caughtUp.has(selected.id) ? caughtUpNoteFor(caughtUp.get(selected.id)!) : undefined}
-          catchUp={!selectedLog && selected.id !== openDraftId && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id), pause: { leave: settings.leavePeriods, templates: templateById, illness: settings.illnessEpisodes, races } }).ok}
+          catchUp={!selectedLog && selected.id !== openDraftId && catchUpEligibility(selected, templateById.get(selected.templateId)!, { logged: false, today: todayISO(), caughtUp: caughtUp.has(selected.id), pause: { leave: settings.leavePeriods, templates: templateById, illness: settings.illnessEpisodes, races, programStart: program?.startDate } }).ok}
           template={templateById.get(selected.templateId)!}
           allowedPair={pairs.get(selected.id)}
           placeReason={selectedPlace}

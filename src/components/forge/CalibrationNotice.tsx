@@ -5,7 +5,7 @@
 import { Eyebrow, SecondaryButton } from '../ui';
 import { TextButton } from '../TextButton';
 
-export function CalibrationNotice({ name, phase: state, onAccept, onLater, onSettings }: { name: string; phase: 'open' | 'added' | 'failed'; onAccept: () => Promise<void>; onLater: () => void; onSettings: () => void }) {
+export function CalibrationNotice({ name, phase: state, onAccept, onLater, onSettings }: { name: string; phase: 'open' | 'added' | 'gone'; onAccept: () => Promise<void>; onLater: () => void; onSettings: () => void }) {
   const ink = { color: 'var(--color-ink)' };
   const accept = () => void onAccept();
   return (
@@ -26,7 +26,7 @@ export function CalibrationNotice({ name, phase: state, onAccept, onLater, onSet
           </>
         ) : (
           <p role="status" className="text-sm leading-relaxed" style={ink}>
-            {state === 'added' ? `Er staat een set bij ${name}. Wil je hem toch niet, haal hem dan weg.` : `De set staat erbij, maar onthouden lukte niet. Forge vraagt het de volgende keer opnieuw.`}
+            {state === 'added' ? `Er staat een set bij ${name}. Wil je hem toch niet, haal hem dan weg.` : `De ijkset bij ${name} staat er nu niet bij.`}
           </p>
         )}
       </div>
