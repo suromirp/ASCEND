@@ -4,7 +4,7 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-Geen open vragen. De vier oude vragen (drempel en korte test, routes wandelen, horlogetoets, Forge-concept) zijn met het advies gebouwd en blijven instelbaar.
+Sterker worden met kracht uit (I-110, samen met I-47): het Richting-blad zegt dan nog "Kracht staat voorop". Keuzes: (1) Sterker worden niet tonen als kracht uit staat, met één zin waarom (advies); (2) wel tonen, met een andere zin; (3) laten zoals het is. Zonder antwoord: het bouwmoment kiest het advies, want het verandert geen doel en blijft instelbaar via kracht aan.
 
 ## Stuk of vast
 
@@ -15,6 +15,9 @@ Geen open vragen. De vier oude vragen (drempel en korte test, routes wandelen, h
 
 
 ## Net live
+
+### 22 november 08:50
+- Richting: met kracht uit noemen de uitleg en de keuzes geen keren kracht meer (I-109).
 
 ### 22 november 08:00
 - Weekbudget: met kracht uit noemen de notitie en de uitleg geen kracht meer (I-46). Code opgeruimd zonder gedragswijziging (deel van I-82).
