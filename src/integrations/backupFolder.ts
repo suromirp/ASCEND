@@ -188,10 +188,13 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
   }
   let moved = false;
   const isTaken = await taken();
-  if (opts.stillWanted && !opts.stillWanted()) {
+  // Telt deze poging niet meer, dan blijft de naam onaangeroerd: een nieuwere poging kan er al staan.
+  const unwanted = () => opts.stillWanted !== undefined && !opts.stillWanted();
+  const giveUp = async (): Promise<never> => {
     await fs.remove(tmp).catch(() => undefined);
     throw new AutoBackupError('write', 'temp');
-  }
+  };
+  if (unwanted()) await giveUp();
   if (isTaken) {
     // Tussen de eerste blik en nu kwam er iets onder de naam, of de blik lukte niet: nooit vervangen.
     if (opts.neverReplace) {
@@ -217,6 +220,9 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
     } catch (err) {
       failure = err;
       const held = await holdsSettled(fs, name, text);
+      // Een rename die laat een fout meldt: wat er nu onder de naam staat kan een nieuwere back-up zijn.
+      // Niets weghalen en `.old` niet terugzetten.
+      if (unwanted()) await giveUp();
       if (held === 'same') {
         done = true;
       } else if (held === 'unknown') {
@@ -235,6 +241,7 @@ export async function writeThroughTemp(fs: TempFs, name: string, text: string, a
   }
   await fs.remove(tmp).catch(() => undefined);
   if (!done) {
+    if (unwanted()) await giveUp();
     if (moved) await fs.rename(old, name).catch(() => undefined);
     if (moved || sawHalf) throw asBackupError(failure, 'rename');
     console.warn('Back-up: de naam lukte niet, het volgende volgnummer', failure);
