@@ -4,7 +4,7 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-Geen open vragen. I-110 en I-47 (Sterker worden met kracht uit): uw keuze 22 november was het advies, in aanbouw.
+Geen open vragen.
 
 ## Stuk of vast
 
@@ -15,6 +15,9 @@ Geen open vragen. I-110 en I-47 (Sterker worden met kracht uit): uw keuze 22 nov
 
 
 ## Net live
+
+### 22 november 09:30
+- Richting: met krachttraining uit staat Sterker worden niet meer in het richtingblad; al gekozen blijft het zichtbaar met een zin (I-110, I-47, uw keuze).
 
 ### 22 november 08:50
 - Richting: met kracht uit noemen de uitleg en de keuzes geen keren kracht meer (I-109).
