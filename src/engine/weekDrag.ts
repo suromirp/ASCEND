@@ -235,13 +235,16 @@ export const LEAVE_ASK_REASON = 'Deze training schoof opzij voor je vakantie. Ve
 const PERIOD_WORD: Record<LeaveKind, string> = { no_training: 'je vakantie', trek: 'je tocht', free_days: 'je vrije dagen', no_gym: 'je periode zonder sportschool' };
 // "werd korter" alleen als de rij het merk shortened heeft en nu echt korter staat dan zijn volle lengte (Lookout,
 // 16 november); anders "schoof opzij".
-export function leaveAskReason(session: Pick<PlannedSession, 'leave' | 'plannedMinutes'> & { leave: PlannedLeaveMark }, template: Pick<SessionTemplate, 'durationVariants'> | undefined, periods: LeavePeriod[] | undefined, verb: 'Verplaats' | 'Ruil' = 'Verplaats'): string {
+export function leaveAskReason(session: Pick<PlannedSession, 'leave' | 'plannedMinutes'> & { leave: PlannedLeaveMark }, template: Pick<SessionTemplate, 'durationVariants'> & { name?: string } | undefined, periods: LeavePeriod[] | undefined, verb: 'Verplaats' | 'Ruil' = 'Verplaats'): string {
+  const name = template?.name;
   const mark = session.leave;
   const kind = periods?.find((p) => p.id === mark.periodId)?.kind;
   if (!kind && verb === 'Verplaats') return LEAVE_ASK_REASON;
   const where = kind ? PERIOD_WORD[kind] : 'je vakantie';
   const short = !!mark.shortened && session.plannedMinutes !== undefined && !!template && session.plannedMinutes < template.durationVariants.full;
-  const what = short ? `Deze training werd korter door ${where}.` : `Deze training schoof opzij voor ${where}.`;
+  // Bij Ruil gaat het over de andere training: noem hem bij naam.
+  const who = verb === 'Ruil' && name ? name : 'Deze training';
+  const what = short ? `${who} werd korter door ${where}.` : `${who} schoof opzij voor ${where}.`;
   return `${what} ${verb} je hem, dan blijft hij op de nieuwe dag staan.`;
 }
 

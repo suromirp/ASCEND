@@ -24,11 +24,18 @@ const SWAP_PLACED = 'Je periode zette deze training hier neer. Ruil je hem, dan 
 export const SWAP_LEGS = 'Twee zware beendagen achter elkaar.';
 // De korte vraag onder de vinger bij een ruil die eerst vraagt; de chip zegt al met wie je ruilt (Lookout, 16 november).
 const SWAP_DROP_ASK = 'Als je loslaat, komt eerst de vraag.';
-const CHIP_MAX = 28;
+// Korter dan de andere chips: hij hangt rechtsboven op de rij en mag de titel van de rij op 360 px niet raken.
+const SWAP_CHIP_MAX = 16;
 const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 
 const dayLower = (date: string) => `${weekdayLongNL(date)} ${formatDateNL(date)}`;
-const fit = (...options: string[]) => options.find((o) => o.length <= CHIP_MAX) ?? options[options.length - 1].slice(0, CHIP_MAX);
+// De regel onder de vinger noemt de dag één keer: de kop, of de zin zelf als die de dag al noemt.
+function onceOn(said: string, date: string): string {
+  const title = dayTitle(date);
+  if (said.startsWith(title)) return said;
+  const lower = dayLower(date);
+  return `${title}. ${said.replace(` op ${lower}`, '')}`;
+}
 
 export type SwapCheck =
   | { ok: false; line: string }
@@ -214,8 +221,8 @@ export function withSwapVerdicts(ctx: DragContext, sessionId: string, verdicts: 
       kind: 'swap',
       droppable: true,
       tone: asks ? 'warn' : 'ok',
-      chip: fit(`Ruilen met ${tb.name}`, 'Ruilen'),
-      line: asks ? `${dayTitle(v.date)}. ${said} ${SWAP_DROP_ASK}` : `${dayTitle(v.date)}. Ruilen met ${tb.name}, die gaat naar ${dayLower(a.scheduledDate)}.${hints}`,
+      chip: `Ruilen met ${tb.name}`.length <= SWAP_CHIP_MAX ? `Ruilen met ${tb.name}` : 'Ruilen',
+      line: asks ? `${onceOn(said, v.date)} ${SWAP_DROP_ASK}` : `${dayTitle(v.date)}. Ruilen met ${tb.name}, die gaat naar ${dayLower(a.scheduledDate)}.${hints}`,
       ask: !!asks,
       ...(asks ? { askReason: asks } : {}),
       swapWithId: b.id,
