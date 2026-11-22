@@ -32,7 +32,6 @@ import { formatNumberNL } from '../utils/number';
 
 // --- weekly load (session-RPE) ---------------------------------------------------
 export type LoadSport = 'lopen' | 'kracht' | 'wandelen' | 'overig';
-export const LOAD_SPORTS: LoadSport[] = ['lopen', 'kracht', 'wandelen', 'overig'];
 
 // One training as it counts: minutes times effort.
 export interface LoadItem {

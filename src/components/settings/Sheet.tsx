@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSheetClose } from '../../utils/useSheetClose';
+import { strengthTrainingOn } from '../../engine/strengthTraining';
 import { hasSettingsHelp, loadSettingsHelp, settingsHelpIfLoaded } from '../../data/settingsHelpKeys';
 import { useAppData } from '../../state/AppDataContext';
 import { Portal } from '../Portal';
@@ -76,7 +77,7 @@ export function InfoSheet({ helpKey, onClose }: { helpKey: string; onClose: () =
   const named = settings.influenceNames !== false;
   const [, setLoaded] = useState(0);
   const [failed, setFailed] = useState(false);
-  const help = settingsHelpIfLoaded(helpKey, named);
+  const help = settingsHelpIfLoaded(helpKey, named, strengthTrainingOn(settings));
   const waiting = !help && hasSettingsHelp(helpKey);
   useEffect(() => {
     if (!waiting) return;

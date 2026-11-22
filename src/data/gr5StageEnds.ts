@@ -9,8 +9,6 @@
 
 export const GR5_OSM_ATTRIBUTION = '© OpenStreetMap contributors';
 export const GR5_OSM_LICENSE_URL = 'https://www.openstreetmap.org/copyright';
-export const GR5_OSM_RELATION = 2704286;
-export const GR5_OSM_TAKEN_ON = '2026-11-11';
 
 export interface Gr5StageEnds {
   start: { lat: number; lon: number };

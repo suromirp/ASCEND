@@ -319,9 +319,3 @@ export function withExerciseAddOns(raw: StrengthSettings | undefined, exerciseId
 
 // Voor hoeveel toestellen dit profiel een eigen keuze heeft.
 export const exerciseAddOnCount = (profile: GymProfile): number => Object.values(profile.exerciseAddOnKg ?? {}).filter((l) => cleanAddOnOverride(l)).length;
-
-// De waarde in de rij van een toestel: een korte lijst zoals hij is, een lange als "4,5 tot 109,5 kg".
-export function machineSummary(list: number[]): string {
-  if (list.length <= 6) return formatMachineWeights(list);
-  return `${formatMachineWeights([list[0]])} tot ${formatMachineWeights([list[list.length - 1]])} kg`;
-}

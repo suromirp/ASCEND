@@ -28,6 +28,6 @@ export function loadSettingsHelp(): Promise<HelpModule> {
 }
 
 // De uitleg als die al geladen is; anders undefined (laad dan eerst met loadSettingsHelp).
-export function settingsHelpIfLoaded(key: string, named: boolean): SettingsHelp | undefined {
-  return loaded?.settingsHelp(key, named);
+export function settingsHelpIfLoaded(key: string, named: boolean, strengthOn: boolean = true): SettingsHelp | undefined {
+  return loaded?.settingsHelp(key, named, strengthOn);
 }

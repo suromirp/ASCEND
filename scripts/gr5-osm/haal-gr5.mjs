@@ -414,8 +414,6 @@ ${withElevation ? '// Hoogte: EU-DEM 25 m via OpenTopoData (Copernicus Land Moni
 
 export const GR5_OSM_ATTRIBUTION = '© OpenStreetMap contributors';
 export const GR5_OSM_LICENSE_URL = 'https://www.openstreetmap.org/copyright';
-export const GR5_OSM_RELATION = ${SUPERROUTE};
-export const GR5_OSM_TAKEN_ON = '${today}';
 
 export interface Gr5StageEnds {
   start: { lat: number; lon: number };

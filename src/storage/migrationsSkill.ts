@@ -13,10 +13,10 @@
 // leest precies als voorheen. Met een kapotte `general` valt het doel weg (geteld als overgeslagen); zie readGeneral.
 
 import type { SkillGoal, SkillGoalStore, SkillStepProgress } from '../models/skillGoals';
+import { isRecord } from '../utils/guards';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const isText = (v: unknown, max = 200): v is string => typeof v === 'string' && v.trim().length > 0 && v.length <= max;
-const isRecord = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 
 // Alleen de vorm: een id, een ladder als tekst en een doelstap als geheel getal vanaf 1. Een ladder die deze versie
 // niet kent of een doelstap boven de ladder blijft ongewijzigd staan (ook velden van een nieuwere versie); het tonen

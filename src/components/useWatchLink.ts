@@ -53,11 +53,6 @@ export function storeWatchLink(link: Link | undefined): void {
   }
 }
 
-// Alleen voor tests: alsof de app net start.
-export function resetWatchLinkCache(): void {
-  last = undefined;
-}
-
 export function useWatchLink(): Link {
   const { sessionLogs } = useAppData();
   const [found, setFound] = useState<Link>(() => last ?? readStoredWatchLink(sessionLogs) ?? {});

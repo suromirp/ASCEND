@@ -17,6 +17,7 @@ import { formatNumberNL } from '../utils/number';
 import type { LadderState } from './skillLadder';
 import type { RowTarget, WorkoutExercise, WorkoutRow } from './forgeWorkout';
 import { isWorkSet } from './workSets';
+import { isNum } from '../utils/guards';
 
 // Minder en Meer bij een houding gaan in stappen van 5 seconden; een houding duurt hoogstens een uur (zoals het log).
 export const SECONDS_STEP = 5;
@@ -115,8 +116,6 @@ export function ladderHint(exercise: Pick<Exercise, 'id'> | undefined, state: La
 
 // --- de rijen -----------------------------------------------------------------------------------
 
-const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
-
 // De band van de laatste werkset van je vorige keer op deze oefening, anders geen.
 export function lastBand(previous: readonly SetLog[] | undefined): SetBand | undefined {
   const work = (previous ?? []).filter((s) => s && isWorkSet(s));
@@ -150,13 +149,13 @@ export function ladderRows(input: LadderRowsInput): { rows: WorkoutRow[]; hold: 
   let target: RowTarget;
   let row: Pick<WorkoutRow, 'weightKg' | 'reps' | 'seconds'>;
   if (hold) {
-    const done = work.map((s) => s.seconds).filter((n): n is number => finite(n) && n > 0);
+    const done = work.map((s) => s.seconds).filter((n): n is number => isNum(n) && n > 0);
     const top = test?.kind === 'hold' ? test.seconds : MAX_ROW_SECONDS;
     const seconds = done.length > 0 ? Math.min(top, Math.max(...done)) : SKILL_FLOOR_SECONDS;
     target = { repsLow: 1, repsHigh: 1, holdSec: seconds };
     row = { reps: 1, seconds };
   } else {
-    const counted = (added !== undefined ? work.filter((s) => finite(s.weightKg) && s.weightKg >= added) : work).filter((s) => finite(s.reps) && s.reps > 0);
+    const counted = (added !== undefined ? work.filter((s) => isNum(s.weightKg) && s.weightKg >= added) : work).filter((s) => isNum(s.reps) && s.reps > 0);
     let reps = SKILL_FLOOR_REPS;
     let weightKg: number | undefined;
     if (added !== undefined) {
@@ -222,8 +221,8 @@ export function asksClean(ex: WorkoutExercise, rowId: string, exercise: Exercise
   if (!exercise?.ladder) return false;
   const row = ex.rows.find((r) => r.id === rowId);
   if (!row || row.kind !== 'work' || !row.done || row.band !== undefined) return false;
-  if (exercise.measure === 'hold') return finite(row.seconds) && row.seconds >= SKILL_FLOOR_SECONDS;
-  return finite(row.reps) && row.reps >= SKILL_FLOOR_REPS;
+  if (exercise.measure === 'hold') return isNum(row.seconds) && row.seconds >= SKILL_FLOOR_SECONDS;
+  return isNum(row.reps) && row.reps >= SKILL_FLOOR_REPS;
 }
 
 // Ja is `clean: true`, Nee `clean: false`, niets (of "weet ik niet") laat het leeg.
@@ -249,7 +248,7 @@ export function countsForLine(exercise: Exercise | undefined, row: Pick<WorkoutR
   if (!place || exercise?.resistance !== 'bodyweight' || row.kind !== 'work' || row.band !== undefined) return undefined;
   const next = place.ladder.steps[place.step];
   if (!next || next.test.kind !== 'reps' || next.test.addedKg === undefined) return undefined;
-  if (!finite(row.weightKg) || row.weightKg < next.test.addedKg) return undefined;
+  if (!isNum(row.weightKg) || row.weightKg < next.test.addedKg) return undefined;
   const name = exerciseById(next.exerciseId)?.name;
   return name ? `Telt voor ${name}.` : undefined;
 }

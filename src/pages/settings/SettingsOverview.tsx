@@ -8,6 +8,8 @@ import { useSettingsFacts } from '../../components/settings/useSettingsFacts';
 import { jumpRoute, normalizeJumpTarget, useJumpState } from '../../components/settings/jump';
 import { SETTINGS_INDEX } from '../../data/settingsIndex';
 import { SETTINGS_PAGES, placementOf, settingsPageRoute, settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
+import { noteFor } from '../../engine/settingsDefs/derive';
+import { strengthTrainingOn } from '../../engine/strengthTraining';
 import { searchSettings } from '../../engine/settingsSearch';
 import { settingAvailabilityOnPage } from '../../engine/settingsAvailability';
 import { groupSummary, searchResultValue } from '../../engine/settingsSummary';
@@ -38,7 +40,7 @@ export function SettingsOverview() {
     ...(facts.noGoal ? { direction: directionStatus(facts.settings, facts.today) } : {}),
   });
   const searching = query.trim().length > 0;
-  const results = searching ? searchSettings(query, visibleInSearch(SETTINGS_INDEX, facts.trekGoal === true)).slice(0, MAX_RESULTS) : [];
+  const results = searching ? searchSettings(query, visibleInSearch(SETTINGS_INDEX, facts.trekGoal === true).map((i) => ({ ...i, note: noteFor(i.id, strengthTrainingOn(facts.settings)) }))).slice(0, MAX_RESULTS) : [];
   // Het tandwiel op een tab geeft `from` mee: de groep van die tab licht even op.
   const highlighted: SettingsPageId[] = jump.from === '/week' ? ['planning'] : jump.from === '/' ? ['vandaag'] : [];
 

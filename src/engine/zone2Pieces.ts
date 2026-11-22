@@ -379,13 +379,12 @@ export function isStaleZone2Pieces(z: Pick<Zone2Pieces, 'wholeKm' | 'wholeMinute
   return Math.abs(z.wholeKm - km) > 0.005 || Math.abs(z.wholeMinutes - minutes) > 0.05;
 }
 
-const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 function readPiece(raw: unknown): Zone2Piece | undefined {
   if (typeof raw !== 'object' || raw === null) return undefined;
   const r = raw as Record<string, unknown>;
   if (r.from !== 'stream' && r.from !== 'km') return undefined;
-  if (!finite(r.startSec) || !finite(r.endSec) || !finite(r.sec) || !finite(r.distanceM) || !finite(r.hr) || !finite(r.paceSecKm) || !finite(r.gradePct) || typeof r.flat !== 'boolean') return undefined;
+  if (!isNum(r.startSec) || !isNum(r.endSec) || !isNum(r.sec) || !isNum(r.distanceM) || !isNum(r.hr) || !isNum(r.paceSecKm) || !isNum(r.gradePct) || typeof r.flat !== 'boolean') return undefined;
   if (r.startSec < 0 || r.endSec <= r.startSec || r.sec <= 0 || r.distanceM <= 0 || r.hr <= 0 || r.paceSecKm <= 0) return undefined;
   return { from: r.from, startSec: r.startSec, endSec: r.endSec, sec: r.sec, distanceM: r.distanceM, hr: r.hr, paceSecKm: r.paceSecKm, flat: r.flat, gradePct: r.gradePct };
 }
@@ -394,7 +393,7 @@ function readPiece(raw: unknown): Zone2Piece | undefined {
 export function readZone2Pieces(raw: unknown): Zone2Pieces | undefined {
   if (typeof raw !== 'object' || raw === null) return undefined;
   const r = raw as Record<string, unknown>;
-  if (r.version !== 1 || !finite(r.wholeKm) || !finite(r.wholeMinutes) || typeof r.builtAt !== 'string' || !Array.isArray(r.pieces) || r.pieces.length > 500) return undefined;
+  if (r.version !== 1 || !isNum(r.wholeKm) || !isNum(r.wholeMinutes) || typeof r.builtAt !== 'string' || !Array.isArray(r.pieces) || r.pieces.length > 500) return undefined;
   const pieces = r.pieces.map(readPiece);
   if (pieces.some((x) => !x)) return undefined;
   return { version: 1, wholeKm: r.wholeKm, wholeMinutes: r.wholeMinutes, builtAt: r.builtAt, pieces: pieces as Zone2Piece[] };

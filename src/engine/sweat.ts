@@ -27,6 +27,7 @@ import { isWalkOrTripLog, logSport } from './sports';
 import { mean } from '../utils/stats';
 import type { SessionLog } from '../models/training';
 import type { SweatActivity, SweatEntry } from '../models/sweat';
+import { isNum } from '../utils/guards';
 
 // Korter dan dit weegt de weegschaal (op 100 g) te zwaar mee in het tempo.
 const MIN_SWEAT_MINUTES = 30;
@@ -45,8 +46,6 @@ export interface SweatRate {
   // De temperatuur waarvoor het geldt.
   tempC: number;
 }
-
-const finite = (v: number | undefined): v is number => typeof v === 'number' && Number.isFinite(v);
 
 // De soort meting van een training: lopen is 'run', een wandeling of tocht 'walk'; de rest
 // krijgt geen zweetmeting. De wandeling-of-tochtregel is die van de schoenen
@@ -71,14 +70,14 @@ export function usableSweatEntries(entries: SweatEntry[] | undefined, logs: Pick
   return (entries ?? []).flatMap((e) => {
     const log = byId.get(e.logId);
     if (!log) return [];
-    return [finite(log.durationMinutes) && log.durationMinutes > 0 ? { ...e, durationMinutes: log.durationMinutes } : e];
+    return [isNum(log.durationMinutes) && log.durationMinutes > 0 ? { ...e, durationMinutes: log.durationMinutes } : e];
   });
 }
 
 // Het zweetverlies van één weging in ml: gewichtsverschil, plus wat je dronk, min wat je
 // plaste. Undefined zonder allebei de wegingen.
 export function sweatLossMl(e: Pick<SweatEntry, 'weightBeforeKg' | 'weightAfterKg' | 'drankMl' | 'peeMl'>): number | undefined {
-  if (!finite(e.weightBeforeKg) || !finite(e.weightAfterKg)) return undefined;
+  if (!isNum(e.weightBeforeKg) || !isNum(e.weightAfterKg)) return undefined;
   return Math.round((e.weightBeforeKg - e.weightAfterKg) * 1000 + (e.drankMl ?? 0) - (e.peeMl ?? 0));
 }
 
@@ -92,7 +91,7 @@ export interface EntryRate {
 export function entryRate(e: SweatEntry): EntryRate | undefined {
   if (!(e.durationMinutes >= MIN_SWEAT_MINUTES)) return undefined;
   const hours = e.durationMinutes / 60;
-  const ok = (ml: number | undefined) => (finite(ml) && ml > 0 && ml / hours <= MAX_SWEAT_ML_PER_HOUR ? Math.round(ml / hours) : undefined);
+  const ok = (ml: number | undefined) => (isNum(ml) && ml > 0 && ml / hours <= MAX_SWEAT_ML_PER_HOUR ? Math.round(ml / hours) : undefined);
   const w = ok(sweatLossMl(e));
   if (w !== undefined) return { mlPerHour: w, source: 'weighed' };
   const h = ok(e.watchMl);
@@ -133,7 +132,7 @@ interface Point { rate: number; tempC?: number }
 // undefined als er geen zijn.
 function fromPoints(points: Point[], tempC: number): { mlPerHour: number; count: number } | undefined {
   if (points.length === 0) return undefined;
-  const withTemp = points.filter((p): p is Point & { tempC: number } => finite(p.tempC));
+  const withTemp = points.filter((p): p is Point & { tempC: number } => isNum(p.tempC));
   const temps = withTemp.map((p) => p.tempC);
   // 1. Een lijn, als er genoeg spreiding in de temperatuur is en we er niet ver buiten gaan.
   if (withTemp.length >= 3) {
