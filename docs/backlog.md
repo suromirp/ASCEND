@@ -30,7 +30,6 @@ Hoogste code: I-110. Een nieuw punt krijgt het volgende nummer (zet het getal hi
 - [I-52] Eerste week bij heel licht (Lookout 15 november): Herstelwandeling 45 min staat langer dan de lange wandeling van 30 min, en kracht 75 min past slecht bij "alleen makkelijk"; de wandelkaart op Vandaag heeft het etiket "Vandaag · Hardlopen". Hoort bij I-18 stap 3.
 - [I-53] Routes op reis (Pathfinder 15 november, later): zoekt hij zonder actuele kaart, zeg dat in één regel (`routeProposal.ts:135`); bij een time-out een snelle weg naar een andere plek naast Opnieuw.
 - [I-54] Twee tabbladen (Warden 15 november): dezelfde geplande training tegelijk opslaan of afvinken in twee tabbladen schrijft twee logs (`src/state/logSession.ts:92-127`, kijken en schrijven niet in één transactie). Opslag, Warden op Fable.
-- [I-47] Richting Sterker worden met kracht uit (Pathfinder 15 november, besluitpunt): de richting belooft "Kracht staat voorop" terwijl de planning lopen geeft. Kiezen: de richting verbergen bij kracht uit, of zeggen dat het lopen wordt. Geen tekstfix.
 
 - [I-10] Profielendoorloop 14 november (verslagen in `docs/profielen/2026-11-14-*.md` op de branches `claude/profiel-*`; vier van vijf binnen, ziek-vakantie loopt). Moet, gegroepeerd, in volgorde van bouwen:
   - [I-14] D. Eén plan: het eerste voorstel noemt een herstelwandeling die daarna nergens staat en 2 keer kracht bij 1 in het plan (beginner 1, GR5 7); Vandaag, Week en de weekbalk noemen verschillende trainingen (hardloper 1); het voorstel Deze week nog een keer? noemt 60, 55 en 50 min voor dezelfde loop (GR5 5); na een zware test "je benen zijn dan fris" naast "rustig houden" (hardloper 2). Planner, Opus met Warden op Fable; eerst naspelen. (nakijken)
@@ -90,6 +89,7 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-47] Richting Sterker worden met kracht uit (22 november, 40634d8)
 - [I-110] Sterker worden met kracht uit (Sherpa 22 november, vraag): het Richting-blad zegt bij Sterker worden "Kracht staat voorop, duur loopt rustig mee.", ook als kracht uit staat. Advies: met kracht uit Sterker worden niet aanbieden of grijs met één zin; hangt samen met I-47 (Richting Sterker worden met kracht uit, besluitpunt). Niet zonder de eigenaar.
 - [I-109] Na I-46 en I-82 (22 november, 4302e8b)
 - [I-46] Vaste notitie en uitleg bij de rij Weekbudget zeggen "2 keer kracht", ook met kracht uit; vraagt… (22 november, c19bfb5)
