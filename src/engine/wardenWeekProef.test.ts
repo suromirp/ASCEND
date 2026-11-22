@@ -180,14 +180,17 @@ describe('afbouw voor een race en de start van het programma', () => {
   });
 });
 
-describe('RAND: een rij van voor de start van het programma', () => {
-  it('Week noemt hem gemist en de kaart telt hem; de terugblik telt en noemt hem niet (bestond al, vastgelegd)', () => {
+describe('een rij van voor de start van het programma (I-57)', () => {
+  it('Week en de kaart volgen de terugblik: hij is niet gemist, een rij na de start wel', () => {
     const late: Program = { ...program, startDate: '2026-10-08' };
     const plan = [ps('a', 'tpl_upper_a', '2026-10-06'), ps('b', 'tpl_easy_run', '2026-10-09')];
     const r = buildWeekReview({ weekStart: W, plannedSessions: plan, logs: [], templates, program: late, planChangeLog: [], asOf: '2026-10-10' })!;
     clock('2026-10-10');
     expect(r.missed).toEqual(['Rustige duurloop']);
-    expect(missedInWeek(plan, [], byId, { leave: undefined, templates: byId })).toBe(2);
+    const pause = { leave: undefined, templates: byId, programStart: late.startDate };
+    expect(missedInWeek(plan, [], byId, pause)).toBe(1);
+    expect(deriveSessionStatus(plan[0], [], false, pause).status).not.toBe('missed');
+    expect(deriveSessionStatus(plan[1], [], false, pause).status).toBe('missed');
   });
 });
 

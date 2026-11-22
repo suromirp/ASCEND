@@ -28,7 +28,8 @@ import { EFFORT_COLOR } from './effortColor';
 import { HeartSign } from './influence/HeartSign';
 import { useDeviations } from './influence/useInfluence';
 import { entryForLog, signState, type SignState } from '../engine/influence';
-import { Fragment, useMemo, type ReactNode } from 'react';
+import { Fragment, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Portal } from './Portal';
 import { dragEligibility } from '../engine/weekDrag';
 import { doneOnOtherDay, rowExtra } from '../engine/weekRow';
 import { catchUpEligibility, catchUpNoteFor, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
@@ -92,7 +93,7 @@ function SessionRow({
   const { settings: { restDayMode, illnessEpisodes }, openDraftId } = useAppData();
   const restMode = restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
-  const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest, { leave, templates, illness: illnessEpisodes, races, openDraft: openDraftId });
+  const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest, { leave, templates, illness: illnessEpisodes, races, openDraft: openDraftId, programStart: program?.startDate });
   // Teken en woord van de rij volgen het blad (engine/skipReason.ts): een overgeslagen rij die door ziekte verviel heet
   // Vervallen. Alleen weergave; de telling leest `status`.
   const reasonOf = useSkipReason();
@@ -364,7 +365,7 @@ export function WeekPlanner({
     // (vandaag of later): loslaten haalt hem in (engine/catchUp.ts). Een andere week gaat via het blad.
     // Vervallen (een gemelde vakantie of ziekte, of de afbouw voor een race die er al was) haal je niet in: geen greep.
     // Een training die nog loopt (een concept in Forge) haal je ook niet in: rond hem af of verwijder hem eerst.
-    const pastStatus = deriveSessionStatus(s, logs, false, { leave, templates, illness: settings.illnessEpisodes, races, openDraft: openDraftId }).status;
+    const pastStatus = deriveSessionStatus(s, logs, false, { leave, templates, illness: settings.illnessEpisodes, races, openDraft: openDraftId, programStart: program?.startDate }).status;
     const lapsedDay = pastStatus === 'away' || pastStatus === 'open';
     const catchable = eligibility && !eligibility.ok && eligibility.reason === 'history' && !lapsedDay && days.some((d) => d >= today)
       && catchUpEligibility(s, template, { logged: loggedIds.has(s.id), today, caughtUp: caughtUp.has(s.id), pause: { leave, templates, illness: settings.illnessEpisodes, races } }).ok;
@@ -507,10 +508,18 @@ export function WeekPlanner({
 // Het doelvak: de dag onder je vinger, nooit meer dan een. Mint als de dag past, amber als er iets
 // niet klopt maar het jouw keuze is of er een voorstel volgt, gedempt gestippeld als de dag niet kan.
 // Het label legt niets over de rij heen en verschuift niets; kleur is nooit het enige signaal.
+// De chip hangt in een Portal boven de zwevende rij (die staat vast op z-60): anders ligt hij bij slepen eronder.
 function DropTarget({ tone, chip }: { tone: 'ok' | 'warn' | 'none'; chip?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<{ top: number; right: number } | null>(null);
+  useLayoutEffect(() => {
+    const r = ref.current?.getBoundingClientRect();
+    if (r) setBox({ top: r.top, right: r.right });
+  }, []);
   const color = tone === 'ok' ? 'var(--color-action)' : tone === 'warn' ? 'var(--color-warning)' : 'var(--color-control-border)';
   return (
     <div
+      ref={ref}
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 z-10"
       style={tone === 'none'
@@ -520,10 +529,16 @@ function DropTarget({ tone, chip }: { tone: 'ok' | 'warn' | 'none'; chip?: strin
           background: tone === 'ok' ? 'color-mix(in srgb, var(--color-action-muted) 45%, transparent)' : 'color-mix(in srgb, var(--color-warning) 12%, transparent)',
         }}
     >
-      {chip && (
-        <span className="absolute right-2 top-0.5 rounded-full border px-2 text-xs leading-5" style={{ background: 'var(--color-raised)', color: 'var(--color-ink)', borderColor: color }}>
-          {chip}
-        </span>
+      {chip && box && (
+        <Portal>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none fixed z-[70] rounded-full border px-2 text-xs leading-5"
+            style={{ top: box.top + 2, right: window.innerWidth - box.right + 8, background: 'var(--color-raised)', color: 'var(--color-ink)', borderColor: color }}
+          >
+            {chip}
+          </span>
+        </Portal>
       )}
     </div>
   );

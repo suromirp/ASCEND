@@ -56,6 +56,9 @@ interface PauseBase {
   races?: readonly string[];
   // De geplande sessie waar nog een concept van in Forge ligt (openDraftId), of niets.
   openDraft?: string;
+  // De startdatum van het programma: een rij van daarvoor (een restje van een eerdere planning) telt nergens als gemist,
+  // net als in de weekterugblik (engine/weekLogs.ts#leftOutOfCount, I-57).
+  programStart?: string;
 }
 // Wie de periodes meegeeft, geeft ook de sjablonen mee: zonder sportschool telt alleen wat de sportschool nodig heeft
 // als weg (docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md). Verplicht, zodat geen scherm stil een
@@ -86,6 +89,7 @@ export function isDraftOpen(session: Pick<PlannedSession, 'id' | 'scheduledDate'
 // { leave, templates, illness, races } mee.
 // Via de ene regel (engine/dayRules.ts, stap tellen). Wie veel rijen telt, maakt de regel één keer (`pauseRules`).
 export function isPausedFor(session: Pick<PlannedSession, 'scheduledDate' | 'templateId'>, pause: PauseContext | undefined, today: string, rules: DayRules = pauseRules(pause, today)): boolean {
+  if (pause?.programStart && session.scheduledDate < pause.programStart) return true;
   return !rules.ok({ date: session.scheduledDate, step: 'count', template: templateIn(pause?.templates, session.templateId) });
 }
 
