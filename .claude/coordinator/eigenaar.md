@@ -16,6 +16,11 @@ Geen open vragen. De vier oude vragen (drempel en korte test, routes wandelen, h
 
 ## Net live
 
+### 22 november 05:50
+- Import: het ochtendfilter raakt alleen intervals.icu en Health Connect; je eigen invoer, Garmin en MacroFactor blijven staan (I-98, I-101).
+- Koppelvoorstel: zegt nu ook dat een rustige loop later in de week zijn korte test verliest; de kaart springt niet meer (I-99, I-100, I-102).
+- Week: ziekmelding kort als "Ziek gemeld: koorts", dag één keer in sleep- en ruilregel, één punt op een rustdag zonder sportschool, vervallen training zonder mint (I-56, I-85, deel van I-72).
+
 ### 22 november 00:45
 - Back-up terugzetten: voor een import bewaart ASCEND eerst een kopie van wat er stond; een tijdstip in de toekomst uit een bestand telt niet meer als nu. Uitgezette soorten komen niet terug bij een import (I-93, I-97).
 - Koppelvoorstel: zegt nu of je korte test van die week verschuift als je een loop koppelt; de knoppen wachten tot dat bekend is (I-95).
