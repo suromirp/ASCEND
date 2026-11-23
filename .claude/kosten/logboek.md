@@ -575,3 +575,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-23 | Lookout beginnersladder I-18 | tester helper | sonnet | 87k tok | 8 min | geen moet |
 | 2026-11-23 | Warden Eén plan 2 en Losse sport | reviewer helper | opus | 90k tok | 12 min | moet M1 (stem) en M2 (tekst) |
 | 2026-11-23 | Sherpa terugkeer rustdag I-144 | ontwikkelaar helper | opus | 171k tok | 29 min | oorzaak en fix, besluit terugkeer-eerste-dag |
+| 2026-11-23 | Warden terugkeer I-144 | reviewer helper | opus | 104k tok | 7 min | niet akkoord: oorzaak onbewezen, 48 uur |
