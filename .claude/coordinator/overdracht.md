@@ -1,23 +1,16 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 23 november 2026 door coördinator session_01LnDpSkRtYRz7771kuLPf2T (opvolger van session_01LnDpSip9wpY6fuZXMm2yqw). Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
+Bijgewerkt: 23 november 2026 06:00 door coördinator session_01LnDpSnS2nhuSzP3eTLuurZ. Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
 
-## Stand 23 november 03:45 (coördinator session_01LnDpSnS2nhuSzP3eTLuurZ)
+## Wissel 23 november 06:00 (van session_01LnDpSnS2nhuSzP3eTLuurZ)
 
-- Overgenomen. Bundel 3 (I-113, I-60, I-30, I-73) gestart: Sherpa sonnet op claude/forge-logs-23, raakt naspelen niet.
-- Naspelen-herstel binnen (9a451b88), Warden tweede ronde akkoord (Mag: `rules ?? rd` opruimen, valkuilregel rules/shown in briefje lopen-en-tests).
-- Bundel 2 LIVE als fec6c454 (04:30), backlog bij 13ef02f7 (I-125, I-130 tot I-136 erbij), Werkkaart-trigger gezet. Lookout-fix: tweede regel bij schakelaar (settings.css) meegenomen.
-- Bundel 3 proef 23e groen (fix briefje 45fd0ce5). Bundel 4 dayRules 073ea446; proef 23f (main + 3 + 4) groen incl. kaart (geen verschil). Lookout 23f loopt. Warden Fable bundel 4: I-82 akkoord, 2 Moet in I-74 (slot = niveau 1, kies op rol; 'Met koorts' ook bij buikgriep) terug naar Sherpa (worktree staat nog). Na herstel: opnieuw mergen in 23f, controles, squash 'Klaar: I-113, I-60, I-73, I-74, I-82'.
-- Mag bundel 4 naar backlog: equivalentietoets op aanroepers (3-4 overlappende periodes), toets pauze in moveActions, nearbyTerrain bouwt dayRules per aanroep, chip doeldag achter sleepkaart 412 px, rest dayRulesScan-lijst (adviceLoad, adviceWeek, adviceShared, reentry, repeatWeek, WeekdayPatternLine, leaveBlock, LEAVE weekValidator).
-- Kostenregels nog op main zetten met de squash van bundel 3: Sherpa forge sonnet 110k 18 min; Warden naspelen 29k; Warden forge fable 103k 16 min; Lookout 23d 93k 18 min; Sherpa dayRules opus.
-- Bundel 3: claude/forge-logs-23 (39b88b96 + herstel 903ce279). Warden Fable: Moet was warmSourceNow tegen besluit 14 nov; eruit gehaald, vraag in eigenaar.md. I-30 blijft deels open (alleen uitleg Vragen na je loop gedaan; rest stond al op main). Volle controles nog op de volgende proef (tsc faalt in worktree met symlink node_modules). Mag: geruilde bron zonder opwarmrijen, still pas weg na heropenen.
-- Fout van mij: worktree van een bouwer opgeruimd voor Warden klaar was, daardoor kon hij niet hervat worden. Les: worktree pas weg na squash.
-- Limiet reset 08:40 Amsterdam.
-
-## Wissel 23 november 03:40
-
-- Lopend: herstel naspelen door helper a18affb46032c6d5e in de vorige coördinator-chat (session_01LnDpSkRtYRz7771kuLPf2T); hij pusht naar claude/naspelen-hoogte-ziek met "Klaar: I-77, I-33, I-78". Kijk met git log origin/claude/naspelen-hoogte-ziek; geen nieuwe commit na 8f154102 binnen een uur: verse Sherpa (opus) met de twee Moet-punten hieronder bij 8.
-- Volgende stap: proef van main 36542894 plus week (akkoord), naspelen (na herstel) en route-op-reis f8ffff33; één Lookout; npm run kaart in /home/user/ascend; squash. Dan bundels 3 en 4.
+- Main dff62db9. Live vannacht: bundel 1 en 1b (eerder), bundel 2 fec6c454 (week, naspelen, route op reis), bundel 3 en 4 121f9c1e (Forge en logs, dayRules). Backlog bij; Inbox tot I-138. Werkkaart-triggers gezet.
+- Geen lopende bouwers. Oude worktrees opgeruimd; /home/user/ascend staat op claude/proef-23f (mag weg). Vorige coördinator session_01LnDpSkRtYRz7771kuLPf2T mag gearchiveerd.
+- Volgende: bundel 9, de grote punten I-14, I-18, I-23, I-34: eerst Cartographer (ontwerper, opus) per punt in docs/visie (eerst docs/onderzoek en docs/visie doorzoeken), dan bouwen naar risico. I-103 niet. Daarna Mag-ronde (I-125, I-130 tot I-138) als kleine bundels. Als de lijst leeg is: Graphify-proef (trig_01Y51Apkj25Cb19ifriWdA36) opnieuw plannen.
+- Limiet reset 08:40 Amsterdam. Ochtend één pushmelding Jarvis-stijl met wat live ging (zie eigenaar.md Net live) en de open vragen.
+- Nieuwe open vraag: opwarmset na ruil (I-30), advies zo laten volgens besluit 14 november.
+- Lookout 23f: geen Moet; ijkset na heropenen en horlogewandeling niet bereikbaar in de browser.
+- Lessen: worktree van een bouwer pas weg na de squash; werkbriefje hoogstens 44 regels plus slot; tsc in een worktree met symlink naar node_modules faalt, volle controles op de proef in /home/user/ascend; kaart en Lookout nooit tegelijk; één Warden per bundel, herstel zelf nakijken; equivalentietoets oud tegen nieuw (Warden) is een goede poort bij refactors.
 
 ## Nachtlijst 23 november (Nachtronde via chat ASCEND, maandag = bouwmoment)
 
