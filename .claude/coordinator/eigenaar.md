@@ -41,6 +41,8 @@ Sinds: 23 november.
 
 ## Stuk of vast
 
+- Vandaag een rustdag na een week niets (I-144): wordt nagespeeld en hersteld, voorrang boven bundel 9.
+
 
 ## Loopt
 

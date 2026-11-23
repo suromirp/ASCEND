@@ -568,3 +568,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-23 | Sherpa dayRules I-74, I-82 | ontwikkelaar helper | opus | 199k tok | 34 min | gebouwd plus herstel, besluit ziek-en-test-of-wedstrijd |
 | 2026-11-23 | Warden dayRules | reviewer helper | fable | 114k tok | 24 min | I-82 akkoord, 2 moet I-74 hersteld |
 | 2026-11-23 | Lookout proef 23f (forge, dayRules) | tester helper | sonnet | 92k tok | 15 min | geen moet; ijkset en horlogewandeling niet bereikbaar |
+| 2026-11-23 | Mag-ronde plus ontwerpen bundel 9 naar main (9f6c67fa) | coördinator | opus | n.v.t. | n.v.t. | Mag A en B, vier ontwerpen, I-14-tests, zuinige start; kaart alleen verklaarde verschillen |
+| 2026-11-23 | Warden beginnersladder I-18 | reviewer helper | opus | 110k tok | 23 min | akkoord, geen moet; mag naar I-143 |
