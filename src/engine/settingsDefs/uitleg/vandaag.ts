@@ -235,7 +235,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Simpel', text: 'dezelfde helling op en af tot de hoogtemeters er zijn. Bij een vlakke training heen en terug over hetzelfde pad.' },
       { head: 'Avontuurlijk', text: 'één lange lus langs verschillende hellingen en onverharde paden, liefst zonder stukken twee keer.' },
       { head: 'Naar je horloge', text: 'met Naar Garmin Connect kies je de app van je horloge en sla je de lus op als koers; anders download je het GPX-bestand.' },
-      { head: 'Wat de deur uit gaat', text: `standaard je plek van nu, precies, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS), en op ongeveer 100 m naar OpenStreetMap voor heuvels en paden; de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Bij Startpunt van je lus kies je ook Thuis, of Ongeveer: dan gaat alleen je plek, afgerond op ongeveer een kilometer, de deur uit. Geen naam, geen adres. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. ${PHOTO_SOURCES_LINE} De route wordt niet bewaard.` },
+      { head: 'Wat de deur uit gaat', text: `standaard je plek van nu, precies, naar de routeplanner (BRouter, anders Valhalla van FOSSGIS), en op ongeveer 100 m naar OpenStreetMap voor heuvels, paden, water en bos; de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Bij Startpunt van je lus kies je ook Thuis, of Ongeveer: dan gaat alleen je plek, afgerond op ongeveer een kilometer, de deur uit. Geen naam, geen adres. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. ${PHOTO_SOURCES_LINE} De route wordt niet bewaard.` },
     ],
   },
   'route-start': {
@@ -245,7 +245,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Waar je nu bent', text: 'het advies. Bij elke zoektocht komt één keer de vraag om je plek, op 50 m nauwkeurig, en die gaat naar de routeplanner (BRouter, anders Valhalla van FOSSGIS). Hij wordt niet als startpunt bewaard. Lukt het niet, dan wordt er niet gezocht: één regel zegt waarom, en je kiest Opnieuw, Thuis (als je die hebt) of Andere plek. Nooit stil bij Thuis, dat kan ver weg liggen als je op reis bent. Boven de kaart kies je met Start bij, onder Andere plek, voor deze training ook Thuis of een andere bewaarde plek.' },
       { head: 'Thuis', text: 'je kiest hieronder Gebruik waar ik nu ben, bij je deur, of je tikt een punt op de kaart bij Route voorstellen en kiest Bewaar als plek, Maak dit Thuis. Dat punt gaat naar de routeplanner en wordt op dit toestel bewaard; het gaat mee in je back-up. Start hier op de kaart geldt alleen voor die zoektocht en verandert Thuis niet. Wis startpunt haalt Thuis weg.' },
       { head: 'Ongeveer', text: 'je plaats, binnen een kilometer. De lus begint tot ongeveer 700 m van huis.' },
-      { head: 'OpenStreetMap', text: 'heuvels en paden zoekt het om je plek van nu (op ongeveer 100 m), om Thuis, of bij Ongeveer om je afgeronde plek. De hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Wis startpunt haalt ook de bewaarde heuvels rond een precies punt weg.' },
+      { head: 'OpenStreetMap', text: 'heuvels, paden, water en bos zoekt het om je plek van nu (op ongeveer 100 m), om Thuis, of bij Ongeveer om je afgeronde plek. De hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Wis startpunt haalt ook de bewaarde heuvels rond een precies punt weg.' },
       { head: 'Het dichtstbijzijnde pad', text: 'de routeplanner begint op het pad of de weg het dichtst bij je startpunt. Het stukje ernaartoe is een rechte lijn.' },
     ],
   },
@@ -273,7 +273,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
     points: [
       { head: 'Aan', text: 'de app draait de lus zo dat het eerste derde het meest tegen de wind in gaat. Het zijn dezelfde punten achterstevoren, dus de afstand blijft. Eén regel bij de lus zegt wat je tegenkomt; kies je Andersom, dan zegt die regel dat je nu met de wind mee begint.' },
       { head: 'Uit', text: 'de lus blijft zoals de routeplanner hem maakt.' },
-      { head: 'Altijd', text: 'bij wind onder 12 km/u (ongeveer 3 Beaufort) of zonder windgegevens verandert er niets. De wind komt uit het weer dat de app al ophaalt; er gaat niets nieuws de deur uit.' },
+      { head: 'Altijd', text: 'bij wind onder 12 km/u (ongeveer 3 Beaufort), zonder windgegevens of als je start verder dan 25 km van de plek van het weer ligt, verandert er niets. De wind is die van het uur waarop je begint; is dat uur vandaag al voorbij, dan van het uur van nu. Hij komt uit het weer dat de app al ophaalt; er gaat niets nieuws de deur uit.' },
     ],
   },
   'route-donker': {

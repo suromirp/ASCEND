@@ -51,4 +51,12 @@ describe('het blad Route, gerenderd', () => {
       expect(html).toContain(`height:${ROUTE_MAP_HEIGHT}`);
     }
   });
+  it('bij een tijdgrens staat naast Opnieuw zoeken ook Andere plek, zonder verbinding niet (I-53)', () => {
+    const model = {} as never;
+    const slow = renderToStaticMarkup(createElement(RouteFailure, { kind: 'timeout', onRetry: () => undefined, model }));
+    expect(slow).toContain('>Opnieuw zoeken<');
+    expect(slow).toContain('>Andere plek<');
+    const offline = renderToStaticMarkup(createElement(RouteFailure, { kind: 'offline', onRetry: () => undefined, model }));
+    expect(offline).not.toContain('Andere plek');
+  });
 });

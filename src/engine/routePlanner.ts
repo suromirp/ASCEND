@@ -55,6 +55,8 @@ export interface PlanInput {
   // Stukken die de lus moet mijden (Vermijd dit stuk). Een punt erin wordt geen doel, de routeplanner
   // krijgt ze mee, en een lus die er toch doorheen gaat telt niet (dan is er geen weg omheen).
   avoid?: AvoidArea[];
+  // De klok, voor de leeftijd van de kaart; standaard nu.
+  now?: Date;
 }
 
 const routeOptions = (input: PlanInput) => (input.avoid && input.avoid.length > 0 ? { avoid: input.avoid } : undefined);
@@ -83,6 +85,8 @@ export interface RoutePlans {
   adventure: PlanOutcome;
   // Ontbreekt als de kaart niet antwoordde: dan is er niets geteld, ook geen nul.
   found?: TerrainFound;
+  // De kaart van de omgeving ontbrak ('none') of was ouder dan MAP_OLD_DAYS ('old'); ontbreekt als hij actueel was.
+  map?: 'none' | 'old';
   // Een melding over de hele zoektocht (bijvoorbeeld geen pad bij het startpunt).
   notice?: string;
 }
@@ -717,6 +721,24 @@ export function renotedProposal(p: RouteProposal, target: RouteTarget, found?: T
   return o.ok ? o.proposal : p;
 }
 
+// Zoveel dagen is de kaart van de omgeving actueel (zoals storage/nearbyTerrain.ts#TERRAIN_FETCH_DAYS).
+export const MAP_OLD_DAYS = 30;
+
+function mapAge(terrain: NearbyTerrain | undefined, now: Date): 'none' | 'old' | undefined {
+  if (!terrain) return 'none';
+  const at = Date.parse(terrain.fetchedAt);
+  return Number.isFinite(at) && now.getTime() - at > MAP_OLD_DAYS * 86_400_000 ? 'old' : undefined;
+}
+
+// Eén regel bij het voorstel als de kaart van de omgeving ontbrak of oud was; leeg zonder lus (dan zegt de
+// fout genoeg) en bij een actuele kaart. Alleen tekst: het plant niets.
+export function mapAgeLine(plans: RoutePlans): string {
+  if (!plans.map || ![plans.simple, plans.adventure].some((o) => o.ok)) return '';
+  return plans.map === 'none'
+    ? 'Er is geen actuele kaart van de omgeving, dus de lus is zonder heuvels, paden, water en bos gezocht.'
+    : 'De kaart van de omgeving is een oude kaart, dus heuvels, paden, water en bos kunnen veranderd zijn.';
+}
+
 // Beide lussen, de avontuurlijke eerst (zijn lijn is de reserve voor Simpel). Gooit nooit: elke
 // uitkomst is een lus of een reden.
 export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<RoutePlans> {
@@ -736,6 +758,8 @@ export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<R
     if (mine.ok && rival.ok && mine.proposal.distanceM < input.target.distanceKm * 1000 * FAR_OFF && fitsDistance(rival.proposal, input.target)) plans[style] = { ok: false, reason: 'nothing', farOff: true };
   }
   if (found) plans.found = found;
+  const age = mapAge(input.terrain, input.now ?? new Date());
+  if (age) plans.map = age;
   if (noStart || (!simple.ok && simple.at === 'start' && !adventure.ok)) plans.notice = NO_PATH_AT_START;
   return plans;
 }
