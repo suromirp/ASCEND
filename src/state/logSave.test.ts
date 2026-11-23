@@ -60,7 +60,7 @@ describe('saveLogWithin: het oude trainingsscherm en de kaart Van je horloge', (
 
   it('nee door een schrijffout: failed, geen log, en opnieuw proberen kan', async () => {
     await PlannedSessionsRepo.put(planned);
-    const put = vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('vol'));
+    const put = vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('vol'));
     const logSession = makeLogSession();
     expect(await saveLogWithin(logSession, forPlanned)).toBe('failed');
     expect(await SessionLogsRepo.getAll()).toHaveLength(0);
@@ -77,7 +77,7 @@ describe('saveLogWithin: het oude trainingsscherm en de kaart Van je horloge', (
   });
 
   it('een losse training met een schrijffout: failed, nooit already', async () => {
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('vol'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('vol'));
     expect(await saveLogWithin(makeLogSession(), { ...forPlanned, plannedSessionId: undefined })).toBe('failed');
   });
 
@@ -117,8 +117,8 @@ describe('saveLogWithin: het oude trainingsscherm en de kaart Van je horloge', (
   it('een tweede tik terwijl de eerste nog hangt: failed, en maar een log als de eerste landt', async () => {
     let release!: () => void;
     const hold = new Promise<void>((resolve) => (release = resolve));
-    const realPut = SessionLogsRepo.put.bind(SessionLogsRepo);
-    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => {
+    const realPut = SessionLogsRepo.add.bind(SessionLogsRepo);
+    vi.spyOn(SessionLogsRepo, 'add').mockImplementation(async (log) => {
       await hold;
       return realPut(log);
     });
@@ -144,7 +144,7 @@ describe('autoTickLog: vanzelf afvinken van het horloge', () => {
   });
 
   it('nee door een schrijffout: niets genoteerd, geen log', async () => {
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('vol'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('vol'));
     let noted = 0;
     expect(await autoTickLog(makeLogSession(), fromWatch, async () => void noted++)).toBe('failed');
     expect(noted).toBe(0);
@@ -214,7 +214,7 @@ describe('saveLogThenChoice: de sportvraag', () => {
   });
 
   it('nee door een schrijffout: gooit LogNotSaved, de keuze wordt niet gezet', async () => {
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('vol'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('vol'));
     let chosen = 0;
     await expect(saveLogThenChoice(makeLogSession(), fromWatch, async () => void chosen++, 8000)).rejects.toBeInstanceOf(LogNotSaved);
     expect(chosen).toBe(0);
@@ -255,13 +255,13 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
   const own = { onWriteError: () => undefined };
 
   it('zonder de optie: een schrijffout gaat naar de melding bovenin (de oude weg blijft)', async () => {
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     expect(await makeLogSession()(fromWatch)).toBe(false);
     expect(general).toHaveLength(1);
   });
 
   it('saveLogWithin, autoTickLog, saveLogThenChoice en logOrAlready: mislukt, en bovenin komt niets', async () => {
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     const logSession = makeLogSession();
     expect(await saveLogWithin(logSession, fromWatch, own)).toBe('failed');
     expect(await autoTickLog(logSession, fromWatch, async () => undefined)).toBe('failed');
@@ -271,7 +271,7 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
   });
 
   it('logOrAlready zonder onWriteError houdt de melding bovenin niet tegen: een vergeten scherm is nooit stil', async () => {
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     expect(await logOrAlready(makeLogSession(), fromWatch)).toBe(false);
     expect(general).toHaveLength(1);
     // Met onWriteError krijgt het scherm de fout zelf en blijft het bovenin leeg.
@@ -285,9 +285,9 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
   // Een schrijven dat blijft hangen tot de test het laat mislukken.
   function hangingPut() {
     let fail!: (err: Error) => void;
-    const hold = new Promise<string>((_, reject) => (fail = reject));
+    const hold = new Promise<boolean>((_, reject) => (fail = reject));
     hold.catch(() => undefined);
-    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(() => hold);
+    vi.spyOn(SessionLogsRepo, 'add').mockImplementation(() => hold);
     return () => fail(new Error('kapot'));
   }
 
@@ -337,7 +337,7 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
   });
 
   it('een scherm dat onWriteError vergeet is nooit stil: de schrijffout gaat bovenin', async () => {
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     const logSession = makeLogSession();
     expect(await saveLogWithin(logSession, fromWatch)).toBe('failed');
     expect(general).toHaveLength(1);
@@ -348,7 +348,7 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
   it('de kaart Van je horloge: Opslaan, van tab gewisseld, schrijven faalt geeft precies een melding bovenin; in beeld geen', async () => {
     for (const inView of [false, true]) {
       general = [];
-      const put = vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+      const put = vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
       let writeError: unknown;
       const outcome = await saveLogWithin(makeLogSession(), fromWatch, { onWriteError: (err) => { writeError = err; } });
       // show() van de kaart.
@@ -362,7 +362,7 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
   it('de sportvraag: blad dicht terwijl het bezig is en dan nee geeft precies een melding bovenin; in beeld geen', async () => {
     for (const alive of [false, true]) {
       general = [];
-      const put = vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+      const put = vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
       let chosen = 0;
       await expect(saveLogThenChoice(makeLogSession(), fromWatch, async () => void chosen++, 8000, (err, late) => reportIfGone(!late && alive, err, (e) => general.push(e)))).rejects.toBeInstanceOf(LogNotSaved);
       expect(general).toHaveLength(alive ? 0 : 1);
@@ -405,7 +405,7 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
   });
 
   it('de back-uptip gaat niet verloren: eerst de gewone zin, bij een tweede schrijffout op rij dezelfde zin met de reden erachter', async () => {
-    const put = vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    const put = vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     const logSession = makeLogSession();
     expect(await saveLogWithin(logSession, fromWatch, own)).toBe('failed');
     expect(failedNote(FORM_SAVE_NOTE.failedLoose)).toBe(FORM_SAVE_NOTE.failedLoose);
@@ -419,7 +419,7 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
 
   it('"op rij": fout, gelukt, fout geeft weer de gewone zin, ook over schermen heen', async () => {
     const logSession = makeLogSession();
-    const fails = () => vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    const fails = () => vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     let put = fails();
     expect(await saveLogWithin(logSession, fromWatch, own)).toBe('failed');
     put.mockRestore();
@@ -434,7 +434,7 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
   });
 
   it('de opslag is vol: de tweede keer zegt het scherm dat erbij', async () => {
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(full());
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(full());
     const logSession = makeLogSession();
     await saveLogWithin(logSession, fromWatch, own);
     await saveLogWithin(logSession, fromWatch, own);
@@ -457,7 +457,7 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     expect(thrownSaveNote(running)).toEqual({ kind: 'slow', text: LOG_STILL_RUNNING_NOTE });
     // Een echte schrijffout.
     resetFailedNotes();
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     const failed = await saveLogThenChoice(makeLogSession(), fromWatch, async () => undefined, 8000, () => undefined).catch((e: unknown) => e);
     expect(thrownSaveNote(failed)).toEqual({ kind: 'failed', text: LOG_SAVE_NOTE.failed });
   });
@@ -621,10 +621,10 @@ describe('saveOnCard: per pad wat je ziet', () => {
   }
   // Een schrijven dat hangt tot de test het laat slagen of mislukken.
   function heldPut() {
-    const real = SessionLogsRepo.put.bind(SessionLogsRepo);
+    const real = SessionLogsRepo.add.bind(SessionLogsRepo);
     let go!: (fail?: Error) => void;
     const hold = new Promise<Error | undefined>((resolve) => (go = resolve));
-    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => {
+    vi.spyOn(SessionLogsRepo, 'add').mockImplementation(async (log) => {
       const fail = await hold;
       if (fail) throw fail;
       return real(log);
@@ -641,7 +641,7 @@ describe('saveOnCard: per pad wat je ziet', () => {
   });
 
   it('in beeld, een fout halverwege: de amber zin, het blad blijft open, niets bovenin, geen half log', async () => {
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     const { ui, seen } = screen();
     expect(await saveOnCard(makeLogSession(), fromWatch, 'x1', ui)).toBe('failed');
     expect(seen.notes).toEqual([{ text: LOG_SAVE_NOTE.failed, warn: true }]);
@@ -740,7 +740,7 @@ describe('Forge afronden: een van de twee, het blad of de melding bovenin', () =
 
   it('in beeld: de eigen zin over je sets, niets bovenin; bij de tweede fout op rij de reden erbij', async () => {
     await PlannedSessionsRepo.put(planned);
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     await expect(forgeSave(() => true)).rejects.toBeInstanceOf(LogNotSaved);
     expect(general).toEqual([]);
     expect(forgeFinishNote('failed')).toEqual({ text: 'Opslaan lukte niet. Je sets blijven bewaard; probeer het zo nog eens.', warn: true });
@@ -752,7 +752,7 @@ describe('Forge afronden: een van de twee, het blad of de melding bovenin', () =
 
   it('blad weg, aan het sluiten of na de grens: de fout gaat bovenin', async () => {
     await PlannedSessionsRepo.put(planned);
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     await expect(forgeSave(() => false)).rejects.toBeInstanceOf(LogNotSaved);
     expect(general).toHaveLength(1);
   });
@@ -777,10 +777,10 @@ describe('een losse training met een andere invulling terwijl de eerste hangt', 
   const looseA: LogSessionInput = { templateId: 'tpl_hang', type: 'cardio', variant: 'full', durationMinutes: 40, completedDate: '2026-11-09' };
 
   it('de eerste antwoordt nooit binnen de grens: de tweede zegt ook "duurt langer", schrijft niets, en na het antwoord een log', async () => {
-    const real = SessionLogsRepo.put.bind(SessionLogsRepo);
+    const real = SessionLogsRepo.add.bind(SessionLogsRepo);
     let go!: () => void;
     const hold = new Promise<void>((resolve) => (go = resolve));
-    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => { await hold; return real(log); });
+    vi.spyOn(SessionLogsRepo, 'add').mockImplementation(async (log) => { await hold; return real(log); });
     const logSession = makeLogSession();
     const late: LogSaveResult[] = [];
     expect(await saveLogWithin(logSession, looseA, { limitMs: 20, onLate: (r) => late.push(r) })).toBe('slow');
@@ -819,10 +819,10 @@ describe('saveOnLogger: het oude trainingsscherm, per pad wat je ziet', () => {
     return { ui, seen };
   }
   function heldPut() {
-    const real = SessionLogsRepo.put.bind(SessionLogsRepo);
+    const real = SessionLogsRepo.add.bind(SessionLogsRepo);
     let go!: (fail?: Error) => void;
     const hold = new Promise<Error | undefined>((resolve) => (go = resolve));
-    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => {
+    vi.spyOn(SessionLogsRepo, 'add').mockImplementation(async (log) => {
       const fail = await hold;
       if (fail) throw fail;
       return real(log);
@@ -851,7 +851,7 @@ describe('saveOnLogger: het oude trainingsscherm, per pad wat je ziet', () => {
 
   it('in beeld mislukt: de amber zin, concept blijft, knop weer aan, niets bovenin', async () => {
     await PlannedSessionsRepo.put(planned);
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     const { ui, seen } = screen();
     expect(await saveOnLogger(makeLogSession(), forPlanned, ui)).toBe('failed');
     expect(seen.notes).toEqual([{ text: FORM_SAVE_NOTE.failed, warn: true }]);
@@ -861,7 +861,7 @@ describe('saveOnLogger: het oude trainingsscherm, per pad wat je ziet', () => {
   });
 
   it('een losse training die mislukt: eerst in je logboek kijken', async () => {
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     const { ui, seen } = screen({ loose: true });
     expect(await saveOnLogger(makeLogSession(), loose, ui)).toBe('failed');
     expect(seen.notes).toEqual([{ text: FORM_SAVE_NOTE.failedLoose, warn: true }]);
@@ -941,7 +941,7 @@ describe('logOrAlready: het blad Hoe ging het? onderscheidt stond er al van misl
     const logSession = makeLogSession();
     expect(await logOrAlready(logSession, forPlanned)).toBe(true);
     expect(await logOrAlready(logSession, forPlanned)).toBe('already');
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     expect(await logOrAlready(logSession, { ...forPlanned, plannedSessionId: undefined, templateId: 'tpl_bike' }, () => undefined)).toBe(false);
   });
 
@@ -957,10 +957,10 @@ describe('tickOff: afvinken met één tik op Vandaag en Week (I-32)', () => {
     return { n, seen };
   }
   function heldPut() {
-    const real = SessionLogsRepo.put.bind(SessionLogsRepo);
+    const real = SessionLogsRepo.add.bind(SessionLogsRepo);
     let go!: (fail?: Error) => void;
     const hold = new Promise<Error | undefined>((resolve) => (go = resolve));
-    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => { const fail = await hold; if (fail) throw fail; return real(log); });
+    vi.spyOn(SessionLogsRepo, 'add').mockImplementation(async (log) => { const fail = await hold; if (fail) throw fail; return real(log); });
     return go;
   }
   const settle = () => new Promise((r) => setTimeout(r, 60));
@@ -986,7 +986,7 @@ describe('tickOff: afvinken met één tik op Vandaag en Week (I-32)', () => {
 
   it('mislukt: precies een melding bovenin, met de zin van de schrijffout', async () => {
     await PlannedSessionsRepo.put(planned);
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     const { n, seen } = notice();
     expect(await tickOff(makeLogSession(), forPlanned, n)).toBe('failed');
     expect(seen.reported).toHaveLength(1);
@@ -1041,10 +1041,10 @@ describe('tickOff: afvinken met één tik op Vandaag en Week (I-32)', () => {
 
 describe('saveOnLogger: een tweede poging terwijl de eerste hangt (Warden M2)', () => {
   function heldPut() {
-    const real = SessionLogsRepo.put.bind(SessionLogsRepo);
+    const real = SessionLogsRepo.add.bind(SessionLogsRepo);
     let go!: (fail?: Error) => void;
     const hold = new Promise<Error | undefined>((resolve) => (go = resolve));
-    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => { const fail = await hold; if (fail) throw fail; return real(log); });
+    vi.spyOn(SessionLogsRepo, 'add').mockImplementation(async (log) => { const fail = await hold; if (fail) throw fail; return real(log); });
     return go;
   }
   const ui = (notes: (ShownSaveNote | null)[], over: Partial<LoggerSaveUi> = {}): LoggerSaveUi => ({

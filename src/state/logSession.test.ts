@@ -64,7 +64,7 @@ describe('logSession: het log staat er, ook als een stap erna faalt', () => {
   });
 
   it('het schrijven zelf faalt: nee, niets bewaard, de gewone melding', async () => {
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('vol'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('vol'));
     const { deps, errors } = makeDeps();
     expect(await runLogSession(loose(), undefined, deps)).toBe(false);
     vi.restoreAllMocks();
@@ -117,7 +117,7 @@ describe('logSession: het log staat er, ook als een stap erna faalt', () => {
 
   it('de eerste losse opslag mislukt terwijl een andere invulling wacht: die schrijft dan zelf, een log en niets kwijt', async () => {
     const { deps } = makeDeps();
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValueOnce(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValueOnce(new Error('kapot'));
     const first = runLogSession(loose(), undefined, deps);
     const second = runLogSession(loose({ durationMinutes: 55 }), undefined, deps);
     expect(await Promise.all([first, second])).toEqual([false, true]);
@@ -131,7 +131,7 @@ describe('logSession: het log staat er, ook als een stap erna faalt', () => {
     const gate = new Promise<void>((r) => { release = r; });
     let refreshing = 0;
     const { deps } = makeDeps({ refresh: () => { refreshing += 1; return gate; } });
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValueOnce(new Error('kapot'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValueOnce(new Error('kapot'));
     const day = { completedDate: '2026-11-08' };
     const first = runLogSession(loose(day), undefined, deps);
     const second = runLogSession(loose({ ...day, durationMinutes: 55 }), undefined, deps);
@@ -184,8 +184,8 @@ describe('logSession: het log staat er, ook als een stap erna faalt', () => {
     await PlannedSessionsRepo.put({ id: 'p2', templateId: 'tpl_easy_run', scheduledDate: '2026-11-11', weekStartDate: '2026-11-09', status: 'planned', order: 0 });
     let release!: () => void;
     const hold = new Promise<void>((resolve) => (release = resolve));
-    const realPut = SessionLogsRepo.put.bind(SessionLogsRepo);
-    vi.spyOn(SessionLogsRepo, 'put').mockImplementation(async (log) => {
+    const realPut = SessionLogsRepo.add.bind(SessionLogsRepo);
+    vi.spyOn(SessionLogsRepo, 'add').mockImplementation(async (log) => {
       await hold;
       return realPut(log);
     });
@@ -204,7 +204,7 @@ describe('logSession: het log staat er, ook als een stap erna faalt', () => {
   });
 
   it('een horloge-activiteit waarvan het schrijven mislukte is daarna weer vrij', async () => {
-    const put = vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('vol'));
+    const put = vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('vol'));
     const { deps } = makeDeps();
     const input = loose({ externalId: 'intervals.icu:i-10', source: 'garmin' });
     expect(await runLogSession(input, undefined, deps)).toBe(false);
@@ -243,7 +243,7 @@ describe('settleLogOutcome: nee is niet altijd "staat er al"', () => {
 
   it('schrijffout halverwege: LogNotSaved, geen half log, de keuze wordt niet gezet', async () => {
     await PlannedSessionsRepo.put(planned);
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('vol'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('vol'));
     const { deps, errors } = makeDeps();
     const input = loose({ plannedSessionId: 'p1' });
     const saved = await runLogSession(input, undefined, deps);
@@ -258,7 +258,7 @@ describe('settleLogOutcome: nee is niet altijd "staat er al"', () => {
   });
 
   it('een losse training (ook een geplande die niet meer bestaat) met een schrijffout: LogNotSaved', async () => {
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('vol'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('vol'));
     const { deps } = makeDeps();
     const input = loose({ plannedSessionId: undefined });
     await expect(settleLogOutcome(await runLogSession(input, undefined, deps), input)).rejects.toBeInstanceOf(LogNotSaved);
@@ -279,7 +279,7 @@ describe('settleLogOutcome: nee is niet altijd "staat er al"', () => {
     expect(await settleLogOutcome(await runLogSession(input, undefined, deps), input)).toBe(true);
     expect(await settleLogOutcome(await runLogSession(input, undefined, deps), input)).toBe(false);
     await wipeAllData();
-    vi.spyOn(SessionLogsRepo, 'put').mockRejectedValue(new Error('vol'));
+    vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('vol'));
     await expect(settleLogOutcome(await runLogSession(input, undefined, deps), input)).rejects.toBeInstanceOf(LogNotSaved);
   });
 
@@ -294,5 +294,78 @@ describe('settleLogOutcome: nee is niet altijd "staat er al"', () => {
     expect(forge).toMatch(/await settleWithOwnNotice\(logSession, input, \(err\) => reportIfGone\(seen\(\), err, reportStorageError\)\)/);
     expect(forge).not.toMatch(/await logSession\(/);
     expect(forge.indexOf('settleWithOwnNotice(logSession')).toBeLessThan(forge.indexOf('p.dropDraft();\n            if (saved)'));
+  });
+});
+
+// I-54: twee tabbladen delen de opslag, niet het geheugen. Een tweede tabblad is hier een tweede kopie van de
+// modules (vi.resetModules): eigen loggingInFlight, eigen externalInFlight en een eigen verbinding met IndexedDB.
+describe('logSession: twee tabbladen tegelijk', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  async function secondTab() {
+    vi.resetModules();
+    const mod = await import('./logSession');
+    const db = await import('../storage/database');
+    // Beide tabbladen hebben hun verbinding al open, zoals in het echt: anders wacht het tweede op het openen.
+    await Promise.all([db.SessionLogsRepo.getAll(), SessionLogsRepo.getAll()]);
+    return { runLogSession: mod.runLogSession, settleLogOutcome: mod.settleLogOutcome, SessionLogsRepo: db.SessionLogsRepo };
+  }
+
+  it('dezelfde geplande training in twee tabbladen tegelijk: één log, het tweede hoort dat het er al stond', async () => {
+    const tab2 = await secondTab();
+    const input = loose({ plannedSessionId: 'ps_tab_1' });
+    const one = makeDeps();
+    const two = makeDeps();
+    const [a, b] = await Promise.all([runLogSession(input, undefined, one.deps), tab2.runLogSession(input, undefined, two.deps)]);
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+    expect(await tab2.SessionLogsRepo.getAll()).toHaveLength(1);
+    // Precies één tabblad schreef; het andere krijgt nee, en dat nee betekent "stond er al" (zichtbaar als already).
+    expect([a, b].filter(Boolean)).toHaveLength(1);
+    expect(await settleLogOutcome(a, input)).toBe(a);
+    expect(await tab2.settleLogOutcome(b, input)).toBe(b);
+    expect(one.errors).toEqual([]);
+    expect(two.errors).toEqual([]);
+  });
+
+  it('dezelfde horloge-activiteit in twee tabbladen tegelijk: één log', async () => {
+    const tab2 = await secondTab();
+    const one = makeDeps();
+    const two = makeDeps();
+    const [a, b] = await Promise.all([
+      runLogSession(loose({ externalId: 'ext_tab_1', source: 'garmin' }), undefined, one.deps),
+      tab2.runLogSession(loose({ externalId: 'ext_tab_1', source: 'garmin', plannedSessionId: 'ps_tab_2' }), undefined, two.deps),
+    ]);
+    expect(await SessionLogsRepo.getAll()).toHaveLength(1);
+    expect([a, b].filter(Boolean)).toHaveLength(1);
+  });
+
+  it('tweede poging later in hetzelfde tabblad: nee, niets dubbel, het eerste log blijft staan', async () => {
+    const { deps } = makeDeps();
+    const input = loose({ plannedSessionId: 'ps_tab_3' });
+    expect(await runLogSession(input, undefined, deps)).toBe(true);
+    const first = (await SessionLogsRepo.getAll())[0];
+    expect(await runLogSession({ ...input, durationMinutes: 55 }, undefined, deps)).toBe(false);
+    expect(await SessionLogsRepo.getAll()).toEqual([first]);
+  });
+
+  it('het schrijven faalt halverwege: niets half, geen ander log weg, en een nieuwe poging schrijft wel', async () => {
+    const { deps } = makeDeps();
+    await runLogSession(loose({ plannedSessionId: 'ps_other' }), undefined, deps);
+    const before = await SessionLogsRepo.getAll();
+    const writeErrors: unknown[] = [];
+    // Een waarde die IndexedDB niet kan bewaren (een functie) laat de put in de transactie mislukken.
+    const bad = loose({ plannedSessionId: 'ps_tab_4', notes: (() => 'x') as unknown as string });
+    expect(await runLogSession(bad, { onWriteError: (err) => writeErrors.push(err) }, deps)).toBe(false);
+    expect(writeErrors).toHaveLength(1);
+    expect(await SessionLogsRepo.getAll()).toEqual(before);
+    expect(deps.loggingInFlight.current.size).toBe(0);
+    await expect(settleLogOutcome(false, { plannedSessionId: 'ps_tab_4' })).rejects.toBeInstanceOf(LogNotSaved);
+    expect(await runLogSession(loose({ plannedSessionId: 'ps_tab_4' }), undefined, deps)).toBe(true);
+    expect(await SessionLogsRepo.getAll()).toHaveLength(2);
   });
 });
