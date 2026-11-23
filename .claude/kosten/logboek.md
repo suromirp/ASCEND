@@ -564,3 +564,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-23 | Warden route en klein | reviewer helper | sonnet | ~90k tok | ~15 min | geen moet, 6 mag naar I-125 tot I-130 |
 | 2026-11-23 | Lookout route en I-124 | tester helper | sonnet | 192k tok | 44 min | geen moet; I-104, I-105 niet te zien met testdata |
 | 2026-11-23 | Warden terugkeer I-124 | reviewer helper | opus | 82k tok | 22 min | 1 moet (Forge lichter), 7 mag, herstel naar bouwer |
+| 2026-11-23 | Lookout week | tester helper | sonnet | ~? tok | ~35 min | 1 moet (kaart Weekterugblik) |
