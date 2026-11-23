@@ -387,7 +387,8 @@ describe('Warden ronde 2: één id per terugkomst, één racebescherming, grenze
     const tomorrow = ps('tpl_easy_run', '2027-01-05');
     const skipped = ps('tpl_long_run', '2027-01-03', { status: 'skipped' });
     const race = ps('tpl_race', '2027-01-10');
-    const rules = (withRace: boolean) => computeAdvice(adviceInputs({ plannedSessions: [rest, tomorrow, skipped, ...(withRace ? [race] : [])], asOf: '2027-01-04' })).map((a) => a.ruleId);
+    // Zonder logs ziet de terugkeer twee stille weken; die gaat voor inhalen (I-154). Hier gaat het om het inhalen zelf.
+    const rules = (withRace: boolean) => computeAdvice(adviceInputs({ plannedSessions: [rest, tomorrow, skipped, ...(withRace ? [race] : [])], asOf: '2027-01-04', reentry: { choice: 'off' } })).map((a) => a.ruleId);
     expect(rules(false).some((r) => r === 'REST-SWAP' || r === 'SKIPPED-KEY-TO-REST')).toBe(true);
     expect(rules(true).some((r) => r === 'REST-SWAP' || r === 'SKIPPED-KEY-TO-REST')).toBe(false);
   });

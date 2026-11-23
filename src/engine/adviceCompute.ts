@@ -494,15 +494,25 @@ function newConcernsOfEnd(end: PlannedSession[], touched: Set<string>, inputs: A
 
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
+  // Terugkeer gaat voor inhalen (I-154, docs/beslissingen/2026-11-23-terugkeer-voor-inhalen.md): staat de rustige
+  // instap open, dan komt er geen inhaaladvies (MISSED-CATCH-UP, SKIPPED-KEY-TO-REST, TEST-MAKE-ROOM). Ze worden
+  // niet berekend, dus ook niet meegeteld in usedIds, catchUpDays en de volle week. Na een antwoord op de instap
+  // (Liever niet of Akkoord) mag inhalen weer.
+  const reentryOpen = reentryAdvice(inputs).filter((a) => !inputs.respondedIds.has(a.id));
+  const holdCatchUp = reentryOpen.length > 0;
+  const heldBack = holdCatchUp ? missedAdvice(inputs, templateById).filter((a) => !inputs.respondedIds.has(a.id)) : [];
   // A catch-up you declined leaves the rest day free for the swap.
-  const missed = missedAdvice(inputs, templateById).filter((a) => !inputs.respondedIds.has(a.id));
+  const missed = holdCatchUp ? [] : missedAdvice(inputs, templateById).filter((a) => !inputs.respondedIds.has(a.id));
   const usedIds = new Set(missed.flatMap((a) => a.proposal?.changes.map((c) => c.plannedSessionId).filter((id): id is string => !!id) ?? []));
+  // De ruil van de eerste dag in de instap (reentryFirstDay) is ook een voorstel: geen tweede ruil van dezelfde
+  // rustdag ernaast nu het inhalen hem niet meer bezet (REST-SWAP, REST-PULL).
+  for (const f of reentryOpen.map((a) => a.reentryFirstDay)) if (f) { usedIds.add(f.restId); usedIds.add(f.trainingId); }
   // Eén inhaal per keer over beide regels: stelt MISSED-CATCH-UP al een inhaal voor, dan geen tweede via de rustdag
   // (twee voorstellen die elk kloppen, maar samen hard naast hard zetten; Warden, 11 november).
   const missedMoves = missed.some((a) => a.proposal?.changes.some((c) => c.action === 'move'));
-  const skippedKey = missedMoves ? [] : skippedKeyAdvice(inputs, templateById, usedIds).filter((a) => !inputs.respondedIds.has(a.id));
+  const skippedKey = missedMoves || holdCatchUp ? [] : skippedKeyAdvice(inputs, templateById, usedIds).filter((a) => !inputs.respondedIds.has(a.id));
   for (const id of skippedKey.flatMap((a) => a.proposal?.changes.map((c) => c.plannedSessionId) ?? [])) if (id) usedIds.add(id);
-  const testRoom = testRunAdvice(inputs, templateById, usedIds).filter((a) => !inputs.respondedIds.has(a.id));
+  const testRoom = holdCatchUp ? [] : testRunAdvice(inputs, templateById, usedIds).filter((a) => !inputs.respondedIds.has(a.id));
   const fresh = (list: Advice[]) => list.filter((a) => !inputs.respondedIds.has(a.id));
   const restSwap = restSwapAdvice(inputs, templateById, usedIds);
   const restPull = restPullAdvice(inputs, templateById, usedIds);
@@ -514,7 +524,8 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const extraSession = extraSessionAdvice(inputs, templateById);
   const restWeekSkip = restWeekSkipAdvice(inputs);
   const repeatWeek = repeatWeekAdvice(inputs);
-  const reentry = reentryAdvice(inputs);
+  // Wacht er een inhaaladvies achter de instap, dan wacht de vraag Niet gedaan? ook (components/useMissedTraining.ts).
+  const reentry = reentryOpen.map((a) => (heldBack.length > 0 ? { ...a, holdsCatchUp: true as const } : a));
   const tentPack = tentPackAdvice(inputs);
   const targetTime = targetTimeAdvice(inputs);
   const weather = weatherAdvice(inputs, templateById);
@@ -587,5 +598,6 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   // Het vangnet zonder sportschool: geen voorstel zet een sportschooltraining op een dag zonder sportschool
   // (engine/noGymGuard.ts, docs/beslissingen/2026-11-15-zonder-sportschool-verplaatst.md).
   return withoutGymOnNoGym([...rest, ...fullWeekNow, ...descent], inputs.plannedSessions, templateById, inputs.leave)
-    .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
+    // Bij gelijke prioriteit gaat de rustige instap voor (I-154): de kaart op Vandaag toont alleen de eerste.
+    .sort((a, b) => b.priority - a.priority || Number(b.ruleId === 'REENTRY') - Number(a.ruleId === 'REENTRY') || a.id.localeCompare(b.id));
 }

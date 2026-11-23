@@ -77,6 +77,9 @@ export interface Advice {
   reentryForgeDays?: number;
   // De eerste dag van die instap: herstel en de eerste lichte training ruilen van dag, met hetzelfde Akkoord (I-144).
   reentryFirstDay?: ReentryFirstDay;
+  // Rule REENTRY: er wachtte een inhaaladvies dat voor de terugkeer wijkt (I-154). De vraag Niet gedaan? wacht dan
+  // ook, net als achter MISSED-CATCH-UP (components/useMissedTraining.ts). Alleen voor die kaart, niet opgeslagen.
+  holdsCatchUp?: true;
 }
 
 export interface AdviceOption {

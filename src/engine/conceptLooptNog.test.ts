@@ -338,6 +338,8 @@ describe('de volle week telt een training die nog loopt niet als verloren', () =
     const inputs = (openDraft?: string) => ({
       logs, plannedSessions: sessions, templates, injuries: [], program: fullProgram, dailyTimeBudget: undefined, sameDayPairingPreference: 'automatic',
       respondedIds: new Set<string>(), asOf: d(3), restDay: 1, missedLink: { on: false, declined: [] }, openDraft,
+      // Zonder logs ziet de terugkeer twee stille weken; die gaat voor inhalen (I-154). Hier gaat het om het inhalen zelf.
+      reentry: { choice: 'off' },
     }) as AdviceInputs;
     const full = (list: { ruleId: string }[]) => list.filter((a) => a.ruleId === 'WEEK-FULL').length;
     // Zonder concept staat eerst het inhaaladvies (dat laat Bovenlichaam A vallen) en wacht de volle week daarop.

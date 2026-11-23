@@ -137,7 +137,8 @@ describe('I-41: de kaart en het inhaaladvies tellen niet langs elkaar heen', () 
   // Maandag 12 oktober: het advies kijkt drie dagen terug, tot in de vorige week; de kaart in Week telt deze week.
   const asOf = '2026-10-12';
   const sessions = [ps('a', 'tpl_upper_b', '2026-10-09'), ps('b', 'tpl_easy_run', '2026-10-10'), ps('c', 'tpl_upper_a', '2026-10-13')];
-  const inputs: AdviceInputs = { logs: [], plannedSessions: sessions, templates, injuries: [], program, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf };
+  // Zonder logs ziet de terugkeer twee stille weken; die gaat voor inhalen (I-154). Hier gaat het om het inhalen zelf.
+  const inputs: AdviceInputs = { logs: [], plannedSessions: sessions, templates, injuries: [], program, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf, reentry: { choice: 'off' } };
 
   it('de titel van het advies noemt de dagen en geen eigen aantal; de kaart zegt "deze week"', () => {
     const advice = computeAdvice(inputs).find((a) => a.ruleId === 'MISSED-CATCH-UP');

@@ -52,8 +52,9 @@ export function useMissedTraining() {
   }, [autoIds, skipMissed, rememberMissed]);
 
   // Eén plek voor gemist: staat het inhaaladvies (MISSED-CATCH-UP) op Vandaag, dan wacht de vraag Niet gedaan? tot
-  // dat beantwoord is. Anders twee kaarten met twee woorden voor hetzelfde (profielendoorloop GR5 9).
-  const catchUpShown = advice.some((a) => a.ruleId === 'MISSED-CATCH-UP');
+  // dat beantwoord is. Anders twee kaarten met twee woorden voor hetzelfde (profielendoorloop GR5 9). Wijkt het inhalen
+  // voor de rustige instap (I-154, `holdsCatchUp`), dan wacht de vraag ook: na Liever niet op de instap komt het inhalen.
+  const catchUpShown = advice.some((a) => a.ruleId === 'MISSED-CATCH-UP' || !!a.holdsCatchUp);
   return { item: catchUpShown ? undefined : plan?.item, lapsed: catchUpShown ? undefined : plan?.lapsed, missedSettings };
 }
 
