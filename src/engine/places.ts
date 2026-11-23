@@ -4,6 +4,7 @@
 // docs/beslissingen/2026-11-11-plekken-engine.md). Niets hier verandert de planning.
 
 import { ascentOf, lineLength, metersBetween } from './routeGeometry';
+import { isNearlyFlat } from './elevation';
 import { MIN_ASCENT_TARGET_M, fitsDistance, missScore } from './routePlanner';
 import { roundExact, validStartPoint, type RouteStartMode } from './routeStart';
 import { hasRole } from './templateRoles';
@@ -137,9 +138,17 @@ function routeFits(route: SavedRoute, target: RouteTarget): boolean {
   return route.ascentM >= target.ascentM * SUGGEST_SHARE && route.ascentM <= target.ascentM * MAX_ASCENT_SHARE;
 }
 
-function routeLine(route: SavedRoute, fits: boolean, runs: number): string {
-  const climb = round10(route.ascentM);
-  const facts = climb >= MIN_ASCENT_TARGET_M ? `${kmText(route.distanceM)} en ${formatNumberNL(climb, 0)} hoogtemeters` : kmText(route.distanceM);
+// De feiten zoals bij een nieuwe lus (routePlanner.ts#proposalFacts, stap 2 van de hoogtemeters, I-136): onder
+// ongeveer 40 m geen getal met schijnprecisie maar vrijwel vlak, behalve als de training hoogtemeters vraagt; dan
+// staat het getal er altijd.
+function routeLine(route: SavedRoute, fits: boolean, runs: number, target: RouteTarget): string {
+  const asks = target.ascentM >= MIN_ASCENT_TARGET_M;
+  const known = Number.isFinite(route.ascentM);
+  const facts = !known
+    ? kmText(route.distanceM)
+    : !asks && isNearlyFlat(route.ascentM)
+      ? `${kmText(route.distanceM)}, vrijwel vlak`
+      : `${kmText(route.distanceM)} en ${formatNumberNL(round10(route.ascentM), 0)} hoogtemeters`;
   const ran = runs === 0 ? 'Nog niet gelopen.' : runs === 1 ? 'Je liep hem 1 keer.' : `Je liep hem ${runs} keer.`;
   return `${fits ? 'Past' : 'Wijkt af'}: ${facts}. ${ran}`;
 }
@@ -155,7 +164,7 @@ export function rankSavedRoutes(routes: readonly SavedRoute[], target: RouteTarg
       const fits = routeFits(route, target);
       const runs = routeRunDates(route, logs).length;
       const raw = missScore(route, target);
-      return { route, score: Number.isFinite(raw) ? raw : Infinity, fits, runs, line: routeLine(route, fits, runs) };
+      return { route, score: Number.isFinite(raw) ? raw : Infinity, fits, runs, line: routeLine(route, fits, runs, target) };
     })
     .sort((a, b) => (a.fits !== b.fits ? (a.fits ? -1 : 1) : (a.score - b.score || 0) || b.runs - a.runs || byText(a.route.name, b.route.name) || byText(a.route.id, b.route.id)));
 }

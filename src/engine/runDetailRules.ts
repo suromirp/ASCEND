@@ -53,8 +53,10 @@ const MIN_REPEAT_M = 400;
 export const WARMUP_MIN = 8;
 // Feels-like temperature from which warmth is a fact (degrees).
 const WARM_FEELS_C = 20;
-// Climb per kilometre that makes a route hilly (metres).
-export const HILLY_M_PER_KM = 10;
+// Climb per kilometre that makes a route hilly (metres), per merk van de teller (engine/elevation.ts#climbLimitFor):
+// `old` voor km zonder merk, `counted` voor de teller van nu. Allebei 10: dat was zo en blijft zo (I-136); een andere
+// grens voor de teller van nu vraagt eerst naspelen met echte lopen.
+export const HILLY_M_PER_KM = { old: 10, counted: 10 } as const;
 // Wind that can colour a whole test, from runComparison.ts (km/h).
 const WIND_MEAN_KMH = 25;
 const WIND_GUST_KMH = 40;
@@ -269,7 +271,7 @@ export function testConditions(rd: RunDetail | undefined, ctx: PlayedContext = {
   }
   const climb = kms.reduce((n, k) => n + (k.gainM ?? 0), 0);
   const km = kms.reduce((n, k) => n + k.distanceM / 1000, 0);
-  if (km > 0 && climb / km > HILLY_M_PER_KM) out.push({ kind: 'route', text: `De route was heuvelachtig: ${Math.round(climb / km)} meter stijging per km.` });
+  if (km > 0 && climb / km > climbLimitFor(rd.counter, HILLY_M_PER_KM)) out.push({ kind: 'route', text: `De route was heuvelachtig: ${Math.round(climb / km)} meter stijging per km.` });
   return out;
 }
 

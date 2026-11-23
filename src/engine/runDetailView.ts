@@ -14,6 +14,7 @@ import { formatPace } from './aerobicTrend';
 import { testTotals } from './racePrediction';
 import { idHasRole, idIsTestOrRace } from './templateRoles';
 import { NOISE, isUnavailable } from './runMetrics';
+import { climbLimitFor } from './elevation';
 import { zoneBpm, type HeartRateSettings } from './heartRateZones';
 import {
   ADVICE_MIN_SEC,
@@ -772,7 +773,7 @@ export function runAdvice(rd: RunDetail, kind: RunKind, opts: { pain?: boolean; 
     const kms = verdictKms(rd, kind);
     const km = sum(kms.map((k) => k.distanceM)) / 1000;
     const climb = sum(kms.map((k) => k.gainM ?? 0));
-    if (!opts.indoor && km > 0 && climb / km > HILLY_M_PER_KM) lines.push(`Kies voor je volgende test een vlakkere route; deze had ${Math.round(climb / km)} meter stijging per kilometer.`);
+    if (!opts.indoor && km > 0 && climb / km > climbLimitFor(rd.counter, HILLY_M_PER_KM)) lines.push(`Kies voor je volgende test een vlakkere route; deze had ${Math.round(climb / km)} meter stijging per kilometer.`);
     if (lines.length === 0 && a?.kind === 'even') lines.push('Gelijkmatig gelopen. Houd dezelfde aanpak bij je volgende test.');
     return lines.length > 0
       ? { title: 'Voor de volgende test', lines: lines.slice(0, 2), why: 'Uit de verdeling van je test en wat er van die dag bekend is. Gelijkmatig lopen is meestal het snelst. Hoeveel sneller jij dan bent, zegt niemand vooraf.' }
