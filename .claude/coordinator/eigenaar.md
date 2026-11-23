@@ -29,6 +29,12 @@ Keuzes: één aanroep mag tot 120 seconden duren en de melding over een mislukte
 Zonder antwoord: het advies, zo is het gebouwd.
 Sinds: 23 november.
 
+### Opwarmset na een ruil (I-30, 23 november)
+Je besloot op 14 november: ruil je de squat, dan krijg je een gewone opwarmset. Helpers stelden voor om bij een ruil voor een oefening op hetzelfde patroon de opwarmset gedempt te houden.
+Keuzes: zo laten zoals je besloot (advies, het is veilig en simpel); of gedempt houden bij hetzelfde patroon en als de bron zelf opwarmsets had.
+Zonder antwoord: het blijft zoals je besloot.
+Sinds: 23 november.
+
 ## Stuk of vast
 
 
