@@ -8,7 +8,7 @@
 // Puur: geen React, geen IndexedDB.
 
 import type { Program } from '../models/program';
-import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
+import type { PlanChangeItem, PlanChangeProposal, RecentPlanChange } from '../models/planChange';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { plannedMinutesOf } from './substitutions';
 
@@ -71,5 +71,30 @@ export function planCheckRecord(repaired: { lines: readonly string[]; items?: re
     createdAt: now,
     resolvedAt: now,
     resolution: 'accepted',
+  };
+}
+
+// Komt de ronde binnen 15 seconden na een wijziging van jou (verplaatsen, een Akkoord), dan voegen de regels zich bij
+// die melding: ongedaan maken zet alles terug zoals het voor jouw wijziging stond. Het record van de ronde gaat mee
+// (`alsoReverts`), zodat ongedaan maken ook dat record terugdraait (storage/undoPlanChange.ts). Zonder dat bleef een
+// wijziging van de ronde in het Logboek en in Aangepast door ASCEND staan, terwijl de rij al terug was.
+export const JOIN_WINDOW_MS = 15_000;
+
+export function joinsNotice(prev: RecentPlanChange | null, nowMs: number): prev is RecentPlanChange {
+  return !!prev && !prev.failed && prev.trigger !== 'plan_check' && nowMs - Date.parse(prev.createdAt) < JOIN_WINDOW_MS;
+}
+
+export function joinPlanCheck(
+  prev: RecentPlanChange,
+  repaired: { lines: readonly string[]; stored: readonly PlannedSession[]; addedIds?: readonly string[] },
+  recordId: string,
+): RecentPlanChange {
+  const known = new Set(prev.before.map((s) => s.id));
+  return {
+    ...prev,
+    lines: [...prev.lines, ...repaired.lines],
+    before: [...prev.before, ...repaired.stored.filter((s) => !known.has(s.id))],
+    addedIds: [...prev.addedIds, ...(repaired.addedIds ?? [])],
+    alsoReverts: [...(prev.alsoReverts ?? []), recordId],
   };
 }

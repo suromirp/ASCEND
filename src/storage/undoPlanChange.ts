@@ -98,19 +98,24 @@ export async function undoPlanChangeNow(change: RecentPlanChange): Promise<UndoO
       if (log?.linkedLater) await tx.objectStore('sessionLogs').put(unlinkLog(log));
     }
     const now = new Date().toISOString();
-    await tx.objectStore('planChangeProposals').put({
-      id: makeId('planchange'),
-      trigger: change.trigger,
-      issue: `Ongedaan gemaakt: ${change.title}`,
-      changes: [],
-      alternatives: [],
-      consequences: change.lines.join('; '),
-      explanation: 'Door jou ongedaan gemaakt, direct na de wijziging.',
-      revertsProposalId: change.id,
-      createdAt: now,
-      resolvedAt: now,
-      resolution: 'rejected',
-    });
+    // Append-only: a new record that reverts the change, and one for each record of the week check that joined its
+    // notice (RecentPlanChange.alsoReverts); the records themselves stay as they are.
+    const reverts = [{ id: change.id, trigger: change.trigger, title: change.title }, ...(change.alsoReverts ?? []).map((id) => ({ id, trigger: 'plan_check' as const, title: 'Planning bijgewerkt' }))];
+    for (const { id: revertsProposalId, trigger, title } of reverts) {
+      await tx.objectStore('planChangeProposals').put({
+        id: makeId('planchange'),
+        trigger,
+        issue: `Ongedaan gemaakt: ${title}`,
+        changes: [],
+        alternatives: [],
+        consequences: change.lines.join('; '),
+        explanation: 'Door jou ongedaan gemaakt, direct na de wijziging.',
+        revertsProposalId,
+        createdAt: now,
+        resolvedAt: now,
+        resolution: 'rejected',
+      });
+    }
     await tx.done;
   } catch (err) {
     try { tx.abort(); } catch { /* al afgebroken */ }

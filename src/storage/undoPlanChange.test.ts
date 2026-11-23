@@ -11,6 +11,9 @@ import { writeCatchUp } from './catchUpApply';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { RecentPlanChange } from '../models/planChange';
 import type { TrainingGoal } from '../models/goals';
+import { buildDefaultProgramData } from '../data/defaultProgram';
+import { joinPlanCheck, joinsNotice, planCheckRecord, repairAuditItems } from '../engine/repairAudit';
+import { buildChangeLog, weekAdjustments } from '../engine/changeLog';
 
 const lock = { by: 'user' as const, at: '2026-10-29T08:00:00.000Z' };
 const run: PlannedSession = { id: 'p-run', templateId: 'tpl_easy_run', scheduledDate: '2026-10-30', weekStartDate: '2026-10-26', status: 'planned', order: 1 };
@@ -233,4 +236,53 @@ describe('de planning gaat verder na je wijziging (wedstrijdblok)', () => {
       throw new Error('verwacht dat de rij na de andere schrijver en de planning anders is');
     }
   }, 60000);
+});
+
+// Warden I-23 punt 9: het record van de weekcontrole heeft nu wijzigingen. Voegt de ronde zich binnen 15 seconden bij
+// jouw melding, dan draait Ongedaan maken ook dat record terug (een nieuw record, append-only).
+describe('de weekcontrole voegt zich bij jouw melding en jij maakt het ongedaan', () => {
+  const { templates } = buildDefaultProgramData();
+  const long: PlannedSession = { id: 'p-long', templateId: 'tpl_long_run', scheduledDate: '2026-11-01', weekStartDate: '2026-10-26', status: 'planned', order: 2 };
+  const shorter: PlannedSession = { ...long, plannedMinutes: 60 };
+  const at = '2026-10-29T08:00:05.000Z';
+
+  beforeEach(async () => {
+    await wipeAllData();
+    await seedIfEmpty({ withProgram: false });
+    await PlannedSessionsRepo.put(run);
+    await PlannedSessionsRepo.put(long);
+  });
+
+  it('het record van de ronde krijgt een terugdraairecord: niet meer in het Logboek als gedaan en niet in Aangepast door ASCEND', async () => {
+    const mine = await moveRun();
+    // De ronde maakt de lange duurloop korter (zoals ONE-LONG) en schrijft haar record met de wijziging.
+    await PlannedSessionsRepo.put(shorter);
+    const items = repairAuditItems({ ids: [long.id], before: new Map([[long.id, long]]), after: new Map([[long.id, shorter]]), templates: new Map(templates.map((t) => [t.id, t])), program: null, reasonOf: () => 'een lange duurloop per week' });
+    expect(items).toHaveLength(1);
+    const record = planCheckRecord({ lines: ['Lange duurloop: korter'], items }, 'plancheck-1', at);
+    await PlanChangeProposalsRepo.put(record);
+    expect(joinsNotice(mine, Date.parse(at))).toBe(true);
+    const joined = joinPlanCheck(mine, { lines: ['Lange duurloop: korter'], stored: [long] }, record.id);
+    expect(joined.alsoReverts).toEqual(['plancheck-1']);
+    const change = { ...joined, written: await snapshotWritten(joined.before, joined.addedIds) };
+
+    expect(weekAdjustments(await PlanChangeProposalsRepo.getAll(), await PlannedSessionsRepo.getAll(), templates, '2026-10-26', '2026-10-29').map((a) => a.sessionId)).toContain(long.id);
+
+    await undoPlanChangeNow(change);
+    expect(await rowOf(long.id)).toEqual(long);
+    const proposals = await PlanChangeProposalsRepo.getAll();
+    // Het record van de ronde zelf blijft zoals het was; er komt een nieuw record bij dat ernaar wijst.
+    expect(proposals.find((p) => p.id === record.id)).toEqual(record);
+    expect(proposals.filter((p) => p.revertsProposalId === record.id)).toHaveLength(1);
+    expect(proposals.filter((p) => p.revertsProposalId === mine.id)).toHaveLength(1);
+    expect(buildChangeLog(proposals, await PlannedSessionsRepo.getAll(), templates, '2026-10-01').find((e) => e.id === record.id)?.undone).toBe(true);
+    expect(weekAdjustments(proposals, await PlannedSessionsRepo.getAll(), templates, '2026-10-26', '2026-10-29')).toEqual([]);
+  });
+
+  it('na 15 seconden, of bij een melding van de weekcontrole zelf, voegt hij zich niet', () => {
+    const mine = notice({});
+    expect(joinsNotice(mine, Date.parse(mine.createdAt) + 15_000)).toBe(false);
+    expect(joinsNotice({ ...mine, trigger: 'plan_check' }, Date.parse(mine.createdAt))).toBe(false);
+    expect(joinsNotice(null, Date.parse(mine.createdAt))).toBe(false);
+  });
 });

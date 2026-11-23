@@ -57,7 +57,7 @@ import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { mondayOfWeek, todayISO } from '../utils/dates';
 import { withProgramExercises } from '../engine/macrofactorProgram';
 import { withCountingSports } from '../engine/sportTemplate';
-import { PLAN_CHECK_WHY, planCheckRecord } from '../engine/repairAudit';
+import { PLAN_CHECK_WHY, joinPlanCheck, joinsNotice, planCheckRecord } from '../engine/repairAudit';
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName, logIdsInEnvelope } from '../storage/backupExport';
 import { backupFileText } from '../storage/backupFile';
@@ -225,9 +225,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         // Right after a change of yours (a move, an Akkoord): the repairs
         // join that notice, so its undo still works and puts everything
         // back as it was before your change.
-        if (prev && !prev.failed && prev.trigger !== 'plan_check' && Date.now() - Date.parse(prev.createdAt) < 15_000) {
-          const known = new Set(prev.before.map((s) => s.id));
-          const joined = { ...prev, lines: [...prev.lines, ...repaired.lines], before: [...prev.before, ...repaired.stored.filter((s) => !known.has(s.id))], addedIds: [...prev.addedIds, ...(repaired.addedIds ?? [])] };
+        if (joinsNotice(prev, Date.now())) {
+          // The record of this round goes along, so undoing the joined notice reverts it too (storage/undoPlanChange.ts).
+          const joined = joinPlanCheck(prev, repaired, id);
           const joinedIds = noticeIds(joined).filter((x) => !noticeIds(prev).includes(x));
           return { ...joined, written: refreshWritten(prev.written, syncTouched, noticeIds(joined), freshFor(joinedIds)) };
         }

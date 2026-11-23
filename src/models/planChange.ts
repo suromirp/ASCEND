@@ -236,5 +236,9 @@ export interface RecentPlanChange {
   written?: PlannedSession[];
   // Een handeling die niet lukte: de melding zegt dat, zonder Ongedaan maken (before is leeg).
   failed?: true;
+  // De records van de weekcontrole (plan_check) waarvan de melding zich bij deze voegde: ongedaan maken schrijft
+  // ook voor elk daarvan een terugdraairecord, zodat het Logboek en Week ze niet meer als gedaan tonen. Alleen in
+  // het geheugen, nooit bewaard.
+  alsoReverts?: string[];
   createdAt: string;
 }

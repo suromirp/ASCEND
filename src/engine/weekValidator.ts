@@ -75,7 +75,7 @@ export interface Finding {
   // proposal with Akkoord (weekFixProposal.ts), which lets the repair move its subject via `mayMove`.
   fromSport?: true;
   // A sport is in the finding (a fixed appointment or a logged sport day) and its repair changes the duration or the
-  // kind of a training (HARD-DAYS, ONE-LONG): with Duur aanpassen na een sport on Eerst een voorstel (`sportChange`,
+  // kind of a training (HARD-DAYS): with Duur aanpassen na een sport on Eerst een voorstel (`sportChange`,
   // the advice) only as a proposal with Akkoord in Week, never by itself (docs/visie/Ontwerp Losse sport.md, Ontwerp 9).
   sport?: { name: string; date: string };
   // HARD-DAYS only: how many hard days the week has and the limit (hardDayLimit).
@@ -430,7 +430,8 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
     // The last hard training of ASCEND that may change; a test or race never.
     const subject = week.filter((s) => isOwnHard(s) && open(s) && !isTestOrRace(tpl(s)!)).sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
     if (!subject) continue;
-    const outside = week.find(isOutsideHard)!;
+    // The earliest sport of the week names it, the same one every time.
+    const outside = week.filter(isOutsideHard).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.id.localeCompare(b.id))[0];
     findings.push({ rule: 'HARD-DAYS', date: subject.scheduledDate, sessionIds: [outside.id, subject.id], subjectId: subject.id, level: level(subject), message: `${hardDays.size} harde dagen in de week van ${day(monday)}, grens ${limit}.`, sport: { name: tpl(outside)?.name ?? 'je sport', date: outside.scheduledDate }, hardDays: { count: hardDays.size, limit } });
   }
 
@@ -441,9 +442,8 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
     if (list.length < 2) continue;
     const sorted = [...list].sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
     const subject = sorted.find((s) => level(s) === 3 && s !== sorted[sorted.length - 1]) ?? sorted[0];
-    // A sport among them (a fixed appointment or a logged sport day): the short version only with your Akkoord.
-    const sport = sorted.find((s) => s.fixed || isSportLogSession(s.id));
-    findings.push({ rule: 'ONE-LONG', date: subject.scheduledDate, sessionIds: list.map((s) => s.id), subjectId: subject.id, level: level(subject), message: `Twee volle lange trainingen in de week van ${day(mondayOfWeek(subject.scheduledDate))}.`, ...(sport ? { sport: { name: tpl(sport)?.name ?? 'je sport', date: sport.scheduledDate } } : {}) });
+    // No sport here: a sport template never has the role long (engine/sportTemplate.ts), so ONE-LONG carries no `sport`.
+    findings.push({ rule: 'ONE-LONG', date: subject.scheduledDate, sessionIds: list.map((s) => s.id), subjectId: subject.id, level: level(subject), message: `Twee volle lange trainingen in de week van ${day(mondayOfWeek(subject.scheduledDate))}.` });
   }
   return findings;
 }
