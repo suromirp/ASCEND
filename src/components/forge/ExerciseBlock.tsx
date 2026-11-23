@@ -67,7 +67,6 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   heavyTip,
   rirAsValue,
   warmNow = false,
-  warmName,
   swipeOn,
   undoText,
   quickRirRow,
@@ -109,8 +108,6 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   rirAsValue: boolean;
   // De oefening die deze opwarmset al deed is echt gedaan (engine/warmupLater.ts#warmNow): dan gedempt met de zin.
   warmNow?: boolean;
-  // De naam van die oefening nu (hij kan geruild zijn voor een oefening op hetzelfde patroon).
-  warmName?: string;
   swipeOn: boolean;
   // "Set 3 verwijderd" zolang je het nog ongedaan kunt maken.
   undoText?: string;
@@ -407,7 +404,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                   </LongPressRow>
                   </SwipeRow>
                   {row.id === warmLineRow && ex.warmFrom && (
-                    <p role="note" className="ml-9 font-sans text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{warmAlreadyLine(exercise, warmName ?? ex.warmFrom)}</p>
+                    <p role="note" className="ml-9 font-sans text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{warmAlreadyLine(exercise, ex.warmFrom)}</p>
                   )}
                   {!readOnly && row.kind === 'work' && addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg) && (
                     <p className="ml-9 h-5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg)} kg</p>

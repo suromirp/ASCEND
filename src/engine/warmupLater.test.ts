@@ -5,7 +5,7 @@ import type { ExercisePrescription, SessionLog } from '../models/training';
 import { planWorkout, progress, tickAllRows, tickRow, toStrengthData, type PlanContext, type WorkoutExercise } from './forgeWorkout';
 import { activeRow, exerciseComplete } from './forgeInput';
 import { resolveStrengthSettings, strengthModelKey } from './strengthSettings';
-import { allTicked, mutedWarmup, warmAlreadyAfter, warmAlreadyLine, warmNow, warmSourceNow } from './warmupLater';
+import { allTicked, mutedWarmup, warmAlreadyAfter, warmAlreadyLine, warmNow } from './warmupLater';
 import { isWorkSet } from './workSets';
 import { demoStrengthLogs } from './fixtures/strengthLogs';
 
@@ -91,16 +91,6 @@ describe('Forge: opwarmset later in de training', () => {
     let w = planWorkout(legDay, ctx());
     w = tickRow(w, 'a', work(w[0])[0].id).workout;
     expect(warmNow(w, w[2])).toBe(true);
-  });
-
-  it('bron geruild voor een oefening op hetzelfde patroon: nog steeds gedempt, met de naam van nu (I-30)', () => {
-    const w = afterSquatAndDeadlift();
-    const hack = exerciseById('hack-squat') ?? exerciseById('front-squat')!;
-    expect(hack.pattern).toBe(squat.pattern);
-    const swapped = w.map((e, i) => (i === 0 ? { ...e, exerciseId: hack.id, name: hack.name, swappedFrom: e.name } : e));
-    expect(warmNow(swapped, swapped[2])).toBe(true);
-    expect(warmSourceNow(swapped, swapped[2])).toBe(hack.name);
-    expect(muted(swapped, 2).length).toBeGreaterThan(0);
   });
 
   it('bron geruild (squat voor Walking Lunge): gewoon, ook met afgevinkte sets', () => {

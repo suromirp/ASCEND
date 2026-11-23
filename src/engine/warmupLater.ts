@@ -9,7 +9,6 @@
 // De zin en de demping lezen wat er is afgevinkt, niet de geplande volgorde (`warmNow`): de bron moet nog op zijn
 // plek staan, met dezelfde naam, en minstens één afgevinkte set hebben. Anders is het een gewone opwarmset.
 
-import { exerciseById } from '../data/exercises';
 import type { Exercise } from '../models/exercise';
 import type { WarmupScope } from './strengthSettings';
 import { isCompound, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmSource, type WarmState } from './warmup';
@@ -21,7 +20,6 @@ interface Row {
 }
 interface Block {
   slot: string;
-  exerciseId?: string;
   name: string;
   rows: Row[];
   warmFrom?: string;
@@ -44,23 +42,12 @@ export function warmAlreadyAfter(exercise: Exercise | undefined, before: { exerc
   return warmAlready(exercise, kind, state)?.name;
 }
 
-// De naam van de bron zoals hij nu in de training staat, als hij echt gedaan is: zijn plek staat er nog, er is
-// minstens één set van afgevinkt, en hij heeft dezelfde naam of hetzelfde patroon als toen (een bron geruild voor
-// een oefening op hetzelfde patroon houdt de benen of het bovenlichaam even warm, I-30). Een andere naam op een
-// ander patroon is gewoon. Een concept zonder `warmFromSlot` (van voor deze regel) is gewoon.
-export function warmSourceNow(workout: readonly Block[], ex: Block): string | undefined {
-  if (!ex.warmFrom || !ex.warmFromSlot || ex.warmFromSlot === ex.slot) return undefined;
-  const source = workout.find((e) => e.slot === ex.warmFromSlot);
-  if (!source || !source.rows.some((r) => r.done)) return undefined;
-  if (source.name === ex.warmFrom) return source.name;
-  const mine = ex.exerciseId ? exerciseById(ex.exerciseId)?.pattern : undefined;
-  const theirs = source.exerciseId ? exerciseById(source.exerciseId)?.pattern : undefined;
-  return mine && theirs && mine === theirs ? source.name : undefined;
-}
-
-// Is de bron nu echt gedaan? (`warmSourceNow`)
+// Is de bron nu echt gedaan? Alleen als zijn plek nog in de training staat met dezelfde naam (niet geruild) en er
+// minstens één set van is afgevinkt. Een concept zonder `warmFromSlot` (van voor deze regel) is gewoon.
 export function warmNow(workout: readonly Block[], ex: Block): boolean {
-  return warmSourceNow(workout, ex) !== undefined;
+  if (!ex.warmFrom || !ex.warmFromSlot || ex.warmFromSlot === ex.slot) return false;
+  const source = workout.find((e) => e.slot === ex.warmFromSlot);
+  return !!source && source.name === ex.warmFrom && source.rows.some((r) => r.done);
 }
 
 // De zin onder de gedempte opwarmset. Het feit eerst, dan wanneer je hem toch doet.
