@@ -9,7 +9,7 @@ Adres: `#/week`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 [knop: Volgende week]
 
 --- kaart 1 ---
-[knop: Bovenlichaam AMa 26·50 min· gedaandi 27Gedaan]
+[knop: Bovenlichaam AMa 26·50 min· gedaan di 27· gedaandi 27Gedaan]
 [knop: Rustige duurloopMa 26·56 min·zonder planGedaan]
 
 --- kaart 2 ---
