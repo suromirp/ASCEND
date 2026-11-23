@@ -110,19 +110,22 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
         const sick = cause === 'ill';
         const ramp = cause === 'ramp';
         const kept = DAY_CAUSE_TEXT[cause].kept;
-        // Een test of wedstrijd op een koortsdag (I-74): die liet ziek melden staan. Een test schuift alleen met jouw
-        // Akkoord, een wedstrijd schuift niet; of je start, kies je zelf.
-        if (f.level === 2) {
-          const race = idHasRole(byId.get(a)?.templateId ?? '', 'race', input.templates);
+        // Een test of wedstrijd op een ziektedag (I-74): die liet ziek melden staan. Op de rol, niet op het niveau: met een
+        // slot is hij niveau 1 (Warden, 23 november). Een test schuift alleen met jouw Akkoord, een wedstrijd schuift niet;
+        // of je start, kies je zelf. Koorts en buikgriep zijn allebei ziek, dus de tekst zegt ziek.
+        const templateId = byId.get(a)?.templateId ?? '';
+        const race = idHasRole(templateId, 'race', input.templates);
+        if (race || idHasRole(templateId, 'test', input.templates)) {
+          const what = race ? 'je wedstrijd staat er' : 'er staat een testloop';
           return {
             ...base,
-            headline: race ? 'Je bent ziek, en je wedstrijd staat er.' : 'Je bent ziek, en er staat een testloop.',
+            headline: sick ? `Je bent ziek, en ${what}.` : ramp ? `Je bouwt op na ziekte, en ${what}.` : `Je bent verkouden, en ${what}.`,
             fact: `${nameOf(a)} op ${dayName(dateOf(a))} ${kept}.`,
             title: `${nameOf(a)} op een ziektedag`,
             why: race
-              ? 'Met koorts train je niet. Je wedstrijd schuift niet mee; of je start, kies je zelf.'
-              : 'Met koorts zegt een testloop niets over je vorm. Hij schuift alleen met jouw Akkoord.',
-            notes: { [a]: 'je bent ziek' },
+              ? 'Ziek train je niet. Je wedstrijd schuift niet mee. Of je start, kies je zelf.'
+              : 'Ziek zegt een testloop niets over je vorm. Hij schuift alleen met jouw Akkoord.',
+            notes: { [a]: sick ? 'je bent ziek' : 'niets zwaars' },
           };
         }
         return {
