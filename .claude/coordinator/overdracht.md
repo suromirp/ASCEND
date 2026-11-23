@@ -2,6 +2,12 @@
 
 Bijgewerkt: 23 november 2026 door coördinator session_01LnDpSkRtYRz7771kuLPf2T (opvolger van session_01LnDpSip9wpY6fuZXMm2yqw). Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
 
+## Stand 23 november 03:45 (coördinator session_01LnDpSnS2nhuSzP3eTLuurZ)
+
+- Overgenomen. Bundel 3 (I-113, I-60, I-30, I-73) gestart: Sherpa sonnet op claude/forge-logs-23, raakt naspelen niet.
+- Naspelen: laatste commit 8f154102 (03:12); grens 04:12, dan verse Sherpa opus. send_later 04:15 gezet.
+- Limiet reset 08:40 Amsterdam.
+
 ## Wissel 23 november 03:40
 
 - Lopend: herstel naspelen door helper a18affb46032c6d5e in de vorige coördinator-chat (session_01LnDpSkRtYRz7771kuLPf2T); hij pusht naar claude/naspelen-hoogte-ziek met "Klaar: I-77, I-33, I-78". Kijk met git log origin/claude/naspelen-hoogte-ziek; geen nieuwe commit na 8f154102 binnen een uur: verse Sherpa (opus) met de twee Moet-punten hieronder bij 8.
