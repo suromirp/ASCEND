@@ -51,7 +51,7 @@ Sinds: 23 november.
 
 ## Net live
 
-### 23 november 10:50
+### 23 november 10:37
 - Beginnersladder (I-143): kies je bij kracht Meer, dan gaat in je startweken de ladder voor; het voorstel en Week noemen hetzelfde getal (35 en 45 minuten), ook voor een training die Meer erbij zet.
 - Losse sport (I-145): "Je deed vandaag padel, 1 uur."; het afrondscherm noemt de sport bij naam en zegt dat hij niet meetelt in plaats van "0 van 4".
 - Tocht (I-142): een gepauzeerd trekdoel telt niet als tocht; de Kennisbank en de les van de week alleen met een tocht als doel; Etappes zegt "Nog geen gelopen dag om mee te vergelijken".
