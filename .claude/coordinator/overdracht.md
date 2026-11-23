@@ -18,7 +18,7 @@ Max twee bouwers, nooit op dezelfde bestanden. Warden en Lookout per twee of dri
 8. Naspelen (opus, loopt, claude/naspelen-hoogte-ziek): I-77, I-33, I-78 met de back-up (scratchpad backup/backup-2026-11-23.json, chmod 600, alleen lezen). Besluit 2026-11-23-hoogte-en-ziek-signalen.md.
 9. Groot, achteraan: I-14, I-18, I-23, I-34: eerst Cartographer (opus) per punt in docs/visie, dan bouwen naar risico. I-103 niet.
 
-Mag naar de backlog (vanaf I-125, nog invoeren): route-wind uitleg noemt 25 km en het uur niet (uitleg/vandaag.ts ~270, vandaag.ts ~716); "heuvels en paden" noemt water en bos niet (uitleg/vandaag.ts 238 en 248, RoutePanel.tsx 184, HillsNearbyLine.tsx 57); opmaak bronnen.json; cancelVia in onClose van BigRouteSheet; viaChoosing wissen bij nieuwe zoeksleutel; werkbriefje-zin over nieuwe Overpass-soorten; I-51 "Telt alleen bij Rustig beginnen" en BEGINNER_SWAPS splitsen in werkbriefje planning. I-87 en I-20 als al opgelost markeren.
+Mag-punten route staan in de backlog als I-125 tot I-130; I-87 en I-20 gemarkeerd als nakijken.
 
 Vraag (I-124): de kaart heeft Bekijk, Akkoord staat in het blad erna (bestaand primitive). Advies zo laten; zonder antwoord blijft het zo. Staat in eigenaar.md.
 
