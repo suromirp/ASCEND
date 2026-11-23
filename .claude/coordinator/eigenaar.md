@@ -41,15 +41,20 @@ Sinds: 23 november.
 
 ## Stuk of vast
 
-- Vandaag een rustdag na een week niets (I-144): wordt nagespeeld en hersteld, voorrang boven bundel 9.
+- Niets.
 
 
 ## Loopt
 
-- Bundel 9 (I-14, I-18, I-23, I-34): vier ontwerpen klaar. Beginnersladder gebouwd, wordt nagekeken; Eén plan en Losse sport worden gebouwd.
+- Bundel 9 (I-14, I-18, I-23, I-34): ladder, Eén plan deel 1 en Losse sport deel 1 live. Nog: het eerste voorstel en één dagbeeld (I-14), beginner stap 5 tot 7, losse sport rest, na een loop één moment (I-34), kleine punten I-142, I-143, I-145.
 - Graphify, eerlijke proef: zodra de lijst leeg is. De koppeling alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 ## Net live
+
+### 23 november 09:28
+- Rustdag na een pauze (I-144): uw situatie gaf de terugkeerkaart al; waarschijnlijk draaide de app nog een oude versie, ververs hem. Daarnaast: ook een pauze die eerder eindigde telt, de eerste dag wordt niet geruild als je al trainde, zware benen komen niet binnen 48 uur na zware benen, en zonder Akkoord zegt Vandaag "Je trainde N dagen niet. Vandaag rustig beginnen".
+- Eén plan (I-14, deel): "Deze week nog een keer?" noemt één getal, dat van Week; na een test geen dubbel advies.
+- Losse sport (I-23, deel): Padel, Voetbal, Yoga en Zwemmen altijd onder Anders; na het loggen vraagt Vandaag "Hoe telt dit?"; de coachzin past bij de sport.
 
 ### 23 november 08:25
 - Beginnersstart (I-18): op Heel licht wordt de start echt licht, na je Akkoord: kracht in week 1 35 minuten met 2 sets per oefening, wandelen en dribbelen 20 en 30 minuten, elke week iets meer. Een start die al loopt krijgt eerst het voorstel "Je start wordt lichter"; Liever niet laat alles zoals het was.
