@@ -4477,6 +4477,19 @@
    "kern": "Bij de gekozen lus: terug voor het donker (nu plus duur tegenover zonsondergang, instelbaar), een hoogteprofiel met stukken boven 8 procent in amber, de ondergrond uit BRouter-WayTags (Valhalla niets) en een afhaakring op de kaart tussen 35 en 65 procent van de lus; alles uit de lus zelf, geen extra aanroep.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-23-hoogte-en-ziek-signalen.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "lichaam-en-herstel",
+    "koppelingen-en-data"
+   ],
+   "kern": "Een loop heeft één getal voor zijn stijging (engine/runClimb.ts): het getal van het horloge tenzij watchClimbTrusted nee zegt, dan de eigen telling; Run in detail schaalt de km naar dat totaal, alleen om te tonen; de bodem van 20 m blijft (nagespeeld: geen vlakke loop verloor zijn horlogegetal). Vroeg ziek zien slaat een ochtend zonder nacht over en laat zijn rusthartslag uit het gemiddelde; na een gewone nacht van minstens 6 uur is één duidelijke ochtend genoeg (illnessSignsOneMorning, standaard aan).",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-14-hoogtemeters-na-stap-1.md",
+    "docs/beslissingen/2026-11-20-niet-goed-gemeten-rest.md"
+   ]
+  },
   "docs/beslissingen/2026-11-20-koppelvoorstel-korte-test.md": {
    "onderwerpen": [
     "lopen-en-tests",

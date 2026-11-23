@@ -18,6 +18,14 @@
 //   bewijs van gezond. Met een gewone rusthartslag breekt hij de reeks wel. Er blijven minstens
 //   twee ochtenden met beide signalen nodig (docs/beslissingen/2026-11-20-niet-goed-gemeten-rest.md).
 //
+// - een ochtend zonder nacht (geen slaap en geen HRV: het horloge lag 's nachts af) is geen meting
+//   in rust: zijn rusthartslag komt van overdag en ligt hoger. Hij wordt overgeslagen, telt niet
+//   en breekt de reeks niet, en zijn rusthartslag blijft uit het gemiddelde van dit signaal;
+// - één duidelijke ochtend is genoeg als de nacht gewoon was (minstens 6 uur, en niet "Niet goed
+//   gemeten"): een korte nacht verklaart een hoge rusthartslag en een lage HRV al. Instelbaar
+//   (`oneMorning`, instelling `illnessSignsOneMorning`, standaard aan).
+//   Besluit: docs/beslissingen/2026-11-23-hoogte-en-ziek-signalen.md (I-78).
+//
 // Het is een vraag, geen waarschuwing en geen diagnose. Het verandert niets aan de planning; wie
 // "Word ziek" kiest, komt in de gewone ziekmelding, die zelf een voorstel met Akkoord is.
 //
@@ -25,7 +33,7 @@
 
 import type { RecoveryMetric } from '../models/metrics';
 import { addDays } from '../utils/dates';
-import { baselineValues, dayRecord, MIN_BASELINE_DAYS } from './wellnessCheck';
+import { baselineValues, dayRecord, MIN_BASELINE_DAYS, SHORT_NIGHT_MINUTES } from './wellnessCheck';
 import { mean, stdev } from '../utils/stats';
 
 const ILLNESS_RHR_RISE = 6;
@@ -51,28 +59,38 @@ export interface IllnessSignInput {
   // Nachten die je "Niet goed gemeten" noemde (engine/shortNight.ts#ignoredNightDates): alleen de HRV.
   ignoredNights?: ReadonlySet<string>;
   ill?: boolean;
+  // Eén duidelijke ochtend na een gewone nacht is genoeg (standaard aan).
+  oneMorning?: boolean;
 }
+
+// Zag het horloge deze nacht? Een slaapduur of een HRV zegt ja. Zonder beide komt de rusthartslag
+// van overdag (het horloge lag 's nachts af) en zegt hij niets over je ochtend in rust.
+const sawNight = (m: Pick<RecoveryMetric, 'sleepMinutes' | 'hrv'>): boolean => m.sleepMinutes !== undefined || m.hrv !== undefined;
+const nightRhr = (m: RecoveryMetric): number | undefined => (sawNight(m) ? m.restingHeartRate : undefined);
 
 // Wat deze ochtend voor de reeks is: `counts` als beide signalen afwijken, niet `counts` als hij
 // wordt overgeslagen (niet goed gemeten, rusthartslag wel hoog), undefined als hij de reeks breekt.
-// `rise` is de stijging van de rusthartslag.
-interface Morning { rise: number; counts: boolean }
-function offMorning(day: string, metrics: RecoveryMetric[], explained: ReadonlySet<string>, hrvSkip: ReadonlySet<string>): Morning | undefined {
+// 'no-night': het horloge zag geen nacht, overslaan zonder iets te zeggen. `rise` is de stijging
+// van de rusthartslag, `fullNight` of de nacht minstens 6 uur duurde.
+interface Morning { rise: number; counts: boolean; fullNight: boolean }
+function offMorning(day: string, metrics: RecoveryMetric[], explained: ReadonlySet<string>, hrvSkip: ReadonlySet<string>): Morning | 'no-night' | undefined {
   if (explained.has(day)) return undefined;
   const r = dayRecord(day, metrics);
+  if (r && !sawNight(r)) return 'no-night';
   if (r?.restingHeartRate === undefined) return undefined;
-  const rhrBase = baselineValues(day, metrics, (m) => m.restingHeartRate, explained);
+  const rhrBase = baselineValues(day, metrics, nightRhr, explained);
   if (rhrBase.length < MIN_BASELINE_DAYS) return undefined;
   const rise = r.restingHeartRate - Math.round(mean(rhrBase));
   if (rise < ILLNESS_RHR_RISE) return undefined;
   // Niet goed gemeten: de HRV zegt niets, de hoge rusthartslag wel. Overslaan, niet breken.
-  if (hrvSkip.has(day)) return { rise, counts: false };
+  const fullNight = r.sleepMinutes !== undefined && r.sleepMinutes >= SHORT_NIGHT_MINUTES;
+  if (hrvSkip.has(day)) return { rise, counts: false, fullNight };
   if (r.hrv === undefined) return undefined;
   const hrvBase = baselineValues(day, metrics, (m) => m.hrv, hrvSkip);
   if (hrvBase.length < MIN_BASELINE_DAYS) return undefined;
   const hrvAvg = mean(hrvBase);
   const margin = Math.max(stdev(hrvBase), hrvAvg * 0.07);
-  return r.hrv < hrvAvg - margin ? { rise, counts: true } : undefined;
+  return r.hrv < hrvAvg - margin ? { rise, counts: true, fullNight } : undefined;
 }
 
 const COUNT_WORD = ['nul', 'een', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven'];
@@ -83,27 +101,49 @@ export function illnessSign(input: IllnessSignInput): IllnessSign | undefined {
   const ignored = input.ignoredNights;
   const hrvSkip = ignored && ignored.size > 0 ? new Set([...explained, ...ignored]) : explained;
   const metrics = [...input.metrics];
-  let todayRise: number | undefined;
+  let today: Morning | undefined;
   let mornings = 0;
   let from = input.today;
-  // Hoeveel dagen terug de vroegste ochtend met beide signalen ligt.
+  // Hoeveel dagen terug de vroegste ochtend met beide signalen ligt, en hoeveel dagen daarvan het
+  // horloge geen nacht zag (die tellen niet als dag met een hoge rusthartslag).
   let reach = 0;
+  let unseen = 0;
+  let unseenToReach = 0;
   for (let i = 0; i < LOOKBACK; i++) {
     const day = addDays(input.today, -i);
     const m = offMorning(day, metrics, explained, hrvSkip);
     if (!m) break;
-    if (i === 0) todayRise = m.rise;
+    if (m === 'no-night') {
+      // Vandaag zonder nacht: vandaag is niet gemeten, dus geen vraag.
+      if (i === 0) break;
+      unseen++;
+      continue;
+    }
+    if (i === 0) today = m;
     if (!m.counts) continue;
     mornings++;
     from = day;
     reach = i;
+    unseenToReach = unseen;
   }
-  if (todayRise === undefined || mornings < ILLNESS_MIN_MORNINGS) return undefined;
+  if (today === undefined) return undefined;
+  const todayRise = today.rise;
+  if (mornings < ILLNESS_MIN_MORNINGS) {
+    // Eén duidelijke ochtend: beide signalen vandaag, na een gewone nacht die meetelt.
+    if (input.oneMorning === false || mornings !== 1 || from !== input.today || !today.counts || !today.fullNight) return undefined;
+    return {
+      from,
+      mornings,
+      rhrRise: todayRise,
+      text: `Je rusthartslag ligt vanochtend ${todayRise} slagen boven je gewone en je HRV eronder, na een gewone nacht. Voel je je goed?`,
+    };
+  }
   const word = COUNT_WORD[mornings] ?? mornings;
   // Met een overgeslagen ochtend ertussen zijn het geen ochtenden achter elkaar: dan het aantal dagen
-  // dat je rusthartslag hoog ligt, en op hoeveel ochtenden je HRV eronder lag.
-  const gap = reach + 1 > mornings;
-  const days = reach + 1;
+  // dat je rusthartslag hoog ligt, en op hoeveel ochtenden je HRV eronder lag. Een dag zonder nacht
+  // telt daarin niet mee.
+  const days = reach + 1 - unseenToReach;
+  const gap = days > mornings;
   return {
     from,
     mornings,

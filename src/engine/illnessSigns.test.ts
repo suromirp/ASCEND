@@ -28,7 +28,7 @@ describe('vroeg ziek zien', () => {
     expect(sign?.text).toBe('Je rusthartslag ligt twee ochtenden achter elkaar 7 slagen boven je gewone, en je HRV eronder. Voel je je goed?');
   });
 
-  it('één ochtend is niet genoeg', () => {
+  it('één ochtend zonder bekende nacht is niet genoeg', () => {
     expect(illnessSign({ today, metrics: weeks([fine, bad]) })).toBeUndefined();
   });
 
@@ -134,6 +134,72 @@ describe('vroeg ziek zien', () => {
 
     it('een lege lijst verandert niets', () => {
       expect(illnessSign({ today, metrics: weeks([bad, bad]), ignoredNights: new Set() })).toEqual(illnessSign({ today, metrics: weeks([bad, bad]) }));
+    });
+  });
+
+  // Scherper (I-78, docs/beslissingen/2026-11-23-hoogte-en-ziek-signalen.md).
+  describe('een ochtend zonder nacht', () => {
+    // Het horloge zag geen nacht: geen slaap, geen HRV, alleen een rusthartslag van overdag.
+    const noNight = (metrics: RecoveryMetric[], dates: string[], rhr = 56) =>
+      metrics.map((m) => (dates.includes(m.date) ? { ...m, restingHeartRate: rhr, hrv: undefined, sleepMinutes: undefined } : m));
+
+    it('wordt overgeslagen: hij breekt de reeks niet en telt niet mee', () => {
+      const sign = illnessSign({ today, metrics: noNight(weeks([bad, bad, bad]), ['2026-10-30']) });
+      expect(sign?.mornings).toBe(2);
+      expect(sign?.from).toBe('2026-10-29');
+      expect(sign?.text).toBe('Je rusthartslag ligt twee ochtenden achter elkaar 7 slagen boven je gewone, en je HRV eronder. Voel je je goed?');
+    });
+
+    it('ook met een gewone rusthartslag van overdag', () => {
+      expect(illnessSign({ today, metrics: noNight(weeks([bad, bad, bad]), ['2026-10-30'], 50) })?.mornings).toBe(2);
+    });
+
+    it('vandaag zonder nacht: geen vraag, want vandaag is niet gemeten', () => {
+      expect(illnessSign({ today, metrics: noNight(weeks([bad, bad, bad]), [today]) })).toBeUndefined();
+    });
+
+    it('zijn rusthartslag blijft uit je gemiddelde', () => {
+      // Tien dagen zonder nacht met een rusthartslag van overdag die hoger ligt.
+      const days = Array.from({ length: 10 }, (_, n) => addDays(today, -(5 + n)));
+      const metrics = noNight(weeks([{ rhr: 56, hrv: 48 }, { rhr: 56, hrv: 48 }]), days, 60);
+      expect(illnessSign({ today, metrics })?.rhrRise).toBe(6);
+    });
+  });
+
+  describe('één duidelijke ochtend', () => {
+    const night = (metrics: RecoveryMetric[], minutes: number) => metrics.map((m) => (m.date === today ? { ...m, sleepMinutes: minutes } : m));
+
+    it('na een gewone nacht: de vraag, met één ochtend', () => {
+      const sign = illnessSign({ today, metrics: night(weeks([fine, bad]), 420) });
+      expect(sign?.mornings).toBe(1);
+      expect(sign?.from).toBe(today);
+      expect(sign?.text).toBe('Je rusthartslag ligt vanochtend 7 slagen boven je gewone en je HRV eronder, na een gewone nacht. Voel je je goed?');
+    });
+
+    it('na een korte nacht niet: die verklaart het al', () => {
+      expect(illnessSign({ today, metrics: night(weeks([fine, bad]), 300) })).toBeUndefined();
+    });
+
+    it('niet als je hem uitzet', () => {
+      expect(illnessSign({ today, metrics: night(weeks([fine, bad]), 420), oneMorning: false })).toBeUndefined();
+    });
+
+    it('niet bij een nacht die niet goed gemeten is, een uitgelegde ochtend of als je al ziek bent', () => {
+      const metrics = night(weeks([fine, bad]), 420);
+      expect(illnessSign({ today, metrics, ignoredNights: new Set([today]) })).toBeUndefined();
+      expect(illnessSign({ today, metrics, explained: new Set([today]) })).toBeUndefined();
+      expect(illnessSign({ today, metrics, ill: true })).toBeUndefined();
+    });
+
+    it('alleen een hoge rusthartslag, of alleen een lage HRV, blijft niet genoeg', () => {
+      expect(illnessSign({ today, metrics: night(weeks([fine, { rhr: 57, hrv: 60 }]), 420) })).toBeUndefined();
+      expect(illnessSign({ today, metrics: night(weeks([fine, { rhr: 50, hrv: 45 }]), 420) })).toBeUndefined();
+    });
+
+    it('twee ochtenden houden hun eigen zin', () => {
+      const sign = illnessSign({ today, metrics: night(weeks([bad, bad]), 420) });
+      expect(sign?.mornings).toBe(2);
+      expect(sign?.text).toContain('twee ochtenden achter elkaar');
     });
   });
 });

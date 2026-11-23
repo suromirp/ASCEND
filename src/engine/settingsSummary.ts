@@ -1194,6 +1194,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: String(f.snapshots), dim: f.snapshots === 0 };
     case 'vroeg-ziek':
       return { checked: s.illnessSigns !== false };
+    case 'vroeg-ziek-een':
+      return { checked: s.illnessSignsOneMorning !== false };
     case 'hitte-tempo':
       return { checked: s.heatPace !== false };
     case 'weekdag-patroon':
