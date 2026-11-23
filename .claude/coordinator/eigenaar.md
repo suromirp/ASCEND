@@ -4,14 +4,19 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-Geen open vragen.
+### Terugkeer na een pauze: Bekijk of Akkoord op de kaart (I-124, 23 november)
+Keuzes: de kaart houdt Bekijk en Akkoord staat in het blad dat opent, zoals elk voorstel in de app (advies); of Akkoord direct op de kaart.
+Zonder antwoord: het blijft Bekijk.
+Sinds: 23 november.
 
 ## Stuk of vast
 
 
 ## Loopt
 
-- Route: soort terrein en via een punt in Andere lus (I-112) plus vier kleine verbeteringen aan de lus (I-120 tot I-123). Bouwer bezig.
+- Route: soort terrein en via een punt in Andere lus (I-112) plus vier kleine verbeteringen (I-120 tot I-123): gebouwd en nagekeken, laatste schermtest loopt, daarna live.
+- Terugkeer na een pauze (I-124): de pauze telt vanaf je laatste echte training, het voorstel verloopt niet meer na drie dagen, Forge lichter na meer dan 10 dagen zonder kracht, en een periode achteraf vastleggen. Gebouwd, controle loopt.
+- Hoogtemeters en vroeg ziek zien (I-77, I-33, I-78): nagespeeld met uw back-up, bouwer bezig.
 - Telt op de dag van uitvoeren (I-58, na uw correctie): een Forge-training die later wordt afgesloten, een verplaatste training en een log in een andere week tellen op de dag dat ze echt gedaan zijn. Bouwer bezig.
 - Graphify, eerlijke proef: na de reset van de weeklimiet (zondag 22 november 18:00 Portugese tijd). De graaf één keer bouwen (kosten apart), de koppeling en de regel in CLAUDE.md alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
