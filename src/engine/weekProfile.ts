@@ -128,8 +128,10 @@ const shortName = (t: SessionTemplate) => t.name.replace(/\s*\([^)]*\)\s*$/, '')
 
 export function ridgeSentence(days: DayLoad[], today: string): string {
   const peak = days.reduce<DayLoad | undefined>((best, d) => (d.load > (best?.load ?? 0) ? d : best), undefined);
-  if (!peak) return 'Deze week staat er geen training.';
   const past = days[days.length - 1].date < today;
+  // Een voorbije week kan trainingen hebben gehad die niet telden (gemist, overgeslagen, een wandeling): "Deze week
+  // staat er geen training" zou dan niet kloppen.
+  if (!peak) return past ? 'Die week telde geen training mee in de belasting.' : 'Deze week staat er geen training.';
   const heaviest = `${capitalize(weekdayLongNL(peak.date))} ${past || peak.date < today ? 'was' : 'is'} je zwaarste dag.`;
 
   const legs = days.filter((d) => d.legTemplate);
