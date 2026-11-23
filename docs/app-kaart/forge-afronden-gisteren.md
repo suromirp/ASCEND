@@ -13,7 +13,7 @@ Gedaan op
 Duur
 [veld: text = 1]
 min
-Zwaarte (RPE) van de hele training, als je wilt
+Zwaarte van de hele training, als je wilt
 [label: Zwaarte van 1 tot 10]
 [knop: 1]
 [knop: 2]

@@ -8,8 +8,6 @@ Adres: `#/more/gidsen`. Klok: 31 oktober 2026, 08:00. Breedte: 390 px.
 Opzoeken
 [knop: Weer en kleding]
 Weer en kleding
-[knop: Kennisbank]
-Kennisbank
 [knop: Trainingsplekken]
 Trainingsplekken
 [knop: Datavelden bekijken]

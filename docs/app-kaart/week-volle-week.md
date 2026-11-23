@@ -26,10 +26,10 @@ Vr 30 · niets gepland
 [knop: Verplaats of ruil Rustige duurloop, nu op zaterdag, volle dag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
 [knop: Bovenlichaam AVandaag·60 min· volle dag]
 [knop: Verplaats of ruil Bovenlichaam A, nu op zaterdag, volle dag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
-[knop: Rustige duurloopZo 1·Zone 230 min· volle dag]
-[knop: Verplaats of ruil Rustige duurloop, nu op zondag, volle dag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
 [knop: Lange duurloopZo 1·Zone 250 min· volle dag]
 [knop: Verplaats of ruil Lange duurloop, nu op zondag, volle dag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
+[knop: Rustige duurloopZo 1·Zone 230 min· volle dag]
+[knop: Verplaats of ruil Rustige duurloop, nu op zondag, volle dag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
 Twee rustige lopen
 · liefst 5 uur ertussen
 

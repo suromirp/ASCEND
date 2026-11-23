@@ -6,6 +6,7 @@ import { useAppData } from '../state/AppDataContext';
 import { planMissed, resolveMissedSettings } from '../engine/missedTraining';
 import { todayISO } from '../utils/dates';
 import { useTrainingPlaces } from './useTrainingPlaces';
+import { adviceBusyIds, catchUpWaiting } from '../engine/adviceShared';
 
 // Wacht even tot de planning na het openen staat, zoals het vanzelf afvinken.
 const AUTO_DELAY_MS = 1500;
@@ -20,10 +21,8 @@ export function useMissedTraining() {
   const places = useTrainingPlaces();
   const missedSettings = resolveMissedSettings(settings);
   // Wat al in een advies op Vandaag staat (een gemiste training inhalen of laten vervallen), krijgt geen tweede kaart.
-  const busyIds = useMemo(
-    () => new Set(advice.flatMap((a) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])]).flatMap((p) => p?.changes ?? []).map((c) => c.plannedSessionId).filter((id): id is string => !!id)),
-    [advice],
-  );
+  // Ook wat een open rustige instap voor het inhalen vasthoudt (I-154), anders slaat Vanzelf overslaan het stil over.
+  const busyIds = useMemo(() => adviceBusyIds(advice), [advice]);
   const plan = useMemo(
     () => (memory ? planMissed({ plannedSessions, logs: sessionLogs, templates, today, settings: missedSettings, memory, busy: busyIds, illnessEpisodes: settings.illnessEpisodes, leavePeriods: settings.leavePeriods, places, openDraftId, programStart: program?.startDate }) : undefined),
     // missedSettings komt uit settings.
@@ -52,8 +51,9 @@ export function useMissedTraining() {
   }, [autoIds, skipMissed, rememberMissed]);
 
   // Eén plek voor gemist: staat het inhaaladvies (MISSED-CATCH-UP) op Vandaag, dan wacht de vraag Niet gedaan? tot
-  // dat beantwoord is. Anders twee kaarten met twee woorden voor hetzelfde (profielendoorloop GR5 9).
-  const catchUpShown = advice.some((a) => a.ruleId === 'MISSED-CATCH-UP');
+  // dat beantwoord is. Anders twee kaarten met twee woorden voor hetzelfde (profielendoorloop GR5 9). Wijkt het inhalen
+  // voor de rustige instap (I-154, `heldCatchUpIds`), dan wacht de vraag ook: na Liever niet op de instap komt het inhalen.
+  const catchUpShown = catchUpWaiting(advice);
   return { item: catchUpShown ? undefined : plan?.item, lapsed: catchUpShown ? undefined : plan?.lapsed, missedSettings };
 }
 

@@ -29,6 +29,9 @@ Lijntjes in de lijst
 [knop: Volgorde van de oefeningen, Meest getraind]
 Volgorde van de oefeningen
 Meest getraind
+[knop: Woorden in Forge, Gewoon]
+Woorden in Forge
+Gewoon
 [knop: Plaatjes bij oefeningen, Kaart en tekening]
 Plaatjes bij oefeningen
 [knop: Uitleg: Plaatjes bij oefeningen]

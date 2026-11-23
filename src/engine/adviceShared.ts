@@ -77,6 +77,25 @@ export interface Advice {
   reentryForgeDays?: number;
   // De eerste dag van die instap: herstel en de eerste lichte training ruilen van dag, met hetzelfde Akkoord (I-144).
   reentryFirstDay?: ReentryFirstDay;
+  // Rule REENTRY: de trainingen van een inhaaladvies dat voor de terugkeer wijkt (I-154). Ze blijven bezet
+  // (adviceBusyIds), dus de vraag Niet gedaan? en Vanzelf overslaan laten ze met rust, net als achter MISSED-CATCH-UP
+  // (components/useMissedTraining.ts). Niet opgeslagen.
+  heldCatchUpIds?: string[];
+}
+
+// De trainingen die al in een advies op Vandaag staan, ook die een open instap voor het inhalen vasthoudt: die krijgen
+// geen kaart Training die niet doorging en worden niet vanzelf overgeslagen (engine/missedTraining.ts#planMissed, busy).
+export function adviceBusyIds(advice: readonly Advice[]): Set<string> {
+  const ids = advice.flatMap((a) => [
+    ...[a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])].flatMap((p) => p?.changes ?? []).map((c) => c.plannedSessionId),
+    ...(a.heldCatchUpIds ?? []),
+  ]);
+  return new Set(ids.filter((id): id is string => !!id));
+}
+
+// Wacht er een inhaaladvies (MISSED-CATCH-UP, of een dat voor de instap wijkt), dan wacht de vraag Niet gedaan?.
+export function catchUpWaiting(advice: readonly Advice[]): boolean {
+  return advice.some((a) => a.ruleId === 'MISSED-CATCH-UP' || (a.heldCatchUpIds?.length ?? 0) > 0);
 }
 
 export interface AdviceOption {

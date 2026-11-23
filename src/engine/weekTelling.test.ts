@@ -67,6 +67,7 @@ const pauseOf = (leave: LeavePeriod[] | undefined): PauseContext => ({ leave, te
 const adviceInputs = (over: Partial<AdviceInputs>): AdviceInputs => ({
   logs: [], plannedSessions: [], templates, injuries: [], program, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf: '2026-11-15', restDay: 1, ...over,
 });
+const baseInputs = adviceInputs;
 const catchUp = (inputs: AdviceInputs) => computeAdvice(inputs).filter((a) => a.ruleId === 'MISSED-CATCH-UP' || a.ruleId === 'SKIPPED-KEY-TO-REST');
 
 describe('de voorbeeldweek van de eigenaar (zondag 15 november 10:40)', () => {
@@ -242,6 +243,8 @@ describe('randgevallen', () => {
 
   it('een training die vandaag nog staat: morgen is geen rustdag om op te vullen; is vandaag leeg, dan wel', () => {
     at('2026-11-15');
+    // Zonder logs ziet de terugkeer twee stille weken; die gaat voor inhalen (I-154). Hier gaat het om het inhalen zelf.
+    const adviceInputs = (over: Partial<AdviceInputs>) => baseInputs({ reentry: { choice: 'off' }, ...over });
     const long = ps('long', 'tpl_long_run', '2026-11-14');
     const easy = ps('easy', 'tpl_easy_run', '2026-11-15');
     const rest = ps('rest', 'tpl_herstel', '2026-11-16');
