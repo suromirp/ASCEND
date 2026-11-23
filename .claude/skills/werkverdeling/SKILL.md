@@ -20,7 +20,7 @@ Besluit `docs/beslissingen/2026-11-21-zuinige-stand.md`. De eigenaar ging te sne
 - Herstel voorkomen: een korte opdracht met harde criteria en de bestanden erbij. Alleen Moet-punten herstellen; Mag-punten gaan naar de backlog, niet in dezelfde ronde. Na een herstel kijkt de coördinator zelf naar de diff, geen nieuwe keuring.
 - De bouwer draait zelf tsc, lint, vitest, build en kaart:vergelijk; geen aparte tester voor die controles.
 - Losse chats (`create_session`) alleen voor opslag of migraties; de rest als helper.
-- Coördinator: wissel rond 150k context of na elke bouwronde; overdracht kort; uit de backlog alleen lezen wat nodig is; geen wachtlussen of wakeups zonder reden (een helper meldt zich vanzelf).
+- Coördinator: wissel rond 200k context of na drie bundels; blok Start van de overdracht hoogstens 3 KB; eigenaar.md en backlog niet lezen bij de start, alleen grep op I-nummer; elke helperopdracht eindigt met "Antwoord hoogstens tien regels; details in een bestand op je tak."; geen wachtlussen of wakeups zonder reden (een helper meldt zich vanzelf).
 - Kostenlogboek: per feature het totaal (bouwer plus poorten); na een week vergelijken met 18 tot 20 november.
 
 ## De tabel

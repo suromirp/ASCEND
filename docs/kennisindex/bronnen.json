@@ -955,10 +955,11 @@
    "onderwerpen": [
     "werkwijze"
    ],
-   "kern": "De coördinator wisselt op lengte (250k tot 300k context of na een bouwronde), de overdracht blijft onder 10 KB, haken rond het samenvatten bewaren de stand, en de kosten gaan omlaag met plan-eerst bij planner en opslag, het model naar het werk en gebundelde kleine punten. Geldt nog: de overdracht onder 10 KB, de haken rond het samenvatten, plan-eerst bij planner en opslag.",
+   "kern": "De coördinator wisselt op lengte (250k tot 300k context of na een bouwronde), de overdracht blijft onder 10 KB, haken rond het samenvatten bewaren de stand, en de kosten gaan omlaag met plan-eerst bij planner en opslag, het model naar het werk en gebundelde kleine punten. Geldt nog: de haken rond het samenvatten, plan-eerst bij planner en opslag.",
    "stand": "deels",
    "vervangenDoor": [
-    "docs/beslissingen/2026-11-21-zuinige-stand.md"
+    "docs/beslissingen/2026-11-21-zuinige-stand.md",
+    "docs/beslissingen/2026-11-23-zuinige-start-coordinator.md"
    ]
   },
   "docs/beslissingen/2026-11-20-ijkset-op-de-pagina.md": {
@@ -4497,6 +4498,13 @@
     "koppelingen-en-data"
    ],
    "kern": "Bij een Avontuurlijke lus begin je tegen de wind in en heb je hem op de terugweg mee: de app draait de lus (reverseProposal, geen aanroep) op de windrichting van het startuur uit de voorspelling die er al is, gemeten over het eerste en laatste derde; zwakker dan 12 km/u of onbekend doet niets; één regel bij de lus, ook eerlijk na Andersom; instelling routeWind, standaard aan.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-23-zuinige-start-coordinator.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "De coördinator wisselt bij ongeveer 200k context of na drie bundels; bij de start alleen CLAUDE.md en het blok Start van de overdracht (hoogstens 3 KB), `werkwijze.md` alleen bij nodig, backlog en `eigenaar.md` alleen met grep; helpers antwoorden in hoogstens tien regels.",
    "stand": "geldt"
   }
  }

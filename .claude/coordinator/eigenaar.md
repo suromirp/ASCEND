@@ -9,32 +9,6 @@ Keuzes: de kaart houdt Bekijk en Akkoord staat in het blad dat opent, zoals elk 
 Zonder antwoord: het blijft Bekijk.
 Sinds: 23 november.
 
-### Week van uitvoeren: twee randgevallen (I-58, 23 november)
-Keuzes: een Forge-training die nog openstaat telt pas mee na Afronden, op de dag van je laatste set (advies); of al zodra je sets logt. En een sleuteltraining of Gemist blijft bij de geplande week (advies), want een gedane training is nooit gemist; of ook die verhuist.
-Zonder antwoord: het advies, zo is het gebouwd.
-Sinds: 23 november.
-
-### Hoogtemeters per km in Run in detail (I-77, 23 november)
-Keuzes: de meters per km tellen op tot het getal van je horloge, ook als een km bij een oude loop daardoor hoger uitvalt (advies); of de km-getallen los laten staan.
-Zonder antwoord: het advies, zo is het gebouwd.
-Sinds: 23 november.
-
-### Slaaphartslag en ademhaling voor vroeg ziek zien (I-78, 23 november)
-Keuzes: eerst laten nagaan of je horloge die levert (advies); of meteen meenemen.
-Zonder antwoord: er gebeurt nu niets.
-Sinds: 23 november.
-
-### Wachttijd intervals.icu en melding herstelstap (I-35, I-54, 23 november)
-Keuzes: één aanroep mag tot 120 seconden duren en de melding over een mislukte herstelstap staat in het blad Versie (advies); of korter wachten en de melding op Vandaag.
-Zonder antwoord: het advies, zo is het gebouwd.
-Sinds: 23 november.
-
-### Opwarmset na een ruil (I-30, 23 november)
-Je besloot op 14 november: ruil je de squat, dan krijg je een gewone opwarmset. Helpers stelden voor om bij een ruil voor een oefening op hetzelfde patroon de opwarmset gedempt te houden.
-Keuzes: zo laten zoals je besloot (advies, het is veilig en simpel); of gedempt houden bij hetzelfde patroon en als de bron zelf opwarmsets had.
-Zonder antwoord: het blijft zoals je besloot.
-Sinds: 23 november.
-
 ### Eén plan: vier keuzes (I-14, 23 november)
 Voorstel, Vandaag, Week en de weekbalk gaan uit één dagbeeld lezen; ontwerp in docs/visie/Ontwerp Eén plan.md.
 Keuzes, advies voorop: na een test of wedstrijd geen "na zwaar, ruimte" (de test heeft eigen rust); bij twee keer kracht op drie dagen volgt de tekst het plan ("1 keer kracht; met een vierde dag past het"); het eerste voorstel noemt de rustdag met wandelen; "Deze week nog een keer?" noemt één getal, dat van Week.
@@ -56,18 +30,23 @@ Na een loop één moment in plaats van zes tot acht lagen; de Terugblik als apar
 Zonder antwoord: het advies.
 Sinds: 23 november.
 
+## Beslist op advies (23 november, uw opdracht van 07:42)
+
+- Opwarmset na een ruil (I-30): blijft zoals u op 14 november besloot, een gewone opwarmset.
+- Week van uitvoeren (I-58): een open Forge-training telt pas na Afronden; een sleuteltraining of Gemist blijft bij de geplande week.
+- Wachttijd intervals.icu (I-35): hoogstens 120 seconden per aanroep.
+- Mislukte herstelstap (I-54): de melding staat in het blad Versie.
+- Hoogtemeters per km in Run in detail (I-77): tellen op tot het getal van uw horloge.
+- Slaaphartslag en ademhaling (I-78): eerst nagaan of uw horloge die levert (Scout), daarna pas bouwen.
+
 ## Stuk of vast
 
 
 ## Loopt
 
-- Bundel 9 (I-14, I-18, I-23, I-34): vier ontwerpen klaar, bouwen per stap naar risico.
-- Kleine punten (I-125, I-130 tot I-138): twee bouwers bezig.
-
-- Hoogtemeters en vroeg ziek zien (I-77, I-33, I-78): nagespeeld met uw back-up, gebouwd; bij het nakijken twee punten gevonden, herstel loopt.
-- Telt op de dag van uitvoeren (I-58, I-59, I-72): gebouwd en nagekeken, schermtest volgt.
-- Graphify, eerlijke proef: na de reset van de weeklimiet (zondag 22 november 18:00 Portugese tijd). De graaf één keer bouwen (kosten apart), de koppeling en de regel in CLAUDE.md alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
-
+- Bundel 9 (I-14, I-18, I-23, I-34): vier ontwerpen klaar. Beginnersladder gebouwd, wordt nagekeken; Eén plan en Losse sport worden gebouwd.
+- Kleine punten (I-125, I-130 tot I-138): gebouwd, nagekeken en getest; gaan naar main na de laatste vergelijking van de schermen.
+- Graphify, eerlijke proef: zodra de lijst leeg is. De koppeling alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 ## Net live
 
