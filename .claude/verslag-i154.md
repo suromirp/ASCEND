@@ -27,3 +27,12 @@ Tak: `claude/terugkeer-voorrang` (vanaf origin/main df187512).
 - Geen screenshot of Lookout: de kaart op Vandaag en de vraag Niet gedaan? zijn niet in de browser bekeken.
 - Niet nagespeeld met een echte back-up; alleen nagemaakte data.
 - Golden scenario's: `src/storage/planGolden.test.ts` is groen; deze wijziging raakt alleen adviezen, niet de planning.
+
+## Controles
+
+- `npx tsc -p tsconfig.app.json --noEmit`: groen.
+- `npm run lint`: groen (alleen de bestaande waarschuwing in LegFatigueCard.tsx).
+- `npx vitest run`: 813 bestanden, 12417 tests groen.
+- `npm run build`: groen.
+- `npm run kaart:vergelijk`: 102 schermen gelijk, geen schendingen van invarianten. Verschillen alleen in instellingenbladen (Voorstel na een zware sport, Duur aanpassen na een sport, Woorden in Forge): rijen die al op main staan maar nog niet in `docs/app-kaart/`. Niet van deze wijziging (die raakt geen instellingen); de kaart is niet bijgewerkt, dat hoort bij wie die rijen bouwde.
+- `npm run kennisindex:vergelijk`: Geen verschil met docs/kennisindex/.
