@@ -13,8 +13,7 @@ import {
   skipSession as skipSessionEngine,
   type ScheduleProposal,
 } from '../engine/scheduler';
-import { caughtUpMap, qualifiesForCatchUp } from '../engine/catchUp';
-import { raceDatesOf } from '../engine/raceWindow';
+import { catchUpPause, caughtUpMap, qualifiesForCatchUp } from '../engine/catchUp';
 import { writeCatchUp } from '../storage/catchUpApply';
 import { writeSwap } from '../storage/weekSwap';
 import { snapshotWritten } from '../storage/undoPlanChange';
@@ -188,7 +187,7 @@ export function useMoveActions(deps: {
       const caughtUp = caughtUpMap(stored);
       // Dezelfde pauze als Week en het blad (pages/Week.tsx): wat verviel door ziek, een periode of de afbouw haal je
       // niet in, ook niet via een voorstel dat hier langskomt (I-74).
-      const pause = { leave: settings.leavePeriods, templates: catchUpTemplates, illness: settings.illnessEpisodes, races: raceDatesOf(stored, catchUpTemplates), programStart: program?.startDate };
+      const pause = catchUpPause({ leave: settings.leavePeriods, illness: settings.illnessEpisodes, sessions: stored, templates: catchUpTemplates, programStart: program?.startDate });
       const addedIds: string[] = [];
       let caughtUpCount = 0;
       for (const change of proposal.changes) {

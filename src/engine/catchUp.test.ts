@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
+import moveActions from '../state/moveActions.ts?raw';
 import type { PlannedSession } from '../models/training';
 import { proposeMove } from './scheduler';
 import { decideMove, dayVerdicts, type DragContext } from './weekDrag';
-import { catchUpEligibility, catchUpNoteFor, caughtUpNoteFor, catchUpRows, qualifiesForCatchUp, caughtUpMap, validCatchUp } from './catchUp';
+import { catchUpEligibility, catchUpNoteFor, catchUpPause, caughtUpNoteFor, catchUpRows, qualifiesForCatchUp, caughtUpMap, validCatchUp } from './catchUp';
 
 const { templates } = buildDefaultProgramData();
 const byId = new Map(templates.map((t) => [t.id, t]));
@@ -123,5 +124,30 @@ describe('validCatchUp', () => {
     const broken = { id: 'n', templateId: 't', scheduledDate: '2026-10-29', weekStartDate: '2026-10-26', status: 'planned', catchUp: {} } as unknown as PlannedSession;
     expect(caughtUpMap([broken]).size).toBe(0);
     expect(catchUpNoteFor(broken)).toBeUndefined();
+  });
+});
+
+// I-137: de pauze die moveActions meegeeft bij een inhaal via een voorstel. Alles nagemaakt.
+describe('catchUpPause', () => {
+  const missed = s('m', 'tpl_easy_run', '2026-09-22');
+  const ch = change('2026-09-30', { sessionId: 'm', fromDate: '2026-09-22' });
+  const base = { leave: undefined, illness: undefined, sessions: [missed], templates: byId, programStart: undefined };
+  const ok = (pause: ReturnType<typeof catchUpPause>) => qualifiesForCatchUp(missed, t('tpl_easy_run'), ch, { ...args, pause });
+  it('zonder pauze mag de inhaal', () => {
+    expect(ok(catchUpPause(base))).toBe(true);
+  });
+  it('ziek, een periode zonder training of voor de start niet', () => {
+    expect(ok(catchUpPause({ ...base, illness: [{ id: 'z', kind: 'below_neck', startDate: '2026-09-21', endDate: '2026-09-23' }] }))).toBe(false);
+    expect(ok(catchUpPause({ ...base, leave: [{ id: 'p', kind: 'no_training', startDate: '2026-09-21', endDate: '2026-09-23' }] }))).toBe(false);
+    expect(ok(catchUpPause({ ...base, programStart: '2026-09-25' }))).toBe(false);
+  });
+  it('moveActions geeft bij een inhaal via een voorstel deze pauze mee, niet een eigen', () => {
+    expect(moveActions).toMatch(/catchUpPause\(\{/);
+    expect(moveActions).not.toMatch(/raceDatesOf/);
+  });
+  it('de races komen uit de rijen zelf', () => {
+    const race = s('r', 'tpl_race', '2026-09-24');
+    expect(catchUpPause({ ...base, sessions: [missed, race] }).races).toEqual(['2026-09-24']);
+    expect(catchUpPause(base).races).toEqual([]);
   });
 });

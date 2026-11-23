@@ -409,6 +409,20 @@ describe('I-74: ziek in Let op, ook een test of wedstrijd, en verplaatsen als vo
     expect(ills(check(withAnchor('tpl_test_run')))).toEqual([]);
   });
 
+  // I-137: onder de kop "Je bent verkouden" hoort een uitleg bij verkouden, nooit "Ziek train je niet".
+  it('verkouden of in de opbouw: de uitleg bij een test of wedstrijd past bij de kop', () => {
+    const locked = (templateId: string) => withAnchor(templateId).map((s) => (s.id === 'an17' ? { ...s, lock: LOCK } : s));
+    const [race] = ills(check(locked('tpl_race'), { illness: COLD }));
+    expect(race).toMatchObject({ headline: 'Je bent verkouden, en je wedstrijd staat er.', why: 'Verkouden loop je geen wedstrijd voluit. Je wedstrijd schuift niet mee. Of je start, kies je zelf.' });
+    const [test] = ills(check(locked('tpl_test_run'), { illness: COLD }));
+    expect(test).toMatchObject({ headline: 'Je bent verkouden, en er staat een testloop.', why: 'Verkouden zegt een testloop weinig over je vorm. Hij schuift alleen met jouw Akkoord.' });
+    for (const c of [race, test]) expect(c.why).not.toMatch(/^Ziek/);
+    const RAMP = [ill('below_neck', addDays(TODAY, -3), addDays(TODAY, -1))];
+    const [rampRace] = ills(check(locked('tpl_race'), { illness: RAMP }));
+    expect(rampRace.headline).toBe('Je bouwt op na ziekte, en je wedstrijd staat er.');
+    expect(rampRace.why).toBe('In je opbouw na ziekte loop je nog niet voluit. Je wedstrijd schuift niet mee. Of je start, kies je zelf.');
+  });
+
   it('verkouden: eerst naar een rustige dag, dan laten vervallen', () => {
     const sessions = withAnchor('tpl_hill_intervals').map((s) => (s.id === 'an17' ? { ...s, lock: LOCK } : s));
     const input = check(sessions, { illness: COLD });

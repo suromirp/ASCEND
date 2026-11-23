@@ -8,6 +8,9 @@ import type { PlanLock, PlannedSession, SessionTemplate } from '../models/traini
 import type { ScheduleChange } from './scheduler';
 import { hasRole } from './templateRoles';
 import { isBeforeStart, isPausedFor, type PauseContext } from './sessionStatus';
+import { raceDatesOf } from './raceWindow';
+import type { LeavePeriod } from '../models/leave';
+import type { IllnessEpisode } from '../models/illness';
 import { addDays, mondayOfWeek, weekdayShortNL } from '../utils/dates';
 
 type CatchUpRefusal = 'logged' | 'future' | 'old' | 'skipped' | 'rest' | 'race' | 'test' | 'leave' | 'done' | 'fixed' | 'paused' | 'before';
@@ -33,6 +36,19 @@ export function catchUpEligibility(session: PlannedSession, template: SessionTem
   if (isBeforeStart(session, args.pause?.programStart)) return { ok: false, reason: 'before' };
   if (args.pause && isPausedFor(session, args.pause, args.today)) return { ok: false, reason: 'paused' };
   return { ok: true };
+}
+
+// De pauze voor een inhaal die via een voorstel langskomt (state/moveActions.ts): dezelfde velden als Week en het blad
+// (pages/Week.tsx), zodat wat verviel door ziek, een periode of de afbouw van een race ook daar niet ingehaald wordt
+// (I-74, toets I-137). De races komen uit de rijen zelf.
+export function catchUpPause(args: {
+  leave: LeavePeriod[] | undefined;
+  illness: IllnessEpisode[] | undefined;
+  sessions: readonly PlannedSession[];
+  templates: ReadonlyMap<string, SessionTemplate>;
+  programStart: string | undefined;
+}): PauseContext {
+  return { leave: args.leave, templates: args.templates, illness: args.illness, races: raceDatesOf(args.sessions, args.templates), programStart: args.programStart };
 }
 
 // Hoort deze verandering van een voorstel bij een inhaal: een gemiste rij die naar vandaag of later gaat.

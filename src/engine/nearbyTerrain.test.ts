@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { LeavePeriod } from '../models/leave';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { distanceText, mapLink, pickTerrain, terrainLine, terrainWish, terrainWishOn } from './nearbyTerrain';
+import { distanceText, mapLink, periodRules, pickTerrain, terrainLine, terrainWish, terrainWishOn } from './nearbyTerrain';
 
 const terrain = (features: TerrainFeature[]): NearbyTerrain => ({ source: 'osm', fetchedAt: '2026-11-08T10:00:00.000Z', place: { name: '', lat: 52.12, lon: 5.65 }, radiusM: 3000, features });
 const hill = (distanceM: number, heightM?: number): TerrainFeature => ({ kind: 'hill', lat: 52.13, lon: 5.66, distanceM, ...(heightM !== undefined ? { heightM } : {}) });
@@ -38,6 +38,14 @@ describe('een dag zonder sportschool met Heuvels in de buurt', () => {
     expect(terrainWishOn(tpl('tpl_easy_run'), '2026-11-17', undefined)).toBeUndefined();
     const line = terrainLine(tpl('tpl_easy_run'), terrain([hill(800, 40)]), terrainWishOn(tpl('tpl_easy_run'), '2026-11-17', [away(true)]));
     expect(line?.text).toBe('Op 800 m een helling van 40 m.');
+  });
+
+  it('de regel wordt één keer per lijst periodes gebouwd, niet per aanroep (I-137)', () => {
+    const periods = [away(true)];
+    expect(periodRules(periods)).toBe(periodRules(periods));
+    expect(periodRules([away(true)])).not.toBe(periodRules(periods));
+    for (const d of ['2026-11-16', '2026-11-18', '2026-11-20']) expect(terrainWishOn(tpl('tpl_easy_run'), d, periods)).toBe('hills');
+    expect(periodRules(periods).noGymPeriod('2026-11-21')).toBeUndefined();
   });
 
   it('kracht met eigen gewicht en een vakantie krijgen niets; een eigen heuveltraining houdt zijn regel', () => {
