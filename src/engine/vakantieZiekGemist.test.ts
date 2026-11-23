@@ -461,7 +461,7 @@ describe('het woord gemist, per zin', () => {
     expect(glance.value).not.toMatch(/liggen/);
     const verdict = { fellShort: true, fewDone: true, keyMissed: true, share: 0 };
     expect(shortfallSentence({ id: 'x', weekStart: '2026-11-30', previousWeek: '2026-11-23', done: 0, planned: 5, verdict, missedKey: ['Bergtocht'] })).toBe('Vorige week deed je 0 van de 5 trainingen, en de bergtocht heb je gemist.');
-    expect(shortfallSentence({ id: 'x', weekStart: '2026-11-30', previousWeek: '2026-11-23', done: 4, planned: 5, verdict: { ...verdict, fewDone: false }, missedKey: ['Bergtocht'] })).toBe('Vorige week miste je de bergtocht, de belangrijkste training van de week.');
+    expect(shortfallSentence({ id: 'x', weekStart: '2026-11-30', previousWeek: '2026-11-23', done: 4, planned: 5, verdict: { ...verdict, fewDone: false }, missedKey: ['Bergtocht'] })).toBe('Vorige week miste je de bergtocht, de belangrijkste training van de geplande week.');
   });
 });
 

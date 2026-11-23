@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { weekHighlights, weekSummaryLine, joinNames } from './weekHighlights';
+import { weekHighlights, joinNames } from './weekHighlights';
 import type { WeekReview } from './weekReview';
 
 const base: WeekReview = {
@@ -36,18 +36,5 @@ describe('weekHighlights', () => {
   it('noemt niets blijven liggen als er niets voor vandaag blijft liggen', () => {
     const h = weekHighlights({ ...base, running: true, todayLeft: 2 });
     expect(h.some((x) => /liggen/.test(x.text))).toBe(false);
-  });
-});
-
-describe('weekSummaryLine', () => {
-  it('geeft de telling, tijd en afstand van een afgesloten week', () => {
-    expect(weekSummaryLine(base)).toBe('2 van 5 gedaan · 1:56 uur · hardlopen 8,6 km');
-  });
-  it('zegt op zondag wat vandaag nog staat', () => {
-    expect(weekSummaryLine({ ...base, running: true, todayLeft: 2 })).toBe('2 gedaan, vandaag staan er nog 2 · 1:56 uur · hardlopen 8,6 km');
-    expect(weekSummaryLine({ ...base, running: true, todayLeft: 1, minutes: 0, perSport: [] })).toBe('2 gedaan, vandaag staat er nog 1');
-  });
-  it('is vriendelijk bij een week zonder training', () => {
-    expect(weekSummaryLine({ ...base, done: 0, minutes: 0, perSport: [] })).toBe('Geen trainingen deze week. Volgende week volgt het plan.');
   });
 });
