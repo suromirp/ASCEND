@@ -51,6 +51,9 @@ Sinds: 23 november.
 
 ## Net live
 
+### 23 november 16:40
+- Losse sport (I-23) helemaal: een voorstel na een zware sport blijft tot je kiest, en een duur verandert na een sport niet meer stil maar als voorstel met Akkoord. Beide instelbaar.
+
 ### 23 november 15:05
 - Beginner heel licht (I-18) helemaal live: de zin van week 1 in het voorstel noemt wat je week heeft en belooft "elke week iets meer"; Forge zegt Plan, Over en Zwaarte, met uitleg achter de i en een instelling Woorden in Forge (Gewoon of Vaktaal).
 

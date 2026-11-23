@@ -591,3 +591,7 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 23 nov 14:05 Warden beginner woorden, opus, reviewer: 109k tokens, 35 tools, 10 min. Niet akkoord, 2 Mag.
 - 23 nov 14:40 Pathfinder beginner woorden, sonnet: 45k tokens, 7 tools, 1 min. 2 Mag (zelf hersteld).
 - 23 nov 15:05 Lookout beginner woorden, sonnet, tester: 77k tokens, 40 tools, 18 min. Groen.
+- 23 nov 16:00 Sherpa sport-duur voorstel (I-23 stap 0+4), opus, ontwikkelaar: 147k tokens, 180 tools, 43 min met herstel. Akkoord na één herstel.
+- 23 nov 16:00 Sherpa sport-voorstel blijft (I-23 stap 0+3), opus, ontwikkelaar: 91k tokens, 144 tools, 46 min met herstel. Akkoord na één herstel.
+- 23 nov 16:05 Warden losse sport, opus, reviewer: 150k tokens, 47 tools, 8 min over vier rondes. Twee Moet, beide hersteld.
+- 23 nov 16:20 Lookout losse sport, sonnet, tester: 114k tokens, 61 tools, 20 min. Groen, één gele vlag (I-156).
