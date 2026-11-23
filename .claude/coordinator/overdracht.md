@@ -9,6 +9,7 @@ Vijfuurslimiet (eigenaar via chat ASCEND, geef door aan elke opvolger): niet sto
 Max twee bouwers tegelijk, nooit op dezelfde bestanden. Warden en Lookout per twee of drie bundels. Squash per bundel. Wissel na drie bundels of rond 150k. Stop bij lege lijst, vraag aan eigenaar of limietwaarschuwing. Ochtend één pushmelding, niet tussendoor.
 
 1. Route (sonnet, loopt): I-112, I-120 tot I-123. Lookout.
+1b. I-124 terugkeer na pauze (opus plus Warden, eigenaar hoog): eerste vrije plek. Naspelen doet de coördinator zelf met de back-up.
 2. Week weergave (opus, planning, loopt): I-58 breder na correctie eigenaar 23 november 01:02: een training telt overal (minuten, x van y, weekbalk, belasting, beenindex, Stand) op de dag van uitvoeren: Forge later afgesloten (dag van de sets), verplaatst of ingehaald, log in andere week. Besluit 2026-11-23-telt-op-dag-van-uitvoeren.md; de bouwer schrijft per geval hoe het nu werkt, dat komt hier. Plus I-59, I-72 rest. Warden opus.
 3. Forge en logs (sonnet): I-113, I-60, I-30, I-73 (raakt afvinken: Warden). Lookout.
 4. dayRules (opus, planning): I-74, I-82 punt 3. Warden opus. Na bundel 2 (zelfde weekbestanden).
