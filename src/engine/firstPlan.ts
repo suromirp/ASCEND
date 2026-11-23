@@ -274,7 +274,7 @@ export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate
       ...(beginnerCap ? [`Je begint met hoogstens ${BEGINNER_MAX_DAYS} dagen per week.`] : []),
       ...(beginner && direction !== 'easy' ? [beginnerStartLine(startDate, startDate) ?? ''] : []),
       // Heel licht (het advies) hoort bij dit Akkoord: wandelen en dribbelen in de start (engine/beginnerStart.ts).
-      ...(beginner ? [WALK_JOG_LINE, beginnerWeekOneLine()] : []),
+      ...(beginner ? [WALK_JOG_LINE, beginnerWeekOneLine(week.kept) ?? ''] : []),
       ...(direction ? ['Je week bestaat uit kracht en lopen. Andere sporten die je doet tellen straks gewoon mee.'] : []),
       ...week.notes,
     ].filter(Boolean),

@@ -3,6 +3,7 @@
 // ze zijn. Regels: engine/macrofactorProgram.ts. Besluit:
 // docs/beslissingen/2026-10-22-programma-uit-macrofactor.md.
 
+import { useForgeWords } from '../useForgeWords';
 import { useState } from 'react';
 import { buildStoredProgram, programCycle, proposeMapping, setsText, type MacroFactorProgram, type ProgramMapping } from '../../engine/macrofactorProgram';
 import type { StoredStrengthProgram } from '../../engine/strengthProgramStore';
@@ -16,6 +17,7 @@ import { ForgeSheet } from './parts';
 
 // Op de pagina MacroFactor inlezen: het gevonden programma en de knop naar het voorstel.
 export function ProgramOfferCard({ program, current, onOpen }: { program: MacroFactorProgram; current?: StoredStrengthProgram; onOpen: () => void }) {
+  const jargon = useForgeWords() === 'jargon';
   return (
     <Card className="flex flex-col gap-3">
       <Eyebrow>Trainingsprogramma</Eyebrow>
@@ -26,7 +28,7 @@ export function ProgramOfferCard({ program, current, onOpen }: { program: MacroF
         </p>
       </div>
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Je krachttrainingen kunnen per week de oefeningen, sets, herhalingen en RIR van dit programma krijgen. Je planning en wat je al deed blijven zoals ze zijn.
+        Je krachttrainingen kunnen per week de oefeningen, sets, herhalingen en {jargon ? 'RIR' : 'wat je over hebt'} van dit programma krijgen. Je planning en wat je al deed blijven zoals ze zijn.
         {current ? ` Het vervangt ${current.name}.` : ''}
       </p>
       <SecondaryButton onClick={onOpen}>Voorstel bekijken</SecondaryButton>

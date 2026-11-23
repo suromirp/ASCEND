@@ -141,7 +141,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   act: BlockActions;
 }) {
   const reasonText = reasonWithOwnCount(ex) ?? '';
-  const words_ = forgeLabels(words);
+  const labels = forgeLabels(words);
   const [readOpen, setReadOpen] = useState(false);
   // Forge rekent mee zette het gewicht een stap omhoog: de regel en Terugzetten, zolang een open set het nog heeft.
   const raiseLine = !readOnly && ex.raise && raiseOpen(ex) ? ex.raise.line : undefined;
@@ -312,15 +312,15 @@ export const ExerciseBlock = memo(function ExerciseBlock({
               {readOnly ? (
                 <span role="columnheader">Vorige</span>
               ) : (
-                <button type="button" role="columnheader" onClick={act.column} className="-my-[14px] flex items-center gap-1 py-[14px] text-left" aria-label={showPrevious ? `Toon ${words_.plan.toLowerCase()}` : 'Toon vorige keer'}>
-                  {showPrevious ? 'Vorige' : words_.plan}
+                <button type="button" role="columnheader" onClick={act.column} className="-my-[14px] flex items-center gap-1 py-[14px] text-left" aria-label={showPrevious ? `Toon ${labels.plan.toLowerCase()}` : 'Toon vorige keer'}>
+                  {showPrevious ? 'Vorige' : labels.plan}
                   <Icon name="ruilen" size={12} />
                 </button>
               )}
               {/* Een houding heeft geen kg (behalve met extra gewicht) en geen RIR: de koppen blijven dan leeg. */}
               <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : added ? '+ kg' : ex.hold ? '' : 'kg'}</span>
-              <span role="columnheader" className="text-center">{ex.timed || ex.hold ? 'sec' : <><span aria-hidden>{words_.reps}</span><span className="sr-only">{words_.repsSpoken}</span></>}</span>
-              <span role="columnheader" className="text-center">{ex.hold ? '' : words_.over}</span>
+              <span role="columnheader" className="text-center">{ex.timed || ex.hold ? 'sec' : <><span aria-hidden>{labels.reps}</span><span className="sr-only">{labels.repsSpoken}</span></>}</span>
+              <span role="columnheader" className="text-center">{ex.hold ? '' : labels.over}</span>
               {/* Alle sets afvinken staat in het blad Oefening, groep Sets (docs/beslissingen/2026-11-02-forge-herinrichting.md). */}
               <span role="columnheader" className="flex justify-center"><span className="sr-only">Gedaan</span>{!readOnly && <InfoButton label="Zo lees je dit" onClick={() => setReadOpen(true)} />}</span>
             </div>
@@ -361,10 +361,10 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                       ) : own ? (
                         <span className="flex min-h-[44px] items-center text-sm">{isCalibrationRow(row) ? 'ijkset' : 'eigen set'}</span>
                       ) : readOnly ? (
-                        <PrescriptionText row={row} ex={ex} />
+                        <PrescriptionText row={row} ex={ex} words={words} />
                       ) : (
-                        <button type="button" data-swipe-ok onClick={() => act.take(ex.slot, row.id)} disabled={row.done} aria-label={`${words_.plan} overnemen, set ${label}`} className="flex min-h-[44px] w-full flex-col justify-center text-left">
-                          <PrescriptionText row={row} ex={ex} />
+                        <button type="button" data-swipe-ok onClick={() => act.take(ex.slot, row.id)} disabled={row.done} aria-label={`${labels.plan} overnemen, set ${label}`} className="flex min-h-[44px] w-full flex-col justify-center text-left">
+                          <PrescriptionText row={row} ex={ex} words={words} />
                         </button>
                       )}
                     </span>
@@ -399,7 +399,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                           hint={!readOnly && (row.rir === undefined || (!!row.rirAssumed && !rirAsValue))}
                           label={
                             !readOnly && (row.rir === undefined || (row.rirAssumed && !rirAsValue))
-                              ? `${words_.plan} ${row.rir ?? row.target.rir} over, set ${label}, tik om je eigen ${words_.over === 'RIR' ? 'RIR' : 'waarde'} in te vullen`
+                              ? `${labels.plan} ${row.rir ?? row.target.rir} over, set ${label}, tik om je eigen ${labels.over === 'RIR' ? 'RIR' : 'waarde'} in te vullen`
                               : `${row.rir ?? row.target.rir} over, set ${label}${readOnly ? '' : ', tik om te wijzigen'}`
                           }
                           onClick={readOnly ? undefined : () => act.rir(ex.slot, row.id)}
@@ -514,7 +514,7 @@ function QuickRir({ label, aim, onPick }: { label: string; aim?: number; onPick:
 }
 
 // Het voorschrift van een set: "47,5 kg × 11-13" met de RIR eronder.
-function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise }) {
+function PrescriptionText({ row, ex, words }: { row: WorkoutRow; ex: WorkoutExercise; words: ForgeWords }) {
   return (
     <>
       <span className="block">
@@ -526,7 +526,7 @@ function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise })
           </Fragment>
         ))}
       </span>
-      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && !ex.hold && <span className="block text-xs">{row.target.rir} RIR</span>}
+      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && !ex.hold && <span className="block text-xs">{row.target.rir} {forgeLabels(words).over === 'RIR' ? 'RIR' : 'over'}</span>}
     </>
   );
 }

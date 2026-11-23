@@ -12,6 +12,7 @@
 import type { SessionLog } from '../models/training';
 import { BEGINNER_LADDER, REFERENCE_SETS, type WalkJog } from '../data/beginnerLadder';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
+import { isStrengthTemplateId } from './weekShape';
 
 export type BeginnerStartChoice = 'auto' | 'ja' | 'nee';
 const BEGINNER_START_CHOICES: BeginnerStartChoice[] = ['auto', 'ja', 'nee'];
@@ -100,11 +101,21 @@ export function beginnerStartLine(start: string, today: string, waveLength = BEG
   return `Je begint rustig: de eerste ${WEEKS_WORD[weeks] ?? weeks} weken alleen makkelijk, geen harde training. Zo went je lichaam eerst aan het ritme, en elke week wordt het iets meer.`;
 }
 
-// De zin voor het voorstel met de ladder: week 1 in getallen uit data/beginnerLadder.ts, en dat het elke week iets
-// meer wordt. Wat hier staat is ook wat Week laat zien (beginnerWeek is de bron van allebei).
-export function beginnerWeekOneLine(): string {
+// De zin voor het voorstel met de ladder: week 1 in getallen uit data/beginnerLadder.ts, voor wat er in die week
+// werkelijk staat (`ids`: de sjablonen van de geplande week, de week van het voorstel), en dat het elke week iets
+// meer wordt. De rustige duurloop wordt de korte sessie wandelen en dribbelen, de lange duurloop de lange. Zonder
+// kracht of met een keer wandelen en dribbelen noemt de zin alleen wat er staat; een week zonder een van beide
+// geeft niets. Nooit een vaste zin met de getallen van het standaardpatroon.
+const WALK_JOG_SLOTS: Readonly<Record<string, 'short' | 'long'>> = { tpl_easy_run: 'short', tpl_long_run: 'long' };
+export function beginnerWeekOneLine(ids: readonly string[]): string | undefined {
   const w = beginnerWeek(1)!;
-  return `Week 1: kracht ${w.strengthMinutes} minuten, twee keer wandelen en dribbelen: ${w.shortMinutes} en ${w.longMinutes} minuten. Elke week wordt het iets meer.`;
+  const strength = ids.some((id) => isStrengthTemplateId(id));
+  const walks = ids.filter((id) => WALK_JOG_SLOTS[id]).map((id) => (WALK_JOG_SLOTS[id] === 'long' ? w.longMinutes : w.shortMinutes)).sort((x, y) => x - y);
+  const parts = [
+    ...(strength ? [`kracht tot ${w.strengthMinutes} minuten`] : []),
+    ...(walks.length === 1 ? [`één keer wandelen en dribbelen: ${walks[0]} minuten`] : walks.length > 1 ? [`${walks.length === 2 ? 'twee' : walks.length} keer wandelen en dribbelen: ${walks.slice(0, -1).join(', ')} en ${walks[walks.length - 1]} minuten`] : []),
+  ];
+  return parts.length > 0 ? `Week 1: ${parts.join(', ')}. Elke week wordt het iets meer.` : undefined;
 }
 
 // --- heel licht: de ladder per week (docs/visie/Ontwerp beginner heel licht.md, deel 1) -------------

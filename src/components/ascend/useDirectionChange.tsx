@@ -84,7 +84,7 @@ export function useDirectionChange(): {
           ...(wavesHeld(settings, program) ? noGoalWavesLines() : []),
           ...(id !== 'easy' && isBeginnerStart(settings.beginnerStart, sessionLogs, start) ? [beginnerStartLine(start, todayISO(), resolveWaveSettings(settings.waves).length) ?? ''].filter(Boolean) : []),
           ...(isBeginnerStart(settings.beginnerStart, sessionLogs, start) && resolveBeginnerBuild(patch.beginnerBuild ?? settings.beginnerBuild) === 'licht' ? [WALK_JOG_LINE] : []),
-          ...(isBeginnerStart(settings.beginnerStart, sessionLogs, start) && resolveStartBuild({ ...settings, ...patch }) === 'ladder' ? [beginnerWeekOneLine()] : []),
+          ...(isBeginnerStart(settings.beginnerStart, sessionLogs, start) && resolveStartBuild({ ...settings, ...patch }) === 'ladder' ? [beginnerWeekOneLine(Object.keys(settings.weekShape?.days ?? {})) ?? ''].filter(Boolean) : []),
         ],
       }),
       { eyebrow: 'Je richting', ask: 'always', alwaysAsk: true, notesTitle: 'Je richting', declined: KEEP },

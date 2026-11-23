@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useForgeWords } from './useForgeWords';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
@@ -23,6 +24,7 @@ const SOURCES: { label: string; url: string }[] = [
 
 export function LegFatigueInfoSheet({ onClose }: { onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
+  const rpe = useForgeWords() === 'jargon' ? 'RPE' : 'zwaarte';
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
@@ -49,9 +51,9 @@ export function LegFatigueInfoSheet({ onClose }: { onClose: () => void }) {
             </Section>
 
             <Section title="Wat het zwaarst meetelt">
-              <Bullet head="Je beentraining">Duur (tot 75 minuten), zwaarte en gewenning. Het getal schuift de dag erna 5 tot 12 punten. Van krachttraining tellen alleen duur en RPE; zonder RPE geldt 8.</Bullet>
+              <Bullet head="Je beentraining">Duur (tot 75 minuten), zwaarte en gewenning. Het getal schuift de dag erna 5 tot 12 punten. Van krachttraining tellen alleen duur en {rpe}; zonder {rpe} geldt 8.</Bullet>
               <Bullet head="Bergaf">24 punten per 1.000 m dalen, anderhalf keer zoveel als hardlopend dalen, meer met een rugzak. Op vlak terrein telt het weinig.</Bullet>
-              <Bullet head="Gevoel en pijn">"Slechter dan normaal" telt een training een kwart zwaarder. Je RPE maakt een training hooguit anderhalf keer zo zwaar of een kwart lichter. Pijn in je benen telt 3 punten en maakt je nooit vanzelf fris. Gemelde spierpijn is een ondergrens. "Fris" in de ochtendvraag verlaagt het getal nooit.</Bullet>
+              <Bullet head="Gevoel en pijn">"Slechter dan normaal" telt een training een kwart zwaarder. Je {rpe} maakt een training hooguit anderhalf keer zo zwaar of een kwart lichter. Pijn in je benen telt 3 punten en maakt je nooit vanzelf fris. Gemelde spierpijn is een ondergrens. "Fris" in de ochtendvraag verlaagt het getal nooit.</Bullet>
               <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Wat nog gepland staat telt met je eigen gemiddelde hoogtemeters, of met het doel van de training. Dat is het minst zeker.</p>
             </Section>
 
@@ -63,7 +65,7 @@ export function LegFatigueInfoSheet({ onClose }: { onClose: () => void }) {
 
             <Section title="Wat je zelf kunt doen">
               <Bullet head="Loop in op je gewone tempo">Loop op je testdag eerst tien minuten rustig. Voelen je benen duidelijk zwaarder dan normaal, stel de test dan een dag uit, ook als het getal fris zegt. Dat gevoel meet jouw benen van vandaag.</Bullet>
-              <Bullet head="Vul je RPE in">Vooral na Benen A. Zonder RPE geldt 8.</Bullet>
+              <Bullet head={`Vul je ${rpe} in`}>Vooral na Benen A. Zonder {rpe} geldt 8.</Bullet>
               <Bullet head="Kracht na de test">Loop eerst en doe daarna kracht, liefst 6 uur later en minstens 3. Dat verstoort je volgende loop niet. Voel je je eerder fit, dan kan het eerder. Kracht voor een loop verstoort hem wel.</Bullet>
             </Section>
 

@@ -134,7 +134,7 @@ export function RpeChoice({ value: rpe, onChange, planRpe, peak, steps = [], not
       ) : (
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{forgeLabels(words).effort}: hoe zwaar voelde de hele training?</p>
       )}
-      {quiet && rpeInfo && <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{SHORT_TEXT.rpeInfo}</p>}
+      {quiet && rpeInfo && <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{words === 'jargon' ? SHORT_TEXT.rpeInfo : SHORT_TEXT.rpeInfo.replace(' (RPE)', '')}</p>}
       <div className="mt-2 grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
           const inPlan = planRpe && n >= planRpe[0] && n <= planRpe[1];

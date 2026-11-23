@@ -33,5 +33,5 @@ export const CALM_WORDS = 'rustig, je kunt hele zinnen praten';
 // (5-6, 8-9) blijven staan: die hebben geen vaste zin die iedereen kent.
 export function effortWords(text: string, mode: ForgeWords): string {
   if (mode === 'jargon') return text;
-  return text.replace(/RPE 3-4(?:\/10)?/g, CALM_WORDS);
+  return text.replace(/RPE 3(?:-| tot )4(?:\/10)?/g, CALM_WORDS);
 }
