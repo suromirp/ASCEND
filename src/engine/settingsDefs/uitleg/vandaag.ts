@@ -60,7 +60,7 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Alles', text: 'alles onder elkaar, zonder Meer.' },
       { head: 'Zwaarte', text: 'staat altijd in de eerste stap, met de waarde van je horloge als die er is. Zonder zwaarte telt je belasting de zwaarte van het plan.' },
       // Gelijk aan engine/autoTick.ts#QUESTION_HOURS (afterRun.test.ts houdt ze samen).
-      { head: 'Hoe lang', text: 'de rij staat er 72 uur. Daarna verdwijnt hij; je training blijft in je logboek.' },
+      { head: 'Hoe lang', text: 'de rij staat er tot je antwoordt, hoogstens 72 uur na het afvinken. Sluiten met Niet nu laat hem staan. Daarna verdwijnt hij; je training blijft in je logboek.' },
     ],
   },
   lijfvraag: {

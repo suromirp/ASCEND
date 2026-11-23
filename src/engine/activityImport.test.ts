@@ -116,9 +116,29 @@ describe('fallbackTemplate', () => {
   it('uses an easy run, a bike, a rest-day walk and a mountain day by kind', () => {
     expect(fallbackTemplate(run(), templates)?.id).toBe('tpl_easy_run');
     expect(fallbackTemplate(run({ kind: 'ride' }), templates)?.id).toBe('tpl_bike');
-    expect(fallbackTemplate(run({ kind: 'hike', elevationGainM: 80 }), templates)?.id).toBe('tpl_herstel');
+    expect(fallbackTemplate(run({ kind: 'hike', elevationGainM: 80 }), templates)?.id).toBe('tpl_walk');
     expect(fallbackTemplate(run({ kind: 'hike', elevationGainM: 900 }), templates)?.id).toBe('tpl_mountain_hike');
     expect(fallbackTemplate(run({ kind: 'other' }), templates)).toBeUndefined();
+  });
+});
+
+describe('een horlogewandeling zonder plan heet Wandeling (I-73)', () => {
+  it('ook zonder hoogtemeters, en als een rustdagwandeling in het log', () => {
+    const t = fallbackTemplate(run({ kind: 'hike', elevationGainM: undefined, externalId: 'test:w2' }), templates)!;
+    expect(t.id).toBe('tpl_walk');
+    expect(t.name).toBe('Wandeling');
+    const draft = activityToDraft(run({ kind: 'hike', elevationGainM: undefined, externalId: 'test:w2' }), t);
+    expect(draft.templateId).toBe('tpl_walk');
+    expect(draft.type).toBe('recovery');
+    expect(draft.cardioData?.modality).toBe('recovery_walk');
+  });
+  it('een lijst zonder Wandeling valt terug op Herstel', () => {
+    const without = templates.filter((x) => x.id !== 'tpl_walk');
+    expect(fallbackTemplate(run({ kind: 'hike', elevationGainM: 80 }), without)?.id).toBe('tpl_herstel');
+  });
+  it('een geplande Herstelwandeling blijft Herstel: de planning wint', () => {
+    const match = planned('p_rest', 'tpl_herstel', '2026-10-14');
+    expect(activityToDraft(run({ kind: 'hike', externalId: 'test:w3' }), tpl('tpl_herstel'), match).templateId).toBe('tpl_herstel');
   });
 });
 
