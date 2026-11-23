@@ -46,6 +46,7 @@ describe('de soorten', () => {
 
   it('zegt wat het in minuten betekent, en wat Minder op je doel kost', () => {
     expect(kindAmountLine(45, 2, undefined)).toBe('Normaal: 45 minuten, 2 keer per week. Meer: 50 minuten.');
+    expect(kindAmountLine(35, 2, 'more', true)).toBe('Normaal: 35 minuten, 2 keer per week. Meer: in je startweken gaat de ladder voor, de minuten blijven.');
     expect(kindAmountLine(60, 1, 'less')).toBe('Normaal: 60 minuten, 1 keer per week. Minder: 50 minuten.');
     expect(kindCostLine('ruck', 'less', { trek: true })).toContain('Toch doen?');
     expect(kindCostLine('strength', 'less', { trek: true, key: 'long' })).toBeUndefined();

@@ -280,6 +280,14 @@ export function resolveEffectiveFullDuration(
   return Math.max(15, Math.round((base * adjustment.factor) / 5) * 5);
 }
 
+// De lengte van een rij die er nog niet is, als de ladder van de start hem bepaalt (I-143): het voorstel noemt dan
+// hetzelfde getal als Week na Akkoord, ook voor een training die Hoeveel per soort op Meer erbij zet. Buiten de
+// ladder niets: die rij volgt de gewone opbouw en het voorstel zegt liever niets dan iets dat niet klopt.
+export function ladderMinutesOf(template: SessionTemplate, scheduledDate: string, program: Program | null | undefined): number | undefined {
+  if (!startLadderMinutes(template, scheduledDate, program, startBuild)) return undefined;
+  return resolveEffectiveFullDuration(template, scheduledDate, program);
+}
+
 // De geplande minuten van een training zoals Week ze toont (I-14, docs/visie/Ontwerp Eén plan.md, "één duur"): de
 // vaste lengte van de rij (PlannedSession.plannedMinutes), anders de volle duur met ambitie, hoeveel per soort, de rem
 // van 110% en een rustiger instap. Een tekst die minuten van een geplande training noemt, leest ze hier; nooit de kale
