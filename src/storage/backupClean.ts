@@ -16,7 +16,7 @@ import { cleanMorningNotice } from '../engine/morningNotice';
 import { cleanWeekNoticeTime } from '../engine/deviceNotices';
 import { cleanEveningTime } from '../engine/eveningBefore';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateStartChoices, migrateSportHandling, migrateSportCounting, migrateKindAmount, migrateCustomSports, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateTestJudgments, migrateZoneAnswers, migrateStrapWorn, migrateShortTestSeries, migrateWeeklyHealthCheck, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings } from './migrations';
+import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateStartChoices, migrateSportHandling, migrateSportCounting, migrateKindAmount, migrateCustomSports, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateTestJudgments, migrateZoneAnswers, migrateStrapWorn, migrateShortTestSeries, migrateWeeklyHealthCheck, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateSportRestOffers, migrateSportRestKeep, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings } from './migrations';
 import { normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { validCatchUp } from '../engine/catchUp';
@@ -153,6 +153,20 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     if (pre.list === undefined) delete s.sweatPre;
     else s.sweatPre = pre.list;
     skipped.n += pre.skipped;
+  }
+  // Een voorstel na een zware sport: regel voor regel, een kapotte valt weg en telt mee; een ouder bestand heeft
+  // er geen en laat de lijst op het toestel met rust (storage/migrations.ts#migrateSportRestOffers).
+  if ('sportRestOffers' in s) {
+    const offers = migrateSportRestOffers(s.sportRestOffers);
+    if (offers.list === undefined) delete s.sportRestOffers;
+    else s.sportRestOffers = offers.list;
+    skipped.n += offers.skipped;
+  }
+  if ('sportRestKeep' in s) {
+    const keep = migrateSportRestKeep(s.sportRestKeep);
+    if (keep.value === undefined) delete s.sportRestKeep;
+    else s.sportRestKeep = keep.value;
+    skipped.n += keep.skipped;
   }
   // The switch for water per stage: a yes or a no, or not there.
   if ('showStageWater' in s && typeof s.showStageWater !== 'boolean') {

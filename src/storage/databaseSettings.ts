@@ -11,6 +11,7 @@ import type { ExternalOneRm, WeightEntry } from '../models/metrics';
 import type { SweatEntry, SweatPre } from '../models/sweat';
 import type { MorningCheckIn, NightJudgment, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
 import type { LegEaseDay } from '../models/legEase';
+import type { SportRestOffer } from '../engine/sportRestOffer';
 import type { TestJudgment } from '../models/testJudgment';
 import type { InfluenceEntry } from '../models/influence';
 import type { SportId } from '../data/sports';
@@ -672,6 +673,14 @@ export interface AppSettings {
   // logs; de laatste 60. Optional and additive; read defensively on import
   // (storage/migrations.ts#migrateLegEaseDays) and merged per date and session.
   legEaseDays?: LegEaseDay[];
+  // Een voorstel na een zware sport (engine/sportRestOffer.ts, I-23 punt 10): alleen toevoegen, één regel per
+  // aanleiding toen je hem zag en één met de uitkomst; de laatste per id geldt, ouder dan 30 dagen valt bij het lezen
+  // weg. Optional and additive; read defensively on import (storage/migrations.ts#migrateSportRestOffers) and on a
+  // restore only new rows are added (backupMerge.ts).
+  sportRestOffers?: SportRestOffer[];
+  // "Voorstel na een zware sport": 'blijft' (het advies, afwezig) of 'vanzelf' (vervalt als de dag voorbij is).
+  // Optional and additive; a backup keeps only a known value (storage/backupClean.ts).
+  sportRestKeep?: 'blijft' | 'vanzelf';
   // "Lucht bovenaan" (engine/skySettings.ts): the light or dark sky on the tabs, by
   // the clock ('auto', the default), always light or always dark, and from when it is
   // dark. Optional and additive; read defensively, so no migration step is needed.

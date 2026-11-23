@@ -85,6 +85,8 @@ import { useWeekReplanActions } from './weekReplanActions';
 import { useMoveActions } from './moveActions';
 import { useGoalActions } from './goalActions';
 import { useNotesAndIllness } from './notesAndIllness';
+import { appendSportRestOffers } from '../storage/sportRestOffers';
+import type { SportRestOffer } from '../engine/sportRestOffer';
 import { useHorizonActions } from './horizonActions';
 import { useBodyAndLeave } from './bodyAndLeave';
 import { useAdviceAndWeek } from './adviceAndWeek';
@@ -315,6 +317,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const openDraftId = useMemo(() => openDraftIdOf(sessionSnap ? readSession() : undefined, sessionLogs), [sessionSnap, sessionLogs]);
   const { weather, answeredAdviceIds, advice, weekNoticeFor, weekFixesFor, previewDrop, legsCloseAt, proposeSwap, swapOptionsFor, influenceMoveNow } = useAdviceAndWeek({ loading, program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, templates, planChangeLog, adviceResponses, missedMemory, openDraftId, plannerAdvice, templateById, goalOverviews, dragContextFor, updateSettings });
 
+  // Een voorstel na een zware sport (engine/sportRestOffer.ts): alleen regels toevoegen, vanaf wat er staat.
+  const appendSportRest = useCallback(async (rows: SportRestOffer[]) => {
+    if (rows.length === 0) return;
+    setSettings(await appendSportRestOffers(rows, todayISO()));
+  }, [setSettings]);
   const value: AppData = {
     loading,
     bootError,
@@ -486,6 +493,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     saveInfluence,
     saveSweat,
     saveSweatPre,
+    appendSportRest,
     removeInfluence,
     clearInfluences,
     planIllness,

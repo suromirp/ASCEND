@@ -24,6 +24,8 @@ import { MountainWeatherCard } from '../components/MountainWeatherCard';
 import { StagePositionLine } from '../components/StagePositionLine';
 import { TestPendingLine } from '../components/TestPendingLine';
 import { SportAskLine } from '../components/sports/SportAskLine';
+import { SportRestLine } from '../components/sports/SportRestLine';
+import { SportRestOfferCard } from '../components/sports/SportRestOfferCard';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
@@ -515,6 +517,8 @@ function TodayContent() {
     stagePosition: <StagePositionLine />,
     // Een sport van je horloge zonder gekozen rol: een rustige vraag, geen kaart (docs/visie/Sporten die meetellen.md, 2.5).
     sportAsk: <SportAskLine />,
+    // Een voorstel na een zware sport dat verviel zonder keuze (I-23 punt 10).
+    sportRest: <SportRestLine />,
     backup: (
       <ExportReminderBanner
         logsSinceBackup={logsSinceBackup}
@@ -569,6 +573,8 @@ function TodayContent() {
       <RaceDayLine />
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />
+      {/* Op de beendag na een zware sport: het voorstel uit Week blijft tot je kiest (I-23 punt 10). */}
+      <SportRestOfferCard />
       {/* Twee van de drie getallen van je horloge wijken af op de ochtend van een zware training (engine/morningProposal.ts). */}
       <MorningProposalCard />
       {/* Wat bevestigd moet worden. */}

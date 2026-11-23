@@ -16,6 +16,7 @@ const everything: AppSettings = {
   ambition: 'stevig',
   restDayMode: 'active',
   hardSameDay: true,
+  sportRestKeep: 'vanzelf',
   longRunThenLegs: true,
   testRest: 48,
   longSundaySession: 'run',

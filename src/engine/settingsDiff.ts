@@ -177,6 +177,8 @@ export const ADVICE_SPECS: AdviceSpec[] = [
     reset: () => ({ strengthTraining: undefined }),
   },
   plain('lange-loop-benen', 'Beenkracht de dag na de lange duurloop', 'planning', 'longRunThenLegs', false as boolean, (v) => onOff(v === true), { plan: true }),
+  // Of een voorstel na een zware sport blijft tot je kiest: verandert je planning niet, dus meteen terug.
+  choice('sport-voorstel', 'Voorstel na een zware sport', 'planning', 'sportRestKeep', 'blijft', 'sportVoorstel'),
 
   // Doel en tochten
   {
