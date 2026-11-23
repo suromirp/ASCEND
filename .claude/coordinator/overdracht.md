@@ -6,6 +6,8 @@ Bijgewerkt: 23 november 2026 06:00 door coördinator session_01LnDpSnS2nhuSzP3eT
 
 - Main dff62db9. Bundel 9: vier Cartographers (opus, zoals de vorige stand vroeg; zuinige stand zegt sonnet, volgende keer sonnet) schrijven op tak claude/ontwerp-bundel-9 in /home/user/ascend: Ontwerp Eén plan (I-14), Ontwerp beginner rest (I-18), Ontwerp Losse sport (I-23), Ontwerp Na een loop één moment (I-34). Daarna kennisindex en bouwen naar risico.
 - Mag-ronde loopt: Sherpa Mag A (sonnet, worktree, claude/mag-a: I-125, I-130 tot I-133, I-138) en Sherpa Mag B (opus, worktree, claude/mag-b: I-134 tot I-137). Daarna één Warden en één Lookout over beide, proefmerge en kaart in /home/user/ascend.
+- 06:45: vier ontwerpen klaar op claude/ontwerp-bundel-9 (4663b96, kennisindex bij). Vragen in eigenaar.md; zonder antwoord geldt het advies. Bouwvolgorde zodra Mag A en B klaar zijn (max twee bouwers): I-18 stap 3+4 samen (opus, Warden opus, Lookout), I-14 stap naspelen-invarianten (opus); daarna I-14 minuten en één stem, I-23 stap 0 en 1, I-34 stap 1 (Terugblik in het moment) en de vier Mag-fixes uit I-34 als kleine bundel. claude/ontwerp-bundel-9 alleen docs: mag als docs-squash naar main.
+- Let op: Mag A (I-125) herschrijft ook bronnen.json; bij botsing main nemen en npm run kennisindex.
 - Overdracht en eigenaar.md worden bijgewerkt in worktree /home/user/coord.
 
 ## Wissel 23 november 06:00 (van session_01LnDpSnS2nhuSzP3eTLuurZ)

@@ -35,10 +35,34 @@ Keuzes: zo laten zoals je besloot (advies, het is veilig en simpel); of gedempt 
 Zonder antwoord: het blijft zoals je besloot.
 Sinds: 23 november.
 
+### Eén plan: vier keuzes (I-14, 23 november)
+Voorstel, Vandaag, Week en de weekbalk gaan uit één dagbeeld lezen; ontwerp in docs/visie/Ontwerp Eén plan.md.
+Keuzes, advies voorop: na een test of wedstrijd geen "na zwaar, ruimte" (de test heeft eigen rust); bij twee keer kracht op drie dagen volgt de tekst het plan ("1 keer kracht; met een vierde dag past het"); het eerste voorstel noemt de rustdag met wandelen; "Deze week nog een keer?" noemt één getal, dat van Week.
+Zonder antwoord: het advies.
+Sinds: 23 november.
+
+### Beginner: drie keuzes (I-18, 23 november)
+Keuzes, advies voorop: de herstelwandeling in de start duurt hoogstens zo lang als de korte sessie wandelen en dribbelen (nu 45 min); bij wandelen en dribbelen staat "Rustig, praten kan" in plaats van Zone 2; de ladder in de planning en het voorstel voor een lopende start gaan samen naar main.
+Zonder antwoord: het advies.
+Sinds: 23 november.
+
+### Losse sport: vier keuzes (I-23, 23 november)
+Keuzes, advies voorop: zwemmen, padel en voetbal altijd te kiezen, zonder rol één vraag na opslaan "Hoe telt padel?"; een voorstel na een zware sport blijft staan tot je kiest (instelbaar); geen kleding- en zweetvragen bij deze sporten tot er onderzoek is; past de weekcontrole na een sport een duur aan, dan eerst een voorstel.
+Zonder antwoord: het advies.
+Sinds: 23 november.
+
+### Na een loop één moment: vijf keuzes (I-34, 23 november)
+Na een loop één moment in plaats van zes tot acht lagen; de Terugblik als apart blad vervalt. Keuzes, advies telkens ja: een rustige vorm van het moment na Hoe ging het?; een test die op Telt mee wacht bovenaan; één training op een dag in het Logboek opent meteen het logblad; de Kennisbank op Ascend alleen bij een tocht als doel; acht Forge-keuzes in een blad tijdens het trainen.
+Zonder antwoord: het advies.
+Sinds: 23 november.
+
 ## Stuk of vast
 
 
 ## Loopt
+
+- Bundel 9 (I-14, I-18, I-23, I-34): vier ontwerpen klaar, bouwen per stap naar risico.
+- Kleine punten (I-125, I-130 tot I-138): twee bouwers bezig.
 
 - Hoogtemeters en vroeg ziek zien (I-77, I-33, I-78): nagespeeld met uw back-up, gebouwd; bij het nakijken twee punten gevonden, herstel loopt.
 - Telt op de dag van uitvoeren (I-58, I-59, I-72): gebouwd en nagekeken, schermtest volgt.
