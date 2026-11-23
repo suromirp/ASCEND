@@ -41,7 +41,7 @@ Sinds: 23 november.
 
 ## Stuk of vast
 
-- Niets.
+- Een wedstrijd op een dag die niet in je trainingsdagen zit, kan bij het openen van de app uit de planning verdwijnen (gevonden door de Warden bij Eén plan). Wordt hersteld in dezelfde ronde als het eerste voorstel.
 
 
 ## Loopt

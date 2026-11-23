@@ -580,3 +580,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-23 | Sherpa terugkeer herstel I-144 | ontwikkelaar helper | opus | 198k tok | 19 min | Moet 1, 2 en vier Mag, live 7be515c |
 | 2026-11-23 | Sherpa klein I-142, I-143, I-145 | ontwikkelaar helper | sonnet | 154k tok | 24 min | live d99eb30, na Moet Lookout |
 | 2026-11-23 | Lookout klein I-142, I-143, I-145 | tester helper | sonnet | 90k tok | 13 min | Moet I-143, daarna groen |
+| 2026-11-23 | Sherpa Eén plan eerste voorstel I-14 A | ontwikkelaar helper | opus | 166k tok | 26 min | gebouwd, Warden niet akkoord |
+| 2026-11-23 | Warden Eén plan eerste voorstel | reviewer helper | fable | 125k tok | 11 min | Moet: wedstrijddag valt weg (ook op main) |
