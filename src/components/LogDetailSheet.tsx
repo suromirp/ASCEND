@@ -6,6 +6,7 @@ import { getCompatibility, COMPATIBILITY_LABEL } from '../data/garminSuggested';
 import { formatDateNL, todayISO } from '../utils/dates';
 import { detailFetchMode } from '../engine/detailFetch';
 import { isUsableRunDetail } from '../engine/runDetail';
+import { runClimb } from '../engine/runClimb';
 import { minutesText } from '../engine/activityText';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
@@ -126,8 +127,10 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
   if (garminType) rows.push({ label: 'Garmin stelde voor', value: garminType });
   // 0 km is "weet ik niet": geen rij (profielen 14 november, punt B).
   if (activity?.distanceKm !== undefined && activity.distanceKm > 0) rows.push({ label: 'Afstand', value: `${formatNumberNL(activity.distanceKm, 2)} km` });
-  if (activity?.elevationGainM !== undefined) {
-    rows.push({ label: 'Stijging', value: `${formatNumberNL(activity.elevationGainM, 0)} m D+${activity.estimatedElevation ? ' (geschat)' : ''}` });
+  // Eén getal voor de stijging, hetzelfde als afronden en Run in detail (engine/runClimb.ts, I-77).
+  const climb = runClimb(log);
+  if (climb) {
+    rows.push({ label: 'Stijging', value: `${formatNumberNL(climb.gainM, 0)} m D+${climb.from === 'log' && activity?.estimatedElevation ? ' (geschat)' : ''}` });
   }
   if (log.outdoorData?.elevationLossM !== undefined) rows.push({ label: 'Daling', value: `${formatNumberNL(log.outdoorData.elevationLossM, 0)} m D−` });
   if (log.outdoorData?.steps !== undefined) rows.push({ label: 'Verdiepingen (trap)', value: `${log.outdoorData.steps}` });

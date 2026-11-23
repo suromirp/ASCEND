@@ -15,7 +15,8 @@
 import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { DetailConditions } from '../models/activityDetail';
-import { counterMark, gainDisagreement, ownGainOf, sameCounter } from './elevation';
+import { sameCounter } from './elevation';
+import { watchClimbTrusted } from './runClimb';
 import { logSport, isIndoorLog } from './sports';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { zoneBpm, type HeartRateSettings } from './heartRateZones';
@@ -347,21 +348,8 @@ export function comparableLogs(subject: SessionLog, topic: InsightTopic, ctx: Co
 const SIMILAR_DISTANCE_PCT = 15;
 const SIMILAR_CLIMB_M_PER_KM = 5;
 
-// Is het getal van het horloge op dit log te geloven? Een 0 is geen meting (een horloge met hoogte
-// meldt op een loop vrijwel nooit precies niets, een horloge zonder hoogte wel). Verder de
-// overeenkomst met de eigen telling van het profiel (engine/elevation.ts#gainDisagreement: buiten
-// 60 tot 140 procent en ook 20 m of meer uit elkaar, want in vlak land zeggen procenten weinig),
-// gelezen met het merk van `detail`: de teller van engine/elevation.ts ligt dicht bij het horloge,
-// dus ver uiteen is het horloge niet te vertrouwen. De oude dode band telde altijd te laag: een
-// lage overeenkomst zegt daar niets over het horloge, alleen een te hoge.
-function watchClimbTrusted(log: SessionLog, reported: number | undefined): reported is number {
-  if (reported === undefined || !Number.isFinite(reported) || reported <= 0) return false;
-  const detail = log.detail;
-  if (!detail) return true;
-  const apart = gainDisagreement(detail.quality.gainAgreementPct, ownGainOf(detail), reported);
-  if (apart === 'high') return false;
-  return apart === undefined || counterMark(detail.counter) === undefined;
-}
+// Of het getal van het horloge te geloven is: engine/runClimb.ts#watchClimbTrusted, dezelfde regel
+// als het ene getal van een loop (I-77).
 
 // Stijging per km van een log, op twee manieren. `watch` is het getal van het horloge op het log,
 // alleen als het te geloven is: dat verandert niet met de teller. `own` is de eigen optelling van

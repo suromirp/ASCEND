@@ -582,6 +582,8 @@ describe('rowSummary: gegevens en back-up', () => {
     expect(rowSummary('reeksen-bewaren', facts({ settings: { keepStreams: false } as never })).checked).toBe(false);
     expect(rowSummary('ochtend-backup', facts()).checked).toBe(true);
     expect(rowSummary('vroeg-ziek', facts({ settings: { illnessSigns: false } as never })).checked).toBe(false);
+    expect(rowSummary('vroeg-ziek-een', facts()).off).toBeUndefined();
+    expect(rowSummary('vroeg-ziek-een', facts({ settings: { illnessSigns: false } as never }))).toMatchObject({ checked: true, off: true });
     expect(rowSummary('hitte-tempo', facts({ settings: { heatPace: false } as never })).checked).toBe(false);
     expect(rowSummary('weekdag-patroon', facts({ settings: { weekdayPattern: false } as never })).checked).toBe(false);
     expect(rowSummary('luchtkwaliteit', facts({ settings: { airQuality: false } as never })).checked).toBe(false);

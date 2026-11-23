@@ -112,14 +112,15 @@ const RESTING_RANGE: [number, number] = [30, 100];
 
 // Meters stijging per km. De stijging van het horloge, tenzij die niet te vertrouwen is
 // (engine/elevation.ts#gainDisagreement: buiten de marge in procenten en ook 20 m of meer uit elkaar): dan ASCEND's eigen optelling per km. Zonder hoogtegegevens
-// valt er niets te zeggen en geldt wat het horloge meldt (0 als dat ook niets zegt).
-function climbPerKm(watchGainM: number, km: number, log: SessionLog, rd: RunDetail | undefined): number {
-  const untrusted = !!log.detail && gainDisagreement(log.detail.quality.gainAgreementPct, ownGainOf(log.detail), watchGainM) !== undefined;
+// valt er niets te zeggen en geldt wat het horloge meldt (0 als dat ook niets zegt). Zonder getal van
+// het horloge telt de eigen optelling (I-33: eerder telde dat als 0, dus als vlak).
+function climbPerKm(watchGainM: number | undefined, km: number, log: SessionLog, rd: RunDetail | undefined): number {
+  const untrusted = watchGainM === undefined || (!!log.detail && gainDisagreement(log.detail.quality.gainAgreementPct, ownGainOf(log.detail), watchGainM) !== undefined);
   if (untrusted && rd) {
     const own = rd.kms.reduce((n, k) => n + (k.gainM ?? 0), 0);
     if (rd.kms.some((k) => k.gainM !== undefined)) return own / km;
   }
-  return watchGainM / km;
+  return (watchGainM ?? 0) / km;
 }
 
 // Het vlakke tempo tegen het echte tempo, over de afstand van elke km. Een km zonder
@@ -229,7 +230,7 @@ export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], p
     // The old path: planned easy and long runs, the whole run.
     const top = t ? plannedRpeTop(t, l.completedDate, program) : undefined;
     if (top === undefined || top > EASY_RPE_TOP || bpm <= 0) return [];
-    const climb = climbPerKm(d?.elevationGainM ?? 0, km, l, rd);
+    const climb = climbPerKm(d?.elevationGainM, km, l, rd);
     // Met het vlakke tempo per km telt een heuvelachtige loop mee; zonder blijft de oude grens.
     // Alleen boven de oude grens het vlakke tempo, zodat lopen met en zonder run in detail vergelijkbaar blijven.
     const flat = rd && climb > MAX_CLIMB_PER_KM ? flatFactor(rd) : undefined;
