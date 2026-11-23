@@ -59,7 +59,7 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
     title: 'Opbouw van de start',
     lead: 'Hoe licht de eerste weken zijn als je rustig begint. Een andere keuze laat eerst zien wat er verandert, pas na Akkoord verandert je planning.',
     points: [
-      { head: 'Heel licht', text: 'het advies. Om de beurt dribbelen en wandelen, op de plek van de rustige en de lange duurloop. Wie net begint met lopen raakt per uur veel vaker geblesseerd.' },
+      { head: 'Heel licht', text: 'het advies. Om de beurt dribbelen en wandelen, op de plek van de rustige en de lange duurloop. Wie net begint met lopen raakt per uur ongeveer acht keer zo vaak geblesseerd als wie al loopt.' },
       { head: 'Gewoon', text: 'de rustige en de lange duurloop van je richting, alleen zonder harde training.' },
       { head: 'Nog niet gekozen', text: 'liep je start al voor deze keuze bestond, dan blijft hij gewoon tot je Akkoord geeft.' },
     ],
