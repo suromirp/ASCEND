@@ -22,9 +22,8 @@ import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, weekdayLongNL } from '../utils/dates';
 import { makeId } from '../utils/id';
-import { isIllnessDay } from './illness';
-import { isTaperDay, raceDatesOf } from './raceWindow';
-import { leaveDays } from './leave';
+import { raceDatesOf } from './raceWindow';
+import { dayRules } from './dayRules';
 import { hasRole } from './templateRoles';
 import { isKeyFor, type KeyFocus } from './keySession';
 import { hardRunApart } from './hardRunApart';
@@ -56,14 +55,15 @@ export function restDaysToBringBack(input: RestBackInput): PlannedSession[] {
   const byId = new Map(input.templates.map((t) => [t.id, t]));
   const isRest = (s: PlannedSession) => byId.get(s.templateId)?.type === 'recovery';
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
-  const leave = leaveDays(input.leave);
+  // De dagkeuze via de ene regel (engine/dayRules.ts, I-74): elke dag van een periode en ziek.
+  const rules = dayRules({ today, leave: input.leave, illness: input.illnessEpisodes });
   const out: PlannedSession[] = [];
   const seen = new Set<string>();
   for (const s of plannedSessions) {
     const date = s.scheduledDate;
     if (s.status !== 'skipped' || !isRest(s) || s.lock?.by !== 'proposal' || s.leave || s.catchUp) continue;
     if (date < today || logged.has(s.id) || isoWeekday(date) !== restDay || seen.has(date)) continue;
-    if ((input.anchor && date >= input.anchor) || leave.has(date) || isIllnessDay(date, input.illnessEpisodes, today)) continue;
+    if ((input.anchor && date >= input.anchor) || !!rules.leaveDay(date) || rules.ill(date)) continue;
     // De dag is weer leeg: niets gepland dat niet overgeslagen is, en niets gedaan op die dag.
     if (plannedSessions.some((o) => o.id !== s.id && o.status !== 'skipped' && o.scheduledDate === date)) continue;
     if (logs.some((l) => l.completedDate === date)) continue;
@@ -97,15 +97,15 @@ function trainedOn(day: string, input: RestBackInput, byId: Map<string, SessionT
 function catchUpFits(date: string, rest: PlannedSession, input: RestBackInput, byId: Map<string, SessionTemplate>): boolean {
   const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter(Boolean));
   const caughtUp = caughtUpMap(input.plannedSessions);
-  const races = raceDatesOf(input.plannedSessions, byId);
+  const rules = dayRules({ today: input.today, illness: input.illnessEpisodes, races: raceDatesOf(input.plannedSessions, byId) });
   const around = input.plannedSessions.filter((o) => o.id !== rest.id && o.status !== 'skipped' && (o.scheduledDate >= input.today || logged.has(o.id)));
   return input.plannedSessions.some((m) => {
     const t = byId.get(m.templateId);
     if (!t || !(hasRole(t, 'test') || isKeyFor(t, input.keyFocus))) return false;
     if (m.scheduledDate >= date || m.scheduledDate < addDays(date, -7) || logged.has(m.id) || caughtUp.has(m.id) || m.leave || m.catchUp) return false;
-    if (isIllnessDay(m.scheduledDate, input.illnessEpisodes, input.today)) return false;
+    if (rules.ill(m.scheduledDate)) return false;
     // Uit de afbouw van een race die er al was: vervallen, niets in te halen (engine/raceWindow.ts).
-    if (isTaperDay(m.scheduledDate, races, input.today)) return false;
+    if (rules.taperDone(m.scheduledDate)) return false;
     const missed = m.status === 'skipped' ? m.lock?.by === 'user' : m.scheduledDate < input.today;
     if (!missed) return false;
     // Hetzelfde gedaan binnen twee dagen, zonder koppeling: niet gemist.

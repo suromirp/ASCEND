@@ -21,8 +21,9 @@ import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { makeId } from '../utils/id';
-import { LEAVE_KIND_LABEL, LEAVE_KIND_SHORT, dayCount, describePeriodCompact, describePeriodDates, leaveDays, leaveLabelOn, pastLeaveLine, sortPeriods } from './leave';
+import { LEAVE_KIND_LABEL, LEAVE_KIND_SHORT, dayCount, describePeriodCompact, describePeriodDates, leaveLabelOn, pastLeaveLine, sortPeriods } from './leave';
 import { trekLightDaysBefore } from './trekTaper';
+import { dayRules } from './dayRules';
 import { planPass, type PlanPassContext } from './planPass';
 import { fixedInLeave, fixedKeptInNoGym, fixedLeaveNote, fixedNoGymNote } from './fixedSports';
 import { REPAIR_REASON, lockLevel, type Finding } from './weekValidator';
@@ -82,9 +83,10 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   // What the planning looks like without the period's earlier work.
   // Changing a period: a training you moved yourself that the new period still makes short keeps
   // its length and passes to the new period (Warden, tweede review punt 1).
-  const newDays = leaveDays([period]);
+  // Zonder sportschool via de ene regel (engine/dayRules.ts, I-82).
+  const newRules = dayRules({ today, leave: [period] });
   const stillShort = (s: PlannedSession): boolean => {
-    if (period.kind === 'no_gym') return newDays.get(s.scheduledDate)?.kind === 'nogym';
+    if (period.kind === 'no_gym') return !!newRules.noGymPeriod(s.scheduledDate);
     if (period.kind === 'trek') { const gap = daysBetween(period.endDate, s.scheduledDate); return gap >= 1 && gap <= TREK_REST_DAYS; }
     return false;
   };
@@ -241,10 +243,11 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     }
     // What is fixed in place stays a gym session or a run as it is: say so, never silent (Warden punt 2).
     const light = resolveNoGym(period).amount === 'light';
+    const rulesAfter = dayRules({ today, leave: periodsAfter });
     for (const s of result.sessions) {
       const t = byId.get(s.templateId);
       if (s.status === 'skipped' || logged.has(s.id) || s.scheduledDate < today || s.scheduledDate < period.startDate || s.scheduledDate > period.endDate) continue;
-      if (lockLevel(s, logged, today) !== 1 || idIsTestOrRace(s.templateId, byId) || leaveLabelOn(s.scheduledDate, periodsAfter)?.kind !== 'nogym') continue;
+      if (lockLevel(s, logged, today) !== 1 || idIsTestOrRace(s.templateId, byId) || !rulesAfter.noGymPeriod(s.scheduledDate)) continue;
       if (s.leave && (s.leave.periodId === period.id || s.leave.periodId === replaces?.id)) continue;
       if (isNoGymStrength(t)) notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} staat vast. Die blijft staan, ook zonder sportschool.`);
       else if (isNoGymRun(t)) notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} staat vast. Die blijft staan${light ? ' en telt mee voor je twee keer lopen' : ''}.`);

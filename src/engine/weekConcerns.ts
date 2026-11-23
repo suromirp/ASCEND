@@ -110,6 +110,21 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
         const sick = cause === 'ill';
         const ramp = cause === 'ramp';
         const kept = DAY_CAUSE_TEXT[cause].kept;
+        // Een test of wedstrijd op een koortsdag (I-74): die liet ziek melden staan. Een test schuift alleen met jouw
+        // Akkoord, een wedstrijd schuift niet; of je start, kies je zelf.
+        if (f.level === 2) {
+          const race = idHasRole(byId.get(a)?.templateId ?? '', 'race', input.templates);
+          return {
+            ...base,
+            headline: race ? 'Je bent ziek, en je wedstrijd staat er.' : 'Je bent ziek, en er staat een testloop.',
+            fact: `${nameOf(a)} op ${dayName(dateOf(a))} ${kept}.`,
+            title: `${nameOf(a)} op een ziektedag`,
+            why: race
+              ? 'Met koorts train je niet. Je wedstrijd schuift niet mee; of je start, kies je zelf.'
+              : 'Met koorts zegt een testloop niets over je vorm. Hij schuift alleen met jouw Akkoord.',
+            notes: { [a]: 'je bent ziek' },
+          };
+        }
         return {
           ...base,
           headline: sick ? 'Je bent ziek, en er staat een training.' : ramp ? 'Je bouwt op na ziekte, en er staat een zware training.' : 'Je bent verkouden, en er staat een zware training.',

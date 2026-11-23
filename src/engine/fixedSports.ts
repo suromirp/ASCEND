@@ -10,6 +10,7 @@ import type { PlannedSession, SessionLog } from '../models/training';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import { parseSportHandling, type FixedSlot, type SportHandlingMap } from './sportRole';
 import { sportTemplateId } from './sportTemplate';
+import { dayRules } from './dayRules';
 
 // Hoe ver vooruit de vaste rijen staan; de dagelijkse ronde vult de volgende weken aan.
 const FIXED_WEEKS_AHEAD = 8;
@@ -47,16 +48,14 @@ export function fixedInLeave(from: string, until: string, handling: SportHandlin
   return fixedOnDays(from, until, handling, leave, leaveBlocks);
 }
 
-// Een dag zonder sportschool (en niet strenger, zoals een vakantie of tocht): daar blijft een vaste afspraak
-// staan. Sport bij een club is geen sportschool en ASCEND weet niet of je er bent.
-function noGymKeeps(date: string, leave: readonly LeavePeriod[] | undefined): LeavePeriod | undefined {
-  if (leaveBlocks(date, leave)) return undefined;
-  return (leave ?? []).find((p) => p.kind === 'no_gym' && date >= p.startDate && date <= p.endDate);
-}
-
 // De vaste afspraken die in een periode zonder sportschool vallen en blijven staan, voor een noot in het
-// voorstel: zo zie je ze voor je Akkoord geeft en kun je er een overslaan in Week.
+// voorstel: zo zie je ze voor je Akkoord geeft en kun je er een overslaan in Week. Een dag zonder sportschool (en niet
+// strenger, zoals een vakantie of tocht) via de ene regel (engine/dayRules.ts, I-82): daar blijft een vaste afspraak
+// staan. Sport bij een club is geen sportschool en ASCEND weet niet of je er bent. De periode is de eerste die de dag
+// dekt, zoals altijd.
 export function fixedKeptInNoGym(from: string, until: string, handling: SportHandlingMap | undefined, leave: readonly LeavePeriod[] | undefined): { sport: CountedSportId; date: string; period: LeavePeriod }[] {
+  const rules = dayRules({ today: from, leave });
+  const noGymKeeps = (date: string) => (rules.noGymPeriod(date) ? (leave ?? []).find((p) => p.kind === 'no_gym' && date >= p.startDate && date <= p.endDate) : undefined);
   return fixedOnDays(from, until, handling, leave, noGymKeeps);
 }
 

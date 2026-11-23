@@ -15,8 +15,8 @@ import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../model
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import { addDays, mondayOfWeek } from '../utils/dates';
-import { activeIllness, isIllnessDay } from './illness';
-import { leaveDays, lightDays } from './leave';
+import { activeIllness } from './illness';
+import { dayRules } from './dayRules';
 import { isLegHeavyTemplate } from './scheduler';
 import { lockLevel, validateWeeks } from './weekValidator';
 import { WEEK_SHAPE_STRENGTH, WEEK_SHAPE_TEMPLATE_IDS, parseWeekShape, type WeekShape } from './sports';
@@ -164,8 +164,8 @@ export function strengthPlanItems(reshape: Pick<StrengthReshape, 'shape' | 'adde
   let noRoomWeeks = 0;
   let partialWeeks = 0;
   if (reshape.added.length > 0) {
-    const leave = leaveDays(ctx.leave);
-    const light = lightDays(ctx.leave, leave);
+    // De dagkeuze via de ene regel (engine/dayRules.ts, I-74): elke dag van een periode, licht rond een tocht en ziek.
+    const rules = dayRules({ today: ctx.today, leave: ctx.leave, illness: ctx.illnessEpisodes });
     const templates = [...ctx.templates];
     const byId = new Map(templates.map((t) => [t.id, t]));
     const weekStarts = [...new Set(ctx.plannedSessions.filter((s) => s.scheduledDate > ctx.today).map((s) => s.weekStartDate))].sort();
@@ -181,7 +181,7 @@ export function strengthPlanItems(reshape: Pick<StrengthReshape, 'shape' | 'adde
         if (date <= ctx.today) continue;
         const draft: PlannedSession = { id: `draft:${weekStart}:${id}`, templateId: id, scheduledDate: date, weekStartDate: weekStart, status: 'planned', order: 99 };
         const nextToHeavy = isLegHeavyTemplate(byId.get(id)!) && [-1, 1].some((o) => ctx.plannedSessions.some((x) => x.status !== 'skipped' && x.scheduledDate === addDays(date, o) && !!byId.get(x.templateId) && isLegHeavyTemplate(byId.get(x.templateId)!)) || ctx.logs.some((l) => l.completedDate === addDays(date, o) && !!byId.get(l.templateId) && isLegHeavyTemplate(byId.get(l.templateId)!)));
-        const blocked = nextToHeavy || leave.has(date) || light.has(date) || isIllnessDay(date, ctx.illnessEpisodes, ctx.today) || (!!activeIllness(ctx.illnessEpisodes) && date <= addDays(ctx.today, 7));
+        const blocked = nextToHeavy || !!rules.leaveDay(date) || rules.holds(date, 'light') || rules.ill(date) || (!!activeIllness(ctx.illnessEpisodes) && date <= addDays(ctx.today, 7));
         const findings = blocked ? [] : validateWeeks({
           sessions: [...ctx.plannedSessions.filter((s) => s.status !== 'skipped'), ...week.filter((s) => s.id.startsWith('draft:')), draft],
           logs: [...ctx.logs] as SessionLog[], templates, today: ctx.today, restDay: ctx.restDay, program: ctx.program,

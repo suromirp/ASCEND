@@ -275,7 +275,9 @@ describe('Warden ronde 2: elke stem, en een antwoord op de race klapt niets teru
   });
 
   it('rustdag terug en het weekdagpatroon lezen het venster ook', () => {
-    expect(restDayBackSrc).toMatch(/isTaperDay\(m\.scheduledDate, races, input\.today\)/);
+    // Sinds I-74 via de ene regel (engine/dayRules.ts#DayRules.taperDone, gelijk aan isTaperDay in dayRules.test.ts).
+    expect(restDayBackSrc).toMatch(/races: raceDatesOf\(input\.plannedSessions, byId\)/);
+    expect(restDayBackSrc).toMatch(/rules\.taperDone\(m\.scheduledDate\)/);
     expect(weekdayPattern).toMatch(/isTaperDay\(d, races, today\)/);
   });
 });

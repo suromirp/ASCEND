@@ -44,7 +44,8 @@ import { askBeforeApplying } from '../engine/changeImpact';
 import { planEndDay } from '../engine/programLayout';
 import { dayRules } from '../engine/dayRules';
 import { isTemplatePlannable, fixedFrequencySports, templateSport, type Sport } from '../engine/sports';
-import { strengthAllows } from '../engine/strengthTraining';
+import { strengthTrainingOn } from '../engine/strengthTraining';
+import { planKnows } from '../engine/dayRules';
 
 export type WeeklyPrescriptionStepOutcome =
   // Niets te doen, of niets dat anders is: er is niets geschreven.
@@ -121,7 +122,7 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
     // Sports pinned to a number per week keep that count; the automatic
     // planning neither adds nor removes their sessions.
     // With strength switched off, no strength training comes back through the prescription (engine/strengthTraining.ts).
-    (t) => isTemplatePlannable(t, appSettings.enabledSports) && strengthAllows(t, appSettings) && !fixedFrequencySports(appSettings).includes(templateSport(t) as Sport),
+    (t) => isTemplatePlannable(t, appSettings.enabledSports) && planKnows(t, !strengthTrainingOn(appSettings)) && !fixedFrequencySports(appSettings).includes(templateSport(t) as Sport),
   );
 
   // Never a session on or after the main goal's own day (the plan ends the

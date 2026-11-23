@@ -6,8 +6,7 @@ import { withoutGymOnNoGym } from './noGymGuard';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
-import { isIllnessDay } from './illness';
-import { mayPropose } from './dayRules';
+import { dayRules, mayPropose } from './dayRules';
 import { findHeavyConflicts, freshnessAt, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, testRestHours } from './scheduler';
 import { LEG_EASE_INDEX, legEaseCardSession } from './legDayEase';
 import { addDays, daysBetween, formatShortDayNL, mondayOfWeek, weekdayLongNL, formatWeekdayDateNL } from '../utils/dates';
@@ -15,14 +14,13 @@ import { countedTests, type TestResult } from './racePrediction';
 import { manyStops } from './bestEffort';
 import { hasRole, idIsTestOrRace } from './templateRoles';
 import { templateSport } from './sports';
-import { leaveDays, lightDays } from './leave';
 import { freeDaysOfWeek, lockLevel, validateWeeks, type CheckInput, type Finding } from './weekValidator';
 import { CONCERN_RULES } from './weekConcerns';
 import { applyPlanChangeItems } from './proposalEngine';
 import { weatherAdvice } from './weatherSwap';
 import { restBackAdvice } from './restDayBack';
 import { type AdviceInputs, type Advice, MAX_OPTIONS, proposal, leavesNextHardFresh, catchUpMinutes, recoveryWeekGuard } from './adviceShared';
-import { isTaperDay, raceDatesOf } from './raceWindow';
+import { raceDatesOf } from './raceWindow';
 import { TEST_RUN_ID, testRunAdvice } from './adviceTestRun';
 import { missedAdvice, skippedKeyAdvice, restSwapAdvice, restPullAdvice, extraSessionAdvice } from './adviceWeek';
 import { tooHardAdvice, tooLightAdvice, injuryAdvice, strengthAdvice, spacingAdvice } from './adviceLoad';
@@ -74,19 +72,20 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
   const earliest = afterTest > addDays(today, 1) ? afterTest : addDays(today, 1);
   const latest = addDays(today, RETRY_AHEAD_DAYS);
   const levelOf = (s: PlannedSession) => lockLevel(s, loggedIds, today);
-  const leaveMap = leaveDays(inputs.leave);
-  const light = lightDays(inputs.leave, leaveMap);
+  // De dagkeuze via de ene regel (engine/dayRules.ts, I-74): vakantie, tocht, licht rond een tocht en ziek.
+  const rules = dayRules({ today, leave: inputs.leave, illness: inputs.illnessEpisodes });
   // The first question was answered: once more only when its retry did not happen (decision 2026-11-02-testloop-en-zware-benen.md).
-  if (inputs.respondedIds.has(`retest:${last.date}`)) return retryAgainAdvice(inputs, templateById, usedIds, last, stops, (d) => { const kind = leaveMap.get(d)?.kind; return kind === 'off' || kind === 'trek' || light.has(d); });
+  if (inputs.respondedIds.has(`retest:${last.date}`)) return retryAgainAdvice(inputs, templateById, usedIds, last, stops, (d) => rules.holds(d, 'off', 'trek', 'light'));
   const ctx: RetryContext = {
     usedIds,
     easeId: legEaseCardSession({ mode: inputs.legEase, today, plannedSessions: inputs.plannedSessions, templates: inputs.templates, logs: inputs.logs, injuries: inputs.injuries, checkIns: inputs.checkIns })?.id,
-    blocked: (d, heavy) => { const kind = leaveMap.get(d)?.kind; return kind === 'off' || kind === 'trek' || (heavy && light.has(d)); },
+    blocked: (d, heavy) => rules.holds(d, 'off', 'trek') || (heavy && rules.holds(d, 'light')),
+    ill: (d) => rules.ill(d),
   };
   const hardRuns = inputs.plannedSessions
     .filter((s) => {
       const t = templateById.get(s.templateId);
-      return !!t && hasRole(t, 'hard_run') && open(s) && levelOf(s) === 3 && s.scheduledDate >= earliest && s.scheduledDate <= latest && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, today) && !ctx.blocked(s.scheduledDate, true);
+      return !!t && hasRole(t, 'hard_run') && open(s) && levelOf(s) === 3 && s.scheduledDate >= earliest && s.scheduledDate <= latest && !ctx.ill(s.scheduledDate) && !ctx.blocked(s.scheduledDate, true);
     })
     .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.id.localeCompare(b.id));
 
@@ -166,10 +165,11 @@ function retryAgainAdvice(inputs: AdviceInputs, templateById: Map<string, Sessio
   const id = `retest:${last.date}:opnieuw`;
   if (inputs.respondedIds.has(id) || !inputs.retryRows || inputs.retryRows.size === 0) return [];
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const raceRules = dayRules({ today, races: raceDatesOf(inputs.plannedSessions, templateById) });
   const row = inputs.plannedSessions
     .filter((s) => inputs.retryRows!.has(s.id) && s.templateId === TEST_RUN_ID && s.scheduledDate > last.date && !loggedIds.has(s.id) && (s.status === 'skipped' || s.scheduledDate < today)
       // Een herkansing in de afbouw van een race die er al was, vervalt (engine/raceWindow.ts).
-      && !isTaperDay(s.scheduledDate, raceDatesOf(inputs.plannedSessions, templateById), today))
+      && !raceRules.taperDone(s.scheduledDate))
     .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
   if (!row) return [];
   const when = formatWeekdayDateNL(row.scheduledDate);
@@ -232,6 +232,8 @@ interface RetryContext {
   easeId?: string;
   // A holiday or trek day, or a light day around a trek: nothing hard goes there (heavy: the session is hard, heavy for the legs or long).
   blocked: (date: string, heavy: boolean) => boolean;
+  // Een dag in een ziekmelding (engine/dayRules.ts#DayRules.ill).
+  ill: (date: string) => boolean;
 }
 
 // The test replaces `found` on its own day. Whatever the spacing rules (the same as TEST-MAKE-ROOM)
@@ -321,7 +323,7 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
       // First a day that keeps the rest day of its week; only then one that costs it, with the lightest training let go.
       for (const letGo of [false, true]) for (const off of targets) {
         const d = addDays(date, off);
-        if (d <= today || d === s.scheduledDate || ban.has(`${s.id}@${d}`) || (strength && restDates.has(d)) || isIllnessDay(d, inputs.illnessEpisodes, today) || ctx.blocked(d, isHeavyFor(t))) continue;
+        if (d <= today || d === s.scheduledDate || ban.has(`${s.id}@${d}`) || (strength && restDates.has(d)) || ctx.ill(d) || ctx.blocked(d, isHeavyFor(t))) continue;
         // A long run never moves into a week that has a long run of its own: then it goes instead (below).
         const twin = ownLongOf(s, t, d, others);
         if (twin) { longTwin ??= twin; continue; }
