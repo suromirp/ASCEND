@@ -560,3 +560,6 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-22 | Sherpa route-info I-115 tot I-118 | ontwikkelaar helper | sonnet | middel | ~30 min | gebouwd, besluit route-info |
 | 2026-11-22 | Warden ronde 22e | reviewer helper | opus | 117k tok | 20 min | 1 moet (app-kaart, zelf vastgelegd), 7 mag naar I-120 tot I-123 |
 | 2026-11-22 | Lookout ronde 22e | tester helper | sonnet | 141k tok | 12 min | groen 360/412, uitleg donker naar I-120 |
+| 2026-11-23 | Sherpa route I-112, I-120 tot I-123 | ontwikkelaar helper | sonnet | ~204k tok | ~45 min | gebouwd, besluit lus-soort-en-via-punt, live 545d5a72 |
+| 2026-11-23 | Warden route en klein | reviewer helper | sonnet | ~90k tok | ~15 min | geen moet, 6 mag naar I-125 tot I-130 |
+| 2026-11-23 | Lookout route en I-124 | tester helper | sonnet | 192k tok | 44 min | geen moet; I-104, I-105 niet te zien met testdata |

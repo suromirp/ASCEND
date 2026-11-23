@@ -14,7 +14,6 @@ Sinds: 23 november.
 
 ## Loopt
 
-- Route: soort terrein en via een punt in Andere lus (I-112) plus vier kleine verbeteringen (I-120 tot I-123): gebouwd en nagekeken, laatste schermtest loopt, daarna live.
 - Terugkeer na een pauze (I-124): de pauze telt vanaf je laatste echte training, het voorstel verloopt niet meer na drie dagen, Forge lichter na meer dan 10 dagen zonder kracht, en een periode achteraf vastleggen. Gebouwd, controle loopt.
 - Hoogtemeters en vroeg ziek zien (I-77, I-33, I-78): nagespeeld met uw back-up, bouwer bezig.
 - Telt op de dag van uitvoeren (I-58, na uw correctie): een Forge-training die later wordt afgesloten, een verplaatste training en een log in een andere week tellen op de dag dat ze echt gedaan zijn. Bouwer bezig.
@@ -22,6 +21,10 @@ Sinds: 23 november.
 
 
 ## Net live
+
+### 23 november 02:05
+- Route (I-112, I-120 tot I-123): in Andere lus kies je nu een soort terrein (langs water, door bos of groen, meer onverhard) en Via een punt: tik op de grote kaart waar de lus langs moet, Zonder punt brengt de eerste lus terug. Terug voor het donker heeft uitleg, de amber regel klopt na omdraaien, en de wind telt alleen dicht bij je weerplek.
+- Opbouw van de start (I-51): de uitleg zegt dat hij alleen telt bij een rustige start, met het getal uit het onderzoek.
 
 ### 22 november 17:30
 - Route (I-111, I-114 tot I-118): knop Andere lus (Andersom, een andere kant op, vier richtingen, zonder heen en terug), de wind bepaalt de richting, en onder de kaart een hoogteprofiel, de ondergrond, een afhaakpunt en terug voor het donker. Eigenaar daarna: even stoppen.
