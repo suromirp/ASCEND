@@ -569,7 +569,7 @@ function TodayContent() {
             </p>
           )}
         </header>
-        <WeekStrip weekStart={weekStart} sessions={weekSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
+        <WeekStrip weekStart={weekStart} sessions={plannedSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
       </SkyBand>
 
       {/* Kaarten rond de missie in een vaste volgorde, hoogstens twee erboven (engine/todayCards.ts,

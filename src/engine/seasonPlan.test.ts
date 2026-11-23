@@ -28,3 +28,17 @@ describe('buildSeasonPlan', () => {
     expect(opbouw.weeks[0].items.some((i) => i.kind === 'long' && i.label.startsWith('Lange duurloop'))).toBe(true);
   });
 });
+
+// I-58: in het jaaroverzicht telt een training ook op de dag van uitvoeren. De lange duurloop van zondag 4 oktober,
+// gedaan op maandag 5 oktober, gaat van de ene week naar de andere.
+describe('x van n per week op de dag van uitvoeren', () => {
+  it('de week van de planning telt hem niet meer, de week van uitvoeren wel', () => {
+    const lr = planned.find((s) => s.templateId === 'tpl_long_run' && s.scheduledDate === '2026-10-04')!;
+    const log = { id: 'l', plannedSessionId: lr.id, templateId: lr.templateId, type: 'hiking' as const, completedDate: '2026-10-05', completedAt: '2026-10-05T10:00:00Z', variant: 'full' as const, durationMinutes: 90, source: 'manual' as const };
+    const weeks = buildSeasonPlan(program, planned, [log], templates, '2026-10-20').flatMap((p) => p.weeks);
+    const before = buildSeasonPlan(program, planned, [], templates, '2026-10-20').flatMap((p) => p.weeks);
+    const at = (ws: typeof weeks, start: string) => ws.find((w) => w.weekStart === start)!.done!;
+    expect(at(weeks, '2026-09-28')).toEqual({ done: 0, planned: at(before, '2026-09-28').planned - 1 });
+    expect(at(weeks, '2026-10-05')).toEqual({ done: 1, planned: at(before, '2026-10-05').planned + 1 });
+  });
+});

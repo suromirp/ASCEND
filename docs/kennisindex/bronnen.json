@@ -3311,8 +3311,11 @@
    "onderwerpen": [
     "week"
    ],
-   "kern": "Week en de weekterugblik zeggen over gemist hetzelfde: wat je miste doe je niet dubbel, de rest gaat terug naar het plan met Week opnieuw plannen; de terugblik sluit de som met Overgeslagen en Vervallen, het inhaaladvies noemt dagen in plaats van een eigen aantal, en een rij zegt \"gedaan di 27\" als de dag van het log anders is.",
-   "stand": "geldt"
+   "kern": "Week en de weekterugblik zeggen over gemist hetzelfde: wat je miste doe je niet dubbel, de rest gaat terug naar het plan met Week opnieuw plannen; de terugblik sluit de som met Overgeslagen en Vervallen, het inhaaladvies noemt dagen in plaats van een eigen aantal, en een rij zegt \"gedaan di 27\" als de dag van het log anders is. Geldt nog: alles, behalve dat \"x van n\" op de geplande dag bleef; een gedane training telt nu op de dag van uitvoeren.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md"
+   ]
   },
   "docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md": {
    "onderwerpen": [
@@ -4503,8 +4506,12 @@
    "onderwerpen": [
     "week"
    ],
-   "kern": "Een training die in een andere week gedaan is dan gepland, telt als gedaan in de geplande week en met zijn minuten in de week van uitvoeren; beide weken zeggen het (\"1 in de week erna\", \"1 uit de week ervoor\"), de weekgrens is maandag 00:00 in Amsterdam op de dag van het log.",
-   "stand": "geldt"
+   "kern": "Een gedane training telt op de dag van uitvoeren in de minuten, x van n, de weekbalk, de belasting, de beenindex en Stand (Forge later afgesloten, verplaatst of ingehaald, log in een andere week); beide weken zeggen het (\"1 in de week erna\", \"1 uit de week ervoor\"), de weekgrens is maandag 00:00 in Amsterdam; gemist en de sleuteltraining blijven bij de geplande week; daarnaast eerlijke verwijzing naar Week opnieuw plannen bij gemist.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-15-dag-van-afronden.md",
+    "docs/beslissingen/2026-10-29-dag-van-een-training.md"
+   ]
   }
  }
 }

@@ -9,7 +9,7 @@ import { weekHighlights } from '../engine/weekHighlights';
 import { attentionLines, elsewhereNotes, nextWeekLine, sportLines, weekCountLine, weekRestLines } from '../engine/weekGlance';
 import { looseLogsOfWeek, weekLogsOf } from '../engine/weekLogs';
 import { intentionForWeek } from '../engine/weeklyQuestion';
-import { addDays, formatDateNL, formatHoursMinutesNL, formatShortDayNL, todayISO } from '../utils/dates';
+import { formatDateNL, formatHoursMinutesNL, formatShortDayNL, todayISO } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { SettingsLinkRow } from './settings/SettingsLink';
 import { Portal } from './Portal';
@@ -117,8 +117,6 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
   const attention = attentionLines(review);
   const restLines = weekRestLines(review, { missedShown: attention.some((a) => a.key === 'missed') });
   const next = review.next ? nextWeekLine(review.next) : null;
-  const weekEnd = addDays(review.weekStart, 6);
-  const weekSessions = plannedSessions.filter((s) => s.scheduledDate >= review.weekStart && s.scheduledDate <= weekEnd);
   const weekLogs = weekLogsOf(sessionLogs, new Map(templates.map((t) => [t.id, t])), review.weekStart, plannedByIdOf(plannedSessions))
     .sort((a, b) => a.completedDate.localeCompare(b.completedDate));
   const sports = sportLines(review);
@@ -150,7 +148,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
             {view === 'main' && (
               <>
                 <div className="mt-4 flex flex-col gap-3">
-                  <WeekStrip plain loose={looseLogsOfWeek(sessionLogs, plannedSessions, review.weekStart)} weekStart={review.weekStart} sessions={weekSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
+                  <WeekStrip plain loose={looseLogsOfWeek(sessionLogs, plannedSessions, review.weekStart)} weekStart={review.weekStart} sessions={plannedSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
                   <div>
                     <p className="font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{weekCountLine(review)}</p>
                     {restLines.map((line) => <p key={line} className="mt-0.5 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>)}

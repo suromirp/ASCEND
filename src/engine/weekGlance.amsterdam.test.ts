@@ -61,31 +61,33 @@ describe('Forge en de weekterugblik rekenen het voorstel met dezelfde week', () 
   });
 });
 
-// I-58: de minuten tellen in de week van uitvoeren. De grens is maandag 00:00 in Amsterdam, op de dag van het log
-// (engine/logDay.ts), dezelfde dag als de minuten.
+// I-58: een training telt op de dag van uitvoeren (docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md). De grens
+// is maandag 00:00 in Amsterdam, op de dag van het log (engine/logDay.ts), dezelfde dag als die van de minuten.
 describe('gedaan in een andere week, rond 00:00 Europe/Amsterdam', () => {
   const mon = (id: string): PlannedSession => ({ id, templateId: 'tpl_long_run', scheduledDate: '2026-10-12', weekStartDate: '2026-10-12', status: 'planned', order: 0 });
-  const logOf = (s: PlannedSession, completedAt: string, source: SessionLog['source']): SessionLog => {
+  const logOf = (s: PlannedSession, completedAt: string, source: SessionLog['source'], completedDate?: string): SessionLog => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(completedAt));
-    const day = todayISO();
+    const day = completedDate ?? todayISO();
     vi.useRealTimers();
     return { id: `l-${s.id}`, plannedSessionId: s.id, templateId: s.templateId, type: 'hiking', completedDate: day, completedAt, variant: 'full', durationMinutes: 90, source };
   };
   const review = (weekStart: string, plan: PlannedSession[], logs: SessionLog[]) =>
     buildWeekReview({ weekStart, plannedById: plannedByIdOf(plan), plannedSessions: plan, logs, templates, program, planChangeLog: [], asOf: '2026-10-20' })!;
 
-  it('zondag gepland, maandag 00:30 Amsterdam gelogd: de minuten in de week erna, de geplande week zegt het', () => {
-    const plan = [sun('s')];
+  it('geval 3: zondag gepland, maandag 00:30 Amsterdam gelogd: telt in de week erna, de geplande week zegt het', () => {
+    const plan = [sun('s'), mon('m')];
     const logs = [logOf(plan[0], '2026-10-11T22:30:00Z', 'manual')];
     expect(logs[0].completedDate).toBe('2026-10-12');
     const planned = review('2026-10-05', plan, logs);
-    expect(planned.minutes).toBe(0);
-    expect(weekCountLine(planned)).toBe('1 van 1 gedaan, 1 in de week erna');
-    expect(weekCountLine(review('2026-10-12', [...plan, mon('m')], logs))).toBe('0 van 1 gedaan · 1 uit de week ervoor · 1:30 uur');
+    expect(planned).toMatchObject({ done: 0, planned: 0, minutes: 0 });
+    expect(weekCountLine(planned)).toBe('1 gedaan in de week erna');
+    const next = review('2026-10-12', plan, logs);
+    expect(next).toMatchObject({ done: 1, planned: 2, minutes: 90 });
+    expect(weekCountLine(next)).toBe('1 van 2 gedaan, 1 uit de week ervoor · 1:30 uur');
   });
 
-  it('zondag 23:59 Amsterdam gelogd voor zondag: zelfde week, geen opmerking', () => {
+  it('de dag zelf: zondag 23:59 Amsterdam gelogd voor zondag blijft in dezelfde week, zonder opmerking', () => {
     const plan = [sun('s')];
     const logs = [logOf(plan[0], '2026-10-11T21:59:00Z', 'manual')];
     expect(weekCountLine(review('2026-10-05', plan, logs))).toBe('1 van 1 gedaan · 1:30 uur');
@@ -96,9 +98,25 @@ describe('gedaan in een andere week, rond 00:00 Europe/Amsterdam', () => {
     const logs = [logOf(plan[0], '2026-10-11T21:30:00Z', 'macrofactor')];
     expect(logs[0].completedDate).toBe('2026-10-11');
     const r = review('2026-10-12', plan, logs);
-    expect(r.minutes).toBe(90);
+    expect(r).toMatchObject({ done: 1, planned: 1, minutes: 90 });
     expect(r.doneElsewhere).toBeUndefined();
     expect(weekCountLine(r)).toBe('1 van 1 gedaan · 1:30 uur');
-    expect(review('2026-10-05', plan, logs).fromElsewhere).toBeUndefined();
+    expect(review('2026-10-05', plan, logs)).toMatchObject({ done: 0, minutes: 0 });
+  });
+
+  it('geval 1: Forge open over de weekgrens; de laatste set zondag 23:50, Afronden op maandag: telt op zondag', async () => {
+    const { finishDayDefault } = await import('./forgeSession');
+    const { toISODate } = await import('../utils/dates');
+    const plan = [mon('m')];
+    const lastTickAt = new Date('2026-10-11T21:50:00Z').getTime(); // zondag 23:50 in Amsterdam
+    const dayOf = (ms: number) => toISODate(new Date(ms));
+    const doneOn = finishDayDefault({ today: '2026-10-12', plannedSessionId: 'm', scheduledDate: '2026-10-12', lastTickAt, dayOf });
+    expect(doneOn).toBe('2026-10-11');
+    const logs = [logOf(plan[0], '2026-10-11T21:50:00Z', 'manual', doneOn)];
+    expect(review('2026-10-05', plan, logs)).toMatchObject({ done: 1, planned: 1, minutes: 90, fromElsewhere: { count: 1, when: 'later' } });
+    expect(review('2026-10-12', plan, logs)).toMatchObject({ done: 0, planned: 0, minutes: 0, doneElsewhere: { count: 1, when: 'earlier' } });
+    // Een set om 00:10 maandag hoort bij maandag: dan de geplande week.
+    const late = finishDayDefault({ today: '2026-10-12', plannedSessionId: 'm', scheduledDate: '2026-10-12', lastTickAt: new Date('2026-10-11T22:10:00Z').getTime(), dayOf });
+    expect(late).toBe('2026-10-12');
   });
 });

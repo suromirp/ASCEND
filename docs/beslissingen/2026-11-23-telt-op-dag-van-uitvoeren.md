@@ -5,13 +5,23 @@ Status: aangenomen
 
 ## Besluit
 
-Staat het log van een training in een andere week dan de geplande sessie, dan tellen de minuten in de week van het log (de week van uitvoeren). De geplande week blijft gelijk: de training telt daar als gedaan in "x van n", en de regel zegt erbij dat hij in een andere week gedaan is, zodat de minuten niet lijken mee te tellen.
+Een gedane training telt op de dag dat hij echt gedaan is, niet op de geplande dag: in de minuten, in "x van n gedaan", in de weekbalk, in de belasting, in de beenindex en in Stand. De dag is de dag van het log (`engine/weekLogs.ts#countDayOf`, met `engine/logDay.ts` dezelfde dag als die van de minuten). Alleen de telling verandert: geen log en geen geplande training wordt herschreven, en de dagrij in Week blijft op de geplande dag staan met "gedaan ma 12" (`engine/weekRow.ts#doneOnOtherDay`).
 
-- De geplande week: "2 van 2 gedaan, 1 in de week erna · 45 min". Een log een week eerder: "1 in de week ervoor"; verder weg (achteraf gekoppeld): "1 in een andere week".
-- De week van het log: "0 gedaan · 1 uit de week ervoor · 1:30 uur". Het is geen losse training: hij hoort bij een geplande training, alleen in een andere week.
-- Dezelfde woorden in de weekterugblik (`engine/weekGlance.ts#weekCountLine`), de rij Je week in Week (`engine/weekList.ts#weekSoFarRow`) en de kaart Weekterugblik op Vandaag. De woorden komen uit één functie, `weekGlance.ts#elsewhereNotes`.
-- De dagrij in Week blijft zoals hij was: hij staat op de geplande dag en zegt "gedaan ma 12".
-- Welke week het log hoort, volgt de dag van het log uit `engine/logDay.ts`, dezelfde dag als die van de minuten. De weekgrens is maandag 00:00 in Europe/Amsterdam (de lokale datum van het log). Een training uit MacroFactor die zondag voor middernacht begon voor de training van maandag, telt op maandag en geeft dus geen andere week.
+Drie gevallen, met hoe het was en wat er nu geldt:
+
+1. Een Forge-training die openstond en later is afgesloten. Afronden stelde al de dag van de laatste echte set voor (`engine/forgeSession.ts#finishDayDefault`, `2026-11-15-dag-van-afronden.md` en `-opnieuw-afvinken.md`), en die dag wordt de `completedDate` van het log. Minuten, belasting, beenindex en Stand volgden die dag al. Wat afweek: lag die dag in een andere week dan de geplande, dan telde "x van n" en de weekbalk nog in de geplande week. Dat is nu gelijk aan geval 3. Een set om 23:50 zondag in Amsterdam en Afronden op maandag telt op zondag; een set om 00:10 maandag telt op maandag.
+2. Een verplaatste of ingehaalde training. Verplaatsen zet de rij zelf op de nieuwe dag (`scheduledDate`, met `movedFromDate`), een inhaal is een nieuwe rij met `catchUp` en de oude rij wordt overgeslagen en telt niet (`engine/catchUp.ts`). Gedaan op de nieuwe dag klopte dus al. Wat afweek: gedaan op een andere dag dan de nieuwe (bijvoorbeeld al op zondag gedaan terwijl hij naar dinsdag van de week erna verplaatst stond) telde in "x van n" en de weekbalk op de geplande dag. Nu op de dag van uitvoeren.
+3. Een log in een andere week dan gepland (I-58). De minuten telden al in de week van het log, maar "x van n" en de weekbalk in de geplande week, en de week van het log noemde hem een losse training. Nu telt hij helemaal in de week van uitvoeren.
+
+Wat je ziet:
+
+- De geplande week zegt waar hij heen ging: "1 van 1 gedaan, 1 in de week erna · 45 min"; stond er verder niets: "1 gedaan in de week erna". Een log een week eerder: "in de week ervoor"; verder weg (achteraf gekoppeld): "in een andere week".
+- De week van uitvoeren zegt waar hij vandaan kwam: "1 van 2 gedaan, 1 uit de week ervoor · 1:30 uur". Hij telt daar in gedaan en in "van n", en is geen losse training.
+- Dezelfde woorden en getallen in de weekterugblik (`engine/weekGlance.ts#weekCountLine`), de rij Je week in Week (`engine/weekList.ts#weekSoFarRow` met `weekGlance.ts#shiftedProgress`), de kaart Weekterugblik op Vandaag en het jaaroverzicht (`engine/seasonPlan.ts`). De woorden komen uit `weekGlance.ts#elsewhereNotes`, de verschuiving uit `engine/weekLogs.ts#weekExecutionShift`.
+- De weekbalk op Vandaag en in de terugblik zet een gedane training op de dag van uitvoeren, ook uit een andere week (`engine/weekLogs.ts#stripSessionsByDay`).
+- De weekgrens is maandag 00:00 in Europe/Amsterdam, op de lokale datum van het log. Een training uit MacroFactor die zondag voor middernacht begon voor de training van maandag, telt op maandag (`2026-10-29-dag-van-een-training.md`) en geeft dus geen andere week.
+
+Wat bij de geplande week blijft: gemist, de sleuteltraining van de week (`keyDone`, de coachregel "sleuteltraining 3 van 4") en het advies "Alles gedaan wat gepland stond". Die gaan over wat er gepland stond; een gedane training is daar nooit gemist. Een training die openstaat in Forge en nog niet is afgesloten telt nog nergens mee: er is nog geen log, Week zegt "loopt nog".
 
 ## Gemist en Week opnieuw plannen (I-59)
 
@@ -21,21 +31,23 @@ Staat het log van een training in een andere week dan de geplande sessie, dan te
 
 ## Reden
 
-De eigenaar koos op 23 november het advies: "Ja advies, week van uitvoeren". De minuten zijn belasting, en belasting hoort bij de week waarin je hem deed; zo werken de bergkam, de beendag en de belasting over zeven dagen al. Gedaan hoort bij de planning: de geplande week heeft hem afgerond. Alleen de regel "2 van 2 gedaan · 45 min" deed alsof alles in die week gebeurde.
+De eigenaar koos op 23 november eerst het advies "week van uitvoeren" voor de minuten, en verbreedde het dezelfde dag: "als een forge workout niet is afgesloten, of workouts die verplaatst worden, moeten gelden op de dag dat ze worden afgenomen". De belasting, de beenindex en Stand rekenden al zo; "x van n" en de weekbalk niet, waardoor dezelfde training in de ene telling in de ene week en in de andere telling in de andere week stond. Over de weken samen telt een training nog steeds één keer.
 
 ## Alternatieven
 
-- De minuten mee naar de geplande week. Niet gekozen: dan lopen de minuten van de terugblik en de belasting per week uit elkaar, en mist de week van uitvoeren tijd die je wel liep.
-- In de geplande week niets zeggen. Niet gekozen: dat was de oude stand (Warden, 15 november, I-58).
+- De minuten mee naar de geplande week. Niet gekozen: dan lopen de minuten en de belasting per week uit elkaar.
+- Alleen de minuten in de week van uitvoeren, gedaan in de geplande week (de eerste versie van dit besluit). Ingehaald door de verbreding van de eigenaar.
+- De rij in Week naar de dag van het log verplaatsen. Niet gekozen: dat herschrijft de planning om een log te tonen (werkbriefje Week, Nooit).
+- Ook de sleuteltraining en gemist naar de week van uitvoeren. Niet gekozen: een gedane training is nooit gemist, en de sleuteltraining is die van de geplande week; omzetten zou Herhaal de week en de coachregel laten springen zonder dat er iets aan de planning veranderd is.
 
 ## Bron
 
-Backlog I-58 (Warden Week, 15 november), vastgelegd in `src/engine/wardenWeekProef.test.ts`; de weekgrens in `src/engine/weekGlance.amsterdam.test.ts`. Antwoord van de eigenaar, 23 november.
+Backlog I-58 (Warden Week, 15 november) en I-59 (Pathfinder, 15 november). Toetsen per geval in `src/engine/wardenWeekProef.test.ts` (log in een andere week, verplaatst, inhaal, weekbalk) en `src/engine/weekGlance.amsterdam.test.ts` (de weekgrens om 00:00, de dag zelf, MacroFactor over middernacht, Forge afgesloten op maandag); het jaaroverzicht in `src/engine/seasonPlan.test.ts`. Antwoorden van de eigenaar, 23 november.
 
 ## Vervangt
 
-Niets. Vult `2026-11-15-gemist-en-opnieuw-plannen.md` aan: de rij en "x van n" blijven op de geplande dag.
+Deels `2026-11-15-gemist-en-opnieuw-plannen.md`: daar bleef "x van n" op de geplande dag; nu telt het op de dag van uitvoeren. De rij in Week blijft op de geplande dag. Vult `2026-11-15-dag-van-afronden.md` en `2026-10-29-dag-van-een-training.md` aan.
 
 ## Terugdraaien
 
-Haal `doneElsewhere` en `fromElsewhere` uit `engine/weekReview.ts` en de stukjes uit `weekCountLine`, `weekSoFarRow` en de kaart; de minuten zelf veranderen niet.
+Laat `weekExecutionShift` in `engine/weekReview.ts` en `engine/seasonPlan.ts` weg, de weekbalk weer op `scheduledDate` filteren, en haal de stukjes uit `weekCountLine`, `weekSoFarRow` en de kaart. Er verandert geen opgeslagen vorm; de minuten zelf veranderen niet.

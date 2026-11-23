@@ -11,7 +11,8 @@ import { addDays, formatDayMonthNL, mondayOfWeek, resolveProgramWeek } from '../
 import { PHASE_TAPER, progressionTarget, waveWeek } from './programLayout';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { hasRole } from './templateRoles';
-import { countsAsTraining } from './weekLogs';
+import { countsAsTraining, weekExecutionShift } from './weekLogs';
+import { plannedByIdOf } from './logDay';
 
 interface SeasonWeekItem {
   label: string;
@@ -58,6 +59,12 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
   const thisMonday = mondayOfWeek(today);
   const start = mondayOfWeek(program.startDate);
   const minutesOf = (s: PlannedSession, t: SessionTemplate) => Math.round(s.plannedMinutes ?? resolveEffectiveFullDuration(t, s.scheduledDate, program));
+
+  // Een gedane training telt op de dag van uitvoeren, ook in "x van n" per week (I-58,
+  // docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md): wat in een andere week gedaan is gaat daarheen.
+  const plannedById = plannedByIdOf(plannedSessions);
+  const counts = (s: PlannedSession) => { const t = byId.get(s.templateId); return !!t && countsAsTraining(s, t, leftOut); };
+  const shiftDelta = (weekStart: string) => { const x = weekExecutionShift(plannedSessions, logs, weekStart, counts, plannedById); return x.in.length - x.out.length; };
 
   let weekNumber = 0;
   return program.phases.map((phase) => {
@@ -132,7 +139,7 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
         items: [...items.filter((i) => i.kind === 'race' || i.kind === 'test'), ...items.filter((i) => i.kind !== 'race' && i.kind !== 'test')],
         current: weekStart === thisMonday,
         past: weekStart < thisMonday,
-        done: weekStart < thisMonday && counted > 0 ? { done, planned: counted } : undefined,
+        done: weekStart < thisMonday && counted + shiftDelta(weekStart) > 0 ? { done: done + shiftDelta(weekStart), planned: counted + shiftDelta(weekStart) } : undefined,
       });
     }
 

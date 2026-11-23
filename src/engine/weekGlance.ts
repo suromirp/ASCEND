@@ -19,24 +19,25 @@ const lower = (s: string) => (/^[A-Z][a-z]/.test(s) ? `${s.charAt(0).toLowerCase
 // nog staat laat de strip zien; de verdeling per sport staat in Je trainingen. Een losse training (iets buiten de
 // planning om) telt in de tijd, niet in gedaan, en staat er dan met zijn eigen woord bij: "0 gedaan · 1 losse
 // training · 56 min". Is er niets gedaan, dan staat er geen tijd.
-// Gedaan in een andere week dan gepland (I-58, docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md): de
-// geplande week telt hem als gedaan, de minuten staan in de week van uitvoeren. "2 van 2 gedaan, 1 in de week erna ·
-// 45 min" en daar "0 gedaan · 1 uit de week ervoor · 1:30 uur".
+// Gedaan in een andere week dan gepland (I-58, docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md): hij telt
+// in de week van uitvoeren, in gedaan, "van n" en de minuten. De geplande week zegt waar hij heen ging: "1 van 1 gedaan,
+// 1 in de week erna · 45 min"; de week van uitvoeren waar hij vandaan kwam: "2 van 3 gedaan, 1 uit de week ervoor".
+// Stond er verder niets in de geplande week: "1 gedaan in de week erna".
 export function weekCountLine(r: WeekReview): string {
-  if (!r.running && r.done === 0 && r.minutes === 0) return 'Geen trainingen deze week. Volgende week volgt het plan.';
   const notes = elsewhereNotes(r);
-  const count = (r.running ? `${r.done} gedaan` : `${r.done} van ${r.planned} gedaan`) + (notes.doneElsewhere ? `, ${notes.doneElsewhere}` : '');
+  if (!r.running && r.planned === 0 && r.doneElsewhere && r.minutes === 0) return `${r.doneElsewhere.count} gedaan in ${WHEN_TEXT[r.doneElsewhere.when]}`;
+  if (!r.running && r.done === 0 && r.minutes === 0 && !r.doneElsewhere) return 'Geen trainingen deze week. Volgende week volgt het plan.';
+  const count = [r.running ? `${r.done} gedaan` : `${r.done} van ${r.planned} gedaan`, notes.doneElsewhere, notes.fromElsewhere].filter(Boolean).join(', ');
   const extra = r.extraLogged ?? 0;
   const loose = extra > 0 ? `${extra} ${extra === 1 ? 'losse training' : 'losse trainingen'}` : undefined;
-  const from = notes.fromElsewhere;
-  if (r.minutes <= 0 || (r.done === 0 && !loose && !from)) return [count, loose, from].filter(Boolean).join(' · ');
-  return [count, loose, from, time(r.minutes)].filter(Boolean).join(' · ');
+  if (r.minutes <= 0 || (r.done === 0 && !loose)) return [count, loose].filter(Boolean).join(' · ');
+  return [count, loose, time(r.minutes)].filter(Boolean).join(' · ');
 }
 
 const WHEN_TEXT: Record<ElsewhereWeek['when'], string> = { earlier: 'de week ervoor', later: 'de week erna', other: 'een andere week' };
 
 // De twee korte stukjes voor gedaan in een andere week: "1 in de week erna" in de geplande week, "1 uit de week ervoor"
-// in de week van uitvoeren. Dezelfde woorden in de terugblik, de rij Je week in Week en de kaart op Vandaag.
+// in de week van uitvoeren (daar telt hij mee in gedaan). Dezelfde woorden in de terugblik, de rij Je week in Week en de kaart op Vandaag.
 export function elsewhereNotes(r: Pick<WeekReview, 'doneElsewhere' | 'fromElsewhere'>): { doneElsewhere?: string; fromElsewhere?: string } {
   return {
     doneElsewhere: r.doneElsewhere ? `${r.doneElsewhere.count} in ${WHEN_TEXT[r.doneElsewhere.when]}` : undefined,
@@ -135,4 +136,12 @@ export function nextWeekLine(next: NonNullable<WeekReview['next']>): { value: st
   const value = [next.label, time(next.minutes)].filter(Boolean).join(' · ');
   const sub = next.key ? `Belangrijkste: ${lower(next.key).replace(': ', ', ')}` : undefined;
   return { value, sub };
+}
+
+// "x van n" van de rij Je week in Week (engine/weekProfile.ts#weekProgress telt op de geplande dag) op de dag van
+// uitvoeren, met dezelfde verschuiving als de terugblik (I-58): wat in een andere week gedaan is eruit, wat van een
+// andere week hier gedaan is erin.
+export function shiftedProgress(p: { done: number; total: number }, r: Pick<WeekReview, 'doneElsewhere' | 'fromElsewhere'>): { done: number; total: number } {
+  const delta = (r.fromElsewhere?.count ?? 0) - (r.doneElsewhere?.count ?? 0);
+  return { done: p.done + delta, total: p.total + delta };
 }
