@@ -56,14 +56,14 @@ function useOffers() {
 // De regel na een voorstel dat verviel, met Begrepen. Schrijft ook wat je in Week al koos, zodat het spoor
 // compleet is.
 export function useSportRestLapsed(): { lapsed: LapsedSportRest | undefined; understood: () => Promise<void> } {
-  const { plannedSessions, templates, appendSportRest } = useAppData();
+  const { plannedSessions, sessionLogs, templates, appendSportRest } = useAppData();
   const { list, keep, today, choseOn } = useOffers();
   const answers = useAnswers();
   const lapsed = useMemo(
-    () => (keep === 'blijft' ? lapsedSportRests({ list, sessions: plannedSessions, templates, today, answers, choseOn })[0] : undefined),
-    [keep, list, plannedSessions, templates, today, answers, choseOn],
+    () => (keep === 'blijft' ? lapsedSportRests({ list, sessions: plannedSessions, logs: sessionLogs, templates, today, answers, choseOn })[0] : undefined),
+    [keep, list, plannedSessions, sessionLogs, templates, today, answers, choseOn],
   );
-  const fromWeek = useMemo(() => (keep === 'blijft' ? weekAnswerRows(list, answers, today) : []), [keep, list, answers, today]);
+  const fromWeek = useMemo(() => (keep === 'blijft' ? weekAnswerRows(list, answers, today, new Date().toISOString()) : []), [keep, list, answers, today]);
   useEffect(() => {
     if (fromWeek.length > 0) void traceInBackground(appendSportRest(fromWeek), 'Je keuze in Week kon niet bij het voorstel worden bewaard:');
   }, [fromWeek, appendSportRest]);

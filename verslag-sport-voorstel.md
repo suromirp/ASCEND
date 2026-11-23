@@ -44,3 +44,13 @@ Branch: claude/sport-voorstel-blijft. Dit bestand is niet voor main.
 ## Niet gecontroleerd
 
 - Geen screenshot of Lookout, geen kaart:vergelijk (doet de coördinator), geen test op een echt toestel.
+
+## Herstel na Warden (tweede commit)
+
+- Moet: `lapsedSportRests` krijgt `logs` (verplicht) en slaat een gelogde beendag over; useSportRest.ts geeft sessionLogs mee. Test "gedaan op de beendag is ook een keuze" faalde eerst, nu groen. De naspeeltest geeft de logs ook mee. Geen eigen regel geschreven om het spoor te sluiten: de gelogde training is zelf het spoor, en de regel shown blijft open zonder iets te tonen (valt na 30 dagen weg).
+- Mag, gedaan: terugzetten heropent niet meer. `weekAnswerRows` schrijft het moment van schrijven (nooit voor de regel shown), en `mergeSportRestOffers` zet bij hetzelfde moment shown voor een keuze. Getest.
+- Mag, gedaan: `sport-voorstel` staat in ADVICE_SPECS (settingsDiff.ts), dus Terug naar advies zet hem terug; settingsDiff.test.ts en instellingen-foto.json bijgewerkt (hernummering, advies 222). `sport-rust` staat daar ook niet; niet aangeraakt (raakt de planning, dus via een voorstel; aparte keuze).
+- Mag, niet gedaan: `taken` doorgeven. Er is geen bron met de open voorstellen op Vandaag per training (inhalen, ochtendvoorstel, InfluenceMoveCard); dat verzamelen is niet klein. choseOn dekt een gegeven ochtendantwoord.
+- Mag, niet gedaan (niet gevraagd): de tekst bij een TimeoutError na Akkoord ("Dit lukte niet" terwijl de planning alsnog kan veranderen), het snoeien bij het schrijven noemen in databaseSettings.ts en het briefje, en het besluit voor Ontwerp 9 en 10 in docs/beslissingen/.
+- Valkuil toegevoegd aan docs/werkbriefjes/week.md (bij de valkuil over gemist, het briefje zit op de grens van 45 regels). kennisindex:vergelijk: geen verschil.
+- Controles opnieuw: tsc groen; lint 0 fouten (dezelfde waarschuwing in LegFatigueCard als op main); vitest 810 bestanden, 12398 tests groen; build groen.

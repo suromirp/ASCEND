@@ -159,11 +159,13 @@ function open(list: readonly SportRestOffer[]): SportRestOffer[] {
 }
 
 // Wat Week je al liet kiezen, als regel in de lijst (zodat het spoor compleet is).
-export function weekAnswerRows(list: readonly SportRestOffer[], answers: AnswerMap, today: string): SportRestOffer[] {
+// `at` is het moment van schrijven, niet dat van je antwoord in Week: koos je in Week voordat de eerste regel er
+// stond, dan zou de keuze bij terugzetten (gesorteerd op `at`) voor die regel komen en het voorstel weer openen.
+export function weekAnswerRows(list: readonly SportRestOffer[], answers: AnswerMap, today: string, now: string): SportRestOffer[] {
   const out: SportRestOffer[] = [];
   for (const r of open(list)) {
     const answer = weekAnswerOf(r.id, answers);
-    if (answer) out.push({ id: r.id, state: answer.response, date: today, at: answer.at });
+    if (answer) out.push({ id: r.id, state: answer.response, date: today, at: now > r.at ? now : r.at });
   }
   return out;
 }
@@ -193,6 +195,8 @@ export function lapsedLine(sport: string, name: string, sessionDate: string, tod
 export function lapsedSportRests(input: {
   list: readonly SportRestOffer[];
   sessions: readonly PlannedSession[];
+  // Klaar is geen vlag: een gedane training staat nog op zijn dag met status planned; alleen een log zegt het.
+  logs: readonly SessionLog[];
   templates: readonly SessionTemplate[];
   today: string;
   answers?: AnswerMap;
@@ -200,10 +204,12 @@ export function lapsedSportRests(input: {
   choseOn?: (date: string, sessionId: string) => boolean;
 }): LapsedSportRest[] {
   const out: LapsedSportRest[] = [];
+  const logged = new Set(input.logs.map((l) => l.plannedSessionId).filter(Boolean));
   for (const r of open(input.list)) {
     const { sessionId } = partsOf(r.id);
     const session = input.sessions.find((s) => s.id === sessionId);
     if (!session || !r.sessionDate || !r.sport) continue;
+    if (logged.has(session.id)) continue;
     if (session.scheduledDate !== r.sessionDate || session.status === 'skipped') continue;
     if (r.sessionDate >= input.today) continue;
     if (input.answers && weekAnswerOf(r.id, input.answers)) continue;
@@ -285,5 +291,7 @@ export function pruneOld(list: readonly SportRestOffer[], today: string): SportR
 // Samenvoegen bij het terugzetten van een back-up: alleen nieuwe regels komen erbij (`onlyNew`), wat op het toestel
 // staat blijft zoals het is. Gesorteerd op moment, zodat de laatste regel per id de nieuwste is.
 export function mergeSportRestOffers(current: readonly SportRestOffer[] | undefined, incoming: readonly SportRestOffer[] | undefined): SportRestOffer[] {
-  return appendRows(current, incoming ?? []).map((r, i) => ({ r, i })).sort((a, b) => a.r.at.localeCompare(b.r.at) || a.i - b.i).map((x) => x.r);
+  // Bij hetzelfde moment gaat de eerste regel (shown) voor een keuze: een keuze opent het voorstel nooit opnieuw.
+  const first = (r: SportRestOffer) => (r.state === 'shown' ? 0 : 1);
+  return appendRows(current, incoming ?? []).map((r, i) => ({ r, i })).sort((a, b) => a.r.at.localeCompare(b.r.at) || first(a.r) - first(b.r) || a.i - b.i).map((x) => x.r);
 }

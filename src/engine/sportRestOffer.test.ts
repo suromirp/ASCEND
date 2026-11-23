@@ -55,43 +55,55 @@ describe('de melding van Week als aanleiding', () => {
 describe('de grensdag: de dag na de beendag', () => {
   it('zonder keuze staat er één rustige regel', () => {
     expect(live(SAT)).toEqual([]);
-    const lapsed = lapsedSportRests({ list: [shown()], sessions: [legs], templates: counted, today: SAT });
+    const lapsed = lapsedSportRests({ list: [shown()], sessions: [legs], logs: [padel], templates: counted, today: SAT });
     expect(lapsed).toEqual([{ id: ID, line: 'Je voorstel na padel is vervallen. Benen B was gisteren.' }]);
   });
 
   it('op de beendag zelf nog niet', () => {
-    expect(lapsedSportRests({ list: [shown()], sessions: [legs], templates: counted, today: FRI })).toEqual([]);
+    expect(lapsedSportRests({ list: [shown()], sessions: [legs], logs: [padel], templates: counted, today: FRI })).toEqual([]);
   });
 
   it('na Begrepen niet meer', () => {
     const list = appendRows([shown()], [answerRow(ID, 'lapsed', SAT, `${SAT}T08:00:00Z`)]);
-    expect(lapsedSportRests({ list, sessions: [legs], templates: counted, today: SAT })).toEqual([]);
+    expect(lapsedSportRests({ list, sessions: [legs], logs: [padel], templates: counted, today: SAT })).toEqual([]);
   });
 
   it('met eerder Liever niet: geen regel, en geen voorstel meer', () => {
     const list = [shown(), answerRow(ID, 'declined', FRI, `${FRI}T07:10:00Z`)];
-    expect(lapsedSportRests({ list, sessions: [legs], templates: counted, today: SAT })).toEqual([]);
+    expect(lapsedSportRests({ list, sessions: [legs], logs: [padel], templates: counted, today: SAT })).toEqual([]);
     expect(todaySportRest({ live: live(FRI), list, sessions: [legs], logs: [padel], templates: counted, today: FRI, fixFor: fixFor(FRI) })).toBeUndefined();
   });
 
   it('met eerder Akkoord: geen regel, ook al staat de training er niet meer', () => {
     const moved = { ...legs, scheduledDate: SAT };
     const list = [shown(), answerRow(ID, 'accepted', FRI, `${FRI}T07:10:00Z`)];
-    expect(lapsedSportRests({ list, sessions: [moved], templates: counted, today: SAT })).toEqual([]);
-    expect(lapsedSportRests({ list, sessions: [legs], templates: counted, today: SAT })).toEqual([]);
+    expect(lapsedSportRests({ list, sessions: [moved], logs: [padel], templates: counted, today: SAT })).toEqual([]);
+    expect(lapsedSportRests({ list, sessions: [legs], logs: [padel], templates: counted, today: SAT })).toEqual([]);
   });
 
   it('zelf verplaatst of overgeslagen is een keuze: geen regel', () => {
-    expect(lapsedSportRests({ list: [shown()], sessions: [{ ...legs, scheduledDate: '2026-11-29' }], templates: counted, today: SAT })).toEqual([]);
-    expect(lapsedSportRests({ list: [shown()], sessions: [{ ...legs, status: 'skipped' }], templates: counted, today: SAT })).toEqual([]);
+    expect(lapsedSportRests({ list: [shown()], sessions: [{ ...legs, scheduledDate: '2026-11-29' }], logs: [padel], templates: counted, today: SAT })).toEqual([]);
+    expect(lapsedSportRests({ list: [shown()], sessions: [{ ...legs, status: 'skipped' }], logs: [padel], templates: counted, today: SAT })).toEqual([]);
   });
 
   it('een keuze in Week of in de ochtend telt ook', () => {
     const answers = { [weekFixId(live(THU)[0].concern, [legs])]: { response: 'declined', at: `${THU}T21:05:00Z` } };
     expect(weekAnswerOf(ID, answers)).toEqual({ response: 'declined', at: `${THU}T21:05:00Z` });
-    expect(lapsedSportRests({ list: [shown()], sessions: [legs], templates: counted, today: SAT, answers })).toEqual([]);
-    expect(weekAnswerRows([shown()], answers, FRI)).toEqual([{ id: ID, state: 'declined', date: FRI, at: `${THU}T21:05:00Z` }]);
-    expect(lapsedSportRests({ list: [shown()], sessions: [legs], templates: counted, today: SAT, choseOn: (d, s) => d === FRI && s === 'legs' })).toEqual([]);
+    expect(lapsedSportRests({ list: [shown()], sessions: [legs], logs: [padel], templates: counted, today: SAT, answers })).toEqual([]);
+    expect(weekAnswerRows([shown()], answers, FRI, `${FRI}T07:00:00Z`)).toEqual([{ id: ID, state: 'declined', date: FRI, at: `${FRI}T07:00:00Z` }]);
+    // Koos je in Week voordat de eerste regel er stond: de keuze komt toch na die regel, ook na een terugzetten.
+    const late = { ...shown(), at: `${THU}T21:10:00Z` };
+    const rows = weekAnswerRows([late], answers, THU, `${THU}T21:09:00Z`);
+    expect(rows[0].at).toBe(late.at);
+    expect(lastRows(mergeSportRestOffers(rows, [late])).get(ID)?.state).toBe('declined');
+    expect(lapsedSportRests({ list: [shown()], sessions: [legs], logs: [padel], templates: counted, today: SAT, choseOn: (d, s) => d === FRI && s === 'legs' })).toEqual([]);
+  });
+
+  it('gedaan op de beendag is ook een keuze: geen regel dat het verviel', () => {
+    // Klaar is geen vlag: een gedane training staat nog op zijn dag met status planned. Alleen de log zegt het.
+    const done: SessionLog = { id: 'benen1', templateId: 'tpl_lower_b', plannedSessionId: 'legs', type: 'strength', completedDate: FRI, completedAt: `${FRI}T18:00:00Z`, source: 'manual' } as SessionLog;
+    expect(lapsedSportRests({ list: [shown()], sessions: [legs], logs: [padel, done], templates: counted, today: SAT })).toEqual([]);
+    expect(lapsedSportRests({ list: [shown()], sessions: [legs], logs: [padel], templates: counted, today: SAT })).toHaveLength(1);
   });
 
   it('noemt een oudere dag bij naam', () => {

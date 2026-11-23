@@ -88,9 +88,9 @@ describe('I-23 punt 10: een voorstel na een zware sport', () => {
     expect(await sportConcern(FRI)).toBeDefined();
     await weekSees(FRI);
     await openAt(`${SAT}T08:00:00`);
-    const { settings, sessions, templates } = await state(SAT);
+    const { settings, sessions, logs, templates } = await state(SAT);
     const list = parseSportRestOffers(settings.sportRestOffers, SAT).list ?? [];
     expect(list.map((r) => r.state)).toEqual(['shown']);
-    expect(lapsedSportRests({ list, sessions, templates, today: SAT }).map((l) => l.line)).toEqual(['Je voorstel na padel is vervallen. Benen B was gisteren.']);
+    expect(lapsedSportRests({ list, sessions, logs, templates, today: SAT }).map((l) => l.line)).toEqual(['Je voorstel na padel is vervallen. Benen B was gisteren.']);
   });
 });
