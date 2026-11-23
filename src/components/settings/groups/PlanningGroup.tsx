@@ -133,6 +133,15 @@ export function PlanningGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {inner === 'week-na-keuze' && (
         <ChoiceFromDef def={CHOICES.weekNaKeuze} value={resolveWeekAfterChoice(settings)} onPick={(v) => void updateSettings({ weekAfterChoice: v })} onClose={closeInner} />
       )}
+      {/* Vanzelf verandert de planning: de keuze gaat als voorstel, zoals Opzij voor een vakantie. */}
+      {inner === 'sport-duur' && (
+        <ChoiceFromDef
+          def={CHOICES.sportDuur}
+          value={settings.sportDurationChange ?? 'propose'}
+          onPick={(v) => { if (v !== (settings.sportDurationChange ?? 'propose')) void plan.changeSetting(`Duur aanpassen na een sport: ${choiceShort('sportDuur', v)}`, { sportDurationChange: v }, 'Volgt je keuze voor een training die na een sport korter of rustiger wordt.'); }}
+          onClose={closeInner}
+        />
+      )}
       {inner === 'niet-doorgegaan' && (
         <ChoiceFromDef def={CHOICES.nietDoorgegaan} value={missed.choice} onPick={(v) => void updateSettings({ missedTraining: v })} onClose={closeInner} />
       )}
@@ -215,6 +224,7 @@ export function PlanningGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="weekvoorstel" title="Voorstel bij een probleem in de week" facts={facts} info="weekVoorstel" onChange={(on) => void updateSettings({ weekFixProposal: on })} />
           <SummaryRow id="week-na-keuze" title="Melding na jouw keuze" facts={facts} info="weekNaKeuze" onClick={() => setInner('week-na-keuze')} />
           <SummaryRow id="week-vol" title="Vragen als je week te vol wordt" facts={facts} info="weekVol" onChange={(on) => void updateSettings({ fullWeekAsk: on })} />
+          <SummaryRow id="sport-duur" title="Duur aanpassen na een sport" facts={facts} info="sport-duur" onClick={() => setInner('sport-duur')} />
         </BundleSheet>
       )}
       {sheet === 'bundel-testloop' && (

@@ -54,6 +54,12 @@ export interface PlanChangeItem {
   // On a 'keep' with `leave: null`: a training you moved yourself keeps its day
   // and lock, and loses the length the period gave it (engine/leaveProposal.ts).
   restore?: boolean;
+  // The minutes before and after, as Week shows them (engine/substitutions.ts#plannedMinutesOf): for the record and the
+  // text only, never read by applyPlanChangeItems. On a change of duration or kind by the week check (the record of
+  // a round, engine/repairAudit.ts) and in its proposal after a sport (engine/weekFixProposal.ts). Optional and
+  // additive: an older proposal without them reads the same, so no migration step (storage/migrations.ts).
+  fromMinutes?: number;
+  toMinutes?: number;
   // 'move' only: the session becomes this training on its (new) day, like a
   // long run that becomes a mountain hike in Bergcapaciteit. Optional, additive.
   templateId?: string;

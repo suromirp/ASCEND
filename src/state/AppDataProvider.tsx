@@ -57,6 +57,7 @@ import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { mondayOfWeek, todayISO } from '../utils/dates';
 import { withProgramExercises } from '../engine/macrofactorProgram';
 import { withCountingSports } from '../engine/sportTemplate';
+import { PLAN_CHECK_WHY, planCheckRecord } from '../engine/repairAudit';
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName, logIdsInEnvelope } from '../storage/backupExport';
 import { backupFileText } from '../storage/backupFile';
@@ -216,9 +217,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // Not on a fresh install: there is nothing of yours to put right yet.
     if (repaired && logs.length > 0) {
       const id = makeId('plancheck');
-      const why = 'Na elke wijziging gaan je weken langs vaste regels: je rustdag vrij, niet te veel op een dag, genoeg ruimte tussen zware dagen, frisse benen voor een test. Wat vanzelf gepland was, wordt dan rechtgezet. Wat jij zelf zette en je test of wedstrijd schuiven nooit; daarvoor krijg je een voorstel.';
+      const why = PLAN_CHECK_WHY;
       const now = new Date().toISOString();
-      await PlanChangeProposalsRepo.put({ id, trigger: 'plan_check', issue: 'Weekcontrole', changes: [], alternatives: [], consequences: repaired.lines.join('; '), explanation: why, createdAt: now, resolvedAt: now, resolution: 'accepted' });
+      // Een nieuw record per ronde, met wat er in duur of soort veranderde (engine/repairAudit.ts, Ontwerp 9).
+      await PlanChangeProposalsRepo.put(planCheckRecord(repaired, id, now));
       setRecentChange((prev) => {
         // Right after a change of yours (a move, an Akkoord): the repairs
         // join that notice, so its undo still works and puts everything

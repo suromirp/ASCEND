@@ -209,6 +209,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('rust-na-tocht', 'Rust na een bergtocht', 'doel', 'trekLegRest', 'soft', 'rustNaTocht', true),
   choice('afdaalklok', 'Afdaalklok', 'doel', 'descentClock', 'advies', 'afdaalklok'),
   choice('vakantie-opzij', 'Opzij voor een vakantie', 'planning', 'leaveCrowding', 'drop', 'vakantieOpzij', true),
+  choice('sport-duur', 'Duur aanpassen na een sport', 'planning', 'sportDurationChange', 'propose', 'sportDuur', true),
   choice('vakantie-schuiven', 'Rond een vakantie schuiven', 'planning', 'leaveAround', 'wide', 'vakantieSchuiven', true),
   choice('zonder-sportschool', 'Kracht zonder sportschool', 'planning', 'noGymStrength', 'bodyweight', 'zonderSportschool'),
   choice('vakantie-achteraf', 'Periode achteraf vastleggen', 'planning', 'leaveBackfill', 'four_weeks', 'vakantieAchteraf'),

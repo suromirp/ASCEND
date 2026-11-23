@@ -193,6 +193,15 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Alleen vandaag', text: 'je antwoord geldt voor vandaag en voor die ene training. Er verandert niets in je planning.' },
     ],
   },
+  'sport-duur': {
+    title: 'Duur aanpassen na een sport',
+    lead: 'Met een zware vaste sport of een gelogde sportdag kan een training van ASCEND in die week te veel zijn. Dan wordt hij rustiger of korter.',
+    points: [
+      { head: 'Eerst een voorstel', text: 'het advies. Week zegt wat er zou veranderen, met de minuten ervoor en erna. Pas na Akkoord verandert er iets; na Liever niet blijft je week zoals hij is.' },
+      { head: 'Vanzelf, met melding', text: 'de training wordt meteen aangepast en je ziet Planning bijgewerkt. Het Logboek van voorstellen bewaart wat er veranderde.' },
+      { head: 'Zonder sport', text: 'verandert er niets: deze keuze geldt alleen als een sport de oorzaak is.' },
+    ],
+  },
   'week-vol': {
     title: 'Vragen als je week te vol wordt',
     lead: 'Viel er in je week een dag weg en is de rest te vol, dan komt de vraag welke training mag vervallen.',

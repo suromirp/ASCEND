@@ -231,6 +231,11 @@ export interface AppSettings {
   // the advice) lets it go rather than put it right before or after its own next time, 'shift' moves
   // it to any day of that week that fits. Optional and additive, so no migration step.
   leaveCrowding?: 'drop' | 'shift';
+  // Duur aanpassen na een sport (engine/weekValidator.ts#CheckInput.sportChange, docs/visie/Ontwerp Losse sport.md,
+  // Ontwerp 9): 'propose' (absent = propose, the advice) makes a duration or kind that would change because of a sport
+  // a proposal with Akkoord in Week; 'auto' changes it, with the notice Planning bijgewerkt. Optional and additive, so
+  // no migration step; backupClean drops any other value.
+  sportDurationChange?: 'propose' | 'auto';
   // Around a holiday (engine/leaveAround.ts): 'wide' (absent = wide, the advice) looks for the best
   // arrangement over all workable days of the weeks around it, also over the week border; 'little'
   // leaves it to the week check, which moves a training to the nearest day of its own week. Optional

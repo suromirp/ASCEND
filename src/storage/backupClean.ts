@@ -451,6 +451,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.leaveCrowding;
     skipped.n++;
   }
+  // Duur aanpassen na een sport: een voorstel (het advies) of vanzelf.
+  if ('sportDurationChange' in s && s.sportDurationChange !== 'propose' && s.sportDurationChange !== 'auto') {
+    delete s.sportDurationChange;
+    skipped.n++;
+  }
   if ('leaveAround' in s && s.leaveAround !== 'wide' && s.leaveAround !== 'little') {
     delete s.leaveAround;
     skipped.n++;

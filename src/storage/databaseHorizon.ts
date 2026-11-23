@@ -4,7 +4,8 @@ import { withHardSameDay, withLongRunThenLegs, withTestRestHours } from '../engi
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
 import type { TrainingGoal, GoalMilestone } from '../models/goals';
-import type { PlanChangeProposal } from '../models/planChange';
+import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
+import { repairAuditItems } from '../engine/repairAudit';
 import { addDays, formatDateNL, mondayOfWeek, resolveProgramWeek, todayISO, weekdayShortNL } from '../utils/dates';
 import { activeSwaps, directionSwaps, layoutPhases, patternForWeek, PHASE_GOLF, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { planDirection } from '../engine/direction';
@@ -173,7 +174,9 @@ export interface ProgramHorizonResult {
   // undo of the action that caused the run puts back).
   // addedIds: sessions the run put on the plan itself (a walk on a trek day):
   // undo takes those off again.
-  repairs?: { lines: string[]; before: PlannedSession[]; stored: PlannedSession[]; addedIds?: string[] };
+  // items: what changed in duration or kind, with the minutes before and after (engine/repairAudit.ts): the record of
+  // the week check keeps them, so the change can still be seen after a reload.
+  repairs?: { lines: string[]; before: PlannedSession[]; stored: PlannedSession[]; addedIds?: string[]; items?: PlanChangeItem[] };
   // Every row this run wrote or took off the plan, said or not (the race block, WEEK-START, a test revived, the rest
   // day laid out again, a stray tochtdag): the notice of your last change reads them again, so its undo is not
   // refused because the planning moved on (engine/undoGuard.ts#refreshWritten). Per row how it was before this run
@@ -407,7 +410,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
     newId: () => makeId('planned'),
     leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, leaveAround: settings.leaveAround ?? 'wide',
     fixedSports: settings.sportHandling ?? null,
-    kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
+    kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null, sportChange: settings.sportDurationChange,
   })))));
   if (!dryRun && pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
 
@@ -453,11 +456,19 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   const repairedIds = [...new Set([...ownIds, ...shown.map((r) => r.sessionId)])].filter((id) => !addedIds.includes(id));
   const beforeCheck = new Map(pass.beforeCheck.map((s) => [s.id, s]));
   const lines = [...ownLines, ...shown.map((r) => describeRepair(r, nameOf(r.sessionId)))];
+  // Every change of duration or kind by the round, with the minutes as stored and as it is now (Ontwerp 9): kept in
+  // the record of the week check, never only in the notice.
+  const lineOf = new Map<string, string>();
+  for (const r of shown) if (!lineOf.has(r.sessionId)) lineOf.set(r.sessionId, describeRepair(r, nameOf(r.sessionId)));
+  const items = withDurationScope(overrides.registers, () => repairAuditItems({
+    ids: shown.map((r) => r.sessionId), before: stored, after: finalById, templates: new Map(passTemplates.map((t) => [t.id, t])), program: next, reasonOf: (id) => lineOf.get(id),
+  }));
   const repairs = lines.length === 0 ? undefined : {
     lines,
     before: repairedIds.map((id) => beforeCheck.get(id) ?? stored.get(id)).filter((s): s is PlannedSession => !!s),
     stored: repairedIds.map((id) => stored.get(id) ?? beforeCheck.get(id)).filter((s): s is PlannedSession => !!s),
     ...(addedIds.length > 0 ? { addedIds } : {}),
+    ...(items.length > 0 ? { items } : {}),
   };
   const newCount = writes.filter((w) => !stored.has(w.id)).length;
   const removedFinal = new Set(toRemove.map((s) => s.id));

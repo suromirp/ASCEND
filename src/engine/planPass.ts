@@ -68,6 +68,9 @@ export interface PlanPassContext {
   // Hoeveel per soort (engine/kindAmount.ts): an extra training for Meer, one fewer for Minder. Absent: left as
   // it is.
   kindAmounts?: KindAmountMap | null;
+  // Duur aanpassen na een sport (engine/weekValidator.ts#CheckInput.sportChange): absent or 'propose' (the advice)
+  // leaves a duration or kind that would change because of a sport to a proposal with Akkoord in Week.
+  sportChange?: 'propose' | 'auto';
 }
 
 export interface PlanPassResult {
@@ -127,7 +130,7 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
       afterGoals: ctx.afterGoals ?? ctx.blocks.filter((b) => (b.recoveryDays ?? 0) > 0).map((b) => ({ date: b.raceDate, days: b.recoveryDays! })),
       program: ctx.program, dailyTimeBudget: ctx.dailyTimeBudget,
       sameDayPairingPreference: ctx.sameDayPairingPreference, slotDays: ctx.slotDays, minutesOf: ctx.minutesOf, until: ctx.until,
-      leave: ctx.leave, trekRest: ctx.trekRest, leaveCrowding: ctx.leaveCrowding,
+      leave: ctx.leave, trekRest: ctx.trekRest, leaveCrowding: ctx.leaveCrowding, sportChange: ctx.sportChange,
     };
     // Walks on a trek, a long walk on a free day: what the periods put in.
     const placed = applyLeaveBlocks(afterRace, { check: checkInput, newId: ctx.newId, hikingEnabled: ctx.hikingEnabled, legComplaint: ctx.noGymLegComplaint });

@@ -171,6 +171,17 @@ export const PLANNING_CHOICES = {
       { value: 'plain', label: 'Gewone melding', note: 'Zoals altijd, met Bekijk voorstel als hoofdknop', short: 'Gewone melding' },
     ],
   }),
+  sportDuur: def({
+    group: 'Planning',
+    title: 'Duur aanpassen na een sport',
+    line: 'Als een vaste sport of een gelogde sportdag een training van ASCEND korter of rustiger maakt.',
+    advice: 'propose' as 'propose' | 'auto',
+    help: 'sport-duur',
+    options: [
+      { value: 'propose', label: 'Eerst een voorstel', note: 'In Week, met de minuten ervoor en erna; pas na Akkoord verandert er iets', short: 'Eerst een voorstel' },
+      { value: 'auto', label: 'Vanzelf, met melding', note: 'Meteen aangepast, met de melding Planning bijgewerkt', short: 'Vanzelf' },
+    ],
+  }),
   vakantieOpzij: def({
     group: 'Planning',
     title: 'Opzij voor een vakantie',
@@ -506,6 +517,16 @@ export const PLANNING: SettingDef[] = [
     help: true,
     helpKey: 'weekNaKeuze',
     choice: { key: 'weekNaKeuze', def: PLANNING_CHOICES.weekNaKeuze },
+  },
+  {
+    id: 'sport-duur',
+    page: 'planning',
+    place: { in: 'bundel-weekmelding' },
+    title: 'Duur aanpassen na een sport',
+    note: 'Maakt een vaste sport of een gelogde sportdag een training korter of rustiger, dan krijg je eerst een voorstel in Week.',
+    keywords: ['sport', 'voetbal', 'padel', 'zwemmen', 'duur', 'korter', 'rustiger', 'harde dagen', 'vaste afspraak', 'voorstel', 'vanzelf', 'week'],
+    help: true,
+    choice: { key: 'sportDuur', def: PLANNING_CHOICES.sportDuur },
   },
   {
     id: 'week-vol',

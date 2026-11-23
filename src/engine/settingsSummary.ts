@@ -916,6 +916,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: s.weekFixProposal === false ? 'Zonder voorstel' : 'Met voorstel', sub: `Melding: ${choiceShort('weekNaKeuze', resolveWeekAfterChoice(s)).toLowerCase()}` };
     case 'week-na-keuze':
       return { value: choiceShort('weekNaKeuze', resolveWeekAfterChoice(s)) };
+    case 'sport-duur':
+      return { value: choiceShort('sportDuur', s.sportDurationChange ?? 'propose') };
     case 'weekvoorstel':
       return { checked: s.weekFixProposal !== false };
     case 'volgorde-stand':

@@ -183,7 +183,7 @@ export function useBodyAndLeave(deps: {
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       newId: () => `preview-pass-${n++}`,
       until,
-      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, leaveAround: settings.leaveAround ?? 'wide', fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
+      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, leaveAround: settings.leaveAround ?? 'wide', fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null, sportChange: settings.sportDurationChange,
     });
   }, [trainingGoals, goalMilestones, settings, sessionLogs, templates, program, goalEngineConfig]);
 
@@ -212,7 +212,7 @@ export function useBodyAndLeave(deps: {
           newId: () => `leave-${n++}`,
           noGymLegComplaint: legComplaintOpen(injuryNotes, today),
           until: addDays(replaces && replaces.endDate > period.endDate ? replaces.endDate : period.endDate, 21),
-          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, leaveAround: settings.leaveAround ?? 'wide', fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
+          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, leaveAround: settings.leaveAround ?? 'wide', fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null, sportChange: settings.sportDurationChange,
         };
       },
     });
@@ -278,7 +278,7 @@ export function useBodyAndLeave(deps: {
         slotDays: patternDays(templates, settings, restDay),
         minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
         newId: () => `restday-${n++}`,
-        leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, leaveAround: settings.leaveAround ?? 'wide', fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null,
+        leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest, leaveCrowding: settings.leaveCrowding, leaveAround: settings.leaveAround ?? 'wide', fixedSports: settings.sportHandling ?? null, kindAmounts: parseKindAmounts(settings.kindAmount).value ?? null, sportChange: settings.sportDurationChange,
       },
     });
   }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
