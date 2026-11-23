@@ -12,7 +12,7 @@ Geen open vragen.
 ## Loopt
 
 - Route: soort terrein en via een punt in Andere lus (I-112) plus vier kleine verbeteringen aan de lus (I-120 tot I-123). Bouwer bezig.
-- Minuten in een andere week (I-58): u koos de week van uitvoeren. Komt in de volgende planning-ronde.
+- Telt op de dag van uitvoeren (I-58, na uw correctie): een Forge-training die later wordt afgesloten, een verplaatste training en een log in een andere week tellen op de dag dat ze echt gedaan zijn. Bouwer bezig.
 - Graphify, eerlijke proef: na de reset van de weeklimiet (zondag 22 november 18:00 Portugese tijd). De graaf één keer bouwen (kosten apart), de koppeling en de regel in CLAUDE.md alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 
