@@ -35,10 +35,13 @@ const logOf = (monday: string, templateId: string, minutes = 50): SessionLog => 
 const adviceInputs = (logs: SessionLog[], asOf: string, over: Partial<AdviceInputs> = {}): AdviceInputs => ({
   logs, plannedSessions: planned, templates, injuries: [], program, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf, ...over,
 });
-// "Je lange duurloop wordt deze week X minuten in plaats van Y minuten."
+// "Je lange duurloop wordt deze week X minuten in plaats van Y minuten.", of bij gelijke minuten één getal:
+// "Je lange duurloop blijft deze week X minuten." (besluit met het advies, I-14 stap minuten).
 const promised = (effect: string) => {
   const m = /wordt deze week (\d+) minuten in plaats van (\d+) minuten/.exec(effect);
-  return m ? { to: Number(m[1]), from: Number(m[2]) } : undefined;
+  if (m) return { to: Number(m[1]), from: Number(m[2]) };
+  const same = /blijft deze week (\d+) minuten/.exec(effect);
+  return same ? { to: Number(same[1]), from: Number(same[1]) } : undefined;
 };
 // Wat Week toont voor de lange duurloop van die week, nu en na Akkoord (Program.repeatedWeeks).
 const weekShows = (monday: string) => {
@@ -58,16 +61,19 @@ describe('symptoom C: de minuten in "Deze week nog een keer?" tegen Week', () =>
     expect(promised(a.effect)).toEqual(weekShows(W2));
   });
 
-  it.fails('symptoom C: met de rem van 110% noemt het voorstel de minuten die Week toont, nu en na Akkoord', () => {
+  it('symptoom C: met de rem van 110% noemt het voorstel de minuten die Week toont, nu en na Akkoord', () => {
     // Week 1 helemaal gedaan met een lange duurloop van 45 minuten, week 2 alleen het bovenlichaam. In week 3 remt de
     // 110% de lange duurloop op 50 minuten, met en zonder herhaling. Het voorstel rekent de kale stap van het schema
-    // (progressionTarget) en belooft "66 minuten in plaats van 77"; Week toont 50 en na Akkoord nog steeds 50.
+    // (progressionTarget) en beloofde "66 minuten in plaats van 77"; Week toont 50 en na Akkoord nog steeds 50. Nu zegt
+    // het voorstel één getal, dat van Week, en noemt het de zwaarste week niet omdat die niet verandert.
     const logs = [logOf(W1, 'tpl_upper_a'), logOf(W1, 'tpl_easy_run'), logOf(W1, 'tpl_hill_intervals'), logOf(W1, 'tpl_long_run', 45), logOf(W2, 'tpl_upper_a')];
     setRecentSessionMaxima(recentSessionMaxima(logs, W3));
     const a = computeAdvice(adviceInputs(logs, W3)).find((x) => x.ruleId === 'REPEAT-WEEK')!;
     expect(a).toBeDefined();
     expect(weekShows(W3)).toEqual({ from: 50, to: 50 });
     expect(promised(a.effect)).toEqual(weekShows(W3));
+    expect(a.effect).toContain('Je lange duurloop blijft deze week 50 minuten.');
+    expect(a.effect).not.toContain('minuten in plaats van');
   });
 });
 
@@ -97,21 +103,58 @@ describe('symptoom D: tegenstrijdige adviezen na een zware test', () => {
     expect(retry?.title).toBe('Nieuwe testpoging op za 31 oktober');
   });
 
-  it.fails('symptoom D: na een testloop met zwaarte 9 geen HARD-THEN-SPACE', () => {
+  it('symptoom D: na een testloop met zwaarte 9 geen HARD-THEN-SPACE', () => {
     // Nu zegt HARD-THEN-SPACE "Testloop 5 km was zwaar (zwaarte 9 van 10)" en "Houd het de komende dag rustig",
     // naast de nieuwe testpoging. Een test hoort zwaar te zijn en heeft zijn eigen rust.
     expect(afterTest().map((a) => a.ruleId)).not.toContain('HARD-THEN-SPACE');
   });
 
-  it.fails('symptoom D: één stem per log, zonder zware beendag morgen', () => {
+  it('symptoom D: één stem per log, zonder zware beendag morgen', () => {
     const ids = afterTest().map((a) => a.relatedLogId).filter(Boolean);
     expect(ids).toEqual([...new Set(ids)]);
   });
 
-  it.fails('symptoom D: één stem per log, met een zware beendag vandaag ("rustig houden" naast een nieuwe testpoging)', () => {
+  it('symptoom D: één stem per log, met een zware beendag vandaag ("rustig houden" naast een nieuwe testpoging)', () => {
     // Benen A vandaag: HARD-THEN-SPACE zegt "Benen A (zwaar) op wo 28 oktober rustig houden (RPE 3-4)" en
     // TEST-RETRY stelt een nieuwe test voor op wo 4 november, beide voor hetzelfde log.
     const advice = afterTest([row('legs', 'tpl_lower_a', '2026-10-28', '2026-10-26')]);
     expect(advice.filter((a) => a.relatedLogId === 'log-test').map((a) => a.ruleId)).toHaveLength(1);
+  });
+
+  it('na een wedstrijd met zwaarte 9 ook geen HARD-THEN-SPACE; een gewone zware loop krijgt hem wel', () => {
+    const race: SessionLog = { ...testLog, id: 'log-race', templateId: 'tpl_race', bestEffort: undefined } as SessionLog;
+    const run: SessionLog = { ...testLog, id: 'log-run', templateId: 'tpl_easy_run', bestEffort: undefined } as SessionLog;
+    const legsToday = testWeek([row('legs', 'tpl_lower_a', '2026-10-28', '2026-10-26')]);
+    const advise = (log: SessionLog) => computeAdvice({
+      logs: [log], plannedSessions: legsToday, templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf: '2026-10-28',
+    }).map((a) => a.ruleId);
+    expect(advise(race)).not.toContain('HARD-THEN-SPACE');
+    expect(advise(run)).toContain('HARD-THEN-SPACE');
+  });
+
+  it('een zware loop eerder op de dag van de test: de test is het nieuwste zware log, dus geen HARD-THEN-SPACE', () => {
+    const morningRun: SessionLog = { ...testLog, id: 'log-morning', templateId: 'tpl_easy_run', completedAt: '2026-10-27T07:00:00Z', bestEffort: undefined } as SessionLog;
+    for (const asOf of ['2026-10-27', '2026-10-28']) {
+      const advice = computeAdvice({
+        logs: [morningRun, testLog], plannedSessions: testWeek([row('legs', 'tpl_lower_a', '2026-10-28', '2026-10-26')]), templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf,
+      });
+      expect(advice.map((a) => a.ruleId)).not.toContain('HARD-THEN-SPACE');
+    }
+    // Andersom, de loop na de test: dan is de loop het nieuwste zware log en komt de regel wel.
+    const eveningRun: SessionLog = { ...morningRun, id: 'log-evening', completedAt: '2026-10-27T18:00:00Z' } as SessionLog;
+    const later = computeAdvice({
+      logs: [testLog, eveningRun], plannedSessions: testWeek([row('legs', 'tpl_lower_a', '2026-10-28', '2026-10-26')]), templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf: '2026-10-28',
+    });
+    expect(later.find((a) => a.ruleId === 'HARD-THEN-SPACE')?.relatedLogId).toBe('log-evening');
+  });
+
+  it('de grensdag: de dag na de test zelf (zwaarte 9) en de dag erna, nooit twee stemmen voor de test', () => {
+    for (const asOf of ['2026-10-27', '2026-10-28', '2026-10-29']) {
+      const advice = computeAdvice({
+        logs: [testLog], plannedSessions: testWeek([row('legs', 'tpl_lower_a', asOf, '2026-10-26')]), templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf,
+      });
+      expect(advice.map((a) => a.ruleId)).not.toContain('HARD-THEN-SPACE');
+      expect(advice.filter((a) => a.relatedLogId === 'log-test').length).toBeLessThanOrEqual(1);
+    }
   });
 });

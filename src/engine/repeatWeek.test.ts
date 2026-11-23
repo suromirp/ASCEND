@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import {
   REPEAT_SHARE_LIMIT, canRepeatWeek, costSentence, judgeWeek, proposeRepeatWeek, repeatState, shortfallSentence, withWeekRepeated,
   type RepeatWeekInputs,
@@ -13,6 +13,7 @@ import { addDays, resolveProgramWeek } from '../utils/dates';
 import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { IllnessEpisode } from '../models/illness';
+import { plannedMinutesOf, recentSessionMaxima, resolveEffectiveFullDuration, setAmbition, setRecentSessionMaxima } from './substitutions';
 
 const { templates } = buildDefaultProgramData();
 const longRun = templates.find((t) => t.id === 'tpl_long_run')!;
@@ -226,6 +227,52 @@ describe('the advice: Akkoord and Liever niet', () => {
 
   it('costSentence says it plainly', () => {
     expect(costSentence(undefined)).toContain('op het niveau van vorige week');
+  });
+
+  it('costSentence noemt één getal als de minuten gelijk blijven, en de zwaarste week alleen als die verandert', () => {
+    const l = (minutes: number) => ({ minutes });
+    expect(costSentence({ name: 'Lange duurloop', thisWeek: { from: l(50), to: l(50) } })).toBe('Je lange duurloop blijft deze week 50 minuten.');
+    expect(costSentence({ name: 'Lange duurloop', thisWeek: { from: l(50), to: l(50) }, peak: { from: l(70), to: l(70) } })).toBe('Je lange duurloop blijft deze week 50 minuten.');
+    expect(costSentence({ name: 'Lange duurloop', thisWeek: { from: l(60), to: l(55) }, peak: { from: l(70), to: l(70) } })).toBe('Je lange duurloop wordt deze week 55 minuten in plaats van 60 minuten.');
+    expect(costSentence({ name: 'Lange duurloop', thisWeek: { from: l(50), to: l(50) }, peak: { from: l(70), to: l(60) } }))
+      .toBe('Je lange duurloop blijft deze week 50 minuten. De zwaarste week van deze golf wordt wel lichter: 60 minuten in plaats van 70 minuten.');
+    expect(costSentence({ name: 'Lange duurloop', thisWeek: { from: l(60), to: l(55) }, peak: { from: l(70), to: l(60) } }))
+      .toBe('Je lange duurloop wordt deze week 55 minuten in plaats van 60 minuten. De zwaarste week van deze golf wordt daardoor ook lichter: 60 minuten in plaats van 70 minuten.');
+    // Alleen de hoogtemeters veranderen: dan verandert de week wel.
+    expect(costSentence({ name: 'Bergtocht', thisWeek: { from: { minutes: 120, elevationGainM: 600 }, to: { minutes: 120, elevationGainM: 500 } } }))
+      .toBe('Je bergtocht wordt deze week 120 minuten, 500 m omhoog in plaats van 120 minuten, 600 m omhoog. Dat is de zwaarste week van deze golf, die dus lichter wordt.');
+  });
+});
+
+// I-14 stap minuten: het voorstel rekent met de minuten van Week (substitutions.ts#plannedMinutesOf), niet met de
+// kale stap van het schema.
+describe('proposeRepeatWeek: de minuten van Week', () => {
+  afterEach(() => { setRecentSessionMaxima({ asOf: '', minutesByTemplate: {} }); setAmbition('standaard'); });
+  const sunday = addDays(W3, 6);
+
+  it('met de rem van 110%: het getal van Week, zonder "in plaats van" als het gelijk blijft', () => {
+    const logs = [logOf(W1, 'tpl_upper_a'), logOf(W1, 'tpl_easy_run'), logOf(W1, 'tpl_hill_intervals'), logOf(W1, 'tpl_long_run', 45), logOf(W2, 'tpl_upper_a')];
+    setRecentSessionMaxima(recentSessionMaxima(logs, W3));
+    const p = proposeRepeatWeek(inputs({ logs }))!;
+    expect(p.impact!.thisWeek.from.minutes).toBe(resolveEffectiveFullDuration(longRun, sunday, program));
+    expect(p.impact!.thisWeek.to.minutes).toBe(resolveEffectiveFullDuration(longRun, sunday, withWeekRepeated(program, W3, true)));
+    expect(p.impact!.thisWeek.from.minutes).toBeLessThan(progressionTarget(longRun, program, sunday)!.minutes);
+    expect(costSentence(p.impact)).toBe(`Je lange duurloop blijft deze week ${p.impact!.thisWeek.from.minutes} minuten.`);
+  });
+
+  it('met ambitie: het getal van Week, met de ambitie erin', () => {
+    setAmbition('stevig');
+    const p = proposeRepeatWeek(inputs())!;
+    expect(p.impact!.thisWeek.from.minutes).toBe(resolveEffectiveFullDuration(longRun, sunday, program));
+    expect(p.impact!.thisWeek.to.minutes).toBe(resolveEffectiveFullDuration(longRun, sunday, withWeekRepeated(program, W3, true)));
+    expect(p.impact!.thisWeek.from.minutes).not.toBe(progressionTarget(longRun, program, sunday)!.minutes);
+  });
+
+  it('een vaste lengte op de rij wint, zoals in Week', () => {
+    const fixed = planned.map((s) => (s.id === `${W3}-tpl_long_run` ? { ...s, plannedMinutes: 40 } : s));
+    const p = proposeRepeatWeek(inputs({ plannedSessions: fixed }))!;
+    expect(p.impact!.thisWeek).toEqual({ from: { minutes: 40 }, to: { minutes: 40 } });
+    expect(plannedMinutesOf(fixed.find((s) => s.id === `${W3}-tpl_long_run`)!, longRun, program)).toBe(40);
   });
 });
 

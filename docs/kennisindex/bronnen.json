@@ -4599,6 +4599,13 @@
    ],
    "kern": "De coördinator wisselt bij ongeveer 200k context of na drie bundels; bij de start alleen CLAUDE.md en het blok Start van de overdracht (hoogstens 3 KB), `werkwijze.md` alleen bij nodig, backlog en `eigenaar.md` alleen met grep; helpers antwoorden in hoogstens tien regels.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-23-een-stem-per-log.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Twee adviezen over hetzelfde log worden er één: de regel die eerst staat in VOICE_RANK (TEST-RETRY, HARD-THEN-SPACE, LIGHT-TWICE) wint en de ander valt weg zonder extra zin; HARD-THEN-SPACE zwijgt als het nieuwste zware log een test of wedstrijd is.",
+   "stand": "geldt"
   }
  }
 }
