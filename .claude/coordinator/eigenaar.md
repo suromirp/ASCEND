@@ -14,19 +14,36 @@ Keuzes: een Forge-training die nog openstaat telt pas mee na Afronden, op de dag
 Zonder antwoord: het advies, zo is het gebouwd.
 Sinds: 23 november.
 
+### Hoogtemeters per km in Run in detail (I-77, 23 november)
+Keuzes: de meters per km tellen op tot het getal van je horloge, ook als een km bij een oude loop daardoor hoger uitvalt (advies); of de km-getallen los laten staan.
+Zonder antwoord: het advies, zo is het gebouwd.
+Sinds: 23 november.
+
+### Slaaphartslag en ademhaling voor vroeg ziek zien (I-78, 23 november)
+Keuzes: eerst laten nagaan of je horloge die levert (advies); of meteen meenemen.
+Zonder antwoord: er gebeurt nu niets.
+Sinds: 23 november.
+
+### Wachttijd intervals.icu en melding herstelstap (I-35, I-54, 23 november)
+Keuzes: één aanroep mag tot 120 seconden duren en de melding over een mislukte herstelstap staat in het blad Versie (advies); of korter wachten en de melding op Vandaag.
+Zonder antwoord: het advies, zo is het gebouwd.
+Sinds: 23 november.
+
 ## Stuk of vast
 
 
 ## Loopt
 
-- Terugkeer na een pauze (I-124): de pauze telt vanaf je laatste echte training, het voorstel verloopt niet meer na drie dagen, Forge lichter na meer dan 10 dagen zonder kracht, en een periode achteraf vastleggen. Gebouwd, controle loopt.
-- Hoogtemeters en vroeg ziek zien (I-77, I-33, I-78): nagespeeld met uw back-up, bouwer bezig.
-- Telt op de dag van uitvoeren (I-58, I-59, I-72): gebouwd, nakijken en schermtest lopen.
-- Twee tabbladen en de grens van intervals.icu (I-54, I-35): bouwer bezig.
+- Hoogtemeters en vroeg ziek zien (I-77, I-33, I-78): nagespeeld met uw back-up, gebouwd; bij het nakijken twee punten gevonden, herstel loopt.
+- Telt op de dag van uitvoeren (I-58, I-59, I-72): gebouwd en nagekeken, schermtest volgt.
 - Graphify, eerlijke proef: na de reset van de weeklimiet (zondag 22 november 18:00 Portugese tijd). De graaf één keer bouwen (kosten apart), de koppeling en de regel in CLAUDE.md alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 
 ## Net live
+
+### 23 november 03:35
+- Terugkeer na een pauze (I-124): de pauze telt vanaf je laatste echte training, het voorstel verloopt niet voordat de eerste week voorbij is of je gekozen hebt, Forge maakt de eerste sets lichter na meer dan 10 dagen zonder kracht, en je kunt een periode achteraf vastleggen of verlengen (tot 4 weken terug). Instelling Rond een vakantie in Planning.
+- Twee tabbladen tegelijk open schrijven elkaar niet meer over (I-54), en een trage intervals.icu houdt na 120 seconden op met wachten (I-35).
 
 ### 23 november 02:05
 - Route (I-112, I-120 tot I-123): in Andere lus kies je nu een soort terrein (langs water, door bos of groen, meer onverhard) en Via een punt: tik op de grote kaart waar de lus langs moet, Zonder punt brengt de eerste lus terug. Terug voor het donker heeft uitleg, de amber regel klopt na omdraaien, en de wind telt alleen dicht bij je weerplek.

@@ -567,3 +567,8 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-23 | Lookout week | tester helper | sonnet | ~? tok | ~35 min | 1 moet (kaart Weekterugblik) |
 | 2026-11-23 | Sherpa opslag I-54, I-35 | ontwikkelaar helper | opus | 133k tok | 29 min | gebouwd, besluit opslag-twee-tabbladen-en-grens |
 | 2026-11-23 | Warden week | reviewer helper | opus | 117k tok | 35 min | 1 moet (Herhaal de week), 6 mag, herstel naar bouwer |
+| 2026-11-23 | Sherpa week I-58, I-59, I-72 plus herstel | ontwikkelaar helper | opus | ~140k tok | ~110 min | gebouwd, besluit telt-op-dag-van-uitvoeren |
+| 2026-11-23 | Sherpa terugkeer I-124 plus herstel | ontwikkelaar helper | opus | 113k tok | ~90 min | gebouwd, besluit terugkeer-na-pauze |
+| 2026-11-23 | Sherpa naspelen I-77, I-33, I-78 | ontwikkelaar helper | opus | 57k tok | 83 min | gebouwd met back-up, besluit hoogte-en-ziek-signalen |
+| 2026-11-23 | Sherpa route vervolg I-53, I-126 tot I-129 | ontwikkelaar helper | sonnet | 91k tok | 28 min | gebouwd |
+| 2026-11-23 | Warden opslag | reviewer helper | opus | 62k tok | 19 min | akkoord, 4 mag |
