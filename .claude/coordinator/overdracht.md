@@ -6,7 +6,9 @@ Bijgewerkt: 23 november 2026 door coördinator session_01LnDpSkRtYRz7771kuLPf2T 
 
 - Overgenomen. Bundel 3 (I-113, I-60, I-30, I-73) gestart: Sherpa sonnet op claude/forge-logs-23, raakt naspelen niet.
 - Naspelen-herstel binnen (9a451b88), Warden tweede ronde akkoord (Mag: `rules ?? rd` opruimen, valkuilregel rules/shown in briefje lopen-en-tests).
-- Proef claude/proef-23d = main + week-weergave + route-op-reis + naspelen: tsc, lint, 12048 tests, build groen. `npm run kaart` loopt (scratchpad/kaart-23d.log), daarna één Lookout, dan squash "Klaar: I-58, I-59, I-72, I-77, I-33, I-78, I-53, I-126, I-127, I-128, I-129".
+- Bundel 2 LIVE als fec6c454 (04:30), backlog bij 13ef02f7 (I-125, I-130 tot I-136 erbij), Werkkaart-trigger gezet. Lookout-fix: tweede regel bij schakelaar (settings.css) meegenomen.
+- Bundel 3 proef claude/proef-23e (main + forge-logs-23) loopt: controles en kaart:vergelijk. Bundel 4 dayRules: Sherpa opus op claude/dayrules-23. Lookout voor 3 en 4 samen.
+- Kostenregels nog op main zetten met de squash van bundel 3: Sherpa forge sonnet 110k 18 min; Warden naspelen 29k; Warden forge fable 103k 16 min; Lookout 23d 93k 18 min; Sherpa dayRules opus.
 - Bundel 3: claude/forge-logs-23 (39b88b96 + herstel 903ce279). Warden Fable: Moet was warmSourceNow tegen besluit 14 nov; eruit gehaald, vraag in eigenaar.md. I-30 blijft deels open (alleen uitleg Vragen na je loop gedaan; rest stond al op main). Volle controles nog op de volgende proef (tsc faalt in worktree met symlink node_modules). Mag: geruilde bron zonder opwarmrijen, still pas weg na heropenen.
 - Fout van mij: worktree van een bouwer opgeruimd voor Warden klaar was, daardoor kon hij niet hervat worden. Les: worktree pas weg na squash.
 - Limiet reset 08:40 Amsterdam.

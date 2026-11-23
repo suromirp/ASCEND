@@ -47,6 +47,12 @@ Sinds: 23 november.
 
 ## Net live
 
+### 23 november 04:30
+- Week (I-58, I-59, I-72): een training telt in de week waarin je hem deed; beide weken zeggen het ("1 in de week erna", "1 uit de week ervoor"); gemist verwijst naar Week opnieuw plannen.
+- Lopen (I-77, I-33): één getal voor de stijging van een loop, ook in het Logboek.
+- Vroeg ziek zien (I-78): een ochtend zonder nacht telt niet; nieuwe instelling Eén duidelijke ochtend.
+- Route op reis (I-126 tot I-129): een regel bij een oude of ontbrekende kaart, en Andere plek als de route te lang duurt.
+
 ### 23 november 03:35
 - Terugkeer na een pauze (I-124): de pauze telt vanaf je laatste echte training, het voorstel verloopt niet voordat de eerste week voorbij is of je gekozen hebt, Forge maakt de eerste sets lichter na meer dan 10 dagen zonder kracht, en je kunt een periode achteraf vastleggen of verlengen (tot 4 weken terug). Instelling Rond een vakantie in Planning.
 - Twee tabbladen tegelijk open schrijven elkaar niet meer over (I-54), en een trage intervals.icu houdt na 120 seconden op met wachten (I-35).
