@@ -26,7 +26,8 @@ describe('calisthenics in het workoutscherm', () => {
   });
 
   it('een houding heeft de kolom sec en de seconden in het cijferblok; extra gewicht heet + kg (Extra is de rol van een oefening, besluit 2026-11-11-forge-kern-zichtbaar)', () => {
-    expect(block).toContain("ex.timed || ex.hold ? 'sec' : 'Herh.'");
+    expect(block).toContain("ex.timed || ex.hold ? 'sec' : <>");
+    expect(block).toContain('words_.reps');
     expect(block).toContain("act.open(ex.slot, row.id, 'seconds')");
     expect(block).toContain("'+ kg'");
   });
@@ -41,7 +42,7 @@ describe('calisthenics in het workoutscherm', () => {
 
   it('na de review: lege koppen kg en RIR bij een houding, Netjes-rijen uitgelijnd, Gewicht erbij in het cijferblok, uitleg bij de instellingen', () => {
     expect(block).toContain("added ? '+ kg' : ex.hold ? '' : 'kg'");
-    expect(block).toContain("{ex.hold ? '' : 'RIR'}");
+    expect(block).toContain("{ex.hold ? '' : words_.over}");
     const netjes = menus.slice(menus.indexOf("'Netjes: ja'"), menus.indexOf('Set verwijderen'));
     expect(netjes).toContain('lead={<span className="h-5 w-5 shrink-0" aria-hidden="true" />}');
     expect(read('./ForgeDock.tsx')).toContain("'Gewicht erbij'");

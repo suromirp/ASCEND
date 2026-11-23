@@ -668,6 +668,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('forgeVergelijken', forge.compareWeeks) };
     case 'forge-volgorde-lijst':
       return { value: choiceShort('forgeVolgorde', forge.listSort) };
+    case 'forge-woorden':
+      return { value: choiceShort('forgeWoorden', forge.words) };
     case 'forge-extras':
       return { checked: forge.showExtras };
     case 'forge-lijntjes':

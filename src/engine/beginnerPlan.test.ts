@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { layoutWaves, progressionTarget } from './programLayout';
 import { resolveEffectiveFullDuration, setFixedSessionMinutes, setStartBuild, withDurationScope } from './substitutions';
-import { startLadderSets, startWeekOn } from './beginnerPlan';
+import { firstStrengthLine, startLadderSets, startWeekOn } from './beginnerPlan';
 import { capWorkSets, prescribedSets } from './forgeTimeCap';
 import { exercisesForVariant } from './substitutions';
-import { resolveStartBuild, buildConsentPatch, type StartBuild } from './beginnerStart';
+import { resolveStartBuild, buildConsentPatch, beginnerWeekOneLine, type StartBuild } from './beginnerStart';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { BEGINNER_LADDER } from '../data/beginnerLadder';
 import type { Program } from '../models/program';
@@ -169,5 +169,32 @@ describe('de sets in de start (Forge)', () => {
     const out = capWorkSets([slot], 2);
     expect(out[0].sets).toBe(2);
     expect(out[0].setTargets).toHaveLength(2);
+  });
+});
+
+describe('het voorstel en Week zeggen hetzelfde (stap 5)', () => {
+  it('de getallen van week 1 in het voorstel zijn de minuten die Week plant, en het wordt elke week iets meer', () => {
+    const line = beginnerWeekOneLine();
+    const program = programFor(4);
+    const strength = minutes('tpl_upper_a', day(1, 1), program, 'ladder');
+    const short = minutes('tpl_walk_jog', day(1, 2), program, 'ladder');
+    const long = minutes('tpl_walk_jog_long', day(1, 6), program, 'ladder');
+    expect(line).toContain(`kracht ${strength} minuten`);
+    expect(line).toContain(`${short} en ${long} minuten`);
+    expect(line).toMatch(/Elke week wordt het iets meer/);
+    expect(line).not.toMatch(/[\u2013\u2014]/);
+    expect(minutes('tpl_walk_jog_long', day(2, 6), program, 'ladder')).toBeGreaterThan(long);
+  });
+});
+
+describe('de regel over het gewicht boven de eerste krachttraining van de start', () => {
+  it('alleen kracht, alleen in de start, en alleen zolang je nog geen kracht logde', () => {
+    const program = programFor(4);
+    const line = 'Kies een gewicht dat licht voelt. Je moet er nog een paar over hebben.';
+    expect(firstStrengthLine(t('tpl_upper_a'), day(1, 1), program, [])).toBe(line);
+    expect(firstStrengthLine(t('tpl_walk_jog'), day(1, 1), program, [])).toBeUndefined();
+    expect(firstStrengthLine(t('tpl_upper_a'), day(5, 1), program, [])).toBeUndefined();
+    expect(firstStrengthLine(t('tpl_upper_a'), day(2, 1), program, [{ type: 'strength' }])).toBeUndefined();
+    expect(firstStrengthLine(t('tpl_upper_a'), day(1, 1), null, [])).toBeUndefined();
   });
 });

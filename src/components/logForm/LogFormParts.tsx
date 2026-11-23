@@ -2,6 +2,8 @@
 // Het oude trainingsscherm zet ze onder elkaar in één kaart; het blad Hoe ging het? verdeelt ze over
 // twee stappen. Beide lezen en schrijven dezelfde toestand (useLogForm.ts).
 
+import { useForgeWords } from '../useForgeWords';
+import { effortWords, forgeLabels } from '../../engine/forgeWords';
 import type { SessionTemplate } from '../../models/training';
 import { NumberField } from '../NumberField';
 import { Chip, InfoButton, Segmented, Toggle } from '../ui';
@@ -120,6 +122,7 @@ export function RpeChoice({ value: rpe, onChange, planRpe, peak, steps = [], not
 }) {
   const quiet = useContext(SheetMode);
   const [rpeInfo, setRpeInfo] = useState(false);
+  const words = useForgeWords();
   return (
     <div>
       {quiet ? (
@@ -129,7 +132,7 @@ export function RpeChoice({ value: rpe, onChange, planRpe, peak, steps = [], not
           <InfoButton label="Wat is zwaarte?" onClick={() => setRpeInfo((v) => !v)} />
         </div>
       ) : (
-        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE): hoe zwaar voelde de hele training?</p>
+        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{forgeLabels(words).effort}: hoe zwaar voelde de hele training?</p>
       )}
       {quiet && rpeInfo && <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{SHORT_TEXT.rpeInfo}</p>}
       <div className="mt-2 grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
@@ -153,7 +156,7 @@ export function RpeChoice({ value: rpe, onChange, planRpe, peak, steps = [], not
       </div>
       {peak && (
         <p className="mt-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Het plan: {INTENSITY[peak].label.toLowerCase()} ({INTENSITY[peak].rpe}){peak >= 3 && steps.some((st) => st.intensity <= 2) ? ' in de zware stukken, rustig ertussen' : ''}.
+          Het plan: {INTENSITY[peak].label.toLowerCase()} ({effortWords(INTENSITY[peak].rpe, words)}){peak >= 3 && steps.some((st) => st.intensity <= 2) ? ' in de zware stukken, rustig ertussen' : ''}.
         </p>
       )}
       {note && <p className="mt-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}

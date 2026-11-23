@@ -16,6 +16,7 @@
 import type { Program } from '../models/program';
 import type { SessionTemplate } from '../models/training';
 import { BEGINNER_LADDER } from '../data/beginnerLadder';
+import { FIRST_STRENGTH_LINE } from '../data/forgeReadLines';
 import { beginnerWeek, type BeginnerWeekPlan, type StartBuild } from './beginnerStart';
 import { PHASE_GOLF_START, START_STAND_INS } from './programLayout';
 import { hasRole, idHasRole } from './templateRoles';
@@ -104,4 +105,19 @@ export function startLadderSets(
   if (build !== 'ladder') return undefined;
   const at = startWeekOn(program, date);
   return at ? beginnerWeek(at.week, fullSets)?.strengthSets : undefined;
+}
+
+// De regel boven de eerste krachttraining van de start ("Kies een gewicht dat licht voelt"): alleen voor een
+// krachttraining in een week van de beginnersstart, zolang je nog geen krachttraining logde. Het lost het lege
+// kg-veld op zonder een startgewicht te verzinnen (docs/visie/Ontwerp beginner heel licht.md, deel 3).
+export function firstStrengthLine(
+  template: Pick<SessionTemplate, 'type'>,
+  date: string,
+  program: Pick<Program, 'startDate' | 'phases'> | null | undefined,
+  logs: readonly { type: string }[],
+): string | undefined {
+  if (template.type !== 'strength') return undefined;
+  if (!startWeekOn(program, date)) return undefined;
+  if (logs.some((l) => l.type === 'strength')) return undefined;
+  return FIRST_STRENGTH_LINE;
 }

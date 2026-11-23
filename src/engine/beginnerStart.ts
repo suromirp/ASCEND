@@ -97,7 +97,14 @@ export function beginnerStartLine(start: string, today: string, waveLength = BEG
   const weeks = beginnerWeeksFor(waveLength);
   const since = Math.floor(daysBetween(mondayOfWeek(start), mondayOfWeek(today)) / 7);
   if (since < 0 || since >= weeks) return undefined;
-  return `Je begint rustig: de eerste ${WEEKS_WORD[weeks] ?? weeks} weken alleen makkelijk, de eerste pittige training pas daarna. Zo went je lichaam eerst aan het ritme.`;
+  return `Je begint rustig: de eerste ${WEEKS_WORD[weeks] ?? weeks} weken alleen makkelijk, geen harde training. Zo went je lichaam eerst aan het ritme, en elke week wordt het iets meer.`;
+}
+
+// De zin voor het voorstel met de ladder: week 1 in getallen uit data/beginnerLadder.ts, en dat het elke week iets
+// meer wordt. Wat hier staat is ook wat Week laat zien (beginnerWeek is de bron van allebei).
+export function beginnerWeekOneLine(): string {
+  const w = beginnerWeek(1)!;
+  return `Week 1: kracht ${w.strengthMinutes} minuten, twee keer wandelen en dribbelen: ${w.shortMinutes} en ${w.longMinutes} minuten. Elke week wordt het iets meer.`;
 }
 
 // --- heel licht: de ladder per week (docs/visie/Ontwerp beginner heel licht.md, deel 1) -------------

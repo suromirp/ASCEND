@@ -2,6 +2,7 @@
 // hele training, het ruilen, de RIR-keuze, de uitleg bij "zonder spotter", het weggooien en de lange onderbreking.
 // Alleen tonen; wat een keuze doet staat in ForgeWorkout en de engine.
 
+import { forgeLabels, type ForgeWords } from '../../engine/forgeWords';
 import { canRemoveRow, reasonWithOwnCount } from '../../engine/forgeRows';
 import { canSwap, isAddedSlot } from '../../engine/addedExercises';
 import { useState } from 'react';
@@ -45,7 +46,8 @@ export function SpotterSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function RowMenuSheet({ ex, rowId, onTake, onCopy, onRemove, onClean, onClose }: {
+export function RowMenuSheet({ words, ex, rowId, onTake, onCopy, onRemove, onClean, onClose }: {
+  words: ForgeWords;
   ex: WorkoutExercise;
   rowId: string;
   onTake: () => void;
@@ -61,7 +63,7 @@ export function RowMenuSheet({ ex, rowId, onTake, onCopy, onRemove, onClean, onC
     <ForgeSheet title={ex.name} sub={row.kind === 'warmup' ? 'Opwarmset' : `Werkset ${ex.rows.filter((r) => r.kind === 'work').indexOf(row) + 1}`} onClose={onClose}>
       {(close) => (
         <div className="flex flex-col">
-          {!row.done && <MenuRow icon="vinkje" title="Voorschrift overnemen" sub="Kilo's en herhalingen zoals het voorschrift ze vraagt." onClick={() => { onTake(); close(); }} />}
+          {!row.done && <MenuRow icon="vinkje" title={`${forgeLabels(words).plan} overnemen`} sub={`Kilo's en herhalingen zoals het ${forgeLabels(words).plan.toLowerCase()} ze vraagt.`} onClick={() => { onTake(); close(); }} />}
           <MenuRow icon="plus" title="Set kopiëren" sub="Een kopie van deze set eronder." onClick={() => { onCopy(); close(); }} />
           {onClean && ([['Netjes: ja', true], ['Netjes: nee', false], ['Netjes: weet ik niet', undefined]] as const).map(([title, value]) => (
             // Een lege plek ter grootte van een icoon, zodat de tekst uitlijnt met de rijen erboven.
@@ -223,7 +225,8 @@ export function SwapSheet({ ex, workout, strength, program, onPick, onClose }: {
   );
 }
 
-export function RirSheet({ target, current, assumed, onPick, onClose }: {
+export function RirSheet({ words, target, current, assumed, onPick, onClose }: {
+  words: ForgeWords;
   target: number | undefined;
   current: number | undefined;
   assumed: boolean | undefined;
@@ -231,7 +234,7 @@ export function RirSheet({ target, current, assumed, onPick, onClose }: {
   onClose: () => void;
 }) {
   return (
-    <ForgeSheet title="Hoeveel had je nog over?" sub={target !== undefined ? `Het voorschrift is ${target} over.` : undefined} onClose={onClose}>
+    <ForgeSheet title="Hoeveel had je nog over?" sub={target !== undefined ? `Het ${forgeLabels(words).plan.toLowerCase()} is ${target} over.` : undefined} onClose={onClose}>
       {(close) => (
         <div className="grid grid-cols-6 gap-2 pt-1" role="radiogroup" aria-label="Herhalingen in reserve">
           {[0, 1, 2, 3, 4, 5].map((n) => (

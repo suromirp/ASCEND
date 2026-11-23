@@ -62,7 +62,7 @@ const PHASE_TEXT: Record<string, { name: string; description: string }> = {
   },
   [PHASE_GOLF_START]: {
     name: 'RUSTIG BEGINNEN',
-    description: 'De eerste vier weken van je richting alleen makkelijk: de heuvelloop is dan een herstelloop. Zo went je lichaam eerst aan het ritme. Daarna lopen je weken gewoon in golven.',
+    description: 'De eerste vier weken van je richting alleen makkelijk: de heuvelloop is dan een herstelloop. Zo went je lichaam eerst aan het ritme, en elke week wordt het iets meer. Daarna lopen je weken gewoon in golven.',
   },
   [PHASE_GOLF]: {
     name: 'GOLVEN',

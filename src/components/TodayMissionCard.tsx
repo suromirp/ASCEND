@@ -1,4 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
+import { useForgeWords } from './useForgeWords';
+import { forgeLabels } from '../engine/forgeWords';
 import { useNavigate } from 'react-router-dom';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { availableVariants } from '../engine/substitutions';
@@ -122,6 +124,7 @@ export function TodayMissionCard({
   // Het blad Je horloge (engine/watchSheet.ts), als tweede rij in het menu (spoor 2 van het Info-blad).
   // De missiekaart zelf verandert niet.
   const { program, sessionLogs } = useAppData();
+  const forgeWords = useForgeWords();
   const [showWatch, setShowWatch] = useState(false);
   // De mint knop: Briefing als je horloge deze training afvinkt (engine/briefing.ts#missionButton),
   // anders Gedaan. Zolang de koppeling gelezen wordt: Gedaan, de veilige kant. Zelf invullen staat dan
@@ -370,7 +373,7 @@ export function TodayMissionCard({
                 )}
                 {showPlan && (
                   <button type="button" className={row} style={{ borderColor: 'var(--color-card-border)' }} onClick={pick(() => onShowPlan?.())}>
-                    <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>Voorschrift</span>
+                    <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>{forgeLabels(forgeWords).plan}</span>
                     <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
                   </button>
                 )}

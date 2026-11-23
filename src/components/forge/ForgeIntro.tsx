@@ -9,7 +9,7 @@ import { MountainMuscleNotice } from '../MountainMuscleNotice';
 import { CalibrationNotice } from './CalibrationNotice';
 import { StepProposalNotice } from './StepProposalNotice';
 
-export function ForgeIntro({ templateId, date, program, preview, readOnly, mountainNotice, stepNotice, calibration, capLine, legLine, legPanel }: {
+export function ForgeIntro({ templateId, date, program, preview, readOnly, mountainNotice, stepNotice, calibration, capLine, startLine, legLine, legPanel, plan = 'het voorschrift' }: {
   templateId: string;
   date: string;
   program?: Program | null;
@@ -19,20 +19,25 @@ export function ForgeIntro({ templateId, date, program, preview, readOnly, mount
   stepNotice: boolean;
   calibration?: { name: string; phase: 'open' | 'added' | 'gone'; onAccept: () => Promise<void>; onLater: () => void; onSettings: () => void };
   capLine: string | undefined;
+  // Boven de eerste krachttraining van de start: kies een gewicht dat licht voelt (engine/beginnerPlan.ts#firstStrengthLine).
+  startLine?: string;
+  // Het woord voor het voorschrift in de regel bij alleen kijken (instelling Woorden in Forge).
+  plan?: string;
   legLine: string | undefined;
   legPanel: ReactNode;
 }) {
-  if (!(legLine || readOnly || capLine || mountainNotice || stepNotice || calibration)) return null;
+  if (!(legLine || readOnly || capLine || startLine || mountainNotice || stepNotice || calibration)) return null;
   return (
     <div className="flex flex-col gap-1 px-4 pt-3">
       {mountainNotice && <MountainMuscleNotice onlyFor={templateId} className="mb-2" />}
       {stepNotice && <StepProposalNotice templateId={templateId} date={date} />}
       {calibration && <CalibrationNotice {...calibration} />}
       {capLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }} data-testid="forge-ingekort">{capLine}</p>}
+      {startLine && !readOnly && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }} data-testid="forge-eerste-gewicht">{startLine}</p>}
       {preview && <p className="text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{previewDayLine(date, program)}</p>}
       {preview ? (
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Zo staat hij klaar. Afvinken kan op de dag zelf.</p>
-      ) : readOnly && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je houdt kracht bij in MacroFactor. Dit is het voorschrift om mee te kijken; afvinken doe je hier als je klaar bent.</p>}
+      ) : readOnly && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je houdt kracht bij in MacroFactor. Dit is {plan} om mee te kijken; afvinken doe je hier als je klaar bent.</p>}
       {legPanel ?? (legLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{legLine}</p>)}
     </div>
   );

@@ -5,6 +5,8 @@
 // (engine/workoutPlan.ts, engine/sessionBrief.ts); hier wordt niets berekend
 // wat het plan niet al zegt.
 
+import { useForgeWords } from '../useForgeWords';
+import { effortWords } from '../../engine/forgeWords';
 import { useState } from 'react';
 import type { Stretch } from '../../models/training';
 import type { BriefFact } from '../../engine/sessionBrief';
@@ -133,12 +135,15 @@ export function IntervalProfile({ plan }: { plan: WorkoutPlan }) {
 // regel met zwaarte, zone, hartslag en de praattest.
 function StepLine({ step }: { step: PlanStep }) {
   const { settings } = useAppData();
+  const words = useForgeWords();
   const level = INTENSITY[step.intensity];
+  // Gewoon: de gewone woorden zeggen zelf al dat je kunt praten, dus de praattest hoeft er niet nog eens achter.
+  const feel = words === 'plain' && step.intensity === 2 ? '' : ` · ${level.feel}`;
   const line = step.kind === 'strength'
     ? step.detail
     : step.noTarget
       ? `${level.label} · geen hartslagdoel${step.detail ? `. ${step.detail}` : ''}`
-      : `${level.rpe} · ${zoneText(step.intensity, level.zone, settings.heartRate)} · ${level.feel}${step.detail ? `. ${step.detail}` : ''}`;
+      : `${effortWords(level.rpe, words)} · ${zoneText(step.intensity, level.zone, settings.heartRate)}${feel}${step.detail ? `. ${step.detail}` : ''}`;
   return (
     <li className="flex gap-3 py-2.5">
       <span aria-hidden="true" className="w-1 shrink-0 self-stretch rounded-full" style={{ background: stepColor(step) }} />

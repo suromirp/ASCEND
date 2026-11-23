@@ -99,6 +99,7 @@ export function ForgeSheets(p: ForgeSheetsProps) {
 
       {sh.rowMenu && rowMenuEx && rowMenuRow && (
         <RowMenuSheet
+          words={strength.words}
           ex={rowMenuEx}
           rowId={rowMenuRow.id}
           onTake={() => p.take(rowMenuEx.slot, rowMenuRow.id)}
@@ -178,6 +179,7 @@ export function ForgeSheets(p: ForgeSheetsProps) {
 
       {rirFor && rirRow && (
         <RirSheet
+          words={strength.words}
           target={rirRow.target.rir}
           current={rirRow.rir}
           assumed={rirRow.rirAssumed}

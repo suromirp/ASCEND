@@ -15,6 +15,7 @@ import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { restoreDropped, swipeDeleteOn } from '../../engine/forgeRows';
 import { canSwap, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
 import { learnedMinutesPerSet } from '../../engine/durationLearning';
+import { firstStrengthLine } from '../../engine/beginnerPlan';
 import { capForTemplate, capLineFor, capRemovedFor, capRemovedLine, capSlots, referenceMinutes, resolveTimeCap, roleLabel, servesMountainMuscle, startLadderSlots } from '../../engine/forgeTimeCap';
 import { forgeSlotsFor } from '../../engine/forgeSlots';
 import { withoutStepSwap } from '../../engine/stepSwaps';
@@ -283,6 +284,8 @@ function ForgeWorkoutInner({
   // De regel "Ingekort tot ongeveer 60 minuten" zegt wat er bij het openen wegviel, bij de eerste stand van de
   // sessie (een heropend concept houdt wat je al deed), en blijft dan staan.
   const [capLine] = useState(() => capLineFor(capped, workout));
+  const words = strength.words;
+  const [startLine] = useState(() => firstStrengthLine(template, date, program, sessionLogs));
   const { startedAt, pauses, paused, lastAction, awayMs, dismissBreak, begin, togglePause, answerBreak } = useForgeClock(restored, readOnly, settings);
   const later = useLater();
   const [rest, setRest] = useState<Rest | undefined>(() => (restored?.rest && restored.rest.endsAt > Date.now() - REST_DONE_LINGER_MS ? restored.rest : undefined));
@@ -732,7 +735,7 @@ function ForgeWorkoutInner({
         }, AFTER_SCREEN_MS);
       },
     } : undefined;
-  const intro = <ForgeIntro templateId={template.id} date={date} program={program} preview={preview} readOnly={readOnly} mountainNotice={mountainNotice} stepNotice={stepNotice} calibration={calibration} capLine={capLine} legLine={legLine} legPanel={legPanel} />;
+  const intro = <ForgeIntro templateId={template.id} date={date} program={program} preview={preview} readOnly={readOnly} mountainNotice={mountainNotice} stepNotice={stepNotice} calibration={calibration} capLine={capLine} startLine={startLine} plan={words === 'jargon' ? 'het voorschrift' : 'het plan'} legLine={legLine} legPanel={legPanel} />;
   const exerciseBlock = (ex: WorkoutExercise, i: number) => {
     const capRemoved = capRemovedFor(capped, ex, effSlots);
     const lines = stepsOn && ex.known ? ladderLines(exerciseOf(ex)) : undefined;
@@ -756,6 +759,7 @@ function ForgeWorkoutInner({
               noFitText={noFit[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, noFit[ex.slot]) ? noFitLine(noFit[ex.slot], !!ownWeightsFor(strength.profile, exerciseOf(ex))) : undefined}
               heavyTip={heavyTip[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) && fitStillOpen(ex, heavyTip[ex.slot]) ? heavyTip[ex.slot].text : undefined}
               rirAsValue={strength.rirPrefill === 'target'}
+              words={words}
               warmNow={warmNow(workout, ex)}
               swipeOn={swipeDeleteOn(settings)}
               undoText={undo?.slot === ex.slot ? `Set ${undo.label} verwijderd` : undefined}
