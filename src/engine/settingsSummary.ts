@@ -88,6 +88,7 @@ import { kindAmountSummary, parseKindAmounts } from './kindAmount';
 import { formatNumberNL } from '../utils/number';
 import { resolveMissedSettings } from './missedTraining';
 import { resolveReentry } from './reentry';
+import { resolveLeaveBackfill } from './leave';
 import { capAboveMission, resolveAboveMission } from './todayCards';
 import { resolveDropOnTraining } from './dropOnTraining';
 import { resolveWeekAfterChoice } from './weekKept';
@@ -577,6 +578,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('vakantieSchuiven', s.leaveAround ?? 'wide') };
     case 'vakantie-opzij':
       return { value: choiceShort('vakantieOpzij', s.leaveCrowding ?? 'drop') };
+    case 'vakantie-achteraf':
+      return { value: choiceShort('vakantieAchteraf', resolveLeaveBackfill(s.leaveBackfill)) };
+    case 'bundel-vakantie':
+      return { value: choiceShort('vakantieSchuiven', s.leaveAround ?? 'wide'), sub: resolveLeaveBackfill(s.leaveBackfill) === 'off' ? 'Niet achteraf' : `Achteraf tot ${choiceShort('vakantieAchteraf', resolveLeaveBackfill(s.leaveBackfill))} terug` };
     case 'zonder-sportschool':
       return { value: choiceShort('zonderSportschool', s.noGymStrength ?? 'bodyweight') };
     case 'vrije-dagen':

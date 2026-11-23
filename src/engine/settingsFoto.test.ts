@@ -53,6 +53,7 @@ const ALLES_ANDERS: AppSettings = {
   descentClock: 'uit',
   leaveCrowding: 'shift',
   leaveAround: 'little',
+  leaveBackfill: 'off',
   noGymStrength: 'drop',
   longRunGrowth: 'wave',
   bootBreakInKm: 150,

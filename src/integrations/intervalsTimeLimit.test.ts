@@ -95,3 +95,85 @@ describe('intervals.icu: de grens geldt ook voor het lezen van het antwoord', ()
     expect(err.kind).toBe('response');
   });
 });
+
+// I-35: een groot antwoord over een trage lijn. De kop heeft 15 s; daarna mag elk stuk inhoud tot 15 s op zich
+// laten wachten, zolang de hele aanroep onder de 120 s blijft. Alles nagemaakt, geen echte aanroep.
+describe('intervals.icu: een groot antwoord dat langzaam binnenkomt', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+  // Een lijn die de kop na `headMs` stuurt en daarna elke `everyMs` een stuk, `pieces` keer (of eindeloos).
+  // Het antwoord is "[", spaties en "]": geldige JSON (een lege lijst) die in stukken komt.
+  function slowLine(headMs: number, every: number | ((piece: number) => number), pieces: number) {
+    const fn = vi.fn(async () => {
+      await wait(headMs);
+      let sent = 0;
+      const enc = new TextEncoder();
+      const stream = new ReadableStream<Uint8Array>({
+        async pull(controller) {
+          await wait(typeof every === 'number' ? every : every(sent));
+          if (sent >= pieces) {
+            controller.close();
+            return;
+          }
+          controller.enqueue(enc.encode(sent === 0 ? '[' : sent === pieces - 1 ? ']' : ' '.repeat(1000)));
+          sent++;
+        },
+      });
+      return new Response(stream, { status: 200 });
+    });
+    return fn as unknown as typeof fetch;
+  }
+
+  it('kop na 14 s en daarna 8 stukken met telkens 10 s ertussen (ruim 90 s): komt binnen', async () => {
+    vi.useFakeTimers();
+    let outcome: unknown = 'bezig';
+    const work = outcomeOf(fetchIntervalsActivities(CONNECTION, RANGE, { fetchImpl: slowLine(14_000, 10_000, 8) })).then((o) => (outcome = o));
+    await vi.advanceTimersByTimeAsync(110_000);
+    await work;
+    expect(outcome).toBe('klaar');
+  });
+
+  it('de kop blijft langer dan 15 s weg: time-out na 15 s', async () => {
+    vi.useFakeTimers();
+    const work = outcomeOf(fetchIntervalsWellness(CONNECTION, RANGE, { fetchImpl: slowLine(16_000, 1, 2) }));
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(((await work) as IntervalsError).kind).toBe('network');
+  });
+
+  it('na een stuk blijft de inhoud langer dan 15 s steken: time-out 15 s na het laatste stuk', async () => {
+    vi.useFakeTimers();
+    let settled = false;
+    // Kop meteen, eerste stuk na 10 s, het volgende pas 20 s later: om 25 s is het op.
+    const work = outcomeOf(fetchIntervalsWellness(CONNECTION, RANGE, { fetchImpl: slowLine(0, (i) => (i === 0 ? 10_000 : 20_000), 3) })).finally(() => (settled = true));
+    await vi.advanceTimersByTimeAsync(24_999);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(((await work) as IntervalsError).kind).toBe('network');
+  });
+
+  it('een lijn die eindeloos druppelt: na 120 s is het een time-out, ook al komt er steeds iets', async () => {
+    vi.useFakeTimers();
+    let settled = false;
+    const work = outcomeOf(fetchIntervalsWellness(CONNECTION, RANGE, { fetchImpl: slowLine(0, 5_000, Infinity) })).finally(() => (settled = true));
+    await vi.advanceTimersByTimeAsync(119_999);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    const err = (await work) as IntervalsError;
+    expect(err.kind).toBe('network');
+    expect(err.message).toBe(NETWORK);
+  });
+
+  it('schrijven volgt dezelfde regel: een trage maar levende inhoud is geen time-out', async () => {
+    vi.useFakeTimers();
+    let outcome: unknown = 'bezig';
+    const work = outcomeOf(createWorkoutEvents(CONNECTION, [WORKOUT], { fetchImpl: slowLine(10_000, 10_000, 4) })).then((o) => (outcome = o));
+    await vi.advanceTimersByTimeAsync(60_000);
+    await work;
+    expect(outcome).not.toBe('bezig');
+    expect(outcome instanceof IntervalsError ? outcome.kind : 'klaar').not.toBe('network');
+  });
+});

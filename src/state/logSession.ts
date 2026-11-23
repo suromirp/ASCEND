@@ -42,7 +42,8 @@ const looseInFlight = new Map<string, Promise<boolean>>();
 
 // Een horloge-activiteit die nog onderweg is, met of zonder geplande training erbij: elke volgende poging met
 // dezelfde externalId krijgt nee, ook met een andere keuze (gepland of los, of een andere geplande training).
-// Kijken en schrijven is niet één transactie, dus zonder dit geeft opnieuw tikken twee logs van één activiteit.
+// Kijken en schrijven is sinds I-54 één transactie (SessionLogsRepo.add); dit houdt binnen één tabblad
+// een tweede poging tegen voordat ze de opslag raakt.
 const externalInFlight = new Set<string>();
 
 function pendingKey(input: LogSessionInput): string | undefined {
@@ -89,10 +90,6 @@ async function writeLog(input: LogSessionInput, opts: LogSessionOpts | undefined
     loggingInFlight.current.add(plannedId);
   }
   try {
-    const existing = plannedId || input.externalId ? await SessionLogsRepo.getAll() : [];
-    if (plannedId && existing.some((l) => l.plannedSessionId === plannedId)) return false;
-    // The same watch activity is never stored twice.
-    if (input.externalId && existing.some((l) => l.externalId === input.externalId)) return false;
     const log: SessionLog = {
       id: makeId('log'),
       plannedSessionId: input.plannedSessionId,
@@ -124,7 +121,9 @@ async function writeLog(input: LogSessionInput, opts: LogSessionOpts | undefined
       sourceSync: input.sourceSync,
       source: input.source ?? 'manual',
     };
-    await SessionLogsRepo.put(log);
+    // Een geplande training of horloge-activiteit krijgt nooit twee logs, ook niet uit twee tabbladen tegelijk:
+    // kijken en schrijven gaan in één transactie (I-54). Stond er al een log, dan nee zonder iets te schrijven.
+    if (!(await SessionLogsRepo.add(log))) return false;
     // Vanaf hier staat het log er: wat nu nog faalt maakt de uitkomst geen nee meer.
     const followUpFailed = (err: unknown) => reportStorageError(new LogStoredFollowUpFailed(err));
 

@@ -53,9 +53,9 @@ Met voorstel
 Kracht zonder sportschool
 [knop: Uitleg: Kracht zonder sportschool]
 Eigen gewicht
-[knop: Rond een vakantie schuiven, Flink]
-Rond een vakantie schuiven
-[knop: Uitleg: Rond een vakantie schuiven]
+[knop: Rond een vakantie, Flink]
+Rond een vakantie
+Achteraf tot 4 weken terug
 Flink
 [knop: Geavanceerd]
-Training die niet doorging, Beenkracht de dag na de lange duurloop, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie, Zones bijwerken na een test
+Training die niet doorging, Beenkracht de dag na de lange duurloop, Trainingen slepen in Week, Volgorde van Je stand, Zones bijwerken na een test

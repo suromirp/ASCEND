@@ -21,10 +21,6 @@ Aan, ruilen
 Volgorde van Je stand
 [knop: Uitleg: Volgorde van Je stand]
 Standaard
-[knop: Opzij voor een vakantie, Laten vervallen]
-Opzij voor een vakantie
-[knop: Uitleg: Opzij voor een vakantie]
-Laten vervallen
 [knop: Zones bijwerken na een test]
 Zones bijwerken na een test
 [knop: Uitleg: Zones bijwerken na een test]

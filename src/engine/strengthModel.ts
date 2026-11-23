@@ -526,6 +526,9 @@ export interface PrescribeInput {
   // The day of the last strength training with any exercise before `date`. A pause
   // for this exercise is only a break from training when nothing was trained in between.
   lastStrengthDate?: string;
+  // Een rustiger instap na een pauze waar je Akkoord op gaf, na meer dan tien dagen zonder krachttraining
+  // (engine/reentry.ts#reentryForgeLighter): het voorstel begint met dezelfde 5% minder kracht als na een lange pauze.
+  reentry?: boolean;
 }
 
 const nl = (n: number) => formatNumberNL(n, 2);
@@ -842,7 +845,9 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   // rested while other strength training went on (a new program) starts at its last level.
   const pauseDays = daysBetween(last.date, input.date);
   const trainedMeanwhile = input.lastStrengthDate !== undefined && daysBetween(input.lastStrengthDate, input.date) <= LIGHTER_AFTER_DAYS;
-  const lighter = settings.lighterAfterBreak && !legsTired && pauseDays > LIGHTER_AFTER_DAYS && !trainedMeanwhile;
+  const longBreak = settings.lighterAfterBreak && !legsTired && pauseDays > LIGHTER_AFTER_DAYS && !trainedMeanwhile;
+  const reentryLighter = settings.lighterAfterBreak && !legsTired && !!input.reentry;
+  const lighter = longBreak || reentryLighter;
   const factor = lighter ? 1 - LIGHTER_AFTER_BREAK : 1;
 
   // The goal of last time is not stored with a set, so it is derived from what
@@ -909,6 +914,16 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const strengthKg = (legsTired ? rawStrength : cappedStrength) * factor;
   let idx = pick(strengthKg);
   if (lighter && idx > lastIdx) idx = lastIdx;
+  // A rustiger instap says "begint 5% lichter": then the first set is lighter than last time, not only the
+  // strength. The weight nearest to 95% of last time's, at least one step down (I-124).
+  const reentryStep = reentryLighter && !longBreak && idx >= lastIdx && lastIdx > 0;
+  if (reentryStep) {
+    let best = lastIdx - 1;
+    for (let k = lastIdx - 1; k >= 0; k--) {
+      if (Math.abs(candidates[k].loadKg - factor * lastLoad) < Math.abs(candidates[best].loadKg - factor * lastLoad)) best = k;
+    }
+    idx = best;
+  }
   // The brake counts when it changed the weight: the same strength without the
   // brake would have given another weight.
   const free = legsTired ? idx : Math.min(pick(rawStrength * factor), lighter ? lastIdx : Infinity);
@@ -946,7 +961,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     // heavier side lowers the bottom of this set. Not where the heavier weight would go
     // against a brake (two weak trainings, a pause, the cap on the strength).
     const heavier = candidates[idx + 1];
-    const brakes = twoUnder || cappedDown || (lighter && idx + 1 > lastIdx);
+    const brakes = twoUnder || cappedDown || (lighter && idx + 1 > lastIdx) || reentryStep;
     if (settings.widenRange && heavier && !brakes) {
       const expectedHeavier = expectedReps(strengthKg, heavier.loadKg, rir);
       // The misses are compared before rounding down: rounded reps tilt the choice
@@ -1048,6 +1063,11 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   } else if (atBottom) {
     kind = 'used_bottom';
     reason = 'Dit is het lichtste gewicht dat je op dit toestel gebruikte. Een lichter gewicht is hier onbekend en komt dus niet in het voorstel. Kies zelf iets lichter als dit te zwaar is.';
+  } else if (reentryLighter && !longBreak) {
+    kind = 'pause';
+    reason = first.loadKg < lastLoad - 1e-6
+      ? 'Je deed meer dan tien dagen geen krachttraining en koos een rustiger instap, dus je eerste werkset is lichter dan vorige keer. Na deze training volgt een nieuw voorstel.'
+      : 'Je deed meer dan tien dagen geen krachttraining en koos een rustiger instap, dus het voorstel rekent met 5% minder kracht. Na deze training volgt een nieuw voorstel.';
   } else if (raised) {
     kind = 'up';
     reason = raisedText(raised, assisted);
@@ -1058,7 +1078,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     kind = 'widened';
     const step = stepAt(candidates, idx);
     reason = `Een stap van ${kgLabel(step, 2)} is hier te grof voor ${low} tot ${high} herhalingen, daarom is het bereik nu tijdelijk verbreed.`;
-  } else if (lighter) {
+  } else if (longBreak) {
     kind = 'pause';
     reason = 'Je deed dit meer dan vier weken niet, dus het voorstel begint iets lichter. Na deze training volgt een nieuw voorstel.';
   } else if (pauseDays > BREAK_DAYS) {

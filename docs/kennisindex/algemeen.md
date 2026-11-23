@@ -11,7 +11,6 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
-- 2026-11-14 [Een fout bij het opstarten is geen hangen, en de grens van intervals.icu geldt tot het antwoord gelezen is](../beslissingen/2026-11-14-opstarten-en-intervals-grens.md): De tijdgrens van 15 seconden op een aanroep naar intervals.icu loopt nu door tot en met het lezen van het antwoord, bij lezen en bij schrijven.
 - 2026-11-02 [Widget beter: pictogram, morgen en nooit afgeknipt](../beslissingen/2026-11-02-widget-beter.md): De widget Vandaag krijgt links een rond sportpictogram, rechts de tekst, en een regel over morgen.
 - 2026-11-02 [Snelkoppelingen en widget in de Android-app](../beslissingen/2026-11-02-snelkoppelingen-en-widget.md): De Android-app krijgt vier snelkoppelingen onder het icoon (Vandaag, Week, Logboek, Training afvinken, gelijk aan de PWA) en een kleine widget Vandaag.
 - 2026-11-01 [Een Android-app met Capacitor, naast de website](../beslissingen/2026-11-01-android-app.md): ASCEND krijgt een Android-app: dezelfde Vite-build als de website, ingepakt met Capacitor 8 en gebundeld in de app, zodat hij altijd offline werkt.
@@ -25,7 +24,7 @@ Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
 Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat; lees voor de rest het latere besluit.
 
-Geen.
+- 2026-11-14 [Een fout bij het opstarten is geen hangen, en de grens van intervals.icu geldt tot het antwoord gelezen is](../beslissingen/2026-11-14-opstarten-en-intervals-grens.md): De tijdgrens van 15 seconden op een aanroep naar intervals.icu loopt nu door tot en met het lezen van het antwoord, bij lezen en bij schrijven. Geldt nog: de grens geldt tot en met het lezen, een time-out is network, een herstelstap die faalt wordt alleen zelf overgeslagen; ingehaald zijn de ene grens van 15 s voor kop en inhoud samen en het ontbreken van een teller. Deels ingehaald door: [2026-11-23-opslag-twee-tabbladen-en-grens](../beslissingen/2026-11-23-opslag-twee-tabbladen-en-grens.md).
 
 ## Onderzoek, ontwerpen en verslagen
 

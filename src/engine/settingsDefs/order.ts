@@ -26,7 +26,7 @@ export const INDEX_ORDER: readonly string[] = [
   'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-namen', 'wat-vastgelegd', 'herinnering-gewicht',
   'programma', 'lange-zondag', 'na-hoofddoel', 'doelen', 'rugzak', 'vaardigheidsdoelen', 'seizoensstrook',
   'volgende-tocht', 'water-per-etappe', 'klaar-weging', 'klaar-groei', 'klaar-marge', 'doeltijd-voorstel', 'racedag',
-  'rust-na-tocht', 'vakantie-schuiven', 'vakantie-opzij', 'zonder-sportschool', 'vrije-dagen', 'reisplanner',
+  'rust-na-tocht', 'vakantie-schuiven', 'vakantie-achteraf', 'vakantie-opzij', 'zonder-sportschool', 'vrije-dagen', 'reisplanner',
   'afdaalklok', 'bergschoenen', 'bergschoenen-herinnering', 'paklijst', 'boven-missie', 'kaarten',
   'forge-onderbreking', 'forge-concept', 'forge-verloop', 'forge-oefeningen', 'forge-vegen', 'forge-plaatjes',
   'forge-uitleg-open', 'lijfvraag', 'vragen-na-loop', 'reistaak-vandaag', 'korter-vandaag', 'lichterbenen',
@@ -55,7 +55,7 @@ export const INDEX_ORDER: readonly string[] = [
 export const ADVICE_ORDER: readonly string[] = [
   'wijzigingen', 'ambitie', 'lange-loop', 'rustdag-doen', 'zware-dingen', 'lange-loop-benen', 'weekbudget', 'golven',
   'beginnersstart', 'opbouw-start', 'lange-zondag', 'na-hoofddoel', 'seizoensstrook', 'vaardigheidsdoelen', 'volgende-tocht',
-  'water-per-etappe', 'rust-na-tocht', 'afdaalklok', 'vakantie-opzij', 'vakantie-schuiven', 'zonder-sportschool',
+  'water-per-etappe', 'rust-na-tocht', 'afdaalklok', 'vakantie-opzij', 'vakantie-schuiven', 'zonder-sportschool', 'vakantie-achteraf',
   'bergschoenen', 'bergschoenen-herinnering', 'forge', 'forge-volgorde', 'forge-sets', 'forge-opwarmen',
   'forge-opwarmbereik', 'forge-opwarmset-later', 'forge-vermoeidheid', 'forge-pauze', 'forge-rekent-mee',
   'standen-onthouden', 'forge-afvinken-doel', 'forge-tussen-oefeningen', 'forge-bereik', 'forge-schatting',

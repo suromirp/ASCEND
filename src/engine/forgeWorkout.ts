@@ -39,6 +39,7 @@ import { spotterApplies, spotterSlot } from './spotter';
 import { isWorkSet } from './workSets';
 import { ladderRows, MAX_ROW_SECONDS, withLastBand } from './forgeLadder';
 import { adjustFirstSet, CROSS_PER_SET, crossFatigue, expectedHard, hardSetsLogged, crossHistory, crossLine, crossPoints, hardPlanned, learnCross, normalBefore, setsBefore, type CrossFatigue, type CrossHistory, type EarlierWork } from './forgeCrossFatigue';
+import { reentryForgeLighter } from './reentry';
 
 // --- the shapes ---------------------------------------------------------------------------
 
@@ -244,6 +245,9 @@ export interface PlanContext {
   // Je koos "Lichter" voor deze training (engine/legDayEase.ts): meer reserve en een set minder voor
   // wat de benen belast. Zonder keuze verandert er niets. `because`: waardoor, in de regel eronder.
   ease?: { how: LegEaseHow; because: string };
+  // Een rustiger instap waar je Akkoord op gaf (engine/reentry.ts#reentryForgeLighter): de bewaarde weken. Na meer dan
+  // tien dagen zonder krachttraining begint het voorstel 5% lichter, met de reden in de regel eronder.
+  reentryWeeks?: unknown;
 }
 
 export interface PlanState {
@@ -377,6 +381,7 @@ export function planExercise(planned: ExercisePrescription, ctx: PlanContext, st
       sessions: history.sessions,
       date: ctx.date,
       ...(lastStrengthDate ? { lastStrengthDate } : {}),
+      ...(reentryForgeLighter(ctx.reentryWeeks, ctx.date, lastStrengthDate) ? { reentry: true } : {}),
       bodyKg: ctx.bodyKg,
       settings: ctx.settings,
       ...(tired && state.tiredNow ? { tired: state.tiredNow } : {}),

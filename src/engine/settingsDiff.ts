@@ -211,6 +211,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('vakantie-opzij', 'Opzij voor een vakantie', 'planning', 'leaveCrowding', 'drop', 'vakantieOpzij', true),
   choice('vakantie-schuiven', 'Rond een vakantie schuiven', 'planning', 'leaveAround', 'wide', 'vakantieSchuiven', true),
   choice('zonder-sportschool', 'Kracht zonder sportschool', 'planning', 'noGymStrength', 'bodyweight', 'zonderSportschool'),
+  choice('vakantie-achteraf', 'Periode achteraf vastleggen', 'planning', 'leaveBackfill', 'four_weeks', 'vakantieAchteraf'),
   {
     id: 'bergschoenen', title: 'Bergschoenen inlopen', page: 'doel',
     differs: (s) => bootGoalKm(s.bootBreakInKm) !== bootGoalKm(undefined),

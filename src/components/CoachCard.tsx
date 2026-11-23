@@ -163,7 +163,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
           explanation: REENTRY_WHY,
           trigger: 'reentry_planned',
           settings: { reentryWeeks: [...(settings.reentryWeeks ?? []).filter((w) => w.from !== week.from), week] },
-          notes: [reentryNote(week)],
+          notes: [reentryNote(week, advice.reentryForgeDays)],
         }),
         {
           eyebrow: 'Rustiger instap',

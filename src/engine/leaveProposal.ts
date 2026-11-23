@@ -21,7 +21,7 @@ import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 import { makeId } from '../utils/id';
-import { LEAVE_KIND_LABEL, LEAVE_KIND_SHORT, dayCount, describePeriodCompact, describePeriodDates, leaveDays, leaveLabelOn, sortPeriods } from './leave';
+import { LEAVE_KIND_LABEL, LEAVE_KIND_SHORT, dayCount, describePeriodCompact, describePeriodDates, leaveDays, leaveLabelOn, pastLeaveLine, sortPeriods } from './leave';
 import { trekLightDaysBefore } from './trekTaper';
 import { planPass, type PlanPassContext } from './planPass';
 import { fixedInLeave, fixedKeptInNoGym, fixedLeaveNote, fixedNoGymNote } from './fixedSports';
@@ -254,6 +254,10 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   // A fixed appointment of a sport (engine/fixedSports.ts) in a holiday or on a tocht lapses, the advice: say
   // which, so it is never silent. In a period without a gym it stays, and the proposal says that too.
   if (mode === 'add') {
+    // Achteraf vastgelegd of verlengd (I-124): voor dagen die voorbij zijn verplaatst het voorstel niets, het zegt
+    // alleen welke dagen nu als weg tellen.
+    const past = pastLeaveLine(period, today, replaces);
+    if (past) notes.unshift(past);
     const fixedSports = input.context(periodsAfter).fixedSports ?? undefined;
     for (const item of fixedInLeave(input.today, period.endDate, fixedSports, [period])) notes.push(fixedLeaveNote(item));
     // Without a gym it stays: say which, so it is never silent (and a stricter period on the same day wins).

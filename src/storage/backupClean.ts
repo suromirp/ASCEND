@@ -2,6 +2,7 @@
 // de opslag bereikt.
 
 import { isReentryWeek } from '../engine/reentry';
+import { LEAVE_BACKFILL_CHOICES } from '../engine/leave';
 import { cleanCardOrder } from '../engine/cardOrder';
 import type { PlannedSession } from '../models/training';
 import type { WeeklyHealthCheck } from '../models/checkIn';
@@ -452,6 +453,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   }
   if ('leaveAround' in s && s.leaveAround !== 'wide' && s.leaveAround !== 'little') {
     delete s.leaveAround;
+    skipped.n++;
+  }
+  // Periode achteraf vastleggen: alleen een bekende keuze, anders het advies.
+  if ('leaveBackfill' in s && !LEAVE_BACKFILL_CHOICES.some((c) => c === s.leaveBackfill)) {
+    delete s.leaveBackfill;
     skipped.n++;
   }
   // Kracht zonder sportschool: eigen gewicht of laten vervallen, of niet aanwezig (het advies).

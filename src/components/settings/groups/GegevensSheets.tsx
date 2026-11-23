@@ -12,6 +12,7 @@ import { webBackupFileAdapter } from '../../../storage/backupFileAdapter';
 import { chooseBackupFolder } from '../../../storage/autoBackup';
 import type { PreImportSnapshot } from '../../../storage/backupTypes';
 import { checkForUpdate } from '../../../utils/appUpdate';
+import { bootFailureNote } from '../../../storage/bootFailures';
 import { buildLabel } from '../../../utils/buildLabel';
 import { formatDateNL, localDateOf, localTimeOf, todayISO } from '../../../utils/dates';
 import { BaselineEvidenceCard } from '../../BaselineEvidenceCard';
@@ -242,6 +243,17 @@ export function SnapshotsSheet({ onChanged, onClose }: { onChanged: () => void; 
 export function VersionSheet({ onClose }: { onClose: () => void }) {
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  // Een herstelstap die bij het openen faalt, geteld over de starts heen (I-35). Alleen als er een is.
+  const [bootNote, setBootNote] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    void bootFailureNote().then((note) => {
+      if (live) setBootNote(note);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
   async function check() {
     setChecking(true);
     const r = await checkForUpdate();
@@ -260,6 +272,7 @@ export function VersionSheet({ onClose }: { onClose: () => void }) {
         <button type="button" className="st-btn" disabled={checking} onClick={() => void check()}>{checking ? 'Zoeken' : 'Zoeken naar update'}</button>
       </div>
       {result && <p className="st-hint" style={{ marginLeft: 0 }} role="status">{result}</p>}
+      {bootNote && <p className="st-hint warn" style={{ marginLeft: 0 }} role="status">{bootNote}</p>}
     </Sheet>
   );
 }

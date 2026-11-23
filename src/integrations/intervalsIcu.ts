@@ -513,30 +513,69 @@ export function mapIntervalsWellness(raw: unknown): RecoveryMetric[] {
 
 // --- the request ----------------------------------------------------------------
 
-const TIMEOUT_MS = 15_000;
+// De grens in tijd van een aanroep (besluit 2026-11-23-opslag-twee-tabbladen-en-grens.md, I-35). De kop moet
+// binnen WAIT_MS komen; daarna mag elk stuk van de inhoud tot WAIT_MS op zich laten wachten, zodat een groot
+// antwoord over een trage maar levende lijn nog binnenkomt. De hele aanroep duurt nooit langer dan TOTAL_MS,
+// ook niet als er steeds een druppel komt. Was eerder één grens van 15 s voor kop en inhoud samen
+// (2026-11-14-opstarten-en-intervals-grens.md); een lange activiteit over een trage lijn haalde die niet.
+export const INTERVALS_WAIT_MS = 15_000;
+export const INTERVALS_TOTAL_MS = 120_000;
 
 export interface FetchOptions {
   fetchImpl?: typeof fetch;
 }
 
-// One request under one limit in time (TIMEOUT_MS), from the first byte sent to the last byte of the body
-// read. The limit used to stop at the headers; a body that stalled then left the call hanging, and the
-// background steps in state/boot.ts with it. Past the limit the request is aborted and the caller reads the
-// same sentence as for any other time-out (docs/beslissingen/2026-11-14-opstarten-en-intervals-grens.md).
-async function withinLimit<T>(work: (signal: AbortSignal) => Promise<T>): Promise<T> {
+// `alive` zegt dat er net iets binnenkwam: de klok van WAIT_MS begint opnieuw. Gaat een klok af, dan wordt het
+// verzoek afgebroken en leest de aanroeper dezelfde zin als bij elke time-out. De grens wacht niet op het
+// afbreken: een leesactie die er niet naar luistert hangt ook niet.
+async function withinLimit<T>(work: (signal: AbortSignal, alive: () => void) => Promise<T>): Promise<T> {
   const controller = new AbortController();
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  let idle: ReturnType<typeof setTimeout> | undefined;
+  let over = false;
+  let fire: () => void = () => undefined;
   const limit = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      // Reject first: the abort makes the work fail too, and the time-out is the answer that counts.
+    fire = () => {
+      if (over) return;
+      over = true;
+      // Eerst afwijzen: het afbreken laat het werk ook mislukken, en de time-out is het antwoord dat telt.
       reject(new IntervalsError('network', MESSAGES.network));
       controller.abort();
-    }, TIMEOUT_MS);
+    };
   });
+  const alive = () => {
+    if (over) return;
+    clearTimeout(idle);
+    idle = setTimeout(fire, INTERVALS_WAIT_MS);
+  };
+  alive();
+  const total = setTimeout(fire, INTERVALS_TOTAL_MS);
   try {
-    return await Promise.race([work(controller.signal), limit]);
+    return await Promise.race([work(controller.signal, alive), limit]);
   } finally {
-    clearTimeout(timer);
+    over = true;
+    clearTimeout(idle);
+    clearTimeout(total);
+  }
+}
+
+// De inhoud als tekst, stuk voor stuk gelezen zodat elk stuk de klok verlengt. Een antwoord zonder leesbare
+// stroom (een nagemaakt antwoord in een test) wordt in één keer gelezen, onder dezelfde klok. Een fout tijdens
+// het lezen is een onbegrepen antwoord, zoals het was.
+async function readBody(response: Response, alive: () => void): Promise<string> {
+  const reader = response.body && typeof response.body.getReader === 'function' ? response.body.getReader() : undefined;
+  try {
+    if (!reader) return await response.text();
+    const decoder = new TextDecoder();
+    let text = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      alive();
+      text += decoder.decode(value, { stream: true });
+    }
+    return text + decoder.decode();
+  } catch {
+    throw new IntervalsError('response', MESSAGES.response);
   }
 }
 
@@ -545,7 +584,7 @@ async function withinLimit<T>(work: (signal: AbortSignal) => Promise<T>): Promis
 async function getJson(connection: IntervalsConnection, urlFor: (athleteId: string) => string, options: FetchOptions): Promise<unknown> {
   const { athleteId, apiKey } = normalizeConnection(connection);
   const doFetch = options.fetchImpl ?? fetch;
-  return withinLimit(async (signal) => {
+  return withinLimit(async (signal, alive) => {
     let response: Response;
     try {
       response = await doFetch(urlFor(athleteId), {
@@ -564,8 +603,11 @@ async function getJson(connection: IntervalsConnection, urlFor: (athleteId: stri
     if (response.status >= 500) throw new IntervalsError('server', MESSAGES.server);
     if (!response.ok) throw new IntervalsError('response', MESSAGES.response);
 
+    // De kop is er: vanaf nu telt de klok per stuk inhoud.
+    alive();
+    const text = await readBody(response, alive);
     try {
-      return (await response.json()) as unknown;
+      return JSON.parse(text) as unknown;
     } catch {
       throw new IntervalsError('response', MESSAGES.response);
     }
@@ -707,7 +749,7 @@ export function mapRunHrBasis(raw: unknown): IntervalsHrBasis {
   return { lthr: plainHr(pick.lthr, 100, 220), maxHr: plainHr(pick.max_hr, 120, 230) };
 }
 
-// One request, limited in time like every other (TIMEOUT_MS). Throws an
+// One request, limited in time like every other (INTERVALS_WAIT_MS, INTERVALS_TOTAL_MS). Throws an
 // IntervalsError; the caller decides what to do without it.
 export async function fetchRunHeartRateBasis(connection: IntervalsConnection, options: FetchOptions = {}): Promise<IntervalsHrBasis> {
   return mapRunHrBasis(await getJson(connection, sportSettingsUrl, options));
@@ -799,7 +841,7 @@ async function writeRequest(
 ): Promise<{ status: number; body: unknown }> {
   const { apiKey } = normalizeConnection(connection);
   const doFetch = options.fetchImpl ?? fetch;
-  return withinLimit(async (signal) => {
+  return withinLimit(async (signal, alive) => {
     let response: Response;
     try {
       response = await doFetch(url, {
@@ -821,9 +863,10 @@ async function writeRequest(
     if (response.status >= 500) throw new IntervalsError('server', MESSAGES.server);
     if (response.status === 400 || response.status === 422) throw new IntervalsError('rejected', MESSAGES.rejected);
     if (!response.ok) throw new IntervalsError('response', MESSAGES.response);
+    alive();
+    const text = await readBody(response, alive);
     let parsed: unknown;
     try {
-      const text = await response.text();
       parsed = text ? (JSON.parse(text) as unknown) : undefined;
     } catch {
       throw new IntervalsError('response', MESSAGES.response);
