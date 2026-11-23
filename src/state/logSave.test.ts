@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PlannedSessionsRepo, SessionLogsRepo, wipeAllData } from '../storage/database';
 import { runLogSession, LogNotSaved, type LogSessionDeps, type LogSessionOpts } from './logSession';
-import { autoTickLog, cardAfterSave, closeClearsDraft, failedNote, formAfterSave, logOrAlready, reportIfGone, resetFailedNotes, saveLogThenChoice, saveLogWithin, saveOnCard, saveOnLogger, formNoteText, loggerNote, loggerShowsClose, tickOff, STILL_RUNNING_HELP, type TickOffNotice, settleWithOwnNotice, thrownSaveNote, ChoiceNotSaved, CHOICE_NOT_SAVED, ALREADY_LOGGED_NOTE, FORM_SAVE_NOTE, LOG_SAVE_NOTE, LOG_STILL_RUNNING_NOTE, type CardSaveUi, type LoggerSaveUi, type LogSaveResult, type ShownSaveNote } from './logSave';
-import { forgeFinishNote } from '../components/forge/forgeFinishLog';
-import { HOW_TEXT } from '../components/logForm/howDidItGo';
+import { autoTickLog, cardAfterSave, closeClearsDraft, failedNote, formAfterSave, logOrAlready, reportIfGone, resetFailedNotes, saveLogThenChoice, saveLogWithin, saveOnCard, saveOnLogger, formNoteText, loggerNote, loggerShowsClose, tickOff, STILL_RUNNING_HELP, type TickOffNotice, settleWithOwnNotice, thrownSaveNote, ChoiceNotSaved, CHOICE_NOT_SAVED, ALREADY_LOGGED_NOTE, FORM_SAVE_NOTE, LOG_SAVE_NOTE, LOG_STILL_RUNNING_NOTE, type CardSaveUi, type LoggerSaveUi, type LogSaveResult, type ShownSaveNote, waitForEarlierSave } from './logSave';
+import { forgeAfterEarlier, forgeExitLabel, forgeFinishNote } from '../components/forge/forgeFinishLog';
+import { afterEarlierSave, HOW_TEXT } from '../components/logForm/howDidItGo';
 import { TimeoutError } from '../utils/withTimeout';
 import { describeWriteError, TICK_OFF_STILL_RUNNING } from '../storage/storageError';
 import type { LogSessionInput } from './appDataTypes';
@@ -475,7 +475,14 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     expect(FORM_SAVE_NOTE.slowLoose).not.toMatch(/ASCEND|de app/);
     expect(FORM_SAVE_NOTE.slowLoose.length).toBeLessThanOrEqual(110);
     expect(HOW_TEXT.slowLoose).toBe(FORM_SAVE_NOTE.slowLoose);
-    expect(howSrc).toMatch(/: still \|\| loose \? HOW_TEXT\.slowLoose : HOW_TEXT\.slow\}/);
+    expect(howSrc).toMatch(/: still \? HOW_TEXT\.stillWaiting : waited \? HOW_TEXT\.waited : loose \? HOW_TEXT\.slowLoose : HOW_TEXT\.slow\}/);
+    // Een eerdere poging loopt nog (I-135): zelfde begin, geen advies om de app af te sluiten, kort genoeg op 360 px.
+    for (const text of [HOW_TEXT.stillWaiting, HOW_TEXT.waited]) {
+      expect(text.startsWith('Opslaan duurt langer dan verwacht.')).toBe(true);
+      expect(text).not.toMatch(/ASCEND|de app/);
+      expect(text).toMatch(/je invulling blijft bewaard/i);
+    }
+    expect(HOW_TEXT.stillWaiting.length).toBeLessThanOrEqual(110);
     expect(HOW_TEXT.slow).toBe(FORM_SAVE_NOTE.slow);
     expect(HOW_TEXT.failed).toBe(FORM_SAVE_NOTE.failed);
     expect(HOW_TEXT.failedLoose).toBe(FORM_SAVE_NOTE.failedLoose);
@@ -490,7 +497,8 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     // Vanaf het begin van het sluiten (onLeave van useSheetClose) telt het blad niet meer als in beeld.
     expect(howSrc).toMatch(/reportIfGone\(!leavingRef\.current && !closedRef\.current && !goneRef\.current, writeError, reportStorageError\);[\s\S]*?setFailedText\(failedNote\(/);
     expect(howSrc).toMatch(/\}, 200, canClose, \(\) => \{ leavingRef\.current = true; \}\);/);
-    expect(howSrc.match(/failedNote\(/g)).toHaveLength(1);
+    // Twee keer: mislukt bij Opslaan, en mislukt na het wachten op een eerdere poging (I-135).
+    expect(howSrc.match(/failedNote\(/g)).toHaveLength(2);
     // De sportvraag: vanaf het begin van het sluiten niet meer in beeld (I-32).
     expect(sportSrc.match(/SAVE_TIMEOUT_MS, \(err, late\) => reportIfGone\(!late && alive\.current && !leaving\.current, err, reportStorageError\)\);/g)).toHaveLength(2);
     expect(sportSrc.match(/onLeave=\{\(\) => \{ leaving\.current = true; \}\}/g)).toHaveLength(2);
@@ -767,8 +775,10 @@ describe('Forge afronden: een van de twee, het blad of de melding bovenin', () =
 
   it('de zinnen: alleen mislukt is amber, en het begin is dat van elk scherm', () => {
     expect(forgeFinishNote('slow')).toEqual({ text: 'Opslaan duurt langer dan verwacht. Je sets blijven bewaard; probeer het zo nog eens.', warn: false });
-    expect(forgeFinishNote('stillRunning').text).toMatch(/^Opslaan duurt langer dan verwacht\. Je sets blijven bewaard\. Kijk in je logboek/);
-    expect(forgeFinishNote('stillRunning').warn).toBe(false);
+    // Dezelfde woorden als Hoe ging het? bij een poging die nog loopt, zonder "sluit de app" (I-135).
+    expect(forgeFinishNote('stillRunning')).toEqual({ text: HOW_TEXT.stillWaiting, warn: false });
+    expect(forgeFinishNote('waited')).toEqual({ text: HOW_TEXT.waited, warn: false });
+    expect(forgeFinishNote('stillRunning').text).not.toMatch(/sluit de app/i);
     expect(forgeFinishNote('already').warn).toBe(false);
   });
 });
@@ -1095,5 +1105,74 @@ describe('loggerShowsClose: Sluiten onderaan het oude trainingsscherm', () => {
     });
     expect(drafts).toBe(1);
     expect(closes).toEqual([false]);
+  });
+});
+
+describe('waitForEarlierSave: Opslaan weer aan zodra de eerdere poging klaar is of faalt (I-135)', () => {
+  function heldAdd() {
+    const real = SessionLogsRepo.add.bind(SessionLogsRepo);
+    let go!: (fail?: Error) => void;
+    const hold = new Promise<Error | undefined>((resolve) => (go = resolve));
+    vi.spyOn(SessionLogsRepo, 'add').mockImplementation(async (log) => { const fail = await hold; if (fail) throw fail; return real(log); });
+    return go;
+  }
+
+  it('de eerdere poging lukt: stored, en het blad toont de zin van al gedaan', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const go = heldAdd();
+    const logSession = makeLogSession();
+    const first = logSession(forPlanned, { onWriteError: () => undefined });
+    expect(await logSession({ ...forPlanned, durationMinutes: 50 }, { onWriteError: () => undefined })).toBe(false);
+    const waiting = waitForEarlierSave(forPlanned, 1000);
+    go();
+    expect(await waiting).toBe('stored');
+    expect(await first).toBe(true);
+    expect(afterEarlierSave('stored')).toBe('already');
+    expect(forgeAfterEarlier('stored')).toBe('already');
+  });
+
+  it('de eerdere poging faalt: free, Opslaan weer aan met de zin van mislukt', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const go = heldAdd();
+    const logSession = makeLogSession();
+    const first = logSession(forPlanned, { onWriteError: () => undefined });
+    const waiting = waitForEarlierSave(forPlanned, 1000);
+    go(new Error('kapot'));
+    expect(await waiting).toBe('free');
+    expect(await first).toBe(false);
+    expect(afterEarlierSave('free')).toBe('failed');
+    expect(forgeAfterEarlier('free')).toBe('failed');
+    vi.restoreAllMocks();
+    expect(await logSession(forPlanned, { onWriteError: () => undefined })).toBe(true);
+  });
+
+  it('de eerdere poging antwoordt niet binnen de grens: slow, Opslaan weer aan met Sluiten als uitweg', async () => {
+    await PlannedSessionsRepo.put(planned);
+    const go = heldAdd();
+    const logSession = makeLogSession();
+    const first = logSession(forPlanned, { onWriteError: () => undefined });
+    expect(await waitForEarlierSave(forPlanned, 20)).toBe('slow');
+    expect(afterEarlierSave('slow')).toBe('waited');
+    expect(forgeAfterEarlier('slow')).toBe('waited');
+    expect(forgeExitLabel('waited')).toBe('Sluiten');
+    go();
+    expect(await first).toBe(true);
+  });
+
+  it('niets meer onderweg: meteen kijken in de opslag; een losse training is onbekend', async () => {
+    await PlannedSessionsRepo.put(planned);
+    expect(await waitForEarlierSave(forPlanned, 1000)).toBe('free');
+    expect(await waitForEarlierSave({}, 1000)).toBe('unknown');
+    expect(forgeAfterEarlier('unknown')).toBe('waited');
+  });
+
+  it('Forge heeft één uitweg met de woorden van Hoe ging het?', () => {
+    expect(forgeExitLabel('stillRunning')).toBe(HOW_TEXT.close);
+    expect(forgeExitLabel('slow')).toBe(HOW_TEXT.close);
+    expect(forgeExitLabel('failed')).toBe(HOW_TEXT.cancel);
+    expect(forgeExitLabel(undefined)).toBe(HOW_TEXT.cancel);
+    expect(finishSrc).toContain('{forgeExitLabel(outcomeKind)}');
+    expect(finishSrc).toContain('disabled={saving || waiting || tooShort}');
+    expect(finishSrc).not.toContain('>Annuleren<');
   });
 });

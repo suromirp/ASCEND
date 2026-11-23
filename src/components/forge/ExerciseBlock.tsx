@@ -44,8 +44,9 @@ import { SET_BANDS, type SetBand } from '../../models/training';
 import type { BlockActions } from './forgeWorkoutHelpers';
 import { mutedWarmup, warmAlreadyLine } from '../../engine/warmupLater';
 
-// Een uitleg onder de kop langer dan dit staat op één regel met "Waarom zo", dat het blad Oefening opent; daar
-// staat de hele reden bovenaan (docs/beslissingen/2026-11-02-forge-herinrichting.md).
+// Een uitleg onder de kop langer dan dit krijgt "Waarom zo" erbij, dat het blad Oefening opent; daar staat de hele
+// reden bovenaan (docs/beslissingen/2026-11-02-forge-herinrichting.md). De zin zelf breekt af op meerdere regels en
+// wordt nooit afgekapt: op 360 px viel anders het eind weg (I-135).
 const REASON_SHORT = 100;
 
 export const ExerciseBlock = memo(function ExerciseBlock({
@@ -246,7 +247,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
           )}
           {ex.reason && !(raiseLine && reasonText === raiseLine) && (
             <div className="mt-1.5 flex items-center gap-2 border-l-2 pl-2" style={{ borderColor: 'var(--color-sage)' }}>
-              <p className={`min-w-0 flex-1 text-xs leading-snug ${reasonText.length <= REASON_SHORT ? '' : 'truncate'}`} style={{ color: 'var(--color-ink-dim)' }}>{reasonText}</p>
+              <p className="min-w-0 flex-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{reasonText}</p>
               {reasonText.length > REASON_SHORT && (
                 <button type="button" data-sheet-from onClick={() => act.menu(ex.slot)} className="flex min-h-[44px] shrink-0 items-center text-xs" style={{ color: 'var(--color-action)' }}>
                   Waarom zo

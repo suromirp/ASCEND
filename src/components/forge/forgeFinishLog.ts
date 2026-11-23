@@ -9,7 +9,7 @@ import type { ForgeEvent } from '../../engine/forgeLog';
 import type { SessionTemplate, SessionVariant } from '../../models/training';
 import type { LogSessionInput } from '../../state/AppDataContext';
 import type { FinishExtra } from './FinishSheet';
-import { failedNote, STILL_RUNNING_HELP } from '../../state/logSave';
+import { failedNote, STILL_WAITED_NOTE, STILL_WAITING_NOTE, type EarlierSaveOutcome } from '../../state/logSave';
 
 export function forgeLogInput({ template, variant, extra, workout, readOnly, plannedSessionId, plannedStill, gymProfileId, forgeLog, now = Date.now() }: {
   template: SessionTemplate;
@@ -55,9 +55,25 @@ export function forgeLogInput({ template, variant, extra, workout, readOnly, pla
 // op rij komt de reden erachter (failedNote), want de melding bovenin blijft hier weg.
 export interface ForgeFinishNote { text: string; warn: boolean }
 
-export function forgeFinishNote(kind: 'already' | 'slow' | 'failed' | 'stillRunning'): ForgeFinishNote {
+// `stillRunning` en `waited` hebben de woorden van het blad Hoe ging het? (state/logSave.ts): een eerdere poging
+// loopt nog, Opslaan staat uit en Sluiten is de uitweg; `waited` als die poging na de grens nog niet antwoordde.
+export type ForgeFinishNoteKind = 'already' | 'slow' | 'failed' | 'stillRunning' | 'waited';
+
+export function forgeFinishNote(kind: ForgeFinishNoteKind): ForgeFinishNote {
   if (kind === 'already') return { text: 'Deze training staat al in je logboek. Er is niets dubbel opgeslagen.', warn: false };
   if (kind === 'slow') return { text: 'Opslaan duurt langer dan verwacht. Je sets blijven bewaard; probeer het zo nog eens.', warn: false };
-  if (kind === 'stillRunning') return { text: `Opslaan duurt langer dan verwacht. Je sets blijven bewaard. ${STILL_RUNNING_HELP}`, warn: false };
+  if (kind === 'stillRunning') return { text: STILL_WAITING_NOTE, warn: false };
+  if (kind === 'waited') return { text: STILL_WAITED_NOTE, warn: false };
   return { text: failedNote('Opslaan lukte niet. Je sets blijven bewaard; probeer het zo nog eens.'), warn: true };
+}
+
+// Na `stillRunning` wacht het blad op de eerdere poging (state/logSave.ts#waitForEarlierSave) en zegt dan hoe die
+// afliep: het log staat er, er staat niets (opnieuw kan), of de poging loopt na de grens nog (Opslaan weer aan).
+export function forgeAfterEarlier(outcome: EarlierSaveOutcome): ForgeFinishNoteKind {
+  return outcome === 'stored' ? 'already' : outcome === 'free' ? 'failed' : 'waited';
+}
+
+// Eén uitweg zolang er een opslag loopt, met het woord van Hoe ging het?: Sluiten. Je sets blijven bewaard.
+export function forgeExitLabel(kind: ForgeFinishNoteKind | undefined): 'Sluiten' | 'Annuleren' {
+  return kind === 'slow' || kind === 'stillRunning' || kind === 'waited' ? 'Sluiten' : 'Annuleren';
 }

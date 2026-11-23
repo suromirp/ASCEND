@@ -27,8 +27,8 @@ import { blocksSave } from './logForm/manualLog';
 import type { EnabledSports } from '../engine/sports';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, PlaceChoice, RpeField, VariantField } from './logForm/LogFormParts';
 import { chosenPlaceLabel, placeLabel, SheetMode, showsPlace } from './logForm/formRules';
-import { failedNote, logOrAlready, reportIfGone } from '../state/logSave';
-import { alreadyLogged, clearsDraft, footState, HOW_TEXT, submitLog, type CloseWay, type FootState } from './logForm/howDidItGo';
+import { failedNote, logOrAlready, reportIfGone, waitForEarlierSave } from '../state/logSave';
+import { afterEarlierSave, alreadyLogged, clearsDraft, footState, HOW_TEXT, submitLog, type CloseWay, type FootState } from './logForm/howDidItGo';
 
 export function HowDidItGoSheet({
   template,
@@ -87,6 +87,8 @@ export function HowDidItGoSheet({
   const [failed, setFailed] = useState(false);
   // Een eerdere poging voor deze training loopt nog (loggingInFlight): geen mislukt, wel dezelfde wachtzin en Sluiten.
   const [still, setStill] = useState(false);
+  // Na "loopt nog" antwoordde de eerdere poging niet binnen de grens: Opslaan weer aan, met de zin daarvoor.
+  const [waited, setWaited] = useState(false);
   // De zin bij mislukt, vastgelegd op het moment van de uitkomst.
   const [failedText, setFailedText] = useState<string>();
   const [otherOpen, setOtherOpen] = useState(false);
@@ -110,6 +112,7 @@ export function HowDidItGoSheet({
     setConfirmLong(false);
     setFailed(false);
     setStill(false);
+    setWaited(false);
     setSaving(true);
     let writeError: unknown;
     await submitLog({
@@ -125,7 +128,22 @@ export function HowDidItGoSheet({
       onFailed: () => {
         reportIfGone(!leavingRef.current && !closedRef.current && !goneRef.current, writeError, reportStorageError);
         // Nee zonder schrijffout bij een geplande training: de eerste poging houdt hem vast, dus geen mislukt.
-        if (writeError === undefined && plannedSessionId) { setStill(true); return; }
+        // Opslaan blijft uit tot die poging klaar is of faalt, hoogstens EARLIER_SAVE_LIMIT_MS; dan een zichtbare uitkomst.
+        if (writeError === undefined && plannedSessionId) {
+          setStill(true);
+          void waitForEarlierSave({ plannedSessionId }).then((after) => {
+            if (closedRef.current || goneRef.current) return;
+            setStill(false);
+            const next = afterEarlierSave(after);
+            if (next === 'already') setAlreadyNow(true);
+            else if (next === 'waited') setWaited(true);
+            else {
+              setFailedText(failedNote(HOW_TEXT.failed));
+              setFailed(true);
+            }
+          });
+          return;
+        }
         setFailedText(failedNote(plannedSessionId ? HOW_TEXT.failed : HOW_TEXT.failedLoose));
         setFailed(true);
       },
@@ -140,7 +158,7 @@ export function HowDidItGoSheet({
   const day = values.doneOn === form.today ? 'Vandaag' : `${weekdayShortNL(values.doneOn)} ${formatDateNL(values.doneOn)}`;
   const place = showsPlace(form, template) ? chosenPlaceLabel(template, values.modalityKey, settings.enabledSports) : undefined;
   const dayLine = [day, place].filter(Boolean).join(' · ');
-  const footer = <SheetFoot state={foot} saving={saving} slow={slow} failed={failed} still={still} failedText={failedText} loose={!plannedSessionId} rest={shape.isRest} blocked={blocked} minutes={entryMinutes(values.duration)} onClose={closeAs(foot === 'already' ? 'already' : slow || still ? 'cross' : 'cancel')} onAdjust={() => { setConfirmLong(false); setStep(1); }} onSave={(confirmed) => void save(confirmed)} />;
+  const footer = <SheetFoot state={foot} saving={saving} slow={slow} failed={failed} still={still} waited={waited} failedText={failedText} loose={!plannedSessionId} rest={shape.isRest} blocked={blocked} minutes={entryMinutes(values.duration)} onClose={closeAs(foot === 'already' ? 'already' : slow || still || waited ? 'cross' : 'cancel')} onAdjust={() => { setConfirmLong(false); setStep(1); }} onSave={(confirmed) => void save(confirmed)} />;
 
   if (step === 2) {
     return (
@@ -216,8 +234,8 @@ export function StepTwo({ form, template, scheduledDate, enabledSports, otherOpe
 
 // Onderaan: al gedaan (alleen Sluiten), Klopt dit? bij een heel lange duur, of Annuleren en Opslaan met
 // wat het opslaan zegt (duurt lang, lukte niet).
-export function SheetFoot({ state, saving, slow, failed, still = false, failedText, loose = false, rest, blocked = false, minutes, onClose, onAdjust, onSave }: {
-  state: FootState; saving: boolean; slow: boolean; failed: boolean; still?: boolean; failedText?: string; loose?: boolean; rest: boolean; blocked?: boolean; minutes: number; onClose: () => void; onAdjust: () => void; onSave: (confirmed: boolean) => void;
+export function SheetFoot({ state, saving, slow, failed, still = false, waited = false, failedText, loose = false, rest, blocked = false, minutes, onClose, onAdjust, onSave }: {
+  state: FootState; saving: boolean; slow: boolean; failed: boolean; still?: boolean; waited?: boolean; failedText?: string; loose?: boolean; rest: boolean; blocked?: boolean; minutes: number; onClose: () => void; onAdjust: () => void; onSave: (confirmed: boolean) => void;
 }) {
   if (state === 'already') {
     return (
@@ -241,11 +259,11 @@ export function SheetFoot({ state, saving, slow, failed, still = false, failedTe
   }
   return (
     <div>
-      {(slow || failed || still) && (
-        <p role="status" className="mb-2 text-xs leading-snug" style={{ color: failed ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{failed ? failedText ?? (loose ? HOW_TEXT.failedLoose : HOW_TEXT.failed) : still || loose ? HOW_TEXT.slowLoose : HOW_TEXT.slow}</p>
+      {(slow || failed || still || waited) && (
+        <p role="status" className="mb-2 text-xs leading-snug" style={{ color: failed ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{failed ? failedText ?? (loose ? HOW_TEXT.failedLoose : HOW_TEXT.failed) : still ? HOW_TEXT.stillWaiting : waited ? HOW_TEXT.waited : loose ? HOW_TEXT.slowLoose : HOW_TEXT.slow}</p>
       )}
       <div className="flex gap-3">
-        <SecondaryButton onClick={onClose} disabled={saving && !slow} className="min-w-[112px] flex-none px-4">{slow || still ? HOW_TEXT.close : HOW_TEXT.cancel}</SecondaryButton>
+        <SecondaryButton onClick={onClose} disabled={saving && !slow} className="min-w-[112px] flex-none px-4">{slow || still || waited ? HOW_TEXT.close : HOW_TEXT.cancel}</SecondaryButton>
         <PrimaryButton onClick={() => onSave(false)} disabled={saving || blocked || still}>{saving ? HOW_TEXT.saving : rest ? HOW_TEXT.rest : HOW_TEXT.save}</PrimaryButton>
       </div>
     </div>
