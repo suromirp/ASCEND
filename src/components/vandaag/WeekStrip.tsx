@@ -1,8 +1,6 @@
-import type { Program } from '../../models/program';
-import type { PlannedSession, SessionLog, SessionTemplate } from '../../models/training';
-import { resolveEffectiveFullDuration } from '../../engine/substitutions';
-import { weekDates, weekdayLongNL } from '../../utils/dates';
-import { stripSessionsByDay } from '../../engine/weekLogs';
+import type { SessionLog } from '../../models/training';
+import { weekdayLongNL } from '../../utils/dates';
+import type { WeekPlan } from '../../engine/dayPlan';
 import { Icon } from '../icons';
 import { Pictogram, type PictogramName } from '../pictograms';
 import { LightCard } from '../ui';
@@ -14,7 +12,8 @@ import { lookOfLog } from '../logbook/sportLook';
 // hetzelfde pictogram met een klein mint vinkje, zodat je in één oogopslag ziet
 // wat al af is. Een rustdag is een poppetje dat ontspant (gedempt), een vrije dag
 // een streepje, en vandaag staat de letter in een ijsblauwe bol. Twee trainingen
-// op één dag staan kleiner onder elkaar (het pictogram van de langste bovenaan).
+// op één dag staan kleiner onder elkaar, in de volgorde van Vandaag en Week. Wat er per dag
+// staat komt uit het dagbeeld (engine/dayPlan.ts#weekPlan), dezelfde afleiding als Vandaag en Week.
 // De sportkleuren zijn hier de donkere varianten op licht: de strook staat in een
 // LightCard, dus `.on-light` zet ze om.
 
@@ -47,21 +46,13 @@ function DayGlyph({ icon, done, small }: { icon: PictogramName; done: boolean; s
 }
 
 export function WeekStrip({
-  weekStart,
-  sessions,
-  logs,
-  templateById,
-  program,
+  plan,
   today,
   plain = false,
   loose = [],
 }: {
-  weekStart: string;
-  // Het hele plan of de week met de weken ernaast: een gedane training staat op de dag van uitvoeren.
-  sessions: PlannedSession[];
-  logs: SessionLog[];
-  templateById: Map<string, SessionTemplate>;
-  program?: Program | null;
+  // Het dagbeeld van de week, met een gedane training op de dag van uitvoeren (engine/dayPlan.ts).
+  plan: WeekPlan;
   today: string;
   // Donker in een blad (de weekterugblik): zonder lichte kaart eromheen, en een dag die voorbij is zonder
   // gedaan te zijn staat gedempt, zonder rood en zonder kruis.
@@ -70,30 +61,17 @@ export function WeekStrip({
   loose?: SessionLog[];
 }) {
   const Wrap = plain ? 'div' : LightCard;
-  const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
-  // Een gedane training staat op de dag van uitvoeren, ook uit een andere week (I-58).
-  const byDay = stripSessionsByDay(sessions, logs, weekStart);
   return (
     <Wrap>
       <ol className="grid grid-cols-7 gap-1" aria-label="Je week">
-        {weekDates(weekStart).map((date) => {
+        {plan.days.map(({ date, strip: training, stripRest: rest }) => {
           const letter = weekdayLongNL(date).charAt(0).toUpperCase();
-          const day = (byDay.get(date) ?? [])
-            .filter((s) => !(s.status === 'skipped' && (templateById.get(s.templateId)?.type === 'recovery' || s.leave?.role === 'dropped')))
-            .flatMap((s) => {
-              const template = templateById.get(s.templateId);
-              return template ? [{ s, template }] : [];
-            });
-          const training = day
-            .filter((d) => d.template.type !== 'recovery' && d.s.status !== 'skipped')
-            .map((d) => ({ ...d, minutes: resolveEffectiveFullDuration(d.template, date, program), done: logged.has(d.s.id) }))
-            .sort((a, b) => b.minutes - a.minutes);
-          const rest = training.length === 0 && day.some((d) => d.template.type === 'recovery' && d.s.status !== 'skipped');
           const isToday = date === today;
           const shown = training.slice(0, MAX_PER_DAY);
           const state = (done: boolean) => (done ? 'gedaan' : date < today ? 'niet gedaan' : 'gepland');
+          // Gedaan op een andere dag dan gepland: de balk zegt de geplande dag, Week de dag van uitvoeren.
           const what = training.length > 0
-            ? training.map((t) => `${t.template.name}, ${state(t.done)}`).join(' en ')
+            ? training.map((t) => `${t.template.name}${t.plannedOn ? ` van ${t.plannedOn}` : ''}, ${state(t.done)}`).join(' en ')
             : rest ? 'rustdag' : 'vrij';
           const label = weekdayLongNL(date);
           return (
@@ -101,7 +79,7 @@ export function WeekStrip({
               <div aria-hidden="true" className="flex h-10 flex-col items-center justify-center gap-[3px]">
                 {shown.length > 0 ? (
                   shown.map((t) => (
-                    <span key={t.s.id} className="flex" style={{ color: sportColor(t.template), opacity: plain && date < today && !t.done ? 0.4 : undefined }}>
+                    <span key={t.session.id} className="flex" style={{ color: sportColor(t.template), opacity: plain && date < today && !t.done ? 0.4 : undefined }}>
                       <DayGlyph icon={sportPictogram(t.template)} done={t.done} small={shown.length > 1} />
                     </span>
                   ))

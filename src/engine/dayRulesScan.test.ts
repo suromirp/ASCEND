@@ -26,7 +26,8 @@ const LEFT: Record<string, { calls: Partial<Record<typeof OLD[number], number>>;
   'components/useIllnessSign.ts': { calls: { activeIllness: 1 }, why: 'het teken dat je ziek gemeld bent' },
   'components/vandaag/yourDayRows.ts': { calls: { activeIllness: 1 }, why: 'geen weegherinnering terwijl je ziek bent' },
   'engine/widgetSummary.ts': { calls: { activeIllness: 1, leaveLabelOn: 2 }, why: 'de widget zegt dat je ziek bent en noemt de periode van vandaag' },
-  'pages/Today.tsx': { calls: { activeIllness: 1, recoveryRamp: 1, leaveLabelOn: 1 }, why: 'de missie volgt de melding (de toets zelf is dayRules, stap doen); de kaart Opbouw; het etiket van de periode van vandaag' },
+  'pages/Today.tsx': { calls: { activeIllness: 1, recoveryRamp: 1, leaveLabelOn: 1 }, why: 'de kaart Ziek boven de missie; de kaart Opbouw; het etiket van de periode van vandaag' },
+  'engine/dayPlan.ts': { calls: { activeIllness: 1 }, why: 'de missie volgt een lopende melding, zoals eerst op Vandaag (de toets zelf is dayRules, stap doen)' },
   'engine/missedTraining.ts': { calls: { activeIllness: 1, isTaperDay: 1 }, why: 'geen vragen tot je beter bent; de afbouw apart omdat een horlogelog nog gekoppeld mag worden' },
   'engine/eveningBefore.ts': { calls: { activeIllness: 1, isIllnessDay: 1, leaveDays: 1 }, why: 'de avond ervoor: rust uit, er valt niets klaar te leggen; de soort periode van morgen (vakantie, tocht) voor wat er klaar ligt' },
   // De ronde: sports.ts kan dayRules niet lezen (een kring van imports via illness.ts en scheduler.ts), het voorschrift

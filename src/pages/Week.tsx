@@ -1,4 +1,5 @@
 import { resolveIntensityCounting } from '../engine/intensitySettings';
+import { hiddenFromDay, weekPlan } from '../engine/dayPlan';
 import { useKeyFocus } from '../components/useKeyFocus';
 import { useMemo, useState } from 'react';
 import { WeekdayPatternLine } from '../components/WeekdayPatternLine';
@@ -116,7 +117,7 @@ export function WeekPage() {
   const restCard = [...restAdvice, ...restBackAdvice];
   const extraAdvice = advice.filter((a) => a.ruleId === 'EXTRA-SESSION' && a.proposal?.changes.some((c) => c.newSessionDraft?.weekStartDate === weekStart));
   // What a holiday or a trek let go of is explained by the band on those days: not listed, not counted.
-  const sessions = sessionsForWeek(weekStart).filter((s) => !(s.status === 'skipped' && (templateById.get(s.templateId)?.type === 'recovery' || s.leave?.role === 'dropped')));
+  const sessions = sessionsForWeek(weekStart).filter((s) => !hiddenFromDay(s, templateById));
   const position = program ? resolveProgramWeek(program, weekStart) : null;
   const caughtUp = useMemo(() => caughtUpMap(plannedSessions), [plannedSessions]);
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
@@ -135,6 +136,8 @@ export function WeekPage() {
 
   // De bergkam: belasting per dag van deze week en van de week ervoor (engine/weekProfile.ts).
   const today = todayISO();
+  // Het dagbeeld (engine/dayPlan.ts): de rijen per dag, dezelfde afleiding als Vandaag en de weekbalk.
+  const plan = useMemo(() => weekPlan({ weekStart, sessions: plannedSessions, logs: sessionLogs, templateById, today, illness: settings.illnessEpisodes }), [weekStart, plannedSessions, sessionLogs, templateById, today, settings.illnessEpisodes]);
   const profile = useMemo(() => {
     const minutesOf = (s: PlannedSession, t: SessionTemplate) => resolveVariantDuration(t, 'full', s.scheduledDate, program);
     return {
@@ -338,6 +341,7 @@ export function WeekPage() {
           <WeekPlanner
             weekStartDate={weekStart}
             sessions={sessions}
+            plan={plan}
             templateById={templateById}
             logs={sessionLogs}
             program={program}

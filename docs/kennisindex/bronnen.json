@@ -3406,6 +3406,14 @@
    "kern": "Naspelen van I-144 (rustdag na twaalf dagen niets): de gemelde vorm gaf op main al het voorstel, waarschijnlijk een bouw van voor I-124; de fix dicht het gat voor een periode die op T-8 of eerder eindigt. Oorzaak, fix en testnamen.",
    "stand": "achtergrond"
   },
+  "docs/onderhoud/2026-11-23-een-plan-dagbeeld.md": {
+   "onderwerpen": [
+    "week",
+    "planning"
+   ],
+   "kern": "Verslag van I-14 stap 5: het dagbeeld (engine/dayPlan.ts#weekPlan) voor Vandaag, Week en de weekbalk, de balk in de volgorde van Vandaag en met de geplande dag als woord. Keuzes, tests, controles en wat niet is nagegaan.",
+   "stand": "achtergrond"
+  },
   "docs/onderhoud/2026-11-23-een-plan-eerste-voorstel.md": {
    "onderwerpen": [
     "planning"

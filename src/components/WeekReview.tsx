@@ -21,6 +21,7 @@ import { useMountainMuscleProposal } from './useMountainMuscleProposal';
 import { reviewShowsMuscleProposal } from '../engine/mountainMuscles';
 import { useBackToClose } from '../utils/useBackToClose';
 import { WeekStrip } from './vandaag/WeekStrip';
+import { weekPlan } from '../engine/dayPlan';
 import { LogDetailSheet } from './LogDetailSheet';
 import type { SessionLog } from '../models/training';
 
@@ -103,7 +104,7 @@ const VIEW_TITLE: Record<Exclude<View, 'main'>, string> = { trainings: 'Je train
 
 export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
-  const { settings, plannedSessions, sessionLogs, templates, templateById, program } = useAppData();
+  const { settings, plannedSessions, sessionLogs, templates, templateById } = useAppData();
   const [view, setView] = useState<View>('main');
   // De terugknop van het toestel gaat eerst terug naar de hoofdweergave, daarna pas dicht.
   useBackToClose(view !== 'main', () => setView('main'));
@@ -147,7 +148,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
             {view === 'main' && (
               <>
                 <div className="mt-4 flex flex-col gap-3">
-                  <WeekStrip plain loose={looseLogsOfWeek(sessionLogs, plannedSessions, review.weekStart)} weekStart={review.weekStart} sessions={plannedSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
+                  <WeekStrip plain loose={looseLogsOfWeek(sessionLogs, plannedSessions, review.weekStart)} plan={weekPlan({ weekStart: review.weekStart, sessions: plannedSessions, logs: sessionLogs, templateById, today, illness: settings.illnessEpisodes })} today={today} />
                   <div>
                     <p className="font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{weekCountLine(review)}</p>
                     {restLines.map((line) => <p key={line} className="mt-0.5 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>)}

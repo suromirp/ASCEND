@@ -94,3 +94,11 @@ export function doneOnOtherDay(session: Pick<PlannedSession, 'id' | 'scheduledDa
   if (day === session.scheduledDate) return undefined;
   return Math.abs(daysBetween(session.scheduledDate, day)) > DONE_ON_NEAR_DAYS ? formatWeekdayDayMonthNL(day) : dayShort(day);
 }
+
+// Andersom, voor de weekbalk (engine/dayPlan.ts): een gedane training staat daar op de dag van uitvoeren, en zegt dan de
+// dag waarop hij gepland stond, in dezelfde vorm als hierboven ("do 19", verder weg "do 5 nov"). Zo noemen Week en de
+// balk het verschil allebei met een woord (invariant 3 van docs/visie/Ontwerp Eén plan.md). Op zijn eigen dag niets.
+export function plannedOnOtherDay(session: Pick<PlannedSession, 'scheduledDate'>, executedOn: string): string | undefined {
+  if (executedOn === session.scheduledDate) return undefined;
+  return Math.abs(daysBetween(session.scheduledDate, executedOn)) > DONE_ON_NEAR_DAYS ? formatWeekdayDayMonthNL(session.scheduledDate) : dayShort(session.scheduledDate);
+}

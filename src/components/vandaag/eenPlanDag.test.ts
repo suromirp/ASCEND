@@ -1,14 +1,15 @@
-// I-14 Eén plan, stap naspelen (docs/visie/Ontwerp Eén plan.md, symptoom B en invariant 3): Vandaag, Week en de
-// weekbalk zeggen voor dezelfde dag hetzelfde. Wat nu niet klopt staat als it.fails; een latere stap (het dagbeeld,
-// claude/een-plan-dagbeeld) zet die om naar it. Testdata is nagemaakt.
+// I-14 Eén plan (docs/visie/Ontwerp Eén plan.md, symptoom B en invariant 3): Vandaag, Week en de weekbalk zeggen voor
+// dezelfde dag hetzelfde. De stap naspelen zette wat niet klopte als it.fails; het dagbeeld (engine/dayPlan.ts,
+// claude/een-plan-dagbeeld) maakte er gewone tests van. Testdata is nagemaakt.
 //
-// Vandaag en Week kiezen hun rijen in de pagina zelf (src/pages/Today.tsx en src/pages/Week.tsx), zonder functie die
-// een test kan aanroepen. Deze tests lezen daarom wat er wel los staat: de weekbalk zoals hij rendert (zijn
-// aria-labels), de woorden van een rij in Week (engine/weekRow.ts) en de volgorde van Vandaag (engine/dayOrder.ts).
+// De tests lezen de weekbalk zoals hij rendert (zijn aria-labels), de woorden van een rij in Week (engine/weekRow.ts)
+// en de volgorde van Vandaag (engine/dayOrder.ts); invariant 3 over willekeurige standen staat in
+// src/engine/dayPlan.test.ts.
 import { describe, it, expect } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { WeekStrip } from './WeekStrip';
+import { weekPlan } from '../../engine/dayPlan';
 import { buildDefaultProgramData } from '../../data/defaultProgram';
 import { doneOnOtherDay } from '../../engine/weekRow';
 import { dayOrder, orderDay } from '../../engine/dayOrder';
@@ -29,7 +30,7 @@ const logFor = (s: PlannedSession, completedDate: string): SessionLog => ({
 
 // De aria-label van elke dag in de weekbalk, op dag van de week (1 = maandag).
 function stripLabels(sessions: PlannedSession[], logs: SessionLog[], today: string): string[] {
-  const html = renderToStaticMarkup(createElement(WeekStrip, { weekStart: MONDAY, sessions, logs, templateById, program: null, today }));
+  const html = renderToStaticMarkup(createElement(WeekStrip, { plan: weekPlan({ weekStart: MONDAY, sessions, logs, templateById, today }), today }));
   return [...html.matchAll(/<li[^>]*aria-label="([^"]*)"/g)].map((m) => m[1]);
 }
 
@@ -42,14 +43,14 @@ describe('symptoom B: een training van morgen die je vandaag deed', () => {
     // Week (components/WeekPlanner.tsx): de rij op zijn geplande dag, met de dag van uitvoeren erbij.
     expect(doneOnOtherDay(tempo, logs[0])).toBe('wo 18');
     const labels = stripLabels(sessions, logs, WEDNESDAY);
-    expect(labels[2]).toBe(`Woensdag (vandaag): ${nameOf('tpl_tempo_run')}, gedaan`);
+    // De balk: op de dag van uitvoeren, met de geplande dag erbij (engine/weekRow.ts#plannedOnOtherDay).
+    expect(labels[2]).toBe(`Woensdag (vandaag): ${nameOf('tpl_tempo_run')} van do 19, gedaan`);
     expect(labels[3]).toBe('Donderdag: vrij');
   });
 
-  it.fails('symptoom B: de balk noemt het verschil met Week in een woord, zoals Week "wo 18" zegt', () => {
+  it('symptoom B: de balk noemt het verschil met Week in een woord, zoals Week "wo 18" zegt', () => {
     // Invariant 3: de balk toont dezelfde rijen als Week, behalve wat de dag van uitvoeren verplaatst, en dat verschil
-    // staat in beide met een woord. Nu zegt de balk woensdag "gedaan" en donderdag "vrij", zonder te zeggen dat het
-    // de training van donderdag was; Week zegt donderdag "gedaan wo 18".
+    // staat in beide met een woord: de balk zegt woensdag "van do 19", Week zegt donderdag "gedaan wo 18".
     const labels = stripLabels(sessions, logs, WEDNESDAY);
     const wednesdayNamesThursday = /\bdo\b|donderdag/i.test(labels[2]);
     const thursdayNotEmpty = labels[3] !== 'Donderdag: vrij';
@@ -69,9 +70,9 @@ describe('symptoom B: twee trainingen op een dag', () => {
     expect(resolveEffectiveFullDuration(templateById.get('tpl_lower_a')!, WEDNESDAY, null)).toBeGreaterThan(resolveEffectiveFullDuration(templateById.get('tpl_tempo_run')!, WEDNESDAY, null));
   });
 
-  it.fails('symptoom B: de balk noemt de twee trainingen in dezelfde volgorde als Vandaag', () => {
-    // De balk sorteert op duur, de langste eerst (WeekStrip.tsx); Vandaag volgt dayOrder. In de balk staat Benen A
-    // bovenaan, op Vandaag de tempoloop.
+  it('symptoom B: de balk noemt de twee trainingen in dezelfde volgorde als Vandaag', () => {
+    // De balk sorteerde op duur, de langste eerst; nu lezen balk en Vandaag dezelfde volgorde uit het dagbeeld
+    // (dayOrder): de tempoloop eerst, dan Benen A.
     const today = orderDay(sessions, dayOrder(sessions, [], templateById)).map((s) => nameOf(s.templateId));
     const label = stripLabels(sessions, [], WEDNESDAY)[2];
     expect(label).toBe(`Woensdag (vandaag): ${today.map((n) => `${n}, gepland`).join(' en ')}`);
