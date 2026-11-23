@@ -6,15 +6,17 @@ Bijgewerkt: 23 november 2026 door coördinator session_01LnDpSkRtYRz7771kuLPf2T 
 
 Vijfuurslimiet (eigenaar via chat ASCEND, geef door aan elke opvolger): niet stoppen; lopend stuk afronden, stand hier, send_later op resetsAt (get_session) plus een paar minuten, dan door; bouwers na de reset hervatten. Weektegoed op waarschuwing: afronden en stoppen.
 
+Werkkaart (eigenaar 23 november): nachtlijst hieronder actueel per I-nummer met stand; na elke afgeronde bundel create_trigger naar session_01LnDpSktfMxYFgMMgDhw8Do, run_once_at twee minuten vooruit, nooit fire_trigger: "Werkkaart-beurt: bundel X is af, ververs ook Op de planning."
+
 Max twee bouwers tegelijk, nooit op dezelfde bestanden. Warden en Lookout per twee of drie bundels. Squash per bundel. Wissel na drie bundels of rond 150k. Stop bij lege lijst, vraag aan eigenaar of limietwaarschuwing. Ochtend één pushmelding, niet tussendoor.
 
-1. Route (sonnet, loopt): I-112, I-120 tot I-123. Lookout.
+1. Route (sonnet, bouwer bezig): I-112, I-120 tot I-123. Lookout.
 1b. I-124 terugkeer na pauze (opus plus Warden, eigenaar hoog): eerste vrije plek. Naspelen gedaan door de coördinator (alleen lezen). Oorzaak, in algemene termen: een periode zonder sportschool telt in `awayPeriods` als weg, dus `returnDay` neemt de dag erna als terugkomst, ook als de laatste echte training ruim daarvoor lag. Het voorstel staat alleen op die dag en drie dagen erna (OFFER_DAYS); wie daarna opent ziet niets, en het venster van zeven dagen telt ook vanaf die terugkomst. Bouwer krijgt dit met nagemaakte data.
 2. Week weergave (opus, planning, loopt): I-58 breder na correctie eigenaar 23 november 01:02: een training telt overal (minuten, x van y, weekbalk, belasting, beenindex, Stand) op de dag van uitvoeren: Forge later afgesloten (dag van de sets), verplaatst of ingehaald, log in andere week. Besluit 2026-11-23-telt-op-dag-van-uitvoeren.md; de bouwer schrijft per geval hoe het nu werkt, dat komt hier. Plus I-59, I-72 rest. Warden opus.
 3. Forge en logs (sonnet): I-113, I-60, I-30, I-73 (raakt afvinken: Warden). Lookout.
 4. dayRules (opus, planning): I-74, I-82 punt 3. Warden opus. Na bundel 2 (zelfde weekbestanden).
 5. Opslag (opus): I-54 twee tabbladen, I-35 grens intervals. Warden opus.
-6. Klein, coördinator zelf: I-87 tikdoelen Testloop, I-20 Jaaroverzicht, I-51 zin. Plus I-104 en I-105 in de eerstvolgende Lookout.
+6. Klein, coördinator zelf (tak claude/klein-23, controles bijna rond): I-51 zinnen gedaan; I-87 en I-20 bleken al opgelost (tikvlak 46 px, volle rij), alleen nakijken; I-51 punt werkbriefje planning splitsen nog open. Plus I-104 en I-105 in de eerstvolgende Lookout.
 7. Route vervolg (sonnet): I-53. I-76 eerst Scout (onderzoek).
 Back-up van de eigenaar (23 november 00:52) staat in de scratchpad van deze sessie, `backup/backup-2026-11-23.json`, chmod 600, alleen lezen met Python -I, nooit in repo, tests of commits. Daarmee kan vannacht 8. Naspelen (opus): I-77, I-33, I-78: eerst skill naspelen en oorzaak vastleggen, dan bouwen met nagemaakte testdata; een probe-test meteen weg. Niet vannacht:  I-103 (pas bij derde keer).
 9. Groot, achteraan (eigenaar): I-14, I-18, I-23, I-34: per punt eerst Cartographer (opus) met voorstel in docs/visie, dan bouwen naar risico (planner opus plus Warden). Echte vragen aan de eigenaar hier, doorgaan met advies; alleen wat zijn doel of planning wezenlijk verandert wacht.
