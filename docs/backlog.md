@@ -27,7 +27,6 @@ Hoogste code: I-151. Een nieuw punt krijgt het volgende nummer (zet het getal hi
 - [I-52] Eerste week bij heel licht (Lookout 15 november): Herstelwandeling 45 min staat langer dan de lange wandeling van 30 min, en kracht 75 min past slecht bij "alleen makkelijk"; de wandelkaart op Vandaag heeft het etiket "Vandaag · Hardlopen". Hoort bij I-18 stap 3.
 
 - [I-10] Profielendoorloop 14 november (verslagen in `docs/profielen/2026-11-14-*.md` op de branches `claude/profiel-*`; vier van vijf binnen, ziek-vakantie loopt). Moet, gegroepeerd, in volgorde van bouwen:
-  - [I-18] H. Beginner: "de eerste vier weken alleen makkelijk" maar week 1 heeft 75 min kracht met 23 sets en een lange loop van 60 min; vaktaal (RIR, RPE, Zone 2, Voorschrift) zonder uitleg (beginner 4, 5). Eerst Cartographer en Scout op Fable, dan planner. Ontwerp klaar (`docs/visie/Ontwerp beginner heel licht.md`); eigenaar 15 november: alle drie de keuzes het advies (`docs/beslissingen/2026-11-15-beginner-tien-procent.md`). Stap 0 en 1 lopen. Stap 3 en 4 live (23 november, 64467ee6); open: stap 5 tot 7.
   - [I-20] J. Tikdoelen, rest: Jaaroverzicht 38 px breed (GR5 3). Forge en de start staan live (e2260329, e99104c). (nakijken)
   - [I-23] M. Sport uit Losse training, rest (oude logs lezen al via `sportOfLog`, 2ee2f6f): zwemmen, padel en voetbal niet te kiezen zonder eerst een rol in Instellingen (2); na zo'n sport passen aanmoediging, kleding- en zweetvragen niet (3, 4); een voorstel na een zware sport verdwijnt de volgende ochtend zonder keuze (10); een sessieduur verandert zonder voorstel (9). Opus, Warden Fable voor 9 en 10. Stap 1 en 2 live (23 november, 7be515c).
   Mag: zie de verslagen (back-upkaart op dag 1, dubbele zin na afronden, Kies je plaats landt op Weer en kleding, 0 km voor onbekend, afronding van weken).
@@ -81,6 +80,7 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-18] H. Beginner heel licht, alle stappen: de ladder, Akkoord, de belofte en de gewone woorden in Forge (23 november, 40a3c67)
 - [I-14] D. Eén plan, alle stappen: C en D, eerste voorstel en dagbeeld (23 november, 5cd027b)
 - [I-145] Losse sport (23 november, d99eb30)
 - [I-143] Beginnersladder (23 november, d99eb30)
