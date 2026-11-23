@@ -8,6 +8,7 @@
 - I-154 controle: Warden geen Moet (herstelronde bij Sherpa: heldBack-ids in busyIds, geen TEST-RETRY tijdens terugkeer, verslag weg, app-kaart voor drie I-23-bladen). Lookout groen (tak lookout/terugkeer-voorrang 3b74369a, niet naar main). Worktrees scratchpad/wt en scratchpad/wt154 mogen weg. Pushmelding trig_019MVtBrZ4PdrMiC8G1Ygp9y verstuurd.
 - Besluit op advies: geen TEST-RETRY tijdens een open terugkeer (komt in 2026-11-23-terugkeer-voor-inhalen.md).
 - Vraag eigenaar 23 nov: rustdag (Di 24) in de terugkeerweek overslaan na twaalf dagen rust. Antwoord: niet schrappen; zeven dagen op rij met Benen zwaar, heuvels en lange loop in de eerste week terug is het risico, en een extra training botst met de kortere instap. Wel mogelijk: Herstelwandeling op Di, of een ruil (rustige duurloop naar Di, rust naar Do). Geen backlogregel tenzij hij doorzet. I-158 (blok een week terug) ingetrokken: berustte op een verkeerde lezing.
+- Correctie eigenaar: niet twaalf dagen ziek, twee of drie dagen niet fit, de rest vakantie. Advies bijgesteld: een lichte training op de rustdag (Di) mag, geen zware. Voorstel I-158 nieuw: na een terugkeer zonder ziekte (vakantie, stil) mag de eerste rustdag een lichte gemiste training worden, als voorstel met Akkoord; na ziekte niet. Zonder antwoord morgen met advies in de Inbox, op het bouwmoment.
 
 Lees dit en CLAUDE.md. `eigenaar.md` en `docs/backlog.md` niet lezen, alleen grep op I-nummer. Meer nodig: `werkwijze.md`. Oude standen: git-geschiedenis.
 
