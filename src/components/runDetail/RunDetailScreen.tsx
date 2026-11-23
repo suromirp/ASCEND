@@ -4,6 +4,7 @@
 // en per ronde, met bij een test de beste 5 km en de vraag "Telt mee". Alles wat hier staat
 // komt uit engine/runDetailView.ts; dit bestand rekent niets en verandert niets aan de log.
 
+import { climbScale, withClimbScale } from '../../engine/runClimb';
 import { useEffect, useMemo, useState } from 'react';
 import type { SessionLog } from '../../models/training';
 import type { RunDetail, RunKm, RunLap } from '../../models/runDetail';
@@ -141,10 +142,14 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
     return () => { live = false; };
   }, [logId, runDetail, trimmed]);
   const edgesRead = !!runDetail && edges?.for === runDetail;
+  // De stijging per km op de schaal van het ene getal van de loop (engine/runClimb.ts, I-77): de
+  // km tellen samen op tot de stijging op het logblad. Alleen om te tonen.
+  const scale = useMemo(() => climbScale(log), [log]);
   const shown = useMemo(() => {
     if (!runDetail) return undefined;
-    return edgesRead ? withoutEdgePauses(runDetail, edges?.value) : { rd: withPausesHidden(runDetail), edge: { headSec: 0, tailSec: 0 } };
-  }, [runDetail, edgesRead, edges]);
+    const s = edgesRead ? withoutEdgePauses(runDetail, edges?.value) : { rd: withPausesHidden(runDetail), edge: { headSec: 0, tailSec: 0 } };
+    return { ...s, rd: withClimbScale(s.rd, scale) };
+  }, [runDetail, edgesRead, edges, scale]);
   const rd = shown?.rd;
   const d = log.cardioData ?? log.outdoorData;
   const stale = !!rd && isStaleRunDetail(rd, d?.distanceKm ?? 0, d?.durationMinutes || log.durationMinutes);

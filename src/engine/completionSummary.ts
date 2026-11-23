@@ -10,6 +10,7 @@
 //
 // Puur: geen React, geen IndexedDB.
 
+import { runClimb } from './runClimb';
 import { isWorkSet } from './workSets';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { GoalMilestone, GoalMilestoneProgress, TrainingGoal } from '../models/goals';
@@ -118,9 +119,11 @@ export function logFacts(log: SessionLog): CompletionFacts {
     main.push(`gemiddeld ${paceText(pace)} per km`);
   }
 
-  const gain = data?.elevationGainM;
+  // Eén getal voor de stijging, hetzelfde als het logblad en Run in detail (engine/runClimb.ts, I-77).
+  const climb = runClimb(log);
+  const gain = climb?.gainM;
   if (gain !== undefined && gain >= 1) {
-    const text = `${formatNumberNL(gain, 0)} m omhoog${data?.estimatedElevation ? ' (geschat)' : ''}`;
+    const text = `${formatNumberNL(gain, 0)} m omhoog${climb?.from === 'log' && data?.estimatedElevation ? ' (geschat)' : ''}`;
     (running ? extra : main).push(text);
   }
   const loss = log.outdoorData?.elevationLossM ?? log.cardioData?.elevationLossM;
