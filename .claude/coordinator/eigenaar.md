@@ -41,7 +41,7 @@ Sinds: 23 november.
 
 ## Stuk of vast
 
-Niets.
+- Geen suggestie om je rustdag te verplaatsen (I-154, 15:48): het inhalen van gemiste trainingen staat vóór de rustige terugkeer en de kaart toont alleen het eerste advies. Eerste taak voor de nieuwe coördinator.
 
 
 ## Loopt
