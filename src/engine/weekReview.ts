@@ -23,7 +23,7 @@ import { progressionTarget } from './programLayout';
 import { logSport, SPORT_LABEL, type Sport } from './sports';
 import { weekNameAt, weekPositionLabel } from './weekLabel';
 import { durationLabel } from './sessionBrief';
-import type { PlannedById } from './logDay';
+import { logDay, type PlannedById } from './logDay';
 import { countsAsTraining as countsAsTrainingShared, leftOutOfCount, weekDoneMinutes, weekLogsOf } from './weekLogs';
 import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
@@ -75,7 +75,13 @@ export interface WeekReview {
   // `rest`: volgens het programma een rustweek die je niet doortraint.
   next?: { title: string; note?: string; minutes: number; key?: string; label?: string; rest?: boolean };
   label?: string; // de naam van deze week, zoals bij next
-  extraLogged?: number; // logs van deze week die niet bij een geplande training van deze week horen
+  extraLogged?: number; // losse logs van deze week: niet bij een geplande training van deze week, en ook niet van een andere week
+  // Gedaan in een andere week dan gepland (I-58, docs/beslissingen/2026-11-23-minuten-in-week-van-uitvoeren.md): gedaan
+  // telt in de geplande week, de minuten in de week van het log. `doneElsewhere`: trainingen van deze week die in een
+  // andere week gedaan zijn (hun minuten staan daar); `fromElsewhere`: logs van deze week bij een training van een andere
+  // week (hun minuten staan hier). De dag van het log is dezelfde als die van de minuten (engine/logDay.ts).
+  doneElsewhere?: ElsewhereWeek;
+  fromElsewhere?: ElsewhereWeek;
   // De week loopt en heeft een programma: dan staat in Week de rij Week opnieuw plannen (pages/Week.tsx, replanOn:
   // programma, minstens één training, de week nog niet voorbij), en verwijst de regel Gemist ernaar
   // (docs/beslissingen/2026-11-15-gemist-en-opnieuw-plannen.md). Gemist bestaat alleen met trainingen, dus de eis van
@@ -83,6 +89,22 @@ export interface WeekReview {
   replan?: boolean;
   advice: string[];
   weeklyCheck?: WeeklyHealthCheck;
+}
+
+// Hoeveel, en welke week: de week ervoor, de week erna, of verder weg.
+export interface ElsewhereWeek { count: number; when: 'earlier' | 'later' | 'other' }
+
+// De richting van een dag ten opzichte van een week; samen één richting, anders 'other'.
+function elsewhereOf(days: readonly string[], weekStart: string): ElsewhereWeek | undefined {
+  if (days.length === 0) return undefined;
+  const whenOf = (d: string): ElsewhereWeek['when'] => {
+    const monday = mondayOfWeek(d);
+    if (monday === addDays(weekStart, -7)) return 'earlier';
+    if (monday === addDays(weekStart, 7)) return 'later';
+    return 'other';
+  };
+  const whens = new Set(days.map(whenOf));
+  return { count: days.length, when: whens.size === 1 ? [...whens][0] : 'other' };
 }
 
 interface ReviewInputs {
@@ -158,7 +180,24 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // Wat je deze week deed buiten een geplande training om (een losse training, iets op een rustdag): telt mee in de
   // minuten, niet in "gedaan". Het blad zegt het dan apart, zodat "0 gedaan · 56 min" geen tegenspraak is.
   const trainingIds = new Set(trainings.map((s) => s.id));
-  const extraLogged = weekLogs.filter((l) => !l.plannedSessionId || !trainingIds.has(l.plannedSessionId)).length;
+  // Gedaan in een andere week (I-58): de dag van het log, dezelfde als die van de minuten (weekLogsOf).
+  const dayOfLog = (l: SessionLog) => (inputs.plannedById ? logDay(l, inputs.plannedById) : l.completedDate);
+  const inWeek = (day: string) => day >= weekStart && day <= weekEnd;
+  const doneElsewhereDays = trainings.flatMap((s) => {
+    const own = logs.filter((l) => l.plannedSessionId === s.id).map(dayOfLog).sort();
+    return own.length > 0 && !own.some(inWeek) ? [own[0]] : [];
+  });
+  const plannedDay = new Map(plannedSessions.map((s) => [s.id, s.scheduledDate]));
+  const fromElsewhereDays = weekLogs.flatMap((l) => {
+    const day = l.plannedSessionId ? plannedDay.get(l.plannedSessionId) : undefined;
+    return day !== undefined && !inWeek(day) ? [day] : [];
+  });
+  const extraLogged = weekLogs.filter((l) => {
+    if (!l.plannedSessionId) return true;
+    if (trainingIds.has(l.plannedSessionId)) return false;
+    const day = plannedDay.get(l.plannedSessionId);
+    return day === undefined || inWeek(day);
+  }).length;
   // Gemist is overal dezelfde afleiding (engine/sessionStatus.ts#isMissedSession): voorbij, zonder log en niet
   // overgeslagen. Een overgeslagen training telt wel als gepland en niet gedaan ("2 van 5"), maar heet niet gemist:
   // Week toont hem als overgeslagen, en de kaart in Week telt hem ook niet
@@ -318,6 +357,8 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     title: weekTitle(program, weekStart),
     label: weekNameAt(program, weekStart),
     extraLogged,
+    doneElsewhere: elsewhereOf(doneElsewhereDays, weekStart),
+    fromElsewhere: elsewhereOf(fromElsewhereDays, weekStart),
     done,
     planned: trainings.length,
     minutes,

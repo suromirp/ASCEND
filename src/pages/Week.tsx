@@ -27,6 +27,7 @@ import { WeekProposalRow } from '../components/WeekProposalRow';
 import { SheetRow, SheetRows } from '../components/SheetRows';
 import { TextButton } from '../components/TextButton';
 import { missedInWeek, replanSub, SEASON_ROW, weekBox, weekSkyLine, weekSoFarRow } from '../engine/weekList';
+import { elsewhereNotes } from '../engine/weekGlance';
 import { raceDatesOf } from '../engine/raceWindow';
 import { rowNotes } from '../engine/weekConcerns';
 import { allowedPairs } from '../engine/allowedPair';
@@ -368,7 +369,7 @@ export function WeekPage() {
           <SheetRows label="Meer over deze week">
             <WeekLoadRow weekStart={weekStart} />
             {review && review.planned > 0 && trainings > 0 && (
-              <SheetRow {...weekSoFarRow({ current, done: progress.done, total: progress.total, doneMinutes })} onClick={() => setReviewOpen(true)} sheetFrom />
+              <SheetRow {...weekSoFarRow({ current, done: progress.done, total: progress.total, doneMinutes, ...elsewhereNotes(review) })} onClick={() => setReviewOpen(true)} sheetFrom />
             )}
             <WeekAdjustmentsRow adjustments={adjustments} weekStart={weekStart} current={current} />
             {/* Week opnieuw plannen: alleen voor de getoonde week, vandaag en later (engine/replanWeek.ts). */}

@@ -8,8 +8,8 @@ import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
 import type { IllnessEpisode } from '../models/illness';
 import { buildWeekReview } from './weekReview';
-import { attentionLines, weekCountLine, weekRestLines } from './weekGlance';
-import { missedInWeek } from './weekList';
+import { attentionLines, elsewhereNotes, weekCountLine, weekRestLines } from './weekGlance';
+import { missedInWeek, weekSoFarRow } from './weekList';
 import { deriveSessionStatus } from './sessionStatus';
 import { doneOnOtherDay, rowExtra } from './weekRow';
 import { caughtUpMap, catchUpEligibility } from './catchUp';
@@ -61,16 +61,39 @@ describe('logdag in een andere week', () => {
     expect(lr.scheduledDate).toBe('2026-10-11');
   });
 
-  it('de telling: gedaan telt in de geplande week, de minuten in de week van de log (vastgelegd, geen oordeel)', () => {
+  // Besluit van de eigenaar, 23 november (docs/beslissingen/2026-11-23-minuten-in-week-van-uitvoeren.md, I-58):
+  // gedaan telt in de geplande week, de minuten in de week van het log, en beide weken zeggen dat.
+  it('de telling: gedaan telt in de geplande week, de minuten in de week van uitvoeren, en de regel zegt het', () => {
     const a = reviewOf(stand, '2026-10-14');
     const b = reviewOf(stand, '2026-10-14', '2026-10-12');
     expect(a.done).toBe(2);
     expect(a.planned).toBe(2);
     expect(a.missed).toEqual([]);
-    // De week van het plan zegt 2 van 2 gedaan met alleen de 45 minuten van dinsdag: de 90 minuten staan een week later.
-    expect(weekCountLine(a)).toBe('2 van 2 gedaan · 45 min');
+    expect(a.minutes).toBe(45);
+    expect(a.doneElsewhere).toEqual({ count: 1, when: 'later' });
+    expect(weekCountLine(a)).toBe('2 van 2 gedaan, 1 in de week erna · 45 min');
+    expect(weekCountLine(a)).not.toBe('2 van 2 gedaan · 45 min');
     expect(b.minutes).toBe(90);
-    expect(b.extraLogged).toBe(1);
+    // Geen losse training: hij hoort bij een geplande training, een week eerder.
+    expect(b.extraLogged).toBe(0);
+    expect(b.fromElsewhere).toEqual({ count: 1, when: 'earlier' });
+    expect(weekCountLine(b)).toBe('0 gedaan · 1 uit de week ervoor · 1:30 uur');
+  });
+
+  it('de rij Je week in Week zegt hetzelfde als de terugblik', () => {
+    const a = reviewOf(stand, '2026-10-14');
+    expect(weekSoFarRow({ current: false, done: 2, total: 2, doneMinutes: a.minutes, ...elsewhereNotes(a) }).sub).toBe('2 van 2 gedaan, 1 in de week erna · 0:45 uur');
+    const b = reviewOf(stand, '2026-10-14', '2026-10-12');
+    expect(weekSoFarRow({ current: true, done: 0, total: 1, doneMinutes: b.minutes, ...elsewhereNotes(b) }).sub).toBe('0 van 1 gedaan, 1 uit de week ervoor · 1:30 uur');
+  });
+
+  it('een log een week eerder: de geplande week zegt "in de week ervoor", verder weg "in een andere week"', () => {
+    const mo = ps('mo', 'tpl_easy_run', '2026-10-05');
+    const early = reviewOf({ plan: [mo], logs: [log(mo, '2026-10-04')] }, '2026-10-14');
+    expect(weekCountLine(early)).toBe('1 van 1 gedaan, 1 in de week ervoor');
+    const far = reviewOf({ plan: [mo], logs: [log(mo, '2026-11-06')] }, '2026-11-10');
+    expect(weekCountLine(far)).toBe('1 van 1 gedaan, 1 in een andere week');
+    expect(weekCountLine(reviewOf({ plan: [mo], logs: [log(mo, '2026-11-06')] }, '2026-11-06', '2026-11-02'))).toBe('0 gedaan · 1 uit een andere week · 45 min');
   });
 
   it('een log een week eerder (zondag voor de geplande maandag) geeft "gedaan zo 4"', () => {

@@ -5,7 +5,8 @@ import { buildWeekReview } from './weekReview';
 import { weekCountLine } from './weekGlance';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { Program } from '../models/program';
-import type { PlannedSession } from '../models/training';
+import type { PlannedSession, SessionLog } from '../models/training';
+import { plannedByIdOf } from './logDay';
 
 const { templates } = buildDefaultProgramData();
 const program: Program = { id: 'p', name: 'P', startDate: '2026-09-28', phases: [{ id: 'phase_1', name: 'BASISFASE', order: 1, weekCount: 4 }] };
@@ -57,5 +58,47 @@ describe('Forge en de weekterugblik rekenen het voorstel met dezelfde week', () 
     expect(reviewShowsMuscleProposal('2026-10-12', today)).toBe(true);
     expect(reviewShowsMuscleProposal('2026-10-05', today)).toBe(true);
     expect(reviewShowsMuscleProposal('2026-09-28', today)).toBe(false);
+  });
+});
+
+// I-58: de minuten tellen in de week van uitvoeren. De grens is maandag 00:00 in Amsterdam, op de dag van het log
+// (engine/logDay.ts), dezelfde dag als de minuten.
+describe('gedaan in een andere week, rond 00:00 Europe/Amsterdam', () => {
+  const mon = (id: string): PlannedSession => ({ id, templateId: 'tpl_long_run', scheduledDate: '2026-10-12', weekStartDate: '2026-10-12', status: 'planned', order: 0 });
+  const logOf = (s: PlannedSession, completedAt: string, source: SessionLog['source']): SessionLog => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(completedAt));
+    const day = todayISO();
+    vi.useRealTimers();
+    return { id: `l-${s.id}`, plannedSessionId: s.id, templateId: s.templateId, type: 'hiking', completedDate: day, completedAt, variant: 'full', durationMinutes: 90, source };
+  };
+  const review = (weekStart: string, plan: PlannedSession[], logs: SessionLog[]) =>
+    buildWeekReview({ weekStart, plannedById: plannedByIdOf(plan), plannedSessions: plan, logs, templates, program, planChangeLog: [], asOf: '2026-10-20' })!;
+
+  it('zondag gepland, maandag 00:30 Amsterdam gelogd: de minuten in de week erna, de geplande week zegt het', () => {
+    const plan = [sun('s')];
+    const logs = [logOf(plan[0], '2026-10-11T22:30:00Z', 'manual')];
+    expect(logs[0].completedDate).toBe('2026-10-12');
+    const planned = review('2026-10-05', plan, logs);
+    expect(planned.minutes).toBe(0);
+    expect(weekCountLine(planned)).toBe('1 van 1 gedaan, 1 in de week erna');
+    expect(weekCountLine(review('2026-10-12', [...plan, mon('m')], logs))).toBe('0 van 1 gedaan · 1 uit de week ervoor · 1:30 uur');
+  });
+
+  it('zondag 23:59 Amsterdam gelogd voor zondag: zelfde week, geen opmerking', () => {
+    const plan = [sun('s')];
+    const logs = [logOf(plan[0], '2026-10-11T21:59:00Z', 'manual')];
+    expect(weekCountLine(review('2026-10-05', plan, logs))).toBe('1 van 1 gedaan · 1:30 uur');
+  });
+
+  it('MacroFactor over middernacht: zondag 23:30 begonnen voor de training van maandag telt op maandag, geen andere week', () => {
+    const plan = [mon('m')];
+    const logs = [logOf(plan[0], '2026-10-11T21:30:00Z', 'macrofactor')];
+    expect(logs[0].completedDate).toBe('2026-10-11');
+    const r = review('2026-10-12', plan, logs);
+    expect(r.minutes).toBe(90);
+    expect(r.doneElsewhere).toBeUndefined();
+    expect(weekCountLine(r)).toBe('1 van 1 gedaan · 1:30 uur');
+    expect(review('2026-10-05', plan, logs).fromElsewhere).toBeUndefined();
   });
 });

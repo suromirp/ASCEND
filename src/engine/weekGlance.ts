@@ -5,7 +5,7 @@
 
 import { hoursMinutes } from '../utils/hoursMinutes';
 import { joinNames } from './weekHighlights';
-import type { WeekReview } from './weekReview';
+import type { ElsewhereWeek, WeekReview } from './weekReview';
 
 const time = (minutes: number) => {
   const m = Math.max(0, Math.round(minutes));
@@ -19,13 +19,29 @@ const lower = (s: string) => (/^[A-Z][a-z]/.test(s) ? `${s.charAt(0).toLowerCase
 // nog staat laat de strip zien; de verdeling per sport staat in Je trainingen. Een losse training (iets buiten de
 // planning om) telt in de tijd, niet in gedaan, en staat er dan met zijn eigen woord bij: "0 gedaan · 1 losse
 // training · 56 min". Is er niets gedaan, dan staat er geen tijd.
+// Gedaan in een andere week dan gepland (I-58, docs/beslissingen/2026-11-23-minuten-in-week-van-uitvoeren.md): de
+// geplande week telt hem als gedaan, de minuten staan in de week van uitvoeren. "2 van 2 gedaan, 1 in de week erna ·
+// 45 min" en daar "0 gedaan · 1 uit de week ervoor · 1:30 uur".
 export function weekCountLine(r: WeekReview): string {
   if (!r.running && r.done === 0 && r.minutes === 0) return 'Geen trainingen deze week. Volgende week volgt het plan.';
-  const count = r.running ? `${r.done} gedaan` : `${r.done} van ${r.planned} gedaan`;
+  const notes = elsewhereNotes(r);
+  const count = (r.running ? `${r.done} gedaan` : `${r.done} van ${r.planned} gedaan`) + (notes.doneElsewhere ? `, ${notes.doneElsewhere}` : '');
   const extra = r.extraLogged ?? 0;
   const loose = extra > 0 ? `${extra} ${extra === 1 ? 'losse training' : 'losse trainingen'}` : undefined;
-  if (r.minutes <= 0 || (r.done === 0 && !loose)) return [count, loose].filter(Boolean).join(' · ');
-  return [count, loose, time(r.minutes)].filter(Boolean).join(' · ');
+  const from = notes.fromElsewhere;
+  if (r.minutes <= 0 || (r.done === 0 && !loose && !from)) return [count, loose, from].filter(Boolean).join(' · ');
+  return [count, loose, from, time(r.minutes)].filter(Boolean).join(' · ');
+}
+
+const WHEN_TEXT: Record<ElsewhereWeek['when'], string> = { earlier: 'de week ervoor', later: 'de week erna', other: 'een andere week' };
+
+// De twee korte stukjes voor gedaan in een andere week: "1 in de week erna" in de geplande week, "1 uit de week ervoor"
+// in de week van uitvoeren. Dezelfde woorden in de terugblik, de rij Je week in Week en de kaart op Vandaag.
+export function elsewhereNotes(r: Pick<WeekReview, 'doneElsewhere' | 'fromElsewhere'>): { doneElsewhere?: string; fromElsewhere?: string } {
+  return {
+    doneElsewhere: r.doneElsewhere ? `${r.doneElsewhere.count} in ${WHEN_TEXT[r.doneElsewhere.when]}` : undefined,
+    fromElsewhere: r.fromElsewhere ? `${r.fromElsewhere.count} uit ${WHEN_TEXT[r.fromElsewhere.when]}` : undefined,
+  };
 }
 
 // De verdeling per sport, voor de weergave Je trainingen: "hardlopen 18,4 km · 320 m omhoog".
