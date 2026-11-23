@@ -146,12 +146,12 @@ export async function proposeOtherLoop(input: PlanInput, route: RouteFn, choice:
   const arc: Arc = { from: (deg - DIRECTION_HALF_WIDTH + 360) % 360, span: 2 * DIRECTION_HALF_WIDTH };
   const real = adventureVias(input, FIRST_REACH, arc).filter((v) => !v.pad);
   if (real.length === 0) {
-    // Niets om heen te lopen die kant op: het droge feit, met de beste lus die er wel is.
+    // Niets om heen te lopen die kant op: het droge feit, met de lus die er nu staat. Een nieuwe zoektocht zonder
+    // richting geeft dezelfde lus terug, dus er gaat niets de deur uit.
     const radius = km(input.target.distanceKm * 1000 * FIRST_REACH);
-    const best = await proposeAdventure(input, route);
-    const heading = best.ok ? loopHeading(best.proposal.points, input.start) : undefined;
-    const differs = heading === undefined ? '' : ` De beste lus die er wel is gaat naar ${compassWord(heading)}.`;
-    return finish(best, `Naar ${where} liggen binnen ${radius} geen paden of hellingen.${differs}`);
+    const heading = loopHeading(previous.points, input.start);
+    const differs = heading === undefined ? '' : ` De lus die er is gaat naar ${compassWord(heading)}.`;
+    return finish({ ok: true, proposal: previous }, `Naar ${where} liggen binnen ${radius} geen paden of hellingen.${differs}`);
   }
   return finish(await proposeAdventure(input, route, { arc }));
 }

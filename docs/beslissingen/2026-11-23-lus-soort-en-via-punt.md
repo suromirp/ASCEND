@@ -25,6 +25,10 @@ Het via-punt en de gekozen soort staan alleen in het geheugen: niet bewaard, gee
 
 Terug voor het donker (`routeBackBeforeDark`) krijgt een uitleg achter de i, zoals Wind bepaalt de richting. Hoogteprofiel, ondergrond en afhaken blijven zonder instelling, omdat ze feiten over de lus zijn die uit de lus zelf komen en geen keuze van de app: ze veranderen de lus niet, kosten geen aanroep en lieten bij uitzetten alleen minder zien (`2026-11-22-route-info.md`); Terug voor het donker is een oordeel over jouw uur, dat je mag uitzetten.
 
+## Een richting waar niets ligt (I-121)
+
+Bij Noord, Oost, Zuid of West zonder paden of hellingen in dat zoekbereik houdt de app de lus die er staat, zonder aanroep van de planner. Een zoektocht zonder richting gaf dezelfde lus terug. De regel zegt waar de lus die er is naartoe gaat ("De lus die er is gaat naar het westen."), en wijkt daarmee een woord af van de eerdere zin ("De beste lus die er wel is"), omdat het nu de lus is die er al stond. Dit werkt het zinnetje in `2026-11-22-andere-lus.md` bij; dat besluit blijft staan.
+
 ## Reden
 
 De eigenaar vroeg in het besluit Andere lus al om Via een punt en Soort terrein, later (I-112). Een lus langs water of bos, of langs een plek die je zelf aanwijst, is wat een loper zelf zou kiezen.

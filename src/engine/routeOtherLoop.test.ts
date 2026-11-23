@@ -134,16 +134,17 @@ describe('Andere lus: een richting', () => {
     expect(inner(route.calls[0]).length).toBeGreaterThan(1);
   });
 
-  it('zegt het droge feit als die kant op niets ligt, met de beste lus die er wel is', async () => {
+  it('zegt het droge feit als die kant op niets ligt en houdt de lus die er staat, zonder aanroep', async () => {
     const westOnly = terrain(feature('hill', 270, 2000, 40), feature('dirt_path', 250, 1800), feature('hill', 300, 2300, 30));
     const route = fakeRoute();
-    const out = await proposeOtherLoop({ start: START, target: TARGET, terrain: westOnly }, route, 'east', loopOf());
+    const west = offsetPoint(START, 270, 2500);
+    const previous = loopOf({ points: [START, west, START] });
+    const out = await proposeOtherLoop({ start: START, target: TARGET, terrain: westOnly }, route, 'east', previous);
     expect(out.ok).toBe(true);
     if (!out.ok) return;
-    expect(out.note).toMatch(/^Naar het oosten liggen binnen 3 km geen paden of hellingen\. De beste lus die er wel is gaat naar het (noord|zuid)?west(en)?\.$/);
-    // De lus is de gewone beste lus: hij gaat naar het westen, waar iets ligt.
-    expect(inner(route.calls[0]).some((p) => away(bearing(START, p), 270) < 60)).toBe(true);
-    expect(route.calls.length).toBeLessThanOrEqual(MAX_ROUTE_CALLS);
+    expect(out.note).toBe('Naar het oosten liggen binnen 3 km geen paden of hellingen. De lus die er is gaat naar het westen.');
+    expect(out.proposal.points).toEqual(previous.points);
+    expect(route.calls).toHaveLength(0);
   });
 
   it('een mislukte routeplanner geeft een regel en laat de lus staan', async () => {
