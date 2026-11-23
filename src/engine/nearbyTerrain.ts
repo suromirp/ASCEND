@@ -13,7 +13,7 @@ import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { SessionTemplate } from '../models/training';
 import type { LeavePeriod } from '../models/leave';
 import { hasRole, type RoleCarrier } from './templateRoles';
-import { leaveDays } from './leave';
+import { dayRules } from './dayRules';
 import { resolveNoGym } from './noGymDetails';
 import { isNoGymRun } from './noGym';
 
@@ -38,8 +38,9 @@ export function terrainWish(template: RoleCarrier & Pick<SessionTemplate, 'id'>)
 export function terrainWishOn(template: SessionTemplate, date: string, periods: LeavePeriod[] | undefined): TerrainWish | undefined {
   const own = terrainWish(template);
   if (own) return own;
-  const day = leaveDays(periods).get(date);
-  return day?.kind === 'nogym' && resolveNoGym(day.period).hills && isNoGymRun(template) ? 'hills' : undefined;
+  // Zonder sportschool via de ene regel (engine/dayRules.ts, I-82).
+  const noGym = dayRules({ today: date, leave: periods }).noGymPeriod(date);
+  return noGym && resolveNoGym(noGym).hills && isNoGymRun(template) ? 'hills' : undefined;
 }
 
 const usableHill = (f: TerrainFeature) => f.kind === 'hill' && (f.heightM === undefined || f.heightM >= MIN_HILL_HEIGHT_M);

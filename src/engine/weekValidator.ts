@@ -48,7 +48,7 @@ export type CheckRule =
   | 'LEAVE-OFF' // nothing on a holiday day, nothing but the walk on a trek day (engine/leave.ts)
   | 'LEAVE-LIGHT' // the day before and after a trek stays light
   | 'NO-GYM' // a gym session you (or a proposal) fixed on a day without a gym; reported for Week only (engine/noGymGuard.ts)
-  | 'ILL' // a training you fixed on a day you are ill, or a heavy one with a cold or while building back; reported for Week only (engine/dayRules.ts)
+  | 'ILL' // a training you fixed on a day you are ill (also a test or race), or a heavy one with a cold or while building back; reported for Week only (engine/dayRules.ts)
   | 'REST-DAY' // the rest day stays free
   | 'TWO-HARD-RUNS' // at most one hard run a day
   | 'HARD-DAYS' // with a hard sport of your own in the week: at most 2 or 3 hard days over all sports
@@ -265,8 +265,10 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
     // Ziek en zonder sportschool via de ene regel (engine/dayRules.ts, stap plaatsen). Een training die jij of een
     // voorstel vastzette laat de planning staan; Week zegt het altijd in Let op (eigenaar, 16 november, I-67). Ziek gaat
     // voor: dan alleen ILL. De planning zelf leest deze twee regels niet (docs/beslissingen/2026-11-15-zonder-sportschool-verplaatst.md).
+    // Een test of wedstrijd (niveau 2) op een koortsdag staat er ook (I-74): ziek melden laat hem staan, want hij schuift
+    // alleen met jouw Akkoord.
     const said = input.reportYours ? daySays(s, t) : undefined;
-    if (said && level(s) === 1 && (said.cause === 'ill' || said.cause === 'ill_light' || said.cause === 'ramp')) {
+    if (said && ((level(s) === 1 && (said.cause === 'ill' || said.cause === 'ill_light' || said.cause === 'ramp')) || (level(s) === 2 && said.cause === 'ill'))) {
       findings.push({ rule: 'ILL', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), illness: said.cause, message: `${name} op ${day(s.scheduledDate)} ${DAY_CAUSE_TEXT[said.cause].kept}.` });
     } else if (said && level(s) > 0 && (said.cause === 'nogym' || said.more.some((m) => m.cause === 'nogym'))) {
       findings.push({ rule: 'NO-GYM', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} heeft de sportschool nodig (${day(s.scheduledDate)}).` });

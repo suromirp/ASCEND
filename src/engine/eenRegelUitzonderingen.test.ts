@@ -342,3 +342,53 @@ describe('ILL in Let op: de tweede zin hoort bij de soort', () => {
     expect(ramp.headline).toBe('Je bouwt op na ziekte, en er staat een zware training.');
   });
 });
+
+// I-74: een test of wedstrijd op een koortsdag staat in Let op, en bij ILL kan een training ook naar een rustige dag.
+describe('I-74: ziek in Let op, ook een test of wedstrijd, en verplaatsen als voorstel', () => {
+  const FEVER = [ill('below_neck', TODAY)];
+  const COLD = [ill('above_neck', TODAY)];
+  const TUE = addDays(MONDAY, 1);
+  const withAnchor = (templateId: string): PlannedSession[] => [ps('an17', templateId, TUE), ps('ua18', 'tpl_upper_a', addDays(MONDAY, 2)), ps('lr21', 'tpl_long_run', addDays(MONDAY, 5))];
+  const ills = (input: CheckInput) => weekConcerns(input, MONDAY).filter((c) => c.rule === 'ILL');
+
+  it('een testloop op een koortsdag: in Let op, met een voorstel om hem te verplaatsen, nooit te laten vervallen', () => {
+    const input = check(withAnchor('tpl_test_run'), { illness: FEVER });
+    const [c] = ills(input);
+    expect(c).toMatchObject({ headline: 'Je bent ziek, en er staat een testloop.', fact: 'Testloop 5 km op dinsdag 17 valt nog in je ziekte.', notes: { an17: 'je bent ziek' } });
+    expect(c.finding.level).toBe(2);
+    const fix = planWeekFix(input, c, MONDAY)!;
+    const all = [fix.proposal!, ...(fix.options ?? []).map((o) => o.proposal!)].flatMap((p) => p.changes);
+    expect(all.every((x) => x.action === 'move' && x.plannedSessionId === 'an17')).toBe(true);
+    // Niet naar een dag die de ziekte nog vasthoudt (vandaag en morgen).
+    expect(all.every((x) => x.toDate! > addDays(TODAY, 1))).toBe(true);
+  });
+
+  it('een wedstrijd op een koortsdag: in Let op, zonder voorstel; hij schuift niet', () => {
+    const input = check(withAnchor('tpl_race'), { illness: FEVER });
+    const [c] = ills(input);
+    expect(c).toMatchObject({ headline: 'Je bent ziek, en je wedstrijd staat er.', why: 'Met koorts train je niet. Je wedstrijd schuift niet mee; of je start, kies je zelf.' });
+    expect(planWeekFix(input, c, MONDAY)).toBeNull();
+  });
+
+  it('met neus of keel staat een test er niet: alleen koorts of buikgriep', () => {
+    expect(ills(check(withAnchor('tpl_test_run'), { illness: COLD }))).toEqual([]);
+    expect(ills(check(withAnchor('tpl_test_run')))).toEqual([]);
+  });
+
+  it('verkouden: eerst naar een rustige dag, dan laten vervallen', () => {
+    const sessions = withAnchor('tpl_hill_intervals').map((s) => (s.id === 'an17' ? { ...s, lock: LOCK } : s));
+    const input = check(sessions, { illness: COLD });
+    const [c] = ills(input);
+    const fix = planWeekFix(input, c, MONDAY)!;
+    expect(fix.proposal!.changes).toEqual([expect.objectContaining({ plannedSessionId: 'an17', action: 'move' })]);
+    expect(fix.options!.map((o) => o.proposal!.changes[0].action)).toEqual(['move', 'remove']);
+    expect(fix.options![0].label).toBe('Heuvelintervallen verplaatsen');
+  });
+
+  it('met koorts: eerst laten vervallen, dan naar een rustige dag', () => {
+    const sessions = withAnchor('tpl_easy_run').map((s) => (s.id === 'an17' ? { ...s, lock: LOCK } : s));
+    const input = check(sessions, { illness: FEVER });
+    const fix = planWeekFix(input, ills(input)[0], MONDAY)!;
+    expect(fix.options!.map((o) => o.proposal!.changes[0].action)).toEqual(['remove', 'move']);
+  });
+});

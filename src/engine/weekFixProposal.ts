@@ -248,9 +248,17 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
       break;
     }
     case 'ILL': {
-      // Ziek: wat ziek melden doet, alleen voor deze rij van jou. Laten vervallen; telt niet als gemist.
+      // Ziek: wat ziek melden doet, alleen voor deze rij van jou. Laten vervallen; telt niet als gemist. Of naar een rustige
+      // dag van de week (I-74): een dag waarop de regel niets meer zegt en de week er niet slechter van wordt. Verkouden
+      // of in de opbouw is verplaatsen het vriendelijkst en staat het voorop; met koorts eerst laten vervallen. Een test
+      // op een koortsdag alleen verplaatsen, een wedstrijd nooit (dan alleen de melding).
       const subject = sessionById(concern.finding.subjectId);
-      if (subject && level(subject) === 1) push([{ id: subject.id, from: subject.scheduledDate, removed: true }]);
+      const t = subject && templateOf(subject);
+      if (!subject || !t) break;
+      const drop: Change[] = [{ id: subject.id, from: subject.scheduledDate, removed: true }];
+      if (level(subject) === 1) {
+        if (concern.finding.illness === 'ill') { push(drop); push(viaScan(subject.id)); } else { push(viaScan(subject.id)); push(drop); }
+      } else if (level(subject) === 2 && hasRole(t, 'test') && !hasRole(t, 'race')) push(viaScan(subject.id));
       break;
     }
     case 'NO-GYM': {
