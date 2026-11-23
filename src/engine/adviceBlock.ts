@@ -59,10 +59,13 @@ export function reentryAdvice(inputs: AdviceInputs): Advice[] {
   const found = proposeReentry({
     program: inputs.program, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, today: inputs.asOf,
     illnessEpisodes: inputs.illnessEpisodes, leavePeriods: inputs.leave, choice: inputs.reentry?.choice ?? REENTRY_ADVICE,
-    weeks: inputs.reentry?.weeks, respondedIds: inputs.respondedIds, raceGoals: inputs.raceGoals,
+    weeks: inputs.reentry?.weeks, respondedIds: inputs.respondedIds, raceGoals: inputs.raceGoals, forgeLighter: inputs.reentry?.forgeLighter,
   });
   if (!found) return [];
-  return [{ id: found.id, trigger: 'plan_update', ruleId: 'REENTRY', title: REENTRY_TITLE, effect: reentryEffect(found), why: REENTRY_WHY, priority: 3, reentry: found.week }];
+  return [{
+    id: found.id, trigger: 'plan_update', ruleId: 'REENTRY', title: REENTRY_TITLE, effect: reentryEffect(found, inputs.asOf), why: REENTRY_WHY, priority: 3, reentry: found.week,
+    ...(found.forgeDays !== undefined ? { reentryForgeDays: found.forgeDays } : {}),
+  }];
 }
 
 export function tentPackAdvice(inputs: AdviceInputs): Advice[] {

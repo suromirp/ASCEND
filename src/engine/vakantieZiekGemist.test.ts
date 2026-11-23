@@ -214,7 +214,7 @@ describe('K: rustiger instap na ziekte en een vakantie', () => {
   it('op de dag terug een voorstel: zeven dagen driekwart, het doel blijft', () => {
     const p = proposeReentry(input())!;
     expect(p).toMatchObject({ id: 'reentry:2026-12-07', cause: 'ill_away', done: 1, usual: 5, week: { from: '2026-12-07', until: '2026-12-13', factor: 0.75 } });
-    expect(reentryEffect(p)).toBe('De afgelopen twee weken deed je 1 training, met ziekte en een vakantie ertussen. Een gewone week heeft er 5. Voorstel: tot en met zo 13 december duren je trainingen driekwart van de gewone tijd. Welke trainingen er staan, je fase en je doeldatum blijven zoals ze zijn. Met Liever niet blijft alles staan.');
+    expect(reentryEffect(p, '2026-12-07')).toBe('De afgelopen twee weken deed je 1 training, met ziekte en een vakantie ertussen. Een gewone week heeft er 5. Voorstel: vanaf vandaag tot en met zo 13 december duren je trainingen driekwart van de gewone tijd. Welke trainingen er staan, je fase en je doeldatum blijven zoals ze zijn. Met Liever niet blijft alles staan.');
   });
 
   it('als advies op Vandaag, met Akkoord via het eigen voorstel; zonder Akkoord verandert de duur niet', () => {
@@ -231,10 +231,13 @@ describe('K: rustiger instap na ziekte en een vakantie', () => {
     expect(resolveReentry('altijd')).toBe('three_quarters');
   });
 
-  it('tot en met dag 4 na terugkomst, met hetzelfde id en hetzelfde venster, en niet terwijl je nog weg bent', () => {
+  // Sinds 23 november (I-124): de hele eerste week na terugkomst, met hetzelfde id; het venster begint op de dag
+  // dat je het ziet. De dag na die eerste week niet meer.
+  it('de hele eerste week na terugkomst, met hetzelfde id, het venster vanaf vandaag, en niet terwijl je nog weg bent', () => {
     expect(proposeReentry(input({ today: '2026-12-09' }))).toBeDefined();
-    expect(proposeReentry(input({ today: '2026-12-10' }))).toMatchObject({ id: 'reentry:2026-12-07', week: { from: '2026-12-07', until: '2026-12-13' } });
-    expect(proposeReentry(input({ today: '2026-12-11' }))).toBeUndefined();
+    expect(proposeReentry(input({ today: '2026-12-10' }))).toMatchObject({ id: 'reentry:2026-12-07', week: { from: '2026-12-10', until: '2026-12-16' } });
+    expect(proposeReentry(input({ today: '2026-12-13' }))).toMatchObject({ id: 'reentry:2026-12-07', week: { from: '2026-12-13', until: '2026-12-19' } });
+    expect(proposeReentry(input({ today: '2026-12-14' }))).toBeUndefined();
     expect(proposeReentry(input({ today: '2026-12-05' }))).toBeUndefined();
   });
 
@@ -276,7 +279,7 @@ describe('K: rustiger instap na ziekte en een vakantie', () => {
   it('zomertijd: terug op de zondag van de klokwissel, de zeven dagen kloppen', () => {
     const autumn = [...week('2026-10-19'), ...week('2026-10-26')];
     const p = proposeReentry({
-      program: { ...program, startDate: '2026-09-28' }, plannedSessions: autumn, logs: [], templates, today: '2026-10-27',
+      program: { ...program, startDate: '2026-09-28' }, plannedSessions: autumn, logs: [], templates, today: '2026-10-25',
       leavePeriods: [vacation('2026-10-17', '2026-10-24')], choice: 'three_quarters', respondedIds: new Set(),
     })!;
     expect(p.week).toEqual({ from: '2026-10-25', until: '2026-10-31', factor: 0.75 });
@@ -350,9 +353,11 @@ describe('Warden ronde 2: één id per terugkomst, één racebescherming, grenze
     expect(proposeReentry(base({ leavePeriods: leave, today: '2026-12-07', raceGoals: [{ ...goal, raceDate: '2026-12-15' }] }))).toBeDefined();
   });
 
+  // Een korte vakantie, de laatste loop vlak ervoor: geen lange pauze, dus telt het aantal (I-124: een pauze van meer
+  // dan zeven dagen sinds je laatste training geeft altijd een voorstel, zie het verhaal hieronder).
   it('de grens van weinig training: 3 van 5 gedaan geeft een voorstel, 4 niet', () => {
-    const leave = [vacation('2026-11-30', '2026-12-06')];
-    const runs = (n: number) => Array.from({ length: n }, (_, i) => loose('tpl_easy_run', addDays('2026-11-23', i)));
+    const leave = [vacation('2026-12-03', '2026-12-06')];
+    const runs = (n: number) => Array.from({ length: n }, (_, i) => loose('tpl_easy_run', addDays('2026-11-29', i)));
     expect(proposeReentry(base({ leavePeriods: leave, today: '2026-12-07', logs: runs(3) }))).toBeDefined();
     expect(proposeReentry(base({ leavePeriods: leave, today: '2026-12-07', logs: runs(4) }))).toBeUndefined();
   });

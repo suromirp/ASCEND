@@ -29,6 +29,7 @@ const everything: AppSettings = {
   descentClock: 'uit',
   leaveCrowding: 'shift',
   leaveAround: 'little',
+  leaveBackfill: 'off',
   noGymStrength: 'drop',
   longRunGrowth: 'wave',
   bootBreakInKm: 150,

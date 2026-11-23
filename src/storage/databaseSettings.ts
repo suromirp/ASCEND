@@ -236,6 +236,10 @@ export interface AppSettings {
   // leaves it to the week check, which moves a training to the nearest day of its own week. Optional
   // and additive, so no migration step.
   leaveAround?: 'wide' | 'little';
+  // Een vakantie of periode weg achteraf vastleggen of verlengen (engine/leave.ts#validateLeaveDraft): tot hoe ver
+  // terug. Absent = 4 weken, het advies; 'off' = alleen een periode die nog loopt of komt, zoals voor 23 november.
+  // Optioneel en erbij, dus geen migratiestap.
+  leaveBackfill?: 'four_weeks' | 'two_weeks' | 'eight_weeks' | 'off';
   // A new period without a gym (engine/noGym.ts): 'bodyweight' (absent = bodyweight, the advice)
   // puts a short session with your own weight in place of a gym session, 'drop' lets it go. Only
   // the starting choice in the sheet: the period keeps its own choice, so changing this never

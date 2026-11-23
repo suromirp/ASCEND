@@ -3136,12 +3136,21 @@
     "planning",
     "week"
    ],
-   "kern": "Een vakantie, tocht of periode zonder sportschool die je zelf meldde, telt nooit als gemist. Geldt nog: een gemelde vakantie of tocht telt nooit als gemist en er komt geen vraag of inhaaladvies over wat ervoor lag; zonder sportschool vervalt alleen wat de sportschool nodig heeft (2026-11-15-week-telling-zonder-sportschool); de regel onder Vervallen noemt wat binnen de pauze stond.",
+   "kern": "Een vakantie, tocht of periode zonder sportschool die je zelf meldde, telt nooit als gemist. Geldt nog: een gemelde vakantie of tocht telt nooit als gemist en er komt geen vraag of inhaaladvies over wat ervoor lag; zonder sportschool vervalt alleen wat de sportschool nodig heeft (2026-11-15-week-telling-zonder-sportschool); de regel onder Vervallen noemt wat binnen de pauze stond; de rustiger instap na een pauze (driekwart, de helft of niet voorstellen) blijft, maar staat de hele eerste week terug met het venster vanaf de dag dat je kiest (2026-11-23-terugkeer-na-pauze).",
    "stand": "deels",
    "vervangenDoor": [
     "docs/beslissingen/2026-11-15-vervallen-een-bron.md",
-    "docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md"
+    "docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md",
+    "docs/beslissingen/2026-11-23-terugkeer-na-pauze.md"
    ]
+  },
+  "docs/beslissingen/2026-11-23-terugkeer-na-pauze.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "De rustiger instap na een pauze telt de pauze vanaf je laatste echte training (meer dan zeven dagen is genoeg), staat de hele eerste week na de terugkomst tot je kiest, met het venster vanaf de dag dat je kiest; Forge begint daarin 5% lichter na meer dan tien dagen zonder kracht; een vrije periode mag je achteraf vastleggen of verlengen tot de grens van Periode achteraf vastleggen (advies 4 weken), zonder dat er iets verschuift.",
+   "stand": "geldt"
   },
   "docs/beslissingen/2026-11-14-verborgen-schermen.md": {
    "onderwerpen": [

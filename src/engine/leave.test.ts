@@ -102,7 +102,9 @@ describe('the periods themselves', () => {
     expect(validateLeaveDraft({ kind: 'trek', startDate: '2026-10-28', endDate: '2026-10-30' }, TODAY)).toBeUndefined();
     expect(validateLeaveDraft({ startDate: '2026-10-28', endDate: '2026-10-30' }, TODAY)).toMatch(/soort/);
     expect(validateLeaveDraft({ kind: 'trek', startDate: '2026-10-30', endDate: '2026-10-28' }, TODAY)).toMatch(/voor de begindatum/);
-    expect(validateLeaveDraft({ kind: 'trek', startDate: '2026-10-01', endDate: '2026-10-05' }, TODAY)).toMatch(/voorbij/);
+    // Achteraf vastleggen (I-124): tot 4 weken terug mag het, met Niet achteraf zoals vroeger.
+    expect(validateLeaveDraft({ kind: 'trek', startDate: '2026-10-01', endDate: '2026-10-05' }, TODAY)).toBeUndefined();
+    expect(validateLeaveDraft({ kind: 'trek', startDate: '2026-10-01', endDate: '2026-10-05' }, TODAY, { backfill: 'off' })).toMatch(/voorbij/);
     expect(validateLeaveDraft({ kind: 'trek', startDate: '2026-10-28', endDate: '2027-03-30' }, TODAY)).toMatch(/Langer dan/);
     expect(validateLeaveDraft({ kind: 'trek', startDate: '', endDate: '' }, TODAY)).toMatch(/datum/);
   });

@@ -70,6 +70,8 @@ export interface Advice {
   // Rule REENTRY: Akkoord bewaart een rustiger instap na een pauze (engine/reentry.ts). Eerst het eigen voorstel
   // van de planningsronde met de trainingen die korter worden.
   reentry?: ReentryWeek;
+  // Dagen sinds je laatste krachttraining, als Forge in die instap ook iets lichter begint (de regel in het voorstel).
+  reentryForgeDays?: number;
 }
 
 export interface AdviceOption {
@@ -151,7 +153,8 @@ export interface AdviceInputs {
   // "Vragen als je week te vol wordt" (rule WEEK-FULL, engine/fullWeek.ts). Absent = on.
   fullWeekAsk?: boolean;
   // "Rustiger instap na een pauze" (engine/reentry.ts, rule REENTRY) en wat al met Akkoord bewaard is. Absent = het advies.
-  reentry?: { choice: ReentryChoice; weeks?: unknown };
+  // `forgeLighter`: krachttraining aan en Na een pauze lichter beginnen aan, dan begint Forge in de instap lichter.
+  reentry?: { choice: ReentryChoice; weeks?: unknown; forgeLighter?: boolean };
   // Internal: leave TEST-RETRY out, for the check of its own end state (it would otherwise call itself).
   noRetry?: boolean;
 }

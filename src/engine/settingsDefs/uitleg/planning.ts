@@ -211,6 +211,16 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Altijd', text: 'je ziet eerst een voorstel. Een periode die al staat, houdt zijn eigen keuze.' },
     ],
   },
+  'vakantie-achteraf': {
+    title: 'Periode achteraf vastleggen',
+    lead: 'Vergeten een vakantie of periode weg te zetten, of duurde hij langer? Dan leg je hem achteraf vast of verleng je hem.',
+    points: [
+      { head: 'Wat er gebeurt', text: 'dagen die voorbij zijn tellen als weg, niet als gemist. Er verschuift niets en je logs blijven zoals ze zijn: een dag met een training blijft gedaan.' },
+      { head: 'Terugkomen', text: 'zo\'n periode telt ook mee voor de rustiger instap na een pauze.' },
+      { head: 'Hoe ver terug', text: 'het advies is 4 weken. Verder terug verandert weken die je al lang afsloot.' },
+      { head: 'Niet achteraf', text: 'dan moet een periode nog lopen of nog komen, zoals vroeger.' },
+    ],
+  },
   'vakantie-schuiven': {
     title: 'Rond een vakantie schuiven',
     lead: 'Hoe je weken rond een vakantie eruitzien.',

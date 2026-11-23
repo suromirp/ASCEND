@@ -14,7 +14,7 @@ import type { LeaveKind, LeavePeriod, NoGymDetails } from '../models/leave';
 import type { Advice } from '../engine/adviceEngine';
 import type { LeavePlan } from '../engine/leaveProposal';
 import {
-  LEAVE_KINDS, LEAVE_KIND_HINT, LEAVE_KIND_LABEL, describeDayCount, describePeriodDates, validateLeaveDraft,
+  LEAVE_KINDS, LEAVE_KIND_HINT, LEAVE_KIND_LABEL, describeDayCount, describePeriodDates, earliestBackfillDay, resolveLeaveBackfill, validateLeaveDraft,
 } from '../engine/leave';
 import { editedPeriod, leaveEditScope, leaveWordsChange } from '../engine/leaveEdit';
 import { NO_GYM_ADVICE, resolveNoGym } from '../engine/noGymDetails';
@@ -38,7 +38,7 @@ const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}
 // De rij in de lijst onder de dagen en het blad met de periodes erachter. `openId`: de band van een periode in de
 // weeklijst vroeg om het blad om hem bij te werken; `onOpenHandled` meldt dat het blad weer dicht is.
 export function LeavePeriodsRow({ openId, onOpenHandled }: { openId?: string | null; onOpenHandled?: () => void } = {}) {
-  const { leavePeriods, planLeave, applyLeave, planPreviewPass, saveLeaveNote } = useAppData();
+  const { leavePeriods, planLeave, applyLeave, planPreviewPass, saveLeaveNote, settings } = useAppData();
   const [listOpen, setListOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [ownEditing, setEditing] = useState<LeavePeriod | null>(null);
@@ -48,8 +48,11 @@ export function LeavePeriodsRow({ openId, onOpenHandled }: { openId?: string | n
   // The planning changed while the proposal was open: nothing was stored.
   const [stale, setStale] = useState(false);
   const today = todayISO();
-  // What is over for more than two weeks is no longer shown.
-  const shown = leavePeriods.filter((p) => p.endDate >= addDays(today, -14));
+  // What is over for more than two weeks is no longer shown, unless you may still extend it afterwards
+  // (Periode achteraf vastleggen, engine/leave.ts#earliestBackfillDay).
+  const backfillFrom = earliestBackfillDay(today, resolveLeaveBackfill(settings.leaveBackfill));
+  const shownFrom = backfillFrom && backfillFrom < addDays(today, -14) ? backfillFrom : addDays(today, -14);
+  const shown = leavePeriods.filter((p) => p.endDate >= shownFrom);
 
   const previewPass = useMemo(
     () => (plan ? (sessions: Parameters<typeof planPreviewPass>[0]) => planPreviewPass(sessions, plan.periodsAfter) : undefined),
@@ -170,14 +173,17 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
   const [startDate, setStartDate] = useState(editing?.startDate ?? today);
   const [endDate, setEndDate] = useState(editing?.endDate ?? today);
   const [note, setNote] = useState(editing?.note ?? '');
-  const problem = validateLeaveDraft({ kind, startDate, endDate }, today);
+  const backfill = resolveLeaveBackfill(settings.leaveBackfill);
+  const problem = validateLeaveDraft({ kind, startDate, endDate }, today, { backfill, ...(editing ? { keepStart: editing.startDate } : {}) });
   const overlap = !problem ? existing.find((p) => p.id !== editing?.id && p.startDate <= endDate && p.endDate >= startDate) : undefined;
   // A tocht stays a tocht here: its name, terrain and importance live with Tochten on Ascend.
   const isTocht = !!editing?.trek;
   const draft = editing ? editedPeriod(editing, { kind, startDate, endDate, note, ...(kind === 'no_gym' ? { noGym } : {}) }) : undefined;
   const scope = editing && draft ? leaveEditScope(editing, draft) : 'plan';
-  // An ongoing period may keep its first day in the past.
-  const minStart = editing && editing.startDate < today ? editing.startDate : today;
+  // An ongoing period may keep its first day in the past; a period over may be stored afterwards, as far back as
+  // Periode achteraf vastleggen allows. The check itself is validateLeaveDraft, with the message what does work.
+  const earliest = earliestBackfillDay(today, backfill) ?? today;
+  const minStart = editing && editing.startDate < earliest ? editing.startDate : earliest;
 
   return (
     <Portal>
@@ -275,7 +281,7 @@ function LeavePeriodSheet({ existing, editing, onSubmit, onRemove, onClose }: {
                   <input
                     type="date" lang="nl"
                     value={endDate}
-                    min={startDate || today}
+                    min={startDate || minStart}
                     onChange={(e) => setEndDate(e.target.value)}
                     className="mt-1 w-full rounded-lg border bg-transparent px-2.5 py-2 text-sm"
                     style={inputStyle}

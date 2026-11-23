@@ -526,6 +526,9 @@ export interface PrescribeInput {
   // The day of the last strength training with any exercise before `date`. A pause
   // for this exercise is only a break from training when nothing was trained in between.
   lastStrengthDate?: string;
+  // Een rustiger instap na een pauze waar je Akkoord op gaf, na meer dan tien dagen zonder krachttraining
+  // (engine/reentry.ts#reentryForgeLighter): het voorstel begint met dezelfde 5% minder kracht als na een lange pauze.
+  reentry?: boolean;
 }
 
 const nl = (n: number) => formatNumberNL(n, 2);
@@ -842,7 +845,9 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   // rested while other strength training went on (a new program) starts at its last level.
   const pauseDays = daysBetween(last.date, input.date);
   const trainedMeanwhile = input.lastStrengthDate !== undefined && daysBetween(input.lastStrengthDate, input.date) <= LIGHTER_AFTER_DAYS;
-  const lighter = settings.lighterAfterBreak && !legsTired && pauseDays > LIGHTER_AFTER_DAYS && !trainedMeanwhile;
+  const longBreak = settings.lighterAfterBreak && !legsTired && pauseDays > LIGHTER_AFTER_DAYS && !trainedMeanwhile;
+  const reentryLighter = settings.lighterAfterBreak && !legsTired && !!input.reentry;
+  const lighter = longBreak || reentryLighter;
   const factor = lighter ? 1 - LIGHTER_AFTER_BREAK : 1;
 
   // The goal of last time is not stored with a set, so it is derived from what
@@ -1058,9 +1063,12 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     kind = 'widened';
     const step = stepAt(candidates, idx);
     reason = `Een stap van ${kgLabel(step, 2)} is hier te grof voor ${low} tot ${high} herhalingen, daarom is het bereik nu tijdelijk verbreed.`;
-  } else if (lighter) {
+  } else if (longBreak) {
     kind = 'pause';
     reason = 'Je deed dit meer dan vier weken niet, dus het voorstel begint iets lichter. Na deze training volgt een nieuw voorstel.';
+  } else if (reentryLighter) {
+    kind = 'pause';
+    reason = 'Je deed meer dan tien dagen geen krachttraining en koos een rustiger instap, dus het voorstel begint 5% lichter. Na deze training volgt een nieuw voorstel.';
   } else if (pauseDays > BREAK_DAYS) {
     kind = 'pause';
     reason = 'Je deed dit een tijd niet, dus het voorstel begint op je laatste niveau. Na deze training volgt een nieuw voorstel.';
