@@ -134,16 +134,17 @@ describe('Andere lus: een richting', () => {
     expect(inner(route.calls[0]).length).toBeGreaterThan(1);
   });
 
-  it('zegt het droge feit als die kant op niets ligt, met de beste lus die er wel is', async () => {
+  it('zegt het droge feit als die kant op niets ligt en houdt de lus die er staat, zonder aanroep', async () => {
     const westOnly = terrain(feature('hill', 270, 2000, 40), feature('dirt_path', 250, 1800), feature('hill', 300, 2300, 30));
     const route = fakeRoute();
-    const out = await proposeOtherLoop({ start: START, target: TARGET, terrain: westOnly }, route, 'east', loopOf());
+    const west = offsetPoint(START, 270, 2500);
+    const previous = loopOf({ points: [START, west, START] });
+    const out = await proposeOtherLoop({ start: START, target: TARGET, terrain: westOnly }, route, 'east', previous);
     expect(out.ok).toBe(true);
     if (!out.ok) return;
-    expect(out.note).toMatch(/^Naar het oosten liggen binnen 3 km geen paden of hellingen\. De beste lus die er wel is gaat naar het (noord|zuid)?west(en)?\.$/);
-    // De lus is de gewone beste lus: hij gaat naar het westen, waar iets ligt.
-    expect(inner(route.calls[0]).some((p) => away(bearing(START, p), 270) < 60)).toBe(true);
-    expect(route.calls.length).toBeLessThanOrEqual(MAX_ROUTE_CALLS);
+    expect(out.note).toBe('Naar het oosten liggen binnen 3 km geen paden of hellingen. De lus die er is gaat naar het westen.');
+    expect(out.proposal.points).toEqual(previous.points);
+    expect(route.calls).toHaveLength(0);
   });
 
   it('een mislukte routeplanner geeft een regel en laat de lus staan', async () => {
@@ -190,8 +191,87 @@ describe('Andere lus: Zonder heen en terug', () => {
 });
 
 describe('Andere lus: de keuzes', () => {
-  it('heeft zeven keuzes met een eigen label in zinsletters', () => {
-    expect(OTHER_LOOP_CHOICES.map((c) => c.label)).toEqual(['Andersom', 'Een andere kant op', 'Noord', 'Oost', 'Zuid', 'West', 'Zonder heen en terug']);
-    for (const c of OTHER_LOOP_CHOICES) expect(c.line).not.toMatch(/[–—]/);
+  it('heeft elf keuzes met een eigen label in zinsletters, zonder Simpel of Avontuurlijk', () => {
+    expect(OTHER_LOOP_CHOICES.map((c) => c.label)).toEqual(['Andersom', 'Een andere kant op', 'Noord', 'Oost', 'Zuid', 'West', 'Zonder heen en terug', 'Langs water', 'Door bos of groen', 'Meer onverhard', 'Via een punt']);
+    for (const c of OTHER_LOOP_CHOICES) {
+      expect(c.line).not.toMatch(/[–—]/);
+      expect(`${c.label} ${c.line}`).not.toMatch(/Simpel|Avontuurlijk/);
+    }
+  });
+});
+
+describe('Andere lus: Soort', () => {
+  const kinds = terrain(
+    feature('water', 80, 1800), feature('water', 100, 2200), feature('wood', 250, 2000), feature('wood', 270, 2300),
+    feature('dirt_path', 340, 1900), feature('hill', 160, 2000, 40),
+  );
+  const near = (call: RoutePoint[], f: TerrainFeature) => call.some((p) => metersBetween(p, f) < 5);
+  const scenic = { ...kinds, scenery: true as const };
+
+  it('Langs water gebruikt alleen water als punten, in één zoektocht', async () => {
+    const route = fakeRoute();
+    const out = await proposeOtherLoop({ start: START, target: TARGET, terrain: scenic }, route, 'water', loopOf());
+    expect(out.ok).toBe(true);
+    expect(route.calls.length).toBeGreaterThan(0);
+    expect(route.calls.length).toBeLessThanOrEqual(MAX_ROUTE_CALLS);
+    expect(kinds.features.filter((f) => f.kind === 'water').some((f) => near(route.calls[0], f))).toBe(true);
+    expect(kinds.features.filter((f) => f.kind !== 'water').some((f) => near(route.calls[0], f))).toBe(false);
+  });
+
+  it('Door bos of groen en Meer onverhard kiezen hun eigen soort', async () => {
+    const wood = fakeRoute();
+    await proposeOtherLoop({ start: START, target: TARGET, terrain: scenic }, wood, 'wood', loopOf());
+    expect(kinds.features.filter((f) => f.kind === 'wood').some((f) => near(wood.calls[0], f))).toBe(true);
+    expect(kinds.features.filter((f) => f.kind !== 'wood').some((f) => near(wood.calls[0], f))).toBe(false);
+    const dirt = fakeRoute();
+    await proposeOtherLoop({ start: START, target: TARGET, terrain: scenic }, dirt, 'unpaved', loopOf());
+    expect(near(dirt.calls[0], feature('dirt_path', 340, 1900))).toBe(true);
+    expect(kinds.features.filter((f) => f.kind === 'water' || f.kind === 'wood').some((f) => near(dirt.calls[0], f))).toBe(false);
+  });
+
+  it('vindt hij niets van die soort binnen het eerste zoekbereik, dan één droge zin en geen aanroep', async () => {
+    const route = fakeRoute();
+    const nothing = { ...terrain(feature('water', 80, 5000), feature('hill', 160, 2000, 40)), scenery: true as const };
+    const out = await proposeOtherLoop({ start: START, target: TARGET, terrain: nothing }, route, 'water', loopOf());
+    expect(out).toEqual({ ok: false, line: 'Binnen 3 km ligt geen water. De lus blijft zoals hij was.' });
+    expect(route.calls).toHaveLength(0);
+  });
+
+  it('zegt eerlijk dat water en bos nog niet zijn opgehaald bij een oudere bewaarde plek', async () => {
+    const route = fakeRoute();
+    const out = await proposeOtherLoop({ start: START, target: TARGET, terrain: kinds }, route, 'water', loopOf());
+    expect(out.ok).toBe(false);
+    expect(route.calls).toHaveLength(0);
+  });
+});
+
+describe('Andere lus: Via een punt', () => {
+  const VIA = offsetPoint(START, 45, 2500);
+
+  it('gaat langs het punt en komt terug bij de start, binnen MAX_ROUTE_CALLS', async () => {
+    const route = fakeRoute();
+    const out = await proposeOtherLoop({ start: START, target: TARGET }, route, 'via', loopOf(), VIA);
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(route.calls.length).toBeLessThanOrEqual(MAX_ROUTE_CALLS);
+    expect(route.calls[0][1].lat).toBeCloseTo(VIA.lat, 6);
+    expect(out.proposal.points.some((p) => metersBetween(p, VIA) < 250)).toBe(true);
+    const pts = out.proposal.points;
+    expect(metersBetween(pts[0], START)).toBeLessThan(10);
+    expect(metersBetween(pts[pts.length - 1], START)).toBeLessThan(10);
+    expect(out.note).toBe('Deze lus gaat langs het punt dat je koos.');
+  });
+
+  it('weigert een punt in een stuk dat je vermijdt, zonder aanroep', async () => {
+    const route = fakeRoute();
+    const out = await proposeOtherLoop({ start: START, target: TARGET, avoid: [{ lat: VIA.lat, lon: VIA.lon, radiusM: 300 }] }, route, 'via', loopOf(), VIA);
+    expect(out.ok).toBe(false);
+    expect(route.calls).toHaveLength(0);
+  });
+
+  it('zegt dat er geen pad bij het punt ligt als de planner het niet kent, en laat het punt niet vallen', async () => {
+    const route = (async (): Promise<RouteAnswer> => ({ ok: false, reason: 'unmapped', waypoint: 1 })) as RouteFn;
+    const out = await proposeOtherLoop({ start: START, target: TARGET }, route, 'via', loopOf(), VIA);
+    expect(out).toEqual({ ok: false, line: 'Bij dat punt ligt geen pad dat de routeplanner kent. De lus blijft zoals hij was.' });
   });
 });

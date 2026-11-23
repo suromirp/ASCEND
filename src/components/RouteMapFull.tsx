@@ -76,6 +76,7 @@ export function RouteMapFull({ model, piece, onClose }: { model: RouteSearchMode
               keepName={model.keepName}
               onKeep={model.keepPlace}
               piece={piece}
+              {...(model.other.choosing ? { viaPick: { onApply: (point: RoutePoint) => { model.other.applyVia(point); onClose(); }, onCancel: () => { model.other.cancelVia(); onClose(); } } } : {})}
             />
           )}
         </div>

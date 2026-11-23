@@ -52,7 +52,7 @@ export interface RouteSearchDeps {
   // Sluit het paneel, dan stopt de zoektocht: er gaat geen aanroep meer de deur uit.
   signal?: AbortSignal;
   route?: RouteFn;
-  terrain?: (place: { name: string; lat: number; lon: number }, exact: boolean) => Promise<NearbyTerrain | undefined>;
+  terrain?: (place: { name: string; lat: number; lon: number }, exact: boolean, needScenery?: boolean) => Promise<NearbyTerrain | undefined>;
   // Wat er al bewaard lag, als de kaart niet op tijd antwoordt; standaard de cache van nearbyTerrain.
   cachedTerrain?: (place: { name: string; lat: number; lon: number }, exact: boolean) => Promise<NearbyTerrain | undefined>;
   offline?: () => boolean;
@@ -65,6 +65,8 @@ export interface RouteSearchDeps {
   avoid?: AvoidArea[];
   // Grote wegen mijden in de aanvraag (instelling Grote wegen mijden); afwezig is aan.
   avoidBigRoads?: boolean;
+  // Via een punt (Andere lus): het punt waar de lus langs moet. Alleen in het geheugen.
+  via?: RoutePoint;
 }
 
 export type RouteSearchStep = 'terrain' | 'routes';
@@ -81,7 +83,7 @@ export async function findRoutes(place: { lat: number; lon: number }, target: Ro
   const began = Date.now();
   const guarded = guardedRoute(deps, began, budget.routesUntilMs);
   const { route } = guarded;
-  const terrainOf = deps.terrain ?? ((p, exact) => refreshNearbyTerrain(p, { exact }).catch(() => getNearbyTerrain(p, exact)));
+  const terrainOf = deps.terrain ?? ((p, exact, needScenery) => refreshNearbyTerrain(p, { exact, ...(needScenery ? { needScenery } : {}) }).catch(() => getNearbyTerrain(p, exact)));
   const cachedOf = deps.cachedTerrain ?? getNearbyTerrain;
   const search = (async (): Promise<RouteSearch> => {
     // Zonder heuvels en paden zoekt de planner nog steeds een lus, op punten rond het startpunt.
@@ -147,13 +149,15 @@ export async function findOtherLoop(
   const limitMs = deps.limitMs ?? PROPOSAL_LIMIT_MS;
   const budget = searchBudget(limitMs);
   const guarded = guardedRoute(deps, Date.now(), budget.routesUntilMs);
-  const terrainOf = deps.terrain ?? ((p, exact) => refreshNearbyTerrain(p, { exact }).catch(() => getNearbyTerrain(p, exact)));
+  const terrainOf = deps.terrain ?? ((p, exact, needScenery) => refreshNearbyTerrain(p, { exact, ...(needScenery ? { needScenery } : {}) }).catch(() => getNearbyTerrain(p, exact)));
   const cachedOf = deps.cachedTerrain ?? getNearbyTerrain;
   const search = (async (): Promise<OtherLoopResult> => {
     const terrainPlace = { name: '', ...(exactStart ? deps.terrainAt ?? exactStart : rounded) };
-    const terrain = (await withTimeout(cachedOf(terrainPlace, !!exactStart), budget.cacheMs).catch(() => undefined))
-      ?? (await withTimeout(terrainOf(terrainPlace, !!exactStart), budget.terrainMs).catch(() => undefined));
-    return proposeOtherLoop({ start, target, terrain, anchor: !!exactStart, ...(deps.avoid && deps.avoid.length > 0 ? { avoid: deps.avoid } : {}) }, guarded.route, choice, previous);
+    // Water en bos staan pas in een plek van na deze keuze: een bewaarde plek zonder ze wordt eenmalig opnieuw gevraagd (zelfde verzoek).
+    const needScenery = choice === 'water' || choice === 'wood';
+    const cached = await withTimeout(cachedOf(terrainPlace, !!exactStart), budget.cacheMs).catch(() => undefined);
+    const terrain = cached && (!needScenery || cached.scenery) ? cached : (await withTimeout(terrainOf(terrainPlace, !!exactStart, needScenery), budget.terrainMs).catch(() => undefined)) ?? cached;
+    return proposeOtherLoop({ start, target, terrain, anchor: !!exactStart, ...(deps.avoid && deps.avoid.length > 0 ? { avoid: deps.avoid } : {}) }, guarded.route, choice, previous, deps.via);
   })();
   try {
     return await withTimeout(search.catch((): OtherLoopResult => ({ ok: false, line: otherLoopFailLine('error') })), limitMs);

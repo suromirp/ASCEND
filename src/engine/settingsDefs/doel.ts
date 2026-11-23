@@ -221,7 +221,7 @@ export const DOEL: SettingDef[] = [
     page: 'doel',
     place: { in: 'bundel-zonder-doel' },
     title: 'Opbouw van de start',
-    note: 'In een beginnersstart wandel en dribbel je om de beurt, op de plek van de rustige en de lange duurloop. Gewoon houdt de lopen van je richting.',
+    note: 'In een beginnersstart wandel en dribbel je om de beurt, op de plek van de rustige en de lange duurloop. Gewoon houdt de lopen van je richting. Telt alleen als je start rustig is.',
     keywords: ['beginner', 'start', 'wandelen', 'dribbelen', 'heel licht', 'opbouw', 'rustig beginnen', 'zonder doel', 'richting'],
     help: true,
     choice: { key: 'opbouwStart', def: DOEL_CHOICES.opbouwStart },

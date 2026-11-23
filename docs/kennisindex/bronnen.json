@@ -4491,7 +4491,14 @@
    ],
    "kern": "Onder de gekozen lus staat een knop Andere lus met Andersom (nul aanroepen), Een andere kant op, Noord, Oost, Zuid en West, en Zonder heen en terug; elke keuze behalve Andersom is één zoektocht binnen MAX_ROUTE_CALLS, de gekozen variant is een eenmalige afwijking die niet bewaard wordt.",
    "stand": "geldt"
+  },  "docs/beslissingen/2026-11-23-lus-soort-en-via-punt.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Het blad Andere lus krijgt Soort (Langs water, Door bos of groen, Meer onverhard; één zoektocht met alleen punten van die soort, uit hetzelfde Overpass-verzoek) en Via een punt (kaart in Groter in kiesstand, een tik zet een speld, Lus erlangs; alleen in het geheugen).",
+   "stand": "geldt"
   },
+
   "docs/beslissingen/2026-11-22-wind-en-lus.md": {
    "onderwerpen": [
     "koppelingen-en-data"

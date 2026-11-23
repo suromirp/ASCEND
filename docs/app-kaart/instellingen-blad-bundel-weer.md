@@ -50,6 +50,7 @@ Wind bepaalt de richting
 [knop: Uitleg: Wind bepaalt de richting]
 [knop: Terug voor het donker]
 Terug voor het donker
+[knop: Uitleg: Terug voor het donker]
 [knop: Gekozen plek onthouden]
 Gekozen plek onthouden
 [knop: Ondergrond van de kaart, Donker]

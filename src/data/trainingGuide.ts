@@ -78,7 +78,7 @@ const WALK_JOG_GUIDE: TrainingDayGuide = {
   sections: [
     {
       heading: 'Waarom',
-      body: 'Wie net begint met lopen raakt per uur veel vaker geblesseerd dan wie al loopt. Om de beurt dribbelen en wandelen geeft je pezen en botten de tijd om te wennen.',
+      body: 'Wie net begint met lopen raakt per uur ongeveer acht keer zo vaak geblesseerd als wie al loopt. Om de beurt dribbelen en wandelen geeft je pezen en botten de tijd om te wennen.',
     },
     {
       heading: 'Zo doe je het',

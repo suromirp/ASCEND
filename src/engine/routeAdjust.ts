@@ -56,8 +56,19 @@ export function stepDistance(trainingKm: number, deltaKm: number, dir: 'longer' 
 // over hetzelfde pad: daar is de andere kant op dezelfde lus, dus geen knop.
 export const canReverse = (p: Pick<RouteProposal, 'style'>): boolean => p.style === 'adventure';
 
+// De ondergrond hoort bij het stuk dat op een punt eindigt (models/route.ts); keer je de lus om, dan eindigt elk stuk
+// op het punt ervoor, dus de ondergrond schuift een punt op. `bigRoad` hoort bij twee punten tegelijk en blijft zoals hij is.
+function reversedPoints(points: readonly RoutePoint[]): RoutePoint[] {
+  const n = points.length;
+  return [...points].reverse().map((pt, j) => {
+    const { surface: _old, ...rest } = pt;
+    const surface = j >= 1 ? points[n - j].surface : undefined;
+    return surface ? { ...rest, surface } : rest;
+  });
+}
+
 export function reverseProposal(p: RouteProposal): RouteProposal {
-  const points = [...p.points].reverse();
+  const points = reversedPoints(p.points);
   const threshold = modelThresholdM(points.map((x) => x.ele));
   return { ...p, points, ascentM: ascentOf(points, threshold) };
 }

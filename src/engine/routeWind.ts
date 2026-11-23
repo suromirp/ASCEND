@@ -8,13 +8,15 @@ import type { RoutePoint, RouteProposal } from '../models/route';
 import type { WeatherForecast } from '../models/weather';
 import { pad } from '../utils/pad';
 import { canReverse, reverseProposal } from './routeAdjust';
-import { bearing, cumulative } from './routeGeometry';
+import { bearing, cumulative, metersBetween } from './routeGeometry';
 
 // Onder deze wind (km/u) doet de app niets: 3 Beaufort begint bij 12 km/u.
 export const WIND_MIN_KMH = 12;
 // Vanaf zoveel zegt de regel "tegen de wind in" of "met de wind mee": de gemiddelde cosinus van de hoek tussen
 // je looprichting en de wind (1 is recht tegen, 0 is dwars).
 export const WIND_CLEAR = 0.3;
+// Ligt de start verder dan dit van de plek van het weer (ongeveer 25 km), dan zegt de voorspelling niets over de wind bij de lus.
+export const WIND_MAX_DISTANCE_M = 25_000;
 
 export interface LoopWind {
   // Waar de wind vandaan komt, in graden (0 is noord, 90 oost).
@@ -26,16 +28,32 @@ const COMPASS = ['noord', 'noordoost', 'oost', 'zuidoost', 'zuid', 'zuidwest', '
 export const windWord = (deg: number): string => COMPASS[Math.round((((deg % 360) + 360) % 360) / 45) % 8];
 
 // De wind op het uur van de start, uit de voorspelling die er al is. `startHour` is het uur waarop je meestal
-// begint; zonder uur (een wandeling die je zelf plant) is het nu. Geen voorspelling, geen richting in dat uur
-// (een voorspelling van voor dit veld) of een uur dat er niet in staat: undefined.
-export function windForStart(forecast: WeatherForecast | undefined, date: string, startHour: number | undefined, now: Date): LoopWind | undefined {
+// begint; zonder uur (een wandeling die je zelf plant) is het nu. Voor vandaag geldt: is dat gebruikelijke uur al
+// voorbij, dan het uur van nu, want daar begin je nu hoogstens. `start`: ligt de start meer dan WIND_MAX_DISTANCE_M van
+// de plek van de voorspelling, dan zegt die niets over de lus en is er geen oordeel. Geen voorspelling, geen richting
+// in dat uur (een voorspelling van voor dit veld) of een uur dat er niet in staat: undefined.
+export function windForStart(forecast: WeatherForecast | undefined, date: string, startHour: number | undefined, now: Date, start?: RoutePoint): LoopWind | undefined {
   if (!forecast) return undefined;
+  if (start && metersBetween(start, forecast.place) > WIND_MAX_DISTANCE_M) return undefined;
   const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  const hour = startHour ?? (date === today ? now.getHours() : undefined);
-  if (hour === undefined) return undefined;
+  const usual = startHour ?? (date === today ? now.getHours() : undefined);
+  if (usual === undefined) return undefined;
+  const hour = date === today ? Math.max(usual, now.getHours()) : usual;
   const at = forecast.hours.find((h) => h.time === `${date}T${pad(hour)}:00`);
   if (!at || at.windDirDeg === undefined || !Number.isFinite(at.windDirDeg) || !Number.isFinite(at.windKmh)) return undefined;
   return { fromDeg: at.windDirDeg, kmh: at.windKmh };
+}
+
+// De wind vastzetten voor één zoektocht (de zoeksleutel): staat hij er al voor deze sleutel, dan blijft hij; anders wordt
+// hij vastgezet zodra de voorspelling er is (ook als hij zwak is of geen richting heeft). Een voorspelling die later
+// binnenkomt verandert de lus dan niet meer; een nieuwe zoektocht (andere sleutel) zet opnieuw vast.
+export interface WindPin {
+  key: string;
+  wind: LoopWind | undefined;
+}
+export function pinWind(pin: WindPin | undefined, key: string, live: LoopWind | undefined, forecastKnown: boolean): WindPin | undefined {
+  if (pin?.key === key) return pin;
+  return live !== undefined || forecastKnown ? { key, wind: live } : pin;
 }
 
 const RAD = Math.PI / 180;

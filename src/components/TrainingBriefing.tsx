@@ -570,7 +570,7 @@ function LoopPlace({ model, target, onBigger, date }: { model: RouteSearchModel;
           <div className="-mt-2 shrink-0">{bigger}</div>
         </div>
       )}
-      {pickedOutcome?.ok && picked && <div className="-mt-2"><OtherLoop model={model} /></div>}
+      {pickedOutcome?.ok && picked && <div className="-mt-2"><OtherLoop model={model} onFull={onBigger} /></div>}
       {date && pickedOutcome?.ok && <RouteInfo proposal={pickedOutcome.proposal} target={target} paceSecKm={model.paceSecKm} date={date} compact />}
       {other && otherOutcome?.ok && (
         // Direct onder de gekozen lus: Kies is 44 px hoog, de rij schuift 4 px op zodat er geen gat valt.

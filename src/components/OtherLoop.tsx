@@ -6,7 +6,7 @@
 // en Opnieuw, en de lus blijft zoals hij was.
 
 import { useSheetClose } from '../utils/useSheetClose';
-import { OTHER_LOOP_CHOICES, OTHER_LOOP_SOURCES_LINE, type OtherLoopChoice } from '../engine/routeOtherLoop';
+import { LOOP_KINDS, OTHER_LOOP_CHOICES, OTHER_LOOP_SOURCES_LINE, type OtherLoopChoice } from '../engine/routeOtherLoop';
 import { searchLimitLine } from '../engine/routeSearchSteps';
 import { PROPOSAL_LIMIT_MS } from '../storage/routeProposal';
 import { Portal } from './Portal';
@@ -20,12 +20,8 @@ const dim = { color: 'var(--color-ink-dim)' };
 const choice = (c: OtherLoopChoice) => OTHER_LOOP_CHOICES.find((x) => x.choice === c)!;
 const DIRECTIONS: OtherLoopChoice[] = ['north', 'east', 'south', 'west'];
 
-function OtherLoopSheet({ onPick, onClose }: { onPick: (c: OtherLoopChoice) => void; onClose: () => void }) {
-  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
-  const pick = (c: OtherLoopChoice) => {
-    onPick(c);
-    requestClose();
-  };
+// De rijen van het blad: Andersom, de richtingen, Zonder heen en terug, de groep Soort en Via een punt.
+export function OtherLoopRows({ pick }: { pick: (c: OtherLoopChoice) => void }) {
   const row = (c: OtherLoopChoice) => (
     <button
       key={c}
@@ -39,12 +35,7 @@ function OtherLoopSheet({ onPick, onClose }: { onPick: (c: OtherLoopChoice) => v
     </button>
   );
   return (
-    <Portal>
-      <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} className={`relative w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
-          <SheetGrip />
-          <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-[max(var(--rand-onder),32px)]">
-            <div className="-mt-2"><SheetHeader eyebrow="Route" title="Andere lus" onClose={requestClose} /></div>
+    <>
             <div className="flex flex-col gap-2">
               {row('reverse')}
               {row('otherSide')}
@@ -57,6 +48,30 @@ function OtherLoopSheet({ onPick, onClose }: { onPick: (c: OtherLoopChoice) => v
               <p className="text-sm leading-snug" style={dim}>{choice('north').line}</p>
             </div>
             {row('noRepeat')}
+            <div className="flex flex-col gap-2">
+              <Eyebrow tone="var(--color-ink-dim)">Soort</Eyebrow>
+              {LOOP_KINDS.map((k) => row(k))}
+            </div>
+            {row('via')}
+    </>
+  );
+}
+
+function OtherLoopSheet({ onPick, onVia, onClose }: { onPick: (c: OtherLoopChoice) => void; onVia: () => void; onClose: () => void }) {
+  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
+  const pick = (c: OtherLoopChoice) => {
+    if (c === 'via') onVia();
+    else onPick(c);
+    requestClose();
+  };
+  return (
+    <Portal>
+      <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
+        <div ref={sheetRef} className={`relative w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
+          <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-[max(var(--rand-onder),32px)]">
+            <div className="-mt-2"><SheetHeader eyebrow="Route" title="Andere lus" onClose={requestClose} /></div>
+            <OtherLoopRows pick={pick} />
             <p className="text-xs leading-snug" style={dim}>{OTHER_LOOP_SOURCES_LINE}</p>
           </Card>
         </div>
@@ -66,13 +81,15 @@ function OtherLoopSheet({ onPick, onClose }: { onPick: (c: OtherLoopChoice) => v
 }
 
 // De knop met zijn uitkomst eronder. Zonder lus over paden (alleen heen en terug) staat er niets.
-export function OtherLoop({ model }: { model: RouteSearchModel }) {
+// `onFull`: opent Groter (in de Briefing het blad Route), waar Via een punt de kaart in kiesstand zet.
+export function OtherLoop({ model, onFull }: { model: RouteSearchModel; onFull?: () => void }) {
   const [open, setOpen] = useState(false);
   const { other } = model;
   if (!other.available) return null;
   return (
     <div className="flex flex-col items-start">
       <TextButton tone="dim" icon="verder" disabled={other.busy} onClick={() => setOpen(true)}>Andere lus</TextButton>
+      {other.viaActive && <TextButton tone="dim" disabled={other.busy} onClick={other.clearVia}>Zonder punt</TextButton>}
       {other.windLine && <p className="text-xs leading-snug" style={dim}>{other.windLine}</p>}
       {other.busy && <p role="status" className="text-xs leading-snug" style={dim}>{`Een andere lus zoeken. ${searchLimitLine(undefined, PROPOSAL_LIMIT_MS)}`}</p>}
       {!other.busy && other.failLine && (
@@ -82,7 +99,7 @@ export function OtherLoop({ model }: { model: RouteSearchModel }) {
         </>
       )}
       {!other.busy && !other.failLine && other.note && <p role="status" className="text-xs leading-snug" style={dim}>{other.note}</p>}
-      {open && <OtherLoopSheet onPick={other.pick} onClose={() => setOpen(false)} />}
+      {open && <OtherLoopSheet onPick={other.pick} onVia={() => { other.beginVia(); onFull?.(); }} onClose={() => setOpen(false)} />}
     </div>
   );
 }

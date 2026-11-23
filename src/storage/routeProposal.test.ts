@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { RouteFn, RoutePoint } from '../models/route';
+import type { RouteFn, RoutePoint, RouteProposal } from '../models/route';
 import { cleanSettings } from './backupClean';
-import { findRoutes, searchBudget, PROPOSAL_LIMIT_MS } from './routeProposal';
+import { findOtherLoop, findRoutes, searchBudget, PROPOSAL_LIMIT_MS } from './routeProposal';
 import { createGate, routeWithFallback } from '../integrations/routing';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { routeTarget } from '../engine/routeTarget';
@@ -252,5 +252,61 @@ describe('findRoutes met een wandeling zonder training (Wandeling plannen)', () 
     // De ingang met een training is dezelfde als voorheen.
     const training = await findRoutes(place, target, { route: straight, terrain: async () => undefined, offline: () => false });
     expect(training.kind).toBe('plans');
+  });
+});
+
+describe('findOtherLoop', () => {
+  const previous: RouteProposal = { style: 'adventure', source: 'brouter', points: [{ lat: 52.12, lon: 5.65 }, { lat: 52.14, lon: 5.65 }, { lat: 52.12, lon: 5.65 }], distanceM: 6000, ascentM: 0, repeatedShare: 0 };
+  const cachedTerrain: NearbyTerrain = { source: 'osm', fetchedAt: '2026-11-01T08:00:00.000Z', place: { name: '', lat: 52.12, lon: 5.65 }, radiusM: 3000, features: [{ kind: 'dirt_path', lat: 52.13, lon: 5.67, distanceM: 1500 }] };
+
+  it('leest eerst wat er bewaard lag en vraagt de kaart dan niet opnieuw', async () => {
+    const terrain = vi.fn(async () => undefined);
+    const route = vi.fn(straight);
+    const out = await findOtherLoop(place, target, 'east', previous, { route, terrain, cachedTerrain: async () => cachedTerrain, offline: () => false });
+    expect(out.ok).toBe(true);
+    expect(terrain).not.toHaveBeenCalled();
+    expect(route.mock.calls.length).toBeLessThanOrEqual(MAX_ROUTE_CALLS);
+  });
+
+  it('vraagt de kaart alleen als er niets bewaard lag', async () => {
+    const terrain = vi.fn(async () => cachedTerrain);
+    await findOtherLoop(place, target, 'east', previous, { route: straight, terrain, cachedTerrain: async () => undefined, offline: () => false });
+    expect(terrain).toHaveBeenCalledTimes(1);
+  });
+
+  it('na de tijdgrens komt er een regel en de lus blijft', async () => {
+    let release: () => void = () => undefined;
+    const slow: RouteFn = async () => {
+      await new Promise<void>((r) => { release = r; });
+      return { ok: false, reason: 'error' };
+    };
+    const out = await findOtherLoop(place, target, 'otherSide', previous, { route: slow, terrain: async () => undefined, cachedTerrain: async () => undefined, offline: () => false, limitMs: 20 });
+    release();
+    expect(out).toEqual({ ok: false, line: 'De routeplanner antwoordde niet op tijd. De lus blijft zoals hij was.' });
+  });
+
+  it('na sluiten van het blad gaat er geen aanroep meer de deur uit', async () => {
+    const stop = new AbortController();
+    stop.abort();
+    const route = vi.fn(straight);
+    const out = await findOtherLoop(place, target, 'otherSide', previous, { route, terrain: async () => undefined, cachedTerrain: async () => undefined, offline: () => false, signal: stop.signal });
+    expect(route).not.toHaveBeenCalled();
+    expect(out.ok).toBe(false);
+  });
+
+  it('zonder netwerk meteen de regel, zonder kaart en zonder aanroep', async () => {
+    const terrain = vi.fn(async () => undefined);
+    const route = vi.fn(straight);
+    const out = await findOtherLoop(place, target, 'east', previous, { route, terrain, cachedTerrain: async () => undefined, offline: () => true });
+    expect(out).toEqual({ ok: false, line: 'Zonder netwerk kan er geen andere lus komen. De lus blijft zoals hij was.' });
+    expect(terrain).not.toHaveBeenCalled();
+    expect(route).not.toHaveBeenCalled();
+  });
+
+  it('een richting waar niets ligt hergebruikt de lus zonder aanroep van de planner', async () => {
+    const route = vi.fn(straight);
+    const out = await findOtherLoop(place, target, 'west', previous, { route, terrain: async () => undefined, cachedTerrain: async () => ({ ...cachedTerrain, features: [] }), offline: () => false });
+    expect(out.ok).toBe(true);
+    expect(route).not.toHaveBeenCalled();
   });
 });
