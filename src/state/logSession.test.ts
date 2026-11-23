@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { GoalMilestonesRepo, PlannedSessionsRepo, SessionLogsRepo, wipeAllData } from '../storage/database';
+import { GoalMilestonesRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo, wipeAllData } from '../storage/database';
 import { runLogSession, settleLogOutcome, LogNotSaved, type LogSessionDeps } from './logSession';
 import type { LogSessionInput } from './appDataTypes';
 import type { SavedMoment } from '../engine/savedMoments';
@@ -231,6 +231,25 @@ describe('logSession: het log staat er, ook als een stap erna faalt', () => {
 });
 
 // Forge (concept) en de sportvraag (keuze) leggen pas iets vast of gooien pas iets weg als het log er echt staat.
+describe('logSession: de zin na een losse sport', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+
+  it('een padellog zoekt zijn afgeleide sjabloon: geen licht en rustig, geen korte training', async () => {
+    await SettingsRepo.set({ sportHandling: { padel: { role: 'count' } } });
+    const { deps, announced } = makeDeps();
+    expect(await runLogSession(loose({ templateId: 'sport_padel', countedSport: 'padel', durationMinutes: 25 }), undefined, deps)).toBe(true);
+    expect(announced[0][0].coachNote).toBe('Opgeslagen. Padel telt mee voor je benen en je week.');
+  });
+
+  it('zonder rol: de sport telt nog niet mee', async () => {
+    const { deps, announced } = makeDeps();
+    expect(await runLogSession(loose({ templateId: 'sport_football', countedSport: 'football' }), undefined, deps)).toBe(true);
+    expect(announced[0][0].coachNote).toBe('Opgeslagen. Voetbal telt nog niet mee.');
+  });
+});
+
 describe('settleLogOutcome: nee is niet altijd "staat er al"', () => {
   beforeEach(async () => {
     await wipeAllData();

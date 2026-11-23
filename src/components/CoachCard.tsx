@@ -4,7 +4,7 @@
 // Het waarom zit dicht achter "Waarom?". Akkoord is het enige gevulde mint als het de enige keuze is;
 // een advies zonder `lead` houdt zijn alinea (`effect`). Zie docs/beslissingen/2026-10-28-adviesblad-compact.md.
 
-import { REENTRY_TITLE, REENTRY_WHY, reentryNote } from '../engine/reentry';
+import { REENTRY_TITLE, REENTRY_WHY, reentryFirstDayItems, reentryNote } from '../engine/reentry';
 import { ProposalChangeList, ProposalSheet } from './ProposalSheet';
 import { useState, type ReactNode } from 'react';
 import { useAppData } from '../state/AppDataContext';
@@ -165,7 +165,8 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
           explanation: REENTRY_WHY,
           trigger: 'reentry_planned',
           settings: { reentryWeeks: [...(settings.reentryWeeks ?? []).filter((w) => w.from !== week.from), week] },
-          notes: [reentryNote(week, advice.reentryForgeDays)],
+          notes: [reentryNote(week, advice.reentryForgeDays, advice.reentryFirstDay)],
+          ...(advice.reentryFirstDay ? { startItems: reentryFirstDayItems(advice.reentryFirstDay) } : {}),
         }),
         {
           eyebrow: 'Rustiger instap',

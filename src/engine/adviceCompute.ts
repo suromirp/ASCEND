@@ -28,6 +28,7 @@ import { restWeekSkipAdvice, repeatWeekAdvice, reentryAdvice, tentPackAdvice, ta
 import { morningAdvice } from './adviceMorning';
 import { descentAdvice } from './descentClock';
 import { fullWeekAdvice, resolveFullWeekAsk } from './fullWeek';
+import { oneVoicePerLog } from './oneVoice';
 
 // --- Rule TEST-RETRY ---------------------------------------------------------
 // Trigger: the last test run (the last 21 days) has a fastest 5 km with more standing still than
@@ -536,8 +537,8 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     .flatMap((p) => p?.changes.filter((c) => c.action !== 'remove').map((c) => c.toDate ?? c.newSessionDraft?.scheduledDate) ?? []));
   const restBackLeft = restBack.filter((a) => !a.proposal?.changes.some((c) => c.toDate && catchUpDays.has(c.toDate)));
   // Alles behalve de afdaalklok, zoals het straks teruggaat: één lijst, zodat de afdaalklok dezelfde voorstellen ziet
-  // als de gebruiker.
-  const rest = [
+  // als de gebruiker. Eén stem per log (engine/oneVoice.ts): twee adviezen over hetzelfde log worden er één.
+  const rest = oneVoicePerLog([
     ...missed,
     ...skippedKey,
     ...testRoom,
@@ -558,7 +559,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...weather,
     ...morning,
     ...restBackLeft,
-  ].filter((a) => !inputs.respondedIds.has(a.id));
+  ].filter((a) => !inputs.respondedIds.has(a.id)));
   // De afdaalklok komt als laatste en wijkt voor alles: geen trapsessie op of naast een dag waar een ander
   // voorstel van vandaag iets neerzet (twee voorstellen die elk kloppen, maar samen botsen).
   const takenDays = new Set(rest.flatMap((a) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])])

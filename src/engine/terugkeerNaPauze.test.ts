@@ -67,15 +67,18 @@ describe('het verhaal: terug na een periode zonder sportschool met ziekte', () =
     expect(p).toMatchObject({ id: `reentry:${day(8)}`, cause: 'ill_away', lastTraining: D, pauseDays: 12, trainedSince: false, week: { from: day(12), until: day(18), factor: 0.75 } });
     // De twee weken ervoor waren vol: zonder de pauze vanaf de laatste training kwam er geen voorstel.
     expect(p.done).toBeGreaterThanOrEqual(4);
-    expect(reentryEffect(p, day(12))).toBe('Je laatste training was wo 13 januari, 12 dagen geleden. Daartussen was je ziek en weg. Een gewone week heeft er 5. Voorstel: vanaf vandaag tot en met zo 31 januari duren je trainingen driekwart van de gewone tijd. Welke trainingen er staan, je fase en je doeldatum blijven zoals ze zijn. Met Liever niet blijft alles staan.');
+    expect(reentryEffect(p, day(12))).toBe('Je laatste training was wo 13 januari, 12 dagen geleden. Daartussen was je ziek en weg. Een gewone week heeft er 5. Voorstel: vanaf vandaag tot en met zo 31 januari duren je trainingen driekwart van de gewone tijd. Vandaag geen herstel maar je eerste training: Bovenlichaam A komt naar vandaag, de Herstelwandeling naar di 26 januari. Verder blijven je trainingen, je fase en je doeldatum zoals ze zijn. Met Liever niet blijft alles staan.');
   });
 
-  it('de hele eerste week na terugkomst; D+15, de dag erna, niet meer', () => {
+  it('de hele eerste week na terugkomst; D+15 alleen nog als je sindsdien niet trainde (I-144)', () => {
     // D+8 is de laatste dag van Weer opbouwen na twee dagen ziek: dat schema doet het dan al.
     expect(proposeReentry(input({ today: day(8) }))).toBeUndefined();
     expect(proposeReentry(input({ today: day(9) }))?.week).toMatchObject({ from: day(9), until: day(15) });
     expect(proposeReentry(input({ today: day(14) }))?.week).toMatchObject({ from: day(14), until: day(20) });
-    expect(proposeReentry(input({ today: day(15) }))).toBeUndefined();
+    // Getraind na de terugkomst: de terugkomst is voorbij. Nog niets gedaan: dezelfde pauze, het voorstel blijft.
+    const back = [...logs, { ...done(ps('tpl_easy_run', day(10))), id: 'terug' } as SessionLog];
+    expect(proposeReentry(input({ today: day(15), logs: back }))).toBeUndefined();
+    expect(proposeReentry(input({ today: day(15) }))).toMatchObject({ id: `reentry:${day(8)}`, pauseDays: 15 });
     // Nog weg: niets.
     expect(proposeReentry(input({ today: day(7) }))).toBeUndefined();
   });
@@ -116,14 +119,15 @@ describe('het verhaal: terug na een periode zonder sportschool met ziekte', () =
 describe('de grens van de dag zelf, in Europe/Amsterdam', () => {
   afterEach(() => vi.useRealTimers());
 
-  it('om 23.59 op D+14 nog het voorstel, om 00.01 op D+15 niet meer', () => {
+  it('om 23.59 op D+14 nog het voorstel, om 00.01 op D+15 niet meer (na een training sinds de terugkomst)', () => {
+    const back = [...logs, { ...done(ps('tpl_easy_run', day(10))), id: 'terug' } as SessionLog];
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2027-01-27T22:59:00Z')); // 23.59 in Amsterdam, woensdag 27 januari = D+14
     expect(todayISO()).toBe(day(14));
-    expect(proposeReentry(input({ today: todayISO() }))).toBeDefined();
+    expect(proposeReentry(input({ today: todayISO(), logs: back }))).toBeDefined();
     vi.setSystemTime(new Date('2027-01-27T23:01:00Z')); // 00.01 in Amsterdam, donderdag 28 januari = D+15
     expect(todayISO()).toBe(day(15));
-    expect(proposeReentry(input({ today: todayISO() }))).toBeUndefined();
+    expect(proposeReentry(input({ today: todayISO(), logs: back }))).toBeUndefined();
   });
 
   it('achteraf vastleggen: precies 4 weken terug mag, een dag eerder niet, ook net na middernacht', () => {

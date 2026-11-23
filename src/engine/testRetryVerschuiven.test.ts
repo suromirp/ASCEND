@@ -93,10 +93,14 @@ describe('TEST-RETRY: eerst verschuiven, dan pas laten vervallen', () => {
 
   it('raakt geen sessie die al in een ander voorstel staat', () => {
     const sessions = [...standard().filter((x) => x.id !== 'upA' && x.id !== 'legs'), planned('todayLegs', 'tpl_lower_a', '2026-10-28', '2026-10-26')];
-    const all = computeAdvice(inputs(sessions));
+    // Na de testloop zelf komt geen HARD-THEN-SPACE meer (een test heeft zijn eigen rust, I-14 stap een stem): het andere
+    // voorstel komt van een losse zware loop vanochtend.
+    const hardRun: SessionLog = { id: 'log-hard', templateId: 'tpl_easy_run', type: 'cardio', completedDate: '2026-10-28', completedAt: '2026-10-28T07:00:00Z', variant: 'full', durationMinutes: 40, rpe: 8, source: 'manual' };
+    const all = computeAdvice(inputs(sessions, { logs: [testLog(), hardRun] }));
     const other = all.find((x) => x.ruleId === 'HARD-THEN-SPACE')!;
     expect(other.proposal!.changes.some((c) => c.plannedSessionId === 'todayLegs')).toBe(true);
     const retry = all.find((x) => x.ruleId === 'TEST-RETRY');
+    expect(other.relatedLogId).toBe('log-hard');
     expect(retry?.proposal?.changes.some((c) => c.plannedSessionId === 'todayLegs')).toBeFalsy();
   });
 });

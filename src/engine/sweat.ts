@@ -51,7 +51,7 @@ export interface SweatRate {
 // krijgt geen zweetmeting. De wandeling-of-tochtregel is die van de schoenen
 // (engine/sports.ts#isWalkOrTripLog): een bergtocht zonder modaliteit hoort erbij, een
 // fietstocht niet.
-export function sweatActivityOfLog(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'>): SweatActivity | undefined {
+export function sweatActivityOfLog(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'> & { countedSport?: SessionLog['countedSport']; customSport?: string; templateId?: string }): SweatActivity | undefined {
   if (logSport(log) === 'running') return 'run';
   return isWalkOrTripLog(log) ? 'walk' : undefined;
 }

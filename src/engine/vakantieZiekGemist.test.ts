@@ -214,7 +214,7 @@ describe('K: rustiger instap na ziekte en een vakantie', () => {
   it('op de dag terug een voorstel: zeven dagen driekwart, het doel blijft', () => {
     const p = proposeReentry(input())!;
     expect(p).toMatchObject({ id: 'reentry:2026-12-07', cause: 'ill_away', done: 1, usual: 5, week: { from: '2026-12-07', until: '2026-12-13', factor: 0.75 } });
-    expect(reentryEffect(p, '2026-12-07')).toBe('De afgelopen twee weken deed je 1 training, met ziekte en een vakantie ertussen. Een gewone week heeft er 5. Voorstel: vanaf vandaag tot en met zo 13 december duren je trainingen driekwart van de gewone tijd. Welke trainingen er staan, je fase en je doeldatum blijven zoals ze zijn. Met Liever niet blijft alles staan.');
+    expect(reentryEffect(p, '2026-12-07')).toBe('De afgelopen twee weken deed je 1 training, met ziekte en een vakantie ertussen. Een gewone week heeft er 5. Voorstel: vanaf vandaag tot en met zo 13 december duren je trainingen driekwart van de gewone tijd. Vandaag geen herstel maar je eerste training: Bovenlichaam A komt naar vandaag, de Herstelwandeling naar di 8 december. Verder blijven je trainingen, je fase en je doeldatum zoals ze zijn. Met Liever niet blijft alles staan.');
   });
 
   it('als advies op Vandaag, met Akkoord via het eigen voorstel; zonder Akkoord verandert de duur niet', () => {
@@ -232,12 +232,15 @@ describe('K: rustiger instap na ziekte en een vakantie', () => {
   });
 
   // Sinds 23 november (I-124): de hele eerste week na terugkomst, met hetzelfde id; het venster begint op de dag
-  // dat je het ziet. De dag na die eerste week niet meer.
+  // dat je het ziet. De dag na die eerste week niet meer als je sindsdien trainde; wie nog niets deed, zit nog in
+  // dezelfde pauze en houdt het voorstel (I-144).
   it('de hele eerste week na terugkomst, met hetzelfde id, het venster vanaf vandaag, en niet terwijl je nog weg bent', () => {
     expect(proposeReentry(input({ today: '2026-12-09' }))).toBeDefined();
     expect(proposeReentry(input({ today: '2026-12-10' }))).toMatchObject({ id: 'reentry:2026-12-07', week: { from: '2026-12-10', until: '2026-12-16' } });
     expect(proposeReentry(input({ today: '2026-12-13' }))).toMatchObject({ id: 'reentry:2026-12-07', week: { from: '2026-12-13', until: '2026-12-19' } });
-    expect(proposeReentry(input({ today: '2026-12-14' }))).toBeUndefined();
+    const trainedBack = [...logs, loose('tpl_easy_run', '2026-12-08', 30)];
+    expect(proposeReentry(input({ today: '2026-12-14', logs: trainedBack }))).toBeUndefined();
+    expect(proposeReentry(input({ today: '2026-12-14' }))).toMatchObject({ id: 'reentry:2026-12-07', week: { from: '2026-12-14', until: '2026-12-20' } });
     expect(proposeReentry(input({ today: '2026-12-05' }))).toBeUndefined();
   });
 
