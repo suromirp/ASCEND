@@ -8,7 +8,7 @@ import type { PlannedSession, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
 import { buildWeekReview, type WeekReview } from './weekReview';
-import { attentionLines, countedNames, MISSED_REPLAN_HINT, weekCountLine, weekRestLines } from './weekGlance';
+import { attentionLines, countedNames, MISSED_KEY_REPLAN_HINT, MISSED_REPLAN_HINT, weekCountLine, weekRestLines } from './weekGlance';
 import { missedInWeek, replanSub } from './weekList';
 import { deriveSessionStatus } from './sessionStatus';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
@@ -106,7 +106,17 @@ describe('I-42: gemist heeft één richting', () => {
     const r = review('2026-10-12', { asOf: '2026-10-12' } as never);
     const missed = attentionLines({ ...r, running: true, replan: true }).find((a) => a.key === 'missed')!;
     expect(r.keyMissedName).toBe('Lange duurloop');
-    expect(missed.value).toMatch(/De lange duurloop is de belangrijkste; die komt na Akkoord op een vrije dag, als dat past\. De rest van je week zet Week opnieuw plannen terug naar het plan\.$/);
+    // I-59: Week opnieuw plannen zet ook een aangenomen inhaal van deze week terug (engine/replanWeek.ts); de
+    // verwijzing zegt dat, zodat de belofte van een inhaal niet stil vervalt.
+    expect(missed.value).toMatch(/De lange duurloop is de belangrijkste; die komt na Akkoord op een vrije dag, als dat past\. Week opnieuw plannen zet de rest van je week terug naar het plan, ook een inhaal\.$/);
+    expect(missed.value).toContain(MISSED_KEY_REPLAN_HINT);
+  });
+
+  it('I-59: valt Gemist buiten de twee regels van Let op, dan krijgt hij toch de verwijzing', () => {
+    const r = review('2026-10-10');
+    expect(weekRestLines(r, { missedShown: false })[0]).toBe(`Gemist: Bovenlichaam B. ${MISSED_REPLAN_HINT}`);
+    // Een voorbije week heeft de rij niet: dan ook geen verwijzing.
+    expect(weekRestLines({ ...r, replan: false }, { missedShown: false })[0]).toBe('Gemist: Bovenlichaam B');
   });
 
   it('een voorbije week heeft geen rij Week opnieuw plannen: dan ook geen verwijzing', () => {

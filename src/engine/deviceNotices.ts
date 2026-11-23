@@ -11,6 +11,7 @@
 import { resolveMorningNotice, NOTICE_BODY, NOTICE_LINK, NOTICE_TITLE, type MorningNoticeSettings, type NoticeSupport } from './morningNotice';
 import type { RestAlert } from './strengthSettings';
 import type { WeekReview } from './weekReview';
+import { elsewhereNotes, onlyElsewhereText } from './weekGlance';
 import { formatHoursMinutesNL, toISODate } from '../utils/dates';
 
 // ---- de opgeslagen keuzes ---------------------------------------------------------------
@@ -177,9 +178,14 @@ const lowerFirst = (text: string) => (text ? text.charAt(0).toLowerCase() + text
 // Kort: wat er gebeurde, wat er komt en één tip. De getallen eerst, droog; de tip is de eerste
 // regel van de coach uit de weekterugblik (engine/weekReview.ts), zodat de melding en de
 // terugblik hetzelfde zeggen. Een week zonder plan en zonder training geeft geen melding.
+// De getallen tellen op de dag van uitvoeren, net als de terugblik waar de melding naartoe leidt, met dezelfde toelichting
+// ("1 in de week erna"); de melding is een telling, geen oordeel (docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md).
 export function weekNoticeText(review: WeekReview | null): { title: string; body: string; largeBody: string } | null {
-  if (!review || (review.planned === 0 && review.done === 0)) return null;
-  const body = `${review.done} van ${review.planned} ${review.planned === 1 ? 'training' : 'trainingen'} gedaan, ${formatHoursMinutesNL(review.minutes)}.`;
+  if (!review || (review.planned === 0 && review.done === 0 && !review.doneElsewhere)) return null;
+  const notes = elsewhereNotes(review);
+  const only = onlyElsewhereText(review);
+  const count = only ?? [`${review.done} van ${review.planned} ${review.planned === 1 ? 'training' : 'trainingen'} gedaan`, notes.doneElsewhere, notes.fromElsewhere].filter(Boolean).join(', ');
+  const body = only && review.minutes <= 0 ? `${only}.` : `${count}, ${formatHoursMinutesNL(review.minutes)}.`;
   const parts = [body];
   if (review.next) parts.push(`Volgende week: ${lowerFirst(review.next.title)}${review.next.key ? `, met ${review.next.key}` : ''}.`);
   if (review.advice[0]) parts.push(review.advice[0]);

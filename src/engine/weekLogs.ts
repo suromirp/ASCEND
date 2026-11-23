@@ -17,7 +17,7 @@ import { addDays } from '../utils/dates';
 import type { IllnessEpisode } from '../models/illness';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { LeavePeriod } from '../models/leave';
-import { logDay, type PlannedById } from './logDay';
+import { logDay, plannedByIdOf, type PlannedById } from './logDay';
 import { isDraftOpen, isPausedFor, pauseRules, type TemplateLookup } from './sessionStatus';
 
 type TemplateTypes = Map<string, Pick<SessionTemplate, 'type'>>;
@@ -105,4 +105,54 @@ export function leftOutOfCount(
     const trigger = removedBy.get(id);
     return !!trigger && trigger !== 'session_skipped' && trigger !== 'session_missed';
   };
+}
+
+// Een gedane training telt op de dag van uitvoeren (docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md, I-58):
+// de dag van zijn log, dezelfde dag als die van de minuten (`weekLogsOf`: met `plannedById` de dag uit engine/logDay.ts,
+// anders `completedDate`). Heeft een training meer logs, dan telt de vroegste. Zonder log de geplande dag. Alleen lezen:
+// geen log en geen geplande training wordt herschreven.
+export function countDayOf(logs: readonly SessionLog[], plannedById?: PlannedById): (s: Pick<PlannedSession, 'id' | 'scheduledDate'>) => string {
+  const first = new Map<string, string>();
+  for (const l of logs) {
+    if (!l.plannedSessionId) continue;
+    const day = plannedById ? logDay(l, plannedById) : l.completedDate;
+    const was = first.get(l.plannedSessionId);
+    if (was === undefined || day < was) first.set(l.plannedSessionId, day);
+  }
+  return (s) => first.get(s.id) ?? s.scheduledDate;
+}
+
+// Wat een week in "x van n" anders telt door de dag van uitvoeren: `out` zijn de gedane trainingen die in deze week
+// gepland stonden en in een andere week gedaan zijn, `in` de gedane trainingen van een andere week die in deze week
+// gedaan zijn. `counts` zegt welke geplande training meetelt (countsAsTraining, zonder de oude rij van een inhaal).
+export function weekExecutionShift<S extends Pick<PlannedSession, 'id' | 'scheduledDate'>>(plannedSessions: readonly S[], logs: readonly SessionLog[], weekStart: string, counts: (s: S) => boolean, plannedById?: PlannedById): { out: S[]; in: S[] } {
+  const weekEnd = addDays(weekStart, 6);
+  const inWeek = (d: string) => d >= weekStart && d <= weekEnd;
+  const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const dayOf = countDayOf(logs, plannedById);
+  const out: S[] = [];
+  const into: S[] = [];
+  for (const s of plannedSessions) {
+    if (!logged.has(s.id) || !counts(s)) continue;
+    const planned = inWeek(s.scheduledDate);
+    const done = inWeek(dayOf(s));
+    if (planned && !done) out.push(s);
+    if (!planned && done) into.push(s);
+  }
+  return { out, in: into };
+}
+
+// De weekbalk (components/vandaag/WeekStrip.tsx) per dag van de week: een training staat op de dag van uitvoeren als
+// hij gedaan is, anders op zijn geplande dag (I-58). `sessions` is het hele plan, zodat een training van een andere
+// week die deze week gedaan is er ook staat. Een MacroFactor-log over middernacht telt op zijn geplande dag, zoals de minuten.
+export function stripSessionsByDay<S extends Pick<PlannedSession, 'id' | 'scheduledDate'>>(sessions: readonly S[], logs: readonly SessionLog[], weekStart: string): Map<string, S[]> {
+  const dayOf = countDayOf(logs, plannedByIdOf(sessions));
+  const weekEnd = addDays(weekStart, 6);
+  const out = new Map<string, S[]>();
+  for (const s of sessions) {
+    const day = dayOf(s);
+    if (day < weekStart || day > weekEnd) continue;
+    out.set(day, [...(out.get(day) ?? []), s]);
+  }
+  return out;
 }

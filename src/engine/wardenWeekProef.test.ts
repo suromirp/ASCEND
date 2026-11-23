@@ -8,8 +8,9 @@ import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
 import type { IllnessEpisode } from '../models/illness';
 import { buildWeekReview } from './weekReview';
-import { attentionLines, weekCountLine, weekRestLines } from './weekGlance';
-import { missedInWeek } from './weekList';
+import { attentionLines, elsewhereNotes, shiftedProgress, weekCountLine, weekRestLines } from './weekGlance';
+import { weekProgress } from './weekProfile';
+import { missedInWeek, weekSoFarRow } from './weekList';
 import { deriveSessionStatus } from './sessionStatus';
 import { doneOnOtherDay, rowExtra } from './weekRow';
 import { caughtUpMap, catchUpEligibility } from './catchUp';
@@ -18,6 +19,7 @@ import { MISSED_ADVICE, planMissed } from './missedTraining';
 import { raceDatesOf } from './raceWindow';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import { dayLoads } from './weekProfile';
+import { stripSessionsByDay } from './weekLogs';
 
 const { templates } = buildDefaultProgramData();
 const byId = new Map(templates.map((t) => [t.id, t]));
@@ -61,16 +63,63 @@ describe('logdag in een andere week', () => {
     expect(lr.scheduledDate).toBe('2026-10-11');
   });
 
-  it('de telling: gedaan telt in de geplande week, de minuten in de week van de log (vastgelegd, geen oordeel)', () => {
+  // Besluit van de eigenaar, 23 november (docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md, I-58): een
+  // training telt op de dag van uitvoeren, in gedaan, "van n" en de minuten; beide weken zeggen het.
+  it('de telling: gedaan, "van n" en de minuten tellen in de week van uitvoeren, en de regel zegt het', () => {
     const a = reviewOf(stand, '2026-10-14');
     const b = reviewOf(stand, '2026-10-14', '2026-10-12');
-    expect(a.done).toBe(2);
-    expect(a.planned).toBe(2);
+    expect(a.done).toBe(1);
+    expect(a.planned).toBe(1);
     expect(a.missed).toEqual([]);
-    // De week van het plan zegt 2 van 2 gedaan met alleen de 45 minuten van dinsdag: de 90 minuten staan een week later.
-    expect(weekCountLine(a)).toBe('2 van 2 gedaan · 45 min');
+    expect(a.minutes).toBe(45);
+    expect(a.doneElsewhere).toEqual({ count: 1, when: 'later' });
+    expect(weekCountLine(a)).toBe('1 van 1 gedaan, 1 in de week erna · 45 min');
+    expect(b.done).toBe(1);
+    expect(b.planned).toBe(2);
     expect(b.minutes).toBe(90);
-    expect(b.extraLogged).toBe(1);
+    // Geen losse training: hij hoort bij een geplande training, een week eerder.
+    expect(b.extraLogged).toBe(0);
+    expect(b.fromElsewhere).toEqual({ count: 1, when: 'earlier' });
+    expect(weekCountLine(b)).toBe('1 gedaan, 1 uit de week ervoor · 1:30 uur');
+    expect(weekCountLine(reviewOf(stand, '2026-10-19', '2026-10-12'))).toBe('1 van 2 gedaan, 1 uit de week ervoor · 1:30 uur');
+    // Over de weken samen telt hij één keer.
+    expect(a.done + b.done).toBe(2);
+    // De log en de planning zijn niet aangeraakt.
+    expect(lr.scheduledDate).toBe('2026-10-11');
+    expect(stand.logs[1].completedDate).toBe('2026-10-12');
+  });
+
+  it('de rij Je week in Week zegt hetzelfde als de terugblik (pages/Week.tsx: weekProgress, verschoven)', () => {
+    const rowOf = (weekStart: string, current: boolean) => {
+      const r = reviewOf(stand, '2026-10-14', weekStart);
+      const p = weekProgress(stand.plan.filter((x) => x.weekStartDate === weekStart), stand.logs, byId as never);
+      const shifted = shiftedProgress(p, r);
+      expect(shifted).toEqual({ done: r.done, total: r.planned });
+      return weekSoFarRow({ current, ...shifted, doneMinutes: r.minutes, ...elsewhereNotes(r) }).sub;
+    };
+    expect(rowOf(W, false)).toBe('1 van 1 gedaan, 1 in de week erna · 0:45 uur');
+    expect(rowOf('2026-10-12', true)).toBe('1 van 2 gedaan, 1 uit de week ervoor · 1:30 uur');
+  });
+
+  it('een log een week eerder: "in de week ervoor", verder weg "in een andere week"', () => {
+    const mo = ps('mo', 'tpl_easy_run', '2026-10-05');
+    const early = reviewOf({ plan: [mo], logs: [log(mo, '2026-10-04')] }, '2026-10-14');
+    expect(weekCountLine(early)).toBe('1 gedaan in de week ervoor');
+    const far = reviewOf({ plan: [mo], logs: [log(mo, '2026-11-06')] }, '2026-11-10');
+    expect(weekCountLine(far)).toBe('1 gedaan in een andere week');
+    expect(weekCountLine(reviewOf({ plan: [mo], logs: [log(mo, '2026-11-06')] }, '2026-11-06', '2026-11-02'))).toBe('1 gedaan, 1 uit een andere week · 45 min');
+  });
+
+  it('de weekbalk zet hem op de dag van uitvoeren: niet op zondag 11, wel op maandag 12 van de week erna', () => {
+    const ids = (m: Map<string, PlannedSession[]>, day: string) => (m.get(day) ?? []).map((x) => x.id);
+    const planned = stripSessionsByDay(stand.plan, stand.logs, W);
+    expect(ids(planned, '2026-10-11')).toEqual([]);
+    expect(ids(planned, '2026-10-06')).toEqual(['ua']);
+    const next = stripSessionsByDay(stand.plan, stand.logs, '2026-10-12');
+    expect(ids(next, '2026-10-12')).toEqual(['lr']);
+    expect(ids(next, '2026-10-13')).toEqual(['nx']);
+    // Zonder log blijft hij op de geplande dag.
+    expect(ids(stripSessionsByDay(stand.plan, [], W), '2026-10-11')).toEqual(['lr']);
   });
 
   it('een log een week eerder (zondag voor de geplande maandag) geeft "gedaan zo 4"', () => {
@@ -83,6 +132,38 @@ describe('logdag in een andere week', () => {
     // Dinsdag 6 oktober gepland, achteraf gekoppeld aan een log van vrijdag 6 november: "gedaan vr 6 nov".
     const text = rowExtra({ done: true, doneOn: doneOnOtherDay(mo, log(mo, '2026-11-06')) })?.text;
     expect(text).toBe('gedaan vr 6 nov');
+  });
+});
+
+// I-58, geval 2: een verplaatste of ingehaalde training telt op de dag van uitvoeren, ook over de weekgrens.
+describe('verplaatst of ingehaald, op de dag van uitvoeren', () => {
+  const ua = ps('ua', 'tpl_upper_a', '2026-10-06');
+  it('naar maandag verplaatst en maandag gedaan: telt in de week erna, de oude week ziet hem niet meer', () => {
+    const lr = ps('lr', 'tpl_long_run', '2026-10-12', { status: 'moved', movedFromDate: '2026-10-11', lock: { by: 'user', at: '2026-10-10T08:00:00Z' } });
+    const stand: Stand = { plan: [ua, lr], logs: [log(ua), log(lr)] };
+    expect(reviewOf(stand, '2026-10-14')).toMatchObject({ done: 1, planned: 1 });
+    expect(reviewOf(stand, '2026-10-14').doneElsewhere).toBeUndefined();
+    expect(reviewOf(stand, '2026-10-14', '2026-10-12')).toMatchObject({ done: 1, minutes: 45 });
+    expect(reviewOf(stand, '2026-10-14', '2026-10-12').fromElsewhere).toBeUndefined();
+  });
+
+  it('naar dinsdag verplaatst maar al op zondag gedaan: telt op zondag, in de week ervoor', () => {
+    const lr = ps('lr', 'tpl_long_run', '2026-10-13', { status: 'moved', movedFromDate: '2026-10-11', lock: { by: 'user', at: '2026-10-10T08:00:00Z' } });
+    const stand: Stand = { plan: [ua, lr], logs: [log(ua), log(lr, '2026-10-11', { durationMinutes: 90 })] };
+    const prev = reviewOf(stand, '2026-10-14');
+    expect(prev).toMatchObject({ done: 2, planned: 2, minutes: 135, fromElsewhere: { count: 1, when: 'later' } });
+    expect(weekCountLine(prev)).toBe('2 van 2 gedaan, 1 uit de week erna · 2:15 uur');
+    const next = reviewOf(stand, '2026-10-19', '2026-10-12');
+    expect(next).toMatchObject({ done: 0, planned: 0, minutes: 0, doneElsewhere: { count: 1, when: 'earlier' } });
+    expect(weekCountLine(next)).toBe('1 gedaan in de week ervoor');
+  });
+
+  it('een inhaal in de week erna, daar gedaan: telt daar, de overgeslagen oude rij telt nergens', () => {
+    const old = ps('old', 'tpl_long_run', '2026-10-09', { status: 'skipped', lock: { by: 'user', at: '2026-10-10T08:00:00Z' } });
+    const catchUp = ps('cu', 'tpl_long_run', '2026-10-13', { lock: { by: 'user', at: '2026-10-10T08:00:00Z' }, catchUp: { fromId: 'old', fromDate: '2026-10-09' } });
+    const stand: Stand = { plan: [ua, old, catchUp], logs: [log(ua), log(catchUp, '2026-10-14')] };
+    expect(reviewOf(stand, '2026-10-19')).toMatchObject({ done: 1, planned: 1, missed: [] });
+    expect(reviewOf(stand, '2026-10-19', '2026-10-12')).toMatchObject({ done: 1, planned: 1, minutes: 45 });
   });
 });
 

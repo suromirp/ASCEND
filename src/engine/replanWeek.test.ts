@@ -333,3 +333,23 @@ describe('het blad: nooit Akkoord naast een lege lijst', () => {
     expect(sheetSource).not.toContain('data.moves.length === 0 && (!extraLines');
   });
 });
+
+// I-59: de terugblik zegt dat Week opnieuw plannen ook een inhaal terugzet (weekGlance.ts#MISSED_KEY_REPLAN_HINT). Dit
+// is dat feit: een inhaal van deze week die nog open staat gaat eraf, de overgeslagen oude rij blijft.
+describe('Week opnieuw plannen en een inhaal van deze week', () => {
+  it('de open inhaal gaat terug naar het plan, de oude rij blijft overgeslagen', () => {
+    const rows = [
+      s('lower', 'tpl_lower_a', d(0)),
+      s('easy', 'tpl_easy_run', d(1)),
+      s('tempoOld', 'tpl_tempo_run', d(2), { status: 'skipped', lock: yours }),
+      s('upper', 'tpl_upper_a', d(3)),
+      s('tempoNew', 'tpl_tempo_run', d(4), { lock: yours, catchUp: { fromId: 'tempoOld', fromDate: d(2) } }),
+      s('hills', 'tpl_hill_intervals', d(5)),
+      s('long', 'tpl_long_run', d(6)),
+    ];
+    const out = replanWeek({ sessions: rows, fresh: fresh(), weekStart: MON, today: d(3), logs: [log('lower', 'tpl_lower_a', d(0)), log('easy', 'tpl_easy_run', d(1))], templates }).sessions;
+    expect(out.find((x) => x.id === 'tempoNew')).toBeUndefined();
+    expect(out.find((x) => x.id === 'tempoOld')).toMatchObject({ status: 'skipped' });
+    expect(weekDiff(rows, out, MON).removedIds).toEqual(['tempoNew']);
+  });
+});

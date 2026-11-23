@@ -3323,8 +3323,11 @@
    "onderwerpen": [
     "week"
    ],
-   "kern": "Week en de weekterugblik zeggen over gemist hetzelfde: wat je miste doe je niet dubbel, de rest gaat terug naar het plan met Week opnieuw plannen; de terugblik sluit de som met Overgeslagen en Vervallen, het inhaaladvies noemt dagen in plaats van een eigen aantal, en een rij zegt \"gedaan di 27\" als de dag van het log anders is.",
-   "stand": "geldt"
+   "kern": "Week en de weekterugblik zeggen over gemist hetzelfde: wat je miste doe je niet dubbel, de rest gaat terug naar het plan met Week opnieuw plannen; de terugblik sluit de som met Overgeslagen en Vervallen, het inhaaladvies noemt dagen in plaats van een eigen aantal, en een rij zegt \"gedaan di 27\" als de dag van het log anders is. Geldt nog: alles, behalve dat \"x van n\" op de geplande dag bleef; een gedane training telt nu op de dag van uitvoeren.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md"
+   ]
   },
   "docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md": {
    "onderwerpen": [
@@ -4525,6 +4528,17 @@
    ],
    "kern": "Een nieuw log met een geplande training of horloge-activiteit wordt in één readwrite-transactie gekeken en geschreven (SessionLogsRepo.add), zodat twee tabbladen nooit twee logs geven; intervals.icu krijgt 15 s voor de kop en 15 s per stuk inhoud, nooit meer dan 120 s; een herstelstap die bij het openen faalt telt door in meta (bootStepFailures) en staat onder Versie.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Een gedane training telt op de dag van uitvoeren in de minuten, x van n, de weekbalk, de belasting, de beenindex en Stand (Forge later afgesloten, verplaatst of ingehaald, log in een andere week); beide weken zeggen het (\"1 in de week erna\", \"1 uit de week ervoor\"), de weekgrens is maandag 00:00 in Amsterdam; gemist en de sleuteltraining blijven bij de geplande week; daarnaast eerlijke verwijzing naar Week opnieuw plannen bij gemist.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-15-dag-van-afronden.md",
+    "docs/beslissingen/2026-10-29-dag-van-een-training.md"
+   ]
   }
  }
 }

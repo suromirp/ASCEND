@@ -5,7 +5,7 @@
 
 import { hoursMinutes } from '../utils/hoursMinutes';
 import { joinNames } from './weekHighlights';
-import type { WeekReview } from './weekReview';
+import type { ElsewhereWeek, WeekReview } from './weekReview';
 
 const time = (minutes: number) => {
   const m = Math.max(0, Math.round(minutes));
@@ -19,13 +19,50 @@ const lower = (s: string) => (/^[A-Z][a-z]/.test(s) ? `${s.charAt(0).toLowerCase
 // nog staat laat de strip zien; de verdeling per sport staat in Je trainingen. Een losse training (iets buiten de
 // planning om) telt in de tijd, niet in gedaan, en staat er dan met zijn eigen woord bij: "0 gedaan · 1 losse
 // training · 56 min". Is er niets gedaan, dan staat er geen tijd.
+// Gedaan in een andere week dan gepland (I-58, docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md): hij telt
+// in de week van uitvoeren, in gedaan, "van n" en de minuten. De geplande week zegt waar hij heen ging: "1 van 1 gedaan,
+// 1 in de week erna · 45 min"; de week van uitvoeren waar hij vandaan kwam: "2 van 3 gedaan, 1 uit de week ervoor".
+// Stond er verder niets in de geplande week: "1 gedaan in de week erna".
 export function weekCountLine(r: WeekReview): string {
-  if (!r.running && r.done === 0 && r.minutes === 0) return 'Geen trainingen deze week. Volgende week volgt het plan.';
-  const count = r.running ? `${r.done} gedaan` : `${r.done} van ${r.planned} gedaan`;
+  const notes = elsewhereNotes(r);
   const extra = r.extraLogged ?? 0;
   const loose = extra > 0 ? `${extra} ${extra === 1 ? 'losse training' : 'losse trainingen'}` : undefined;
+  const only = onlyElsewhereText(r);
+  if (only) return [only, loose, r.minutes > 0 ? time(r.minutes) : undefined].filter(Boolean).join(' · ');
+  if (!r.running && r.done === 0 && r.minutes === 0 && !r.doneElsewhere) return 'Geen trainingen deze week. Volgende week volgt het plan.';
+  const count = [r.running ? `${r.done} gedaan` : `${r.done} van ${r.planned} gedaan`, notes.doneElsewhere, notes.fromElsewhere].filter(Boolean).join(', ');
   if (r.minutes <= 0 || (r.done === 0 && !loose)) return [count, loose].filter(Boolean).join(' · ');
   return [count, loose, time(r.minutes)].filter(Boolean).join(' · ');
+}
+
+const WHEN_TEXT: Record<ElsewhereWeek['when'], string> = { earlier: 'de week ervoor', later: 'de week erna', other: 'een andere week' };
+
+// De twee korte stukjes voor gedaan in een andere week: "1 in de week erna" in de geplande week, "1 uit de week ervoor"
+// in de week van uitvoeren (daar telt hij mee in gedaan). Dezelfde woorden in de terugblik, de rij Je week in Week en de kaart op Vandaag.
+export function elsewhereNotes(r: Pick<WeekReview, 'doneElsewhere' | 'fromElsewhere'>): { doneElsewhere?: string; fromElsewhere?: string } {
+  return {
+    doneElsewhere: r.doneElsewhere ? `${r.doneElsewhere.count} in ${WHEN_TEXT[r.doneElsewhere.when]}` : undefined,
+    fromElsewhere: r.fromElsewhere ? `${r.fromElsewhere.count} uit ${WHEN_TEXT[r.fromElsewhere.when]}` : undefined,
+  };
+}
+
+// Stond er in deze week niets meer dan wat in een andere week gedaan is: "1 gedaan in de week erna", in plaats van
+// "0 van 0 gedaan". Dezelfde zin in de terugblik, de kaart op Vandaag en de rij Je week.
+export function onlyElsewhereText(r: Pick<WeekReview, 'planned' | 'doneElsewhere'>): string | undefined {
+  return r.planned === 0 && r.doneElsewhere ? `${r.doneElsewhere.count} gedaan in ${WHEN_TEXT[r.doneElsewhere.when]}` : undefined;
+}
+
+// Heeft de week iets te tellen: een geplande training, of een die in een andere week gedaan is. Dan staan de kaart
+// Weekterugblik, Bekijk je week in het Logboek en de rij Je week er; een week waarvan de enige training elders gedaan
+// is, verdwijnt dus niet.
+export const hasWeekTally = (r: Pick<WeekReview, 'planned' | 'doneElsewhere'> | null | undefined): r is WeekReview => !!r && (r.planned > 0 || !!r.doneElsewhere);
+
+// De telling op de kaart Weekterugblik op Vandaag: dezelfde stukjes als de terugblik en de rij Je week; de kaart zet
+// de tijd erachter.
+export function weekCardCount(r: WeekReview): string {
+  const only = onlyElsewhereText(r);
+  const notes = elsewhereNotes(r);
+  return only ?? [r.running ? `${r.done} gedaan` : `${r.done} van ${r.planned} trainingen`, notes.doneElsewhere, notes.fromElsewhere].filter(Boolean).join(', ');
 }
 
 // De verdeling per sport, voor de weergave Je trainingen: "hardlopen 18,4 km · 320 m omhoog".
@@ -38,14 +75,19 @@ export function sportLines(r: WeekReview): string[] {
 
 // De verwijzing naar de rij in Week, met haar eigen naam.
 export const MISSED_REPLAN_HINT = 'De rest van je week zet Week opnieuw plannen terug naar het plan.';
+// Na een gemiste sleuteltraining: Week opnieuw plannen zet ook een aangenomen inhaal van deze week terug
+// (engine/replanWeek.ts, replanSummary zegt het in het voorstel). De verwijzing zegt het ook, zodat de belofte van een
+// inhaal niet stil vervalt (I-59, docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md).
+export const MISSED_KEY_REPLAN_HINT = 'Week opnieuw plannen zet de rest van je week terug naar het plan, ook een inhaal.';
 
 // Wat naast gedaan en gemist nog in de week stond, zodat de som sluit: "Overgeslagen: Bovenlichaam B" (telt mee in
 // "van n"; lag hij in een pauze of haalde ASCEND hem weg, dan met ", telt niet mee") en "Vervallen: Benen A (zwaar), telt
 // niet mee" (een pauze haalde hem uit de telling). Valt Gemist buiten de
-// twee regels om op te letten, dan staat hij hier, zonder advies (Pathfinder, 15 november, I-40).
+// twee regels om op te letten, dan staat hij hier, zonder advies (Pathfinder, 15 november, I-40), met de verwijzing (I-59).
 export function weekRestLines(r: WeekReview, opts: { missedShown: boolean }): string[] {
   const out: string[] = [];
-  if (!opts.missedShown && r.missed.length > 0) out.push(`Gemist: ${joinNames(countedNames(r.missed))}`);
+  // Zonder advies, wel met de verwijzing naar de rij in Week als die er staat (I-59).
+  if (!opts.missedShown && r.missed.length > 0) out.push(`Gemist: ${joinNames(countedNames(r.missed))}${r.replan ? `. ${MISSED_REPLAN_HINT}` : ''}`);
   if (r.skipped?.length) out.push(`Overgeslagen: ${joinNames(countedNames(r.skipped))}`);
   if (r.skippedOff?.length) out.push(`Overgeslagen: ${joinNames(countedNames(r.skippedOff))}, telt niet mee`);
   if (r.lapsed?.length) out.push(`Vervallen: ${joinNames(countedNames(r.lapsed))}, telt niet mee`);
@@ -100,7 +142,7 @@ export function attentionLines(r: WeekReview): AttentionLine[] {
       key: 'missed', label: 'Gemist', warn: false,
       value: (r.keyMissedName
         ? `${names}. De ${lower(r.keyMissedName)} is de belangrijkste; die komt na Akkoord op een vrije dag, als dat past.`
-        : `${names}. Laat het los; dubbel doen helpt niet.`) + (r.replan ? ` ${MISSED_REPLAN_HINT}` : ''),
+        : `${names}. Laat het los; dubbel doen helpt niet.`) + (r.replan ? ` ${r.keyMissedName ? MISSED_KEY_REPLAN_HINT : MISSED_REPLAN_HINT}` : ''),
     });
   }
   if (r.heavier >= 2) out.push({ key: 'heavier', label: 'Zwaarder', warn: false, value: 'Twee of meer trainingen voelden zwaarder. Voelt het weer zo, kies de korte versie.' });
@@ -114,4 +156,12 @@ export function nextWeekLine(next: NonNullable<WeekReview['next']>): { value: st
   const value = [next.label, time(next.minutes)].filter(Boolean).join(' · ');
   const sub = next.key ? `Belangrijkste: ${lower(next.key).replace(': ', ', ')}` : undefined;
   return { value, sub };
+}
+
+// "x van n" van de rij Je week in Week (engine/weekProfile.ts#weekProgress telt op de geplande dag) op de dag van
+// uitvoeren, met dezelfde verschuiving als de terugblik (I-58): wat in een andere week gedaan is eruit, wat van een
+// andere week hier gedaan is erin.
+export function shiftedProgress(p: { done: number; total: number }, r: Pick<WeekReview, 'doneElsewhere' | 'fromElsewhere'>): { done: number; total: number } {
+  const delta = (r.fromElsewhere?.count ?? 0) - (r.doneElsewhere?.count ?? 0);
+  return { done: p.done + delta, total: p.total + delta };
 }

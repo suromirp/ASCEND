@@ -106,9 +106,10 @@ export function extraRunEarned(inputs: Omit<ExtraRunInputs, 'newId' | 'anchor' |
     // Bewust zonder leavePeriods: een week op vakantie telt hier als een week zonder training, dus na een pauze
     // komt er geen extra loop bij; eerst de rustiger instap (engine/reentry.ts). Deze telling staat nergens als verwijt.
     const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(firstLooked, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, openDraft: inputs.openDraft, keyFocus: inputs.keyFocus });
-    if (!review || review.planned === 0) continue;
+    // De telling van de geplande week, zoals Herhaal de week (docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md).
+    if (!review || review.plannedWeek.planned === 0) continue;
     weeks++;
-    done += review.done; planned += review.planned; keyDone += review.keyDone; keyPlanned += review.keyPlanned;
+    done += review.plannedWeek.done; planned += review.plannedWeek.planned; keyDone += review.keyDone; keyPlanned += review.keyPlanned;
   }
   if (weeks < MIN_WEEKS) return { earned: false, reason: 'Na twee volle weken in je plan volgt de toets of er een loop bij kan.' };
   if (done / planned < MIN_DONE_SHARE) return { earned: false, reason: `De laatste weken deed je ${done} van de ${planned} trainingen. Bij 80% komt er een loop bij.` };

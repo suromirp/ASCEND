@@ -42,10 +42,13 @@ export function buildRhythm(input: { adherence: Adherence; thisWeek: WeekReview 
   const { adherence, thisWeek, streak } = input;
   const weeks: RhythmWeek[] = [...adherence.reviews]
     .sort((a, b) => a.weekStart.localeCompare(b.weekStart))
-    .map((r) => ({ weekStart: r.weekStart, done: r.done, planned: r.planned, missed: r.planned - r.done, open: 0, current: false }));
-  if (thisWeek && thisWeek.planned > 0) {
-    const missed = Math.min(thisWeek.missed.length, thisWeek.planned - thisWeek.done);
-    weeks.push({ weekStart: thisWeek.weekStart, done: thisWeek.done, planned: thisWeek.planned, missed, open: Math.max(0, thisWeek.planned - thisWeek.done - missed), current: true });
+    // De telling van de geplande week, net als de zin "18 van 23 gedaan" (engine/onCourse.ts#recentAdherence): het ritme
+    // is een oordeel over wat gepland stond (docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md).
+    .map((r) => ({ weekStart: r.weekStart, done: r.plannedWeek.done, planned: r.plannedWeek.planned, missed: r.plannedWeek.planned - r.plannedWeek.done, open: 0, current: false }));
+  const now = thisWeek?.plannedWeek;
+  if (thisWeek && now && now.planned > 0) {
+    const missed = Math.min(thisWeek.missed.length, now.planned - now.done);
+    weeks.push({ weekStart: thisWeek.weekStart, done: now.done, planned: now.planned, missed, open: Math.max(0, now.planned - now.done - missed), current: true });
   }
   const streakLine = streak >= STREAK_FROM ? `Nu ${streak} trainingsdagen op rij alles gedaan.` : undefined;
   if (!adherence.enough) {
