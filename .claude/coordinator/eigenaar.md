@@ -46,10 +46,15 @@ Sinds: 23 november.
 
 ## Loopt
 
-- Bundel 9 (I-14, I-18, I-23, I-34): ladder, Eén plan deel 1 en Losse sport deel 1 live. Nog: het eerste voorstel en één dagbeeld (I-14), beginner stap 5 tot 7, losse sport rest, na een loop één moment (I-34), kleine punten I-142, I-143, I-145.
+- Bundel 9 (I-14, I-18, I-23, I-34): ladder, Eén plan deel 1 en Losse sport deel 1 live. Nog: het eerste voorstel en één dagbeeld (I-14), beginner stap 5 tot 7, losse sport rest, na een loop één moment (I-34), klein punt I-146.
 - Graphify, eerlijke proef: zodra de lijst leeg is. De koppeling alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 ## Net live
+
+### 23 november 10:50
+- Beginnersladder (I-143): kies je bij kracht Meer, dan gaat in je startweken de ladder voor; het voorstel en Week noemen hetzelfde getal (35 en 45 minuten), ook voor een training die Meer erbij zet.
+- Losse sport (I-145): "Je deed vandaag padel, 1 uur."; het afrondscherm noemt de sport bij naam en zegt dat hij niet meetelt in plaats van "0 van 4".
+- Tocht (I-142): een gepauzeerd trekdoel telt niet als tocht; de Kennisbank en de les van de week alleen met een tocht als doel; Etappes zegt "Nog geen gelopen dag om mee te vergelijken".
 
 ### 23 november 09:28
 - Rustdag na een pauze (I-144): uw situatie gaf de terugkeerkaart al; waarschijnlijk draaide de app nog een oude versie, ververs hem. Daarnaast: ook een pauze die eerder eindigde telt, de eerste dag wordt niet geruild als je al trainde, zware benen komen niet binnen 48 uur na zware benen, en zonder Akkoord zegt Vandaag "Je trainde N dagen niet. Vandaag rustig beginnen".
