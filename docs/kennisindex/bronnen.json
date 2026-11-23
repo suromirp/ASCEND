@@ -4689,6 +4689,17 @@
    ],
    "kern": "Twee adviezen over hetzelfde log worden er één: de regel die eerst staat in VOICE_RANK (TEST-RETRY, HARD-THEN-SPACE, LIGHT-TWICE) wint en de ander valt weg zonder extra zin; HARD-THEN-SPACE zwijgt als het nieuwste zware log een test of wedstrijd is.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-23-zuinig-proef.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "Proef: de coördinator draait op Sonnet, bouwers en Warden aan engine, opslag of planning op Opus; bouwen alleen op het bouwmoment, tussendoor alleen wat stuk is; meldingen en wissel via de nieuwe chat ASCEND.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-21-zuinige-stand.md",
+    "docs/beslissingen/2026-11-20-gemengde-bouwers-en-wissel.md"
+   ]
   }
  }
 }

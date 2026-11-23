@@ -13,6 +13,7 @@ die erft het model van de coördinator.
 
 Besluit `docs/beslissingen/2026-11-21-zuinige-stand.md`. De eigenaar ging te snel door zijn abonnement.
 
+- Coördinator op Sonnet (`claude-sonnet-5-5`, proef, besluit `2026-11-23-zuinig-proef.md`). Bouwers en Warden aan engine, opslag of planning op Opus.
 - Modellen: bouwer en Warden op Sonnet, denkwerk laag of medium. Opus alleen voor planner, opslag, migraties en historie. Fable nooit, tenzij de eigenaar erom vraagt. Lookout en Pathfinder op Haiku waar de vaste kit volstaat, anders Sonnet.
 - Poorten naar risico. Tekst, kleine UI-fix of kleine bug: de coördinator zelf, zonder helpers, met de vier controles en één screenshot. UI-wijziging: bouwer plus Lookout, geen Warden. Engine, opslag, planner: bouwer plus Warden plus Lookout. Pathfinder alleen bij een nieuw scherm of een nieuwe flow.
 - Bundelen: per bouwmoment één Warden en één Lookout over alle features samen.
