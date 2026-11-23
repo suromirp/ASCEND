@@ -82,6 +82,11 @@ export interface WeekReview {
   // die deze week gedaan zijn (ze tellen hier). De dag is dezelfde als die van de minuten (engine/logDay.ts).
   doneElsewhere?: ElsewhereWeek;
   fromElsewhere?: ElsewhereWeek;
+  // De telling van de geplande week, zonder de verschuiving naar de dag van uitvoeren: gedaan is elke training van
+  // deze week met een log, waar en wanneer ook. Een oordeel over de geplande week (Herhaal de week, de toets voor een
+  // extra loop, de koers over de laatste weken) leest deze, nooit `done` en `planned`
+  // (docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md).
+  plannedWeek: { done: number; planned: number };
   // De week loopt en heeft een programma: dan staat in Week de rij Week opnieuw plannen (pages/Week.tsx, replanOn:
   // programma, minstens één training, de week nog niet voorbij), en verwijst de regel Gemist ernaar
   // (docs/beslissingen/2026-11-15-gemist-en-opnieuw-plannen.md). Gemist bestaat alleen met trainingen, dus de eis van
@@ -354,6 +359,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     fromElsewhere: elsewhereOf(shift.in.map((s) => s.scheduledDate), weekStart),
     done,
     planned: plannedCount,
+    plannedWeek: { done: doneOwn, planned: trainings.length },
     minutes,
     perSport,
     missed: missedNames,

@@ -23,6 +23,10 @@ Wat je ziet:
 
 Wat bij de geplande week blijft: gemist, de sleuteltraining van de week (`keyDone`, de coachregel "sleuteltraining 3 van 4") en het advies "Alles gedaan wat gepland stond". Die gaan over wat er gepland stond; een gedane training is daar nooit gemist. Een training die openstaat in Forge en nog niet is afgesloten telt nog nergens mee: er is nog geen log, Week zegt "loopt nog".
 
+Een oordeel over de geplande week leest de telling van de geplande week, nooit de verschuiving (Warden, 23 november). `buildWeekReview` geeft daarvoor `plannedWeek: { done, planned }`: elke training van die week met een log, waar en wanneer ook. Zo lezen Herhaal de week (`engine/repeatWeek.ts`), de koers over de laatste weken (`engine/onCourse.ts#recentAdherence`, ook de sleuteltraining en het ritme in Stand, `engine/standRhythm.ts`) en de toets voor een extra loop (`engine/extraRun.ts`). Anders slaat een voorstel om door alleen de dag van een log: 5 gepland, 3 gedaan waarvan de lange duurloop van zondag op maandag, is 3 van 5 en geen herhaling; op de verschoven telling werd het 2 van 4 en wel. Elke aanroeper geeft `plannedById` mee, zodat een training uit MacroFactor die zondag om 23:30 begon voor maandag ook daar op maandag telt. De weekmelding op zondag is een telling, geen oordeel: dezelfde getallen en woorden als de terugblik waar hij naartoe leidt ("3 van 4 trainingen gedaan, 1 in de week ervoor, 1 uit de week erna").
+
+Een week waarvan de enige training in een andere week gedaan is, verdwijnt niet: de kaart Weekterugblik, Bekijk je week in het Logboek en de rij Je week staan er met "1 gedaan in de week erna" (`engine/weekGlance.ts#hasWeekTally`, `onlyElsewhereText`). De kaart op Vandaag noemt beide kanten, net als Week (`weekCardCount`).
+
 ## Gemist en Week opnieuw plannen (I-59)
 
 - Week opnieuw plannen zet een aangenomen inhaal van deze week terug naar het plan; het voorstel zegt dat al ("Dat geldt ook voor wat je inhaalde"). Dat blijft zo: het is het kleinste juiste, opnieuw plannen is "terug naar het plan" en de inhaal is na een nieuwe week opnieuw voor te stellen. De terugblik zegt het nu ook. Bij een gemiste sleuteltraining staat er na de belofte van een inhaal: "Week opnieuw plannen zet de rest van je week terug naar het plan, ook een inhaal." (`engine/weekGlance.ts#MISSED_KEY_REPLAN_HINT`).
@@ -47,7 +51,7 @@ De eigenaar koos op 23 november eerst het advies "week van uitvoeren" voor de mi
 
 ## Bron
 
-Backlog I-58 (Warden Week, 15 november) en I-59 (Pathfinder, 15 november). Toetsen per geval in `src/engine/wardenWeekProef.test.ts` (log in een andere week, verplaatst, inhaal, weekbalk) en `src/engine/weekGlance.amsterdam.test.ts` (de weekgrens om 00:00, de dag zelf, MacroFactor over middernacht, Forge afgesloten op maandag); het jaaroverzicht in `src/engine/seasonPlan.test.ts`. Antwoorden van de eigenaar, 23 november.
+Backlog I-58 (Warden Week, 15 november) en I-59 (Pathfinder, 15 november). Toetsen per geval in `src/engine/wardenWeekProef.test.ts` (log in een andere week, verplaatst, inhaal, weekbalk) en `src/engine/weekGlance.amsterdam.test.ts` (de weekgrens om 00:00, de dag zelf, MacroFactor over middernacht, Forge afgesloten op maandag); het jaaroverzicht in `src/engine/seasonPlan.test.ts`; Herhaal de week op de geplande telling in `src/engine/repeatWeek.ts` en `src/engine/repeatWeek.test.ts`. Antwoorden van de eigenaar, 23 november.
 
 ## Vervangt
 

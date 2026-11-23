@@ -6,7 +6,7 @@ import { useAppData } from '../state/AppDataContext';
 import { buildWeekReview, type WeekReview } from '../engine/weekReview';
 import { weekReviewCardShown } from '../engine/overviewSettings';
 import { weekHighlights } from '../engine/weekHighlights';
-import { attentionLines, elsewhereNotes, nextWeekLine, sportLines, weekCountLine, weekRestLines } from '../engine/weekGlance';
+import { attentionLines, hasWeekTally, nextWeekLine, sportLines, weekCardCount, weekCountLine, weekRestLines } from '../engine/weekGlance';
 import { looseLogsOfWeek, weekLogsOf } from '../engine/weekLogs';
 import { intentionForWeek } from '../engine/weeklyQuestion';
 import { formatDateNL, formatHoursMinutesNL, formatShortDayNL, todayISO } from '../utils/dates';
@@ -41,15 +41,14 @@ export function WeekReviewCard({ weekStart }: { weekStart: string }) {
   const review = useWeekReviewFor(weekStart);
   const { settings } = useAppData();
   const [open, setOpen] = useState(false);
-  if (!review || review.planned === 0) return null;
+  if (!hasWeekTally(review)) return null;
   if (!weekReviewCardShown(review, settings.overviews)) return null;
   const first = weekHighlights(review)[0]?.text ?? review.advice[0];
-  const { doneElsewhere } = elsewhereNotes(review);
   return (
     <Card className="flex flex-col gap-2">
       <Eyebrow>Weekterugblik</Eyebrow>
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-        {review.running ? `${review.done} gedaan` : `${review.done} van ${review.planned} trainingen`}{doneElsewhere ? `, ${doneElsewhere}` : ''} · {formatHoursMinutesNL(review.minutes)}
+        {weekCardCount(review)} · {formatHoursMinutesNL(review.minutes)}
       </p>
       {first && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{first}</p>}
       <div className="-mb-2"><TextButton onClick={() => setOpen(true)} icon="verder">{review.running ? 'Bekijk je week tot nu' : 'Bekijk je week'}</TextButton></div>
@@ -63,7 +62,7 @@ export function WeekReviewCard({ weekStart }: { weekStart: string }) {
 export function WeekHeaderRow({ weekStart }: { weekStart: string }) {
   const review = useWeekReviewFor(weekStart);
   const [open, setOpen] = useState(false);
-  const canReview = !!review && review.planned > 0 && weekStart <= todayISO();
+  const canReview = hasWeekTally(review) && weekStart <= todayISO();
   return (
     <div className="flex min-h-[44px] items-center justify-between gap-3">
       <Eyebrow>Week van {formatDateNL(weekStart)}</Eyebrow>

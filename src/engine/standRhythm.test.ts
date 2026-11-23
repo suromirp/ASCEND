@@ -5,7 +5,7 @@ import type { WeekReview } from './weekReview';
 import type { WeekLoad } from './standing';
 
 const review = (weekStart: string, done: number, planned: number, over: Partial<WeekReview> = {}): WeekReview => ({
-  weekStart, title: '', done, planned, minutes: 0, perSport: [], missed: [], missedTemplateIds: [], keyPlanned: 1, keyDone: 1, heavier: 0, pain: [], lighter: 0,
+  weekStart, title: '', done, planned, plannedWeek: { done, planned }, minutes: 0, perSport: [], missed: [], missedTemplateIds: [], keyPlanned: 1, keyDone: 1, heavier: 0, pain: [], lighter: 0,
   effort: { easy: 0, hard: 0, uncounted: 0 }, running: false, todayLeft: 0, advice: [], ...over,
 });
 const adherenceOf = (reviews: WeekReview[]): Adherence => ({

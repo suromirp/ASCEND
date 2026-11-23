@@ -25,11 +25,12 @@ const lower = (s: string) => (/^[A-Z][a-z]/.test(s) ? `${s.charAt(0).toLowerCase
 // Stond er verder niets in de geplande week: "1 gedaan in de week erna".
 export function weekCountLine(r: WeekReview): string {
   const notes = elsewhereNotes(r);
-  if (!r.running && r.planned === 0 && r.doneElsewhere && r.minutes === 0) return `${r.doneElsewhere.count} gedaan in ${WHEN_TEXT[r.doneElsewhere.when]}`;
-  if (!r.running && r.done === 0 && r.minutes === 0 && !r.doneElsewhere) return 'Geen trainingen deze week. Volgende week volgt het plan.';
-  const count = [r.running ? `${r.done} gedaan` : `${r.done} van ${r.planned} gedaan`, notes.doneElsewhere, notes.fromElsewhere].filter(Boolean).join(', ');
   const extra = r.extraLogged ?? 0;
   const loose = extra > 0 ? `${extra} ${extra === 1 ? 'losse training' : 'losse trainingen'}` : undefined;
+  const only = onlyElsewhereText(r);
+  if (only) return [only, loose, r.minutes > 0 ? time(r.minutes) : undefined].filter(Boolean).join(' · ');
+  if (!r.running && r.done === 0 && r.minutes === 0 && !r.doneElsewhere) return 'Geen trainingen deze week. Volgende week volgt het plan.';
+  const count = [r.running ? `${r.done} gedaan` : `${r.done} van ${r.planned} gedaan`, notes.doneElsewhere, notes.fromElsewhere].filter(Boolean).join(', ');
   if (r.minutes <= 0 || (r.done === 0 && !loose)) return [count, loose].filter(Boolean).join(' · ');
   return [count, loose, time(r.minutes)].filter(Boolean).join(' · ');
 }
@@ -43,6 +44,25 @@ export function elsewhereNotes(r: Pick<WeekReview, 'doneElsewhere' | 'fromElsewh
     doneElsewhere: r.doneElsewhere ? `${r.doneElsewhere.count} in ${WHEN_TEXT[r.doneElsewhere.when]}` : undefined,
     fromElsewhere: r.fromElsewhere ? `${r.fromElsewhere.count} uit ${WHEN_TEXT[r.fromElsewhere.when]}` : undefined,
   };
+}
+
+// Stond er in deze week niets meer dan wat in een andere week gedaan is: "1 gedaan in de week erna", in plaats van
+// "0 van 0 gedaan". Dezelfde zin in de terugblik, de kaart op Vandaag en de rij Je week.
+export function onlyElsewhereText(r: Pick<WeekReview, 'planned' | 'doneElsewhere'>): string | undefined {
+  return r.planned === 0 && r.doneElsewhere ? `${r.doneElsewhere.count} gedaan in ${WHEN_TEXT[r.doneElsewhere.when]}` : undefined;
+}
+
+// Heeft de week iets te tellen: een geplande training, of een die in een andere week gedaan is. Dan staan de kaart
+// Weekterugblik, Bekijk je week in het Logboek en de rij Je week er; een week waarvan de enige training elders gedaan
+// is, verdwijnt dus niet.
+export const hasWeekTally = (r: Pick<WeekReview, 'planned' | 'doneElsewhere'> | null | undefined): r is WeekReview => !!r && (r.planned > 0 || !!r.doneElsewhere);
+
+// De telling op de kaart Weekterugblik op Vandaag: dezelfde stukjes als de terugblik en de rij Je week; de kaart zet
+// de tijd erachter.
+export function weekCardCount(r: WeekReview): string {
+  const only = onlyElsewhereText(r);
+  const notes = elsewhereNotes(r);
+  return only ?? [r.running ? `${r.done} gedaan` : `${r.done} van ${r.planned} trainingen`, notes.doneElsewhere, notes.fromElsewhere].filter(Boolean).join(', ');
 }
 
 // De verdeling per sport, voor de weergave Je trainingen: "hardlopen 18,4 km · 320 m omhoog".

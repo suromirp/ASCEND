@@ -2,7 +2,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mondayOfWeek, todayISO } from '../utils/dates';
 import { buildWeekReview } from './weekReview';
-import { weekCountLine } from './weekGlance';
+import { elsewhereNotes, hasWeekTally, onlyElsewhereText, weekCardCount, weekCountLine } from './weekGlance';
+import { weekNoticeText } from './deviceNotices';
+import { weekSoFarRow } from './weekList';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog } from '../models/training';
@@ -118,5 +120,65 @@ describe('gedaan in een andere week, rond 00:00 Europe/Amsterdam', () => {
     // Een set om 00:10 maandag hoort bij maandag: dan de geplande week.
     const late = finishDayDefault({ today: '2026-10-12', plannedSessionId: 'm', scheduledDate: '2026-10-12', lastTickAt: new Date('2026-10-11T22:10:00Z').getTime(), dayOf });
     expect(late).toBe('2026-10-12');
+  });
+
+  it('wintertijd: zondag 25 oktober om 02:00 terug; zondag 23:59 is nog die week, maandag 00:30 de week erna', () => {
+    const autumn: PlannedSession = { id: 'w', templateId: 'tpl_long_run', scheduledDate: '2026-10-25', weekStartDate: '2026-10-19', status: 'planned', order: 0 };
+    const after = (weekStart: string, logs: SessionLog[]) =>
+      buildWeekReview({ weekStart, plannedById: plannedByIdOf([autumn]), plannedSessions: [autumn], logs, templates, program: { ...program, phases: [{ ...program.phases[0], weekCount: 8 }] }, planChangeLog: [], asOf: '2026-11-02' })!;
+    const sameDay = [logOf(autumn, '2026-10-25T22:59:00Z', 'manual')]; // 23:59 wintertijd (UTC+1)
+    expect(sameDay[0].completedDate).toBe('2026-10-25');
+    expect(weekCountLine(after('2026-10-19', sameDay))).toBe('1 van 1 gedaan · 1:30 uur');
+    const nextDay = [logOf(autumn, '2026-10-25T23:30:00Z', 'manual')]; // maandag 00:30 wintertijd
+    expect(nextDay[0].completedDate).toBe('2026-10-26');
+    expect(weekCountLine(after('2026-10-19', nextDay))).toBe('1 gedaan in de week erna');
+    expect(after('2026-10-26', nextDay)).toMatchObject({ done: 1, planned: 1, fromElsewhere: { count: 1, when: 'earlier' } });
+  });
+});
+
+describe('dezelfde woorden op de kaart, de rij Je week en de melding (Lookout, I-58)', () => {
+  const at = (id: string, scheduledDate: string, weekStartDate: string): PlannedSession => ({ id, templateId: 'tpl_long_run', scheduledDate, weekStartDate, status: 'planned', order: 0 });
+  const log = (s: PlannedSession, day: string): SessionLog => ({ id: `l-${s.id}`, plannedSessionId: s.id, templateId: s.templateId, type: 'hiking', completedDate: day, completedAt: `${day}T10:00:00Z`, variant: 'full', durationMinutes: 45, source: 'manual' });
+  const review = (weekStart: string, plan: PlannedSession[], logs: SessionLog[]) =>
+    buildWeekReview({ weekStart, plannedById: plannedByIdOf(plan), plannedSessions: plan, logs, templates, program, planChangeLog: [], asOf: '2026-10-25' })!;
+
+  // Week van 12 oktober: vier trainingen. Twee gedaan, één in de week ervoor gedaan, één van de week erna hier gedaan.
+  const plan = [
+    at('a', '2026-10-12', '2026-10-12'), at('b', '2026-10-14', '2026-10-12'), at('c', '2026-10-16', '2026-10-12'), at('d', '2026-10-18', '2026-10-12'),
+    at('e', '2026-10-20', '2026-10-19'),
+  ];
+  const logs = [log(plan[0], '2026-10-12'), log(plan[1], '2026-10-14'), log(plan[2], '2026-10-09'), log(plan[4], '2026-10-17')];
+
+  it('de kaart Weekterugblik zegt beide kanten, net als de terugblik', () => {
+    const r = review('2026-10-12', plan, logs);
+    expect(r).toMatchObject({ done: 3, planned: 4, plannedWeek: { done: 3, planned: 4 } });
+    expect(weekCardCount(r)).toBe('3 van 4 trainingen, 1 in de week ervoor, 1 uit de week erna');
+    expect(weekCountLine(r)).toBe('3 van 4 gedaan, 1 in de week ervoor, 1 uit de week erna · 2:15 uur');
+    expect(weekNoticeText(r)!.body).toBe('3 van 4 trainingen gedaan, 1 in de week ervoor, 1 uit de week erna, 2 uur 15 min.');
+  });
+
+  it('een week waarvan de enige training elders gedaan is verdwijnt niet', () => {
+    const only = [at('z', '2026-10-18', '2026-10-12')];
+    const r = review('2026-10-12', only, [log(only[0], '2026-10-19')]);
+    expect(r).toMatchObject({ done: 0, planned: 0, plannedWeek: { done: 1, planned: 1 } });
+    expect(hasWeekTally(r)).toBe(true);
+    expect(weekCardCount(r)).toBe('1 gedaan in de week erna');
+    expect(weekCountLine(r)).toBe('1 gedaan in de week erna');
+    expect(weekSoFarRow({ current: false, done: 0, total: 0, doneMinutes: 0, ...elsewhereNotes(r), only: onlyElsewhereText(r) }).sub).toBe('1 gedaan in de week erna');
+    expect(weekNoticeText(r)!.body).toBe('1 gedaan in de week erna.');
+    expect(hasWeekTally(review('2026-10-12', [], []))).toBe(false);
+  });
+
+  it('de koers over de laatste weken leest de geplande week: gedaan en de sleuteltraining over dezelfde trainingen', async () => {
+    const { recentAdherence } = await import('./onCourse');
+    const a = recentAdherence({ today: '2026-10-26', program, plannedSessions: plan, logs, templates, planChangeLog: [], illnessEpisodes: [] });
+    const week = a.reviews.find((r) => r.weekStart === '2026-10-12')!;
+    expect(week).toMatchObject({ done: 3, planned: 4 });
+    // Over de weken samen: elke geplande training één keer, in zijn eigen week.
+    expect({ done: a.done, planned: a.planned }).toEqual({ done: 4, planned: 5 });
+    // De week van 5 oktober had niets gepland (daar telt c alleen in de week van uitvoeren): geen week in de koers.
+    // De week van 19 oktober wel: e stond daar en is gedaan, ook al was het in de week ervoor.
+    expect(a.reviews.map((r) => r.weekStart).sort()).toEqual(['2026-10-12', '2026-10-19']);
+    expect(a.reviews.find((r) => r.weekStart === '2026-10-19')!.plannedWeek).toEqual({ done: 1, planned: 1 });
   });
 });

@@ -50,6 +50,7 @@ import { PHASE_TAPER, WAVE_LENGTH, progressionTarget } from './programLayout';
 import { phaseWaveLength } from '../models/program';
 import { mayPropose } from './dayRules';
 import { buildWeekReview } from './weekReview';
+import { plannedByIdOf } from './logDay';
 import { currentChoices, loadChange, type LoadChange, type WeekLoadContext } from './weekLoadChange';
 import { weekKeySession, type KeyFocus } from './keySession';
 import { kgLabel } from '../utils/kg';
@@ -242,17 +243,20 @@ export function proposeRepeatWeek(inputs: RepeatWeekInputs): RepeatWeekProposal 
   if ((inputs.raceWeeks ?? []).some((w) => Math.abs(daysBetween(w, weekStart)) <= 7 || Math.abs(daysBetween(w, previousWeek)) <= 7)) return undefined;
 
   const review = buildWeekReview({
-    weekStart: previousWeek, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, program,
+    plannedById: plannedByIdOf(inputs.plannedSessions), weekStart: previousWeek, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates, program,
     planChangeLog: inputs.planChangeLog ?? [], asOf: today, illnessEpisodes, leavePeriods: inputs.leavePeriods, openDraft: inputs.openDraft, keyFocus: inputs.keyFocus,
   });
   if (!review) return undefined;
-  const verdict = judgeWeek(review);
+  // Het oordeel gaat over de geplande week: de telling van die week, niet de verschuiving naar de dag van uitvoeren
+  // (docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md). Anders slaat een voorstel om door alleen de dag van een log.
+  const { done, planned } = review.plannedWeek;
+  const verdict = judgeWeek({ done, planned, keyPlanned: review.keyPlanned, keyDone: review.keyDone });
   if (!verdict.fellShort) return undefined;
 
   // The one key session of that week (engine/keySession.ts#weekKeySession), when it was not done.
   const missedKey = verdict.keyMissed ? [review.keyName ?? 'sleuteltraining'] : [];
   return {
-    id, weekStart, previousWeek, done: review.done, planned: review.planned, verdict, missedKey,
+    id, weekStart, previousWeek, done, planned, verdict, missedKey,
     impact: keyImpact(program, weekStart, inputs.plannedSessions, inputs.templates, inputs.keyFocus),
   };
 }

@@ -130,6 +130,9 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
         if (t.id === 'tpl_tempo_run' && !blockFrom) blockFrom = formatDayMonthNL(weekStart);
       }
 
+      // Eén keer per week: de verschuiving naar de dag van uitvoeren, alleen voor een voorbije week.
+      const delta = weekStart < thisMonday ? shiftDelta(weekStart) : 0;
+      const shiftedDone = weekStart < thisMonday && counted + delta > 0 ? { done: done + delta, planned: counted + delta } : undefined;
       weeks.push({
         weekStart,
         number: weekNumber,
@@ -139,7 +142,7 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
         items: [...items.filter((i) => i.kind === 'race' || i.kind === 'test'), ...items.filter((i) => i.kind !== 'race' && i.kind !== 'test')],
         current: weekStart === thisMonday,
         past: weekStart < thisMonday,
-        done: weekStart < thisMonday && counted + shiftDelta(weekStart) > 0 ? { done: done + shiftDelta(weekStart), planned: counted + shiftDelta(weekStart) } : undefined,
+        done: shiftedDone,
       });
     }
 

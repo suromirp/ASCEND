@@ -44,8 +44,9 @@ export function weekLoadRow(state: { rest: boolean; restSkipped: boolean; repeat
 // De rij naar de weekterugblik heet zoals het blad: "Je week tot nu" voor deze week, "Je week" voor een voorbije.
 // Eronder de stand: "2 van 5 gedaan · 1:04 uur"; zonder gedane tijd alleen de telling. Gedaan in een andere week
 // (weekGlance.ts#elsewhereNotes): "2 van 2 gedaan, 1 in de week erna · 0:45 uur" (I-58).
-export function weekSoFarRow(input: { current: boolean; done: number; total: number; doneMinutes: number; doneElsewhere?: string; fromElsewhere?: string }): ListRow {
-  const count = [`${input.done} van ${input.total} gedaan`, input.doneElsewhere, input.fromElsewhere].filter(Boolean).join(', ');
+// `only`: stond er niets meer dan wat in een andere week gedaan is, dan die zin ("1 gedaan in de week erna").
+export function weekSoFarRow(input: { current: boolean; done: number; total: number; doneMinutes: number; doneElsewhere?: string; fromElsewhere?: string; only?: string }): ListRow {
+  const count = input.total === 0 && input.only ? input.only : [`${input.done} van ${input.total} gedaan`, input.doneElsewhere, input.fromElsewhere].filter(Boolean).join(', ');
   return { title: input.current ? 'Je week tot nu' : 'Je week', sub: input.doneMinutes > 0 ? `${count} · ${hoursMinutes(input.doneMinutes)} uur` : count };
 }
 

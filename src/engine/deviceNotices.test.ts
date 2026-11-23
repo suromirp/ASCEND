@@ -35,6 +35,7 @@ function review(over: Partial<WeekReview> = {}): WeekReview {
     title: 'Week 3 van 6, basisfase',
     done: 3,
     planned: 4,
+    plannedWeek: { done: 3, planned: 4 },
     minutes: 200,
     perSport: [],
     missed: ['Duurloop'],

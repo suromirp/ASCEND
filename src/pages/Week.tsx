@@ -27,7 +27,7 @@ import { WeekProposalRow } from '../components/WeekProposalRow';
 import { SheetRow, SheetRows } from '../components/SheetRows';
 import { TextButton } from '../components/TextButton';
 import { missedInWeek, replanSub, SEASON_ROW, weekBox, weekSkyLine, weekSoFarRow } from '../engine/weekList';
-import { elsewhereNotes, shiftedProgress } from '../engine/weekGlance';
+import { elsewhereNotes, hasWeekTally, onlyElsewhereText, shiftedProgress } from '../engine/weekGlance';
 import { raceDatesOf } from '../engine/raceWindow';
 import { rowNotes } from '../engine/weekConcerns';
 import { allowedPairs } from '../engine/allowedPair';
@@ -368,8 +368,8 @@ export function WeekPage() {
           {/* De lijst onder de dagen: één rijvorm, geen mint, elke rij opent iets. */}
           <SheetRows label="Meer over deze week">
             <WeekLoadRow weekStart={weekStart} />
-            {review && review.planned > 0 && trainings > 0 && (
-              <SheetRow {...weekSoFarRow({ current, ...shiftedProgress(progress, review), doneMinutes, ...elsewhereNotes(review) })} onClick={() => setReviewOpen(true)} sheetFrom />
+            {hasWeekTally(review) && trainings > 0 && (
+              <SheetRow {...weekSoFarRow({ current, ...shiftedProgress(progress, review), doneMinutes, ...elsewhereNotes(review), only: onlyElsewhereText(review) })} onClick={() => setReviewOpen(true)} sheetFrom />
             )}
             <WeekAdjustmentsRow adjustments={adjustments} weekStart={weekStart} current={current} />
             {/* Week opnieuw plannen: alleen voor de getoonde week, vandaag en later (engine/replanWeek.ts). */}
