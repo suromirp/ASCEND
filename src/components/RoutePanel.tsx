@@ -96,11 +96,20 @@ export function ChosenLoop({ style, proposal, date, target, sender, climbMarked 
 // Geen netwerk of een routeplanner die te laat was: op de plek van de kaart, met dezelfde hoogte, de
 // regel en Opnieuw zoeken.
 // `line`: de regel van de regie (geen verbinding, of welke stap niet op tijd was); zonder de vaste regel.
-export function RouteFailure({ kind, onRetry, height, line }: { kind: 'offline' | 'timeout'; onRetry: () => void; height?: string; line?: string }) {
+// `model`: bij een tijdgrens staat naast Opnieuw zoeken ook Andere plek, de snelle weg naar een andere start
+// (hetzelfde blad als bij Start bij, I-53); de uitkomst is een nieuwe zoektocht, met haar eigen tijdgrens.
+export function RouteFailure({ kind, onRetry, height, line, model }: { kind: 'offline' | 'timeout'; onRetry: () => void; height?: string; line?: string; model?: RouteSearchModel }) {
+  const [open, setOpen] = useState(false);
   return (
     <div className="flex w-full flex-col items-start justify-center gap-1 rounded-xl border px-5" style={{ height: ROUTE_MAP_HEIGHT, ...(height ? { height } : {}), borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
       <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{line || (kind === 'offline' ? OFFLINE_LINE : TIMEOUT_LINE)}</p>
-      <TextButton tone="dim" onClick={onRetry}>Opnieuw zoeken</TextButton>
+      <div className="flex flex-wrap gap-x-5">
+        <TextButton tone="dim" onClick={onRetry}>Opnieuw zoeken</TextButton>
+        {kind === 'timeout' && model && <TextButton tone="dim" onClick={() => setOpen(true)}>Andere plek</TextButton>}
+      </div>
+      {open && model && (
+        <NewPlaceSheet saved={model.savedStarts} chosen={model.startChip} onPickSaved={(c) => model.pickStart(c)} onPick={model.choosePlace} onClose={() => setOpen(false)} />
+      )}
     </div>
   );
 }
@@ -181,7 +190,7 @@ export function RouteFirstQuestion({ model, onDecline }: { model: RouteSearchMod
       <p className="text-sm leading-snug" style={dim}>Een lus zoeken voor deze {model.trainingTarget.plannedWalk ? 'wandeling' : 'training'}? Kies waar de lus begint. Er gaat geen naam of adres mee.</p>
       <TextButton onClick={() => void model.choose('here')}>Waar je nu bent</TextButton>
       <p className="text-xs leading-snug" style={dim}>
-        Bij elke zoektocht wordt je plek één keer gevraagd. Die gaat precies naar de routeplanner (BRouter, anders Valhalla van FOSSGIS); heuvels en paden zoekt OpenStreetMap om je plek op ongeveer 100 m, en de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Je plek wordt niet als startpunt bewaard. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. {PHOTO_SOURCES_LINE}
+        Bij elke zoektocht wordt je plek één keer gevraagd. Die gaat precies naar de routeplanner (BRouter, anders Valhalla van FOSSGIS); heuvels, paden, water en bos zoekt OpenStreetMap om je plek op ongeveer 100 m, en de hoogte van heuvels komt van Open-Meteo, om hetzelfde punt. Je plek wordt niet als startpunt bewaard. De kaart haalt kaarttegels rond je plek op bij OpenFreeMap, anders bij OpenStreetMap. {PHOTO_SOURCES_LINE}
       </p>
       <TextButton tone="dim" onClick={() => void model.choose('exact')}>Thuis</TextButton>
       <p className="text-xs leading-snug" style={dim}>
@@ -275,7 +284,7 @@ export function RoutePanelView({ model, date, onDecline, startAbove = false }: {
       case 'ask':
         return <AskStart key={p} model={model} onFull={() => setBigger(true)} />;
       case 'failure':
-        return <RouteFailure key={p} kind={stage === 'offline' ? 'offline' : 'timeout'} onRetry={model.retry} line={model.failLine} />;
+        return <RouteFailure key={p} kind={stage === 'offline' ? 'offline' : 'timeout'} onRetry={model.retry} line={model.failLine} model={model} />;
       case 'map':
         return model.mapStartPoint ? (
           <div key={p} className="flex flex-col gap-1">
@@ -299,7 +308,7 @@ export function RoutePanelView({ model, date, onDecline, startAbove = false }: {
           </div>
         ) : null;
       case 'found':
-        return model.foundLines.length > 0 ? <p key={p} role="status" className="text-sm leading-snug" style={dim}>{model.foundLines.join(' ')}</p> : null;
+        return model.foundLines.length > 0 || model.mapLine ? <p key={p} role="status" className="text-sm leading-snug" style={dim}>{[...model.foundLines, model.mapLine].filter(Boolean).join(' ')}</p> : null;
       case 'retry':
         return <div key={p}>{retry}</div>;
       case 'sources':

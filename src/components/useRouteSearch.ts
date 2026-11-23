@@ -21,7 +21,7 @@ import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { loadBodyKg } from '../engine/weightTrend';
 import { resolveRouteStyle, roundStart, routeTarget, runPaceSecKm, walkKind } from '../engine/routeTarget';
-import { renotedProposal, searchLines, type PlanOutcome } from '../engine/routePlanner';
+import { mapAgeLine, renotedProposal, searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { findOtherLoop, findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
 import { askMapCenter, locateAnswerCounts, locateNow, maySearch, planStart, startView, resolveRouteStart, type AskMapCenter, roundExact, roundHere, startFailureReason, type RouteStartMode, type StartPick } from '../engine/routeStart';
 import { getRouteStartPoint, locateStartHere, saveRouteStartPoint, START_LOCATE_LIMIT_MS, startFromMap, type StartLocation } from '../storage/routeStart';
@@ -111,6 +111,8 @@ export interface RouteSearchModel {
   searchKey: string;
   // Na het zoeken.
   foundLines: string[];
+  // Eén regel als de kaart van de omgeving ontbrak of oud was; anders leeg (engine/routePlanner.ts#mapAgeLine).
+  mapLine: string;
   sources: string[];
   parts: RouteSheetPart[];
   retry: () => void;
@@ -202,7 +204,8 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   const [noMapKey, setNoMapKey] = useState<string | undefined>();
   // Andere lus: de gekozen variant (geldt voor één zoektocht, de sleutel), of hij zoekt, en de regel als het niet lukte.
   const [variant, setVariant] = useState<{ key: string; style: RouteStyle; proposal: RouteProposal; note?: string; via?: true } | undefined>();
-  const [viaChoosing, setViaChoosing] = useState(false);
+  // Het punt kiezen geldt voor één zoektocht (de sleutel): een nieuwe zoektocht wist het.
+  const [viaChoosingKey, setViaChoosingKey] = useState<string | undefined>();
   const [otherBusy, setOtherBusy] = useState<string | undefined>();
   const [otherFail, setOtherFail] = useState<{ key: string; line: string; choice: OtherLoopChoice } | undefined>();
   const otherStop = useRef<AbortController | undefined>(undefined);
@@ -611,6 +614,7 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     // Per zoektocht van jou (poging, getikte chip, getikt punt), niet per stap of terugval: je plek vinden begint geen nieuwe balk.
     searchKey: `${attempt}|${startPicked}|${startPlace?.key}|${startPlace?.point.lat}|${startPlace?.point.lon}|${mapStart?.lat}|${mapStart?.lon}|${adjustKey(adjust)}`,
     foundLines: plans ? searchLines(plans, target) : [],
+    mapLine: plans ? mapAgeLine(plans) : '',
     sources,
     parts: routeSheetParts(stage, plans ? { anyOk: okStyles.length > 0, anyFailed: order.some((s) => !plans[s].ok) } : undefined),
     retry: () => setAttempt((n) => n + 1),
@@ -644,11 +648,11 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
       note: variant?.key === key && variant.style === picked ? variant.note ?? '' : '',
       pick: pickOther,
       retry: otherFail?.key === key && otherFail.choice !== 'via' ? () => pickOther(otherFail.choice) : undefined,
-      choosing: viaChoosing,
-      beginVia: () => setViaChoosing(true),
-      cancelVia: () => setViaChoosing(false),
+      choosing: viaChoosingKey === key,
+      beginVia: () => setViaChoosingKey(key),
+      cancelVia: () => setViaChoosingKey(undefined),
       applyVia: (point) => {
-        setViaChoosing(false);
+        setViaChoosingKey(undefined);
         pickOther('via', point);
       },
       viaActive: variant?.key === key && variant.style === picked && variant.via === true,

@@ -54,7 +54,7 @@ export function HillsNearbyLine({ template, date, className = '' }: { template: 
     return (
       <div className={`flex flex-col ${className}`}>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Zoeken naar een helling of trap in de buurt? Daarvoor gaat je plek, afgerond op ongeveer een kilometer, naar OpenStreetMap. Er gaat geen naam of adres mee.
+          Zoeken naar een helling of trap in de buurt? Daarvoor gaat je plek, afgerond op ongeveer een kilometer, naar OpenStreetMap. Het zoekt ook water en bos, voor een route. Er gaat geen naam of adres mee.
         </p>
         <div className="flex flex-wrap gap-x-4">
           <TextButton size="xs" onClick={() => { void grantTerrainConsent().then(() => setConsent(true)); }}>Ja, zoek</TextButton>
