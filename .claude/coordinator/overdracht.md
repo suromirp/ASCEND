@@ -2,6 +2,12 @@
 
 Bijgewerkt: 23 november 2026 06:00 door coördinator session_01LnDpSnS2nhuSzP3eTLuurZ. Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
 
+## Stand 23 november 06:15 (coördinator session_01LnDpSnEAuFAjTkBK2YLZBH)
+
+- Main dff62db9. Bundel 9: vier Cartographers (opus, zoals de vorige stand vroeg; zuinige stand zegt sonnet, volgende keer sonnet) schrijven op tak claude/ontwerp-bundel-9 in /home/user/ascend: Ontwerp Eén plan (I-14), Ontwerp beginner rest (I-18), Ontwerp Losse sport (I-23), Ontwerp Na een loop één moment (I-34). Daarna kennisindex en bouwen naar risico.
+- Mag-ronde loopt: Sherpa Mag A (sonnet, worktree, claude/mag-a: I-125, I-130 tot I-133, I-138) en Sherpa Mag B (opus, worktree, claude/mag-b: I-134 tot I-137). Daarna één Warden en één Lookout over beide, proefmerge en kaart in /home/user/ascend.
+- Overdracht en eigenaar.md worden bijgewerkt in worktree /home/user/coord.
+
 ## Wissel 23 november 06:00 (van session_01LnDpSnS2nhuSzP3eTLuurZ)
 
 - Main dff62db9. Live vannacht: bundel 1 en 1b (eerder), bundel 2 fec6c454 (week, naspelen, route op reis), bundel 3 en 4 121f9c1e (Forge en logs, dayRules). Backlog bij; Inbox tot I-138. Werkkaart-triggers gezet.
