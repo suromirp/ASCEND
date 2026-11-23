@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import type { PlannedSession } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
-import { dayAtY, nextDroppable, type DayVerdict, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
+import { dayAtY, ghostLift, nextDroppable, type DayVerdict, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
 import { haptics } from '../utils/haptics';
 import { useVerticalDrag } from './useVerticalDrag';
 import { useLegMoveNotes } from './useLegMoveNote';
@@ -20,7 +20,7 @@ export interface WeekDragState {
   verdicts: DayVerdict[];
   askAlways: boolean | string;
   // De zwevende rij (alleen met de vinger): vast aan het scherm, alleen verticaal bewegend.
-  ghost?: { left: number; width: number; height: number; top: number };
+  ghost?: { left: number; width: number; height: number; top: number; lift: number };
   fingerY: number;
 }
 
@@ -130,10 +130,11 @@ export function useWeekDrag({ weekStart, enabled, moveTo, onOpenMove }: {
         onPickUp: () => { haptics.tap(); setAnnounce(''); },
         onChange: (target) => setDrag({
           id, mode: 'pointer', target, verdicts, askAlways, fingerY: fingerY.current,
-          ghost: { left: rect.left, width: rect.width, height: rect.height, top: fingerY.current - grab },
+          // De kaart hangt boven de dag onder je vinger, zodat hij het label van die dag niet bedekt (I-138).
+          ghost: { left: rect.left, width: rect.width, height: rect.height, top: fingerY.current - grab, lift: ghostLift({ fingerY: fingerY.current, grab, height: rect.height, targetTop: dayRects().find((d) => d.date === target)?.top }) },
         }),
         // De rij schuift naar zijn dag vanaf waar je hem losliet (utils/flipDom.ts).
-        onDrop: (target) => { setFlipOrigin(id, fingerY.current - grab); void finish(id, target, askAlways, verdicts); },
+        onDrop: (target) => { setFlipOrigin(id, fingerY.current - grab - (live.current.drag?.ghost?.lift ?? 0)); void finish(id, target, askAlways, verdicts); },
         onCancel: () => { setDrag(null); setAnnounce('Niet verplaatst'); },
       });
     };
