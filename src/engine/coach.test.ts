@@ -164,6 +164,15 @@ describe('coachReaction na een losse sport', () => {
   it('zegt na een zware partij iets over morgen', () => {
     expect(react(sportLog('football', { rpe: 8 }), sportTemplate('football'))).toBe('Zwaar gespeeld. Morgen liever geen zware beendag.');
   });
+  it('zegt zwaar gespeeld alleen bij padel en voetbal', () => {
+    expect(react(sportLog('swimming', { rpe: 8 }), sportTemplate('swimming'))).toBe('Zwaar geweest. Morgen liever geen zware beendag.');
+  });
+  it('zegt na Negeren dat de sport niet meetelt, zonder nog', () => {
+    expect(coachReaction(sportLog('football'), undefined, program, [], { sportOff: true })).toBe('Opgeslagen. Voetbal telt niet mee.');
+  });
+  it('zegt gedaan zoals afgesproken ook bij een vaste zwemafspraak', () => {
+    expect(react(sportLog('swimming', { plannedSessionId: 'ps1' }), sportTemplate('swimming'))).toBe('Gedaan zoals afgesproken.');
+  });
   it('zegt zonder rol dat de sport nog niet meetelt', () => {
     expect(react(sportLog('football'))).toBe('Opgeslagen. Voetbal telt nog niet mee.');
   });

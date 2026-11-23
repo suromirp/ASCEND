@@ -160,24 +160,24 @@ export const HARD_LOOSE_TEXT = 'Dit was geen rustige loop. Houd je volgende trai
 // tak met zinnen die bij de sport passen (docs/visie/Ontwerp Losse sport.md, punt 3). `template` is het afgeleide
 // sjabloon en bestaat alleen zolang de sport meetelt; zonder telt de sport nog niet mee.
 export const SPORT_HEAVY_RPE = 7;
-function sportReaction(log: SessionLog, template: SessionTemplate | undefined): string | undefined {
+function sportReaction(log: SessionLog, template: SessionTemplate | undefined, off = false): string | undefined {
   const { countedSport, customSport } = sportOfLog(log);
   if (!countedSport && !customSport) return undefined;
   const label = countedSport ? anySportDefinition(countedSport).label : customName(customSport!);
   const counts = !!template && (!!template.countedSport || !!template.customSport);
-  if (!counts) return `Opgeslagen. ${label} telt nog niet mee.`;
+  if (!counts) return off ? `Opgeslagen. ${label} telt niet mee.` : `Opgeslagen. ${label} telt nog niet mee.`;
   if (log.subjectiveFeel === 'worse') return 'Slechter dan normaal, dat hoort erbij. Houd het morgen rustig; goed slapen en eten kan helpen.';
-  if (log.rpe !== undefined && log.rpe >= SPORT_HEAVY_RPE) return 'Zwaar gespeeld. Morgen liever geen zware beendag.';
+  if (log.rpe !== undefined && log.rpe >= SPORT_HEAVY_RPE) return countedSport === 'padel' || countedSport === 'football' ? 'Zwaar gespeeld. Morgen liever geen zware beendag.' : 'Zwaar geweest. Morgen liever geen zware beendag.';
+  if (log.plannedSessionId) return 'Gedaan zoals afgesproken.';
   const legs = template!.baseStressProfile?.lowerBodyLoad;
   if (legs === 'none' || legs === 'light') return `Opgeslagen. ${label} telt mee voor je week, nauwelijks voor je benen.`;
-  if (log.plannedSessionId) return 'Gedaan zoals afgesproken.';
   return `Opgeslagen. ${label} telt mee voor je benen en je week.`;
 }
 
-export function coachReaction(log: SessionLog, template: SessionTemplate | undefined, program: Program | null | undefined, history: SessionLog[] = [], fit: Pick<FitContext, 'hr' | 'easyPace'> & { sessionMinutes?: number } = {}): string {
+export function coachReaction(log: SessionLog, template: SessionTemplate | undefined, program: Program | null | undefined, history: SessionLog[] = [], fit: Pick<FitContext, 'hr' | 'easyPace'> & { sessionMinutes?: number; sportOff?: boolean } = {}): string {
   const pain = painReaction(log, history);
   if (pain) return pain;
-  const sport = sportReaction(log, template);
+  const sport = sportReaction(log, template, fit.sportOff);
   if (sport) return sport;
   if (!template || template.type === 'recovery') return 'Goed dat je bewoog. Licht en rustig is precies de bedoeling van vandaag.';
   const top = plannedRpeTop(template, log.completedDate, program);

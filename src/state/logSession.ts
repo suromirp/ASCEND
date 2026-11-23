@@ -9,6 +9,8 @@ import { LogStoredFollowUpFailed } from '../storage/storageError';
 import { todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { excludedLogIds } from '../engine/influence';
+import { sportOfLog } from '../engine/sportOfLog';
+import { sportRole } from '../engine/sportRole';
 import { withCountingSports } from '../engine/sportTemplate';
 import { coachReaction } from '../engine/coach';
 import { aerobicTrend, celebratedChange, progressMoment, tempoPiecesOn, type ProgressCelebrated } from '../engine/aerobicTrend';
@@ -165,11 +167,12 @@ async function writeLog(input: LogSessionInput, opts: LogSessionOpts | undefined
       // Het afgeleide sjabloon van een sport die meetelt staat nooit in de opslag (engine/sportTemplate.ts).
       const storedSettings = await SettingsRepo.get();
       const coachTemplates = withCountingSports(allTemplates, storedSettings);
-      let coachNote = coachReaction(log, coachTemplates.find((t) => t.id === log.templateId), currentProgram, allLogs, { hr: settings.heartRate, sessionMinutes });
+      const logSport = sportOfLog(log).countedSport;
+      let coachNote = coachReaction(log, coachTemplates.find((t) => t.id === log.templateId), currentProgram, allLogs, { hr: settings.heartRate, sessionMinutes, sportOff: logSport !== undefined && sportRole(storedSettings, logSport) === 'off' });
       // Faster at the same heart rate over weeks: said once, right after
       // an easy run (engine/aerobicTrend.ts#progressMoment).
       // A training set to "Niet meetellen voor hartslag" stays out of the trend (engine/influence.ts).
-      const excluded = excludedLogIds((await SettingsRepo.get()).influences);
+      const excluded = excludedLogIds(storedSettings.influences);
       const pieces = { pieces: tempoPiecesOn({ tempoStablePieces: settings.tempoStablePieces }) };
       const trend = aerobicTrend(allLogs, allTemplates, currentProgram, settings.heartRate, log.completedDate, excluded, pieces);
       const lastProgress = await MetaRepo.get<ProgressCelebrated>('aerobicProgressCelebrated');
