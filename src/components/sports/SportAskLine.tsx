@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { SPORTS_ROUTE } from '../../pages/settings/sportsRoute';
 import { useAppData } from '../../state/AppDataContext';
 import { getWatchState, onWatchChange, type WatchActivityState } from '../../storage/externalActivities';
-import { ASK_ADVICE, ASK_ROLES, adviceFelt, pendingSports, sportQuestionLine, type SportQuestion } from '../../engine/sportAsk';
+import { ASK_ADVICE, ASK_ROLES, adviceFelt, pendingSportLogs, pendingSports, sportQuestionLine, type SportLogQuestion, type SportQuestion } from '../../engine/sportAsk';
 import { parseSportHandling, resolveSportCounting } from '../../engine/sportRole';
 import { activityToDraft, durationLabel } from '../../engine/activityImport';
 import { sportTemplate } from '../../engine/sportTemplate';
@@ -26,9 +26,9 @@ import { autoCustomSports, customIdOf, customQuestionLine, customTemplate, FEEL_
 const SAVE_TIMEOUT_MS = 8000;
 
 export function SportAskLine() {
-  const { settings, updateSettings } = useAppData();
+  const { settings, updateSettings, sessionLogs } = useAppData();
   const [state, setState] = useState<WatchActivityState | null>(null);
-  const [open, setOpen] = useState<SportQuestion | null>(null);
+  const [open, setOpen] = useState<SportQuestion | SportLogQuestion | null>(null);
   const [openCustom, setOpenCustom] = useState<CustomQuestion | null>(null);
 
   useEffect(() => {
@@ -53,7 +53,9 @@ export function SportAskLine() {
     void updateSettings({ customSports: [...current, ...auto.filter((c) => !current.some((k) => k.type === c.type))] });
   }, [autoKey, auto, settings.customSports, updateSettings]);
 
-  const question = state?.use.activities ? pendingSports(state.activities, settings, todayISO())[0] : undefined;
+  // Een horlogeactiviteit gaat voor; daarna een training die je zelf invulde (Losse training), ook zonder horloge.
+  const logQuestion = useMemo(() => pendingSportLogs(sessionLogs, settings, todayISO())[0], [sessionLogs, settings]);
+  const question: SportQuestion | SportLogQuestion | undefined = (state?.use.activities ? pendingSports(state.activities, settings, todayISO())[0] : undefined) ?? logQuestion;
   const custom = !question && state?.use.activities ? pendingCustomSports(state.activities, settings, todayISO())[0] : undefined;
   if (!question && !custom && !open && !openCustom) return null;
   const def = question ? anySportDefinition(question.sport) : undefined;
@@ -199,7 +201,7 @@ const ROLE_TEXT: Partial<Record<SportRole, { label: string; note: string }>> = {
   off: { label: 'Negeren', note: 'Telt niet mee in je planning. Loggen kan wel.' },
 };
 
-function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose: () => void }) {
+function SportAskSheet({ question, onClose }: { question: SportQuestion | SportLogQuestion; onClose: () => void }) {
   const { settings, updateSettings, logSession, reportStorageError } = useAppData();
   const alive = useAlive();
   // Vanaf het begin van het sluiten telt het blad niet meer als in beeld (I-32): een fout gaat dan bovenin.
@@ -214,8 +216,12 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
   // De uitkomst als niet alles bewaard is: mislukt (amber), te lang (het log kan nog landen), of alleen de keuze niet.
   const [error, setError] = useState<ReturnType<typeof thrownSaveNote> | null>(null);
   // De zwaarte vraagt het blad alleen als het horloge er geen gaf en je het wilt.
-  const askFelt = counting.askFelt && question.activity.rpe === undefined && role === 'count';
-  const day = question.activity.start.slice(0, 10);
+  // Een log dat je zelf invulde staat er al: dan alleen de keuze, geen tweede log.
+  const activity = 'activity' in question ? question.activity : undefined;
+  const askFelt = !!activity && counting.askFelt && activity.rpe === undefined && role === 'count';
+  const day = activity ? activity.start.slice(0, 10) : (question as SportLogQuestion).log.completedDate;
+  const minutes = activity ? undefined : (question as SportLogQuestion).log.durationMinutes;
+  const length = activity ? durationLabel(activity.durationSec) : minutes && minutes > 0 ? durationLabel(minutes * 60) : '';
 
   async function save(close: () => void) {
     if (busy) return;
@@ -223,9 +229,9 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
     setError(null);
     try {
       // Eerst het log, dan de rol (state/logSave.ts): lukt het log niet, dan blijft alles zoals het was en staat de vraag er nog.
-      const input = role === 'count'
+      const input = role === 'count' && activity
         ? {
-            ...activityToDraft(question.activity, sportTemplate(question.sport)),
+            ...activityToDraft(activity, sportTemplate(question.sport)),
             ...(askFelt ? { rpe: FELT_RPE[felt], ...(touched ? {} : { rpeAssumed: true as const }) } : {}),
             quiet: true,
           }
@@ -243,7 +249,7 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
   }
 
   return (
-    <Sheet eyebrow="Sporten" title={def.label} line={`Je deed ${def.label.toLowerCase()} op ${dayText(day)}, ${durationLabel(question.activity.durationSec)}. Hoe telt dit?`} onClose={onClose} onLeave={() => { leaving.current = true; }}>
+    <Sheet eyebrow="Sporten" title={def.label} line={`Je deed ${def.label.toLowerCase()} op ${dayText(day)}${length ? `, ${length}` : ''}. Hoe telt dit?`} onClose={onClose} onLeave={() => { leaving.current = true; }}>
       {(close) => (
         <>
           <ChoiceList<SportRole>
@@ -266,7 +272,7 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion; onClose
               />
             </div>
           )}
-          {question.count > 1 && role === 'count' && (
+          {activity && question.count > 1 && role === 'count' && (
             <p className="st-hint" style={{ marginLeft: 0 }}>{`De andere ${question.count - 1 === 1 ? 'activiteit' : `${question.count - 1} activiteiten`} van ${def.label.toLowerCase()} zie je daarna op Vandaag om op te slaan.`}</p>
           )}
           {error && <p className={error.kind === 'failed' ? 'st-hint warn' : 'st-hint'} style={{ marginLeft: 0 }} role="status">{error.text}</p>}
