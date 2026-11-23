@@ -29,7 +29,12 @@ Wat bij de geplande week blijft: gemist, de sleuteltraining van de week (`keyDon
 - Valt Gemist buiten de twee regels van Let op, dan staat hij onder de telling met dezelfde verwijzing naar Week opnieuw plannen als de week die rij heeft (`weekRestLines`), nog steeds zonder advies.
 - Een dagrij met een dag aan het eind ("gedaan di 27") leest voor de schermlezer als één zin; de twee zichtbare delen zijn er alleen voor het afkappen (`components/WeekPlanner.tsx`).
 
-## Reden
+## Let op en de voorstellen op Vandaag (I-72)
+
+- "Hier staat al een voorstel voor op Vandaag" (`engine/weekFixProposal.ts#TAKEN_LINE`) staat er alleen als een voorstel op Vandaag een training van de melding zelf raakt. Raakte het eigen voorstel van Week toevallig een andere training waar Vandaag een voorstel voor heeft, dan zei Week dat ook; nu vallen die keuzes van het weekvoorstel weg (twee voorstellen trekken nooit aan dezelfde training) en zegt Week niet dat Vandaag er al een heeft. De snelle helft (`weekNoticeConcerns`) en de volledige (`weekNotice`) zeggen hetzelfde over gedekt.
+- Op je rustdag in een periode zonder sportschool geeft één training één punt in Let op (`engine/weekConcerns.ts#dedupeRestNoGym`, al gebouwd op 22 november); er is nu ook een toets over de hele week.
+
+
 
 De eigenaar koos op 23 november eerst het advies "week van uitvoeren" voor de minuten, en verbreedde het dezelfde dag: "als een forge workout niet is afgesloten, of workouts die verplaatst worden, moeten gelden op de dag dat ze worden afgenomen". De belasting, de beenindex en Stand rekenden al zo; "x van n" en de weekbalk niet, waardoor dezelfde training in de ene telling in de ene week en in de andere telling in de andere week stond. Over de weken samen telt een training nog steeds één keer.
 

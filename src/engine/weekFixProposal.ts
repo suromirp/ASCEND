@@ -385,6 +385,23 @@ export function weekNoticeConcerns(input: CheckInput, weekStart: string, taken: 
 
 export const TAKEN_LINE = 'Hier staat al een voorstel voor op Vandaag.';
 
+// Gedekt (TAKEN_LINE) is een melding alleen als een voorstel op Vandaag een training van die melding zelf raakt (de
+// sleutel is de melding, I-72). Raakt het eigen voorstel van Week een andere training waar Vandaag al een voorstel voor
+// heeft, dan vallen die keuzes weg: twee voorstellen trekken nooit aan dezelfde training. Blijft er niets over, dan is
+// er geen voorstel, maar zegt Week niet dat Vandaag er al een voor heeft. De snelle helft (weekNoticeConcerns) en deze
+// zeggen zo hetzelfde over gedekt.
+function clearOf(fix: Advice | null, touches: (ids: Iterable<string>) => boolean): Advice | null {
+  if (!fix) return null;
+  if (!fix.options) return touches(adviceSessionIds([fix])) ? null : fix;
+  const all = fix.options;
+  const clear = all.filter((o) => !touches(adviceSessionIds([{ ...fix, proposal: o.proposal, options: undefined }])));
+  if (clear.length === all.length) return fix;
+  if (clear.length === 0) return null;
+  const { options: _o, ...rest } = fix;
+  void _o;
+  return { ...rest, effect: clear[0].effect, proposal: clear[0].proposal, ...(clear.length > 1 ? { options: clear } : {}) };
+}
+
 export function weekNotice(input: CheckInput, weekStart: string, proposals: boolean, taken: Set<string> = new Set()): WeekNotice {
   const concerns = weekConcerns(input, weekStart);
   const fixes: Record<string, Advice> = {};
@@ -393,10 +410,8 @@ export function weekNotice(input: CheckInput, weekStart: string, proposals: bool
   for (const c of concerns) {
     if (touches([...c.finding.sessionIds, c.finding.subjectId])) { covered.push(c.key); continue; }
     if (!proposals) continue;
-    const fix = planWeekFix(input, c, weekStart, taken);
-    if (!fix) continue;
-    if (touches(adviceSessionIds([fix]))) { covered.push(c.key); continue; }
-    fixes[c.key] = fix;
+    const fix = clearOf(planWeekFix(input, c, weekStart, taken), touches);
+    if (fix) fixes[c.key] = fix;
   }
   return { concerns, fixes, covered };
 }
