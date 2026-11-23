@@ -572,3 +572,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-23 | Warden beginnersladder I-18 | reviewer helper | opus | 110k tok | 23 min | akkoord, geen moet; mag naar I-143 |
 | 2026-11-23 | Sherpa Eén plan 2 I-14 C en D | ontwikkelaar helper | opus | 127k tok | 39 min | gebouwd, controles en kaart groen |
 | 2026-11-23 | Sherpa Losse sport I-23 stap 1 en 2 | ontwikkelaar helper | sonnet | 100k tok | 37 min | gebouwd, vraag als regel op Vandaag |
+| 2026-11-23 | Lookout beginnersladder I-18 | tester helper | sonnet | 87k tok | 8 min | geen moet |
+| 2026-11-23 | Warden Eén plan 2 en Losse sport | reviewer helper | opus | 90k tok | 12 min | moet M1 (stem) en M2 (tekst) |
