@@ -4,6 +4,7 @@
 
 - 16:42: overgenomen door session_01LnDpSkfAkTpyoFVnRE9gBr. Sherpa Opus loopt op I-154, tak claude/terugkeer-voorrang; daarna Warden Opus. Deploy df187512 groen 16:41, pushmelding 16:50, werkkaart ververst.
 - I-154 gebouwd: tak claude/terugkeer-voorrang (1920cbaf + verslag 2c274c1d), alle controles groen; Warden Opus en Lookout Sonnet lopen. Beslist op advies: geldt voor elke oorzaak van de terugkeer, ook stille weken (één toets op cause als de eigenaar anders wil). kaart:vergelijk: drie instellingenbladen van I-23 staan nog niet in docs/app-kaart, bijwerken bij de squash.
+- 17:33 wens eigenaar I-157 (belangrijk advies als blad bij openen, botsende adviezen): regel in scratchpad i157.txt, gaat mee in de squash van I-154 naar de Inbox (Hoogste code I-157). Bevestiging naar de chat ASCEND bij live I-154. Op het bouwmoment, eerst Pathfinder en Cartographer.
 
 Lees dit en CLAUDE.md. `eigenaar.md` en `docs/backlog.md` niet lezen, alleen grep op I-nummer. Meer nodig: `werkwijze.md`. Oude standen: git-geschiedenis.
 
