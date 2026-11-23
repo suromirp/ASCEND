@@ -178,6 +178,10 @@ export function proposeReentry(inputs: ReentryInputs): ReentryProposal | undefin
   const lastTraining = trained.filter((d) => d < back.day).at(-1);
   const firstAfter = trained.find((d) => d >= back.day);
   const pauseDays = lastTraining ? daysBetween(lastTraining, firstAfter ?? today) : undefined;
+  // Eén vraag per pauze: een eerder antwoord voor een terugkomst binnen dezelfde pauze (een periode die je daarna
+  // verlengde of achteraf vastlegde geeft een latere dag terug) geldt ook nu.
+  const pauseFrom = lastTraining ?? lookFrom;
+  if ([...inputs.respondedIds].some((r) => r.startsWith('reentry:') && r.slice('reentry:'.length) > pauseFrom && r.slice('reentry:'.length) < back.day)) return undefined;
   const longPause = back.paused && pauseDays !== undefined && pauseDays > REENTRY_PAUSE_DAYS;
   if (!longPause && done >= REENTRY_SHARE * 2 * usual) return undefined;
 
@@ -195,7 +199,8 @@ export function proposeReentry(inputs: ReentryInputs): ReentryProposal | undefin
   // Forge iets lichter: meer dan tien dagen zonder krachttraining, en alleen met Akkoord op deze instap.
   const lastStrength = realTrainingDates(inputs.logs, byId, 'strength').filter((d) => d < today).at(-1);
   const forgeDays = lastStrength ? daysBetween(lastStrength, today) : undefined;
-  const forge = inputs.forgeLighter && forgeDays !== undefined && forgeDays > REENTRY_FORGE_DAYS;
+  // De toets tot het begin van het venster, dezelfde als Forge daarna doet (reentryForgeLighter).
+  const forge = inputs.forgeLighter && !!lastStrength && forgeDays !== undefined && daysBetween(lastStrength, from) > REENTRY_FORGE_DAYS;
   return {
     id, week: { from, until, factor }, cause, done, usual,
     ...(lastTraining && pauseDays !== undefined ? { lastTraining, pauseDays, trainedSince: !!firstAfter } : {}),
@@ -207,8 +212,10 @@ export function proposeReentry(inputs: ReentryInputs): ReentryProposal | undefin
 // krachttraining (`lastStrengthDate` is je laatste krachttraining voor deze dag). Puur; de 5% zelf staat in
 // engine/strengthModel.ts, zodat het dezelfde stap is als Na een pauze lichter beginnen.
 export function reentryForgeLighter(weeks: unknown, date: string, lastStrengthDate: string | undefined): boolean {
-  if (!activeReentry(weeks, date) || !lastStrengthDate) return false;
-  return daysBetween(lastStrengthDate, date) > REENTRY_FORGE_DAYS;
+  const w = activeReentry(weeks, date);
+  // Gemeten tot het begin van de bewaarde week, net als het voorstel: zo wordt Forge alleen lichter als de zin in
+  // het voorstel stond waar je Akkoord op gaf, en alleen de eerste krachttraining in die dagen.
+  return !!w && !!lastStrengthDate && daysBetween(lastStrengthDate, w.from) > REENTRY_FORGE_DAYS;
 }
 
 // --- woorden ---------------------------------------------------------------------------
@@ -247,7 +254,7 @@ function pauseFact(p: ReentryProposal): string {
 
 // De regel over Forge, alleen als die in de instap lichter begint.
 export function reentryForgeLine(forgeDays: number): string {
-  return `Je laatste krachttraining was ${days(forgeDays)} geleden, dus Forge begint deze dagen 5% lichter.`;
+  return `Je laatste krachttraining was ${days(forgeDays)} geleden, dus je eerste krachttraining in die dagen begint 5% lichter.`;
 }
 
 export function reentryEffect(p: ReentryProposal, today?: string): string {

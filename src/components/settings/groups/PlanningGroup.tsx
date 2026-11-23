@@ -85,14 +85,13 @@ export function PlanningGroup({ facts, reload, sheet, setSheet }: GroupProps) {
 
       <SettingsSection
         title="Hoe je planning werkt"
-        advancedTitles="Training die niet doorging, Beenkracht de dag na de lange duurloop, Trainingen slepen in Week, Volgorde van Je stand, Opzij voor een vakantie, Zones bijwerken na een test"
+        advancedTitles="Training die niet doorging, Beenkracht de dag na de lange duurloop, Trainingen slepen in Week, Volgorde van Je stand, Zones bijwerken na een test"
         advanced={
           <>
             <SummaryRow id="bundel-niet-doorgegaan" title="Training die niet doorging" facts={facts} info="nietDoorgegaan" onClick={() => setSheet('bundel-niet-doorgegaan')} />
             <SummaryRow id="lange-loop-benen" title="Beenkracht de dag na de lange duurloop" facts={facts} info="langeLoopBenen" onChange={(on) => void plan.changeSetting('Beenkracht de dag na de lange duurloop', { longRunThenLegs: on }, on ? 'Beenkracht mag de dag na de lange duurloop.' : 'Weer 48 uur tussen de lange duurloop en beenkracht.')} />
             <SummaryRow id="bundel-slepen" title="Trainingen slepen in Week" facts={facts} info="slepenWeek" onClick={() => setSheet('bundel-slepen')} />
             <SummaryRow id="volgorde-stand" title="Volgorde van Je stand" facts={facts} info="volgordeStand" onClick={() => setSheet('volgorde-stand')} />
-            <SummaryRow id="vakantie-opzij" title="Opzij voor een vakantie" facts={facts} info="vakantieOpzij" onClick={() => setSheet('vakantie-opzij')} />
             <SummaryRow id="zones-na-test" title="Zones bijwerken na een test" facts={facts} info="zonesNaTest" onChange={(on) => void updateSettings({ zonesAfterTest: on })} />
           </>
         }
@@ -181,9 +180,10 @@ export function PlanningGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       )}
       {sheet === 'volgorde-stand' && <OrderSheet onClose={close} />}
       {sheet === 'bundel-vakantie' && (
-        <BundleSheet eyebrow="Planning" title="Rond een vakantie" line="Wat er schuift rond een vakantie en hoe ver je terug mag." onClose={close}>
+        <BundleSheet eyebrow="Planning" title="Rond een vakantie" line="Wat er schuift en vervalt rond een vakantie, en hoe ver je terug mag." onClose={close}>
           <SummaryRow id="vakantie-schuiven" title="Rond een vakantie schuiven" facts={facts} info="vakantieSchuiven" onClick={() => setInner('vakantie-schuiven')} />
           <SummaryRow id="vakantie-achteraf" title="Periode achteraf vastleggen" facts={facts} info="vakantieAchteraf" onClick={() => setInner('vakantie-achteraf')} />
+          <SummaryRow id="vakantie-opzij" title="Opzij voor een vakantie" facts={facts} info="vakantieOpzij" onClick={() => setInner('vakantie-opzij')} />
         </BundleSheet>
       )}
       {inner === 'vakantie-schuiven' && (
@@ -198,12 +198,12 @@ export function PlanningGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {inner === 'vakantie-achteraf' && (
         <ChoiceFromDef def={CHOICES.vakantieAchteraf} value={resolveLeaveBackfill(settings.leaveBackfill)} onPick={(v) => void updateSettings({ leaveBackfill: v })} onClose={closeInner} />
       )}
-      {sheet === 'vakantie-opzij' && (
+      {inner === 'vakantie-opzij' && (
         <ChoiceFromDef
           def={CHOICES.vakantieOpzij}
           value={settings.leaveCrowding ?? 'drop'}
           onPick={(v) => { if (v !== (settings.leaveCrowding ?? 'drop')) void plan.changeSetting(`Opzij voor een vakantie: ${choiceShort('vakantieOpzij', v)}`, { leaveCrowding: v }, 'Volgt je keuze voor trainingen die moeten wijken voor een vakantie.'); }}
-          onClose={close}
+          onClose={closeInner}
         />
       )}
       {/* Alleen de eerste keuze voor een nieuwe periode: verandert geen planning, dus meteen bewaard. */}

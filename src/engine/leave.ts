@@ -137,9 +137,11 @@ export function validateLeaveDraft(
   if (!draft.startDate || !draft.endDate || !DATE_RE.test(draft.startDate) || !DATE_RE.test(draft.endDate)) return 'Kies een begin- en einddatum.';
   if (draft.endDate < draft.startDate) return 'De einddatum ligt voor de begindatum.';
   if (draft.endDate < today) {
+    // Vrije dagen geven tijd voor wat nog komt; voorbij hebben ze geen betekenis.
+    if (draft.kind === 'free_days') return 'Vrije dagen die al voorbij zijn veranderen niets meer. Kies een einddatum vanaf vandaag, of leg het vast als vakantie.';
     const backfill = opts.backfill ?? LEAVE_BACKFILL_ADVICE;
     const earliest = earliestBackfillDay(today, backfill);
-    if (!earliest) return 'Deze periode is al voorbij. Achteraf vastleggen staat uit in Instellingen, Planning.';
+    if (!earliest) return 'Deze periode is al voorbij. Achteraf vastleggen staat uit in Instellingen, Planning, Rond een vakantie.';
     const kept = opts.keepStart !== undefined && draft.startDate >= opts.keepStart;
     if (draft.startDate < earliest && !kept) {
       const weeks = BACKFILL_WEEKS[backfill as Exclude<LeaveBackfill, 'off'>];
@@ -152,9 +154,12 @@ export function validateLeaveDraft(
 
 // Voor een periode die (deels) voorbij is: welke voorbije dagen nu als weg tellen. Er verschuift niets en een log
 // blijft een gedane training (engine/leaveProposal.ts zet deze zin in het voorstel). Niets als er niets voorbij is.
-export function pastLeaveLine(period: Pick<LeavePeriod, 'kind' | 'startDate' | 'endDate'>, today: string): string | undefined {
+// Bij bijwerken (`replaces`) alleen als er voorbije dagen bijkomen.
+export function pastLeaveLine(period: Pick<LeavePeriod, 'kind' | 'startDate' | 'endDate'>, today: string, replaces?: Pick<LeavePeriod, 'kind' | 'startDate' | 'endDate'>): string | undefined {
   if (period.startDate >= today || period.kind === 'free_days') return undefined;
-  const end = period.endDate < today ? period.endDate : addDays(today, -1);
+  const pastEnd = (p: Pick<LeavePeriod, 'endDate'>) => (p.endDate < today ? p.endDate : addDays(today, -1));
+  const end = pastEnd(period);
+  if (replaces && replaces.kind === period.kind && replaces.startDate <= period.startDate && pastEnd(replaces) >= end) return undefined;
   const span = describePeriodDates({ startDate: period.startDate, endDate: end });
   const what = period.kind === 'no_gym' ? 'Kracht in de sportschool telt op die dagen als weg, niet als gemist.' : 'Wat daar stond telt als weg, niet als gemist.';
   return `Voorbij: ${span}. ${what} Daar verschuift niets, en een training die je toen deed blijft gedaan.`;

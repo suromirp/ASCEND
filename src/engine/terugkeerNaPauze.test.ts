@@ -147,7 +147,7 @@ describe('een periode achteraf vastleggen of verlengen', () => {
     const longer: LeavePeriod = { ...noGym, endDate: day(11) };
     // Eerder weigerde dit met "Deze periode is al voorbij."
     expect(validateLeaveDraft({ kind: 'no_gym', startDate: longer.startDate, endDate: longer.endDate }, day(12), { keepStart: noGym.startDate })).toBeUndefined();
-    expect(validateLeaveDraft({ kind: 'no_gym', startDate: longer.startDate, endDate: longer.endDate }, day(12), { backfill: 'off' })).toBe('Deze periode is al voorbij. Achteraf vastleggen staat uit in Instellingen, Planning.');
+    expect(validateLeaveDraft({ kind: 'no_gym', startDate: longer.startDate, endDate: longer.endDate }, day(12), { backfill: 'off' })).toBe('Deze periode is al voorbij. Achteraf vastleggen staat uit in Instellingen, Planning, Rond een vakantie.');
     const p = proposeReentry(input({ leavePeriods: [longer] }))!;
     expect(p).toMatchObject({ id: `reentry:${day(12)}`, lastTraining: D, pauseDays: 12, week: { from: day(12), until: day(18) } });
   });
@@ -159,6 +159,12 @@ describe('een periode achteraf vastleggen of verlengen', () => {
     expect(result.notes[0]).toBe('Voorbij: za 16 januari t/m zo 24 januari. Kracht in de sportschool telt op die dagen als weg, niet als gemist. Daar verschuift niets, en een training die je toen deed blijft gedaan.');
     expect(pastLeaveLine({ kind: 'no_training', startDate: day(8), endDate: day(14) }, day(12))).toBe('Voorbij: do 21 januari t/m zo 24 januari. Wat daar stond telt als weg, niet als gemist. Daar verschuift niets, en een training die je toen deed blijft gedaan.');
     expect(pastLeaveLine({ kind: 'no_training', startDate: day(12), endDate: day(14) }, day(12))).toBeUndefined();
+    // Bijwerken zonder nieuwe voorbije dagen (alleen verder in de toekomst): geen regel Voorbij.
+    const before = { kind: 'no_training' as const, startDate: day(8), endDate: day(13) };
+    expect(pastLeaveLine({ ...before, endDate: day(16) }, day(12), before)).toBeUndefined();
+    expect(pastLeaveLine({ ...before, startDate: day(6) }, day(12), before)).toContain('Voorbij:');
+    // Vrije dagen die voorbij zijn: de melding zegt wat wel kan.
+    expect(validateLeaveDraft({ kind: 'free_days', startDate: day(8), endDate: day(10) }, day(12))).toBe('Vrije dagen die al voorbij zijn veranderen niets meer. Kies een einddatum vanaf vandaag, of leg het vast als vakantie.');
   });
 
   it('ouder dan de grens: de melding zegt wat wel kan; een periode die je bijwerkt houdt zijn eigen eerste dag', () => {
@@ -187,12 +193,22 @@ describe('een periode achteraf vastleggen of verlengen', () => {
   });
 });
 
+describe('Liever niet geldt voor de hele pauze', () => {
+  it('na Liever niet en daarna een verlengde periode komt er geen nieuw voorstel', () => {
+    const declined = new Set([proposeReentry(input({ today: day(9) }))!.id]);
+    // De periode zonder sportschool verlengd tot D+10: de dag terug wordt D+11, een nieuw id, dezelfde pauze.
+    const longer: LeavePeriod = { ...noGym, endDate: day(10) };
+    expect(proposeReentry(input({ today: day(12), leavePeriods: [longer] }))?.id).toBe(`reentry:${day(11)}`);
+    expect(proposeReentry(input({ today: day(12), leavePeriods: [longer], respondedIds: declined }))).toBeUndefined();
+  });
+});
+
 describe('Forge iets lichter na meer dan tien dagen zonder krachttraining', () => {
   it('hoort bij hetzelfde voorstel, alleen met krachttraining en Na een pauze lichter beginnen aan', () => {
     const p = proposeReentry(input({ forgeLighter: true }))!;
     expect(p.forgeDays).toBe(12);
-    expect(reentryEffect(p, day(12))).toContain('Je laatste krachttraining was 12 dagen geleden, dus Forge begint deze dagen 5% lichter.');
-    expect(reentryNote(p.week, p.forgeDays)).toContain('Forge begint deze dagen 5% lichter.');
+    expect(reentryEffect(p, day(12))).toContain('Je laatste krachttraining was 12 dagen geleden, dus je eerste krachttraining in die dagen begint 5% lichter.');
+    expect(reentryNote(p.week, p.forgeDays)).toContain('je eerste krachttraining in die dagen begint 5% lichter.');
     expect(proposeReentry(input())!.forgeDays).toBeUndefined();
     // Tien dagen is niet meer dan tien.
     const strength = { ...done(ps('tpl_upper_a', day(2))), id: 'kracht' } as SessionLog;
@@ -205,6 +221,11 @@ describe('Forge iets lichter na meer dan tien dagen zonder krachttraining', () =
     expect(reentryForgeLighter(weeks, day(12), day(2))).toBe(false);
     expect(reentryForgeLighter([], day(12), D)).toBe(false);
     expect(reentryForgeLighter(weeks, day(19), D)).toBe(false);
+    // Gemeten tot het begin van de bewaarde week: laatste kracht 9 dagen voor het venster, training op dag 3 ervan,
+    // dan niet lichter (het Akkoord had geen zin over Forge).
+    expect(reentryForgeLighter(weeks, day(14), day(3))).toBe(false);
+    // Na de eerste krachttraining in het venster niet meer.
+    expect(reentryForgeLighter(weeks, day(15), day(13))).toBe(false);
 
     const settings = resolveStrengthSettings(undefined);
     const bench = exerciseById('bench-press');
@@ -213,7 +234,19 @@ describe('Forge iets lichter na meer dan tien dagen zonder krachttraining', () =
     const plain = prescribe({ exercise: bench, sessions, date: day(12), settings, lastStrengthDate: D })!;
     const eased = prescribe({ exercise: bench, sessions, date: day(12), settings, lastStrengthDate: D, reentry: true })!;
     expect(eased.strengthKg).toBeCloseTo(plain.strengthKg * 0.95, 6);
-    expect(eased.reason).toBe('Je deed meer dan tien dagen geen krachttraining en koos een rustiger instap, dus het voorstel begint 5% lichter. Na deze training volgt een nieuw voorstel.');
+    // De zin zegt lichter, dus de eerste werkset is ook echt lichter dan de 60 kg van vorige keer.
+    expect(plain.sets[0].weightKg).toBe(60);
+    expect(eased.sets[0].weightKg).toBeLessThan(60);
+    expect(eased.sets[0].weightKg).toBeGreaterThanOrEqual(55);
+    expect(eased.reason).toBe('Je deed meer dan tien dagen geen krachttraining en koos een rustiger instap, dus je eerste werkset is lichter dan vorige keer. Na deze training volgt een nieuw voorstel.');
+    // Ook als 5% minder kracht nog bij 60 kg uitkomt (vorige keer ruim in het bereik): een stap lager, de sets erna niet zwaarder.
+    const strong = [{ date: day(-7), sets: [work(12, 60), work(11, 60), work(10, 60)] }, { date: D, sets: [work(12, 60), work(11, 60), work(10, 60)] }];
+    const strongPlain = prescribe({ exercise: bench, sessions: strong, date: day(12), settings, lastStrengthDate: D })!;
+    const strongEased = prescribe({ exercise: bench, sessions: strong, date: day(12), settings, lastStrengthDate: D, reentry: true })!;
+    expect(strongPlain.sets[0].weightKg).toBeGreaterThanOrEqual(60);
+    expect(strongEased.sets[0].weightKg).toBeLessThan(60);
+    for (const set of strongEased.sets) expect(set.weightKg).toBeLessThanOrEqual(strongEased.sets[0].weightKg);
+    expect(strongEased.reason).toContain('je eerste werkset is lichter dan vorige keer');
     const off = prescribe({ exercise: bench, sessions, date: day(12), settings: resolveStrengthSettings({ lighterAfterBreak: false }), lastStrengthDate: D, reentry: true })!;
     expect(off.strengthKg).toBeCloseTo(plain.strengthKg, 6);
   });

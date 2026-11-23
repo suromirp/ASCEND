@@ -914,6 +914,16 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const strengthKg = (legsTired ? rawStrength : cappedStrength) * factor;
   let idx = pick(strengthKg);
   if (lighter && idx > lastIdx) idx = lastIdx;
+  // A rustiger instap says "begint 5% lichter": then the first set is lighter than last time, not only the
+  // strength. The weight nearest to 95% of last time's, at least one step down (I-124).
+  const reentryStep = reentryLighter && !longBreak && idx >= lastIdx && lastIdx > 0;
+  if (reentryStep) {
+    let best = lastIdx - 1;
+    for (let k = lastIdx - 1; k >= 0; k--) {
+      if (Math.abs(candidates[k].loadKg - factor * lastLoad) < Math.abs(candidates[best].loadKg - factor * lastLoad)) best = k;
+    }
+    idx = best;
+  }
   // The brake counts when it changed the weight: the same strength without the
   // brake would have given another weight.
   const free = legsTired ? idx : Math.min(pick(rawStrength * factor), lighter ? lastIdx : Infinity);
@@ -951,7 +961,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     // heavier side lowers the bottom of this set. Not where the heavier weight would go
     // against a brake (two weak trainings, a pause, the cap on the strength).
     const heavier = candidates[idx + 1];
-    const brakes = twoUnder || cappedDown || (lighter && idx + 1 > lastIdx);
+    const brakes = twoUnder || cappedDown || (lighter && idx + 1 > lastIdx) || reentryStep;
     if (settings.widenRange && heavier && !brakes) {
       const expectedHeavier = expectedReps(strengthKg, heavier.loadKg, rir);
       // The misses are compared before rounding down: rounded reps tilt the choice
@@ -1053,6 +1063,11 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   } else if (atBottom) {
     kind = 'used_bottom';
     reason = 'Dit is het lichtste gewicht dat je op dit toestel gebruikte. Een lichter gewicht is hier onbekend en komt dus niet in het voorstel. Kies zelf iets lichter als dit te zwaar is.';
+  } else if (reentryLighter && !longBreak) {
+    kind = 'pause';
+    reason = first.loadKg < lastLoad - 1e-6
+      ? 'Je deed meer dan tien dagen geen krachttraining en koos een rustiger instap, dus je eerste werkset is lichter dan vorige keer. Na deze training volgt een nieuw voorstel.'
+      : 'Je deed meer dan tien dagen geen krachttraining en koos een rustiger instap, dus het voorstel rekent met 5% minder kracht. Na deze training volgt een nieuw voorstel.';
   } else if (raised) {
     kind = 'up';
     reason = raisedText(raised, assisted);
@@ -1066,9 +1081,6 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   } else if (longBreak) {
     kind = 'pause';
     reason = 'Je deed dit meer dan vier weken niet, dus het voorstel begint iets lichter. Na deze training volgt een nieuw voorstel.';
-  } else if (reentryLighter) {
-    kind = 'pause';
-    reason = 'Je deed meer dan tien dagen geen krachttraining en koos een rustiger instap, dus het voorstel begint 5% lichter. Na deze training volgt een nieuw voorstel.';
   } else if (pauseDays > BREAK_DAYS) {
     kind = 'pause';
     reason = 'Je deed dit een tijd niet, dus het voorstel begint op je laatste niveau. Na deze training volgt een nieuw voorstel.';

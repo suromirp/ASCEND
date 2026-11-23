@@ -256,7 +256,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   if (mode === 'add') {
     // Achteraf vastgelegd of verlengd (I-124): voor dagen die voorbij zijn verplaatst het voorstel niets, het zegt
     // alleen welke dagen nu als weg tellen.
-    const past = pastLeaveLine(period, today);
+    const past = pastLeaveLine(period, today, replaces);
     if (past) notes.unshift(past);
     const fixedSports = input.context(periodsAfter).fixedSports ?? undefined;
     for (const item of fixedInLeave(input.today, period.endDate, fixedSports, [period])) notes.push(fixedLeaveNote(item));
