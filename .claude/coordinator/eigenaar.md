@@ -51,7 +51,7 @@ Sinds: 23 november.
 
 ## Net live
 
-### 23 november 08:45
+### 23 november 08:25
 - Beginnersstart (I-18): op Heel licht wordt de start echt licht, na je Akkoord: kracht in week 1 35 minuten met 2 sets per oefening, wandelen en dribbelen 20 en 30 minuten, elke week iets meer. Een start die al loopt krijgt eerst het voorstel "Je start wordt lichter"; Liever niet laat alles zoals het was.
 
 ### 23 november 08:05
