@@ -132,6 +132,22 @@ describe('symptoom D: tegenstrijdige adviezen na een zware test', () => {
     expect(advise(run)).toContain('HARD-THEN-SPACE');
   });
 
+  it('een zware loop eerder op de dag van de test: de test is het nieuwste zware log, dus geen HARD-THEN-SPACE', () => {
+    const morningRun: SessionLog = { ...testLog, id: 'log-morning', templateId: 'tpl_easy_run', completedAt: '2026-10-27T07:00:00Z', bestEffort: undefined } as SessionLog;
+    for (const asOf of ['2026-10-27', '2026-10-28']) {
+      const advice = computeAdvice({
+        logs: [morningRun, testLog], plannedSessions: testWeek([row('legs', 'tpl_lower_a', '2026-10-28', '2026-10-26')]), templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf,
+      });
+      expect(advice.map((a) => a.ruleId)).not.toContain('HARD-THEN-SPACE');
+    }
+    // Andersom, de loop na de test: dan is de loop het nieuwste zware log en komt de regel wel.
+    const eveningRun: SessionLog = { ...morningRun, id: 'log-evening', completedAt: '2026-10-27T18:00:00Z' } as SessionLog;
+    const later = computeAdvice({
+      logs: [testLog, eveningRun], plannedSessions: testWeek([row('legs', 'tpl_lower_a', '2026-10-28', '2026-10-26')]), templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf: '2026-10-28',
+    });
+    expect(later.find((a) => a.ruleId === 'HARD-THEN-SPACE')?.relatedLogId).toBe('log-evening');
+  });
+
   it('de grensdag: de dag na de test zelf (zwaarte 9) en de dag erna, nooit twee stemmen voor de test', () => {
     for (const asOf of ['2026-10-27', '2026-10-28', '2026-10-29']) {
       const advice = computeAdvice({

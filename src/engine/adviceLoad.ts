@@ -24,10 +24,11 @@ import { idIsTestOrRace } from './templateRoles';
 export function tooHardAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
   const recent = inputs.logs
     .filter((l) => LOAD_SPORT_TYPES.has(l.type) && daysBetween(l.completedDate, inputs.asOf) <= 1 && daysBetween(l.completedDate, inputs.asOf) >= 0)
-    .filter((l) => !idIsTestOrRace(l.templateId, templateById))
     .filter((l) => (l.rpe ?? 0) >= 8 || l.subjectiveFeel === 'worse')
     .sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0];
-  if (!recent) return [];
+  // Eerst het nieuwste zware log, dan pas overslaan: een zware loop eerder op de dag van de test zou anders als
+  // "je laatste training" naast de nieuwe testpoging staan (Warden, 23 november).
+  if (!recent || idIsTestOrRace(recent.templateId, templateById)) return [];
   const loggedName = templateById.get(recent.templateId)?.name ?? 'Je sessie';
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const next = inputs.plannedSessions
