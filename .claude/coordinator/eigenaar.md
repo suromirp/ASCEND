@@ -9,6 +9,11 @@ Keuzes: de kaart houdt Bekijk en Akkoord staat in het blad dat opent, zoals elk 
 Zonder antwoord: het blijft Bekijk.
 Sinds: 23 november.
 
+### Week van uitvoeren: twee randgevallen (I-58, 23 november)
+Keuzes: een Forge-training die nog openstaat telt pas mee na Afronden, op de dag van je laatste set (advies); of al zodra je sets logt. En een sleuteltraining of Gemist blijft bij de geplande week (advies), want een gedane training is nooit gemist; of ook die verhuist.
+Zonder antwoord: het advies, zo is het gebouwd.
+Sinds: 23 november.
+
 ## Stuk of vast
 
 
@@ -16,7 +21,8 @@ Sinds: 23 november.
 
 - Terugkeer na een pauze (I-124): de pauze telt vanaf je laatste echte training, het voorstel verloopt niet meer na drie dagen, Forge lichter na meer dan 10 dagen zonder kracht, en een periode achteraf vastleggen. Gebouwd, controle loopt.
 - Hoogtemeters en vroeg ziek zien (I-77, I-33, I-78): nagespeeld met uw back-up, bouwer bezig.
-- Telt op de dag van uitvoeren (I-58, na uw correctie): een Forge-training die later wordt afgesloten, een verplaatste training en een log in een andere week tellen op de dag dat ze echt gedaan zijn. Bouwer bezig.
+- Telt op de dag van uitvoeren (I-58, I-59, I-72): gebouwd, nakijken en schermtest lopen.
+- Twee tabbladen en de grens van intervals.icu (I-54, I-35): bouwer bezig.
 - Graphify, eerlijke proef: na de reset van de weeklimiet (zondag 22 november 18:00 Portugese tijd). De graaf één keer bouwen (kosten apart), de koppeling en de regel in CLAUDE.md alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 

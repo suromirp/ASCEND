@@ -10,10 +10,10 @@ Max twee bouwers, nooit op dezelfde bestanden. Warden en Lookout per twee of dri
 
 1. Route plus I-51: LIVE als 545d5a72 (23 november 02:05), backlog:bij gedaan, Werkkaart-trigger gezet. Lookout: geen Moet; Mag (i-knoppen 20 px, I-87-patroon) al bekend.
 1b. I-124 terugkeer na pauze: Lookout groen op de Moet-punten; Mag te controleren: Forge zegt 5% lichter maar eerste werkset gelijk aan vorige keer (navragen bij bouwer samen met Warden-punten). Gebouwd op claude/terugkeer-na-pauze (94a9a178, bouwer-worktree agent-a9fc8e916608d79d5; herstel via SendMessage naar die helper). Warden (opus) en Lookout lopen. Daarna kaart in /home/user/ascend en squash. Oorzaak in algemene termen: zonder sportschool telde als weg, dus de terugkomst lag te vroeg en het voorstel verliep.
-2. Week (opus, loopt, claude/week-weergave): I-58 breed (telt op dag van uitvoeren: Forge later afgesloten, verplaatst of ingehaald, log in andere week; besluit 2026-11-23-telt-op-dag-van-uitvoeren.md; huidige werking per geval komt in het verslag), I-59, I-72 rest. Warden opus.
+2. Week: gebouwd (claude/week-weergave, 4 commits, 11.946 tests groen). Huidige werking per geval: Forge later afgesloten telde al op de dag van de sets voor minuten, belasting, beenindex en Stand, alleen x van n en de weekbalk niet; verplaatst klopte al tenzij op weer een andere dag gedaan; log in andere week: minuten goed, x van n en weekbalk niet. Alles nu op dag van uitvoeren. Eigen keuzes (advies, gebouwd): open Forge telt pas vanaf Afronden; sleuteltraining en Gemist blijven bij de geplande week. Proefmerge claude/proef-23b in /home/user/ascend, kaart:vergelijk loopt. Warden (opus) en Lookout lopen.
 3. Forge en logs (sonnet): I-113, I-60, I-30, I-73. Pas na squash I-124 (ForgeWorkout.tsx).
-4. dayRules (opus): I-74, I-82 punt 3. Na bundel 2.
-5. Opslag (opus): I-54, I-35.
+4. dayRules (opus): I-74, I-82 punt 3. Pas na squash bundel 2.
+5. Opslag (opus, loopt, claude/opslag-23): I-54, I-35.
 7. Route vervolg (sonnet): I-53; I-76 eerst Scout.
 8. Naspelen (opus, loopt, claude/naspelen-hoogte-ziek): I-77, I-33, I-78 met de back-up (scratchpad backup/backup-2026-11-23.json, chmod 600, alleen lezen). Besluit 2026-11-23-hoogte-en-ziek-signalen.md.
 9. Groot, achteraan: I-14, I-18, I-23, I-34: eerst Cartographer (opus) per punt in docs/visie, dan bouwen naar risico. I-103 niet.
