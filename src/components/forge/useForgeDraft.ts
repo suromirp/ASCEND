@@ -30,9 +30,11 @@ interface DraftInput {
   seenAt: number;
   // De ladderstappen waarmee de sessie opende: ze gaan mee in het concept (forgeDraft.ts#sessionStepSwaps).
   stepSwaps: StepSwaps | undefined;
+  // Je Akkoord op de ijkset (forgeDraft.ts#calAcceptedOf).
+  calAccepted: boolean;
 }
 
-export function useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt, stepSwaps }: DraftInput) {
+export function useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt, stepSwaps, calAccepted }: DraftInput) {
   const pendingDraft = useRef<WorkoutDraft | null>(null);
   // Schreef deze sessie al (of liep hij al bij het openen)? Dan schrijft hij niet meer zonder eigen wijzer.
   const wrote = useRef(readPointer()?.key === key);
@@ -57,9 +59,9 @@ export function useForgeDraft({ key, template, plannedSessionId, scheduledDate, 
   }, [key]);
   useEffect(() => {
     if (readOnly || startedAt === null) return;
-    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, pauses, lastActionAt: lastAction.current, exercises: workout, eased: easeOn, ...(rest ? { rest } : {}), column, ...(forgeLog.length > 0 ? { log: forgeLog } : {}), seen: seenAt, stepSwaps: stepSwaps ?? null };
+    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, pauses, lastActionAt: lastAction.current, exercises: workout, eased: easeOn, ...(rest ? { rest } : {}), column, ...(forgeLog.length > 0 ? { log: forgeLog } : {}), seen: seenAt, stepSwaps: stepSwaps ?? null, ...(calAccepted ? { calAccepted } : {}) };
     if (draftTimer.current === undefined) draftTimer.current = window.setTimeout(flushDraft, 300);
-  }, [readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt, stepSwaps, flushDraft]);
+  }, [readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt, stepSwaps, calAccepted, flushDraft]);
   // Zolang dit scherm open is, staat de pil er niet.
   useEffect(() => {
     if (readOnly) return;

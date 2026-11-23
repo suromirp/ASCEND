@@ -3,6 +3,7 @@
 
 import type { WorkoutExercise } from '../../engine/forgeWorkout';
 import { cleanForgeLog, spotterEvents, type ForgeEvent } from '../../engine/forgeLog';
+import { hasCalibrationRow } from '../../engine/calibration';
 import { makeId } from '../../utils/id';
 import type { Pause } from '../../engine/forgeSession';
 import { poundStackProposal, poundStackText } from '../../engine/poundStack';
@@ -31,6 +32,15 @@ export interface WorkoutDraft {
   // De ladderstappen waarmee deze sessie opende (engine/stepSwaps.ts); `null` is: geen. Een Akkoord tijdens de sessie
   // geldt vanaf de volgende sessie, ook na herladen. Optioneel: een concept van voor dit veld neemt de stappen van nu.
   stepSwaps?: StepSwaps | null;
+  // Je Akkoord op de kaart IJkset in deze training. Met Lichter aan staat de set niet in de rijen, dus de rijen alleen
+  // onthouden het niet. Optioneel: een concept van voor dit veld leest het uit de rijen.
+  calAccepted?: boolean;
+}
+
+// Of de ijkset in deze training aangenomen is: het bewaarde Akkoord, anders of de rij erin staat.
+export function calAcceptedOf(restored: Pick<WorkoutDraft, 'calAccepted' | 'exercises'> | undefined): boolean {
+  if (restored && typeof restored.calAccepted === 'boolean') return restored.calAccepted || hasCalibrationRow(restored.exercises);
+  return hasCalibrationRow(restored?.exercises);
 }
 
 // De ladderstappen van een sessie: die van het concept als het ze heeft, anders die van nu.
