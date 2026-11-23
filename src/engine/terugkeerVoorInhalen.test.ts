@@ -12,6 +12,8 @@ import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
 import type { IllnessEpisode } from '../models/illness';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
+import { adviceBusyIds, catchUpWaiting } from './adviceShared';
+import { planMissed } from './missedTraining';
 import { addDays, mondayOfWeek } from '../utils/dates';
 
 const { templates, program: base } = buildDefaultProgramData();
@@ -69,7 +71,8 @@ describe('I-154: de rustige terugkeer gaat voor inhalen', () => {
     expect(all[0].ruleId).toBe('REENTRY');
     expect(all.some((a) => CATCH_UP.includes(a.ruleId))).toBe(false);
     // De vraag Niet gedaan? wacht, net als achter een inhaaladvies (components/useMissedTraining.ts).
-    expect(all[0].holdsCatchUp).toBe(true);
+    expect(all[0].heldCatchUpIds?.length).toBeGreaterThan(0);
+    expect(catchUpWaiting(all)).toBe(true);
   });
 
   it('geen stille bijwerking: wat het inhalen zou raken, raakt geen ander voorstel in zijn plaats', () => {
@@ -95,7 +98,7 @@ describe('I-154: de rustige terugkeer gaat voor inhalen', () => {
     expect(all.some((a) => a.ruleId === 'REENTRY')).toBe(false);
     const missed = all.filter((a) => a.ruleId === 'MISSED-CATCH-UP');
     expect(missed.length).toBeGreaterThan(0);
-    expect(all.every((a) => !a.holdsCatchUp)).toBe(true);
+    expect(all.every((a) => !a.heldCatchUpIds)).toBe(true);
     // Hetzelfde als met terugkeer uit: de keuze speelt zonder pauze geen rol.
     const shape = (list: typeof all) => JSON.stringify(list.map((a) => ({ ...a, proposal: a.proposal && { ...a.proposal, id: '', createdAt: '' } })));
     expect(shape(computeAdvice({ ...plain, reentry: { choice: 'off' } }))).toBe(shape(all));
@@ -106,5 +109,38 @@ describe('I-154: de rustige terugkeer gaat voor inhalen', () => {
     const reentry = all.find((a) => a.ruleId === 'REENTRY')!;
     const same = all.filter((a) => a.priority === reentry.priority);
     expect(same[0].ruleId).toBe('REENTRY');
+  });
+
+  it('Vanzelf overslaan laat wat de instap vasthoudt staan, zodat er na Liever niet nog iets in te halen is', () => {
+    const advice = computeAdvice(inputs());
+    const reentry = advice.find((a) => a.ruleId === 'REENTRY')!;
+    const held = new Set(reentry.heldCatchUpIds);
+    const missed = (busy: Set<string>) => planMissed({
+      plannedSessions: plan, logs, templates, today: T, settings: { choice: 'auto', days: 1, link: false }, memory: {}, busy,
+      illnessEpisodes: ill, leavePeriods: [noGym], programStart: program.startDate,
+    });
+    // Zonder die bezetting sloeg Vanzelf overslaan de gemiste trainingen stil over.
+    expect(missed(new Set()).autoSkip.some((m) => held.has(m.session.id))).toBe(true);
+    const plan2 = missed(adviceBusyIds(advice));
+    expect(plan2.autoSkip.some((m) => held.has(m.session.id))).toBe(false);
+    expect(plan2.item && held.has(plan2.item.session.id)).toBeFalsy();
+    // Na Liever niet op de instap is het inhaaladvies er weer, met dezelfde trainingen.
+    const after = computeAdvice(inputs({ respondedIds: new Set([reentry.id]) })).find((a) => a.ruleId === 'MISSED-CATCH-UP')!;
+    expect(new Set(after.proposal!.changes.map((c) => c.plannedSessionId))).toEqual(held);
+  });
+
+  it('tijdens een open instap geen nieuwe testpoging; na Liever niet wel', () => {
+    // Een testloop met veel stilstand, dertien dagen terug (voor de pauze), en Heuvelintervallen over vijf dagen.
+    const test = {
+      id: 'log-test', templateId: 'tpl_test_run', type: 'cardio', completedDate: t(-13), completedAt: `${t(-13)}T10:00:00Z`, variant: 'full', durationMinutes: 36, rpe: 9, source: 'manual',
+      cardioData: { durationMinutes: 36, distanceKm: 6, source: 'manual' },
+      bestEffort: { km: 5, minutes: 27.67, wholeKm: 6, wholeMinutes: 36, accepted: true, v: 2, stops: 5, stoppedSec: 136 },
+    } as SessionLog;
+    const withTest = (over: Partial<AdviceInputs> = {}) => computeAdvice(inputs({ logs: [...logs, test], ...over }));
+    const open = withTest();
+    const reentry = open.find((a) => a.ruleId === 'REENTRY')!;
+    expect(reentry).toBeDefined();
+    expect(open.some((a) => a.ruleId === 'TEST-RETRY')).toBe(false);
+    expect(withTest({ respondedIds: new Set([reentry.id]) }).some((a) => a.ruleId === 'TEST-RETRY')).toBe(true);
   });
 });

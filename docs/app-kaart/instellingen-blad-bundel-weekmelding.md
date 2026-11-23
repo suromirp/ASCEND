@@ -16,3 +16,7 @@ Met jouw keuze
 [knop: Vragen als je week te vol wordt]
 Vragen als je week te vol wordt
 [knop: Uitleg: Vragen als je week te vol wordt]
+[knop: Duur aanpassen na een sport, Eerst een voorstel]
+Duur aanpassen na een sport
+[knop: Uitleg: Duur aanpassen na een sport]
+Eerst een voorstel

@@ -495,9 +495,9 @@ function newConcernsOfEnd(end: PlannedSession[], touched: Set<string>, inputs: A
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
   // Terugkeer gaat voor inhalen (I-154, docs/beslissingen/2026-11-23-terugkeer-voor-inhalen.md): staat de rustige
-  // instap open, dan komt er geen inhaaladvies (MISSED-CATCH-UP, SKIPPED-KEY-TO-REST, TEST-MAKE-ROOM). Ze worden
-  // niet berekend, dus ook niet meegeteld in usedIds, catchUpDays en de volle week. Na een antwoord op de instap
-  // (Liever niet of Akkoord) mag inhalen weer.
+  // instap open, dan komt er geen inhaaladvies (MISSED-CATCH-UP, SKIPPED-KEY-TO-REST, TEST-MAKE-ROOM) en geen
+  // TEST-RETRY. Ze worden niet berekend, dus ook niet meegeteld in usedIds, catchUpDays en de volle week. Na een
+  // antwoord op de instap (Liever niet of Akkoord) mag inhalen weer.
   const reentryOpen = reentryAdvice(inputs).filter((a) => !inputs.respondedIds.has(a.id));
   const holdCatchUp = reentryOpen.length > 0;
   const heldBack = holdCatchUp ? missedAdvice(inputs, templateById).filter((a) => !inputs.respondedIds.has(a.id)) : [];
@@ -525,7 +525,10 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const restWeekSkip = restWeekSkipAdvice(inputs);
   const repeatWeek = repeatWeekAdvice(inputs);
   // Wacht er een inhaaladvies achter de instap, dan wacht de vraag Niet gedaan? ook (components/useMissedTraining.ts).
-  const reentry = reentryOpen.map((a) => (heldBack.length > 0 ? { ...a, holdsCatchUp: true as const } : a));
+  // De trainingen van dat inhaaladvies gaan mee op de instap: zo blijven ze bezet en slaat Gemiste trainingen op
+  // Vanzelf overslaan ze niet stil over, zodat er na Liever niet op de instap nog iets in te halen is.
+  const heldIds = [...new Set(heldBack.flatMap((a) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])]).flatMap((p) => p?.changes.map((c) => c.plannedSessionId) ?? []).filter((id): id is string => !!id))];
+  const reentry = reentryOpen.map((a) => (heldIds.length > 0 ? { ...a, heldCatchUpIds: heldIds } : a));
   const tentPack = tentPackAdvice(inputs);
   const targetTime = targetTimeAdvice(inputs);
   const weather = weatherAdvice(inputs, templateById);
@@ -541,7 +544,8 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   for (const a of fresh([...restSwap, ...restPull, ...tooHard, ...tooLight, ...injury, ...strength, ...spacing, ...extraSession, ...restWeekSkip, ...repeatWeek, ...tentPack, ...targetTime, ...weather, ...morning, ...restBack])) {
     for (const p of [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])]) for (const c of p?.changes ?? []) if (c.plannedSessionId) retryUsed.add(c.plannedSessionId);
   }
-  const retry = inputs.noRetry ? [] : testRetryAdvice(inputs, templateById, retryUsed, testRoom);
+  // Tijdens een open instap geen nieuwe testpoging: een test herhalen past niet bij rustig opbouwen (I-154).
+  const retry = inputs.noRetry || holdCatchUp ? [] : testRetryAdvice(inputs, templateById, retryUsed, testRoom);
   // Inhalen gaat voor (docs/beslissingen/2026-11-01-rustdag-na-rust.md): zet een inhaalvoorstel iets op de dag
   // waar REST-BACK de rustdag terug wil, dan komt REST-BACK niet.
   const catchUpDays = new Set(fresh([...missed, ...skippedKey, ...testRoom, ...retry]).flatMap((a) => [a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])])

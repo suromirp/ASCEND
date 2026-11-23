@@ -3203,7 +3203,7 @@
     "planning",
     "lichaam-en-herstel"
    ],
-   "kern": "Staat het voorstel voor een rustiger instap open, dan komt er geen inhaaladvies (MISSED-CATCH-UP, SKIPPED-KEY-TO-REST, TEST-MAKE-ROOM) en wacht de vraag Niet gedaan?; na Liever niet of Akkoord op de instap mag inhalen weer; bij gelijke prioriteit gaat REENTRY voor.",
+   "kern": "Staat het voorstel voor een rustiger instap open, dan komt er geen inhaaladvies (MISSED-CATCH-UP, SKIPPED-KEY-TO-REST, TEST-MAKE-ROOM) en geen TEST-RETRY; wat het inhalen zou raken blijft bezet (geen vraag Niet gedaan?, niet vanzelf overgeslagen); na Liever niet of Akkoord op de instap mag inhalen weer; bij gelijke prioriteit gaat REENTRY voor.",
    "stand": "geldt",
    "vultAan": [
     "docs/beslissingen/2026-11-23-terugkeer-eerste-dag.md",

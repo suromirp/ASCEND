@@ -37,7 +37,7 @@ Tempo, hoger is sneller
 Hartslag
 140 tot 155 bpm
 Hoogte
-6 tot 18 m
+6 tot 18 m, 30 m omhoog
 0 km
 3 km
 6 km

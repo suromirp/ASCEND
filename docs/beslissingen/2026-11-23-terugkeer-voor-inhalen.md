@@ -7,12 +7,12 @@ Status: aangenomen
 
 Een aanvulling op `2026-11-23-terugkeer-eerste-dag.md` (I-144), na een melding van de eigenaar. Backlog I-154.
 
-- Staat het voorstel voor een rustiger instap open (REENTRY gevonden en nog niet beantwoord), dan komt er geen inhaaladvies: geen MISSED-CATCH-UP, geen SKIPPED-KEY-TO-REST en geen TEST-MAKE-ROOM (een gemiste testloop op een nieuwe dag). Ze worden niet berekend, dus ze tellen ook niet mee in wat andere regels als bezet zien (`usedIds`, de inhaaldagen voor REST-BACK, de volle week). Dat geldt zolang het voorstel staat, voor elke oorzaak van de terugkeer, ook twee stille weken.
+- Staat het voorstel voor een rustiger instap open (REENTRY gevonden en nog niet beantwoord), dan komt er geen inhaaladvies: geen MISSED-CATCH-UP, geen SKIPPED-KEY-TO-REST, geen TEST-MAKE-ROOM (een gemiste testloop op een nieuwe dag) en geen TEST-RETRY (een nieuwe poging voor een test met veel stilstand): een test herhalen in de terugkeerweek past niet bij rustig opbouwen. Ze worden niet berekend, dus ze tellen ook niet mee in wat andere regels als bezet zien (`usedIds`, de inhaaldagen voor REST-BACK, de volle week). Dat geldt zolang het voorstel staat, voor elke oorzaak van de terugkeer, ook twee stille weken.
 - Na een antwoord op de instap (Liever niet of Akkoord) mag inhalen weer, met de gewone regels en het gewone venster van drie dagen.
 - De ruil van de eerste dag in de instap (`reentryFirstDay`) telt als bezet: REST-SWAP en REST-PULL zetten geen tweede ruil op dezelfde rustdag of training.
-- De vraag Niet gedaan? wacht, net als achter een inhaaladvies. Het advies REENTRY draagt dan `holdsCatchUp` (alleen als er echt een inhaaladvies wachtte, niet opgeslagen) en `components/useMissedTraining.ts` leest dat.
+- De trainingen van het inhaaladvies dat wijkt, blijven bezet. Het advies REENTRY draagt hun ids (`heldCatchUpIds`, alleen als er echt een inhaaladvies wachtte, niet opgeslagen). `adviceShared.ts#adviceBusyIds` neemt ze op, zodat Gemiste trainingen op Vanzelf overslaan ze niet stil overslaat en er na Liever niet op de instap nog iets in te halen is; de vraag Niet gedaan? wacht (`catchUpWaiting`), net als achter een inhaaladvies.
 - Bij gelijke prioriteit gaat REENTRY voor in de volgorde van `computeAdvice`; daarna blijft de volgorde op id. De kaart op Vandaag toont alleen het eerste advies.
-- Niet onder inhalen: REST-SWAP en REST-PULL (een rustdag schuiven, niets gemists terugzetten) en TEST-RETRY (een nieuwe poging voor een test die wel gedaan is). Die blijven zoals ze waren.
+- Niet onder inhalen: REST-SWAP en REST-PULL (een rustdag schuiven, niets gemists terugzetten). Die blijven zoals ze waren.
 
 ## Reden
 
@@ -34,4 +34,4 @@ Niets. Een aanvulling op `2026-11-23-terugkeer-eerste-dag.md` en `2026-11-23-ter
 
 ## Terugdraaien
 
-In `computeAdvice` (`src/engine/adviceCompute.ts`) `holdCatchUp` op `false` zetten en de tiebreak op REENTRY uit de sortering halen; in `useMissedTraining.ts` de toets op `holdsCatchUp` weghalen. Er is geen opgeslagen vorm veranderd.
+In `computeAdvice` (`src/engine/adviceCompute.ts`) `holdCatchUp` op `false` zetten en de tiebreak op REENTRY uit de sortering halen; `heldCatchUpIds` niet meer zetten (dan valt ook de bezetting in `adviceBusyIds` weg). Er is geen opgeslagen vorm veranderd.

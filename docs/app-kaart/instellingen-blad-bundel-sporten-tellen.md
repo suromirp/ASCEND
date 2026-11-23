@@ -13,3 +13,6 @@ Vragen hoe zwaar het was
 [knop: Rust na een zware sport, Ruim]
 Rust na een zware sport
 Ruim
+[knop: Voorstel na een zware sport, Blijft]
+Voorstel na een zware sport
+Blijft
