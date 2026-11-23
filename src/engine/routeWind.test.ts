@@ -3,7 +3,7 @@ import type { RoutePoint, RouteProposal } from '../models/route';
 import { mapForecast } from '../integrations/openMeteo';
 import { makeForecast, rawOpenMeteo } from './fixtures/weatherFixture';
 import { metersBetween, offsetPoint } from './routeGeometry';
-import { WIND_MIN_KMH, orientByWind, windForStart, windEnds, windLine, windWord } from './routeWind';
+import { WIND_MAX_DISTANCE_M, WIND_MIN_KMH, orientByWind, pinWind, windForStart, windEnds, windLine, windWord } from './routeWind';
 
 // Nagemaakt: een startpunt dat nergens is.
 const START: RoutePoint = { lat: 52.1, lon: 5.9 };
@@ -35,6 +35,52 @@ describe('windForStart', () => {
     expect(windForStart(undefined, '2026-11-25', 9, new Date())).toBeUndefined();
     expect(windForStart(forecast, '2026-11-25', 10, new Date())).toBeUndefined();
     expect(windForStart(forecast, '2026-12-25', 9, new Date())).toBeUndefined();
+  });
+});
+
+describe('windForStart: ver weg en een uur dat voorbij is', () => {
+  const day = '2026-11-25';
+  const forecast = { ...makeForecast(day, (_d, h) => (h === 9 || h === 14 ? { windKmh: 25, windDirDeg: h === 9 ? 225 : 90 } : undefined)), place: { name: '', lat: START.lat, lon: START.lon } };
+  const now = new Date(2026, 10, 25, 14, 10);
+
+  it('geeft geen oordeel als de start meer dan 25 km van de weerplek ligt', () => {
+    const near = offsetPoint(START, 0, WIND_MAX_DISTANCE_M - 1000);
+    const far = offsetPoint(START, 0, WIND_MAX_DISTANCE_M + 1000);
+    expect(windForStart(forecast, day, 9, new Date(2026, 10, 22, 8), near)).toEqual(SW);
+    expect(windForStart(forecast, day, 9, new Date(2026, 10, 22, 8), far)).toBeUndefined();
+  });
+
+  it('neemt voor vandaag het uur van nu als het gebruikelijke uur al voorbij is', () => {
+    expect(windForStart(forecast, day, 9, now)).toEqual({ fromDeg: 90, kmh: 25 });
+  });
+
+  it('laat voor een andere dag het gebruikelijke uur staan, ook als dat vroeger is dan nu', () => {
+    expect(windForStart(forecast, day, 9, new Date(2026, 10, 24, 14, 10))).toEqual(SW);
+  });
+
+  it('is nog niet voorbij: een gebruikelijk uur later vandaag blijft staan', () => {
+    expect(windForStart(forecast, day, 14, new Date(2026, 10, 25, 8))).toEqual({ fromDeg: 90, kmh: 25 });
+  });
+});
+
+describe('pinWind', () => {
+  const a = { fromDeg: 225, kmh: 25 };
+  const b = { fromDeg: 45, kmh: 25 };
+
+  it('zet de wind vast voor een zoektocht: een nieuwe voorspelling verandert hem niet', () => {
+    const first = pinWind(undefined, 'k1', a, true);
+    expect(first).toEqual({ key: 'k1', wind: a });
+    expect(pinWind(first, 'k1', b, true)).toBe(first);
+  });
+
+  it('een nieuwe zoektocht (andere sleutel) zet opnieuw vast', () => {
+    const first = pinWind(undefined, 'k1', a, true);
+    expect(pinWind(first, 'k2', b, true)).toEqual({ key: 'k2', wind: b });
+  });
+
+  it('wacht op de voorspelling, en zet ook geen wind of zwakke wind vast zodra hij er is', () => {
+    expect(pinWind(undefined, 'k1', undefined, false)).toBeUndefined();
+    expect(pinWind(undefined, 'k1', undefined, true)).toEqual({ key: 'k1', wind: undefined });
   });
 });
 

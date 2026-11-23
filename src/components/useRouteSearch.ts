@@ -45,7 +45,7 @@ import { INITIAL_SEARCH_STATE, answerFor, currentAdjust, failLineFor, needsSearc
 import { adjustKey, adjustSummary, avoidPiece, canReverse, isAdjusted, loopPieces, reverseProposal, searchTarget, stepDistance, type AdjustAction, type LoopAdjust, type LoopPiece } from '../engine/routeAdjust';
 
 import { reverseLoop, type OtherLoopChoice } from '../engine/routeOtherLoop';
-import { orientByWind, windForStart, windLine } from '../engine/routeWind';
+import { orientByWind, pinWind, windForStart, windLine, type WindPin } from '../engine/routeWind';
 import { usualStartHour } from '../engine/weather';
 
 const CONSENT_LIMIT_MS = 3000;
@@ -484,7 +484,13 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   // Wind (engine/routeWind.ts): de lus begint tegen de wind in, uit het weer dat er al is; zwak of onbekend is niets.
   // De wind van het uur waarop je meestal begint; een wandeling die je zelf plant begint nu.
   const startHour = template ? usualStartHour(template, sessionLogs, date).hour : undefined;
-  const loopWind = settings.routeWind !== false ? windForStart(weather.forecast, date, startHour, new Date()) : undefined;
+  const windStart = exactPoint ?? (lat !== undefined && lon !== undefined ? { lat, lon } : undefined);
+  const liveWind = settings.routeWind !== false ? windForStart(weather.forecast, date, startHour, new Date(), windStart) : undefined;
+  // De wind staat vast per zoektocht (engine/routeWind.ts#pinWind): komt er onder je hand een nieuwe voorspelling, dan draait de lus niet om.
+  const [windPin, setWindPin] = useState<WindPin | undefined>();
+  const pinned = pinWind(windPin, key, liveWind, weather.forecast !== undefined);
+  if (rawPlans && pinned !== windPin) setWindPin(pinned);
+  const loopWind = settings.routeWind === false ? undefined : pinned?.key === key ? pinned.wind : liveWind;
   // Een omgedraaide lus telt zijn stijgen opnieuw: de amber regel wordt voor de lus zoals hij nu staat uitgerekend (renotedProposal).
   const renote = (before: RouteProposal, after: RouteProposal) => (after === before ? after : renotedProposal(after, target, rawPlans?.found));
   const orient = (p: RouteProposal) => renote(p, orientByWind(p, loopWind));

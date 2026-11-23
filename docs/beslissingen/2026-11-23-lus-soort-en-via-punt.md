@@ -33,6 +33,14 @@ Bij Noord, Oost, Zuid of West zonder paden of hellingen in dat zoekbereik houdt 
 
 Draait de lus om (wind, Andersom, Een andere kant op onder Bijsturen, Andersom in het blad Andere lus), dan telt het stijgen opnieuw en dus ook de amber regel "Deze lus stijgt X m; de training vraagt Y m". Die wordt voor de omgedraaide lus opnieuw uitgerekend met dezelfde regel als bij het zoeken (`routePlanner.ts#renotedProposal`, `notedOutcome` op de omgedraaide feiten); een regel die niet meer geldt verdwijnt, en het getal dat de training vraagt blijft erbij. De ondergrond hoort bij het stuk dat op een punt eindigt en schuift bij omkeren een punt op (`routeAdjust.ts#reverseProposal`); een grote weg hoort bij twee punten tegelijk en blijft zoals hij was, dus `bigRoadM` verandert niet. Dit was een kleine bug: de oude regel bleef staan met het getal van de andere richting.
 
+## Wind bij de lus (I-123)
+
+Drie aanscherpingen van `2026-11-22-wind-en-lus.md`, zonder nieuwe aanroep.
+
+- **Ver van de weerplek:** ligt de start meer dan 25 km (`WIND_MAX_DISTANCE_M`) van de plek van de voorspelling, dan zegt die niets over de lus en is er geen windoordeel en dus geen regel en geen draaiing.
+- **Vandaag:** is het gebruikelijke startuur al voorbij, dan telt het uur van nu. Voor andere dagen blijft het gebruikelijke uur.
+- **Vastgezet per zoektocht:** de wind wordt bij de zoeksleutel vastgezet (`routeWind.ts#pinWind`) zodra de voorspelling er is, ook als hij zwak is. Een nieuwe voorspelling draait de lus dan niet meer om onder je hand; een nieuwe zoektocht (Langer, een andere start, Opnieuw zoeken) zet opnieuw vast. Komt de voorspelling pas na de lus, dan telt hij één keer.
+
 ## Reden
 
 De eigenaar vroeg in het besluit Andere lus al om Via een punt en Soort terrein, later (I-112). Een lus langs water of bos, of langs een plek die je zelf aanwijst, is wat een loper zelf zou kiezen.
