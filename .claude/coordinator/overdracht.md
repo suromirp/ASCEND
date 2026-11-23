@@ -5,7 +5,8 @@ Bijgewerkt: 23 november 2026 door coördinator session_01LnDpSkRtYRz7771kuLPf2T 
 ## Stand 23 november 03:45 (coördinator session_01LnDpSnS2nhuSzP3eTLuurZ)
 
 - Overgenomen. Bundel 3 (I-113, I-60, I-30, I-73) gestart: Sherpa sonnet op claude/forge-logs-23, raakt naspelen niet.
-- Naspelen: laatste commit 8f154102 (03:12); grens 04:12, dan verse Sherpa opus. send_later 04:15 gezet.
+- Naspelen-herstel binnen (9a451b88), Warden tweede ronde akkoord (Mag: `rules ?? rd` opruimen, valkuilregel rules/shown in briefje lopen-en-tests).
+- Proef claude/proef-23d = main + week-weergave + route-op-reis + naspelen: tsc, lint, 12048 tests, build groen. `npm run kaart` loopt (scratchpad/kaart-23d.log), daarna één Lookout, dan squash "Klaar: I-58, I-59, I-72, I-77, I-33, I-78, I-53, I-126, I-127, I-128, I-129".
 - Limiet reset 08:40 Amsterdam.
 
 ## Wissel 23 november 03:40
