@@ -6,7 +6,8 @@ import { logLineParts } from '../engine/logLine';
 import { useCallback, useMemo, useState } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
-import { formatDateNL, formatHoursMinutesNL, formatShortDayNL, formatMonthNL, monthBounds, shiftMonthAnchor, todayISO } from '../utils/dates';
+import { formatDateNL, formatHoursMinutesNL, formatShortDayNL, formatMonthNL, monthBounds, mondayOfWeek, shiftMonthAnchor, todayISO } from '../utils/dates';
+import { weekPlan } from '../engine/dayPlan';
 import { emptyMonthTitle, monthCompare } from '../engine/logbookMonth';
 import { logbookWeeks, weighingsInRange, weightCardOn, weightSourceLabel } from '../engine/weightCard';
 import { weightsInUse } from '../engine/bodyWeight';
@@ -118,7 +119,8 @@ export function HistoryPage() {
   const trainingCount = totalsLogs.filter((l) => l.type !== 'recovery').length;
   const monthName = formatMonthNL(anchor).split(' ')[0];
   // Vandaag nog gepland en niet gedaan, voor de zin op de eerste dagen van een maand.
-  const todayPlanned = plannedSessions.find((p) => p.scheduledDate === today && p.status !== 'skipped' && !isRest(p) && !sessionLogs.some((l) => l.plannedSessionId === p.id));
+  // De missie van Vandaag uit het dagbeeld (engine/dayPlan.ts), zodat beide dezelfde training noemen.
+  const todayPlanned = useMemo(() => weekPlan({ weekStart: mondayOfWeek(today), sessions: plannedSessions, logs: sessionLogs, templateById, today, illness: settings.illnessEpisodes }).day(today).primary, [today, plannedSessions, sessionLogs, templateById, settings.illnessEpisodes]);
   const todayName = todayPlanned ? templateById.get(todayPlanned.templateId)?.name : undefined;
   const vs = compare.vs;
   const vsText = vs ? (vs.whole ? `dan in ${formatMonthNL(vs.from).split(' ')[0]}` : `dan ${Number(vs.from.slice(8, 10))} tot ${formatDateNL(vs.to)}`) : '';

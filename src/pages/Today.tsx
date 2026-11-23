@@ -13,7 +13,7 @@ import { QUIET_TODAY_LINES, capAboveMission, isSafetyCard, placeTodayCards, reso
 import { hasRole } from '../engine/templateRoles';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
 import { suggestSameDayOrder } from '../engine/concurrentTraining';
-import { dayOrder, orderDay } from '../engine/dayOrder';
+import { weekPlan } from '../engine/dayPlan';
 import { DayOrderCard } from '../components/DayOrderCard';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
@@ -82,7 +82,7 @@ import { DayRow, YourDay, type YourDayEntry } from '../components/vandaag/DayRow
 import { DoneTodayCard, QuietDayCard } from '../components/vandaag/QuietDayCard';
 import { missionFacts } from '../engine/missionFacts';
 import { recentRunPace } from '../engine/recentRunPace';
-import { standTomorrow, tomorrowEntry, tomorrowText, trainingRowState, trainingRowsForYourDay } from '../engine/yourDay';
+import { standTomorrow, tomorrowEntryOf, tomorrowText, trainingRowState, trainingRowsForYourDay } from '../engine/yourDay';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -92,7 +92,6 @@ import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { decideMove, dragEligibility } from '../engine/weekDrag';
 import { keptAsk, keptRefusal } from '../engine/moveSuggestions';
-import { dayRules } from '../engine/dayRules';
 import { goalTiming } from '../engine/goalRoute';
 import { SkyBand } from '../components/SkyBand';
 import { StretchMenuButton } from '../components/StretchMenuButton';
@@ -109,7 +108,7 @@ import { skipWord } from '../engine/skipReason';
 import { useSkipReason } from '../components/useSkipReason';
 
 function TodayContent() {
-  const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones, showFailure, moveContext } = useAppData();
+  const { advice, suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones, showFailure, moveContext } = useAppData();
   // Het woord van een overgeslagen training volgt het blad (engine/skipReason.ts): een ziekmelding heet Vervallen.
   const skipReasonOf = useSkipReason();
   // Afvinken met één tik: grens in tijd en de melding bovenin (state/logSave.ts#tickOff).
@@ -157,38 +156,19 @@ function TodayContent() {
 
   const position = program ? resolveProgramWeek(program, today) : null;
   const weekStart = mondayOfWeek(today);
-  const weekSessions = sessionsForWeek(weekStart);
-  // A rest day ASCEND gave up for a training is simply gone, as in Week.
-  // Two trainings today: in the advised order (engine/dayOrder.ts).
-  const dayOrderAdvice = dayOrder(
-    weekSessions.filter((s) => s.scheduledDate === today && !sessionLogs.some((l) => l.plannedSessionId === s.id)),
-    plannedSessions.filter((s) => s.scheduledDate === addDays(today, 1)),
-    templateById,
-  );
-  const todaySessions = orderDay(weekSessions.filter((s) => s.scheduledDate === today && !(s.status === 'skipped' && (templateById.get(s.templateId)?.type === 'recovery' || s.leave?.role === 'dropped'))), dayOrderAdvice);
-  // No `?? todaySessions[0]` fallback here: .find() only returns undefined
-  // when every session today is already completed or skipped, and falling
-  // back to one of those would re-show a finished session as if it still
-  // needed to be started.
-  // While ill, today's mission follows the illness for as long as it lasts,
-  // not only the two days cleared when it was reported: nothing with fever
-  // or stomach flu, only light sessions with a cold above the neck.
-  // De ene regel (engine/dayRules.ts, stap doen): met koorts of buikgriep niets, verkouden niets zwaars.
+  // Wat er vandaag staat komt uit het dagbeeld (engine/dayPlan.ts), dezelfde afleiding als Week en de weekbalk:
+  // de rijen in de volgorde van dayOrder, een rustdag die ASCEND opgaf is weg, en de missie volgt een lopende ziekte
+  // (engine/dayRules.ts, stap doen: met koorts of buikgriep niets, verkouden niets zwaars). Zonder `?? todaySessions[0]`:
+  // een gedane of overgeslagen training komt nooit terug als missie.
+  const plan = useMemo(() => weekPlan({ weekStart, sessions: plannedSessions, logs: sessionLogs, templateById, today, illness: settings.illnessEpisodes }), [weekStart, plannedSessions, sessionLogs, templateById, today, settings.illnessEpisodes]);
+  const { sessions: todaySessions, order: dayOrderAdvice, primary, rest: restToday } = plan.day(today);
   const illness = activeIllness(settings.illnessEpisodes);
-  const illRules = dayRules({ today, illness: settings.illnessEpisodes });
-  const allowedWhileIll = (s: PlannedSession) => {
-    if (!illness) return true;
-    const t = templateById.get(s.templateId);
-    return !!t && illRules.ok({ date: today, step: 'do', template: t });
-  };
   // A rest day is no training to start or tick off (production feedback:
   // "een herstelmoment ga je niet los loggen"). It gets its own quiet card
   // and never counts in the week's numbers.
   const isRestSession = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'recovery';
-  const primary = todaySessions.find((s) => !isRestSession(s) && deriveSessionStatus(s, sessionLogs).status !== 'completed' && s.status !== 'skipped' && allowedWhileIll(s));
-  const restToday = !primary ? todaySessions.find((s) => isRestSession(s) && s.status !== 'skipped' && !sessionLogs.some((l) => l.plannedSessionId === s.id)) : undefined;
-  const allTodayDone = todaySessions.some((s) => !isRestSession(s)) && !primary;
-  const anyDoneToday = todaySessions.some((s) => deriveSessionStatus(s, sessionLogs).status === 'completed');
+  // Wat vandaag gedaan is, telt op de dag van uitvoeren, zoals de balk (engine/dayPlan.ts, `allDone` en `anyDone`).
+  const { allDone: allTodayDone, anyDone: anyDoneToday } = plan.day(today);
 
   // A short look-back nudge — only worth showing right at the week
   // boundary (closing out the week that just ended, or opening the new
@@ -286,7 +266,8 @@ function TodayContent() {
   const mission = primary && primaryTemplate
     ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates, macroFactor: macroFactorLinked }), paces, resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program), recentPaceOfRuns?.range, recentPaceOfRuns?.runs)
     : undefined;
-  const tomorrow = tomorrowEntry(today, plannedSessions, templateById, program);
+  // Morgen uit het dagbeeld, zoals de balk: wat je vandaag al deed staat er niet meer, ook na zondag.
+  const tomorrow = tomorrowEntryOf(plan.day(addDays(today, 1)), program);
   const tomorrowLine = `Morgen: ${tomorrowText(tomorrow)}`;
   // Een stille dag zegt al dat er niets staat; "Morgen: Niets gepland" erachter herhaalt dat alleen.
   const quietTomorrow = tomorrow.kind === 'none' ? undefined : tomorrowLine;
@@ -450,7 +431,7 @@ function TodayContent() {
         template: primaryTemplate,
         date: primary.scheduledDate,
         program,
-        tomorrow: plannedSessions.filter((s) => s.scheduledDate === addDays(today, 1) && s.status !== 'skipped').map((s) => templateById.get(s.templateId)).filter((t): t is SessionTemplate => !!t),
+        tomorrow: plan.day(addDays(today, 1)).strip.filter((e) => !e.done).map((e) => e.template),
         yesterdayLogs: sessionLogs.filter((l) => l.completedDate === addDays(today, -1)),
         templateById,
       })}
@@ -569,7 +550,7 @@ function TodayContent() {
             </p>
           )}
         </header>
-        <WeekStrip weekStart={weekStart} sessions={plannedSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
+        <WeekStrip plan={plan} today={today} />
       </SkyBand>
 
       {/* Kaarten rond de missie in een vaste volgorde, hoogstens twee erboven (engine/todayCards.ts,

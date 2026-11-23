@@ -1,4 +1,4 @@
-import { dayOrder, orderDay } from '../engine/dayOrder';
+import type { WeekPlan } from '../engine/dayPlan';
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
@@ -22,7 +22,7 @@ import { zoneOfTemplate } from './vandaag/zone';
 import { Icon } from './icons';
 import { useWatchStatuses } from './useWatchStatus';
 import type { WatchStatusKind } from '../engine/watchStatus';
-import { addDays, weekDates, weekdayShortNL, weekdayLongNL, todayISO } from '../utils/dates';
+import { weekDates, weekdayShortNL, weekdayLongNL, todayISO } from '../utils/dates';
 import { Eyebrow, StatusPill } from './ui';
 import { EFFORT_COLOR } from './effortColor';
 import { HeartSign } from './influence/HeartSign';
@@ -294,6 +294,7 @@ function LooseRow({ log, template, isToday, onTap, sign }: { log: SessionLog; te
 export function WeekPlanner({
   weekStartDate,
   sessions,
+  plan,
   templateById,
   logs,
   program,
@@ -311,6 +312,8 @@ export function WeekPlanner({
 }: {
   weekStartDate: string;
   sessions: PlannedSession[];
+  // Het dagbeeld van de week: per dag de rijen in de volgorde van de dag (engine/dayPlan.ts#weekPlan).
+  plan: WeekPlan;
   templateById: Map<string, SessionTemplate>;
   logs: SessionLog[];
   program?: Program | null;
@@ -407,9 +410,9 @@ export function WeekPlanner({
     <div className="mx-stagger overflow-hidden rounded-2xl border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
       {groupDaysByBand(days, periodWeek.bands).map((g) => {
         const nodes = g.dates.map((date) => {
-        const advice = dayOrder(sessions.filter((s) => s.scheduledDate === date && !loggedIds.has(s.id)), sessions.filter((s) => s.scheduledDate === addDays(date, 1)), templateById);
-        // Zonder advies houdt een dag zijn eigen volgorde (order), ook als een rij overgeslagen of ingehaald is.
-        const daySessions = orderDay(sessions.filter((s) => s.scheduledDate === date).sort((a, b) => a.order - b.order), advice);
+        // De rijen van de dag uit het dagbeeld (engine/dayPlan.ts), dezelfde volgorde als Vandaag en de weekbalk. Zonder
+        // advies houdt een dag zijn eigen volgorde (order), ook als een rij overgeslagen of ingehaald is.
+        const { order: advice, sessions: daySessions } = plan.day(date);
         const isToday = date === today;
         // Een dag in een periode krijgt geen eigen kaart: hij staat als gewone rij in het paneel van de periode. Alleen de lichte dagen bij een tocht houden hun label per dag.
         const inPeriod = periodWeek.inBand.has(date);
