@@ -94,6 +94,35 @@ describe('de ladder van heel licht in de planning', () => {
     expect(week?.budget.minutes, id).toBe(budgets[TODAY]);
   });
 
+  it('Meer bij kracht in de startweken: het voorstel noemt voor elke nieuwe rij hetzelfde getal als Week na Akkoord (I-143)', async () => {
+    expect((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain', ladderConsentPatch)))).status).toBe('applied');
+    // Twee vrije vrijdagen, zoals een start met minder dagen: daar kan Meer een training bijzetten.
+    for (const s of await PlannedSessionsRepo.getAll()) if (s.scheduledDate === '2026-10-30' || s.scheduledDate === '2026-11-06') await PlannedSessionsRepo.delete(s.id);
+    await primePlanningRegisters();
+    const known = new Set((await PlannedSessionsRepo.getAll()).map((s) => s.id));
+    const plan = await computeHorizonPlan({
+      title: 'Kracht: meer', why: 'Test.', explanation: 'Test.', trigger: 'availability_changed' as const,
+      settings: { kindAmount: { strength: 'more' } }, notes: [],
+    });
+    const templates = new Map((await SessionTemplatesRepo.getAll()).map((t) => [t.id, t]));
+    const adds = plan.proposal.changes.filter((c) => c.action === 'add' && c.newSessionDraft && templates.get(c.newSessionDraft.templateId)?.type === 'strength');
+    const inStart = adds.filter((c) => c.newSessionDraft!.scheduledDate < '2026-11-09');
+    expect(inStart.length, 'er komt in week 1 of 2 een extra kracht bij').toBeGreaterThan(0);
+    expect((await applyHorizonPlanNow(plan)).status).toBe('applied');
+    const rows = await lengths();
+    for (const c of inStart) {
+      const draft = c.newSessionDraft!;
+      const row = rows.find((r) => !known.has(r.s.id) && r.s.scheduledDate === draft.scheduledDate && r.t.id === draft.templateId)!;
+      expect(row, `${draft.scheduledDate} ${draft.templateId}`).toBeDefined();
+      expect(c.plannedMinutes, `voorstel ${draft.scheduledDate}`).toBe(row.minutes);
+      expect(row.minutes).toBeLessThanOrEqual(rungs[Math.min(weekOf(row.s), rungs.length) - 1].strength);
+    }
+    // Elke kracht in week 1 en 2 blijft op de ladder, ook met Meer.
+    for (const r of rows.filter((x) => x.t.type === 'strength' && weekOf(x.s) <= 2)) {
+      expect(r.minutes, `${r.s.scheduledDate} ${r.t.id}`).toBeLessThanOrEqual(rungs[weekOf(r.s) - 1].strength);
+    }
+  });
+
   it('twee rondes achter elkaar geven hetzelfde, en drie openingen ook', async () => {
     expect((await applyHorizonPlanNow(await computeHorizonPlan(input('maintain', ladderConsentPatch)))).status).toBe('applied');
     await primePlanningRegisters();

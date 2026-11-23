@@ -82,6 +82,8 @@ export function startLadderMinutes(
   const rung = rungFor(at.week)!;
   if (hasRole(template, 'start_only')) return { set: walkJogMinutes(template.id, rung) };
   if (isRecoveryWalk(template)) return { cap: rung.shortMinutes };
+  // De Herstelloop (rustig tempo, geen lange duurloop) hoogstens zo lang als de korte sessie.
+  if (hasRole(template, 'easy_pace') && !hasRole(template, 'long')) return { cap: rung.shortMinutes };
   return undefined;
 }
 

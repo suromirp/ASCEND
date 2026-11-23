@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useHasTrekGoal } from '../../reis/useHasTrekGoal';
 import { SettingsRow, SettingsSection } from '../SettingsList';
 
 // Gidsen en kennis: het weer en de kleding bij je training, kennis voor onderweg, de
@@ -9,13 +10,15 @@ import { SettingsRow, SettingsSection } from '../SettingsList';
 // koppeling met Garmin (Koppelingen).
 export function GidsenGroup() {
   const navigate = useNavigate();
-  const rows: [string, string, string][] = [
+  const trek = useHasTrekGoal();
+  const all: [string, string, string][] = [
     ['weer-gids', 'Weer en kleding', '/weer'],
     ['kennisbank', 'Kennisbank', '/kennis'],
     ['plekken', 'Trainingsplekken', '/plekken'],
     ['datavelden-bekijken', 'Datavelden bekijken', '/horloge/datavelden'],
     ['bronnen', 'Bronnen', '/bronnen'],
   ];
+  const rows = all.filter(([id]) => trek || id !== 'kennisbank');
   return (
     <SettingsSection title="Opzoeken">
       {rows.map(([id, title, to]) => <SettingsRow key={id} id={id} title={title} onClick={() => navigate(to)} />)}

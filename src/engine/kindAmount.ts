@@ -48,8 +48,10 @@ export function kindAmountSummary(map: KindAmountMap | undefined): { value: stri
 }
 
 // "Normaal: 45 minuten, 2 keer per week. Meer: 50 minuten."
-export function kindAmountLine(minutes: number, perWeek: number, amount: KindAmount | undefined): string {
+// `ladder`: de training zit nu in de startweken van de ladder; die gaat voor, dus Meer maakt hem er niet langer door.
+export function kindAmountLine(minutes: number, perWeek: number, amount: KindAmount | undefined, ladder = false): string {
   const base = `Normaal: ${minutes} minuten, ${perWeek} keer per week.`;
+  if (ladder && (!amount || amount === 'more')) return `${base} Meer: in je startweken gaat de ladder voor, de minuten blijven.`;
   if (!amount) return `${base} Meer: ${scaledMinutes(minutes, 'more')} minuten.`;
   return `${base} ${amount === 'more' ? 'Meer' : 'Minder'}: ${scaledMinutes(minutes, amount)} minuten.`;
 }

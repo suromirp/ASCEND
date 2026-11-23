@@ -11,7 +11,7 @@ import { Card, Chip } from '../../components/ui';
 import { useSettingsFacts } from '../../components/settings/useSettingsFacts';
 import { usePlanSettingChange } from '../../components/settings/usePlanSettingChange';
 import { kindAmountLine, kindCostLine, parseKindAmounts, trainingKindOf, visibleKinds } from '../../engine/kindAmount';
-import { resolveEffectiveFullDuration, withDurationScope } from '../../engine/substitutions';
+import { ladderMinutesOf, resolveEffectiveFullDuration, withDurationScope } from '../../engine/substitutions';
 import { weeklyPatternTemplates } from '../../engine/sports';
 import { KIND_AMOUNT_LABEL, type KindAmount, type TrainingKindId } from '../../data/trainingKinds';
 import { settingsPageRoute } from '../../data/settingsLayout';
@@ -30,12 +30,14 @@ export function KindAmountPage() {
   const kinds = visibleKinds(pattern, { trek: facts.treks > 0 });
   const keyKind: TrainingKindId | undefined = pattern.some((t) => trainingKindOf(t) === 'long') ? 'long' : undefined;
 
-  function info(kind: TrainingKindId): { minutes: number; perWeek: number } {
+  function info(kind: TrainingKindId): { minutes: number; perWeek: number; ladder: boolean } {
     const ofKind = pattern.filter((t) => trainingKindOf(t) === kind);
     const first = ofKind[0] ?? templates.find((t) => trainingKindOf(t) === kind);
     // Normaal: zonder de keuze van nu.
     const minutes = first ? withDurationScope({ kindAmounts: {} }, () => resolveEffectiveFullDuration(first, todayISO(), program)) : 0;
-    return { minutes, perWeek: ofKind.length };
+    // In de startweken van de ladder gaat de ladder voor Meer (engine/substitutions.ts#ladderMinutesOf).
+    const ladder = !!first && ladderMinutesOf(first, todayISO(), program) !== undefined;
+    return { minutes, perWeek: ofKind.length, ladder };
   }
 
   function pick(kind: TrainingKindId, label: string, choice: KindAmount | 'normal') {
@@ -62,13 +64,13 @@ export function KindAmountPage() {
       {plan.note && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{plan.note}</p>}
       <div className="mt-4 flex flex-col gap-3">
         {kinds.map((k) => {
-          const { minutes, perWeek } = info(k.id);
+          const { minutes, perWeek, ladder } = info(k.id);
           const value = amounts[k.id] ?? 'normal';
           return (
             <Card key={k.id} className="flex flex-col gap-3">
               <div>
                 <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{k.label}</p>
-                {minutes > 0 && <p className="mt-1 text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{kindAmountLine(minutes, perWeek, value === 'normal' ? undefined : value)}</p>}
+                {minutes > 0 && <p className="mt-1 text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{kindAmountLine(minutes, perWeek, value === 'normal' ? undefined : value, ladder)}</p>}
               </div>
               <div className="st-chips" role="group" aria-label={`Hoeveel ${k.label.toLowerCase()}`}>
                 {CHOICES.map((c) => (

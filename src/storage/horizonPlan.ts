@@ -39,7 +39,7 @@ import { diffHorizon, type HorizonDiff } from '../engine/horizonChange';
 import { acceptConflicts, applyResolution, conflictsForGoals, newConflicts, type GoalConflict } from '../engine/goalConflicts';
 import { makeId } from '../utils/id';
 import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
-import { resolveVariantDuration, withDurationScope, type DurationScope } from '../engine/substitutions';
+import { ladderMinutesOf, resolveVariantDuration, withDurationScope, type DurationScope } from '../engine/substitutions';
 import { durationScopeFor } from '../engine/durationScope';
 import { withWavesConsent } from '../engine/noGoalWaves';
 import { isWavePhase } from '../engine/programLayout';
@@ -154,7 +154,15 @@ async function diffFor(input: HorizonChangeInput, registers?: DurationScope) {
   // The proposal's own items keep their own reason.
   const own = new Map((input.startItems ?? []).filter((i) => i.plannedSessionId).map((i) => [i.plannedSessionId!, i]));
   const items = diff.items.map((i) => (i.plannedSessionId && own.get(i.plannedSessionId)?.reason ? { ...i, reason: own.get(i.plannedSessionId)!.reason } : i));
-  return { diff: { ...diff, items }, stored, run, templates };
+  // Een rij die erbij komt in de startweken krijgt in het voorstel de lengte van de ladder, dezelfde als Week na Akkoord.
+  const byTemplate = new Map(templates.map((t) => [t.id, t]));
+  const withLadder = items.map((i) => {
+    const t = i.action === 'add' && i.newSessionDraft && i.plannedMinutes === undefined ? byTemplate.get(i.newSessionDraft.templateId) : undefined;
+    if (!t || !i.newSessionDraft) return i;
+    const minutes = withDurationScope(registers, () => ladderMinutesOf(t, i.newSessionDraft!.scheduledDate, run.program));
+    return minutes === undefined ? i : { ...i, plannedMinutes: minutes };
+  });
+  return { diff: { ...diff, items: withLadder }, stored, run, templates };
 }
 
 // The minutes of every open training in the next two weeks, as the screens

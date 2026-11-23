@@ -16,17 +16,32 @@ export function effectiveGoalKind(goal: TrainingGoal, isMain: boolean): GoalKind
   return goalKindOf(goal) ?? (isMain ? 'trek_hut' : undefined);
 }
 
+// Een trekdoel dat meetelt: een tocht als soort, en niet gepauzeerd (een gepauzeerd doel staat stil).
+function liveTreks(goals: readonly TrainingGoal[], ladderGoalIds: ReadonlySet<string>, today: string): TrainingGoal[] {
+  return listedGoals(goals, ladderGoalIds, today)
+    .filter(({ goal, isMain }) => {
+      const kind = effectiveGoalKind(goal, isMain);
+      return !!kind && isTrekKind(kind) && goal.status !== 'paused';
+    })
+    .map(({ goal }) => goal);
+}
+
 // Is er een doel dat een tocht is? Programma-ankerdatum (programAnchorDate) is de datum van elk
-// hoofddoel en bewijst dus geen tocht; dit wel.
+// hoofddoel en bewijst dus geen tocht; dit wel. Een gepauzeerd trekdoel telt niet mee.
 export function hasTrekGoal(goals: readonly TrainingGoal[], ladderGoalIds: ReadonlySet<string>, today: string): boolean {
-  return listedGoals(goals, ladderGoalIds, today).some(({ goal, isMain }) => {
-    const kind = effectiveGoalKind(goal, isMain);
-    return !!kind && isTrekKind(kind);
-  });
+  return liveTreks(goals, ladderGoalIds, today).length > 0;
+}
+
+// De vertrekdatum van de tocht: de eerstvolgende actieve tocht die nog voor je ligt, ook als het niet je hoofddoel
+// is (programAnchorDate geeft dan de datum van het hoofddoel, bijvoorbeeld een wedstrijd).
+export function trekDepartureDate(goals: readonly TrainingGoal[], ladderGoalIds: ReadonlySet<string>, today: string): string | undefined {
+  return liveTreks(goals, ladderGoalIds, today)
+    .flatMap((g) => (g.status === 'active' && g.targetDate > today ? [g.targetDate] : []))
+    .sort()[0];
 }
 
 // De instellingen die alleen een verwijzing naar een tochtscherm zijn.
-const JOURNEY_LINK_IDS: ReadonlySet<string> = new Set(['reisplanner', 'paklijst']);
+const JOURNEY_LINK_IDS: ReadonlySet<string> = new Set(['reisplanner', 'paklijst', 'kennisbank']);
 
 export function isJourneyLink(settingId: string): boolean {
   return JOURNEY_LINK_IDS.has(settingId);

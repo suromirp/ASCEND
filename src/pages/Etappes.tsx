@@ -100,7 +100,7 @@ export function EtappesPage() {
                   <span className="block text-xs leading-snug" style={{ color: up?.enough && down?.enough ? 'var(--color-success-text)' : 'var(--color-ink-dim)' }}>
                     {up && down && (up.best > 0 || down.best > 0)
                       ? `Jouw beste: ${formatNumberNL(up.best, 0)} m omhoog, ${formatNumberNL(down.best, 0)} m omlaag`
-                      : 'Nog geen tocht om mee te vergelijken'}
+                      : 'Nog geen gelopen dag om mee te vergelijken'}
                   </span>
                 </span>
                 <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>

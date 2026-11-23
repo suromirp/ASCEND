@@ -193,3 +193,26 @@ describe('een kamp en een samenvatting van meer trainingen', () => {
     expect(s.items![0]).toMatch(/^1 oktober, /);
   });
 });
+
+describe('een losse sport (I-145)', () => {
+  const padel = (): SessionLog => ({
+    id: 'padel1', templateId: 'sport_padel', type: 'cardio', countedSport: 'padel', completedDate: TODAY, completedAt: `${TODAY}T18:00:00Z`, variant: 'full', durationMinutes: 60, source: 'manual',
+  });
+
+  it('de titel is de naam van de sport, niet Training', () => {
+    const p = padel();
+    expect(completionSummary(inputs([p], [p.id])).title).toBe('Padel');
+  });
+
+  it('de weekregel zegt dat de sport niet meetelt, geen 0 van 3', () => {
+    const p = padel();
+    const week = completionSummary(inputs([p], [p.id])).lines.find((l) => l.id === 'week')!;
+    expect(week.text).toBe('Padel telt niet mee in je geplande trainingen.');
+    expect(week.text).not.toMatch(/\d van \d/);
+  });
+
+  it('een gewone training houdt de telling', () => {
+    const week = completionSummary(inputs([watchRun], [watchRun.id])).lines.find((l) => l.id === 'week')!;
+    expect(week.text).toMatch(/\d van 3 trainingen/);
+  });
+});
