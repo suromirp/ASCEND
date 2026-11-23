@@ -585,3 +585,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 23 november, Sherpa Eén plan herstel (opus, I-14 stap A): 48 tool-aanroepen, 18 minuten; Warden-punten opgelost.
 - 23 november, Warden herkijk Eén plan (fable): 11 tool-aanroepen, akkoord; drie Inbox-punten (I-147 tot I-149).
 - 23 november, Lookout Eén plan (sonnet): 40 tool-aanroepen, 11 minuten; testte per ongeluk een oude preview (poort bezet door een achtergebleven server), de coördinator deed de controle opnieuw op de juiste bouw. Les: oude previews na elke Lookout stoppen; de Lookout stopt als --strictPort faalt.
+- 23 november, Sherpa Eén plan dagbeeld (opus, I-14): drie rondes, 83 tool-aanroepen, ongeveer 38 minuten; Warden (fable) akkoord, Pathfinder (sonnet) één Moet, Lookout (sonnet) één rood, beide opgelost.

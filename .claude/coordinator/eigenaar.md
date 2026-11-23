@@ -46,10 +46,13 @@ Niets.
 
 ## Loopt
 
-- Bundel 9 (I-14, I-18, I-23, I-34): ladder, Eén plan deel 1 en Losse sport deel 1 live. Eén plan eerste voorstel live. Nog: één dagbeeld (I-14), beginner stap 5 tot 7, losse sport rest, na een loop één moment (I-34), kleine punten I-146 tot I-149.
+- Bundel 9 (I-14, I-18, I-23, I-34): ladder, Eén plan deel 1 en Losse sport deel 1 live. Eén plan (I-14) helemaal live. Nog: beginner stap 5 tot 7, losse sport rest, na een loop één moment (I-34), kleine punten I-146 tot I-151.
 - Graphify, eerlijke proef: zodra de lijst leeg is. De koppeling alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 ## Net live
+
+### 23 november 13:17
+- Eén plan, je dag (I-14, laatste stap): Vandaag, Week en de weekbalk zeggen voor dezelfde dag hetzelfde. Twee trainingen staan in de balk in de volgorde van Vandaag; doe je de training van morgen vandaag, dan zegt Vandaag "Vandaag zit erop" en is morgen vrij, ook in de regel "Morgen:". Eén plan is daarmee af.
 
 ### 23 november 12:04
 - Eén plan, je eerste voorstel (I-14 stap A): de rustdag heet zoals in Week ("Rustdag · wandelen mag", of Hersteldag in die stand), de zin over kracht noemt de richtlijn, en wat het voorstel toont is wat er na Akkoord staat.
