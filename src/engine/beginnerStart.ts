@@ -98,7 +98,7 @@ export function beginnerStartLine(start: string, today: string, waveLength = BEG
   const weeks = beginnerWeeksFor(waveLength);
   const since = Math.floor(daysBetween(mondayOfWeek(start), mondayOfWeek(today)) / 7);
   if (since < 0 || since >= weeks) return undefined;
-  return `Je begint rustig: de eerste ${WEEKS_WORD[weeks] ?? weeks} weken alleen makkelijk, geen harde training. Zo went je lichaam eerst aan het ritme, en elke week wordt het iets meer.`;
+  return `Je begint rustig: de eerste ${WEEKS_WORD[weeks] ?? weeks} weken alleen makkelijk, geen harde training. Zo went je lichaam eerst aan het ritme.`;
 }
 
 // De zin voor het voorstel met de ladder: week 1 in getallen uit data/beginnerLadder.ts, voor wat er in die week

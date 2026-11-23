@@ -45,7 +45,7 @@ describe('isBeginnerStart', () => {
 
 describe('beginnerStartLine', () => {
   it('zegt het in een zin en loopt vanzelf af', () => {
-    expect(beginnerStartLine(START, START)).toBe('Je begint rustig: de eerste vier weken alleen makkelijk, geen harde training. Zo went je lichaam eerst aan het ritme, en elke week wordt het iets meer.');
+    expect(beginnerStartLine(START, START)).toBe('Je begint rustig: de eerste vier weken alleen makkelijk, geen harde training. Zo went je lichaam eerst aan het ritme.');
     expect(beginnerStartLine(START, addDays(START, 7 * BEGINNER_WEEKS))).toBeUndefined();
     // Bij golven van drie of zes weken beslaat de start hele golven: zes weken.
     expect(beginnerStartLine(START, START, 3)).toMatch(/de eerste zes weken/);
