@@ -272,6 +272,19 @@ export function resolveEffectiveFullDuration(
   return Math.max(15, Math.round((base * adjustment.factor) / 5) * 5);
 }
 
+// De geplande minuten van een training zoals Week ze toont (I-14, docs/visie/Ontwerp Eén plan.md, "één duur"): de
+// vaste lengte van de rij (PlannedSession.plannedMinutes), anders de volle duur met ambitie, hoeveel per soort, de rem
+// van 110% en een rustiger instap. Een tekst die minuten van een geplande training noemt, leest ze hier; nooit de kale
+// stap van het schema (programLayout.ts#progressionTarget). Een rij die er nog niet is (een latere week) geef je als
+// alleen de datum mee.
+export function plannedMinutesOf(
+  session: { scheduledDate: string; plannedMinutes?: number },
+  template: SessionTemplate,
+  program: Program | null | undefined,
+): number {
+  return session.plannedMinutes ?? resolveEffectiveFullDuration(template, session.scheduledDate, program);
+}
+
 // Shared by ExerciseLogger (variant picker) and the quick-complete flow
 // (Settings → Krachttraining) so both resolve a variant's duration the same
 // way: 'full' follows weeklyProgression when present, short/minimum are

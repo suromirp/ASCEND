@@ -54,6 +54,7 @@ import { plannedByIdOf } from './logDay';
 import { currentChoices, loadChange, type LoadChange, type WeekLoadContext } from './weekLoadChange';
 import { weekKeySession, type KeyFocus } from './keySession';
 import { kgLabel } from '../utils/kg';
+import { plannedMinutesOf } from './substitutions';
 
 // Below this share of the planned trainings (rest sessions not counted) a
 // week fell short. A round, explainable line, not a number from a study.
@@ -151,11 +152,15 @@ export interface KeyImpact {
   peak?: { from: LoadLine; to: LoadLine };
 }
 
-function loadAt(template: SessionTemplate, program: Program, date: string): LoadLine | undefined {
-  const target = progressionTarget(template, program, date);
+// De belasting van een training op een dag: de minuten zoals Week ze toont (substitutions.ts#plannedMinutesOf, met de
+// vaste lengte, ambitie, hoeveel per soort en de rem van 110%), de hoogtemeters en de rugzak van de stap van het schema.
+// Nooit de kale minuten van die stap: dan noemt het voorstel een ander getal dan Week (I-14, symptoom C).
+function loadAt(template: SessionTemplate, program: Program, session: { scheduledDate: string; plannedMinutes?: number }): LoadLine | undefined {
+  const target = progressionTarget(template, program, session.scheduledDate);
   if (!target) return undefined;
   const { elevationGainM, backpackKg } = target.step;
-  return { minutes: Math.round(target.minutes), ...(elevationGainM ? { elevationGainM } : {}), ...(backpackKg ? { backpackKg } : {}) };
+  const minutes = Math.round(plannedMinutesOf(session, template, program));
+  return { minutes, ...(elevationGainM ? { elevationGainM } : {}), ...(backpackKg ? { backpackKg } : {}) };
 }
 
 // The key session of the week (engine/keySession.ts) before and after
@@ -167,16 +172,18 @@ function keyImpact(program: Program, weekStart: string, plannedSessions: Planned
   const position = resolveProgramWeek(program, monday);
   if (!key || !template || !position) return undefined;
   const repeated = withWeekRepeated(program, monday, true);
-  const line = (date: string) => {
-    const from = loadAt(template, program, date);
-    const to = loadAt(template, repeated, date);
+  const line = (session: { scheduledDate: string; plannedMinutes?: number }) => {
+    const from = loadAt(template, program, session);
+    const to = loadAt(template, repeated, session);
     return from && to ? { from, to } : undefined;
   };
-  const thisWeek = line(key.scheduledDate);
+  const thisWeek = line(key);
   if (!thisWeek) return undefined;
   const len = phaseWaveLength(position.phase);
   const peakDate = addDays(key.scheduledDate, 7 * (len - 1 - waveOf(position.weekInPhase, len)));
-  const peak = waveOf(position.weekInPhase, len) < len - 1 ? line(peakDate) : undefined;
+  // De rij van die training in de zwaarste week als hij er al staat, anders alleen de datum.
+  const peakRow = plannedSessions.find((s) => s.templateId === template.id && s.scheduledDate === peakDate && s.status !== 'skipped') ?? { scheduledDate: peakDate };
+  const peak = waveOf(position.weekInPhase, len) < len - 1 ? line(peakRow) : undefined;
   return { name: template.name, thisWeek, ...(peak ? { peak } : {}) };
 }
 
@@ -279,11 +286,22 @@ export function shortfallSentence(p: RepeatWeekProposal): string {
   return `Vorige week miste je de ${key}, de belangrijkste training van de week.`;
 }
 
-// What the repeat costs, in the numbers of the key session.
+const sameLoad = (a: LoadLine, b: LoadLine) => describeLoad(a) === describeLoad(b);
+
+// What the repeat costs, in the numbers of the key session: één getal per week, dat van Week. Remt de 110% de training
+// al, dan blijft hij gelijk en zegt de zin dat. De zwaarste week van de golf alleen als die ook verandert
+// (I-14, besluit met het advies: geen "50 in plaats van 50").
 export function costSentence(impact: KeyImpact | undefined): string {
   if (!impact) return 'De minuten van je lopen, de hoogtemeters en de rugzak blijven op het niveau van vorige week.';
   const name = impact.name.toLowerCase();
-  const first = `Je ${name} wordt deze week ${describeLoad(impact.thisWeek.to)} in plaats van ${describeLoad(impact.thisWeek.from)}.`;
-  if (!impact.peak) return `${first} Dat is de zwaarste week van deze golf, die dus lichter wordt.`;
-  return `${first} De zwaarste week van deze golf wordt daardoor ook lichter: ${describeLoad(impact.peak.to)} in plaats van ${describeLoad(impact.peak.from)}.`;
+  const changes = !sameLoad(impact.thisWeek.from, impact.thisWeek.to);
+  const first = changes
+    ? `Je ${name} wordt deze week ${describeLoad(impact.thisWeek.to)} in plaats van ${describeLoad(impact.thisWeek.from)}.`
+    : `Je ${name} blijft deze week ${describeLoad(impact.thisWeek.from)}.`;
+  if (!impact.peak) return changes ? `${first} Dat is de zwaarste week van deze golf, die dus lichter wordt.` : first;
+  if (sameLoad(impact.peak.from, impact.peak.to)) return first;
+  const peak = `${describeLoad(impact.peak.to)} in plaats van ${describeLoad(impact.peak.from)}`;
+  return changes
+    ? `${first} De zwaarste week van deze golf wordt daardoor ook lichter: ${peak}.`
+    : `${first} De zwaarste week van deze golf wordt wel lichter: ${peak}.`;
 }

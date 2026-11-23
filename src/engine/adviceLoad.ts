@@ -12,14 +12,19 @@ import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { LEG_BODY_PARTS } from './legSpots';
 import { type AdviceInputs, type Advice, LOAD_SPORT_TYPES, catchUpDates, moveOptions, inProgram, isDone, proposal } from './adviceShared';
 import { legCardSessionOf } from './adviceMorning';
+import { idIsTestOrRace } from './templateRoles';
 
 // --- Rule HARD-THEN-SPACE ----------------------------------------------------
 // Trigger: a run/ride/hike in the last 2 days logged at RPE 8+ or as
 // "zwaarder dan normaal". Rule: the next leg-heavy session within a day of
 // it gets one extra day, if there's room; otherwise keep it easy.
+// Een testloop of wedstrijd telt niet: die hoort zwaar te zijn en heeft zijn eigen rust (testRest, het raceblok, de
+// nieuwe testpoging van TEST-RETRY). Anders zegt Vandaag "rustig houden" naast "je benen zijn dan fris" (I-14,
+// symptoom D; besluit met het advies van docs/visie/Ontwerp Eén plan.md, vraag 1).
 export function tooHardAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
   const recent = inputs.logs
     .filter((l) => LOAD_SPORT_TYPES.has(l.type) && daysBetween(l.completedDate, inputs.asOf) <= 1 && daysBetween(l.completedDate, inputs.asOf) >= 0)
+    .filter((l) => !idIsTestOrRace(l.templateId, templateById))
     .filter((l) => (l.rpe ?? 0) >= 8 || l.subjectiveFeel === 'worse')
     .sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0];
   if (!recent) return [];
