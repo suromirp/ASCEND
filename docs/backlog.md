@@ -7,7 +7,9 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 `docs/beslissingen/`.
 
 ## Inbox
-Hoogste code: I-136. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+Hoogste code: I-138. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+- [I-138] (23 november, Sherpa en Lookout dayRules, mag) De chip van de doeldag zit bij slepen achter de sleepkaart op 412 px (`WeekDragGhost` bedekt de rij); vraagt een andere indeling en Lookout.
+- [I-137] (23 november, Warden en coördinator dayRules, mag) Bij verkouden zegt de uitleg bij een test of wedstrijd "Ziek train je niet" onder de kop "Je bent verkouden" (`weekConcerns.ts`). Equivalentietoets op de aanroepers met 3 tot 4 overlappende periodes; toets voor de pauze in `moveActions.ts`; `nearbyTerrain.ts` bouwt per aanroep een dayRules; rest van de lijst in `dayRulesScan.test.ts` (adviceLoad, adviceWeek, adviceShared, reentry, repeatWeek, WeekdayPatternLine, leaveBlock, LEAVE in weekValidator).
 - [I-136] (23 november, rest I-33, mag) Hoogte: `altitudeTrusted` en `HILLY_M_PER_KM` nog zonder merk van de teller; stap 2 in `places.ts`.
 - [I-135] (23 november, Warden en Lookout forge, mag) Forge zegt bij een opslag die nog loopt "sluit de app" met Annuleren, Hoe ging het? nu Sluiten: één uitweg (rest I-60). In Hoe ging het? blijft Opslaan uit na "loopt nog" tot je heropent. De reden in Forge is afgekapt op 360 px.
 - [I-134] (23 november, Warden opslag en Lookout, mag) Blad Versie noemt de stapnaam (seedIfEmpty@1) in de zin: achter Details. `linkLogNow` in één transactie; `getAll` houdt een schrijfslot; ruimere timeout in `settingsFoto.test.ts`.
@@ -16,16 +18,11 @@ Hoogste code: I-136. Een nieuw punt krijgt het volgende nummer (zet het getal hi
 - [I-131] (23 november, Warden en Lookout week, mag) Weekterugblik: "· 0 min" weglaten; zin bij Herhaal de week "van de geplande week"; `weekSummaryLine` heeft geen aanroeper.
 - [I-130] (23 november, Warden route, mag) Werkbriefje planning: BEGINNER_SWAPS splitsen beschrijven (rest van I-51), en de zin bij Opbouw van de start eindigt op "Telt alleen bij Rustig beginnen".
 - [I-125] (23 november, Warden route, mag) Opmaak van `docs/kennisindex/bronnen.json` gelijk trekken (inspringen en volgorde van de nieuwe regels).
-- [I-113] (22 november, Warden en Sherpa forge, mag) Heropen je een training terwijl Lichter aan staat en de aangenomen ijkset al weg is, dan weet het scherm het Akkoord niet meer (`calAccepted` leeft in het geheugen van `ForgeWorkout.tsx`); de set blijft dan weg. Klein, kost hooguit één ijkset.
 - [I-105] Label "Ziek gemeld: koorts" (I-56) niet op 360 px gezien: Lookout vond het voorstel met die titel niet in de testdata. Bij de volgende Lookout meenemen.
 - [I-104] Zin "Je rustige loop van <dag> krijgt dan geen korte test meer." (I-99) niet op het scherm gezien; alleen in tests. Bij de volgende Lookout meenemen.
 - [I-103] Token voor de zachte mint vulling (Warden 21 november, mag): de 18%-vulling van Akkoord staat nu in StepProposalNotice en CalibrationNotice; komt hij een derde keer terug, maak dan een token `--color-action-soft` in `src/index.css`.
 - [I-87] Lookout Drempel 17 november (mag, bestaand): de uitlegknoppen (i) in de rijen van het blad Testloop zijn 20 bij 20 px (de rij zelf 44 px), en de voorstelkaart heeft vier mint Straks-regels naast de mint knoppen. Bij een volgende ronde in die rij en kaart meenemen.
-- [I-82] (22 november deels gebouwd, c19bfb5: punt 2 en 4, van punt 1 alleen goalSetupAssist; stageAt.ts en traitsProfile.ts bewust gelaten als voorbereiding; over: punt 3) Opruimen na de onderhoudsronde (16 november, `docs/onderhoud/2026-11-16-onderhoudsronde.md`): eerst punten 1, 2 en 4 (drie bestanden alleen voor tests, 11 dode exports, guards naar `utils/guards.ts`), daarna Zonder sportschool overal via `dayRules.ts` (punt 3, planning, Warden Fable). Geen gedragswijziging; tekstkaart gelijk.
 - [I-76] Luchtfoto buiten Nederland en Frankrijk (eigenaar 16 november 08:51): "waarom hebben we geen betere satellietfoto hier, je kan echt niet inzoomen". Buiten NL en FR valt de luchtfoto terug op EOX (Sentinel-2, ongeveer 10 m per pixel). Onderzoek per land een open nationale luchtfoto zoals PDOK en IGN (Portugal: de orthofoto van DGT; Spanje: PNOA van IGN-ES), met licentie, naamsvermelding en grensvlak volgens de valkuilen in koppelingen-en-data; daarna een vlak per land zoals NL en FR. Scout eerst, dan Sherpa.
-- [I-74] Na I-67 (Warden, Pathfinder en Lookout 16 november, mag): een test of wedstrijd op een koortsdag staat nergens in Let op (ILL meldt alleen niveau 1); het voorstel bij ILL biedt alleen laten vervallen, "naar een rustige dag verplaatsen" is vriendelijker bij verkouden; `qualifiesForCatchUp` krijgt in `src/state/moveActions.ts:188` geen pause mee; de chip van de doeldag zit bij slepen deels achter de sleepkaart (412 px); stap 5 (de ronde) en de dagkeuze binnen voorstellen lezen dayRules nog niet (lijst in dayRulesScan.test.ts).
-- [I-73] Wandeling van het horloge (Warden 16 november, mag): een horlogewandeling zonder hoogtemeters wordt nog Herstelwandeling (`src/engine/activityImport.ts:313`, manier op regel 366), terwijl los loggen nu Wandeling kiest (I-70). Twee namen voor hetzelfde; raakt vanzelf afvinken, dus Warden op Fable.
-- [I-60] Hoe ging het? (Warden 15 november, mag): hetzelfde "loopt nog"-gat als op het oude trainingsscherm: een tweede poging terwijl de eerste loopt. En bij een losse training heet de knop links Annuleren terwijl de wachtzin "Sluit en probeer opnieuw; je invulling blijft bewaard" zegt (Lookout); Forge zegt bij hetzelfde "sluit de app" (Pathfinder): één uitweg kiezen.
 - [I-52] Eerste week bij heel licht (Lookout 15 november): Herstelwandeling 45 min staat langer dan de lange wandeling van 30 min, en kracht 75 min past slecht bij "alleen makkelijk"; de wandelkaart op Vandaag heeft het etiket "Vandaag · Hardlopen". Hoort bij I-18 stap 3.
 
 - [I-10] Profielendoorloop 14 november (verslagen in `docs/profielen/2026-11-14-*.md` op de branches `claude/profiel-*`; vier van vijf binnen, ziek-vakantie loopt). Moet, gegroepeerd, in volgorde van bouwen:
@@ -84,6 +81,11 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-82] Opruimen na de onderhoudsronde (23 november, 121f9c1)
+- [I-74] Na I-67 (23 november, 121f9c1)
+- [I-73] Wandeling van het horloge (23 november, 121f9c1)
+- [I-60] Hoe ging het? (23 november, 121f9c1)
+- [I-113] Heropen je een training terwijl Lichter aan staat en de aangenomen ijkset al weg is, dan weet het… (23 november, 121f9c1)
 - [I-53] Routes op reis (23 november, fec6c45)
 - [I-78] Vroeg zien dat je ziek wordt, scherper (23 november, fec6c45)
 - [I-33] Hoogtemeters, na stap 1, rest (23 november, fec6c45)
