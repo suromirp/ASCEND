@@ -13,7 +13,7 @@ Max twee bouwers tegelijk, nooit op dezelfde bestanden. Warden en Lookout per tw
 5. Opslag (opus): I-54 twee tabbladen, I-35 grens intervals. Warden opus.
 6. Klein, coördinator zelf: I-87 tikdoelen Testloop, I-20 Jaaroverzicht, I-51 zin. Plus I-104 en I-105 in de eerstvolgende Lookout.
 7. Route vervolg (sonnet): I-53. I-76 eerst Scout (onderzoek).
-Niet vannacht: I-77, I-33, I-78 (back-up van de eigenaar nodig, skill naspelen); I-14, I-18, I-23, I-34 (groot, ontwerp eerst); I-103 (pas bij derde keer).
+Back-up van de eigenaar (23 november 00:52) staat in de scratchpad van deze sessie, `backup/backup-2026-11-23.json`, chmod 600, alleen lezen met Python -I, nooit in repo, tests of commits. Daarmee kan vannacht 8. Hoogtemeters en ziek (naspelen eerst): I-77, I-33, I-78. Niet vannacht: I-14, I-18, I-23, I-34 (groot, ontwerp eerst); I-103 (pas bij derde keer).
 
 Beter kan (één regel per bundel):
 
