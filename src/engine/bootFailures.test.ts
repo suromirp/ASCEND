@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { bootFailureLine, noteBootOutcomes, type BootFailureRecord } from './bootFailures';
+import { bootFailureDetails, bootFailureLine, noteBootOutcomes, type BootFailureRecord } from './bootFailures';
 
 const AT = '2026-11-23T07:00:00.000Z';
 
@@ -30,7 +30,14 @@ describe('bootFailures: een herstelstap die elke start faalt, geteld', () => {
   it('de zin: niets bij geen fout, de stap met de meeste fouten op rij voorop', () => {
     expect(bootFailureLine(undefined)).toBeUndefined();
     expect(bootFailureLine({})).toBeUndefined();
-    expect(bootFailureLine({ tidyOldProposals: { count: 1, firstAt: AT, lastAt: AT } })).toBe('Een herstelstap bij het openen mislukte de laatste start (tidyOldProposals). Je gegevens blijven staan; de volgende start probeert het opnieuw.');
-    expect(bootFailureLine({ a: { count: 2, firstAt: AT, lastAt: AT }, b: { count: 5, firstAt: AT, lastAt: AT } })).toBe('Een herstelstap bij het openen mislukte de laatste 5 starts op rij (b, en nog 1). Je gegevens blijven staan; de volgende start probeert het opnieuw.');
+    expect(bootFailureLine({ tidyOldProposals: { count: 1, firstAt: AT, lastAt: AT } })).toBe('Een herstelstap bij het openen mislukte de laatste start. Je gegevens blijven staan; de volgende start probeert het opnieuw.');
+    expect(bootFailureLine({ a: { count: 2, firstAt: AT, lastAt: AT }, b: { count: 5, firstAt: AT, lastAt: AT } })).toBe('2 herstelstappen bij het openen mislukten de laatste 5 starts op rij. Je gegevens blijven staan; de volgende start probeert het opnieuw.');
+  });
+
+  it('de zin noemt geen stapnaam; die staat achter Details', () => {
+    const rec = { 'seedIfEmpty@1': { count: 3, firstAt: AT, lastAt: AT }, tidyOldProposals: { count: 1, firstAt: AT, lastAt: AT } };
+    expect(bootFailureLine(rec)).not.toMatch(/seedIfEmpty|tidyOldProposals|@/);
+    expect(bootFailureDetails(rec)).toEqual(['seedIfEmpty@1: de laatste 3 starts op rij', 'tidyOldProposals: de laatste start']);
+    expect(bootFailureDetails(undefined)).toEqual([]);
   });
 });

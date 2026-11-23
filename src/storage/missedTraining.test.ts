@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, wipeAllData } from './database';
 import { linkLogNow, unlinkLogsNow } from './missedTraining';
 import { buildBackupEnvelope } from './backupExport';
@@ -53,6 +53,66 @@ describe('koppelen schrijven: het tweede vangnet', () => {
     await SessionLogsRepo.put(watchRun('h1', { externalId: undefined, source: 'manual' }));
     expect(await linkLogNow('h1', 'easy', '2026-10-28T09:00:00Z')).toBe(false);
     expect((await SessionLogsRepo.getAll())[0].plannedSessionId).toBeUndefined();
+  });
+});
+
+// Een schrijfactie die halverwege faalt: de n-de put gooit, de rest loopt gewoon.
+function failPutNumber(n: number) {
+  const proto = (globalThis as unknown as { IDBObjectStore: { prototype: { put: (...a: unknown[]) => unknown } } }).IDBObjectStore.prototype;
+  const original = proto.put;
+  let calls = 0;
+  return vi.spyOn(proto, 'put').mockImplementation(function (this: unknown, ...args: unknown[]) {
+    calls++;
+    if (calls === n) throw new Error('nagemaakte schrijffout');
+    return original.apply(this, args);
+  });
+}
+
+describe('koppelen en ontkoppelen: alles of niets', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('een fout bij het schrijven laat de log los staan, en daarna lukt koppelen en Ongedaan maken gewoon', async () => {
+    await PlannedSessionsRepo.put(planned('easy'));
+    await SessionLogsRepo.put(watchRun('w1'));
+    const spy = failPutNumber(1);
+    await expect(linkLogNow('w1', 'easy', '2026-10-28T09:00:00Z')).rejects.toThrow();
+    spy.mockRestore();
+    expect((await SessionLogsRepo.getAll())[0]).toEqual(watchRun('w1'));
+    expect(await linkLogNow('w1', 'easy', '2026-10-28T09:00:00Z')).toBe(true);
+    expect(await unlinkLogsNow(['w1'])).toBe(1);
+    expect((await SessionLogsRepo.getAll())[0]).toEqual(watchRun('w1'));
+  });
+
+  it('Ongedaan maken dat halverwege faalt, laat beide koppelingen staan; opnieuw proberen haalt ze allebei weg', async () => {
+    await PlannedSessionsRepo.put(planned('a'));
+    await PlannedSessionsRepo.put(planned('b', { scheduledDate: '2026-10-29' }));
+    await SessionLogsRepo.put(watchRun('w1'));
+    await SessionLogsRepo.put(watchRun('w2'));
+    expect(await linkLogNow('w1', 'a', '2026-10-28T09:00:00Z')).toBe(true);
+    expect(await linkLogNow('w2', 'b', '2026-10-28T09:00:00Z')).toBe(true);
+    const spy = failPutNumber(2);
+    await expect(unlinkLogsNow(['w1', 'w2'])).rejects.toThrow();
+    spy.mockRestore();
+    const after = await SessionLogsRepo.getAll();
+    expect(after.map((l) => l.plannedSessionId).sort()).toEqual(['a', 'b']);
+    expect(await unlinkLogsNow(['w1', 'w2'])).toBe(2);
+    const undone = await SessionLogsRepo.getAll();
+    expect(undone.find((l) => l.id === 'w1')).toEqual(watchRun('w1'));
+    expect(undone.find((l) => l.id === 'w2')).toEqual(watchRun('w2'));
+  });
+
+  it('twee keer tegelijk koppelen aan dezelfde training geeft één koppeling', async () => {
+    await PlannedSessionsRepo.put(planned('easy'));
+    await SessionLogsRepo.put(watchRun('w1'));
+    await SessionLogsRepo.put(watchRun('w2'));
+    const results = await Promise.all([linkLogNow('w1', 'easy', '2026-10-28T09:00:00Z'), linkLogNow('w2', 'easy', '2026-10-28T09:00:00Z')]);
+    expect(results.filter(Boolean)).toHaveLength(1);
+    expect((await SessionLogsRepo.getAll()).filter((l) => l.plannedSessionId === 'easy')).toHaveLength(1);
   });
 });
 

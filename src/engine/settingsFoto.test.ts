@@ -372,5 +372,7 @@ function photo(): string {
 describe('de foto van de instellingen', () => {
   it('is gelijk aan instellingen-foto.json', async () => {
     await expect(photo()).toMatchFileSnapshot('./__snapshots__/instellingen-foto.json');
-  });
+    // Een grote foto over alle instellingen; bij de volle testronde naast andere bestanden kan die langer duren
+    // dan de standaardgrens van 30 seconden (I-134).
+  }, 120_000);
 });
