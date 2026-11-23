@@ -3,6 +3,7 @@
 ## Start (bijgewerkt 23 november 16:45 Amsterdam, coördinator session_01LnDpSnEAuFAjTkBK2YLZBH)
 
 - 16:42: overgenomen door session_01LnDpSkfAkTpyoFVnRE9gBr. Sherpa Opus loopt op I-154, tak claude/terugkeer-voorrang; daarna Warden Opus. Deploy df187512 groen 16:41, pushmelding 16:50, werkkaart ververst.
+- I-154 gebouwd: tak claude/terugkeer-voorrang (1920cbaf + verslag 2c274c1d), alle controles groen; Warden Opus en Lookout Sonnet lopen. Beslist op advies: geldt voor elke oorzaak van de terugkeer, ook stille weken (één toets op cause als de eigenaar anders wil). kaart:vergelijk: drie instellingenbladen van I-23 staan nog niet in docs/app-kaart, bijwerken bij de squash.
 
 Lees dit en CLAUDE.md. `eigenaar.md` en `docs/backlog.md` niet lezen, alleen grep op I-nummer. Meer nodig: `werkwijze.md`. Oude standen: git-geschiedenis.
 
