@@ -151,8 +151,8 @@ describe('een wandeling van 4 km bij een lange duurloop', () => {
     expect(p.activity.kind).toBe('hike');
     expect(p.original?.kind).toBe('run');
     expect(p.match).toBeUndefined();
-    expect(p.template?.id).toBe('tpl_herstel');
-    expect(p.fitNote).toBe('Wandeltempo, 13:06 per km: dit wordt een herstelwandeling. Was het een loop? Kies dan Andere training.');
+    expect(p.template?.id).toBe('tpl_walk');
+    expect(p.fitNote).toBe('Wandeltempo, 13:06 per km: dit wordt een wandeling. Was het een loop? Kies dan Andere training.');
     expect(autoTickMatch(walk, [planned('long', 'tpl_long_run', '2026-11-02')], templates, [], '2026-11-02', undefined, FIT)).toBeUndefined();
   });
 

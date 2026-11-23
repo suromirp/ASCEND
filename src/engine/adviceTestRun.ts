@@ -3,12 +3,11 @@
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
-import { isIllnessDay } from './illness';
-import { mayPropose } from './dayRules';
+import { dayRules, mayPropose } from './dayRules';
 import { findHeavyConflicts, freshnessAt, respectsHeavySpacing, dayHasRoomFor, isHeavyBeforeTest, isLegHeavyTemplate, testRestHours, withTestRestHours } from './scheduler';
 import { addDays, daysBetween, mondayOfWeek, formatWeekdayDateNL } from '../utils/dates';
 import { type AdviceInputs, type Advice, isDone, inProgram, leavesNextHardFresh, proposal, MAX_OPTIONS, recoveryWeekGuard } from './adviceShared';
-import { isTaperDay, raceDatesOf } from './raceWindow';
+import { raceDatesOf } from './raceWindow';
 
 // --- Rule TEST-MAKE-ROOM -----------------------------------------------------
 // Trigger: the 5 km test run was missed or skipped (no time). The test is
@@ -64,6 +63,8 @@ export function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, Se
   if (!test) return [];
   const today = inputs.asOf;
   const races = raceDatesOf(inputs.plannedSessions, templateById);
+  // De dagkeuze via de ene regel (engine/dayRules.ts, I-74): ziek en de afbouw van een race die er al was.
+  const rules = dayRules({ today, illness: inputs.illnessEpisodes, races });
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const open = (s: PlannedSession) => s.status !== 'skipped' && !loggedIds.has(s.id);
   // Not in the two weeks before a race: that is the taper.
@@ -93,9 +94,9 @@ export function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, Se
   // A retry of TEST-RETRY that did not happen is TEST-RETRY's to speak for (one voice, one Liever niet).
   const lost = again?.row ?? around ?? inputs.plannedSessions
     .filter((s) => s.templateId === TEST_RUN_ID && !loggedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id) && !inputs.retryRows?.has(s.id)
-      && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, today)
+      && !rules.ill(s.scheduledDate)
       // Een testloop uit de afbouw van een race die er al was, vervalt zoals in Week.
-      && !isTaperDay(s.scheduledDate, races, today)
+      && !rules.taperDone(s.scheduledDate)
       && (s.status === 'skipped' ? daysBetween(s.scheduledDate, today) >= -14 && daysBetween(s.scheduledDate, today) <= 7 : s.scheduledDate < today && daysBetween(s.scheduledDate, today) <= 7))
     .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
   if (!lost) return [];
@@ -106,9 +107,9 @@ export function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, Se
   // date, nearest first, never a rest day itself.
   const days = around
     ? Array.from({ length: 9 }, (_, i) => addDays(lost.scheduledDate, [1, -1, 2, -2, 3, -3, 4, -4, 5][i]))
-      .filter((d) => d > today && !restDates.has(d) && !isIllnessDay(d, inputs.illnessEpisodes, today))
+      .filter((d) => d > today && !restDates.has(d) && !rules.ill(d))
     : Array.from({ length: TEST_ROOM_DAYS }, (_, i) => addDays(today, i + 1))
-      .filter((d) => !again || (!again.blocked(d) && !isIllnessDay(d, inputs.illnessEpisodes, today)));
+      .filter((d) => !again || (!again.blocked(d) && !rules.ill(d)));
   const ruleId = forced ? 'TEST-INFLUENCE' : again ? 'TEST-RETRY' : 'TEST-MAKE-ROOM';
   const by = ['engine/adviceEngine.ts', again ? 'TEST-RETRY' : 'TEST-MAKE-ROOM'];
   const why = forced?.why ?? again?.why ?? 'De testloop van 5 km is het meetpunt voor je wedstrijdtempo: daaruit volgen je tempo en je voorspelde tijd. Daarom hoort hij erin, ook als er een andere training voor moet wijken. Eerst een voorstel, pas na Akkoord verandert er iets.';
@@ -146,7 +147,7 @@ export function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, Se
       // Leg strength after the test (that evening first); upper body the nearest free day.
       const targets = legs ? [0, 1, 2, 3] : [1, -1, 2, -2, 3];
       const to = targets.map((d) => addDays(date, d)).find((d) => {
-        if (d < today || d === s.scheduledDate && d === date || restDates.has(d) || isIllnessDay(d, inputs.illnessEpisodes, today) || !!again?.blocked(d)) return false;
+        if (d < today || d === s.scheduledDate && d === date || restDates.has(d) || rules.ill(d) || !!again?.blocked(d)) return false;
         const week = [...weekOf(d).filter((o) => o.id !== s.id && !moves.some((m) => m.session.id === o.id)), ...moves.filter((m) => m.to === d).map((m) => ({ ...m.session, scheduledDate: m.to })), ...(d === date ? [testAt] : [])];
         return dayHasRoomFor(d, t, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)
           && respectsHeavySpacing(d, t, [...others, testAt], templateById, inputs.logs, s.id)

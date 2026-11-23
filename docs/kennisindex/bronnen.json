@@ -3155,6 +3155,14 @@
    "kern": "De rustiger instap na een pauze telt de pauze vanaf je laatste echte training (meer dan zeven dagen is genoeg), staat de hele eerste week na de terugkomst tot je kiest, met het venster vanaf de dag dat je kiest; Forge begint daarin 5% lichter na meer dan tien dagen zonder kracht; een vrije periode mag je achteraf vastleggen of verlengen tot de grens van Periode achteraf vastleggen (advies 4 weken), zonder dat er iets verschuift.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-23-ziek-en-test-of-wedstrijd.md": {
+   "onderwerpen": [
+    "week",
+    "planning"
+   ],
+   "kern": "Een test of wedstrijd op een ziektedag staat in Let op; een test krijgt alleen verplaatsen (de verste passende dag van de week), een wedstrijd nooit een voorstel; een gewone training van jou krijgt laten vervallen of verplaatsen (ziek eerst vervallen, verkouden of opbouw eerst verplaatsen); de keuze gaat op de rol, niet op het slot.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-14-verborgen-schermen.md": {
    "onderwerpen": [
     "bediening-en-beweging"

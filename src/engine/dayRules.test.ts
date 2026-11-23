@@ -8,7 +8,7 @@ import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { addDays, isoWeekday, mondayOfWeek } from '../utils/dates';
-import { CAUSE_ORDER, DAY_CAUSE_TEXT, dayRules, mayOn, YOURS_LINE, type DayQuestion, type DayState, type DayStep } from './dayRules';
+import { CAUSE_ORDER, DAY_CAUSE_TEXT, dayRules, mayOn, planKnows, YOURS_LINE, type DayQuestion, type DayState, type DayStep } from './dayRules';
 import { activeIllness, isHeavySession, isIllnessDay, recoveryRamp } from './illness';
 import { isAwayFor, isLeaveBlockedDay, isPauseDay, leaveDays, lightDays } from './leave';
 import type { MoveContext } from './moveSuggestions';
@@ -16,6 +16,7 @@ import { needsGymOn } from './noGymGuard';
 import { isTaperDay } from './raceWindow';
 import { illnessHeld as replanHeld } from './replanWeek';
 import { isGymStrengthTemplate } from './templateRoles';
+import { strengthAllows } from './strengthTraining';
 
 const { templates } = buildDefaultProgramData();
 const byId = new Map(templates.map((t) => [t.id, t]));
@@ -351,5 +352,42 @@ describe('vergelijking met de oude toetsen over willekeurige standen', () => {
     const q = (t: SessionTemplate): DayQuestion => ({ date: TODAY, step: 'do', template: t });
     const rules = dayRules({ today: TODAY, illness: [ill('above_neck', TODAY)] });
     for (const t of templates) expect(rules.ok(q(t))).toBe(!isHeavySession(t));
+  });
+});
+
+// I-74 en I-82: de vragen voor de ronde en de dagkeuze binnen een voorstel geven precies wat de oude toetsen gaven.
+describe('holds, ill, taperDone, noGymPeriod en planKnows: gelijk aan de oude toetsen', () => {
+  it('over willekeurige standen, ook met twee races', () => {
+    const r = rng(41);
+    for (let n = 0; n < 300; n++) {
+      const base = randomState(r);
+      const state = n % 3 === 0 ? { ...base, races: [addDays(TODAY, Math.floor(r() * 8) - 6), addDays(TODAY, Math.floor(r() * 8) - 2)] } : base;
+      const rules = dayRules(state);
+      const leave = [...state.leave!];
+      const days = leaveDays(leave);
+      const light = lightDays(leave, days);
+      for (let i = -9; i < 10; i++) {
+        const date = addDays(TODAY, i);
+        const why = `${date} ${JSON.stringify(state)}`;
+        expect(rules.ill(date), why).toBe(isIllnessDay(date, [...state.illness!], TODAY));
+        expect(rules.taperDone(date), why).toBe(isTaperDay(date, state.races, TODAY));
+        expect(rules.holds(date, 'off'), why).toBe(days.get(date)?.kind === 'off');
+        expect(rules.holds(date, 'off', 'trek'), why).toBe(days.get(date)?.kind === 'off' || days.get(date)?.kind === 'trek');
+        expect(rules.holds(date, 'light'), why).toBe(light.has(date));
+        expect(rules.holds(date, 'ill', 'ill_light'), why).toBe(isIllnessDay(date, [...state.illness!], TODAY));
+        const gym = days.get(date)?.kind === 'nogym' ? days.get(date)!.period : undefined;
+        expect(rules.noGymPeriod(date), why).toBe(gym);
+        for (const t of SAMPLE) expect(!!rules.noGymPeriod(date) && isGymStrengthTemplate(t)).toBe(needsGymOn(date, t, leave));
+      }
+    }
+  });
+
+  it('planKnows: met kracht uit geen kracht, ook geen eigen gewicht; met kracht aan alles', () => {
+    for (const t of templates) {
+      expect(planKnows(t, false)).toBe(true);
+      expect(planKnows(t, true)).toBe(strengthAllows(t, { strengthTraining: false }));
+    }
+    expect(planKnows(BODY, true)).toBe(false);
+    expect(planKnows(EASY, true)).toBe(true);
   });
 });

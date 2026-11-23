@@ -243,6 +243,17 @@ export interface DayRules {
   // De dag van de vakantie, tocht of periode zonder sportschool (engine/leave.ts#leaveDays), voor wie de periode zelf
   // nodig heeft.
   leaveDay(date: string): LeaveDay | undefined;
+  // Voor de ronde (stap 5) en de dagkeuze binnen een voorstel, die bovenop de tabel een eigen maat hebben: geldt een van
+  // deze oorzaken op de dag (I-74, I-82). Morgen van een lopende ziekte die nog niet in de melding valt (`ahead`) telt
+  // niet mee, zoals bij tellen.
+  holds(date: string, ...causes: DayCause[]): boolean;
+  // Ziek op deze dag volgens een melding (koorts, buikgriep, neus of keel), tot en met de dag van beter melden of tot
+  // vandaag; morgen niet.
+  ill(date: string): boolean;
+  // In de afbouw van een race die vandaag al is of voorbij is: wat daar niet gedaan is, vervalt (de afbouw bij tellen).
+  taperDone(date: string): boolean;
+  // De periode zonder sportschool van deze dag, als de dag er een is en niet strenger (vakantie, tocht).
+  noGymPeriod(date: string): LeavePeriod | undefined;
 }
 
 export function dayRules(state: DayState): DayRules {
@@ -308,13 +319,27 @@ export function dayRules(state: DayState): DayRules {
     return { ok: false, outcome, cause: first.cause, reason, also: rest, more };
   };
 
+  const binding = (f: DayFact) => !f.illness?.ahead;
+  const taperDone = (date: string) => facts(date).some((f) => f.cause === 'taper' && !!f.raceDate && f.raceDate <= today);
+
   return {
     state,
     facts,
     may,
     ok: (q) => may(q).ok,
     leaveDay: (date) => days.get(date),
+    holds: (date, ...causes) => facts(date).some((f) => causes.includes(f.cause) && binding(f)),
+    ill: (date) => { const f = illFact(date); return !!f && binding(f); },
+    taperDone,
+    noGymPeriod: (date) => { const day = days.get(date); return day?.kind === 'nogym' ? day.period : undefined; },
   };
+}
+
+// Kent de planning dit sjabloon? Met kracht uit niet als het kracht is: dezelfde regel als de tabel (oorzaak kracht uit,
+// stap plaatsen), voor de ronde en het weekvoorschrift die de sjablonen kiezen voordat er een dag is.
+export function planKnows(template: TemplateFacts, strengthOff: boolean): boolean {
+  if (!strengthOff) return true;
+  return rule('strength_off', { date: '', step: 'place', template }, { cause: 'strength_off' }, '') === undefined;
 }
 
 // Voor één vraag zonder de stand te bewaren.

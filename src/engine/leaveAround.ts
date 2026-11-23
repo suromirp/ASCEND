@@ -27,7 +27,7 @@
 
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { addDays, daysBetween, mondayOfWeek, isoWeekday } from '../utils/dates';
-import { leaveDays } from './leave';
+import { dayRules } from './dayRules';
 import { lockLevel, validateWeeks, type CheckInput, type Repair } from './weekValidator';
 import { isLegHeavyTemplate } from './scheduler';
 import { templateSport } from './sports';
@@ -91,13 +91,21 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
   const periods = (input.check.leave ?? []).filter((p) => p.kind === 'no_training' || p.kind === 'no_gym');
   if (periods.length === 0) return none;
   const { today, goalDay, templates, logs, restDay } = input.check;
-  const days = leaveDays(input.check.leave);
+  // De dagen van een periode via de ene regel (engine/dayRules.ts, I-82): vakantie, tocht en zonder sportschool.
+  const rules = dayRules({ today, leave: input.check.leave });
+  const kindOn = (date: string) => rules.leaveDay(date)?.kind;
   const byId = new Map(templates.map((t) => [t.id, t]));
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const raceDays = new Set(input.check.raceDays ?? []);
   const until = [goalDay ? addDays(goalDay, -1) : addDays(today, 365), input.check.until, input.limit].filter((d): d is string => !!d).sort()[0];
-  const off = [...days.entries()].filter(([d, v]) => (v.kind === 'off' || v.kind === 'nogym') && d >= today && d <= until).map(([d]) => d).sort();
-  const fixedDay = (date: string) => days.get(date)?.kind === 'nogym';
+  const offSet = new Set<string>();
+  for (const p of periods) {
+    for (let d = p.startDate > today ? p.startDate : today; d <= p.endDate && d <= until; d = addDays(d, 1)) {
+      if (kindOn(d) === 'off' || rules.noGymPeriod(d)) offSet.add(d);
+    }
+  }
+  const off = [...offSet].sort();
+  const fixedDay = (date: string) => !!rules.noGymPeriod(date);
   if (off.length === 0) return none;
 
   // The weeks that hold a holiday day, joined when only one week lies between them.
@@ -142,7 +150,7 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
       if (s.status === 'skipped') return true;
       // The daily run (no proposal in front of you) only finds a day for what stands on a holiday day; the rest of the
       // stretch is arranged again only in a proposal for a new holiday, which you accept.
-      if (!input.reshuffle && days.get(s.scheduledDate)?.kind !== 'off') return false;
+      if (!input.reshuffle && kindOn(s.scheduledDate) !== 'off') return false;
       return lockLevel(s, logged, today) === 3 || (lockLevel(s, logged, today) === 1 && markedByHoliday(s));
     };
     const keyTask = (t: SessionTemplate | undefined) => !!t && LEAVE_SPACING_ROLES.some((r) => hasRole(t, r));
@@ -175,7 +183,7 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
     const windowEnd = addDays(last, 13);
     const empty = (date: string) => !openOthers.some((s) => s.scheduledDate === date);
     const candidateDays = Array.from({ length: daysBetween(windowStart, windowEnd) + 1 }, (_, i) => addDays(windowStart, i))
-      .filter((d) => d >= today && d <= until && !(goalDay && d >= goalDay) && !raceDays.has(d) && days.get(d)?.kind !== 'off' && days.get(d)?.kind !== 'trek' && !fixedDay(d) && !keepBefore(d) && !(restDay && isoWeekday(d) === restDay))
+      .filter((d) => d >= today && d <= until && !(goalDay && d >= goalDay) && !raceDays.has(d) && kindOn(d) !== 'off' && kindOn(d) !== 'trek' && !fixedDay(d) && !keepBefore(d) && !(restDay && isoWeekday(d) === restDay))
       .filter((d) => inCluster(d) || empty(d))
       .filter((d) => !others.some((s) => s.scheduledDate === d && (logged.has(s.id) || idIsTestOrRace(s.templateId, byId))));
 
@@ -210,7 +218,7 @@ export function planAroundLeave(all: PlannedSession[], input: LeaveAroundInput):
       // Only the long run: not a mountain hike (the role covers both), a short version or a day in a trek, as in ONE-LONG.
       const isLongRun = (s: PlannedSession) => {
         const t = byId.get(s.templateId);
-        return !!t && hasRole(t, 'long') && templateSport(t) !== 'hiking' && !s.plannedMinutes && days.get(s.scheduledDate)?.kind !== 'trek';
+        return !!t && hasRole(t, 'long') && templateSport(t) !== 'hiking' && !s.plannedMinutes && kindOn(s.scheduledDate) !== 'trek';
       };
       const longRuns = built.filter((s) => s.status !== 'skipped' && s.scheduledDate >= addDays(windowStart, -7) && s.scheduledDate <= addDays(windowEnd, 7) && isLongRun(s));
       for (let i = 0; i < longRuns.length; i++) {

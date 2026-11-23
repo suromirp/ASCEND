@@ -295,7 +295,7 @@ function fitIssueOf(activity: ExternalActivity, original: ExternalActivity, matc
 }
 
 // When nothing is planned for it: the template an unplanned activity is
-// saved under, by kind. A short walk is a Herstel walk; a real mountain day
+// saved under, by kind. A short walk is a plain Wandeling; a real mountain day
 // (300 m up or more) is a Bergtocht.
 export function fallbackTemplate(activity: ExternalActivity, templates: SessionTemplate[]): SessionTemplate | undefined {
   const pool = templatesForKind(activity.kind, templates, activity.countedSport, activity.otherType);
@@ -310,7 +310,8 @@ export function fallbackTemplate(activity: ExternalActivity, templates: SessionT
     case 'strength':
       return pool[0];
     case 'hike':
-      return ((activity.elevationGainM ?? 0) >= 300 ? byId('tpl_mountain_hike') : byId('tpl_herstel')) ?? pool.find((t) => t.type === 'hiking') ?? pool[0];
+      // A plain walk is called Wandeling, as in Losse training (I-73); Herstel only when the list has no Wandeling.
+      return ((activity.elevationGainM ?? 0) >= 300 ? byId('tpl_mountain_hike') : byId('tpl_walk') ?? byId('tpl_herstel')) ?? pool.find((t) => t.type === 'hiking') ?? pool[0];
     default:
       return undefined;
   }

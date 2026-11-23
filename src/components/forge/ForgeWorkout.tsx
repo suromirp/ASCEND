@@ -87,7 +87,7 @@ import { resolveDeviceNotices } from '../../engine/deviceNotices';
 import { type Rest, clock, type BlockActions } from './forgeWorkoutHelpers';
 import { ExerciseBlock } from './ExerciseBlock';
 import { OtherSessionRunning } from './OtherSessionRunning';
-import { DRAFT_VERSION, initialForgeLog, poundLine, sessionStepSwaps, type WorkoutDraft } from './forgeDraft';
+import { DRAFT_VERSION, calAcceptedOf, initialForgeLog, poundLine, sessionStepSwaps, type WorkoutDraft } from './forgeDraft';
 import { useForgeDraft } from './useForgeDraft';
 import { useForgeClock } from './useForgeClock';
 import { useForgeStands } from './useForgeStands';
@@ -199,7 +199,7 @@ function ForgeWorkoutInner({
   // mergeDraft na herladen een onaangeraakte plek midden in de sessie.
   // Je Akkoord op de kaart IJkset is een feit van deze training, niet af te leiden uit de rij: Lichter haalt de rij weg en
   // Terugzetten zet hem terug. Een heropend concept met de set erin telt als aangenomen.
-  const [calAccepted, setCalAccepted] = useState(() => hasCalibrationRow(restored?.exercises));
+  const [calAccepted, setCalAccepted] = useState(() => calAcceptedOf(restored));
   const [sessionSwaps] = useState(() => sessionStepSwaps(restored, settings.strengthModel?.stepSwaps));
   const allSlots = useMemo(() => forgeSlotsFor(template, { ...settings.strengthModel, stepSwaps: sessionSwaps }, date), [template, settings.strengthModel, sessionSwaps, date]);
   // Hoogstens per krachttraining (engine/forgeTimeCap.ts): met de geleerde tijd per set gaat er eerst bijwerk af
@@ -274,7 +274,7 @@ function ForgeWorkoutInner({
     const log = initialForgeLog(w, restored, readOnly);
     // Een heropend concept volgt de stand: staat IJkset op Uit, dan gaat een ijkset die nog open staat eruit.
     if (readOnly || (!replanned && strength.calibrationMode !== 'uit')) return { workout: w, log };
-    return syncCalibrationFor(w, log, calInput(easeOn, hasCalibrationRow(restored?.exercises)), Date.now(), () => makeId('fe'));
+    return syncCalibrationFor(w, log, calInput(easeOn, calAcceptedOf(restored)), Date.now(), () => makeId('fe'));
   });
   const [workout, setWorkout] = useState<WorkoutExercise[]>(opening.workout);
   // De regel "Ingekort tot ongeveer 60 minuten" zegt wat er bij het openen wegviel, bij de eerste stand van de
@@ -337,7 +337,7 @@ function ForgeWorkoutInner({
   }, [openSlot]);
 
   // Het concept en de wijzer van de sessie (useForgeDraft.ts).
-  const { dropDraft } = useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant: initialVariant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt, stepSwaps: sessionSwaps });
+  const { dropDraft } = useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant: initialVariant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt, stepSwaps: sessionSwaps, calAccepted });
   // Jouw handelingen zetten het laatste moment van handelen: een set afvinken, typen, een oefening ruilen.
   const firstWorkout = useRef(workout);
   useEffect(() => {

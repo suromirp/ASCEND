@@ -104,13 +104,14 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
     return [...merged.values()].filter((c) => c.removed || c.to !== c.from || c.minutes);
   };
 
-  // Another day of the same week for one session, the nearest that is better.
-  const viaScan = (id: string): Change[] => {
+  // Another day of the same week for one session, the nearest that is better (`far`: the farthest, for a test while ill).
+  const viaScan = (id: string, far = false): Change[] => {
     const s = sessionById(id);
     if (!s) return [];
     const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i))
       .filter((d) => d !== s.scheduledDate && d >= input.today && (!input.goalDay || d < input.goalDay) && !(input.raceDays ?? []).includes(d) && isoWeekday(d) !== input.restDay)
       .sort((a, b) => Math.abs(Date.parse(a) - Date.parse(s.scheduledDate)) - Math.abs(Date.parse(b) - Date.parse(s.scheduledDate)) || a.localeCompare(b));
+    if (far) days.reverse();
     for (const d of days) {
       const change: Change = { id, from: s.scheduledDate, to: d };
       if (improves([change])) return [change];
@@ -248,9 +249,19 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
       break;
     }
     case 'ILL': {
-      // Ziek: wat ziek melden doet, alleen voor deze rij van jou. Laten vervallen; telt niet als gemist.
+      // Ziek: wat ziek melden doet, alleen voor deze rij van jou. Laten vervallen; telt niet als gemist. Of naar een rustige
+      // dag van de week (I-74): een dag waarop de regel niets meer zegt en de week er niet slechter van wordt. Verkouden
+      // of in de opbouw is verplaatsen het vriendelijkst en staat het voorop; met koorts of buikgriep eerst laten
+      // vervallen. Op de rol, niet op het niveau (een test of wedstrijd met een slot is niveau 1): een wedstrijd nooit een
+      // voorstel, een test alleen verplaatsen, bij ziek naar de verste passende dag zodat je beter bent.
       const subject = sessionById(concern.finding.subjectId);
-      if (subject && level(subject) === 1) push([{ id: subject.id, from: subject.scheduledDate, removed: true }]);
+      const t = subject && templateOf(subject);
+      if (!subject || !t || level(subject) === 0 || hasRole(t, 'race')) break;
+      const sick = concern.finding.illness === 'ill';
+      if (hasRole(t, 'test')) { push(viaScan(subject.id, sick)); break; }
+      if (level(subject) !== 1) break;
+      const drop: Change[] = [{ id: subject.id, from: subject.scheduledDate, removed: true }];
+      if (sick) { push(drop); push(viaScan(subject.id)); } else { push(viaScan(subject.id)); push(drop); }
       break;
     }
     case 'NO-GYM': {

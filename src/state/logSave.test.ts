@@ -475,7 +475,7 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     expect(FORM_SAVE_NOTE.slowLoose).not.toMatch(/ASCEND|de app/);
     expect(FORM_SAVE_NOTE.slowLoose.length).toBeLessThanOrEqual(110);
     expect(HOW_TEXT.slowLoose).toBe(FORM_SAVE_NOTE.slowLoose);
-    expect(howSrc).toMatch(/: loose \? HOW_TEXT\.slowLoose : HOW_TEXT\.slow\}/);
+    expect(howSrc).toMatch(/: still \|\| loose \? HOW_TEXT\.slowLoose : HOW_TEXT\.slow\}/);
     expect(HOW_TEXT.slow).toBe(FORM_SAVE_NOTE.slow);
     expect(HOW_TEXT.failed).toBe(FORM_SAVE_NOTE.failed);
     expect(HOW_TEXT.failedLoose).toBe(FORM_SAVE_NOTE.failedLoose);
@@ -488,7 +488,7 @@ describe('geen melding bovenin als het scherm de uitkomst zelf toont', () => {
     expect(howSrc).toMatch(/save: \(\) => logOrAlready\(logSession, input, /);
     // De zin wordt vastgelegd bij de uitkomst, niet gelezen in de render; en een blad dat al dicht is meldt bovenin.
     // Vanaf het begin van het sluiten (onLeave van useSheetClose) telt het blad niet meer als in beeld.
-    expect(howSrc).toMatch(/reportIfGone\(!leavingRef\.current && !closedRef\.current && !goneRef\.current, writeError, reportStorageError\);\s*setFailedText\(failedNote\(/);
+    expect(howSrc).toMatch(/reportIfGone\(!leavingRef\.current && !closedRef\.current && !goneRef\.current, writeError, reportStorageError\);[\s\S]*?setFailedText\(failedNote\(/);
     expect(howSrc).toMatch(/\}, 200, canClose, \(\) => \{ leavingRef\.current = true; \}\);/);
     expect(howSrc.match(/failedNote\(/g)).toHaveLength(1);
     // De sportvraag: vanaf het begin van het sluiten niet meer in beeld (I-32).

@@ -24,9 +24,7 @@ import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../model
 import { addDays, daysBetween, formatWeekdayDateNL, isoWeekday, localDateOf, mondayOfWeek, weekDates, weekdayOf } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { goalKindOf } from './goalLabels';
-import { isIllnessDay } from './illness';
-import { mayPropose } from './dayRules';
-import { leaveDays, lightDays } from './leave';
+import { dayRules, mayPropose } from './dayRules';
 import { mainGoal, type Ladder } from './mainGoal';
 import { MOUNTAIN_KINDS, hasMountainGoal } from './mountainMuscles';
 import { isKeyFor, type KeyFocus } from './keySession';
@@ -202,8 +200,8 @@ export function findDescentDay(input: DescentAdviceInput, from: string, until: s
   const busy = (day: string) => rowsOn(day).length > 0 || logs.some((l) => l.completedDate === day);
   // Een dag zonder training: niets gepland of gedaan behalve Herstel.
   const trains = (day: string) => rowsOn(day).some((s) => byId.get(s.templateId)?.type !== 'recovery') || logs.some((l) => l.completedDate === day && l.type !== 'recovery');
-  const leave = leaveDays(input.leave);
-  const light = lightDays(input.leave, leave);
+  // De dagkeuze via de ene regel (engine/dayRules.ts, I-74): vakantie, tocht, licht rond een tocht en ziek.
+  const rules = dayRules({ today, leave: input.leave, illness: input.illnessEpisodes });
   const trips = input.context?.trips ?? [];
   // Een herstelwandeling of een rustige loop: niet hard, niet zwaar voor de benen, geen sleuteltraining, test of wedstrijd.
   const easy = (t: SessionTemplate) => t.type === 'recovery'
@@ -211,8 +209,7 @@ export function findDescentDay(input: DescentAdviceInput, from: string, until: s
 
   const fits = (day: string, addOn = false): boolean => {
     if (input.restDay && isoWeekday(day) === input.restDay) return false;
-    const kind = leave.get(day)?.kind;
-    if (kind === 'off' || kind === 'trek' || light.has(day) || isIllnessDay(day, input.illnessEpisodes, today)) return false;
+    if (rules.holds(day, 'off', 'trek', 'light') || rules.ill(day)) return false;
     const before = templatesOn(addDays(day, -1));
     const after = templatesOn(addDays(day, 1));
     if ([...before, ...after].some((t) => isHardRun(t)) || after.some((t) => isLegHeavyTemplate(t))) return false;
@@ -275,7 +272,7 @@ export function descentAdvice(input: DescentAdviceInput): Advice[] {
   if (!template) return [];
   // Ziek, of net beter: eerst herstellen. Op vakantie zonder training: stil tot je terug bent.
   if (!mayPropose(today, input.illnessEpisodes)) return [];
-  if (leaveDays(input.leave).get(today)?.kind === 'off') return [];
+  if (dayRules({ today, leave: input.leave }).holds(today, 'off')) return [];
 
   const clock = descentClock(input.logs, input.templates, today, input.leave);
   const byId = new Map(input.templates.map((t) => [t.id, t]));

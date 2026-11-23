@@ -14,6 +14,7 @@ import {
   type ScheduleProposal,
 } from '../engine/scheduler';
 import { caughtUpMap, qualifiesForCatchUp } from '../engine/catchUp';
+import { raceDatesOf } from '../engine/raceWindow';
 import { writeCatchUp } from '../storage/catchUpApply';
 import { writeSwap } from '../storage/weekSwap';
 import { snapshotWritten } from '../storage/undoPlanChange';
@@ -185,6 +186,9 @@ export function useMoveActions(deps: {
       const catchUpTemplates = new Map((await SessionTemplatesRepo.getAll()).map((t) => [t.id, t]));
       const loggedIds = new Set((await SessionLogsRepo.getAll()).map((l) => l.plannedSessionId));
       const caughtUp = caughtUpMap(stored);
+      // Dezelfde pauze als Week en het blad (pages/Week.tsx): wat verviel door ziek, een periode of de afbouw haal je
+      // niet in, ook niet via een voorstel dat hier langskomt (I-74).
+      const pause = { leave: settings.leavePeriods, templates: catchUpTemplates, illness: settings.illnessEpisodes, races: raceDatesOf(stored, catchUpTemplates), programStart: program?.startDate };
       const addedIds: string[] = [];
       let caughtUpCount = 0;
       for (const change of proposal.changes) {
@@ -192,7 +196,7 @@ export function useMoveActions(deps: {
         if (!session) continue;
         before.push(session);
         const template = catchUpTemplates.get(session.templateId);
-        if (template && qualifiesForCatchUp(session, template, change, { logged: loggedIds.has(session.id), today: todayISO(), caughtUp: caughtUp.has(session.id) })) {
+        if (template && qualifiesForCatchUp(session, template, change, { logged: loggedIds.has(session.id), today: todayISO(), caughtUp: caughtUp.has(session.id), pause })) {
           const added = await writeCatchUp(session, change.toDate, lock, makeId('planned'));
           addedIds.push(added.id);
           caughtUpCount++;
@@ -239,7 +243,7 @@ export function useMoveActions(deps: {
       bumpPlanRevision();
       await refresh();
     },
-    [refresh, setRecentChange],
+    [refresh, setRecentChange, settings.leavePeriods, settings.illnessEpisodes, program?.startDate],
   );
 
   const proposeSkip = useCallback(

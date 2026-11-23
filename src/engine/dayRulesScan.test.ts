@@ -29,18 +29,16 @@ const LEFT: Record<string, { calls: Partial<Record<typeof OLD[number], number>>;
   'pages/Today.tsx': { calls: { activeIllness: 1, recoveryRamp: 1, leaveLabelOn: 1 }, why: 'de missie volgt de melding (de toets zelf is dayRules, stap doen); de kaart Opbouw; het etiket van de periode van vandaag' },
   'engine/missedTraining.ts': { calls: { activeIllness: 1, isTaperDay: 1 }, why: 'geen vragen tot je beter bent; de afbouw apart omdat een horlogelog nog gekoppeld mag worden' },
   'engine/eveningBefore.ts': { calls: { activeIllness: 1, isIllnessDay: 1, leaveDays: 1 }, why: 'de avond ervoor: rust uit, er valt niets klaar te leggen; de soort periode van morgen (vakantie, tocht) voor wat er klaar ligt' },
-  // De ronde en wat de planning kent (stap 5 van het ontwerp: alleen als stap 0 tot 4 stil bleven).
-  'engine/sports.ts': { calls: { strengthAllows: 1 }, why: 'ronde: met kracht uit kent de planning geen kracht' },
-  'storage/weeklyPrescriptionStep.ts': { calls: { strengthAllows: 1 }, why: 'ronde: met kracht uit geen kracht in het voorschrift' },
-  // De dagkeuze binnen een voorstel; de poort ervoor is al mayPropose. Nog om te zetten naar de stap verplaatsen.
-  'engine/adviceCompute.ts': { calls: { isIllnessDay: 2, isTaperDay: 1, leaveDays: 1, lightDays: 1 }, why: 'dagkeuze van een voorstel' },
+  // De ronde: sports.ts kan dayRules niet lezen (een kring van imports via illness.ts en scheduler.ts), het voorschrift
+  // leest planKnows.
+  'engine/sports.ts': { calls: { strengthAllows: 1 }, why: 'ronde: met kracht uit kent de planning geen kracht (dezelfde toets als planKnows, een kring van imports houdt hem hier)' },
+  // De dagkeuze binnen een voorstel; de poort ervoor is al mayPropose. Wat over is telt (gemist, belasting) of leest
+  // de week; de dagkeuze van de herkansing, testloop, afdaalklok, kracht bij een richting en de rustdag terug lezen
+  // dayRules sinds I-74 (`holds`, `ill`, `taperDone`), de ronde en het voorschrift `planKnows`.
   'engine/adviceLoad.ts': { calls: { isIllnessDay: 1, isTaperDay: 1 }, why: 'belasting telt geen zieke dagen en de afbouw' },
   'engine/adviceShared.ts': { calls: { afterRaceGuard: 1, isAwayFor: 1, isPauseDay: 1 }, why: 'raceWeekGuard en de inhaaldag, het ene venster rond een race' },
-  'engine/adviceTestRun.ts': { calls: { isIllnessDay: 4, isTaperDay: 1 }, why: 'dagkeuze van de testloop' },
   'engine/adviceWeek.ts': { calls: { isAwayFor: 2, isIllnessDay: 3, isPauseDay: 3, isTaperDay: 1 }, why: 'inhalen en de week: dagkeuze en vandaag in een pauze' },
-  'engine/descentClock.ts': { calls: { isIllnessDay: 1, leaveDays: 2, lightDays: 1 }, why: 'dagkeuze van de afdaalklok' },
-  'engine/directionStrength.ts': { calls: { activeIllness: 1, isIllnessDay: 1, leaveDays: 1, lightDays: 1 }, why: 'dagkeuze van kracht bij een richting' },
-  'engine/restDayBack.ts': { calls: { isIllnessDay: 2, isTaperDay: 1, leaveDays: 1 }, why: 'dagkeuze van de rustdag terug' },
+  'engine/directionStrength.ts': { calls: { activeIllness: 1 }, why: 'kracht bij een richting: de week na een lopende ziekte (de dagkeuze zelf is dayRules)' },
   'engine/reentry.ts': { calls: { isAwayDay: 1 }, why: 'geen rustige instap op een dag dat je weg bent' },
   'engine/repeatWeek.ts': { calls: { isAwayDay: 1, leaveDays: 1 }, why: 'een week waarin je weg was viel niet tegen' },
   'components/WeekdayPatternLine.tsx': { calls: { isIllnessDay: 1, isTaperDay: 1, leaveDays: 1 }, why: 'het weekdagpatroon telt zieke dagen en de afbouw niet' },
@@ -48,11 +46,9 @@ const LEFT: Record<string, { calls: Partial<Record<typeof OLD[number], number>>;
   'components/WeekPlanner.tsx': { calls: { leaveLabelOn: 1 }, why: 'Week toont de band van de periode' },
   'engine/calibration.ts': { calls: { leaveDays: 1 }, why: 'de ijkset: een tocht in dezelfde week of de drie dagen erna (eigen regel naast dayRules)' },
   'engine/fullWeek.ts': { calls: { leaveDays: 1 }, why: 'de volle week leest de periode voor zijn eigen telling van vrije dagen' },
-  'engine/leaveAround.ts': { calls: { leaveDays: 1 }, why: 'ronde: de indeling rond een vakantie' },
   'engine/leaveBlock.ts': { calls: { leaveDays: 1 }, why: 'ronde: een lange wandeling op vrije dagen' },
-  'engine/leaveProposal.ts': { calls: { leaveDays: 1, leaveLabelOn: 2 }, why: 'het voorstel bij een periode zelf' },
+  'engine/leaveProposal.ts': { calls: { leaveLabelOn: 1 }, why: 'het voorstel bij een periode zelf noemt de soort dag' },
   'engine/leaveWeek.ts': { calls: { leaveDays: 1 }, why: 'de periode in de week, voor de band' },
-  'engine/nearbyTerrain.ts': { calls: { leaveDays: 1 }, why: 'de plek van een tochtdag' },
   'engine/proposalPreview.ts': { calls: { leaveLabelOn: 1 }, why: 'het voorbeeld van een voorstel noemt de periode' },
   'engine/restDayThisWeek.ts': { calls: { leaveDays: 1, leaveLabelOn: 1 }, why: 'dagkeuze van de rustdag deze week' },
   'engine/routeTarget.ts': { calls: { leaveDays: 1 }, why: 'de route van een tochtdag' },

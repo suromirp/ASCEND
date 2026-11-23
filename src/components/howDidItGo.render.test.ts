@@ -245,8 +245,13 @@ describe('opslaan in het blad', () => {
     const html = renderToStaticMarkup(createElement(SheetFoot, { state: 'save', saving: true, slow: true, failed: false, rest: false, minutes: 40, onClose: () => undefined, onAdjust: () => undefined, onSave: () => undefined }));
     expect(html).toContain(HOW_TEXT.slow);
     expect(html).toContain('Opslaan…');
-    // Na de grens mag je weg: Annuleren staat aan, het concept blijft staan.
-    expect(html).not.toMatch(/disabled=""[^>]*>Annuleren</);
+    // Na de grens mag je weg: de knop heet Sluiten (zoals de zin), staat aan en het concept blijft staan (I-60).
+    expect(html).not.toMatch(/disabled=""[^>]*>Sluiten</);
+    expect(html).not.toContain('>Annuleren<');
+    const still = renderToStaticMarkup(createElement(SheetFoot, { state: 'save', saving: false, slow: false, failed: false, still: true, rest: false, minutes: 40, onClose: () => undefined, onAdjust: () => undefined, onSave: () => undefined }));
+    expect(still).toContain(HOW_TEXT.slowLoose);
+    expect(still).toContain('>Sluiten<');
+    expect(still).toMatch(/disabled=""[^>]*>Opslaan</);
     expect(sheetSrc).toContain('const canClose = () => !savingRef.current || slowRef.current;');
     expect(sheetSrc).toContain('if (!savingRef.current && clearsDraft(wayRef.current, form.filled())) form.clearDraft();');
   });
@@ -262,7 +267,7 @@ describe('opslaan in het blad', () => {
     expect(sheetSrc).toContain('if (!savingRef.current && clearsDraft(wayRef.current, form.filled())) form.clearDraft();');
     expect(sheetSrc).toContain("const wayRef = useRef<CloseWay>('backdrop');");
     expect(sheetSrc).toContain("const close = closeAs('cross');");
-    expect(sheetSrc).toContain("onClose={closeAs(foot === 'already' ? 'already' : 'cancel')}");
+    expect(sheetSrc).toContain("onClose={closeAs(foot === 'already' ? 'already' : slow || still ? 'cross' : 'cancel')}");
   });
 
   it('ingevuld: een teruggelezen concept of een andere waarde dan het begin; de plek uit de opslag telt niet', () => {
