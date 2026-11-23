@@ -82,7 +82,7 @@ import { DayRow, YourDay, type YourDayEntry } from '../components/vandaag/DayRow
 import { DoneTodayCard, QuietDayCard } from '../components/vandaag/QuietDayCard';
 import { missionFacts } from '../engine/missionFacts';
 import { recentRunPace } from '../engine/recentRunPace';
-import { standTomorrow, tomorrowEntry, tomorrowText, trainingRowState, trainingRowsForYourDay } from '../engine/yourDay';
+import { standTomorrow, tomorrowEntryOf, tomorrowText, trainingRowState, trainingRowsForYourDay } from '../engine/yourDay';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -266,7 +266,8 @@ function TodayContent() {
   const mission = primary && primaryTemplate
     ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates, macroFactor: macroFactorLinked }), paces, resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program), recentPaceOfRuns?.range, recentPaceOfRuns?.runs)
     : undefined;
-  const tomorrow = tomorrowEntry(today, plannedSessions, templateById, program);
+  // Morgen uit het dagbeeld, zoals de balk: wat je vandaag al deed staat er niet meer, ook na zondag.
+  const tomorrow = tomorrowEntryOf(plan.day(addDays(today, 1)), program);
   const tomorrowLine = `Morgen: ${tomorrowText(tomorrow)}`;
   // Een stille dag zegt al dat er niets staat; "Morgen: Niets gepland" erachter herhaalt dat alleen.
   const quietTomorrow = tomorrow.kind === 'none' ? undefined : tomorrowLine;
@@ -430,7 +431,7 @@ function TodayContent() {
         template: primaryTemplate,
         date: primary.scheduledDate,
         program,
-        tomorrow: plannedSessions.filter((s) => s.scheduledDate === addDays(today, 1) && s.status !== 'skipped').map((s) => templateById.get(s.templateId)).filter((t): t is SessionTemplate => !!t),
+        tomorrow: plan.day(addDays(today, 1)).strip.filter((e) => !e.done).map((e) => e.template),
         yesterdayLogs: sessionLogs.filter((l) => l.completedDate === addDays(today, -1)),
         templateById,
       })}

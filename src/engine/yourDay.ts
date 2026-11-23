@@ -3,9 +3,10 @@
 // Pure: no React, no IndexedDB.
 
 import type { Program } from '../models/program';
-import type { PlannedSession, SessionTemplate } from '../models/training';
+import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { resolveEffectiveFullDuration } from './substitutions';
-import { addDays } from '../utils/dates';
+import { addDays, mondayOfWeek } from '../utils/dates';
+import { weekPlan, type PlanDay } from './dayPlan';
 
 export interface TomorrowEntry {
   kind: 'training' | 'rest' | 'none';
@@ -20,17 +21,18 @@ export function tomorrowEntry(
   planned: PlannedSession[],
   templateById: Map<string, SessionTemplate>,
   program: Program | null | undefined,
+  logs: readonly SessionLog[] = [],
 ): TomorrowEntry {
   const date = addDays(today, 1);
-  const tomorrow = planned
-    .filter((s) => s.scheduledDate === date && s.status !== 'skipped')
-    .sort((a, b) => a.order - b.order);
-  const training = tomorrow.find((s) => templateById.get(s.templateId)?.type !== 'recovery');
-  const template = training ? templateById.get(training.templateId) : undefined;
-  if (training && template) {
-    return { kind: 'training', name: template.name, minutes: resolveEffectiveFullDuration(template, date, program) };
-  }
-  if (tomorrow.length > 0) return { kind: 'rest' };
+  return tomorrowEntryOf(weekPlan({ weekStart: mondayOfWeek(date), sessions: planned, logs, templateById, today }).day(date), program);
+}
+
+// Morgen uit het dagbeeld (engine/dayPlan.ts), zoals de balk het toont: wat je vandaag al deed staat er niet meer,
+// ook niet over de weekgrens. De eerste training die nog open is, anders de rustdag, anders niets.
+export function tomorrowEntryOf(day: Pick<PlanDay, 'date' | 'strip' | 'stripRest'>, program: Program | null | undefined): TomorrowEntry {
+  const training = day.strip.find((e) => !e.done);
+  if (training) return { kind: 'training', name: training.template.name, minutes: resolveEffectiveFullDuration(training.template, day.date, program) };
+  if (day.strip.length === 0 && day.stripRest) return { kind: 'rest' };
   return { kind: 'none' };
 }
 

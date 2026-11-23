@@ -20,6 +20,11 @@ Geen nieuwe schrijver, geen opgeslagen vorm, geen migratie, geen voorstel. Allee
 - Mag 4: invariant 3 heeft nu ook de stand "concept open": een voorbije training met een concept blijft in Week en in de balk op zijn dag en is nooit de missie. Een toets dat de standen die stand ook echt raken.
 - Niet gedaan: Mag 2 van de Warden (`primary` en `rest` alleen voor vandaag). Ziek in de balk blijft zoals het is, op verzoek. Het dagbeeld draagt geen stand uit `deriveSessionStatus`, naam of minuten zoals het ontwerp schetst; dat lezen Week en de balk nog zelf. Dat is smaller dan het ontwerp, niet tegen het ontwerp in.
 
+## Tweede herstelronde (Lookout op 5f5d9b61)
+
+- Moet: de Morgen-regel op Vandaag noemde een training van morgen die je vandaag al deed ("Vandaag zit erop" met daaronder "Morgen: Bovenlichaam A"), terwijl de balk morgen vrij toonde. `src/engine/yourDay.ts#tomorrowEntryOf` leest nu de dag van morgen uit het dagbeeld (de balk van die dag: de eerste open training, anders de rustdag, anders Niets gepland). `tomorrowEntry` blijft bestaan en rekent via `weekPlan`, met de logs als nieuw, optioneel argument. `weekPlan(...).day()` rekent een dag buiten de week nu volledig, ook de balk, zodat zondag naar maandag kijkt. De coachzin over morgen op de missiekaart (`coachLineForToday`, zware benen morgen) leest dezelfde dag. Tests in `src/engine/yourDay.test.ts`: gelogd vandaag, dan niet genoemd en Niets gepland; een tweede training of een rustdag morgen; over de weekgrens.
+- Mag, niet gedaan: in Week zegt de rij van vandaag "Rustdag, bewust herstel" als je vandaag een training van een andere dag deed. Dat is de tekst voor een lege geplande dag (`emptyDayText` in `components/WeekPlanner.tsx`); Week houdt de training op zijn geplande dag, zoals het besluit van 23 november zegt. Laten staan; een kandidaat voor de backlog (de lege dag zou "gedaan: Tempoloop van do 19" kunnen zeggen).
+
 ## Keuzes die het ontwerp niet besliste
 
 - Welk woord de balk gebruikt. Het ontwerp zegt "met een woord" en geeft als voorbeeld "gedaan di 27" voor Week. Gekozen: de balk noemt de geplande dag na de naam, "van do 19", en de geplande dag zelf blijft "vrij" (de balk tekent daar ook niets). Zo past het label bij wat je ziet en zegt het waar de training vandaan kwam.

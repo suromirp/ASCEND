@@ -93,7 +93,7 @@ export function weekPlan(input: DayPlanInput): WeekPlan {
     return out;
   };
 
-  const days = weekDates(weekStart).map((date): PlanDay => {
+  const buildDay = (date: string): PlanDay => {
     const { sessions, order } = orderedOn(date);
     const allowed = (s: PlannedSession) => {
       if (!illRules) return true;
@@ -118,12 +118,19 @@ export function weekPlan(input: DayPlanInput): WeekPlan {
     const allDone = candidates.some((s) => !isRest(s)) && !primary;
     const anyDone = candidates.some((s) => logged.has(s.id));
     return { date, sessions, order, primary, rest, strip, stripRest, allDone, anyDone };
-  });
+  };
 
+  const days = weekDates(weekStart).map(buildDay);
   const byDate = new Map(days.map((d) => [d.date, d]));
   return {
     days,
-    // Een dag buiten de week rekent dezelfde rijen, zonder balk.
-    day: (date) => byDate.get(date) ?? { date, ...orderedOn(date), strip: [], stripRest: false, allDone: false, anyDone: false },
+    // Een dag buiten de week (morgen na zondag) rekent op dezelfde manier, ook de balk.
+    day: (date) => {
+      const was = byDate.get(date);
+      if (was) return was;
+      const out = buildDay(date);
+      byDate.set(date, out);
+      return out;
+    },
   };
 }
