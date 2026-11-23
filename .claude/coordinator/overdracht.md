@@ -26,13 +26,13 @@ Werkkaart: na elke bundel create_trigger naar session_01LnDpSktfMxYFgMMgDhw8Do, 
 Max twee bouwers, nooit op dezelfde bestanden. Warden en Lookout per twee of drie bundels, alleen Moet herstellen. Squash per bundel. Wissel na drie bundels of rond 150k. Ochtend één pushmelding, niet tussendoor. Per bundel regel in kostenlogboek en hieronder bij Beter kan.
 
 1. Route plus I-51: LIVE als 545d5a72 (23 november 02:05), backlog:bij gedaan, Werkkaart-trigger gezet. Lookout: geen Moet; Mag (i-knoppen 20 px, I-87-patroon) al bekend.
-1b. I-124 plus opslag: LIVE als 36542894 (23 november 03:35). Was: herstel klaar (3f518783, Warden-Moet en Lookout-punt opgelost, eerste werkset nu echt lichter). In proef-23c (/home/user/ascend, main plus terugkeer plus opslag), `npm run kaart` loopt (log scratchpad/kaart-23c.log). Daarna diff app-kaart nakijken, committen (aparte aanroep), squash "Klaar: I-124, I-54, I-35", backlog:bij, Net live, Werkkaart-trigger "bundel 1b en 5 is af". longPause breder bewust (pauze telt vanaf laatste echte training).
-2. Week (I-58, I-59, I-72): claude/week-weergave, herstel cbfa828a (plannedWeek voor oordelen repeatWeek, onCourse, extraRun, standRhythm; Weekterugblik noemt beide kanten). Tweede Warden: week akkoord (Mag naar backlog: WeekReview "· 0 min" weglaten, repeatWeek zin "van de geplande week", weekSummaryLine zonder aanroeper). Daarna proef: main plus week, naspelen, route-op-reis; één Lookout (week, route vervolg, Run in detail, zin in Versie); kaart; squash "Klaar: I-58, I-59, I-72, I-77, I-33, I-78, I-53, I-126, I-127, I-128, I-129".
-3. Forge en logs (sonnet): I-113, I-60, I-30, I-73. Pas na squash I-124 (ForgeWorkout.tsx).
-4. dayRules (opus): I-74, I-82 punt 3. Pas na squash bundel 2.
-5. Opslag (I-54, I-35): claude/opslag-23, Warden akkoord. Mag naar backlog: linkLogNow in één transactie, getAll houdt schrijfslot, stapnaam achter Details, ruimere timeout settingsFoto.test. In proef-23c.
-7. Route vervolg: gebouwd (f8ffff33, regel bij oude kaart, Andere plek bij time-out, I-126 tot I-129). Wacht op Lookout. I-76 eerst Scout.
-8. Naspelen: gebouwd (9d3e173f, 8f154102; één hoogtegetal, ochtend zonder nacht telt niet, instelling Eén duidelijke ochtend; vals 0 voor en na, treffer 0 naar 1). Warden niet akkoord: geschaalde km in oordelen Run in detail, Logboek-regel niet via runClimb; herstel naar bouwer a18affb46032c6d5e. Rest I-33 (altitudeTrusted, HILLY_M_PER_KM zonder merk, stap 2 places.ts) nieuw Inboxpunt. Vragen met advies: km in Run in detail schalen naar totaal (zo houden); slaaphartslag en ademhaling eerst Scout. I-77, I-33, I-78 met de back-up (scratchpad backup/backup-2026-11-23.json, chmod 600, alleen lezen). Besluit 2026-11-23-hoogte-en-ziek-signalen.md.
+1b. I-124 plus opslag: LIVE als 36542894.
+2. Week, naspelen, route vervolg: LIVE als fec6c454.
+3. Forge en logs: LIVE als 121f9c1e (I-30 deels, vraag opwarmset).
+4. dayRules: LIVE als 121f9c1e.
+5. Opslag: LIVE met 1b.
+7. Route vervolg: LIVE met 2. I-76 eerst Scout.
+8. Naspelen: LIVE met 2.
 9. Groot, achteraan: I-14, I-18, I-23, I-34: eerst Cartographer (opus) per punt in docs/visie, dan bouwen naar risico. I-103 niet.
 
 Mag-punten route staan in de backlog als I-125 tot I-130; I-87 en I-20 gemarkeerd als nakijken.
