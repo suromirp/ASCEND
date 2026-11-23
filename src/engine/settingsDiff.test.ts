@@ -228,7 +228,7 @@ describe('resetPatch', () => {
   it('zet alles terug op het advies, in twee delen: wat meteen kan en wat de planning raakt', () => {
     const all = adviceDifferences(everything).map((d) => d.id);
     const { now, plan, planTitles } = resetPatch(everything, all);
-    expect(Object.keys(plan).sort()).toEqual(['afterMainGoal', 'ambition', 'beginnerBuild', 'beginnerStart', 'hardSameDay', 'leaveAround', 'leaveCrowding', 'longRunGrowth', 'longRunThenLegs', 'longSundaySession', 'restDayMode', 'strengthTraining', 'testRest', 'trekLegRest', 'waves']);
+    expect(Object.keys(plan).sort()).toEqual(['afterMainGoal', 'ambition', 'beginnerBuild', 'beginnerLadder', 'beginnerStart', 'hardSameDay', 'leaveAround', 'leaveCrowding', 'longRunGrowth', 'longRunThenLegs', 'longSundaySession', 'restDayMode', 'strengthTraining', 'testRest', 'trekLegRest', 'waves']);
     expect(planTitles).toHaveLength(15);
     expect(Object.keys(now)).not.toContain('ambition');
     const after = apply(apply(everything, now), plan);

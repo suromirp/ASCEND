@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { needsFirstPlan } from '../../engine/freshStart';
 import { listedGoals } from '../../engine/goalList';
-import { plannedRestFor, yourWeek, type YourWeek } from '../../engine/yourWeek';
+import { plannedRestFor, startBudgetsFor, yourWeek, type YourWeek } from '../../engine/yourWeek';
 import { todayISO } from '../../utils/dates';
 
 // Je week voor Je stand: alleen zonder doel en met een plan, anders niets (zie YourWeekStandCard).
@@ -16,6 +16,7 @@ export function useStandYourWeek(): YourWeek | undefined {
     return yourWeek({
       settings, goals: [], milestones: ladder, logs: sessionLogs, templates, plannedSessions, today,
       plannedRest: plannedRestFor({ plannedSessions, templates, logs: sessionLogs, program, settings, today }),
+      startBudgets: startBudgetsFor({ plannedSessions, templates, program, settings, today }),
     });
   }, [trainingGoals, goalMilestones, program, plannedSessions, settings, sessionLogs, templates, today]);
 }

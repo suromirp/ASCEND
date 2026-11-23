@@ -166,6 +166,8 @@ export async function horizonKey(): Promise<string> {
       settings.noGoalWaves,
       // Opbouw van de start (engine/beginnerStart.ts): wandelen en dribbelen in de start of niet.
       settings.beginnerBuild,
+      // Je Akkoord op de ladder van heel licht (engine/beginnerPlan.ts): andere lengtes in de start.
+      settings.beginnerLadder,
       // The fourth run in Opbouw (engine/extraRun.ts) is off on Rustig.
       settings.ambition,
       // Tussendoelen (engine/raceBlock.ts) change the plan too. The rucksack

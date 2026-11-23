@@ -13,6 +13,8 @@ import type { Ladder } from './mainGoal';
 import { plannedEffort } from './standing';
 import type { Program } from '../models/program';
 import { resolveEffectiveFullDuration } from './substitutions';
+import { resolveStartBuild } from './beginnerStart';
+import { startWeekOn } from './beginnerPlan';
 import {
   belowGuideline, budgetFor, countedMinutesOfWeek, plannedRestOfWeek, recentAverage, resolveWeekBudget, weekProgress,
   type CountOptions, type WeekBudget, type WeekProgress,
@@ -33,6 +35,9 @@ export interface YourWeekInputs {
   // Wat er deze week nog gepland staat en meetelt (engine/weekBudget.ts#plannedRestOfWeek). Zonder:
   // alleen wat er nog te gaan is.
   plannedRest?: number;
+  // De beginnersstart op heel licht met de ladder: het budget van elke week van de start, op de maandag
+  // (startBudgetsFor). Zonder: het budget van je richting.
+  startBudgets?: Readonly<Record<string, number>>;
   today: string;
 }
 
@@ -102,6 +107,32 @@ export function plannedRestFor(input: {
   );
 }
 
+// Het weekbudget in de beginnersstart op heel licht met de ladder (docs/visie/Ontwerp beginner rest.md, deel 2): wat
+// er die week gepland staat en meetelt, met de lengtes zoals de planning ze geeft, zodat de ring in week 1 niet op rood
+// staat bij een plan dat bewust licht is. Per maandag van de start; buiten de start, bij Gewoon of zonder Akkoord op de
+// ladder niets.
+export function startBudgetsFor(input: {
+  plannedSessions: readonly PlannedSession[];
+  templates: readonly SessionTemplate[];
+  program: Program | null | undefined;
+  settings: { weekBudget?: unknown; beginnerBuild?: unknown; beginnerLadder?: unknown };
+  today: string;
+}): Record<string, number> | undefined {
+  if (resolveStartBuild(input.settings) !== 'ladder') return undefined;
+  const at = startWeekOn(input.program, input.today);
+  if (!at) return undefined;
+  const byId = new Map(input.templates.map((t) => [t.id, t]));
+  const kinds = new Map(input.templates.map((t) => [t.id, { type: t.type, intendedRpe: plannedEffort(t) }]));
+  const doubleHard = resolveWeekBudget(input.settings.weekBudget).doubleHard;
+  const minutesOf = (s: { templateId: string; scheduledDate: string }) => { const t = byId.get(s.templateId); return t ? resolveEffectiveFullDuration(t, s.scheduledDate, input.program) : 0; };
+  const out: Record<string, number> = {};
+  for (let w = 0; w < at.weeks; w++) {
+    const monday = addDays(at.startsOn, w * 7);
+    out[monday] = plannedRestOfWeek(input.plannedSessions, kinds, minutesOf, monday, monday, new Set(), doubleHard);
+  }
+  return out;
+}
+
 // Undefined zodra je een doel hebt: dan is er geen Je week en blijft alles zoals het is.
 export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
   const active = activeDirection(input.settings, input.goals, input.milestones);
@@ -116,7 +147,10 @@ export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
   const wave = shape ? waveWeek(start, input.today, shape.weeks) : undefined;
   // De start van een golf blijft de hele golf gelijk: het gemiddelde van de vier weken ervoor.
   const history = id === 'improve' ? recentAverage(input.logs, wave?.startsOn ?? weekStart, opts) : undefined;
-  const budget = budgetFor(id, { choice, history, wave, shape });
+  // In de beginnersstart op heel licht volgt het budget wat er gepland staat (startBudgetsFor).
+  const startBudget = input.startBudgets?.[weekStart];
+  const planned = budgetFor(id, { choice, history, wave, shape });
+  const budget = startBudget !== undefined ? { ...planned, minutes: startBudget } : planned;
   const base = budgetFor(id, { choice, history, shape });
   const strengthOn = strengthTrainingOn(input.settings);
   const counted = weekProgress(input.logs, weekStart, budget, opts);
@@ -130,7 +164,7 @@ export function yourWeek(input: YourWeekInputs): YourWeek | undefined {
         const w = i + 1;
         return {
           week: w,
-          budget: budgetFor(id, { choice, history, shape, wave: { week: w, light: w === shape.weeks } }).minutes,
+          budget: input.startBudgets?.[monday] ?? budgetFor(id, { choice, history, shape, wave: { week: w, light: w === shape.weeks } }).minutes,
           done: monday <= weekStart ? Math.round(countedMinutesOfWeek(input.logs, monday, opts)) : 0,
           current: w === wave.week,
           future: monday > weekStart,

@@ -43,6 +43,12 @@ describe('migrateWaveSettings', () => {
     expect(migrateWaveSettings({ beginnerBuild: 'zwaar' })).toEqual({ value: {}, skipped: 1 });
   });
 
+  it('houdt alleen het Akkoord op de ladder over; een oud bestand zonder blijft zonder (heel licht van voor de ladder)', () => {
+    expect(migrateWaveSettings({ beginnerBuild: 'licht', beginnerLadder: 'agreed' })).toEqual({ value: { beginnerBuild: 'licht', beginnerLadder: 'agreed' }, skipped: 0 });
+    expect(migrateWaveSettings({ beginnerBuild: 'licht', beginnerLadder: 'ja' })).toEqual({ value: { beginnerBuild: 'licht' }, skipped: 1 });
+    expect(migrateWaveSettings({ beginnerBuild: 'licht' })).toEqual({ value: { beginnerBuild: 'licht' }, skipped: 0 });
+  });
+
   it('houdt alleen een bekende lengte en de lichte week over', () => {
     expect(migrateWaveSettings({ waves: { length: 6, lightWeek: false } })).toEqual({ value: { waves: { length: 6, lightWeek: false } }, skipped: 0 });
     expect(migrateWaveSettings({ waves: { length: 4 } })).toEqual({ value: {}, skipped: 0 });
@@ -98,6 +104,18 @@ describe('richting en weekbudget in de back-up', () => {
     const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
     envelope.payload.settings = { ...envelope.payload.settings, beginnerBuild: 'zwaar' };
     expect(normalizeBackupToCurrentModel(envelope).settings?.beginnerBuild).toBeUndefined();
+  });
+
+  it('het Akkoord op de ladder reist mee; een back-up van voor de ladder importeert zoals hij was', async () => {
+    await SettingsRepo.set({ beginnerBuild: 'licht' });
+    const old = normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope()))).settings;
+    expect(old?.beginnerBuild).toBe('licht');
+    expect(old?.beginnerLadder).toBeUndefined();
+    await SettingsRepo.set({ beginnerBuild: 'licht', beginnerLadder: 'agreed' });
+    expect(normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope()))).settings?.beginnerLadder).toBe('agreed');
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    envelope.payload.settings = { ...envelope.payload.settings, beginnerLadder: true };
+    expect(normalizeBackupToCurrentModel(envelope).settings?.beginnerLadder).toBeUndefined();
   });
 
   it('het antwoord uit de start reist mee, een onbekende sleutel of waarde niet (backlog Q)', async () => {

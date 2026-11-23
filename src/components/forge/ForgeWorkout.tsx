@@ -15,7 +15,7 @@ import { useDrawingsFor } from '../useExerciseArtPrefetch';
 import { restoreDropped, swipeDeleteOn } from '../../engine/forgeRows';
 import { canSwap, sessionPrescription, withoutAddedSlot, workoutWithoutAdded } from '../../engine/addedExercises';
 import { learnedMinutesPerSet } from '../../engine/durationLearning';
-import { capForTemplate, capLineFor, capRemovedFor, capRemovedLine, capSlots, referenceMinutes, resolveTimeCap, roleLabel, servesMountainMuscle } from '../../engine/forgeTimeCap';
+import { capForTemplate, capLineFor, capRemovedFor, capRemovedLine, capSlots, referenceMinutes, resolveTimeCap, roleLabel, servesMountainMuscle, startLadderSlots } from '../../engine/forgeTimeCap';
 import { forgeSlotsFor } from '../../engine/forgeSlots';
 import { withoutStepSwap } from '../../engine/stepSwaps';
 import { hasMountainGoal } from '../../engine/mountainMuscles';
@@ -218,8 +218,11 @@ function ForgeWorkoutInner({
   // De rol per plek (Kern, Bijwerk, Extra), uit het voorschrift; een geruilde oefening houdt de rol van zijn plek.
   const priorityBySlot = useMemo(() => new Map(allSlots.map((s) => [s.id, s.priority])), [allSlots]);
   const priorityOf = useCallback((slot: string) => priorityBySlot.get(slot) ?? 'core', [priorityBySlot]);
+  // De beginnersstart op heel licht (engine/beginnerPlan.ts): de sets van die week van de ladder, voor de tijdsgrens.
+  const beginnerBuild = settings.beginnerBuild;
+  const beginnerLadder = settings.beginnerLadder;
   const capped = useMemo(() => capSlots({
-    slots: exercisesForVariant({ ...template, exercises: allSlots }, initialVariant),
+    slots: startLadderSlots(exercisesForVariant({ ...template, exercises: allSlots }, initialVariant), allSlots, { program, date, settings: { beginnerBuild, beginnerLadder } }),
     fullSlots: allSlots,
     fullMinutes,
     minutesPerSet,
@@ -227,7 +230,7 @@ function ForgeWorkoutInner({
     cap: capForTemplate(template, capSetting),
     // Bij een bergdoel (zoals Spieren voor de berg het leest) vallen kuit, scheen en bilspieren als laatste weg.
     ...(mountainGoal ? { keep: servesMountainMuscle } : {}),
-  }), [template, allSlots, initialVariant, fullMinutes, minutesPerSet, capSetting, mountainGoal]);
+  }), [template, allSlots, initialVariant, fullMinutes, minutesPerSet, capSetting, mountainGoal, program, date, beginnerBuild, beginnerLadder]);
   const slots = capped.slots;
 
   // De planning van de rijen, één keer: de geschiedenis per oefening uit de logs.

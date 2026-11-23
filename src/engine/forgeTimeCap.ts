@@ -19,6 +19,9 @@ import { MOUNTAIN_MUSCLES } from './mountainMuscles';
 import { exerciseKey } from './strengthHistory';
 import { isLegHeavyTemplate } from './scheduler';
 import { joinNL } from '../utils/joinNL';
+import type { Program } from '../models/program';
+import { startLadderSets } from './beginnerPlan';
+import { resolveStartBuild } from './beginnerStart';
 
 // 0 is "Tonen, niet inkorten" (het advies, ook voor een oude back-up met Uit of zonder veld).
 export const TIME_CAP_OPTIONS = [0, 45, 60, 75, 90] as const;
@@ -168,6 +171,48 @@ export function capSlots(args: { slots: ExercisePrescription[]; fullSlots?: Exer
   const removedFromKept = slots.filter((s) => keptIds.has(s.id)).reduce((n, s) => n + prescribedSets(s), 0) - setsOf(kept);
   const minutes = minutesOf(kept);
   return { slots: kept, cap, fromMinutes, minutes, setsRemoved: removedFromKept, dropped, coreOver: minutes > cap, from: slots, perSet };
+}
+
+// De beginnersstart op heel licht (engine/beginnerPlan.ts#startLadderSets): hoogstens `maxSets` werksets. Eerst vallen
+// extra oefeningen weg, van achteren af (week 3 is zo de korte versie met volle sets), dan gaat er telkens een set af
+// bij de oefening met de meeste sets (bij gelijk de laatste): bijwerk tot twee, de kern tot twee, daarna alles tot
+// een. Pas dan valt bijwerk weg, van achteren af. De kern valt nooit weg. Alleen de inhoud van deze sessie in Forge.
+export function capWorkSets(slots: ExercisePrescription[], maxSets: number): ExercisePrescription[] {
+  if (setsOf(slots) <= maxSets) return slots;
+  const list: (ExercisePrescription | null)[] = [...slots];
+  const total = () => setsOf(list.filter((s): s is ExercisePrescription => s !== null));
+  const of = (tiers: readonly ExercisePriority[]) => list.flatMap((s, i) => (s && tiers.includes(s.priority) ? [i] : []));
+  const dropLast = (tiers: readonly ExercisePriority[]): boolean => {
+    const i = of(tiers).at(-1);
+    if (i === undefined) return false;
+    list[i] = null;
+    return true;
+  };
+  const trim = (tiers: readonly ExercisePriority[], floor: number): boolean => {
+    let best = -1;
+    for (const i of of(tiers)) if (prescribedSets(list[i]!) > floor && (best < 0 || prescribedSets(list[i]!) >= prescribedSets(list[best]!))) best = i;
+    if (best < 0) return false;
+    list[best] = withoutLastSet(list[best]!);
+    return true;
+  };
+  while (total() > maxSets && dropLast(['optional']));
+  while (total() > maxSets && trim(['accessory'], KEEP_SETS));
+  while (total() > maxSets && trim(['core'], KEEP_SETS));
+  while (total() > maxSets && trim(['accessory', 'core'], 1));
+  while (total() > maxSets && dropLast(['accessory']));
+  return list.filter((s): s is ExercisePrescription => s !== null);
+}
+
+// De voorschriften van een krachttraining op `date` in de beginnersstart: de sets van die week van de ladder, gemeten
+// aan de werksets van het gewone plan (`fullSlots`). Buiten de ladder, bij Gewoon of zonder Akkoord op de ladder blijft
+// alles staan.
+export function startLadderSlots(
+  slots: ExercisePrescription[],
+  fullSlots: readonly ExercisePrescription[],
+  args: { program: Pick<Program, 'startDate' | 'phases'> | null | undefined; date: string; settings: { beginnerBuild?: unknown; beginnerLadder?: unknown } },
+): ExercisePrescription[] {
+  const max = startLadderSets(args.program, args.date, resolveStartBuild(args.settings), setsOf(fullSlots));
+  return max === undefined ? slots : capWorkSets(slots, max);
 }
 
 const roundTo5 = (m: number) => Math.max(5, Math.round(m / 5) * 5);

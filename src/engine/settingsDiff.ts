@@ -35,7 +35,7 @@ import { resolveCalmRun, resolveWatchHrMode } from './watchHeartRate';
 import { DEFAULT_STREAMS_BACKUP, resolveStreamsBackup } from './streamsBackup';
 import { DEFAULT_PROPOSAL_TIDY_MONTHS, resolveProposalTidyMonths } from './proposalTidy';
 import { strengthTrainingOn } from './strengthTraining';
-import { BEGINNER_BUILD_ADVICE, resolveBeginnerBuild } from './beginnerStart';
+import { BEGINNER_BUILD_ADVICE, resolveBeginnerBuild, startBuildPatch } from './beginnerStart';
 
 export interface AdviceSpec {
   // Een id uit de index (settingsIndex.ts): zo vindt de kaart de plek van de instelling.
@@ -198,7 +198,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
     id: 'opbouw-start', title: 'Opbouw van de start', page: 'doel', plan: true,
     differs: (s) => s.beginnerBuild !== undefined && resolveBeginnerBuild(s.beginnerBuild) !== BEGINNER_BUILD_ADVICE,
     value: (s) => choiceShort('opbouwStart', resolveBeginnerBuild(s.beginnerBuild)),
-    reset: () => ({ beginnerBuild: BEGINNER_BUILD_ADVICE }),
+    reset: () => startBuildPatch(BEGINNER_BUILD_ADVICE),
   },
   choice('lange-zondag', 'De lange zondag', 'doel', 'longSundaySession', 'hike', 'langeZondag', true),
   choice('na-hoofddoel', 'Na je hoofddoel', 'doel', 'afterMainGoal', 'stop', 'naHoofddoel', true),

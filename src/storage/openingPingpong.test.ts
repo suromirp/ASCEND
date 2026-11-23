@@ -166,6 +166,40 @@ describe('opening na opening: geen pingpong tussen voorschrift en planningsronde
   });
 });
 
+// Stap 3 van docs/visie/Ontwerp beginner rest.md: een beginnersstart op heel licht met de ladder. De lengtes
+// verschillen per week; de ronde mag daardoor niets heen en weer zetten.
+describe('opening na opening in een beginnersstart met de ladder', () => {
+  const START = '2026-10-26';
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(`${START}T08:00:00`));
+    await wipeAllData();
+    await runBootMigrations({ build: 'ladder', seedProgram: true });
+    for (const g of await TrainingGoalsRepo.getAll()) await TrainingGoalsRepo.put({ ...g, status: 'archived' } as TrainingGoal);
+    await SettingsRepo.set({ restDay: 1, beginnerStart: 'ja', direction: 'maintain', directionStart: START, noGoalWaves: 'agreed', beginnerBuild: 'licht', beginnerLadder: 'agreed' });
+    await open('stand');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('drie openingen achter elkaar: geen melding, geen kaart en dezelfde planning', async () => {
+    expect((await PlannedSessionsRepo.getAll()).some((s) => s.templateId === 'tpl_walk_jog_long')).toBe(true);
+    const logbook = (await PlanChangeProposalsRepo.getAll()).length;
+    const first = await open('opening-1');
+    const afterFirst = await rows();
+    for (const build of ['opening-2', 'opening-3']) {
+      const o = await open(build);
+      expect(o.sync.repairs?.lines ?? []).toEqual([]);
+      expect(o.weekly.kind).toBe('unchanged');
+      expect(await rows()).toEqual(afterFirst);
+    }
+    expect(first.sync.repairs?.lines ?? []).toEqual([]);
+    expect((await PlanChangeProposalsRepo.getAll()).length).toBe(logbook);
+  });
+});
+
 function freeDay(planned: PlannedSession[], monday: string): string | undefined {
   for (let i = 0; i < 7; i++) {
     const d = addDays(monday, i);

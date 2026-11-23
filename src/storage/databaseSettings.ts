@@ -309,6 +309,12 @@ export interface AppSettings {
   // verandert niet stil. Het eerste voorstel en het kiezen van een richting zetten 'licht' in hun Akkoord.
   // Optional and additive; cleaned on import (migrationsPlanning.ts#migrateWaveSettings).
   beginnerBuild?: 'licht' | 'gewoon';
+  // Je Akkoord op de ladder van heel licht (engine/beginnerStart.ts#resolveStartBuild): kracht en wandelen en dribbelen
+  // per week van de start (data/beginnerLadder.ts). Zonder dit houdt een start op heel licht de lengtes van voor de
+  // ladder, tot het voorstel op Vandaag (engine/beginnerLadderOffer.ts). Het eerste voorstel en het kiezen van een
+  // richting zetten het in hun Akkoord. Een antwoord op een voorstel, geen vlag op een training. Optional and
+  // additive; cleaned on import (migrationsPlanning.ts#migrateWaveSettings).
+  beginnerLadder?: 'agreed';
   // Krachttraining (engine/strengthTraining.ts): absent = aan, het advies; `false` = geen krachttraining in je
   // planning. Alleen met Akkoord bewaard. Optional and additive; cleaned on import (backupClean.ts).
   strengthTraining?: false;

@@ -17,6 +17,8 @@ import { TodaySheet } from './vandaag/TodaySheet';
 import { Icon } from './icons';
 import { useHorizonChange } from './useHorizonChange';
 import { NO_GOAL_WAVES_TITLE, noGoalWavesLines, wavesConsentPatch } from '../engine/noGoalWaves';
+import { BEGINNER_LADDER_EXPLANATION, BEGINNER_LADDER_TITLE, beginnerLadderLinesOn, ladderConsentPatch } from '../engine/beginnerLadderOffer';
+import { todayISO } from '../utils/dates';
 
 const KIND: Record<AdviceTrigger, { label: string; color: string; icon: ReactNode }> = {
   session_missed: {
@@ -82,7 +84,7 @@ export function CoachCard() {
   if (advice.length === 0) return null;
   const first = advice[0];
   const kind = KIND[first.trigger];
-  const plain = !(first.proposal || first.restWeekSkip || first.repeatWeek || first.goalChange || first.goalTargetTime || first.noGoalWaves || first.reentry);
+  const plain = !(first.proposal || first.restWeekSkip || first.repeatWeek || first.goalChange || first.goalTargetTime || first.noGoalWaves || first.reentry || first.beginnerLadder);
   const more = advice.length - 1;
   return (
     <Card className="flex flex-col gap-3" data-advice-ids={advice.map((a) => a.id).join(' ')}>
@@ -127,14 +129,14 @@ export function CoachCard() {
 // in plaats van de alinea; de andere houden hun effect, zodat er niets verdwijnt.
 // `primary`: Akkoord is gevuld mint, omdat het de enige keuze in het blad is; anders omlijnd.
 export function AdviceItem({ advice, compact = false, primary = false }: { advice: Advice; compact?: boolean; primary?: boolean }) {
-  const { respondToAdvice, planWeekLoadChange, planHorizonChange, settings } = useAppData();
+  const { respondToAdvice, planWeekLoadChange, planHorizonChange, settings, program } = useAppData();
   // Training through a rest week and "Deze week nog een keer" change the
   // program: first their own proposal with what changes, Akkoord in there
   // (storage/weekLoadPlan.ts). Only then the answer to the advice is recorded.
   const horizon = useHorizonChange();
   const weekLoad = advice.restWeekSkip ? { kind: 'rest' as const, week: advice.restWeekSkip } : advice.repeatWeek ? { kind: 'repeat' as const, week: advice.repeatWeek } : undefined;
   // Neutrale golven zonder doel (engine/noGoalWaves.ts): ook eerst het eigen voorstel met de hele planningsronde.
-  const ownProposal = !!weekLoad || !!advice.noGoalWaves || !!advice.reentry;
+  const ownProposal = !!weekLoad || !!advice.noGoalWaves || !!advice.reentry || !!advice.beginnerLadder;
   const [open, setOpen] = useState(false);
   const [showWeek, setShowWeek] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -178,6 +180,31 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
       );
       return;
     }
+    // De ladder van heel licht in een lopende start (engine/beginnerLadderOffer.ts): eerst het voorstel van de
+    // planningsronde met de trainingen die korter worden, Akkoord daarin bewaart het.
+    if (response === 'accepted' && advice.beginnerLadder) {
+      await horizon.propose(
+        () => planHorizonChange({
+          title: BEGINNER_LADDER_TITLE,
+          why: 'Je start wordt lichter.',
+          explanation: BEGINNER_LADDER_EXPLANATION,
+          trigger: 'availability_changed',
+          settings: { ...ladderConsentPatch },
+          notes: beginnerLadderLinesOn(settings, program, todayISO()),
+        }),
+        {
+          eyebrow: 'Rustig beginnen',
+          extraTitle: 'Andere lengte',
+          ask: 'always',
+          alwaysAsk: true,
+          notesTitle: 'Wat er verandert',
+          declined: 'Je start blijft zoals hij is. Geen vraag meer hierover.',
+          onStored: () => void respondToAdvice(advice, 'accepted'),
+          onDeclined: () => void respondToAdvice(advice, 'declined'),
+        },
+      );
+      return;
+    }
     if (response === 'accepted' && advice.noGoalWaves) {
       await horizon.propose(
         () => planHorizonChange({
@@ -207,7 +234,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
 
   const actions = (
     <div className="mt-3 flex items-center gap-3">
-      {advice.proposal || advice.restWeekSkip || advice.repeatWeek || advice.goalChange || advice.goalTargetTime || advice.noGoalWaves || advice.reentry ? (
+      {advice.proposal || advice.restWeekSkip || advice.repeatWeek || advice.goalChange || advice.goalTargetTime || advice.noGoalWaves || advice.reentry || advice.beginnerLadder ? (
         <>
           <SecondaryButton onClick={() => void respond('declined')} disabled={busy || horizon.busy} className={primary && !ownProposal ? 'min-h-[52px]' : ''}>Liever niet</SecondaryButton>
           {primary && !ownProposal

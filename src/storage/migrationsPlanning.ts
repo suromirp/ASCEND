@@ -138,8 +138,8 @@ export function migrateStartChoices(raw: unknown): { value?: { beginnerStart?: '
 // Zonder doel, de keuzes rond golven (docs/beslissingen/2026-10-31-zonder-doel-beginnersstart.md):
 // alleen bekende waarden blijven over; wat ontbreekt is het advies. Een oud bestand zonder deze velden
 // importeert zoals het was, dus het schemanummer blijft staan.
-type WaveSettingsValue = { beginnerStart?: 'auto' | 'ja' | 'nee'; beginnerBuild?: 'licht' | 'gewoon'; waves?: { length?: 3 | 6; lightWeek?: false; review?: false; weeksForStep?: number }; waveReviewDone?: string; noGoalWaves?: 'agreed' };
-export function migrateWaveSettings(raw: { beginnerStart?: unknown; beginnerBuild?: unknown; waves?: unknown; waveReviewDone?: unknown; noGoalWaves?: unknown }): { value: WaveSettingsValue; skipped: number } {
+type WaveSettingsValue = { beginnerStart?: 'auto' | 'ja' | 'nee'; beginnerBuild?: 'licht' | 'gewoon'; beginnerLadder?: 'agreed'; waves?: { length?: 3 | 6; lightWeek?: false; review?: false; weeksForStep?: number }; waveReviewDone?: string; noGoalWaves?: 'agreed' };
+export function migrateWaveSettings(raw: { beginnerStart?: unknown; beginnerBuild?: unknown; beginnerLadder?: unknown; waves?: unknown; waveReviewDone?: unknown; noGoalWaves?: unknown }): { value: WaveSettingsValue; skipped: number } {
   const value: WaveSettingsValue = {};
   let skipped = 0;
   if (raw.beginnerStart !== undefined) {
@@ -151,6 +151,12 @@ export function migrateWaveSettings(raw: { beginnerStart?: unknown; beginnerBuil
   if (raw.beginnerBuild !== undefined) {
     const known = (['licht', 'gewoon'] as const).find((c) => c === raw.beginnerBuild);
     if (known) value.beginnerBuild = known;
+    else skipped++;
+  }
+  // Het Akkoord op de ladder van heel licht: alleen 'agreed' blijft. Een oud bestand zonder dit veld houdt bij import
+  // zijn start zoals hij was, tot je Akkoord geeft.
+  if (raw.beginnerLadder !== undefined) {
+    if (raw.beginnerLadder === 'agreed') value.beginnerLadder = 'agreed';
     else skipped++;
   }
   if (raw.waves !== undefined) {
