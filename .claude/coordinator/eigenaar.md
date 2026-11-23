@@ -52,7 +52,7 @@ Niets.
 ## Net live
 
 ### 23 november 15:05
-I-18 Beginner heel licht helemaal live: de zin van week 1 in het voorstel noemt wat je week heeft en belooft "elke week iets meer"; Forge zegt Plan, Over en Zwaarte, met uitleg achter de i en een instelling Woorden in Forge (Gewoon of Vaktaal).
+- Beginner heel licht (I-18) helemaal live: de zin van week 1 in het voorstel noemt wat je week heeft en belooft "elke week iets meer"; Forge zegt Plan, Over en Zwaarte, met uitleg achter de i en een instelling Woorden in Forge (Gewoon of Vaktaal).
 
 ### 23 november 13:17
 - Eén plan, je dag (I-14, laatste stap): Vandaag, Week en de weekbalk zeggen voor dezelfde dag hetzelfde. Twee trainingen staan in de balk in de volgorde van Vandaag; doe je de training van morgen vandaag, dan zegt Vandaag "Vandaag zit erop" en is morgen vrij, ook in de regel "Morgen:". Eén plan is daarmee af.
