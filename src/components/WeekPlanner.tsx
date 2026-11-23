@@ -492,7 +492,7 @@ export function WeekPlanner({
       })}
     </div>
     {dragging?.ghost && ghostSession && ghostTemplate && (
-      <WeekDragGhost left={dragging.ghost.left} width={dragging.ghost.width} top={dragging.ghost.top} lift={dragging.ghost.lift} tone={view?.tone}>
+      <WeekDragGhost left={dragging.ghost.left} width={dragging.ghost.width} top={dragging.ghost.top} settled={dragging.ghost.settled} tone={view?.tone}>
         {rowFor(ghostSession, ghostTemplate, ghostSession.scheduledDate, { ghost: true })}
       </WeekDragGhost>
     )}

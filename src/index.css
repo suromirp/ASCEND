@@ -1103,20 +1103,15 @@ html[data-motion='calm'] .mx-lijf-glow {
   animation: none;
 }
 
-/* De zwevende rij bij slepen in Week hangt boven de dag onder je vinger (WeekDragGhost, I-138): bij het oppakken
-   glijdt hij van zijn rij omhoog, bij een andere dag glijdt hij mee. 200 ms, ease-out, een keer. Rustig: alleen de
-   glijdende stand tussen dagen blijft uit; Uit en beperkte beweging: meteen op de eindstand (globale regel). */
-@keyframes mx-ghost-lift {
-  from { transform: translateY(0); }
-}
-
-.mx-ghost-lift {
-  animation: mx-ghost-lift 0.2s ease-out backwards;
+/* De zwevende rij bij slepen in Week hangt vast boven de dag onder je vinger (WeekDragGhost, I-138). Alleen als hij
+   boven een dag hangt glijdt hij in 200 ms, ease-out, naar de plek boven een andere dag; die plek verandert niet
+   binnen een dag. Zonder dag volgt hij je vinger zonder transition. Rustig en Uit en beperkte beweging van het
+   systeem: meteen op de eindstand (Uit via de globale regel, Rustig hieronder). */
+.mx-ghost-settled {
   transition: transform 0.2s ease-out;
 }
 
-html[data-motion='calm'] .mx-ghost-lift {
-  animation: none;
+html[data-motion='calm'] .mx-ghost-settled {
   transition: none;
 }
 

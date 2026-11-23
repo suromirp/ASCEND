@@ -3,7 +3,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import type { DailyTimeBudget, Weekday } from '../models/goalEngineConfig';
 import { proposeMove } from './scheduler';
-import { dayAtY, ghostLift, decideMove, dayVerdicts, dragEligibility, nextDroppable, TEST_ASK_REASON, LEAVE_ASK_REASON, PLACED_ASK_REASON, newConcernLines, type DragContext } from './weekDrag';
+import { dayAtY, ghostTop, decideMove, dayVerdicts, dragEligibility, nextDroppable, TEST_ASK_REASON, LEAVE_ASK_REASON, PLACED_ASK_REASON, newConcernLines, type DragContext } from './weekDrag';
 
 const { templates, program } = buildDefaultProgramData();
 const byId = new Map(templates.map((t) => [t.id, t]));
@@ -221,24 +221,28 @@ describe('decideMove: de eigen training blijft op zijn dag', () => {
   });
 });
 
-describe('ghostLift (I-138)', () => {
-  // De rij die je vasthoudt (hoog 72, je pakte hem op 30 px van zijn bovenkant) mag de dag onder je vinger niet bedekken.
-  const bottomOf = (fingerY: number, grab: number, height: number, lift: number) => fingerY - grab - lift + height;
-
+describe('ghostTop (I-138)', () => {
+  // De rij die je vasthoudt is 72 hoog; de dag onder je vinger begint op 360.
   it('zet de onderkant van de kaart boven de bovenkant van de dag onder je vinger', () => {
-    const lift = ghostLift({ fingerY: 400, grab: 30, height: 72, targetTop: 360 });
-    expect(bottomOf(400, 30, 72, lift)).toBeLessThanOrEqual(360);
+    expect(ghostTop({ fingerY: 400, height: 72, targetTop: 360 }) + 72).toBeLessThanOrEqual(360);
   });
 
-  it('en in elk geval boven je vinger, ook als de dag hoger begint of onbekend is', () => {
-    const noDay = ghostLift({ fingerY: 400, grab: 30, height: 72 });
-    expect(bottomOf(400, 30, 72, noDay)).toBeLessThanOrEqual(400 - 12);
-    const tall = ghostLift({ fingerY: 400, grab: 30, height: 72, targetTop: 395 });
-    expect(bottomOf(400, 30, 72, tall)).toBeLessThanOrEqual(400 - 12);
+  it('geeft binnen dezelfde dag dezelfde kaartpositie, wat je vinger ook doet', () => {
+    const tops = [362, 380, 400, 430, 470].map((fingerY) => ghostTop({ fingerY, height: 72, targetTop: 360 }));
+    expect(new Set(tops).size).toBe(1);
+  });
+
+  it('schuift als je een andere dag kiest', () => {
+    expect(ghostTop({ fingerY: 500, height: 72, targetTop: 450 })).not.toBe(ghostTop({ fingerY: 400, height: 72, targetTop: 360 }));
+  });
+
+  it('volgt je vinger, boven je vinger, zonder dag', () => {
+    const a = ghostTop({ fingerY: 400, height: 72 });
+    expect(a + 72).toBeLessThanOrEqual(400 - 12);
+    expect(ghostTop({ fingerY: 420, height: 72 }) - a).toBe(20);
   });
 
   it('laat de kaart niet boven het scherm uit gaan', () => {
-    const lift = ghostLift({ fingerY: 60, grab: 30, height: 72, targetTop: 40 });
-    expect(60 - 30 - lift).toBeGreaterThanOrEqual(8);
+    expect(ghostTop({ fingerY: 60, height: 72, targetTop: 40 })).toBeGreaterThanOrEqual(8);
   });
 });

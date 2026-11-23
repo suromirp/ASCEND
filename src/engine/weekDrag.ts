@@ -328,14 +328,13 @@ export function newConcernLines(input: CheckInput, weekStart: string, sessionId:
     .map((c) => c.headline);
 }
 
-// Hoeveel pixels de zwevende rij omhoog staat ten opzichte van waar hij 1 op 1 met je vinger zou hangen
-// (`fingerY - grab`). De kaart hangt boven de dag onder je vinger: zijn onderkant ligt boven de bovenkant van die dag
-// (waar het label staat) en minstens 12 px boven je vinger, en hij verlaat de bovenkant van het scherm niet. De kaart
-// beweegt nog steeds 1 op 1 met je vinger; alleen de plek binnen een dag verspringt als je een dag verder komt.
+// Waar de zwevende rij hangt (bovenkant, in pixels van het scherm). Met een dag onder je vinger hangt de kaart vast
+// boven die dag: zijn onderkant 4 px boven de bovenkant van de dag (waar het label staat). Die plek hangt alleen van
+// de dag af en verandert dus niet zolang je binnen een dag blijft; de kaart schuift alleen als je een andere dag
+// kiest. Zonder dag (annuleren) volgt hij je vinger, 12 px erboven. Hij verlaat de bovenkant van het scherm niet.
 export const GHOST_GAP = 12;
 const GHOST_EDGE = 8;
-export function ghostLift({ fingerY, grab, height, targetTop }: { fingerY: number; grab: number; height: number; targetTop?: number }): number {
-  const above = targetTop === undefined ? fingerY - GHOST_GAP : Math.min(fingerY - GHOST_GAP, targetTop - 4);
-  const bottom = Math.max(above, GHOST_EDGE + height);
-  return fingerY - grab - (bottom - height);
+export function ghostTop({ fingerY, height, targetTop }: { fingerY: number; height: number; targetTop?: number }): number {
+  const bottom = targetTop === undefined ? fingerY - GHOST_GAP : targetTop - 4;
+  return Math.max(bottom - height, GHOST_EDGE);
 }

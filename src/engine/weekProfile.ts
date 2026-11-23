@@ -128,7 +128,7 @@ const shortName = (t: SessionTemplate) => t.name.replace(/\s*\([^)]*\)\s*$/, '')
 
 export function ridgeSentence(days: DayLoad[], today: string): string {
   const peak = days.reduce<DayLoad | undefined>((best, d) => (d.load > (best?.load ?? 0) ? d : best), undefined);
-  const past = days[days.length - 1].date < today;
+  const past = (days.at(-1)?.date ?? today) < today;
   // Een voorbije week kan trainingen hebben gehad die niet telden (gemist, overgeslagen, een wandeling): "Deze week
   // staat er geen training" zou dan niet kloppen.
   if (!peak) return past ? 'Die week telde geen training mee in de belasting.' : 'Deze week staat er geen training.';
