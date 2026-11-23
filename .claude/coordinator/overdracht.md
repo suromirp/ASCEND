@@ -5,6 +5,9 @@
 - 16:42: overgenomen door session_01LnDpSkfAkTpyoFVnRE9gBr. Sherpa Opus loopt op I-154, tak claude/terugkeer-voorrang; daarna Warden Opus. Deploy df187512 groen 16:41, pushmelding 16:50, werkkaart ververst.
 - I-154 gebouwd: tak claude/terugkeer-voorrang (1920cbaf + verslag 2c274c1d), alle controles groen; Warden Opus en Lookout Sonnet lopen. Beslist op advies: geldt voor elke oorzaak van de terugkeer, ook stille weken (één toets op cause als de eigenaar anders wil). kaart:vergelijk: drie instellingenbladen van I-23 staan nog niet in docs/app-kaart, bijwerken bij de squash.
 - 17:33 wens eigenaar I-157 (belangrijk advies als blad bij openen, botsende adviezen): regel in scratchpad i157.txt, gaat mee in de squash van I-154 naar de Inbox (Hoogste code I-157). Bevestiging naar de chat ASCEND bij live I-154. Op het bouwmoment, eerst Pathfinder en Cartographer.
+- I-154 controle: Warden geen Moet (herstelronde bij Sherpa: heldBack-ids in busyIds, geen TEST-RETRY tijdens terugkeer, verslag weg, app-kaart voor drie I-23-bladen). Lookout groen (tak lookout/terugkeer-voorrang 3b74369a, niet naar main). Worktrees scratchpad/wt en scratchpad/wt154 mogen weg. Pushmelding trig_019MVtBrZ4PdrMiC8G1Ygp9y verstuurd.
+- Besluit op advies: geen TEST-RETRY tijdens een open terugkeer (komt in 2026-11-23-terugkeer-voor-inhalen.md).
+- Vraag eigenaar 23 nov: rustdag (Di 24) in de terugkeerweek overslaan na twaalf dagen rust. Antwoord: niet schrappen; zeven dagen op rij met Benen zwaar, heuvels en lange loop in de eerste week terug is het risico, en een extra training botst met de kortere instap. Wel mogelijk: Herstelwandeling op Di, of een ruil (rustige duurloop naar Di, rust naar Do). Geen backlogregel tenzij hij doorzet. I-158 (blok een week terug) ingetrokken: berustte op een verkeerde lezing.
 
 Lees dit en CLAUDE.md. `eigenaar.md` en `docs/backlog.md` niet lezen, alleen grep op I-nummer. Meer nodig: `werkwijze.md`. Oude standen: git-geschiedenis.
 
