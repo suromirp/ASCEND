@@ -2,6 +2,8 @@
 
 ## Start (bijgewerkt 23 november 16:45 Amsterdam, coördinator session_01LnDpSnEAuFAjTkBK2YLZBH)
 
+- 16:42: overgenomen door session_01LnDpSnEAuFAjTkBK2YLZBH (opvolger). Sherpa Opus loopt op I-154, tak claude/terugkeer-voorrang; daarna Warden Opus. Deploy df187512 liep nog om 16:40.
+
 Lees dit en CLAUDE.md. `eigenaar.md` en `docs/backlog.md` niet lezen, alleen grep op I-nummer. Meer nodig: `werkwijze.md`. Oude standen: git-geschiedenis.
 
 - EERST, hoge voorrang: I-154 (staat in de Inbox). Melding eigenaar: geen suggestie om de rustdag te verplaatsen. Nagespeeld op 6fe4db90: computeAdvice geeft MISSED-CATCH-UP en REENTRY allebei priority 3, inhalen eerst; CoachCard toont alleen advice[0]. Bouwen: (1) staat REENTRY open, dan die week geen MISSED-CATCH-UP of ander inhalen; na Liever niet op de terugkeer mag inhalen weer; (2) REENTRY voorrang boven gewone adviezen van gelijke priority; (3) test: laatste training T-12, periode zonder sportschool en ziek erna, gemiste trainingen de dag ervoor. Sherpa Opus, Warden Opus. Besluit als aanvulling op terugkeer-eerste-dag. In eigenaar.md onder Stuk of vast; na live daar weg en onder Net live.
