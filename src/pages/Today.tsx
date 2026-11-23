@@ -458,7 +458,7 @@ function TodayContent() {
   ) : restToday && !allTodayDone ? (
     <QuietDayCard
       title={REST_DAY_COPY[restMode].title}
-      body={pauseRestDayLine({ logs: sessionLogs, templates, today }) ?? REST_DAY_COPY[restMode].valley}
+      body={pauseRestDayLine({ logs: sessionLogs, templates, today, leave: leavePeriods, illness: settings.illnessEpisodes, mode: restMode }) ?? REST_DAY_COPY[restMode].valley}
       detail={restMode === 'active' ? REST_DAY_COPY.active.detail : undefined}
       doneLabel={restMode === 'active' ? 'Gedaan' : undefined}
       onDone={() => { const t = templateById.get(restToday.templateId); if (t) void tickOff(logSession, asPlannedLog(restToday, t, program, today), tickNotice); }}

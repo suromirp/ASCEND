@@ -3,8 +3,10 @@
 // verschoven datums: vandaag T is een maandag met de vaste Herstelwandeling, de laatste training (kracht) was twaalf
 // dagen eerder, daarna geen logs. Een periode zonder sportschool van vijf dagen met twee dagen ziek boven de nek, en
 // de laatste vijf dagen alles overgeslagen of verplaatst. Geen terugkeer gekozen.
-// Eerder: lag het einde van de periode meer dan zes dagen terug, dan was de terugkomst "voorbij", ook al had je
-// sindsdien niets gedaan. Geen voorstel, en de maandag met weinig training kwam er ook niet, want die terugkomst gold.
+// De gemelde vorm (zonder sportschool T-9 tot en met T-5, ziek T-8 en T-7) gaf op main na I-124 al het voorstel; de
+// waarschijnlijke oorzaak van de melding is een bouw van voor I-124 (het voorstel stond toen maar vier dagen). Wel een
+// tweede gat: eindigde de periode op T-8 of eerder, dan was de terugkomst "voorbij", ook al had je sindsdien niets
+// gedaan, en de maandag met weinig training kwam er ook niet, want die terugkomst gold.
 
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
@@ -76,9 +78,9 @@ describe('I-144: maandag een rustdag na twaalf dagen niets', () => {
   });
 
   it('elke plek van de periode zonder sportschool tussen je laatste training en de laatste vijf dagen geeft vandaag het voorstel', () => {
-    // De periode begint op T-14 (je laatste training valt erin) tot en met T-10 (eindigt op T-6). Voor de fix gaf
-    // alles met een einde voor T-7 niets: de terugkomst lag meer dan zes dagen terug.
-    for (let start = -14; start <= -10; start++) {
+    // Start -9 is de gemelde vorm (T-9 tot en met T-5, dag terug T-4). Start -14 tot en met -12 eindigt op T-8 of
+    // eerder: voor de fix gaf dat niets, de terugkomst lag meer dan zes dagen terug.
+    for (let start = -14; start <= -9; start++) {
       const p = proposeReentry(input(start));
       expect(p, `zonder sportschool vanaf T${start}`).toBeDefined();
       expect(p).toMatchObject({ lastTraining: t(-12), pauseDays: 12, trainedSince: false, week: { from: T, until: t(6), factor: 0.75 } });
@@ -106,7 +108,7 @@ describe('I-144: maandag een rustdag na twaalf dagen niets', () => {
     expect(after.filter((s) => s.scheduledDate === t(1)).map((s) => s.templateId)).toEqual(['tpl_herstel']);
     // Het voorstel zelf verandert niets: de planning blijft tot Akkoord zoals hij was.
     expect(plan.filter((s) => s.scheduledDate === T).map((s) => s.templateId)).toEqual(['tpl_herstel']);
-    expect(reentryNote({ from: T, until: t(6), factor: 0.75 }, undefined, f)).toContain(`${name('tpl_upper_a')} komt naar ma 15 februari`);
+    expect(reentryNote({ from: T, until: t(6), factor: 0.75 }, undefined, f)).toContain(`Op ma 15 februari geen herstel maar je eerste training: ${name('tpl_upper_a')} komt naar die dag`);
   });
 
   it('geen ruil als de eerste dag al een training heeft, als er al getraind is, of zonder kracht- of looptraining in die dagen', () => {
@@ -117,6 +119,26 @@ describe('I-144: maandag een rustdag na twaalf dagen niets', () => {
     expect(reentryFirstDay({ from: T, until: t(6) }, plan, walked, templates)).toBeDefined();
     const onlyHikes = plan.filter((s) => s.scheduledDate === T || !['tpl_upper_a', 'tpl_lower_a', 'tpl_easy_run', 'tpl_upper_b', 'tpl_hill_intervals'].includes(s.templateId));
     expect(reentryFirstDay({ from: T, until: t(6) }, onlyHikes, logs, templates)).toBeUndefined();
+  });
+
+  it('getraind na de terugkomst: geen ruil van de eerste dag, ook niet met zware benen gisteren (Warden)', () => {
+    // Benen A gisteren gelogd, na de terugkomst: wie al trainde heeft wel iets om van te herstellen.
+    const legs = { ...done(ps('tpl_lower_a', t(-1))), id: 'benen' } as SessionLog;
+    const p = proposeReentry(input(-9, { logs: [...logs, legs] }));
+    expect(p).toMatchObject({ trainedSince: true, pauseDays: 11 });
+    expect(p!.firstDay).toBeUndefined();
+    expect(reentryEffect(p!, T)).toContain('Welke trainingen er staan');
+  });
+
+  it('zware benen komen nooit binnen 48 uur na een zware beensessie naar voren', () => {
+    const legs = { ...done(ps('tpl_lower_a', t(-1))), id: 'benen' } as SessionLog;
+    // De eerste training na vandaag is Benen A: die slaat de ruil over, de volgende kracht- of looptraining niet.
+    const legsFirst = plan.filter((s) => !(s.templateId === 'tpl_upper_a' && s.scheduledDate === t(1)));
+    const f = reentryFirstDay({ from: T, until: t(6) }, legsFirst, [...logs, legs], templates)!;
+    expect(f.trainingName).not.toBe(name('tpl_lower_a'));
+    expect(f.trainingName).toBe(name('tpl_easy_run'));
+    // Zonder die log is Benen A wel de eerste.
+    expect(reentryFirstDay({ from: T, until: t(6) }, legsFirst, logs, templates)!.trainingName).toBe(name('tpl_lower_a'));
   });
 
   it('getraind na de terugkomst: de terugkomst is na een week voorbij, zoals in I-124', () => {
@@ -131,7 +153,11 @@ describe('I-144: maandag een rustdag na twaalf dagen niets', () => {
   });
 
   it('zonder Akkoord zegt de rustdag eerlijk hoe lang je niet trainde; N is afgeleid', () => {
-    expect(pauseRestDayLine({ logs, templates, today: T })).toBe('Je trainde 12 dagen niet. Vandaag rustig beginnen: wandel een half uur stevig door, en houd je eerste training korter dan gewoon.');
+    expect(pauseRestDayLine({ logs, templates, today: T })).toBe('Je trainde 12 dagen niet. Vandaag rustig beginnen: houd je eerste training korter dan gewoon.');
+    expect(pauseRestDayLine({ logs, templates, today: T, mode: 'active' })).toBe('Je trainde 12 dagen niet. Vandaag rustig beginnen: wandel een half uur, en houd je eerste training korter dan gewoon.');
+    // Op een vakantiedag en tijdens Weer opbouwen na ziekte niet: die dagen hebben hun eigen kaart.
+    expect(pauseRestDayLine({ logs, templates, today: T, leave: [{ id: 'v', kind: 'no_training', startDate: T, endDate: t(3) }] })).toBeUndefined();
+    expect(pauseRestDayLine({ logs, templates, today: T, illness: [{ id: 'z', kind: 'below_neck', startDate: t(-4), endDate: t(-1) }] })).toBeUndefined();
     expect(pauseRestDayLine({ logs, templates, today: t(3) })).toMatch(/^Je trainde 15 dagen niet\./);
     // Zeven dagen of minder: de gewone tekst van de rustdag.
     expect(pauseRestDayLine({ logs, templates, today: t(-5) })).toBeUndefined();

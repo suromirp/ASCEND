@@ -3164,7 +3164,7 @@
     "planning",
     "lichaam-en-herstel"
    ],
-   "kern": "Het voorstel voor een rustiger instap blijft na de eerste week staan zolang je na de terugkomst niet trainde; staat er op de eerste dag alleen herstel, dan ruilt die in hetzelfde voorstel met Akkoord met de eerste kracht- of looptraining; zonder Akkoord zegt de rustdag op Vandaag na meer dan zeven dagen zonder training \"Je trainde N dagen niet. Vandaag rustig beginnen: ...\" (alleen tekst).",
+   "kern": "Het voorstel voor een rustiger instap blijft na de eerste week staan zolang je na de terugkomst niet trainde; staat er op de eerste dag alleen herstel en trainde je sindsdien niet, dan ruilt die in hetzelfde voorstel met Akkoord met de eerste kracht- of looptraining; zonder Akkoord zegt de rustdag op Vandaag na meer dan zeven dagen zonder training \"Je trainde N dagen niet. Vandaag rustig beginnen: ...\" (alleen tekst).",
    "stand": "geldt"
   },
   "docs/beslissingen/2026-11-23-ziek-en-test-of-wedstrijd.md": {
@@ -3391,6 +3391,13 @@
    "kern": "Ruwe lijst van 29 oktober 2026 met ongebruikte exports per bestand en regel.",
    "stand": "verouderd",
    "waarom": "De meting van 2 november (`docs/onderhoud/2026-11-02-exports.md`) heeft deze lijst niet gebruikt en is nieuwer."
+  },
+  "docs/onderhoud/2026-11-23-naspelen-terugkeer.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Naspelen van I-144 (rustdag na twaalf dagen niets): de gemelde vorm gaf op main al het voorstel, waarschijnlijk een bouw van voor I-124; de fix dicht het gat voor een periode die op T-8 of eerder eindigt. Oorzaak, fix en testnamen.",
+   "stand": "achtergrond"
   },
   "docs/onderhoud/2026-10-29.md": {
    "onderwerpen": [

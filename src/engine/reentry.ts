@@ -26,8 +26,9 @@ import type { Program } from '../models/program';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import type { DurationAdjustment } from './substitutions';
-import { mayPropose } from './dayRules';
+import { dayRules, mayPropose } from './dayRules';
 import { awayPeriods, isAwayDay } from './leave';
+import { isLegHeavyTemplate } from './scheduler';
 import { isTestOrRace } from './templateRoles';
 import { raceWeekGuard } from './adviceShared';
 import type { RaceBlock } from './raceBlock';
@@ -183,9 +184,15 @@ export function reentryFirstDay(
   const first = plannedSessions.filter((s) => s.scheduledDate === week.from && openOn(s, logged)).sort(byDayOrder);
   if (first.length === 0 || first.some((s) => byId.get(s.templateId)?.type !== 'recovery')) return undefined;
   const rest = first[0];
+  // Zware benen naar voren halen alleen met 48 uur na je laatste zware beensessie: het slot van het voorstel laat de
+  // ronde het daarna niet meer repareren (Warden, I-144).
+  const legsRecent = logs.some((l) => {
+    const t = byId.get(l.templateId);
+    return !!t && isLegHeavyTemplate(t) && l.completedDate < week.from && daysBetween(l.completedDate, week.from) < 2;
+  });
   const training = plannedSessions
     .filter((s) => s.scheduledDate > week.from && s.scheduledDate <= week.until && openOn(s, logged))
-    .filter((s) => { const t = byId.get(s.templateId); return !!t && (t.type === 'strength' || t.type === 'cardio') && !isTestOrRace(t); })
+    .filter((s) => { const t = byId.get(s.templateId); return !!t && (t.type === 'strength' || t.type === 'cardio') && !isTestOrRace(t) && !(legsRecent && isLegHeavyTemplate(t)); })
     .sort(byDayOrder)[0];
   if (!training) return undefined;
   return {
@@ -262,7 +269,8 @@ export function proposeReentry(inputs: ReentryInputs): ReentryProposal | undefin
   const forgeDays = lastStrength ? daysBetween(lastStrength, today) : undefined;
   // De toets tot het begin van het venster, dezelfde als Forge daarna doet (reentryForgeLighter).
   const forge = inputs.forgeLighter && !!lastStrength && forgeDays !== undefined && daysBetween(lastStrength, from) > REENTRY_FORGE_DAYS;
-  const firstDay = reentryFirstDay({ from, until }, inputs.plannedSessions, inputs.logs, inputs.templates);
+  // Alleen als je sinds de terugkomst niet trainde: wie al trainde heeft wel iets om van te herstellen (Warden, I-144).
+  const firstDay = firstAfter ? undefined : reentryFirstDay({ from, until }, inputs.plannedSessions, inputs.logs, inputs.templates);
   return {
     id, week: { from, until, factor }, cause, done, usual,
     ...(lastTraining && pauseDays !== undefined ? { lastTraining, pauseDays, trainedSince: !!firstAfter } : {}),
@@ -323,7 +331,7 @@ export function reentryForgeLine(forgeDays: number): string {
 // "Vandaag geen herstel maar je eerste training: Bovenlichaam A komt naar vandaag, de Herstelwandeling naar di 26 januari."
 export function reentryFirstDayLine(f: ReentryFirstDay, today?: string): string {
   const isToday = !!today && f.date === today;
-  return `${isToday ? 'Vandaag' : `Op ${formatWeekdayDateNL(f.date)}`} geen herstel maar je eerste training: ${f.trainingName} komt naar ${isToday ? 'vandaag' : formatWeekdayDateNL(f.date)}, de ${f.restName} naar ${formatWeekdayDateNL(f.trainingDate)}.`;
+  return `${isToday ? 'Vandaag' : `Op ${formatWeekdayDateNL(f.date)}`} geen herstel maar je eerste training: ${f.trainingName} komt naar ${isToday ? 'vandaag' : 'die dag'}, de ${f.restName} naar ${formatWeekdayDateNL(f.trainingDate)}.`;
 }
 
 export function reentryEffect(p: ReentryProposal, today?: string): string {
@@ -345,13 +353,24 @@ export function reentryNote(week: ReentryWeek, forgeDays?: number, firstDay?: Re
 // Een dag met alleen herstel na een lange pauze: Vandaag zegt eerlijk hoe lang je niet trainde, in plaats van "je
 // lichaam bouwt op wat je deze week deed" (I-144). N is afgeleid: dagen sinds je laatste echte training (geen herstel)
 // voor vandaag. Alleen tekst; het plan verandert er niet door (dat doet alleen het voorstel met Akkoord).
-export function pauseRestDayLine(input: { logs: readonly SessionLog[]; templates: readonly SessionTemplate[]; today: string }): string | undefined {
+export function pauseRestDayLine(input: {
+  logs: readonly SessionLog[];
+  templates: readonly SessionTemplate[];
+  today: string;
+  // Op een vakantie- of tochtdag en tijdens Weer opbouwen na ziekte niet: die dagen hebben hun eigen kaart.
+  leave?: LeavePeriod[];
+  illness?: IllnessEpisode[];
+  // De rustdag zonder beweging (rest) of met licht bewegen (active).
+  mode?: 'rest' | 'active';
+}): string | undefined {
+  if (dayRules({ today: input.today, leave: input.leave, illness: input.illness }).holds(input.today, 'off', 'trek', 'ramp', 'ill', 'ill_light')) return undefined;
   const byId = new Map(input.templates.map((t) => [t.id, t]));
   const last = realTrainingDates(input.logs, byId).filter((d) => d < input.today).at(-1);
   if (!last) return undefined;
   const n = daysBetween(last, input.today);
   if (n <= REENTRY_PAUSE_DAYS) return undefined;
-  return `Je trainde ${n} dagen niet. Vandaag rustig beginnen: wandel een half uur stevig door, en houd je eerste training korter dan gewoon.`;
+  const walk = input.mode === 'active' ? 'wandel een half uur, en ' : '';
+  return `Je trainde ${n} dagen niet. Vandaag rustig beginnen: ${walk}houd je eerste training korter dan gewoon.`;
 }
 
 // Een instap terugzetten (Aangepast door ASCEND in Week) is zelf een wijziging: een eigen regel in het logboek van
