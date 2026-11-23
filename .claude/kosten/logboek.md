@@ -566,3 +566,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-23 | Warden terugkeer I-124 | reviewer helper | opus | 82k tok | 22 min | 1 moet (Forge lichter), 7 mag, herstel naar bouwer |
 | 2026-11-23 | Lookout week | tester helper | sonnet | ~? tok | ~35 min | 1 moet (kaart Weekterugblik) |
 | 2026-11-23 | Sherpa opslag I-54, I-35 | ontwikkelaar helper | opus | 133k tok | 29 min | gebouwd, besluit opslag-twee-tabbladen-en-grens |
+| 2026-11-23 | Warden week | reviewer helper | opus | 117k tok | 35 min | 1 moet (Herhaal de week), 6 mag, herstel naar bouwer |
