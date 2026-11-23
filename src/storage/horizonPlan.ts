@@ -32,13 +32,16 @@ import type { StrengthProgramStrategy } from '../models/strengthProgram';
 import type { GoalEngineConfig, Weekday } from '../models/goalEngineConfig';
 import {
   GoalEngineConfigRepo, GoalMilestonesRepo, MetaRepo, PlannedSessionsRepo, ProgramsRepo, SessionLogsRepo, SessionTemplatesRepo, SettingsRepo, StrengthProgramStrategiesRepo, TrainingGoalsRepo,
-  previewProgramHorizon, syncProgramHorizon, type AppSettings, type HorizonOverrides,
+  previewProgramHorizon, syncProgramHorizon, type AppSettings, type HorizonOverrides, type HorizonRun,
 } from './database';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { diffHorizon, type HorizonDiff } from '../engine/horizonChange';
 import { acceptConflicts, applyResolution, conflictsForGoals, newConflicts, type GoalConflict } from '../engine/goalConflicts';
 import { makeId } from '../utils/id';
-import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
+import { addDays, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL } from '../utils/dates';
+import { firstPlanLines, type FirstPlanText, type FirstWeekRow } from '../engine/firstPlan';
+import { activeGoalDemandKeys } from '../engine/progressionDecisions';
+import { computeForecastReplan } from '../engine/adaptiveReplanner';
 import { ladderMinutesOf, resolveVariantDuration, withDurationScope, type DurationScope } from '../engine/substitutions';
 import { durationScopeFor } from '../engine/durationScope';
 import { withWavesConsent } from '../engine/noGoalWaves';
@@ -87,6 +90,9 @@ interface FirstPlanExtras {
   allowedDays: Weekday[];
   // The rest day the plan is laid out for, so the sync does not lay it out again.
   restDay: number;
+  // Wat de zinnen van het voorstel nodig hebben (engine/firstPlan.ts#firstPlanLines). Met dit veld maakt het voorstel
+  // de zinnen over de week uit het voorbeeld zelf (I-14 stap 4), in plaats van `notes` van de aanroeper.
+  text?: FirstPlanText;
 }
 
 export interface HorizonPlan {
@@ -133,6 +139,29 @@ async function settledPreview(overrides: HorizonOverrides) {
   return run;
 }
 
+// Het eerste plan met de beschikbaarheid die Akkoord schrijft (I-14 stap 4): de opstartstap beschikbaarheid
+// (state/strengthAndReplan.ts#runForecastReplan) verschuift na Akkoord wat in de vervolgweken op een dag staat waarop je
+// niet kunt. Het voorbeeld doet hetzelfde, met dezelfde toets en dezelfde functie, zodat het laat zien wat er komt.
+async function withAvailability(run: HorizonRun, first: FirstPlanExtras, changedGoals: TrainingGoal[] | undefined, templates: SessionTemplate[]): Promise<HorizonRun> {
+  const goals = goalsAfter(await TrainingGoalsRepo.getAll(), changedGoals);
+  if (activeGoalDemandKeys(goals).length === 0) return run;
+  const config = await GoalEngineConfigRepo.get();
+  const { proposal } = computeForecastReplan({ plannedSessions: run.after, templates, availability: { ...config.availability, allowedDays: first.allowedDays }, asOf: todayISO() });
+  if (proposal.changes.length === 0) return run;
+  const { sessions, unsupported } = applyPlanChangeItems(proposal.changes, run.after);
+  return unsupported.length > 0 ? run : { ...run, after: sessions };
+}
+
+// De rijen van de eerste volle week van het voorbeeld zoals Week ze toont: een recovery-rij is de rustdag.
+function firstWeekRows(after: PlannedSession[], templates: SessionTemplate[], today: string): FirstWeekRow[] {
+  const from = addDays(mondayOfWeek(today), 7);
+  const until = addDays(from, 6);
+  const byId = new Map(templates.map((t) => [t.id, t]));
+  return after
+    .filter((s) => s.status !== 'skipped' && s.scheduledDate >= from && s.scheduledDate <= until && byId.has(s.templateId))
+    .map((s) => { const t = byId.get(s.templateId)!; return { weekday: isoWeekday(s.scheduledDate), name: t.name, strength: t.type === 'strength', rest: t.type === 'recovery' }; });
+}
+
 // The plan with the fixed lengths of the trainings that keep theirs.
 function withPins(sessions: PlannedSession[], pins: HorizonChangeInput['pinMinutes']): PlannedSession[] {
   if (!pins?.length) return sessions;
@@ -149,7 +178,8 @@ async function diffFor(input: HorizonChangeInput, registers?: DurationScope) {
   const start = input.startItems?.length
     ? applyPlanChangeItems(input.startItems, base, () => `horizon-draft-${++drafts}`, { by: 'proposal', at: 'preview' }).sessions
     : (base !== stored ? base : undefined);
-  const run = await settledPreview({ settings: input.settings, goals: input.goals, sessions: start, registers, program: input.program, milestones: input.firstPlan?.milestones });
+  const settled = await settledPreview({ settings: input.settings, goals: input.goals, sessions: start, registers, program: input.program, milestones: input.firstPlan?.milestones });
+  const run = input.firstPlan ? await withAvailability(settled, input.firstPlan, input.goals, templates) : settled;
   const diff = diffHorizon({ before: base, after: run.after, logs, templates, today: todayISO(), goalDay: run.anchor, reason: input.why });
   // The proposal's own items keep their own reason.
   const own = new Map((input.startItems ?? []).filter((i) => i.plannedSessionId).map((i) => [i.plannedSessionId!, i]));
@@ -277,8 +307,11 @@ export async function computeHorizonPlan(given: HorizonChangeInput, deps: Horizo
   };
   const conflicts = await goalConflictsOf(input, today);
   const conflictNotes = conflicts.flatMap((c) => [c.message, c.suggestion]);
+  // Het eerste voorstel noemt de week van het voorbeeld, niet de vorm die de vragen kozen: wat het noemt staat daarna in Week.
+  const text = input.firstPlan?.text;
+  const own = text ? firstPlanLines(text, firstWeekRows(done.run.after, templates, today)) : (input.notes ?? []);
   return {
-    input, proposal, notes: [...(input.notes ?? []), ...conflictNotes, ...diff.notes], lengths: input.lengths ?? lengths, counts: diff.counts,
+    input, proposal, notes: [...own, ...conflictNotes, ...diff.notes], lengths: input.lengths ?? lengths, counts: diff.counts,
     ...(conflicts.length > 0 ? { conflicts } : {}),
     ...(input.program ? { programWas: JSON.stringify(programs[0] ?? null) } : {}),
   };

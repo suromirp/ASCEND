@@ -327,6 +327,7 @@ function MoveLine({ move }: { move: PreviewMove }) {
               {move.from && <span className="mx-1.5 inline-block align-[-2px]" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={14} /></span>}
               <span style={{ color: 'var(--color-ink)' }}>{short(move.to!)}</span>
               {move.isNew && move.minutes !== undefined && <span style={{ color: 'var(--color-ink-dim)' }}> · {move.minutes} min</span>}
+              {move.rest && move.action === 'add' && <span style={{ color: 'var(--color-ink-dim)' }}> · wandelen mag</span>}
             </>
           )}
         </span>

@@ -3399,6 +3399,13 @@
    "kern": "Naspelen van I-144 (rustdag na twaalf dagen niets): de gemelde vorm gaf op main al het voorstel, waarschijnlijk een bouw van voor I-124; de fix dicht het gat voor een periode die op T-8 of eerder eindigt. Oorzaak, fix en testnamen.",
    "stand": "achtergrond"
   },
+  "docs/onderhoud/2026-11-23-een-plan-eerste-voorstel.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Verslag van I-14 stap 4: het eerste voorstel maakt zijn zinnen uit het voorbeeld (firstPlanLines), kracht volgt het plan met het budget apart, de rustdag heet Rustdag in de lijst. Tests, controles en wat niet is nagegaan.",
+   "stand": "achtergrond"
+  },
   "docs/onderhoud/2026-11-23-klein-142-143-145.md": {
    "onderwerpen": [
     "planning"

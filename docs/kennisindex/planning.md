@@ -99,6 +99,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 ## Onderzoek, ontwerpen en verslagen
 
 - [audit/3 Simulatie trainingsplan.md](../audit/3%20Simulatie%20trainingsplan.md): Simulatie van 3 oktober 2026 waarin de echte engine een heel traject van programmastart tot de GR5 draait.
+- [onderhoud/2026-11-23-een-plan-eerste-voorstel.md](../onderhoud/2026-11-23-een-plan-eerste-voorstel.md): Verslag van I-14 stap 4: het eerste voorstel maakt zijn zinnen uit het voorbeeld (firstPlanLines), kracht volgt het plan met het budget apart, de rustdag heet Rustdag in de lijst. Tests, controles en wat niet is nagegaan.
 - [onderhoud/2026-11-23-klein-142-143-145.md](../onderhoud/2026-11-23-klein-142-143-145.md): Verslag van de kleine punten I-142, I-143 en I-145: ladder na Hoeveel per soort, trekdoel en Kennisbank, tekst van een losse sport. Wat is gebouwd en wat is nagegaan zonder wijziging.
 - [onderhoud/2026-11-23-naspelen-terugkeer.md](../onderhoud/2026-11-23-naspelen-terugkeer.md): Naspelen van I-144 (rustdag na twaalf dagen niets): de gemelde vorm gaf op main al het voorstel, waarschijnlijk een bouw van voor I-124; de fix dicht het gat voor een periode die op T-8 of eerder eindigt. Oorzaak, fix en testnamen.
 - [onderzoek/ASCEND voor iedereen.md](../onderzoek/ASCEND%20voor%20iedereen.md): Hoe ASCEND werkt voor iedereen: met of zonder doel, eigen sporten, een hoeveelheid per soort training en sporten die eerlijk meetellen.

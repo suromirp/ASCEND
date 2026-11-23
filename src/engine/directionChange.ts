@@ -18,11 +18,31 @@ const WHAT_IT_DOES: Record<DirectionId, string> = {
   easy: 'Elke week hetzelfde en nooit een harde training: de heuvelloop van de zaterdag wordt een herstelloop.',
 };
 
+const ORDINAL: Record<number, string> = { 2: 'tweede', 3: 'derde', 4: 'vierde', 5: 'vijfde', 6: 'zesde', 7: 'zevende' };
+
+// Wat het plan echt heeft (I-14, docs/visie/Ontwerp Eén plan.md vraag 2): de tekst volgt het plan. `strength` is het
+// aantal krachtdagen in de week van het plan; `days` en `fitsWith` (het aantal dagen waarmee het budget past) alleen
+// als het verschilt van wat de richting vraagt.
+export interface PlannedStrength {
+  strength: number;
+  days?: number;
+  fitsWith?: number;
+}
+
+function strengthPart(budget: number, planned: PlannedStrength | undefined): string {
+  if (!planned || planned.strength === budget) return `${budget} keer kracht`;
+  const fits = planned.fitsWith === undefined ? ''
+    : planned.days !== undefined && planned.fitsWith === planned.days + 1 && ORDINAL[planned.fitsWith] ? `, met een ${ORDINAL[planned.fitsWith]} dag past het`
+    : `, met ${planned.fitsWith} dagen per week past het`;
+  return `${planned.strength} keer kracht; je richting vraagt ${budget}${planned.strength < budget ? fits : ''}`;
+}
+
 // Met krachttraining uit (engine/strengthTraining.ts) telt het budget geen kracht: dan noemen de zinnen alleen minuten en lopen.
-export function directionChangeLines(id: DirectionId, settings: { weekBudget?: unknown; strengthTraining?: unknown }): string[] {
+// `planned`: het eerste voorstel noemt het aantal krachtdagen van het plan, en het budget apart als dat anders is.
+export function directionChangeLines(id: DirectionId, settings: { weekBudget?: unknown; strengthTraining?: unknown }, planned?: PlannedStrength): string[] {
   const on = strengthTrainingOn(settings);
   const budget = budgetFor(id, { choice: resolveWeekBudget(settings.weekBudget) });
-  const week = on ? `Je week: ${budget.minutes} minuten en ${budget.strength} keer kracht.` : `Je week: ${budget.minutes} minuten.`;
+  const week = on ? `Je week: ${budget.minutes} minuten en ${strengthPart(budget.strength, planned)}.` : `Je week: ${budget.minutes} minuten.`;
   return [
     `Richting: ${DIRECTIONS[id].label}.`,
     belowGuideline(budget, on) ? `${week} Dat is onder de richtlijn, en dat mag een keuze zijn.` : week,
