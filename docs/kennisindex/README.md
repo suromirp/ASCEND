@@ -11,7 +11,7 @@ Een nieuw document in `docs/` krijgt een regel in `bronnen.json`, en haalt het e
 oudere besluit de stand deels of vervangen. Daarna `npm run kennisindex`; de test
 `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 588 documenten: 353 gelden, 92 deels ingehaald, 3 vervangen, 3 verouderd, 137 achtergrond.
+Stand van de 589 documenten: 354 gelden, 92 deels ingehaald, 3 vervangen, 3 verouderd, 137 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; deels ingehaald geldt alleen nog voor wat achter "Geldt nog" staat, de
@@ -48,13 +48,13 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/planning.md](../werkbriefjes/planning.md)
 - [architectuur/planning.md](../architectuur/planning.md): Het lange verhaal bij planning: hoofddoel en rollen, scheduler, wie een sessie mag aanraken, labels, eerst vragen, ziek, vrij, tochten en de rugzakladder.
-- Alles over dit onderwerp: [planning.md](planning.md) (66 besluiten die gelden, 14 deels ingehaald, 35 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [planning.md](planning.md) (67 besluiten die gelden, 14 deels ingehaald, 35 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Week
 
 - Werkbriefje: [werkbriefjes/week.md](../werkbriefjes/week.md)
 - [architectuur/week.md](../architectuur/week.md): Het lange verhaal bij de Week-tab: waarschuwingen, slepen en inhalen.
-- Alles over dit onderwerp: [week.md](week.md) (29 besluiten die gelden, 9 deels ingehaald, 7 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [week.md](week.md) (30 besluiten die gelden, 9 deels ingehaald, 7 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Lichaam en herstel
 

@@ -43,6 +43,11 @@ export interface PlanDay {
   strip: StripEntry[];
   // Geen training in de balk, wel een rustdag.
   stripRest: boolean;
+  // Voor de kaart op Vandaag, op de dag van uitvoeren zoals de balk: er is hier een training en geen open missie meer
+  // (`allDone`), en hier is iets gedaan (`anyDone`). Een training van morgen die je vandaag deed telt vandaag, niet
+  // op zijn geplande dag; die dag is dan een vrije dag.
+  allDone: boolean;
+  anyDone: boolean;
 }
 
 export interface WeekPlan {
@@ -110,13 +115,15 @@ export function weekPlan(input: DayPlanInput): WeekPlan {
       return [{ session: s, template, done: logged.has(s.id), ...(plannedOn ? { plannedOn } : {}) }];
     });
     const stripRest = strip.length === 0 && candidates.some((s) => isRest(s) && s.status !== 'skipped');
-    return { date, sessions, order, primary, rest, strip, stripRest };
+    const allDone = candidates.some((s) => !isRest(s)) && !primary;
+    const anyDone = candidates.some((s) => logged.has(s.id));
+    return { date, sessions, order, primary, rest, strip, stripRest, allDone, anyDone };
   });
 
   const byDate = new Map(days.map((d) => [d.date, d]));
   return {
     days,
     // Een dag buiten de week rekent dezelfde rijen, zonder balk.
-    day: (date) => byDate.get(date) ?? { date, ...orderedOn(date), strip: [], stripRest: false },
+    day: (date) => byDate.get(date) ?? { date, ...orderedOn(date), strip: [], stripRest: false, allDone: false, anyDone: false },
   };
 }

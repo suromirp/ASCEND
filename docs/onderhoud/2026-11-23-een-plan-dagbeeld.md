@@ -12,6 +12,14 @@ Backlogpunt I-14, stap 5 van `docs/visie/Ontwerp Eén plan.md` (symptoom B, inva
 
 Geen nieuwe schrijver, geen opgeslagen vorm, geen migratie, geen voorstel. Alleen afleiding en een aria-label. Historie wordt niet geraakt.
 
+## Herstelronde (Warden akkoord, Pathfinder één Moet)
+
+- Moet 1: de kaart op Vandaag rekent op de dag van uitvoeren. Het dagbeeld geeft per dag `allDone` (er is hier een training en geen open missie) en `anyDone` (hier is iets gedaan), uit dezelfde rijen als de balk (`countDayOf`). Today leest die in plaats van de rijen van de geplande dag. Doe je de tempoloop van donderdag op woensdag: woensdag zegt "Vandaag zit erop" met "Tempoloop gedaan", donderdag is een vrije dag ("Rust of vrije dag"), niet meer "Vandaag zit erop" met " gedaan" zonder naam. Getoetst op beide dagen in `src/engine/dayPlan.test.ts`, plus een dag met een gedane en een open training. In de zestig standen: als de balk iets gedaan toont, telt de kaart het ook.
+- Moet 2: besluit `docs/beslissingen/2026-11-23-een-plan-dagbeeld.md` met de drie keuzes (Week kijkt voorbij zondag, het Logboek volgt de ziekteregel, "van do 19" alleen in het aria-label), met een regel in `docs/kennisindex/bronnen.json`.
+- Moet 3: de valkuil staat in `docs/werkbriefjes/week.md`, bij de regel over het dagbeeld (het briefje mag niet langer dan 45 regels).
+- Mag 4: invariant 3 heeft nu ook de stand "concept open": een voorbije training met een concept blijft in Week en in de balk op zijn dag en is nooit de missie. Een toets dat de standen die stand ook echt raken.
+- Niet gedaan: Mag 2 van de Warden (`primary` en `rest` alleen voor vandaag). Ziek in de balk blijft zoals het is, op verzoek. Het dagbeeld draagt geen stand uit `deriveSessionStatus`, naam of minuten zoals het ontwerp schetst; dat lezen Week en de balk nog zelf. Dat is smaller dan het ontwerp, niet tegen het ontwerp in.
+
 ## Keuzes die het ontwerp niet besliste
 
 - Welk woord de balk gebruikt. Het ontwerp zegt "met een woord" en geeft als voorbeeld "gedaan di 27" voor Week. Gekozen: de balk noemt de geplande dag na de naam, "van do 19", en de geplande dag zelf blijft "vrij" (de balk tekent daar ook niets). Zo past het label bij wat je ziet en zegt het waar de training vandaan kwam.

@@ -167,8 +167,8 @@ function TodayContent() {
   // "een herstelmoment ga je niet los loggen"). It gets its own quiet card
   // and never counts in the week's numbers.
   const isRestSession = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'recovery';
-  const allTodayDone = todaySessions.some((s) => !isRestSession(s)) && !primary;
-  const anyDoneToday = todaySessions.some((s) => deriveSessionStatus(s, sessionLogs).status === 'completed');
+  // Wat vandaag gedaan is, telt op de dag van uitvoeren, zoals de balk (engine/dayPlan.ts, `allDone` en `anyDone`).
+  const { allDone: allTodayDone, anyDone: anyDoneToday } = plan.day(today);
 
   // A short look-back nudge — only worth showing right at the week
   // boundary (closing out the week that just ended, or opening the new

@@ -9,6 +9,7 @@ import { addDays } from '../utils/dates';
 import { hiddenFromDay, weekPlan } from './dayPlan';
 import { dayOrder, orderDay } from './dayOrder';
 import { doneOnOtherDay } from './weekRow';
+import { isDraftOpen } from './sessionStatus';
 
 const { templates } = buildDefaultProgramData();
 const templateById = new Map(templates.map((t) => [t.id, t]));
@@ -37,6 +38,27 @@ describe('weekPlan', () => {
     expect(plan.day('2026-11-19').strip).toEqual([]);
     expect(plan.day(WEDNESDAY).strip.map((e) => ({ id: e.session.id, done: e.done, plannedOn: e.plannedOn }))).toEqual([{ id: 'tempo', done: true, plannedOn: 'do 19' }]);
     expect(plan.day(WEDNESDAY).primary).toBeUndefined();
+  });
+
+  it('de kaart op Vandaag telt op de dag van uitvoeren: een training van donderdag op woensdag gedaan', () => {
+    // Woensdag: niets gepland, de tempoloop van donderdag gedaan. De kaart zegt gedaan (Vandaag zit erop), zoals de balk.
+    // Donderdag: de geplande dag. Daar is niets meer, dus een vrije dag, niet "Vandaag zit erop" zonder naam.
+    const tempo = row('tempo', 'tpl_tempo_run', '2026-11-19');
+    const logs = [logFor(tempo, WEDNESDAY)];
+    const wednesday = weekPlan({ weekStart: MONDAY, sessions: [tempo], logs, templateById, today: WEDNESDAY }).day(WEDNESDAY);
+    expect({ allDone: wednesday.allDone, anyDone: wednesday.anyDone, primary: wednesday.primary }).toEqual({ allDone: true, anyDone: true, primary: undefined });
+    const thursday = weekPlan({ weekStart: MONDAY, sessions: [tempo], logs, templateById, today: '2026-11-19' }).day('2026-11-19');
+    expect({ allDone: thursday.allDone, anyDone: thursday.anyDone, primary: thursday.primary, rest: thursday.rest }).toEqual({ allDone: false, anyDone: false, primary: undefined, rest: undefined });
+    expect(thursday.strip).toEqual([]);
+  });
+
+  it('de kaart op Vandaag: gedaan op de eigen dag, en een open training ernaast', () => {
+    const tempo = row('tempo', 'tpl_tempo_run', WEDNESDAY, { order: 0 });
+    const upper = row('upper', 'tpl_upper_a', WEDNESDAY, { order: 1 });
+    const one = weekPlan({ weekStart: MONDAY, sessions: [tempo], logs: [logFor(tempo, WEDNESDAY)], templateById, today: WEDNESDAY }).day(WEDNESDAY);
+    expect([one.allDone, one.anyDone]).toEqual([true, true]);
+    const two = weekPlan({ weekStart: MONDAY, sessions: [tempo, upper], logs: [logFor(tempo, WEDNESDAY)], templateById, today: WEDNESDAY }).day(WEDNESDAY);
+    expect([two.allDone, two.anyDone, two.primary?.id]).toEqual([false, true, 'upper']);
   });
 
   it('laat een overgeslagen rustdag en wat een periode liet vallen weg, op een plek', () => {
@@ -90,8 +112,11 @@ function stand(seed: number) {
     if (s.status !== 'skipped' && r() < 0.4) logs.push(logFor(s, addDays(date, pick([0, 0, -1, 1, 2]))));
   }
   const today = addDays(MONDAY, Math.floor(r() * 7));
+  // Concept open: een training van voor vandaag met een concept in Forge, zonder log (engine/sessionStatus.ts#isDraftOpen).
+  const draftable = sessions.filter((s) => s.scheduledDate < today && s.status !== 'skipped' && !logs.some((l) => l.plannedSessionId === s.id));
+  const openDraft = draftable.length > 0 && r() < 0.5 ? pick(draftable).id : undefined;
   const illness: IllnessEpisode[] = r() < 0.2 ? [{ id: 'z', kind: pick(['above_neck', 'below_neck', 'stomach'] as const), startDate: today }] : [];
-  return { sessions, logs, plan: weekPlan({ weekStart: MONDAY, sessions, logs, templateById, today, illness }) };
+  return { sessions, logs, today, openDraft, plan: weekPlan({ weekStart: MONDAY, sessions, logs, templateById, today, illness }) };
 }
 const SEEDS = Array.from({ length: 60 }, (_, i) => i + 1);
 
@@ -101,14 +126,22 @@ describe('invariant 3: een dag, een antwoord', () => {
     expect(days.some((d) => d.strip.some((e) => e.plannedOn))).toBe(true);
     expect(days.some((d) => d.order)).toBe(true);
     expect(days.some((d) => d.primary)).toBe(true);
+    expect(SEEDS.some((seed) => stand(seed).openDraft)).toBe(true);
   });
 
   for (const seed of SEEDS) {
     it(`stand ${seed}`, () => {
-      const { sessions, logs, plan } = stand(seed);
+      const { sessions, logs, plan, today, openDraft } = stand(seed);
       const logged = new Map(logs.map((l) => [l.plannedSessionId!, l]));
       const shown = (s: PlannedSession) => templateById.get(s.templateId)!.type !== 'recovery' && s.status !== 'skipped';
 
+      // Concept open: de rij blijft in Week op zijn dag, in de balk als hij training is, en is nooit de missie van vandaag.
+      const draft = sessions.find((s) => s.id === openDraft);
+      if (draft && isDraftOpen(draft, openDraft, today) && draft.scheduledDate >= MONDAY) {
+        expect(plan.day(draft.scheduledDate).sessions).toContain(draft);
+        if (shown(draft)) expect(plan.day(draft.scheduledDate).strip.map((e) => e.session)).toContain(draft);
+        expect(plan.day(today).primary?.id).not.toBe(draft.id);
+      }
       for (const day of plan.days) {
         // De missie is een open rij van Week op die dag.
         if (day.primary) {
@@ -116,6 +149,8 @@ describe('invariant 3: een dag, een antwoord', () => {
           expect(logged.has(day.primary.id)).toBe(false);
           expect(day.primary.status).not.toBe('skipped');
         }
+        // De kaart op Vandaag telt wat de balk gedaan toont (dag van uitvoeren).
+        if (day.strip.some((e) => e.done)) expect(day.anyDone).toBe(true);
         // De volgorde van Week is die van Vandaag (dayOrder).
         const open = day.sessions.filter((s) => !logged.has(s.id));
         const tomorrow = sessions.filter((s) => s.scheduledDate === addDays(day.date, 1));
