@@ -19,7 +19,7 @@ const lower = (s: string) => (/^[A-Z][a-z]/.test(s) ? `${s.charAt(0).toLowerCase
 // nog staat laat de strip zien; de verdeling per sport staat in Je trainingen. Een losse training (iets buiten de
 // planning om) telt in de tijd, niet in gedaan, en staat er dan met zijn eigen woord bij: "0 gedaan · 1 losse
 // training · 56 min". Is er niets gedaan, dan staat er geen tijd.
-// Gedaan in een andere week dan gepland (I-58, docs/beslissingen/2026-11-23-minuten-in-week-van-uitvoeren.md): de
+// Gedaan in een andere week dan gepland (I-58, docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md): de
 // geplande week telt hem als gedaan, de minuten staan in de week van uitvoeren. "2 van 2 gedaan, 1 in de week erna ·
 // 45 min" en daar "0 gedaan · 1 uit de week ervoor · 1:30 uur".
 export function weekCountLine(r: WeekReview): string {
@@ -54,14 +54,19 @@ export function sportLines(r: WeekReview): string[] {
 
 // De verwijzing naar de rij in Week, met haar eigen naam.
 export const MISSED_REPLAN_HINT = 'De rest van je week zet Week opnieuw plannen terug naar het plan.';
+// Na een gemiste sleuteltraining: Week opnieuw plannen zet ook een aangenomen inhaal van deze week terug
+// (engine/replanWeek.ts, replanSummary zegt het in het voorstel). De verwijzing zegt het ook, zodat de belofte van een
+// inhaal niet stil vervalt (I-59, docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md).
+export const MISSED_KEY_REPLAN_HINT = 'Week opnieuw plannen zet de rest van je week terug naar het plan, ook een inhaal.';
 
 // Wat naast gedaan en gemist nog in de week stond, zodat de som sluit: "Overgeslagen: Bovenlichaam B" (telt mee in
 // "van n"; lag hij in een pauze of haalde ASCEND hem weg, dan met ", telt niet mee") en "Vervallen: Benen A (zwaar), telt
 // niet mee" (een pauze haalde hem uit de telling). Valt Gemist buiten de
-// twee regels om op te letten, dan staat hij hier, zonder advies (Pathfinder, 15 november, I-40).
+// twee regels om op te letten, dan staat hij hier, zonder advies (Pathfinder, 15 november, I-40), met de verwijzing (I-59).
 export function weekRestLines(r: WeekReview, opts: { missedShown: boolean }): string[] {
   const out: string[] = [];
-  if (!opts.missedShown && r.missed.length > 0) out.push(`Gemist: ${joinNames(countedNames(r.missed))}`);
+  // Zonder advies, wel met de verwijzing naar de rij in Week als die er staat (I-59).
+  if (!opts.missedShown && r.missed.length > 0) out.push(`Gemist: ${joinNames(countedNames(r.missed))}${r.replan ? `. ${MISSED_REPLAN_HINT}` : ''}`);
   if (r.skipped?.length) out.push(`Overgeslagen: ${joinNames(countedNames(r.skipped))}`);
   if (r.skippedOff?.length) out.push(`Overgeslagen: ${joinNames(countedNames(r.skippedOff))}, telt niet mee`);
   if (r.lapsed?.length) out.push(`Vervallen: ${joinNames(countedNames(r.lapsed))}, telt niet mee`);
@@ -116,7 +121,7 @@ export function attentionLines(r: WeekReview): AttentionLine[] {
       key: 'missed', label: 'Gemist', warn: false,
       value: (r.keyMissedName
         ? `${names}. De ${lower(r.keyMissedName)} is de belangrijkste; die komt na Akkoord op een vrije dag, als dat past.`
-        : `${names}. Laat het los; dubbel doen helpt niet.`) + (r.replan ? ` ${MISSED_REPLAN_HINT}` : ''),
+        : `${names}. Laat het los; dubbel doen helpt niet.`) + (r.replan ? ` ${r.keyMissedName ? MISSED_KEY_REPLAN_HINT : MISSED_REPLAN_HINT}` : ''),
     });
   }
   if (r.heavier >= 2) out.push({ key: 'heavier', label: 'Zwaarder', warn: false, value: 'Twee of meer trainingen voelden zwaarder. Voelt het weer zo, kies de korte versie.' });

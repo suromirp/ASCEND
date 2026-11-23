@@ -4499,7 +4499,7 @@
    "kern": "Bij een Avontuurlijke lus begin je tegen de wind in en heb je hem op de terugweg mee: de app draait de lus (reverseProposal, geen aanroep) op de windrichting van het startuur uit de voorspelling die er al is, gemeten over het eerste en laatste derde; zwakker dan 12 km/u of onbekend doet niets; één regel bij de lus, ook eerlijk na Andersom; instelling routeWind, standaard aan.",
    "stand": "geldt"
   },
-  "docs/beslissingen/2026-11-23-minuten-in-week-van-uitvoeren.md": {
+  "docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md": {
    "onderwerpen": [
     "week"
    ],

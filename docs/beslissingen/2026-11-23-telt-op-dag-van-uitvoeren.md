@@ -1,4 +1,4 @@
-# Minuten in de week van uitvoeren
+# Een training telt op de dag van uitvoeren
 
 Datum: 2026-11-23
 Status: aangenomen
@@ -12,6 +12,12 @@ Staat het log van een training in een andere week dan de geplande sessie, dan te
 - Dezelfde woorden in de weekterugblik (`engine/weekGlance.ts#weekCountLine`), de rij Je week in Week (`engine/weekList.ts#weekSoFarRow`) en de kaart Weekterugblik op Vandaag. De woorden komen uit één functie, `weekGlance.ts#elsewhereNotes`.
 - De dagrij in Week blijft zoals hij was: hij staat op de geplande dag en zegt "gedaan ma 12".
 - Welke week het log hoort, volgt de dag van het log uit `engine/logDay.ts`, dezelfde dag als die van de minuten. De weekgrens is maandag 00:00 in Europe/Amsterdam (de lokale datum van het log). Een training uit MacroFactor die zondag voor middernacht begon voor de training van maandag, telt op maandag en geeft dus geen andere week.
+
+## Gemist en Week opnieuw plannen (I-59)
+
+- Week opnieuw plannen zet een aangenomen inhaal van deze week terug naar het plan; het voorstel zegt dat al ("Dat geldt ook voor wat je inhaalde"). Dat blijft zo: het is het kleinste juiste, opnieuw plannen is "terug naar het plan" en de inhaal is na een nieuwe week opnieuw voor te stellen. De terugblik zegt het nu ook. Bij een gemiste sleuteltraining staat er na de belofte van een inhaal: "Week opnieuw plannen zet de rest van je week terug naar het plan, ook een inhaal." (`engine/weekGlance.ts#MISSED_KEY_REPLAN_HINT`).
+- Valt Gemist buiten de twee regels van Let op, dan staat hij onder de telling met dezelfde verwijzing naar Week opnieuw plannen als de week die rij heeft (`weekRestLines`), nog steeds zonder advies.
+- Een dagrij met een dag aan het eind ("gedaan di 27") leest voor de schermlezer als één zin; de twee zichtbare delen zijn er alleen voor het afkappen (`components/WeekPlanner.tsx`).
 
 ## Reden
 

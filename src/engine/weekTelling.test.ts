@@ -330,3 +330,13 @@ describe('randgevallen', () => {
     expect(weekWord('2027-02-01', '2027-01-31')).toBe('volgende week');
   });
 });
+
+// I-59: de schermlezer leest "gedaan di 27" als één zin; de twee zichtbare delen (voor het afkappen) zijn verborgen.
+describe('schermlezer bij een rij met een dag aan het eind', () => {
+  it('één sr-only zin, de zichtbare delen aria-hidden', () => {
+    const block = weekPlanner.slice(weekPlanner.indexOf(') : extra.tail ? ('), weekPlanner.indexOf(') : extra.also ? ('));
+    expect(block).toContain('<span className="sr-only">· {extra.text}</span>');
+    expect(block).toContain('<span aria-hidden="true" className="truncate">');
+    expect(block).toContain('<span aria-hidden="true" className="shrink-0">{extra.tail}</span>');
+  });
+});

@@ -61,7 +61,7 @@ describe('logdag in een andere week', () => {
     expect(lr.scheduledDate).toBe('2026-10-11');
   });
 
-  // Besluit van de eigenaar, 23 november (docs/beslissingen/2026-11-23-minuten-in-week-van-uitvoeren.md, I-58):
+  // Besluit van de eigenaar, 23 november (docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md, I-58):
   // gedaan telt in de geplande week, de minuten in de week van het log, en beide weken zeggen dat.
   it('de telling: gedaan telt in de geplande week, de minuten in de week van uitvoeren, en de regel zegt het', () => {
     const a = reviewOf(stand, '2026-10-14');

@@ -76,7 +76,7 @@ export interface WeekReview {
   next?: { title: string; note?: string; minutes: number; key?: string; label?: string; rest?: boolean };
   label?: string; // de naam van deze week, zoals bij next
   extraLogged?: number; // losse logs van deze week: niet bij een geplande training van deze week, en ook niet van een andere week
-  // Gedaan in een andere week dan gepland (I-58, docs/beslissingen/2026-11-23-minuten-in-week-van-uitvoeren.md): gedaan
+  // Gedaan in een andere week dan gepland (I-58, docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md): gedaan
   // telt in de geplande week, de minuten in de week van het log. `doneElsewhere`: trainingen van deze week die in een
   // andere week gedaan zijn (hun minuten staan daar); `fromElsewhere`: logs van deze week bij een training van een andere
   // week (hun minuten staan hier). De dag van het log is dezelfde als die van de minuten (engine/logDay.ts).
