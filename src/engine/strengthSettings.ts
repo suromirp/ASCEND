@@ -10,6 +10,7 @@
 // One profile now, but the shape is a list with an active id, so more gyms can
 // come later without changing what is stored.
 
+import { FORGE_WORDS, FORGE_WORDS_ADVICE, type ForgeWords } from './forgeWords';
 import { normalizeStrengthProgram, type StoredStrengthProgram } from './strengthProgramStore';
 import { isRecord, isNum } from '../utils/guards';
 import { normalizeAddedExercises, type AddedExercises } from './addedExercises';
@@ -276,6 +277,8 @@ export interface StrengthSettings {
   compareWeeks?: CompareWeeks;
   // The order of the list on Forge.
   listSort?: ForgeSort;
+  // De woorden in Forge: gewoon (Plan, Over) of vaktaal (Voorschrift, RIR). Alleen wat je ziet.
+  words?: ForgeWords;
   // The small lines next to the number: reps at the same weight, top weight, volume.
   showExtras?: boolean;
   // A small line per exercise in the list on Forge, and the chart when a row opens.
@@ -375,6 +378,7 @@ export interface ResolvedStrengthSettings {
   showMacroFactorOneRm: boolean;
   compareWeeks: CompareWeeks;
   listSort: ForgeSort;
+  words: ForgeWords;
   showExtras: boolean;
   showTrendLines: boolean;
   restSeconds: Record<string, number>;
@@ -613,6 +617,8 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (compareWeeks) out.compareWeeks = compareWeeks;
   const listSort = FORGE_SORTS.find((v) => v === raw.listSort);
   if (listSort) out.listSort = listSort;
+  const words = FORGE_WORDS.find((v) => v === raw.words);
+  if (words) out.words = words;
   if (typeof raw.showExtras === 'boolean') out.showExtras = raw.showExtras;
   if (typeof raw.showTrendLines === 'boolean') out.showTrendLines = raw.showTrendLines;
   const stackWeights = STACK_WEIGHTS.find((v) => v === raw.stackWeights);
@@ -694,6 +700,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     showMacroFactorOneRm: s.showMacroFactorOneRm ?? true,
     compareWeeks: s.compareWeeks ?? '4_8',
     listSort: s.listSort ?? 'most',
+    words: s.words ?? FORGE_WORDS_ADVICE,
     showExtras: s.showExtras ?? true,
     showTrendLines: s.showTrendLines ?? true,
     restSeconds: s.restSeconds ?? {},
@@ -764,6 +771,7 @@ export function strengthModelKey(raw: StrengthSettings | undefined): string {
   delete copy.showMacroFactorOneRm;
   delete copy.compareWeeks;
   delete copy.listSort;
+  delete copy.words;
   delete copy.showExtras;
   delete copy.showComparison;
   delete copy.checkFrom;

@@ -187,6 +187,16 @@ export const FORGE_CHOICES = {
       { value: 'name', label: 'Op naam', note: 'Van A tot Z', short: 'Op naam' },
     ],
   }),
+  forgeWoorden: def({
+    group: 'Forge',
+    title: 'Woorden in Forge',
+    line: 'Gewone woorden, of de vaktaal van krachttraining.',
+    advice: 'plain' as 'plain' | 'jargon',
+    options: [
+      { value: 'plain', label: 'Gewoon', note: 'Plan, Over en Zwaarte', short: 'Gewoon' },
+      { value: 'jargon', label: 'Vaktaal', note: 'Voorschrift, RIR en RPE', short: 'Vaktaal' },
+    ],
+  }),
   restsignaal: def({
     group: 'Forge',
     title: 'Signaal als de rust om is',
@@ -491,6 +501,16 @@ export const FORGE: SettingDef[] = [
     note: 'Hoe de lijst op Forge gesorteerd staat: meest getraind, laatst getraind of op naam.',
     keywords: ['forge', 'sorteren', 'volgorde', 'lijst', 'oefeningen', 'naam', 'laatst', 'weergave op forge'],
     choice: { key: 'forgeVolgorde', def: FORGE_CHOICES.forgeVolgorde },
+    showWhen: [B.forge],
+  },
+  {
+    id: 'forge-woorden',
+    page: 'forge',
+    place: { in: 'bundel-weergave' },
+    title: 'Woorden in Forge',
+    note: 'Gewone woorden zoals Plan en Over, of de vaktaal zoals Voorschrift en RIR. De training zelf verandert niet.',
+    keywords: ['forge', 'woorden', 'taal', 'vaktaal', 'rir', 'rpe', 'voorschrift', 'plan', 'over', 'zwaarte', 'weergave op forge'],
+    choice: { key: 'forgeWoorden', def: FORGE_CHOICES.forgeWoorden },
     showWhen: [B.forge],
   },
   {

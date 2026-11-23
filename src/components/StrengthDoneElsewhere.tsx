@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useForgeWords } from './useForgeWords';
+import { forgeLabels } from '../engine/forgeWords';
 import type { SubjectiveFeel } from '../models/training';
 import { QUICK_RPE_SCALE, type DoneDuration } from '../engine/sessionActions';
 import { ChoiceStrip } from './ChoiceStrip';
@@ -53,6 +55,7 @@ export function StrengthDoneElsewhere({
   const [rpe, setRpe] = useState<number | undefined>();
   const [rir, setRir] = useState<number | undefined>();
   const label = 'mb-2 block text-[13px]';
+  const effortLabel = forgeLabels(useForgeWords()).effort;
   return (
     <div className="flex flex-col gap-4">
       <label
@@ -80,7 +83,7 @@ export function StrengthDoneElsewhere({
       </label>
 
       <div>
-        <span className={label} style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE)</span>
+        <span className={label} style={{ color: 'var(--color-ink-dim)' }}>{effortLabel}</span>
         <ChoiceStrip label="Zwaarte van 4 tot 10" options={RPE} value={rpe} onChange={setRpe} optional numeric />
       </div>
 

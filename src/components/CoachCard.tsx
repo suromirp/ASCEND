@@ -4,6 +4,8 @@
 // Het waarom zit dicht achter "Waarom?". Akkoord is het enige gevulde mint als het de enige keuze is;
 // een advies zonder `lead` houdt zijn alinea (`effect`). Zie docs/beslissingen/2026-10-28-adviesblad-compact.md.
 
+import { useForgeWords } from './useForgeWords';
+import { effortWords } from '../engine/forgeWords';
 import { REENTRY_TITLE, REENTRY_WHY, reentryFirstDayItems, reentryNote } from '../engine/reentry';
 import { ProposalChangeList, ProposalSheet } from './ProposalSheet';
 import { useState, type ReactNode } from 'react';
@@ -130,6 +132,7 @@ export function CoachCard() {
 // `primary`: Akkoord is gevuld mint, omdat het de enige keuze in het blad is; anders omlijnd.
 export function AdviceItem({ advice, compact = false, primary = false }: { advice: Advice; compact?: boolean; primary?: boolean }) {
   const { respondToAdvice, planWeekLoadChange, planHorizonChange, settings, program } = useAppData();
+  const words = useForgeWords();
   // Training through a rest week and "Deze week nog een keer" change the
   // program: first their own proposal with what changes, Akkoord in there
   // (storage/weekLoadPlan.ts). Only then the answer to the advice is recorded.
@@ -280,7 +283,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
   if (compact) {
     return (
       <div>
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{advice.effect}</p>
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{effortWords(advice.effect, words)}</p>
         {actions}
         <div className="flex flex-col">{whyToggle}</div>
         {why}
@@ -302,7 +305,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
           {glance ? (
             <p className="mt-1 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{adviceLead(advice)}</p>
           ) : (
-            <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{advice.effect}</p>
+            <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{effortWords(advice.effect, words)}</p>
           )}
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useForgeWords } from '../useForgeWords';
 import { Card, Eyebrow, InfoButton } from '../ui';
 import { TextButton } from '../TextButton';
 import { Sheet } from '../settings/Sheet';
@@ -11,6 +12,7 @@ import { formatShortDateNL } from '../../utils/dates';
 // nooit (docs/beslissingen/2026-11-09-hoe-goed-kent-forge-je.md).
 export function ForgeKnowsYou({ logs, today, bodyKg, estimateUpTo }: { logs: SessionLog[]; today: string; bodyKg: number | undefined; estimateUpTo: number }) {
   const [info, setInfo] = useState(false);
+  const jargon = useForgeWords() === 'jargon';
   const [open, setOpen] = useState(false);
   const c = useMemo(() => calibrate({ logs, today, bodyKg, maxToFailure: estimateUpTo }), [logs, today, bodyKg, estimateUpTo]);
   const any = hasAnyData(c);
@@ -25,7 +27,7 @@ export function ForgeKnowsYou({ logs, today, bodyKg, estimateUpTo }: { logs: Ses
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{c.lines.strength}</p>
       {c.lines.bias && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{c.lines.bias}</p>}
       {!any && (
-        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Dit telt vanaf je trainingen in Forge, met het voorschrift dat Forge toen gaf.</p>
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Dit telt vanaf je trainingen in Forge, met het {jargon ? 'voorschrift' : 'plan'} dat Forge toen gaf.</p>
       )}
       {info && (
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
@@ -64,7 +66,7 @@ export function ForgeKnowsYou({ logs, today, bodyKg, estimateUpTo }: { logs: Ses
               </div>
             )}
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              Een oefening telt mee vanaf {MIN_SETS} sets. Een voorspelling is raak als je hooguit één herhaling naast Forge zat, bij het voorgestelde gewicht en met je eigen RIR.
+              Een oefening telt mee vanaf {MIN_SETS} sets. Een voorspelling is raak als je hooguit één herhaling naast Forge zat, bij het voorgestelde gewicht en met {jargon ? 'je eigen RIR' : 'wat je zelf over had'}.
             </p>
           </div>
         </Sheet>

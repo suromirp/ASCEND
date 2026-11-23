@@ -1,5 +1,7 @@
 // Het blad om een training in Forge af te ronden of af te vinken.
 
+import { useForgeWords } from '../useForgeWords';
+import { forgeLabels } from '../../engine/forgeWords';
 import { useEffect, useRef, useState } from 'react';
 import { lastWorkMoment, progress, type WorkoutExercise } from '../../engine/forgeWorkout';
 import { isLegHeavyTemplate } from '../../engine/scheduler';
@@ -55,6 +57,7 @@ export function FinishSheet({
   onSave: (extra: FinishExtra, seen: () => boolean) => Promise<boolean>;
 }) {
   const today = todayISO();
+  const effortLabel = forgeLabels(useForgeWords()).effort;
   const { done, total } = progress(workout);
   const anyTicked = workout.some((e) => e.rows.some((r) => r.done));
   // Boven vier uur actieve tijd is de klok verdacht: dan staat hier je gewone duur en zegt een regel wat de klok zei.
@@ -166,7 +169,7 @@ export function FinishSheet({
           </div>
           {tooShort && <p className="-mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{SHORT_DURATION_TEXT}</p>}
           <div>
-            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE) van de hele training, als je wilt</p>
+            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{effortLabel} van de hele training, als je wilt</p>
             <div className="mt-2 grid grid-cols-5 gap-2" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
               {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                 <button key={n} type="button" role="radio" aria-checked={rpe === n} onClick={() => setRpe(rpe === n ? undefined : n)} className="min-h-[44px] rounded-lg border font-sans text-sm tabular-nums" style={{ borderColor: rpe === n ? 'var(--color-ink)' : 'var(--color-card-border)', background: rpe === n ? 'var(--color-surface)' : 'transparent', color: rpe === n ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>

@@ -3148,6 +3148,14 @@
     "docs/beslissingen/2026-11-23-terugkeer-na-pauze.md"
    ]
   },
+  "docs/beslissingen/2026-11-23-beginner-woorden.md": {
+   "onderwerpen": [
+    "planning",
+    "forge"
+   ],
+   "kern": "De zin van week 1 in het voorstel noemt wat de geplande week heeft en belooft als enige \"elke week iets meer\"; Forge zegt Plan, Over en Zwaarte (engine/forgeWords.ts), met het blad Zo lees je dit en de instelling Woorden in Forge (Gewoon of Vaktaal).",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-23-een-plan-dagbeeld.md": {
    "onderwerpen": [
     "week",

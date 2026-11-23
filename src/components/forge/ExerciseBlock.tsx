@@ -1,6 +1,6 @@
 // Een oefening in het workoutscherm van Forge: de kop, de tabel met sets en de regels eronder.
 
-import { Fragment, memo, useMemo } from 'react';
+import { Fragment, memo, useMemo, useState } from 'react';
 import { ExerciseArtButton } from '../ExerciseArtButton';
 import { QUICK_RIR, QUICK_RIR_HINT, quickRirLabel, raiseOpen } from '../../engine/forgeReckon';
 import { barNote } from '../../engine/barCheck';
@@ -38,7 +38,9 @@ import { BodyLoadChip } from './BodyLoad';
 import { addOnText } from '../../engine/machineWeights';
 import { SPOTTER_SIGN } from '../../engine/spotter';
 import { LongPressRow, RirBubble, TickBox, ValueCell } from './parts';
-import { Segmented } from '../ui';
+import { InfoButton, Segmented } from '../ui';
+import { forgeLabels, type ForgeWords } from '../../engine/forgeWords';
+import { ForgeReadSheet } from './ForgeReadSheet';
 import { addedKgOf, BAND_LABEL, bandOf, countsForLine, type LadderLines } from '../../engine/forgeLadder';
 import { SET_BANDS, type SetBand } from '../../models/training';
 import type { BlockActions } from './forgeWorkoutHelpers';
@@ -67,6 +69,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   noFitText,
   heavyTip,
   rirAsValue,
+  words = 'plain',
   warmNow = false,
   swipeOn,
   undoText,
@@ -107,6 +110,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   heavyTip?: string;
   // "RIR vooraf invullen: Met het doel": het doel staat er als waarde, niet als hint.
   rirAsValue: boolean;
+  // De woorden in Forge (instelling Woorden in Forge): Plan en Over, of Voorschrift en RIR.
+  words?: ForgeWords;
   // De oefening die deze opwarmset al deed is echt gedaan (engine/warmupLater.ts#warmNow): dan gedempt met de zin.
   warmNow?: boolean;
   swipeOn: boolean;
@@ -136,6 +141,8 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   act: BlockActions;
 }) {
   const reasonText = reasonWithOwnCount(ex) ?? '';
+  const labels = forgeLabels(words);
+  const [readOpen, setReadOpen] = useState(false);
   // Forge rekent mee zette het gewicht een stap omhoog: de regel en Terugzetten, zolang een open set het nog heeft.
   const raiseLine = !readOnly && ex.raise && raiseOpen(ex) ? ex.raise.line : undefined;
   const plates = useMemo(() => (usesPlates(exerciseOf(ex)) ? plateSteps(ex, profile) : undefined), [ex, profile]);
@@ -305,17 +312,17 @@ export const ExerciseBlock = memo(function ExerciseBlock({
               {readOnly ? (
                 <span role="columnheader">Vorige</span>
               ) : (
-                <button type="button" role="columnheader" onClick={act.column} className="-my-[14px] flex items-center gap-1 py-[14px] text-left" aria-label={showPrevious ? 'Toon het voorschrift' : 'Toon vorige keer'}>
-                  {showPrevious ? 'Vorige' : 'Voorschrift'}
+                <button type="button" role="columnheader" onClick={act.column} className="-my-[14px] flex items-center gap-1 py-[14px] text-left" aria-label={showPrevious ? `Toon ${labels.plan.toLowerCase()}` : 'Toon vorige keer'}>
+                  {showPrevious ? 'Vorige' : labels.plan}
                   <Icon name="ruilen" size={12} />
                 </button>
               )}
               {/* Een houding heeft geen kg (behalve met extra gewicht) en geen RIR: de koppen blijven dan leeg. */}
               <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : added ? '+ kg' : ex.hold ? '' : 'kg'}</span>
-              <span role="columnheader" className="text-center">{ex.timed || ex.hold ? 'sec' : 'Herh.'}</span>
-              <span role="columnheader" className="text-center">{ex.hold ? '' : 'RIR'}</span>
+              <span role="columnheader" className="text-center">{ex.timed || ex.hold ? 'sec' : <><span aria-hidden>{labels.reps}</span><span className="sr-only">{labels.repsSpoken}</span></>}</span>
+              <span role="columnheader" className="text-center">{ex.hold ? '' : labels.over}</span>
               {/* Alle sets afvinken staat in het blad Oefening, groep Sets (docs/beslissingen/2026-11-02-forge-herinrichting.md). */}
-              <span role="columnheader" className="flex justify-center"><span className="sr-only">Gedaan</span></span>
+              <span role="columnheader" className="flex justify-center"><span className="sr-only">Gedaan</span>{!readOnly && <InfoButton label="Zo lees je dit" onClick={() => setReadOpen(true)} />}</span>
             </div>
             {ex.rows.map((row, i) => {
               if (row.kind === 'work') workNo++;
@@ -354,10 +361,10 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                       ) : own ? (
                         <span className="flex min-h-[44px] items-center text-sm">{isCalibrationRow(row) ? 'ijkset' : 'eigen set'}</span>
                       ) : readOnly ? (
-                        <PrescriptionText row={row} ex={ex} />
+                        <PrescriptionText row={row} ex={ex} words={words} />
                       ) : (
-                        <button type="button" data-swipe-ok onClick={() => act.take(ex.slot, row.id)} disabled={row.done} aria-label={`Voorschrift overnemen, set ${label}`} className="flex min-h-[44px] w-full flex-col justify-center text-left">
-                          <PrescriptionText row={row} ex={ex} />
+                        <button type="button" data-swipe-ok onClick={() => act.take(ex.slot, row.id)} disabled={row.done} aria-label={`${labels.plan} overnemen, set ${label}`} className="flex min-h-[44px] w-full flex-col justify-center text-left">
+                          <PrescriptionText row={row} ex={ex} words={words} />
                         </button>
                       )}
                     </span>
@@ -392,7 +399,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                           hint={!readOnly && (row.rir === undefined || (!!row.rirAssumed && !rirAsValue))}
                           label={
                             !readOnly && (row.rir === undefined || (row.rirAssumed && !rirAsValue))
-                              ? `Voorschrift ${row.rir ?? row.target.rir} over, set ${label}, tik om je eigen RIR in te vullen`
+                              ? `${labels.plan} ${row.rir ?? row.target.rir} over, set ${label}, tik om je eigen ${labels.over === 'RIR' ? 'RIR' : 'waarde'} in te vullen`
                               : `${row.rir ?? row.target.rir} over, set ${label}${readOnly ? '' : ', tik om te wijzigen'}`
                           }
                           onClick={readOnly ? undefined : () => act.rir(ex.slot, row.id)}
@@ -466,6 +473,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
       {!readOnly && folded && cleanRow && (
         <CleanAsk label={rowLabel(ex, cleanRow)} onPick={(v) => act.clean(ex.slot, cleanRow, v)} />
       )}
+      {readOpen && <ForgeReadSheet words={words} onClose={() => setReadOpen(false)} />}
     </section>
   );
 });
@@ -506,7 +514,7 @@ function QuickRir({ label, aim, onPick }: { label: string; aim?: number; onPick:
 }
 
 // Het voorschrift van een set: "47,5 kg × 11-13" met de RIR eronder.
-function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise }) {
+function PrescriptionText({ row, ex, words }: { row: WorkoutRow; ex: WorkoutExercise; words: ForgeWords }) {
   return (
     <>
       <span className="block">
@@ -518,7 +526,7 @@ function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise })
           </Fragment>
         ))}
       </span>
-      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && !ex.hold && <span className="block text-xs">{row.target.rir} RIR</span>}
+      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && !ex.hold && <span className="block text-xs">{row.target.rir} {forgeLabels(words).over === 'RIR' ? 'RIR' : 'over'}</span>}
     </>
   );
 }

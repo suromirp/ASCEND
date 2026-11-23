@@ -12,6 +12,7 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
+- 2026-11-23 [Beginner heel licht: de belofte en de gewone woorden](../beslissingen/2026-11-23-beginner-woorden.md): De zin van week 1 in het voorstel noemt wat de geplande week heeft en belooft als enige "elke week iets meer"; Forge zegt Plan, Over en Zwaarte (engine/forgeWords.ts), met het blad Zo lees je dit en de instelling Woorden in Forge (Gewoon of Vaktaal).
 - 2026-11-22 [De ijkset telt pas bij Afronden, ook bij Vragen](../beslissingen/2026-11-22-ijkset-dag-bij-afronden.md): Ook bij Vragen telt de ijkset (calibratedAt) pas bij Afronden met de set afgevinkt, niet bij Akkoord; Lichter haalt de aangenomen set weg zonder dat de vier weken tellen, en een concept volgt de stand Uit.
 - 2026-11-20 [De ijkset staat op de Forge-pagina](../beslissingen/2026-11-20-ijkset-op-de-pagina.md): De ijkset staat als rij op de Forge-pagina (13 rijen, plafond van Forge verruimd) en de kaart in de training springt ernaartoe; de terugknop brengt je terug in de training.
 - 2026-11-15 [De ijkset automatisch erbij](../beslissingen/2026-11-15-ijkset-automatisch.md): IJkset in drie standen: Vragen (advies), Automatisch erbij (de set staat bij het openen al in de training, de dag telt pas bij Afronden met die set) en Uit; nooit als je ziek bent of opbouwt, zonder sportschool, in een vakantie of op een tocht, met Lichter of naast een ander concept met een ijkset.

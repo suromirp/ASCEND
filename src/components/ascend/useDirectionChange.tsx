@@ -4,7 +4,7 @@ import type { DirectionId } from '../../data/directions';
 import { parseDirection, parseDirectionStart } from '../../engine/direction';
 import type { AppSettings } from '../../storage/database';
 import { directionChangeLines, directionChangeTitle } from '../../engine/directionChange';
-import { beginnerStartLine, buildConsentPatch, isBeginnerStart, resolveBeginnerBuild, WALK_JOG_LINE } from '../../engine/beginnerStart';
+import { beginnerStartLine, beginnerWeekOneLine, buildConsentPatch, isBeginnerStart, resolveBeginnerBuild, resolveStartBuild, WALK_JOG_LINE } from '../../engine/beginnerStart';
 import { resolveWaveSettings } from '../../engine/waves';
 import { noGoalWavesLines, wavesHeld } from '../../engine/noGoalWaves';
 import { waveReviewPatch, type WaveReviewCard, type WaveReviewChoice } from '../../engine/waveReviewCard';
@@ -84,6 +84,7 @@ export function useDirectionChange(): {
           ...(wavesHeld(settings, program) ? noGoalWavesLines() : []),
           ...(id !== 'easy' && isBeginnerStart(settings.beginnerStart, sessionLogs, start) ? [beginnerStartLine(start, todayISO(), resolveWaveSettings(settings.waves).length) ?? ''].filter(Boolean) : []),
           ...(isBeginnerStart(settings.beginnerStart, sessionLogs, start) && resolveBeginnerBuild(patch.beginnerBuild ?? settings.beginnerBuild) === 'licht' ? [WALK_JOG_LINE] : []),
+          ...(isBeginnerStart(settings.beginnerStart, sessionLogs, start) && resolveStartBuild({ ...settings, ...patch }) === 'ladder' ? [beginnerWeekOneLine(Object.keys(((kracht.settings as Partial<AppSettings>).weekShape ?? settings.weekShape)?.days ?? {})) ?? ''].filter(Boolean) : []),
         ],
       }),
       { eyebrow: 'Je richting', ask: 'always', alwaysAsk: true, notesTitle: 'Je richting', declined: KEEP },

@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { layoutWaves, progressionTarget } from './programLayout';
 import { resolveEffectiveFullDuration, setFixedSessionMinutes, setStartBuild, withDurationScope } from './substitutions';
-import { startLadderSets, startWeekOn } from './beginnerPlan';
+import { firstStrengthLine, startLadderSets, startWeekOn } from './beginnerPlan';
 import { capWorkSets, prescribedSets } from './forgeTimeCap';
 import { exercisesForVariant } from './substitutions';
-import { resolveStartBuild, buildConsentPatch, type StartBuild } from './beginnerStart';
+import { resolveStartBuild, buildConsentPatch, beginnerWeekOneLine, type StartBuild } from './beginnerStart';
+import { chooseWeekShape, isStrengthTemplateId } from './weekShape';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { BEGINNER_LADDER } from '../data/beginnerLadder';
 import type { Program } from '../models/program';
@@ -169,5 +170,46 @@ describe('de sets in de start (Forge)', () => {
     const out = capWorkSets([slot], 2);
     expect(out[0].sets).toBe(2);
     expect(out[0].setTargets).toHaveLength(2);
+  });
+});
+
+describe('het voorstel en Week zeggen hetzelfde (stap 5)', () => {
+  const goals = ['fit', 'improve', 'stronger', 'easy'] as const;
+  it.each(goals.flatMap((goal) => [2, 3, 4, 5].flatMap((days) => [3, 4, 6].map((length) => [goal, days, length] as const))))(
+    'richting %s, %i dagen, golven van %i: de zin noemt wat de geplande week 1 heeft',
+    (goal, days, length) => {
+      const strength = days > 2 || goal === 'stronger';
+      const kept = chooseWeekShape(templates, { goal, daysPerWeek: days, allowedDays: [1, 2, 3, 4, 5, 6, 7], strength }).kept;
+      const line = beginnerWeekOneLine(kept);
+      const program = programFor(length);
+      const swap: Record<string, string> = { tpl_easy_run: 'tpl_walk_jog', tpl_long_run: 'tpl_walk_jog_long' };
+      const walks = kept.filter((id) => swap[id]).map((id) => minutes(swap[id], day(1, 3), program, 'ladder')).sort((x, y) => x - y);
+      const hasStrength = kept.some(isStrengthTemplateId);
+      if (!hasStrength && walks.length === 0) return expect(line).toBeUndefined();
+      expect(line).toMatch(/Elke week wordt het iets meer/);
+      expect(line).not.toMatch(/[\u2013\u2014]/);
+      expect(line?.includes('kracht tot 35 minuten')).toBe(hasStrength);
+      if (walks.length === 0) expect(line).not.toMatch(/wandelen/);
+      else expect(line).toContain(walks.length === 1 ? `één keer wandelen en dribbelen: ${walks[0]} minuten` : `${walks.length === 2 ? 'twee' : walks.length} keer wandelen en dribbelen: ${walks.slice(0, -1).join(', ')} en ${walks[walks.length - 1]} minuten`);
+    },
+  );
+
+  it('twee dagen is één keer wandelen en dribbelen, en week 2 is langer', () => {
+    const line = beginnerWeekOneLine(['tpl_upper_a', 'tpl_long_run']);
+    expect(line).toBe('Week 1: kracht tot 35 minuten, één keer wandelen en dribbelen: 30 minuten. Elke week wordt het iets meer.');
+    expect(minutes('tpl_walk_jog_long', day(2, 6), programFor(4), 'ladder')).toBeGreaterThan(30);
+    expect(beginnerWeekOneLine(['tpl_easy_run', 'tpl_long_run'])).toMatch(/^Week 1: twee keer wandelen en dribbelen: 20 en 30 minuten/);
+  });
+});
+
+describe('de regel over het gewicht boven de eerste krachttraining van de start', () => {
+  it('alleen kracht, alleen in de start, en alleen zolang je nog geen kracht logde', () => {
+    const program = programFor(4);
+    const line = 'Kies een gewicht dat licht voelt. Je moet er nog een paar over hebben.';
+    expect(firstStrengthLine(t('tpl_upper_a'), day(1, 1), program, [])).toBe(line);
+    expect(firstStrengthLine(t('tpl_walk_jog'), day(1, 1), program, [])).toBeUndefined();
+    expect(firstStrengthLine(t('tpl_upper_a'), day(5, 1), program, [])).toBeUndefined();
+    expect(firstStrengthLine(t('tpl_upper_a'), day(2, 1), program, [{ type: 'strength' }])).toBeUndefined();
+    expect(firstStrengthLine(t('tpl_upper_a'), day(1, 1), null, [])).toBeUndefined();
   });
 });

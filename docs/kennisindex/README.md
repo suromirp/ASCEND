@@ -11,7 +11,7 @@ Een nieuw document in `docs/` krijgt een regel in `bronnen.json`, en haalt het e
 oudere besluit de stand deels of vervangen. Daarna `npm run kennisindex`; de test
 `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 589 documenten: 354 gelden, 92 deels ingehaald, 3 vervangen, 3 verouderd, 137 achtergrond.
+Stand van de 590 documenten: 355 gelden, 92 deels ingehaald, 3 vervangen, 3 verouderd, 137 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; deels ingehaald geldt alleen nog voor wat achter "Geldt nog" staat, de
@@ -23,7 +23,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 - Werkbriefje: [werkbriefjes/forge.md](../werkbriefjes/forge.md)
 - [architectuur/forge.md](../architectuur/forge.md): Het lange verhaal bij Forge: Je stand en volgorde, sessie, verloop, spotter, plaatjes, het blad Oefening en spieren voor de berg.
 - [visie/Los van MacroFactor.md](../visie/Los%20van%20MacroFactor.md): Het doel van de eigenaar van 9 november 2026: Forge maakt MacroFactor Workouts overbodig, de voedingsapp blijft.
-- Alles over dit onderwerp: [forge.md](forge.md) (68 besluiten die gelden, 15 deels ingehaald, 20 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [forge.md](forge.md) (69 besluiten die gelden, 15 deels ingehaald, 20 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Koppelingen en data
 
@@ -48,7 +48,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/planning.md](../werkbriefjes/planning.md)
 - [architectuur/planning.md](../architectuur/planning.md): Het lange verhaal bij planning: hoofddoel en rollen, scheduler, wie een sessie mag aanraken, labels, eerst vragen, ziek, vrij, tochten en de rugzakladder.
-- Alles over dit onderwerp: [planning.md](planning.md) (67 besluiten die gelden, 14 deels ingehaald, 35 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [planning.md](planning.md) (68 besluiten die gelden, 14 deels ingehaald, 35 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Week
 

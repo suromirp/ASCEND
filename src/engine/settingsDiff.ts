@@ -265,6 +265,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   strengthFlag('forge-extras', 'Wat er verder veranderde', 'showExtras'),
   strengthFlag('forge-lijntjes', 'Lijntjes in de lijst', 'showTrendLines'),
   strengthChoice('forge-volgorde-lijst', 'Volgorde van de oefeningen', 'listSort', 'forgeVolgorde'),
+  strengthChoice('forge-woorden', 'Woorden in Forge', 'words', 'forgeWoorden'),
   strengthFlag('forge-naast', 'Voorstel naast MacroFactor', 'showComparison'),
 
   // Lichaam
