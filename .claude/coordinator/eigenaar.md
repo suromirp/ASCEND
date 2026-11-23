@@ -4,18 +4,65 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-### Minuten in een andere week (I-58, 22 november)
-Je deed een training in een andere week dan gepland. Advies: de minuten tellen in de week waarin je hem deed, de geplande week blijft gelijk. Andere keuze: de minuten gaan mee naar de geplande week. Zonder antwoord bouwt de coördinator het advies.
+### Terugkeer na een pauze: Bekijk of Akkoord op de kaart (I-124, 23 november)
+Keuzes: de kaart houdt Bekijk en Akkoord staat in het blad dat opent, zoals elk voorstel in de app (advies); of Akkoord direct op de kaart.
+Zonder antwoord: het blijft Bekijk.
+Sinds: 23 november.
+
+### Eén plan: vier keuzes (I-14, 23 november)
+Voorstel, Vandaag, Week en de weekbalk gaan uit één dagbeeld lezen; ontwerp in docs/visie/Ontwerp Eén plan.md.
+Keuzes, advies voorop: na een test of wedstrijd geen "na zwaar, ruimte" (de test heeft eigen rust); bij twee keer kracht op drie dagen volgt de tekst het plan ("1 keer kracht; met een vierde dag past het"); het eerste voorstel noemt de rustdag met wandelen; "Deze week nog een keer?" noemt één getal, dat van Week.
+Zonder antwoord: het advies.
+Sinds: 23 november.
+
+### Beginner: drie keuzes (I-18, 23 november)
+Keuzes, advies voorop: de herstelwandeling in de start duurt hoogstens zo lang als de korte sessie wandelen en dribbelen (nu 45 min); bij wandelen en dribbelen staat "Rustig, praten kan" in plaats van Zone 2; de ladder in de planning en het voorstel voor een lopende start gaan samen naar main.
+Zonder antwoord: het advies.
+Sinds: 23 november.
+
+### Losse sport: vier keuzes (I-23, 23 november)
+Keuzes, advies voorop: zwemmen, padel en voetbal altijd te kiezen, zonder rol één vraag na opslaan "Hoe telt padel?"; een voorstel na een zware sport blijft staan tot je kiest (instelbaar); geen kleding- en zweetvragen bij deze sporten tot er onderzoek is; past de weekcontrole na een sport een duur aan, dan eerst een voorstel.
+Zonder antwoord: het advies.
+Sinds: 23 november.
+
+### Na een loop één moment: vijf keuzes (I-34, 23 november)
+Na een loop één moment in plaats van zes tot acht lagen; de Terugblik als apart blad vervalt. Keuzes, advies telkens ja: een rustige vorm van het moment na Hoe ging het?; een test die op Telt mee wacht bovenaan; één training op een dag in het Logboek opent meteen het logblad; de Kennisbank op Ascend alleen bij een tocht als doel; acht Forge-keuzes in een blad tijdens het trainen.
+Zonder antwoord: het advies.
+Sinds: 23 november.
+
+## Beslist op advies (23 november, uw opdracht van 07:42)
+
+- Opwarmset na een ruil (I-30): blijft zoals u op 14 november besloot, een gewone opwarmset.
+- Week van uitvoeren (I-58): een open Forge-training telt pas na Afronden; een sleuteltraining of Gemist blijft bij de geplande week.
+- Wachttijd intervals.icu (I-35): hoogstens 120 seconden per aanroep.
+- Mislukte herstelstap (I-54): de melding staat in het blad Versie.
+- Hoogtemeters per km in Run in detail (I-77): tellen op tot het getal van uw horloge.
+- Slaaphartslag en ademhaling (I-78): eerst nagaan of uw horloge die levert (Scout), daarna pas bouwen.
 
 ## Stuk of vast
 
 
 ## Loopt
 
-- Graphify, eerlijke proef: na de reset van de weeklimiet (zondag 22 november 18:00 Portugese tijd). De graaf één keer bouwen (kosten apart), de koppeling en de regel in CLAUDE.md alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
-
+- Bundel 9 (I-14, I-18, I-23, I-34): vier ontwerpen klaar. Beginnersladder gebouwd, wordt nagekeken; Eén plan en Losse sport worden gebouwd.
+- Kleine punten (I-125, I-130 tot I-138): gebouwd, nagekeken en getest; gaan naar main na de laatste vergelijking van de schermen.
+- Graphify, eerlijke proef: zodra de lijst leeg is. De koppeling alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 ## Net live
+
+### 23 november 04:30
+- Week (I-58, I-59, I-72): een training telt in de week waarin je hem deed; beide weken zeggen het ("1 in de week erna", "1 uit de week ervoor"); gemist verwijst naar Week opnieuw plannen.
+- Lopen (I-77, I-33): één getal voor de stijging van een loop, ook in het Logboek.
+- Vroeg ziek zien (I-78): een ochtend zonder nacht telt niet; nieuwe instelling Eén duidelijke ochtend.
+- Route op reis (I-126 tot I-129): een regel bij een oude of ontbrekende kaart, en Andere plek als de route te lang duurt.
+
+### 23 november 03:35
+- Terugkeer na een pauze (I-124): de pauze telt vanaf je laatste echte training, het voorstel verloopt niet voordat de eerste week voorbij is of je gekozen hebt, Forge maakt de eerste sets lichter na meer dan 10 dagen zonder kracht, en je kunt een periode achteraf vastleggen of verlengen (tot 4 weken terug). Instelling Rond een vakantie in Planning.
+- Twee tabbladen tegelijk open schrijven elkaar niet meer over (I-54), en een trage intervals.icu houdt na 120 seconden op met wachten (I-35).
+
+### 23 november 02:05
+- Route (I-112, I-120 tot I-123): in Andere lus kies je nu een soort terrein (langs water, door bos of groen, meer onverhard) en Via een punt: tik op de grote kaart waar de lus langs moet, Zonder punt brengt de eerste lus terug. Terug voor het donker heeft uitleg, de amber regel klopt na omdraaien, en de wind telt alleen dicht bij je weerplek.
+- Opbouw van de start (I-51): de uitleg zegt dat hij alleen telt bij een rustige start, met het getal uit het onderzoek.
 
 ### 22 november 17:30
 - Route (I-111, I-114 tot I-118): knop Andere lus (Andersom, een andere kant op, vier richtingen, zonder heen en terug), de wind bepaalt de richting, en onder de kaart een hoogteprofiel, de ondergrond, een afhaakpunt en terug voor het donker. Eigenaar daarna: even stoppen.

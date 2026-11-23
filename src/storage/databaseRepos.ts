@@ -102,15 +102,21 @@ export const SessionLogsRepo = {
   // op dezelfde store nooit door elkaar lopen, ook niet uit twee tabbladen: de tweede ziet het log van de eerste
   // (I-54, besluit 2026-11-23-opslag-twee-tabbladen-en-grens.md). Faalt het schrijven, dan breekt de transactie
   // af en staat er niets half. Een losse training heeft geen sleutel en wordt gewoon geschreven: ja.
+  // Staat het log er al, dan is lezen genoeg: dat gebeurt eerst in een readonly-transactie, zonder schrijfslot dat
+  // andere schrijvers (ook uit een ander tabblad) laat wachten op het lezen van alle logs. Alleen als er nog niets
+  // staat volgt de readwrite-transactie, die opnieuw kijkt: daar zit de garantie.
   add: async (l: SessionLog): Promise<boolean> => {
     const db = await getDB();
+    const keyed = !!l.plannedSessionId || !!l.externalId;
+    const takenIn = (existing: SessionLog[]) =>
+      existing.some((x) => (!!l.plannedSessionId && x.plannedSessionId === l.plannedSessionId) || (!!l.externalId && x.externalId === l.externalId));
+    if (keyed && takenIn(await db.transaction('sessionLogs', 'readonly').store.getAll())) return false;
     const tx = db.transaction('sessionLogs', 'readwrite');
     const done = tx.done;
     // Een fout in de transactie komt ook via `done`; zonder deze vanger zou die los als onafgehandeld gelden.
     done.catch(() => undefined);
-    const keyed = !!l.plannedSessionId || !!l.externalId;
     const existing = keyed ? await tx.store.getAll() : [];
-    const taken = existing.some((x) => (!!l.plannedSessionId && x.plannedSessionId === l.plannedSessionId) || (!!l.externalId && x.externalId === l.externalId));
+    const taken = takenIn(existing);
     if (!taken) await tx.store.put(l);
     await done;
     return !taken;

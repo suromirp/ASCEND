@@ -6,7 +6,7 @@ import { useAppData } from '../state/AppDataContext';
 import { buildWeekReview, type WeekReview } from '../engine/weekReview';
 import { weekReviewCardShown } from '../engine/overviewSettings';
 import { weekHighlights } from '../engine/weekHighlights';
-import { attentionLines, hasWeekTally, nextWeekLine, sportLines, weekCardCount, weekCountLine, weekRestLines } from '../engine/weekGlance';
+import { attentionLines, hasWeekTally, nextWeekLine, sportLines, weekCardLine, weekCountLine, weekRestLines } from '../engine/weekGlance';
 import { looseLogsOfWeek, weekLogsOf } from '../engine/weekLogs';
 import { intentionForWeek } from '../engine/weeklyQuestion';
 import { formatDateNL, formatHoursMinutesNL, formatShortDayNL, todayISO } from '../utils/dates';
@@ -48,7 +48,7 @@ export function WeekReviewCard({ weekStart }: { weekStart: string }) {
     <Card className="flex flex-col gap-2">
       <Eyebrow>Weekterugblik</Eyebrow>
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-        {weekCardCount(review)} · {formatHoursMinutesNL(review.minutes)}
+        {weekCardLine(review)}
       </p>
       {first && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{first}</p>}
       <div className="-mb-2"><TextButton onClick={() => setOpen(true)} icon="verder">{review.running ? 'Bekijk je week tot nu' : 'Bekijk je week'}</TextButton></div>

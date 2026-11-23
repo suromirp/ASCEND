@@ -14,7 +14,7 @@
 // Pure: no React, no IndexedDB.
 
 import type { ActivityDetail, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
-import { climbLimitFor, gainDisagreement, ownGainOf } from './elevation';
+import { climbLimitFor, gainDisagreement, gainSidesFor, ownGainOf, type GainSide } from './elevation';
 
 export type Unavailable =
   | 'noDetail'
@@ -264,7 +264,14 @@ const GRADE_CLASS_WIDTH = 4;
 // and also 20 m or more apart (engine/elevation.ts#gainDisagreement; on flat ground a percentage
 // says little), and the altitude of this training is not trusted. A corrected altitude at the
 // source can differ legitimately, so the margin is wide.
-const altitudeTrusted = (d: ActivityDetail) => gainDisagreement(d.quality.gainAgreementPct, ownGainOf(d)) === undefined;
+// Gelezen met het merk van de teller (engine/elevation.ts#gainSidesFor). De hellingen en afdalingen komen uit
+// dezelfde eigen telling als de overeenkomst: ligt die ver onder of boven het horloge, dan zijn ook de stukken niet
+// te geloven, oud of nieuw. Daarom beide kanten voor beide merken; dat was zo en blijft zo (I-136).
+export const ALTITUDE_DISTRUST: { old: readonly GainSide[]; counted: readonly GainSide[] } = { old: ['low', 'high'], counted: ['low', 'high'] };
+export const altitudeTrusted = (d: ActivityDetail): boolean => {
+  const apart = gainDisagreement(d.quality.gainAgreementPct, ownGainOf(d));
+  return apart === undefined || !gainSidesFor(d.counter, ALTITUDE_DISTRUST).includes(apart);
+};
 
 export function climbsOf(detail: ActivityDetail | undefined): ClimbFact[] | NotAvailable {
   if (!detail) return { unavailable: 'noDetail' };

@@ -46,12 +46,26 @@ export function noteBootOutcomes(
   return Object.keys(next).length > 0 ? next : undefined;
 }
 
-// Eén zin voor de diagnose, of niets als alles lukte.
+function sorted(rec: BootFailureRecord | undefined): [string, BootFailure][] {
+  return Object.entries(clean(rec)).sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]));
+}
+
+function startsText(count: number): string {
+  return count === 1 ? 'de laatste start' : `de laatste ${count} starts op rij`;
+}
+
+// Eén zin voor de diagnose, of niets als alles lukte. Zonder de naam van de stap: die staat achter Details
+// (bootFailureDetails), voor wie het doorgeeft (I-134).
 export function bootFailureLine(rec: BootFailureRecord | undefined): string | undefined {
-  const list = Object.entries(clean(rec)).sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]));
+  const list = sorted(rec);
   if (list.length === 0) return undefined;
-  const [id, worst] = list[0];
-  const when = worst.count === 1 ? 'de laatste start' : `de laatste ${worst.count} starts op rij`;
-  const others = list.length > 1 ? `, en nog ${list.length - 1}` : '';
-  return `Een herstelstap bij het openen mislukte ${when} (${id}${others}). Je gegevens blijven staan; de volgende start probeert het opnieuw.`;
+  const [, worst] = list[0];
+  const what = list.length === 1 ? 'Een herstelstap' : `${list.length} herstelstappen`;
+  const verb = list.length === 1 ? 'mislukte' : 'mislukten';
+  return `${what} bij het openen ${verb} ${startsText(worst.count)}. Je gegevens blijven staan; de volgende start probeert het opnieuw.`;
+}
+
+// De stappen zoals ze in de code heten, één regel per stap, voor achter Details.
+export function bootFailureDetails(rec: BootFailureRecord | undefined): string[] {
+  return sorted(rec).map(([id, f]) => `${id}: ${startsText(f.count)}`);
 }

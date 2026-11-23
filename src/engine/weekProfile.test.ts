@@ -121,6 +121,13 @@ describe('ridgeSentence', () => {
     expect(ridgeSentence(days([], []), TODAY)).toBe('Deze week staat er geen training.');
   });
 
+  it('zegt van een voorbije week met alleen gemiste trainingen niet dat er geen training staat (I-132)', () => {
+    const missed = planned('tpl_easy_run', '2026-10-13', { status: 'skipped' });
+    const lastWeek = dayLoads({ templates, today: TODAY, weekStart: '2026-10-12', logs: [], plannedSessions: [missed] });
+    expect(ridgeSentence(lastWeek, TODAY)).toBe('Die week telde geen training mee in de belasting.');
+    expect(ridgeSentence(days([], []), TODAY)).toBe('Deze week staat er geen training.');
+  });
+
   it('noemt de zwaarste dag en genoeg ruimte tussen twee beendagen', () => {
     const d = days([log('tpl_lower_a', '2026-10-19', 70, { rpe: 7 })], [planned('tpl_mountain_hike', '2026-10-24', { plannedMinutes: 150 })]);
     expect(ridgeSentence(d, TODAY)).toBe('Zaterdag is je zwaarste dag. Tussen Benen A en Bergtocht zitten vier dagen, ruim genoeg.');

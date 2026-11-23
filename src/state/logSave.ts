@@ -2,7 +2,7 @@
 // trainingsscherm, de kaart Van je horloge en de sportvraag. Besluit docs/beslissingen/2026-11-14-nee-van-logsession.md.
 
 import type { LogSessionInput } from './appDataTypes';
-import { LogNotSaved, settleLogOutcome } from './logSession';
+import { LogNotSaved, earlierPlannedWrite, logStoredFor, settleLogOutcome } from './logSession';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { TickOffStillRunning } from '../storage/storageError';
 
@@ -40,6 +40,36 @@ export const LOG_SAVE_NOTE: Record<SaveNoteKind, string> = {
 // houdt de training of activiteit vast tot ze antwoordt, en antwoordt ze nooit, dan tot de app opnieuw start.
 export const STILL_RUNNING_HELP = 'Kijk in je logboek of hij er staat. Staat hij er niet, sluit de app dan af en open hem opnieuw.';
 export const LOG_STILL_RUNNING_NOTE = `${SLOW} ${STILL_RUNNING_HELP}`;
+
+// Opnieuw getikt op een formulier (Hoe ging het? en Afronden in Forge) terwijl een eerdere poging voor deze training
+// nog loopt. Eén uitweg met dezelfde woorden op beide plekken: Sluiten, je invulling blijft bewaard, en Opslaan gaat
+// vanzelf weer aan zodra de eerdere poging klaar is of faalt (waitForEarlierSave, I-135). Geen advies om de app af te
+// sluiten: het concept staat in sessionStorage en overleeft dat niet.
+export const STILL_WAITING_NOTE = `${SLOW} Je invulling blijft bewaard; Opslaan gaat weer aan zodra het klaar is.`;
+// De eerdere poging antwoordde niet binnen EARLIER_SAVE_LIMIT_MS (of het is een losse training): Opslaan staat weer aan. Een nieuwe tik maakt geen
+// tweede log (één log per geplande training, SessionLogsRepo.add) en krijgt zelf weer een zichtbare uitkomst.
+export const STILL_WAITED_NOTE = `${SLOW} Kijk in je logboek of hij er staat. Zo niet, probeer het opnieuw; je invulling blijft bewaard.`;
+
+// Hoe lang een formulier hoogstens wacht op de eerdere poging voordat Opslaan weer aan gaat.
+export const EARLIER_SAVE_LIMIT_MS = 30_000;
+
+// stored: het log staat er (de eerdere poging lukte, of een ander scherm was eerder). free: er staat geen log en er
+// loopt niets meer; opnieuw opslaan kan. slow: de eerdere poging loopt na de grens nog. unknown: een losse training,
+// zonder geplande training of activiteit om op te zoeken; kijk zelf in je logboek. Gooit nooit.
+export type EarlierSaveOutcome = 'stored' | 'free' | 'slow' | 'unknown';
+
+export async function waitForEarlierSave(input: Pick<LogSessionInput, 'plannedSessionId' | 'externalId'>, limitMs = EARLIER_SAVE_LIMIT_MS): Promise<EarlierSaveOutcome> {
+  if (!input.plannedSessionId && !input.externalId) return 'unknown';
+  const earlier = input.plannedSessionId ? earlierPlannedWrite(input.plannedSessionId) : undefined;
+  try {
+    return await withTimeout((async () => {
+      if (earlier) await earlier;
+      return (await logStoredFor(input)) ? 'stored' as const : 'free' as const;
+    })(), limitMs);
+  } catch {
+    return 'slow';
+  }
+}
 
 // Een formulier met je eigen invulling. Na de grens blijft de knop uit, dus daar staat geen "probeer het nog eens".
 // `failedLoose`: een losse training heeft geen geplande training die een tweede log tegenhoudt, dus eerst kijken.

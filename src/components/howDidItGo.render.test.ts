@@ -249,9 +249,16 @@ describe('opslaan in het blad', () => {
     expect(html).not.toMatch(/disabled=""[^>]*>Sluiten</);
     expect(html).not.toContain('>Annuleren<');
     const still = renderToStaticMarkup(createElement(SheetFoot, { state: 'save', saving: false, slow: false, failed: false, still: true, rest: false, minutes: 40, onClose: () => undefined, onAdjust: () => undefined, onSave: () => undefined }));
-    expect(still).toContain(HOW_TEXT.slowLoose);
+    expect(still).toContain(HOW_TEXT.stillWaiting);
+    expect(still).not.toContain('sluit de app');
     expect(still).toContain('>Sluiten<');
     expect(still).toMatch(/disabled=""[^>]*>Opslaan</);
+    // Na het wachten (I-135): Opslaan weer aan, Sluiten blijft de uitweg zolang de eerdere poging kan landen.
+    const waited = renderToStaticMarkup(createElement(SheetFoot, { state: 'save', saving: false, slow: false, failed: false, waited: true, rest: false, minutes: 40, onClose: () => undefined, onAdjust: () => undefined, onSave: () => undefined }));
+    expect(waited).toContain(HOW_TEXT.waited);
+    expect(waited).toContain('>Sluiten<');
+    expect(waited).not.toMatch(/disabled=""[^>]*>Opslaan</);
+    expect(sheetSrc).toContain('void waitForEarlierSave({ plannedSessionId })');
     expect(sheetSrc).toContain('const canClose = () => !savingRef.current || slowRef.current;');
     expect(sheetSrc).toContain('if (!savingRef.current && clearsDraft(wayRef.current, form.filled())) form.clearDraft();');
   });
@@ -267,7 +274,7 @@ describe('opslaan in het blad', () => {
     expect(sheetSrc).toContain('if (!savingRef.current && clearsDraft(wayRef.current, form.filled())) form.clearDraft();');
     expect(sheetSrc).toContain("const wayRef = useRef<CloseWay>('backdrop');");
     expect(sheetSrc).toContain("const close = closeAs('cross');");
-    expect(sheetSrc).toContain("onClose={closeAs(foot === 'already' ? 'already' : slow || still ? 'cross' : 'cancel')}");
+    expect(sheetSrc).toContain("onClose={closeAs(foot === 'already' ? 'already' : slow || still || waited ? 'cross' : 'cancel')}");
   });
 
   it('ingevuld: een teruggelezen concept of een andere waarde dan het begin; de plek uit de opslag telt niet', () => {

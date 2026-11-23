@@ -7,13 +7,17 @@ import { Portal } from './Portal';
 // bewegingsstand. Dezelfde rand en schaduw als een opgepakt doel op Ascend.
 // De rand neemt de kleur van de dag eronder over (mint past, amber vraagt iets, gedempt kan niet), omdat
 // de rij op een smal scherm het doelvak bijna helemaal bedekt.
-export function WeekDragGhost({ left, width, top, tone, children }: { left: number; width: number; top: number; tone?: 'ok' | 'warn' | 'none'; children: ReactNode }) {
+// De kaart hangt vast boven de dag onder je vinger (engine/weekDrag.ts#ghostTop), zodat hij het label van die dag niet
+// bedekt (I-138). Hij heeft één plek per dag: met een dag (`settled`) schuift hij in 200 ms naar de plek boven een
+// andere dag (`mx-ghost`, alleen daar een transition), zonder dag volgt hij je vinger zonder vertraging. Rustig en Uit:
+// meteen op de eindstand.
+export function WeekDragGhost({ left, width, top, settled = false, tone, children }: { left: number; width: number; top: number; settled?: boolean; tone?: 'ok' | 'warn' | 'none'; children: ReactNode }) {
   const border = tone === 'warn' ? 'var(--color-warning)' : tone === 'none' ? 'var(--color-control-border)' : 'var(--color-action)';
   return (
     <Portal>
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed z-[60] overflow-hidden rounded-2xl border"
+        className={`pointer-events-none fixed z-[60] overflow-hidden rounded-2xl border ${settled ? 'mx-ghost-settled' : ''}`}
         style={{
           left,
           width,

@@ -16,7 +16,7 @@
 
 import type { SessionLog } from '../models/training';
 import type { RunDetail, RunKm } from '../models/runDetail';
-import { counterMark, gainDisagreement, ownGainOf } from './elevation';
+import { gainDisagreement, gainSidesFor, ownGainOf, type GainSide } from './elevation';
 
 // Is het getal van het horloge op dit log te geloven? Een 0 is geen meting (een horloge met hoogte
 // meldt op een loop vrijwel nooit precies niets, een horloge zonder hoogte wel). Verder de
@@ -25,13 +25,14 @@ import { counterMark, gainDisagreement, ownGainOf } from './elevation';
 // gelezen met het merk van `detail`: de teller van engine/elevation.ts ligt dicht bij het horloge,
 // dus ver uiteen is het horloge niet te vertrouwen. De oude dode band telde altijd te laag: een
 // lage overeenkomst zegt daar niets over het horloge, alleen een te hoge.
+export const WATCH_CLIMB_DISTRUST: { old: readonly GainSide[]; counted: readonly GainSide[] } = { old: ['high'], counted: ['low', 'high'] };
+
 export function watchClimbTrusted(log: Pick<SessionLog, 'detail'>, reported: number | undefined): reported is number {
   if (reported === undefined || !Number.isFinite(reported) || reported <= 0) return false;
   const detail = log.detail;
   if (!detail) return true;
   const apart = gainDisagreement(detail.quality.gainAgreementPct, ownGainOf(detail), reported);
-  if (apart === 'high') return false;
-  return apart === undefined || counterMark(detail.counter) === undefined;
+  return apart === undefined || !gainSidesFor(detail.counter, WATCH_CLIMB_DISTRUST).includes(apart);
 }
 
 const sumOf = (pieces: readonly { gainM?: number }[]): number | undefined =>

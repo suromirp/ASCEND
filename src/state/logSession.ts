@@ -46,6 +46,24 @@ const looseInFlight = new Map<string, Promise<boolean>>();
 // een tweede poging tegen voordat ze de opslag raakt.
 const externalInFlight = new Set<string>();
 
+// De poging die een geplande training nu vasthoudt (loggingInFlight), zodat een scherm dat nee kreeg omdat ze nog
+// loopt kan wachten tot ze klaar is of faalt (earlierPlannedWrite, state/logSave.ts#waitForEarlierSave, I-135).
+// Alleen de eerste poging komt erin: een tweede die meteen nee krijgt overschrijft haar niet.
+const plannedWrites = new Map<string, Promise<boolean>>();
+
+function trackPlanned(input: LogSessionInput, write: Promise<boolean>): Promise<boolean> {
+  const id = input.plannedSessionId;
+  if (!id || plannedWrites.has(id)) return write;
+  plannedWrites.set(id, write);
+  void write.finally(() => { if (plannedWrites.get(id) === write) plannedWrites.delete(id); });
+  return write;
+}
+
+// De lopende poging voor deze geplande training, of niets. Gooit nooit: writeLog vangt zijn eigen fouten.
+export function earlierPlannedWrite(plannedSessionId: string): Promise<boolean> | undefined {
+  return plannedWrites.get(plannedSessionId);
+}
+
 function pendingKey(input: LogSessionInput): string | undefined {
   if (input.plannedSessionId || input.externalId) return undefined;
   return `loose:${JSON.stringify(input)}`;
@@ -65,10 +83,10 @@ export function runLogSession(input: LogSessionInput, opts: LogSessionOpts | und
     // Al onderweg: nee, zoals wanneer haar log er al staat (de aanroeper doet dan niets dubbel).
     if (externalInFlight.has(externalId)) return Promise.resolve(false);
     externalInFlight.add(externalId);
-    return writeLog(input, opts, deps).finally(() => externalInFlight.delete(externalId));
+    return trackPlanned(input, writeLog(input, opts, deps).finally(() => externalInFlight.delete(externalId)));
   }
   const key = pendingKey(input);
-  if (!key) return writeLog(input, opts, deps);
+  if (!key) return trackPlanned(input, writeLog(input, opts, deps));
   const running = pending.get(key);
   if (running) return running;
   const day = looseKey(input);

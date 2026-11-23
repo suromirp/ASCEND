@@ -14,6 +14,7 @@ import { formatPace } from './aerobicTrend';
 import { testTotals } from './racePrediction';
 import { idHasRole, idIsTestOrRace } from './templateRoles';
 import { NOISE, isUnavailable } from './runMetrics';
+import { climbLimitFor } from './elevation';
 import { zoneBpm, type HeartRateSettings } from './heartRateZones';
 import {
   ADVICE_MIN_SEC,
@@ -280,6 +281,12 @@ function splitNote(h: Halves, inBest: boolean): string {
 
 // Always three, never more: the pace (or the best 5 km of a test), the spread and the heart
 // rate; what is not there makes room for the next fact.
+// De totale stijging van de loop in hele meters, uit de km die je ziet; zonder hoogtegegevens niets.
+export function runGainTotal(rd: RunDetail): number | undefined {
+  if (!rd.kms.some((k) => k.gainM !== undefined)) return undefined;
+  return Math.round(sum(rd.kms.map((k) => k.gainM ?? 0)));
+}
+
 export function headlineStats(rd: RunDetail, kind: RunKind, totals?: RunTotals): HeadStat[] {
   const out: HeadStat[] = [];
   const t = totals ?? { km: rd.totalM / 1000, sec: rd.movingSec };
@@ -308,9 +315,8 @@ export function headlineStats(rd: RunDetail, kind: RunKind, totals?: RunTotals):
       note: d === 0 ? `${over}, helften gelijk` : `${over}, ${d > 0 ? '+' : '−'}${Math.abs(d)} in de tweede helft`,
     });
   }
-  const gain = sum(rd.kms.map((k) => k.gainM ?? 0));
-  const hasAltitude = rd.kms.some((k) => k.gainM !== undefined);
-  if (out.length < 3 && hasAltitude) out.push({ key: 'climb', label: 'Stijging', value: String(Math.round(gain)), unit: 'm', note: 'omhoog over de hele loop' });
+  const gain = runGainTotal(rd);
+  if (out.length < 3 && gain !== undefined) out.push({ key: 'climb', label: 'Stijging', value: String(gain), unit: 'm', note: 'omhoog over de hele loop' });
   if (out.length < 3) out.push({ key: 'distance', label: 'Afstand', value: nl(rd.totalM / 1000, 2), unit: 'km', note: rd.pauseSec > 0 ? `met ${clock(rd.pauseSec)} stilstaan` : 'volgens je horloge' });
   if (out.length < 3 && pace !== undefined && !out.some((s) => s.key === 'pace')) out.push({ key: 'pace', label: 'Tempo', value: formatPace(pace), unit: '/km', note: 'gemiddeld over de hele loop' });
   return out.slice(0, 3);
@@ -772,7 +778,7 @@ export function runAdvice(rd: RunDetail, kind: RunKind, opts: { pain?: boolean; 
     const kms = verdictKms(rd, kind);
     const km = sum(kms.map((k) => k.distanceM)) / 1000;
     const climb = sum(kms.map((k) => k.gainM ?? 0));
-    if (!opts.indoor && km > 0 && climb / km > HILLY_M_PER_KM) lines.push(`Kies voor je volgende test een vlakkere route; deze had ${Math.round(climb / km)} meter stijging per kilometer.`);
+    if (!opts.indoor && km > 0 && climb / km > climbLimitFor(rd.counter, HILLY_M_PER_KM)) lines.push(`Kies voor je volgende test een vlakkere route; deze had ${Math.round(climb / km)} meter stijging per kilometer.`);
     if (lines.length === 0 && a?.kind === 'even') lines.push('Gelijkmatig gelopen. Houd dezelfde aanpak bij je volgende test.');
     return lines.length > 0
       ? { title: 'Voor de volgende test', lines: lines.slice(0, 2), why: 'Uit de verdeling van je test en wat er van die dag bekend is. Gelijkmatig lopen is meestal het snelst. Hoeveel sneller jij dan bent, zegt niemand vooraf.' }

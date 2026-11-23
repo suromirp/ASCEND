@@ -137,7 +137,7 @@ describe('proposeRepeatWeek', () => {
     const logs = [logOf(W2, 'tpl_upper_a'), logOf(W2, 'tpl_easy_run'), logOf(W2, 'tpl_hill_intervals')];
     const p = proposeRepeatWeek(inputs({ logs }))!;
     expect(p.verdict).toMatchObject({ fewDone: false, keyMissed: true });
-    expect(shortfallSentence(p)).toBe('Vorige week miste je de lange duurloop, de belangrijkste training van de week.');
+    expect(shortfallSentence(p)).toBe('Vorige week miste je de lange duurloop, de belangrijkste training van de geplande week.');
   });
 
   it('not after a normal week, or one with the key session done', () => {

@@ -13,7 +13,8 @@ import { Chip, PrimaryButton, SecondaryButton } from '../ui';
 import { finishDayChoices, finishDayDefault, finishDuration } from '../../engine/forgeSession';
 import { durationTooShort, entryMinutes, SHORT_DURATION_TEXT } from '../../engine/inputLimits';
 import { ForgeSheet } from './parts';
-import { forgeFinishNote, type ForgeFinishNote } from './forgeFinishLog';
+import { forgeAfterEarlier, forgeExitLabel, forgeFinishNote, type ForgeFinishNote, type ForgeFinishNoteKind } from './forgeFinishLog';
+import { waitForEarlierSave } from '../../state/logSave';
 
 const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'Beter', normal: 'Normaal', worse: 'Slechter' };
 
@@ -74,6 +75,14 @@ export function FinishSheet({
   const dayChoices = plannedSessionId ? finishDayChoices({ today, scheduledDate, ...tick, dayOf }) : [];
   const [saving, setSaving] = useState(false);
   const [outcome, setOutcome] = useState<ForgeFinishNote | null>(null);
+  const [outcomeKind, setOutcomeKind] = useState<ForgeFinishNoteKind>();
+  const show = (kind: ForgeFinishNoteKind) => {
+    setOutcomeKind(kind);
+    setOutcome(forgeFinishNote(kind));
+  };
+  // Een eerdere poging voor deze training loopt nog: Opslaan blijft uit tot ze klaar is of faalt, hoogstens
+  // EARLIER_SAVE_LIMIT_MS (state/logSave.ts#waitForEarlierSave, I-135).
+  const [waiting, setWaiting] = useState(false);
   const busy = useRef(false);
   // Weg of aan het sluiten: dan leest niemand de zin hier.
   const away = useRef(false);
@@ -92,6 +101,7 @@ export function FinishSheet({
     busy.current = true;
     setSaving(true);
     setOutcome(null);
+    setOutcomeKind(undefined);
     // Na de grens zei het blad al dat het langer duurt: een nee dat dan nog komt gaat bovenin.
     let late = false;
     let sawWriteError = false;
@@ -102,10 +112,20 @@ export function FinishSheet({
         return !late && !away.current;
       }), SAVE_LIMIT_MS);
       if (ok === true) return;
-      setOutcome(forgeFinishNote('already'));
+      show('already');
     } catch (err) {
       late = err instanceof TimeoutError;
-      setOutcome(forgeFinishNote(late ? 'slow' : sawWriteError ? 'failed' : 'stillRunning'));
+      const kind = late ? 'slow' : sawWriteError ? 'failed' : 'stillRunning';
+      show(kind);
+      if (kind === 'stillRunning') {
+        // Busy blijft aan tegen een dubbele tik; de knop staat uit via `waiting`, zonder "Opslaan…".
+        setSaving(false);
+        setWaiting(true);
+        const after = await waitForEarlierSave({ plannedSessionId });
+        if (away.current) return;
+        setWaiting(false);
+        show(forgeAfterEarlier(after));
+      }
     }
     busy.current = false;
     setSaving(false);
@@ -172,10 +192,10 @@ export function FinishSheet({
           </div>
           {outcome && <p className="text-xs leading-snug" role="status" style={{ color: outcome.warn ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>{outcome.text}</p>}
           <div className="flex gap-3">
-            <SecondaryButton onClick={close}>Annuleren</SecondaryButton>
+            <SecondaryButton onClick={close}>{forgeExitLabel(outcomeKind)}</SecondaryButton>
             <PrimaryButton
               fullWidth={false}
-              disabled={saving || tooShort}
+              disabled={saving || waiting || tooShort}
               onClick={() => void save()}
             >
               {saving ? 'Opslaan…' : readOnly ? 'Afvinken' : 'Opslaan'}

@@ -103,6 +103,16 @@ describe('rankSavedRoutes', () => {
     expect(ranked[0].line).toBe('Past: 8,1 km en 240 hoogtemeters. Nog niet gelopen.');
     expect(ranked[1].line).toBe('Wijkt af: 12 km en 100 hoogtemeters. Nog niet gelopen.');
   });
+  it('de feiten zoals bij een nieuwe lus: vrijwel vlak onder 40 m, behalve als de training hoogtemeters vraagt (I-136)', () => {
+    const flatTarget = { distanceKm: 8, ascentM: 0 };
+    expect(rankSavedRoutes([route('vlak', 'p', 8000, 30)], flatTarget)[0].line).toBe('Past: 8 km, vrijwel vlak. Nog niet gelopen.');
+    expect(rankSavedRoutes([route('vlak', 'p', 8000, 8)], flatTarget)[0].line).toBe('Past: 8 km, vrijwel vlak. Nog niet gelopen.');
+    expect(rankSavedRoutes([route('heuvel', 'p', 8000, 60)], flatTarget)[0].line).toBe('Past: 8 km en 60 hoogtemeters. Nog niet gelopen.');
+    // De training vraagt hoogtemeters: het getal staat er altijd, ook laag.
+    expect(rankSavedRoutes([route('laag', 'p', 8000, 30)], target)[0].line).toBe('Wijkt af: 8 km en 30 hoogtemeters. Nog niet gelopen.');
+    // Geen bruikbare stijging: alleen de afstand.
+    expect(rankSavedRoutes([route('raar', 'p', 8000, Number.NaN)], flatTarget)[0].line).toBe('Past: 8 km. Nog niet gelopen.');
+  });
   it('gelijke stand: de vaakst gelopen, dan de naam', () => {
     const a = route('a', 'p', 8000, 240, { name: 'B-route', chosenFor: [{ date: '2026-03-02', plannedSessionId: 'x' }] });
     const b = route('b', 'p', 8000, 240, { name: 'A-route', chosenFor: [{ date: '2026-03-02', plannedSessionId: 'y' }, { date: '2026-03-09', plannedSessionId: 'z' }] });

@@ -955,10 +955,11 @@
    "onderwerpen": [
     "werkwijze"
    ],
-   "kern": "De coördinator wisselt op lengte (250k tot 300k context of na een bouwronde), de overdracht blijft onder 10 KB, haken rond het samenvatten bewaren de stand, en de kosten gaan omlaag met plan-eerst bij planner en opslag, het model naar het werk en gebundelde kleine punten. Geldt nog: de overdracht onder 10 KB, de haken rond het samenvatten, plan-eerst bij planner en opslag.",
+   "kern": "De coördinator wisselt op lengte (250k tot 300k context of na een bouwronde), de overdracht blijft onder 10 KB, haken rond het samenvatten bewaren de stand, en de kosten gaan omlaag met plan-eerst bij planner en opslag, het model naar het werk en gebundelde kleine punten. Geldt nog: de haken rond het samenvatten, plan-eerst bij planner en opslag.",
    "stand": "deels",
    "vervangenDoor": [
-    "docs/beslissingen/2026-11-21-zuinige-stand.md"
+    "docs/beslissingen/2026-11-21-zuinige-stand.md",
+    "docs/beslissingen/2026-11-23-zuinige-start-coordinator.md"
    ]
   },
   "docs/beslissingen/2026-11-20-ijkset-op-de-pagina.md": {
@@ -4527,14 +4528,14 @@
    ],
    "kern": "Onder de gekozen lus staat een knop Andere lus met Andersom (nul aanroepen), Een andere kant op, Noord, Oost, Zuid en West, en Zonder heen en terug; elke keuze behalve Andersom is één zoektocht binnen MAX_ROUTE_CALLS, de gekozen variant is een eenmalige afwijking die niet bewaard wordt.",
    "stand": "geldt"
-  },  "docs/beslissingen/2026-11-23-lus-soort-en-via-punt.md": {
+  },
+  "docs/beslissingen/2026-11-23-lus-soort-en-via-punt.md": {
    "onderwerpen": [
     "koppelingen-en-data"
    ],
    "kern": "Het blad Andere lus krijgt Soort (Langs water, Door bos of groen, Meer onverhard; één zoektocht met alleen punten van die soort, uit hetzelfde Overpass-verzoek) en Via een punt (kaart in Groter in kiesstand, een tik zet een speld, Lus erlangs; alleen in het geheugen).",
    "stand": "geldt"
   },
-
   "docs/beslissingen/2026-11-22-wind-en-lus.md": {
    "onderwerpen": [
     "koppelingen-en-data"
@@ -4560,6 +4561,44 @@
     "docs/beslissingen/2026-11-15-dag-van-afronden.md",
     "docs/beslissingen/2026-10-29-dag-van-een-training.md"
    ]
+  },
+  "docs/visie/Ontwerp Eén plan.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Ontwerpvoorstel van 23 november 2026 voor I-14: één dagbeeld en één duur voor voorstel, Vandaag, Week en weekbalk, met invarianten als tests.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp beginner rest.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Stand van 23 november 2026 per stap van het beginnersontwerp (I-18) en ontwerp voor de rest: ladder in de planning, voorstel voor een lopende start, teksten en vaktaal.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp Losse sport.md": {
+   "onderwerpen": [
+    "planning",
+    "historie-en-logs"
+   ],
+   "kern": "Ontwerpvoorstel van 23 november 2026 voor I-23: losse sport zonder rol, coachtekst per sport, voorstel na een zware sport dat blijft staan, duurwijziging als voorstel.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Ontwerp Na een loop één moment.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "bediening-en-beweging"
+   ],
+   "kern": "Ontwerpvoorstel van 23 november 2026 voor I-34: na een loop één moment in plaats van zes tot acht lagen, plus Gidsen, Forge-instellingen en instellingen per onderwerp.",
+   "stand": "achtergrond"
+  },
+  "docs/beslissingen/2026-11-23-zuinige-start-coordinator.md": {
+   "onderwerpen": [
+    "werkwijze"
+   ],
+   "kern": "De coördinator wisselt bij ongeveer 200k context of na drie bundels; bij de start alleen CLAUDE.md en het blok Start van de overdracht (hoogstens 3 KB), `werkwijze.md` alleen bij nodig, backlog en `eigenaar.md` alleen met grep; helpers antwoorden in hoogstens tien regels.",
+   "stand": "geldt"
   }
  }
 }

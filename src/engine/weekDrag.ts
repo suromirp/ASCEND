@@ -327,3 +327,14 @@ export function newConcernLines(input: CheckInput, weekStart: string, sessionId:
     .filter((c) => !before.has(c.key) && !skipRules.includes(c.rule))
     .map((c) => c.headline);
 }
+
+// Waar de zwevende rij hangt (bovenkant, in pixels van het scherm). Met een dag onder je vinger hangt de kaart vast
+// boven die dag: zijn onderkant 4 px boven de bovenkant van de dag (waar het label staat). Die plek hangt alleen van
+// de dag af en verandert dus niet zolang je binnen een dag blijft; de kaart schuift alleen als je een andere dag
+// kiest. Zonder dag (annuleren) volgt hij je vinger, 12 px erboven. Hij verlaat de bovenkant van het scherm niet.
+export const GHOST_GAP = 12;
+const GHOST_EDGE = 8;
+export function ghostTop({ fingerY, height, targetTop }: { fingerY: number; height: number; targetTop?: number }): number {
+  const bottom = targetTop === undefined ? fingerY - GHOST_GAP : targetTop - 4;
+  return Math.max(bottom - height, GHOST_EDGE);
+}

@@ -59,6 +59,18 @@ export type WeekConcern = CheckConcern | PlainConcern;
 export const dayName = (iso: string) => `${weekdayLongNL(iso)} ${Number(iso.slice(8, 10))}`;
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+// De uitleg bij een test of wedstrijd in je ziekte, verkoudheid of opbouw (I-74, I-137). De eerste zin hoort bij de
+// kop: onder "Je bent verkouden" nooit "Ziek train je niet". De rest is voor alle drie gelijk: een wedstrijd schuift
+// niet en of je start kies je zelf; een test schuift alleen met jouw Akkoord.
+export function illTestWhy(cause: 'ill' | 'cold' | 'ramp', race: boolean): string {
+  if (race) {
+    const first = cause === 'ill' ? 'Ziek train je niet.' : cause === 'cold' ? 'Verkouden loop je geen wedstrijd voluit.' : 'In je opbouw na ziekte loop je nog niet voluit.';
+    return `${first} Je wedstrijd schuift niet mee. Of je start, kies je zelf.`;
+  }
+  const first = cause === 'ill' ? 'Ziek zegt een testloop niets over je vorm.' : cause === 'cold' ? 'Verkouden zegt een testloop weinig over je vorm.' : 'In je opbouw na ziekte zegt een testloop weinig over je vorm.';
+  return `${first} Hij schuift alleen met jouw Akkoord.`;
+}
+
 export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern[] {
   const monday = mondayOfWeek(weekStart);
   const names = new Map(input.templates.map((t) => [t.id, t.name]));
@@ -122,9 +134,7 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
             headline: sick ? `Je bent ziek, en ${what}.` : ramp ? `Je bouwt op na ziekte, en ${what}.` : `Je bent verkouden, en ${what}.`,
             fact: `${nameOf(a)} op ${dayName(dateOf(a))} ${kept}.`,
             title: `${nameOf(a)} op een ziektedag`,
-            why: race
-              ? 'Ziek train je niet. Je wedstrijd schuift niet mee. Of je start, kies je zelf.'
-              : 'Ziek zegt een testloop niets over je vorm. Hij schuift alleen met jouw Akkoord.',
+            why: illTestWhy(sick ? 'ill' : ramp ? 'ramp' : 'cold', race),
             notes: { [a]: sick ? 'je bent ziek' : 'niets zwaars' },
           };
         }

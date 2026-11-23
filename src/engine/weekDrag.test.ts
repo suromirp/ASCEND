@@ -3,7 +3,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import type { DailyTimeBudget, Weekday } from '../models/goalEngineConfig';
 import { proposeMove } from './scheduler';
-import { dayAtY, decideMove, dayVerdicts, dragEligibility, nextDroppable, TEST_ASK_REASON, LEAVE_ASK_REASON, PLACED_ASK_REASON, newConcernLines, type DragContext } from './weekDrag';
+import { dayAtY, ghostTop, decideMove, dayVerdicts, dragEligibility, nextDroppable, TEST_ASK_REASON, LEAVE_ASK_REASON, PLACED_ASK_REASON, newConcernLines, type DragContext } from './weekDrag';
 
 const { templates, program } = buildDefaultProgramData();
 const byId = new Map(templates.map((t) => [t.id, t]));
@@ -218,5 +218,31 @@ describe('decideMove: de eigen training blijft op zijn dag', () => {
       { plannedSessionId: 'b', fromDate: '2026-11-03', toDate: '2026-11-04' },
     ] } as unknown as Parameters<typeof decideMove>[0];
     expect(decideMove(proposal).action).toBe('none');
+  });
+});
+
+describe('ghostTop (I-138)', () => {
+  // De rij die je vasthoudt is 72 hoog; de dag onder je vinger begint op 360.
+  it('zet de onderkant van de kaart boven de bovenkant van de dag onder je vinger', () => {
+    expect(ghostTop({ fingerY: 400, height: 72, targetTop: 360 }) + 72).toBeLessThanOrEqual(360);
+  });
+
+  it('geeft binnen dezelfde dag dezelfde kaartpositie, wat je vinger ook doet', () => {
+    const tops = [362, 380, 400, 430, 470].map((fingerY) => ghostTop({ fingerY, height: 72, targetTop: 360 }));
+    expect(new Set(tops).size).toBe(1);
+  });
+
+  it('schuift als je een andere dag kiest', () => {
+    expect(ghostTop({ fingerY: 500, height: 72, targetTop: 450 })).not.toBe(ghostTop({ fingerY: 400, height: 72, targetTop: 360 }));
+  });
+
+  it('volgt je vinger, boven je vinger, zonder dag', () => {
+    const a = ghostTop({ fingerY: 400, height: 72 });
+    expect(a + 72).toBeLessThanOrEqual(400 - 12);
+    expect(ghostTop({ fingerY: 420, height: 72 }) - a).toBe(20);
+  });
+
+  it('laat de kaart niet boven het scherm uit gaan', () => {
+    expect(ghostTop({ fingerY: 60, height: 72, targetTop: 40 })).toBeGreaterThanOrEqual(8);
   });
 });

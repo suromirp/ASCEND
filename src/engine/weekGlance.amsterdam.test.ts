@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mondayOfWeek, todayISO } from '../utils/dates';
 import { buildWeekReview } from './weekReview';
-import { elsewhereNotes, hasWeekTally, onlyElsewhereText, weekCardCount, weekCountLine } from './weekGlance';
+import { elsewhereNotes, hasWeekTally, onlyElsewhereText, weekCardCount, weekCardLine, weekCountLine } from './weekGlance';
 import { weekNoticeText } from './deviceNotices';
 import { weekSoFarRow } from './weekList';
 import { buildDefaultProgramData } from '../data/defaultProgram';
@@ -154,6 +154,7 @@ describe('dezelfde woorden op de kaart, de rij Je week en de melding (Lookout, I
     expect(r).toMatchObject({ done: 3, planned: 4, plannedWeek: { done: 3, planned: 4 } });
     expect(weekCardCount(r)).toBe('3 van 4 trainingen, 1 in de week ervoor, 1 uit de week erna');
     expect(weekCountLine(r)).toBe('3 van 4 gedaan, 1 in de week ervoor, 1 uit de week erna · 2:15 uur');
+    expect(weekCardLine(r)).toBe('3 van 4 trainingen, 1 in de week ervoor, 1 uit de week erna · 2 uur 15 min');
     expect(weekNoticeText(r)!.body).toBe('3 van 4 trainingen gedaan, 1 in de week ervoor, 1 uit de week erna, 2 uur 15 min.');
   });
 
@@ -163,6 +164,8 @@ describe('dezelfde woorden op de kaart, de rij Je week en de melding (Lookout, I
     expect(r).toMatchObject({ done: 0, planned: 0, plannedWeek: { done: 1, planned: 1 } });
     expect(hasWeekTally(r)).toBe(true);
     expect(weekCardCount(r)).toBe('1 gedaan in de week erna');
+    // Geen minuten: geen "· 0 min" erachter.
+    expect(weekCardLine({ ...r, minutes: 0 })).toBe('1 gedaan in de week erna');
     expect(weekCountLine(r)).toBe('1 gedaan in de week erna');
     expect(weekSoFarRow({ current: false, done: 0, total: 0, doneMinutes: 0, ...elsewhereNotes(r), only: onlyElsewhereText(r) }).sub).toBe('1 gedaan in de week erna');
     expect(weekNoticeText(r)!.body).toBe('1 gedaan in de week erna.');

@@ -50,6 +50,17 @@ export function climbLimitFor(counter: unknown, limits: { old: number; counted: 
   return Math.min(limits.old, limits.counted);
 }
 
+// Welke kant van de marge (gainDisagreement: 'low' of 'high') een regel laat tellen, voor de telling van
+// het veld: `old` voor een log zonder merk, `counted` voor het merk van deze app. Zelfde patroon als
+// `climbLimitFor`: een nieuwer merk dan de app kent krijgt de strengste keuze, beide kanten samen.
+export type GainSide = 'low' | 'high';
+export function gainSidesFor(counter: unknown, sides: { old: readonly GainSide[]; counted: readonly GainSide[] }): readonly GainSide[] {
+  const mark = counterMark(counter);
+  if (mark === undefined) return sides.old;
+  if (mark === ELEVATION_COUNTER) return sides.counted;
+  return [...new Set([...sides.old, ...sides.counted])];
+}
+
 // Twee eigen tellingen zijn alleen naast elkaar te leggen als ze op dezelfde manier geteld zijn:
 // allebei zonder merk, of allebei met precies hetzelfde merk.
 export function sameCounter(a: unknown, b: unknown): boolean {

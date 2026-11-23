@@ -3,7 +3,7 @@
 // docs/beslissingen/2026-11-12-hoe-ging-het.md.
 
 import type { SessionLog } from '../../models/training';
-import { FORM_SAVE_NOTE } from '../../state/logSave';
+import { FORM_SAVE_NOTE, STILL_WAITED_NOTE, STILL_WAITING_NOTE, type EarlierSaveOutcome } from '../../state/logSave';
 
 export const HOW_TEXT = {
   title: 'Hoe ging het?',
@@ -21,6 +21,10 @@ export const HOW_TEXT = {
   // Na de grens in tijd: het opslaan loopt nog, en je ziet dat.
   slow: FORM_SAVE_NOTE.slow,
   slowLoose: FORM_SAVE_NOTE.slowLoose,
+  // Een eerdere poging voor deze training loopt nog: Opslaan uit tot ze klaar is of faalt, dezelfde woorden als
+  // Afronden in Forge (I-135). `waited`: na de grens loopt ze nog, Opslaan staat weer aan.
+  stillWaiting: STILL_WAITING_NOTE,
+  waited: STILL_WAITED_NOTE,
   failed: FORM_SAVE_NOTE.failed,
   // Een losse training heeft geen geplande training die een tweede log tegenhoudt: eerst kijken. Sinds
   // besluit 2026-11-12-dubbel-log.md zegt logSession ja zodra het log geschreven is; deze regel blijft als voorzorg.
@@ -93,4 +97,11 @@ export type CloseWay = 'cancel' | 'backdrop' | 'drag' | 'back' | 'cross' | 'alre
 
 export function clearsDraft(way: CloseWay, filled: boolean): boolean {
   return way === 'cancel' || way === 'already' || !filled;
+}
+
+// Na "loopt nog" wacht het blad op de eerdere poging (state/logSave.ts#waitForEarlierSave): het log staat er (de zin
+// van al gedaan), er staat niets (mislukt, Opslaan weer aan), of ze loopt na de grens nog (Opslaan weer aan, kijk in
+// je logboek).
+export function afterEarlierSave(outcome: EarlierSaveOutcome): 'already' | 'failed' | 'waited' {
+  return outcome === 'stored' ? 'already' : outcome === 'free' ? 'failed' : 'waited';
 }

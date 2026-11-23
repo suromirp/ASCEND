@@ -10,7 +10,7 @@
 
 import type { PlanLock, PlannedSession } from '../models/training';
 import { linkLog, resolveMissedMemory, unlinkLog, MISSED_MEMORY_KEY, type MissedMemory } from '../engine/missedTraining';
-import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo } from './database';
+import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, getDB } from './database';
 
 const MEMORY_KEY = MISSED_MEMORY_KEY;
 
@@ -41,27 +41,58 @@ export async function skipMissedNow(sessionIds: readonly string[], lock: PlanLoc
 
 // Koppel een log aan een geplande training. Niets gebeurt als de log intussen ergens aan hangt, de
 // training intussen een log heeft, weg is of overgeslagen (een dubbele tik, een import ertussen), of als
-// het een log is die je zelf invulde (`linkLog`).
+// het een log is die je zelf invulde (`linkLog`). Kijken en schrijven gaan in één readwrite-transactie over
+// logs en geplande trainingen: alles of niets, en geen ander tabblad dat ertussen koppelt of afvinkt.
 export async function linkLogNow(logId: string, sessionId: string, at: string): Promise<boolean> {
-  const [logs, sessions] = await Promise.all([SessionLogsRepo.getAll(), PlannedSessionsRepo.getAll()]);
-  const log = logs.find((l) => l.id === logId);
-  const session = sessions.find((s) => s.id === sessionId);
-  if (!log || !session || session.status === 'skipped' || logs.some((l) => l.plannedSessionId === sessionId)) return false;
-  const linked = linkLog(log, sessionId, at);
-  if (!linked) return false;
-  await SessionLogsRepo.put(linked);
-  return true;
+  const db = await getDB();
+  const tx = db.transaction(['sessionLogs', 'plannedSessions'], 'readwrite');
+  const done = tx.done;
+  done.catch(() => undefined);
+  try {
+    const logs = tx.objectStore('sessionLogs');
+    const [all, session] = await Promise.all([logs.getAll(), tx.objectStore('plannedSessions').get(sessionId)]);
+    const log = all.find((l) => l.id === logId);
+    if (!log || !session || session.status === 'skipped' || all.some((l) => l.plannedSessionId === sessionId)) {
+      await done;
+      return false;
+    }
+    const linked = linkLog(log, sessionId, at);
+    if (linked) await logs.put(linked);
+    await done;
+    return !!linked;
+  } catch (err) {
+    abortQuietly(tx);
+    throw err;
+  }
 }
 
-// Ongedaan maken: alleen logs die later gekoppeld werden, verliezen hun verwijzing.
+// Ongedaan maken: alleen logs die later gekoppeld werden, verliezen hun verwijzing. In één transactie:
+// faalt er één, dan blijft alles zoals het was en kun je het opnieuw proberen.
 export async function unlinkLogsNow(logIds: readonly string[]): Promise<number> {
-  const logs = await SessionLogsRepo.getAll();
-  let n = 0;
-  for (const id of logIds) {
-    const log = logs.find((l) => l.id === id);
-    if (!log?.linkedLater) continue;
-    await SessionLogsRepo.put(unlinkLog(log));
-    n++;
+  const db = await getDB();
+  const tx = db.transaction('sessionLogs', 'readwrite');
+  const done = tx.done;
+  done.catch(() => undefined);
+  try {
+    let n = 0;
+    for (const id of logIds) {
+      const log = await tx.store.get(id);
+      if (!log?.linkedLater) continue;
+      await tx.store.put(unlinkLog(log));
+      n++;
+    }
+    await done;
+    return n;
+  } catch (err) {
+    abortQuietly(tx);
+    throw err;
   }
-  return n;
+}
+
+function abortQuietly(tx: { abort: () => void }): void {
+  try {
+    tx.abort();
+  } catch {
+    // Al afgebroken of al klaar.
+  }
 }

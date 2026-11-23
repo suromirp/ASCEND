@@ -1103,6 +1103,18 @@ html[data-motion='calm'] .mx-lijf-glow {
   animation: none;
 }
 
+/* De zwevende rij bij slepen in Week hangt vast boven de dag onder je vinger (WeekDragGhost, I-138). Alleen als hij
+   boven een dag hangt glijdt hij in 200 ms, ease-out, naar de plek boven een andere dag; die plek verandert niet
+   binnen een dag. Zonder dag volgt hij je vinger zonder transition. Rustig en Uit en beperkte beweging van het
+   systeem: meteen op de eindstand (Uit via de globale regel, Rustig hieronder). */
+.mx-ghost-settled {
+  transition: transform 0.2s ease-out;
+}
+
+html[data-motion='calm'] .mx-ghost-settled {
+  transition: none;
+}
+
 /* De grafieken van Run in detail komen een keer zacht op als ze verschijnen. */
 .mx-chart-in {
   animation: ascend-fade-in 0.3s ease-out backwards;

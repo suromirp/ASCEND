@@ -93,3 +93,13 @@ describe('de regel onder de klok', () => {
     expect(SOURCES['./ForgeHeader.tsx']).toContain('{!readOnly && !preview && !paused && <OverTimeNote');
   });
 });
+
+describe('de reden onder de kop (I-135)', () => {
+  it('een lange reden breekt af op meerdere regels, nooit afgekapt; Waarom zo staat erbij', () => {
+    const reason = 'Vorige keer haalde je alle herhalingen met twee in reserve, dus vandaag een stap zwaarder; voelt het zwaar, dan mag je terug naar het vorige gewicht.';
+    const html = block({ ...squat([row(0, 60)]), reason });
+    expect(html).toContain(reason);
+    expect(html).not.toMatch(/truncate/);
+    expect(html).toContain('Waarom zo');
+  });
+});

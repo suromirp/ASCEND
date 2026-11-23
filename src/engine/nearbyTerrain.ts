@@ -13,7 +13,7 @@ import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { SessionTemplate } from '../models/training';
 import type { LeavePeriod } from '../models/leave';
 import { hasRole, type RoleCarrier } from './templateRoles';
-import { dayRules } from './dayRules';
+import { dayRules, type DayRules } from './dayRules';
 import { resolveNoGym } from './noGymDetails';
 import { isNoGymRun } from './noGym';
 
@@ -38,9 +38,22 @@ export function terrainWish(template: RoleCarrier & Pick<SessionTemplate, 'id'>)
 export function terrainWishOn(template: SessionTemplate, date: string, periods: LeavePeriod[] | undefined): TerrainWish | undefined {
   const own = terrainWish(template);
   if (own) return own;
+  if (!periods?.length || !isNoGymRun(template)) return undefined;
   // Zonder sportschool via de ene regel (engine/dayRules.ts, I-82).
-  const noGym = dayRules({ today: date, leave: periods }).noGymPeriod(date);
-  return noGym && resolveNoGym(noGym).hills && isNoGymRun(template) ? 'hills' : undefined;
+  const noGym = periodRules(periods).noGymPeriod(date);
+  return noGym && resolveNoGym(noGym).hills ? 'hills' : undefined;
+}
+
+// De regel één keer per lijst periodes, niet per aanroep (I-137). noGymPeriod leest alleen de periodes, niet vandaag,
+// dus de dag waarmee hij gebouwd is doet er niet toe. Een nieuwe lijst (andere instellingen) bouwt hem opnieuw.
+const RULES = new WeakMap<readonly LeavePeriod[], DayRules>();
+export function periodRules(periods: readonly LeavePeriod[]): DayRules {
+  let rules = RULES.get(periods);
+  if (!rules) {
+    rules = dayRules({ today: '1970-01-01', leave: periods });
+    RULES.set(periods, rules);
+  }
+  return rules;
 }
 
 const usableHill = (f: TerrainFeature) => f.kind === 'hill' && (f.heightM === undefined || f.heightM >= MIN_HILL_HEIGHT_M);

@@ -2,14 +2,22 @@
 // diagnose onder Versie. Geschreven door storage/bootMigrations.ts. Alleen op dit toestel: niet in de back-up.
 
 import { MetaRepo } from './database';
-import { BOOT_FAILURES_KEY, bootFailureLine, type BootFailureRecord } from '../engine/bootFailures';
+import { BOOT_FAILURES_KEY, bootFailureDetails, bootFailureLine, type BootFailureRecord } from '../engine/bootFailures';
 import { BOOT_STEP_LIMIT_MS } from '../engine/bootWatch';
 import { withTimeout } from '../utils/withTimeout';
 
-// De zin, of niets als alles lukte of de opslag niet op tijd antwoordt.
-export async function bootFailureNote(): Promise<string | undefined> {
+export interface BootFailureNote {
+  line: string;
+  // De stapnamen zoals in de code, voor achter Details.
+  details: string[];
+}
+
+// De zin met de details, of niets als alles lukte of de opslag niet op tijd antwoordt.
+export async function bootFailureNote(): Promise<BootFailureNote | undefined> {
   try {
-    return bootFailureLine(await withTimeout(MetaRepo.get<BootFailureRecord>(BOOT_FAILURES_KEY), BOOT_STEP_LIMIT_MS));
+    const rec = await withTimeout(MetaRepo.get<BootFailureRecord>(BOOT_FAILURES_KEY), BOOT_STEP_LIMIT_MS);
+    const line = bootFailureLine(rec);
+    return line ? { line, details: bootFailureDetails(rec) } : undefined;
   } catch {
     return undefined;
   }

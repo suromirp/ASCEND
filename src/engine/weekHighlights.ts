@@ -3,7 +3,6 @@
 // trainingen die zwaarder of lichter voelden, de wekelijkse lijfvraag, en anders het advies. De volgende
 // week staat er apart onder. Puur: geen React, niets wordt opgeslagen of gepland.
 
-import { hoursMinutes } from '../utils/hoursMinutes';
 import type { WeekReview } from './weekReview';
 
 export interface Highlight { text: string; tone: 'normal' | 'warning'; icon: 'info' | 'week' | 'lichaam' }
@@ -39,20 +38,4 @@ export function weekHighlights(r: WeekReview): Highlight[] {
   if (r.checkAdvice) out.push({ tone: 'normal', icon: 'lichaam', text: r.checkAdvice });
   if (out.length === 0 && r.advice[0]) out.push({ tone: 'normal', icon: 'info', text: r.advice[0] });
   return out.slice(0, 2);
-}
-
-// De ene feitregel onder de dagen.
-export function weekSummaryLine(r: WeekReview): string {
-  if (!r.running && r.done === 0 && r.minutes === 0) return 'Geen trainingen deze week. Volgende week volgt het plan.';
-  const time = r.minutes >= 60 ? `${hoursMinutes(r.minutes)} uur` : `${r.minutes} min`;
-  const sports = r.perSport.map((p) => {
-    const [name, rest] = p.split(': ');
-    return `${name.toLowerCase()} ${(rest ?? '').replace(', ', ' · ').replace(' m D+', ' m omhoog')}`.trim();
-  });
-  const count = r.running
-    ? `${r.done} gedaan${r.todayLeft > 0 ? `, vandaag ${r.todayLeft === 1 ? 'staat er' : 'staan er'} nog ${r.todayLeft}` : ''}`
-    : `${r.done} van ${r.planned} gedaan`;
-  // Wat je deed zonder plan telt in de minuten en afstand, ook als de telling van gepland op 0 staat.
-  if (r.running && r.minutes === 0) return count;
-  return [count, time, ...sports].join(' · ');
 }

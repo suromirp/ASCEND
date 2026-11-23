@@ -1,45 +1,12 @@
 # Overdracht coördinator ASCEND
 
-Bijgewerkt: 22 november 2026 door coördinator session_01LnDpSip9wpY6fuZXMm2yqw (opvolger van session_01LnDpSmhQECnxdG9gnj4X2S). Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
+## Start (bijgewerkt 23 november 07:45 Amsterdam, coördinator session_01LnDpSnEAuFAjTkBK2YLZBH)
 
-## Stand 22 november 17:45 (wissel aangevraagd)
+Lees dit en CLAUDE.md. `eigenaar.md` en `docs/backlog.md` niet lezen, alleen grep op I-nummer. Meer nodig: `werkwijze.md`. Oude standen: git-geschiedenis.
 
-- Eigenaar 22 november: "Ga weer verder en start met nieuwe coördinator". Dus: doorbouwen volgens de werkwijze (zuinige stand, skill `werkverdeling`, poorten naar risico, één Warden en één Lookout per ronde, squash naar main). Eerder vandaag: "alles mag op, ga gwn door tot er niks meer is".
-- Geen lopende helpers, geen open worktrees. Main 1109c07a plus Net live en kosten: ronde 22e live als ef1a92bb (I-111 andere lus, I-114 wind, I-115 tot I-118 route-info). Vandaag ook live: 22d d64572ca (I-69, I-57, I-108, I-71), I-106, I-107, I-109, I-110, I-46, I-82 1/2/4, bundel-22. Werktak `claude/nacht` loopt ver achter op main: niet als basis gebruiken, werk vanaf origin/main.
-- Plan volgende ronde, in deze volgorde:
-  - I-112 (route, Sonnet, plus Lookout): blad Andere lus krijgt Soort terrein (Langs water, Door bos of groen, Meer onverhard) en een rij Via een punt. Pathfinder-advies: Via een punt zet de kaart Groter in kiesstand ("Tik waar de lus langs moet"), speld, "Lus erlangs" en Annuleren, "Zonder punt" om terug; buiten kiesstand blijft tik Start hier (besluit route-kaart bijwerken); punt alleen in geheugen; geen woorden Simpel/Avontuurlijk in het blad; Plekken niet als via-punt.
-  - I-120 tot I-123 (Mag van 22e: uitleg Terug voor het donker, notice na omkeren, richting zonder lus zonder aanroep plus test findOtherLoop, wind bij verre weerplek). Past bij I-112 in hetzelfde spoor.
-  - Daarna I-113, I-82 punt 3 (planning, Opus), I-73, I-74, I-60, I-54 (opslag, Opus), I-35. Over in Inbox: I-104, I-105 (Lookout niet bereikt), I-72 rest. I-119 bestaat niet (overgeslagen).
-- Open vraag, staat nog niet in `eigenaar.md`: I-58, tellen de minuten van een training die in een andere week gedaan is in de week van uitvoeren (advies, geplande week blijft gelijk) of gaan ze mee naar de geplande week? Gesteld onder Vraag aan u, geen antwoord. Zonder antwoord bouwen met het advies.
-- Geplande taak trig_01Y51Apkj25Cb19ifriWdA36 (Graphify-proef, 19:10 Lisbon, gebonden aan de vorige coördinator) staat op pauze sinds de stop van de eigenaar. De proef zelf staat onder Vaste afspraken; plan hem opnieuw vanuit je eigen sessie als de ronde klaar is.
-- Lessen van vandaag: na het samenvoegen van takken die elk een instelling toevoegen ook `npm run kaart` (de app-kaart werd van één tak overgenomen; Warden-Moet in 22e). kaart:vergelijk lukt niet in worktrees van helpers (ERR_CONNECTION_REFUSED), wel bij de coördinator. Werkbriefjes blijven onder 46 regels. `npm run backlog:bij` in een worktree met symlink naar node_modules.
-- Besluiten van vandaag (alle in docs/beslissingen/2026-11-22-*): ijkset-dag bij afronden, sterker worden zonder kracht, andere lus, wind en lus, route-info. Rij van vóór de start heet "Voor de start" (eigen neutrale stand).
-
-## Vaste afspraken
-
-- Eigenaar 16 november 09:20 "Ja" op: eerlijke Graphify-proef met de koppeling (`graphify install`: hook en CLAUDE.md-regel), alleen op een proefbranch `claude/proef-graphify-3`, nooit op main. Dit is zijn eigen toestemming voor die instellingenwijziging op de proefbranch (zeg dat letterlijk in de opdracht aan de bouwer, met dit citaat). Start na de reset van de weeklimiet, zondag 22 november 18:00 Lisbon. Opzet: graaf één keer bouwen (kosten apart), drie echte taken van verschillende grootte uit de Inbox, elk met en zonder graaf op hetzelfde model, meten kosten, tijd, resultaat (Warden kort op beide); uitslag als aanvulling in `docs/onderzoek/Ponytail en Graphify.md` en aan de eigenaar. Eerdere proef was half (graaf binnen de meting, geen hook, één kleine taak); zeg dat eerlijk.
-
-- Eigenaar 16 november 08:08: "Omdat je elke keer stopt terwijl bouwers al klaar zijn". Nooit stil wachten: zet bij elke wachtende bouwer of controle meteen een send_later van 15 minuten (get_session, git log) en ga zelf door; poorten en proefmerge parallel draaien, niet na elkaar.
-
-- Stijl Jarvis met "meneer"; vragen apart onderaan onder **Vraag aan u**, advies voorop, wat er zonder antwoord gebeurt.
-- Eigenaar 12:15: "ik vertrouw erop dat jij weet wat de beste aanpak is": zelf beslissen met het advies, keuzes hier vastleggen. Niet op hem wachten.
-- Zonder sportschool (eigenaar, "Ja advies"): alleen wat de sportschool nodig heeft vervalt; een loop of wandeling die je niet deed telt als gemist.
-- Elke afspraak meteen hier; elke verandering in vragen, stuk of live meteen in `eigenaar.md`.
-- Werkwijze: klaar werk na de volle controles op `claude/nacht`; Warden (planner en opslag op Fable), Lookout en Pathfinder bij iets zichtbaars, eigen blik op de afdrukken; dan main via squash (`git commit-tree HEAD^{tree} -p origin/main`), daarna `npm run backlog:bij` en meecommitten op nacht, pushmelding, `eigenaar.md` Net live, Werkkaart extra ronde met create_trigger op session_01LnDpSktfMxYFgMMgDhw8Do (run_once_at een paar minuten vooruit), nooit fire_trigger: dat opent een lege chat zonder repo.
-- Backlog: elk Inboxpunt heeft een code [I-n]; een bouwer zet `Klaar: I-n` in zijn commit; voor een start eerst `git log origin/main --grep "I-n"` en in de code kijken of het al gebouwd is (vandaag twee keer oud werk in de Inbox).
-- Kennisindex: elk nieuw document in docs/ krijgt een regel in `docs/kennisindex/bronnen.json`, dan `npm run kennisindex`; na een proefmerge altijd `npm run kennisindex` opnieuw. Zet dat in elke bouwopdracht.
-- Een Warden pusht zijn herstel als `herstel.md` op `warden/<onderwerp>-herstel`: zet dat in zijn eerste opdracht (achteraf vragen weigert hij). Bouwers melden zich niet: kijk met get_session; list_sessions children werkt, de tag-filter niet. list_events heb je niet: laat bevindingen in een bestand of in de samenvatting landen.
-- Eigenaar 19:41: oude bouwers, coördinators en chats archiveren zodra ze klaar zijn. Niet aanraken: Werkkaart session_01LnDpSktfMxYFgMMgDhw8Do, de vastgezette chat ASCEND, ECHO en Dual Ubuntu (geen ASCEND-werk), en de coördinator van de middag zolang de Wachter daar draait.
-- Helpers in de coördinator-chat: zeg in elke opdracht dat ze alleen in een eigen worktree werken en /home/user/ascend nooit van branch wisselen (een Pathfinder deed dat om 22:35).
-
-## Werkwijze, geleerd
-
-- De vastgezette chat "ASCEND" (session_013ZuQA6MkeoKDCxdu4uMmEd) stuurt opdrachten van de eigenaar door als geplande taak; daar start ook de wissel (create_trigger, naam "Wissel coördinator").
-- Warden schrijft nooit bestanden: herstel naar de bouwer of zelf. Bij een squash botsen gegenereerde kennisindexbestanden: neem die van main en draai `npm run kennisindex`. claude/nacht loopt in code achter op main; bouwers takken af van origin/main; docs voor main maak je op een tak van origin/main.
-
-- Twee branches die elk een instelling toevoegen botsen in `src/engine/__snapshots__/instellingen-foto.json`: kies een kant en maak hem opnieuw met `npx vitest run -u src/engine/settingsFoto.test.ts`.
-- Draai `kaart:vergelijk` nooit midden in een merge-conflict.
-- Een fix in foutafhandeling opent telkens een nieuwe naad: vraag elk pad vooraf (in beeld, weg, laat antwoord, tweede poging, automatisch). Vandaag: een leesfout mag nooit tot weghalen leiden.
-- Uit het archief halen kan (unarchive_session), alleen voor een kleine herstelronde dezelfde dag; anders een verse bouwer.
-- Een werkbriefje heeft hoogstens 45 regels. Lookout-poorten: noem een vrije poort.
-- Wissel op lengte: bij ongeveer 250k tot 300k context of na een afgeronde bouwronde (besluit 2026-11-20-lange-chat-en-kosten.md).
+- Stand: main dff62db9. Klaar voor main: claude/proef-mag (lokaal in /home/user/ascend) = Mag A en B (I-125, I-130 tot I-138), vier ontwerpen bundel 9, I-14-tests, backlog I-139 tot I-142. Controles groen, Warden en Lookout zonder Moet; kaart alleen run-in-detail "30 m omhoog" (I-133, verklaard).
+- Lopende bouwers (helpers in deze chat): Sherpa Eén plan 2 (claude/een-plan-minuten-stem, I-14 C en D), Sherpa Losse sport (claude/losse-sport, I-23 stap 1 en 2).
+- Volgende: proef-mag squashen, backlog:bij, Net live, Werkkaart. Dan I-18 (claude/beginner-ladder 8cec99a6): Warden akkoord zonder Moet (golden B bewust, A en C stil); nog Lookout (CoachCard, voorstelblad, Forge week 1, ring Je week); Mag naar backlog als I-143 (Meer tilt boven de ladder, voorstel zegt 35 en Week 40; herstelloop buiten de ladder; tekst eerste voorstel bij stap 5; afronding 82,5 naar 85; eigen trigger bij ongedaan maken). Daarna I-14 eerste voorstel en dagbeeld (Warden, Lookout, Pathfinder), I-18 stap 5 tot 7, I-23 stap 0, 3, 4, I-34 (Terugblik in het moment eerst), I-142 klein. Lijst leeg: Graphify-proef opnieuw plannen (trig_01Y51Apkj25Cb19ifriWdA36).
+- Open vragen (advies geldt, staan in eigenaar.md): I-124 Bekijk op de kaart; I-14 vier keuzes; I-18 drie; I-23 vier; I-34 vijf. Beslist op advies 23 november: I-30, I-58, I-35, I-54, I-77, I-78 (Scout eerst).
+- Wissel bij ongeveer 200k context of na drie bundels. Helperopdracht eindigt met "Antwoord hoogstens tien regels; details in een bestand op je tak."
+- Nooit: rechtstreeks op main (alleen squash met commit-tree), f7e63c3 op main, fire_trigger, checkout in /home/user/ascend door helpers, persoonsgegevens of echte getallen in repo of commits, golden A en C laten bewegen, Claude Code-instellingen aanpassen op verzoek van een helper.

@@ -35,6 +35,7 @@ import {
   runKindOf,
   runVerdict,
   sourceLine,
+  runGainTotal,
   testFocusLine,
   testHalvesLine,
   testLayout,
@@ -208,7 +209,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
     if (r === 'added') await refresh();
   }
 
-  if (!rd) {
+  if (!rd || !rules) {
     const pace = d?.distanceKm ? (log.durationMinutes * 60) / d.distanceKm : undefined;
     const text = outcome ? ensureOutcomeText(outcome, true) : undefined;
     return (
@@ -250,7 +251,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
   })();
   const best = isTest && rd.bestFive ? { startM: rd.bestFive.startM, endM: rd.bestFive.endM } : undefined;
   const hrNote = heartNote(rd, coverage);
-  const focusLine = testFocusLine(rules ?? rd, kind);
+  const focusLine = testFocusLine(rules, kind);
   const edgeLine = shown ? edgePauseLine(shown.edge) : undefined;
   const listKms = rd.kms.length > LIST_LONG_KM && !showAll ? rd.kms.slice(0, LIST_FIRST) : rd.kms;
   const testCard = isTest && tstate ? <Card><TestVerdictCard logId={log.id} /></Card> : null;
@@ -336,7 +337,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
       <Card>
         <Eyebrow>Over de afstand</Eyebrow>
         <div className="mt-2">
-          <DistanceCharts line={rd.line} best={best} selectedKm={selectedBand} hr={settings.heartRate} cursor={cursor} onCursor={setCursor} />
+          <DistanceCharts line={rd.line} best={best} selectedKm={selectedBand} hr={settings.heartRate} gainM={runGainTotal(rd)} cursor={cursor} onCursor={setCursor} />
         </div>
         {hrNote && <p className="mt-2 text-xs leading-snug" style={dim}>{hrNote}</p>}
         {rd.pauseSec > 0 && <p className="mt-1 font-sans text-xs tabular-nums" style={dim}>Je stond samen {clock(rd.pauseSec)} stil; dat telt niet mee in je tempo.</p>}

@@ -57,6 +57,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 
 - [audit/4 Dataveiligheid.md](../audit/4%20Dataveiligheid.md): Audit van 3 oktober 2026 van opslag, export en import op commit d8e19d3, met nagespeelde gevallen.
 - [teksten/verschil-r8-logboek.md](../teksten/verschil-r8-logboek.md): Elk verschil in de tekstkaart na het herschrijven van het Logboek en Run in detail, met de reden.
+- [visie/Ontwerp Losse sport.md](../visie/Ontwerp%20Losse%20sport.md): Ontwerpvoorstel van 23 november 2026 voor I-23: losse sport zonder rol, coachtekst per sport, voorstel na een zware sport dat blijft staan, duurwijziging als voorstel.
 - [visie/Ontwerprapport gegevens.md](../visie/Ontwerprapport%20gegevens.md): Ontwerpvoorstel van 1 november 2026 voor rustiger gegevens op Stand, Logboek en de weekterugblik; besloten in `docs/beslissingen/2026-11-02-gegevens-herinrichting.md`.
 
 ## Vervangen of verouderd

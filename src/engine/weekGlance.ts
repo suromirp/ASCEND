@@ -3,6 +3,7 @@
 // de dagen, hoogstens twee regels om op te letten, en één regel over volgende week. Puur: alles komt uit wat
 // buildWeekReview al levert; niets wordt opgeslagen of gepland.
 
+import { formatHoursMinutesNL } from '../utils/dates';
 import { hoursMinutes } from '../utils/hoursMinutes';
 import { joinNames } from './weekHighlights';
 import type { ElsewhereWeek, WeekReview } from './weekReview';
@@ -63,6 +64,12 @@ export function weekCardCount(r: WeekReview): string {
   const only = onlyElsewhereText(r);
   const notes = elsewhereNotes(r);
   return only ?? [r.running ? `${r.done} gedaan` : `${r.done} van ${r.planned} trainingen`, notes.doneElsewhere, notes.fromElsewhere].filter(Boolean).join(', ');
+}
+
+// De regel op de kaart Weekterugblik: de telling met de tijd erachter, en zonder tijd geen "· 0 min".
+export function weekCardLine(r: WeekReview): string {
+  const m = Math.max(0, Math.round(r.minutes));
+  return m > 0 ? `${weekCardCount(r)} · ${formatHoursMinutesNL(m)}` : weekCardCount(r);
 }
 
 // De verdeling per sport, voor de weergave Je trainingen: "hardlopen 18,4 km · 320 m omhoog".

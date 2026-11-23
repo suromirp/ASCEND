@@ -12,7 +12,8 @@ import { webBackupFileAdapter } from '../../../storage/backupFileAdapter';
 import { chooseBackupFolder } from '../../../storage/autoBackup';
 import type { PreImportSnapshot } from '../../../storage/backupTypes';
 import { checkForUpdate } from '../../../utils/appUpdate';
-import { bootFailureNote } from '../../../storage/bootFailures';
+import { bootFailureNote, type BootFailureNote } from '../../../storage/bootFailures';
+import { TextButton } from '../../TextButton';
 import { buildLabel } from '../../../utils/buildLabel';
 import { formatDateNL, localDateOf, localTimeOf, todayISO } from '../../../utils/dates';
 import { BaselineEvidenceCard } from '../../BaselineEvidenceCard';
@@ -244,7 +245,9 @@ export function VersionSheet({ onClose }: { onClose: () => void }) {
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   // Een herstelstap die bij het openen faalt, geteld over de starts heen (I-35). Alleen als er een is.
-  const [bootNote, setBootNote] = useState<string | undefined>(undefined);
+  // De zin zelf zonder technische naam; de stapnamen staan ingeklapt achter Details (I-134).
+  const [bootNote, setBootNote] = useState<BootFailureNote | undefined>(undefined);
+  const [bootDetails, setBootDetails] = useState(false);
   useEffect(() => {
     let live = true;
     void bootFailureNote().then((note) => {
@@ -272,7 +275,13 @@ export function VersionSheet({ onClose }: { onClose: () => void }) {
         <button type="button" className="st-btn" disabled={checking} onClick={() => void check()}>{checking ? 'Zoeken' : 'Zoeken naar update'}</button>
       </div>
       {result && <p className="st-hint" style={{ marginLeft: 0 }} role="status">{result}</p>}
-      {bootNote && <p className="st-hint warn" style={{ marginLeft: 0 }} role="status">{bootNote}</p>}
+      {bootNote && <p className="st-hint warn" style={{ marginLeft: 0 }} role="status">{bootNote.line}</p>}
+      {bootNote && bootNote.details.length > 0 && (
+        <>
+          <TextButton tone="dim" icon="omlaag" flipped={bootDetails} aria-expanded={bootDetails} onClick={() => setBootDetails((v) => !v)}>Details</TextButton>
+          {bootDetails && bootNote.details.map((d) => <p key={d} className="st-hint" style={{ marginLeft: 0 }}>{d}</p>)}
+        </>
+      )}
     </Sheet>
   );
 }

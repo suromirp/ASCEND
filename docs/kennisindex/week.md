@@ -57,6 +57,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 
 ## Onderzoek, ontwerpen en verslagen
 
+- [visie/Ontwerp Eén plan.md](../visie/Ontwerp%20E%C3%A9n%20plan.md): Ontwerpvoorstel van 23 november 2026 voor I-14: één dagbeeld en één duur voor voorstel, Vandaag, Week en weekbalk, met invarianten als tests.
 - [visie/Ontwerp Je week tot nu.md](../visie/Ontwerp%20Je%20week%20tot%20nu.md): Ontwerpvoorstel van 12 november 2026 voor het blad Je week tot nu; besloten in `docs/beslissingen/2026-11-12-je-week-tot-nu.md`.
 - [visie/Ontwerp Week minimaal.md](../visie/Ontwerp%20Week%20minimaal.md): Ontwerpvoorstel van 12 november 2026 voor de tab Week; besloten in `docs/beslissingen/2026-11-12-week-minimaal.md`.
 - [visie/Ontwerp een regel voor uitzonderingen.md](../visie/Ontwerp%20een%20regel%20voor%20uitzonderingen.md): Ontwerpvoorstel van 15 november 2026 voor één functie in `engine/` die zegt of een training of stap op een dag mag (ziek, periodes, afbouw, rustdag), met twaalf gevonden gaten en de migratie in vijf stappen; backlogpunt I-67.
