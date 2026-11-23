@@ -149,6 +149,17 @@ export const PLANNING_CHOICES = {
       { value: 'korter', label: 'Korter', note: '48 uur na een wedstrijd, 24 uur na een training of padel', short: 'Korter' },
     ],
   }),
+  sportVoorstel: def({
+    group: 'Planning',
+    title: 'Voorstel na een zware sport',
+    line: 'Anders verdwijnt een voorstel als de dag voorbij is, zonder dat je het zag.',
+    advice: 'blijft' as 'blijft' | 'vanzelf',
+    help: 'sportenTellen',
+    options: [
+      { value: 'blijft', label: 'Blijft tot je kiest', note: 'Op de dag zelf op Vandaag, en een regel als het vervalt', short: 'Blijft' },
+      { value: 'vanzelf', label: 'Vervalt vanzelf', note: 'Is de dag voorbij, dan is het voorstel weg', short: 'Vervalt vanzelf' },
+    ],
+  }),
   loslaten: def({
     group: 'Planning',
     title: 'Loslaten op een training',
@@ -345,6 +356,15 @@ export const PLANNING: SettingDef[] = [
     note: 'Hoe lang je benen na padel of voetbal vrij blijven van een zware beendag.',
     keywords: ['rust', 'voetbal', 'padel', 'wedstrijd', '72 uur', '48 uur', 'hoe sporten meetellen'],
     choice: { key: 'sportRust', def: PLANNING_CHOICES.sportRust },
+  },
+  {
+    id: 'sport-voorstel',
+    page: 'planning',
+    place: { in: 'bundel-sporten-tellen' },
+    title: 'Voorstel na een zware sport',
+    note: 'Anders verdwijnt een voorstel als de dag voorbij is, zonder dat je het zag.',
+    keywords: ['voorstel', 'vervalt', 'blijft', 'padel', 'voetbal', 'beendag', 'hoe sporten meetellen'],
+    choice: { key: 'sportVoorstel', def: PLANNING_CHOICES.sportVoorstel },
   },
   {
     id: 'wijzigingen',

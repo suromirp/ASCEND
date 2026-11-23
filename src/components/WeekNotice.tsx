@@ -3,6 +3,7 @@ import { TAKEN_LINE, weekFixId, type WeekNotice as WeekNoticeData } from '../eng
 import { noticeCard, noticeHeadline } from '../engine/weekConcerns';
 import { useAppData } from '../state/AppDataContext';
 import { ProposalSheet } from './ProposalSheet';
+import { useSportRestSeenInWeek } from './sports/useSportRest';
 import { Sheet } from './settings/Sheet';
 import { TextButton } from './TextButton';
 import { Card, Eyebrow, PrimaryButton } from './ui';
@@ -33,6 +34,8 @@ export function WeekNotice({ notice, weekStart }: { notice: WeekNoticeData; week
   const full = current.outcome === 'ready' ? current.full : undefined;
   const { concerns, covered } = full ?? notice;
   const fixes = full?.fixes ?? {};
+  // Een voorstel na een zware sport dat je hier ziet, blijft tot je kiest (I-23 punt 10): Week schrijft de eerste regel.
+  useSportRestSeenInWeek(concerns, covered);
   if (concerns.length === 0) return null;
 
   const withFix = concerns.map((c) => fixes[c.key]).filter((a): a is NonNullable<typeof a> => !!a);

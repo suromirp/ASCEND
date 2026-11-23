@@ -43,6 +43,9 @@ export { migrateNightJudgments, migrateLegEaseDays, migrateSweatEntries, migrate
 export { migrateManualMeasured, migrateLogManualMeasured, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateTestJudgments, migrateZoneAnswers, migrateStrapWorn, migrateLogSetTimes, migrateLogSets, migrateLogSetAsked, migrateLogSetSkill, migrateLogSetRow } from './migrationsLogs';
 export { cleanNavigationSettings, migrateCardsAboveMission, migrateDataSettings, migrateAutoBackupSettings, migrateHealthConnectState, migrateShortTestSeries } from './migrationsSettings';
 export { migrateSportHandling, migrateSportCounting, migrateLogCountedSport, migratePlannedFixed, migrateKindAmount, migratePlannedAmount, migrateCustomSports, migrateLogCustomSport, migrateLogRpeAssumed } from './migrationsSports';
+// Een voorstel na een zware sport (I-23 punt 10): `sportRestOffers` en `sportRestKeep` in de instellingen, optioneel en
+// additief, dus het schemanummer blijft; een oudere back-up importeert zoals eerst.
+export { migrateSportRestOffers, migrateSportRestKeep } from './migrationsSports';
 export { migrateActivityDetail, migrateLogDetail, migrateLogRunDetail, migrateActivityStreams, migrateSessionTrim, migrateLogTrim, migrateSourceSync, migrateLogSourceSync, migrateLogZone2Pieces } from './migrationsLogDetail';
 export { readGoalDetails, readGoalKind, readGoalPriority, priorityFromPlanRole, routePlanUsesTent, migrateTrainingGoal, readAcceptedConflicts, migrateTrainingGoals } from './migrationsGoals';
 export type { GoalKindContext } from './migrationsGoals';

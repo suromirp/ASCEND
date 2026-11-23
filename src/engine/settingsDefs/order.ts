@@ -20,7 +20,7 @@ export const INDEX_ORDER: readonly string[] = [
   'richting', 'golven', 'golf-terugblik', 'beginnersstart', 'opbouw-start', 'weekbudget', 'zones-na-test', 'twijfeltest',
   'lange-loop-benen', 'slepen-week', 'week-na-keuze', 'loslaten-training', 'volgorde-stand', 'weekvoorstel',
   'nieuwe-test', 'niet-doorgegaan', 'niet-doorgegaan-dagen', 'bundel-sporten-tellen', 'sport-vragen',
-  'sport-zwaarte', 'sport-rust', 'log-koppelen', 'rustiger-instap', 'rustdag-terug', 'week-vol', 'test-rust',
+  'sport-zwaarte', 'sport-rust', 'sport-voorstel', 'log-koppelen', 'rustiger-instap', 'rustdag-terug', 'week-vol', 'test-rust',
   'test-stilstaan', 'ambitie', 'hartslag', 'blessures', 'gewicht-kaart', 'eten-onderweg', 'tempo-stukken',
   'intensiteit', 'figuur', 'lichaamsgewicht', 'gewicht-eigen', 'gewicht-periode', 'gewichtstrend', 'vetpercentage',
   'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-namen', 'wat-vastgelegd', 'herinnering-gewicht',

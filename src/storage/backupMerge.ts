@@ -6,6 +6,7 @@ import { mergeIntentions } from '../engine/weeklyQuestion';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { MAX_LEG_EASE_DAYS } from '../models/legEase';
 import { mergeSweatEntries } from '../engine/sweat';
+import { mergeSportRestOffers } from '../engine/sportRestOffer';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { dedupeInfluencesByPlace } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
@@ -237,6 +238,10 @@ export function mergeSettingsHistory(current: AppSettings, incoming: Partial<App
     const byDate = new Map((incoming.sweatPre ?? []).map((p) => [p.date, p]));
     for (const p of current.sweatPre ?? []) byDate.set(p.date, p);
     merged.sweatPre = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  }
+  // Een voorstel na een zware sport: alleen toevoegen (onlyNew), wat op het toestel staat blijft zoals het is.
+  if (incoming.sportRestOffers || current.sportRestOffers) {
+    merged.sportRestOffers = mergeSportRestOffers(current.sportRestOffers, incoming.sportRestOffers);
   }
   // Notes of "Wat speelde er" are history too: the union per id, the newest updatedAt
   // wins and on a tie the device does. A note you removed on this device comes back
