@@ -13,16 +13,6 @@ Hoogste code: I-143. Een nieuw punt krijgt het volgende nummer (zet het getal hi
 - [I-141] (23 november, Lookout Mag, mag) Week op 360 px: bij slepen bedekt de chip "Je rustdag" half de pil Herstel van die rij; de ondertitel "verplaatst… di 24" van een verplaatste rij is afgekapt. Niet getoetst in de browser: slepen naar een dag met twee trainingen, de chips Vol en Dicht op, Let op bij verkouden.
 - [I-140] (23 november, Warden Mag, mag) `SessionLogsRepo.add` leest bij elk nieuw log twee keer alle logs (readonly voorcontrole en readwrite); op termijn een index op `plannedSessionId` en `externalId` (migratie) of alleen de readwrite-controle. In Hoe ging het? blijft Opslaan uit na "loopt nog" (Lookout), Forge zet hem weer aan: gelijk trekken.
 - [I-139] (23 november, Warden Mag, mag) Valkuil in een werkbriefje: `nearbyTerrain.ts#periodRules` cachet op de identiteit van de lijst periodes; een periode nooit in place wijzigen. Besluit vastleggen voor de wachtgrens van 30 s op een eerdere opslag (I-135). `FinishSheet.tsx:169` zet `busy.current` niet terug na `away`.
-- [I-138] (23 november, Sherpa en Lookout dayRules, mag) De chip van de doeldag zit bij slepen achter de sleepkaart op 412 px (`WeekDragGhost` bedekt de rij); vraagt een andere indeling en Lookout.
-- [I-137] (23 november, Warden en coördinator dayRules, mag) Bij verkouden zegt de uitleg bij een test of wedstrijd "Ziek train je niet" onder de kop "Je bent verkouden" (`weekConcerns.ts`). Equivalentietoets op de aanroepers met 3 tot 4 overlappende periodes; toets voor de pauze in `moveActions.ts`; `nearbyTerrain.ts` bouwt per aanroep een dayRules; rest van de lijst in `dayRulesScan.test.ts` (adviceLoad, adviceWeek, adviceShared, reentry, repeatWeek, WeekdayPatternLine, leaveBlock, LEAVE in weekValidator).
-- [I-136] (23 november, rest I-33, mag) Hoogte: `altitudeTrusted` en `HILLY_M_PER_KM` nog zonder merk van de teller; stap 2 in `places.ts`.
-- [I-135] (23 november, Warden en Lookout forge, mag) Forge zegt bij een opslag die nog loopt "sluit de app" met Annuleren, Hoe ging het? nu Sluiten: één uitweg (rest I-60). In Hoe ging het? blijft Opslaan uit na "loopt nog" tot je heropent. De reden in Forge is afgekapt op 360 px.
-- [I-134] (23 november, Warden opslag en Lookout, mag) Blad Versie noemt de stapnaam (seedIfEmpty@1) in de zin: achter Details. `linkLogNow` in één transactie; `getAll` houdt een schrijfslot; ruimere timeout in `settingsFoto.test.ts`.
-- [I-133] (23 november, Warden en Lookout naspelen, mag) Run in detail toont geen totaal van de stijging, alleen het bereik; `rules ?? rd` in `RunDetailScreen.tsx` opruimen; valkuilregel in het briefje lopen-en-tests: een oordeel met een grens op eigen stijging leest `rules`, nooit `shown`.
-- [I-132] (23 november, Lookout week, mag, nakijken) De belastingkaart van een vorige week zegt "Deze week staat er geen training" bij een week met trainingen; nagaan of dit al op main zo was.
-- [I-131] (23 november, Warden en Lookout week, mag) Weekterugblik: "· 0 min" weglaten; zin bij Herhaal de week "van de geplande week"; `weekSummaryLine` heeft geen aanroeper.
-- [I-130] (23 november, Warden route, mag) Werkbriefje planning: BEGINNER_SWAPS splitsen beschrijven (rest van I-51), en de zin bij Opbouw van de start eindigt op "Telt alleen bij Rustig beginnen".
-- [I-125] (23 november, Warden route, mag) Opmaak van `docs/kennisindex/bronnen.json` gelijk trekken (inspringen en volgorde van de nieuwe regels).
 - [I-105] Label "Ziek gemeld: koorts" (I-56) niet op 360 px gezien: Lookout vond het voorstel met die titel niet in de testdata. Bij de volgende Lookout meenemen.
 - [I-104] Zin "Je rustige loop van <dag> krijgt dan geen korte test meer." (I-99) niet op het scherm gezien; alleen in tests. Bij de volgende Lookout meenemen.
 - [I-103] Token voor de zachte mint vulling (Warden 21 november, mag): de 18%-vulling van Akkoord staat nu in StepProposalNotice en CalibrationNotice; komt hij een derde keer terug, maak dan een token `--color-action-soft` in `src/index.css`.
@@ -86,6 +76,16 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-138] De chip van de doeldag zit bij slepen achter de sleepkaart op 412 px; vraagt een andere indeling en… (23 november, 9f6c67f)
+- [I-137] Bij verkouden zegt de uitleg bij een test of wedstrijd "Ziek train je niet" onder de kop "Je bent… (23 november, 9f6c67f)
+- [I-136] Hoogte (23 november, 9f6c67f)
+- [I-135] Forge zegt bij een opslag die nog loopt "sluit de app" met Annuleren, Hoe ging het? nu Sluiten (23 november, 9f6c67f)
+- [I-134] Blad Versie noemt de stapnaam in de zin (23 november, 9f6c67f)
+- [I-133] Run in detail toont geen totaal van de stijging, alleen het bereik; rules ?? rd in… (23 november, 9f6c67f)
+- [I-132] De belastingkaart van een vorige week zegt "Deze week staat er geen training" bij een week met… (23 november, 9f6c67f)
+- [I-131] Weekterugblik (23 november, 9f6c67f)
+- [I-130] Werkbriefje planning (23 november, 9f6c67f)
+- [I-125] Opmaak van docs/kennisindex/bronnen.json gelijk trekken (23 november, 9f6c67f)
 - [I-82] Opruimen na de onderhoudsronde (23 november, 121f9c1)
 - [I-74] Na I-67 (23 november, 121f9c1)
 - [I-73] Wandeling van het horloge (23 november, 121f9c1)
