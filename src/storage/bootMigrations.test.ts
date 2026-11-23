@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { missingBootSteps, runBootMigrations } from './bootMigrations';
 import { MetaRepo, applyBackupWrites, seedIfEmpty, wipeAllData } from './database';
 import { BOOT_MIGRATIONS, BOOT_MIGRATIONS_KEY, type BootMigrationRecord } from '../engine/bootWatch';
+import { BOOT_FAILURES_KEY, type BootFailureRecord } from '../engine/bootFailures';
 import { probeStorage } from './storageProbe';
 import { setPageLife, storageOpenFor, whenStorageOpen } from './lifecycle';
 
@@ -127,6 +128,19 @@ describe('een herstelstap die een fout gooit', () => {
     expect(ok.skipped).toEqual([]);
     const record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
     expect(record?.done).toHaveLength(BOOT_MIGRATIONS.length);
+  });
+
+  // I-35: een stap die elke start faalt stond alleen in de console; nu telt meta hem voor de diagnose.
+  it('een stap die elke start faalt telt door in meta, en verdwijnt uit de teller zodra hij lukt', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await runBootMigrations({ build: 'v1', overrides: { ...quickRepairs, mergeDuplicateWeeklyPrescriptionLines: fails } });
+    expect((await MetaRepo.get<BootFailureRecord>(BOOT_FAILURES_KEY))?.mergeDuplicateWeeklyPrescriptionLines.count).toBe(1);
+    await runBootMigrations({ build: 'v1', overrides: { mergeDuplicateWeeklyPrescriptionLines: fails } });
+    const two = await MetaRepo.get<BootFailureRecord>(BOOT_FAILURES_KEY);
+    expect(Object.keys(two ?? {})).toEqual(['mergeDuplicateWeeklyPrescriptionLines']);
+    expect(two?.mergeDuplicateWeeklyPrescriptionLines.count).toBe(2);
+    await runBootMigrations({ build: 'v1' });
+    expect(await MetaRepo.get(BOOT_FAILURES_KEY)).toBeUndefined();
   });
 
   it('een stap die meteen gooit, zonder belofte, telt als dezelfde fout', async () => {

@@ -22,6 +22,7 @@ import { tidyDoubleMornings } from './wellness';
 import { straightenBackupTime } from './backupTime';
 import { withTimeout } from '../utils/withTimeout';
 import type { BootRunResult } from './bootLock';
+import { BOOT_FAILURES_KEY, noteBootOutcomes, type BootFailureRecord } from '../engine/bootFailures';
 import { BOOT_MIGRATIONS, BOOT_MIGRATIONS_KEY, BOOT_STEP_LIMIT_MS, migrationsToRun, recordAfter, type BootMigrationRecord } from '../engine/bootWatch';
 
 const STEPS: Record<string, () => Promise<unknown>> = {
@@ -92,6 +93,7 @@ export async function runBootMigrations(
   let record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
   const skipped: string[] = [];
   const failed = new Set<string>();
+  const succeeded: string[] = [];
   let repairsStopped = false;
   // The repair that went over its time and still runs. The caller keeps the
   // lock until it is really done, and the planning sync waits for it, so it
@@ -143,6 +145,7 @@ export async function runBootMigrations(
     }
     record = recordAfter(record, build, step);
     await MetaRepo.set(BOOT_MIGRATIONS_KEY, record);
+    succeeded.push(step.id);
   }
   // Vast punt wordt Thuis (storage/places.ts#migrateStartPointToHome). Niet in de lijst van stappen: die
   // onthoudt per versie wat gelopen heeft, en deze moet bij elke start opnieuw kijken tot het gelukt is.
@@ -154,7 +157,22 @@ export async function runBootMigrations(
   // versie van de app, dus dit kijkt bij elke start, met één leesactie. Gooit nooit.
   const backupTime = await withTimeout(straightenBackupTime(), limit).catch(() => 'failed' as const);
   if (backupTime === 'failed') console.warn('Laatste back-up is niet nagekeken; de volgende start probeert het opnieuw.');
+  // Een herstelstap die faalt, geteld per stap over de starts heen, voor de diagnose onder Versie (I-35).
+  // Een stap die over zijn tijd ging telt niet: die kan nog lukken. Gooit nooit en wacht hooguit een stapgrens.
+  if (home === 'failed') failed.add('migrateStartPointToHome');
+  else succeeded.push('migrateStartPointToHome');
+  if (backupTime === 'failed') failed.add('straightenBackupTime');
+  else succeeded.push('straightenBackupTime');
+  await withTimeout(noteFailures([...failed], succeeded), limit).catch(() => undefined);
   return pending ? { skipped, pending } : { skipped };
+}
+
+async function noteFailures(failedIds: string[], succeededIds: string[]): Promise<void> {
+  const before = await MetaRepo.get<BootFailureRecord>(BOOT_FAILURES_KEY);
+  const next = noteBootOutcomes(before, { failed: failedIds, succeeded: succeededIds }, new Date().toISOString());
+  if (next === before) return;
+  if (next) await MetaRepo.set(BOOT_FAILURES_KEY, next);
+  else await MetaRepo.delete(BOOT_FAILURES_KEY);
 }
 
 // Voor de test: elke stap uit engine/bootWatch.ts heeft hier zijn functie.

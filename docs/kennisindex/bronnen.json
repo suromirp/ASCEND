@@ -3042,8 +3042,11 @@
     "algemeen",
     "koppelingen-en-data"
    ],
-   "kern": "De tijdgrens van 15 seconden op een aanroep naar intervals.icu loopt nu door tot en met het lezen van het antwoord, bij lezen en bij schrijven.",
-   "stand": "geldt"
+   "kern": "De tijdgrens van 15 seconden op een aanroep naar intervals.icu loopt nu door tot en met het lezen van het antwoord, bij lezen en bij schrijven. Geldt nog: de grens geldt tot en met het lezen, een time-out is network, een herstelstap die faalt wordt alleen zelf overgeslagen; ingehaald zijn de ene grens van 15 s voor kop en inhoud samen en het ontbreken van een teller.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-23-opslag-twee-tabbladen-en-grens.md"
+   ]
   },
   "docs/beslissingen/2026-11-14-opwarmset-later.md": {
    "onderwerpen": [
@@ -4504,6 +4507,14 @@
     "koppelingen-en-data"
    ],
    "kern": "Bij een Avontuurlijke lus begin je tegen de wind in en heb je hem op de terugweg mee: de app draait de lus (reverseProposal, geen aanroep) op de windrichting van het startuur uit de voorspelling die er al is, gemeten over het eerste en laatste derde; zwakker dan 12 km/u of onbekend doet niets; één regel bij de lus, ook eerlijk na Andersom; instelling routeWind, standaard aan.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-23-opslag-twee-tabbladen-en-grens.md": {
+   "onderwerpen": [
+    "historie-en-logs",
+    "koppelingen-en-data"
+   ],
+   "kern": "Een nieuw log met een geplande training of horloge-activiteit wordt in één readwrite-transactie gekeken en geschreven (SessionLogsRepo.add), zodat twee tabbladen nooit twee logs geven; intervals.icu krijgt 15 s voor de kop en 15 s per stuk inhoud, nooit meer dan 120 s; een herstelstap die bij het openen faalt telt door in meta (bootStepFailures) en staat onder Versie.",
    "stand": "geldt"
   }
  }
