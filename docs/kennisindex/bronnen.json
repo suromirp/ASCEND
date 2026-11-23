@@ -3148,6 +3148,13 @@
     "docs/beslissingen/2026-11-23-terugkeer-na-pauze.md"
    ]
   },
+  "docs/beslissingen/2026-11-23-een-plan-eerste-voorstel.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Het eerste voorstel noemt wat daarna in Week staat (zinnen uit het voorbeeld); vraag 2 op advies: de tekst volgt het plan en noemt het budget van de richting apart; vraag 3 op advies: de rustdag heet zoals in Week. Een test, wedstrijd of rij met een slot blijft op zijn dag, ook op een dag die niet in je beschikbare dagen zit.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/2026-11-23-terugkeer-na-pauze.md": {
    "onderwerpen": [
     "planning",
@@ -3397,6 +3404,13 @@
     "planning"
    ],
    "kern": "Naspelen van I-144 (rustdag na twaalf dagen niets): de gemelde vorm gaf op main al het voorstel, waarschijnlijk een bouw van voor I-124; de fix dicht het gat voor een periode die op T-8 of eerder eindigt. Oorzaak, fix en testnamen.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/2026-11-23-een-plan-eerste-voorstel.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Verslag van I-14 stap 4: het eerste voorstel maakt zijn zinnen uit het voorbeeld (firstPlanLines), kracht volgt het plan met het budget apart, de rustdag heet Rustdag in de lijst. Tests, controles en wat niet is nagegaan.",
    "stand": "achtergrond"
   },
   "docs/onderhoud/2026-11-23-klein-142-143-145.md": {

@@ -17,9 +17,8 @@ import {
   GoalEngineConfigRepo,
 } from '../storage/database';
 import { extractEvidenceFromLogs } from '../engine/capability';
-import { activeGoalDemandKeys } from '../engine/progressionDecisions';
-import { computeForecastReplan } from '../engine/adaptiveReplanner';
 import { runWeeklyPrescriptionStep } from '../storage/weeklyPrescriptionStep';
+import { runAvailabilityStep } from '../storage/availabilityStep';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { prescriptionSummary } from '../engine/changeImpact';
 import { describeChanges } from '../engine/changeImpact';
@@ -59,55 +58,10 @@ export function useStrengthAndReplan(deps: {
   // engine/weeklyPrescriptionEngine.ts, which also actually supplies
   // candidate numbers to the specialists (see runWeeklyPrescriptionBuild).
   const runForecastReplan = useCallback(async () => {
-    const [goals, planned, tpls, engineConfig] = await Promise.all([
-      TrainingGoalsRepo.getAll(),
-      PlannedSessionsRepo.getAll(),
-      SessionTemplatesRepo.getAll(),
-      GoalEngineConfigRepo.get(),
-    ]);
-
-    const keys = activeGoalDemandKeys(goals);
-    if (keys.length === 0) return; // no active goal's demand to adapt the forecast around
-
-    const asOf = todayISO();
-
-    const { proposal, passiveSummary } = computeForecastReplan({
-      plannedSessions: planned,
-      templates: tpls,
-      availability: engineConfig.availability,
-      asOf,
-    });
-
-    if (proposal.changes.length === 0) return;
-
-    const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
-    if (unsupported.length > 0) {
-      // Never an unintended partial apply: if any item in this batch can't
-      // be honored, nothing from this run is persisted — no sessions, no
-      // prescriptions, no audit record, no passive summary claiming
-      // success. Structurally shouldn't happen from this module's own
-      // output (see engine/adaptiveReplanner.ts, which never emits a
-      // malformed or unpaired item) — this is the safety net for if it
-      // ever does, not the expected path. The next boot recomputes fresh
-      // against then-current data rather than retrying this exact batch.
-      console.error('Adaptive Replanner: refusing to apply, unsupported plan change items present', unsupported);
-      return;
-    }
-
-    const touchedIds = new Set(proposal.changes.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
-    const originalIds = new Set(planned.map((s) => s.id));
-    for (const session of updatedSessions) {
-      if (touchedIds.has(session.id) || !originalIds.has(session.id)) {
-        await PlannedSessionsRepo.put(session);
-      }
-    }
-
-    // Append-only audit trail (Storage plan: "audit trail of shown
-    // proposals + resolution") — resolvedAt/resolution set immediately
-    // since the forecast range auto-applies, never user-confirmed.
-    await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
-
-    setForecastSummary(passiveSummary);
+    // De stap zelf staat in storage/availabilityStep.ts (testbaar zonder React).
+    const done = await runAvailabilityStep();
+    if (!done) return;
+    setForecastSummary(done.passiveSummary);
     await refresh();
   }, [refresh, setForecastSummary]);
 

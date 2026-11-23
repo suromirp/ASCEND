@@ -31,6 +31,7 @@ import type { TrainingAvailability } from '../models/goalEngineConfig';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import { resolveHorizonZone, isDateInForecastRange } from './planningHorizon';
 import { proposeNoTimeToday } from './scheduler';
+import { lockLevel } from './weekValidator';
 import { weekdayOf, mondayOfWeek } from '../utils/dates';
 import { makeId } from '../utils/id';
 
@@ -89,10 +90,18 @@ export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastRep
   const unavailableDates = [...new Set(forecastSessions.map((s) => s.scheduledDate))].filter(
     (d) => !isDateAvailable(d, availability),
   );
+  // Een test, een wedstrijd en een rij met een slot (van jou of uit een voorstel) blijven staan: de automatische planning
+  // verschuift ze nooit (weekValidator.ts#lockLevel, docs/werkbriefjes/planning.md Nooit). Ze komen achteraan, zodat
+  // wat wel mag eerst een dag krijgt; het eerste voorstel dat er een zou raken, stopt de dag (de voorstellen bouwen op
+  // elkaar voort, dus een half toegepaste reeks zou niet kloppen). Een wedstrijd op een dag die niet in je dagen zit
+  // viel hier anders stil uit het plan (Warden, 23 november).
+  const anchored = new Set(plannedSessions.filter((s) => lockLevel(s, new Set(), asOf) < 3).map((s) => s.id));
   for (const date of unavailableDates) {
     const weekStart = mondayOfWeek(date);
     const weekSessions = plannedSessions.filter((s) => s.weekStartDate === weekStart && s.status !== 'skipped');
-    for (const proposal of proposeNoTimeToday(weekSessions, templates, date)) {
+    const ordered = [...weekSessions.filter((s) => !anchored.has(s.id)), ...weekSessions.filter((s) => anchored.has(s.id))];
+    for (const proposal of proposeNoTimeToday(ordered, templates, date)) {
+      if (proposal.changes.some((c) => anchored.has(c.sessionId))) break;
       for (const change of proposal.changes) {
         if (handledIds.has(change.sessionId)) continue;
         // Defensive: never let a resolved cascade land outside the

@@ -65,7 +65,7 @@ describe('het voorstel voor wie al in een start zit', () => {
     expect(fromGewoon).toContain(WALK_JOG_LINE);
     expect(fromLicht).not.toContain(WALK_JOG_LINE);
     expect(fromLicht.join(' ')).toMatch(/kracht 35 minuten/);
-    expect(fromLicht.join(' ')).toMatch(/herstelwandeling duurt hoogstens 20 minuten/);
+    expect(fromLicht.join(' ')).toMatch(/Wandelen op je rustdag: hoogstens 20 minuten/);
     expect(beginnerLadderLines({}, 4).join(' ')).not.toMatch(/Elke week iets meer/);
   });
 

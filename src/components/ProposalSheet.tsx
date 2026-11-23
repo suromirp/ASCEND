@@ -23,6 +23,12 @@ import { Icon } from './icons';
 import { TextButton } from './TextButton';
 import { hasTestOrRaceThatDay, testOrRaceKind } from '../engine/testRaceUpcoming';
 import { idIsTestOrRace } from '../engine/templateRoles';
+import { REST_DAY_COPY } from '../data/restDayCopy';
+
+// Het woord van Week voor de rustdag, met de stand van Op je rustdag (components/WeekPlanner.tsx).
+function useRestCopy() {
+  return REST_DAY_COPY[useAppData().settings.restDayMode ?? 'rest'];
+}
 
 // "Zo ziet je week eruit": a sheet from below, like a training in Week. On
 // top what changes, one line each; below the week in the same style as the
@@ -298,12 +304,14 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 }
 
 function MoveLine({ move }: { move: PreviewMove }) {
+  const restCopy = useRestCopy();
   const removed = move.action === 'remove';
+  const name = move.rest ? restCopy.title : move.name;
   return (
     <div className="flex items-start gap-3 text-sm">
       <Glyph kind={move.action} />
       <span className="min-w-0 flex-1 leading-snug">
-        <span className="font-medium" style={{ color: removed ? 'var(--color-ink-dim)' : 'var(--color-ink)', textDecoration: removed ? 'line-through' : undefined }}>{move.name}</span>
+        <span className="font-medium" style={{ color: removed ? 'var(--color-ink-dim)' : 'var(--color-ink)', textDecoration: removed ? 'line-through' : undefined }}>{name}</span>
         <span className="mt-0.5 block text-xs tabular-nums">
           {removed ? (
             <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.from!)} · vervalt</span>
@@ -327,6 +335,7 @@ function MoveLine({ move }: { move: PreviewMove }) {
               {move.from && <span className="mx-1.5 inline-block align-[-2px]" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={14} /></span>}
               <span style={{ color: 'var(--color-ink)' }}>{short(move.to!)}</span>
               {move.isNew && move.minutes !== undefined && <span style={{ color: 'var(--color-ink-dim)' }}> · {move.minutes} min</span>}
+              {move.rest && move.action === 'add' && restCopy === REST_DAY_COPY.rest && <span style={{ color: 'var(--color-ink-dim)' }}> · wandelen mag</span>}
             </>
           )}
         </span>
@@ -352,6 +361,7 @@ function Glyph({ kind }: { kind: PreviewMove['action'] }) {
 // A training as a card, like in Week: a coloured dot for the kind of
 // training, the name, the minutes; what changes gets its own state.
 function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes?: number; afterTest?: boolean }) {
+  const restCopy = useRestCopy();
   const rest = entry.type === 'recovery';
   const struck = entry.change === 'weg' || entry.change === 'vervalt';
   const highlighted = entry.change === 'hierheen' || entry.change === 'nieuw' || entry.change === 'anders';
@@ -359,7 +369,7 @@ function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes
     : entry.change === 'anders' && entry.otherName ? `was ${entry.otherName}`
     : entry.change === 'weg' && entry.otherDate ? `naar ${short(entry.otherDate)}`
     : entry.change === 'vervalt' ? 'vervalt'
-    : rest ? 'Wandelen mag, niets af te vinken'
+    : rest ? restCopy.line
     : afterTest ? 'Na de test, liefst 6 uur later' : undefined;
   return (
     <div
@@ -373,7 +383,7 @@ function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes
       <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: struck ? 'var(--color-ink-dim)' : TYPE_COLOR[entry.type] }} aria-hidden />
       <div className="min-w-0 flex-1">
         <p className="break-words text-sm font-medium" style={{ color: struck ? 'var(--color-ink-dim)' : 'var(--color-ink)', textDecoration: struck ? 'line-through' : undefined }}>
-          {rest ? 'Rustdag' : entry.name}
+          {rest ? restCopy.title : entry.name}
         </p>
         {note && <p className="mt-0.5 break-words text-xs" style={{ color: highlighted ? 'var(--color-action)' : 'var(--color-ink-dim)' }}>{note}</p>}
       </div>

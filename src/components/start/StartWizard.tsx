@@ -55,7 +55,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
         program: setup.program,
         goals: setup.goals,
         settings: { ...settings, ...(marathonRaceType ? { marathonRaceType, marathonTargetDate } : {}) },
-        firstPlan: { milestones: setup.milestones, strategy: setup.strategy, allowedDays: setup.allowedDays, restDay: setup.settings.restDay },
+        firstPlan: { milestones: setup.milestones, strategy: setup.strategy, allowedDays: setup.allowedDays, restDay: setup.settings.restDay, text: setup.text },
       }),
       { eyebrow: 'Je eerste week', notesTitle: 'Wat je koos', ask: 'always', alwaysAsk: true, declined: 'Er is niets ingepland.', onStored: close, onDeclined: close },
     );

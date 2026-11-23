@@ -28,6 +28,7 @@ import type { WeekShape } from './sports';
 import { adviceDays, chooseWeekShape, isStrengthTemplateId, type StartGoalKind } from './weekShape';
 import { DIRECTIONS, type DirectionId } from '../data/directions';
 import { directionChangeLines } from './directionChange';
+import { budgetFor } from './weekBudget';
 import { beginnerStartLine, isBeginnerStart, LADDER_CONSENT, WALK_JOG_LINE } from './beginnerStart';
 import { kindForShelter, SHELTER_ADVICE, type TrekShelter } from './trekShelter';
 
@@ -154,8 +155,11 @@ export interface FirstPlanSetup {
   };
   allowedDays: Weekday[];
   strategy: StrengthProgramStrategy | null;
-  // Gewone zinnen: wat je koos en wat anders uitpakte dan gevraagd.
+  // Gewone zinnen: wat je koos en wat anders uitpakte dan gevraagd. Hier uit de vorm van de week; het voorstel
+  // (storage/horizonPlan.ts#computeHorizonPlan) maakt ze opnieuw uit de week van het plan zelf, met `text`.
   lines: string[];
+  // Wat de zinnen nodig hebben naast de week van het plan (I-14 stap 4): het voorstel noemt alleen wat daarna in Week staat.
+  text: FirstPlanText;
   // Het aantal trainingen per week zoals het werd.
   count: number;
 }
@@ -250,22 +254,39 @@ export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate
     ? { ...buildDefaultStrengthProgramStrategy(today), startDate: today, sessionsPerWeek: strengthIds.length, sessionTemplateIds: strengthIds, splitType: strengthIds.length === 1 ? 'full_body' : 'upper_lower' }
     : null;
 
-  const names = new Map(templates.map((t) => [t.id, t.name]));
-  const dayLine = week.kept.map((id) => `${WEEKDAY_NAMES[(week.shape.days[id] ?? 1) - 1]}: ${names.get(id) ?? id}`).join(', ');
-  const lines = [
-    existing ? 'Je doel blijft zoals het is.' : goalLine(answers),
-    // Richting en je week, in dezelfde zinnen als het voorstel van een richting (engine/directionChange.ts).
-    ...(direction ? directionChangeLines(direction, {}).slice(0, 2) : []),
-    `${week.count} ${week.count === 1 ? 'training' : 'trainingen'} per week${week.count > 0 ? ` (${dayLine})` : ''}.`,
-    `Rustdag: ${WEEKDAY_NAMES[week.restDay - 1]}.`,
-    strategy ? 'Met krachttraining.' : 'Zonder krachttraining.',
-    ...(beginnerCap ? [`Je begint met hoogstens ${BEGINNER_MAX_DAYS} dagen per week.`] : []),
-    ...(beginner && direction !== 'easy' ? [beginnerStartLine(startDate, startDate) ?? ''] : []),
-    // Heel licht (het advies) hoort bij dit Akkoord: wandelen en dribbelen in de start (engine/beginnerStart.ts).
-    ...(beginner ? [WALK_JOG_LINE] : []),
-    ...(direction ? ['Je week bestaat uit kracht en lopen. Andere sporten die je doet tellen straks gewoon mee.'] : []),
-    ...week.notes,
-  ].filter(Boolean);
+  // Met hoeveel dagen het aantal keer kracht van de richting past (vraag 2 van docs/visie/Ontwerp Eén plan.md): dezelfde
+  // keuze van de week met een dag meer, tot het past of de dagen op zijn.
+  const budgetStrength = direction ? budgetFor(direction).strength : 0;
+  const daysCap = Math.min(direction && answers.beginner === true ? BEGINNER_MAX_DAYS : 6, answers.allowedDays.length);
+  let fitsWith: number | undefined;
+  // Koos je zelf minder keer kracht dan de richting vraagt (Sterker worden met 2), dan helpt een dag meer niet: dan geen dag.
+  if (direction && answers.strength && !(strengthSessions !== undefined && strengthSessions < budgetStrength)) {
+    for (let d = week.count + 1; d <= daysCap && fitsWith === undefined; d++) {
+      const more = chooseWeekShape(templates, { goal: answers.goal, daysPerWeek: d, allowedDays: answers.allowedDays, strength: true, ...(strengthSessions !== undefined ? { strengthSessions } : {}) });
+      if (more.count === d && more.kept.filter(isStrengthTemplateId).length >= budgetStrength) fitsWith = d;
+    }
+  }
+  const text: FirstPlanText = {
+    head: [existing ? 'Je doel blijft zoals het is.' : goalLine(answers)],
+    ...(direction ? { direction, strengthOn: answers.strength, days: week.count, ...(fitsWith !== undefined ? { fitsWith } : {}) } : {}),
+    tail: [
+      strategy ? 'Met krachttraining.' : 'Zonder krachttraining.',
+      ...(beginnerCap ? [`Je begint met hoogstens ${BEGINNER_MAX_DAYS} dagen per week.`] : []),
+      ...(beginner && direction !== 'easy' ? [beginnerStartLine(startDate, startDate) ?? ''] : []),
+      // Heel licht (het advies) hoort bij dit Akkoord: wandelen en dribbelen in de start (engine/beginnerStart.ts).
+      ...(beginner ? [WALK_JOG_LINE] : []),
+      ...(direction ? ['Je week bestaat uit kracht en lopen. Andere sporten die je doet tellen straks gewoon mee.'] : []),
+      ...week.notes,
+    ].filter(Boolean),
+  };
+  // Voor het voorbeeld er is: de week zoals de vorm hem zet (een rij per sjabloon op zijn dag).
+  const byId = new Map(templates.map((t) => [t.id, t]));
+  const restRow = week.shape.days['tpl_herstel'];
+  const shapeRows: FirstWeekRow[] = [
+    ...week.kept.map((id) => ({ weekday: week.shape.days[id] ?? 1, name: byId.get(id)?.name ?? id, strength: isStrengthTemplateId(id), rest: false })),
+    ...(restRow ? [{ weekday: restRow, name: byId.get('tpl_herstel')?.name ?? 'tpl_herstel', strength: false, rest: true }] : []),
+  ];
+  const lines = firstPlanLines(text, shapeRows);
 
   return {
     title: 'Zo ziet je eerste week eruit',
@@ -282,6 +303,56 @@ export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate
     allowedDays: answers.allowedDays.filter((d) => d >= 1 && d <= 7).map((d) => WEEKDAY_KEYS[d - 1]),
     strategy,
     lines,
+    text,
     count: week.count,
   };
+}
+
+// Wat de zinnen van het eerste voorstel nodig hebben naast de week zelf. Gewone gegevens, zodat het voorstel ze
+// meeneemt (storage/horizonPlan.ts, FirstPlanExtras.text).
+export interface FirstPlanText {
+  // De zinnen voor de week: het doel of de richting.
+  head: string[];
+  // Zonder doel: de richting, of kracht aan staat, het aantal dagen dat je koos en met hoeveel dagen het budget past.
+  direction?: DirectionId;
+  strengthOn?: boolean;
+  days?: number;
+  fitsWith?: number;
+  // De zinnen na de week: kracht, de beginnersstart, wat anders uitpakte.
+  tail: string[];
+}
+
+// Een rij van de week zoals Week hem toont: de dag, de naam, of het kracht is en of het de rustdag is (een recovery-rij
+// heet in Week Rustdag, components/WeekPlanner.tsx).
+export interface FirstWeekRow {
+  weekday: number;
+  name: string;
+  strength: boolean;
+  rest: boolean;
+}
+
+// De zinnen van het eerste voorstel uit de week van het plan (I-14 stap 4, docs/visie/Ontwerp Eén plan.md): de dagen
+// met de naam die Week toont, het aantal keer kracht dat Week heeft, de rustdag. Het budget van de richting staat er
+// apart bij als het plan anders uitkomt (vraag 2). Puur.
+// `firstWeekOnly`: de week is niet elke week zo (de app had al eigen rijen), dan heet hij de eerste volle week.
+export function firstPlanLines(text: FirstPlanText, rows: FirstWeekRow[], firstWeekOnly = false): string[] {
+  const trainings = rows.filter((r) => !r.rest).sort((a, b) => a.weekday - b.weekday);
+  const rest = rows.filter((r) => r.rest).sort((a, b) => a.weekday - b.weekday).slice(0, 1);
+  const strength = trainings.filter((r) => r.strength).length;
+  const dayLine = trainings.map((r) => `${WEEKDAY_NAMES[r.weekday - 1]}: ${r.name}`).join(', ');
+  const count = trainings.length;
+  const direction = text.direction
+    ? directionChangeLines(text.direction, text.strengthOn === false ? { strengthTraining: false } : {}, { strength, ...(text.days !== undefined ? { days: text.days } : {}), ...(text.fitsWith !== undefined ? { fitsWith: text.fitsWith } : {}) }).slice(0, 2)
+    : [];
+  return [
+    ...text.head,
+    // Richting en je week, in dezelfde zinnen als het voorstel van een richting (engine/directionChange.ts).
+    ...direction,
+    firstWeekOnly
+      ? `Je eerste volle week: ${count} ${count === 1 ? 'training' : 'trainingen'}${count > 0 ? ` (${dayLine})` : ''}.`
+      : `${count} ${count === 1 ? 'training' : 'trainingen'} per week${count > 0 ? ` (${dayLine})` : ''}.`,
+    // Alleen als de week een rustdag heeft (een herstelrij), op de dag van die rij: wat Week Rustdag noemt.
+    ...rest.map((r) => `Rustdag: ${WEEKDAY_NAMES[r.weekday - 1]}.`),
+    ...text.tail,
+  ].filter(Boolean);
 }

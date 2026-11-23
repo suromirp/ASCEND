@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { buildFirstPlan, defaultAnswers, kindOfExistingGoals, startDateProblem, startSteps, stepCounter, tapTooSoon, GOAL_OPTIONS, STEP_TAP_GUARD_MS } from './firstPlan';
+import { buildFirstPlan, defaultAnswers, firstPlanLines, kindOfExistingGoals, startDateProblem, startSteps, stepCounter, tapTooSoon, GOAL_OPTIONS, STEP_TAP_GUARD_MS } from './firstPlan';
 import { adviceDays } from './weekShape';
 import { isBeginnerStart, WALK_JOG_LINE } from './beginnerStart';
 import type { SessionLog } from '../models/training';
@@ -226,5 +226,37 @@ describe('waar je slaapt op een tocht', () => {
     expect(both.goals[0].kind).toBe('trek_tent');
     expect(both.goals[0].details?.shelter).toBe('both');
     expect(both.lines[0]).toContain('in hutten en met tent');
+  });
+});
+
+// I-14 stap 4 (docs/visie/Ontwerp Eén plan.md, vraag 2 en 3, en de punten van de Warden van 23 november).
+describe('firstPlanLines: de tekst volgt de week van het plan', () => {
+  const row = (weekday: number, name: string, strength = false, rest = false) => ({ weekday, name, strength, rest });
+
+  it('Fit blijven met drie dagen: 1 keer kracht, het budget apart, en met een vierde dag past het', () => {
+    const plan = buildFirstPlan({ ...defaultAnswers('fit'), beginner: false }, templates, TODAY, NOW);
+    expect(plan.lines).toContain('Je week: 150 minuten en 1 keer kracht; je richting vraagt 2, met een vierde dag past het. Met 1 keer kracht zit je onder de richtlijn, en dat mag een keuze zijn.');
+  });
+
+  it('Fitter worden met vier dagen: plan en budget gelijk, dan de gewone zin', () => {
+    const plan = buildFirstPlan({ ...defaultAnswers('improve'), beginner: false }, templates, TODAY, NOW);
+    expect(plan.lines).toContain('Je week: 120 minuten en 2 keer kracht. Dat is onder de richtlijn, en dat mag een keuze zijn.');
+  });
+
+  it('Sterker worden met zelf gekozen 2 keer kracht: geen dag die het laat passen', () => {
+    const plan = buildFirstPlan({ ...defaultAnswers('stronger'), strengthSessions: 2, beginner: false }, templates, TODAY, NOW);
+    const line = plan.lines.find((l) => l.startsWith('Je week: '))!;
+    expect(line).toContain('2 keer kracht; je richting vraagt 3');
+    expect(line).not.toMatch(/past het/);
+  });
+
+  it('de rustdag alleen als de week een herstelrij heeft, op de dag van die rij', () => {
+    const text = { head: [], tail: [] };
+    expect(firstPlanLines(text, [row(2, 'Bovenlichaam A', true), row(7, 'Lange duurloop')]).some((l) => l.startsWith('Rustdag'))).toBe(false);
+    expect(firstPlanLines(text, [row(2, 'Bovenlichaam A', true), row(3, 'Herstelwandeling', false, true)])).toContain('Rustdag: woensdag.');
+  });
+
+  it('niet elke week is zo: de zin noemt de eerste volle week', () => {
+    expect(firstPlanLines({ head: [], tail: [] }, [row(2, 'Bovenlichaam A', true)], true)).toContain('Je eerste volle week: 1 training (dinsdag: Bovenlichaam A).');
   });
 });
