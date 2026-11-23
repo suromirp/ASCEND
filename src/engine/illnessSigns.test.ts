@@ -196,6 +196,18 @@ describe('vroeg ziek zien', () => {
       expect(illnessSign({ today, metrics: night(weeks([fine, { rhr: 50, hrv: 45 }]), 420) })).toBeUndefined();
     });
 
+    it('na Voel me goed vraagt de volgende ochtend van dezelfde reeks niet opnieuw', () => {
+      // Gisteren één duidelijke ochtend na een gewone nacht; vandaag weer beide signalen.
+      const yesterday = addDays(today, -1);
+      const metrics = weeks([fine, bad, bad]).map((m) => (m.date === yesterday ? { ...m, sleepMinutes: 420 } : m));
+      const first = illnessSign({ today: yesterday, metrics: metrics.filter((m) => m.date <= yesterday) });
+      expect(first?.mornings).toBe(1);
+      const next = illnessSign({ today, metrics });
+      expect(next?.mornings).toBe(2);
+      // De kaart vergelijkt `from` met wat je bij Voel me goed bewaarde (components/useIllnessSign.ts).
+      expect(next?.from).toBe(first?.from);
+    });
+
     it('twee ochtenden houden hun eigen zin', () => {
       const sign = illnessSign({ today, metrics: night(weeks([bad, bad]), 420) });
       expect(sign?.mornings).toBe(2);

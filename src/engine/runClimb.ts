@@ -61,6 +61,15 @@ export function runClimb(log: SessionLog): RunClimb | undefined {
   return reported !== undefined && Number.isFinite(reported) ? { gainM: reported, from: 'log' } : undefined;
 }
 
+// De stijging in de regel van een log in het Logboek: hetzelfde getal als het logblad, met
+// "(geschat)" alleen als het getal op het log geschat is. Totalen (de maand, per sport, de week)
+// tellen het getal op het log op en vallen hier niet onder.
+export function climbOfLine(log: SessionLog): { elevationGainM?: number; elevationEstimated?: boolean } {
+  const climb = runClimb(log);
+  if (!climb) return {};
+  return { elevationGainM: climb.gainM, elevationEstimated: climb.from === 'log' && !!(log.cardioData ?? log.outdoorData)?.estimatedElevation };
+}
+
 // Met welke factor de km van Run in detail de stijging (en de daling) van het log volgen. 1 als het
 // totaal de eigen telling is, als er geen eigen stijging is om te schalen, of als de km bij andere
 // totalen horen dan het log nu heeft.
@@ -99,4 +108,12 @@ export function withClimbScale(rd: RunDetail, s: { gain: number; loss: number })
     ...(rd.laps ? { laps: rd.laps.map((l) => scalePiece(l, s)) } : {}),
     ...(rd.bestFive ? { bestFive: { ...rd.bestFive, kms: rd.bestFive.kms.map((k) => scalePiece(k, s)) } } : {}),
   };
+}
+
+// De twee kanten van Run in detail. `shown` is voor de getallen op het scherm (kop Stijging, de km,
+// de rondes, de bladen per km of ronde). `rules` zijn de opgeslagen km, voor elk oordeel met een
+// grens op de eigen stijging (runVerdict, runPatterns, runAdvice, compareWithSimilar, formKeysOf):
+// die grenzen lezen het merk van de telling (climbLimitFor) en horen bij de ongeschaalde km.
+export function runDetailViews(log: SessionLog, rd: RunDetail): { shown: RunDetail; rules: RunDetail } {
+  return { shown: withClimbScale(rd, climbScale(log)), rules: rd };
 }

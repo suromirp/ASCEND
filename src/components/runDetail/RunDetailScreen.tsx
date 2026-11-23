@@ -4,7 +4,7 @@
 // en per ronde, met bij een test de beste 5 km en de vraag "Telt mee". Alles wat hier staat
 // komt uit engine/runDetailView.ts; dit bestand rekent niets en verandert niets aan de log.
 
-import { climbScale, withClimbScale } from '../../engine/runClimb';
+import { runDetailViews } from '../../engine/runClimb';
 import { useEffect, useMemo, useState } from 'react';
 import type { SessionLog } from '../../models/training';
 import type { RunDetail, RunKm, RunLap } from '../../models/runDetail';
@@ -143,14 +143,16 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
   }, [logId, runDetail, trimmed]);
   const edgesRead = !!runDetail && edges?.for === runDetail;
   // De stijging per km op de schaal van het ene getal van de loop (engine/runClimb.ts, I-77): de
-  // km tellen samen op tot de stijging op het logblad. Alleen om te tonen.
-  const scale = useMemo(() => climbScale(log), [log]);
+  // km tellen samen op tot de stijging op het logblad. Alleen om te tonen: `rd` is voor de getallen op
+  // het scherm, `rules` (de opgeslagen km) voor elk oordeel met een grens op de eigen stijging.
   const shown = useMemo(() => {
     if (!runDetail) return undefined;
     const s = edgesRead ? withoutEdgePauses(runDetail, edges?.value) : { rd: withPausesHidden(runDetail), edge: { headSec: 0, tailSec: 0 } };
-    return { ...s, rd: withClimbScale(s.rd, scale) };
-  }, [runDetail, edgesRead, edges, scale]);
+    const v = runDetailViews(log, s.rd);
+    return { ...s, rules: v.rules, rd: v.shown };
+  }, [runDetail, edgesRead, edges, log]);
   const rd = shown?.rd;
+  const rules = shown?.rules;
   const d = log.cardioData ?? log.outdoorData;
   const stale = !!rd && isStaleRunDetail(rd, d?.distanceKm ?? 0, d?.durationMinutes || log.durationMinutes);
   const kind = runKindOf(log, templates);
@@ -160,29 +162,29 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
   const tstate = useMemo(() => (isTest ? testState(sessionLogs, judgmentOptions(settings), log.id) : undefined), [isTest, sessionLogs, settings, log.id]);
   const askTop = tstate?.standing === 'pending' || tstate?.standing === 'held';
 
-  const verdict = useMemo(() => (rd ? runVerdict(rd, kind) : undefined), [rd, kind]);
+  const verdict = useMemo(() => (rules ? runVerdict(rules, kind) : undefined), [rules, kind]);
   const stats = useMemo(() => (rd ? headlineStats(rd, kind, runTotalsOf(log, rd)) : []), [rd, kind, log]);
   const bars = useMemo(() => (rd ? paceBars(rd, kind) : undefined), [rd, kind]);
   const layout = useMemo(() => (rd && isTest ? testLayout(rd) : undefined), [rd, isTest]);
   const laps = rd ? lapsForList(rd) : [];
   // 4.7 to 4.10: only what the run has and what is switched on.
-  const formKeys = useMemo(() => (rd ? formKeysOf(rd, screen.detail.form) : []), [rd, screen.detail.form]);
+  const formKeys = useMemo(() => (rules ? formKeysOf(rules, screen.detail.form) : []), [rules, screen.detail.form]);
   const patterns = useMemo(() => {
-    if (!rd || !screen.detail.patterns) return undefined;
+    if (!rules || !screen.detail.patterns) return undefined;
     const recurring = kind === 'test' || kind === 'race' || kind === 'blocks' ? recurringFastStart(sessionLogs, templates, log) : undefined;
-    return runPatterns(rd, { kind, indoor, recurring, played: { conditions: log.detail?.conditions } });
-  }, [rd, screen.detail.patterns, kind, indoor, sessionLogs, templates, log]);
+    return runPatterns(rules, { kind, indoor, recurring, played: { conditions: log.detail?.conditions } });
+  }, [rules, screen.detail.patterns, kind, indoor, sessionLogs, templates, log]);
   const compare = useMemo(() => {
-    if (!rd) return undefined;
+    if (!rules) return undefined;
     const c = similarRuns(log, { logs: sessionLogs, templates, program, hr: settings.heartRate, legs, chestStrap: screen.chestStrap, excludedLogIds: excluded });
     const others = c.logs.flatMap((l) => (l.runDetail ? [l.runDetail] : []));
-    const result = c.enough ? compareWithSimilar(rd, others) : undefined;
+    const result = c.enough ? compareWithSimilar(rules, others) : undefined;
     const reason = mainReason(c.reasons);
     return { result, reason: reason ? reasonText(reason, 'lopen') : undefined };
-  }, [rd, log, sessionLogs, templates, program, settings.heartRate, legs, screen.chestStrap, excluded]);
+  }, [rules, log, sessionLogs, templates, program, settings.heartRate, legs, screen.chestStrap, excluded]);
   const advice = useMemo(
-    () => (rd && screen.detail.advice ? runAdvice(rd, kind, { pain: painReports(log).length > 0, feltWorse: log.subjectiveFeel === 'worse', indoor }) : undefined),
-    [rd, screen.detail.advice, kind, log, indoor],
+    () => (rules && screen.detail.advice ? runAdvice(rules, kind, { pain: painReports(log).length > 0, feltWorse: log.subjectiveFeel === 'worse', indoor }) : undefined),
+    [rules, screen.detail.advice, kind, log, indoor],
   );
   const meanPace = rd && rd.totalM > 0 ? (rd.movingSec / rd.totalM) * 1000 : 0;
 
@@ -248,7 +250,7 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
   })();
   const best = isTest && rd.bestFive ? { startM: rd.bestFive.startM, endM: rd.bestFive.endM } : undefined;
   const hrNote = heartNote(rd, coverage);
-  const focusLine = testFocusLine(rd, kind);
+  const focusLine = testFocusLine(rules ?? rd, kind);
   const edgeLine = shown ? edgePauseLine(shown.edge) : undefined;
   const listKms = rd.kms.length > LIST_LONG_KM && !showAll ? rd.kms.slice(0, LIST_FIRST) : rd.kms;
   const testCard = isTest && tstate ? <Card><TestVerdictCard logId={log.id} /></Card> : null;
@@ -394,9 +396,9 @@ function Body({ log, templates, settings, refresh, onClose }: { log: SessionLog;
       </Card>
 
       {/* 4.7 tot 4.10 */}
-      {formKeys.length > 0 && <FormCard rd={rd} keys={formKeys} />}
+      {formKeys.length > 0 && <FormCard rd={rules ?? rd} keys={formKeys} />}
       {patterns && <PatternsCard patterns={patterns} />}
-      {compare && <CompareCard rd={rd} comparison={compare.result} reason={compare.reason} />}
+      {compare && <CompareCard rd={rules ?? rd} comparison={compare.result} reason={compare.reason} />}
       {advice && <AdviceCard advice={advice} />}
 
       {/* 6.3: geen open vraag, dan onderaan */}

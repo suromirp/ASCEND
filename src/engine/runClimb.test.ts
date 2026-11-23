@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { climbScale, runClimb, withClimbScale } from './runClimb';
+import { climbOfLine, climbScale, runClimb, runDetailViews, withClimbScale } from './runClimb';
+import { runAdvice, runPatterns, runVerdict } from './runDetailView';
 import type { SessionLog } from '../models/training';
 import type { RunDetail, RunKm } from '../models/runDetail';
 import type { ActivityDetail } from '../models/activityDetail';
@@ -80,7 +81,7 @@ describe('één getal voor de stijging van een loop', () => {
   });
 
   it('I-33: vijf vlakke lopen en een heuvelloop met de teller van nu houden allemaal hun horlogegetal', () => {
-    // Nagemaakt naar de verhoudingen uit een echte reeks (afgerond): eigen telling tegen horloge.
+    // Nagemaakte lopen: eigen telling per km tegen het getal van het horloge.
     const runs: [number[], number][] = [[[10, 10, 10, 10], 30], [[10, 10, 10, 10], 25], [[5, 5, 5], 20], [[10, 10, 10], 20], [[5, 5, 5, 5], 30], [[15, 15, 15, 15, 15, 15, 15, 20], 135]];
     for (const [kms, watch] of runs) expect(runClimb(log({ watch, kms, counter: 2 }))).toEqual({ gainM: watch, from: 'log' });
   });
@@ -141,5 +142,45 @@ describe('de km volgen het totaal', () => {
     const shown = withClimbScale(rd, climbScale(l));
     expect(shown.laps![0].gainM).toBeCloseTo(40 * (130 / 85), 0);
     expect(shown.bestFive!.kms[0].gainM).toBeCloseTo(20 * (130 / 85), 0);
+  });
+});
+
+describe('de oordelen lezen de opgeslagen km, niet de geschaalde', () => {
+  // Een oude lange duurloop (zonder merk): 6 m per km in de eigen telling, 60 m per km volgens het
+  // horloge. De hartslag loopt op bij gelijk tempo.
+  function oldLongRun(): SessionLog {
+    const kms = Array.from({ length: 14 }, (_, i) => ({ ...km(i + 1, 6, 6), hrAvg: 140 + i * 2 }));
+    const rd = { ...runDetail(kms.map(() => 6)), kms, movingSec: 14 * 360, wholeMinutes: 84 } as RunDetail;
+    const base = log({ watch: 14 * 60, watchLoss: 14 * 60, kms: kms.map(() => 6) });
+    return { ...base, runDetail: rd };
+  }
+
+  it('het oordeel, de patronen en het advies blijven gelijk met en zonder schaal', () => {
+    const l = oldLongRun();
+    const v = runDetailViews(l, l.runDetail!);
+    expect(climbScale(l).gain).toBeCloseTo(10, 5);
+    expect(v.rules).toBe(l.runDetail);
+    expect(runVerdict(v.rules, 'long')).toEqual(runVerdict(l.runDetail!, 'long'));
+    expect(runVerdict(v.rules, 'long').word).toBe('Hartslag liep op');
+    expect(runPatterns(v.rules, { kind: 'long' })).toEqual(runPatterns(l.runDetail!, { kind: 'long' }));
+    expect(runAdvice(v.rules, 'long')).toEqual(runAdvice(l.runDetail!, 'long'));
+    // Waarom dit ertoe doet: met de geschaalde km zou het oordeel wegvallen.
+    expect(runVerdict(v.shown, 'long').word).not.toBe('Hartslag liep op');
+    // Op het scherm tellen de km wel op tot het getal van het horloge.
+    expect(Math.round(v.shown.kms.reduce((n, k) => n + (k.gainM ?? 0), 0))).toBe(14 * 60);
+  });
+});
+
+describe('de regel in het Logboek', () => {
+  it('noemt hetzelfde getal als het logblad', () => {
+    expect(climbOfLine(log({ watch: 130, kms: [20, 15, 10, 20, 20] }))).toEqual({ elevationGainM: 130, elevationEstimated: false });
+    expect(climbOfLine(log({ watch: 0, kms: [10, 10, 10] }))).toEqual({ elevationGainM: 30, elevationEstimated: false });
+    expect(climbOfLine(log({}))).toEqual({});
+  });
+
+  it('zegt alleen geschat als het getal op het log geschat is', () => {
+    const est = (l: SessionLog): SessionLog => ({ ...l, cardioData: { ...l.cardioData!, estimatedElevation: true } });
+    expect(climbOfLine(est(log({ watch: 60 }))).elevationEstimated).toBe(true);
+    expect(climbOfLine(est(log({ watch: 0, kms: [10, 10, 10] }))).elevationEstimated).toBe(false);
   });
 });
