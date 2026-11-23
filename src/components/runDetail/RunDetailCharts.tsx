@@ -107,6 +107,7 @@ export function DistanceCharts({
   best,
   selectedKm,
   hr,
+  gainM,
   cursor,
   onCursor,
 }: {
@@ -114,6 +115,8 @@ export function DistanceCharts({
   best?: Band;
   selectedKm?: Band;
   hr?: HeartRateSettings;
+  // De totale stijging van de loop (engine/runDetailView.ts#runGainTotal), achter het bereik van de hoogte.
+  gainM?: number;
   cursor: number | null;
   onCursor: (i: number) => void;
 }) {
@@ -193,7 +196,7 @@ export function DistanceCharts({
               <path d={altArea} fill="var(--color-track)" opacity="0.8" />
               <path d={altPath} fill="none" stroke="var(--color-card-border)" strokeWidth="1" />
             </>,
-            altR ? `${Math.round(altR.lo)} tot ${Math.round(altR.hi)} m` : undefined,
+            altR ? `${Math.round(altR.lo)} tot ${Math.round(altR.hi)} m${gainM !== undefined ? `, ${gainM} m omhoog` : ''}` : undefined,
           )}
       </div>
       {hasZones && <p className="mt-1 font-sans text-xs" style={dim}>Het streepje onder de hartslag is je zone, van Z1 tot Z5.</p>}

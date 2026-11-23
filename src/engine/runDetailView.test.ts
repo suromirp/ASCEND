@@ -12,6 +12,7 @@ import {
   formSeries,
   halvesOf,
   headlineStats,
+  runGainTotal,
   heartNote,
   heartOf,
   hrZoneOf,
@@ -600,5 +601,14 @@ describe('balans in woorden', () => {
     const rd = { kms: [49.8, 49.2, 49.4, 49.6, 49.3, 49].map((b, i) => ({ index: i + 1, distanceM: 1000, stanceBalanceLeftPct: b })) } as unknown as Parameters<typeof formFactLine>[0];
     const line = formFactLine(rd, 'stanceBalanceLeftPct');
         expect(line).toBe('Links 49 tot 49,8 %, rechts 50,2 tot 51 %. Dat is mooi in evenwicht.');
+  });
+});
+
+describe('runGainTotal (I-133)', () => {
+  it('telt de stijging van alle kilometers op, afgerond, en zegt niets zonder hoogtegegevens', () => {
+    const withGain = detailOf(kmsOf([330, 330, 330], [{ gainM: 12.4 }, { gainM: 30 }, { gainM: 8.3 }]));
+    expect(runGainTotal(withGain)).toBe(51);
+    const noAltitude = detailOf(kmsOf([330, 330]).map((k) => ({ ...k, gainM: undefined })));
+    expect(runGainTotal(noAltitude)).toBeUndefined();
   });
 });
