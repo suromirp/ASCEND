@@ -560,15 +560,13 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-22 | Sherpa route-info I-115 tot I-118 | ontwikkelaar helper | sonnet | middel | ~30 min | gebouwd, besluit route-info |
 | 2026-11-22 | Warden ronde 22e | reviewer helper | opus | 117k tok | 20 min | 1 moet (app-kaart, zelf vastgelegd), 7 mag naar I-120 tot I-123 |
 | 2026-11-22 | Lookout ronde 22e | tester helper | sonnet | 141k tok | 12 min | groen 360/412, uitleg donker naar I-120 |
-| 2026-11-23 | Sherpa route I-112, I-120 tot I-123 | ontwikkelaar helper | sonnet | ~204k tok | ~45 min | gebouwd, besluit lus-soort-en-via-punt, live 545d5a72 |
-| 2026-11-23 | Warden route en klein | reviewer helper | sonnet | ~90k tok | ~15 min | geen moet, 6 mag naar I-125 tot I-130 |
-| 2026-11-23 | Lookout route en I-124 | tester helper | sonnet | 192k tok | 44 min | geen moet; I-104, I-105 niet te zien met testdata |
-| 2026-11-23 | Warden terugkeer I-124 | reviewer helper | opus | 82k tok | 22 min | 1 moet (Forge lichter), 7 mag, herstel naar bouwer |
-| 2026-11-23 | Lookout week | tester helper | sonnet | ~? tok | ~35 min | 1 moet (kaart Weekterugblik) |
-| 2026-11-23 | Sherpa opslag I-54, I-35 | ontwikkelaar helper | opus | 133k tok | 29 min | gebouwd, besluit opslag-twee-tabbladen-en-grens |
-| 2026-11-23 | Warden week | reviewer helper | opus | 117k tok | 35 min | 1 moet (Herhaal de week), 6 mag, herstel naar bouwer |
-| 2026-11-23 | Sherpa week I-58, I-59, I-72 plus herstel | ontwikkelaar helper | opus | ~140k tok | ~110 min | gebouwd, besluit telt-op-dag-van-uitvoeren |
-| 2026-11-23 | Sherpa terugkeer I-124 plus herstel | ontwikkelaar helper | opus | 113k tok | ~90 min | gebouwd, besluit terugkeer-na-pauze |
-| 2026-11-23 | Sherpa naspelen I-77, I-33, I-78 | ontwikkelaar helper | opus | 57k tok | 83 min | gebouwd met back-up, besluit hoogte-en-ziek-signalen |
-| 2026-11-23 | Sherpa route vervolg I-53, I-126 tot I-129 | ontwikkelaar helper | sonnet | 91k tok | 28 min | gebouwd |
-| 2026-11-23 | Warden opslag | reviewer helper | opus | 62k tok | 19 min | akkoord, 4 mag |
+| 2026-11-23 | Sherpa terugkeer I-124 | ontwikkelaar helper | opus | groot | ~60 min | gebouwd, besluit terugkeer-na-pauze |
+| 2026-11-23 | Warden naspelen tweede ronde | reviewer helper | opus | 29k tok | 1 min | akkoord, 2 mag |
+| 2026-11-23 | Lookout proef 23d (week, naspelen, route) | tester helper | sonnet | 93k tok | 18 min | geen moet; schakelaarregel 360 px zelf opgelost |
+| 2026-11-23 | Sherpa forge-logs I-113, I-60, I-30, I-73 | ontwikkelaar helper | sonnet | 110k tok | 18 min | gebouwd; opwarmset na ruil eruit (besluit 14 nov) |
+| 2026-11-23 | Warden forge-logs | reviewer helper | fable | 103k tok | 16 min | 1 moet (besluit), zelf hersteld |
+| 2026-11-23 | Sherpa dayRules I-74, I-82 | ontwikkelaar helper | opus | 199k tok | 34 min | gebouwd plus herstel, besluit ziek-en-test-of-wedstrijd |
+| 2026-11-23 | Warden dayRules | reviewer helper | fable | 114k tok | 24 min | I-82 akkoord, 2 moet I-74 hersteld |
+| 2026-11-23 | Lookout proef 23f (forge, dayRules) | tester helper | sonnet | 92k tok | 15 min | geen moet; ijkset en horlogewandeling niet bereikbaar |
+| 2026-11-23 | Mag-ronde plus ontwerpen bundel 9 naar main (9f6c67fa) | coördinator | opus | n.v.t. | n.v.t. | Mag A en B, vier ontwerpen, I-14-tests, zuinige start; kaart alleen verklaarde verschillen |
+| 2026-11-23 | Warden beginnersladder I-18 | reviewer helper | opus | 110k tok | 23 min | akkoord, geen moet; mag naar I-143 |

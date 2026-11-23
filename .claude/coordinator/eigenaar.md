@@ -45,10 +45,14 @@ Sinds: 23 november.
 ## Loopt
 
 - Bundel 9 (I-14, I-18, I-23, I-34): vier ontwerpen klaar. Beginnersladder gebouwd, wordt nagekeken; Eén plan en Losse sport worden gebouwd.
-- Kleine punten (I-125, I-130 tot I-138): gebouwd, nagekeken en getest; gaan naar main na de laatste vergelijking van de schermen.
 - Graphify, eerlijke proef: zodra de lijst leeg is. De koppeling alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 ## Net live
+
+### 23 november 08:05
+- Kleine punten route, lopen en opslag (I-125, I-130 tot I-138), onder meer: de stijging per km in Run in detail telt op tot het getal van je horloge, een eerdere opslag krijgt een wachtgrens van 30 seconden, een route zonder noemenswaardige stijging heet "vrijwel vlak", en het slepen in de lijst loopt vloeiend mee.
+- Vier ontwerpen voor de grote punten (Eén plan, beginnersstart, losse sport, na een loop één moment) staan klaar; bouwen loopt.
+- Werkwijze: de coördinator start zuiniger en wisselt bij 200k (besluit van vandaag).
 
 ### 23 november 04:30
 - Week (I-58, I-59, I-72): een training telt in de week waarin je hem deed; beide weken zeggen het ("1 in de week erna", "1 uit de week ervoor"); gemist verwijst naar Week opnieuw plannen.
