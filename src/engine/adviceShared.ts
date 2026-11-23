@@ -23,7 +23,7 @@ import type { WeatherForecast } from '../models/weather';
 import type { TestJudgment } from '../models/testJudgment';
 import type { LeavePeriod } from '../models/leave';
 import { isAwayFor, isPauseDay } from './leave';
-import type { ReentryChoice, ReentryWeek } from './reentry';
+import type { ReentryChoice, ReentryFirstDay, ReentryWeek } from './reentry';
 import { idHasRole } from './templateRoles';
 import { RACE_GUARD_DAYS, afterRaceGuard, raceDatesOf } from './raceWindow';
 import type { DescentClockContext } from './descentClock';
@@ -72,6 +72,8 @@ export interface Advice {
   reentry?: ReentryWeek;
   // Dagen sinds je laatste krachttraining, als Forge in die instap ook iets lichter begint (de regel in het voorstel).
   reentryForgeDays?: number;
+  // De eerste dag van die instap: herstel en de eerste lichte training ruilen van dag, met hetzelfde Akkoord (I-144).
+  reentryFirstDay?: ReentryFirstDay;
 }
 
 export interface AdviceOption {

@@ -3153,7 +3153,18 @@
     "planning",
     "lichaam-en-herstel"
    ],
-   "kern": "De rustiger instap na een pauze telt de pauze vanaf je laatste echte training (meer dan zeven dagen is genoeg), staat de hele eerste week na de terugkomst tot je kiest, met het venster vanaf de dag dat je kiest; Forge begint daarin 5% lichter na meer dan tien dagen zonder kracht; een vrije periode mag je achteraf vastleggen of verlengen tot de grens van Periode achteraf vastleggen (advies 4 weken), zonder dat er iets verschuift.",
+   "kern": "De rustiger instap na een pauze telt de pauze vanaf je laatste echte training (meer dan zeven dagen is genoeg), staat de hele eerste week na de terugkomst tot je kiest, met het venster vanaf de dag dat je kiest; Forge begint daarin 5% lichter na meer dan tien dagen zonder kracht; een vrije periode mag je achteraf vastleggen of verlengen tot de grens van Periode achteraf vastleggen (advies 4 weken), zonder dat er iets verschuift. Geldt nog: alles behalve dat het voorstel na de eerste week altijd stopt; dat geldt alleen als je sindsdien trainde (2026-11-23-terugkeer-eerste-dag).",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-23-terugkeer-eerste-dag.md"
+   ]
+  },
+  "docs/beslissingen/2026-11-23-terugkeer-eerste-dag.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Het voorstel voor een rustiger instap blijft na de eerste week staan zolang je na de terugkomst niet trainde; staat er op de eerste dag alleen herstel, dan ruilt die in hetzelfde voorstel met Akkoord met de eerste kracht- of looptraining; zonder Akkoord zegt de rustdag op Vandaag na meer dan zeven dagen zonder training \"Je trainde N dagen niet. Vandaag rustig beginnen: ...\" (alleen tekst).",
    "stand": "geldt"
   },
   "docs/beslissingen/2026-11-23-ziek-en-test-of-wedstrijd.md": {

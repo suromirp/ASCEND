@@ -65,6 +65,7 @@ export function reentryAdvice(inputs: AdviceInputs): Advice[] {
   return [{
     id: found.id, trigger: 'plan_update', ruleId: 'REENTRY', title: REENTRY_TITLE, effect: reentryEffect(found, inputs.asOf), why: REENTRY_WHY, priority: 3, reentry: found.week,
     ...(found.forgeDays !== undefined ? { reentryForgeDays: found.forgeDays } : {}),
+    ...(found.firstDay ? { reentryFirstDay: found.firstDay } : {}),
   }];
 }
 
