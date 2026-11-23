@@ -2,6 +2,11 @@
 
 Bijgewerkt: 23 november 2026 door coördinator session_01LnDpSkRtYRz7771kuLPf2T (opvolger van session_01LnDpSip9wpY6fuZXMm2yqw). Vaste vorm, onder 10 KB: stand, wat aan de sessie hangt, open vragen, besluiten met reden. Oudere standen: git-geschiedenis.
 
+## Wissel 23 november 03:40
+
+- Lopend: herstel naspelen door helper a18affb46032c6d5e in de vorige coördinator-chat (session_01LnDpSkRtYRz7771kuLPf2T); hij pusht naar claude/naspelen-hoogte-ziek met "Klaar: I-77, I-33, I-78". Kijk met git log origin/claude/naspelen-hoogte-ziek; geen nieuwe commit na 8f154102 binnen een uur: verse Sherpa (opus) met de twee Moet-punten hieronder bij 8.
+- Volgende stap: proef van main 36542894 plus week (akkoord), naspelen (na herstel) en route-op-reis f8ffff33; één Lookout; npm run kaart in /home/user/ascend; squash. Dan bundels 3 en 4.
+
 ## Nachtlijst 23 november (Nachtronde via chat ASCEND, maandag = bouwmoment)
 
 Vijfuurslimiet (geef door): niet stoppen; lopend stuk afronden, stand hier, send_later op resetsAt (get_session) plus een paar minuten, dan door; bouwers hervatten. Weektegoed op waarschuwing: afronden en stoppen.
@@ -30,15 +35,11 @@ Beter kan:
 
 Lessen 23 november: nooit echte datums of getallen van de eigenaar in een commit (classifier weigert, terecht); in algemene termen schrijven. Een Warden deed checkout in /home/user/ascend: in elke opdracht "nooit checkout in /home/user/ascend". sleep is geblokkeerd.
 
-## Stand 22 november (kort)
-
-- Live op main: ronde 22e (I-111, I-114 tot I-118) en eerder 22d. claude/nacht loopt achter: werk vanaf origin/main.
-- Graphify-proef (trig_01Y51Apkj25Cb19ifriWdA36, gepauzeerd): opnieuw plannen vanuit eigen sessie als de nachtlijst leeg is.
-- Na samenvoegen van takken met elk een instelling ook `npm run kaart`. Werkbriefjes onder 46 regels.
+Graphify-proef (trig_01Y51Apkj25Cb19ifriWdA36, gepauzeerd): opnieuw plannen als de nachtlijst leeg is. Na samenvoegen van takken met elk een instelling ook `npm run kaart`.
 
 ## Vaste afspraken
 
-- Eigenaar 16 november 09:20 "Ja" op: eerlijke Graphify-proef met de koppeling (`graphify install`: hook en CLAUDE.md-regel), alleen op een proefbranch `claude/proef-graphify-3`, nooit op main. Dit is zijn eigen toestemming voor die instellingenwijziging op de proefbranch (zeg dat letterlijk in de opdracht aan de bouwer, met dit citaat). Start na de reset van de weeklimiet, zondag 22 november 18:00 Lisbon. Opzet: graaf één keer bouwen (kosten apart), drie echte taken van verschillende grootte uit de Inbox, elk met en zonder graaf op hetzelfde model, meten kosten, tijd, resultaat (Warden kort op beide); uitslag als aanvulling in `docs/onderzoek/Ponytail en Graphify.md` en aan de eigenaar. Eerdere proef was half (graaf binnen de meting, geen hook, één kleine taak); zeg dat eerlijk.
+- Eigenaar 16 november 09:20 "Ja" op: eerlijke Graphify-proef met de koppeling (`graphify install`: hook en CLAUDE.md-regel), alleen op een proefbranch `claude/proef-graphify-3`, nooit op main. Dit is zijn eigen toestemming voor die instellingenwijziging op de proefbranch (zeg dat letterlijk in de opdracht aan de bouwer, met dit citaat). Start na de reset van de weeklimiet, zondag 22 november 18:00 Lisbon. Opzet: graaf één keer bouwen (kosten apart), drie echte taken van verschillende grootte uit de Inbox, elk met en zonder graaf op hetzelfde model, meten kosten, tijd, resultaat (Warden kort op beide); uitslag als aanvulling in `docs/onderzoek/Ponytail en Graphify.md` en aan de eigenaar. Eerdere proef was half; zeg dat eerlijk.
 
 - Eigenaar 16 november 08:08: "Omdat je elke keer stopt terwijl bouwers al klaar zijn". Nooit stil wachten: zet bij elke wachtende bouwer of controle meteen een send_later van 15 minuten (get_session, git log) en ga zelf door; poorten en proefmerge parallel draaien, niet na elkaar.
 
@@ -47,11 +48,11 @@ Lessen 23 november: nooit echte datums of getallen van de eigenaar in een commit
 - Zonder sportschool (eigenaar, "Ja advies"): alleen wat de sportschool nodig heeft vervalt; een loop of wandeling die je niet deed telt als gemist.
 - Elke afspraak meteen hier; elke verandering in vragen, stuk of live meteen in `eigenaar.md`.
 - Werkwijze: klaar werk na de volle controles op `claude/nacht`; Warden (planner en opslag op Fable), Lookout en Pathfinder bij iets zichtbaars, eigen blik op de afdrukken; dan main via squash (`git commit-tree HEAD^{tree} -p origin/main`), daarna `npm run backlog:bij` en meecommitten op nacht, pushmelding, `eigenaar.md` Net live, Werkkaart extra ronde met create_trigger op session_01LnDpSktfMxYFgMMgDhw8Do (run_once_at een paar minuten vooruit), nooit fire_trigger: dat opent een lege chat zonder repo.
-- Backlog: elk Inboxpunt heeft een code [I-n]; een bouwer zet `Klaar: I-n` in zijn commit; voor een start eerst `git log origin/main --grep "I-n"` en in de code kijken of het al gebouwd is (vandaag twee keer oud werk in de Inbox).
+- Backlog: elk Inboxpunt heeft een code [I-n]; een bouwer zet `Klaar: I-n` in zijn commit; voor een start eerst `git log origin/main --grep "I-n"` en in de code kijken of het al gebouwd is.
 - Kennisindex: elk nieuw document in docs/ krijgt een regel in `docs/kennisindex/bronnen.json`, dan `npm run kennisindex`; na een proefmerge altijd `npm run kennisindex` opnieuw. Zet dat in elke bouwopdracht.
 - Een Warden pusht zijn herstel als `herstel.md` op `warden/<onderwerp>-herstel`: zet dat in zijn eerste opdracht (achteraf vragen weigert hij). Bouwers melden zich niet: kijk met get_session; list_sessions children werkt, de tag-filter niet. list_events heb je niet: laat bevindingen in een bestand of in de samenvatting landen.
 - Eigenaar 19:41: oude bouwers, coördinators en chats archiveren zodra ze klaar zijn. Niet aanraken: Werkkaart session_01LnDpSktfMxYFgMMgDhw8Do, de vastgezette chat ASCEND, ECHO en Dual Ubuntu (geen ASCEND-werk), en de coördinator van de middag zolang de Wachter daar draait.
-- Helpers in de coördinator-chat: zeg in elke opdracht dat ze alleen in een eigen worktree werken en /home/user/ascend nooit van branch wisselen (een Pathfinder deed dat om 22:35).
+- Helpers in de coördinator-chat: zeg in elke opdracht dat ze alleen in een eigen worktree werken en /home/user/ascend nooit van branch wisselen.
 
 ## Werkwijze, geleerd
 
@@ -60,7 +61,6 @@ Lessen 23 november: nooit echte datums of getallen van de eigenaar in een commit
 
 - Twee branches die elk een instelling toevoegen botsen in `src/engine/__snapshots__/instellingen-foto.json`: kies een kant en maak hem opnieuw met `npx vitest run -u src/engine/settingsFoto.test.ts`.
 - Draai `kaart:vergelijk` nooit midden in een merge-conflict.
-- Een fix in foutafhandeling opent telkens een nieuwe naad: vraag elk pad vooraf (in beeld, weg, laat antwoord, tweede poging, automatisch). Vandaag: een leesfout mag nooit tot weghalen leiden.
-- Uit het archief halen kan (unarchive_session), alleen voor een kleine herstelronde dezelfde dag; anders een verse bouwer.
-- Een werkbriefje heeft hoogstens 45 regels. Lookout-poorten: noem een vrije poort.
-- Wissel op lengte: bij ongeveer 250k tot 300k context of na een afgeronde bouwronde (besluit 2026-11-20-lange-chat-en-kosten.md).
+- Een fix in foutafhandeling opent telkens een nieuwe naad: vraag elk pad vooraf (in beeld, weg, laat antwoord, tweede poging, automatisch).
+- Een werkbriefje heeft hoogstens 45 regels.
+- Wissel op lengte: bij ongeveer 250k tot 300k context of na een afgeronde bouwronde.
