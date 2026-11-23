@@ -366,8 +366,42 @@ describe('I-74: ziek in Let op, ook een test of wedstrijd, en verplaatsen als vo
   it('een wedstrijd op een koortsdag: in Let op, zonder voorstel; hij schuift niet', () => {
     const input = check(withAnchor('tpl_race'), { illness: FEVER });
     const [c] = ills(input);
-    expect(c).toMatchObject({ headline: 'Je bent ziek, en je wedstrijd staat er.', why: 'Met koorts train je niet. Je wedstrijd schuift niet mee; of je start, kies je zelf.' });
+    expect(c).toMatchObject({ headline: 'Je bent ziek, en je wedstrijd staat er.', why: 'Ziek train je niet. Je wedstrijd schuift niet mee. Of je start, kies je zelf.' });
     expect(planWeekFix(input, c, MONDAY)).toBeNull();
+  });
+
+  // Warden, 23 november: met een slot is een test of wedstrijd niveau 1; de keuze gaat op de rol.
+  it('met een slot: een test alleen verplaatsen, een wedstrijd nooit een voorstel, altijd hun eigen tekst', () => {
+    const locked = (templateId: string) => withAnchor(templateId).map((s) => (s.id === 'an17' ? { ...s, lock: LOCK } : s));
+    const testInput = check(locked('tpl_test_run'), { illness: FEVER });
+    const [t] = ills(testInput);
+    expect(t.finding.level).toBe(1);
+    expect(t).toMatchObject({ headline: 'Je bent ziek, en er staat een testloop.', why: 'Ziek zegt een testloop niets over je vorm. Hij schuift alleen met jouw Akkoord.' });
+    const fix = planWeekFix(testInput, t, MONDAY)!;
+    const all = [fix.proposal!, ...(fix.options ?? []).map((o) => o.proposal!)].flatMap((p) => p.changes);
+    expect(all.length).toBeGreaterThan(0);
+    expect(all.every((x) => x.action === 'move')).toBe(true);
+    const raceInput = check(locked('tpl_race'), { illness: FEVER });
+    const [r] = ills(raceInput);
+    expect(r.finding.level).toBe(1);
+    expect(r).toMatchObject({ headline: 'Je bent ziek, en je wedstrijd staat er.', why: 'Ziek train je niet. Je wedstrijd schuift niet mee. Of je start, kies je zelf.' });
+    expect(planWeekFix(raceInput, r, MONDAY)).toBeNull();
+  });
+
+  it('buikgriep is ook ziek: dezelfde tekst, zonder koorts erin', () => {
+    const [c] = ills(check(withAnchor('tpl_race'), { illness: [ill('stomach', TODAY)] }));
+    expect(c.finding.illness).toBe('ill');
+    expect(c.why).toBe('Ziek train je niet. Je wedstrijd schuift niet mee. Of je start, kies je zelf.');
+    expect(`${c.headline} ${c.why}`).not.toMatch(/koorts/i);
+    const [t] = ills(check(withAnchor('tpl_test_run'), { illness: [ill('stomach', TODAY)] }));
+    expect(t.why).toBe('Ziek zegt een testloop niets over je vorm. Hij schuift alleen met jouw Akkoord.');
+  });
+
+  it('ziek: een test gaat naar de verste passende dag van de week', () => {
+    // Alleen de test in de week: elke dag van woensdag tot zaterdag past, zondag is de rustdag.
+    const input = check([ps('an17', 'tpl_test_run', TUE)], { illness: FEVER });
+    const fix = planWeekFix(input, ills(input)[0], MONDAY)!;
+    expect(fix.proposal!.changes).toEqual([expect.objectContaining({ plannedSessionId: 'an17', action: 'move', toDate: addDays(MONDAY, 5) })]);
   });
 
   it('met neus of keel staat een test er niet: alleen koorts of buikgriep', () => {
