@@ -41,15 +41,19 @@ Sinds: 23 november.
 
 ## Stuk of vast
 
-- Een wedstrijd op een dag die niet in je trainingsdagen zit, kan bij het openen van de app uit de planning verdwijnen (gevonden door de Warden bij Eén plan). Wordt hersteld in dezelfde ronde als het eerste voorstel.
+Niets.
 
 
 ## Loopt
 
-- Bundel 9 (I-14, I-18, I-23, I-34): ladder, Eén plan deel 1 en Losse sport deel 1 live. Nog: het eerste voorstel en één dagbeeld (I-14), beginner stap 5 tot 7, losse sport rest, na een loop één moment (I-34), klein punt I-146.
+- Bundel 9 (I-14, I-18, I-23, I-34): ladder, Eén plan deel 1 en Losse sport deel 1 live. Eén plan eerste voorstel live. Nog: één dagbeeld (I-14), beginner stap 5 tot 7, losse sport rest, na een loop één moment (I-34), kleine punten I-146 tot I-149.
 - Graphify, eerlijke proef: zodra de lijst leeg is. De koppeling alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 ## Net live
+
+### 23 november 12:04
+- Eén plan, je eerste voorstel (I-14 stap A): de rustdag heet zoals in Week ("Rustdag · wandelen mag", of Hersteldag in die stand), de zin over kracht noemt de richtlijn, en wat het voorstel toont is wat er na Akkoord staat.
+- Hersteld: een wedstrijd of test op een dag die niet in je trainingsdagen zit, bleef bij het openen van de app niet staan. Nu wel.
 
 ### 23 november 10:37
 - Beginnersladder (I-143): kies je bij kracht Meer, dan gaat in je startweken de ladder voor; het voorstel en Week noemen hetzelfde getal (35 en 45 minuten), ook voor een training die Meer erbij zet.

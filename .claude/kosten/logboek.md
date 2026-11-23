@@ -583,3 +583,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-23 | Sherpa Eén plan eerste voorstel I-14 A | ontwikkelaar helper | opus | 166k tok | 26 min | gebouwd, Warden niet akkoord |
 | 2026-11-23 | Warden Eén plan eerste voorstel | reviewer helper | fable | 125k tok | 11 min | Moet: wedstrijddag valt weg (ook op main) |
 - 23 november, Sherpa Eén plan herstel (opus, I-14 stap A): 48 tool-aanroepen, 18 minuten; Warden-punten opgelost.
+- 23 november, Warden herkijk Eén plan (fable): 11 tool-aanroepen, akkoord; drie Inbox-punten (I-147 tot I-149).
+- 23 november, Lookout Eén plan (sonnet): 40 tool-aanroepen, 11 minuten; testte per ongeluk een oude preview (poort bezet door een achtergebleven server), de coördinator deed de controle opnieuw op de juiste bouw. Les: oude previews na elke Lookout stoppen; de Lookout stopt als --strictPort faalt.
