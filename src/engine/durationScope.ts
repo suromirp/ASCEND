@@ -15,7 +15,7 @@ import { recoveryDurationAdjustments } from './illness';
 import { reentryAdjustments } from './reentry';
 import { learnedStrengthDurations } from './durationLearning';
 import { parseKindAmounts } from './kindAmount';
-import { resolveBeginnerBuild } from './beginnerStart';
+import { resolveStartBuild } from './beginnerStart';
 
 export interface DurationSettings {
   ambition?: Ambition;
@@ -24,8 +24,10 @@ export interface DurationSettings {
   // Een rustiger instap na een pauze, met Akkoord bewaard (engine/reentry.ts).
   reentryWeeks?: unknown;
   sessionDurationEstimates?: Record<string, number>;
-  // Opbouw van de start (engine/beginnerStart.ts#resolveBeginnerBuild): de rem na de start zonder logs.
+  // Opbouw van de start en je Akkoord op de ladder (engine/beginnerStart.ts#resolveStartBuild): de ladder in de start
+  // en de rem na de start zonder logs.
   beginnerBuild?: unknown;
+  beginnerLadder?: unknown;
 }
 
 export function durationScopeFor(settings: DurationSettings, logs: SessionLog[], templates: SessionTemplate[], program: Program | null | undefined, today: string): Required<Omit<DurationScope, 'hardSameDay' | 'longRunThenLegs' | 'testRest'>> {
@@ -34,6 +36,6 @@ export function durationScopeFor(settings: DurationSettings, logs: SessionLog[],
     durationAdjustments: [...recoveryDurationAdjustments(settings.illnessEpisodes), ...reentryAdjustments(settings.reentryWeeks)],
     learnedDurations: learnedStrengthDurations(templates, logs, settings.sessionDurationEstimates),
     kindAmounts: parseKindAmounts(settings.kindAmount).value ?? {},
-    startBuild: resolveBeginnerBuild(settings.beginnerBuild),
+    startBuild: resolveStartBuild(settings),
   };
 }

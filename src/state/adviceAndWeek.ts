@@ -34,6 +34,7 @@ import { declinedRules, learnFromDeclines, type StoredResponse } from '../engine
 import { planEndDay } from '../engine/programLayout';
 import { planDirection } from '../engine/direction';
 import { noGoalWavesAdvice } from '../engine/noGoalWaves';
+import { beginnerLadderAdvice } from '../engine/beginnerLadderOffer';
 import { rankFocusGaps } from '../engine/extraRun';
 import { raceBlocks, afterGoalWindows } from '../engine/raceBlock';
 import { needsWeather, showWeatherSwap } from '../engine/overviewSettings';
@@ -122,6 +123,11 @@ export function useAdviceAndWeek(deps: {
     )),
     [settings.direction, settings.directionStart, settings.noGoalWaves, settings.afterMainGoal, trainingGoals, goalMilestones, program],
   );
+  // Een lopende beginnersstart: de ladder van heel licht pas na Akkoord (engine/beginnerLadderOffer.ts).
+  const ladderOffer = useMemo(
+    () => beginnerLadderAdvice({ settings: { beginnerBuild: settings.beginnerBuild, beginnerLadder: settings.beginnerLadder, directionStart: settings.directionStart }, program, today: todayISO(), responded: (id) => !!adviceResponses[id] }),
+    [settings.beginnerBuild, settings.beginnerLadder, settings.directionStart, program, adviceResponses],
+  );
   // De keuze Waar train je? per training (storage/trainingPlace.ts): eerst koppelen, dan inhalen leest hem ook.
   const [places, setPlaces] = useState(peekTrainingPlaces);
   useEffect(() => {
@@ -146,6 +152,8 @@ export function useAdviceAndWeek(deps: {
       ...(plannerAdvice && !adviceResponses[plannerAdvice.id] ? [plannerAdvice] : []),
       // Een bestaand plan zonder doel: neutrale golven pas na Akkoord (engine/noGoalWaves.ts).
       ...wavesOffer.filter((a) => !adviceResponses[a.id]),
+      // Een lopende beginnersstart: de ladder pas na Akkoord; Liever niet komt niet terug (engine/beginnerLadderOffer.ts).
+      ...ladderOffer,
       ...computeAdvice({
         logs: sessionLogs,
         plannedSessions,
@@ -190,7 +198,7 @@ export function useAdviceAndWeek(deps: {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, wavesOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, openDraftId, places, adviceResponses, adviceSlotDays, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction, settings.reentry, settings.reentryWeeks, settings.strengthTraining, settings.strengthModel],
+    [plannerAdvice, wavesOffer, ladderOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, openDraftId, places, adviceResponses, adviceSlotDays, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction, settings.reentry, settings.reentryWeeks, settings.strengthTraining, settings.strengthModel],
   );
 
   // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).

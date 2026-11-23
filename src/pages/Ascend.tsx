@@ -26,7 +26,7 @@ import { EarlierGoalsSheet } from '../components/ascend/EarlierGoalsSheet';
 import { useGoalViews } from '../components/ascend/useGoalViews';
 import { goalsSentence, listedGoals, marathonSettingsFor, moveGoal, moveOutcome, seasonStrip, stepAvailability, type MoveResult } from '../engine/goalList';
 import { needsFirstPlan } from '../engine/freshStart';
-import { countOptions, plannedRestFor, yourWeek } from '../engine/yourWeek';
+import { countOptions, plannedRestFor, startBudgetsFor, yourWeek } from '../engine/yourWeek';
 import { waveReviewCard } from '../engine/waveReviewCard';
 import { WaveReviewCard } from '../components/ascend/WaveReview';
 import type { AddTileId } from '../engine/goalDraft';
@@ -209,6 +209,7 @@ export function AscendPage() {
       ? yourWeek({
           settings, goals: listed.map((l) => l.goal), milestones: ladder, logs: sessionLogs, templates, plannedSessions, today,
           plannedRest: plannedRestFor({ plannedSessions, templates, logs: sessionLogs, program, settings, today }),
+          startBudgets: startBudgetsFor({ plannedSessions, templates, program, settings, today }),
         })
       : undefined),
     [emptyList, emptyInstall, settings, listed, ladder, sessionLogs, templates, plannedSessions, today, program],

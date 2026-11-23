@@ -19,7 +19,7 @@ import { WavesSheet } from './WavesSheet';
 import { DirectionSheet } from '../../ascend/YourWeek';
 import { useDirectionChange } from '../../ascend/useDirectionChange';
 import { parseDirection } from '../../../engine/direction';
-import { parseBeginnerStart, resolveBeginnerBuild } from '../../../engine/beginnerStart';
+import { parseBeginnerStart, resolveBeginnerBuild, startBuildChanges, startBuildPatch } from '../../../engine/beginnerStart';
 import { resolveDescentClock } from '../../../engine/descentClock';
 import { SummaryRow } from './SummaryRow';
 import { useShelterChange } from '../useShelterChange';
@@ -123,8 +123,10 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef
           def={CHOICES.opbouwStart}
           value={resolveBeginnerBuild(settings.beginnerBuild)}
-          // Altijd eerst het voorstel: een lopende start verandert alleen met Akkoord, Liever niet laat alles staan.
-          onPick={(v) => { if (v !== settings.beginnerBuild) { setNote(null); void plan.changeSetting(`Opbouw van de start: ${choiceShort('opbouwStart', v)}`, { beginnerBuild: v }, 'Volgt je keuze voor de opbouw van de start.', { alwaysAsk: true }); } }}
+          // Altijd eerst het voorstel: een lopende start verandert alleen met Akkoord, Liever niet laat alles staan. Heel
+          // licht is met de ladder (engine/beginnerStart.ts#resolveStartBuild); wie al op heel licht stond zonder de
+          // ladder, kan hem hier ook kiezen.
+          onPick={(v) => { if (startBuildChanges(settings, v)) { setNote(null); void plan.changeSetting(`Opbouw van de start: ${choiceShort('opbouwStart', v)}`, startBuildPatch(v), 'Volgt je keuze voor de opbouw van de start.', { alwaysAsk: true }); } }}
           onClose={closeInner}
         />
       )}

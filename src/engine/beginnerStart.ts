@@ -50,10 +50,35 @@ export function resolveBeginnerBuild(raw: unknown): BeginnerBuild {
   return raw === 'licht' ? 'licht' : 'gewoon';
 }
 
+// Hoe de planning de start bouwt (engine/beginnerPlan.ts, register engine/substitutions.ts#setStartBuild):
+// 'ladder' is heel licht met de ladder (duur en sets per week, data/beginnerLadder.ts), 'licht' is heel licht van voor
+// de ladder (wandelen en dribbelen 20 en 30 minuten, kracht zoals gepland), 'gewoon' de lopen van je richting. Heel
+// licht krijgt de ladder alleen met jouw Akkoord daarop (AppSettings.beginnerLadder): een start die al op heel licht
+// liep, kreeg Akkoord op een tekst zonder kortere kracht en blijft zoals hij is tot het voorstel op Vandaag
+// (engine/beginnerLadderOffer.ts).
+export type StartBuild = 'ladder' | 'licht' | 'gewoon';
+export function resolveStartBuild(settings: { beginnerBuild?: unknown; beginnerLadder?: unknown }): StartBuild {
+  if (resolveBeginnerBuild(settings.beginnerBuild) !== 'licht') return 'gewoon';
+  return settings.beginnerLadder === 'agreed' ? 'ladder' : 'licht';
+}
+
+// Het Akkoord op heel licht met de ladder, zoals het in de instellingen komt.
+export const LADDER_CONSENT = { beginnerBuild: 'licht', beginnerLadder: 'agreed' } as const;
+
+// De instelling Opbouw van de start: Heel licht is met de ladder, Gewoon zonder. Een keuze is een voorstel als hij iets
+// verandert, ook heel licht kiezen als je daar al stond zonder Akkoord op de ladder.
+export function startBuildPatch(choice: BeginnerBuild): { beginnerBuild: BeginnerBuild; beginnerLadder?: 'agreed' } {
+  return choice === 'licht' ? { ...LADDER_CONSENT } : { beginnerBuild: 'gewoon' };
+}
+export function startBuildChanges(settings: { beginnerBuild?: unknown; beginnerLadder?: unknown }, choice: BeginnerBuild): boolean {
+  if (choice !== settings.beginnerBuild) return true;
+  return choice === 'licht' && settings.beginnerLadder !== 'agreed';
+}
+
 // Een richting kiezen is een voorstel met Akkoord dat de start al laat zien: zonder eerdere keuze hoort heel licht
-// (het advies) erbij. Een keuze die je al maakte blijft.
-export function buildConsentPatch(settings: { beginnerBuild?: unknown }): { beginnerBuild?: BeginnerBuild } {
-  return settings.beginnerBuild === undefined ? { beginnerBuild: BEGINNER_BUILD_ADVICE } : {};
+// (het advies) met de ladder erbij. Een keuze die je al maakte blijft.
+export function buildConsentPatch(settings: { beginnerBuild?: unknown }): { beginnerBuild?: BeginnerBuild; beginnerLadder?: 'agreed' } {
+  return settings.beginnerBuild === undefined ? { ...LADDER_CONSENT } : {};
 }
 
 // De zin voor het voorstel bij heel licht: wat er in de start op de plek van je lopen staat.
@@ -99,7 +124,7 @@ export function beginnerWeekNumber(start: string, date: string): number {
 // na de ladder geldt het gewone plan (zonder harde training zolang de start loopt, beginnerWeeksFor).
 // `fullSets`: de werksets van de krachttraining in het gewone plan; die krijgt hetzelfde deel als
 // Bovenlichaam A, in week 1 nooit meer dan de helft en nooit meer dan het gewone plan.
-// Puur: de planning leest dit nog niet (stap 3 van het ontwerp).
+// De planning leest dit via engine/beginnerPlan.ts, alleen bij heel licht met de ladder.
 export function beginnerWeek(week: number, fullSets = REFERENCE_SETS): BeginnerWeekPlan | undefined {
   const rung = Number.isInteger(week) ? BEGINNER_LADDER[week - 1] : undefined;
   if (!rung) return undefined;

@@ -67,6 +67,9 @@ export interface Advice {
   // Rule NO-GOAL-WAVES: Akkoord plant een bestaand plan zonder doel in neutrale golven
   // (engine/noGoalWaves.ts). Een programmawijziging: eerst het eigen voorstel met wat er verandert.
   noGoalWaves?: true;
+  // Rule BEGINNER-LADDER: Akkoord zet de ladder van heel licht in een lopende beginnersstart
+  // (engine/beginnerLadderOffer.ts). Eerst het eigen voorstel van de planningsronde met wat er verandert.
+  beginnerLadder?: true;
   // Rule REENTRY: Akkoord bewaart een rustiger instap na een pauze (engine/reentry.ts). Eerst het eigen voorstel
   // van de planningsronde met de trainingen die korter worden.
   reentry?: ReentryWeek;

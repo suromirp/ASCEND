@@ -9,6 +9,8 @@ import { START_PLANNED_MINUTES } from '../data/beginnerLadder';
 import { daysBetween, isoWeekday, mondayOfWeek } from '../utils/dates';
 import { longRunCapAfterRace } from './runGrowth';
 import { idHasRole } from './templateRoles';
+import { applyStartLadder, lastRung, startLadderMinutes, walkJogMinutes } from './beginnerPlan';
+import type { StartBuild } from './beginnerStart';
 
 // "Short" keeps core + accessory work, drops optional. "Minimum" keeps only
 // core work — the smallest version of the session that still counts.
@@ -115,11 +117,12 @@ export function recentSessionMaxima(
   return { asOf, minutesByTemplate, ...(afterRace.length > 0 ? { afterRace } : {}), ...(Object.keys(fromStart).length > 0 ? { fromStart } : {}) };
 }
 
-// De opbouw van de start (AppSettings.beginnerBuild, engine/beginnerStart.ts#resolveBeginnerBuild), voor de rem na de
-// start zonder logs: wat stond er in de laatste week van de start op de plek van deze loop. Ongezet is het Gewoon,
-// zoals de instelling zonder veld; de app zet het uit je instelling, een voorstel uit het voorstel.
-let startBuild: 'licht' | 'gewoon' = 'gewoon';
-export function setStartBuild(build: 'licht' | 'gewoon'): void {
+// De opbouw van de start (engine/beginnerStart.ts#resolveStartBuild): de ladder van heel licht in de start
+// (engine/beginnerPlan.ts), en voor de rem na de start zonder logs wat er in de laatste week van de start op de plek
+// van deze loop stond. Ongezet is het Gewoon, zoals de instelling zonder veld; de app zet het uit je instelling, een
+// voorstel uit het voorstel.
+let startBuild: StartBuild = 'gewoon';
+export function setStartBuild(build: StartBuild): void {
   startBuild = build;
 }
 
@@ -138,8 +141,11 @@ function plannedAfterStart(template: SessionTemplate, scheduledDate: string, pro
     if (phase.id !== PHASE_GOLF_START) { weeksBefore += phase.weekCount; continue; }
     const end = addDays(mondayOfWeek(program.startDate), (weeksBefore + phase.weekCount) * 7);
     if (scheduledDate < end) return undefined;
-    // Heel licht: wandelen en dribbelen; Gewoon: de eigen loop, op dezelfde dag van de laatste startweek.
-    const last = startBuild === 'licht' ? START_PLANNED_MINUTES[template.id] : progressionTarget(template, program, addDays(end, isoWeekday(scheduledDate) - 8))?.minutes;
+    // Heel licht met de ladder: de laatste trede (35 en 45); heel licht van voor de ladder: wandelen en dribbelen zoals
+    // gepland (20 en 30); Gewoon: de eigen loop, op dezelfde dag van de laatste startweek.
+    const last = startBuild === 'ladder'
+      ? walkJogMinutes(template.id, lastRung())
+      : startBuild === 'licht' ? START_PLANNED_MINUTES[template.id] : progressionTarget(template, program, addDays(end, isoWeekday(scheduledDate) - 8))?.minutes;
     if (!last) return undefined;
     let cap = last;
     for (let week = Math.floor(daysBetween(end, mondayOfWeek(scheduledDate)) / 7); week >= 0; week--) cap = afterStartStep(cap, limit);
@@ -174,7 +180,7 @@ export interface DurationScope {
   learnedDurations?: Record<string, number>;
   kindAmounts?: KindAmountMap;
   // De opbouw van de start (setStartBuild), zoals de wijziging hem zou zetten.
-  startBuild?: 'licht' | 'gewoon';
+  startBuild?: StartBuild;
   // Leg strength and a hard run on one day (engine/scheduler.ts#withHardSameDay); read by the planning run of a preview.
   hardSameDay?: boolean;
   // Leg strength the day after the long run (engine/scheduler.ts#withLongRunThenLegs), the same way.
@@ -226,6 +232,9 @@ export function resolveEffectiveFullDuration(
   if (!fixed && target && currentAmbition !== 'standaard') {
     base = Math.max(15, Math.round((base * ambitionFactor(currentAmbition, /rust/i.test(target.step.note ?? ''))) / 5) * 5);
   }
+  // De ladder van heel licht in de beginnersstart (engine/beginnerPlan.ts): wandelen en dribbelen krijgt de minuten
+  // van die week, kracht en de Herstelwandeling hoogstens zoveel. Een eigen lengte wint.
+  if (!fixed) base = applyStartLadder(base, startLadderMinutes(template, scheduledDate, program, startBuild));
   const own = recentMaxima.minutesByTemplate[template.id];
   const start = recentMaxima.fromStart?.[template.id];
   const logged = Math.max(own ?? 0, start ?? 0) || undefined;

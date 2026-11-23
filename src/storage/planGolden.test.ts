@@ -7,7 +7,7 @@ import { applyHorizonPlanNow, computeHorizonPlan, type HorizonChangeInput } from
 import { buildFirstPlan, defaultAnswers, type StartAnswers } from '../engine/firstPlan';
 import { progressionTarget } from '../engine/programLayout';
 import { resolveEffectiveFullDuration, withDurationScope } from '../engine/substitutions';
-import { resolveBeginnerBuild } from '../engine/beginnerStart';
+import { resolveStartBuild } from '../engine/beginnerStart';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import type { SessionLog } from '../models/training';
 import type { TrainingGoal } from '../models/goals';
@@ -30,7 +30,7 @@ async function capture(): Promise<string> {
     .filter((s) => s.scheduledDate >= from && s.scheduledDate <= until)
     .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.order - b.order || a.templateId.localeCompare(b.templateId));
   // De opbouw van de start zoals bewaard (engine/substitutions.ts#setStartBuild); de andere registers blijven leeg.
-  const build = resolveBeginnerBuild((await SettingsRepo.get()).beginnerBuild);
+  const build = resolveStartBuild(await SettingsRepo.get());
   const lines = rows.map((s) => {
     const t = templates.get(s.templateId);
     const live = s.status !== 'skipped' && t;

@@ -533,10 +533,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     skipped.n += clean.skipped;
   }
   // Zonder doel: the choices around waves; known values stay.
-  if ('beginnerStart' in s || 'beginnerBuild' in s || 'waves' in s || 'waveReviewDone' in s || 'noGoalWaves' in s) {
-    const clean = migrateWaveSettings({ beginnerStart: s.beginnerStart, beginnerBuild: s.beginnerBuild, waves: s.waves, waveReviewDone: s.waveReviewDone, noGoalWaves: s.noGoalWaves });
+  if ('beginnerStart' in s || 'beginnerBuild' in s || 'beginnerLadder' in s || 'waves' in s || 'waveReviewDone' in s || 'noGoalWaves' in s) {
+    const clean = migrateWaveSettings({ beginnerStart: s.beginnerStart, beginnerBuild: s.beginnerBuild, beginnerLadder: s.beginnerLadder, waves: s.waves, waveReviewDone: s.waveReviewDone, noGoalWaves: s.noGoalWaves });
     delete s.beginnerStart;
     delete s.beginnerBuild;
+    delete s.beginnerLadder;
     delete s.waves;
     delete s.waveReviewDone;
     delete s.noGoalWaves;
