@@ -165,8 +165,11 @@ function SessionRow({
                 </>
               ) : extra.tail ? (
                 <>
-                  <span className="truncate">· {extra.text.slice(0, -extra.tail.length).trimEnd()}</span>
-                  <span className="shrink-0">{extra.tail}</span>
+                  {/* De schermlezer leest één zin, "· gedaan di 27"; de twee zichtbare delen zijn er alleen voor het
+                      afkappen en lazen samen "gedaandi 27" (I-59). */}
+                  <span className="sr-only">· {extra.text}</span>
+                  <span aria-hidden="true" className="truncate">· {extra.text.slice(0, -extra.tail.length).trimEnd()}</span>
+                  <span aria-hidden="true" className="shrink-0">{extra.tail}</span>
                 </>
               ) : extra.also ? (
                 // Het woord van de stand ("gemist") blijft altijd staan; is de regel te lang, dan wijkt "aangepast".

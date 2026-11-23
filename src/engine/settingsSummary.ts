@@ -115,6 +115,8 @@ export interface RowSummary {
   dot?: 'ok' | 'no' | 'warn';
   // Een schakelaar: aan of uit.
   checked?: boolean;
+  // De hele rij gedimd: hij doet nu niets omdat een andere instelling uit staat. Hij blijft te zetten.
+  off?: boolean;
   // De rij hoort er nu niet te staan (geen sterktetrainingen, geen browserondersteuning).
   hidden?: boolean;
 }
@@ -1199,6 +1201,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: String(f.snapshots), dim: f.snapshots === 0 };
     case 'vroeg-ziek':
       return { checked: s.illnessSigns !== false };
+    case 'vroeg-ziek-een':
+      return { checked: s.illnessSignsOneMorning !== false, ...(s.illnessSigns === false ? { off: true, sub: 'Doet niets zolang Vroeg ziek zien uit staat' } : {}) };
     case 'hitte-tempo':
       return { checked: s.heatPace !== false };
     case 'weekdag-patroon':

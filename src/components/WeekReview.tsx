@@ -6,10 +6,10 @@ import { useAppData } from '../state/AppDataContext';
 import { buildWeekReview, type WeekReview } from '../engine/weekReview';
 import { weekReviewCardShown } from '../engine/overviewSettings';
 import { weekHighlights } from '../engine/weekHighlights';
-import { attentionLines, nextWeekLine, sportLines, weekCountLine, weekRestLines } from '../engine/weekGlance';
+import { attentionLines, hasWeekTally, nextWeekLine, sportLines, weekCardCount, weekCountLine, weekRestLines } from '../engine/weekGlance';
 import { looseLogsOfWeek, weekLogsOf } from '../engine/weekLogs';
 import { intentionForWeek } from '../engine/weeklyQuestion';
-import { addDays, formatDateNL, formatHoursMinutesNL, formatShortDayNL, todayISO } from '../utils/dates';
+import { formatDateNL, formatHoursMinutesNL, formatShortDayNL, todayISO } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { SettingsLinkRow } from './settings/SettingsLink';
 import { Portal } from './Portal';
@@ -41,14 +41,14 @@ export function WeekReviewCard({ weekStart }: { weekStart: string }) {
   const review = useWeekReviewFor(weekStart);
   const { settings } = useAppData();
   const [open, setOpen] = useState(false);
-  if (!review || review.planned === 0) return null;
+  if (!hasWeekTally(review)) return null;
   if (!weekReviewCardShown(review, settings.overviews)) return null;
   const first = weekHighlights(review)[0]?.text ?? review.advice[0];
   return (
     <Card className="flex flex-col gap-2">
       <Eyebrow>Weekterugblik</Eyebrow>
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-        {review.running ? `${review.done} gedaan` : `${review.done} van ${review.planned} trainingen`} · {formatHoursMinutesNL(review.minutes)}
+        {weekCardCount(review)} · {formatHoursMinutesNL(review.minutes)}
       </p>
       {first && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{first}</p>}
       <div className="-mb-2"><TextButton onClick={() => setOpen(true)} icon="verder">{review.running ? 'Bekijk je week tot nu' : 'Bekijk je week'}</TextButton></div>
@@ -62,7 +62,7 @@ export function WeekReviewCard({ weekStart }: { weekStart: string }) {
 export function WeekHeaderRow({ weekStart }: { weekStart: string }) {
   const review = useWeekReviewFor(weekStart);
   const [open, setOpen] = useState(false);
-  const canReview = !!review && review.planned > 0 && weekStart <= todayISO();
+  const canReview = hasWeekTally(review) && weekStart <= todayISO();
   return (
     <div className="flex min-h-[44px] items-center justify-between gap-3">
       <Eyebrow>Week van {formatDateNL(weekStart)}</Eyebrow>
@@ -116,8 +116,6 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
   const attention = attentionLines(review);
   const restLines = weekRestLines(review, { missedShown: attention.some((a) => a.key === 'missed') });
   const next = review.next ? nextWeekLine(review.next) : null;
-  const weekEnd = addDays(review.weekStart, 6);
-  const weekSessions = plannedSessions.filter((s) => s.scheduledDate >= review.weekStart && s.scheduledDate <= weekEnd);
   const weekLogs = weekLogsOf(sessionLogs, new Map(templates.map((t) => [t.id, t])), review.weekStart, plannedByIdOf(plannedSessions))
     .sort((a, b) => a.completedDate.localeCompare(b.completedDate));
   const sports = sportLines(review);
@@ -149,7 +147,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
             {view === 'main' && (
               <>
                 <div className="mt-4 flex flex-col gap-3">
-                  <WeekStrip plain loose={looseLogsOfWeek(sessionLogs, plannedSessions, review.weekStart)} weekStart={review.weekStart} sessions={weekSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
+                  <WeekStrip plain loose={looseLogsOfWeek(sessionLogs, plannedSessions, review.weekStart)} weekStart={review.weekStart} sessions={plannedSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
                   <div>
                     <p className="font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{weekCountLine(review)}</p>
                     {restLines.map((line) => <p key={line} className="mt-0.5 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>)}

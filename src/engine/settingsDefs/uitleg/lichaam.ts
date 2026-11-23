@@ -137,10 +137,19 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
     title: 'Vroeg ziek zien',
     lead: 'Als je ziek wordt, kan je rusthartslag stijgen en je HRV dalen voor je iets merkt. Daar kijkt Vroeg ziek zien naar.',
     points: [
-      { head: 'Wanneer', text: 'twee ochtenden op rij je rusthartslag minstens 6 slagen hoger en je HRV onder je gewone bereik van de laatste vier weken.' },
+      { head: 'Wanneer', text: 'twee ochtenden op rij je rusthartslag minstens 6 slagen hoger en je HRV onder je gewone bereik van de laatste vier weken. Na een gewone nacht kan één ochtend genoeg zijn (Eén duidelijke ochtend). Een nacht zonder je horloge telt niet mee en breekt de reeks niet.' },
       { head: 'Wat je ziet', text: 'een vraag op Vandaag: Voel me goed, Word ziek of Niet nu. Word ziek opent de gewone ziekmelding. Je planning verandert pas na Akkoord.' },
       { head: 'Hoe zeker', text: 'het bewijs is zwak tot matig. Alcohol, een warme kamer of stress geven hetzelfde beeld. Legde je bij Wat speelde er iets vast, dan komt er geen vraag. De HRV van een nacht die je Niet goed gemeten noemde telt niet mee. Die ochtend wordt overgeslagen als je rusthartslag wel hoger ligt.' },
       { head: 'Geen diagnose', text: 'bij hoge koorts, pijn op de borst of als je je echt slecht voelt: neem contact op met je huisarts.' },
+    ],
+  },
+  'vroeg-ziek-een': {
+    title: 'Eén duidelijke ochtend',
+    lead: 'Een korte nacht verklaart een hoge rusthartslag en een lage HRV vaak al. Na een gewone nacht zegt dezelfde ochtend meer.',
+    points: [
+      { head: 'Aan', text: 'je rusthartslag minstens 6 slagen hoger en je HRV onder je gewone bereik, na een nacht van minstens 6 uur: dan komt de vraag al na één ochtend.' },
+      { head: 'Uit', text: 'de vraag komt pas na twee ochtenden op rij.' },
+      { head: 'Altijd', text: 'een nacht zonder je horloge telt niet en breekt geen reeks. Een nacht die je Niet goed gemeten noemde telt hier niet als gewone nacht.' },
     ],
   },
   ochtendregel: {

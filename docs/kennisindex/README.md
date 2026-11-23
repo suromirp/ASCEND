@@ -11,7 +11,7 @@ Een nieuw document in `docs/` krijgt een regel in `bronnen.json`, en haalt het e
 oudere besluit de stand deels of vervangen. Daarna `npm run kennisindex`; de test
 `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 573 documenten: 348 gelden, 90 deels ingehaald, 3 vervangen, 3 verouderd, 129 achtergrond.
+Stand van de 575 documenten: 349 gelden, 91 deels ingehaald, 3 vervangen, 3 verouderd, 129 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; deels ingehaald geldt alleen nog voor wat achter "Geldt nog" staat, de
@@ -30,13 +30,13 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 - Werkbriefje: [werkbriefjes/koppelingen-en-data.md](../werkbriefjes/koppelingen-en-data.md)
 - [android-sleutel.md](../android-sleutel.md): De Android-app wordt altijd met dezelfde sleutel ondertekend, anders kan een nieuwe versie niet over de oude heen; hier staat hoe de workflow dat doet.
 - [architectuur/koppelingen-en-data.md](../architectuur/koppelingen-en-data.md): Wat ASCEND van Garmin leert (intensiteit, zweet, bergschoenen) en de tekst voor Strava.
-- Alles over dit onderwerp: [koppelingen-en-data.md](koppelingen-en-data.md) (76 besluiten die gelden, 24 deels ingehaald, 19 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
+- Alles over dit onderwerp: [koppelingen-en-data.md](koppelingen-en-data.md) (77 besluiten die gelden, 24 deels ingehaald, 19 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
 
 ## Lopen en tests
 
 - Werkbriefje: [werkbriefjes/lopen-en-tests.md](../werkbriefjes/lopen-en-tests.md)
 - [architectuur/lopen-en-tests.md](../architectuur/lopen-en-tests.md): Het lange verhaal bij lopen: hartslag op het horloge, run in detail en de testloop met de tempo's.
-- Alles over dit onderwerp: [lopen-en-tests.md](lopen-en-tests.md) (33 besluiten die gelden, 11 deels ingehaald, 12 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [lopen-en-tests.md](lopen-en-tests.md) (34 besluiten die gelden, 11 deels ingehaald, 12 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Doelen
 
@@ -54,13 +54,13 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/week.md](../werkbriefjes/week.md)
 - [architectuur/week.md](../architectuur/week.md): Het lange verhaal bij de Week-tab: waarschuwingen, slepen en inhalen.
-- Alles over dit onderwerp: [week.md](week.md) (28 besluiten die gelden, 8 deels ingehaald, 5 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [week.md](week.md) (28 besluiten die gelden, 9 deels ingehaald, 5 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Lichaam en herstel
 
 - Werkbriefje: [werkbriefjes/lichaam-en-herstel.md](../werkbriefjes/lichaam-en-herstel.md)
 - [architectuur/lichaam-en-herstel.md](../architectuur/lichaam-en-herstel.md): Het lange verhaal bij lichaam: het figuur, hoe voelt je lijf, een zware beendag op vermoeide benen, een korte nacht en wat speelde er.
-- Alles over dit onderwerp: [lichaam-en-herstel.md](lichaam-en-herstel.md) (35 besluiten die gelden, 8 deels ingehaald, 20 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [lichaam-en-herstel.md](lichaam-en-herstel.md) (36 besluiten die gelden, 8 deels ingehaald, 20 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Historie en logs
 

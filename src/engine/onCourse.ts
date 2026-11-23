@@ -93,13 +93,15 @@ export function recentAdherence(inputs: AdherenceInputs): Adherence {
   const reviews: WeekReview[] = [];
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
     const review = buildWeekReview({ plannedById: plannedByIdOf(plannedSessions), weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes, leavePeriods: inputs.leavePeriods, openDraft: inputs.openDraft, heartRate: inputs.heartRate, intensityCounting: inputs.intensityCounting, keyFocus: inputs.keyFocus });
-    if (review && review.planned > 0) reviews.push(review);
+    // Een oordeel over voorbije weken leest de telling van de geplande week, zodat gedaan en de sleuteltraining over
+    // dezelfde trainingen gaan (docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md).
+    if (review && review.plannedWeek.planned > 0) reviews.push(review);
   }
   return {
     reviews,
     weeks: reviews.length,
-    done: reviews.reduce((n, r) => n + r.done, 0),
-    planned: reviews.reduce((n, r) => n + r.planned, 0),
+    done: reviews.reduce((n, r) => n + r.plannedWeek.done, 0),
+    planned: reviews.reduce((n, r) => n + r.plannedWeek.planned, 0),
     keyDone: reviews.reduce((n, r) => n + r.keyDone, 0),
     keyPlanned: reviews.reduce((n, r) => n + r.keyPlanned, 0),
     enough: reviews.length >= MIN_WEEKS,

@@ -129,3 +129,17 @@ describe('dedupeRestNoGym', () => {
     expect(dedupeRestNoGym([c('REST-DAY', 'p2', 1), c('NO-GYM', 'p1'), c('LEG-SPACING', 'p1')]).map((x) => x.rule)).toEqual(['REST-DAY', 'NO-GYM', 'LEG-SPACING']);
   });
 });
+
+// I-72: op je rustdag in een periode zonder sportschool geeft één training één punt in Let op, ook als de hele week
+// door weekConcerns gaat (niet alleen de losse ontdubbeling).
+describe('rustdag zonder sportschool, de hele week', () => {
+  it('Bovenlichaam B die jij op donderdag zette, zonder sportschool: één punt voor die training', () => {
+    const yours = { by: 'user' as const, at: '2026-10-20T10:00:00.000Z' };
+    const sessions = FULL.map((templateId, i) => ({ id: `w-${i}`, templateId: i === 3 ? 'tpl_upper_b' : templateId, scheduledDate: addDays(MONDAY, i), weekStartDate: MONDAY, status: 'moved' as const, order: i, lock: i === 3 ? yours : lock }));
+    const on = input(sessions, { reportYours: true, leave: [{ id: 'g', kind: 'no_gym', startDate: '2026-10-28', endDate: '2026-10-30' }] });
+    // De weekcontrole zelf vindt er twee; Let op toont er één.
+    expect(validateWeeks(on).filter((f) => f.sessionIds.includes('w-3') && f.rule !== 'LEG-SPACING').map((f) => f.rule).sort()).toEqual(['NO-GYM', 'REST-DAY']);
+    const forW3 = weekConcerns(on, MONDAY).filter((c) => c.finding.sessionIds.includes('w-3') && (c.rule === 'REST-DAY' || c.rule === 'NO-GYM'));
+    expect(forW3.map((c) => c.rule)).toEqual(['NO-GYM']);
+  });
+});

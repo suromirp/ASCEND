@@ -371,3 +371,30 @@ describe('the planning round after Akkoord', () => {
     expect(again.repairs).toEqual([]);
   });
 });
+
+// Herhaal de week oordeelt over de geplande week, nooit over de verschuiving naar de dag van uitvoeren
+// (Warden, I-58; docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md).
+describe('Herhaal de week leest de telling van de geplande week', () => {
+  // W2 met vijf trainingen: een extra krachttraining op maandag erbij.
+  const extra: PlannedSession = { id: `${W2}-tpl_lower_a`, templateId: 'tpl_lower_a', scheduledDate: W2, weekStartDate: W2, status: 'planned', order: 9 };
+  const five = [...planned, extra];
+  const doneOn = (id: string, day: string, over: Partial<SessionLog> = {}): SessionLog => {
+    const s = five.find((p) => p.id === id)!;
+    return { id: `log-${id}`, plannedSessionId: id, templateId: s.templateId, type: s.templateId.includes('upper') || s.templateId.includes('lower') ? 'strength' : 'cardio', completedDate: day, completedAt: `${day}T10:00:00Z`, variant: 'full', durationMinutes: 50, source: 'manual', ...over };
+  };
+  const w1Done = poorW2.filter((l) => l.completedDate < W2);
+
+  it('3 van 5 gedaan, de lange duurloop van zondag op maandag gedaan: geen voorstel', () => {
+    // Gedaan: kracht dinsdag, heuvels zaterdag, de lange duurloop (zondag 8 november) op maandag 9 november.
+    // Gemist: de extra kracht op maandag en de rustige loop. Op de geplande week 3 van 5 = 0,6: een gewone week.
+    const logs = [...w1Done, doneOn(`${W2}-tpl_upper_a`, addDays(W2, 1)), doneOn(`${W2}-tpl_hill_intervals`, addDays(W2, 5)), doneOn(`${W2}-tpl_long_run`, W3)];
+    expect(proposeRepeatWeek(inputs({ plannedSessions: five, logs }))).toBeUndefined();
+  });
+
+  it('MacroFactor zondag 23:30 voor de training van maandag telt in de geplande week', () => {
+    // De extra kracht van maandag 2 november, in MacroFactor gestart op zondag 1 november om 23:30.
+    const logs = [...w1Done, doneOn(`${W2}-tpl_lower_a`, addDays(W2, -1), { source: 'macrofactor', completedAt: `${addDays(W2, -1)}T22:30:00Z` }),
+      doneOn(`${W2}-tpl_upper_a`, addDays(W2, 1)), doneOn(`${W2}-tpl_long_run`, addDays(W2, 6))];
+    expect(proposeRepeatWeek(inputs({ plannedSessions: five, logs }))).toBeUndefined();
+  });
+});

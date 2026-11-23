@@ -24,7 +24,7 @@ import { logSport, SPORT_LABEL, type Sport } from './sports';
 import { weekNameAt, weekPositionLabel } from './weekLabel';
 import { durationLabel } from './sessionBrief';
 import type { PlannedById } from './logDay';
-import { countsAsTraining as countsAsTrainingShared, leftOutOfCount, weekDoneMinutes, weekLogsOf } from './weekLogs';
+import { countDayOf, countsAsTraining as countsAsTrainingShared, leftOutOfCount, weekDoneMinutes, weekExecutionShift, weekLogsOf } from './weekLogs';
 import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
@@ -75,7 +75,18 @@ export interface WeekReview {
   // `rest`: volgens het programma een rustweek die je niet doortraint.
   next?: { title: string; note?: string; minutes: number; key?: string; label?: string; rest?: boolean };
   label?: string; // de naam van deze week, zoals bij next
-  extraLogged?: number; // logs van deze week die niet bij een geplande training van deze week horen
+  extraLogged?: number; // losse logs van deze week: niet bij een geplande training van deze week, en ook niet van een andere week
+  // Gedaan in een andere week dan gepland (I-58, docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md): een
+  // training telt in gedaan, "van n" en de minuten in de week van uitvoeren. `doneElsewhere`: trainingen die in deze week
+  // gepland stonden en in een andere week gedaan zijn (ze tellen daar); `fromElsewhere`: trainingen van een andere week
+  // die deze week gedaan zijn (ze tellen hier). De dag is dezelfde als die van de minuten (engine/logDay.ts).
+  doneElsewhere?: ElsewhereWeek;
+  fromElsewhere?: ElsewhereWeek;
+  // De telling van de geplande week, zonder de verschuiving naar de dag van uitvoeren: gedaan is elke training van
+  // deze week met een log, waar en wanneer ook. Een oordeel over de geplande week (Herhaal de week, de toets voor een
+  // extra loop, de koers over de laatste weken) leest deze, nooit `done` en `planned`
+  // (docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md).
+  plannedWeek: { done: number; planned: number };
   // De week loopt en heeft een programma: dan staat in Week de rij Week opnieuw plannen (pages/Week.tsx, replanOn:
   // programma, minstens één training, de week nog niet voorbij), en verwijst de regel Gemist ernaar
   // (docs/beslissingen/2026-11-15-gemist-en-opnieuw-plannen.md). Gemist bestaat alleen met trainingen, dus de eis van
@@ -83,6 +94,22 @@ export interface WeekReview {
   replan?: boolean;
   advice: string[];
   weeklyCheck?: WeeklyHealthCheck;
+}
+
+// Hoeveel, en welke week: de week ervoor, de week erna, of verder weg.
+export interface ElsewhereWeek { count: number; when: 'earlier' | 'later' | 'other' }
+
+// De richting van een dag ten opzichte van een week; samen één richting, anders 'other'.
+function elsewhereOf(days: readonly string[], weekStart: string): ElsewhereWeek | undefined {
+  if (days.length === 0) return undefined;
+  const whenOf = (d: string): ElsewhereWeek['when'] => {
+    const monday = mondayOfWeek(d);
+    if (monday === addDays(weekStart, -7)) return 'earlier';
+    if (monday === addDays(weekStart, 7)) return 'later';
+    return 'other';
+  };
+  const whens = new Set(days.map(whenOf));
+  return { count: days.length, when: whens.size === 1 ? [...whens][0] : 'other' };
 }
 
 interface ReviewInputs {
@@ -154,11 +181,21 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // What was done that week, by the day it was done, with or without a plan: the same
   // logs and the same minutes as the top of Week (engine/weekLogs.ts).
   const weekLogs = weekLogsOf(logs, byId, weekStart, inputs.plannedById);
-  const done = trainings.filter((s) => loggedIds.has(s.id)).length;
+  // Een gedane training telt op de dag van uitvoeren (I-58, docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md):
+  // in "x van n" gaat een training van deze week die in een andere week gedaan is eruit (`shift.out`), en een training
+  // van een andere week die deze week gedaan is erin (`shift.in`). De dag is die van de minuten (weekLogsOf). Gemist,
+  // de sleuteltraining en het advies blijven bij de geplande week: daar ging het om wat er gepland stond.
+  const shift = weekExecutionShift(plannedSessions, logs, weekStart, (s) => countsAsTraining(s) && !(s.status === 'skipped' && movedOn.has(s.id)), inputs.plannedById);
+  const inIds = new Set(shift.in.map((s) => s.id));
+  const doneOwn = trainings.filter((s) => loggedIds.has(s.id)).length;
+  const done = doneOwn - shift.out.length + shift.in.length;
+  const plannedCount = trainings.length - shift.out.length + shift.in.length;
   // Wat je deze week deed buiten een geplande training om (een losse training, iets op een rustdag): telt mee in de
-  // minuten, niet in "gedaan". Het blad zegt het dan apart, zodat "0 gedaan · 56 min" geen tegenspraak is.
+  // minuten, niet in "gedaan". Het blad zegt het dan apart, zodat "0 gedaan · 56 min" geen tegenspraak is. Een training
+  // van een andere week die je deze week deed, is geen losse training: die staat in `fromElsewhere`.
   const trainingIds = new Set(trainings.map((s) => s.id));
-  const extraLogged = weekLogs.filter((l) => !l.plannedSessionId || !trainingIds.has(l.plannedSessionId)).length;
+  const dayOfCount = countDayOf(logs, inputs.plannedById);
+  const extraLogged = weekLogs.filter((l) => !l.plannedSessionId || (!trainingIds.has(l.plannedSessionId) && !inIds.has(l.plannedSessionId))).length;
   // Gemist is overal dezelfde afleiding (engine/sessionStatus.ts#isMissedSession): voorbij, zonder log en niet
   // overgeslagen. Een overgeslagen training telt wel als gepland en niet gedaan ("2 van 5"), maar heet niet gemist:
   // Week toont hem als overgeslagen, en de kaart in Week telt hem ook niet
@@ -254,7 +291,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // The coach: at most three lines, the most important first.
   const advice: string[] = [];
   const missedNames = missedSessions.map((s) => byId.get(s.templateId)?.name ?? 'een training');
-  if (missedSessions.length === 0 && trainings.length > 0 && done === trainings.length) {
+  if (missedSessions.length === 0 && trainings.length > 0 && doneOwn === trainings.length) {
     // Een korte training (engine/shortTraining.ts) telt als gedaan, maar is niet "alles wat gepland stond".
     const trainingIds = new Set(trainings.map((s) => s.id));
     const short = weekLogs.filter((l) => {
@@ -318,8 +355,11 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     title: weekTitle(program, weekStart),
     label: weekNameAt(program, weekStart),
     extraLogged,
+    doneElsewhere: elsewhereOf(shift.out.map(dayOfCount), weekStart),
+    fromElsewhere: elsewhereOf(shift.in.map((s) => s.scheduledDate), weekStart),
     done,
-    planned: trainings.length,
+    planned: plannedCount,
+    plannedWeek: { done: doneOwn, planned: trainings.length },
     minutes,
     perSport,
     missed: missedNames,

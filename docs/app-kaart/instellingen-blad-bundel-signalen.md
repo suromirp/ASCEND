@@ -9,6 +9,9 @@ Wat opvalt in je ochtenden, je trainingen en het weer, als melding. Je planning 
 [knop: Vroeg ziek zien]
 Vroeg ziek zien
 [knop: Uitleg: Vroeg ziek zien]
+[knop: Eén duidelijke ochtend]
+Eén duidelijke ochtend
+[knop: Uitleg: Eén duidelijke ochtend]
 [knop: Twee van drie]
 Twee van drie
 [knop: Uitleg: Twee van drie]

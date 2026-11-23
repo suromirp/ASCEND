@@ -4,7 +4,7 @@ import type { RouteAnswer, RouteFn, RoutePoint, RouteProposal } from '../models/
 import { lineLength, metersBetween, offsetPoint } from './routeGeometry';
 import {
   CLOSE_ENOUGH, SHORT_LIMIT, ascentNotice, MAX_ROUTE_CALLS, MAX_VIAS, SUBSTITUTE_LINE, adventureVias, searchLines, terrainFound, climbOnLine, composeOutAndBack, composeSimple, cutAt, tallestClimbLine, proposalFacts, proposalNotes, proposalTitle,
-  proposeAdventure, proposeRoutes, proposeSimple, simpleCandidates, LONGER_WALK_LEAD, longerWalkLine, walkBasisLine, walkFitLine,
+  proposeAdventure, proposeRoutes, proposeSimple, mapAgeLine, simpleCandidates, LONGER_WALK_LEAD, longerWalkLine, walkBasisLine, walkFitLine,
 } from './routePlanner';
 import { loopLines, otherLoopLine, otherLoopWarn } from './routeSheet';
 
@@ -430,5 +430,32 @@ describe('de woorden van een wandeling', () => {
     ].join(' ');
     expect(all).not.toMatch(/[\u2013\u2014]/);
     expect(all).not.toMatch(/ASCEND/);
+  });
+});
+
+describe('Zoekt zonder actuele kaart (I-53)', () => {
+  const target = { distanceKm: 4, ascentM: 0 };
+  const now = new Date('2026-11-23T10:00:00.000Z');
+  const hills = terrain(feature('hill', 40, 1500, 50));
+
+  it('zonder kaart: één regel dat de lus zonder kaart gezocht is', async () => {
+    const plans = await proposeRoutes({ start: START, target, now }, fakeRoute());
+    expect(plans.map).toBe('none');
+    expect(mapAgeLine(plans)).toBe('Er is geen actuele kaart van de omgeving, dus de lus is zonder heuvels, paden, water en bos gezocht.');
+  });
+  it('een oude kaart (ouder dan 30 dagen): de regel zegt hoe oud', async () => {
+    const old = { ...hills, fetchedAt: '2026-09-01T08:00:00.000Z' };
+    const plans = await proposeRoutes({ start: START, target, terrain: old, now }, fakeRoute());
+    expect(plans.map).toBe('old');
+    expect(mapAgeLine(plans)).toContain('oude kaart');
+  });
+  it('een verse kaart: geen regel', async () => {
+    const plans = await proposeRoutes({ start: START, target, terrain: hills, now }, fakeRoute());
+    expect(plans.map).toBeUndefined();
+    expect(mapAgeLine(plans)).toBe('');
+  });
+  it('geen lus gevonden: geen kaartregel, de fout zegt genoeg', async () => {
+    const plans = await proposeRoutes({ start: START, target, now }, fakeRoute({ answers: Array(40).fill({ ok: false, reason: 'timeout' }) }));
+    expect(mapAgeLine(plans)).toBe('');
   });
 });

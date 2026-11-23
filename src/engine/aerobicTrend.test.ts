@@ -95,6 +95,32 @@ describe('aerobicTrend: vlak tempo en stijging', () => {
     expect(pace(l).runs).toBe(0);
   });
 
+  // I-33: de bodem van 20 m in climbPerKm, en een loop zonder getal van het horloge.
+  const short = (watch: number | undefined, ownPerKm: number, profileGain?: number): SessionLog => {
+    const base = run('s', 'tpl_easy_run', '2026-10-18', 3, 27, 152, watch ?? 0);
+    if (watch === undefined) delete base.cardioData!.elevationGainM;
+    const kms = Array.from({ length: 3 }, (_, i) => ({ index: i + 1, startM: i * 1000, endM: (i + 1) * 1000, distanceM: 1000, sec: 540, paceSecKm: 540, gainM: ownPerKm }));
+    return {
+      ...base,
+      runDetail: { version: 1 as const, wholeKm: 3, wholeMinutes: 27, builtAt: '', totalM: 3000, movingSec: 1620, pauseSec: 0, kms, line: { n: 0, distM: [], timeSec: [], paceSecKm: [], hr: [], altitudeM: [] } },
+      ...(profileGain !== undefined && watch
+        ? { detail: { version: 1 as const, source: 'import' as const, sliceCount: 1, slices: [{ sec: 1620, distanceM: 3000, gainM: profileGain, lossM: profileGain }], stretches: [], movingSec: 1620, quality: { heartRateCoveragePct: 100, gainAgreementPct: Math.round((profileGain / watch) * 100) } } }
+        : {}),
+    };
+  };
+
+  it('vlak: een eigen telling ruim boven het horloge maar minder dan 20 m verschil houdt het horloge', () => {
+    // Horloge 31 m (10 m per km), eigen telling 50 m (161 procent, 19 m verschil): het horloge geldt, de loop telt.
+    expect(pace(short(31, 17, 50)).runs).toBe(1);
+    // 20 m of meer verschil: de eigen telling van 17 m per km, te heuvelachtig.
+    expect(pace(short(30, 17, 51)).runs).toBe(0);
+  });
+
+  it('zonder getal van het horloge telt de eigen stijging, niet nul', () => {
+    expect(pace(short(undefined, 17)).runs).toBe(0);
+    expect(pace(short(undefined, 3)).runs).toBe(1);
+  });
+
   it('negeert een run in detail die bij andere totalen hoort', () => {
     const l = hilly();
     l.runDetail!.wholeKm = 9.5;

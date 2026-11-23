@@ -475,6 +475,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
     reset: () => ({ locationOn: false }),
   },
   flag('vroeg-ziek', 'Vroeg ziek zien', 'lichaam', 'illnessSigns'),
+  flag('vroeg-ziek-een', 'Vroeg ziek zien: één duidelijke ochtend', 'lichaam', 'illnessSignsOneMorning'),
   flag('hitte-tempo', 'Hitte bij je tempo', 'lichaam', 'heatPace'),
   flag('weekdag-patroon', 'Patronen per weekdag', 'lichaam', 'weekdayPattern'),
   flag('luchtkwaliteit', 'Luchtkwaliteit', 'lichaam', 'airQuality'),

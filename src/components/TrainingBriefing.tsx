@@ -505,7 +505,7 @@ export function MapPlace({ view, model, searchOn, declined, onTap, onDecline, on
     return (
       <div className="flex flex-col gap-2">
         {start}
-        <RouteFailure kind={stage} onRetry={model.retry} height={BRIEFING_MAP_HEIGHT} line={model.failLine} />
+        <RouteFailure kind={stage} onRetry={model.retry} height={BRIEFING_MAP_HEIGHT} line={model.failLine} model={model} />
         {targetLine}
       </div>
     );
@@ -572,6 +572,7 @@ function LoopPlace({ model, target, onBigger, date }: { model: RouteSearchModel;
       )}
       {pickedOutcome?.ok && picked && <div className="-mt-2"><OtherLoop model={model} onFull={onBigger} /></div>}
       {date && pickedOutcome?.ok && <RouteInfo proposal={pickedOutcome.proposal} target={target} paceSecKm={model.paceSecKm} date={date} compact />}
+      {model.mapLine && <p role="status" className="text-xs leading-snug" style={dim}>{model.mapLine}</p>}
       {other && otherOutcome?.ok && (
         // Direct onder de gekozen lus: Kies is 44 px hoog, de rij schuift 4 px op zodat er geen gat valt.
         <div className="-mt-1 flex items-center justify-between gap-3">
@@ -588,7 +589,11 @@ function LoopPlace({ model, target, onBigger, date }: { model: RouteSearchModel;
 
 // Het blad Route achter Groter: de volle kaart en de lange tekst, met de regie van de Briefing.
 function BigRouteSheet({ template, model, date, onClose, onDecline }: { template: SessionTemplate; model: RouteSearchModel; date: string; onClose: () => void; onDecline: () => void }) {
-  const { closing, requestClose, sheetRef } = useSheetClose(onClose);
+  const { closing, requestClose, sheetRef } = useSheetClose(() => {
+    // Sluit het blad midden in het kiezen van een punt, dan blijft Andere lus niet half open staan.
+    model.other.cancelVia();
+    onClose();
+  });
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>

@@ -150,6 +150,7 @@ const everything: AppSettings = {
   watchSilence: false,
   watchKindCheck: false,
   illnessSigns: false,
+  illnessSignsOneMorning: false,
   heatPace: false,
   weekdayPattern: false,
   airQuality: false,

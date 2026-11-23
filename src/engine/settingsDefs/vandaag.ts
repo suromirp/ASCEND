@@ -713,7 +713,7 @@ export const VANDAAG: SettingDef[] = [
     page: 'vandaag',
     place: { in: 'bundel-weer' },
     title: 'Wind bepaalt de richting',
-    note: 'Bij een lus begin je tegen de wind in en heb je hem op de terugweg mee, uit het weer dat de app al heeft. Het advies is aan. Bij wind onder 12 km/u of zonder windgegevens verandert er niets.',
+    note: 'Bij een lus begin je tegen de wind in en heb je hem op de terugweg mee, uit het weer dat de app al heeft. Het advies is aan. Bij wind onder 12 km/u, zonder windgegevens of als je start verder dan 25 km van de plek van het weer ligt, verandert er niets.',
     keywords: ['route', 'lus', 'wind', 'richting', 'tegenwind', 'meewind', 'andersom', 'draairichting', 'rondje'],
     help: true,
     helpKey: 'routeWind',

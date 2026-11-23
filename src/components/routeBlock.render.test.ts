@@ -29,7 +29,7 @@ function model(over: Partial<RouteSearchModel> = {}): RouteSearchModel {
     order: ['adventure', 'simple'], plans: { adventure: { ok: true, proposal: a }, simple: { ok: true, proposal: s } }, okStyles: ['adventure', 'simple'], picked: 'adventure', pickedOutcome: { ok: true, proposal: a },
     setChosen: () => undefined, mapRoutes: [{ style: 'adventure', points: a.points }, { style: 'simple', points: s.points }], mapStartPoint: { lat: 0, lon: 0 }, base: 'dark', photo: 'map', setPhoto: () => undefined, hereMode: false, noMap: false, markNoMap: () => undefined,
     startOnMap: async () => ({ ok: false, line: '' }), steps: ['terrain', 'routes'], currentStep: 'terrain', limitLine: '', limitMs: 30_000, searchKey: 'k',
-    foundLines: [], sources: [], parts: [], retry: () => undefined, sender: null, other: { available: false, busy: false, failLine: '', note: '', pick: () => undefined, retry: undefined }, ...over,
+    foundLines: [], mapLine: '', sources: [], parts: [], retry: () => undefined, sender: null, other: { available: false, busy: false, failLine: '', note: '', pick: () => undefined, retry: undefined }, ...over,
   } as RouteSearchModel;
 }
 
@@ -150,9 +150,20 @@ describe('het blok met de route in de Briefing', () => {
   it('Groter is een blad door useSheetClose met het greepje: de terugknop sluit alleen dat blad', async () => {
     const src = (await import('./TrainingBriefing.tsx?raw')).default as string;
     const big = src.slice(src.indexOf('function BigRouteSheet'), src.indexOf('function FuelDetail'));
-    expect(big).toContain('useSheetClose(onClose)');
+    expect(big).toContain('useSheetClose(');
     expect(big).toContain('ref={sheetRef}');
     expect(big).toContain('<SheetGrip />');
+  });
+  it('Groter in de Briefing zet het kiezen van een via-punt uit bij sluiten (I-128)', async () => {
+    const src = (await import('./TrainingBriefing.tsx?raw')).default as string;
+    const big = src.slice(src.indexOf('function BigRouteSheet'), src.indexOf('function FuelDetail'));
+    expect(big).toContain('model.other.cancelVia()');
+  });
+  it('het kiezen van een via-punt hoort bij één zoeksleutel: een nieuwe zoektocht wist het (I-128)', async () => {
+    const src = (await import('./useRouteSearch.ts?raw')).default as string;
+    expect(src).toContain('choosing: viaChoosingKey === key');
+    expect(src).toContain('beginVia: () => setViaChoosingKey(key)');
+    expect(src).not.toContain('useState(false);\n  const [otherBusy');
   });
   it('de andere lus: te kort staat één keer in amber in zijn ingeklapte rij, anders niets (routes-vorm)', () => {
     const short = loop({ style: 'simple', distanceM: 5_000, ascentM: 0, hills: 0 });

@@ -4,7 +4,7 @@ import type { PlannedSession } from '../models/training';
 import { addDays } from '../utils/dates';
 import { applyPlanChangeItems } from './proposalEngine';
 import { weekConcerns } from './weekConcerns';
-import { adviceSessionIds, planWeekFix, weekNotice } from './weekFixProposal';
+import { adviceSessionIds, planWeekFix, weekNotice, weekNoticeConcerns } from './weekFixProposal';
 import { repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
 
 const { templates } = buildDefaultProgramData();
@@ -108,6 +108,23 @@ describe('weekNotice naast de voorstellen van Vandaag', () => {
     const n = weekNotice(input(sessions), MONDAY, true, adviceSessionIds([advice('a', 'ander')]));
     expect(n.covered).toEqual([]);
     expect(n.fixes['REST-DAY:w-3']).toBeDefined();
+  });
+
+  // I-72: gedekt is de training van de melding zelf, niet een andere training die het eigen voorstel van Week ook zou
+  // raken. Raakt het voorstel van Week een training van een voorstel op Vandaag, dan komt het er niet (twee voorstellen
+  // trekken nooit aan dezelfde training), maar zegt Week ook niet dat Vandaag er al een voorstel voor heeft.
+  it('een voorstel op Vandaag voor een andere training dekt de melding niet, ook als het eigen voorstel die training raakt', () => {
+    const other = week(['tpl_long_run', 'tpl_long_run', 'tpl_upper_a', 'tpl_easy_run', 'tpl_intervals', 'tpl_hills_descent', 'tpl_lower_a']);
+    const on = input(other, { restDay: 2 });
+    const open = weekNotice(on, MONDAY, true);
+    expect([...adviceSessionIds([open.fixes['REST-DAY:w-1']])]).toContain('w-3');
+    const taken = adviceSessionIds([advice('a', 'w-3')]);
+    const n = weekNotice(on, MONDAY, true, taken);
+    expect(n.covered).not.toContain('REST-DAY:w-1');
+    const fix = n.fixes['REST-DAY:w-1'];
+    if (fix) expect([...adviceSessionIds([fix])]).not.toContain('w-3');
+    // De snelle helft zegt hetzelfde als de volledige.
+    expect(weekNoticeConcerns(on, MONDAY, taken).covered).toEqual(n.covered);
   });
 
   it('de test van TEST-MAKE-ROOM telt ook als de test zelf niet verschuift', () => {

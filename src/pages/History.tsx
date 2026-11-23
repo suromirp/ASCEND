@@ -26,6 +26,7 @@ import { InfluenceSheet } from '../components/influence/InfluenceSheet';
 import { useDeviations } from '../components/influence/useInfluence';
 import { entryForLog, isNoted, signState } from '../engine/influence';
 import { hoursMinutes } from '../utils/hoursMinutes';
+import { climbOfLine } from '../engine/runClimb';
 
 
 
@@ -262,8 +263,8 @@ export function HistoryPage() {
                           environment,
                           garminType,
                           feel: log.subjectiveFeel,
-                          elevationGainM: log.outdoorData?.elevationGainM ?? log.cardioData?.elevationGainM,
-                          elevationEstimated: log.outdoorData?.elevationGainM ? log.outdoorData.estimatedElevation : log.cardioData?.estimatedElevation,
+                          // Eén getal voor de stijging, zoals op het logblad (engine/runClimb.ts, I-77).
+                          ...climbOfLine(log),
                           distanceKm: log.outdoorData?.distanceKm ?? log.cardioData?.distanceKm,
                           steps: log.outdoorData?.steps,
                         }).join(' · ')}

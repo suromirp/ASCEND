@@ -491,6 +491,9 @@ export interface AppSettings {
   // "Vroeg ziek zien" (engine/illnessSigns.ts): a question on Vandaag when resting heart rate and
   // HRV are off together for two mornings in a row. Absent = on. Optional and additive.
   illnessSigns?: boolean;
+  // "Eén duidelijke ochtend" bij Vroeg ziek zien (engine/illnessSigns.ts, I-78): one morning with
+  // both signals after a normal night is enough. Absent = on. Optional and additive.
+  illnessSignsOneMorning?: boolean;
   // "Hitte bij je tempo" (engine/heatPace.ts): a line under the weather of a run when it is warm
   // or humid. Absent = on. Optional and additive.
   heatPace?: boolean;

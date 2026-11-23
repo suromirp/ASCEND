@@ -34,7 +34,8 @@ export function useIllnessSign() {
   // De HRV van een nacht die je "Niet goed gemeten" noemde telt niet mee (engine/illnessSigns.ts).
   const judgments = judgmentsInUse(settings);
   const ignoredNights = useMemo(() => ignoredNightDates(judgments, metrics), [judgments, metrics]);
-  const sign = useMemo(() => (off ? undefined : illnessSign({ today, metrics, explained, ignoredNights, ill })), [off, today, metrics, explained, ignoredNights, ill]);
+  const oneMorning = settings.illnessSignsOneMorning !== false;
+  const sign = useMemo(() => (off ? undefined : illnessSign({ today, metrics, explained, ignoredNights, ill, oneMorning })), [off, today, metrics, explained, ignoredNights, ill, oneMorning]);
   const shown = !!sign && !!seen && seen.goodFrom !== sign.from && seen.notNowOn !== today;
   const remember = (next: Seen) => {
     setSeen(next);

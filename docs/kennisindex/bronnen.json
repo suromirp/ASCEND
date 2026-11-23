@@ -3323,8 +3323,11 @@
    "onderwerpen": [
     "week"
    ],
-   "kern": "Week en de weekterugblik zeggen over gemist hetzelfde: wat je miste doe je niet dubbel, de rest gaat terug naar het plan met Week opnieuw plannen; de terugblik sluit de som met Overgeslagen en Vervallen, het inhaaladvies noemt dagen in plaats van een eigen aantal, en een rij zegt \"gedaan di 27\" als de dag van het log anders is.",
-   "stand": "geldt"
+   "kern": "Week en de weekterugblik zeggen over gemist hetzelfde: wat je miste doe je niet dubbel, de rest gaat terug naar het plan met Week opnieuw plannen; de terugblik sluit de som met Overgeslagen en Vervallen, het inhaaladvies noemt dagen in plaats van een eigen aantal, en een rij zegt \"gedaan di 27\" als de dag van het log anders is. Geldt nog: alles, behalve dat \"x van n\" op de geplande dag bleef; een gedane training telt nu op de dag van uitvoeren.",
+   "stand": "deels",
+   "vervangenDoor": [
+    "docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md"
+   ]
   },
   "docs/beslissingen/2026-11-15-week-telling-zonder-sportschool.md": {
    "onderwerpen": [
@@ -4489,6 +4492,19 @@
    "kern": "Bij de gekozen lus: terug voor het donker (nu plus duur tegenover zonsondergang, instelbaar), een hoogteprofiel met stukken boven 8 procent in amber, de ondergrond uit BRouter-WayTags (Valhalla niets) en een afhaakring op de kaart tussen 35 en 65 procent van de lus; alles uit de lus zelf, geen extra aanroep.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-23-hoogte-en-ziek-signalen.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "lichaam-en-herstel",
+    "koppelingen-en-data"
+   ],
+   "kern": "Een loop heeft één getal voor zijn stijging (engine/runClimb.ts): het getal van het horloge tenzij watchClimbTrusted nee zegt, dan de eigen telling; Run in detail schaalt de km naar dat totaal, alleen om te tonen; de bodem van 20 m blijft (nagespeeld: geen vlakke loop verloor zijn horlogegetal). Vroeg ziek zien slaat een ochtend zonder nacht over en laat zijn rusthartslag uit het gemiddelde; na een gewone nacht van minstens 6 uur is één duidelijke ochtend genoeg (illnessSignsOneMorning, standaard aan).",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-14-hoogtemeters-na-stap-1.md",
+    "docs/beslissingen/2026-11-20-niet-goed-gemeten-rest.md"
+   ]
+  },
   "docs/beslissingen/2026-11-20-koppelvoorstel-korte-test.md": {
    "onderwerpen": [
     "lopen-en-tests",
@@ -4525,6 +4541,17 @@
    ],
    "kern": "Een nieuw log met een geplande training of horloge-activiteit wordt in één readwrite-transactie gekeken en geschreven (SessionLogsRepo.add), zodat twee tabbladen nooit twee logs geven; intervals.icu krijgt 15 s voor de kop en 15 s per stuk inhoud, nooit meer dan 120 s; een herstelstap die bij het openen faalt telt door in meta (bootStepFailures) en staat onder Versie.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-23-telt-op-dag-van-uitvoeren.md": {
+   "onderwerpen": [
+    "week"
+   ],
+   "kern": "Een gedane training telt op de dag van uitvoeren in de minuten, x van n, de weekbalk, de belasting, de beenindex en Stand (Forge later afgesloten, verplaatst of ingehaald, log in een andere week); beide weken zeggen het (\"1 in de week erna\", \"1 uit de week ervoor\"), de weekgrens is maandag 00:00 in Amsterdam; gemist en de sleuteltraining blijven bij de geplande week; daarnaast eerlijke verwijzing naar Week opnieuw plannen bij gemist.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-15-dag-van-afronden.md",
+    "docs/beslissingen/2026-10-29-dag-van-een-training.md"
+   ]
   }
  }
 }

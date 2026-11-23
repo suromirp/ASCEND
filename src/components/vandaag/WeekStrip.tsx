@@ -2,6 +2,7 @@ import type { Program } from '../../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../../models/training';
 import { resolveEffectiveFullDuration } from '../../engine/substitutions';
 import { weekDates, weekdayLongNL } from '../../utils/dates';
+import { stripSessionsByDay } from '../../engine/weekLogs';
 import { Icon } from '../icons';
 import { Pictogram, type PictogramName } from '../pictograms';
 import { LightCard } from '../ui';
@@ -56,6 +57,7 @@ export function WeekStrip({
   loose = [],
 }: {
   weekStart: string;
+  // Het hele plan of de week met de weken ernaast: een gedane training staat op de dag van uitvoeren.
   sessions: PlannedSession[];
   logs: SessionLog[];
   templateById: Map<string, SessionTemplate>;
@@ -69,13 +71,15 @@ export function WeekStrip({
 }) {
   const Wrap = plain ? 'div' : LightCard;
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  // Een gedane training staat op de dag van uitvoeren, ook uit een andere week (I-58).
+  const byDay = stripSessionsByDay(sessions, logs, weekStart);
   return (
     <Wrap>
       <ol className="grid grid-cols-7 gap-1" aria-label="Je week">
         {weekDates(weekStart).map((date) => {
           const letter = weekdayLongNL(date).charAt(0).toUpperCase();
-          const day = sessions
-            .filter((s) => s.scheduledDate === date && !(s.status === 'skipped' && (templateById.get(s.templateId)?.type === 'recovery' || s.leave?.role === 'dropped')))
+          const day = (byDay.get(date) ?? [])
+            .filter((s) => !(s.status === 'skipped' && (templateById.get(s.templateId)?.type === 'recovery' || s.leave?.role === 'dropped')))
             .flatMap((s) => {
               const template = templateById.get(s.templateId);
               return template ? [{ s, template }] : [];

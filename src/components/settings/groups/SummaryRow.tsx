@@ -39,6 +39,7 @@ export function SummaryRow({
       sub={r.sub ?? sub}
       auto={r.auto}
       dim={r.dim}
+      off={r.off}
       dot={r.dot}
       checked={r.checked}
       onChange={onChange}
