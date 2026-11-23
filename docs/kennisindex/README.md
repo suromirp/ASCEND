@@ -11,7 +11,7 @@ Een nieuw document in `docs/` krijgt een regel in `bronnen.json`, en haalt het e
 oudere besluit de stand deels of vervangen. Daarna `npm run kennisindex`; de test
 `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 576 documenten: 350 gelden, 91 deels ingehaald, 3 vervangen, 3 verouderd, 129 achtergrond.
+Stand van de 580 documenten: 350 gelden, 91 deels ingehaald, 3 vervangen, 3 verouderd, 133 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; deels ingehaald geldt alleen nog voor wat achter "Geldt nog" staat, de
@@ -36,7 +36,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/lopen-en-tests.md](../werkbriefjes/lopen-en-tests.md)
 - [architectuur/lopen-en-tests.md](../architectuur/lopen-en-tests.md): Het lange verhaal bij lopen: hartslag op het horloge, run in detail en de testloop met de tempo's.
-- Alles over dit onderwerp: [lopen-en-tests.md](lopen-en-tests.md) (34 besluiten die gelden, 11 deels ingehaald, 12 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [lopen-en-tests.md](lopen-en-tests.md) (34 besluiten die gelden, 11 deels ingehaald, 13 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Doelen
 
@@ -48,13 +48,13 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/planning.md](../werkbriefjes/planning.md)
 - [architectuur/planning.md](../architectuur/planning.md): Het lange verhaal bij planning: hoofddoel en rollen, scheduler, wie een sessie mag aanraken, labels, eerst vragen, ziek, vrij, tochten en de rugzakladder.
-- Alles over dit onderwerp: [planning.md](planning.md) (64 besluiten die gelden, 13 deels ingehaald, 28 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [planning.md](planning.md) (64 besluiten die gelden, 13 deels ingehaald, 31 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Week
 
 - Werkbriefje: [werkbriefjes/week.md](../werkbriefjes/week.md)
 - [architectuur/week.md](../architectuur/week.md): Het lange verhaal bij de Week-tab: waarschuwingen, slepen en inhalen.
-- Alles over dit onderwerp: [week.md](week.md) (29 besluiten die gelden, 9 deels ingehaald, 5 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [week.md](week.md) (29 besluiten die gelden, 9 deels ingehaald, 6 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Lichaam en herstel
 
@@ -66,7 +66,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/historie-en-logs.md](../werkbriefjes/historie-en-logs.md)
 - [architectuur/historie-en-logs.md](../architectuur/historie-en-logs.md): De volledige regel dat historie nooit herschreven wordt, met de uitzonderingen op verzoek van de eigenaar en het append-only patroon.
-- Alles over dit onderwerp: [historie-en-logs.md](historie-en-logs.md) (28 besluiten die gelden, 8 deels ingehaald, 3 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [historie-en-logs.md](historie-en-logs.md) (28 besluiten die gelden, 8 deels ingehaald, 4 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Bediening en beweging
 
@@ -74,7 +74,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 - [architectuur/bediening-en-beweging.md](../architectuur/bediening-en-beweging.md): Het lange verhaal bij bediening: terugknop, scrollen, hervatten en de ontwerpregels voor logo, tabbalk, lucht, instellingen en overgangen.
 - [architectuur/ontwerp-en-tokens.md](../architectuur/ontwerp-en-tokens.md): Het volledige ontwerp: Zee en berg, knoppen en tikdoelen, stem, beweging en alle tokens, woordelijk verhuisd uit CLAUDE.md.
 - [visie/stemgids-concept.md](../visie/stemgids-concept.md): De stemgids: de regels voor alle teksten van de app, goedgekeurd op 9 november 2026 en vastgelegd in `docs/beslissingen/2026-11-09-stem-van-ascend.md`.
-- Alles over dit onderwerp: [bediening-en-beweging.md](bediening-en-beweging.md) (37 besluiten die gelden, 15 deels ingehaald, 22 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
+- Alles over dit onderwerp: [bediening-en-beweging.md](bediening-en-beweging.md) (37 besluiten die gelden, 15 deels ingehaald, 23 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
 
 ## Werkwijze
 
