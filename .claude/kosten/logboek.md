@@ -570,3 +570,5 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-23 | Lookout proef 23f (forge, dayRules) | tester helper | sonnet | 92k tok | 15 min | geen moet; ijkset en horlogewandeling niet bereikbaar |
 | 2026-11-23 | Mag-ronde plus ontwerpen bundel 9 naar main (9f6c67fa) | coördinator | opus | n.v.t. | n.v.t. | Mag A en B, vier ontwerpen, I-14-tests, zuinige start; kaart alleen verklaarde verschillen |
 | 2026-11-23 | Warden beginnersladder I-18 | reviewer helper | opus | 110k tok | 23 min | akkoord, geen moet; mag naar I-143 |
+| 2026-11-23 | Sherpa Eén plan 2 I-14 C en D | ontwikkelaar helper | opus | 127k tok | 39 min | gebouwd, controles en kaart groen |
+| 2026-11-23 | Sherpa Losse sport I-23 stap 1 en 2 | ontwikkelaar helper | sonnet | 100k tok | 37 min | gebouwd, vraag als regel op Vandaag |
