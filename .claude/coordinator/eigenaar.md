@@ -41,7 +41,7 @@ Sinds: 23 november.
 
 ## Stuk of vast
 
-- Geen suggestie om je rustdag te verplaatsen (I-154, 15:48): het inhalen van gemiste trainingen staat vóór de rustige terugkeer en de kaart toont alleen het eerste advies. In aanbouw sinds 16:42.
+- Niets.
 
 
 ## Loopt
@@ -50,6 +50,9 @@ Sinds: 23 november.
 - Graphify, eerlijke proef: zodra de lijst leeg is. De koppeling alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 ## Net live
+
+### 23 november 18:00
+- Terugkeer gaat voor inhalen (I-154): na een pauze staat de rustige terugkeer bovenaan Vandaag, zonder inhaaladvies of testpoging ernaast. Na Liever niet op de terugkeer komt het inhalen weer.
 
 ### 23 november 16:40
 - Losse sport (I-23) helemaal: een voorstel na een zware sport blijft tot je kiest, en een duur verandert na een sport niet meer stil maar als voorstel met Akkoord. Beide instelbaar.

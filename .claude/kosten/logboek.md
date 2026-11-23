@@ -595,3 +595,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 - 23 nov 16:00 Sherpa sport-voorstel blijft (I-23 stap 0+3), opus, ontwikkelaar: 91k tokens, 144 tools, 46 min met herstel. Akkoord na één herstel.
 - 23 nov 16:05 Warden losse sport, opus, reviewer: 150k tokens, 47 tools, 8 min over vier rondes. Twee Moet, beide hersteld.
 - 23 nov 16:20 Lookout losse sport, sonnet, tester: 114k tokens, 61 tools, 20 min. Groen, één gele vlag (I-156).
+- 23 nov 17:55 Sherpa terugkeer voor inhalen (I-154), opus, ontwikkelaar: 155k tokens, 32 tools, 32 min met herstel. Warden opus geen Moet, Lookout sonnet groen.
