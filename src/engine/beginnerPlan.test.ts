@@ -76,6 +76,16 @@ describe('de ladder in de planning', () => {
     }
   });
 
+  it('de ladder gaat voor Hoeveel per soort: kracht Meer blijft op de trede, en de Herstelloop volgt de korte sessie', () => {
+    const program = programFor(4);
+    const more = (id: string, date: string) => withDurationScope({ startBuild: 'ladder', kindAmounts: { strength: 'more' } }, () => resolveEffectiveFullDuration(t(id), date, program));
+    for (let w = 1; w <= ladder.length; w++) {
+      expect(more('tpl_upper_a', day(w, 2)), `week ${w} kracht meer`).toBeLessThanOrEqual(ladder[w - 1].strength);
+      expect(minutes('tpl_recovery_run', day(w, 1), program, 'ladder'), `week ${w} herstelloop`).toBeLessThanOrEqual(ladder[w - 1].short);
+    }
+    expect(minutes('tpl_recovery_run', day(5, 1), program, 'ladder')).toBe(minutes('tpl_recovery_run', day(5, 1), program, 'gewoon'));
+  });
+
   it('bij Gewoon en bij heel licht van voor de ladder verandert er niets', () => {
     const program = programFor(4);
     for (let w = 1; w <= 4; w++) {

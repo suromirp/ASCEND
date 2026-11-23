@@ -11,11 +11,12 @@ import { getWatchState, onWatchChange, type WatchActivityState } from '../../sto
 import { ASK_ADVICE, ASK_ROLES, adviceFelt, pendingSportLogs, pendingSports, sportQuestionLine, type SportLogQuestion, type SportQuestion } from '../../engine/sportAsk';
 import { parseSportHandling, resolveSportCounting } from '../../engine/sportRole';
 import { activityToDraft, durationLabel } from '../../engine/activityImport';
+import { sportDidLine } from '../../engine/sportDidLine';
 import { sportTemplate } from '../../engine/sportTemplate';
 import { FELT_LABEL, FELT_RPE, type FeltWord } from '../../engine/sessionLoad';
 import { reportIfGone, saveLogThenChoice, thrownSaveNote } from '../../state/logSave';
 import { anySportDefinition, type SportRole } from '../../data/sports';
-import { formatDateNL, todayISO, weekdayLongNL } from '../../utils/dates';
+import { todayISO } from '../../utils/dates';
 import { Icon } from '../icons';
 import { Pictogram } from '../pictograms';
 import { ChoiceList, Sheet, SheetButtons } from '../settings/Sheet';
@@ -136,7 +137,7 @@ function CustomSportAskSheet({ question, onClose }: { question: CustomQuestion; 
   }
 
   return (
-    <Sheet eyebrow="Sporten" title={question.label} line={`Je deed iets nieuws op ${dayText(day)}, ${durationLabel(question.activity.durationSec)}. Hoe telt dit?`} onClose={onClose} onLeave={() => { leaving.current = true; }}>
+    <Sheet eyebrow="Sporten" title={question.label} line={`${sportDidLine('iets nieuws', day, todayISO(), durationLabel(question.activity.durationSec))} Hoe telt dit?`} onClose={onClose} onLeave={() => { leaving.current = true; }}>
       {(close) => (
         <>
           <p className="st-lab">Merk je dit vooral in je benen, in je armen en schouders, of in je hele lijf?</p>
@@ -189,10 +190,6 @@ function useAlive() {
     };
   }, []);
   return alive;
-}
-
-function dayText(iso: string): string {
-  return iso === todayISO() ? 'vandaag' : `${weekdayLongNL(iso)} ${formatDateNL(iso)}`;
 }
 
 const ROLE_TEXT: Partial<Record<SportRole, { label: string; note: string }>> = {
@@ -249,7 +246,7 @@ function SportAskSheet({ question, onClose }: { question: SportQuestion | SportL
   }
 
   return (
-    <Sheet eyebrow="Sporten" title={def.label} line={`Je deed ${def.label.toLowerCase()} op ${dayText(day)}${length ? `, ${length}` : ''}. Hoe telt dit?`} onClose={onClose} onLeave={() => { leaving.current = true; }}>
+    <Sheet eyebrow="Sporten" title={def.label} line={`${sportDidLine(def.label.toLowerCase(), day, todayISO(), length)} Hoe telt dit?`} onClose={onClose} onLeave={() => { leaving.current = true; }}>
       {(close) => (
         <>
           <ChoiceList<SportRole>

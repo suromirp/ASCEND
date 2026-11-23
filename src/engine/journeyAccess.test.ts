@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { placementOf } from '../data/settingsLayout';
-import { effectiveGoalKind, hasTrekGoal, isJourneyLink, visibleInSearch, NO_TREK_LINE } from './journeyAccess';
+import { effectiveGoalKind, hasTrekGoal, isJourneyLink, trekDepartureDate, visibleInSearch, NO_TREK_LINE } from './journeyAccess';
 import { searchSettings } from './settingsSearch';
 import { SETTINGS_INDEX } from '../data/settingsIndex';
 import type { TrainingGoal } from '../models/goals';
@@ -76,5 +76,23 @@ describe('zoeken zonder trekdoel', () => {
 describe('de uitleg zonder tocht', () => {
   it('is een zin zonder gedachtestreepjes', () => {
     expect(NO_TREK_LINE).not.toMatch(/[–—]/);
+  });
+});
+
+describe('trekdoel: gepauzeerd en vertrekdatum (I-142)', () => {
+  it('een gepauzeerd trekdoel telt niet mee', () => {
+    expect(hasTrekGoal([goal({ kind: 'trek_hut', status: 'paused' })], none, today)).toBe(false);
+  });
+
+  it('de vertrekdatum is die van de tocht, ook als je hoofddoel een wedstrijd is', () => {
+    const race = goal({ id: 'r', kind: 'run_race', targetDate: '2027-03-01' });
+    const trek = goal({ id: 't', kind: 'trek_hut', targetDate: '2027-07-01' });
+    expect(trekDepartureDate([race, trek], new Set(['r']), today)).toBe('2027-07-01');
+    expect(trekDepartureDate([race], new Set(['r']), today)).toBeUndefined();
+    expect(trekDepartureDate([goal({ kind: 'trek_hut', status: 'paused' })], none, today)).toBeUndefined();
+  });
+
+  it('de Kennisbank is een verwijzing naar een tochtscherm', () => {
+    expect(isJourneyLink('kennisbank')).toBe(true);
   });
 });

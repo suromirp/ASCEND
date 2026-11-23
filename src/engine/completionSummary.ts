@@ -19,7 +19,9 @@ import { computeGoalProgress } from './progression';
 import { resolveSessionContributions } from './sessionContribution';
 import { deriveSessionStatus } from './sessionStatus';
 import { fatigueWord, FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueInputs } from './legFatigue';
-import { logSport } from './sports';
+import { customName, logSport } from './sports';
+import { sportOfLog } from './sportOfLog';
+import { anySportDefinition } from '../data/sports';
 import { addDays, daysBetween, formatDateNL, formatHoursMinutesNL, mondayOfWeek, weekdayLongNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { mainGoal } from './mainGoal';
@@ -189,6 +191,13 @@ function dayWord(date: string, today: string): string {
   return weekdayLongNL(date).toLowerCase();
 }
 
+// De naam van een losse sport (padel, zwemmen of een eigen sport), of niets bij een gewone training.
+function looseSportName(log: SessionLog): string | undefined {
+  const { countedSport, customSport } = sportOfLog(log);
+  if (customSport) return customName(customSport);
+  return countedSport ? anySportDefinition(countedSport).label : undefined;
+}
+
 // Je week: hoeveel van de geplande trainingen gedaan zijn, en wat er volgt.
 function weekLine(inputs: CompletionInputs, newLogs: SessionLog[]): CompletionLine | undefined {
   const { plannedSessions, templates, logs, today } = inputs;
@@ -199,6 +208,14 @@ function weekLine(inputs: CompletionInputs, newLogs: SessionLog[]): CompletionLi
   const done = week.filter((s) => deriveSessionStatus(s, logs).status === 'completed').length;
   const whose = monday === mondayOfWeek(today) ? 'deze week' : 'die week';
   const unlinked = newLogs.every((l) => !l.plannedSessionId);
+
+  // Een losse sport die niet in je planning stond telt niet in "x van y": dat zou 0 van 4 zeggen na een goede training.
+  const sportNames = newLogs.map((l) => (l.plannedSessionId ? undefined : looseSportName(l)));
+  if (sportNames.every((n): n is string => !!n)) {
+    const distinct = [...new Set(sportNames)];
+    const who = distinct.length === 1 ? distinct[0] : 'Deze sporten';
+    return { id: 'week', text: `${who} ${distinct.length === 1 ? 'telt' : 'tellen'} niet mee in je geplande trainingen.` };
+  }
 
   if (week.length === 0) return { id: 'week', text: `Er stond ${whose} niets gepland, dit is een extra training.` };
   if (done >= week.length) return { id: 'week', text: `Je week is rond: alle ${week.length} trainingen gedaan.` };
@@ -237,7 +254,7 @@ function legsLine(inputs: CompletionInputs): CompletionLine {
 export function completionSummary(inputs: CompletionInputs): CompletionSummary {
   const newLogs = inputs.logIds.map((id) => inputs.logs.find((l) => l.id === id)).filter((l): l is SessionLog => !!l);
   const latest = [...newLogs].sort((a, b) => a.completedAt.localeCompare(b.completedAt)).at(-1);
-  const nameOf = (l: SessionLog) => inputs.templates.find((t) => t.id === l.templateId)?.name ?? 'Training';
+  const nameOf = (l: SessionLog) => inputs.templates.find((t) => t.id === l.templateId)?.name ?? looseSportName(l) ?? 'Training';
   const lines: CompletionLine[] = [];
   const goal = goalLine(inputs, latest);
   if (goal) lines.push(goal);

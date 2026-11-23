@@ -6,7 +6,7 @@ import { JOURNEY_TASKS, type JourneyTask } from '../../data/journeyTasks';
 import { bootBreakInStatus, bootGoalKm, type BootBreakInStatus, type BootsState } from '../../engine/bootBreakIn';
 import { derivedDoneLines, journeyProgress, tasksForShelter, EMPTY_JOURNEY, markDone, normalizeJourneyState, pickJourneyTask, postponeTask, unmarkDone, withBootsDone, withDerivedDone, type JourneyPick, type JourneyState } from '../../engine/journey';
 import { usableSweatEntries } from '../../engine/sweat';
-import { programAnchorDate } from '../../engine/programLayout';
+import { trekDepartureDate } from '../../engine/journeyAccess';
 import { todayISO } from '../../utils/dates';
 
 // The reisplanner as the screens use it: the stored state, this week's
@@ -29,9 +29,9 @@ export function useJourney(): {
 } {
   const { settings, updateSettings, trainingGoals, goalMilestones, sessionLogs } = useAppData();
   const today = todayISO();
-  // Zonder tocht als doel bestaat de reis niet: de ankerdatum is er ook bij een loopdoel.
+  // Zonder tocht als doel bestaat de reis niet; met een tocht telt de datum van die tocht, ook als je hoofddoel een wedstrijd is.
   const trek = useHasTrekGoal();
-  const goalDate = trek ? programAnchorDate(trainingGoals, goalMilestones, today) : undefined;
+  const goalDate = trek ? trekDepartureDate(trainingGoals, new Set(goalMilestones.map((m) => m.goalId)), today) : undefined;
   const stored = useMemo(() => normalizeJourneyState(settings.journey).state, [settings.journey]);
   const boots = useMemo(
     () => bootBreakInStatus({ boots: stored?.boots, logs: sessionLogs, goalKm: bootGoalKm(settings.bootBreakInKm), today, departure: goalDate }),

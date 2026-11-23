@@ -232,9 +232,6 @@ export function resolveEffectiveFullDuration(
   if (!fixed && target && currentAmbition !== 'standaard') {
     base = Math.max(15, Math.round((base * ambitionFactor(currentAmbition, /rust/i.test(target.step.note ?? ''))) / 5) * 5);
   }
-  // De ladder van heel licht in de beginnersstart (engine/beginnerPlan.ts): wandelen en dribbelen krijgt de minuten
-  // van die week, kracht en de Herstelwandeling hoogstens zoveel. Een eigen lengte wint.
-  if (!fixed) base = applyStartLadder(base, startLadderMinutes(template, scheduledDate, program, startBuild));
   const own = recentMaxima.minutesByTemplate[template.id];
   const start = recentMaxima.fromStart?.[template.id];
   const logged = Math.max(own ?? 0, start ?? 0) || undefined;
@@ -249,6 +246,8 @@ export function resolveEffectiveFullDuration(
   const kind = fixed ? undefined : trainingKindOf(template);
   const amount = kind ? kindAmounts[kind] : undefined;
   if (amount) base = scaledMinutes(base, amount, !target && logged ? Math.round((logged * SESSION_SPIKE_LIMIT) / 5) * 5 : undefined);
+  // De ladder gaat voor Hoeveel per soort: voorstel en Week noemen dan hetzelfde getal (kracht 35 in week 1, I-143).
+  if (!fixed) base = applyStartLadder(base, startLadderMinutes(template, scheduledDate, program, startBuild));
   // Only the setting "Sneller dan het onderzoek" (Program.runBuild.spikeLimit) lifts the 110% of the long run.
   const limit = template.id === LONG_RUN_ID ? readRunBuild(program?.runBuild)?.spikeLimit ?? SESSION_SPIKE_LIMIT : SESSION_SPIKE_LIMIT;
   // De maat van het plan na de beginnersstart (plannedAfterStart): de rem zonder log, en de bovengrens van de bodem

@@ -359,8 +359,6 @@ function AppShell() {
             {/* De lijst met rekoefeningen en de pagina Blessures zijn opgegaan in Lichaam. */}
             <Route path="/stretches" element={<Navigate to="/lichaam" replace />} />
             <Route path="/stretches/:areaId" element={<StretchAreaRedirect />} />
-            <Route path="/kennis" element={<KnowledgePage />} />
-            <Route path="/kennis/:topicId" element={<KnowledgeTopicPage />} />
             {/* Oude links: de trainingsgids is het blad "Hoe je het doet" bij elke
                 training, de Garmin-gids staat onderaan de koppeling met Garmin. */}
             <Route path="/gids" element={<Navigate to="/week" replace />} />
@@ -380,6 +378,8 @@ function AppShell() {
               <Route path="/reis/paklijst" element={<PackListPage />} />
               <Route path="/etappes" element={<EtappesPage />} />
               <Route path="/onderweg" element={<AlleenOnderwegPage />} />
+              <Route path="/kennis" element={<KnowledgePage />} />
+              <Route path="/kennis/:topicId" element={<KnowledgeTopicPage />} />
             </Route>
             {/* Een adres dat niet bestaat (meer) opent Vandaag, niet een leeg scherm. */}
             <Route path="*" element={<Navigate to="/" replace />} />
