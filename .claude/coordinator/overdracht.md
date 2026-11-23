@@ -13,8 +13,8 @@ Max twee bouwers, nooit op dezelfde bestanden. Warden en Lookout per twee of dri
 2. Week: gebouwd (claude/week-weergave, 4 commits, 11.946 tests groen). Huidige werking per geval: Forge later afgesloten telde al op de dag van de sets voor minuten, belasting, beenindex en Stand, alleen x van n en de weekbalk niet; verplaatst klopte al tenzij op weer een andere dag gedaan; log in andere week: minuten goed, x van n en weekbalk niet. Alles nu op dag van uitvoeren. Eigen keuzes (advies, gebouwd): open Forge telt pas vanaf Afronden; sleuteltraining en Gemist blijven bij de geplande week. Proefmerge claude/proef-23b; kaart:vergelijk: 108 gelijk, verschil week-zonder-sportschool (sr-only "gedaan di 27", bedoeld) en instellingen-vandaag (Meldingen Bezig…, timing); na herstel npm run kaart. Eerste poging crashte bij gelijktijdige Lookout (browser dicht). Lookout: 1 Moet (kaart Weekterugblik op Vandaag mist "1 uit de week ervoor", WeekReview.tsx gebruikt alleen doneElsewhere); I-72 niet in UI op te zetten. Herstel samen met Warden-punten naar bouwer a245f7af9add28677. Warden (opus) loopt.
 3. Forge en logs (sonnet): I-113, I-60, I-30, I-73. Pas na squash I-124 (ForgeWorkout.tsx).
 4. dayRules (opus): I-74, I-82 punt 3. Pas na squash bundel 2.
-5. Opslag (opus, loopt, claude/opslag-23): I-54, I-35.
-7. Route vervolg (sonnet): I-53; I-76 eerst Scout.
+5. Opslag: gebouwd (claude/opslag-23, 1e4954ba en 2045e9a4); eigen keuzes met advies: plafond 120 s intervals, zin mislukte herstelstap in blad Versie. Warden (opus) loopt; Lookout voor de zin in Versie kan mee met de volgende Lookout.
+7. Route vervolg (sonnet, loopt, claude/route-op-reis): I-53 plus I-126 tot I-129. I-76 eerst Scout.
 8. Naspelen (opus, loopt, claude/naspelen-hoogte-ziek): I-77, I-33, I-78 met de back-up (scratchpad backup/backup-2026-11-23.json, chmod 600, alleen lezen). Besluit 2026-11-23-hoogte-en-ziek-signalen.md.
 9. Groot, achteraan: I-14, I-18, I-23, I-34: eerst Cartographer (opus) per punt in docs/visie, dan bouwen naar risico. I-103 niet.
 
