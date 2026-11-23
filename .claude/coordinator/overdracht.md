@@ -2,7 +2,7 @@
 
 ## Start (bijgewerkt 23 november 16:45 Amsterdam, coördinator session_01LnDpSnEAuFAjTkBK2YLZBH)
 
-- 16:42: overgenomen door session_01LnDpSnEAuFAjTkBK2YLZBH (opvolger). Sherpa Opus loopt op I-154, tak claude/terugkeer-voorrang; daarna Warden Opus. Deploy df187512 liep nog om 16:40.
+- 16:42: overgenomen door session_01LnDpSkfAkTpyoFVnRE9gBr. Sherpa Opus loopt op I-154, tak claude/terugkeer-voorrang; daarna Warden Opus. Deploy df187512 liep nog om 16:40.
 
 Lees dit en CLAUDE.md. `eigenaar.md` en `docs/backlog.md` niet lezen, alleen grep op I-nummer. Meer nodig: `werkwijze.md`. Oude standen: git-geschiedenis.
 
