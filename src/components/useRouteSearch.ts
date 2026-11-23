@@ -21,7 +21,7 @@ import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { loadBodyKg } from '../engine/weightTrend';
 import { resolveRouteStyle, roundStart, routeTarget, runPaceSecKm, walkKind } from '../engine/routeTarget';
-import { searchLines, type PlanOutcome } from '../engine/routePlanner';
+import { renotedProposal, searchLines, type PlanOutcome } from '../engine/routePlanner';
 import { findOtherLoop, findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
 import { askMapCenter, locateAnswerCounts, locateNow, maySearch, planStart, startView, resolveRouteStart, type AskMapCenter, roundExact, roundHere, startFailureReason, type RouteStartMode, type StartPick } from '../engine/routeStart';
 import { getRouteStartPoint, locateStartHere, saveRouteStartPoint, START_LOCATE_LIMIT_MS, startFromMap, type StartLocation } from '../storage/routeStart';
@@ -485,13 +485,16 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   // De wind van het uur waarop je meestal begint; een wandeling die je zelf plant begint nu.
   const startHour = template ? usualStartHour(template, sessionLogs, date).hour : undefined;
   const loopWind = settings.routeWind !== false ? windForStart(weather.forecast, date, startHour, new Date()) : undefined;
+  // Een omgedraaide lus telt zijn stijgen opnieuw: de amber regel wordt voor de lus zoals hij nu staat uitgerekend (renotedProposal).
+  const renote = (before: RouteProposal, after: RouteProposal) => (after === before ? after : renotedProposal(after, target, rawPlans?.found));
+  const orient = (p: RouteProposal) => renote(p, orientByWind(p, loopWind));
   const windPlans: typeof rawPlans = rawPlans && loopWind && rawPlans.adventure.ok
-    ? { ...rawPlans, adventure: { ok: true, proposal: orientByWind(rawPlans.adventure.proposal, loopWind) } }
+    ? { ...rawPlans, adventure: { ok: true, proposal: orient(rawPlans.adventure.proposal) } }
     : rawPlans;
 
   // Andere kant op: dezelfde punten achterstevoren, zonder nieuwe zoektocht.
   const reversedPlans: typeof rawPlans = windPlans && adjust.reversed.length > 0
-    ? { ...windPlans, ...Object.fromEntries(adjust.reversed.map((st) => { const o = windPlans[st]; return [st, o.ok && canReverse(o.proposal) ? { ok: true, proposal: reverseProposal(o.proposal) } : o]; })) }
+    ? { ...windPlans, ...Object.fromEntries(adjust.reversed.map((st) => { const o = windPlans[st]; return [st, o.ok && canReverse(o.proposal) ? { ok: true, proposal: renotedProposal(reverseProposal(o.proposal), target, rawPlans?.found) } : o]; })) }
     : windPlans;
   // Andere lus: de gekozen variant staat op de plek van de lus waar hij bij hoort.
   const plans: typeof rawPlans = reversedPlans && variant?.key === key && reversedPlans[variant.style].ok
@@ -510,7 +513,7 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   const reverse = () => {
     if (!picked) return;
     // Staat er een variant van Andere lus, dan draait Andere kant op die om: één lus op de kaart.
-    if (variant?.key === key && variant.style === picked) setVariant({ ...variant, proposal: reverseLoop(variant.proposal) });
+    if (variant?.key === key && variant.style === picked) setVariant({ ...variant, proposal: renotedProposal(reverseLoop(variant.proposal), target, rawPlans?.found) });
     else dispatch({ type: 'reverse', base: adjustBase, style: picked });
   };
   const stepLength = (dir: 'longer' | 'shorter') => {
@@ -538,7 +541,7 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     const previous = pickedOutcome.proposal;
     setOtherFail(undefined);
     if (choice === 'reverse') {
-      setVariant({ key, style: otherStyle, proposal: reverseLoop(previous) });
+      setVariant({ key, style: otherStyle, proposal: renotedProposal(reverseLoop(previous), target, rawPlans?.found) });
       return;
     }
     otherStop.current?.abort();
@@ -552,7 +555,7 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
       setOtherBusy(undefined);
       // Een lus die bij een andere zoektocht hoort (intussen Langer of een andere plek) telt niet.
       if (keyNow.current !== forKey) return;
-      if (result.ok) setVariant({ key: forKey, style: otherStyle, proposal: choice === 'via' ? result.proposal : orientByWind(result.proposal, loopWind), ...(result.note ? { note: result.note } : {}), ...(choice === 'via' ? { via: true as const } : {}) });
+      if (result.ok) setVariant({ key: forKey, style: otherStyle, proposal: choice === 'via' ? result.proposal : orient(result.proposal), ...(result.note ? { note: result.note } : {}), ...(choice === 'via' ? { via: true as const } : {}) });
       else setOtherFail({ key: forKey, line: result.line, choice });
     });
   }

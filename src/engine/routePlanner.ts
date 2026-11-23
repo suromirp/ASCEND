@@ -708,6 +708,15 @@ export function notedOutcome(o: PlanOutcome, target: RouteTarget, found?: Terrai
   return notice || asks.targetAscentM !== undefined ? { ok: true, proposal: { ...o.proposal, ...asks, ...(notice ? { notice } : {}) } } : o;
 }
 
+// Een omgekeerde lus (wind, Andersom, Andere kant op): het stijgen telt opnieuw, dus de amber regel "Deze lus stijgt
+// X m" en het getal dat de training vraagt worden uitgerekend voor de lus zoals hij nu staat. Dezelfde regel als bij
+// het zoeken (notedOutcome), op de omgedraaide feiten; een melding die niet meer geldt verdwijnt.
+export function renotedProposal(p: RouteProposal, target: RouteTarget, found?: TerrainFound): RouteProposal {
+  const { notice: _notice, targetAscentM: _asked, ...bare } = p;
+  const o = notedOutcome({ ok: true, proposal: bare }, target, found);
+  return o.ok ? o.proposal : p;
+}
+
 // Beide lussen, de avontuurlijke eerst (zijn lijn is de reserve voor Simpel). Gooit nooit: elke
 // uitkomst is een lus of een reden.
 export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<RoutePlans> {

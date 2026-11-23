@@ -29,6 +29,10 @@ Terug voor het donker (`routeBackBeforeDark`) krijgt een uitleg achter de i, zoa
 
 Bij Noord, Oost, Zuid of West zonder paden of hellingen in dat zoekbereik houdt de app de lus die er staat, zonder aanroep van de planner. Een zoektocht zonder richting gaf dezelfde lus terug. De regel zegt waar de lus die er is naartoe gaat ("De lus die er is gaat naar het westen."), en wijkt daarmee een woord af van de eerdere zin ("De beste lus die er wel is"), omdat het nu de lus is die er al stond. Dit werkt het zinnetje in `2026-11-22-andere-lus.md` bij; dat besluit blijft staan.
 
+## Na omdraaien klopt de amber regel (I-122)
+
+Draait de lus om (wind, Andersom, Een andere kant op onder Bijsturen, Andersom in het blad Andere lus), dan telt het stijgen opnieuw en dus ook de amber regel "Deze lus stijgt X m; de training vraagt Y m". Die wordt voor de omgedraaide lus opnieuw uitgerekend met dezelfde regel als bij het zoeken (`routePlanner.ts#renotedProposal`, `notedOutcome` op de omgedraaide feiten); een regel die niet meer geldt verdwijnt, en het getal dat de training vraagt blijft erbij. De ondergrond hoort bij het stuk dat op een punt eindigt en schuift bij omkeren een punt op (`routeAdjust.ts#reverseProposal`); een grote weg hoort bij twee punten tegelijk en blijft zoals hij was, dus `bigRoadM` verandert niet. Dit was een kleine bug: de oude regel bleef staan met het getal van de andere richting.
+
 ## Reden
 
 De eigenaar vroeg in het besluit Andere lus al om Via een punt en Soort terrein, later (I-112). Een lus langs water of bos, of langs een plek die je zelf aanwijst, is wat een loper zelf zou kiezen.
