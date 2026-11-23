@@ -7,10 +7,8 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 `docs/beslissingen/`.
 
 ## Inbox
-Hoogste code: I-145. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
-- [I-145] (23 november, Lookout bundel 9, mag) Losse sport: het blad zegt "Je deed padel op vandaag" (`dayText`, oud); het afrondscherm noemt de training "Training" in plaats van de sport; het toont "0 van 4 trainingen" na een losse sport die nog niet meetelt (uitleggen of weglaten). Niet live gedraaid: debrief na een echte testlog, weegherinnering bij een vaste sportafspraak, week 2 van een golf met rem tegelijk.
-- [I-143] (23 november, Warden I-18, mag) Beginnersladder: met Hoeveel per soort op Meer tilt `scaledMinutes` boven de ladder (`substitutions.ts` rond 235), het voorstel zegt kracht 35 en Week toont 40; kleinste fix ladder na `scaledMinutes`, keuze wat wint is voor de eigenaar (advies: de ladder). Herstelloop (`tpl_recovery_run`) valt buiten de ladder. Tekst van het eerste voorstel noemt alleen wandelen en dribbelen (stap 5). `afterStartStep` rondt 82,5 af naar 85 (valkuilregel). Eigen trigger bij ongedaan maken in `planChangeActions`. Kaart: Meldingen toonde eenmaal "Bezig…" onder belasting, nagaan of de wachtstand een tijdsgrens heeft.
-- [I-142] (23 november, ontwerp I-34, mag) Vier kleine punten uit Verborgen schermen, alle vier nog op main: een trekdoel dat geen hoofddoel is krijgt de datum van het hoofddoel (`useJourney.ts:34`, `programAnchorDate`; nagaan welke afteldatum de Reisplanner dan toont); Etappes zegt "Nog geen tocht om mee te vergelijken" (`Etappes.tsx:103`), wordt "Nog geen gelopen dag om mee te vergelijken"; `hasTrekGoal` telt een gepauzeerd trekdoel mee; Kennisbank en `useWeeklyLesson` kijken niet of er een tocht als doel is.
+Hoogste code: I-146. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+- [I-146] (23 november, Sherpa I-143, mag) Een training die Hoeveel per soort op Meer in de startweken erbij zet, krijgt na Akkoord een vaste lengte van de ladder (`diffFor` in `horizonPlan.ts`, `ladderMinutesOf`); verandert de ladder later (ander niveau), dan schuift die rij niet mee. Nagaan of de rij beter zonder vaste lengte kan.
 - [I-141] (23 november, Lookout Mag, mag) Week op 360 px: bij slepen bedekt de chip "Je rustdag" half de pil Herstel van die rij; de ondertitel "verplaatst… di 24" van een verplaatste rij is afgekapt. Niet getoetst in de browser: slepen naar een dag met twee trainingen, de chips Vol en Dicht op, Let op bij verkouden.
 - [I-140] (23 november, Warden Mag, mag) `SessionLogsRepo.add` leest bij elk nieuw log twee keer alle logs (readonly voorcontrole en readwrite); op termijn een index op `plannedSessionId` en `externalId` (migratie) of alleen de readwrite-controle. In Hoe ging het? blijft Opslaan uit na "loopt nog" (Lookout), Forge zet hem weer aan: gelijk trekken.
 - [I-139] (23 november, Warden Mag, mag) Valkuil in een werkbriefje: `nearbyTerrain.ts#periodRules` cachet op de identiteit van de lijst periodes; een periode nooit in place wijzigen. Besluit vastleggen voor de wachtgrens van 30 s op een eerdere opslag (I-135). `FinishSheet.tsx:169` zet `busy.current` niet terug na `away`.
@@ -77,6 +75,9 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-145] Losse sport (23 november, d99eb30)
+- [I-143] Beginnersladder (23 november, d99eb30)
+- [I-142] Vier kleine punten uit Verborgen schermen, alle vier nog op main (23 november, d99eb30)
 - [I-144] Na een pauze van twaalf dagen zonder training staat op Vandaag de vaste Herstelwandeling als… (23 november, 7be515c)
 - [I-138] De chip van de doeldag zit bij slepen achter de sleepkaart op 412 px; vraagt een andere indeling en… (23 november, 9f6c67f)
 - [I-137] Bij verkouden zegt de uitleg bij een test of wedstrijd "Ziek train je niet" onder de kop "Je bent… (23 november, 9f6c67f)
