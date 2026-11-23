@@ -4,6 +4,12 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
+### Rustdag na een vakantie gebruiken (23 november)
+Na een pauze zonder ziekte (vakantie, een stille periode) stelt de app voor om de eerste rustdag van de terugkeer te gebruiken voor een lichte gemiste training, met Akkoord. Na ziekte blijft de rustdag staan.
+Keuzes, advies voorop: ja, als I-159 op het bouwmoment; of nee, dan blijft de rustdag staan.
+Zonder antwoord: op 24 november met advies in de Inbox.
+Sinds: 23 november.
+
 ### Terugkeer na een pauze: Bekijk of Akkoord op de kaart (I-124, 23 november)
 Keuzes: de kaart houdt Bekijk en Akkoord staat in het blad dat opent, zoals elk voorstel in de app (advies); of Akkoord direct op de kaart.
 Zonder antwoord: het blijft Bekijk.
