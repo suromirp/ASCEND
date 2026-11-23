@@ -5,10 +5,11 @@
 // algemene training: stap 2 is dan de lijst. Altijd beschikbaar, wat ASCEND ook mag plannen (Sporten
 // beperkt alleen het plannen). Een log blijft een gewone SessionLog met een templateId.
 
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { Program } from '../models/program';
 import type { SessionTemplate } from '../models/training';
 import { AD_HOC_GROUP_LABEL, adHocChoices, adHocDefault, adHocGroupOf, adHocGroups, type AdHocGroupKey } from '../engine/adHocGroups';
+import { withSportNames } from '../engine/sportTemplate';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
 import { SheetRow, SheetRows } from './SheetRows';
@@ -87,7 +88,9 @@ export function TrainingSwitch({ templates, group, current, onSwitch }: { templa
 
 // Het hele verloop van Losse training op Vandaag en Week: de sport, dan het logblad met de standaard
 // van die sport en Welke training precies?. Sluit het logblad, dan is het verloop klaar.
-export function AdHocLogFlow({ templates, program, date, onClose }: { templates: SessionTemplate[]; program: Program | null; date: string; onClose: () => void }) {
+export function AdHocLogFlow({ templates: counting, program, date, onClose }: { templates: SessionTemplate[]; program: Program | null; date: string; onClose: () => void }) {
+  // Zwemmen, padel en voetbal staan altijd onder Anders, ook zonder rol (alleen om te kiezen; de planning en de beenindex lezen ze niet).
+  const templates = useMemo(() => withSportNames(counting), [counting]);
   const [picked, setPicked] = useState<{ template: SessionTemplate; group: AdHocGroupKey } | undefined>();
   if (!picked) return <AdHocLogSheet templates={templates} onPick={(template, group) => setPicked({ template, group })} onClose={onClose} />;
   const group = adHocGroupOf(picked.template) === picked.group ? picked.group : adHocGroupOf(picked.template);

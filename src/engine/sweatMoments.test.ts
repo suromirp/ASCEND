@@ -7,6 +7,16 @@ import { entryResultLine, isSweatLog } from './sweat';
 const pre = (date: string, weightKg = 80): SweatPre => ({ date, weightKg, updatedAt: `${date}T06:00:00.000Z` });
 const log = (id: string, completedDate: string) => ({ id, completedDate });
 
+describe('sweatActivityOfTemplate voor een losse sport', () => {
+  it('vraagt niet om te wegen voor zwemmen, padel, voetbal of een eigen sport', () => {
+    expect(sweatActivityOfTemplate({ type: 'cardio', countedSport: 'padel' })).toBeUndefined();
+    expect(sweatActivityOfTemplate({ type: 'cardio', countedSport: 'swimming' })).toBeUndefined();
+    expect(sweatActivityOfTemplate({ type: 'cardio', countedSport: 'football' })).toBeUndefined();
+    expect(sweatActivityOfTemplate({ type: 'cardio', customSport: 'custom_yoga' })).toBeUndefined();
+    expect(sweatActivityOfTemplate({ type: 'cardio' })).toBe('run');
+  });
+});
+
 describe('sweatActivityOfTemplate', () => {
   it('volgt de regel van isSweatLog: lopen, wandelen en een tocht', () => {
     expect(sweatActivityOfTemplate({ type: 'cardio' })).toBe('run');

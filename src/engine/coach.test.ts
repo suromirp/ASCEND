@@ -4,6 +4,8 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { Program } from '../models/program';
 import type { SessionLog } from '../models/training';
 import { resolveEffectiveFullDuration } from './substitutions';
+import { sportTemplate } from './sportTemplate';
+import type { SessionTemplate } from '../models/training';
 
 const { templates } = buildDefaultProgramData();
 const byId = new Map(templates.map((t) => [t.id, t]));
@@ -144,5 +146,44 @@ describe('punt F: de tempoloop zegt hetzelfde over praten als de Briefing', () =
   it('een rustige duurloop houdt hele zinnen', () => {
     const line = coachLineForToday({ template: t('tpl_easy_run'), date: '2026-09-29', program, tomorrow: [], yesterdayLogs: [], templateById: byId });
     expect(line).toContain('hele zinnen');
+  });
+});
+
+describe('coachReaction na een losse sport', () => {
+  const sportLog = (sport: 'swimming' | 'padel' | 'football', extra: Partial<SessionLog> = {}): SessionLog => ({
+    id: 'ls', templateId: `sport_${sport}`, type: 'cardio', countedSport: sport, completedDate: '2026-10-05', completedAt: '2026-10-05T10:00:00Z', variant: 'full', durationMinutes: 25, source: 'manual', ...extra,
+  });
+  const react = (l: SessionLog, tp?: SessionTemplate) => coachReaction(l, tp, program);
+
+  it('zegt bij padel nooit licht en rustig', () => {
+    expect(react(sportLog('padel'), sportTemplate('padel'))).toBe('Opgeslagen. Padel telt mee voor je benen en je week.');
+  });
+  it('noemt een korte zwembeurt geen korte training', () => {
+    expect(react(sportLog('swimming'), sportTemplate('swimming'))).toBe('Opgeslagen. Zwemmen telt mee voor je week, nauwelijks voor je benen.');
+  });
+  it('zegt na een zware partij iets over morgen', () => {
+    expect(react(sportLog('football', { rpe: 8 }), sportTemplate('football'))).toBe('Zwaar gespeeld. Morgen liever geen zware beendag.');
+  });
+  it('zegt zwaar gespeeld alleen bij padel en voetbal', () => {
+    expect(react(sportLog('swimming', { rpe: 8 }), sportTemplate('swimming'))).toBe('Zwaar geweest. Morgen liever geen zware beendag.');
+  });
+  it('zegt na Negeren dat de sport niet meetelt, zonder nog', () => {
+    expect(coachReaction(sportLog('football'), undefined, program, [], { sportOff: true })).toBe('Opgeslagen. Voetbal telt niet mee.');
+  });
+  it('zegt gedaan zoals afgesproken ook bij een vaste zwemafspraak', () => {
+    expect(react(sportLog('swimming', { plannedSessionId: 'ps1' }), sportTemplate('swimming'))).toBe('Gedaan zoals afgesproken.');
+  });
+  it('zegt zonder rol dat de sport nog niet meetelt', () => {
+    expect(react(sportLog('football'))).toBe('Opgeslagen. Voetbal telt nog niet mee.');
+  });
+  it('zegt na een vaste afspraak dat het gedaan is zoals afgesproken', () => {
+    expect(react(sportLog('padel', { plannedSessionId: 'ps1' }), sportTemplate('padel'))).toBe('Gedaan zoals afgesproken.');
+  });
+  it('leest ook een oud log dat de sport alleen in het templateId noemt', () => {
+    expect(react(sportLog('padel', { countedSport: undefined }))).toBe('Opgeslagen. Padel telt nog niet mee.');
+  });
+  it('laat pijn voorgaan', () => {
+    const l = sportLog('padel', { painReports: [{ area: 'Knie', score: 4 }] } as Partial<SessionLog>);
+    expect(react(l, sportTemplate('padel'))).toContain('knie');
   });
 });

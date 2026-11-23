@@ -21,8 +21,9 @@ export function asksSweat(setting: boolean | undefined): boolean {
 
 // Krijgt deze geplande training een weging? Dezelfde regel als isSweatLog voor een log:
 // lopen, en wandelen of een tocht zonder andere sport.
-export function sweatActivityOfTemplate(t: Pick<SessionTemplate, 'type' | 'sport'>): SweatActivity | undefined {
-  return sweatActivityOfLog({ type: t.type, sport: templateSport(t as SessionTemplate), cardioData: undefined, outdoorData: undefined });
+// Zwemmen, padel, voetbal of een eigen sport krijgt geen weging: het onderzoek dekt alleen lopen en wandelen.
+export function sweatActivityOfTemplate(t: Pick<SessionTemplate, 'type' | 'sport'> & Partial<Pick<SessionTemplate, 'countedSport' | 'customSport'>>): SweatActivity | undefined {
+  return sweatActivityOfLog({ type: t.type, sport: templateSport(t as SessionTemplate), cardioData: undefined, outdoorData: undefined, countedSport: t.countedSport, customSport: t.customSport });
 }
 
 // --- voorgewicht ----------------------------------------------------------------------
