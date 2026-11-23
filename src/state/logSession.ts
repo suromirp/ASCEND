@@ -9,6 +9,7 @@ import { LogStoredFollowUpFailed } from '../storage/storageError';
 import { todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { excludedLogIds } from '../engine/influence';
+import { withCountingSports } from '../engine/sportTemplate';
 import { coachReaction } from '../engine/coach';
 import { aerobicTrend, celebratedChange, progressMoment, tempoPiecesOn, type ProgressCelebrated } from '../engine/aerobicTrend';
 import type { LogSessionInput } from './appDataTypes';
@@ -161,7 +162,10 @@ async function writeLog(input: LogSessionInput, opts: LogSessionOpts | undefined
       const allLogs = await SessionLogsRepo.getAll();
       // De geplande duur van de sessie zelf, zoals de kaart Van je horloge hem leest.
       const sessionMinutes = log.plannedSessionId ? (await PlannedSessionsRepo.getAll()).find((s) => s.id === log.plannedSessionId)?.plannedMinutes : undefined;
-      let coachNote = coachReaction(log, allTemplates.find((t) => t.id === log.templateId), currentProgram, allLogs, { hr: settings.heartRate, sessionMinutes });
+      // Het afgeleide sjabloon van een sport die meetelt staat nooit in de opslag (engine/sportTemplate.ts).
+      const storedSettings = await SettingsRepo.get();
+      const coachTemplates = withCountingSports(allTemplates, storedSettings);
+      let coachNote = coachReaction(log, coachTemplates.find((t) => t.id === log.templateId), currentProgram, allLogs, { hr: settings.heartRate, sessionMinutes });
       // Faster at the same heart rate over weeks: said once, right after
       // an easy run (engine/aerobicTrend.ts#progressMoment).
       // A training set to "Niet meetellen voor hartslag" stays out of the trend (engine/influence.ts).
