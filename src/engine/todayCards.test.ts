@@ -5,8 +5,8 @@ const ALL: TodayCardId[] = ['backup', 'missed', 'advice', 'freshStart', 'ramp', 
 
 describe('arrangeToday', () => {
   it('geeft elke kaart een vaste plek: veiligheid, ochtend, opbouwen, vandaag, gisteren, onderhoud', () => {
-    expect(TODAY_CARD_RANK.map((c) => c.id)).toEqual(['ill', 'illnessSign', 'weatherWarning', 'morning', 'ramp', 'advice', 'stagePosition', 'missed', 'sportAsk', 'freshStart', 'backup', 'backupDue']);
-    expect(TODAY_CARD_RANK.map((c) => c.group)).toEqual(['safety', 'safety', 'safety', 'morning', 'recovery', 'today', 'today', 'yesterday', 'yesterday', 'upkeep', 'upkeep', 'upkeep']);
+    expect(TODAY_CARD_RANK.map((c) => c.id)).toEqual(['ill', 'illnessSign', 'weatherWarning', 'morning', 'ramp', 'advice', 'stagePosition', 'missed', 'sportAsk', 'sportRest', 'freshStart', 'backup', 'backupDue']);
+    expect(TODAY_CARD_RANK.map((c) => c.group)).toEqual(['safety', 'safety', 'safety', 'morning', 'recovery', 'today', 'today', 'yesterday', 'yesterday', 'yesterday', 'upkeep', 'upkeep', 'upkeep']);
   });
 
   it('laat met het advies één kaart boven de missie, de rest eronder in dezelfde volgorde', () => {
@@ -84,7 +84,7 @@ describe('de rustige regels van ronde 2', () => {
     const ids = TODAY_CARD_RANK.map((c) => c.id);
     expect(ids.indexOf('stagePosition')).toBe(ids.indexOf('advice') + 1);
     expect(ids.indexOf('sportAsk')).toBe(ids.indexOf('missed') + 1);
-    expect(QUIET_TODAY_LINES).toEqual(['stagePosition', 'sportAsk']);
+    expect(QUIET_TODAY_LINES).toEqual(['stagePosition', 'sportAsk', 'sportRest']);
     expect(arrangeToday(['sportAsk', 'stagePosition'], 'all')).toEqual({ above: [], below: ['stagePosition', 'sportAsk'] });
   });
 

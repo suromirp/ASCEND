@@ -7,8 +7,11 @@ en waarom staat in `docs/onderhoud/2026-11-11-backlog-opnieuw.md`. De geschieden
 `docs/beslissingen/`.
 
 ## Inbox
-Hoogste code: I-153. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
+Hoogste code: I-156. Een nieuw punt krijgt het volgende nummer (zet het getal hier mee op). Een bouwer zet `Klaar: I-<n>` in zijn commit; na de squash naar main zet `npm run backlog:bij` het punt onder Pas live.
 - [I-150] (23 november, Lookout dagbeeld, mag) Doe je vandaag een training van een andere dag op een rustdag, dan zegt de rij van vandaag in Week nog "Rustdag, bewust herstel"; Week houdt de training op zijn geplande dag (besluit 2026-11-23-een-plan-dagbeeld.md). Nagaan of de rustdagrij dan iets anders zegt.
+- [I-156] (23 november, Lookout losse sport, nakijken) In het voorstel "Intervallen rustiger" staan vaste afspraken voorbij de planhorizon doorgestreept als "vervalt", maar na Akkoord blijven ze gewoon staan. Nagaan of dit ook op main zo is (demodata met korte horizon) en of het voorstel alleen echte wijzigingen moet tonen.
+- [I-155] (23 november, Warden losse sport, klein) Twee kaarten voor dezelfde training kunnen naast elkaar staan: een voorstel na een zware sport en een ander voorstel op Vandaag (`taken` niet doorgegeven in useSportRest.ts); er is nog geen plek die bijhoudt welke voorstellen open staan. Ook: het terugdraairecord bij Ongedaan maken herhaalt je eigen regels; liever alleen die van de ronde.
+- [I-154] (23 november, stuk, hoge voorrang) Geen suggestie om je rustdag te verplaatsen na een lange pauze: inhalen van gemiste trainingen en de rustige terugkeer hebben dezelfde voorrang, inhalen staat eerst en de kaart toont alleen het eerste advies. Staat de terugkeer open, dan die week geen inhalen (na Liever niet weer wel); terugkeer voorrang bij gelijke priority. Test: laatste training twaalf dagen terug, periode zonder sportschool en ziek erna, gemiste trainingen de dag ervoor. Opus, Warden; besluit als aanvulling op terugkeer-eerste-dag.
 - [I-153] (23 november, Pathfinder beginner woorden, klein) "RIR" staat nog in de importmelding van ExerciseRow, de lege stand van Forge en de instelling "RIR vooraf invullen"; bij Woorden Gewoon "Over" gebruiken. Ook nagaan bij de eerste echte start of de i-knop naast de kolomkoppen gevonden wordt.
 - [I-152] (23 november, Pathfinder beginner woorden, klein) "RPE 3-4/10" is nog zichtbaar in de sportkeuze (`data/modalities.ts`), de trainingsgids, de weekterugblik en `defaultProgram`; laat het langs `engine/forgeWords.ts#effortWords` lopen.
 - [I-151] (23 november, Warden dagbeeld, klein) In `engine/dayPlan.ts` rekenen `primary` en `rest` van andere dagen dan vandaag met de ziekte van vandaag (nu nergens gelezen); alleen vandaag de ziekteregel geven.
@@ -28,7 +31,6 @@ Hoogste code: I-153. Een nieuw punt krijgt het volgende nummer (zet het getal hi
 
 - [I-10] Profielendoorloop 14 november (verslagen in `docs/profielen/2026-11-14-*.md` op de branches `claude/profiel-*`; vier van vijf binnen, ziek-vakantie loopt). Moet, gegroepeerd, in volgorde van bouwen:
   - [I-20] J. Tikdoelen, rest: Jaaroverzicht 38 px breed (GR5 3). Forge en de start staan live (e2260329, e99104c). (nakijken)
-  - [I-23] M. Sport uit Losse training, rest (oude logs lezen al via `sportOfLog`, 2ee2f6f): zwemmen, padel en voetbal niet te kiezen zonder eerst een rol in Instellingen (2); na zo'n sport passen aanmoediging, kleding- en zweetvragen niet (3, 4); een voorstel na een zware sport verdwijnt de volgende ochtend zonder keuze (10); een sessieduur verandert zonder voorstel (9). Opus, Warden Fable voor 9 en 10. Stap 1 en 2 live (23 november, 7be515c).
   Mag: zie de verslagen (back-upkaart op dag 1, dubbele zin na afronden, Kies je plaats landt op Weer en kleding, 0 km voor onbekend, afronding van weken).
 - [I-30] (23 november: uitleg Vragen na je loop gebouwd op claude/forge-logs-23; wachtzin ExerciseLogger en testregel stonden al op main; gedempte opwarmset na ruil niet gebouwd, besluit 14 november, vraag aan de eigenaar) Samen 14 november, rest (Lookout, Pathfinder en Sherpa Opslaan, mag): het oude trainingsscherm (`ExerciseLogger.tsx`) toont bij een losse training nog de wachtzin zonder uitweg; de wachtzin bij opslaan is lang voor 360 px (Lookout zag hem niet live); de uitleg van "Vragen na je loop" zegt dat de rij na 72 uur verdwijnt; een bron geruild voor een oefening op hetzelfde patroon geeft een gewone opwarmset in plaats van een gedempte (zin in het besluit); `src/engine/warmupLater` in de testregel van `docs/werkbriefjes/forge.md`. Klein.
 - [I-31] Les samenvoegen (14 november): twee branches die elk groen zijn, kunnen samen stuk gaan zonder conflict (`question` weg in de ene, gelezen in de andere; Vandaag crashte). Altijd tsc op de proefmerge, voor Lookout.
@@ -80,6 +82,7 @@ Deze week (tot en met 15 november) bouwt de coördinator het rooster zelf; het b
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 
 ## Pas live
+- [I-23] M. Losse sport, alle stappen: elke sport te kiezen, passende woorden, een voorstel na een zware sport blijft tot je kiest en een duur verandert niet stil (23 november)
 - [I-18] H. Beginner heel licht, alle stappen: de ladder, Akkoord, de belofte en de gewone woorden in Forge (23 november, 40a3c67)
 - [I-14] D. Eén plan, alle stappen: C en D, eerste voorstel en dagbeeld (23 november, 5cd027b)
 - [I-145] Losse sport (23 november, d99eb30)

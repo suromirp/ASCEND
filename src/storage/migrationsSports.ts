@@ -7,6 +7,7 @@ import { TRAINING_KINDS, type KindAmountMap } from '../data/trainingKinds';
 import { parseKindAmounts } from '../engine/kindAmount';
 import { parseCustomSports, type CustomSport } from '../engine/customSport';
 import type { PlannedSession, SessionLog } from '../models/training';
+import { parseSportRestOffers, type SportRestOffer } from '../engine/sportRestOffer';
 
 // Sporten die meetellen (engine/sportRole.ts): alleen bekende sporten met een rol die ze kennen en
 // echte vaste afspraken. Een oud bestand zonder dit veld importeert zoals het was.
@@ -90,4 +91,18 @@ export function migrateLogRpeAssumed(log: SessionLog): SessionLog {
   const { rpeAssumed: _wrong, ...rest } = log as SessionLog & { rpeAssumed?: unknown };
   void _wrong;
   return rest as SessionLog;
+}
+
+// AppSettings.sportRestOffers (I-23 punt 10, een voorstel na een zware sport blijft tot je kiest): optioneel en
+// additief, dus het schemanummer blijft. Een bestand van voor deze lijst heeft geen sleutel en laat de lijst op het
+// toestel met rust. Een kapotte regel valt weg en wordt geteld; de volgorde blijft, want de laatste regel per id
+// geldt. Wat ouder is dan 30 dagen valt pas bij het lezen in de app weg (engine/sportRestOffer.ts).
+export function migrateSportRestOffers(raw: unknown): { list: SportRestOffer[] | undefined; skipped: number } {
+  return parseSportRestOffers(raw);
+}
+
+// AppSettings.sportRestKeep: 'blijft' of 'vanzelf', iets anders valt weg (dan het advies).
+export function migrateSportRestKeep(raw: unknown): { value: 'blijft' | 'vanzelf' | undefined; skipped: number } {
+  if (raw === undefined) return { value: undefined, skipped: 0 };
+  return raw === 'blijft' || raw === 'vanzelf' ? { value: raw, skipped: 0 } : { value: undefined, skipped: 1 };
 }

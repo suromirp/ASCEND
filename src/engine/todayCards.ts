@@ -10,7 +10,7 @@
 // over een training die niet doorging komen nooit boven de missie: die beantwoord je in een blad, en
 // de missie is waar Vandaag over gaat. Puur: geen React, geen opslag.
 
-export type TodayCardId = 'ill' | 'illnessSign' | 'weatherWarning' | 'morning' | 'ramp' | 'advice' | 'stagePosition' | 'missed' | 'sportAsk' | 'freshStart' | 'backup' | 'backupDue';
+export type TodayCardId = 'ill' | 'illnessSign' | 'weatherWarning' | 'morning' | 'ramp' | 'advice' | 'stagePosition' | 'missed' | 'sportAsk' | 'sportRest' | 'freshStart' | 'backup' | 'backupDue';
 type TodayCardGroup = 'safety' | 'morning' | 'recovery' | 'today' | 'yesterday' | 'upkeep';
 
 export interface TodayCardSpec {
@@ -48,6 +48,9 @@ export const TODAY_CARD_RANK: readonly TodayCardSpec[] = [
   // "Je deed padel. Hoe telt dit?" (engine/sportAsk.ts): een vraag over iets wat al gebeurd is. Een rustige regel
   // die zelf weet of hij er is; de planning verandert niet tot je antwoordt.
   { id: 'sportAsk', group: 'yesterday', lead: false, quiet: true },
+  // "Je voorstel na padel is vervallen." (engine/sportRestOffer.ts, I-23 punt 10): een voorstel dat verviel zonder dat
+  // je koos. Een rustige regel met Begrepen; de planning verandert niet.
+  { id: 'sportRest', group: 'yesterday', lead: false, quiet: true },
   // Nieuw begonnen: je back-up terugzetten.
   { id: 'freshStart', group: 'upkeep', lead: true },
   { id: 'backup', group: 'upkeep', lead: true },

@@ -160,12 +160,30 @@ describe('HARD-DAYS', () => {
   const onlySat: SportHandlingMap = { football: { role: 'fixed', fixed: [{ day: 6, minutes: 90, intensity: 'high' }] } };
   const tpls = withCountingSports(base, { sportHandling: onlySat });
 
-  it('met een zware wedstrijd erbij wordt de laatste harde loop van ASCEND rustig, gemeld', () => {
-    const result = planPass(hardWeek, ctx({ templates: tpls, fixedSports: onlySat }));
+  it('met Duur aanpassen na een sport op Vanzelf wordt de laatste harde loop van ASCEND rustig, gemeld', () => {
+    const result = planPass(hardWeek, ctx({ templates: tpls, fixedSports: onlySat, sportChange: 'auto' }));
     const changed = result.repairs.filter((r) => r.rule === 'HARD-DAYS');
     expect(changed.length).toBeGreaterThan(0);
     expect(result.sessions.find((s) => s.id === changed[0].sessionId)?.templateId).toBe('tpl_easy_run');
+    expect(changed[0].templateId).toBe('tpl_easy_run');
     expect(changed[0].reason).toContain('voetbal');
+    // Twee keer de ronde: de tweede verandert niets.
+    expect(planPass(result.sessions, ctx({ templates: tpls, fixedSports: onlySat, sportChange: 'auto' })).repairs).toEqual([]);
+  });
+
+  it('op Eerst een voorstel (het advies, ook zonder instelling) blijft de harde loop staan, met de sport in de bevinding (I-23, 9)', () => {
+    // Zonder sport: wat de ronde los van de sport doet (de weekindeling buiten een blok zet tempo en intervallen al om).
+    const without = planPass(hardWeek, ctx({ templates: tpls, fixedSports: {} })).sessions.map((s) => s.templateId);
+    for (const sportChange of [undefined, 'propose' as const]) {
+      const result = planPass(hardWeek, ctx({ templates: tpls, fixedSports: onlySat, sportChange }));
+      expect(result.repairs.filter((r) => r.rule === 'HARD-DAYS')).toEqual([]);
+      expect(result.sessions.filter((s) => !s.fixed).map((s) => s.templateId)).toEqual(without);
+      const finding = result.remaining.find((f) => f.rule === 'HARD-DAYS');
+      expect(finding?.sport).toEqual({ name: 'Voetbal', date: '2026-11-14' });
+      expect(finding?.hardDays?.count).toBeGreaterThan(finding?.hardDays?.limit ?? Infinity);
+      // Twee keer de ronde: de tweede verandert niets.
+      expect(planPass(result.sessions, ctx({ templates: tpls, fixedSports: onlySat, sportChange })).repairs).toEqual([]);
+    }
   });
 
   it('een gelogde zware sport telt mee als harde dag, herkend aan het profiel van de sportdag (Warden punt 9)', () => {

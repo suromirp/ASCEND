@@ -11,6 +11,7 @@ import type { ExternalOneRm, WeightEntry } from '../models/metrics';
 import type { SweatEntry, SweatPre } from '../models/sweat';
 import type { MorningCheckIn, NightJudgment, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
 import type { LegEaseDay } from '../models/legEase';
+import type { SportRestOffer } from '../engine/sportRestOffer';
 import type { TestJudgment } from '../models/testJudgment';
 import type { InfluenceEntry } from '../models/influence';
 import type { SportId } from '../data/sports';
@@ -231,6 +232,11 @@ export interface AppSettings {
   // the advice) lets it go rather than put it right before or after its own next time, 'shift' moves
   // it to any day of that week that fits. Optional and additive, so no migration step.
   leaveCrowding?: 'drop' | 'shift';
+  // Duur aanpassen na een sport (engine/weekValidator.ts#CheckInput.sportChange, docs/visie/Ontwerp Losse sport.md,
+  // Ontwerp 9): 'propose' (absent = propose, the advice) makes a duration or kind that would change because of a sport
+  // a proposal with Akkoord in Week; 'auto' changes it, with the notice Planning bijgewerkt. Optional and additive, so
+  // no migration step; backupClean drops any other value.
+  sportDurationChange?: 'propose' | 'auto';
   // Around a holiday (engine/leaveAround.ts): 'wide' (absent = wide, the advice) looks for the best
   // arrangement over all workable days of the weeks around it, also over the week border; 'little'
   // leaves it to the week check, which moves a training to the nearest day of its own week. Optional
@@ -667,6 +673,14 @@ export interface AppSettings {
   // logs; de laatste 60. Optional and additive; read defensively on import
   // (storage/migrations.ts#migrateLegEaseDays) and merged per date and session.
   legEaseDays?: LegEaseDay[];
+  // Een voorstel na een zware sport (engine/sportRestOffer.ts, I-23 punt 10): alleen toevoegen, één regel per
+  // aanleiding toen je hem zag en één met de uitkomst; de laatste per id geldt, ouder dan 30 dagen valt bij het lezen
+  // weg. Optional and additive; read defensively on import (storage/migrations.ts#migrateSportRestOffers) and on a
+  // restore only new rows are added (backupMerge.ts).
+  sportRestOffers?: SportRestOffer[];
+  // "Voorstel na een zware sport": 'blijft' (het advies, afwezig) of 'vanzelf' (vervalt als de dag voorbij is).
+  // Optional and additive; a backup keeps only a known value (storage/backupClean.ts).
+  sportRestKeep?: 'blijft' | 'vanzelf';
   // "Lucht bovenaan" (engine/skySettings.ts): the light or dark sky on the tabs, by
   // the clock ('auto', the default), always light or always dark, and from when it is
   // dark. Optional and additive; read defensively, so no migration step is needed.

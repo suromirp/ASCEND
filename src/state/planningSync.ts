@@ -156,6 +156,8 @@ export async function horizonKey(): Promise<string> {
       settings.trekLegRest,
       // Let go or shift a training that moves for a holiday (engine/leaveSpacing.ts).
       settings.leaveCrowding,
+      // Duur aanpassen na een sport (engine/weekValidator.ts#CheckInput.sportChange): Vanzelf plant meteen opnieuw.
+      settings.sportDurationChange,
       // How far the planning may shift around a holiday (engine/leaveAround.ts).
       settings.leaveAround ?? 'wide',
       // How fast the long run grows toward a race (engine/runGrowth.ts).
@@ -190,7 +192,7 @@ export function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Prom
       for (const t of result.touched ?? []) pendingTouched.set(t.id, chainTouch(pendingTouched.get(t.id), { before: t.before, after: t.after }));
       // Two syncs before one refresh: both notices count.
       if (result.repairs) pendingRepairs = pendingRepairs
-        ? { lines: [...pendingRepairs.lines, ...result.repairs.lines], before: [...pendingRepairs.before, ...result.repairs.before.filter((b) => !pendingRepairs!.before.some((p) => p.id === b.id))], stored: [...pendingRepairs.stored, ...result.repairs.stored.filter((b) => !pendingRepairs!.stored.some((p) => p.id === b.id))], addedIds: [...(pendingRepairs.addedIds ?? []), ...(result.repairs.addedIds ?? [])] }
+        ? { lines: [...pendingRepairs.lines, ...result.repairs.lines], before: [...pendingRepairs.before, ...result.repairs.before.filter((b) => !pendingRepairs!.before.some((p) => p.id === b.id))], stored: [...pendingRepairs.stored, ...result.repairs.stored.filter((b) => !pendingRepairs!.stored.some((p) => p.id === b.id))], addedIds: [...(pendingRepairs.addedIds ?? []), ...(result.repairs.addedIds ?? [])], items: [...(pendingRepairs.items ?? []), ...(result.repairs.items ?? [])] }
         : result.repairs;
       lastHorizonKey = await currentKey();
       return true;

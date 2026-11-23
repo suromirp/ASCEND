@@ -7,6 +7,7 @@
 // regel (`sub`): een feit of een bron, nooit uitleg. Een test bewaakt dat een regel
 // niet langer is dan SUB_MAX_LENGTH, zodat niets afkapt op 360 px.
 
+import { resolveSportRestKeep } from './sportRestOffer';
 import { locationSummary } from './locationSetting';
 import { resolveShorterToday } from './shorterToday';
 import { resolveJourneyOnToday } from './yourDay';
@@ -891,7 +892,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     // Hoe sporten meetellen (engine/sportRole.ts#resolveSportCounting): "Vragen" of wat er anders is.
     case 'bundel-sporten-tellen': {
       const c = resolveSportCounting(s.sportCounting);
-      const off = [!c.askNew ? 'Nieuwe sport telt meteen' : '', !c.askFelt ? 'zwaarte aangenomen' : '', c.rest === 'korter' ? 'kortere rust' : ''].filter(Boolean);
+      const off = [!c.askNew ? 'Nieuwe sport telt meteen' : '', !c.askFelt ? 'zwaarte aangenomen' : '', c.rest === 'korter' ? 'kortere rust' : '', resolveSportRestKeep(s.sportRestKeep) === 'vanzelf' ? 'voorstel vervalt vanzelf' : ''].filter(Boolean);
       if (off.length === 0) return { value: 'Vragen', auto: true };
       const sub = off.join(', ');
       return { value: 'Aangepast', sub: capitalize(sub) };
@@ -902,6 +903,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveSportCounting(s.sportCounting).askFelt };
     case 'sport-rust':
       return { value: choiceShort('sportRust', resolveSportCounting(s.sportCounting).rest) };
+    case 'sport-voorstel':
+      return { value: choiceShort('sportVoorstel', resolveSportRestKeep(s.sportRestKeep)) };
     case 'rustiger-instap':
       return { value: choiceShort('rustigerInstap', resolveReentry(s.reentry)) };
     case 'rustdag-terug':
@@ -916,6 +919,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: s.weekFixProposal === false ? 'Zonder voorstel' : 'Met voorstel', sub: `Melding: ${choiceShort('weekNaKeuze', resolveWeekAfterChoice(s)).toLowerCase()}` };
     case 'week-na-keuze':
       return { value: choiceShort('weekNaKeuze', resolveWeekAfterChoice(s)) };
+    case 'sport-duur':
+      return { value: choiceShort('sportDuur', s.sportDurationChange ?? 'propose') };
     case 'weekvoorstel':
       return { checked: s.weekFixProposal !== false };
     case 'volgorde-stand':

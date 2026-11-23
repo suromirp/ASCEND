@@ -177,6 +177,8 @@ export const ADVICE_SPECS: AdviceSpec[] = [
     reset: () => ({ strengthTraining: undefined }),
   },
   plain('lange-loop-benen', 'Beenkracht de dag na de lange duurloop', 'planning', 'longRunThenLegs', false as boolean, (v) => onOff(v === true), { plan: true }),
+  // Of een voorstel na een zware sport blijft tot je kiest: verandert je planning niet, dus meteen terug.
+  choice('sport-voorstel', 'Voorstel na een zware sport', 'planning', 'sportRestKeep', 'blijft', 'sportVoorstel'),
 
   // Doel en tochten
   {
@@ -209,6 +211,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('rust-na-tocht', 'Rust na een bergtocht', 'doel', 'trekLegRest', 'soft', 'rustNaTocht', true),
   choice('afdaalklok', 'Afdaalklok', 'doel', 'descentClock', 'advies', 'afdaalklok'),
   choice('vakantie-opzij', 'Opzij voor een vakantie', 'planning', 'leaveCrowding', 'drop', 'vakantieOpzij', true),
+  choice('sport-duur', 'Duur aanpassen na een sport', 'planning', 'sportDurationChange', 'propose', 'sportDuur', true),
   choice('vakantie-schuiven', 'Rond een vakantie schuiven', 'planning', 'leaveAround', 'wide', 'vakantieSchuiven', true),
   choice('zonder-sportschool', 'Kracht zonder sportschool', 'planning', 'noGymStrength', 'bodyweight', 'zonderSportschool'),
   choice('vakantie-achteraf', 'Periode achteraf vastleggen', 'planning', 'leaveBackfill', 'four_weeks', 'vakantieAchteraf'),

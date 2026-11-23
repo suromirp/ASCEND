@@ -74,6 +74,12 @@ export interface Finding {
   // Caused by a sport you did that counts (engine/sportDays.ts): never repaired by itself, only as a
   // proposal with Akkoord (weekFixProposal.ts), which lets the repair move its subject via `mayMove`.
   fromSport?: true;
+  // A sport is in the finding (a fixed appointment or a logged sport day) and its repair changes the duration or the
+  // kind of a training (HARD-DAYS): with Duur aanpassen na een sport on Eerst een voorstel (`sportChange`,
+  // the advice) only as a proposal with Akkoord in Week, never by itself (docs/visie/Ontwerp Losse sport.md, Ontwerp 9).
+  sport?: { name: string; date: string };
+  // HARD-DAYS only: how many hard days the week has and the limit (hardDayLimit).
+  hardDays?: { count: number; limit: number };
   // ILL only: which part of the illness holds the day (engine/dayRules.ts): ill (koorts, buikgriep), ill_light
   // (neus of keel, alleen zwaar) or ramp (opbouw na ziekte, alleen zwaar).
   illness?: 'ill' | 'ill_light' | 'ramp';
@@ -123,6 +129,10 @@ export interface CheckInput {
   // Ids of sessions with a lock of yours (level 1) that the repair may move or change this time. Only for
   // a proposal with Akkoord (engine/weekFixProposal.ts): the check itself never touches what is yours.
   mayMove?: string[];
+  // Duur aanpassen na een sport (AppSettings.sportDurationChange): absent or 'propose' (the advice) leaves a repair with a
+  // sport in its finding that changes duration or kind (Finding.sport) to a proposal with Akkoord; 'auto' makes it, said
+  // in Planning bijgewerkt and kept in the record of the week check (storage/databaseHorizon.ts).
+  sportChange?: 'propose' | 'auto';
 }
 
 // The days of a week with no training: a recovery walk counts as rest, a skipped session is gone and a
@@ -420,8 +430,9 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
     // The last hard training of ASCEND that may change; a test or race never.
     const subject = week.filter((s) => isOwnHard(s) && open(s) && !isTestOrRace(tpl(s)!)).sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
     if (!subject) continue;
-    const outside = week.find(isOutsideHard)!;
-    findings.push({ rule: 'HARD-DAYS', date: subject.scheduledDate, sessionIds: [outside.id, subject.id], subjectId: subject.id, level: level(subject), message: `${hardDays.size} harde dagen in de week van ${day(monday)}, grens ${limit}.` });
+    // The earliest sport of the week names it, the same one every time.
+    const outside = week.filter(isOutsideHard).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.id.localeCompare(b.id))[0];
+    findings.push({ rule: 'HARD-DAYS', date: subject.scheduledDate, sessionIds: [outside.id, subject.id], subjectId: subject.id, level: level(subject), message: `${hardDays.size} harde dagen in de week van ${day(monday)}, grens ${limit}.`, sport: { name: tpl(outside)?.name ?? 'je sport', date: outside.scheduledDate }, hardDays: { count: hardDays.size, limit } });
   }
 
   // One full long session a week.
@@ -431,6 +442,7 @@ export function validateWeeks(rawInput: CheckInput, onlyWeeks?: Set<string>): Fi
     if (list.length < 2) continue;
     const sorted = [...list].sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
     const subject = sorted.find((s) => level(s) === 3 && s !== sorted[sorted.length - 1]) ?? sorted[0];
+    // No sport here: a sport template never has the role long (engine/sportTemplate.ts), so ONE-LONG carries no `sport`.
     findings.push({ rule: 'ONE-LONG', date: subject.scheduledDate, sessionIds: list.map((s) => s.id), subjectId: subject.id, level: level(subject), message: `Twee volle lange trainingen in de week van ${day(mondayOfWeek(subject.scheduledDate))}.` });
   }
   return findings;
@@ -466,6 +478,8 @@ export interface Repair {
   removed?: boolean;
   // A session the planning put on the plan (it was not there before).
   added?: boolean;
+  // The training it became (HARD-DAYS: the easy run), when the kind changed.
+  templateId?: string;
   // A reason of its own in plain words, when the rule's general one is too vague.
   reason?: string;
 }
@@ -607,6 +621,8 @@ export function repairWeeks(input: CheckInput): RepairResult {
       // A test that is on the wrong day itself waits for its proposal first.
       // A sport you did only via a proposal with Akkoord, never by itself.
       .filter((f) => !f.fromSport || yours.has(f.subjectId))
+      // A duration or kind that changes because of a sport: on Eerst een voorstel (the advice) only via that proposal.
+      .filter((f) => !f.sport || input.sportChange === 'auto' || yours.has(f.subjectId))
       // Zonder sportschool zet de stap zonder sportschool om (engine/noGym.ts), nooit de weekcontrole.
       .filter((f) => f.rule !== 'NO-GYM' && f.rule !== 'ILL')
       .filter((f) => (((f.level === 3 || (f.level === 1 && yours.has(f.subjectId))) && movable(byIdNow.get(f.subjectId)!)) || ((f.level === 1 || f.level === 2) && f.rule === 'TEST-FRESH' && !findings.some((o) => o !== f && o.subjectId === f.subjectId))) && !tried.has(key(f)))
@@ -627,7 +643,7 @@ export function repairWeeks(input: CheckInput): RepairResult {
       if (t.type === 'strength' || templateSport(t) !== 'running' || !byId.has(EASY_ID)) continue;
       sessions = sessions.map((s) => (s.id === subject.id ? { ...s, templateId: EASY_ID } : s));
       const outside = byId.get(sessions.find((s) => s.id === next.sessionIds[0])?.templateId ?? '')?.name ?? 'je vaste afspraak';
-      repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, reason: `met ${outside.toLowerCase()} deze week past er een harde training minder, daarom een rustige loop` });
+      repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, templateId: EASY_ID, reason: `met ${outside.toLowerCase()} deze week past er een harde training minder, daarom een rustige loop` });
       continue;
     }
     if (next.rule === 'ONE-LONG') {

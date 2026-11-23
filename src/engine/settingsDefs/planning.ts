@@ -149,6 +149,17 @@ export const PLANNING_CHOICES = {
       { value: 'korter', label: 'Korter', note: '48 uur na een wedstrijd, 24 uur na een training of padel', short: 'Korter' },
     ],
   }),
+  sportVoorstel: def({
+    group: 'Planning',
+    title: 'Voorstel na een zware sport',
+    line: 'Anders verdwijnt een voorstel als de dag voorbij is, zonder dat je het zag.',
+    advice: 'blijft' as 'blijft' | 'vanzelf',
+    help: 'sportenTellen',
+    options: [
+      { value: 'blijft', label: 'Blijft tot je kiest', note: 'Op de dag zelf op Vandaag, en een regel als het vervalt', short: 'Blijft' },
+      { value: 'vanzelf', label: 'Vervalt vanzelf', note: 'Is de dag voorbij, dan is het voorstel weg', short: 'Vervalt vanzelf' },
+    ],
+  }),
   loslaten: def({
     group: 'Planning',
     title: 'Loslaten op een training',
@@ -169,6 +180,17 @@ export const PLANNING_CHOICES = {
     options: [
       { value: 'mine', label: 'Met jouw keuze', note: 'De melding zegt dat jij koos, het voorstel is een gewone tekstknop', short: 'Met jouw keuze' },
       { value: 'plain', label: 'Gewone melding', note: 'Zoals altijd, met Bekijk voorstel als hoofdknop', short: 'Gewone melding' },
+    ],
+  }),
+  sportDuur: def({
+    group: 'Planning',
+    title: 'Duur aanpassen na een sport',
+    line: 'Als een vaste sport of een gelogde sportdag een training van ASCEND korter of rustiger maakt.',
+    advice: 'propose' as 'propose' | 'auto',
+    help: 'sport-duur',
+    options: [
+      { value: 'propose', label: 'Eerst een voorstel', note: 'In Week, met de minuten ervoor en erna; pas na Akkoord verandert er iets', short: 'Eerst een voorstel' },
+      { value: 'auto', label: 'Vanzelf, met melding', note: 'Meteen aangepast, met de melding Planning bijgewerkt', short: 'Vanzelf' },
     ],
   }),
   vakantieOpzij: def({
@@ -347,6 +369,15 @@ export const PLANNING: SettingDef[] = [
     choice: { key: 'sportRust', def: PLANNING_CHOICES.sportRust },
   },
   {
+    id: 'sport-voorstel',
+    page: 'planning',
+    place: { in: 'bundel-sporten-tellen' },
+    title: 'Voorstel na een zware sport',
+    note: 'Anders verdwijnt een voorstel als de dag voorbij is, zonder dat je het zag.',
+    keywords: ['voorstel', 'vervalt', 'blijft', 'padel', 'voetbal', 'beendag', 'hoe sporten meetellen'],
+    choice: { key: 'sportVoorstel', def: PLANNING_CHOICES.sportVoorstel },
+  },
+  {
     id: 'wijzigingen',
     page: 'planning',
     place: { row: true },
@@ -506,6 +537,16 @@ export const PLANNING: SettingDef[] = [
     help: true,
     helpKey: 'weekNaKeuze',
     choice: { key: 'weekNaKeuze', def: PLANNING_CHOICES.weekNaKeuze },
+  },
+  {
+    id: 'sport-duur',
+    page: 'planning',
+    place: { in: 'bundel-weekmelding' },
+    title: 'Duur aanpassen na een sport',
+    note: 'Maakt een vaste sport of een gelogde sportdag een training korter of rustiger, dan krijg je eerst een voorstel in Week.',
+    keywords: ['sport', 'voetbal', 'padel', 'zwemmen', 'duur', 'korter', 'rustiger', 'harde dagen', 'vaste afspraak', 'voorstel', 'vanzelf', 'week'],
+    help: true,
+    choice: { key: 'sportDuur', def: PLANNING_CHOICES.sportDuur },
   },
   {
     id: 'week-vol',

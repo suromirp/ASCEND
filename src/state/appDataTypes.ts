@@ -1,5 +1,6 @@
 // De vorm van wat useAppData geeft, en de invoer van een paar acties. Alleen typen.
 
+import type { SportRestOffer } from '../engine/sportRestOffer';
 import type { Program } from '../models/program';
 import type { WeekReplanPlan } from '../storage/weekReplan';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
@@ -308,6 +309,9 @@ export interface AppData {
   // Your weight from before a training, kept until its log is there (settings.sweatPre, one per
   // day); null takes it away.
   saveSweatPre: (date: string, weightKg: number | null) => Promise<void>;
+  // Een voorstel na een zware sport (settings.sportRestOffers, engine/sportRestOffer.ts): regels toevoegen, nooit
+  // omschrijven. Gooit als de opslag niet lukt.
+  appendSportRest: (rows: SportRestOffer[]) => Promise<void>;
   removeInfluence: (id: string) => Promise<void>;
   clearInfluences: () => Promise<void>;
   planIllness: (change: IllnessChange) => IllnessPlan | undefined;

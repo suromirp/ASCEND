@@ -4,7 +4,7 @@
 // droog feit eronder en een korte tekst voor de rij van elke betrokken
 // training (docs/visie/Waarschuwingen in Week.md, hoofdstuk 4).
 //
-// Tien regels: ILL (ziek, I-67), NO-GYM (zonder sportschool), REST-DAY, LEG-SPACING, TWO-HARD-RUNS, TEST-DAY, AFTER-TEST, ONE-LONG,
+// Elf regels: ILL (ziek, I-67), NO-GYM (zonder sportschool), REST-DAY, LEG-SPACING, TWO-HARD-RUNS, HARD-DAYS (een sport), TEST-DAY, AFTER-TEST, ONE-LONG,
 // TEST-FRESH en TEST-REST (rust voor een test). De controle draait met `reportYours`, zodat ook een training op
 // je rustdag meetelt die jij of een geaccepteerd voorstel vastzette. Alleen
 // toekomstige dagen van de getoonde week; een verleden week meldt niets.
@@ -22,7 +22,9 @@ import { sportOfLog } from './sportOfLog';
 import { NO_GYM_ASK } from './noGymGuard';
 import { DAY_CAUSE_TEXT } from './dayRules';
 
-export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'ILL', 'NO-GYM', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH', 'TEST-REST'];
+// HARD-DAYS komt alleen voor met een sport in de week (een vaste afspraak op Zwaar of een gelogde zware sportdag); met
+// Duur aanpassen na een sport op Eerst een voorstel blijft hij staan tot je Akkoord geeft (Ontwerp Losse sport, 9).
+export const CONCERN_RULES: readonly CheckRule[] = ['LEAVE-OFF', 'ILL', 'NO-GYM', 'REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'HARD-DAYS', 'TEST-DAY', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH', 'TEST-REST'];
 
 interface ConcernText {
   // Dezelfde sleutel als de bevinding; verandert er iets in de week, dan verandert hij mee.
@@ -220,6 +222,24 @@ export function weekConcerns(input: CheckInput, weekStart: string): CheckConcern
           title: 'Zware beendagen verder uit elkaar',
           why: `Zware beendagen hebben tijd nodig om te herstellen. Liefst zit er ${(wanted + 1) * 24} uur tussen.`,
           notes: { [early]: `${days} voor ${nameOf(late)}`, [late]: `${days} na ${nameOf(early)}` },
+        };
+      }
+      case 'HARD-DAYS': {
+        // Het droge feit eerst: welke sport, hoeveel harde dagen en de grens. De training van ASCEND is de laatste
+        // harde van de week; hij wordt pas na Akkoord rustiger (engine/weekFixProposal.ts).
+        const sport = f.sport;
+        const subject = f.subjectId;
+        const hard = f.hardDays;
+        const sportName = (sport?.name ?? 'je sport').toLowerCase();
+        return {
+          ...base,
+          headline: `Met ${sportName}${sport ? ` op ${weekdayLongNL(sport.date)}` : ''} past er deze week een harde training minder.`,
+          fact: hard
+            ? `Deze week ${plural(hard.count, 'harde dag', 'harde dagen')}, liefst hoogstens ${hard.limit}. ${nameOf(subject)} staat op ${dayName(dateOf(subject))}.`
+            : `${nameOf(subject)} staat op ${dayName(dateOf(subject))}.`,
+          title: `${nameOf(subject)} rustiger`,
+          why: `Een zware wedstrijd of partij telt als harde dag. Met te veel harde dagen in een week herstel je slecht tussen je trainingen. Er verandert niets zonder jouw Akkoord.`,
+          notes: { [subject]: 'harde dag te veel' },
         };
       }
       case 'TWO-HARD-RUNS':

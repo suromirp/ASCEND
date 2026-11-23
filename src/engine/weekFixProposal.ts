@@ -28,6 +28,7 @@ import { dayName, weekConcerns, type CheckConcern, type WeekConcern } from './we
 import { findingKey, lockLevel, repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
 import { capitalize } from '../utils/capitalize';
 import { planNoGymFix } from './noGymGuard';
+import { plannedMinutesOf } from './substitutions';
 
 const SOURCE = ['engine/weekFixProposal.ts'];
 const MAX_OPTIONS = 3;
@@ -36,7 +37,8 @@ const TASK_ROLES: readonly TemplateRole[] = ['long', 'key', 'hard_run', 'hard_lo
 
 // Eén wijziging aan één training: een andere dag, korter, of laten vervallen.
 // `keeps`: bij weghalen de sessie met dezelfde rol die in de week blijft staan.
-interface Change { id: string; from: string; to?: string; removed?: boolean; minutes?: number; keeps?: string }
+// `templateId`: the training it becomes (HARD-DAYS: the easy run).
+interface Change { id: string; from: string; to?: string; removed?: boolean; minutes?: number; keeps?: string; templateId?: string }
 
 // A name like "GR5 duurloop" keeps its capitals; only an ordinary first word goes lower case.
 const lower = (s: string) => (s.charAt(1) && s.charAt(1) !== s.charAt(1).toLowerCase() ? s : `${s.charAt(0).toLowerCase()}${s.slice(1)}`);
@@ -74,7 +76,7 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
         const c = by.get(s.id);
         if (!c) return s;
         const date = c.to ?? s.scheduledDate;
-        return { ...s, scheduledDate: date, weekStartDate: mondayOfWeek(date), ...(c.minutes ? { plannedMinutes: c.minutes } : {}) };
+        return { ...s, scheduledDate: date, weekStartDate: mondayOfWeek(date), ...(c.minutes ? { plannedMinutes: c.minutes } : {}), ...(c.templateId ? { templateId: c.templateId } : {}) };
       });
   };
   // A day with no time budget takes a moved session only when it is empty (as in the week check).
@@ -99,9 +101,10 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
     for (const r of result.repairs) {
       if (!ids.includes(r.sessionId) || r.rule === 'WEEK-START') continue;
       const prev = merged.get(r.sessionId);
-      merged.set(r.sessionId, { id: r.sessionId, from: prev?.from ?? r.from, to: r.removed ? undefined : r.to, removed: r.removed, minutes: r.plannedMinutes ?? prev?.minutes });
+      const templateId = r.templateId ?? prev?.templateId;
+      merged.set(r.sessionId, { id: r.sessionId, from: prev?.from ?? r.from, to: r.removed ? undefined : r.to, removed: r.removed, minutes: r.plannedMinutes ?? prev?.minutes, ...(templateId ? { templateId } : {}) });
     }
-    return [...merged.values()].filter((c) => c.removed || c.to !== c.from || c.minutes);
+    return [...merged.values()].filter((c) => c.removed || c.to !== c.from || c.minutes || c.templateId);
   };
 
   // Another day of the same week for one session, the nearest that is better (`far`: the farthest, for a test while ill).
@@ -219,6 +222,13 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
       }
       break;
     }
+    case 'HARD-DAYS': {
+      // A sport in the week (Ontwerp Losse sport, 9): what the week check would do, the hard training of ASCEND as an
+      // easy run, only with your Akkoord. Also when you placed that hard training yourself.
+      const subject = sessionById(concern.finding.subjectId);
+      if (subject && (level(subject) === 1 || level(subject) === 3)) push(viaCheck([subject.id]));
+      break;
+    }
     case 'ONE-LONG': {
       const later = [...sessions].sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate)).find((s) => level(s) === 1 || level(s) === 3);
       const short = later && templateOf(later)?.durationVariants.short;
@@ -302,6 +312,20 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
   if (lastResort) unique.push(lastResort);
 
   const nameOf = (id: string) => templateOf(sessionById(id)!)?.name ?? 'Training';
+  // With a sport in the finding the minutes before and after stand in the text (Ontwerp Losse sport, 9), as Week shows
+  // them (substitutions.ts#plannedMinutesOf). One number when it stays the same.
+  const withSport = !!concern.finding.sport;
+  const minutesBefore = (c: Change) => { const s = sessionById(c.id); const t = s && templateOf(s); return s && t ? plannedMinutesOf(s, t, input.program) : undefined; };
+  const minutesAfter = (c: Change) => {
+    const s = sessionById(c.id);
+    const t = s && byTemplate.get(c.templateId ?? s.templateId);
+    return s && t ? plannedMinutesOf({ scheduledDate: c.to ?? s.scheduledDate, plannedMinutes: c.minutes ?? s.plannedMinutes }, t, input.program) : undefined;
+  };
+  const sportMinutes = (c: Change) => {
+    const [was, now] = [minutesBefore(c), minutesAfter(c)];
+    if (now === undefined) return '';
+    return was === undefined || was === now ? `${now} minuten` : `${now} minuten in plaats van ${was}`;
+  };
   const sentence = (changes: Change[]) => {
     const after = apply(changes);
     const freeNow = (date: string) => !after.some((o) => o.scheduledDate === date && o.status !== 'skipped' && !isRecovery(o));
@@ -310,7 +334,9 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
       const free = freeNow(c.from) ? ` ${capitalize(weekdayLongNL(c.from))} is dan vrij.` : '';
       const kept = c.keeps ? sessionById(c.keeps) : undefined;
       const keep = kept ? ` Je houdt de ${lower(nameOf(kept.id))} op ${dayName(kept.scheduledDate)}.` : '';
-      if (c.removed) parts.push(`Laat de ${lower(nameOf(c.id))} op ${dayName(c.from)} gaan.${freeNow(c.from) ? ` Dan heb je ${weekdayLongNL(c.from)} vrij.` : ''}${keep}`);
+      if (withSport && !c.removed && c.templateId) parts.push(`${nameOf(c.id)} op ${dayName(c.from)} wordt een ${lower(byTemplate.get(c.templateId)?.name ?? 'rustige loop')} van ${sportMinutes(c)}.`);
+      else if (withSport && !c.removed && c.minutes && (!c.to || c.to === c.from)) parts.push(`${nameOf(c.id)} op ${dayName(c.from)} wordt de korte versie, ${sportMinutes(c)}.`);
+      else if (c.removed) parts.push(`Laat de ${lower(nameOf(c.id))} op ${dayName(c.from)} gaan.${freeNow(c.from) ? ` Dan heb je ${weekdayLongNL(c.from)} vrij.` : ''}${keep}`);
       else if (c.to && c.to !== c.from) parts.push(`${nameOf(c.id)} gaat van ${dayName(c.from)} naar ${dayName(c.to)}.${free}`);
       else parts.push(`${nameOf(c.id)} op ${dayName(c.from)} wordt de korte versie, ${c.minutes} minuten.`);
     }
@@ -319,7 +345,12 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
   const labelOf = (changes: Change[]) => {
     const lead = changes.find((c) => c.removed) ?? changes[0];
     if (lead.removed && lead.keeps) return `${nameOf(lead.id)} op ${dayName(lead.from)} weghalen`;
+    if (lead.templateId && !lead.removed) return `${nameOf(lead.id)} rustiger`;
     return lead.removed ? `${nameOf(lead.id)} laten vervallen` : lead.to && lead.to !== lead.from ? `${nameOf(lead.id)} verplaatsen` : `${nameOf(lead.id)} korter`;
+  };
+  const sportMinutesItem = (c: Change): { fromMinutes?: number; toMinutes?: number } => {
+    const [was, now] = [minutesBefore(c), minutesAfter(c)];
+    return { ...(was !== undefined ? { fromMinutes: was } : {}), ...(now !== undefined ? { toMinutes: now } : {}) };
   };
   const items = (changes: Change[]): PlanChangeItem[] => changes.map((c) => ({
     plannedSessionId: c.id,
@@ -327,6 +358,9 @@ export function planWeekFix(input: CheckInput, concern: CheckConcern, weekStart:
     fromDate: c.from,
     toDate: c.removed ? undefined : c.to ?? c.from,
     ...(c.minutes ? { plannedMinutes: c.minutes } : {}),
+    ...(c.templateId && !c.removed ? { templateId: c.templateId } : {}),
+    // The minutes before and after, for the record (engine/repairAudit.ts): with a sport in the finding.
+    ...(withSport && !c.removed ? sportMinutesItem(c) : {}),
     reason: concern.headline,
     generatedBy: SOURCE,
   }));

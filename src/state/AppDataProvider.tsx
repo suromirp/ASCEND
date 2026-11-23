@@ -57,6 +57,7 @@ import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { mondayOfWeek, todayISO } from '../utils/dates';
 import { withProgramExercises } from '../engine/macrofactorProgram';
 import { withCountingSports } from '../engine/sportTemplate';
+import { PLAN_CHECK_WHY, joinPlanCheck, joinsNotice, planCheckRecord } from '../engine/repairAudit';
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName, logIdsInEnvelope } from '../storage/backupExport';
 import { backupFileText } from '../storage/backupFile';
@@ -84,6 +85,8 @@ import { useWeekReplanActions } from './weekReplanActions';
 import { useMoveActions } from './moveActions';
 import { useGoalActions } from './goalActions';
 import { useNotesAndIllness } from './notesAndIllness';
+import { appendSportRestOffers } from '../storage/sportRestOffers';
+import type { SportRestOffer } from '../engine/sportRestOffer';
 import { useHorizonActions } from './horizonActions';
 import { useBodyAndLeave } from './bodyAndLeave';
 import { useAdviceAndWeek } from './adviceAndWeek';
@@ -216,16 +219,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // Not on a fresh install: there is nothing of yours to put right yet.
     if (repaired && logs.length > 0) {
       const id = makeId('plancheck');
-      const why = 'Na elke wijziging gaan je weken langs vaste regels: je rustdag vrij, niet te veel op een dag, genoeg ruimte tussen zware dagen, frisse benen voor een test. Wat vanzelf gepland was, wordt dan rechtgezet. Wat jij zelf zette en je test of wedstrijd schuiven nooit; daarvoor krijg je een voorstel.';
+      const why = PLAN_CHECK_WHY;
       const now = new Date().toISOString();
-      await PlanChangeProposalsRepo.put({ id, trigger: 'plan_check', issue: 'Weekcontrole', changes: [], alternatives: [], consequences: repaired.lines.join('; '), explanation: why, createdAt: now, resolvedAt: now, resolution: 'accepted' });
+      // Een nieuw record per ronde, met wat er in duur of soort veranderde (engine/repairAudit.ts, Ontwerp 9).
+      await PlanChangeProposalsRepo.put(planCheckRecord(repaired, id, now));
       setRecentChange((prev) => {
         // Right after a change of yours (a move, an Akkoord): the repairs
         // join that notice, so its undo still works and puts everything
         // back as it was before your change.
-        if (prev && !prev.failed && prev.trigger !== 'plan_check' && Date.now() - Date.parse(prev.createdAt) < 15_000) {
-          const known = new Set(prev.before.map((s) => s.id));
-          const joined = { ...prev, lines: [...prev.lines, ...repaired.lines], before: [...prev.before, ...repaired.stored.filter((s) => !known.has(s.id))], addedIds: [...prev.addedIds, ...(repaired.addedIds ?? [])] };
+        if (joinsNotice(prev, Date.now())) {
+          // The record of this round goes along, so undoing the joined notice reverts it too (storage/undoPlanChange.ts).
+          const joined = joinPlanCheck(prev, repaired, id);
           const joinedIds = noticeIds(joined).filter((x) => !noticeIds(prev).includes(x));
           return { ...joined, written: refreshWritten(prev.written, syncTouched, noticeIds(joined), freshFor(joinedIds)) };
         }
@@ -313,6 +317,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const openDraftId = useMemo(() => openDraftIdOf(sessionSnap ? readSession() : undefined, sessionLogs), [sessionSnap, sessionLogs]);
   const { weather, answeredAdviceIds, advice, weekNoticeFor, weekFixesFor, previewDrop, legsCloseAt, proposeSwap, swapOptionsFor, influenceMoveNow } = useAdviceAndWeek({ loading, program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, templates, planChangeLog, adviceResponses, missedMemory, openDraftId, plannerAdvice, templateById, goalOverviews, dragContextFor, updateSettings });
 
+  // Een voorstel na een zware sport (engine/sportRestOffer.ts): alleen regels toevoegen, vanaf wat er staat.
+  const appendSportRest = useCallback(async (rows: SportRestOffer[]) => {
+    if (rows.length === 0) return;
+    setSettings(await appendSportRestOffers(rows, todayISO()));
+  }, [setSettings]);
   const value: AppData = {
     loading,
     bootError,
@@ -484,6 +493,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     saveInfluence,
     saveSweat,
     saveSweatPre,
+    appendSportRest,
     removeInfluence,
     clearInfluences,
     planIllness,
