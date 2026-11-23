@@ -36,7 +36,7 @@ export function beginnerLadderLines(settings: OfferSettings, week: number): stri
     ...(settings.beginnerBuild === 'licht' ? [] : [WALK_JOG_LINE]),
     `Deze week: kracht ${rung.strengthMinutes} minuten, met minder sets.`,
     `Wandelen en dribbelen: ${rung.shortMinutes} en ${rung.longMinutes} minuten.`,
-    `Je herstelwandeling duurt hoogstens ${rung.shortMinutes} minuten.`,
+    `Wandelen op je rustdag: hoogstens ${rung.shortMinutes} minuten.`,
     ...(rung.week < last.week
       ? [`Elke week iets meer, tot kracht ${last.strengthMinutes} minuten en wandelen en dribbelen ${last.shortMinutes} en ${last.longMinutes} minuten.`]
       : []),

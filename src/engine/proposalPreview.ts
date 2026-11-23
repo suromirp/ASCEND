@@ -58,7 +58,8 @@ export interface PreviewMove {
   isNew?: true;
   minutes?: number;
   leaveOn?: boolean;
-  // De rustdag (een recovery-rij): heet Rustdag zoals in Week, zonder minuten (I-14 vraag 3, "Rustdag ma, wandelen mag").
+  // De rustdag (een recovery-rij): heet zoals in Week (Rustdag, of Hersteldag in die stand), een nieuwe zonder minuten
+  // (I-14 vraag 3, "Rustdag ma, wandelen mag"). `name` zegt Rustdag; het blad kiest het woord met de stand.
   rest?: true;
 }
 
@@ -112,7 +113,6 @@ export function previewBetween(sessions: PlannedSession[], after: PlannedSession
     const type = byId.get(s.templateId)?.type ?? ('cardio' as SessionType);
     return { name: type === 'recovery' ? REST_DAY_COPY.rest.title : byId.get(s.templateId)?.name ?? 'Training', type, templateId: s.templateId, plannedMinutes: s.plannedMinutes };
   };
-  const restMark = (s: PlannedSession) => (byId.get(s.templateId)?.type === 'recovery' ? { rest: true as const } : {});
   // De lengte van een nieuwe rij, alleen als die vaststaat: een eigen lengte op de rij, of een sjabloon zonder
   // weekopbouw. Bij een weekopbouw hangt de lengte van de week af en zegt het voorstel liever niets dan iets dat niet klopt.
   const newMinutes = (s: PlannedSession): number | undefined => {
@@ -138,11 +138,11 @@ export function previewBetween(sessions: PlannedSession[], after: PlannedSession
     if (!was) {
       if (s.status === 'skipped') continue;
       added.add(s.id);
-      moves.push({ name: info(s).name, action: 'add', to: s.scheduledDate, sessionId: s.id, isNew: true, ...(restMark(s).rest ? restMark(s) : { minutes: newMinutes(s) }) });
+      moves.push({ name: info(s).name, action: 'add', to: s.scheduledDate, sessionId: s.id, isNew: true, ...(byId.get(s.templateId)?.type === 'recovery' ? {} : { minutes: newMinutes(s) }) });
     } else if (was.status === 'skipped' && s.status !== 'skipped') {
       // A session that was let go and comes back on the plan.
       added.add(s.id);
-      moves.push({ name: info(s).name, action: 'add', to: s.scheduledDate, sessionId: s.id, ...restMark(s) });
+      moves.push({ name: info(s).name, action: 'add', to: s.scheduledDate, sessionId: s.id });
     } else if (was.status !== 'skipped' && s.status === 'skipped') {
       gone.push(was);
       moves.push({ name: info(was).name, action: 'remove', from: was.scheduledDate, sessionId: s.id });
@@ -161,6 +161,12 @@ export function previewBetween(sessions: PlannedSession[], after: PlannedSession
       other.set(s.id, s);
       moves.push({ name: info(s).name, action: 'mark', to: s.scheduledDate, sessionId: s.id, leaveOn: !!s.leave });
     }
+  }
+  // Een rij die de rustdag is, draagt dat mee: het blad noemt hem met het woord van Week (REST_DAY_COPY, de stand van Op je rustdag).
+  const rowOf = new Map([...sessions, ...after].map((s) => [s.id, s]));
+  for (const m of moves) {
+    const row = m.sessionId ? rowOf.get(m.sessionId) : undefined;
+    if (row && byId.get(row.templateId)?.type === 'recovery') m.rest = true;
   }
   // Moves first, then what changes, then what goes, then what comes; each in date order.
   moves.sort((a, b) => MOVE_ORDER[a.action] - MOVE_ORDER[b.action] || (a.from ?? a.to ?? '').localeCompare(b.from ?? b.to ?? ''));

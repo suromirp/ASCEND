@@ -152,9 +152,22 @@ async function withAvailability(run: HorizonRun, first: FirstPlanExtras, changed
   return unsupported.length > 0 ? run : { ...run, after: sessions };
 }
 
-// De rijen van de eerste volle week van het voorbeeld zoals Week ze toont: een recovery-rij is de rustdag.
-function firstWeekRows(after: PlannedSession[], templates: SessionTemplate[], today: string): FirstWeekRow[] {
-  const from = addDays(mondayOfWeek(today), 7);
+// De week waarvan het eerste voorstel zegt "per week": de eerste volle week zonder een rij van vóór het voorstel (een
+// eigen rij maakt één week anders dan de rest). Is er binnen twaalf weken geen, dan de eerste volle week, en de zin
+// zegt dat het die week is (`only`).
+const CLEAN_WEEKS = 12;
+function textWeek(before: PlannedSession[], today: string): { from: string; only: boolean } {
+  const first = addDays(mondayOfWeek(today), 7);
+  for (let i = 0; i < CLEAN_WEEKS; i++) {
+    const from = addDays(first, i * 7);
+    const until = addDays(from, 6);
+    if (!before.some((s) => s.status !== 'skipped' && s.scheduledDate >= from && s.scheduledDate <= until)) return { from, only: false };
+  }
+  return { from: first, only: true };
+}
+
+// De rijen van die week in het voorbeeld zoals Week ze toont: een recovery-rij is de rustdag.
+function weekRows(after: PlannedSession[], templates: SessionTemplate[], from: string): FirstWeekRow[] {
   const until = addDays(from, 6);
   const byId = new Map(templates.map((t) => [t.id, t]));
   return after
@@ -309,7 +322,8 @@ export async function computeHorizonPlan(given: HorizonChangeInput, deps: Horizo
   const conflictNotes = conflicts.flatMap((c) => [c.message, c.suggestion]);
   // Het eerste voorstel noemt de week van het voorbeeld, niet de vorm die de vragen kozen: wat het noemt staat daarna in Week.
   const text = input.firstPlan?.text;
-  const own = text ? firstPlanLines(text, firstWeekRows(done.run.after, templates, today)) : (input.notes ?? []);
+  const week = text ? textWeek(stored, today) : undefined;
+  const own = text && week ? firstPlanLines(text, weekRows(done.run.after, templates, week.from), week.only) : (input.notes ?? []);
   return {
     input, proposal, notes: [...own, ...conflictNotes, ...diff.notes], lengths: input.lengths ?? lengths, counts: diff.counts,
     ...(conflicts.length > 0 ? { conflicts } : {}),

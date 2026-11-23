@@ -2,7 +2,7 @@
 // 2.1 en 3.5). De planning zelf komt uit de gewone planningsronde (storage/horizonPlan.ts); dit
 // zijn alleen de regels erboven. Puur: geen React, geen IndexedDB.
 
-import { DIRECTIONS, type DirectionId } from '../data/directions';
+import { DIRECTIONS, GUIDELINE_MINUTES, GUIDELINE_STRENGTH, type DirectionId } from '../data/directions';
 import { belowGuideline, budgetFor, resolveWeekBudget } from './weekBudget';
 import { strengthTrainingOn } from './strengthTraining';
 
@@ -37,6 +37,18 @@ function strengthPart(budget: number, planned: PlannedStrength | undefined): str
   return `${planned.strength} keer kracht; je richting vraagt ${budget}${planned.strength < budget ? fits : ''}`;
 }
 
+// Onder de richtlijn is een keuze. Noemt de zin twee getallen voor kracht (het plan en de richting), dan zegt hij welk
+// getal onder de richtlijn ligt, anders slaat "Dat" op het verkeerde (Warden, 23 november).
+function guidelineLine(week: string, budget: { minutes: number; strength: number }, on: boolean, planned: PlannedStrength | undefined): string {
+  if (!planned || planned.strength === budget.strength || !on) return belowGuideline(budget, on) ? `${week} Dat is onder de richtlijn, en dat mag een keuze zijn.` : week;
+  const below = [
+    ...(budget.minutes < GUIDELINE_MINUTES ? [`${budget.minutes} minuten`] : []),
+    ...(planned.strength < GUIDELINE_STRENGTH ? [`${planned.strength} keer kracht`] : []),
+  ];
+  if (below.length === 0) return week;
+  return `${week} Met ${below.join(' en ')} zit je onder de richtlijn, en dat mag een keuze zijn.`;
+}
+
 // Met krachttraining uit (engine/strengthTraining.ts) telt het budget geen kracht: dan noemen de zinnen alleen minuten en lopen.
 // `planned`: het eerste voorstel noemt het aantal krachtdagen van het plan, en het budget apart als dat anders is.
 export function directionChangeLines(id: DirectionId, settings: { weekBudget?: unknown; strengthTraining?: unknown }, planned?: PlannedStrength): string[] {
@@ -45,7 +57,7 @@ export function directionChangeLines(id: DirectionId, settings: { weekBudget?: u
   const week = on ? `Je week: ${budget.minutes} minuten en ${strengthPart(budget.strength, planned)}.` : `Je week: ${budget.minutes} minuten.`;
   return [
     `Richting: ${DIRECTIONS[id].label}.`,
-    belowGuideline(budget, on) ? `${week} Dat is onder de richtlijn, en dat mag een keuze zijn.` : week,
+    guidelineLine(week, budget, on, planned),
     // Met kracht uit staat kracht niet voorop: Sterker worden zegt dan alleen wat de duur doet.
     !on && id === 'stronger' ? 'De duur loopt rustig mee en is elke vierde week wat korter.' : WHAT_IT_DOES[id],
     'Geen bergtocht en geen rugzak, tot je een tocht als doel kiest.',

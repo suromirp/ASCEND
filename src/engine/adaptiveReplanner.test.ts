@@ -106,3 +106,28 @@ describe('computeForecastReplan — availability pass', () => {
     expect('prescriptions' in result).toBe(false);
   });
 });
+
+// Warden, 23 november (I-14 stap 4): een wedstrijd op een dag die niet in je dagen zit viel stil uit het plan. Een test,
+// wedstrijd of rij met een slot schuift de automatische planning nooit (weekValidator.ts#lockLevel).
+describe('computeForecastReplan: wat vastligt blijft staan', () => {
+  const SUNDAY = '2026-09-27';
+  const tplRace: SessionTemplate = { id: 'tpl_race', name: 'Wedstrijd', type: 'cardio', durationVariants: { full: 120 } };
+  const weekdaysOnly = fullAvailability({ allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri'] });
+
+  it('een wedstrijd op een dag die niet beschikbaar is, blijft op zijn dag', () => {
+    const race = session('race', 'tpl_race', SUNDAY, FORECAST_MONDAY);
+    const result = computeForecastReplan({ plannedSessions: [race], templates: [tplRace, tplEasyRun], availability: weekdaysOnly, asOf: ASOF });
+    expect(result.proposal.changes).toEqual([]);
+  });
+
+  it('een rij met jouw slot blijft staan, een rij van het systeem op dezelfde dag schuift wel', () => {
+    const mine = { ...session('mine', 'tpl_easy_run', '2026-09-26', FORECAST_MONDAY), lock: { by: 'user' as const, at: '2026-09-01T10:00:00.000Z' } };
+    const system = session('system', 'tpl_easy_run', '2026-09-26', FORECAST_MONDAY);
+    const race = session('race', 'tpl_race', SUNDAY, FORECAST_MONDAY);
+    const result = computeForecastReplan({ plannedSessions: [mine, system, race], templates: [tplRace, tplEasyRun], availability: weekdaysOnly, asOf: ASOF });
+    const ids = result.proposal.changes.map((c) => c.plannedSessionId);
+    expect(ids).not.toContain('mine');
+    expect(ids).not.toContain('race');
+    expect(ids).toContain('system');
+  });
+});
