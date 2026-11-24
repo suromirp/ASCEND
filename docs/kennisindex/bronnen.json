@@ -4700,6 +4700,16 @@
     "docs/beslissingen/2026-11-21-zuinige-stand.md",
     "docs/beslissingen/2026-11-20-gemengde-bouwers-en-wissel.md"
    ]
+  },
+  "docs/beslissingen/2026-11-24-route-per-training.md": {
+   "onderwerpen": [
+    "lopen-en-tests"
+   ],
+   "kern": "Een route hoort bij één geplande training: vooraf kiezen, wijzigen of weggooien, schuift mee met de training, geen vaste bibliotheek; rijtijd naar heuvels is een instelling (advies ongeveer 30 minuten). Neemt het punt Routes bewaren per training uit 2026-11-09-routeplanner.md over.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-09-routeplanner.md"
+   ]
   }
  }
 }
