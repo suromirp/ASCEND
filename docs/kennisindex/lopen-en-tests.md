@@ -65,6 +65,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 
 ## Onderzoek, ontwerpen en verslagen
 
+- [onderhoud/sherpa-route-hoogtemeters.md](../onderhoud/sherpa-route-hoogtemeters.md): Verslag van I-160 deel B: Simpel begint op de voet van de steilste helling, de keuze Hoogtemeters halen of Afstand houden met de som, de rij Buiten plus een helling, trap of de loopband uit de gids, en Opnieuw proberen bij een ontbrekende kaart. Bewijs, keuzes en wat niet gebouwd is.
 - [onderzoek/Drempel en submaximale test.md](../onderzoek/Drempel%20en%20submaximale%20test.md): Hoe je de drempelhartslag zonder lab bepaalt (de factor 0,98, drie tests samen, alleen met borstband), hoe groot de fout van de pols is, of RR-intervallen en DFA alpha 1 iets toevoegen, en hoe een korte vaste test vorm en vermoeidheid volgt, met een voorstel in vijf stappen.
 - [onderzoek/Hoogtemeters met precisie.md](../onderzoek/Hoogtemeters%20met%20precisie.md): Hoe precies hoogtemeters uit BRouter, Valhalla en andere bronnen zijn, hoe je telt en ijkt, met een advies in acht punten.
 - [onderzoek/Loopgegevens en vooruitgang.md](../onderzoek/Loopgegevens%20en%20vooruitgang.md): Wat je na een loop uit de reeksen van intervals.icu kunt berekenen en hoe je trainingen eerlijk vergelijkt.

@@ -14,6 +14,7 @@ import { isNearlyFlat, modelThresholdM } from './elevation';
 import { ASCENT_DEAD_BAND_M, ascentOf, bearing, bigRoadMeters, cumulative, deadEnds, lineLength, loopDeadEnds, metersBetween, offsetPoint, repeatedShare, withoutDeadEnds } from './routeGeometry';
 import { formatNumberNL } from '../utils/number';
 import { hikeMinutes, NORM_WALK_RATES, walkTimeText } from './hikeTarget';
+import { driveMinutes, roadKm, walkMinutes, WALKABLE_ROAD_KM } from './trainingSpots';
 
 // Hoogstens zoveel aanroepen van de routeplanner per soort lus: de openbare dienst is van vrijwilligers.
 export const MAX_ROUTE_CALLS = 3;
@@ -57,7 +58,21 @@ export interface PlanInput {
   avoid?: AvoidArea[];
   // De klok, voor de leeftijd van de kaart; standaard nu.
   now?: Date;
+  // Simpel met een keuze (I-160): begint op de voet van de steilste helling en geeft beide uitkomsten,
+  // Hoogtemeters halen en Afstand houden (RoutePlans.choices). Zonder: de oude som (het kleinste van beide).
+  loop?: LoopOptions;
 }
+
+// Wat voorgaat in een lus met één helling: de hoogtemeters van de training (langer) of de afstand (minder hm).
+export type LoopPriority = 'ascent' | 'distance';
+export interface LoopOptions {
+  priority: LoopPriority;
+  // Zoveel minuten rijden mag de voet van de helling liggen (instelling Rijtijd naar heuvels). 0: niet
+  // rijden, alleen lopen; undefined: geen grens.
+  driveLimitMin?: number;
+}
+// Ligt de voet van de helling verder dan dit van je plek, dan begint Simpel op de voet (I-160).
+export const FOOT_START_M = 1000;
 
 const routeOptions = (input: PlanInput) => (input.avoid && input.avoid.length > 0 ? { avoid: input.avoid } : undefined);
 // Een lus die door een vermeden stuk gaat, of na bijsturen onder 1 km komt, is geen lus.
@@ -89,6 +104,8 @@ export interface RoutePlans {
   map?: 'none' | 'old';
   // Een melding over de hele zoektocht (bijvoorbeeld geen pad bij het startpunt).
   notice?: string;
+  // Met PlanInput.loop: Simpel voor beide keuzes en Avontuurlijk zoals hij kwam, voor plansWithPriority.
+  choices?: { simple: Record<LoopPriority, PlanOutcome>; adventure: PlanOutcome };
 }
 
 const knownHill = (f: TerrainFeature) => f.kind === 'hill' && f.heightM !== undefined && f.heightM >= MIN_CLIMB_M;
@@ -300,28 +317,58 @@ function proposal(style: RouteProposal['style'], line: RoutedLine, points: Route
 
 // Van een lijn naar een heuvel een lus met herhalingen: heen naar de voet, zo vaak op en af als de
 // hoogtemeters vragen (en de afstand toelaat), en terug.
-export function composeSimple(line: RoutedLine, target: RouteTarget): RouteProposal | undefined {
+// Met `loop` (I-160): ligt de voet verder dan FOOT_START_M en is hij te bereiken (footReachable), dan begint
+// de lus op de voet, zonder aanloop. Hoogtemeters halen herhaalt tot de hoogtemeters er zijn (hoogstens
+// MAX_REPEATS), Afstand houden zo vaak als in de afstand past. Zonder `loop` de oude som.
+export function composeSimple(line: RoutedLine, target: RouteTarget, loop?: LoopOptions): RouteProposal | undefined {
   const climb = climbOnLine(line.points, line.points.length - 1) ?? climbOnLine(line.points);
   if (!climb) return undefined;
   // Een tak in de aanloop (de routeplanner liep een doodlopend pad in en uit) is alleen omweg: weg ermee,
   // anders tekent de lus een Y met twee doodlopende takken.
-  const approach = withoutDeadEnds(line.points.slice(0, climb.foot + 1));
+  const fullApproach = withoutDeadEnds(line.points.slice(0, climb.foot + 1));
+  const footM = metersBetween(line.points[0], line.points[climb.foot]);
+  const fromFoot = !!loop && lineLength(fullApproach) > FOOT_START_M && footReachable(footM, loop.driveLimitMin);
+  const approach = fromFoot ? [line.points[climb.foot]] : fullApproach;
   const up = line.points.slice(climb.foot, climb.top + 1);
   const down = reversed(up);
   // De drempel van de hele lijn, ook voor de stukken: anders telt de som van de delen anders dan het geheel.
   const threshold = modelThresholdM(line.points.map((p) => p.ele));
   const base = ascentOf(approach, threshold) + ascentOf(reversed(approach), threshold);
   const perRepeat = Math.max(climb.heightM, ascentOf(up, threshold) + ascentOf(down, threshold));
-  const byAscent = Math.round((target.ascentM - base) / perRepeat);
-  const room = 1.5 * target.distanceKm * 1000 - 2 * lineLength(approach);
-  const byDistance = Math.floor(room / (2 * climb.lengthM));
-  const repeats = Math.max(1, Math.min(byAscent, byDistance, MAX_REPEATS));
+  const repeats = loop
+    ? chosenRepeats(loop.priority, target, base, perRepeat, lineLength(approach), climb.lengthM)
+    : oldRepeats(target, base, perRepeat, lineLength(approach), climb.lengthM);
   const points = [...approach];
   for (let i = 0; i < repeats; i++) points.push(...up.slice(1), ...down.slice(1));
   points.push(...reversed(approach).slice(1));
   // Elke herhaling telt voor de hele helling: de dode band zou anders per keer een paar meter van de top afhalen.
   const climbFromM = lineLength(approach);
-  return proposal('simple', line, points, { ascentM: base + repeats * perRepeat, repeats, climbM: climb.heightM, climbLengthM: climb.lengthM, climbFromM, climbToM: climbFromM + climb.lengthM, repeatedShare: 1 });
+  return proposal('simple', line, points, { ascentM: base + repeats * perRepeat, repeats, climbM: climb.heightM, climbLengthM: climb.lengthM, climbFromM, climbToM: climbFromM + climb.lengthM, repeatedShare: 1, ...(fromFoot ? { footStartM: footM } : {}) });
+}
+
+// De oude som: het kleinste van wat de hoogtemeters vragen en wat in anderhalf keer de afstand past.
+function oldRepeats(target: RouteTarget, base: number, perRepeat: number, approachM: number, climbLengthM: number): number {
+  const byAscent = Math.round((target.ascentM - base) / perRepeat);
+  const room = 1.5 * target.distanceKm * 1000 - 2 * approachM;
+  const byDistance = Math.floor(room / (2 * climbLengthM));
+  return Math.max(1, Math.min(byAscent, byDistance, MAX_REPEATS));
+}
+
+// Hoogtemeters halen: naar boven afgerond, zodat de lus de hoogtemeters haalt. Afstand houden: zo vaak als het
+// dichtst bij de afstand ligt, en nooit vaker dan de hoogtemeters vragen.
+export function chosenRepeats(priority: LoopPriority, target: RouteTarget, base: number, perRepeat: number, approachM: number, climbLengthM: number): number {
+  const byAscent = Math.ceil(Math.max(0, target.ascentM - base) / perRepeat);
+  if (priority === 'ascent') return Math.max(1, Math.min(byAscent, MAX_REPEATS));
+  const byDistance = Math.round((target.distanceKm * 1000 - 2 * approachM) / (2 * climbLengthM));
+  return Math.max(1, Math.min(byAscent, byDistance, MAX_REPEATS));
+}
+
+// Is de voet te bereiken? Lopend altijd (tot WALKABLE_ROAD_KM over de weg), rijdend binnen de rijtijd
+// (trainingSpots.ts#driveMinutes, dezelfde schatting als de gids); 0 is niet rijden, undefined geen grens.
+export function footReachable(footM: number, driveLimitMin: number | undefined): boolean {
+  if (roadKm(footM / 1000) <= WALKABLE_ROAD_KM) return true;
+  if (driveLimitMin === undefined) return true;
+  return driveLimitMin > 0 && driveMinutes(footM / 1000) <= driveLimitMin;
 }
 
 // Vlak: heen tot de helft van de afstand en over hetzelfde pad terug.
@@ -371,6 +418,78 @@ export async function proposeSimple(input: PlanInput, route: RouteFn, spare?: Ro
   }
   if (best) return { ok: true, proposal: best };
   return { ok: false, reason: lastFailure ?? 'nothing' };
+}
+
+// Simpel met een keuze (I-160): de hellingen met een bekende hoogte, de hoogste eerst (Simpel begint aan de
+// voet, dus de afstand tot je plek weegt pas daarna); zonder genoeg ook die zonder hoogte.
+export function steepCandidates(input: PlanInput): RoutePoint[] {
+  const { start, terrain } = input;
+  if (input.target.ascentM < MIN_ASCENT_TARGET_M) return flatCandidates(input);
+  return (terrain?.features ?? [])
+    .filter(usableHill)
+    .map((f) => ({ f, crow: metersBetween(start, f), height: f.heightM ?? -1 }))
+    .sort((a, b) => b.height - a.height || a.crow - b.crow || a.f.lat - b.f.lat || a.f.lon - b.f.lon)
+    .slice(0, MAX_ROUTE_CALLS)
+    .map(({ f }) => ({ lat: f.lat, lon: f.lon }));
+}
+
+const steepness = (p: RouteProposal) => (p.climbM ?? 0) / Math.max(1, p.climbLengthM ?? 1);
+// De steilste helling gaat voor, dan de hoogste; bij gelijk de eerste.
+function steeper(a: RouteProposal, b: RouteProposal | undefined): boolean {
+  if (!b) return true;
+  const d = steepness(a) - steepness(b);
+  if (Math.abs(d) > 1e-9) return d > 0;
+  return (a.climbM ?? 0) > (b.climbM ?? 0);
+}
+
+function bothFrom(line: RoutedLine, input: PlanInput & { loop: LoopOptions }): Record<LoopPriority, RouteProposal> | undefined {
+  const ascent = composeSimple(line, input.target, { ...input.loop, priority: 'ascent' });
+  const distance = composeSimple(line, input.target, { ...input.loop, priority: 'distance' });
+  if (!ascent || !distance || !usable(input, ascent) || !usable(input, distance)) return undefined;
+  return { ascent, distance };
+}
+
+// Simpel voor beide keuzes, uit dezelfde helling: de steilste van de hoogstens MAX_ROUTE_CALLS die gevraagd
+// zijn. Zonder hoogtemeters in de training: heen en terug zoals altijd, voor beide keuzes hetzelfde.
+export async function proposeSimpleChoices(input: PlanInput & { loop: LoopOptions }, route: RouteFn, spare?: RoutedLine): Promise<Record<LoopPriority, PlanOutcome>> {
+  if (input.target.ascentM < MIN_ASCENT_TARGET_M) {
+    const { loop: _loop, ...plain } = input;
+    const o = await proposeSimple(plain, route, spare);
+    return { ascent: o, distance: o };
+  }
+  let best: Record<LoopPriority, RouteProposal> | undefined;
+  let lastFailure: RouteFailure | undefined;
+  for (const candidate of steepCandidates(input).filter((c) => !insideAny(c, input.avoid))) {
+    const answer = await route([input.start, candidate], routeOptions(input));
+    if (failed(answer)) {
+      lastFailure = answer.reason;
+      if (stops(answer.reason)) break;
+      if (answer.reason === 'unmapped' && answer.waypoint === 0) {
+        const o: PlanOutcome = { ok: false, reason: 'unmapped', at: 'start' };
+        return { ascent: o, distance: o };
+      }
+      continue;
+    }
+    const anchored = input.anchor ? anchorLine(answer.line.points, input.start, false) : { points: answer.line.points, gapM: 0 };
+    const both = bothFrom({ source: answer.line.source, points: anchored.points }, input);
+    if (!both) continue;
+    // Begint de lus op de voet, dan ligt het pad bij je plek niet op de lus: geen regel erover.
+    if (anchored.gapM >= START_GAP_NOTE_M) {
+      for (const p of [both.ascent, both.distance]) if (p.footStartM === undefined) p.startGapM = anchored.gapM;
+    }
+    if (steeper(both.distance, best?.distance)) best = both;
+  }
+  if (!best && spare) {
+    // Geen helling van de kaart (of geen kaart): de hoogste helling op de avontuurlijke lus, in beide richtingen.
+    for (const points of [spare.points, reversed(spare.points)]) {
+      const line = tallestClimbLine(points);
+      const both = line ? bothFrom({ source: spare.source, points: line }, input) : undefined;
+      if (both && steeper(both.distance, best?.distance)) best = both;
+    }
+  }
+  if (best) return { ascent: { ok: true, proposal: best.ascent }, distance: { ok: true, proposal: best.distance } };
+  const o: PlanOutcome = { ok: false, reason: lastFailure ?? 'nothing' };
+  return { ascent: o, distance: o };
 }
 
 // Het stuk van de lus tussen twee afstanden (meters vanaf de start), met een punt precies op elke grens.
@@ -749,19 +868,39 @@ export async function proposeRoutes(input: PlanInput, route: RouteFn): Promise<R
   // Geen pad bij het startpunt: Simpel vraagt hetzelfde punt en krijgt hetzelfde antwoord.
   const noStart = !adventure.ok && adventure.at === 'start';
   const spare: RoutedLine | undefined = adventure.ok ? { source: adventure.proposal.source, points: adventure.proposal.points } : undefined;
-  const simple = noStart ? adventure : await safe(proposeSimple(input, route, spare));
+  const { loop } = input;
+  const errorBoth = (): Record<LoopPriority, PlanOutcome> => ({ ascent: { ok: false, reason: 'error' }, distance: { ok: false, reason: 'error' } });
+  const choices = loop && !noStart ? await proposeSimpleChoices({ ...input, loop }, route, spare).catch(errorBoth) : undefined;
+  const simple = noStart ? adventure : choices && loop ? choices[loop.priority] : await safe(proposeSimple(input, route, spare));
   const plans: RoutePlans = { simple: noted(simple), adventure: noted(adventure) };
-  // Een voorstel ver onder de afstand komt alleen als er geen ander voorstel binnen de afstand is.
-  for (const [style, other] of [['simple', 'adventure'], ['adventure', 'simple']] as const) {
-    const mine = plans[style];
-    const rival = plans[other];
-    if (mine.ok && rival.ok && mine.proposal.distanceM < input.target.distanceKm * 1000 * FAR_OFF && fitsDistance(rival.proposal, input.target)) plans[style] = { ok: false, reason: 'nothing', farOff: true };
+  if (choices && loop) {
+    plans.choices = { simple: { ascent: noted(choices.ascent), distance: noted(choices.distance) }, adventure: plans.adventure };
+    plans.simple = plans.choices.simple[loop.priority];
   }
+  dropFarOff(plans, input.target);
   if (found) plans.found = found;
   const age = mapAge(input.terrain, input.now ?? new Date());
   if (age) plans.map = age;
   if (noStart || (!simple.ok && simple.at === 'start' && !adventure.ok)) plans.notice = NO_PATH_AT_START;
   return plans;
+}
+
+// Een voorstel ver onder de afstand komt alleen als er geen ander voorstel binnen de afstand is.
+function dropFarOff(plans: RoutePlans, target: RouteTarget): void {
+  for (const [style, other] of [['simple', 'adventure'], ['adventure', 'simple']] as const) {
+    const mine = plans[style];
+    const rival = plans[other];
+    if (mine.ok && rival.ok && mine.proposal.distanceM < target.distanceKm * 1000 * FAR_OFF && fitsDistance(rival.proposal, target)) plans[style] = { ok: false, reason: 'nothing', farOff: true };
+  }
+}
+
+// De lussen bij een keuze (Hoogtemeters halen of Afstand houden), zonder nieuwe zoektocht: Simpel uit
+// `choices`, Avontuurlijk zoals hij kwam, met dezelfde regel voor een voorstel ver onder de afstand.
+export function plansWithPriority(plans: RoutePlans, priority: LoopPriority, target: RouteTarget): RoutePlans {
+  if (!plans.choices) return plans;
+  const next: RoutePlans = { ...plans, simple: plans.choices.simple[priority], adventure: plans.choices.adventure };
+  dropFarOff(next, target);
+  return next;
 }
 
 // ---------- Tekst ----------
@@ -874,10 +1013,25 @@ export const BIG_ROAD_NOTE_M = 300;
 export const BIG_ROAD_LEAD = 'Langs een grote weg:';
 export const bigRoadLine = (meters: number): string => `${BIG_ROAD_LEAD} ${km(meters)}.`;
 
+// Begint Simpel op de voet van de helling (composeSimple, I-160), dan zegt één regel hoe je er komt: lopend
+// te bereiken met lopen en rijden, verder alleen rijden. Met de schatting van de gids (trainingSpots.ts).
+export function footStartLine(p: Pick<RouteProposal, 'footStartM'>): string | undefined {
+  if (p.footStartM === undefined) return undefined;
+  const straight = p.footStartM / 1000;
+  const drive = Math.max(1, driveMinutes(straight));
+  if (roadKm(straight) <= WALKABLE_ROAD_KM) {
+    const walk = Math.max(1, walkMinutes(straight));
+    return `Begint bij de voet van de helling, ${km(p.footStartM)} van je plek: ${walk} minuten lopen of ${drive} minuten rijden.`;
+  }
+  return `Begint bij de voet van de helling, ${drive} minuten rijden van je plek.`;
+}
+
 // Wat je over deze lus moet weten naast de getallen: het droge feit, in korte zinnen.
 // `climbMarked`: de helling staat nu gemarkeerd op de kaart (niet als je in Per stuk een stuk koos).
 export function proposalNotes(p: RouteProposal, target: RouteTarget, climbMarked = true): string[] {
   const notes: string[] = [];
+  const foot = footStartLine(p);
+  if (foot) notes.push(foot);
   if (p.style === 'simple' && p.climbM && p.climbLengthM) {
     const climb = `${formatNumberNL(Math.round(p.climbM), 0)} m omhoog over ${formatNumberNL(Math.round(p.climbLengthM / 10) * 10, 0)} m`;
     // Herhalingen: de helling staat gemarkeerd op de kaart (climbStretch), de regel zegt wat je daar doet.

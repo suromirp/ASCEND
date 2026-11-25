@@ -405,6 +405,15 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.walkPlanKm;
     skipped.n++;
   }
+  // Wat gaat voor in een lus en Rijtijd naar heuvels (I-160): iets anders valt weg, dan geldt het advies.
+  if ('routeLoopPriority' in s && s.routeLoopPriority !== 'auto' && s.routeLoopPriority !== 'ascent' && s.routeLoopPriority !== 'distance') {
+    delete s.routeLoopPriority;
+    skipped.n++;
+  }
+  if ('routeDriveMinutes' in s && ![0, 15, 30, 45, 'free'].includes(s.routeDriveMinutes as number | string)) {
+    delete s.routeDriveMinutes;
+    skipped.n++;
+  }
   // Startpunt van je lus: Waar je nu bent, Vast punt ('exact') of Ongeveer. Iets anders valt weg, en
   // dan geldt de standaard (Waar je nu bent). Het punt zelf staat nooit in een back-up.
   if ('routeStart' in s && s.routeStart !== 'here' && s.routeStart !== 'approx' && s.routeStart !== 'exact') {

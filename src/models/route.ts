@@ -110,6 +110,9 @@ export interface RouteProposal {
   // Simpel met herhalingen: waar de helling ligt, in meters langs de lus (de eerste keer omhoog).
   climbFromM?: number;
   climbToM?: number;
+  // Simpel begint op de voet van de helling, niet bij je plek (engine/routePlanner.ts#composeSimple): de afstand
+  // hemelsbreed van je plek tot die voet. Je gaat er zelf heen; alleen in het geheugen.
+  footStartM?: number;
   // Een melding bij deze lus: het droge feit en wat wel kan (bijvoorbeeld geen heuvels in de buurt).
   notice?: string;
 }

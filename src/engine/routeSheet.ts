@@ -83,9 +83,11 @@ export function routeSheetStage(i: StageInput): RouteSheetStage {
 // de lussen als rijen om te kiezen en de hoofdknop voor de gekozen lus: dat staat boven de vouw op 390
 // en 412 px. Daarna wat er op de kaart lag, Opnieuw zoeken en de bronnen. Nergens een uitklap.
 // 'adjust': bijsturen en de gekozen lus per stuk (engine/routeAdjust.ts), onder de hoofdknop.
-export type RouteSheetPart = 'ask' | 'searching' | 'failure' | 'map' | 'chosen' | 'adjust' | 'loops' | 'found' | 'retry' | 'sources';
+// I-160: 'mapMissing' de amberregel bovenaan als de kaart van de omgeving ontbrak, met Opnieuw proberen;
+// 'priority' Hoogtemeters halen of Afstand houden onder de lussen; 'plus' buiten plus een trap of de loopband.
+export type RouteSheetPart = 'ask' | 'searching' | 'failure' | 'mapMissing' | 'map' | 'chosen' | 'adjust' | 'loops' | 'priority' | 'plus' | 'found' | 'retry' | 'sources';
 
-export function routeSheetParts(stage: RouteSheetStage, plans?: { anyOk: boolean; anyFailed: boolean }): RouteSheetPart[] {
+export function routeSheetParts(stage: RouteSheetStage, plans?: { anyOk: boolean; anyFailed: boolean; mapMissing?: boolean; priority?: boolean; plus?: boolean }): RouteSheetPart[] {
   if (stage === 'ask') return ['ask'];
   if (stage === 'searching') return ['searching'];
   // De regel en Opnieuw zoeken staan in een vak op de plek van de kaart.
@@ -93,13 +95,26 @@ export function routeSheetParts(stage: RouteSheetStage, plans?: { anyOk: boolean
   if (stage !== 'plans' || !plans) return [];
   // Kaart, dan de rijen (de gekozen met vinkje), dan de hoofdknop direct eronder: titel en feiten van
   // een lus staan alleen in zijn rij (Pathfinder, 11 november).
-  const parts: RouteSheetPart[] = ['map', 'loops'];
+  const parts: RouteSheetPart[] = plans.mapMissing ? ['mapMissing', 'map', 'loops'] : ['map', 'loops'];
+  if (plans.priority) parts.push('priority');
+  if (plans.plus) parts.push('plus');
   if (plans.anyOk) parts.push('chosen', 'adjust');
   parts.push('found');
   if (plans.anyFailed) parts.push('retry');
   parts.push('sources');
   return parts;
 }
+
+// Ontbrak de kaart van de omgeving (heuvels en paden van OpenStreetMap), dan staat dat bovenaan in amber, met
+// Opnieuw proberen: dat haalt alleen die kaart opnieuw op en zoekt daarna opnieuw (I-160). "Opnieuw zoeken"
+// blijft het woord voor de lussen zelf.
+export const MAP_MISSING_LINE = 'Er is geen actuele kaart van de omgeving, dus de lussen zijn zonder heuvels gezocht. Probeer het opnieuw voor je een route kiest.';
+export const MAP_FETCHING_LINE = 'De kaart ophalen.';
+export const MAP_FAILED_LINE = 'De kaart kwam niet binnen. Probeer het later nog eens.';
+export type MapRetryState = 'idle' | 'busy' | 'failed';
+export const mapRetryLine = (state: MapRetryState): string => (state === 'busy' ? MAP_FETCHING_LINE : state === 'failed' ? MAP_FAILED_LINE : MAP_MISSING_LINE);
+// De kaart van de omgeving ontbrak echt (geen kaart, niet een oude): alleen dan de regel bovenaan.
+export const mapMissing = (plans: { map?: 'none' | 'old' } | undefined): boolean => plans?.map === 'none';
 
 // Wat er staat als de telefoon de kaart niet kan tekenen; de lussen staan dan als tekst in de rijen.
 export function mapFallbackLine(kind: 'unsupported' | 'failed', hasRoutes: boolean): string {
