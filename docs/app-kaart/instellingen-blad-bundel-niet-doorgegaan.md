@@ -15,3 +15,6 @@ Na hoeveel dagen
 2 dagen
 [knop: Log op een andere dag koppelen]
 Log op een andere dag koppelen
+[knop: Gemiste training op je rustdag]
+Gemiste training op je rustdag
+[knop: Uitleg: Gemiste training op je rustdag]

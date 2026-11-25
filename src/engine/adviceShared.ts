@@ -23,7 +23,7 @@ import type { WeatherForecast } from '../models/weather';
 import type { TestJudgment } from '../models/testJudgment';
 import type { LeavePeriod } from '../models/leave';
 import { isAwayFor, isPauseDay } from './leave';
-import type { ReentryChoice, ReentryFirstDay, ReentryWeek } from './reentry';
+import type { ReentryCatchUp, ReentryChoice, ReentryFirstDay, ReentryWeek } from './reentry';
 import { idHasRole } from './templateRoles';
 import { RACE_GUARD_DAYS, afterRaceGuard, raceDatesOf } from './raceWindow';
 import type { DescentClockContext } from './descentClock';
@@ -77,6 +77,8 @@ export interface Advice {
   reentryForgeDays?: number;
   // De eerste dag van die instap: herstel en de eerste lichte training ruilen van dag, met hetzelfde Akkoord (I-144).
   reentryFirstDay?: ReentryFirstDay;
+  // Na een pauze zonder ziekte: een lichte gemiste training op de eerste rustdag, met hetzelfde Akkoord (I-159).
+  reentryCatchUp?: ReentryCatchUp;
   // Rule REENTRY: de trainingen van een inhaaladvies dat voor de terugkeer wijkt (I-154). Ze blijven bezet
   // (adviceBusyIds), dus de vraag Niet gedaan? en Vanzelf overslaan laten ze met rust, net als achter MISSED-CATCH-UP
   // (components/useMissedTraining.ts). Niet opgeslagen.
@@ -178,7 +180,8 @@ export interface AdviceInputs {
   fullWeekAsk?: boolean;
   // "Rustiger instap na een pauze" (engine/reentry.ts, rule REENTRY) en wat al met Akkoord bewaard is. Absent = het advies.
   // `forgeLighter`: krachttraining aan en Na een pauze lichter beginnen aan, dan begint Forge in de instap lichter.
-  reentry?: { choice: ReentryChoice; weeks?: unknown; forgeLighter?: boolean };
+  // `catchUp`: instelling Gemiste training op je rustdag (I-159), afwezig is aan.
+  reentry?: { choice: ReentryChoice; weeks?: unknown; forgeLighter?: boolean; catchUp?: boolean };
   // Internal: leave TEST-RETRY out, for the check of its own end state (it would otherwise call itself).
   noRetry?: boolean;
 }

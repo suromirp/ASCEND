@@ -118,6 +118,7 @@ export function PlanningGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="niet-doorgegaan" title="Wat er gebeurt" facts={facts} info="nietDoorgegaan" onClick={() => setInner('niet-doorgegaan')} />
           {rowShown('niet-doorgegaan-dagen', facts) && <SummaryRow id="niet-doorgegaan-dagen" title="Na hoeveel dagen" facts={facts} onClick={() => setInner('niet-doorgegaan-dagen')} />}
           <SummaryRow id="log-koppelen" title="Log op een andere dag koppelen" facts={facts} onChange={(on) => void updateSettings({ missedLink: on })} />
+          <SummaryRow id="instap-rustdag" title="Gemiste training op je rustdag" facts={facts} info="instap-rustdag" onChange={(on) => void updateSettings({ reentryCatchUp: on })} />
         </BundleSheet>
       )}
       {sheet === 'bundel-slepen' && (
