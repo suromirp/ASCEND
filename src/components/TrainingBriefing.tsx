@@ -69,6 +69,7 @@ import { useMotionMode } from './motion';
 import { RouteMap } from './RouteMap';
 import { RouteSearching } from './RouteSearching';
 import { OtherLoop } from './OtherLoop';
+import { RouteMapMissing } from './RouteClimbRows';
 import { RouteInfo } from './RouteInfo';
 import { AskStart, RouteFailure, RouteFirstQuestion, RoutePanelView, StartChips } from './RoutePanel';
 import { useRouteSearch, type RouteSearchModel } from './useRouteSearch';
@@ -573,6 +574,8 @@ function LoopPlace({ model, target, onBigger, date }: { model: RouteSearchModel;
   const otherWarn = otherOutcome?.ok ? otherLoopWarn(otherOutcome.proposal, target, pickedOutcome?.ok ? pickedOutcome.proposal : undefined) : undefined;
   return (
     <div className="flex flex-col gap-2">
+      {/* Ontbrak de kaart van de omgeving, dan staat dat bovenaan in amber, met Opnieuw proberen (I-160). */}
+      {model.mapRetry && <RouteMapMissing line={model.mapRetry.line} busy={model.mapRetry.busy} onRetry={model.mapRetry.run} />}
       {model.mapStartPoint && (
         // De stille kaart: alleen de gekozen lus met de ring bij de start, geen knoppen; een tik opent Groter,
         // waar de andere lus, je plek, Kaart of Luchtfoto en Start hier staan (besluit 2026-11-12-route-blok.md).

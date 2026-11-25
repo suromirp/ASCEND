@@ -37,6 +37,7 @@ import { RouteAdjust } from './RouteAdjust';
 import { OtherLoop } from './OtherLoop';
 import { RouteMapFull } from './RouteMapFull';
 import { RouteInfo } from './RouteInfo';
+import { RouteLoopChoice, RouteMapMissing, RouteOutdoorPlus } from './RouteClimbRows';
 
 const STYLE_NAME: Record<RouteStyle, string> = { simple: 'Simpel', adventure: 'Avontuurlijk' };
 const STYLE_LINE: Record<RouteStyle, string> = {
@@ -309,6 +310,12 @@ export function RoutePanelView({ model, date, onDecline, startAbove = false }: {
         ) : null;
       case 'found':
         return model.foundLines.length > 0 || model.mapLine ? <p key={p} role="status" className="text-sm leading-snug" style={dim}>{[...model.foundLines, model.mapLine].filter(Boolean).join(' ')}</p> : null;
+      case 'mapMissing':
+        return model.mapRetry ? <RouteMapMissing key={p} line={model.mapRetry.line} busy={model.mapRetry.busy} onRetry={model.mapRetry.run} /> : null;
+      case 'priority':
+        return model.loopChoice ? <RouteLoopChoice key={p} rows={model.loopChoice.rows} onPick={model.loopChoice.pick} motion={motion} /> : null;
+      case 'plus':
+        return model.plus ? <RouteOutdoorPlus key={p} plus={model.plus} /> : null;
       case 'retry':
         return <div key={p}>{retry}</div>;
       case 'sources':

@@ -204,6 +204,13 @@ export interface AppSettings {
   routeStyle?: 'simple' | 'adventure';
   // De afstand waarmee Wandeling plannen begint (engine/walkPlan.ts#resolveWalkKm); afwezig is 5 km.
   walkPlanKm?: 3 | 5 | 8 | 12;
+  // Wat gaat voor in een lus met één helling (engine/routeClimbPlan.ts#resolveLoopPriority): 'auto' (afwezig,
+  // het advies: hoogtemeters als de training ze vraagt, anders afstand), 'ascent' of 'distance'. Optioneel en
+  // erbij, dus geen migratiestap.
+  routeLoopPriority?: 'auto' | 'ascent' | 'distance';
+  // Rijtijd naar heuvels in minuten (engine/routeClimbPlan.ts#resolveDriveLimit): 0 niet rijden, 15, 30
+  // (afwezig, het advies), 45 of 'free' geen grens. Optioneel en erbij, dus geen migratiestap.
+  routeDriveMinutes?: 0 | 15 | 30 | 45 | 'free';
   // Where a proposed loop starts (engine/routeStart.ts): where you are now, asked once per search
   // ('here', absent = here), your own fixed point, shown as Vast punt ('exact'), or about your place,
   // rounded to a kilometre ('approx'). The fixed point itself is never a

@@ -21,7 +21,12 @@ import { useAppData } from '../state/AppDataContext';
 import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { loadBodyKg } from '../engine/weightTrend';
 import { resolveRouteStyle, roundStart, routeTarget, runPaceSecKm, walkKind } from '../engine/routeTarget';
-import { mapAgeLine, renotedProposal, searchLines, type PlanOutcome } from '../engine/routePlanner';
+import { mapAgeLine, plansWithPriority, renotedProposal, searchLines, type LoopPriority, type PlanOutcome } from '../engine/routePlanner';
+import { driveLimitMinutes, loopChoiceRows, outdoorPlus, resolveDriveLimit, resolveLoopPriority, type LoopChoiceRow, type OutdoorPlus } from '../engine/routeClimbPlan';
+import { mapMissing, mapRetryLine, type MapRetryState } from '../engine/routeSheet';
+import { retryRouteMap } from '../storage/routeMapRetry';
+import { TRAINING_SPOTS } from '../data/trainingSpots';
+import { spotsPageFor } from '../engine/trainingSpots';
 import { findOtherLoop, findRoutes, grantRouteConsent, hasRouteConsent, PROPOSAL_LIMIT_MS, type RouteSearch, type RouteSearchStep } from '../storage/routeProposal';
 import { askMapCenter, locateAnswerCounts, locateNow, maySearch, planStart, startView, resolveRouteStart, type AskMapCenter, roundExact, roundHere, startFailureReason, type RouteStartMode, type StartPick } from '../engine/routeStart';
 import { getRouteStartPoint, locateStartHere, saveRouteStartPoint, START_LOCATE_LIMIT_MS, startFromMap, type StartLocation } from '../storage/routeStart';
@@ -164,6 +169,13 @@ export interface RouteSearchModel {
     viaActive: boolean;
     clearVia: () => void;
   };
+  // I-160: Hoogtemeters halen of Afstand houden (leeg als er niets te kiezen is); een tik wisselt Simpel
+  // zonder nieuwe zoektocht en verandert de training niet.
+  loopChoice?: { rows: LoopChoiceRow[]; pick: (p: LoopPriority) => void };
+  // De derde rij als buiten te weinig hoogte geeft: een helling of trap uit de gids, of de loopband.
+  plus?: OutdoorPlus & { href: string };
+  // De kaart van de omgeving ontbrak: de regel bovenaan en Opnieuw proberen (alleen de kaart, dan opnieuw zoeken).
+  mapRetry?: { line: string; busy: boolean; run: () => void };
 }
 
 export type RouteSearchFor = { template: SessionTemplate; walk?: undefined } | { template?: undefined; walk: RouteTarget };
@@ -361,7 +373,12 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   }, [closing, enabled, asked, planKind, attempt]);
 
   // Eén zoektocht per plek, training en poging; zolang het antwoord van deze sleutel er niet is, zoekt het paneel.
-  const keyBase = `${attempt}|${lat}|${lon}|${exactLat}|${exactLon}|${terrainLat}|${terrainLon}|${trainingTarget.distanceKm}|${ascentM}`;
+  // Simpel met een keuze (I-160): de zoektocht geeft beide; welke eerst staat volgt de instelling of je tik.
+  const advisedPriority = resolveLoopPriority(settings.routeLoopPriority, trainingTarget);
+  const driveLimit = driveLimitMinutes(resolveDriveLimit(settings.routeDriveMinutes));
+  const [priorityPick, setPriorityPick] = useState<LoopPriority | undefined>();
+  const priority = priorityPick ?? advisedPriority;
+  const keyBase = `${attempt}|${lat}|${lon}|${exactLat}|${exactLon}|${terrainLat}|${terrainLon}|${trainingTarget.distanceKm}|${ascentM}|${advisedPriority}|${driveLimit ?? 'free'}`;
   const key = searchKey(keyBase, adjust);
   const search: RouteSearch | 'busy' = answerFor(searchState, key);
   const searchNeeded = needsSearch(searchState, key);
@@ -381,13 +398,13 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     };
     const terrainPoint = terrainLat !== undefined && terrainLon !== undefined ? { lat: terrainLat, lon: terrainLon } : undefined;
     // findRoutes heeft zelf een grens in tijd en gooit nooit: "Lussen zoeken" blijft nooit staan.
-    void findRoutes({ lat, lon }, target, { signal: stop.signal, onStep, terrainAt: terrainPoint, avoidBigRoads, ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
+    void findRoutes({ lat, lon }, target, { signal: stop.signal, onStep, terrainAt: terrainPoint, loop: { priority: advisedPriority, ...(driveLimit !== undefined ? { driveLimitMin: driveLimit } : {}) }, avoidBigRoads, ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
       if (!stop.signal.aborted) dispatch({ type: 'answer', key, answer: result, currentKey: keyNow.current });
     });
     // Sluit het paneel of begint een nieuwe zoektocht, dan gaat er voor deze geen aanroep meer de deur uit.
     return () => stop.abort();
     // De sleutel bevat het punt; de afhankelijkheden zijn dezelfde getallen.
-  }, [closing, enabled, asked, ready, searchNeeded, lat, lon, exactLat, exactLon, terrainLat, terrainLon, target, avoid, avoidBigRoads, key]);
+  }, [closing, enabled, asked, ready, searchNeeded, lat, lon, exactLat, exactLon, terrainLat, terrainLon, target, avoid, avoidBigRoads, key, advisedPriority, driveLimit]);
 
   // Start hier: het getikte punt geldt voor deze zoektocht en wordt niet bewaard; Thuis verschuift niet.
   async function startOnMap(from: { tap: RoutePoint }): Promise<StartAnswer> {
@@ -482,7 +499,9 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   });
 
   const order: RouteStyle[] = first === 'simple' ? ['simple', 'adventure'] : ['adventure', 'simple'];
-  const rawPlans = search !== 'busy' && search.kind === 'plans' ? search.plans : undefined;
+  const searchedPlans = search !== 'busy' && search.kind === 'plans' ? search.plans : undefined;
+  // Hoogtemeters halen of Afstand houden: Simpel uit dezelfde zoektocht (engine/routePlanner.ts#plansWithPriority).
+  const rawPlans = useMemo(() => (searchedPlans ? plansWithPriority(searchedPlans, priority, target) : undefined), [searchedPlans, priority, target]);
 
   // Wind (engine/routeWind.ts): de lus begint tegen de wind in, uit het weer dat er al is; zwak of onbekend is niets.
   // De wind van het uur waarop je meestal begint; een wandeling die je zelf plant begint nu.
@@ -571,6 +590,33 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
 
   const mapStartPoint = pickedRoute?.points[0] ?? exactPoint ?? (lat !== undefined && lon !== undefined ? roundStart({ lat, lon }) : undefined);
 
+  // Buiten plus een helling, trap of de loopband: vanaf je plek (niet de voet van de helling), uit de gids.
+  const yourPlace = exactPoint ?? (lat !== undefined && lon !== undefined ? roundStart({ lat, lon }) : undefined);
+  const okProposals = plans ? okStyles.flatMap((s) => { const o = plans[s]; return o.ok ? [o.proposal] : []; }) : [];
+  const plusRow = plans && yourPlace
+    ? outdoorPlus({ outdoor: [...okProposals].sort((x, y) => y.ascentM - x.ascentM)[0], target: trainingTarget, from: yourPlace, spots: TRAINING_SPOTS, driveLimitMin: driveLimit })
+    : undefined;
+  const plus = plusRow ? { ...plusRow, href: template ? spotsPageFor(template.id) : '/plekken' } : undefined;
+  const choiceRows = loopChoiceRows(searchedPlans, trainingTarget, advisedPriority, priority);
+  // Opnieuw proberen bij een ontbrekende kaart: hoort bij deze zoektocht; een nieuwe zoektocht begint weer leeg.
+  const [mapTry, setMapTry] = useState<{ key: string; state: MapRetryState } | undefined>();
+  const mapState: MapRetryState = mapTry?.key === key ? mapTry.state : 'idle';
+  const runMapRetry = () => {
+    if (lat === undefined || lon === undefined || mapState === 'busy') return;
+    const forKey = key;
+    setMapTry({ key: forKey, state: 'busy' });
+    const exact = exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined;
+    const at = terrainLat !== undefined && terrainLon !== undefined ? { lat: terrainLat, lon: terrainLon } : undefined;
+    void retryRouteMap({ lat, lon }, exact, at).then((ok) => {
+      if (!mounted.current) return;
+      if (ok) {
+        setMapTry(undefined);
+        setAttempt((n) => n + 1);
+      } else setMapTry({ key: forKey, state: 'failed' });
+    });
+  };
+  const showMapRetry = mapMissing(plans) && okStyles.length > 0;
+
   return {
     stage,
     lat,
@@ -614,9 +660,10 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     // Per zoektocht van jou (poging, getikte chip, getikt punt), niet per stap of terugval: je plek vinden begint geen nieuwe balk.
     searchKey: `${attempt}|${startPicked}|${startPlace?.key}|${startPlace?.point.lat}|${startPlace?.point.lon}|${mapStart?.lat}|${mapStart?.lon}|${adjustKey(adjust)}`,
     foundLines: plans ? searchLines(plans, target) : [],
-    mapLine: plans ? mapAgeLine(plans) : '',
+    // Ontbrak de kaart, dan zegt de regel bovenaan het al (mapRetry); hier alleen een oude kaart.
+    mapLine: plans && !showMapRetry ? mapAgeLine(plans) : '',
     sources,
-    parts: routeSheetParts(stage, plans ? { anyOk: okStyles.length > 0, anyFailed: order.some((s) => !plans[s].ok) } : undefined),
+    parts: routeSheetParts(stage, plans ? { anyOk: okStyles.length > 0, anyFailed: order.some((s) => !plans[s].ok), mapMissing: showMapRetry, priority: choiceRows.length > 0, plus: !!plus } : undefined),
     retry: () => setAttempt((n) => n + 1),
     ask: start.ask,
     askCenter: start.ask ? askMapCenter({ rough: hereFound && !hereFound.ok ? hereFound.rough : undefined, home: saved, town: lat !== undefined && lon !== undefined ? { lat, lon } : undefined }) : undefined,
@@ -658,5 +705,8 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
       viaActive: variant?.key === key && variant.style === picked && variant.via === true,
       clearVia: () => setVariant(undefined),
     },
+    loopChoice: { rows: choiceRows, pick: setPriorityPick },
+    plus,
+    mapRetry: showMapRetry ? { line: mapRetryLine(mapState), busy: mapState === 'busy', run: runMapRetry } : undefined,
   };
 }

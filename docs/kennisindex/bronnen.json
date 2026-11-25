@@ -4747,6 +4747,14 @@
    ],
    "kern": "I-158: MacroFactor telt alleen als gekoppeld bij ingelezen en leidend; knop MacroFactor loskoppelen.",
    "stand": "achtergrond"
+  },
+  "docs/onderhoud/sherpa-route-hoogtemeters.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "koppelingen-en-data"
+   ],
+   "kern": "Verslag van I-160 deel B: Simpel begint op de voet van de steilste helling, de keuze Hoogtemeters halen of Afstand houden met de som, de rij Buiten plus een helling, trap of de loopband uit de gids, en Opnieuw proberen bij een ontbrekende kaart. Bewijs, keuzes en wat niet gebouwd is.",
+   "stand": "achtergrond"
   }
  }
 }

@@ -11,7 +11,7 @@ import { grantTerrainConsent, getNearbyTerrain, refreshNearbyTerrain } from './n
 import { brouterRoute } from '../integrations/brouter';
 import { valhallaRoute } from '../integrations/valhalla';
 import { isOffline, routeWithFallback } from '../integrations/routing';
-import { proposeRoutes, type RoutePlans } from '../engine/routePlanner';
+import { proposeRoutes, type LoopOptions, type RoutePlans } from '../engine/routePlanner';
 import { roundStart } from '../engine/routeTarget';
 import type { NearbyTerrain } from '../models/nearbyTerrain';
 import { otherLoopFailLine, proposeOtherLoop, type OtherLoopChoice, type OtherLoopResult } from '../engine/routeOtherLoop';
@@ -67,6 +67,8 @@ export interface RouteSearchDeps {
   avoidBigRoads?: boolean;
   // Via een punt (Andere lus): het punt waar de lus langs moet. Alleen in het geheugen.
   via?: RoutePoint;
+  // Simpel met een keuze en de rijtijd (I-160, engine/routePlanner.ts#LoopOptions). Alleen in het geheugen.
+  loop?: LoopOptions;
 }
 
 export type RouteSearchStep = 'terrain' | 'routes';
@@ -93,7 +95,7 @@ export async function findRoutes(place: { lat: number; lon: number }, target: Ro
       withTimeout(cachedOf(terrainPlace, !!exactStart), budget.cacheMs).catch(() => undefined),
     );
     if (!guarded.stopped()) deps.onStep?.('routes');
-    const plans = await proposeRoutes({ start, target, terrain, anchor: !!exactStart, ...(deps.avoid && deps.avoid.length > 0 ? { avoid: deps.avoid } : {}) }, route);
+    const plans = await proposeRoutes({ start, target, terrain, anchor: !!exactStart, ...(deps.avoid && deps.avoid.length > 0 ? { avoid: deps.avoid } : {}), ...(deps.loop ? { loop: deps.loop } : {}) }, route);
     const reasons = [plans.simple, plans.adventure].map((o) => (o.ok ? undefined : o.reason));
     if (reasons.every((r) => r === 'offline')) return { kind: 'offline' };
     // Geen enkele lus en de tijd was op: dan is het de regel van de tijdgrens, met de stap erbij.

@@ -36,10 +36,20 @@ export interface TravelAdvice {
   text: string;
 }
 
+// De schatting voor heen gaan, in minuten, uit de afstand hemelsbreed: dezelfde vuistregel als travelAdvice
+// (route-factor, 12 minuten per km lopen, CAR_KMH met de auto). Ook voor de rijtijd naar een helling in de
+// routeplanner (engine/routeHills.ts); daar geen tweede formule.
+export const WALK_MIN_PER_KM = 12;
+export const roadKm = (straight: number): number => Math.round(straight * ROUTE_FACTOR);
+export const driveMinutes = (straight: number): number => Math.round((roadKm(straight) / CAR_KMH) * 60);
+export const walkMinutes = (straight: number): number => Math.round(roadKm(straight) * WALK_MIN_PER_KM);
+// Tot hier is een plek lopend te bereiken (travelAdvice: 'lopen').
+export const WALKABLE_ROAD_KM = 3;
+
 export function travelAdvice(home: HomeLocation, spot: TrainingSpot): TravelAdvice {
-  const routeKm = Math.round(straightKm(home, spot) * ROUTE_FACTOR);
-  if (routeKm <= 3) {
-    return { routeKm, mode: 'lopen', minutes: Math.round(routeKm * 12), text: `±${formatNumberNL(routeKm, 1)} km: lopend of hardlopend te bereiken, dat is meteen je warming-up.` };
+  const routeKm = roadKm(straightKm(home, spot));
+  if (routeKm <= WALKABLE_ROAD_KM) {
+    return { routeKm, mode: 'lopen', minutes: Math.round(routeKm * WALK_MIN_PER_KM), text: `±${formatNumberNL(routeKm, 1)} km: lopend of hardlopend te bereiken, dat is meteen je warming-up.` };
   }
   if (routeKm <= MAX_BIKE_KM) {
     const minutes = Math.round((routeKm / BIKE_KMH) * 60);
