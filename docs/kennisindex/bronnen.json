@@ -4211,6 +4211,13 @@
    "kern": "Ontwerpvoorstel van 12 november 2026 voor het blad Je week tot nu; besloten in `docs/beslissingen/2026-11-12-je-week-tot-nu.md`.",
    "stand": "achtergrond"
   },
+  "docs/visie/Ontwerp route per training.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Ontwerpvoorstel van 25 november 2026 (I-160) voor een route per geplande training en een routeplanner die hoogtemeters haalt; besloten in `docs/beslissingen/2026-11-24-route-per-training.md`.",
+   "stand": "achtergrond"
+  },
   "docs/visie/Ontwerp Plekken en routes.md": {
    "onderwerpen": [
     "koppelingen-en-data"
