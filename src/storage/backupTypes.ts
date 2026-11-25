@@ -1,6 +1,7 @@
 import type { MissedMemory } from '../engine/missedTraining';
 import type { SkillGoalStore } from '../models/skillGoals';
 import type { Place, SavedRoute } from '../models/place';
+import type { SessionRoute } from '../models/sessionRoute';
 // ASCEND — Backup / Import / Restore domain types
 //
 // Implements ASCEND Technical Architecture v0.3.2's backup/import/restore
@@ -126,6 +127,9 @@ export interface AscendBackupPayloadV5 extends Omit<AscendBackupPayloadV4, 'vers
   // without them imports as before and the device keeps its own. Only written when there is something.
   places?: Place[];
   savedRoutes?: SavedRoute[];
+  // De route per geplande training (models/sessionRoute.ts, I-160). Optional and additive, so the version stays 5:
+  // a file without it imports as before and the device keeps its own. Only written when there is something.
+  sessionRoutes?: SessionRoute[];
 }
 
 type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3 | AscendBackupPayloadV4 | AscendBackupPayloadV5;
@@ -195,6 +199,9 @@ export interface NormalizedBackupData {
   // backup" (the device keeps its own). Travel with the category app_settings and replace the list.
   places?: Place[];
   savedRoutes?: SavedRoute[];
+  // De route per geplande training, read through storage/migrationsSessionRoutes.ts; undefined means "not in this
+  // backup" (the device keeps its own). Travels with the category planned_schedule.
+  sessionRoutes?: SessionRoute[];
 }
 
 // --- Data categories ---------------------------------------------------------

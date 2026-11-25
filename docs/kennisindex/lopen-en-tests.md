@@ -65,6 +65,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 
 ## Onderzoek, ontwerpen en verslagen
 
+- [onderhoud/sherpa-route-bewaren.md](../onderhoud/sherpa-route-bewaren.md): Verslag van I-160 deel A: de route per geplande training als eigen lijst gekoppeld aan het id (niet als veld), de bewaarde stand in het Route-blok van de Briefing, een stille regel in Week en op Vandaag, export en import zonder hogere schemaversie. Keuzes, tests en wat niet is gedaan.
 - [onderzoek/Drempel en submaximale test.md](../onderzoek/Drempel%20en%20submaximale%20test.md): Hoe je de drempelhartslag zonder lab bepaalt (de factor 0,98, drie tests samen, alleen met borstband), hoe groot de fout van de pols is, of RR-intervallen en DFA alpha 1 iets toevoegen, en hoe een korte vaste test vorm en vermoeidheid volgt, met een voorstel in vijf stappen.
 - [onderzoek/Hoogtemeters met precisie.md](../onderzoek/Hoogtemeters%20met%20precisie.md): Hoe precies hoogtemeters uit BRouter, Valhalla en andere bronnen zijn, hoe je telt en ijkt, met een advies in acht punten.
 - [onderzoek/Loopgegevens en vooruitgang.md](../onderzoek/Loopgegevens%20en%20vooruitgang.md): Wat je na een loop uit de reeksen van intervals.icu kunt berekenen en hoe je trainingen eerlijk vergelijkt.

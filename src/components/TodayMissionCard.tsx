@@ -1,4 +1,8 @@
 import { useRef, useState, type ReactNode } from 'react';
+import { useSessionRoutes } from '../state/useSessionRoutes';
+import { routeOfSession, sessionRouteLine } from '../engine/sessionRoute';
+import { routeShownFor } from '../engine/trainingPlace';
+import { peekTrainingPlaces } from '../storage/trainingPlace';
 import { useForgeWords } from './useForgeWords';
 import { forgeLabels } from '../engine/forgeWords';
 import { useNavigate } from 'react-router-dom';
@@ -139,6 +143,10 @@ export function TodayMissionCard({
   const inAppStrength = template.type === 'strength';
   const view = missionCardView({ briefingReach, briefingButton, quickComplete, inAppStrength });
   const [showBriefing, setShowBriefing] = useState(false);
+  // De route die al bij deze training hoort: alleen als de Briefing hem kan tonen (buiten, met een Briefing).
+  const sessionRoutes = useSessionRoutes();
+  const savedRoute = session && (briefingButton || briefingReach) ? routeOfSession(session, sessionRoutes) : undefined;
+  const routeLine = savedRoute && session && routeShownFor(template, peekTrainingPlaces()?.[session.id]) ? sessionRouteLine(savedRoute) : undefined;
   // Terug vanaf een pagina die je uit deze Briefing opende: de Briefing gaat weer open.
   useBriefingReturn('mission', () => setShowBriefing(true), (m) => m.templateId === template.id && m.date === todayISO());
   const [showManual, setShowManual] = useState(false);
@@ -248,9 +256,17 @@ export function TodayMissionCard({
           {view.beforehand && (
             <>
               <HillsNearbyLine template={template} date={todayISO()} className="mt-1" />
-              {!briefingButton && <RouteProposalLine template={template} date={todayISO()} />}
+              {/* Met een gekozen route staat zijn regel hieronder; dan geen Route voorstellen ernaast. */}
+              {!routeLine && <>{!briefingButton && <RouteProposalLine template={template} date={todayISO()} />}</>}
               <ClothingAdvice template={template} date={todayISO()} minutes={fullDuration} className="mt-1.5" compact />
             </>
+          )}
+          {routeLine && (
+            // De route die je bij deze training koos (I-160): een stille regel; een tik opent de Briefing, waar hij klaarstaat.
+            <button type="button" data-sheet-from="" data-route-line="" onClick={() => setShowBriefing(true)} className="mt-1 flex min-h-[44px] w-full items-center justify-between gap-2 text-left text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+              <span className="min-w-0 truncate">{routeLine}</span>
+              <Icon name="verder" size={16} />
+            </button>
           )}
           {session && <WatchStatusRow session={session} template={template} offer={false} onlyFailed={view.watch === 'failed'} className="mt-3" />}
         </div>

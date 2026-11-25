@@ -4725,6 +4725,14 @@
    "vultAan": [
     "docs/beslissingen/2026-11-09-routeplanner.md"
    ]
+  },
+  "docs/onderhoud/sherpa-route-bewaren.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "Verslag van I-160 deel A: de route per geplande training als eigen lijst gekoppeld aan het id (niet als veld), de bewaarde stand in het Route-blok van de Briefing, een stille regel in Week en op Vandaag, export en import zonder hogere schemaversie. Keuzes, tests en wat niet is gedaan.",
+   "stand": "achtergrond"
   }
  }
 }

@@ -11,7 +11,7 @@ import type { AppSettings } from './database';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigration';
-import { migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateLogZone2Pieces, migrateActivityStreams, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSetAsked, migrateLogSetSkill, migrateLogSetRow, migrateLogSourceSync, migrateLogTrim, migrateTrainingGoals, migratePlanChangeProposal, migrateMornings, migrateSkillGoals, migratePlaces, migrateSavedRoutes, routesOfPlaces, unpackProposalTexts, type AscendExport } from './migrations';
+import { migrateLogCountedSport, migratePlannedFixed, migratePlannedAmount, migrateLogCustomSport, migrateLogRpeAssumed, migrateExport, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateLogRunDetail, migrateLogZone2Pieces, migrateActivityStreams, migrateLogManualMeasured, migrateLogSets, migrateLogSetTimes, migrateLogSetAsked, migrateLogSetSkill, migrateLogSetRow, migrateLogSourceSync, migrateLogTrim, migrateTrainingGoals, migratePlanChangeProposal, migrateMornings, migrateSkillGoals, migratePlaces, migrateSavedRoutes, routesOfPlaces, migrateSessionRoutes, unpackProposalTexts, type AscendExport } from './migrations';
 import { sanitizeRoutePlan, sanitizeSoloPlan } from '../engine/routePlan';
 import { CURRENT_BACKUP_SCHEMA_VERSION, type NormalizedBackupData } from './backupTypes';
 import { BackupMessageError } from './backupMessage';
@@ -173,6 +173,15 @@ function buildNormalized({ createdAt, fileCreatedAt, sourceBackupSchemaVersion, 
       skipped.n += routes.list.length - kept.length;
       normalized.savedRoutes = kept;
     }
+  }
+
+  // De route per geplande training (storage/migrationsSessionRoutes.ts): a file from before it has none and the
+  // device keeps its own; a damaged route is dropped and counted. Like the places, a list of which nothing could be
+  // read counts as "not in this file"; only a list that was empty in the file itself says "no routes".
+  {
+    const routes = migrateSessionRoutes(raw.sessionRoutes);
+    skipped.n += routes.skipped;
+    if (routes.list && (routes.list.length > 0 || (Array.isArray(raw.sessionRoutes) && raw.sessionRoutes.length === 0))) normalized.sessionRoutes = routes.list;
   }
 
   // Soort, gegevens en belangrijkheid van elk doel (ronde 2a): een back-up van voor deze
