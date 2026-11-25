@@ -4218,6 +4218,14 @@
    "kern": "Ontwerpvoorstel van 11 november 2026 voor eigen plekken en bewaarde routes; besloten in `docs/beslissingen/2026-11-11-plekken-en-routes.md`.",
    "stand": "achtergrond"
   },
+  "docs/visie/Plek route per training.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "lopen-en-tests"
+   ],
+   "kern": "Advies van Pathfinder van 25 november 2026 voor route per geplande training (I-160): de ingang is de Briefing, een stille regel in Week en op Vandaag, Trainingsplekken als tik uit het Route-blok, de rijtijd naar heuvels in het blad Weer en kleding; besluit `docs/beslissingen/2026-11-24-route-per-training.md`.",
+   "stand": "achtergrond"
+  },
   "docs/visie/Ontwerp Route en trainingsscherm.md": {
    "onderwerpen": [
     "bediening-en-beweging",

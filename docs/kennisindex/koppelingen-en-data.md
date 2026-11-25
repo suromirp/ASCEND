@@ -140,6 +140,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 - [visie/Ontwerp Plekken en routes.md](../visie/Ontwerp%20Plekken%20en%20routes.md): Ontwerpvoorstel van 11 november 2026 voor eigen plekken en bewaarde routes; besloten in `docs/beslissingen/2026-11-11-plekken-en-routes.md`.
 - [visie/Ontwerp Route en trainingsscherm.md](../visie/Ontwerp%20Route%20en%20trainingsscherm.md): Ontwerpvoorstel van 11 november 2026 voor Route en het scherm vooraf; de Briefing is besloten in `docs/beslissingen/2026-11-11-briefing.md`.
 - [visie/Ontwerp routes wandelen en rugzak.md](../visie/Ontwerp%20routes%20wandelen%20en%20rugzak.md): Ontwerpvoorstel van 15 november 2026 voor lussen bij wandelen en rugzaktraining; stap 1 en 2 besloten in `docs/beslissingen/2026-11-15-routes-wandelen-standaardkeuzes.md`.
+- [visie/Plek route per training.md](../visie/Plek%20route%20per%20training.md): Advies van Pathfinder van 25 november 2026 voor route per geplande training (I-160): de ingang is de Briefing, een stille regel in Week en op Vandaag, Trainingsplekken als tik uit het Route-blok, de rijtijd naar heuvels in het blad Weer en kleding; besluit `docs/beslissingen/2026-11-24-route-per-training.md`.
 
 ## Vervangen of verouderd
 

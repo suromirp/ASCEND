@@ -77,6 +77,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 - [onderzoek/Wandelen en dribbelen voor beginners.md](../onderzoek/Wandelen%20en%20dribbelen%20voor%20beginners.md): De ladder van wandelen en dribbelen voor een beginner klopt in week 1 tot 3 met de onderzochte schema's, week 4 niet; het advies is week 4 op 4 om 2 te zetten.
 - [onderzoek/notities/Aanvullend onderzoek GR5 voorbereiding/marathon.md](../onderzoek/notities/Aanvullend%20onderzoek%20GR5%20voorbereiding/marathon.md): Werknotities (Engels) over een marathon naast de GR5: weekvolume, tijdpad, sleuteltrainingen, taper en blessurerisico.
 - [visie/Ontwerp Na een loop één moment.md](../visie/Ontwerp%20Na%20een%20loop%20%C3%A9%C3%A9n%20moment.md): Ontwerpvoorstel van 23 november 2026 voor I-34: na een loop één moment in plaats van zes tot acht lagen, plus Gidsen, Forge-instellingen en instellingen per onderwerp.
+- [visie/Plek route per training.md](../visie/Plek%20route%20per%20training.md): Advies van Pathfinder van 25 november 2026 voor route per geplande training (I-160): de ingang is de Briefing, een stille regel in Week en op Vandaag, Trainingsplekken als tik uit het Route-blok, de rijtijd naar heuvels in het blad Weer en kleding; besluit `docs/beslissingen/2026-11-24-route-per-training.md`.
 - [visie/Run in detail.md](../visie/Run%20in%20detail.md): Ontwerp van 27 oktober 2026 voor het scherm Run in detail; besloten in `docs/beslissingen/2026-10-27-run-in-detail-gegevens.md`.
 
 ## Vervangen of verouderd
