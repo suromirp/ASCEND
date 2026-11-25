@@ -4218,11 +4218,26 @@
    "kern": "Ontwerpvoorstel van 12 november 2026 voor het blad Je week tot nu; besloten in `docs/beslissingen/2026-11-12-je-week-tot-nu.md`.",
    "stand": "achtergrond"
   },
+  "docs/visie/Ontwerp route per training.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Ontwerpvoorstel van 25 november 2026 (I-160) voor een route per geplande training en een routeplanner die hoogtemeters haalt; besloten in `docs/beslissingen/2026-11-24-route-per-training.md`.",
+   "stand": "achtergrond"
+  },
   "docs/visie/Ontwerp Plekken en routes.md": {
    "onderwerpen": [
     "koppelingen-en-data"
    ],
    "kern": "Ontwerpvoorstel van 11 november 2026 voor eigen plekken en bewaarde routes; besloten in `docs/beslissingen/2026-11-11-plekken-en-routes.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Plek route per training.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "lopen-en-tests"
+   ],
+   "kern": "Advies van Pathfinder van 25 november 2026 voor route per geplande training (I-160): de ingang is de Briefing, een stille regel in Week en op Vandaag, Trainingsplekken als tik uit het Route-blok, de rijtijd naar heuvels in het blad Weer en kleding; besluit `docs/beslissingen/2026-11-24-route-per-training.md`.",
    "stand": "achtergrond"
   },
   "docs/visie/Ontwerp Route en trainingsscherm.md": {
@@ -4717,6 +4732,21 @@
    "vultAan": [
     "docs/beslissingen/2026-11-09-routeplanner.md"
    ]
+  },
+  "docs/onderhoud/sherpa-route-bewaren.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "Verslag van I-160 deel A: de route per geplande training als eigen lijst gekoppeld aan het id (niet als veld), de bewaarde stand in het Route-blok van de Briefing, een stille regel in Week en op Vandaag, export en import zonder hogere schemaversie. Keuzes, tests en wat niet is gedaan.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/sherpa-i158.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "I-158: MacroFactor telt alleen als gekoppeld bij ingelezen en leidend; knop MacroFactor loskoppelen.",
+   "stand": "achtergrond"
   }
  }
 }

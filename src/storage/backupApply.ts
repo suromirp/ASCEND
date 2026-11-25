@@ -17,6 +17,9 @@ import { defaultActionsForMode, mergeSettingsHistory, type ResolvedListCategory 
 import { DEFAULT_SETTINGS, type AppSettings } from './databaseSettings';
 import { SKILL_GOALS_KEY } from './skillGoals';
 import { SAVED_ROUTES_KEY } from './places';
+import { SESSION_ROUTES_KEY, forgetSessionRoutesCache } from './sessionRoutes';
+import { readSessionRouteList } from './migrationsSessionRoutes';
+import { mergeSessionRoutes, routesOfSessions } from '../engine/sessionRoute';
 import { readSavedRouteList, routesOfPlaces } from './migrationsPlaces';
 import { readSkillGoalStore } from './migrationsSkill';
 import { mergeSkillStores } from '../engine/skillGoal';
@@ -175,6 +178,15 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
     metaWrites[SAVED_ROUTES_KEY] = (stored: unknown) => routesOfPlaces(readSavedRouteList(stored), places);
   }
 
+  // De route per geplande training hoort bij de planning: met de planning uit het bestand komen de routes uit het
+  // bestand erbij (die van het bestand winnen bij hetzelfde id), en blijven alleen die van een training die er daarna
+  // is. Zonder het veld houdt het toestel zijn eigen routes. Gelezen op het moment van schrijven, in de transactie.
+  if (touches(effective.planned_schedule)) {
+    const incoming = backup.sessionRoutes;
+    const finalSessions = resolved.plannedSessions.final;
+    metaWrites[SESSION_ROUTES_KEY] = (stored: unknown) => routesOfSessions(mergeSessionRoutes(readSessionRouteList(stored), incoming), finalSessions);
+  }
+
   try {
     await applyBackupWrites({
       programs: touches(programAction) && resolved.program ? { clear: true, puts: [resolved.program] } : undefined,
@@ -201,4 +213,5 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   }
   // De geplande sessies zijn vervangen: een lopende training hoort bij de oude planning (wijzer en concepten mee).
   if (touches(effective.planned_schedule) || touches(programAction)) clearForgeSessions();
+  if (touches(effective.planned_schedule)) forgetSessionRoutesCache();
 }

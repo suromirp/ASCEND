@@ -78,6 +78,10 @@ import { ChevronGlyph, CheckGlyph } from './vandaag/glyphs';
 import { shortPlaceLabels } from '../engine/trainingPlace';
 import { StopSignals } from './SessionHeader';
 import { ZONE_SENTENCE } from './vandaag/zone';
+import { SavedRouteBlock } from './SavedRouteBlock';
+import { useSessionRoutes } from '../state/useSessionRoutes';
+import { routeOfSession, sessionRouteFrom, SAVED_ROUTE_TEXT } from '../engine/sessionRoute';
+import { removeSessionRoute, saveSessionRoute } from '../storage/sessionRoutes';
 
 const STYLE_NAME: Record<RouteStyle, string> = { simple: 'Simpel', adventure: 'Avontuurlijk' };
 // Groter: het blad Route met de volle kaart en de lange tekst.
@@ -147,7 +151,13 @@ export function TrainingBriefing({
   const [tapped, setTapped] = useState(false);
   const [declined, setDeclined] = useState(false);
   const routeMap = homeView?.map.kind === 'route' ? homeView.map : undefined;
-  const searchOn = !!routeMap && !declined && (routeMap.search === 'open' || tapped);
+  // De route die al bij deze training hoort (I-160): dan staat hij klaar en wordt er niet gezocht, tot Andere route.
+  const sessionRoutes = useSessionRoutes();
+  const saved = session && routeMap ? routeOfSession(session, sessionRoutes) : undefined;
+  const [changing, setChanging] = useState(false);
+  const [saveState, setSaveState] = useState<'busy' | 'failed' | undefined>();
+  const showSaved = !!saved && !changing;
+  const searchOn = !!routeMap && !declined && !showSaved && (routeMap.search === 'open' || tapped || changing);
   const model = useRouteSearch({ template, date, closing, enabled: searchOn, sessionId: session?.id });
 
   // Het weer van de gekozen plek: alleen bij een route op de kaart en een plek verder dan 10 km van huis.
@@ -190,7 +200,15 @@ export function TrainingBriefing({
   const due = date <= today;
   const manual = due ? onManual : undefined;
   const picked = model.picked && model.pickedOutcome?.ok ? { style: model.picked, proposal: model.pickedOutcome.proposal } : undefined;
-  const routeReady = view.footer.kind === 'route' && !!picked && searchOn;
+  const routeReady = view.footer.kind === 'route' && (showSaved || (!!picked && searchOn));
+  // Kies deze lus voor deze training: bewaren, en dan staat het blok in de bewaarde stand.
+  async function keepLoop() {
+    if (!session || !picked) return;
+    setSaveState('busy');
+    const ok = await saveSessionRoute(session, sessionRouteFrom(session.id, picked.proposal, today));
+    setSaveState(ok ? undefined : 'failed');
+    if (ok) setChanging(false);
+  }
   const places = view.places.filter((p) => !p.locked && (p.key === view.place || isSportEnabled(modalitySport(p.key), settings.enabledSports)));
   // Hoogstens drie chips, nooit een schuifrij; bij meer keuzes een chip naar het blad (engine/briefing.ts#placeRow).
   const row = placeRow(places, view.place);
@@ -200,8 +218,9 @@ export function TrainingBriefing({
   const minutes = session?.plannedMinutes ?? resolveEffectiveFullDuration(template, date, program);
   // De ene knop onderaan: de route als de lus er is, anders Gedaan (zelf invullen), anders geen onderbalk.
   const footerKind = footerNow(view.footer, routeReady, !!manual);
-  const footer = footerKind === 'route' && picked
-    ? <PrimaryButton disabled={send.busy} onClick={() => void send.go(picked.style, picked.proposal)}>{model.sender ? BRIEFING_TEXT.sendRoute : 'GPX downloaden'}</PrimaryButton>
+  const sendable = showSaved && saved ? { style: saved.style, proposal: saved } : picked;
+  const footer = footerKind === 'route' && sendable
+    ? <PrimaryButton disabled={send.busy} onClick={() => void send.go(sendable.style, sendable.proposal)}>{model.sender ? BRIEFING_TEXT.sendRoute : 'GPX downloaden'}</PrimaryButton>
     : footerKind === 'manual' && manual
       ? <PrimaryButton onClick={manual}><span className="inline-flex items-center justify-center gap-2"><CheckGlyph size={18} />{BRIEFING_TEXT.doneButton}</span></PrimaryButton>
       : null;
@@ -280,7 +299,21 @@ export function TrainingBriefing({
 
             {/* De plek van de kaart: verschijnt of verdwijnt bij een andere keuze, in Vol met een korte overgang. */}
             <div key={view.map.kind} style={{ animation: placeTransition(motion) }}>
-              <MapPlace view={view} model={model} searchOn={searchOn} declined={declined} onTap={() => { setDeclined(false); setTapped(true); }} onDecline={() => setDeclined(true)} onBigger={() => setSheet('route')} onPlace={() => toPage('/weer')} date={date} />
+              {showSaved && saved && session ? (
+                <SavedRouteBlock route={saved} title={template.name} base={model.base} photo={model.photo} onOther={() => { setDeclined(false); setChanging(true); }} onRemove={() => removeSessionRoute(session)} />
+              ) : (
+                <MapPlace view={view} model={model} searchOn={searchOn} declined={declined} onTap={() => { setDeclined(false); setTapped(true); }} onDecline={() => setDeclined(true)} onBigger={() => setSheet('route')} onPlace={() => toPage('/weer')} date={date} />
+              )}
+              {/* Bewaar de gekozen lus bij deze training (I-160); bij Andere route kan Annuleren terug naar de bewaarde. */}
+              {!showSaved && session && routeMap && ((!!picked && searchOn) || (changing && !!saved)) && (
+                <div className="flex flex-col items-start" data-keep-route="">
+                  <div className="flex flex-wrap gap-x-4">
+                    {picked && searchOn && <TextButton tone="dim" icon="verder" disabled={saveState === 'busy'} onClick={() => void keepLoop()}>{SAVED_ROUTE_TEXT.save}</TextButton>}
+                    {changing && saved && <TextButton tone="dim" onClick={() => { setChanging(false); setSaveState(undefined); }}>Annuleren</TextButton>}
+                  </div>
+                  {saveState === 'failed' && <p role="status" className="text-sm leading-snug" style={{ color: 'var(--color-warning)' }}>{SAVED_ROUTE_TEXT.saveFailed}</p>}
+                </div>
+              )}
             </div>
 
             {view.rows.length > 0 && <BriefingRows rows={view.rows} onOpen={openRow} />}

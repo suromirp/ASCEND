@@ -1,4 +1,9 @@
 import type { WeekPlan } from '../engine/dayPlan';
+import { useSessionRoutes } from '../state/useSessionRoutes';
+import { routeOfSession, sessionRouteLine } from '../engine/sessionRoute';
+import { routeShownFor } from '../engine/trainingPlace';
+import { peekTrainingPlaces } from '../storage/trainingPlace';
+import type { SessionRoute } from '../models/sessionRoute';
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
@@ -58,9 +63,19 @@ const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, tran
 // Het tikdoel blijft de hele rij.
 const DISC = 36;
 
+// De stille regel van een gekozen route, alleen bij een training die er een heeft en die buiten is (dezelfde regel als
+// Route voorstellen, engine/trainingPlace.ts#routeShownFor): op de loopband blijft de route ongezien staan.
+function routeLineOf(s: PlannedSession, template: SessionTemplate, routes: readonly SessionRoute[]): string | undefined {
+  const route = routeOfSession(s, routes);
+  if (route && !routeShownFor(template, peekTrainingPlaces()?.[s.id])) return undefined;
+  return route ? sessionRouteLine(route) : undefined;
+}
+
 function SessionRow({
-  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote, leave, races,
+  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote, leave, races, routeLine,
 }: {
+  // De route die je bij deze training koos (engine/sessionRoute.ts#sessionRouteLine): een stille derde regel.
+  routeLine?: string;
   // Vakanties en tochten die je meldde: een voorbije training daar is nooit gemist (engine/sessionStatus.ts, 'away').
   leave?: LeavePeriod[];
   // De dagen van de races: een training uit de afbouw die na de race niet gedaan is, vervalt (engine/raceWindow.ts).
@@ -181,6 +196,9 @@ function SessionRow({
             </span>
           )}
         </span>
+        {routeLine && status !== 'completed' && (
+          <span className="mt-0.5 block truncate text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }} data-route-line="">{routeLine}</span>
+        )}
       </span>
       {/* Rechts precies één ding: het vinkje, de greep, of de lege cirkel of het statusicoon. */}
       <span className="flex shrink-0 items-center gap-2">
@@ -345,6 +363,7 @@ export function WeekPlanner({
   const { statusOf } = useWatchStatuses();
   const { settings, plannedSessions, openDraftId } = useAppData();
   const caughtUp = useMemo(() => caughtUpMap(plannedSessions), [plannedSessions]);
+  const sessionRoutes = useSessionRoutes();
   const races = useMemo(() => raceDatesOf(plannedSessions, templateById), [plannedSessions, templateById]);
   const showWatch = settings.showWatchStatusOnWeek !== false;
   // "Wat speelde er": the sign by a done run with a heart rate that stands out.
@@ -395,6 +414,7 @@ export function WeekPlanner({
         pairNote={pairNotes?.get(s.id)}
         handle={eligibility?.ok ? weekDrag!.handleFor(s, eligibility.askAlways) : catchable ? weekDrag!.handleFor(s, false) : undefined}
         catchNote={catchNote}
+        routeLine={routeLineOf(s, template, sessionRoutes)}
         leave={leave}
         races={races}
         placeholder={pickedUp === s.id}

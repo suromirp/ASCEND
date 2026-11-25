@@ -34,6 +34,12 @@
 // reading step is migrationsCompact.ts#unpackProposalTexts (backupNormalize.ts runs it for schema 6 and up), so a
 // v6 file imports to exactly the database it was made from, and every v5 file or older reads as before.
 
+// Route per geplande training (2026-11-25, I-160, docs/beslissingen/2026-11-24-route-per-training.md) lives in its
+// own optional field `sessionRoutes` (one list in meta, keyed by PlannedSession.id), like `places`: optional and
+// additive, so the version stays 6 and a file without it keeps the routes of the device. migrateSessionRoutes drops a
+// damaged route (counted as skipped) and never throws. PlannedSession itself does not change shape.
+export { migrateSessionRoutes, readSessionRoute, readSessionRouteList } from './migrationsSessionRoutes';
+
 export { CURRENT_SCHEMA_VERSION, migrateV1toV2, migrateExport } from './migrationsSchema';
 export { packProposalTexts, unpackProposalTexts } from './migrationsCompact';
 export type { PackedProposals } from './migrationsCompact';
