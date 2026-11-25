@@ -11,7 +11,7 @@ Een nieuw document in `docs/` krijgt een regel in `bronnen.json`, en haalt het e
 oudere besluit de stand deels of vervangen. Daarna `npm run kennisindex`; de test
 `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 594 documenten: 359 gelden, 92 deels ingehaald, 3 vervangen, 3 verouderd, 137 achtergrond.
+Stand van de 595 documenten: 359 gelden, 92 deels ingehaald, 3 vervangen, 3 verouderd, 138 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; deels ingehaald geldt alleen nog voor wat achter "Geldt nog" staat, de
@@ -42,7 +42,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/doelen.md](../werkbriefjes/doelen.md)
 - [architectuur/doelen.md](../architectuur/doelen.md): Het lange verhaal bij doelen: de Ascend-tab, klaar voor je doel, de GR5-voortgang en een race met doeltijd.
-- Alles over dit onderwerp: [doelen.md](doelen.md) (24 besluiten die gelden, 8 deels ingehaald, 14 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [doelen.md](doelen.md) (24 besluiten die gelden, 8 deels ingehaald, 15 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Planning
 

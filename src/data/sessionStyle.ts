@@ -57,7 +57,7 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
   },
   tpl_hills_descent: {
     styleLabel: 'op en af',
-    purpose: 'Bergop snelheid, en daarna rustig afdalen zodat je bovenbenen de dalingen van de GR5 leren verdragen.',
+    purpose: 'Bergop snelheid, en daarna rustig afdalen zodat je bovenbenen de dalingen van je tocht leren verdragen.',
     stopSignals: ['je knie scherp pijn doet bij het dalen: stoppen en de rest wandelen op vlak terrein', 'je benen gaan trillen bij het afdalen: genoeg voor vandaag'],
     facts: 'descent',
   },
@@ -151,7 +151,7 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
   },
   tpl_mountain_hike: {
     styleLabel: 'met rugzak',
-    purpose: 'Uren op de benen met hoogtemeters en rugzak, zo dicht mogelijk bij een GR5-dag.',
+    purpose: 'Uren op de benen met hoogtemeters en rugzak, zo dicht mogelijk bij een tochtdag.',
     stopSignals: ['je knieën gaan zeuren bij het dalen: kleinere passen, stokken gebruiken', 'je bergop niet meer kunt praten: langzamer', 'je honger of dorst krijgt: eten en drinken, elk uur'],
     facts: 'hike',
   },

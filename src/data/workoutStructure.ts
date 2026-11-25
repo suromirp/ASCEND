@@ -206,7 +206,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     structure: [{ kind: 'walk', label: 'Wandelen met rugzak', rest: true, intensity: 2, detail: 'Hele zinnen kunnen praten' }],
     garminSport: 'Wandelen',
     builds: [
-      { label: 'Uren onderweg', why: 'Lang op de been zijn, de basis van elke dag op de GR5.' },
+      { label: 'Uren onderweg', why: 'Lang op de been zijn, de basis van elke dag onderweg.' },
       { label: 'Rugzak dragen', why: 'Schouders, rug en heupen wennen aan gewicht, stap voor stap.' },
     ],
   },
@@ -248,7 +248,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     garminSport: 'Hardlopen',
     builds: [
       { label: 'Drempel', why: 'Het tempo dat je lang kunt volhouden schuift op: precies wat een 10 km vraagt.' },
-      { label: 'Aerobe basis', why: 'Telt ook mee voor je uithouding richting de GR5.' },
+      { label: 'Aerobe basis', why: 'Telt ook mee voor je uithouding richting je doel.' },
     ],
   },
   tpl_test_run: {
@@ -317,7 +317,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     ],
   },
   tpl_mountain_hike: {
-    summary: () => 'Een lange wandeling met hoogteverschil en de rugzak van deze week. Rustig, eten en drinken onderweg zoals op de GR5.',
+    summary: () => 'Een lange wandeling met hoogteverschil en de rugzak van deze week. Rustig, eten en drinken onderweg zoals tijdens je tocht.',
     keyTag: 'D+ en D− met rugzak',
     structure: [
       { kind: 'warmup', label: 'Rustig inlopen', minutes: 10, intensity: 1, detail: 'Vlak, rugzak goed afstellen' },
@@ -326,7 +326,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     ],
     garminSport: 'Wandelen (of Hike)',
     builds: [
-      { label: 'Tijd op de benen', why: 'Uren achter elkaar bewegen, zoals een etappe van de GR5.' },
+      { label: 'Tijd op de benen', why: 'Uren achter elkaar bewegen, zoals een etappe van je tocht.' },
       { label: 'Afdalen', why: 'Je bovenbenen wennen aan dalen; dat is wat het meest pijn doet op dag 3.' },
       { label: 'Rugzak', why: 'Schouders, heupen en voeten wennen stap voor stap aan het gewicht.' },
     ],

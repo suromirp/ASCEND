@@ -76,7 +76,7 @@ export function tentPackAdvice(inputs: AdviceInputs): Advice[] {
     id: p.id,
     trigger: 'plan_update',
     ruleId: 'GR5-PACK-TENT',
-    title: 'Rugzakdoel voor de GR5 omhoog?',
+    title: 'Rugzakdoel voor je tocht omhoog?',
     effect: `Je rugzakdoel staat op ${p.fromKg} kg, het gewicht voor een tocht van hut naar hut. ${PACK_WEIGHT_EXPLANATION} Voorstel: je rugzakdoel op ${p.toKg} kg. Wat er dan verandert: je bergtochten en rugzakwandelingen gaan stap voor stap naar dit gewicht (piek ongeveer 1 kg erboven, in de zwaarste weken), en kamp 11 vraagt dan een tocht met ${p.toKg} kg. Wat je al behaalde blijft behaald. Slaap je vooral in hutten, dan kies je Liever niet.`,
     why: 'Zo\'n 12 kg past bij hutten. Met tent, slaapzak, matje, kookspullen, water en eten voor twee tot vier dagen komt een goed gepakte rugzak op 12,5 tot 14,5 kg uit (basisgewicht rond 8 kg, plus 0,8 tot 1 kg eten per dag en 2 tot 3 liter water). Je rugzak-voortgang en de vergelijking met een GR5-dag rekenen tegen dit doelgewicht. Je kunt het altijd zelf aanpassen bij Doelen.',
     priority: 1,
