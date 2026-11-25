@@ -9,6 +9,7 @@ import {
   getMapping,
   importMacroFactorText,
   onMacroFactorChange,
+  setMacroFactorLeads,
   setMapping,
 } from './macrofactor';
 import { buildBackupEnvelope } from './backupExport';
@@ -43,6 +44,21 @@ describe('the file', () => {
     await clearMacroFactorWorkouts();
     expect((await getMacroFactorState()).readAt).toBeUndefined();
     expect(await readMacroFactorLinked()).toBe(false);
+  });
+
+  it('I-158: gekoppeld is readAt én leidend; zonder leads geen zin, na loskoppelen ook niet, oude stand zonder leads telt als leidend', async () => {
+    expect(await readMacroFactorLinked()).toBe(false);
+    await importMacroFactorText(csv, 'workout-log.csv', new Date('2026-10-19T08:00:00.000Z'));
+    expect(await readMacroFactorLinked()).toBe(true);
+    await setMacroFactorLeads(false);
+    expect(await readMacroFactorLinked()).toBe(false);
+    await setMacroFactorLeads(true);
+    expect(await readMacroFactorLinked()).toBe(true);
+    await clearMacroFactorWorkouts();
+    expect(await readMacroFactorLinked()).toBe(false);
+    // Een oude back-up zonder leads-veld: leidend, dus met readAt gekoppeld.
+    await MetaRepo.set('macrofactorWorkouts', { readAt: '2026-10-19T08:00:00.000Z', workouts: [], dismissed: [] });
+    expect(await readMacroFactorLinked()).toBe(true);
   });
 
   it('refuses a wrong file with a Dutch message and keeps what was there', async () => {

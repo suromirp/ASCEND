@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
@@ -7,11 +7,12 @@ import { resolveStravaTextParts } from '../../../engine/activityText';
 import { resolveWatchModel } from '../../../engine/watchFields';
 import type { WatchUseKey } from '../../../engine/watchUse';
 import { getConnection, setAutoTick, setGarminLeads, setTakeCorrections, setWatchUse, syncWatchActivities } from '../../../storage/externalActivities';
-import { setMacroFactorLeads } from '../../../storage/macrofactor';
+import { clearMacroFactorWorkouts, getMacroFactorState, onMacroFactorChange, setMacroFactorLeads } from '../../../storage/macrofactor';
 import { setWatchWorkoutsEnabled, syncWatchWorkouts } from '../../../storage/watchWorkouts';
 import { disableHealthConnect, enableHealthConnect, openHealthConnectSettings, syncHealthConnect } from '../../../storage/healthConnect';
 import { healthEnableNote, healthOffNote, type HealthNote } from '../../../engine/healthConnectNote';
 import { TextButton } from '../../TextButton';
+import { PrimaryButton, SecondaryButton } from '../../ui';
 import { SettingsSection } from '../SettingsList';
 import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
@@ -33,6 +34,34 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
   // Health Connect: de zin na aan- of uitzetten, en een slot zodat een tweede tik niet dubbel vraagt.
   const [health, setHealth] = useState<HealthNote | null>(null);
   const healthBusy = useRef(false);
+
+  // MacroFactor loskoppelen (I-158): alleen te zien zolang er een export is ingelezen.
+  const [mfRead, setMfRead] = useState(false);
+  const [mfConfirm, setMfConfirm] = useState(false);
+  const [mfBusy, setMfBusy] = useState(false);
+  const [mfNote, setMfNote] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const load = () => void getMacroFactorState().then((s) => { if (alive) setMfRead(!!s.readAt); }).catch(() => undefined);
+    load();
+    const stop = onMacroFactorChange(load);
+    return () => { alive = false; stop(); };
+  }, []);
+  async function unlinkMacroFactor() {
+    if (mfBusy) return;
+    setMfBusy(true);
+    try {
+      // Tijdsgrens: een hangende opslag laat de knop niet eeuwig wachten.
+      await Promise.race([clearMacroFactorWorkouts(), new Promise<never>((_, no) => setTimeout(() => no(new Error('tijd')), 8000))]);
+      setMfNote('MacroFactor is losgekoppeld. Je krachtlogs blijven zoals ze zijn.');
+      setMfConfirm(false);
+      reload();
+    } catch {
+      setMfNote('Loskoppelen lukte niet. Probeer het zo nog een keer.');
+    } finally {
+      setMfBusy(false);
+    }
+  }
 
   // Aan: pas nu vraagt Android om toestemming, daarna meteen een ronde. Elke uitkomst staat onder de rij.
   async function changeHealth(on: boolean) {
@@ -170,6 +199,22 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
         <SummaryRow id="macrofactor" title="Laatste export" facts={facts} info="macrofactorExport" onClick={() => navigate('/koppelen/macrofactor')} />
         <SummaryRow id="macrofactor-leidend" title="Leidend voor kracht" facts={facts} info="macrofactorLeidend" onChange={(on) => void setMacroFactorLeads(on).finally(reload)} />
         <SummaryRow id="macrofactor-gewicht" title="Gewicht gebruiken" facts={facts} onChange={(on) => void updateSettings({ weightFromMacroFactor: on })} />
+        {mfRead && (
+          <div className="flex flex-col gap-2 px-4 py-3">
+            {mfConfirm ? (
+              <>
+                <p className="st-hint" style={{ marginTop: 0 }}>De ingelezen export gaat van deze telefoon. Wat je al in je logboek hebt staan blijft.</p>
+                <div className="flex gap-3">
+                  <SecondaryButton onClick={() => setMfConfirm(false)} disabled={mfBusy}>Annuleren</SecondaryButton>
+                  <PrimaryButton fullWidth={false} onClick={() => void unlinkMacroFactor()} disabled={mfBusy}>{mfBusy ? 'Bezig…' : 'MacroFactor loskoppelen'}</PrimaryButton>
+                </div>
+              </>
+            ) : (
+              <SecondaryButton onClick={() => { setMfNote(null); setMfConfirm(true); }}>MacroFactor loskoppelen</SecondaryButton>
+            )}
+          </div>
+        )}
+        {mfNote && <p role="status" className="st-hint px-4" style={{ marginTop: 0 }}>{mfNote}</p>}
       </SettingsSection>
 
       <SettingsSection title="Strava">
