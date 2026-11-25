@@ -46,7 +46,7 @@ const CLIMB: BackgroundPart = {
 
 const DESCENT: BackgroundPart = {
   heading: 'Waarom bergaf alleen feiten zijn',
-  text: 'Dalen kost je benen het meest op een GR5-dag, en hartslagmaten missen het, want de oorzaak is de excentrische arbeid van de dijspieren en niet je hart. Er is geen gevalideerde maat voor beheerst dalen uit tempo, hartslag of cadans. Daarom staan bij bergaf alleen feiten en geen oordeel. Het enige signaal is binnen één daling: zakt de snelheid in het laatste derde met 15 procent of meer terwijl je hartslag niet stijgt, dan past dat bij vermoeide benen.',
+  text: 'Dalen kost je benen het meest op een bergdag, en hartslagmaten missen het, want de oorzaak is de excentrische arbeid van de dijspieren en niet je hart. Er is geen gevalideerde maat voor beheerst dalen uit tempo, hartslag of cadans. Daarom staan bij bergaf alleen feiten en geen oordeel. Het enige signaal is binnen één daling: zakt de snelheid in het laatste derde met 15 procent of meer terwijl je hartslag niet stijgt, dan past dat bij vermoeide benen.',
   evidence: 'Bewijs: matig voor de oorzaak, eigen aanname voor de 15 procent',
   sources: ['Vernillo e.a. 2017', 'Bontemps e.a. 2020'],
 };

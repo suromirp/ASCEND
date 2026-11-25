@@ -51,6 +51,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 
 ## Onderzoek, ontwerpen en verslagen
 
+- [onderhoud/sherpa-i161.md](../onderhoud/sherpa-i161.md): I-161: lijst van GR5-teksten die het hoofddoel (of je doel) gingen noemen en van de teksten die bewust GR5 bleven.
 - [onderzoek/ASCEND voor iedereen.md](../onderzoek/ASCEND%20voor%20iedereen.md): Hoe ASCEND werkt voor iedereen: met of zonder doel, eigen sporten, een hoeveelheid per soort training en sporten die eerlijk meetellen.
 - [onderzoek/Aanvullend onderzoek GR5 voorbereiding.md](../onderzoek/Aanvullend%20onderzoek%20GR5%20voorbereiding.md): Regels voor afdalen, herstel (slaap, alcohol, ziekte, tekort) en doelkeuze met vier programmatypes, als aanvulling op de trainingsopbouw.
 - [onderzoek/Doelsoorten berg en buiten.md](../onderzoek/Doelsoorten%20berg%20en%20buiten.md): Wat de engine per berg- en buitendoel nodig heeft: minimale eisen, opbouwduur, fasen, afbouw, meters en herstel.

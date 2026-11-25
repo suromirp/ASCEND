@@ -503,7 +503,7 @@ export const TRAINING_SPOTS: TrainingSpot[] = [
     terrain: 'Trap',
     access: 'Vrij toegankelijk.',
     station: { name: 'Landgraaf', km: 2.4 },
-    tip: 'De langste buitentrap van Nederland. Een weekend hier is een sterke sleuteltraining voor de GR5.',
+    tip: 'De langste buitentrap van Nederland. Een weekend hier is een sterke sleuteltraining voor een tocht.',
     caveat: 'Het hoogteverschil van de trap verschilt per bron (75 of 80 m).',
     region: 'elders',
     sources: [{ label: 'Runners.nl, hoogste trap van Nederland', url: 'https://www.runners.nl/nieuws/1285207/hoogste-trap-nederland' }, BERGEN_MAGAZINE],

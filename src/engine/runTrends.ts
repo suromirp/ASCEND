@@ -249,7 +249,7 @@ function climbingRow(input: RunTrendsInput): TrendRow {
     strengthText: `Klimsnelheid schommelt zelf zo'n 8 procent en hangt sterk af van de helling, dus dit zijn klimmen van ${from} tot ${from + 4} procent helling. Het heet Beter bij 8 procent sneller met een hartslag die niet hoger is, en Slechter bij 8 procent trager zonder lagere hartslag.${descentText}`,
     meaning:
       word === 'Beter'
-        ? 'Je klimt sneller dan eerst bij een vergelijkbare hartslag. Dat is wat je op de GR5 nodig hebt.'
+        ? 'Je klimt sneller dan eerst bij een vergelijkbare hartslag. Dat is wat je voor je doel nodig hebt.'
         : word === 'Slechter'
           ? 'Je klimt trager dan eerst zonder dat je hartslag lager is. Kijk naar slaap, warmte en je rugzak.'
           : 'Je klimsnelheid is ongeveer gelijk aan die van de klimmen ervoor.',

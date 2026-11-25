@@ -5,11 +5,11 @@ import { formatDayMonthNL } from '../utils/dates';
 import { Card, Eyebrow, SheetGrip } from './ui';
 
 // De vier meters achter het percentage: jouw beste van de laatste acht weken
-// naast wat de GR5 vraagt, elk met één zin waarom. Het percentage is het
+// naast wat je doel vraagt, elk met één zin waarom. Het percentage is het
 // gemiddelde van deze vier (engine/gr5Readiness.ts). `milestone`: de rugzakmeters van een tocht
 // (goalReadinessFor#usesMilestoneReadiness); de uitleg over de zware rugzak hoort daar alleen bij.
 
-export function Gr5ReadinessSheet({ readiness, title = 'Klaar voor de GR5', milestone = true, onClose }: { readiness: ShownReadiness; title?: string; milestone?: boolean; onClose: () => void }) {
+export function Gr5ReadinessSheet({ readiness, title = 'Klaar voor je doel', milestone = true, onClose }: { readiness: ShownReadiness; title?: string; milestone?: boolean; onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   return (
     <Portal>

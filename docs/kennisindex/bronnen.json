@@ -3435,6 +3435,13 @@
    "stand": "verouderd",
    "waarom": "De meting van 2 november (`docs/onderhoud/2026-11-02-exports.md`) heeft deze lijst niet gebruikt en is nieuwer."
   },
+  "docs/onderhoud/sherpa-i161.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "I-161: lijst van GR5-teksten die het hoofddoel (of je doel) gingen noemen en van de teksten die bewust GR5 bleven.",
+   "stand": "achtergrond"
+  },
   "docs/onderhoud/2026-11-23-naspelen-terugkeer.md": {
    "onderwerpen": [
     "planning"

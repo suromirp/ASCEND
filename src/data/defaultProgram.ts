@@ -210,7 +210,7 @@ function buildTemplates(): SessionTemplate[] {
       defaultDayOfWeek: 6,
       cardioTarget: { zone: 'RPE 8-9 op de herhalingen, volledig herstel ertussen' },
       notes:
-        'Herhalingen van 30-90 sec bergop (buiten) of op een treadmill op 4-5% helling, op hoge inspanning (RPE 8-9), met ruime rust/rustig afdalen ertussen. Bouwt tegelijk loopsnelheid/-kracht én D+ voor de GR5 op, dit is de kwaliteitssessie van de week, geen rustige duurloop. Minder impact op de knieën/enkels dan vlakke sprints, dankzij de helling.',
+        'Herhalingen van 30-90 sec bergop (buiten) of op een treadmill op 4-5% helling, op hoge inspanning (RPE 8-9), met ruime rust/rustig afdalen ertussen. Bouwt tegelijk loopsnelheid/-kracht én D+ voor je tocht op, dit is de kwaliteitssessie van de week, geen rustige duurloop. Minder impact op de knieën/enkels dan vlakke sprints, dankzij de helling.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
       // Bergop = grotendeels concentrisch, rustig afdalen ertussen houdt de
@@ -239,12 +239,12 @@ function buildTemplates(): SessionTemplate[] {
       // A run toward the marathon, with D+: it counts as running (sports
       // on/off, History totals), its type keeps the outdoor/D+ logging.
       sport: 'running',
-      focus: 'Uithouding × D+, richting marathon en GR5',
+      focus: 'Uithouding × D+, richting marathon en je tocht',
       durationVariants: { full: 75, short: 45 },
       defaultDayOfWeek: 7,
       outdoorTarget: { targetElevationM: 300 },
       notes:
-        'De langste sessie van de week, op vermoeide benen na zaterdag, precies die specificiteit is het doel, niet een fout. Rustig tempo (RPE 3-4/10), De minuten bouwen vanzelf op, nooit meer dan 10% boven je langste loop van de afgelopen maand. Buiten met D+ heeft de voorkeur boven een vlakke route, dit is de sessie die het meest direct naar de GR5 vertaalt.',
+        'De langste sessie van de week, op vermoeide benen na zaterdag, precies die specificiteit is het doel, niet een fout. Rustig tempo (RPE 3-4/10), De minuten bouwen vanzelf op, nooit meer dan 10% boven je langste loop van de afgelopen maand. Buiten met D+ heeft de voorkeur boven een vlakke route, dit is de sessie die het meest direct naar je tocht vertaalt.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
       // Langste sessie, op al vermoeide benen, met echte D+/D− — cumulatief
@@ -272,12 +272,12 @@ function buildTemplates(): SessionTemplate[] {
       name: 'Bergtocht',
       type: 'hiking',
       sport: 'hiking',
-      focus: 'Tijd op de benen × D+ en D− × rugzak, richting de GR5',
+      focus: 'Tijd op de benen × D+ en D− × rugzak, richting je tocht',
       durationVariants: { full: 180, short: 90 },
       outdoorTarget: { targetElevationM: 500, backpackWeightKg: 6 },
       cardioTarget: { zone: 'Zone 1-2, RPE 3-4: je kunt blijven praten' },
       notes:
-        'Een lange wandeling met zoveel mogelijk hoogteverschil, omhoog en omlaag, met de rugzak van deze week. Rustig tempo, eten en drinken onderweg zoals op de GR5. Geen heuvels in de buurt? Herhaal een helling, een trap of een duin, of loop het stijgende deel op de loopband en het dalen op een trap. Ga je mee met stokken op de GR5? Loop er in de tochten van deze weken al mee, dan weten je schouders en polsen wat ze moeten doen.',
+        'Een lange wandeling met zoveel mogelijk hoogteverschil, omhoog en omlaag, met de rugzak van deze week. Rustig tempo, eten en drinken onderweg zoals tijdens je tocht. Geen heuvels in de buurt? Herhaal een helling, een trap of een duin, of loop het stijgende deel op de loopband en het dalen op een trap. Ga je mee met stokken? Loop er in de tochten van deze weken al mee, dan weten je schouders en polsen wat ze moeten doen.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
       baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'heavy', intensity: 'low', upperBodyLoad: 'light', cardioLoad: 'moderate' },
@@ -302,7 +302,7 @@ function buildTemplates(): SessionTemplate[] {
       outdoorTarget: { targetElevationM: 400, backpackWeightKg: 8 },
       cardioTarget: { zone: 'Zone 1-2, RPE 3: bewust rustig, morgen volgt dag 2' },
       notes:
-        'De eerste van twee wandeldagen, zoals op de GR5. Rustiger dan zondag, met hoogteverschil en dezelfde rugzak als morgen. Het doel is niet deze dag zwaar maken, maar morgen op vermoeide benen weer kunnen vertrekken. Slaap je er een nacht tussen in je tent, dan oefen je ook tent opzetten, koken en slapen, precies wat je op de GR5 elke dag doet.',
+        'De eerste van twee wandeldagen, zoals op je tocht. Rustiger dan zondag, met hoogteverschil en dezelfde rugzak als morgen. Het doel is niet deze dag zwaar maken, maar morgen op vermoeide benen weer kunnen vertrekken. Slaap je er een nacht tussen in je tent, dan oefen je ook tent opzetten, koken en slapen, precies wat je onderweg elke dag doet.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
       baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'moderate', intensity: 'low', upperBodyLoad: 'light', cardioLoad: 'moderate' },
@@ -345,7 +345,7 @@ function buildTemplates(): SessionTemplate[] {
       focus: 'Drempeltempo, richting je wedstrijd',
       durationVariants: { full: 45, short: 30 },
       notes:
-        'Rustig inlopen, dan blokken rond je drempel: comfortabel zwaar, je kunt nog korte zinnen zeggen (RPE 6-7, zone 3). Niet harder dan dat: het gaat om lang volhouden, niet om snel. Uitlopen. Houdt je wedstrijdtempo bij, telt ook gewoon als looptraining voor de GR5.',
+        'Rustig inlopen, dan blokken rond je drempel: comfortabel zwaar, je kunt nog korte zinnen zeggen (RPE 6-7, zone 3). Niet harder dan dat: het gaat om lang volhouden, niet om snel. Uitlopen. Houdt je wedstrijdtempo bij, telt ook gewoon als looptraining voor je doel.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
       baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'moderate', eccentricLoad: 'light', intensity: 'moderate', upperBodyLoad: 'none', cardioLoad: 'heavy' },
@@ -391,7 +391,7 @@ function buildTemplates(): SessionTemplate[] {
       name: 'Heuvelsprints en afdalen',
       type: 'cardio',
       sport: 'running',
-      focus: 'Bergop snelheid, daarna gecontroleerd afdalen voor de GR5',
+      focus: 'Bergop snelheid, daarna gecontroleerd afdalen voor je tocht',
       durationVariants: { full: 45, short: 30 },
       outdoorTarget: { targetElevationM: 150 },
       notes:

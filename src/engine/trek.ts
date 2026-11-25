@@ -34,10 +34,11 @@ export const TREK_IMPORTANCE_LABEL: Record<TrekImportance, string> = {
   goal: 'Doel, fris aan de start',
 };
 
-export function trekImportanceHint(importance: TrekImportance, days: number): string {
-  if (importance === 'training') return 'Geen afbouw. Alleen de dag ervoor en erna blijft licht. De tocht telt als training richting de GR5.';
+// `goal` is hoe de tekst je doel noemt (`goalRef`): de naam van het hoofddoel, of "je doel".
+export function trekImportanceHint(importance: TrekImportance, days: number, goal = 'je doel'): string {
+  if (importance === 'training') return `Geen afbouw. Alleen de dag ervoor en erna blijft licht. De tocht telt als training richting ${goal}.`;
   const n = trekLightDaysBefore(days, 'goal');
-  return `De ${n} dagen ervoor blijven licht, zodat je fris vertrekt. De tocht telt ook als training richting de GR5.`;
+  return `De ${n} dagen ervoor blijven licht, zodat je fris vertrekt. De tocht telt ook als training richting ${goal}.`;
 }
 
 export const MAX_TREK_DAYS = 30;
