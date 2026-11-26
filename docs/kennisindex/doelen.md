@@ -11,6 +11,7 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
+- 2026-11-26 [Calisthenics algemeen: de squat op één been en de L-sit als voorstel in een training](../beslissingen/2026-11-26-calisthenics-voorstel-benen-en-romp.md): Staat de squat op één been of de L-sit van Calisthenics algemeen nergens in je trainingen, dan stelt de kaart op Ascend één keer per ladder voor om de eerste passende stap als toegevoegde oefening in één krachttraining te zetten (addedExercises, Akkoord, Liever niet, Ongedaan maken; instelling Stap voorstellen).
 - 2026-11-15 [Na de race: de afbouw vervalt, de herstelweek wordt niet ingehaald](../beslissingen/2026-11-15-na-de-race.md): Een training uit de afbouw voor een race (de zeven dagen ervoor) die niet gedaan is, vervalt zodra de racedag er is.
 - 2026-11-15 [Hutten of tent: één vraag bij een tocht op hutten zonder eigen keuze](../beslissingen/2026-11-15-hutten-of-tent-vraag.md): Een tocht op hutten zonder vastgelegde eigen keuze krijgt op de Reisplanner en de Paklijst één keer de vraag "Je tocht staat op hutten.
 - 2026-11-14 [Racedag: de rij onder de ochtendvraag, het weer op drie plekken](../beslissingen/2026-11-14-racedag-plek-en-weer.md): De rij Racedag staat op Vandaag onder de ochtendvraag en de kaarten onder de missie, niet direct onder de missie.

@@ -235,9 +235,10 @@ export function ExerciseArtSheet({ exerciseId, onClose }: { exerciseId: string; 
   if (!exerciseById(shownId)) return null;
   const previous = trail.length > 1 ? exerciseById(trail[trail.length - 2]) : undefined;
 
+  // Boven een ForgeSheet (z-[60]): de uitleg gaat open vanuit het blad Ruilen en moet daarboven liggen.
   return (
     <Portal>
-      <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
+      <div className={`fixed inset-0 z-[70] flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div
           ref={sheetRef}
           tabIndex={-1}

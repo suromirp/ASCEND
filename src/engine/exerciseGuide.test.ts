@@ -80,12 +80,12 @@ describe('guideLinks', () => {
 describe('oefeningen zonder uitleg', () => {
   it('houden hun drie oude regels en krijgen geen guide', () => {
     const without = EXERCISES.filter((e) => !EXERCISE_GUIDES[e.id]);
-    expect(without.length).toBeGreaterThan(40);
+    expect(without.length).toBeGreaterThan(20);
     for (const e of without) {
       expect(e.guide, e.id).toBeUndefined();
       expect(e.cues.length, e.id).toBeGreaterThanOrEqual(3);
     }
-    expect(exerciseById('hack-squat')!.guide).toBeUndefined();
+    expect(exerciseById('machine-torso-rotation')!.guide).toBeUndefined();
   });
   it('geen oefening met uitleg raakt zijn oude regels kwijt', () => {
     for (const id of Object.keys(EXERCISE_GUIDES)) {
@@ -116,7 +116,9 @@ describe('alle uitleg', () => {
   const BALANCE = ['single-leg-stance', 'single-leg-stance-eyes-closed', 'single-leg-stance-cushion', 'star-excursion-reach'];
   // Batch 5: de elf kandidaten van Spieren voor de berg die nog alleen een dosis toonden.
   const BATCH5 = ['barbell-glute-bridge', 'dumbbell-frog-pump', 'glute-ham-raise', 'lateral-band-walk', 'leg-press-plates', 'single-leg-rdl', 'sumo-deadlift', 'superman', 'trap-bar-deadlift', 'weighted-ghd-hip-hinge', 'weighted-roman-chair-back-extension'];
-  const NEW_BATCHES = [...BATCH3, ...BATCH4, ...BALANCE, ...BATCH5];
+  // Batch 6: romp, heupen, benen en persen met alleen oude regels.
+  const BATCH6 = ['ab-wheel-rollout', 'barbell-rollout', 'cable-crunch', 'copenhagen-plank', 'hanging-leg-raise', 'pallof-press', 'horizontal-cable-chop', 'farmers-carry', 'front-squat', 'hack-squat', 'leg-press-quad-biased', 'spanish-squat', 'reverse-nordic-curl', 'hip-abduction-band', 'hip-abduction-machine', 'hip-adduction-machine', 'side-lying-hip-abduction', 'cable-hip-abduction', 'push-press', 'close-grip-bench-press'];
+  const NEW_BATCHES = [...BATCH3, ...BATCH4, ...BALANCE, ...BATCH5, ...BATCH6];
   it('heeft de vijf proefteksten, de 23 stappen van de overige calisthenicsladders (F4f) en batch 1 tot en met 4', () => {
     const f4f = SKILL_LADDERS.filter((l) => !['push-up', 'pull-up', 'dip'].includes(l.id)).flatMap((l) => l.steps.map((s) => s.exerciseId));
     expect(f4f).toHaveLength(23);
@@ -125,6 +127,7 @@ describe('alle uitleg', () => {
   it('elke batch is twintig oefeningen, zonder dubbele', () => {
     expect(BATCH3).toHaveLength(20);
     expect(BATCH4).toHaveLength(20);
+    expect(BATCH6).toHaveLength(20);
     expect(new Set(NEW_BATCHES).size).toBe(NEW_BATCHES.length);
   });
   it('elke oefening die Spieren voor de berg kan voorstellen heeft uitleg, zodat het voorstel zegt wat je doet', () => {

@@ -58,6 +58,11 @@ Staat nog niet in je trainingen.
 Squat op één been
 Begin bij Assisted Pistol Squat.
 Staat nog niet in je trainingen.
+[label: Voorstel voor je training]
+Zet Assisted Pistol Squat in Benen A (zwaar)?
+Sets en herhalingen: 3 keer 5 per been, als laatste oefening.
+[knop: Liever niet]
+[knop: Akkoord]
 L-sit
 Begin bij Tuck L-Sit.
 Staat nog niet in je trainingen.
