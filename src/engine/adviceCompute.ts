@@ -27,6 +27,7 @@ import { tooHardAdvice, tooLightAdvice, injuryAdvice, strengthAdvice, spacingAdv
 import { restWeekSkipAdvice, repeatWeekAdvice, reentryAdvice, tentPackAdvice, targetTimeAdvice } from './adviceBlock';
 import { morningAdvice } from './adviceMorning';
 import { descentAdvice } from './descentClock';
+import { calibrationAdvice } from './ijktocht';
 import { fullWeekAdvice, resolveFullWeekAsk } from './fullWeek';
 import { oneVoicePerLog } from './oneVoice';
 
@@ -601,9 +602,19 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     restDay: inputs.restDay ?? inputs.extraSession?.restDay, taken: takenDays, keyFocus: inputs.keyFocus,
     program: inputs.program, dailyTimeBudget: inputs.dailyTimeBudget, sameDayPairingPreference: inputs.sameDayPairingPreference,
   }).filter((a) => !inputs.respondedIds.has(a.id));
+  // De ijktocht komt na de afdaalklok en wijkt ook voor haar dag: geen meting op of naast een dag waar een ander
+  // voorstel iets neerzet (engine/ijktocht.ts).
+  const calibrationTaken = new Set(takenDays);
+  for (const d of descent.flatMap((a) => a.proposal?.changes.map((c) => c.newSessionDraft?.scheduledDate) ?? [])) if (d) calibrationTaken.add(d);
+  const calibration = calibrationAdvice({
+    today: inputs.asOf, logs: inputs.logs, plannedSessions: inputs.plannedSessions, templates: inputs.templates, context: inputs.calibration,
+    respondedIds: inputs.respondedIds, answeredOn: inputs.answeredOn, leave: inputs.leave, illnessEpisodes: inputs.illnessEpisodes,
+    restDay: inputs.restDay ?? inputs.extraSession?.restDay, taken: calibrationTaken,
+    program: inputs.program, dailyTimeBudget: inputs.dailyTimeBudget, sameDayPairingPreference: inputs.sameDayPairingPreference,
+  }).filter((a) => !inputs.respondedIds.has(a.id));
   // Het vangnet zonder sportschool: geen voorstel zet een sportschooltraining op een dag zonder sportschool
   // (engine/noGymGuard.ts, docs/beslissingen/2026-11-15-zonder-sportschool-verplaatst.md).
-  return withoutGymOnNoGym([...rest, ...fullWeekNow, ...descent], inputs.plannedSessions, templateById, inputs.leave)
+  return withoutGymOnNoGym([...rest, ...fullWeekNow, ...descent, ...calibration], inputs.plannedSessions, templateById, inputs.leave)
     // Bij gelijke prioriteit gaat de rustige instap voor (I-154): de kaart op Vandaag toont alleen de eerste.
     .sort((a, b) => b.priority - a.priority || Number(b.ruleId === 'REENTRY') - Number(a.ruleId === 'REENTRY') || a.id.localeCompare(b.id));
 }

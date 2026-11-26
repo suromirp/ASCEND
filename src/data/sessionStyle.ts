@@ -4,7 +4,7 @@
 // stop or ease off during the training itself (audit 2026-10, report 6).
 // Keyed by SessionTemplate.id, like data/workoutStructure.ts.
 
-type FactKind = 'steady' | 'intervals' | 'long' | 'hike' | 'strength' | 'recovery' | 'walk' | 'tempo' | 'race' | 'test' | 'strides' | 'fartlek' | 'progression' | 'ruck' | 'vo2' | 'descent' | 'stairs';
+type FactKind = 'steady' | 'intervals' | 'long' | 'hike' | 'strength' | 'recovery' | 'walk' | 'tempo' | 'race' | 'test' | 'strides' | 'fartlek' | 'progression' | 'ruck' | 'vo2' | 'descent' | 'stairs' | 'calibration';
 
 export interface SessionStyle {
   styleLabel: string; // after the sport: "HARDLOPEN · BERGOP"
@@ -70,6 +70,14 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
     facts: 'stairs',
     notesAsHowTo: true,
     weather: false,
+  },
+  // De vaste ijktocht (engine/ijktocht.ts): een meting, geen prestatie. Rustig, zodat de vergelijking eerlijk is.
+  tpl_ijktocht: {
+    styleLabel: 'ijktocht',
+    purpose: 'Een vaste meting voor de berg: dezelfde route en rugzak op rustig tempo laten zien of je sterker klimt en of je hartslag aan het eind minder oploopt.',
+    stopSignals: ['je knie of enkel scherp pijn doet: stop, de meting kan een andere keer', 'je geen hele zinnen meer kunt praten: ga langzamer, het tempo is niet de toets'],
+    facts: 'calibration',
+    notesAsHowTo: true,
   },
   tpl_fartlek: {
     styleLabel: 'fartlek',

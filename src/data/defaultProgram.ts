@@ -576,6 +576,22 @@ function buildTemplates(): SessionTemplate[] {
         'Vijf minuten rustig inlopen. Dan tien minuten dalen: een trappenhuis af (met de lift of rustig omhoog), een duin af of een helling af, telkens opnieuw. Kleine passen, knieën licht gebogen, niet rennen. Ongeveer 30 verdiepingen of 100 meter dalen is genoeg. De eerste keer geeft dit spierpijn in je bovenbenen; dat is de prikkel, en het wordt snel minder.',
       baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'light', eccentricLoad: 'moderate', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'light' },
     },
+    // De vaste ijktocht (engine/ijktocht.ts, docs/beslissingen/2026-11-26-ijktocht.md): om de zes tot acht weken
+    // dezelfde route of hetzelfde trappenhuis met dezelfde rugzak in een rustig tempo, als kompas voor de berg.
+    // Geen vaste dag en geen weekopbouw: alleen een voorstel met Akkoord zet hem neer.
+    {
+      id: 'tpl_ijktocht',
+      name: 'IJktocht',
+      type: 'hiking',
+      sport: 'hiking',
+      focus: 'Een vaste meting: dezelfde route, dezelfde rugzak, rustig tempo',
+      durationVariants: { full: 60, short: 45 },
+      notes:
+        'Loop je vaste ijkroute: een heuvelroute of een trappenhuis dat je elke keer weer kunt doen. Neem dezelfde rugzak als vorige keer en loop rustig, je kunt hele zinnen praten. Draag je horloge met hartslag, zodat ASCEND je klimtempo en je hartslag in het laatste deel kan vergelijken. Duw niet om sneller te zijn: het gaat om wat je op hetzelfde rustige tempo doet. Morgenochtend vraagt ASCEND hoe je benen zijn.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'light', eccentricLoad: 'moderate', intensity: 'low', upperBodyLoad: 'light', cardioLoad: 'moderate' },
+    },
     {
       id: 'tpl_ruck_walk',
       name: 'Rugzakwandeling',

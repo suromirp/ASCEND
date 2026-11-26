@@ -193,6 +193,17 @@ export const DOEL_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Akkoord', text: 'pas dan staat de trapsessie in je week. Met Liever niet verandert er niets en blijft het drie weken stil.' },
     ],
   },
+  ijktocht: {
+    title: 'IJktocht',
+    lead: 'Om de zes weken dezelfde route of hetzelfde trappenhuis, met dezelfde rugzak en op een rustig tempo.',
+    points: [
+      { head: 'Wanneer', text: 'alleen met een bergdoel of een bergtocht. De eerste keer is je nulmeting, daarna om de zes of acht weken.' },
+      { head: 'Wat hij meet', text: 'je klimtempo in meter per uur, hoeveel je hartslag in het laatste deel oploopt tegen het eerste, en hoe je benen de ochtend erna zijn.' },
+      { head: 'Waar je het ziet', text: 'in Je stand, onder Belasting, met de vorige keer ernaast. Een andere rugzak, route of temperatuur staat erbij.' },
+      { head: 'Geen test', text: 'het is een eerlijk kompas, geen gevalideerde test. Een trappenhuis is vaak de beste route: altijd hetzelfde.' },
+      { head: 'Akkoord', text: 'pas dan staat de ijktocht in je week, op een vrije dag. Met Liever niet verandert er niets en blijft het twee weken stil.' },
+    ],
+  },
   bergschoenen: {
     title: 'Bergschoenen inlopen',
     lead: 'Nieuwe schoenen horen niet op de eerste dag van de tocht te beginnen. De kilometers tellen vanaf de dag dat je ze draagt.',

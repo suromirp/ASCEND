@@ -45,7 +45,7 @@ describe('Losse training: de standaard van een sport', () => {
   });
 
   it('Welke training precies?: alleen die sport, op naam', () => {
-    expect(adHocChoices(demo, 'hiking').map((x) => x.name)).toEqual(['Bergop wandelen', 'Bergtocht', 'Herstelwandeling', 'Rugzakwandeling', 'Trap af', 'Wandeldag 1 van 2', 'Wandeling']);
+    expect(adHocChoices(demo, 'hiking').map((x) => x.name)).toEqual(['Bergop wandelen', 'Bergtocht', 'Herstelwandeling', 'IJktocht', 'Rugzakwandeling', 'Trap af', 'Wandeldag 1 van 2', 'Wandeling']);
     expect(adHocChoices(demo, 'running').every((x) => adHocGroupOf(x) === 'running')).toBe(true);
   });
 });

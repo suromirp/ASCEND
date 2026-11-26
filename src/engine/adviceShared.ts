@@ -27,6 +27,7 @@ import type { ReentryCatchUp, ReentryChoice, ReentryFirstDay, ReentryWeek } from
 import { idHasRole } from './templateRoles';
 import { RACE_GUARD_DAYS, afterRaceGuard, raceDatesOf } from './raceWindow';
 import type { DescentClockContext } from './descentClock';
+import type { CalibrationContext } from './ijktocht';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
 
@@ -165,6 +166,8 @@ export interface AdviceInputs {
   weather?: { forecast: WeatherForecast; now: Date; leave?: LeavePeriod[] };
   // De afdaalklok (engine/descentClock.ts): aan, met de tochten die nog komen. Absent = uit.
   descentClock?: DescentClockContext;
+  // De vaste ijktocht (engine/ijktocht.ts): aan, hoe vaak en met de tochten die nog komen. Absent = uit.
+  calibration?: CalibrationContext;
   // De dag van je antwoord per advies-id: de afdaalklok telt haar drie weken stilte vanaf die dag.
   answeredOn?: Readonly<Record<string, string>>;
   // Your rest day, 1 to 7 (rule REST-BACK). Absent: the rest day of the extra training, if any.

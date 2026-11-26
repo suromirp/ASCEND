@@ -22,6 +22,7 @@ const IDS_BY_ROLE: Record<TemplateRole, string[]> = {
   strength: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b', 'tpl_lower_b'],
   ruck: ['tpl_ruck_walk'],
   descent: ['tpl_hills_descent', 'tpl_stairs_down'],
+  calibration: ['tpl_ijktocht'],
   plain_walk: ['tpl_walk'],
   start_only: ['tpl_walk_jog', 'tpl_walk_jog_long'],
   extra: ['tpl_strides_run', 'tpl_fartlek', 'tpl_progression_run', 'tpl_recovery_run', 'tpl_bergconditie', 'tpl_ruck_walk'],

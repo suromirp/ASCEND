@@ -128,6 +128,9 @@ export function buildSessionBrief(
       // De korte trapsessie: geen zone en geen hartslag, wel wat je doet.
       case 'stairs':
         return [total, { value: '10 min', label: 'dalen, na 5 min inlopen' }, { value: 'Afdalen', label: 'kleine passen, niet rennen' }];
+      // De ijktocht: rustig, en alles hetzelfde als vorige keer.
+      case 'calibration':
+        return [total, { value: 'Zone 2', label: 'hele zinnen' }, { value: 'Zelfde', label: 'route en rugzak als vorige keer' }];
       case 'fartlek': {
         const work = plan?.items.find((it) => 'repeat' in it);
         return [total, { value: work && 'repeat' in work ? `${work.repeat} × 1 min` : 'Stukken', label: 'hard' }, { value: 'Op gevoel', label: 'niet op het horloge' }];

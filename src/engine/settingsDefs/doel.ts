@@ -89,6 +89,18 @@ export const DOEL_CHOICES = {
       { value: 'uit', label: 'Uit', note: 'Geen regel en geen voorstel', short: 'Uit' },
     ],
   }),
+  ijktocht: def({
+    group: 'Doel en tochten',
+    title: 'IJktocht',
+    line: 'Om de paar weken dezelfde route met dezelfde rugzak, als kompas voor de berg.',
+    advice: 'zes' as 'zes' | 'acht' | 'uit',
+    help: 'ijktocht',
+    options: [
+      { value: 'zes', label: 'Om de zes weken', note: 'Vaak genoeg om te zien of je groeit, met tijd om te trainen ertussen', short: 'Om de 6 weken' },
+      { value: 'acht', label: 'Om de acht weken', note: 'Minder vaak, minder tijd uit je week', short: 'Om de 8 weken' },
+      { value: 'uit', label: 'Uit', note: 'Geen voorstel; een ijktocht die je logt staat wel in Je stand', short: 'Uit' },
+    ],
+  }),
   // De opties staan in data/shelterOptions.ts: de start en Doel aanpassen lezen dezelfde teksten.
   slapenOnderweg: def({
     group: 'Doel en tochten',
@@ -409,6 +421,17 @@ export const DOEL: SettingDef[] = [
     keywords: ['afdalen', 'afdaling', 'dalen', 'bergaf', 'trap', 'trappen', 'trapsessie', 'spierpijn', 'bovenbenen', 'tocht', 'tochten', 'klok', '21 dagen'],
     help: true,
     choice: { key: 'afdaalklok', def: DOEL_CHOICES.afdaalklok },
+    showWhen: [B.goalOrTrek],
+  },
+  {
+    id: 'ijktocht',
+    page: 'doel',
+    place: { in: 'bundel-tochten' },
+    title: 'IJktocht',
+    note: 'Met een bergdoel om de zes weken een voorstel voor dezelfde route met dezelfde rugzak; de uitkomst staat in Je stand.',
+    keywords: ['ijktocht', 'ijken', 'meting', 'nulmeting', 'kompas', 'vaste route', 'trappenhuis', 'klimtempo', 'hartslag', 'berg', 'vorm'],
+    help: true,
+    choice: { key: 'ijktocht', def: DOEL_CHOICES.ijktocht },
     showWhen: [B.goalOrTrek],
   },
   {

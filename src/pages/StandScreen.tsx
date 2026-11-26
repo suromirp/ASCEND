@@ -13,6 +13,7 @@ import { LOAD_INFO } from '../components/stand/standChartData';
 import { IntensityMixCard } from '../components/stand/IntensityMixCard';
 import { DescentBody } from '../components/stand/DescentCard';
 import { ClimbPaceBody } from '../components/stand/ClimbPaceCard';
+import { CalibrationBody } from '../components/stand/CalibrationCard';
 import { useClimbPace } from '../components/stand/useClimbPace';
 import { TrainingSplitSheet } from '../components/TrainingSplitSheet';
 import { RhythmCard, RhythmSheet } from '../components/stand/RhythmCard';
@@ -59,7 +60,7 @@ function ScreenInfo({ screen, onClose }: { screen: StandScreenId; onClose: () =>
   return <RhythmSheet onClose={onClose} />;
 }
 
-type Sheet = 'beendagen' | 'index' | 'bergaf' | 'klimtempo' | 'verdeling' | null;
+type Sheet = 'beendagen' | 'index' | 'bergaf' | 'klimtempo' | 'ijktocht' | 'verdeling' | null;
 
 function Benen() {
   const d = useStandData();
@@ -92,10 +93,12 @@ function Belasting() {
       <StandRows label="Meer over je belasting">
         {descent && <StandRow label="Bergaf" value={descent} onClick={() => setSheet('bergaf')} sheet />}
         {climbValue && <StandRow label="Klimtempo" value={climbValue} onClick={() => setSheet('klimtempo')} sheet />}
+        {d.calibration && <StandRow label="IJktocht" value={d.calibration.row} onClick={() => setSheet('ijktocht')} sheet />}
         <StandRow label="Soorten" value="Kracht, lopen en bergwerk" onClick={() => setSheet('verdeling')} sheet />
       </StandRows>
       {sheet === 'bergaf' && <StandSheet eyebrow="Belasting" title="Bergaf" onClose={() => setSheet(null)}><DescentBody weeks={d.descent} routeDayDescent={d.routeDescent} /></StandSheet>}
       {sheet === 'klimtempo' && climb && <StandSheet eyebrow="Belasting" title="Klimtempo" onClose={() => setSheet(null)}><ClimbPaceBody state={climb} goalDay={d.goalDay} pack={{ packKg: d.goalPack, bodyKg: d.inputs.bodyKg }} /></StandSheet>}
+      {sheet === 'ijktocht' && d.calibration && <StandSheet eyebrow="Belasting" title="IJktocht" onClose={() => setSheet(null)}><CalibrationBody view={d.calibration} /></StandSheet>}
       {sheet === 'verdeling' && <TrainingSplitSheet onClose={() => setSheet(null)} />}
     </>
   );

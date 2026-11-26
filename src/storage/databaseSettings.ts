@@ -243,6 +243,11 @@ export interface AppSettings {
   // 'advies' (absent): aan bij een bergdoel of bergtocht. 'altijd': bij elk doel. 'uit': nooit. Elke andere
   // waarde leest als het advies (resolveDescentClock), dus er is geen migratiestap nodig. Optional and additive.
   descentClock?: 'advies' | 'altijd' | 'uit';
+  // De vaste ijktocht (engine/ijktocht.ts, docs/beslissingen/2026-11-26-ijktocht.md): met een bergdoel of bergtocht
+  // om de zes of acht weken een voorstel voor dezelfde route met dezelfde rugzak. 'zes' (absent): het advies.
+  // 'acht': om de acht weken. 'uit': nooit. Elke andere waarde leest als het advies (resolveCalibrationHike), dus
+  // er is geen migratiestap nodig. Optional and additive.
+  calibrationHike?: 'zes' | 'acht' | 'uit';
   // A training that moves for a holiday or a tocht (engine/leaveSpacing.ts): 'drop' (absent = drop,
   // the advice) lets it go rather than put it right before or after its own next time, 'shift' moves
   // it to any day of that week that fits. Optional and additive, so no migration step.
