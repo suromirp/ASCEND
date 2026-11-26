@@ -146,8 +146,8 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     lead: 'Een stang op je borst of je schouders kan je klem zetten als je tot het uiterste gaat. Daarom schrijft Forge hier minstens 1 herhaling in reserve voor.',
     points: [
       { head: 'Welke oefeningen', text: 'bankdrukken en schuin bankdrukken met een stang, en squatten met de stang op je rug of voor je. Toestellen, kabels en dumbbells niet.' },
-      { head: 'Nooit een slot', text: 'een klein teken bij de eerste set legt het uit. Ging het tot 0, vul dan 0 in: dat wordt bewaard zoals je het deed.' },
-      { head: 'Veiligheidsarmen', text: 'heeft je sportschool die of een rek met vangers, zet dat aan bij Je sportschool. Dan mag het 0 zijn. Een bewuste 1 waar MacroFactor 0 voorschreef, telt niet als misser.' },
+      { head: 'Nooit een slot', text: 'een klein teken bij de eerste set legt het uit. Ging het tot 0, vul dan 0 in: dat wordt bewaard zoals je het deed. Een bewuste 1 waar MacroFactor 0 voorschreef, telt niet als misser.' },
+      { head: 'Veiligheidsarmen', text: 'heeft je sportschool die of een rek met vangers, zet dat aan bij Je sportschool. Dan mag het 0 zijn.' },
     ],
   },
   'bundel-sportschool': {
@@ -242,9 +242,9 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     title: 'Afvinken telt als het doel',
     lead: 'Vink je een set af zonder te kiezen, dan telt het doel als wat je over had, behalve bij twijfel.',
     points: [
-      { head: 'Wanneer het telt', text: 'je deed minstens de gevraagde herhalingen op het gewicht van het voorschrift, en de set erna viel niet 2 of meer tekort. Dat houdt je kracht vast, meer herhalingen tellen half. Een stap zwaarder pas als al je werksets de bovenkant halen, of je topset twee keer op rij.' },
-      { head: 'Bij twijfel', text: 'vraagt Forge hoeveel je over had: onder het doel, 2 of meer erboven, de eerste set op een zwaarder gewicht en je eerste drie trainingen van een oefening.' },
-      { head: 'Uit', text: 'een set zonder eigen RIR telt zoals voorheen. Oudere trainingen tellen met de onderkant van het bereik. Je log verandert nooit.' },
+      { head: 'Wanneer het telt', text: 'je deed minstens de gevraagde herhalingen met minstens het gewicht van het voorschrift, en de set erna viel niet 2 of meer tekort. Dat houdt je kracht vast, meer herhalingen tellen half. Een stap zwaarder pas als al je werksets de bovenkant halen, of je topset twee keer op rij. Oudere trainingen tellen met de onderkant van het bereik.' },
+      { head: 'Bij twijfel', text: 'vraagt Forge hoeveel je over had: onder het doel, 2 of meer boven het bereik, de eerste set op een zwaarder gewicht en je eerste drie trainingen van een oefening.' },
+      { head: 'Uit', text: 'een set zonder eigen RIR telt zoals voorheen. Je log verandert nooit.' },
     ],
   },
   'forge-vermoeidheid': {
@@ -454,7 +454,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     lead: 'Bergop en bergaf met een rugzak vragen veel van je kuiten, scheenspier en bilspieren, en een gewoon krachtschema slaat die vaak over.',
     points: [
       { head: 'De melding', text: 'minder dan 4 harde sets per week over de laatste vier weken staat één keer in de weekterugblik, en rustig bovenaan de training tot je een set afvinkt. Rustweken en weken met vakantie, een tocht of zonder sportschool tellen niet.' },
-      { head: 'Pas na Akkoord', text: 'komt één oefening als laatste in je training met het meeste beenwerk. Weghalen kan in het blad van de oefening. Liever niet laat die spier acht weken met rust.' },
+      { head: 'Pas na Akkoord', text: 'komt één oefening als laatste in je training met het meeste beenwerk, vanaf de volgende keer. Weghalen kan in het blad van de oefening. Liever niet laat die spier acht weken met rust.' },
       { head: 'Wat telt', text: 'werksets met hoogstens 4 over, ook zonder RIR. Bij Ruilen staat zo’n oefening bij gelijke keuze voorop. Forge ruilt nooit zelf.' },
       { head: 'Uit', text: 'geen melding en de gewone volgorde bij Ruilen.' },
     ],
@@ -463,7 +463,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
     title: 'Enkel en evenwicht',
     lead: 'Bij bergwandelaars die vallen is de enkel de vaakst getroffen plek. Evenwichtstraining verlaagde in zeven studies het aantal verzwikkingen met ongeveer een derde, het duidelijkst bij wie al eens verzwikte.',
     points: [
-      { head: 'De melding', text: 'minder dan 2 sets evenwicht per week over de laatste vier weken (lunges en split squats tellen niet) staat in de weekterugblik, na de spieren, met als voorstel op één been staan in je training met het meeste beenwerk. Weken met vakantie, een tocht of zonder sportschool tellen niet.' },
+      { head: 'De melding', text: 'minder dan 2 sets evenwicht per week over de laatste vier weken (lunges en split squats tellen niet) staat in de weekterugblik, na de spieren, met als voorstel op één been staan in je training met het meeste beenwerk. Rustweken en weken met vakantie, een tocht of zonder sportschool tellen niet.' },
       { head: 'Zwaarder', text: 'staat in de uitleg van de oefening: ogen dicht, op een kussen of reiken op één been.' },
       { head: 'Pijn aan je enkel of voet', text: 'staat er in Lichaam een open klacht, dan geen voorstel. Een enkel na een verzwikking oefen je met een fysiotherapeut.' },
       { head: 'Uit', text: 'alleen de drie spieren. Liever niet laat het acht weken met rust.' },

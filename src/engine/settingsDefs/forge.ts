@@ -1128,7 +1128,7 @@ export const FORGE: SettingDef[] = [
     place: { row: true, advanced: true },
     title: 'Spieren voor de berg',
     note: 'Bij een bergdoel zegt de weekterugblik het als kuiten, scheenspier, bilspieren of je evenwicht vier weken te weinig sets kregen, met een voorstel voor één oefening. Dat staat ook bovenaan de training.',
-    keywords: ['spieren', 'spierindex', 'kuiten', 'kuit', 'tibialis', 'scheen', 'bilspieren', 'billen', 'berg', 'bergdoel', 'tocht', 'sets', 'ruilen', 'weekterugblik', 'forge', 'kracht'],
+    keywords: ['spieren', 'spierindex', 'kuiten', 'kuit', 'tibialis', 'scheen', 'bilspieren', 'billen', 'berg', 'bergdoel', 'tocht', 'sets', 'ruilen', 'weekterugblik', 'forge', 'kracht', 'enkel'],
     sheet: { eyebrow: 'Forge', title: 'Spieren voor de berg', line: 'Bij een bergdoel. Een oefening komt er alleen bij na Akkoord.' },
     help: true,
     helpKey: 'forgeBergspieren',
