@@ -51,6 +51,7 @@ const ALLES_ANDERS: AppSettings = {
   askSweat: false,
   trekLegRest: 'strict',
   descentClock: 'uit',
+  calibrationHike: 'uit',
   leaveCrowding: 'shift',
   leaveAround: 'little',
   leaveBackfill: 'off',

@@ -3,6 +3,7 @@ import { SettingsRepo, wipeAllData } from './database';
 import { buildBackupEnvelope } from './backupExport';
 import { normalizeBackupToCurrentModel } from './backupNormalize';
 import { resolveDescentClock } from '../engine/descentClock';
+import { resolveCalibrationHike } from '../engine/ijktocht';
 import { cleanSettings } from './backupClean';
 
 describe('de schakelaars voor tochten en de back-up', () => {
@@ -68,6 +69,35 @@ describe('een beschadigde afdaalklok telt mee als overgeslagen', () => {
     expect(skipped.n).toBe(1);
     const fine = { n: 0 };
     expect(cleanSettings({ descentClock: 'uit' }, fine)?.descentClock).toBe('uit');
+    expect(fine.n).toBe(0);
+  });
+});
+
+describe('de ijktocht en de back-up', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+
+  it('de keuze reist mee', async () => {
+    await SettingsRepo.set({ calibrationHike: 'acht' });
+    const back = normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope())));
+    expect(back.settings?.calibrationHike).toBe('acht');
+  });
+
+  it('een oude back-up zonder het veld importeert zoals eerst en leest als het advies', async () => {
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    delete envelope.payload.settings.calibrationHike;
+    const back = normalizeBackupToCurrentModel(envelope);
+    expect(back.settings?.calibrationHike).toBeUndefined();
+    expect(resolveCalibrationHike(back.settings?.calibrationHike)).toBe('zes');
+  });
+
+  it('een beschadigde waarde wordt weggelaten en geteld', () => {
+    const skipped = { n: 0 };
+    expect(cleanSettings({ calibrationHike: 'soms' }, skipped)?.calibrationHike).toBeUndefined();
+    expect(skipped.n).toBe(1);
+    const fine = { n: 0 };
+    expect(cleanSettings({ calibrationHike: 'uit' }, fine)?.calibrationHike).toBe('uit');
     expect(fine.n).toBe(0);
   });
 });

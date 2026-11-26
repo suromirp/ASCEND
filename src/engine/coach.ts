@@ -97,6 +97,8 @@ export function coachLineForToday({ template, date, program, tomorrow, yesterday
       return 'De langste loop van de week. Rustig, op vermoeide benen is precies de bedoeling; wandelen bergop mag.';
     case 'tpl_stairs_down':
       return 'Een trappenhuis, duin of helling. Kleine passen en beheerst omlaag, niet rennen.';
+    case 'tpl_ijktocht':
+      return 'Een meting, geen wedstrijd. Zelfde route en rugzak, rustig tempo, horloge met hartslag aan.';
     case 'tpl_hill_intervals':
       return 'Kwaliteit boven aantal: hard bergop, rustig terug. Stop als je techniek rommelig wordt.';
     case 'tpl_lower_a':

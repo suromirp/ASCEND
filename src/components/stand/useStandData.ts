@@ -18,6 +18,7 @@ import { raceDatesOf } from '../../engine/raceWindow';
 import { goalTiming, typicalDayValue } from '../../engine/goalRoute';
 import { mainGoal } from '../../engine/mainGoal';
 import { mondayOfWeek } from '../../utils/dates';
+import { calibrationView } from '../../engine/ijktocht';
 
 // Alles wat Je stand en zijn schermen (Benen, Belasting, Ritme) lezen, op één plek, zodat de regel bovenaan
 // en het scherm erachter altijd hetzelfde getal tonen. Alleen lezen: elke berekening staat in engine/
@@ -41,6 +42,8 @@ export function useStandData() {
   const counting = resolveIntensityCounting(settings);
   const mix = useMemo(() => intensityMix(sessionLogs, templates, today, settings.heartRate, 28, counting), [sessionLogs, templates, today, settings.heartRate, counting]);
   const descent = useMemo(() => weeklyDescent(sessionLogs, today), [sessionLogs, today]);
+  // De vaste ijktocht (engine/ijktocht.ts): de laatste tegen de vorige. Zonder ijktocht in je logs: geen rij.
+  const calibration = useMemo(() => calibrationView(sessionLogs, settings.morningCheckIns, today), [sessionLogs, settings.morningCheckIns, today]);
   const checks = useMemo(() => indexChecks(sessionLogs, templates, inputs.bodyKg), [sessionLogs, templates, inputs.bodyKg]);
 
   // Not an archived goal, as on Ascend (pages/Ascend.tsx).
@@ -82,7 +85,7 @@ export function useStandData() {
   const leg = fatigueWord(legNow.index);
 
   return {
-    today, inputs, program, curve, calendar, legNow, leg, weeks, mix, descent, checks, routeDescent, goalDay, goalPack,
+    today, inputs, program, curve, calendar, legNow, leg, weeks, mix, descent, checks, routeDescent, goalDay, goalPack, calibration,
     rhythm, mainPast, restWeek, load, jump, empty: sessionLogs.length === 0,
   };
 }

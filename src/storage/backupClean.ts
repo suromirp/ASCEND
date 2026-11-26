@@ -481,6 +481,10 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.descentClock;
     skipped.n++;
   }
+  if ('calibrationHike' in s && s.calibrationHike !== 'zes' && s.calibrationHike !== 'acht' && s.calibrationHike !== 'uit') {
+    delete s.calibrationHike;
+    skipped.n++;
+  }
   if ('trekLegRest' in s && s.trekLegRest !== 'soft' && s.trekLegRest !== 'strict') {
     delete s.trekLegRest;
     skipped.n++;

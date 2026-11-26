@@ -126,6 +126,7 @@ export type TemplateRole =
   | 'strength' // a strength training (Hoeveel per soort, data/trainingKinds.ts)
   | 'ruck' // a walk with a backpack (Hoeveel per soort)
   | 'descent' // the session itself is a descent stimulus (engine/descentClock.ts)
+  | 'calibration' // de vaste ijktocht: alleen een voorstel met Akkoord zet hem neer (engine/ijktocht.ts)
   | 'plain_walk' // een gewone wandeling van type recovery: heet Wandelen, niet Herstel (engine/sports.ts)
   | 'start_only'; // only the beginnersstart plans it (wandelen en dribbelen, engine/programLayout.ts BEGINNER_SWAPS)
 

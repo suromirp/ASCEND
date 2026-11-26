@@ -272,6 +272,8 @@ export function rankCandidateTemplates(key: CapabilityKey, templates: SessionTem
     .filter((t) => !(hasRole(t, 'descent') && !t.defaultDayOfWeek && !t.weeklyProgression?.length))
     // Wandelen en dribbelen hoort alleen bij de beginnersstart: alleen die wissel zet het neer, het voorschrift nooit.
     .filter((t) => !hasRole(t, 'start_only'))
+    // De ijktocht is een vaste meting om de zes tot acht weken: alleen een voorstel zet hem neer (engine/ijktocht.ts).
+    .filter((t) => !hasRole(t, 'calibration'))
     .map((t) => ({ id: t.id, keys: inferCapabilityKeysForTemplate(t) }))
     .filter((t) => t.keys.some((k) => keyId(k) === kId))
     .sort((a, b) => {

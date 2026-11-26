@@ -21,6 +21,7 @@ import { useDirectionChange } from '../../ascend/useDirectionChange';
 import { parseDirection } from '../../../engine/direction';
 import { parseBeginnerStart, resolveBeginnerBuild, startBuildChanges, startBuildPatch } from '../../../engine/beginnerStart';
 import { resolveDescentClock } from '../../../engine/descentClock';
+import { resolveCalibrationHike } from '../../../engine/ijktocht';
 import { SummaryRow } from './SummaryRow';
 import { useShelterChange } from '../useShelterChange';
 import { SHELTER_ADVICE } from '../../../engine/trekShelter';
@@ -85,6 +86,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="water-per-etappe" title="Water per etappe tonen" facts={facts} info="waterPerEtappe" onChange={(on) => void updateSettings({ showStageWater: on })} />
           <SummaryRow id="rust-na-tocht" title="Rust na een bergtocht" facts={facts} info="rustNaTocht" onClick={() => setInner('rust-na-tocht')} />
           <SummaryRow id="afdaalklok" title="Afdaalklok" facts={facts} info="afdaalklok" onClick={() => setInner('afdaalklok')} />
+          <SummaryRow id="ijktocht" title="IJktocht" facts={facts} info="ijktocht" onClick={() => setInner('ijktocht')} />
           <SummaryRow id="bergschoenen" title="Bergschoenen inlopen" facts={facts} info="bergschoenen" onClick={() => setInner('bergschoenen')} />
           <SummaryRow id="bergschoenen-herinnering" title="Herinnering bij lange tochten" facts={facts} info="bergschoenenHerinnering" onChange={(on) => void updateSettings({ bootBreakInReminder: on })} />
         </BundleSheet>
@@ -189,6 +191,9 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       )}
       {inner === 'afdaalklok' && (
         <ChoiceFromDef def={CHOICES.afdaalklok} value={resolveDescentClock(settings.descentClock)} onPick={(v) => void updateSettings({ descentClock: v })} onClose={closeInner} />
+      )}
+      {inner === 'ijktocht' && (
+        <ChoiceFromDef def={CHOICES.ijktocht} value={resolveCalibrationHike(settings.calibrationHike)} onPick={(v) => void updateSettings({ calibrationHike: v })} onClose={closeInner} />
       )}
       {inner === 'rust-na-tocht' && (
         <ChoiceFromDef def={CHOICES.rustNaTocht} value={settings.trekLegRest ?? 'soft'} onPick={(v) => { if (v !== (settings.trekLegRest ?? 'soft')) { setNote(null); void plan.changeSetting(`Rust na een bergtocht: ${choiceShort('rustNaTocht', v)}`, { trekLegRest: v }, 'Volgt je keuze voor rust na een bergtocht.'); } }} onClose={closeInner} />

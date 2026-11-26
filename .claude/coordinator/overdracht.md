@@ -1,5 +1,9 @@
 # Overdracht coördinator ASCEND
 
+## Backlogsessie B, ijktocht (Rooster ronde 5, branch claude/ijktocht-26nov)
+
+- Sherpa bouwt; nog niet op main. Keuzes (advies, komt in docs/beslissingen/2026-11-26-ijktocht.md): instelling calibrationHike zes (advies), acht of uit; alleen met een bergdoel of bergtocht; voorstel met Akkoord, sjabloon tpl_ijktocht (60 min rustig, kort 45, zelfde route of trap, zelfde rugzak); meet klimtempo, hartslag laatste derde tegen eerste, benen de ochtend erna; uitkomst als rij IJktocht in Je stand, Belasting; geen vormwijziging. Stand: engine, instelling, Je stand-rij, 30 tests, besluit en kennisindex klaar; volledige vitest groen; golden A en C stil. Volgende: controles, commit, Warden en Lookout, squash. Eind: één Warden en één Lookout, mag-punten vanaf I-170, terugmelding naar session_01LnDpSjkesdr3Yd8mZZV9XL.
+
 ## Backlogsessie A, rooster 26 november (branch claude/rooster-26nov)
 
 - Ronde 2 live: main 96f7ab1f6 (squat op één been en L-sit als voorstel met Akkoord in addedExercises, uitleg batch 5). Mag-rest in I-167. Hoogste code nu I-167; volgende I-168.

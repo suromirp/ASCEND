@@ -60,6 +60,7 @@ import { resolveBodyCheck } from './bodyCheckSettings';
 import { resolveExerciseArt, resolveGuideOpen } from './exerciseArtSettings';
 import { resolveLegEase, resolveLegEaseHow } from './legEaseSettings';
 import { resolveDescentClock } from './descentClock';
+import { resolveCalibrationHike } from './ijktocht';
 import { resolveSky } from './skySettings';
 import { resolveLongRunGrowth } from './runGrowth';
 import { resolveIntensityCounting } from './intensitySettings';
@@ -576,6 +577,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'afdaalklok': {
       const mode = resolveDescentClock(s.descentClock);
       return mode === 'uit' ? { value: 'Uit', dim: true } : { value: choiceShort('afdaalklok', mode) };
+    }
+    case 'ijktocht': {
+      const mode = resolveCalibrationHike(s.calibrationHike);
+      return mode === 'uit' ? { value: 'Uit', dim: true } : { value: choiceShort('ijktocht', mode) };
     }
     case 'rust-na-tocht':
       return { value: choiceShort('rustNaTocht', s.trekLegRest ?? 'soft') };

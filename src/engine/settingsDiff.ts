@@ -211,6 +211,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('water-per-etappe', 'Water per etappe tonen', 'doel', 'showStageWater'),
   choice('rust-na-tocht', 'Rust na een bergtocht', 'doel', 'trekLegRest', 'soft', 'rustNaTocht', true),
   choice('afdaalklok', 'Afdaalklok', 'doel', 'descentClock', 'advies', 'afdaalklok'),
+  choice('ijktocht', 'IJktocht', 'doel', 'calibrationHike', 'zes', 'ijktocht'),
   choice('vakantie-opzij', 'Opzij voor een vakantie', 'planning', 'leaveCrowding', 'drop', 'vakantieOpzij', true),
   choice('sport-duur', 'Duur aanpassen na een sport', 'planning', 'sportDurationChange', 'propose', 'sportDuur', true),
   choice('vakantie-schuiven', 'Rond een vakantie schuiven', 'planning', 'leaveAround', 'wide', 'vakantieSchuiven', true),

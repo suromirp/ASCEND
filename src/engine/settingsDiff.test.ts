@@ -33,6 +33,7 @@ const everything: AppSettings = {
   firstAdviceSheet: false,
   trekLegRest: 'strict',
   descentClock: 'uit',
+  calibrationHike: 'uit',
   leaveCrowding: 'shift',
   sportDurationChange: 'auto',
   leaveAround: 'little',
