@@ -1,6 +1,6 @@
 // Een oefening in het workoutscherm van Forge: de kop, de tabel met sets en de regels eronder.
 
-import { Fragment, memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { ExerciseArtButton } from '../ExerciseArtButton';
 import { QUICK_RIR, QUICK_RIR_HINT, quickRirLabel, raiseOpen } from '../../engine/forgeReckon';
 import { barNote } from '../../engine/barCheck';
@@ -22,11 +22,9 @@ import {
   previousFor,
   previousText,
   repsText,
-  targetText,
   usesPlates,
   type PlateStep,
   type WorkoutExercise,
-  type WorkoutRow,
 } from '../../engine/forgeWorkout';
 import type { GymProfile } from '../../engine/strengthSettings';
 import type { Exercise } from '../../models/exercise';
@@ -40,6 +38,7 @@ import { SPOTTER_SIGN } from '../../engine/spotter';
 import { LongPressRow, RirBubble, TickBox, ValueCell } from './parts';
 import { InfoButton, Segmented } from '../ui';
 import { forgeLabels, type ForgeWords } from '../../engine/forgeWords';
+import { prescriptionLine } from './forgeWorkoutHelpers';
 import { ForgeReadSheet } from './ForgeReadSheet';
 import { addedKgOf, BAND_LABEL, bandOf, countsForLine, type LadderLines } from '../../engine/forgeLadder';
 import { SET_BANDS, type SetBand } from '../../models/training';
@@ -57,7 +56,6 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   first,
   paged = false,
   readOnly,
-  column,
   note,
   active,
   field,
@@ -93,7 +91,6 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   // Een oefening per scherm: elke oefening is een kaart, niet alleen die aan de beurt.
   paged?: boolean;
   readOnly: boolean;
-  column: 'target' | 'previous';
   note?: string;
   // De set die nu aan de beurt is, en het veld dat in het paneel open staat.
   active?: string;
@@ -155,9 +152,9 @@ export const ExerciseBlock = memo(function ExerciseBlock({
   const complete = !readOnly && exerciseComplete(ex);
   // Opwarmset later (engine/warmupLater.ts): de zin staat onder de laatste gedempte opwarmset, zolang die open staat.
   const warmLineRow = !readOnly && ex.warmFrom ? ex.rows.filter((r) => mutedWarmup(r, warmNow)).at(-1)?.id : undefined;
-  // Met MacroFactor als bron staan kg en herhalingen al in hun eigen kolom;
-  // de tweede kolom zegt dan wat je vorige keer deed.
-  const showPrevious = readOnly || column === 'previous';
+  // De tweede kolom zegt altijd wat je vorige keer deed; het voorschrift staat als één regel onder de naam
+  // (docs/beslissingen/2026-11-26-forge-herinrichting-rest.md).
+  const planLine = readOnly ? undefined : prescriptionLine(ex);
   // Zonder spotter: het teken staat hoogstens één keer bij de oefening, bij de eerste open set waar Forge
   // de reserve ophoogde. Vul je zelf 0 in, dan verdwijnt het teken: jij besliste.
   const spotterRowId = ex.rows.find((r) => r.kind === 'work' && r.target.spotter && !r.done && (r.rir ?? r.target.rir ?? 1) >= 1)?.id;
@@ -170,14 +167,17 @@ export const ExerciseBlock = memo(function ExerciseBlock({
             <Icon name="vinkje" size={14} />
           </span>
         )}
-        <span className="min-w-0 text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{ex.name}</span>
+        {/* De naam in de display-letter (Marcellus, één gewicht), hoogstens twee regels; een lange naam breekt af in plaats van weg te vallen. */}
+        <span data-testid="forge-naam" className="min-w-0 break-words font-display text-xl leading-tight" style={{ color: 'var(--color-ink)' }}>{ex.name}</span>
       </span>
       <span className="mt-0.5 block font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
         {role && <span data-testid="forge-rol">{role} · </span>}
-        {complete && folded ? exerciseSummary(ex) : readOnly ? `${workTotal} sets` : `${workDone} van ${workTotal} sets`}
-        {!(complete && folded) && <> · rust {formatClock(ex.restSec)}</>}
+        {complete && folded ? exerciseSummary(ex) : readOnly ? `${workTotal} sets` : (planLine ?? `${workDone} van ${workTotal} sets`)}
         {ex.swappedFrom ? ` · voor ${ex.swappedFrom}` : ''}
       </span>
+      {!(complete && folded) && (
+        <span className="block font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>Rust {formatClock(ex.restSec)} tussen sets</span>
+      )}
     </>
   );
   const card = paged || active !== undefined;
@@ -309,14 +309,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
           <div className="mt-2" role="table" aria-label={`Sets van ${ex.name}`}>
             <div role="row" className="forge-grid items-end pb-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               <span role="columnheader" className="text-center">Set</span>
-              {readOnly ? (
-                <span role="columnheader">Vorige</span>
-              ) : (
-                <button type="button" role="columnheader" onClick={act.column} className="-my-[14px] flex items-center gap-1 py-[14px] text-left" aria-label={showPrevious ? `Toon ${labels.plan.toLowerCase()}` : 'Toon vorige keer'}>
-                  {showPrevious ? 'Vorige' : labels.plan}
-                  <Icon name="ruilen" size={12} />
-                </button>
-              )}
+              <span role="columnheader">Vorige keer</span>
               {/* Een houding heeft geen kg (behalve met extra gewicht) en geen RIR: de koppen blijven dan leeg. */}
               <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : added ? '+ kg' : ex.hold ? '' : 'kg'}</span>
               <span role="columnheader" className="text-center">{ex.timed || ex.hold ? 'sec' : <><span aria-hidden>{labels.reps}</span><span className="sr-only">{labels.repsSpoken}</span></>}</span>
@@ -348,24 +341,29 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                     }}
                   >
                     <span role="cell" data-swipe-zone className="flex min-h-[44px] items-center justify-center">
+                      {/* Het nummer is een knop van 44 bij 44 die het blad Set opent (lang drukken op de rij kan ook); de veeg naar links begint hier ook. */}
+                      <button
+                        type="button"
+                        data-swipe-ok
+                        data-sheet-from
+                        disabled={readOnly}
+                        onClick={() => act.rowMenu(ex.slot, row.id)}
+                        aria-label={readOnly ? `Set ${label}` : `Set ${label}, opent het blad Set`}
+                        className="-mx-1 flex h-11 w-11 shrink-0 items-center justify-center disabled:cursor-default"
+                      >
                       <span
                         className="flex h-7 w-7 items-center justify-center rounded-full font-sans text-xs font-semibold tabular-nums"
                         style={{ background: row.done ? 'var(--color-progress)' : own ? 'transparent' : 'var(--color-surface)', boxShadow: own && !row.done ? 'inset 0 0 0 1.5px var(--color-control-border)' : undefined, color: row.done ? 'var(--color-on-action)' : row.kind === 'warmup' ? 'var(--color-ink-dim)' : 'var(--color-ink)', transition: 'background-color 0.3s ease' }}
                       >
                         {label}
                       </span>
+                      </button>
                     </span>
                     <span role="cell" data-swipe-zone className="min-w-0 font-sans text-xs leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-                      {showPrevious ? (
-                        <span>{prev ?? ''}</span>
-                      ) : own ? (
+                      {own ? (
                         <span className="flex min-h-[44px] items-center text-sm">{isCalibrationRow(row) ? 'ijkset' : 'eigen set'}</span>
-                      ) : readOnly ? (
-                        <PrescriptionText row={row} ex={ex} words={words} />
                       ) : (
-                        <button type="button" data-swipe-ok onClick={() => act.take(ex.slot, row.id)} disabled={row.done} aria-label={`${labels.plan} overnemen, set ${label}`} className="flex min-h-[44px] w-full flex-col justify-center text-left">
-                          <PrescriptionText row={row} ex={ex} words={words} />
-                        </button>
+                        <span className="flex min-h-[44px] items-center">{prev ?? ''}</span>
                       )}
                     </span>
                     {readOnly || ex.timed ? (
@@ -412,26 +410,26 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                   </LongPressRow>
                   </SwipeRow>
                   {row.id === warmLineRow && ex.warmFrom && (
-                    <p role="note" className="ml-9 font-sans text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{warmAlreadyLine(exercise, ex.warmFrom)}</p>
+                    <p role="note" className="ml-10 font-sans text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{warmAlreadyLine(exercise, ex.warmFrom)}</p>
                   )}
                   {!readOnly && row.kind === 'work' && addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg) && (
-                    <p className="ml-9 h-5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg)} kg</p>
+                    <p className="ml-10 h-5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{addOnLine(profile, exercise, row.weightKg ?? row.target.weightKg)} kg</p>
                   )}
                   {!readOnly && ladderLines && countsForLine(exercise, { kind: row.kind, weightKg: row.weightKg ?? row.target.weightKg, band: row.band }) && (
-                    <p className="ml-9 font-sans text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{countsForLine(exercise, { kind: row.kind, weightKg: row.weightKg ?? row.target.weightKg, band: row.band })}</p>
+                    <p className="ml-10 font-sans text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{countsForLine(exercise, { kind: row.kind, weightKg: row.weightKg ?? row.target.weightKg, band: row.band })}</p>
                   )}
                   {/* De schijven per set alleen met de instelling aan (standaard uit); dat een gewicht niet precies past staat er
                       altijd, zonder lege regel bij de andere sets (docs/beslissingen/2026-11-11-forge-kern-zichtbaar.md). */}
                   {!readOnly && row.kind === 'work' && plates && plates.some(Boolean) && (showPlates || (step !== undefined && step.shortKg > 0)) && (
-                    <PlateLine step={step} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
+                    <PlateLine step={step} />
                   )}
                   {barLine && (
-                    <p role="note" className="ml-9 mt-0.5 border-l-2 pl-2 font-sans text-xs leading-snug tabular-nums" style={{ borderColor: 'var(--color-warning)', color: 'var(--color-ink-dim)' }}>{barLine}</p>
+                    <p role="note" className="ml-10 mt-0.5 border-l-2 pl-2 font-sans text-xs leading-snug tabular-nums" style={{ borderColor: 'var(--color-warning)', color: 'var(--color-ink-dim)' }}>{barLine}</p>
                   )}
                   {!readOnly && !folded && row.id === quickRirRow && <QuickRir label={label} aim={row.target.rir} onPick={(n) => act.quickRir(ex.slot, row.id, n)} />}
                   {!readOnly && !folded && row.id === cleanRow && <CleanAsk label={label} onPick={(v) => act.clean(ex.slot, row.id, v)} />}
                   {!readOnly && row.id === spotterRowId && (
-                    <div className="ml-9 h-5">
+                    <div className="ml-10 h-5">
                       <button type="button" onClick={act.spotter} aria-label={`${SPOTTER_SIGN}, set ${label}. Tik voor uitleg`} className="relative flex h-5 items-center gap-1.5 text-xs before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']" style={{ color: 'var(--color-ink-dim)' }}>
                         <Icon name="schild" size={14} />
                         {SPOTTER_SIGN}
@@ -513,24 +511,6 @@ function QuickRir({ label, aim, onPick }: { label: string; aim?: number; onPick:
   );
 }
 
-// Het voorschrift van een set: "47,5 kg × 11-13" met de RIR eronder.
-function PrescriptionText({ row, ex, words }: { row: WorkoutRow; ex: WorkoutExercise; words: ForgeWords }) {
-  return (
-    <>
-      <span className="block">
-        {/* Alleen breken tussen gewicht en herhalingen, nooit midden in "8-10". */}
-        {targetText(row, exerciseOf(ex)).split(' × ').map((part, k) => (
-          <Fragment key={k}>
-            {k > 0 && ' '}
-            <span className="whitespace-nowrap">{k > 0 ? `× ${part}` : part}</span>
-          </Fragment>
-        ))}
-      </span>
-      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && !ex.hold && <span className="block text-xs">{row.target.rir} {forgeLabels(words).over === 'RIR' ? 'RIR' : 'over'}</span>}
-    </>
-  );
-}
-
 // "Ging het netjes?" na een werkset op een ladderstap: Ja of Nee in één tik, in de rij en zonder blad, zoals
 // "Hoeveel over?". Kies je niets, dan blijft het onbekend (dat telt als netjes). Verschijnt met `mx-row-in`, dat in
 // Rustig en Uit meteen op de eindstand staat.
@@ -559,15 +539,16 @@ function addOnLine(profile: GymProfile, exercise: Exercise | undefined, weightKg
   return addOnText(profile, exercise, weightKg, stepFor(exercise, profile));
 }
 
-// De schijven bij een stang, klein onder een werkset: een tik opent het invoerpaneel.
-function PlateLine({ step, onOpen }: { step?: PlateStep; onOpen: () => void }) {
+// De schijven bij een stang, klein onder een werkset, als gewone tekst zonder knop: de stang staat al in het cijferblok
+// (docs/visie/Ontwerprapport Forge.md, 4.1).
+function PlateLine({ step }: { step?: PlateStep }) {
   return (
-    <div className="ml-9 h-5">
+    <div className="ml-10 h-5">
       {step && (
-        <button type="button" onClick={onOpen} aria-label={`Schijven: per kant ${plateSideText(step)}. Tik voor de stang`} className="relative flex h-5 items-center gap-1.5 font-sans text-xs tabular-nums before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']" style={{ color: 'var(--color-ink-dim)' }}>
+        <span data-testid="forge-schijven" className="flex h-5 items-center gap-1.5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
           <Icon name="schijf" size={14} />
           {step.shortKg > 0 ? plateShortText(step) : step.perSide.length > 0 ? `per kant ${plateSideText(step)}` : 'alleen de stang'}
-        </button>
+        </span>
       )}
     </div>
   );

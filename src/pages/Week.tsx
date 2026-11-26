@@ -34,6 +34,8 @@ import { rowNotes } from '../engine/weekConcerns';
 import { allowedPairs } from '../engine/allowedPair';
 import { WeekAdjustmentsRow } from '../components/WeekAdjustments';
 import { LeavePeriodsRow } from '../components/LeavePeriods';
+import { usePublicHolidays } from '../state/usePublicHolidays';
+import { quietHolidays } from '../engine/publicHolidays';
 import { adjustedIdsOf, weekAdjustments } from '../engine/changeLog';
 import { placeReason } from '../engine/placeReason';
 import { patternDays } from '../engine/planPass';
@@ -71,6 +73,9 @@ export function WeekPage() {
   const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, reportStorageError, withdrawStorageNotice, refresh, undoLog, planChangeLog, advice, leavePeriods, weekNoticeFor, legsCloseAt, proposeSwap, swapOptionsFor, showFailure, openDraftId, moveContext } = useAppData();
   // Afvinken met één tik: grens in tijd en de melding bovenin (state/logSave.ts#tickOff).
   const tickNotice = { report: reportStorageError, withdraw: withdrawStorageNotice, refresh };
+  // Feestdagen (engine/publicHolidays.ts): het voorstel staat bij Vrije dagen en vakanties, de naam stil op een lege dag.
+  const holidays = usePublicHolidays(settings);
+  const holidayNames = useMemo(() => quietHolidays({ holidays: holidays.holidays, country: holidays.country, periods: leavePeriods, enabled: holidays.enabled }), [holidays.holidays, holidays.country, holidays.enabled, leavePeriods]);
   const keyFocus = useKeyFocus();
   // The chosen week and the year overview belong to this step in the history:
   // to a training and back, the page is as you left it.
@@ -373,6 +378,7 @@ export function WeekPage() {
             weekDrag={weekDrag}
             dragEnabled={dragHandles}
             onOpenPeriod={setOpenPeriodId}
+            holidayNames={holidayNames}
           />
           {/* Direct onder de dagen wat nu iets van je vraagt: een voorstel dat wacht, en na een gemiste training
               Week opnieuw plannen. Zo zakt het niet onder de bergkam buiten beeld. */}
@@ -395,7 +401,7 @@ export function WeekPage() {
             <WeekAdjustmentsRow adjustments={adjustments} weekStart={weekStart} current={current} />
             {/* Week opnieuw plannen: alleen voor de getoonde week, vandaag en later (engine/replanWeek.ts). */}
             {missed === 0 && replanRow}
-            <LeavePeriodsRow openId={openPeriodId} onOpenHandled={() => setOpenPeriodId(null)} />
+            <LeavePeriodsRow openId={openPeriodId} onOpenHandled={() => setOpenPeriodId(null)} holidays={holidays} />
             <SheetRow {...SEASON_ROW} onClick={() => { setMonthView(true); scrollMainToTop(); }} />
           </SheetRows>
         </>

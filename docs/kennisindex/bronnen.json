@@ -4871,6 +4871,22 @@
    ],
    "kern": "Staat de squat op één been of de L-sit van Calisthenics algemeen nergens in je trainingen, dan stelt de kaart op Ascend één keer per ladder voor om de eerste passende stap als toegevoegde oefening in één krachttraining te zetten (addedExercises, Akkoord, Liever niet, Ongedaan maken; instelling Stap voorstellen).",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-26-forge-herinrichting-rest.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Kolom Voorschrift weg (Vorige keer vast, het voorschrift als regel onder de naam), Kleiner maken en Afronden alleen in de kop, de naam van een oefening in Marcellus, het setnummer als knop van 44 px die het blad Set opent, de schijvenregel als tekst; percentage van je maximum niet gebouwd.",
+   "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-26-feestdagen-als-voorstel.md": {
+   "onderwerpen": [
+    "planning",
+    "week",
+    "koppelingen-en-data"
+   ],
+   "kern": "Een officiële feestdag (Nager.Date, global en Public, land uit de instelling, standaard Nederland) binnen de planhorizon op een dag zonder periode wordt één voorstel om hem als vrije dag te zetten, via planLeave en applyLeave; Liever niet geldt per feestdag (localStorage). Het voorstel staat in Week boven Vrije dagen en vakanties, de naam stil op een lege dag. De cache gaat niet in de back-up; de twee instellingen wel, via migrateHolidaySettings.",
+   "stand": "geldt"
   }
  }
 }

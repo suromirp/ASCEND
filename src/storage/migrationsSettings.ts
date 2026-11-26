@@ -13,6 +13,7 @@ import type { HealthConnectErrorKind, HealthKind, HealthRoundFound } from '../mo
 import type { HealthConnectState } from './healthConnect';
 import type { ShortTestSeries } from '../models/shortTest';
 import { readFirstSheet, type FirstSheetMap } from '../engine/adviceFirst';
+import { HOLIDAY_COUNTRIES, type HolidayCountry } from '../engine/publicHolidays';
 
 // --- terugknop en hervatten (optionele instellingen) ---------------------------
 // `settings.tabBack` en `settings.resumeMinutes` (engine/navigationSettings.ts)
@@ -181,4 +182,28 @@ export function migrateShortTestSeries(raw: unknown, today: string = todayISO())
   const pace = raw.paceSecKm;
   if (typeof pace !== 'number' || !Number.isFinite(pace) || pace < 150 || pace > 900) return { value: undefined, skipped: 1 };
   return { value: { answer: 'accepted', date, paceSecKm: Math.round(pace) }, skipped: 0 };
+}
+
+// --- feestdagen als voorstel (2026-11-26) ---------------------------------------------
+// `settings.publicHolidayOffers` en `settings.publicHolidayCountry` (engine/publicHolidays.ts) zijn nieuw,
+// optioneel en additief: een back-up van ervoor heeft ze niet en krijgt het advies (aan, Nederland). Staat er
+// iets, dan blijft alleen een schakelaar of een bekend land; de rest valt weg en telt. Geen hogere
+// schemaVersion. De opgehaalde feestdagen zelf staan nooit in een back-up (storage/publicHolidays.ts), en
+// Liever niet bij een feestdag ook niet (utils/holidayDeclines.ts).
+export function migrateHolidaySettings(raw: { publicHolidayOffers?: unknown; publicHolidayCountry?: unknown }): {
+  value: { publicHolidayOffers?: boolean; publicHolidayCountry?: HolidayCountry };
+  skipped: number;
+} {
+  const value: { publicHolidayOffers?: boolean; publicHolidayCountry?: HolidayCountry } = {};
+  let skipped = 0;
+  if (raw.publicHolidayOffers !== undefined) {
+    if (typeof raw.publicHolidayOffers === 'boolean') value.publicHolidayOffers = raw.publicHolidayOffers;
+    else skipped++;
+  }
+  if (raw.publicHolidayCountry !== undefined) {
+    const c = HOLIDAY_COUNTRIES.find((x) => x.value === raw.publicHolidayCountry);
+    if (c) value.publicHolidayCountry = c.value;
+    else skipped++;
+  }
+  return { value, skipped };
 }

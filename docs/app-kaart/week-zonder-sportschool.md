@@ -39,5 +39,6 @@ Hoogte: minuten maal zwaarte.
 --- kaart 5 ---
 [label: Meer over deze week]
 [knop: Je week tot nu1 van 4 gedaan · 1:46 uur]
+[knop: Eerste Kerstdag · vr 25 decAls vrije dag zetten?]
 [knop: Vrije dagen en vakantiesNiets gepland]
 [knop: JaaroverzichtAlle weken tot je doel]

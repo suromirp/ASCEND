@@ -5,6 +5,7 @@
 // pagina: een rij, met daaronder wat in haar blad staat. Samenvatting en advies volgen in stap 4.
 
 import { B, def } from './parts';
+import { HOLIDAY_COUNTRIES, type HolidayCountry } from '../publicHolidays';
 import type { SettingDef } from './types';
 
 // De keuzes van deze groep, onder hun oude sleutel in CHOICES (data/settingsChoices.ts leest ze hier).
@@ -227,6 +228,14 @@ export const PLANNING_CHOICES = {
       { value: 'eight_weeks', label: 'Tot 8 weken terug', note: 'Ook een langere reis van een tijd geleden', short: '8 weken' },
       { value: 'off', label: 'Niet achteraf', note: 'Een periode die al voorbij is kun je niet meer vastleggen', short: 'Niet achteraf' },
     ],
+  }),
+  feestdagenLand: def({
+    group: 'Planning',
+    title: 'Land van je feestdagen',
+    line: 'Van welk land ASCEND de officiële feestdagen ophaalt.',
+    advice: 'NL' as HolidayCountry,
+    help: 'feestdagen-land',
+    options: HOLIDAY_COUNTRIES.map((c) => ({ value: c.value as HolidayCountry, label: c.label, short: c.label })),
   }),
   zonderSportschool: def({
     group: 'Planning',
@@ -619,6 +628,26 @@ export const PLANNING: SettingDef[] = [
     help: true,
     helpKey: 'vakantieOpzij',
     choice: { key: 'vakantieOpzij', def: PLANNING_CHOICES.vakantieOpzij },
+  },
+  {
+    id: 'feestdagen',
+    page: 'planning',
+    place: { in: 'bundel-vakantie' },
+    title: 'Feestdagen voorstellen',
+    note: 'Valt er een officiële feestdag in je planning, dan krijg je in Week een voorstel om hem als vrije dag te zetten.',
+    keywords: ['feestdag', 'feestdagen', 'pasen', 'kerst', 'pinksteren', 'koningsdag', 'hemelvaart', 'vrije dag', 'vrij', 'voorstel'],
+    help: true,
+  },
+  {
+    id: 'feestdagen-land',
+    page: 'planning',
+    place: { in: 'bundel-vakantie' },
+    showWhen: [B.holidays],
+    title: 'Land van je feestdagen',
+    note: 'Van welk land ASCEND de officiële feestdagen ophaalt, standaard Nederland.',
+    keywords: ['feestdag', 'feestdagen', 'land', 'nederland', 'belgië', 'duitsland', 'buitenland'],
+    help: true,
+    choice: { key: 'feestdagenLand', def: PLANNING_CHOICES.feestdagenLand },
   },
   {
     id: 'bundel-niet-doorgegaan',

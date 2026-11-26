@@ -38,5 +38,6 @@ Hoogte: minuten maal zwaarte.
 [label: Meer over deze week]
 [knop: RustweekMinder uren, zo is je plan opgebouwd]
 [knop: Je week tot nu0 van 3 gedaan · 0:56 uur]
+[knop: Eerste Kerstdag · vr 25 decAls vrije dag zetten?]
 [knop: Vrije dagen en vakantiesNiets gepland]
 [knop: JaaroverzichtAlle weken tot je doel]

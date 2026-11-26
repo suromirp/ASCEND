@@ -343,6 +343,7 @@ export function WeekPlanner({
   weekDrag,
   dragEnabled = false,
   onOpenPeriod,
+  holidayNames,
 }: {
   weekStartDate: string;
   sessions: PlannedSession[];
@@ -370,6 +371,9 @@ export function WeekPlanner({
   dragEnabled?: boolean;
   // Een tik op de band van een periode opent het blad om hem bij te werken (LeavePeriods.tsx).
   onOpenPeriod?: (periodId: string) => void;
+  // De naam van een feestdag op een dag zonder periode (engine/publicHolidays.ts#quietHolidays): stil, alleen op een
+  // lege dag in plaats van "niets gepland". Een dag met een training houdt zijn 52 px en toont hem niet.
+  holidayNames?: ReadonlyMap<string, string>;
 }) {
   useFlipList();
   const days = weekDates(weekStartDate);
@@ -507,7 +511,7 @@ export function WeekPlanner({
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block text-[15px] font-medium leading-snug" style={{ color: empty.rest ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{empty.title}</span>
-                  <span className="block text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{dayLabel(date)} · {empty.line}</span>
+                  <span className="block truncate text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{dayLabel(date)} · {holidayNames?.get(date) ?? empty.line}</span>
                 </span>
                 {isToday && onAddFree && (
                   <button type="button" onClick={onAddFree} aria-label="Training loggen" className="-my-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-ink-dim)' }}>

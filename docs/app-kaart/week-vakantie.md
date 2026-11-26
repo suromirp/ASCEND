@@ -37,5 +37,6 @@ Hoogte: minuten maal zwaarte.
 --- kaart 4 ---
 [label: Meer over deze week]
 [knop: Je week tot nu0 van 3 gedaan · 0:56 uur]
+[knop: Eerste Kerstdag · vr 25 decAls vrije dag zetten?]
 [knop: Vrije dagen en vakantiesVakantie zonder training · 9 tot 13 nov]
 [knop: JaaroverzichtAlle weken tot je doel]

@@ -21,7 +21,7 @@ const squat = (rows: WorkoutRow[]): WorkoutExercise => ({ slot: 'sq', exerciseId
 
 function block(ex: WorkoutExercise, extra: Record<string, unknown> = {}): string {
   return renderToStaticMarkup(createElement(ExerciseBlock, {
-    ex, first: true, readOnly: false, column: 'target', field: null, selected: false, folded: false, profile, showPlates: false, rirAsValue: false, swipeOn: false, act, ...extra,
+    ex, first: true, readOnly: false, field: null, selected: false, folded: false, profile, showPlates: false, rirAsValue: false, swipeOn: false, act, ...extra,
   }));
 }
 
@@ -42,7 +42,7 @@ describe('schijven per set', () => {
     const html = block(squat([row(0, 60), row(1, 60)]));
     expect(html).not.toContain('per kant');
     expect(html).not.toContain('Schijven:');
-    expect(html).not.toContain('ml-9 h-5');
+    expect(html).not.toContain('ml-10 h-5');
   });
   it('aan: per kant onder elke werkset', () => {
     const html = block(squat([row(0, 60), row(1, 60)]), { showPlates: true });
@@ -52,7 +52,7 @@ describe('schijven per set', () => {
     const html = block(squat([row(0, 60), row(1, 60.3)]));
     expect(html.match(/>kan niet precies/g)).toHaveLength(1);
     expect(html).not.toMatch(/>per kant/);
-    expect(html.match(/ml-9 h-5/g)).toHaveLength(1);
+    expect(html.match(/ml-10 h-5/g)).toHaveLength(1);
   });
 });
 

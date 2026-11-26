@@ -7,6 +7,7 @@
 // regel (`sub`): een feit of een bron, nooit uitleg. Een test bewaakt dat een regel
 // niet langer is dan SUB_MAX_LENGTH, zodat niets afkapt op 360 px.
 
+import { holidayCountryLabel, resolveHolidayCountry, resolveHolidayOffers } from './publicHolidays';
 import { resolveSportRestKeep } from './sportRestOffer';
 import { locationSummary } from './locationSetting';
 import { resolveShorterToday } from './shorterToday';
@@ -584,6 +585,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('vakantieOpzij', s.leaveCrowding ?? 'drop') };
     case 'vakantie-achteraf':
       return { value: choiceShort('vakantieAchteraf', resolveLeaveBackfill(s.leaveBackfill)) };
+    case 'feestdagen':
+      return { checked: resolveHolidayOffers(s.publicHolidayOffers) };
+    case 'feestdagen-land':
+      return { value: holidayCountryLabel(resolveHolidayCountry(s.publicHolidayCountry)) };
     case 'bundel-vakantie':
       return { value: choiceShort('vakantieSchuiven', s.leaveAround ?? 'wide'), sub: resolveLeaveBackfill(s.leaveBackfill) === 'off' ? 'Niet achteraf' : `Achteraf tot ${choiceShort('vakantieAchteraf', resolveLeaveBackfill(s.leaveBackfill))} terug` };
     case 'zonder-sportschool':

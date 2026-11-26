@@ -4,7 +4,9 @@ import type { FieldName } from '../../engine/forgeInput';
 import { exerciseOf, type WorkoutExercise } from '../../engine/forgeWorkout';
 import type { GymProfile } from '../../engine/strengthSettings';
 import type { Exercise } from '../../models/exercise';
-import type { SetBand } from '../../models/training';
+import type { SetBand, SetTarget } from '../../models/training';
+import { programLine } from '../../engine/programLine';
+import { isOwnRow } from '../../engine/forgeRows';
 import { addOnsFor, formatAddOns } from '../../engine/machineWeights';
 
 export interface Rest {
@@ -27,10 +29,20 @@ export function dockRowLabel(ex: WorkoutExercise, index: number): string {
   return String(ex.rows.slice(0, index + 1).filter((r) => r.kind === 'work').length);
 }
 
+// De regel onder de naam van een oefening: wat je programma vraagt ("4 sets van 6 tot 8 met 2 over"), uit de
+// werksets van het voorschrift. Eigen sets tellen niet mee; een oefening op tijd of een houding heeft geen regel
+// (dan staat het aantal sets er). Alleen woorden, geen rekenwerk (engine/programLine.ts).
+export function prescriptionLine(ex: WorkoutExercise): string | undefined {
+  if (ex.timed || ex.hold) return undefined;
+  const sets: SetTarget[] = ex.rows
+    .filter((r) => r.kind === 'work' && !isOwnRow(r))
+    .map((r) => ({ repsLow: r.target.repsLow, repsHigh: r.target.repsHigh, rir: r.target.rir ?? 0, ...(r.target.failure ? { failure: true } : {}), ...(r.target.open ? { open: true } : {}) }));
+  return sets.length > 0 ? programLine(sets) : undefined;
+}
+
 // De handelingen van de tabel. Eén vaste set (nooit een nieuwe functie per render),
 // zodat een oefening alleen opnieuw tekent als hijzelf verandert.
 export interface BlockActions {
-  column: () => void;
   fold: (slot: string) => void;
   menu: (slot: string) => void;
   tick: (slot: string, rowId: string) => void;

@@ -21,46 +21,40 @@ Beenindex 1, fris.
 
 --- kaart 1 ---
 [knop: Uitleg van Barbell Back Squat]
-### Barbell Back SquatKern · 0 van 4 sets · rust 3:00
+### Barbell Back SquatKern · 4 sets van 5 tot 8 met 2 overRust 3:00 tussen sets
 [knop: Menu van Barbell Back Squat]
 [label: Sets van Barbell Back Squat]
 Set
-[knop: Plan] (aria: Toon vorige keer)
+Vorige keer
 kg
 Herhalingen
 Over
 Gedaan
 [knop: Zo lees je dit]
-W
-[knop: 8 herh.] (aria: Plan overnemen, set W)
+[knop: W] (aria: Set W, opent het blad Set)
 [knop: Gewicht, set W: leeg]
 [knop: 8] (aria: Herhalingen, set W: 8)
 [knop: Set W gedaan]
-W
-[knop: 3 herh.] (aria: Plan overnemen, set W)
+[knop: W] (aria: Set W, opent het blad Set)
 [knop: Gewicht, set W: leeg]
 [knop: 3] (aria: Herhalingen, set W: 3)
 [knop: Set W gedaan]
-1
-[knop: 5-8 herh.2 over] (aria: Plan overnemen, set 1)
+[knop: 1] (aria: Set 1, opent het blad Set)
 [knop: Gewicht, set 1: leeg]
 [knop: 7] (aria: Herhalingen, set 1: 7)
 [knop: 2] (aria: Plan 2 over, set 1, tik om je eigen waarde in te vullen)
 [knop: Set 1 gedaan]
-2
-[knop: 5-8 herh.2 over] (aria: Plan overnemen, set 2)
+[knop: 2] (aria: Set 2, opent het blad Set)
 [knop: Gewicht, set 2: leeg]
 [knop: 7] (aria: Herhalingen, set 2: 7)
 [knop: 2] (aria: Plan 2 over, set 2, tik om je eigen waarde in te vullen)
 [knop: Set 2 gedaan]
-3
-[knop: 5-8 herh.2 over] (aria: Plan overnemen, set 3)
+[knop: 3] (aria: Set 3, opent het blad Set)
 [knop: Gewicht, set 3: leeg]
 [knop: 7] (aria: Herhalingen, set 3: 7)
 [knop: 2] (aria: Plan 2 over, set 3, tik om je eigen waarde in te vullen)
 [knop: Set 3 gedaan]
-4
-[knop: 5-8 herh.2 over] (aria: Plan overnemen, set 4)
+[knop: 4] (aria: Set 4, opent het blad Set)
 [knop: Gewicht, set 4: leeg]
 [knop: 7] (aria: Herhalingen, set 4: 7)
 [knop: 2] (aria: Plan 2 over, set 4, tik om je eigen waarde in te vullen)
@@ -69,35 +63,31 @@ W
 
 --- kaart 2 ---
 [knop: Uitleg van Barbell Romanian Deadlift]
-### Barbell Romanian DeadliftKern · 0 van 3 sets · rust 2:00
+### Barbell Romanian DeadliftKern · 3 sets van 8 tot 10 met 2 overRust 2:00 tussen sets
 [knop: Menu van Barbell Romanian Deadlift]
 [label: Sets van Barbell Romanian Deadlift]
 Set
-[knop: Plan] (aria: Toon vorige keer)
+Vorige keer
 kg
 Herhalingen
 Over
 Gedaan
 [knop: Zo lees je dit]
-W
-[knop: 5 herh.] (aria: Plan overnemen, set W)
+[knop: W] (aria: Set W, opent het blad Set)
 [knop: Gewicht, set W: leeg]
 [knop: 5] (aria: Herhalingen, set W: 5)
 [knop: Set W gedaan]
-1
-[knop: 8-10 herh.2 over] (aria: Plan overnemen, set 1)
+[knop: 1] (aria: Set 1, opent het blad Set)
 [knop: Gewicht, set 1: leeg]
 [knop: 9] (aria: Herhalingen, set 1: 9)
 [knop: 2] (aria: Plan 2 over, set 1, tik om je eigen waarde in te vullen)
 [knop: Set 1 gedaan]
-2
-[knop: 8-10 herh.2 over] (aria: Plan overnemen, set 2)
+[knop: 2] (aria: Set 2, opent het blad Set)
 [knop: Gewicht, set 2: leeg]
 [knop: 9] (aria: Herhalingen, set 2: 9)
 [knop: 2] (aria: Plan 2 over, set 2, tik om je eigen waarde in te vullen)
 [knop: Set 2 gedaan]
-3
-[knop: 8-10 herh.2 over] (aria: Plan overnemen, set 3)
+[knop: 3] (aria: Set 3, opent het blad Set)
 [knop: Gewicht, set 3: leeg]
 [knop: 9] (aria: Herhalingen, set 3: 9)
 [knop: 2] (aria: Plan 2 over, set 3, tik om je eigen waarde in te vullen)
@@ -106,32 +96,29 @@ W
 
 --- kaart 3 ---
 [knop: Uitleg van Seated Hamstring Curl]
-### Seated Hamstring CurlBijwerk · 0 van 3 sets · rust 1:30
+### Seated Hamstring CurlBijwerk · 3 sets van 10 tot 12 met 2 overRust 1:30 tussen sets
 [knop: Menu van Seated Hamstring Curl]
 [melding]
 Tik het getal dat op het blok staat. Forge onthoudt het.
 [label: Sets van Seated Hamstring Curl]
 Set
-[knop: Plan] (aria: Toon vorige keer)
+Vorige keer
 kg
 Herhalingen
 Over
 Gedaan
 [knop: Zo lees je dit]
-1
-[knop: 10-12 herh.2 over] (aria: Plan overnemen, set 1)
+[knop: 1] (aria: Set 1, opent het blad Set)
 [knop: Gewicht, set 1: leeg]
 [knop: 11] (aria: Herhalingen, set 1: 11)
 [knop: 2] (aria: Plan 2 over, set 1, tik om je eigen waarde in te vullen)
 [knop: Set 1 gedaan]
-2
-[knop: 10-12 herh.2 over] (aria: Plan overnemen, set 2)
+[knop: 2] (aria: Set 2, opent het blad Set)
 [knop: Gewicht, set 2: leeg]
 [knop: 11] (aria: Herhalingen, set 2: 11)
 [knop: 2] (aria: Plan 2 over, set 2, tik om je eigen waarde in te vullen)
 [knop: Set 2 gedaan]
-3
-[knop: 10-12 herh.2 over] (aria: Plan overnemen, set 3)
+[knop: 3] (aria: Set 3, opent het blad Set)
 [knop: Gewicht, set 3: leeg]
 [knop: 11] (aria: Herhalingen, set 3: 11)
 [knop: 2] (aria: Plan 2 over, set 3, tik om je eigen waarde in te vullen)
@@ -140,30 +127,27 @@ Gedaan
 
 --- kaart 4 ---
 [knop: Uitleg van Bulgarian Split Squat]
-### Bulgarian Split SquatBijwerk · 0 van 3 sets · rust 2:00
+### Bulgarian Split SquatBijwerk · 3 sets van 8 tot 10 met 2 overRust 2:00 tussen sets
 [knop: Menu van Bulgarian Split Squat]
 [label: Sets van Bulgarian Split Squat]
 Set
-[knop: Plan] (aria: Toon vorige keer)
+Vorige keer
 kg
 Herhalingen
 Over
 Gedaan
 [knop: Zo lees je dit]
-1
-[knop: 8-10 herh.2 over] (aria: Plan overnemen, set 1)
+[knop: 1] (aria: Set 1, opent het blad Set)
 [knop: Gewicht, set 1: leeg]
 [knop: 9] (aria: Herhalingen, set 1: 9)
 [knop: 2] (aria: Plan 2 over, set 1, tik om je eigen waarde in te vullen)
 [knop: Set 1 gedaan]
-2
-[knop: 8-10 herh.2 over] (aria: Plan overnemen, set 2)
+[knop: 2] (aria: Set 2, opent het blad Set)
 [knop: Gewicht, set 2: leeg]
 [knop: 9] (aria: Herhalingen, set 2: 9)
 [knop: 2] (aria: Plan 2 over, set 2, tik om je eigen waarde in te vullen)
 [knop: Set 2 gedaan]
-3
-[knop: 8-10 herh.2 over] (aria: Plan overnemen, set 3)
+[knop: 3] (aria: Set 3, opent het blad Set)
 [knop: Gewicht, set 3: leeg]
 [knop: 9] (aria: Herhalingen, set 3: 9)
 [knop: 2] (aria: Plan 2 over, set 3, tik om je eigen waarde in te vullen)
@@ -172,31 +156,28 @@ Gedaan
 
 --- kaart 5 ---
 [knop: Uitleg van Step-Down]
-### Step-DownBijwerk · 0 van 3 sets · rust 2:00
+### Step-DownBijwerk · 3 sets van 8 tot 10 met 2 overRust 2:00 tussen sets
 [knop: Menu van Step-Down]
 [knop: Gewicht invullen · 100%] (aria: Eigen gewicht bij Step-Down: Gewicht invullen · 100%)
 [label: Sets van Step-Down]
 Set
-[knop: Plan] (aria: Toon vorige keer)
+Vorige keer
 kg
 Herhalingen
 Over
 Gedaan
 [knop: Zo lees je dit]
-1
-[knop: 8-10 herh.2 over] (aria: Plan overnemen, set 1)
+[knop: 1] (aria: Set 1, opent het blad Set)
 [knop: Gewicht, set 1: leeg]
 [knop: 9] (aria: Herhalingen, set 1: 9)
 [knop: 2] (aria: Plan 2 over, set 1, tik om je eigen waarde in te vullen)
 [knop: Set 1 gedaan]
-2
-[knop: 8-10 herh.2 over] (aria: Plan overnemen, set 2)
+[knop: 2] (aria: Set 2, opent het blad Set)
 [knop: Gewicht, set 2: leeg]
 [knop: 9] (aria: Herhalingen, set 2: 9)
 [knop: 2] (aria: Plan 2 over, set 2, tik om je eigen waarde in te vullen)
 [knop: Set 2 gedaan]
-3
-[knop: 8-10 herh.2 over] (aria: Plan overnemen, set 3)
+[knop: 3] (aria: Set 3, opent het blad Set)
 [knop: Gewicht, set 3: leeg]
 [knop: 9] (aria: Herhalingen, set 3: 9)
 [knop: 2] (aria: Plan 2 over, set 3, tik om je eigen waarde in te vullen)
@@ -205,32 +186,29 @@ Gedaan
 
 --- kaart 6 ---
 [knop: Uitleg van Pin-Loaded Leg Press Calf Raise]
-### Pin-Loaded Leg Press Calf RaiseExtra · 0 van 3 sets · rust 1:00
+### Pin-Loaded Leg Press Calf RaiseExtra · 3 sets van 12 tot 15 met 2 overRust 1:00 tussen sets
 [knop: Menu van Pin-Loaded Leg Press Calf Raise]
 [melding]
 Tik het getal dat op het blok staat. Forge onthoudt het.
 [label: Sets van Pin-Loaded Leg Press Calf Raise]
 Set
-[knop: Plan] (aria: Toon vorige keer)
+Vorige keer
 kg
 Herhalingen
 Over
 Gedaan
 [knop: Zo lees je dit]
-1
-[knop: 12-15 herh.2 over] (aria: Plan overnemen, set 1)
+[knop: 1] (aria: Set 1, opent het blad Set)
 [knop: Gewicht, set 1: leeg]
 [knop: 14] (aria: Herhalingen, set 1: 14)
 [knop: 2] (aria: Plan 2 over, set 1, tik om je eigen waarde in te vullen)
 [knop: Set 1 gedaan]
-2
-[knop: 12-15 herh.2 over] (aria: Plan overnemen, set 2)
+[knop: 2] (aria: Set 2, opent het blad Set)
 [knop: Gewicht, set 2: leeg]
 [knop: 14] (aria: Herhalingen, set 2: 14)
 [knop: 2] (aria: Plan 2 over, set 2, tik om je eigen waarde in te vullen)
 [knop: Set 2 gedaan]
-3
-[knop: 12-15 herh.2 over] (aria: Plan overnemen, set 3)
+[knop: 3] (aria: Set 3, opent het blad Set)
 [knop: Gewicht, set 3: leeg]
 [knop: 14] (aria: Herhalingen, set 3: 14)
 [knop: 2] (aria: Plan 2 over, set 3, tik om je eigen waarde in te vullen)
@@ -239,25 +217,22 @@ Gedaan
 
 --- kaart 7 ---
 [knop: Uitleg van Plank]
-### PlankExtra · 0 van 3 sets · rust 1:00
+### PlankExtra · 0 van 3 setsRust 1:00 tussen sets
 [knop: Menu van Plank]
 [label: Sets van Plank]
 Set
-[knop: Plan] (aria: Toon vorige keer)
+Vorige keer
 kg
 sec
 Over
 Gedaan
 [knop: Zo lees je dit]
-1
-[knop: 45 sec] (aria: Plan overnemen, set 1)
+[knop: 1] (aria: Set 1, opent het blad Set)
 45
 [knop: Set 1 gedaan]
-2
-[knop: 45 sec] (aria: Plan overnemen, set 2)
+[knop: 2] (aria: Set 2, opent het blad Set)
 45
 [knop: Set 2 gedaan]
-3
-[knop: 45 sec] (aria: Plan overnemen, set 3)
+[knop: 3] (aria: Set 3, opent het blad Set)
 45
 [knop: Set 3 gedaan]

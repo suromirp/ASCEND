@@ -198,8 +198,6 @@ export function ForgeSheets(p: ForgeSheetsProps) {
           hasGuide={!!guide}
           layoutPaged={resolveForgeLayout(settings) === 'scherm'}
           onTogglePause={p.togglePause}
-          onMinimize={onClose}
-          onFinish={() => sh.setFinishing(true)}
           onLayout={(on) => void updateSettings({ forgeLayout: on ? 'scherm' : 'lijst' })}
           onGuide={() => sh.setShowGuide(true)}
           onDiscard={() => p.later(() => sh.setConfirmDiscard(true), 230)}
