@@ -25,9 +25,9 @@ Training bewaren als concept na
 [knop: Vegen om te verwijderen]
 Vegen om te verwijderen
 [knop: Uitleg: Vegen om te verwijderen]
-[knop: RIR vooraf invullen, Als hint]
-RIR vooraf invullen
-[knop: Uitleg: RIR vooraf invullen]
+[knop: Over vooraf invullen, Als hint]
+Over vooraf invullen
+[knop: Uitleg: Over vooraf invullen]
 Als hint
 [knop: Hoeveel over na een set, Bij afwijking]
 Hoeveel over na een set

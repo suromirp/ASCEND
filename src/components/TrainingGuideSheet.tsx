@@ -4,6 +4,8 @@
 // staat op het trainingsscherm en in de Briefing; het horloge in Je horloge (docs/beslissingen/2026-11-14-info-blad-a.md).
 
 import { useState } from 'react';
+import { useForgeWords } from './useForgeWords';
+import { effortWords } from '../engine/forgeWords';
 import type { TrainingDayGuide } from '../data/trainingGuide';
 import type { SessionTemplate } from '../models/training';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
@@ -178,26 +180,28 @@ export function TrainingGuideSheet({
 }
 
 function Sections({ sections }: { sections: TrainingDayGuide['sections'] }) {
+  const words = useForgeWords();
+  const w = (t: string) => effortWords(t, words);
   return (
     <>
       {sections.map((section) => (
         <div key={section.heading} className="mt-3 first:mt-0">
           <Eyebrow>{section.heading}</Eyebrow>
-          {section.body && <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{section.body}</p>}
-          {section.items && <BulletList items={section.items} className="mt-1.5" />}
+          {section.body && <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{w(section.body)}</p>}
+          {section.items && <BulletList items={section.items.map(w)} className="mt-1.5" />}
           {section.subsections && (
             <div className="mt-2 flex flex-col gap-3">
               {section.subsections.map((sub) => (
                 <div key={sub.heading}>
                   <p className="text-xs font-medium" style={{ color: 'var(--color-action)' }}>{sub.heading}</p>
-                  <BulletList items={sub.items} />
+                  <BulletList items={sub.items.map(w)} />
                 </div>
               ))}
             </div>
           )}
           {section.note && (
             <div className="mt-2 rounded-xl border p-3 text-xs leading-relaxed" style={{ borderColor: 'var(--color-warning)', color: 'var(--color-ink-dim)' }}>
-              {section.note}
+              {w(section.note)}
             </div>
           )}
         </div>

@@ -56,7 +56,7 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
     points: [
       { head: 'Eerlijk', text: 'de meting schommelt met vocht, eten en het tijdstip. Het getal kan een paar procentpunten naast de werkelijkheid zitten.' },
       { head: 'Wel bruikbaar', text: 'de richting over weken, als je steeds hetzelfde weegt, bijvoorbeeld nuchter in de ochtend. Het gemiddelde van je laatste 7 metingen staat naast dat van 4 weken eerder.' },
-      { head: 'Vetvrije massa', text: 'je gewicht min het vet. Voor kracht en de GR5 zegt die meer dan het percentage.' },
+      { head: 'Vetvrije massa', text: 'je gewicht min het vet. Voor kracht en je doel zegt die meer dan het percentage.' },
     ],
   },
   hartslag: {

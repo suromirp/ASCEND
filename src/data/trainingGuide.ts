@@ -245,7 +245,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'Waarom',
-        body: 'Gekozen als lang onderweg zijn of een rugzak dragen je grootste tekort is voor de GR5. Wandelen met een rugzak bouwt uren op de been en draagkracht op, met veel minder klap voor je benen dan hardlopen. Onderzoek naar rugzaktraining vond het meeste effect als het gewicht stap voor stap omhoog gaat, naast conditie en kracht.',
+        body: 'Gekozen als lang onderweg zijn of een rugzak dragen je grootste tekort is voor je tocht. Wandelen met een rugzak bouwt uren op de been en draagkracht op, met veel minder klap voor je benen dan hardlopen. Onderzoek naar rugzaktraining vond het meeste effect als het gewicht stap voor stap omhoog gaat, naast conditie en kracht.',
       },
       {
         heading: 'Zo doe je het',
@@ -253,7 +253,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'De rugzak van deze week, strak op je heupen. Deze winter begin je licht, rond 5 tot 6 kilo, en het gewicht klimt in kleine stappen.',
           'Stevig doorwandelen, hele zinnen kunnen praten.',
           'Heuvels, duinen of trappen als dat kan, ook naar beneden.',
-          'Loop je op de GR5 met stokken? Neem ze nu al mee en oefen: bergop korter, bergaf langer, en voel hoe je schouders en polsen reageren.',
+          'Loop je met stokken? Neem ze nu al mee en oefen: bergop korter, bergaf langer, en voel hoe je schouders en polsen reageren.',
         ],
         note: 'Nooit zwaarder dan de rugzak van je bergtocht die week. Gaan schouders, rug of knieën zeuren: lichter of korter.',
       },
@@ -291,7 +291,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'Waarom',
-        body: 'Je hebt een hardloopwedstrijd als tussendoel. In de 8 weken ervoor wordt de rustige duurloop een tempoloop: blokken rond je drempel, het tempo dat je ongeveer een uur kunt volhouden. Dat is de training die je 10 km-tempo het meest laat opschuiven, en hij telt ook gewoon mee voor je basis richting de GR5.',
+        body: 'Je hebt een hardloopwedstrijd als tussendoel. In de 8 weken ervoor wordt de rustige duurloop een tempoloop: blokken rond je drempel, het tempo dat je ongeveer een uur kunt volhouden. Dat is de training die je 10 km-tempo het meest laat opschuiven, en hij telt ook gewoon mee voor je basis richting je doel.',
       },
       {
         heading: 'Zo doe je het',
@@ -442,7 +442,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'Doel',
-        body: 'Primair: langdurig bergop kunnen bewegen. Secundair: verticale trainingsbelasting opbouwen richting de GR5.',
+        body: 'Primair: langdurig bergop kunnen bewegen. Secundair: verticale trainingsbelasting opbouwen richting je tocht.',
       },
       {
         heading: 'Optie A, loopband op helling',
@@ -530,7 +530,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'Doel',
-        body: 'De kwaliteitssessie van de week: bergop intervallen combineren een echte snelheidsprikkel (voor hardloopprogressie) met opbouwende D+ (voor de GR5), twee doelen in één sessie in plaats van losse hardloop- en bergsessies.',
+        body: 'De kwaliteitssessie van de week: bergop intervallen combineren een echte snelheidsprikkel (voor hardloopprogressie) met opbouwende D+ (voor je tocht), twee doelen in één sessie in plaats van losse hardloop- en bergsessies.',
       },
       {
         heading: 'Uitvoering',
@@ -556,16 +556,16 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_long_run: {
-    subtitle: 'Uithouding × D+ · Richting marathon en GR5',
+    subtitle: 'Uithouding × D+ · Richting marathon en je tocht',
     registration: 'ASCEND: duur, afstand, D+, D−, gemiddelde hartslag, RPE.',
     sections: [
       {
         heading: 'Doel',
-        body: 'De langste sessie van de week, bouwt zowel de marathon-uithouding (tijd op de been, aerobe basis) als GR5-specificiteit (D+, terrein, op vermoeide benen na zaterdag) tegelijk op.',
+        body: 'De langste sessie van de week, bouwt zowel de marathon-uithouding (tijd op de been, aerobe basis) als tochtspecificiteit (D+, terrein, op vermoeide benen na zaterdag) tegelijk op.',
       },
       {
         heading: 'Op vermoeide benen, bewust',
-        body: 'De lange duurloop komt direct na de heuvelintervallen. Dat is geen ongelukkige planning: bergsport-specifieke schema\'s trainen bewust een zwaar weekendblok (klimprikkel, dan een dag op vermoeide benen) omdat dat is wat een meerdaagse tocht als de GR5 daadwerkelijk vraagt.',
+        body: 'De lange duurloop komt direct na de heuvelintervallen. Dat is geen ongelukkige planning: bergsport-specifieke schema\'s trainen bewust een zwaar weekendblok (klimprikkel, dan een dag op vermoeide benen) omdat dat is wat een meerdaagse tocht daadwerkelijk vraagt.',
       },
       {
         heading: 'Opbouw',
@@ -593,15 +593,15 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'Doel',
-        body: 'De training die het meest op een GR5-dag lijkt: uren op de benen, echte hoogtemeters omhoog en vooral omlaag, en de rugzak op je rug. Duur, hoogtemeters en rugzakgewicht groeien per week in kleine stappen. Het rugzakgewicht gaat nooit omhoog in een week waarin ook de hoogtemeters omhoog gaan, en loopt naar je rugzakdoel, met in de zwaarste weken tot 1 kg erboven.',
+        body: 'De training die het meest op een tochtdag lijkt: uren op de benen, echte hoogtemeters omhoog en vooral omlaag, en de rugzak op je rug. Duur, hoogtemeters en rugzakgewicht groeien per week in kleine stappen. Het rugzakgewicht gaat nooit omhoog in een week waarin ook de hoogtemeters omhoog gaan, en loopt naar je rugzakdoel, met in de zwaarste weken tot 1 kg erboven.',
       },
       {
         heading: 'Zo doe je het',
         items: [
           'Rustig tempo: je kunt blijven praten, ook bergop (zone 1 tot 2, RPE 3-4).',
           'Bergop kleine passen, bergaf beheerst en met gebogen knieën. Dalen is wat je bovenbenen het meest vraagt.',
-          'Elk uur iets eten en regelmatig drinken, zoals je dat op de GR5 ook doet.',
-          'Loop je op de GR5 met stokken? Oefen er nu al mee: lengte instellen, bergop korter, bergaf langer, en ook met je rugzak van deze week.',
+          'Elk uur iets eten en regelmatig drinken, zoals je dat onderweg ook doet.',
+          'Loop je met stokken? Oefen er nu al mee: lengte instellen, bergop korter, bergaf langer, en ook met je rugzak van deze week.',
           'Geen heuvels in de buurt? Herhaal een helling, trap of duin. Of loop het stijgende deel op de loopband en daal op een trap.',
         ],
       },
@@ -620,7 +620,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         body: 'Check de route en het weer, en laat iemand weten waar je loopt en wanneer je terug bent. Dit is de langste training van de week, tot vijf uur in Expeditieklaar.',
       },
     ],
-    gear: ['rugzak met het gewicht van deze week', 'water', 'eten voor elk uur', 'regenjas', 'wandelschoenen', 'stokken als je die op de GR5 gebruikt', 'Forerunner 255'],
+    gear: ['rugzak met het gewicht van deze week', 'water', 'eten voor elk uur', 'regenjas', 'wandelschoenen', 'stokken als je die op je tocht gebruikt', 'Forerunner 255'],
     sources: [
       { label: 'NKBV, fit de bergen in', url: 'https://nkbv.nl/kenniscentrum/fit-de-bergen-in-conditie.html' },
       { label: 'NKBV, veilig bergwandelen', url: 'https://nkbv.nl/kenniscentrum/veilig-bergwandelen.html' },
@@ -635,7 +635,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'Doel',
-        body: 'Twee dagen achter elkaar wandelen, zoals op de GR5. Deze eerste dag is bewust rustiger dan morgen. Het doel is niet deze dag zwaar maken, maar morgen op vermoeide benen gewoon weer kunnen vertrekken.',
+        body: 'Twee dagen achter elkaar wandelen, zoals op je tocht. Deze eerste dag is bewust rustiger dan morgen. Het doel is niet deze dag zwaar maken, maar morgen op vermoeide benen gewoon weer kunnen vertrekken.',
       },
       {
         heading: 'Zo doe je het',
@@ -643,7 +643,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'Bewust rustig (RPE 3): je bewaart iets voor morgen.',
           'Hoogteverschil en de rugzak van deze week, net als morgen.',
           'Na afloop goed eten, drinken en slapen. Je leert hier hoe je herstelt tussen twee tochtdagen.',
-          'Slaap je er een nacht tussen in je tent? Dan oefen je ook tent opzetten, koken en slapen, zoals op de GR5 elke dag.',
+          'Slaap je er een nacht tussen in je tent? Dan oefen je ook tent opzetten, koken en slapen, zoals je onderweg elke dag doet.',
         ],
       },
       {

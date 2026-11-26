@@ -175,6 +175,15 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet blijft de dag leeg en krijg je er geen vraag meer over.' },
     ],
   },
+  'rustdag-schuift': {
+    title: 'Rustdag schuift mee',
+    lead: 'Zet je een training op de dag van je rustdag, dan krijg je een voorstel om de rustdag naar de dag te zetten die vrijkwam.',
+    points: [
+      { head: 'Welke dag', text: 'de dag waar de training stond, als die vrij is en niet voorbij. Anders de vrije dag in dezelfde week die het dichtst bij ligt, nooit direct naast een test of wedstrijd.' },
+      { head: 'Niet', text: 'als je week geen vrije dag meer heeft, op een dag van je vakantie of tocht, of als je de rustdag al deed of oversloeg.' },
+      { head: 'Alleen met Akkoord', text: 'jouw verplaatsing blijft altijd staan. Na Liever niet verandert er niets, na Akkoord kun je het ongedaan maken.' },
+    ],
+  },
   weekvoorstel: {
     title: 'Voorstel bij een probleem in de week',
     lead: 'Klopt er iets niet in je week en is het niet vanzelf te herstellen, omdat jij of een eerder voorstel de training vastzette, dan krijg je een voorstel.',
@@ -301,6 +310,16 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Een schatting', text: '98 procent van je hartslag over de laatste 20 minuten van je test, met een marge van 5 slagen. Alleen bij een test van 24 tot 40 minuten met je borstband om. Geen labtest.' },
       { head: 'Drie tests samen', text: 'je drempel volgt het midden van je laatste drie tests van het afgelopen jaar. Eén test schommelt 3 tot 4 slagen; drie samen zijn rustiger.' },
       { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet krijg je voor dit getal geen vraag meer; een volgende test kan een nieuw voorstel geven.' },
+    ],
+  },
+  'instap-rustdag': {
+    title: 'Gemiste training op je rustdag',
+    lead: 'Na een vakantie of een stille periode zonder ziekte zet de rustiger instap een lichte training die je miste op je eerste rustdag in die zeven dagen.',
+    points: [
+      { head: 'Welke training', text: 'de laatste die je miste in de pauze of de dagen terug: kracht of een rustige loop, nooit een test, een harde loop of de lange duurloop. Vandaag telt nog niet als gemist.' },
+      { head: 'Grenzen', text: 'geen zware benen binnen 48 uur van een andere zware beensessie, en een training die je zelf vastzette blijft staan. Hij duurt net zo kort als de rest van de instap.' },
+      { head: 'Na ziekte', text: 'blijft de rustdag een rustdag.' },
+      { head: 'Alleen met Akkoord', text: 'het hoort bij het voorstel van de rustiger instap; Liever niet laat alles staan. Uit: de instap zet niets op je rustdag.' },
     ],
   },
 };

@@ -6,7 +6,7 @@
 
 import { useForgeWords } from './useForgeWords';
 import { effortWords } from '../engine/forgeWords';
-import { REENTRY_TITLE, REENTRY_WHY, reentryFirstDayItems, reentryNote } from '../engine/reentry';
+import { REENTRY_TITLE, REENTRY_WHY, reentryCatchUpItems, reentryFirstDayItems, reentryNote } from '../engine/reentry';
 import { ProposalChangeList, ProposalSheet } from './ProposalSheet';
 import { useState, type ReactNode } from 'react';
 import { useAppData } from '../state/AppDataContext';
@@ -168,8 +168,10 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
           explanation: REENTRY_WHY,
           trigger: 'reentry_planned',
           settings: { reentryWeeks: [...(settings.reentryWeeks ?? []).filter((w) => w.from !== week.from), week] },
-          notes: [reentryNote(week, advice.reentryForgeDays, advice.reentryFirstDay)],
-          ...(advice.reentryFirstDay ? { startItems: reentryFirstDayItems(advice.reentryFirstDay) } : {}),
+          notes: [reentryNote(week, advice.reentryForgeDays, advice.reentryFirstDay, advice.reentryCatchUp)],
+          ...(advice.reentryFirstDay || advice.reentryCatchUp
+            ? { startItems: [...(advice.reentryFirstDay ? reentryFirstDayItems(advice.reentryFirstDay) : []), ...(advice.reentryCatchUp ? reentryCatchUpItems(advice.reentryCatchUp) : [])] }
+            : {}),
         }),
         {
           eyebrow: 'Rustiger instap',

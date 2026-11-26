@@ -132,6 +132,10 @@ export interface AppSettings {
   // De rustiger instappen waarop je Akkoord gaf (engine/reentry.ts#ReentryWeek). Alleen via het voorstel
   // geschreven; de duurregisters lezen ze. Optional and additive, so older settings and backups need no change.
   reentryWeeks?: ReentryWeek[];
+  // "Gemiste training op je rustdag" (engine/reentry.ts#reentryCatchUp, I-159): na een pauze zonder ziekte stelt de
+  // rustiger instap een lichte gemiste training op je eerste rustdag voor. Absent = aan. Optional and additive, so
+  // no migration step; a backup keeps only a boolean (storage/backupClean.ts).
+  reentryCatchUp?: boolean;
   // The next tocht (a trek you set up as a goal of your own, models/leave.ts
   // TrekDetails) on Vandaag. Absent = on. Optional and additive.
   showNextTrek?: boolean;
@@ -204,6 +208,13 @@ export interface AppSettings {
   routeStyle?: 'simple' | 'adventure';
   // De afstand waarmee Wandeling plannen begint (engine/walkPlan.ts#resolveWalkKm); afwezig is 5 km.
   walkPlanKm?: 3 | 5 | 8 | 12;
+  // Wat gaat voor in een lus met één helling (engine/routeClimbPlan.ts#resolveLoopPriority): 'auto' (afwezig,
+  // het advies: hoogtemeters als de training ze vraagt, anders afstand), 'ascent' of 'distance'. Optioneel en
+  // erbij, dus geen migratiestap.
+  routeLoopPriority?: 'auto' | 'ascent' | 'distance';
+  // Rijtijd naar heuvels in minuten (engine/routeClimbPlan.ts#resolveDriveLimit): 0 niet rijden, 15, 30
+  // (afwezig, het advies), 45 of 'free' geen grens. Optioneel en erbij, dus geen migratiestap.
+  routeDriveMinutes?: 0 | 15 | 30 | 45 | 'free';
   // Where a proposed loop starts (engine/routeStart.ts): where you are now, asked once per search
   // ('here', absent = here), your own fixed point, shown as Vast punt ('exact'), or about your place,
   // rounded to a kilometre ('approx'). The fixed point itself is never a
@@ -350,6 +361,9 @@ export interface AppSettings {
   // dan stelt ASCEND voor hem terug te zetten, met Akkoord (engine/restDayBack.ts). Absent = on.
   // Optional and additive.
   restDayBack?: boolean;
+  // "Rustdag schuift mee": zet je een training op een dag met je rustdag, dan stelt ASCEND voor de rustdag naar de
+  // dag te zetten die vrijkwam, met Akkoord (engine/restDayFollows.ts, I-162). Absent = on. Optional and additive.
+  restDayFollows?: boolean;
   // "Vragen als je week te vol wordt": viel er in je week een dag weg en is de rest te vol, dan vraagt ASCEND
   // welke training mag vervallen, met een advies (engine/fullWeek.ts, regel WEEK-FULL). Uit: geen vraag, Week
   // zegt het in een gewone regel. Absent = on. Optional and additive.

@@ -30,6 +30,7 @@ import { resolveRouteStart } from './routeStart';
 import { resolveMapGround } from './routeMap';
 import { resolveRouteSearch } from './routeSearchSetting';
 import { resolveWalkKm } from './walkPlan';
+import { resolveDriveLimit, resolveLoopPrioritySetting } from './routeClimbPlan';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { ADVICE_SPECS, countDifferences, fromStart } from './settingsDiff';
@@ -909,6 +910,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('rustigerInstap', resolveReentry(s.reentry)) };
     case 'rustdag-terug':
       return { checked: s.restDayBack !== false };
+    case 'rustdag-schuift':
+      return { checked: s.restDayFollows !== false };
     case 'week-vol':
       return { checked: s.fullWeekAsk !== false };
     case 'trillen':
@@ -1043,6 +1046,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('routeStart', resolveRouteStart(s.routeStart)) };
     case 'wandel-afstand':
       return { value: choiceShort('wandelAfstand', resolveWalkKm(s.walkPlanKm)) };
+    case 'route-voorrang':
+      return { value: choiceShort('routeVoorrang', resolveLoopPrioritySetting(s.routeLoopPriority)) };
+    case 'rijtijd-heuvels':
+      return { value: choiceShort('rijtijdHeuvels', resolveDriveLimit(s.routeDriveMinutes)) };
     case 'route-grote-wegen':
       return { checked: s.routeAvoidBigRoads !== false };
     case 'route-wind':
@@ -1099,6 +1106,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveRunInsight(s.runInsight).chestStrap };
     case 'tempo-stukken':
       return { checked: s.tempoStablePieces !== false };
+    case 'instap-rustdag':
+      return { checked: s.reentryCatchUp !== false };
     case 'eten-onderweg':
       return { checked: s.fuelOnTheGo !== false };
     case 'intensiteit':

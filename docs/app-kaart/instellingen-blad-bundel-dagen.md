@@ -18,3 +18,6 @@ Maandag
 [knop: Op je rustdag, Rust]
 Op je rustdag
 Rust
+[knop: Rustdag schuift mee]
+Rustdag schuift mee
+[knop: Uitleg: Rustdag schuift mee]

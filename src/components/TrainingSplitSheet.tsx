@@ -4,8 +4,10 @@ import { GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
 import { Card, SheetGrip } from './ui';
+import { useAppData } from '../state/AppDataContext';
+import { goalRef } from '../engine/goalWording';
 
-// Hoe de week er richting de GR5 uitziet: de verdeling tussen kracht,
+// Hoe de week er richting je doel uitziet: de verdeling tussen kracht,
 // hardlopen en bergwerk. Opent vanaf Ascend, zodat er geen dichtgeklapt
 // blokje op de pagina staat.
 
@@ -18,16 +20,18 @@ const PARTS = [
 
 export function TrainingSplitSheet({ onClose }: { onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
+  const { trainingGoals, goalMilestones } = useAppData();
+  const goal = goalRef(trainingGoals, goalMilestones);
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div ref={sheetRef} className={`relative max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
-            <div className="-mt-2"><SheetHeader eyebrow="Trainingsverdeling" title="Je week richting de GR5" onClose={requestClose} /></div>
+            <div className="-mt-2"><SheetHeader eyebrow="Trainingsverdeling" title={`Je week richting ${goal}`} onClose={requestClose} /></div>
             <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
               Hardlopen blijft in het schema. Het is een goede aerobe aanvulling en gaat niet ten koste van kracht.
-              Hoe dichter de GR5 komt, hoe meer bergwandelen.
+              Hoe dichter {goal} komt, hoe meer bergwandelen.
             </p>
             <ul className="mt-3 flex flex-col gap-1.5 text-sm" style={{ color: 'var(--color-ink)' }}>
               {PARTS.map((p) => (

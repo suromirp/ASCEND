@@ -7,6 +7,7 @@
 
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
+import { goalRef } from '../engine/goalWording';
 import type { LeavePeriod, TrekImportance, TrekTerrain } from '../models/leave';
 import type { Advice } from '../engine/adviceEngine';
 import type { LeavePlan } from '../engine/leaveProposal';
@@ -41,7 +42,8 @@ const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' };
 
 export function TrekGoalsCard() {
-  const { leavePeriods, planLeave, applyLeave, planPreviewPass, settings, updateSettings } = useAppData();
+  const { leavePeriods, planLeave, applyLeave, planPreviewPass, settings, updateSettings, trainingGoals, goalMilestones } = useAppData();
+  const goal = goalRef(trainingGoals, goalMilestones);
   const [editing, setEditing] = useState<LeavePeriod | 'new' | null>(null);
   const [plan, setPlan] = useState<LeavePlan | null>(null);
   // The planning changed while the proposal was open: nothing was stored.
@@ -73,8 +75,8 @@ export function TrekGoalsCard() {
           <Eyebrow>Tochten</Eyebrow>
           <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             {shown.length === 0
-              ? 'Een sneeuwhike over twee maanden, een weekend met tent: zet het hier als doel naast de GR5. Elke tocht telt ook als training voor de GR5.'
-              : 'Elke tocht telt ook als training voor de GR5. Eerst een voorstel, pas na Akkoord verandert er iets.'}
+              ? 'Een sneeuwhike over twee maanden, een weekend met tent: zet het hier als doel naast ' + goal + '. Elke tocht telt ook als training voor ' + goal + '.'
+              : 'Elke tocht telt ook als training voor ' + goal + '. Eerst een voorstel, pas na Akkoord verandert er iets.'}
           </p>
         </div>
 
@@ -105,14 +107,14 @@ export function TrekGoalsCard() {
         <div className="flex items-center justify-between gap-3 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
           <div className="min-w-0">
             <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Eerstvolgende tocht op Vandaag</p>
-            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Een rustige regel met de naam en over hoeveel dagen. Alleen als de tocht eerder is dan de GR5.</p>
+            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Een rustige regel met de naam en over hoeveel dagen. Alleen als de tocht eerder is dan je hoofddoel.</p>
           </div>
           <Toggle checked={settings.showNextTrek !== false} onChange={(on) => void updateSettings({ showNextTrek: on })} label="Eerstvolgende tocht op Vandaag" />
         </div>
       </Card>
 
       {editing && (
-        <TrekSheet
+        <TrekSheet goal={goal}
           existing={editing === 'new' ? undefined : editing}
           onClose={() => setEditing(null)}
           onSubmit={(period) => {
@@ -232,7 +234,7 @@ function TrekPlaceField({ value, onChange }: { value: TrekPlace | undefined; onC
   );
 }
 
-function TrekSheet({ existing, onSubmit, onClose }: { existing?: LeavePeriod; onSubmit: (period: LeavePeriod) => void; onClose: () => void }) {
+function TrekSheet({ existing, goal, onSubmit, onClose }: { existing?: LeavePeriod; goal: string; onSubmit: (period: LeavePeriod) => void; onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
   const today = todayISO();
   const [d, setD] = useState<TrekDraft>(() => (existing && periodToTrekDraft(existing)) || {
@@ -303,7 +305,7 @@ function TrekSheet({ existing, onSubmit, onClose }: { existing?: LeavePeriod; on
               <p className="mt-4 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe belangrijk is deze tocht?</p>
               <div className="mt-1 flex flex-col gap-2" role="radiogroup" aria-label="Belang van de tocht">
                 {TREK_IMPORTANCES.map((i: TrekImportance) => (
-                  <Choice key={i} on={d.importance === i} onClick={() => set({ importance: i })} title={TREK_IMPORTANCE_LABEL[i]} hint={trekImportanceHint(i, Math.max(1, d.days))} />
+                  <Choice key={i} on={d.importance === i} onClick={() => set({ importance: i })} title={TREK_IMPORTANCE_LABEL[i]} hint={trekImportanceHint(i, Math.max(1, d.days), goal)} />
                 ))}
               </div>
 

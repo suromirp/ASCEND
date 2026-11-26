@@ -3210,6 +3210,18 @@
     "docs/beslissingen/2026-11-23-terugkeer-na-pauze.md"
    ]
   },
+  "docs/beslissingen/2026-11-25-terugkeer-rustdag.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Na een pauze zonder ziekte stelt de rustiger instap in hetzelfde voorstel met Akkoord voor om een lichte gemiste training (kracht of een rustige loop, geen test, harde loop of lange duurloop, niet van een vakantiedag, niet vastgezet door jou) op de eerste rustdag van de instap te doen, met 48 uur tussen zware beensessies en de duur van de instap; na ziekte blijft de rustdag staan; instelling Gemiste training op je rustdag, standaard aan.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-23-terugkeer-eerste-dag.md",
+    "docs/beslissingen/2026-11-23-terugkeer-voor-inhalen.md"
+   ]
+  },
   "docs/beslissingen/2026-11-23-ziek-en-test-of-wedstrijd.md": {
    "onderwerpen": [
     "week",
@@ -3435,6 +3447,20 @@
    "stand": "verouderd",
    "waarom": "De meting van 2 november (`docs/onderhoud/2026-11-02-exports.md`) heeft deze lijst niet gebruikt en is nieuwer."
   },
+  "docs/onderhoud/sherpa-kleine-woorden.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "I-149, I-152, I-153: RPE 3-4, RIR en rustdag volgen de instellingen Woorden en Op je rustdag. Wat veranderde, welk kaartverschil en wat bewust bleef staan.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/sherpa-i161.md": {
+   "onderwerpen": [
+    "doelen"
+   ],
+   "kern": "I-161: lijst van GR5-teksten die het hoofddoel (of je doel) gingen noemen en van de teksten die bewust GR5 bleven.",
+   "stand": "achtergrond"
+  },
   "docs/onderhoud/2026-11-23-naspelen-terugkeer.md": {
    "onderwerpen": [
     "planning"
@@ -3544,6 +3570,13 @@
    ],
    "kern": "Onderhoudsronde 16 november 2026: grootte, dubbele en dode code, top tien om op te ruimen, ochtenden en IJkset.",
    "stand": "geldt"
+  },
+  "docs/onderhoud/sherpa-i159.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Verslag van de bouw van I-159 (gemiste training op de eerste rustdag van de instap): eigen keuzes, bewijs per dag en de controles.",
+   "stand": "achtergrond"
   },
   "docs/onderhoud/reflectie-2026-11-01.md": {
    "onderwerpen": [
@@ -4211,11 +4244,26 @@
    "kern": "Ontwerpvoorstel van 12 november 2026 voor het blad Je week tot nu; besloten in `docs/beslissingen/2026-11-12-je-week-tot-nu.md`.",
    "stand": "achtergrond"
   },
+  "docs/visie/Ontwerp route per training.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "Ontwerpvoorstel van 25 november 2026 (I-160) voor een route per geplande training en een routeplanner die hoogtemeters haalt; besloten in `docs/beslissingen/2026-11-24-route-per-training.md`.",
+   "stand": "achtergrond"
+  },
   "docs/visie/Ontwerp Plekken en routes.md": {
    "onderwerpen": [
     "koppelingen-en-data"
    ],
    "kern": "Ontwerpvoorstel van 11 november 2026 voor eigen plekken en bewaarde routes; besloten in `docs/beslissingen/2026-11-11-plekken-en-routes.md`.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Plek route per training.md": {
+   "onderwerpen": [
+    "koppelingen-en-data",
+    "lopen-en-tests"
+   ],
+   "kern": "Advies van Pathfinder van 25 november 2026 voor route per geplande training (I-160): de ingang is de Briefing, een stille regel in Week en op Vandaag, Trainingsplekken als tik uit het Route-blok, de rijtijd naar heuvels in het blad Weer en kleding; besluit `docs/beslissingen/2026-11-24-route-per-training.md`.",
    "stand": "achtergrond"
   },
   "docs/visie/Ontwerp Route en trainingsscherm.md": {
@@ -4710,6 +4758,45 @@
    "vultAan": [
     "docs/beslissingen/2026-11-09-routeplanner.md"
    ]
+  },
+  "docs/onderhoud/sherpa-route-bewaren.md": {
+   "onderwerpen": [
+    "planning",
+    "lopen-en-tests"
+   ],
+   "kern": "Verslag van I-160 deel A: de route per geplande training als eigen lijst gekoppeld aan het id (niet als veld), de bewaarde stand in het Route-blok van de Briefing, een stille regel in Week en op Vandaag, export en import zonder hogere schemaversie. Keuzes, tests en wat niet is gedaan.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/sherpa-i158.md": {
+   "onderwerpen": [
+    "koppelingen-en-data"
+   ],
+   "kern": "I-158: MacroFactor telt alleen als gekoppeld bij ingelezen en leidend; knop MacroFactor loskoppelen.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/sherpa-route-hoogtemeters.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "koppelingen-en-data"
+   ],
+   "kern": "Verslag van I-160 deel B: Simpel begint op de voet van de steilste helling, de keuze Hoogtemeters halen of Afstand houden met de som, de rij Buiten plus een helling, trap of de loopband uit de gids, en Opnieuw proberen bij een ontbrekende kaart. Bewijs, keuzes en wat niet gebouwd is.",
+   "stand": "achtergrond"
+  },
+  "docs/visie/Plek belangrijk advies.md": {
+   "onderwerpen": [
+    "planning",
+    "bediening-en-beweging"
+   ],
+   "kern": "Pathfinder vooraf voor I-157: welke voorstellen als blad bij openen, waar en wanneer, hoe Niet nu werkt, waar de regel 'één advies per dag' komt en welke instelling.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/sherpa-i162.md": {
+   "onderwerpen": [
+    "planning",
+    "week"
+   ],
+   "kern": "Verslag van I-162 en I-150: na jouw verplaatsing naar een dag met je rustdag één voorstel met Akkoord om de rustdag naar de vrijgekomen dag te zetten (anders de dichtstbijzijnde vrije dag van dezelfde week, nooit naast een test of wedstrijd), instelling Rustdag schuift mee, en de rustdagrij die zegt welke training je die dag deed. Bewijs, keuzes en wat niet gecontroleerd is.",
+   "stand": "achtergrond"
   }
  }
 }

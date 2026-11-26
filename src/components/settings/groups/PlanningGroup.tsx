@@ -111,6 +111,7 @@ export function PlanningGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="trainingstijd" title="Trainingstijd per dag" facts={facts} info="trainingstijd" onClick={() => setInner('trainingstijd')} />
           <SummaryRow id="rustdag" title="Rustdag" facts={facts} info="rustdag" onClick={() => setInner('rustdag')} />
           <SummaryRow id="rustdag-doen" title="Op je rustdag" facts={facts} onClick={() => setInner('rustdag-doen')} />
+          <SummaryRow id="rustdag-schuift" title="Rustdag schuift mee" facts={facts} info="rustdag-schuift" onChange={(on) => void updateSettings({ restDayFollows: on })} />
         </BundleSheet>
       )}
       {sheet === 'bundel-niet-doorgegaan' && (
@@ -118,6 +119,7 @@ export function PlanningGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="niet-doorgegaan" title="Wat er gebeurt" facts={facts} info="nietDoorgegaan" onClick={() => setInner('niet-doorgegaan')} />
           {rowShown('niet-doorgegaan-dagen', facts) && <SummaryRow id="niet-doorgegaan-dagen" title="Na hoeveel dagen" facts={facts} onClick={() => setInner('niet-doorgegaan-dagen')} />}
           <SummaryRow id="log-koppelen" title="Log op een andere dag koppelen" facts={facts} onChange={(on) => void updateSettings({ missedLink: on })} />
+          <SummaryRow id="instap-rustdag" title="Gemiste training op je rustdag" facts={facts} info="instap-rustdag" onChange={(on) => void updateSettings({ reentryCatchUp: on })} />
         </BundleSheet>
       )}
       {sheet === 'bundel-slepen' && (

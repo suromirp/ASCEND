@@ -1,4 +1,9 @@
-import type { WeekPlan } from '../engine/dayPlan';
+import { REST_ROW_QUIET, restRowLine, type WeekPlan } from '../engine/dayPlan';
+import { useSessionRoutes } from '../state/useSessionRoutes';
+import { routeOfSession, sessionRouteLine } from '../engine/sessionRoute';
+import { routeShownFor } from '../engine/trainingPlace';
+import { peekTrainingPlaces } from '../storage/trainingPlace';
+import type { SessionRoute } from '../models/sessionRoute';
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
 import type { LeavePeriod } from '../models/leave';
@@ -58,9 +63,19 @@ const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, tran
 // Het tikdoel blijft de hele rij.
 const DISC = 36;
 
+// De stille regel van een gekozen route, alleen bij een training die er een heeft en die buiten is (dezelfde regel als
+// Route voorstellen, engine/trainingPlace.ts#routeShownFor): op de loopband blijft de route ongezien staan.
+function routeLineOf(s: PlannedSession, template: SessionTemplate, routes: readonly SessionRoute[]): string | undefined {
+  const route = routeOfSession(s, routes);
+  if (route && !routeShownFor(template, peekTrainingPlaces()?.[s.id])) return undefined;
+  return route ? sessionRouteLine(route) : undefined;
+}
+
 function SessionRow({
-  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote, leave, races,
+  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote, leave, races, routeLine, restLine,
 }: {
+  // De route die je bij deze training koos (engine/sessionRoute.ts#sessionRouteLine): een stille derde regel.
+  routeLine?: string;
   // Vakanties en tochten die je meldde: een voorbije training daar is nooit gemist (engine/sessionStatus.ts, 'away').
   leave?: LeavePeriod[];
   // De dagen van de races: een training uit de afbouw die na de race niet gedaan is, vervalt (engine/raceWindow.ts).
@@ -89,6 +104,8 @@ function SessionRow({
   ghost?: boolean;
   // Een gemiste training die je naar later sleepte: "verplaatst van wo 28" op de nieuwe rij.
   catchNote?: string;
+  // De tweede regel van een rustdag (engine/dayPlan.ts#restRowLine): "bewust herstel", of de training die je die dag deed (I-150).
+  restLine?: string;
 }) {
   const { settings: { restDayMode, illnessEpisodes }, openDraftId } = useAppData();
   const restMode = restDayMode ?? 'rest';
@@ -105,7 +122,8 @@ function SessionRow({
   const legs = !isRest && isLegHeavyTemplate(template);
   // Na de dag en de duur hoogstens één ding (engine/weekRow.ts#rowExtra). "aangepast" staat op precies de rijen
   // met een regel in Aangepast door ASCEND, ook als hij gedaan is (engine/changeLog.ts#weekAdjustments).
-  // Een rustdag houdt "bewust herstel"; alleen een punt uit Let op en "aangepast" komen erbij.
+  // Een rustdag houdt "bewust herstel", of zegt de training die je die dag deed (I-150); alleen een punt uit Let op en
+  // "aangepast" komen erbij.
   const extra = isRest ? rowExtra({ concern, adjusted }) : rowExtra({
     concern, missed: status === 'missed', lapsed: shown === 'away', before: status === 'before', open: status === 'open', skipped: shown === 'skipped', catchNote, adjusted, moved: wasMoved, movedFrom: session.movedFromDate, fixed: !!session.fixed, legs, pairNote, done: status === 'completed',
     doneOn: status === 'completed' ? doneOnOtherDay(session, log) : undefined,
@@ -136,7 +154,7 @@ function SessionRow({
               zodat de naam niet onder de pil hoeft te breken en de rij 52 px blijft. */}
           {showToday ? <span className="font-semibold" style={{ color: 'var(--color-status)' }}>Vandaag</span> : <span>{dayLabel(date)}</span>}
           {isRest ? (
-            <span>· bewust herstel</span>
+            <span className="truncate">· {restLine ?? REST_ROW_QUIET}</span>
           ) : (
             <>
               {(zone || duration !== undefined) && <span aria-hidden="true">·</span>}
@@ -181,6 +199,9 @@ function SessionRow({
             </span>
           )}
         </span>
+        {routeLine && status !== 'completed' && (
+          <span className="mt-0.5 block truncate text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }} data-route-line="">{routeLine}</span>
+        )}
       </span>
       {/* Rechts precies één ding: het vinkje, de greep, of de lege cirkel of het statusicoon. */}
       <span className="flex shrink-0 items-center gap-2">
@@ -345,6 +366,7 @@ export function WeekPlanner({
   const { statusOf } = useWatchStatuses();
   const { settings, plannedSessions, openDraftId } = useAppData();
   const caughtUp = useMemo(() => caughtUpMap(plannedSessions), [plannedSessions]);
+  const sessionRoutes = useSessionRoutes();
   const races = useMemo(() => raceDatesOf(plannedSessions, templateById), [plannedSessions, templateById]);
   const showWatch = settings.showWatchStatusOnWeek !== false;
   // "Wat speelde er": the sign by a done run with a heart rate that stands out.
@@ -395,6 +417,8 @@ export function WeekPlanner({
         pairNote={pairNotes?.get(s.id)}
         handle={eligibility?.ok ? weekDrag!.handleFor(s, eligibility.askAlways) : catchable ? weekDrag!.handleFor(s, false) : undefined}
         catchNote={catchNote}
+        restLine={template.type === 'recovery' ? restRowLine(plan.day(date)) : undefined}
+        routeLine={routeLineOf(s, template, sessionRoutes)}
         leave={leave}
         races={races}
         placeholder={pickedUp === s.id}

@@ -123,6 +123,8 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 
 - [audit/4 Dataveiligheid.md](../audit/4%20Dataveiligheid.md): Audit van 3 oktober 2026 van opslag, export en import op commit d8e19d3, met nagespeelde gevallen.
 - [onderhoud/2026-11-11-pathfinder-route-start.md](../onderhoud/2026-11-11-pathfinder-route-start.md): Pathfinder vooraf op 11 november 2026 over de start van een lus en het laden van Route voorstellen.
+- [onderhoud/sherpa-i158.md](../onderhoud/sherpa-i158.md): I-158: MacroFactor telt alleen als gekoppeld bij ingelezen en leidend; knop MacroFactor loskoppelen.
+- [onderhoud/sherpa-route-hoogtemeters.md](../onderhoud/sherpa-route-hoogtemeters.md): Verslag van I-160 deel B: Simpel begint op de voet van de steilste helling, de keuze Hoogtemeters halen of Afstand houden met de som, de rij Buiten plus een helling, trap of de loopband uit de gids, en Opnieuw proberen bij een ontbrekende kaart. Bewijs, keuzes en wat niet gebouwd is.
 - [onderzoek/Avontuurlijke plekken uit OpenStreetMap.md](../onderzoek/Avontuurlijke%20plekken%20uit%20OpenStreetMap.md): Welke kenmerken uit OpenStreetMap een avontuurlijke plek maken en hoe je er via Overpass een startpunt en hoogtemeters bij vindt.
 - [onderzoek/Datavelden voor je horloge.md](../onderzoek/Datavelden%20voor%20je%20horloge.md): Welke indelingen en velden de Forerunner 255 kent, hoe je ze instelt en welk veld groot hoort per soort training.
 - [onderzoek/Drempel en submaximale test.md](../onderzoek/Drempel%20en%20submaximale%20test.md): Hoe je de drempelhartslag zonder lab bepaalt (de factor 0,98, drie tests samen, alleen met borstband), hoe groot de fout van de pols is, of RR-intervallen en DFA alpha 1 iets toevoegen, en hoe een korte vaste test vorm en vermoeidheid volgt, met een voorstel in vijf stappen.
@@ -139,7 +141,9 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 - [visie/Ontwerp Info-blad.md](../visie/Ontwerp%20Info-blad.md): Ontwerpvoorstel van 11 november 2026 voor het blad Je horloge in plaats van het infomenu; besloten in de besluiten over het info-blad.
 - [visie/Ontwerp Plekken en routes.md](../visie/Ontwerp%20Plekken%20en%20routes.md): Ontwerpvoorstel van 11 november 2026 voor eigen plekken en bewaarde routes; besloten in `docs/beslissingen/2026-11-11-plekken-en-routes.md`.
 - [visie/Ontwerp Route en trainingsscherm.md](../visie/Ontwerp%20Route%20en%20trainingsscherm.md): Ontwerpvoorstel van 11 november 2026 voor Route en het scherm vooraf; de Briefing is besloten in `docs/beslissingen/2026-11-11-briefing.md`.
+- [visie/Ontwerp route per training.md](../visie/Ontwerp%20route%20per%20training.md): Ontwerpvoorstel van 25 november 2026 (I-160) voor een route per geplande training en een routeplanner die hoogtemeters haalt; besloten in `docs/beslissingen/2026-11-24-route-per-training.md`.
 - [visie/Ontwerp routes wandelen en rugzak.md](../visie/Ontwerp%20routes%20wandelen%20en%20rugzak.md): Ontwerpvoorstel van 15 november 2026 voor lussen bij wandelen en rugzaktraining; stap 1 en 2 besloten in `docs/beslissingen/2026-11-15-routes-wandelen-standaardkeuzes.md`.
+- [visie/Plek route per training.md](../visie/Plek%20route%20per%20training.md): Advies van Pathfinder van 25 november 2026 voor route per geplande training (I-160): de ingang is de Briefing, een stille regel in Week en op Vandaag, Trainingsplekken als tik uit het Route-blok, de rijtijd naar heuvels in het blad Weer en kleding; besluit `docs/beslissingen/2026-11-24-route-per-training.md`.
 
 ## Vervangen of verouderd
 

@@ -94,6 +94,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 - [visie/Ontwerprapport gegevens.md](../visie/Ontwerprapport%20gegevens.md): Ontwerpvoorstel van 1 november 2026 voor rustiger gegevens op Stand, Logboek en de weekterugblik; besloten in `docs/beslissingen/2026-11-02-gegevens-herinrichting.md`.
 - [visie/Ontwerprapport instellingen.md](../visie/Ontwerprapport%20instellingen.md): Ontwerpvoorstel van 1 november 2026 voor Instellingen; de rondes daarna staan in de besluiten over instellingen van 2 november.
 - [visie/Pictogrammen zwemmen padel voetbal.md](../visie/Pictogrammen%20zwemmen%20padel%20voetbal.md): Ontwerp voor de pictogrammen van zwemmen, padel en voetbal in stijl C, bouwstap 1 van Sporten die meetellen.
+- [visie/Plek belangrijk advies.md](../visie/Plek%20belangrijk%20advies.md): Pathfinder vooraf voor I-157: welke voorstellen als blad bij openen, waar en wanneer, hoe Niet nu werkt, waar de regel 'één advies per dag' komt en welke instelling.
 - [visie/Visuele upgrade en nieuwe ideeën.md](../visie/Visuele%20upgrade%20en%20nieuwe%20idee%C3%ABn.md): Ochtendrapport van 22 oktober 2026 met voorstellen voor een rustiger beeld en nieuwe mogelijkheden, van voor Zee en berg.
 - [visie/Vloeiende overgangen.md](../visie/Vloeiende%20overgangen.md): Ontwerp voor overgangen, trillen en bladen die je vindt; besloten in `docs/beslissingen/2026-10-28-vloeiende-overgangen.md`.
 

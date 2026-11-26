@@ -266,7 +266,7 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   // Snelknoppen tonen bestaat niet meer (docs/beslissingen/2026-11-02-forge-herinrichting.md): een oude
   // waarde wordt stil genegeerd, het is geen fout in het bestand.
   delete s.forgeQuickButtons;
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'watchPlaceWorkout', 'watchWalkBpm', 'stravaText', 'watchFieldsShown', 'routeProposal', 'routeAvoidBigRoads', 'routeWind', 'routeBackBeforeDark', 'rememberStartPlace', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'fullWeekAsk', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'watchKindCheck', 'illnessSigns', 'illnessSignsOneMorning', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'eveningBefore', 'eveningNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'testReadyLine', 'shortTest', 'shortTestWatch', 'tempoStablePieces', 'fuelOnTheGo', 'raceDay'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'watchPlaceWorkout', 'watchWalkBpm', 'stravaText', 'watchFieldsShown', 'routeProposal', 'routeAvoidBigRoads', 'routeWind', 'routeBackBeforeDark', 'rememberStartPlace', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'fullWeekAsk', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'watchKindCheck', 'illnessSigns', 'illnessSignsOneMorning', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'eveningBefore', 'eveningNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'testReadyLine', 'shortTest', 'shortTestWatch', 'tempoStablePieces', 'fuelOnTheGo', 'raceDay', 'reentryCatchUp', 'restDayFollows'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -403,6 +403,15 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   // Afstand van een wandeling: 3, 5, 8 of 12 km; iets anders valt weg (het advies geldt dan).
   if ('walkPlanKm' in s && ![3, 5, 8, 12].includes(s.walkPlanKm as number)) {
     delete s.walkPlanKm;
+    skipped.n++;
+  }
+  // Wat gaat voor in een lus en Rijtijd naar heuvels (I-160): iets anders valt weg, dan geldt het advies.
+  if ('routeLoopPriority' in s && s.routeLoopPriority !== 'auto' && s.routeLoopPriority !== 'ascent' && s.routeLoopPriority !== 'distance') {
+    delete s.routeLoopPriority;
+    skipped.n++;
+  }
+  if ('routeDriveMinutes' in s && ![0, 15, 30, 45, 'free'].includes(s.routeDriveMinutes as number | string)) {
+    delete s.routeDriveMinutes;
     skipped.n++;
   }
   // Startpunt van je lus: Waar je nu bent, Vast punt ('exact') of Ongeveer. Iets anders valt weg, en

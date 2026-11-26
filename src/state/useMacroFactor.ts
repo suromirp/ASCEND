@@ -67,9 +67,11 @@ export function useMacroFactor(): MacroFactorView {
 // meteen goed, zodat de chip alleen bij de eerste opening na de start kan verschijnen.
 let lastLinked = false;
 
-// Gekoppeld: er is een export ingelezen. Los van de hook, zodat een test het kan lezen.
+// Gekoppeld: er is een export ingelezen én MacroFactor is leidend voor kracht (I-158: zonder leidend
+// komt de zwaarte niet uit MacroFactor, dus zegt geen scherm dat het zo is). Los van de hook, zodat een test het kan lezen.
 export async function readMacroFactorLinked(): Promise<boolean> {
-  lastLinked = !!(await getMacroFactorState()).readAt;
+  const state = await getMacroFactorState();
+  lastLinked = !!state.readAt && state.leads;
   return lastLinked;
 }
 

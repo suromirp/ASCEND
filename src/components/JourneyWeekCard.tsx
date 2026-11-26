@@ -5,6 +5,8 @@ import { PrimaryButton, SecondaryButton } from './ui';
 import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
 import { TextButton } from './TextButton';
+import { useAppData } from '../state/AppDataContext';
+import { goalRef } from '../engine/goalWording';
 
 // Vandaag: de taak op weg naar je tocht die geen training is, als één regel in "Je dag", maar
 // alleen als de instelling het zegt (standaard in de laatste week dat hij nog kan). De regel opent
@@ -12,6 +14,7 @@ import { TextButton } from './TextButton';
 // blijft de taak open op Ascend. Nooit rood, nooit "te laat".
 export function JourneyWeekCard() {
   const navigate = useNavigate();
+  const { trainingGoals, goalMilestones } = useAppData();
   const { shown, when, lastWeek, journey } = useJourneyRow();
   const { pick, derived, tick, untick, postpone } = journey;
   const [open, setOpen] = useState(false);
@@ -25,7 +28,7 @@ export function JourneyWeekCard() {
         {task.title}
       </DayRow>
       {open && (
-        <TodaySheet eyebrow="Deze week voor de GR5" title={task.title} onClose={() => setOpen(false)}>
+        <TodaySheet eyebrow={`Deze week voor ${goalRef(trainingGoals, goalMilestones)}`} title={task.title} onClose={() => setOpen(false)}>
           {(close) => (
             <div className="flex flex-col gap-4">
               <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{task.why}</p>

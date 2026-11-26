@@ -51,6 +51,8 @@ import type { ScheduleProposal } from '../engine/scheduler';
 import { catchUpEligibility, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { dragHandlesShown } from '../components/weekDragShown';
 import { decideMove, dragEligibility, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
+import { restDayFollowAfterMove } from '../engine/restDayFollows';
+import { REST_DAY_COPY } from '../data/restDayCopy';
 import { keptAsk, keptRefusal } from '../engine/moveSuggestions';
 import { SWAP_STALE } from '../storage/weekSwap';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
@@ -205,9 +207,20 @@ export function WeekPage() {
     // Losgelaten op een dag met precies één training die mag bewegen: de twee ruilen (engine/weekSwap.ts).
     if (opts?.verdict?.kind === 'swap' && opts.verdict.swapWithId) return swapWith(sessionId, opts.verdict.swapWithId);
     const decision = decideMove(moveSession(sessionId, date), { ...opts, legsClose: legsCloseAt(sessionId, date), restDay: settings.restDay ?? 1 });
-    if (decision.action === 'apply') await applyProposal(decision.proposal);
-    else if (decision.action === 'ask') setPendingProposal(decision.proposal);
+    if (decision.action === 'apply') {
+      const follow = restFollow(decision.proposal);
+      await applyProposal(decision.proposal);
+      if (follow) setPendingProposal(follow);
+    } else if (decision.action === 'ask') setPendingProposal(decision.proposal);
     return decision.action;
+  }
+
+  // De rustdag schuift mee (engine/restDayFollows.ts, I-162): zette jij een training op een dag met je rustdag, dan
+  // volgt één voorstel met Akkoord om de rustdag naar de vrijgekomen dag te zetten. Jouw verplaatsing blijft staan.
+  // Uitgerekend op het plan van voor het schrijven, met jouw verplaatsing erin.
+  function restFollow(proposal: ScheduleProposal): ScheduleProposal | undefined {
+    if (settings.restDayFollows === false) return undefined;
+    return restDayFollowAfterMove(proposal, { sessions: plannedSessions, templateById, logs: sessionLogs, today: todayISO(), leave: settings.leavePeriods, restTitle: REST_DAY_COPY[settings.restDayMode ?? 'rest'].title });
   }
 
   // Ruilen, uit het actieblad en uit het slepen: dezelfde weg als Verplaatsen. Schoon gaat meteen (Ongedaan
@@ -481,7 +494,8 @@ export function WeekPage() {
         <RescheduleDialog
           proposal={pendingProposal}
           onApply={() => {
-            void applyOrTell(pendingProposal);
+            const follow = restFollow(pendingProposal);
+            void applyOrTell(pendingProposal).then((ok) => { if (ok && follow) setPendingProposal(follow); });
             setPendingProposal(null);
           }}
           onCancel={() => setPendingProposal(null)}

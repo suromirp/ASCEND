@@ -12,6 +12,9 @@ const apply = (s: AppSettings, patch: Partial<AppSettings>): AppSettings => ({ .
 const everything: AppSettings = {
   ...base,
   cardOrder: { stand: ['doel', 'lopen', 'invloed', 'kracht', 'benen', 'belasting', 'vier-regels'] },
+  reentryCatchUp: false,
+  routeLoopPriority: 'distance',
+  routeDriveMinutes: 45,
   changeApplyMode: 'always_ask',
   ambition: 'stevig',
   restDayMode: 'active',
@@ -66,6 +69,7 @@ const everything: AppSettings = {
   askDoubtTest: false,
   newTestOnStops: false,
   restDayBack: false,
+  restDayFollows: false,
   fullWeekAsk: false,
   missedTraining: 'off',
   reentry: 'off',

@@ -50,7 +50,7 @@ export function readPlace(raw: unknown): Place | undefined {
   };
 }
 
-function readPoint(raw: unknown): RoutePoint | undefined {
+export function readPoint(raw: unknown): RoutePoint | undefined {
   const point = validStartPoint(raw);
   if (!point) return undefined;
   const ele = (raw as { ele?: unknown }).ele;

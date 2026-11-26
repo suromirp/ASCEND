@@ -5,7 +5,7 @@
 // Gaat weg in stap 6, als eigen kleine zichtbare wijziging.
 
 export const INDEX_ORDER: readonly string[] = [
-  'sporten', 'hoeveel-per-soort', 'sport-per-week', 'wijzigingen', 'trainingstijd', 'rustdag', 'rustdag-doen',
+  'sporten', 'hoeveel-per-soort', 'sport-per-week', 'wijzigingen', 'trainingstijd', 'rustdag', 'rustdag-doen', 'rustdag-schuift',
   'meerdere', 'zware-dingen', 'kracht', 'forge-tijdsgrens', 'forge-grens-kracht', 'forge-grens-been',
   'trainingsduur', 'forge', 'forge-volgorde', 'forge-sets', 'forge-opwarmen', 'forge-opwarmset-later',
   'forge-opwarmbereik', 'forge-bereik', 'forge-schatting', 'forge-rust', 'forge-geluid', 'forge-volume',
@@ -53,7 +53,7 @@ export const INDEX_ORDER: readonly string[] = [
 ];
 
 export const ADVICE_ORDER: readonly string[] = [
-  'wijzigingen', 'ambitie', 'lange-loop', 'rustdag-doen', 'zware-dingen', 'lange-loop-benen', 'weekbudget', 'golven',
+  'wijzigingen', 'ambitie', 'lange-loop', 'rustdag-doen', 'rustdag-schuift', 'zware-dingen', 'lange-loop-benen', 'weekbudget', 'golven',
   'beginnersstart', 'opbouw-start', 'lange-zondag', 'na-hoofddoel', 'seizoensstrook', 'vaardigheidsdoelen', 'volgende-tocht',
   'water-per-etappe', 'rust-na-tocht', 'afdaalklok', 'vakantie-opzij', 'vakantie-schuiven', 'zonder-sportschool', 'vakantie-achteraf',
   'bergschoenen', 'bergschoenen-herinnering', 'forge', 'forge-volgorde', 'forge-sets', 'forge-opwarmen',
@@ -67,7 +67,7 @@ export const ADVICE_ORDER: readonly string[] = [
   'forge-naast', 'vetpercentage', 'gewicht-kaart', 'gewicht-eigen', 'gewicht-periode', 'gewichtstrend', 'figuur',
   'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-namen', 'intensiteit', 'ochtendcheck',
   'ochtendkaart', 'benen-na-test', 'ochtend-vanaf', 'boven-missie', 'zweet-vragen', 'twijfeltest', 'nieuwe-test',
-  'rustiger-instap', 'rustdag-terug', 'week-vol', 'niet-doorgegaan', 'niet-doorgegaan-dagen', 'log-koppelen',
+  'rustiger-instap', 'rustdag-terug', 'week-vol', 'niet-doorgegaan', 'niet-doorgegaan-dagen', 'log-koppelen', 'instap-rustdag',
   'trillen', 'rust-melding', 'weekmelding', 'weekmelding-tijd', 'avond-ervoor', 'avond-ervoor-tijd', 'avond-melding',
   'auto-bijwerken', 'weekvoorstel', 'week-na-keuze', 'volgorde-stand', 'forge-oefeningen', 'forge-verloop',
   'forge-onderbreking', 'forge-concept', 'forge-grens-kracht', 'forge-grens-been', 'forge-vegen', 'slepen-week',

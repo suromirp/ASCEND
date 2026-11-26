@@ -10,6 +10,7 @@
 //
 // Puur: geen React, geen IndexedDB.
 
+import { REST_DAY_COPY, type RestDayMode } from '../data/restDayCopy';
 import type { Program } from '../models/program';
 import type { GoalMilestone, TrainingGoal } from '../models/goals';
 import type { SessionLog, SessionTemplate } from '../models/training';
@@ -53,7 +54,7 @@ export const GOAL_OPTIONS: { id: StartGoalKind; label: string; note: string }[] 
 
 // De keuze na "Een tocht of wedstrijd".
 export const TARGET_OPTIONS: { id: 'trek' | 'race'; label: string; note: string }[] = [
-  { id: 'trek', label: 'Een meerdaagse tocht met rugzak', note: 'Zoals de GR5. Opbouw naar lange dagen met een zware rugzak.' },
+  { id: 'trek', label: 'Een meerdaagse tocht met rugzak', note: 'Opbouw naar lange dagen met een zware rugzak.' },
   { id: 'race', label: 'Een hardloopwedstrijd', note: 'Een vaste afstand op een vaste dag. Een blok toe naar de wedstrijd.' },
 ];
 
@@ -335,7 +336,7 @@ export interface FirstWeekRow {
 // met de naam die Week toont, het aantal keer kracht dat Week heeft, de rustdag. Het budget van de richting staat er
 // apart bij als het plan anders uitkomt (vraag 2). Puur.
 // `firstWeekOnly`: de week is niet elke week zo (de app had al eigen rijen), dan heet hij de eerste volle week.
-export function firstPlanLines(text: FirstPlanText, rows: FirstWeekRow[], firstWeekOnly = false): string[] {
+export function firstPlanLines(text: FirstPlanText, rows: FirstWeekRow[], firstWeekOnly = false, restMode: RestDayMode = 'rest'): string[] {
   const trainings = rows.filter((r) => !r.rest).sort((a, b) => a.weekday - b.weekday);
   const rest = rows.filter((r) => r.rest).sort((a, b) => a.weekday - b.weekday).slice(0, 1);
   const strength = trainings.filter((r) => r.strength).length;
@@ -352,7 +353,7 @@ export function firstPlanLines(text: FirstPlanText, rows: FirstWeekRow[], firstW
       ? `Je eerste volle week: ${count} ${count === 1 ? 'training' : 'trainingen'}${count > 0 ? ` (${dayLine})` : ''}.`
       : `${count} ${count === 1 ? 'training' : 'trainingen'} per week${count > 0 ? ` (${dayLine})` : ''}.`,
     // Alleen als de week een rustdag heeft (een herstelrij), op de dag van die rij: wat Week Rustdag noemt.
-    ...rest.map((r) => `Rustdag: ${WEEKDAY_NAMES[r.weekday - 1]}.`),
+    ...rest.map((r) => `${REST_DAY_COPY[restMode].title}: ${WEEKDAY_NAMES[r.weekday - 1]}.`),
     ...text.tail,
   ].filter(Boolean);
 }

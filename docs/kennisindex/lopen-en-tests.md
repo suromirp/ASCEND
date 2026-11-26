@@ -65,6 +65,8 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 
 ## Onderzoek, ontwerpen en verslagen
 
+- [onderhoud/sherpa-route-bewaren.md](../onderhoud/sherpa-route-bewaren.md): Verslag van I-160 deel A: de route per geplande training als eigen lijst gekoppeld aan het id (niet als veld), de bewaarde stand in het Route-blok van de Briefing, een stille regel in Week en op Vandaag, export en import zonder hogere schemaversie. Keuzes, tests en wat niet is gedaan.
+- [onderhoud/sherpa-route-hoogtemeters.md](../onderhoud/sherpa-route-hoogtemeters.md): Verslag van I-160 deel B: Simpel begint op de voet van de steilste helling, de keuze Hoogtemeters halen of Afstand houden met de som, de rij Buiten plus een helling, trap of de loopband uit de gids, en Opnieuw proberen bij een ontbrekende kaart. Bewijs, keuzes en wat niet gebouwd is.
 - [onderzoek/Drempel en submaximale test.md](../onderzoek/Drempel%20en%20submaximale%20test.md): Hoe je de drempelhartslag zonder lab bepaalt (de factor 0,98, drie tests samen, alleen met borstband), hoe groot de fout van de pols is, of RR-intervallen en DFA alpha 1 iets toevoegen, en hoe een korte vaste test vorm en vermoeidheid volgt, met een voorstel in vijf stappen.
 - [onderzoek/Hoogtemeters met precisie.md](../onderzoek/Hoogtemeters%20met%20precisie.md): Hoe precies hoogtemeters uit BRouter, Valhalla en andere bronnen zijn, hoe je telt en ijkt, met een advies in acht punten.
 - [onderzoek/Loopgegevens en vooruitgang.md](../onderzoek/Loopgegevens%20en%20vooruitgang.md): Wat je na een loop uit de reeksen van intervals.icu kunt berekenen en hoe je trainingen eerlijk vergelijkt.
@@ -77,6 +79,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 - [onderzoek/Wandelen en dribbelen voor beginners.md](../onderzoek/Wandelen%20en%20dribbelen%20voor%20beginners.md): De ladder van wandelen en dribbelen voor een beginner klopt in week 1 tot 3 met de onderzochte schema's, week 4 niet; het advies is week 4 op 4 om 2 te zetten.
 - [onderzoek/notities/Aanvullend onderzoek GR5 voorbereiding/marathon.md](../onderzoek/notities/Aanvullend%20onderzoek%20GR5%20voorbereiding/marathon.md): Werknotities (Engels) over een marathon naast de GR5: weekvolume, tijdpad, sleuteltrainingen, taper en blessurerisico.
 - [visie/Ontwerp Na een loop één moment.md](../visie/Ontwerp%20Na%20een%20loop%20%C3%A9%C3%A9n%20moment.md): Ontwerpvoorstel van 23 november 2026 voor I-34: na een loop één moment in plaats van zes tot acht lagen, plus Gidsen, Forge-instellingen en instellingen per onderwerp.
+- [visie/Plek route per training.md](../visie/Plek%20route%20per%20training.md): Advies van Pathfinder van 25 november 2026 voor route per geplande training (I-160): de ingang is de Briefing, een stille regel in Week en op Vandaag, Trainingsplekken als tik uit het Route-blok, de rijtijd naar heuvels in het blad Weer en kleding; besluit `docs/beslissingen/2026-11-24-route-per-training.md`.
 - [visie/Run in detail.md](../visie/Run%20in%20detail.md): Ontwerp van 27 oktober 2026 voor het scherm Run in detail; besloten in `docs/beslissingen/2026-10-27-run-in-detail-gegevens.md`.
 
 ## Vervangen of verouderd

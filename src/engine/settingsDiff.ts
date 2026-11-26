@@ -167,6 +167,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('ambitie', 'Ambitie', 'planning', 'ambition', 'standaard', 'ambitie', true),
   choice('lange-loop', 'Groei van de lange loop', 'planning', 'longRunGrowth', 'weekly', 'langeLoopGroei', true),
   choice('rustdag-doen', 'Op je rustdag', 'planning', 'restDayMode', 'rest', 'rustdagDoen', true),
+  flag('rustdag-schuift', 'Rustdag schuift mee', 'planning', 'restDayFollows'),
   plain('zware-dingen', 'Benen en een zware loop', 'planning', 'hardSameDay', false as boolean, (v) => onOff(v === true), { plan: true }),
   // Kracht uit mag, met een waarschuwing (engine/strengthTraining.ts); terug naar aan is een voorstel dat je
   // krachttrainingen terugzet (components/settings/useAdviceReset.tsx).
@@ -310,6 +311,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('niet-doorgegaan', 'Training die niet doorging', 'planning', 'missedTraining', 'ask', 'nietDoorgegaan'),
   choice('niet-doorgegaan-dagen', 'Na hoeveel dagen', 'planning', 'missedTrainingDays', 2, 'nietDoorgegaanDagen'),
   flag('log-koppelen', 'Log op een andere dag koppelen', 'planning', 'missedLink'),
+  flag('instap-rustdag', 'Gemiste training op je rustdag', 'planning', 'reentryCatchUp'),
   flag('trillen', 'Trillen', 'vandaag', 'haptics'),
   flag('rust-melding', 'Einde van de rust', 'vandaag', 'restNotice'),
   flag('weekmelding', 'Weekmelding op zondag', 'vandaag', 'weekNotice'),
@@ -372,6 +374,8 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('route-start', 'Startpunt van je lus', 'vandaag', 'routeStart', 'here', 'routeStart'),
   choice('route-zoeken', 'Lus zoeken', 'vandaag', 'routeSearch', 'open', 'routeZoeken'),
   choice('wandel-afstand', 'Afstand van een wandeling', 'vandaag', 'walkPlanKm', 5, 'wandelAfstand'),
+  choice('route-voorrang', 'Wat gaat voor in een lus', 'vandaag', 'routeLoopPriority', 'auto', 'routeVoorrang'),
+  choice('rijtijd-heuvels', 'Rijtijd naar heuvels', 'vandaag', 'routeDriveMinutes', 30, 'rijtijdHeuvels'),
   flag('route-grote-wegen', 'Grote wegen mijden', 'vandaag', 'routeAvoidBigRoads'),
   flag('route-wind', 'Wind bepaalt de richting', 'vandaag', 'routeWind'),
   flag('route-donker', 'Terug voor het donker', 'vandaag', 'routeBackBeforeDark'),

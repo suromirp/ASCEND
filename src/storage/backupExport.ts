@@ -8,6 +8,9 @@ import { ProgramsRepo, SessionTemplatesRepo, PlannedSessionsRepo, SessionLogsRep
 import { serializeStreams } from '../engine/streamPack';
 import { loadSkillGoals } from './skillGoals';
 import { readPlaceStore } from './places';
+import { SESSION_ROUTES_KEY } from './sessionRoutes';
+import { readSessionRouteList } from './migrationsSessionRoutes';
+import { routesOfSessions } from '../engine/sessionRoute';
 import { RoutePlanRepo, SoloPlanRepo } from './routePlan';
 import { CURRENT_BACKUP_SCHEMA_VERSION, type AscendBackupEnvelope, type AscendBackupPayloadV5 } from './backupTypes';
 
@@ -52,6 +55,14 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
   const missedMemory = await MetaRepo.get<unknown>(MISSED_MEMORY_KEY);
   const skillGoals = await loadSkillGoals();
   const placeStore = await readPlaceStore();
+  // De route per geplande training (storage/sessionRoutes.ts): alleen die van een training die er nog is. Kon de
+  // lijst niet gelezen worden, dan staat het veld er niet (nooit "geen routes").
+  let sessionRoutes: ReturnType<typeof readSessionRouteList> | undefined;
+  try {
+    sessionRoutes = routesOfSessions(readSessionRouteList(await MetaRepo.get<unknown>(SESSION_ROUTES_KEY)), plannedSessions);
+  } catch {
+    sessionRoutes = undefined;
+  }
 
   const payload: AscendBackupPayloadV5 = {
     version: 5,
@@ -84,6 +95,8 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
     // so a file never says "no places" and an import of it keeps what the device has.
     ...(placeStore.places.length > 0 || (options.wholeState && placeStore.ok) ? { places: placeStore.places } : {}),
     ...(placeStore.routes.length > 0 || (options.wholeState && placeStore.ok) ? { savedRoutes: placeStore.routes } : {}),
+    // De route per geplande training, alleen als er een is; de kopie van voor een import schrijft ook een lege lijst.
+    ...(sessionRoutes && (sessionRoutes.length > 0 || options.wholeState) ? { sessionRoutes } : {}),
   };
 
   // The full series of runs and tochten, as base64. They may not be fetchable again from the
