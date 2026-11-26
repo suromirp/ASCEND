@@ -4887,6 +4887,14 @@
    ],
    "kern": "Een officiële feestdag (Nager.Date, global en Public, land uit de instelling, standaard Nederland) binnen de planhorizon op een dag zonder periode wordt één voorstel om hem als vrije dag te zetten, via planLeave en applyLeave; Liever niet geldt per feestdag (localStorage). Het voorstel staat in Week boven Vrije dagen en vakanties, de naam stil op een lege dag. De cache gaat niet in de back-up; de twee instellingen wel, via migrateHolidaySettings.",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-26-teksten-forge.md": {
+   "onderwerpen": [
+    "forge",
+    "bediening-en-beweging"
+   ],
+   "kern": "Stap 3 van de stemgids voor de Forge-tab (R10): puntkomma's in zinnen op het scherm zijn twee zinnen, het droge feit eerst, en de Forge-uitleg in Instellingen is ingekort van gemiddeld 98 naar 77 woorden per onderwerp; zorg en de licentie van de tekeningen blijven volledig.",
+   "stand": "geldt"
   }
  }
 }

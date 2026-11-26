@@ -107,7 +107,7 @@ export function SessionChoiceSheet({
     close();
   };
 
-  const title = gone ? 'Training niet meer hier' : step === 'bevestigen' ? 'Training verwijderen?' : left ? 'Training niet afgerond' : 'Er loopt nog een training';
+  const title = gone ? 'Training is weg' : step === 'bevestigen' ? 'Training verwijderen?' : left ? 'Training niet afgerond' : 'Er loopt nog een training';
   return (
     <ForgeSheet title={title} onClose={afterClose}>
       {(close) =>

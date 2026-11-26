@@ -128,7 +128,7 @@ export function StepProposalNotice({ templateId, date, className = 'mb-2' }: { t
           <>
             <p className="text-sm leading-relaxed" style={ink}>{text.question}</p>
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{text.where} {text.keeps}</p>
-            {state === 'failed' && <p role="status" className="text-xs" style={{ color: 'var(--color-warning)' }}>Opslaan lukte niet op tijd. Probeer het nog eens; je plan is niet veranderd.</p>}
+            {state === 'failed' && <p role="status" className="text-xs" style={{ color: 'var(--color-warning)' }}>Opslaan lukte niet op tijd. Je plan is niet veranderd. Probeer het nog eens.</p>}
             {state === 'full' && <p role="status" className="text-xs" style={{ color: 'var(--color-warning)' }} data-testid="forge-stapvoorstel-vol">Je plan is niet veranderd. ASCEND houdt stappen bij in hoogstens {MAX_STEP_TEMPLATES} trainingen en {MAX_STEP_SLOTS} plekken per training, en die zijn vol. Zet eerst ergens een stap terug naar je plan.</p>}
             <div className="mt-1 flex gap-3">
               <SecondaryButton disabled={state === 'busy'} onClick={decline}>Liever niet</SecondaryButton>

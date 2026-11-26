@@ -194,9 +194,9 @@ export function leftSessionLines(o: { name: string; doneSets: number; activeSec:
   const fact = `${o.name}: ${sets} afgevinkt, ${minutesPhrase(o.activeSec)} getraind. Je laatste handeling was ${o.when}.`;
   const note =
     o.reason === 'overgeslagen'
-      ? 'In je planning staat hij als overgeslagen. Je sets staan als concept klaar; er gaat niets weg tot je kiest.'
+      ? 'In je planning staat hij als overgeslagen. Je sets staan als concept klaar. Er gaat niets weg tot je kiest.'
       : o.reason
-        ? 'Hij staat als concept klaar; er gaat niets weg tot je kiest.'
+        ? 'Hij staat als concept klaar. Er gaat niets weg tot je kiest.'
         : 'Er loopt één training tegelijk.';
   const discard = `${o.doneSets > 0 ? `${sets[0].toUpperCase()}${sets.slice(1)} en ${minutesPhrase(o.activeSec)}` : 'Deze training'} van ${o.when.replace(/ om .*/, '')} ${o.doneSets > 0 ? 'gaan' : 'gaat'} weg. Je logboek en je planning veranderen niet.`;
   return { fact, note, discard };
@@ -212,7 +212,7 @@ export function whenPhrase(ms: number, today = todayISO()): string {
 }
 
 // Het blad van een concept of een lopende training, als die elders al afgerond of verwijderd is.
-export const SESSION_GONE_TEXT = 'Deze training is er niet meer. Hij is ergens anders afgerond of verwijderd; je logboek laat zien wat er bewaard is.';
+export const SESSION_GONE_TEXT = 'Deze training is er niet meer. Hij is elders afgerond of verwijderd. Wat bewaard is, staat in je logboek.';
 // Erachter als je net een andere training wilde starten: Begrepen start die (OtherSessionRunning.tsx).
 export const GONE_NEXT_TEXT = 'Na Begrepen start je nieuwe training.';
 

@@ -167,7 +167,7 @@ describe('het voorstel in de weekterugblik', () => {
   it('noemt sets die niet gekoppeld konden worden', () => {
     const p = mountainMuscleProposal(input({ logs: WEEKS.map((d, i) => log(`l${i}`, d, [squat(4), unknown(1)])) }));
     const text = muscleNoticeText(p!);
-    expect(text.unknown).toBe('4 sets konden niet aan een oefening gekoppeld worden; die tellen hier niet mee.');
+    expect(text.unknown).toBe('4 sets tellen hier niet mee: ze konden niet aan een oefening gekoppeld worden.');
     // Op het scherm, niet alleen achter de i.
     expect(text.info).not.toMatch(/gekoppeld/);
   });
@@ -466,7 +466,7 @@ describe('randen van de woorden', () => {
   });
 
   it('één set die niet gekoppeld kon worden: enkelvoud, en zonder zulke sets geen zin', () => {
-    expect(make({ unknownSets: 1 }).unknown).toBe('1 set kon niet aan een oefening gekoppeld worden; die tellen hier niet mee.');
+    expect(make({ unknownSets: 1 }).unknown).toBe('1 set telt hier niet mee: hij kon niet aan een oefening gekoppeld worden.');
     expect(make({}).unknown).toBeUndefined();
   });
 

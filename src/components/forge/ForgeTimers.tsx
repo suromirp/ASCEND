@@ -26,7 +26,7 @@ export function ElapsedClock({ startedAt, pauses }: { startedAt: number | null; 
   return <span className="font-sans tabular-nums" aria-label="Verstreken tijd" style={paused ? { opacity: 0.7 } : undefined}>{formatSessionClock(startedAt === null ? 0 : activeSeconds({ startedAt, pauses }, now))}</span>;
 }
 
-// "Je zit op 64 minuten. Wat nog komt is bijwerk en extra; stoppen kan." De gedempte regel onder de klok
+// "Je zit op 64 minuten. Wat nog komt is bijwerk en extra. Stoppen kan." De gedempte regel onder de klok
 // (engine/forgeTimeCap.ts#overTimeLine), op de actieve tijd: pauzes tellen niet, en tijdens een pauze staat hij er niet.
 // Ververst elke 15 seconden, alleen dit stukje.
 export function OverTimeNote({ startedAt, pauses, reference, exercises, priorityOf }: {

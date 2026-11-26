@@ -409,7 +409,7 @@ describe('bij een grove stap het gewicht met de kleinste verwachte misser', () =
     expect(p.sets[0].weightKg).toBe(55);
     expect(p.sets[0].repsLow).toBe(13);
     expect(p.sets[0].repsHigh).toBe(16);
-    expect(p.reason).toBe('De stap is hier te grof voor 14 tot 16 herhalingen; met 55 kg haal je er naar verwachting 13, dat zit dichter bij je doel dan 50 kg.');
+    expect(p.reason).toBe('De stap is hier te grof voor 14 tot 16 herhalingen. Met 55 kg haal je er naar verwachting 13, dichter bij je doel dan 50 kg.');
     // De latere sets houden het bereik van het doel: de onderkant wordt daar niet verlaagd.
     for (const set of p.sets.slice(1)) expect(set.repsLow).toBeGreaterThanOrEqual(13);
   });

@@ -38,7 +38,7 @@ describe('een training die bleef liggen', () => {
     const html = sheet(session(3), left);
     expect(html).toContain('Training niet afgerond');
     expect(html).toContain('Bovenlichaam A: 3 sets afgevinkt, 35 min getraind.');
-    expect(html).toContain('er gaat niets weg tot je kiest');
+    expect(html).toContain('Er gaat niets weg tot je kiest');
     const [finish, resume, discard, later] = order(html, 'Afronden met 3 sets', 'Verder', 'Verwijderen', 'Niet nu');
     expect(finish).toBeGreaterThan(0);
     expect(finish).toBeLessThan(resume);

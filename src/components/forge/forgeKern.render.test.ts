@@ -73,7 +73,7 @@ describe('de regel onder de klok', () => {
 
   it('verschijnt na de referentie op actieve tijd, met een verschijning die in Rustig en Uit stilstaat', () => {
     const html = note(Date.now() - 64 * min);
-    expect(html).toContain('Je zit op 64 minuten. Wat nog komt is bijwerk; stoppen kan.');
+    expect(html).toContain('Je zit op 64 minuten. Wat nog komt is bijwerk. Stoppen kan.');
     expect(html).toContain('mx-row-in');
     expect(html).not.toMatch(/animate-/);
   });

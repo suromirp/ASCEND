@@ -751,7 +751,7 @@ describe('Forge afronden: een van de twee, het blad of de melding bovenin', () =
     vi.spyOn(SessionLogsRepo, 'add').mockRejectedValue(new Error('kapot'));
     await expect(forgeSave(() => true)).rejects.toBeInstanceOf(LogNotSaved);
     expect(general).toEqual([]);
-    expect(forgeFinishNote('failed')).toEqual({ text: 'Opslaan lukte niet. Je sets blijven bewaard; probeer het zo nog eens.', warn: true });
+    expect(forgeFinishNote('failed')).toEqual({ text: 'Opslaan lukte niet. Je sets blijven bewaard. Probeer het zo nog eens.', warn: true });
     await expect(forgeSave(() => true)).rejects.toBeInstanceOf(LogNotSaved);
     expect(forgeFinishNote('failed').text).toContain('back-up via Instellingen, Gegevens en back-up');
     expect(general).toEqual([]);
@@ -774,7 +774,7 @@ describe('Forge afronden: een van de twee, het blad of de melding bovenin', () =
   });
 
   it('de zinnen: alleen mislukt is amber, en het begin is dat van elk scherm', () => {
-    expect(forgeFinishNote('slow')).toEqual({ text: 'Opslaan duurt langer dan verwacht. Je sets blijven bewaard; probeer het zo nog eens.', warn: false });
+    expect(forgeFinishNote('slow')).toEqual({ text: 'Opslaan duurt langer dan verwacht. Je sets blijven bewaard. Probeer het zo nog eens.', warn: false });
     // Dezelfde woorden als Hoe ging het? bij een poging die nog loopt, zonder "sluit de app" (I-135).
     expect(forgeFinishNote('stillRunning')).toEqual({ text: HOW_TEXT.stillWaiting, warn: false });
     expect(forgeFinishNote('waited')).toEqual({ text: HOW_TEXT.waited, warn: false });
