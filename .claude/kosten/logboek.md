@@ -613,3 +613,6 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-26 | Sherpa R10 teksten van Forge | bouwer helper | opus | 214k tok | 36 min | 29 schermzinnen, Forge-uitleg van 98 naar 77 woorden gemiddeld |
 | 2026-11-26 | Warden rooster ronde 4 | reviewer helper | opus | 91k tok | 7 min | één Moet (uitleg Afvinken telt als het doel), Mag hersteld, stapkaart naar I-169 |
 | 2026-11-26 | Lookout rooster ronde 4 | tester helper | sonnet | 77k tok | 14 min | groen; stapkaart bij 20 trainingen niet na te bootsen, herschreven bladen niet gezien (I-169) |
+| 2026-11-26 | Sherpa ijktocht (Rooster ronde 5) | bouwer | opus | ongeveer 400k tok | lang, met een samenvatting | engine, instelling, rij in Je stand, 33 tests, besluit; Warden-Moet hersteld |
+| 2026-11-26 | Warden ijktocht | reviewer helper | opus | 106k tok | 6 min | één Moet (afdaling en ijktocht naast elkaar als een van beide gepland staat), hersteld; Mag naar I-170 |
+| 2026-11-26 | Lookout ijktocht | tester helper | sonnet | 75k tok | 8 min | groen op 360, 390, 412; instelling onvindbaar zonder hoofddoel (I-170) |
