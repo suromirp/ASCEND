@@ -232,6 +232,14 @@ describe('geen weer', () => {
     const breezy = makeForecast(TODAY, () => ({ tempC: 11, feelsC: 8, windKmh: 20, gustKmh: 30 }));
     expect(tile(briefing(input({ forecast: breezy })), 'weather')?.line).toMatch(/^11 graden, voelt als 8, wind 20 km\/u, /);
   });
+  it('I-36: Weer uit en Kledingadvies aan: de kledingzin noemt de wind', () => {
+    const breezy = makeForecast(TODAY, () => ({ tempC: 11, feelsC: 8, windKmh: 20, gustKmh: 30 }));
+    const line = tile(briefing(input({ forecast: breezy, weatherOn: false })), 'weather')?.line;
+    expect(line).toMatch(/^Wind 20 km\/u, /);
+    expect(line).not.toMatch(/graden/);
+    const calm = makeForecast(TODAY, () => ({ tempC: 11, feelsC: 10, windKmh: 5, gustKmh: 10 }));
+    expect(tile(briefing(input({ forecast: calm, weatherOn: false })), 'weather')?.line).not.toMatch(/wind/i);
+  });
   it('windstil: alleen de temperatuur, zoals voorheen', () => {
     const calm = makeForecast(TODAY, () => ({ tempC: 11, feelsC: 10, windKmh: 5, gustKmh: 10 }));
     expect(tile(briefing(input({ forecast: calm })), 'weather')?.line).toMatch(/^11 graden, /);

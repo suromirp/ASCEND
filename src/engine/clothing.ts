@@ -20,7 +20,7 @@
 import type { SessionLog, SessionTemplate } from '../models/training';
 import type { WeatherForecast } from '../models/weather';
 import { templateSport } from './sports';
-import { weatherForTraining, weatherLine, type SessionWeather } from './weather';
+import { weatherForTraining, weatherLine, windOnlyPhrase, type SessionWeather } from './weather';
 import { capitalize } from '../utils/capitalize';
 import { joinNL } from '../utils/joinNL';
 
@@ -188,6 +188,9 @@ export interface ClothingAdvice {
   darkShown?: boolean;
   // True when any line names sunscreen (the weather page shows them all).
   sunscreenShown?: boolean;
+  // De wind zoals de weerregel hem noemt (weather.ts#windOnlyPhrase), als hij ertoe doet. Staat de weerregel uit, dan
+  // zegt de kledingzin hem (I-36, clothingLinesWithWind).
+  wind?: string;
 }
 
 const sentence = (s: string) => `${capitalize(s)}.`;
@@ -411,7 +414,17 @@ export function clothingForTraining(input: {
   if (!kind) return undefined;
   const w = weatherForTraining({ forecast: input.forecast, template: input.template, logs: input.logs, date: input.date, durationMinutes: input.durationMinutes, now: input.now });
   if (!w) return undefined;
-  return clothingFromWeather(w, kind, input.durationMinutes, { heatSession: isHeatSession(input.template), adjustC: input.adjustC });
+  const advice = clothingFromWeather(w, kind, input.durationMinutes, { heatSession: isHeatSession(input.template), adjustC: input.adjustC });
+  const wind = windOnlyPhrase(w);
+  return wind ? { ...advice, wind } : advice;
+}
+
+// De regels van het kledingadvies; staat de weerregel uit (Weer uit, Kledingadvies aan), dan begint de eerste regel met
+// de wind, anders zegt niemand waarom er een windjack bij staat (I-36). Met de weerregel aan noemt die de wind al.
+export function clothingLinesWithWind(advice: ClothingAdvice, weatherOn: boolean): string[] {
+  if (weatherOn || !advice.wind || advice.lines.length === 0) return advice.lines;
+  const [first, ...rest] = advice.lines;
+  return [`${advice.wind.charAt(0).toUpperCase()}${advice.wind.slice(1)}. ${first}`, ...rest];
 }
 
 function clothingFromWeather(w: SessionWeather, kind: ClothingKind, minutes: number, opts: { heatSession?: boolean; adjustC?: number } = {}): ClothingAdvice {

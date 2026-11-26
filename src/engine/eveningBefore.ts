@@ -26,7 +26,7 @@ import { resolveEffectiveFullDuration } from './substitutions';
 import { leaveDays } from './leave';
 import { activeIllness, isIllnessDay } from './illness';
 import { clockNL, isWeatherSensitive, usualStartHour, weatherForTraining, weatherLine } from './weather';
-import { clothingForTraining } from './clothing';
+import { clothingForTraining, clothingLinesWithWind } from './clothing';
 import { isNightAt, sunDay } from './sun';
 import { progressionTarget } from './programLayout';
 import { templateSport } from './sports';
@@ -206,7 +206,7 @@ function trainingPrep(input: EveningInput, session: PlannedSession, template: Se
       if (input.weatherOn) parts.push(`${capital(weatherLine({ ...w, daylight: undefined }))}.`);
       if (input.clothingOn) {
         const advice = clothingForTraining({ forecast, template, logs: input.logs, date, durationMinutes: minutes, adjustC: input.clothingAdjust?.(template), now: input.now });
-        if (advice?.lines[0]) parts.push(advice.lines[0]);
+        if (advice?.lines[0]) parts.push(clothingLinesWithWind(advice, input.weatherOn)[0]);
       }
       const plain = parts.join(' ');
       if (parts.length > 0) {

@@ -15,7 +15,7 @@ import { useAppData } from '../state/AppDataContext';
 import type { Advice } from '../engine/adviceEngine';
 import type { FirstSheetMap } from '../engine/adviceFirst';
 import {
-  FIRST_SHEET_DONE_NOTE, FIRST_SHEET_FAILED_NOTE, FIRST_SHEET_SETTLE_MS, FIRST_SHEET_SLOW_NOTE, FIRST_SHEET_TIMEOUT_MS, FIRST_SHEET_VIEW_FAILED_NOTE, firstSheetAdvice, pausedToday,
+  FIRST_SHEET_APPLIED_NOTE, FIRST_SHEET_DONE_NOTE, FIRST_SHEET_FAILED_NOTE, FIRST_SHEET_SETTLE_MS, FIRST_SHEET_SLOW_NOTE, FIRST_SHEET_TIMEOUT_MS, FIRST_SHEET_VIEW_FAILED_NOTE, firstSheetAdvice, pausedToday,
   forgetFirstSheetShown, rememberFirstSheetNotNow, rememberFirstSheetShown,
 } from '../engine/adviceFirst';
 import { WAITING_LINE } from '../engine/oneAnswerPerDay';
@@ -30,7 +30,8 @@ import { useOpenRequest, useSessionPill } from './forge/useForgeSession';
 import { useForgeWords } from './useForgeWords';
 import { useAdviceAccept } from './useAdviceAccept';
 import { Portal } from './Portal';
-import { adviceLead } from '../engine/adviceText';
+import { adviceLead, firstSentence } from '../engine/adviceText';
+import { APPLIED_NOTE } from './useHorizonChange';
 import { ProposalChangeList } from './ProposalSheet';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
 import { TextButton } from './TextButton';
@@ -168,7 +169,8 @@ function FirstAdviceSheet({ advice, onNotNow, onFailed, onDone }: { advice: Advi
                       {advice.tip && <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{advice.tip}</p>}
                     </>
                   ) : (
-                    <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{effortWords(advice.effect, words)}</p>
+                    // Met een lijst van wat er verandert alleen het feit; anders herhaalt de lijst het effect (I-165).
+                    <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{changeLines.length > 0 ? firstSentence(effortWords(advice.effect, words)) : effortWords(advice.effect, words)}</p>
                   )}
                   {!glance && changeLines.length > 0 && (
                     <ul className="mt-3 flex flex-col gap-1.5 text-sm leading-snug" style={{ color: 'var(--color-ink)' }} aria-label="Wat er verandert">
@@ -179,7 +181,7 @@ function FirstAdviceSheet({ advice, onNotNow, onFailed, onDone }: { advice: Advi
                 </div>
                 {showDone ? (
                   <>
-                    <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{outcome ?? horizon.note ?? FIRST_SHEET_DONE_NOTE}</p>
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{outcome ?? (horizon.note === APPLIED_NOTE ? FIRST_SHEET_APPLIED_NOTE : horizon.note) ?? FIRST_SHEET_DONE_NOTE}</p>
                     <SecondaryButton onClick={requestClose}>Begrepen</SecondaryButton>
                   </>
                 ) : (

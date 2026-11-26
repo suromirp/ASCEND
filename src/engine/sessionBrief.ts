@@ -19,6 +19,7 @@ import { placeBrief } from '../data/placeBrief';
 import { buildWorkoutPlan, type WorkoutPlan } from './workoutPlan';
 import { progressionTarget } from './programLayout';
 import { resolveEffectiveFullDuration } from './substitutions';
+import { hasRole } from './templateRoles';
 import { SPORT_LABEL, sessionKindLabel, templateSport, type Sport } from './sports';
 import { addDays, resolveProgramWeek } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
@@ -66,7 +67,9 @@ export function buildSessionBrief(
   const planned = template.type === 'strength' || template.type === 'recovery' ? undefined : templateSport(template);
   const chosen: Sport | undefined = options.modalityKey ? modalitySport(options.modalityKey) : undefined;
   const sport = chosen ?? planned;
-  const sportLabel = sport && template.type !== 'strength' && template.type !== 'recovery' ? SPORT_LABEL[sport] : sessionKindLabel(template);
+  // Wandelen en dribbelen in de beginnersstart en een gewone wandeling heten in de kop zoals op Vandaag (I-165).
+  const ownKind = !chosen && (hasRole(template, 'start_only') || hasRole(template, 'plain_walk'));
+  const sportLabel = sport && !ownKind && template.type !== 'strength' && template.type !== 'recovery' ? SPORT_LABEL[sport] : sessionKindLabel(template);
   const sportSwitch = chosen && planned && chosen !== planned ? `Dit telt als ${SPORT_LABEL[chosen].toLowerCase()}, niet als ${SPORT_LABEL[planned].toLowerCase()}.` : undefined;
   // Zegt de stijl hetzelfde woord als de sport (Wandeling: Wandelen · wandelen), dan staat het er één keer.
   const headline = [sportLabel, placeBrief(template.id, options.modalityKey)?.styleLabel ?? style?.styleLabel]

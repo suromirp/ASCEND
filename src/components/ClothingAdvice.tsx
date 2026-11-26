@@ -8,9 +8,9 @@ import { useState } from 'react';
 import type { SessionTemplate } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
-import { clothingForTraining } from '../engine/clothing';
+import { clothingForTraining, clothingLinesWithWind } from '../engine/clothing';
 import { adjustFor } from '../engine/clothingFeedback';
-import { showClothingAdvice } from '../engine/overviewSettings';
+import { showClothingAdvice, showWeatherLine } from '../engine/overviewSettings';
 import { templateSport } from '../engine/sports';
 import { useSheetClose } from '../utils/useSheetClose';
 import { SettingsLinkRow } from './settings/SettingsLink';
@@ -34,7 +34,9 @@ export function ClothingAdvice({ template, date, minutes, className = '', compac
     now: new Date(),
   });
   if (!advice) return null;
-  const lines = advice.packLine ? [...advice.lines, advice.packLine] : advice.lines;
+  // Weer uit: de eerste regel noemt de wind (I-36).
+  const own = clothingLinesWithWind(advice, showWeatherLine(settings.overviews));
+  const lines = advice.packLine ? [...own, advice.packLine] : own;
   if (compact && lines.length > 1) {
     return (
       <div className={`flex flex-col text-[13px] leading-snug ${className}`} style={{ color: 'var(--color-ink-dim)' }} aria-label="Kledingadvies">

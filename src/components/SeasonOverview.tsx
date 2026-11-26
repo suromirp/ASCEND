@@ -6,6 +6,7 @@ import { buildSeasonPlan, type SeasonPhase, type SeasonWeek } from '../engine/se
 import { programAnchorDate } from '../engine/programLayout';
 import { PHASE_COLOR } from '../data/phaseColors';
 import { formatDateNL, formatHoursMinutesNL, todayISO } from '../utils/dates';
+import { widenSpans } from '../utils/widenSpans';
 import { Card, StatusPill } from './ui';
 import { Icon, type IconName } from './icons';
 import { mainGoal as findMainGoal } from '../engine/mainGoal';
@@ -71,6 +72,8 @@ const PAD_L = 8;
 const PAD_R = 14;
 const BASE_Y = 128;
 const TOP_Y = 44;
+// Het beeld is op 360 px ongeveer 296 px breed, dus een eenheid is minstens een pixel (I-20).
+const HIT_MIN = 44;
 
 function ClimbProfile({ phases, goalName, goalDate, onPick }: { phases: SeasonPhase[]; goalName?: string; goalDate?: string; onPick: (id: string) => void }) {
   const weeks = phases.flatMap((p) => p.weeks);
@@ -83,6 +86,7 @@ function ClimbProfile({ phases, goalName, goalDate, onPick }: { phases: SeasonPh
     const at = phases.slice(0, k).reduce((n, q) => n + q.weeks.length, 0);
     return { p, k, x0: xOf(at), x1: xOf(at + p.weeks.length), at };
   });
+  const hits = widenSpans(stretches.map((st): [number, number] => [st.x0, st.x1]), HIT_MIN, 0, W);
   // The y of the line at a (fractional) week position.
   const yAtWeek = (pos: number) => {
     const s = stretches.find((st) => pos <= st.at + st.p.weeks.length) ?? stretches[stretches.length - 1];
@@ -105,23 +109,13 @@ function ClimbProfile({ phases, goalName, goalDate, onPick }: { phases: SeasonPh
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="group" aria-label={label}>
+      {/* Het beeld vangt geen tik; de tikvakken liggen er bovenop (hieronder). */}
       {stretches.map(({ p, k, x0, x1 }) => {
         const color = PHASE_COLOR[p.id] ?? 'var(--color-ink-dim)';
         const y0 = yAt(k, 0);
         const y1 = yAt(k, 1);
         return (
-          <g
-            key={p.id}
-            role="button"
-            tabIndex={0}
-            className="[&:focus-visible>rect]:stroke-[var(--color-status)]"
-            aria-label={`${sentenceCase(p.name)}, ${p.weeks.length} ${phaseWeeks(p)}. Open deze fase`}
-            onClick={() => onPick(p.id)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(p.id); } }}
-            style={{ cursor: 'pointer', outline: 'none' }}
-          >
-            {/* Het vlak is het tikdoel en bij Tab-focus de ring (ijs), binnen het beeld zodat hij niet wordt afgeknipt. */}
-            <rect x={x0 + 1} y={1} width={Math.max(0, x1 - x0 - 2)} height={H - 2} rx={8} fill="transparent" stroke="transparent" strokeWidth={2} />
+          <g key={p.id} style={{ pointerEvents: 'none' }}>
             <polygon points={`${x0},${BASE_Y + 8} ${x0},${y0} ${x1},${y1} ${x1},${BASE_Y + 8}`} fill={color} opacity={p.current ? 0.32 : 0.16} />
             <line x1={x0} y1={y0} x2={x1} y2={y1} stroke={color} strokeWidth={3.5} strokeLinecap="round" opacity={p.current || p.weeks.every((w) => w.past) ? 1 : 0.75} />
           </g>
@@ -157,6 +151,25 @@ function ClimbProfile({ phases, goalName, goalDate, onPick }: { phases: SeasonPh
           <text x={nowLabelX} y={nowY - 22} textAnchor="middle" fontSize={12} fontWeight={600} fill="var(--color-on-status)" fontFamily="var(--font-sans)">nu</text>
         </g>
       )}
+      {/* Elk vak is het tikdoel en bij Tab-focus de ring (ijs), minstens 44 breed (I-20): een korte fase leent van zijn
+          buren, binnen het beeld zodat de ring niet wordt afgeknipt. */}
+      {hits.map(([a, b], k) => {
+        const p = phases[k];
+        return (
+          <g
+            key={`hit-${p.id}`}
+            role="button"
+            tabIndex={0}
+            className="[&:focus-visible>rect]:stroke-[var(--color-status)]"
+            aria-label={`${sentenceCase(p.name)}, ${p.weeks.length} ${phaseWeeks(p)}. Open deze fase`}
+            onClick={() => onPick(p.id)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(p.id); } }}
+            style={{ cursor: 'pointer', outline: 'none' }}
+          >
+            <rect x={a + 1} y={1} width={Math.max(0, b - a - 2)} height={H - 2} rx={8} fill="transparent" stroke="transparent" strokeWidth={2} />
+          </g>
+        );
+      })}
     </svg>
   );
 }

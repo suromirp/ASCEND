@@ -5,7 +5,7 @@ import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { RouteAnswer, RouteFn, RoutePoint, RouteTarget } from '../models/route';
 import type { TrainingSpot } from '../data/trainingSpots';
 import { metersBetween, offsetPoint } from './routeGeometry';
-import { ascentCappedLine, MAX_LOOP_DISTANCE_FACTOR, composeSimple, footReachable, footStartLine, plansWithPriority, proposalNotes, proposeRoutes, proposeSimple, type PlanOutcome } from './routePlanner';
+import { ascentCappedLine, ascentRepeatsLine, MAX_REPEATS, MAX_LOOP_DISTANCE_FACTOR, composeSimple, footReachable, footStartLine, plansWithPriority, proposalNotes, proposeRoutes, proposeSimple, type PlanOutcome } from './routePlanner';
 import { ASCENT_LENGTH_ADVICE, choiceSum, loopChoiceRows, outdoorPlus, resolveAscentLength, resolveDriveLimit, resolveLoopPriority, driveLimitMinutes, TREADMILL_LINE } from './routeClimbPlan';
 import { MAP_FAILED_LINE, MAP_FETCHING_LINE, MAP_MISSING_LINE, mapMissing, mapRetryLine, pickTransition, routeSheetParts } from './routeSheet';
 
@@ -98,6 +98,19 @@ describe('I-160: de lange aanloop at de hoogtemeters op', () => {
     expect(d.ascentCapped).toBeUndefined();
     const rows = loopChoiceRows(plans, target, 'ascent', 'ascent');
     expect(rows.map((r) => r.label)).toEqual(['Hoogtemeters halen', 'Afstand houden']);
+  });
+
+  it('I-165: afgekapt op het hoogste aantal herhalingen geeft ook een zin, met de echte reden', async () => {
+    const small = feature(200, 900, 12);
+    const route = fakeRoute([{ at: small, height: 12, climbLen: 150 }]);
+    const plans = await proposeRoutes({ start: START, target: TARGET, terrain: terrain(small), loop: { priority: 'ascent', driveLimitMin: 30, maxLengthFactor: 2 }, now: NOW }, route);
+    const p = ok(plans.simple)!;
+    expect(p.repeats).toBe(MAX_REPEATS);
+    expect(p.ascentM).toBeLessThan(300);
+    expect(p.ascentCapped).toBe(true);
+    const notes = proposalNotes(p, TARGET);
+    expect(notes).toContain(ascentRepeatsLine(TARGET));
+    expect(notes).not.toContain(ascentCappedLine(TARGET, 2));
   });
 
   it('een helling die de hoogtemeters wel haalt binnen de grens krijgt de zin niet', async () => {
