@@ -26,6 +26,9 @@ const ADVANCED = PAGE_ROWS.forge.advanced;
 // het advies als standaard (docs/beslissingen/2026-10-22-alles-instelbaar.md). Keuzes die bij
 // elkaar horen staan achter één rij met een blad (docs/beslissingen/2026-10-26-instellingen-opruimen.md);
 // wat bij een andere keuze hoort verschijnt pas als die aan staat (data/settingsLayout.ts).
+// De titel volgt de instelling Woorden: Gewoon zegt Over, Precies zegt RIR (engine/forgeWords.ts).
+const rirTitle = (words: 'plain' | 'jargon'): string => (words === 'jargon' ? 'RIR vooraf invullen' : 'Over vooraf invullen');
+
 export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
   const { settings, updateSettings, setStrengthExternal } = useAppData();
   const s = resolveStrengthSettings(settings.strengthModel);
@@ -137,7 +140,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-onderbreking" title="Lange onderbreking vragen na" facts={facts} info="forgeOnderbreking" onClick={() => setInner('forge-onderbreking')} />
           <SummaryRow id="forge-concept" title="Training bewaren als concept na" facts={facts} info="forgeConcept" onClick={() => setInner('forge-concept')} />
           <SummaryRow id="forge-vegen" title="Vegen om te verwijderen" facts={facts} info="forgeVegen" onChange={(on) => void updateSettings({ forgeSwipeDelete: on })} />
-          <SummaryRow id="forge-rir-vooraf" title="RIR vooraf invullen" facts={facts} info="forgeRirVooraf" onClick={() => setInner('forge-rir-vooraf')} />
+          <SummaryRow id="forge-rir-vooraf" title={rirTitle(s.words)} facts={facts} info="forgeRirVooraf" onClick={() => setInner('forge-rir-vooraf')} />
           <SummaryRow id="forge-rir-snel" title="Hoeveel over na een set" facts={facts} info="forgeRirSnel" onClick={() => setInner('forge-rir-snel')} />
           <SummaryRow id="forge-stappen" title="Stappen bij calisthenics" facts={facts} info="forgeStappen" onChange={(on) => save({ ladderRow: on })} />
           <SummaryRow id="forge-netjes" title="Ging het netjes?" facts={facts} info="forgeNetjes" onChange={(on) => save({ askClean: on })} />
@@ -207,7 +210,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {inner === 'forge-volgorde-lijst' && <ChoiceFromDef def={CHOICES.forgeVolgorde} value={s.listSort} onPick={(v) => save({ listSort: v })} onClose={closeInner} />}
       {inner === 'forge-sets' && <ChoiceFromDef def={CHOICES.werksets} value={s.workSets} onPick={(v) => save({ workSets: v })} onClose={closeInner} />}
       {inner === 'forge-rir-snel' && <ChoiceFromDef def={CHOICES.rirSnel} value={s.quickRirMode} onPick={(v) => save({ quickRirMode: v, quickRir: v !== 'uit' })} onClose={closeInner} />}
-      {inner === 'forge-rir-vooraf' && <ChoiceFromDef def={CHOICES.rirVooraf} value={s.rirPrefill} onPick={(v) => save({ rirPrefill: v })} onClose={closeInner} />}
+      {inner === 'forge-rir-vooraf' && <ChoiceFromDef def={s.words === 'jargon' ? CHOICES.rirVooraf : { ...CHOICES.rirVooraf, title: rirTitle('plain'), line: 'Wat er in het veld Over van een werkset staat voor je iets invult.' }} value={s.rirPrefill} onPick={(v) => save({ rirPrefill: v })} onClose={closeInner} />}
       {inner === 'forge-doorvoeren' && <ChoiceFromDef def={CHOICES.doorvoeren} value={s.carryMode} onPick={(v) => save({ carryMode: v })} onClose={closeInner} />}
       {inner === 'forge-vermoeidheid' && <ChoiceFromDef def={CHOICES.vermoeidheid} value={s.fatigue} onPick={(v) => save({ fatigue: v })} onClose={closeInner} />}
       {inner === 'forge-schatting' && <ChoiceFromDef def={CHOICES.schatting} value={s.estimateUpTo as 12 | 15 | 20} onPick={(v) => save({ estimateUpTo: v })} onClose={closeInner} />}

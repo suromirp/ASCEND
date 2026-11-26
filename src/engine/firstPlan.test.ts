@@ -250,6 +250,14 @@ describe('firstPlanLines: de tekst volgt de week van het plan', () => {
     expect(line).not.toMatch(/past het/);
   });
 
+  it('het woord voor de rustdag volgt Op je rustdag, in beide standen', () => {
+    const text = { head: [], tail: [] };
+    const rows = [row(2, 'Bovenlichaam A', true), row(1, 'Herstelwandeling', false, true)];
+    expect(firstPlanLines(text, rows, false, 'rest')).toContain('Rustdag: maandag.');
+    expect(firstPlanLines(text, rows, false, 'active')).toContain('Hersteldag: maandag.');
+    expect(firstPlanLines(text, rows)).toContain('Rustdag: maandag.');
+  });
+
   it('de rustdag alleen als de week een herstelrij heeft, op de dag van die rij', () => {
     const text = { head: [], tail: [] };
     expect(firstPlanLines(text, [row(2, 'Bovenlichaam A', true), row(7, 'Lange duurloop')]).some((l) => l.startsWith('Rustdag'))).toBe(false);

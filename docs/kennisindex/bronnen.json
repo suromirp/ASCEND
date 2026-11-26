@@ -3447,6 +3447,13 @@
    "stand": "verouderd",
    "waarom": "De meting van 2 november (`docs/onderhoud/2026-11-02-exports.md`) heeft deze lijst niet gebruikt en is nieuwer."
   },
+  "docs/onderhoud/sherpa-kleine-woorden.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "I-149, I-152, I-153: RPE 3-4, RIR en rustdag volgen de instellingen Woorden en Op je rustdag. Wat veranderde, welk kaartverschil en wat bewust bleef staan.",
+   "stand": "achtergrond"
+  },
   "docs/onderhoud/sherpa-i161.md": {
    "onderwerpen": [
     "doelen"

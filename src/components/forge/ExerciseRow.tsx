@@ -10,6 +10,8 @@ import { useNavigate } from 'react-router-dom';
 import { Icon } from '../icons';
 import { ExerciseArtButton } from '../ExerciseArtButton';
 import { Eyebrow } from '../ui';
+import { useForgeWords } from '../useForgeWords';
+import { refillText } from '../../engine/forgeWords';
 import { ExerciseChart } from './ExerciseChart';
 import { TrendSpark } from './TrendSpark';
 import type { OneRmReading } from '../../models/metrics';
@@ -26,12 +28,6 @@ import { kgLabel } from '../../utils/kg';
 const TONE: Record<DeltaTone, string> = { up: 'var(--color-progress)', flat: 'var(--color-ink-dim)' };
 
 // Wat er aan de sets ontbreekt, en hoe het erbij komt.
-const REFILL_TEXT: Record<MissingData, string> = {
-  rir: 'Deze sets staan hier nog zonder herhalingen in reserve (RIR); ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan komen ze erbij.',
-  help: 'Deze sets staan hier nog zonder de hulp van het apparaat; ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan komen ze erbij.',
-  rir_and_help: 'Deze sets staan hier nog zonder herhalingen in reserve (RIR) en zonder de hulp van het apparaat; ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan komen ze erbij.',
-};
-
 export function ExerciseRow({
   view,
   mode,
@@ -149,6 +145,7 @@ function Cell({ label, point, status = 'ok', today, kind, view, bodyKg, showExtr
 }
 
 function ExerciseDetail({ view, kind, bodyKg, today, cmp, showExtras, onHistory }: { view: ExerciseView; kind: ValueKind; bodyKg: number | undefined; today: string; cmp: Comparison; showExtras: boolean; onHistory: () => void }) {
+  const words = useForgeWords();
   const navigate = useNavigate();
   const { history, next, strengthKg, weightMismatch } = view;
   const exercise = history.exercise;
@@ -163,7 +160,7 @@ function ExerciseDetail({ view, kind, bodyKg, today, cmp, showExtras, onHistory 
     missing = weightMismatch
       ? WEIGHT_MISMATCH_TEXT
       : refill
-        ? REFILL_TEXT[refill]
+        ? refillText(refill, words)
         : bodyKg === undefined && exercise?.bodyweightFraction !== undefined
           ? 'Vul je lichaamsgewicht in bij Instellingen, Lichaam, dan telt deze oefening mee.'
           : strengthKg === undefined

@@ -39,6 +39,8 @@ import { ZONE_SENTENCE } from './vandaag/zone';
 import { IntervalProfile, KeyNumbers, ModalityChoice, MoreText, StepList, StretchRow } from './duur/DuurParts';
 import { WatchStatusRow } from './WatchStatusRow';
 import { buildSessionBrief } from '../engine/sessionBrief';
+import { useForgeWords } from './useForgeWords';
+import { effortWords } from '../engine/forgeWords';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { durationNeedsCheck, entryMinutes, longDurationText } from '../engine/inputLimits';
 import { ForgeWorkout } from './forge/ForgeWorkout';
@@ -174,6 +176,7 @@ function GeneralLogger({
     });
   }
 
+  const forgeWords = useForgeWords();
   const brief = buildSessionBrief(template, scheduledDate ?? today, program, {
     modalityKey: guidanceMode === 'ascend_guided' ? modalityKey : undefined,
     templates,
@@ -304,7 +307,7 @@ function GeneralLogger({
               {brief.howTo.map((line, i) => (
                 <li key={`${i}-${line}`} className="flex gap-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
                   <span aria-hidden="true" style={{ color: 'var(--color-ink-dim)' }}>·</span>
-                  <span>{line}</span>
+                  <span>{effortWords(line, forgeWords)}</span>
                 </li>
               ))}
             </ul>

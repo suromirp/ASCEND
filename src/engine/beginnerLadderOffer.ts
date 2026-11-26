@@ -6,6 +6,7 @@
 // kracht. Tot het Akkoord blijft zo'n start zoals hij is (engine/beginnerStart.ts#resolveStartBuild).
 // Puur: geen React, geen IndexedDB.
 
+import { REST_DAY_COPY } from '../data/restDayCopy';
 import type { Advice } from './adviceShared';
 import type { Program } from '../models/program';
 import { BEGINNER_LADDER } from '../data/beginnerLadder';
@@ -26,6 +27,7 @@ export const BEGINNER_LADDER_EXPLANATION =
 interface OfferSettings {
   beginnerBuild?: unknown;
   beginnerLadder?: unknown;
+  restDayMode?: 'rest' | 'active';
 }
 
 // Wat er verandert, voor het voorstel met de planningsronde. De getallen komen uit de ladder (data/beginnerLadder.ts).
@@ -36,7 +38,7 @@ export function beginnerLadderLines(settings: OfferSettings, week: number): stri
     ...(settings.beginnerBuild === 'licht' ? [] : [WALK_JOG_LINE]),
     `Deze week: kracht ${rung.strengthMinutes} minuten, met minder sets.`,
     `Wandelen en dribbelen: ${rung.shortMinutes} en ${rung.longMinutes} minuten.`,
-    `Wandelen op je rustdag: hoogstens ${rung.shortMinutes} minuten.`,
+    `Wandelen op je ${REST_DAY_COPY[settings.restDayMode ?? 'rest'].title.toLowerCase()}: hoogstens ${rung.shortMinutes} minuten.`,
     ...(rung.week < last.week
       ? [`Elke week iets meer, tot kracht ${last.strengthMinutes} minuten en wandelen en dribbelen ${last.shortMinutes} en ${last.longMinutes} minuten.`]
       : []),

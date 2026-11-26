@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BEGINNER_LADDER_RULE, beginnerLadderAdvice, beginnerLadderLines, beginnerLadderOfferId } from './beginnerLadderOffer';
+import { REST_DAY_COPY } from '../data/restDayCopy';
 import { layoutWaves } from './programLayout';
 import { WALK_JOG_LINE } from './beginnerStart';
 import type { Program } from '../models/program';
@@ -72,5 +73,16 @@ describe('het voorstel voor wie al in een start zit', () => {
   it('teksten zonder gedachtestreepjes', () => {
     const a = offer({})[0];
     for (const text of [a.title, a.brief ?? '', a.effect, a.why, ...beginnerLadderLines({}, 1)]) expect(text).not.toMatch(NO_GHOST_HYPHENS);
+  });
+});
+
+describe('beginnerLadderLines: het woord voor de rustdag', () => {
+  it('volgt Op je rustdag, in beide standen', () => {
+    expect(beginnerLadderLines({}, 1).some((l) => l.startsWith('Wandelen op je rustdag: hoogstens'))).toBe(true);
+    expect(beginnerLadderLines({ restDayMode: 'rest' }, 1).some((l) => l.startsWith('Wandelen op je rustdag: hoogstens'))).toBe(true);
+    const active = beginnerLadderLines({ restDayMode: 'active' }, 1);
+    expect(active.some((l) => l.startsWith('Wandelen op je hersteldag: hoogstens'))).toBe(true);
+    expect(active.join(' ')).not.toMatch(/rustdag/);
+    expect(REST_DAY_COPY.active.title).toBe('Hersteldag');
   });
 });

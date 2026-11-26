@@ -323,7 +323,7 @@ export async function computeHorizonPlan(given: HorizonChangeInput, deps: Horizo
   // Het eerste voorstel noemt de week van het voorbeeld, niet de vorm die de vragen kozen: wat het noemt staat daarna in Week.
   const text = input.firstPlan?.text;
   const week = text ? textWeek(stored, today) : undefined;
-  const own = text && week ? firstPlanLines(text, weekRows(done.run.after, templates, week.from), week.only) : (input.notes ?? []);
+  const own = text && week ? firstPlanLines(text, weekRows(done.run.after, templates, week.from), week.only, (input.settings?.restDayMode ?? (await SettingsRepo.get()).restDayMode) ?? 'rest') : (input.notes ?? []);
   return {
     input, proposal, notes: [...own, ...conflictNotes, ...diff.notes], lengths: input.lengths ?? lengths, counts: diff.counts,
     ...(conflicts.length > 0 ? { conflicts } : {}),

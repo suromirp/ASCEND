@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CALM_WORDS, effortWords, forgeLabels, resolveForgeWords } from './forgeWords';
+import { CALM_WORDS, effortWords, forgeLabels, refillText, emptyForgeNeed, resolveForgeWords } from './forgeWords';
 import { INTENSITY } from '../data/workoutStructure';
 import { FIRST_STRENGTH_LINE, FORGE_READ_LINES } from '../data/forgeReadLines';
 
@@ -28,5 +28,24 @@ describe('forgeWords', () => {
     for (const l of FORGE_READ_LINES) expect(`${l.head} ${l.text}`).not.toMatch(/[–—]/);
     expect(FORGE_READ_LINES[2].text).toMatch(/Twijfel je tussen twee, kies de laagste/);
     expect(FIRST_STRENGTH_LINE).toBe('Kies een gewicht dat licht voelt. Je moet er nog een paar over hebben.');
+  });
+});
+
+describe('forgeWords: Over en RIR in de meldingen (I-153)', () => {
+  it('Gewoon zegt wat je over had, Precies zegt RIR', () => {
+    for (const m of ['rir', 'rir_and_help'] as const) {
+      expect(refillText(m, 'plain')).toContain('wat je over had');
+      expect(refillText(m, 'plain')).not.toMatch(/RIR/);
+      expect(refillText(m, 'jargon')).toContain('(RIR)');
+    }
+    expect(refillText('help', 'plain')).toBe(refillText('help', 'jargon'));
+    expect(emptyForgeNeed('plain')).not.toMatch(/RIR/);
+    expect(emptyForgeNeed('jargon')).toMatch(/RIR/);
+  });
+
+  it('RPE 3-4/10 in een gidstekst volgt Woorden (I-152)', () => {
+    const how = 'Continu rustig lopen. RPE 3-4/10, gesprekstempo.';
+    expect(effortWords(how, 'plain')).toBe(`Continu rustig lopen. ${CALM_WORDS}, gesprekstempo.`);
+    expect(effortWords(how, 'jargon')).toBe(how);
   });
 });
