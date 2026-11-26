@@ -386,11 +386,11 @@ describe('de woorden van het voorstel', () => {
 
   it('met een gids de eerste regel en de dosis, zonder gids alleen de dosis; een houding in gewone woorden', () => {
     expect(make({}).how).toBe('Voorvoet op een trede, kom hoog op je tenen. 3 sets van 10 tot 15 herhalingen.');
-    // Elke kandidaat heeft nu een gids; een oefening zonder (Hack Squat, of een die ASCEND niet kent) toont de dosis.
+    // Elke kandidaat heeft nu een gids; een oefening zonder (Machine Torso Rotation, of een die ASCEND niet kent) toont de dosis.
     expect(make({ muscle: 'glutes', exerciseId: 'dumbbell-frog-pump', exerciseName: 'Dumbbell Frog Pump', reps: '10-12' }).how).toBe('Voetzolen tegen elkaar, knieën open, heupen omhoog. 3 sets van 10 tot 12 herhalingen.');
     expect(make({ muscle: 'glutes', exerciseId: 'lateral-band-walk', exerciseName: 'Banded Lateral Walk', reps: '10-12' }).how).toBe('Band boven je knieën, zak iets door, stap opzij. 3 sets van 10 tot 12 herhalingen.');
-    expect(exerciseById('hack-squat')?.guide).toBeUndefined();
-    expect(make({ muscle: 'glutes', exerciseId: 'hack-squat', exerciseName: 'Hack Squat', reps: '10-12' }).how).toBe('3 sets van 10 tot 12 herhalingen.');
+    expect(exerciseById('machine-torso-rotation')?.guide).toBeUndefined();
+    expect(make({ muscle: 'glutes', exerciseId: 'machine-torso-rotation', exerciseName: 'Machine Torso Rotation', reps: '10-12' }).how).toBe('3 sets van 10 tot 12 herhalingen.');
     expect(make({ muscle: 'glutes', exerciseId: 'bestaat-niet', exerciseName: 'Eigen oefening', reps: '10-12' }).how).toBe('3 sets van 10 tot 12 herhalingen.');
     expect(make({ muscle: 'balance', exerciseId: 'single-leg-stance', exerciseName: 'Single Leg Stance', reps: '4-6' }).how).toBe('Sta op één been tot je gaat wiebelen, dan op het andere been. Drie keer per been.');
   });
