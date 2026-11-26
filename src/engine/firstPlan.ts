@@ -203,6 +203,10 @@ function goalLine(answers: StartAnswers): string {
   return 'Geen doel met een datum, wel een richting.';
 }
 
+// De vervolgweken: het weekvoorschrift (engine/weeklyPrescriptionEngine.ts) stemt ze bij elke opening af op je doel
+// en meldt wat het verandert (storage/weeklyPrescriptionStep.ts), of vraagt het eerst met die instelling.
+export const FOLLOW_WEEKS_LINE = 'Vanaf over twee weken stemt het weekplan elke week af op je doel. Wat het daar verandert, meldt het je.';
+
 // Which kind of week fits goals that are already there.
 export function kindOfExistingGoals(goals: TrainingGoal[], milestones: GoalMilestone[]): StartGoalKind {
   if (mainGoal(goals, milestones, 'live')) return 'trek';
@@ -278,6 +282,10 @@ export function buildFirstPlan(answers: StartAnswers, templates: SessionTemplate
       ...(beginner ? [WALK_JOG_LINE, beginnerWeekOneLine(week.kept) ?? ''] : []),
       ...(direction ? ['Je week bestaat uit kracht en lopen. Andere sporten die je doet tellen straks gewoon mee.'] : []),
       ...week.notes,
+      // I-148: met een doel met een datum stemt het weekvoorschrift bij elke opening de vervolgweken af (een rustige
+      // duurloop erbij in de week van een wedstrijd); het voorbeeld toont de eerste twee weken (invariant 2). Zo zegt
+      // het voorstel wat er daarna gebeurt (docs/beslissingen/2026-11-26-planning-losse-punten.md).
+      ...(answers.goal === 'race' || answers.goal === 'trek' ? [FOLLOW_WEEKS_LINE] : []),
     ].filter(Boolean),
   };
   // Voor het voorbeeld er is: de week zoals de vorm hem zet (een rij per sjabloon op zijn dag).
