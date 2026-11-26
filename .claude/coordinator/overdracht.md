@@ -1,5 +1,11 @@
 # Overdracht coördinator ASCEND
 
+## Backlogsessie C, beenindex (Rooster ronde 6, branch claude/beenindex-26nov)
+
+- Opdracht eigenaar: geen proefversie, moet kloppen. Sportwetenschapper klaar: docs/onderzoek/Beenindex leert van je ochtenden.md (factor k op de som van de trainingen, 0,7 tot 1,4, vanaf 20 gewogen ijkpunten, krimp naar 1, stap hoogstens 0,15, één voorstel per 28 dagen; beslissers rekenen met max(1,k), alleen de woorden volgen k onder 1; regels F1 tot F13 nooit soepeler).
+- Keuzes Sherpa (in het besluit vast te leggen): backup-schema blijft 6 (optionele velden legAnswers, legFactorLog, legIndexLearning); legAnswers is archief van wat uit de 60 ochtendchecks valt; legsFrom op de ochtendcheck; geen apart record voor een getoond voorstel, rust telt vanaf akkoord of liever-niet.
+- Stand: legFatigue factor-invoer, models/legIndex.ts, engine/legIndexLearning.ts geschreven; nog bouwen: opslag, doorgeven, UI, tests, besluit, Warden en Lookout.
+
 ## Backlogsessie B, ijktocht (Rooster ronde 5, branch claude/ijktocht-26nov)
 
 - Live: main 62e1434 (de vaste ijktocht). Besluit docs/beslissingen/2026-11-26-ijktocht.md: calibrationHike zes (advies), acht of uit; alleen met bergdoel of bergtocht; voorstel met Akkoord, tpl_ijktocht 60 min (kort 45); uitkomst als rij IJktocht in Je stand, Belasting; geen vormwijziging. Warden één Moet (afdaling en ijktocht naast elkaar als een van beide gepland staat), Sherpa herstelde; Lookout groen. Mag-rest in I-170. Hoogste code I-170. Terugmelding naar session_01LnDpSjkesdr3Yd8mZZV9XL gezet. Rooster: alleen ronde 6 (beenindex) open.

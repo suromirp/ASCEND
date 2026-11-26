@@ -16,6 +16,9 @@ export interface MorningCheckIn {
   // Alleen bij spierpijn of flinke spierpijn: 'upper' = de spierpijn zit alleen in je bovenlichaam.
   // Afwezig = de benen, zoals altijd. Zie engine/wellbeing.ts#upperOnly.
   soreWhere?: 'upper';
+  // Waar het benenantwoord vandaan kwam: 'voorstel' = je bevestigde de vooringevulde keuze,
+  // 'zelf' = je koos zelf. Afwezig = een ochtend van voor dit veld (engine/legIndexLearning.ts).
+  legsFrom?: 'voorstel' | 'zelf';
   energy?: EnergyFeeling;
   sleep?: SleepFeeling;
   // The sleep answer came from the proposal (watch or your own estimate of a night),

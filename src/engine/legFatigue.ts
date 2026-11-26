@@ -135,6 +135,10 @@ export interface LegFatigueInputs {
   minutesOf?: (session: PlannedSession, template: SessionTemplate) => number;
   // Morning reports of muscle soreness (pain research: a floor, never lower).
   soreness?: FatigueSoreness[];
+  // Je eigen beenindex (engine/legIndexLearning.ts): een geaccepteerde factor op de som van de trainingen,
+  // nooit op de pijnpunten of de spierpijnvloer. Afwezig is 1, het model zoals het is. Wie beslist (planner,
+  // ruimte voor een test, zware dagen) geeft hier alleen legIndexSafeFactor door, nooit lager dan 1.
+  factor?: number;
 }
 
 export interface FatigueEvent {
@@ -299,8 +303,19 @@ export function sessionImpulse(event: FatigueEvent, template: SessionTemplate, a
 }
 
 // --- the index on a day ------------------------------------------------------------
+// De factor van je eigen beenindex, altijd binnen de vaste band (engine/legIndexLearning.ts).
+// Een kapotte of ontbrekende waarde is 1.
+export const LEG_FACTOR_MIN = 0.7;
+export const LEG_FACTOR_MAX = 1.4;
+export function clampFactor(f: number | undefined): number {
+  if (f === undefined || !Number.isFinite(f)) return 1;
+  return Math.min(LEG_FACTOR_MAX, Math.max(LEG_FACTOR_MIN, f));
+}
+
 export function legFatigueOn(date: string, inputs: LegFatigueInputs, events = fatigueEvents(inputs)): LegFatigueResult {
   const byId = new Map(inputs.templates.map((t) => [t.id, t]));
+  // Je eigen factor geldt per training, zodat de bijdragen en het totaal bij elkaar blijven passen.
+  const factor = clampFactor(inputs.factor);
   const contributions: FatigueContribution[] = [];
   for (const e of events) {
     const days = daysBetween(e.date, date);
@@ -308,7 +323,7 @@ export function legFatigueOn(date: string, inputs: LegFatigueInputs, events = fa
     const t = byId.get(e.templateId);
     if (!t) continue;
     const imp = sessionImpulse(e, t, events, byId, inputs.bodyKg);
-    const c = { intensity: imp.intensity * intensityLeft(days), strength: imp.strength * strengthLeft(days), damage: imp.damage * damageLeft(days) };
+    const c = { intensity: imp.intensity * intensityLeft(days) * factor, strength: imp.strength * strengthLeft(days) * factor, damage: imp.damage * damageLeft(days) * factor };
     const points = c.intensity + c.strength + c.damage;
     if (points < 0.05) continue;
     contributions.push({ id: e.id, templateId: e.templateId, name: t.name, date: e.date, points, ...c, logged: e.logged });

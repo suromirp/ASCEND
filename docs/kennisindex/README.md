@@ -11,7 +11,7 @@ Een nieuw document in `docs/` krijgt een regel in `bronnen.json`, en haalt het e
 oudere besluit de stand deels of vervangen. Daarna `npm run kennisindex`; de test
 `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 618 documenten: 369 gelden, 92 deels ingehaald, 3 vervangen, 3 verouderd, 151 achtergrond.
+Stand van de 619 documenten: 369 gelden, 92 deels ingehaald, 3 vervangen, 3 verouderd, 152 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; deels ingehaald geldt alleen nog voor wat achter "Geldt nog" staat, de
@@ -60,7 +60,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/lichaam-en-herstel.md](../werkbriefjes/lichaam-en-herstel.md)
 - [architectuur/lichaam-en-herstel.md](../architectuur/lichaam-en-herstel.md): Het lange verhaal bij lichaam: het figuur, hoe voelt je lijf, een zware beendag op vermoeide benen, een korte nacht en wat speelde er.
-- Alles over dit onderwerp: [lichaam-en-herstel.md](lichaam-en-herstel.md) (38 besluiten die gelden, 9 deels ingehaald, 20 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [lichaam-en-herstel.md](lichaam-en-herstel.md) (38 besluiten die gelden, 9 deels ingehaald, 21 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Historie en logs
 
