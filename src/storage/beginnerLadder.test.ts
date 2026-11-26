@@ -116,7 +116,15 @@ describe('de ladder van heel licht in de planning', () => {
       expect(row, `${draft.scheduledDate} ${draft.templateId}`).toBeDefined();
       expect(c.plannedMinutes, `voorstel ${draft.scheduledDate}`).toBe(row.minutes);
       expect(row.minutes).toBeLessThanOrEqual(rungs[Math.min(weekOf(row.s), rungs.length) - 1].strength);
+      // I-146: de rij krijgt geen vaste lengte; het getal in het voorstel is alleen tekst. Zo volgt hij de ladder.
+      expect(row.s.plannedMinutes, `vaste lengte ${draft.scheduledDate}`).toBeUndefined();
     }
+    // I-146: een ander niveau van de start (de gewone opbouw in plaats van de ladder): de nieuwe rij schuift mee.
+    const program = (await ProgramsRepo.getAll())[0];
+    const added = rows.filter((r) => !known.has(r.s.id) && r.t.type === 'strength' && inStart.some((c) => c.newSessionDraft!.scheduledDate === r.s.scheduledDate));
+    setStartBuild('gewoon');
+    for (const r of added) expect(resolveVariantDuration(r.t, 'full', r.s.scheduledDate, program), r.s.scheduledDate).toBeGreaterThan(r.minutes);
+    setStartBuild('ladder');
     // Elke kracht in week 1 en 2 blijft op de ladder, ook met Meer.
     for (const r of rows.filter((x) => x.t.type === 'strength' && weekOf(x.s) <= 2)) {
       expect(r.minutes, `${r.s.scheduledDate} ${r.t.id}`).toBeLessThanOrEqual(rungs[weekOf(r.s) - 1].strength);
