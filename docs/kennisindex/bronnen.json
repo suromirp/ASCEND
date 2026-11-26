@@ -4856,6 +4856,15 @@
    ],
    "kern": "Een formulier (Hoe ging het?, Afronden in Forge) wacht hoogstens 30 s op een eerdere opslag voor dezelfde geplande training (EARLIER_SAVE_LIMIT_MS, waitForEarlierSave); daarna staat Opslaan weer aan met een zichtbare uitkomst. Na de gewone grens gaat Opslaan bij een geplande training in beide formulieren weer aan, bij een losse training in Hoe ging het? niet (I-135, I-139, I-140).",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-26-feestdagen-als-voorstel.md": {
+   "onderwerpen": [
+    "planning",
+    "week",
+    "koppelingen-en-data"
+   ],
+   "kern": "Een officiële feestdag (Nager.Date, global en Public, land uit de instelling, standaard Nederland) binnen de planhorizon op een dag zonder periode wordt één voorstel om hem als vrije dag te zetten, via planLeave en applyLeave; Liever niet geldt per feestdag (localStorage). Het voorstel staat in Week boven Vrije dagen en vakanties, de naam stil op een lege dag. De cache gaat niet in de back-up; de twee instellingen wel, via migrateHolidaySettings.",
+   "stand": "geldt"
   }
  }
 }

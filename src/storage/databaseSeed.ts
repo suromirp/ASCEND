@@ -7,6 +7,7 @@ import { layoutPhases } from '../engine/programLayout';
 import { clearForgeSessions } from '../utils/forgeSessionStore';
 import { clearMuscleDeclines } from '../utils/muscleDeclines';
 import { clearStepDeclines } from '../utils/stepDeclines';
+import { clearHolidayDeclines } from '../utils/holidayDeclines';
 import { MetaRepo, putAll, ProgramsRepo, PlannedSessionsRepo, SessionLogsRepo, SessionTemplatesRepo, clearStore, replacePlannedSessions } from './databaseRepos';
 import { SCHEMA_VERSION } from './databaseSchema';
 import { patternContext, defaultPatternSelector, patternSessions, withPackTarget } from './databaseHorizon';
@@ -206,6 +207,8 @@ export async function resetToDemoData(): Promise<void> {
   clearMuscleDeclines();
   // En van Liever niet bij een stapvoorstel op een ladder.
   clearStepDeclines();
+  // En van Liever niet bij een feestdag als vrije dag.
+  clearHolidayDeclines();
   // Like a fresh install: only the templates, no program or planning, so the app
   // opens on the welcome and asks before it plans anything
   // (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md). Stops it halfway, the

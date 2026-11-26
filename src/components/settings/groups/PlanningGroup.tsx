@@ -27,6 +27,8 @@ import { ChoiceList, ChoiceSheet } from '../Sheet';
 import { resolveDropOnTraining } from '../../../engine/dropOnTraining';
 import { resolveWeekAfterChoice } from '../../../engine/weekKept';
 import { resolveLeaveBackfill } from '../../../engine/leave';
+import { resolveHolidayCountry, resolveHolidayOffers } from '../../../engine/publicHolidays';
+import { HolidayStatus } from './HolidayStatus';
 
 const WEEKDAYS_NL = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag'];
 
@@ -191,10 +193,15 @@ export function PlanningGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       )}
       {sheet === 'volgorde-stand' && <OrderSheet onClose={close} />}
       {sheet === 'bundel-vakantie' && (
-        <BundleSheet eyebrow="Planning" title="Rond een vakantie" line="Wat er schuift en vervalt rond een vakantie, en hoe ver je terug mag." onClose={close}>
+        <BundleSheet eyebrow="Planning" title="Rond een vakantie" line="Wat er schuift en vervalt rond een vakantie, en hoe ver je terug mag." onClose={close} footer={<HolidayStatus />}>
           <SummaryRow id="vakantie-schuiven" title="Rond een vakantie schuiven" facts={facts} info="vakantieSchuiven" onClick={() => setInner('vakantie-schuiven')} />
           <SummaryRow id="vakantie-achteraf" title="Periode achteraf vastleggen" facts={facts} info="vakantieAchteraf" onClick={() => setInner('vakantie-achteraf')} />
           <SummaryRow id="vakantie-opzij" title="Opzij voor een vakantie" facts={facts} info="vakantieOpzij" onClick={() => setInner('vakantie-opzij')} />
+          {/* Verandert geen planning: een feestdag wordt alleen met Akkoord een vrije dag. Meteen bewaard. */}
+          <SummaryRow id="feestdagen" title="Feestdagen voorstellen" facts={facts} info="feestdagen" onChange={(on) => void updateSettings({ publicHolidayOffers: on })} />
+          {resolveHolidayOffers(settings.publicHolidayOffers) && (
+            <SummaryRow id="feestdagen-land" title="Land van je feestdagen" facts={facts} info="feestdagen-land" onClick={() => setInner('feestdagen-land')} />
+          )}
         </BundleSheet>
       )}
       {inner === 'vakantie-schuiven' && (
@@ -208,6 +215,9 @@ export function PlanningGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {/* Verandert geen planning, alleen wat je in het blad van een periode mag kiezen: meteen bewaard. */}
       {inner === 'vakantie-achteraf' && (
         <ChoiceFromDef def={CHOICES.vakantieAchteraf} value={resolveLeaveBackfill(settings.leaveBackfill)} onPick={(v) => void updateSettings({ leaveBackfill: v })} onClose={closeInner} />
+      )}
+      {inner === 'feestdagen-land' && (
+        <ChoiceFromDef def={CHOICES.feestdagenLand} value={resolveHolidayCountry(settings.publicHolidayCountry)} onPick={(v) => void updateSettings({ publicHolidayCountry: v })} onClose={closeInner} />
       )}
       {inner === 'vakantie-opzij' && (
         <ChoiceFromDef

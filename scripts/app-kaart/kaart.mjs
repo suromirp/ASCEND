@@ -35,6 +35,11 @@ process.env.LOOKOUT_SHOTS ??= join(ROOT, 'shots');
 const { open, BASE } = await import('../../.claude/skills/lookout/kit/lib.mjs');
 
 const KLOK = '2026-10-31T08:00:00+01:00';
+// De feestdagen die de kaart krijgt, in de vorm van Nager.Date (alleen global en Public tellen).
+const FEESTDAGEN = [
+  { date: '2026-12-25', localName: 'Eerste Kerstdag', name: 'Christmas Day', countryCode: 'NL', global: true, types: ['Public'] },
+  { date: '2026-12-26', localName: 'Tweede Kerstdag', name: "St. Stephen's Day", countryCode: 'NL', global: true, types: ['Public'] },
+];
 // De klok van een scherm met een eigen klok, zoals in de kop van de kaart: "1 november 2026, 08:00".
 const klokTekst = (iso) => new Date(iso).toLocaleString('nl-NL', { timeZone: 'Europe/Amsterdam', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(' om ', ', ');
 const WACHT = 3000;
@@ -372,6 +377,9 @@ async function maakScherm(id, uitMap, fotoMap, markeer) {
   const o = await open(390, { timezoneId: 'Europe/Amsterdam', locale: 'nl-NL', serviceWorkers: 'block', stand: s.stand });
   try {
     await o.page.clock.setFixedTime(new Date(s.klok ?? KLOK));
+    // Feestdagen (src/integrations/publicHolidays.ts) nooit van het echte netwerk: een vaste lijst, zodat de kaart op
+    // elke machine gelijk is, met en zonder verbinding.
+    await o.page.route('https://date.nager.at/**', (r) => r.fulfill({ json: FEESTDAGEN }));
     await o.page.goto(BASE + s.pad);
     await o.page.waitForTimeout(WACHT);
     // Een zware tab (Stand) rendert onder de vertraagde processor later: wacht op echte inhoud.

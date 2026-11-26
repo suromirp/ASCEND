@@ -11,6 +11,7 @@ import type { SessionLog } from '../models/training';
 import type { ExternalActivity } from '../engine/activityImport';
 import type { StreamSet } from '../models/activityDetail';
 import type { StoredLap } from '../models/activityStreams';
+import type { PublicHoliday } from '../models/publicHoliday';
 
 export interface DateRange {
   from: string; // ISO date
@@ -40,4 +41,7 @@ export interface DataSourceAdapter {
   // The laps or intervals of one activity, with their boundaries in seconds since the start
   // (`timeSec` of the series lets an adapter turn indexes into seconds).
   fetchActivityLaps?: (activity: Pick<ExternalActivity, 'externalId'>, timeSec?: readonly number[]) => Promise<StoredLap[]>;
+  // De officiële feestdagen van één jaar in één land (ISO 3166-1 alpha-2), alleen die landelijk gelden
+  // (integrations/publicHolidays.ts). De vorm draagt de bron in `source`.
+  fetchPublicHolidays?: (year: number, country: string) => Promise<PublicHoliday[]>;
 }

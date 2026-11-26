@@ -16,7 +16,7 @@ import { cleanMorningNotice } from '../engine/morningNotice';
 import { cleanWeekNoticeTime } from '../engine/deviceNotices';
 import { cleanEveningTime } from '../engine/eveningBefore';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateStartChoices, migrateSportHandling, migrateSportCounting, migrateKindAmount, migrateCustomSports, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateTestJudgments, migrateZoneAnswers, migrateStrapWorn, migrateShortTestSeries, migrateFirstSheet, migrateWeeklyHealthCheck, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateSportRestOffers, migrateSportRestKeep, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings } from './migrations';
+import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateStartChoices, migrateSportHandling, migrateSportCounting, migrateKindAmount, migrateCustomSports, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateTestJudgments, migrateZoneAnswers, migrateStrapWorn, migrateShortTestSeries, migrateFirstSheet, migrateWeeklyHealthCheck, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateSportRestOffers, migrateSportRestKeep, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings, migrateHolidaySettings } from './migrations';
 import { normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { validCatchUp } from '../engine/catchUp';
@@ -136,6 +136,14 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     if (series.value === undefined) delete s.shortTestSeries;
     else s.shortTestSeries = series.value;
     skipped.n += series.skipped;
+  }
+  // Feestdagen voorstellen en het land (storage/migrationsSettings.ts#migrateHolidaySettings).
+  if ('publicHolidayOffers' in s || 'publicHolidayCountry' in s) {
+    const holidays = migrateHolidaySettings(s);
+    delete s.publicHolidayOffers;
+    delete s.publicHolidayCountry;
+    Object.assign(s, holidays.value);
+    skipped.n += holidays.skipped;
   }
   // Welk belangrijk advies al als blad kwam (storage/migrationsSettings.ts#migrateFirstSheet).
   if ('firstSheet' in s) {
