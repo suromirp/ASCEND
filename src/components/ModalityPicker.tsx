@@ -1,5 +1,7 @@
 import { getModalities, ROLE_LABEL, type ModalityDefinition } from '../data/modalities';
 import { Icon } from './icons';
+import { useForgeWords } from './useForgeWords';
+import { effortWords } from '../engine/forgeWords';
 
 const ROLE_COLOR: Record<ModalityDefinition['role'], string> = {
   PRIMARY: 'var(--color-action)',
@@ -13,6 +15,7 @@ const ROLE_COLOR: Record<ModalityDefinition['role'], string> = {
 // why, when it's less suited, Garmin and sources.
 export function ModalityGuide({ templateId }: { templateId: string }) {
   const modalities = getModalities(templateId) ?? [];
+  const words = useForgeWords();
   return (
     <div className="flex flex-col gap-4">
       {modalities.map((m) => (
@@ -21,7 +24,7 @@ export function ModalityGuide({ templateId }: { templateId: string }) {
             <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{m.label}</span>
             <span className="shrink-0 text-xs" style={{ color: ROLE_COLOR[m.role] }}>{ROLE_LABEL[m.role]}</span>
           </p>
-          <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink)' }}>{m.how}</p>
+          <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink)' }}>{effortWords(m.how, words)}</p>
           <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{m.why}</p>
           {m.whenNotIdeal && m.whenNotIdeal.length > 0 && (
             <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Minder geschikt als: {m.whenNotIdeal.join('; ')}.</p>

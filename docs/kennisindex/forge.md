@@ -104,6 +104,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 
 ## Onderzoek, ontwerpen en verslagen
 
+- [onderhoud/sherpa-kleine-woorden.md](../onderhoud/sherpa-kleine-woorden.md): I-149, I-152, I-153: RPE 3-4, RIR en rustdag volgen de instellingen Woorden en Op je rustdag. Wat veranderde, welk kaartverschil en wat bewust bleef staan.
 - [onderzoek/Afbeeldingen bij oefeningen.md](../onderzoek/Afbeeldingen%20bij%20oefeningen.md): Welke vrije bronnen voor plaatjes bij oefeningen bruikbaar zijn in een openbare repo en offline, met de dekking en een advies.
 - [onderzoek/Bronnen bij de uitleg van oefeningen, batch 1.md](../onderzoek/Bronnen%20bij%20de%20uitleg%20van%20oefeningen,%20batch%201.md): Waar de uitleg van twintig oefeningen uit het demoprogramma en de Dip op rust; geen bron is nagelezen.
 - [onderzoek/Bronnen bij de uitleg van oefeningen, batch 2.md](../onderzoek/Bronnen%20bij%20de%20uitleg%20van%20oefeningen,%20batch%202.md): Per aanwijzing bij acht oefeningen of hij klopt, onzeker is of te toetsen, met de gelezen bron.

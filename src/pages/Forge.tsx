@@ -39,6 +39,8 @@ import { compareMoments, resolveStrengthSettings, strengthModelKey, type OneRmVi
 import type { OneRmReading } from '../models/metrics';
 import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, formatShortDateNL, todayISO } from '../utils/dates';
+import { useForgeWords } from '../components/useForgeWords';
+import { emptyForgeNeed } from '../engine/forgeWords';
 import { usePageState } from '../components/usePageState';
 import { TextButton } from '../components/TextButton';
 import { Sheet } from '../components/settings/Sheet';
@@ -50,6 +52,7 @@ const SHOWN_AT_FIRST = 12;
 const NO_READINGS = new Map<string, OneRmReading[]>();
 
 export function ForgePage() {
+  const forgeWords = useForgeWords();
   const navigate = useNavigate();
   const forgeSettings = jumpRoute('forge', { jumpTo: 'forge' });
   const { sessionLogs, templates, program, settings, updateSettings, injuryNotes } = useAppData();
@@ -129,7 +132,7 @@ export function ForgePage() {
         <Card className="flex flex-col gap-3">
           <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Nog geen krachttrainingen</p>
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            Lees een export van MacroFactor in. Dan staan hier je oefeningen, je vooruitgang en het voorstel voor de volgende keer. Elke set heeft de herhalingen in reserve (RIR) nodig; die staan in de export.
+            Lees een export van MacroFactor in. Dan staan hier je oefeningen, je vooruitgang en het voorstel voor de volgende keer. Elke set heeft {emptyForgeNeed(forgeWords)} nodig; die staan in de export.
           </p>
           <PrimaryButton onClick={() => navigate('/koppelen/macrofactor')}>MacroFactor inlezen</PrimaryButton>
         </Card>
