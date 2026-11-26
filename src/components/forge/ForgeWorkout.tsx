@@ -289,7 +289,6 @@ function ForgeWorkoutInner({
   const { startedAt, pauses, paused, lastAction, awayMs, dismissBreak, begin, togglePause, answerBreak } = useForgeClock(restored, readOnly, settings);
   const later = useLater();
   const [rest, setRest] = useState<Rest | undefined>(() => (restored?.rest && restored.rest.endsAt > Date.now() - REST_DONE_LINGER_MS ? restored.rest : undefined));
-  const [column, setColumn] = useState<'target' | 'previous'>(restored?.column ?? 'target');
   // Welk blad open staat (useForgeSheets.ts, getoond door ForgeSheets.tsx).
   const sh = useForgeSheets(startAtForm && !preview);
   // "Hoeveel over?" onder de set die je net afvinkte (alleen als het anders ging, of met Vaker vragen ook de topset en de laatste set; asksReserve).
@@ -343,7 +342,7 @@ function ForgeWorkoutInner({
   }, [openSlot]);
 
   // Het concept en de wijzer van de sessie (useForgeDraft.ts).
-  const { dropDraft } = useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant: initialVariant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, column, forgeLog, seenAt, stepSwaps: sessionSwaps, calAccepted });
+  const { dropDraft } = useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant: initialVariant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, forgeLog, seenAt, stepSwaps: sessionSwaps, calAccepted });
   // Jouw handelingen zetten het laatste moment van handelen: een set afvinken, typen, een oefening ruilen.
   const firstWorkout = useRef(workout);
   useEffect(() => {
@@ -614,7 +613,6 @@ function ForgeWorkoutInner({
   const { setMenuFor, setRowMenu, setRirFor, setFillFor, setSpotterInfo } = sh;
   const actions = useMemo<BlockActions>(
     () => ({
-      column: () => setColumn((c) => (c === 'target' ? 'previous' : 'target')),
       fold: (slot) => setFolded((f) => ({ ...f, [slot]: !f[slot] })),
       menu: (slot) => setMenuFor(slot),
       tick: (slot, rowId) => latest.current.tick(slot, rowId),
@@ -747,7 +745,6 @@ function ForgeWorkoutInner({
               first={paged || i === 0}
               paged={paged}
               readOnly={readOnly}
-              column={column}
               note={strength.exerciseNotes[ex.exerciseId]}
               active={activeRef?.slot === ex.slot ? activeRef.rowId : undefined}
               field={dock?.slot === ex.slot ? dock : null}

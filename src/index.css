@@ -228,11 +228,11 @@ body {
   color: var(--color-on-status);
 }
 
-/* De tabel per oefening in het workoutscherm van Forge: set, voorschrift,
+/* De tabel per oefening in het workoutscherm van Forge: set, vorige keer,
    kg, herhalingen, RIR en het afvinkvakje. Past op 360 px breed. */
 .forge-grid {
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) 54px 44px 38px 44px;
+  grid-template-columns: 36px minmax(0, 1fr) 54px 44px 38px 44px;
   column-gap: 4px;
 }
 

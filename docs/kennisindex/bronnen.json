@@ -4856,6 +4856,13 @@
    ],
    "kern": "Een formulier (Hoe ging het?, Afronden in Forge) wacht hoogstens 30 s op een eerdere opslag voor dezelfde geplande training (EARLIER_SAVE_LIMIT_MS, waitForEarlierSave); daarna staat Opslaan weer aan met een zichtbare uitkomst. Na de gewone grens gaat Opslaan bij een geplande training in beide formulieren weer aan, bij een losse training in Hoe ging het? niet (I-135, I-139, I-140).",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-26-forge-herinrichting-rest.md": {
+   "onderwerpen": [
+    "forge"
+   ],
+   "kern": "Kolom Voorschrift weg (Vorige keer vast, het voorschrift als regel onder de naam), Kleiner maken en Afronden alleen in de kop, de naam van een oefening in Marcellus, het setnummer als knop van 44 px die het blad Set opent, de schijvenregel als tekst; percentage van je maximum niet gebouwd.",
+   "stand": "geldt"
   }
  }
 }
