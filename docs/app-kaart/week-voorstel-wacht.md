@@ -30,7 +30,7 @@ Za 31 · niets gepland
 [knop: Verplaats of ruil Testloop 5 km, nu op zondag. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
 [knop: Lange duurloopZo 1·Zone 250 min· zelfde dag als je testloop]
 [knop: Verplaats of ruil Lange duurloop, nu op zondag, zelfde dag als je testloop. Spatie pakt op, pijltjes kiezen een dag, spatie laat los, Escape annuleert.]
-[knop: RustdagZo 1· bewust herstelHerstel]
+[knop: RustdagZo 1· 2 trainingen staan nog openHerstel]
 Eerst de testloop 5 km, dan Lange duurloop
 
 --- kaart 3 ---

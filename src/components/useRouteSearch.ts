@@ -599,12 +599,13 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   const plus = plusRow ? { ...plusRow, href: template ? spotsPageFor(template.id) : '/plekken' } : undefined;
   const choiceRows = loopChoiceRows(searchedPlans, trainingTarget, advisedPriority, priority);
   // Opnieuw proberen bij een ontbrekende kaart: hoort bij deze zoektocht; een nieuwe zoektocht begint weer leeg.
-  const [mapTry, setMapTry] = useState<{ key: string; state: MapRetryState } | undefined>();
+  const [mapTry, setMapTry] = useState<{ key: string; state: MapRetryState; tries: number } | undefined>();
   const mapState: MapRetryState = mapTry?.key === key ? mapTry.state : 'idle';
   const runMapRetry = () => {
     if (lat === undefined || lon === undefined || mapState === 'busy') return;
     const forKey = key;
-    setMapTry({ key: forKey, state: 'busy' });
+    const tries = (mapTry?.key === forKey ? mapTry.tries : 0) + 1;
+    setMapTry({ key: forKey, state: 'busy', tries });
     const exact = exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined;
     const at = terrainLat !== undefined && terrainLon !== undefined ? { lat: terrainLat, lon: terrainLon } : undefined;
     void retryRouteMap({ lat, lon }, exact, at).then((ok) => {
@@ -612,7 +613,7 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
       if (ok) {
         setMapTry(undefined);
         setAttempt((n) => n + 1);
-      } else setMapTry({ key: forKey, state: 'failed' });
+      } else setMapTry({ key: forKey, state: 'failed', tries });
     });
   };
   const showMapRetry = mapMissing(plans) && okStyles.length > 0;
@@ -707,6 +708,6 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     },
     loopChoice: { rows: choiceRows, pick: setPriorityPick },
     plus,
-    mapRetry: showMapRetry ? { line: mapRetryLine(mapState), busy: mapState === 'busy', run: runMapRetry } : undefined,
+    mapRetry: showMapRetry ? { line: mapRetryLine(mapState, mapTry?.key === key ? mapTry.tries : 1), busy: mapState === 'busy', run: runMapRetry } : undefined,
   };
 }

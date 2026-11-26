@@ -32,6 +32,7 @@ export function readSessionRoute(raw: unknown): SessionRoute | undefined {
     points.push(point);
   }
   const repeats = fin(raw.repeats) && raw.repeats > 1 && raw.repeats <= 100 ? Math.round(raw.repeats) : undefined;
+  const footStartM = fin(raw.footStartM) && raw.footStartM > 0 && raw.footStartM <= 200000 ? Math.round(raw.footStartM) : undefined;
   return {
     plannedSessionId: raw.plannedSessionId,
     style: raw.style,
@@ -39,6 +40,7 @@ export function readSessionRoute(raw: unknown): SessionRoute | undefined {
     distanceM: Math.round(raw.distanceM),
     ascentM: Math.round(raw.ascentM),
     ...(repeats !== undefined ? { repeats } : {}),
+    ...(footStartM !== undefined ? { footStartM } : {}),
     points,
     chosenAt: raw.chosenAt,
   };

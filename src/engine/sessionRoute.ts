@@ -25,7 +25,7 @@ export const ROUTE_STYLE_NAME: Record<RouteStyle, string> = { simple: 'Simpel', 
 // De gekozen lus als bewaarde route: het spoor uitgedund tot hoogstens 800 punten, alleen plek en hoogte.
 export function sessionRouteFrom(
   plannedSessionId: string,
-  proposal: Pick<RouteProposal, 'style' | 'source' | 'points' | 'distanceM' | 'ascentM' | 'repeats'>,
+  proposal: Pick<RouteProposal, 'style' | 'source' | 'points' | 'distanceM' | 'ascentM' | 'repeats' | 'footStartM'>,
   today: string,
 ): SessionRoute {
   return {
@@ -35,35 +35,56 @@ export function sessionRouteFrom(
     distanceM: Math.round(proposal.distanceM),
     ascentM: Math.round(proposal.ascentM),
     ...(proposal.repeats !== undefined && proposal.repeats > 1 ? { repeats: proposal.repeats } : {}),
+    ...(proposal.footStartM !== undefined && proposal.footStartM > 0 ? { footStartM: Math.round(proposal.footStartM) } : {}),
     // Op vijf decimalen (ongeveer een meter) en de hoogte op een decimeter, zoals de opslag hem leest: heen en terug gelijk.
     points: simplifyTrack(proposal.points, ROUTE_MAX_POINTS).map((p) => ({ ...roundExact(p), ...(p.ele !== undefined ? { ele: Math.round(p.ele * 10) / 10 } : {}) })),
     chosenAt: today,
   };
 }
 
-// De route van deze training: die van zijn eigen id, anders (bij een inhaal) die van de rij van toen. Een
-// overgeslagen training toont geen route; Toch doen brengt hem terug, want de route blijft staan.
-export function routeOfSession(session: Pick<PlannedSession, 'id' | 'status' | 'catchUp'>, routes: readonly SessionRoute[]): SessionRoute | undefined {
-  if (session.status === 'skipped') return undefined;
-  const own = routes.find((r) => r.plannedSessionId === session.id);
-  if (own) return own;
-  const from = session.catchUp?.fromId;
-  return from ? routes.find((r) => r.plannedSessionId === from) : undefined;
+// De keten van een inhaal terug: de rij van toen, en als die zelf een inhaal was, de rij daarvoor, tot de
+// oorspronkelijke. Met de lijst van geplande trainingen volgt hij de hele keten (een inhaal van een inhaal);
+// zonder lijst alleen één stap. Een lus in de gegevens stopt bij het eerste id dat al geweest is.
+function chainIds(session: Pick<PlannedSession, 'id' | 'catchUp'>, sessions?: readonly Pick<PlannedSession, 'id' | 'catchUp'>[]): string[] {
+  const byId = new Map((sessions ?? []).map((s) => [s.id, s]));
+  const ids = [session.id];
+  let next: Pick<PlannedSession, 'id' | 'catchUp'> | undefined = session;
+  while (next?.catchUp?.fromId && !ids.includes(next.catchUp.fromId)) {
+    ids.push(next.catchUp.fromId);
+    next = byId.get(next.catchUp.fromId);
+  }
+  return ids;
 }
 
-// Welke ids bij deze training horen: zijn eigen en, bij een inhaal, die van de rij van toen.
-const idsOf = (session: Pick<PlannedSession, 'id' | 'catchUp'>): Set<string> =>
-  new Set([session.id, ...(session.catchUp?.fromId ? [session.catchUp.fromId] : [])]);
+// De route van deze training: die van zijn eigen id, anders (bij een inhaal) die van de rij van toen, en bij een
+// inhaal van een inhaal die van de oorspronkelijke rij (geef dan `sessions` mee). Een overgeslagen training toont
+// geen route; Toch doen brengt hem terug, want de route blijft staan.
+export function routeOfSession(
+  session: Pick<PlannedSession, 'id' | 'status' | 'catchUp'>,
+  routes: readonly SessionRoute[],
+  sessions?: readonly Pick<PlannedSession, 'id' | 'catchUp'>[],
+): SessionRoute | undefined {
+  if (session.status === 'skipped') return undefined;
+  for (const id of chainIds(session, sessions)) {
+    const found = routes.find((r) => r.plannedSessionId === id);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+// Welke ids bij deze training horen: zijn eigen en, bij een inhaal, die van de rij(en) van toen.
+const idsOf = (session: Pick<PlannedSession, 'id' | 'catchUp'>, sessions?: readonly Pick<PlannedSession, 'id' | 'catchUp'>[]): Set<string> =>
+  new Set(chainIds(session, sessions));
 
 // Een route kiezen of wijzigen: de oude van deze training (ook die van de rij van toen) gaat eruit, de nieuwe
 // komt op het eigen id.
-export function withSessionRoute(routes: readonly SessionRoute[], session: Pick<PlannedSession, 'id' | 'catchUp'>, route: SessionRoute): SessionRoute[] {
-  const ids = idsOf(session);
+export function withSessionRoute(routes: readonly SessionRoute[], session: Pick<PlannedSession, 'id' | 'catchUp'>, route: SessionRoute, sessions?: readonly Pick<PlannedSession, 'id' | 'catchUp'>[]): SessionRoute[] {
+  const ids = idsOf(session, sessions);
   return [...routes.filter((r) => !ids.has(r.plannedSessionId)), { ...route, plannedSessionId: session.id }];
 }
 
-export function withoutSessionRoute(routes: readonly SessionRoute[], session: Pick<PlannedSession, 'id' | 'catchUp'>): SessionRoute[] {
-  const ids = idsOf(session);
+export function withoutSessionRoute(routes: readonly SessionRoute[], session: Pick<PlannedSession, 'id' | 'catchUp'>, sessions?: readonly Pick<PlannedSession, 'id' | 'catchUp'>[]): SessionRoute[] {
+  const ids = idsOf(session, sessions);
   return routes.filter((r) => !ids.has(r.plannedSessionId));
 }
 

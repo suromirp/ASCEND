@@ -18,7 +18,7 @@ import { recentRunPace } from '../engine/recentRunPace';
 import { loadBodyKg } from '../engine/weightTrend';
 import { toISODate } from '../utils/dates';
 import { watchFieldsShown, resolveWatchModel } from '../engine/watchFields';
-import { getTrainingGuide } from '../data/trainingGuide';
+import { useTrainingGuide } from '../state/useTrainingGuide';
 import { useWatchStatuses } from './useWatchStatus';
 import { useWatchLink } from './useWatchLink';
 
@@ -42,7 +42,7 @@ export function useBriefingInput({ template, session, date, program, storedPlace
   const [now] = useState(() => new Date());
   const { watchLink, watchSource } = useWatchLink();
   const { statusOf, ready } = useWatchStatuses();
-  const guide = getTrainingGuide(template.id);
+  const guide = useTrainingGuide(template.id);
   const paces = pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces;
   return {
     template,

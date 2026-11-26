@@ -112,7 +112,11 @@ export const MAP_MISSING_LINE = 'Er is geen actuele kaart van de omgeving, dus d
 export const MAP_FETCHING_LINE = 'De kaart ophalen.';
 export const MAP_FAILED_LINE = 'De kaart kwam niet binnen. Probeer het later nog eens.';
 export type MapRetryState = 'idle' | 'busy' | 'failed';
-export const mapRetryLine = (state: MapRetryState): string => (state === 'busy' ? MAP_FETCHING_LINE : state === 'failed' ? MAP_FAILED_LINE : MAP_MISSING_LINE);
+// `tries`: de hoeveel-ste poging (1 is de eerste). Lukt het opnieuw niet, dan staat er niet dezelfde zin als net:
+// Opnieuw proberen geeft elke keer een nieuwe, zichtbare uitkomst (I-163).
+export const mapFailedAgainLine = (tries: number): string => `De kaart kwam weer niet binnen (poging ${tries}). Probeer het later nog eens.`;
+export const mapRetryLine = (state: MapRetryState, tries = 1): string =>
+  state === 'busy' ? MAP_FETCHING_LINE : state === 'failed' ? (tries > 1 ? mapFailedAgainLine(tries) : MAP_FAILED_LINE) : MAP_MISSING_LINE;
 // De kaart van de omgeving ontbrak echt (geen kaart, niet een oude): alleen dan de regel bovenaan.
 export const mapMissing = (plans: { map?: 'none' | 'old' } | undefined): boolean => plans?.map === 'none';
 

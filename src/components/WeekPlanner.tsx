@@ -1,4 +1,5 @@
-import { REST_ROW_QUIET, restRowLine, type WeekPlan } from '../engine/dayPlan';
+import { REST_ROW_QUIET, type WeekPlan } from '../engine/dayPlan';
+import { restRowText } from '../engine/restRow';
 import { useSessionRoutes } from '../state/useSessionRoutes';
 import { routeOfSession, sessionRouteLine } from '../engine/sessionRoute';
 import { routeShownFor } from '../engine/trainingPlace';
@@ -65,8 +66,8 @@ const DISC = 36;
 
 // De stille regel van een gekozen route, alleen bij een training die er een heeft en die buiten is (dezelfde regel als
 // Route voorstellen, engine/trainingPlace.ts#routeShownFor): op de loopband blijft de route ongezien staan.
-function routeLineOf(s: PlannedSession, template: SessionTemplate, routes: readonly SessionRoute[]): string | undefined {
-  const route = routeOfSession(s, routes);
+function routeLineOf(s: PlannedSession, template: SessionTemplate, routes: readonly SessionRoute[], all: readonly PlannedSession[]): string | undefined {
+  const route = routeOfSession(s, routes, all);
   if (route && !routeShownFor(template, peekTrainingPlaces()?.[s.id])) return undefined;
   return route ? sessionRouteLine(route) : undefined;
 }
@@ -104,7 +105,7 @@ function SessionRow({
   ghost?: boolean;
   // Een gemiste training die je naar later sleepte: "verplaatst van wo 28" op de nieuwe rij.
   catchNote?: string;
-  // De tweede regel van een rustdag (engine/dayPlan.ts#restRowLine): "bewust herstel", of de training die je die dag deed (I-150).
+  // De tweede regel van een rustdag (engine/restRow.ts#restRowText): "bewust herstel", of de training die je die dag deed (I-150).
   restLine?: string;
 }) {
   const { settings: { restDayMode, illnessEpisodes }, openDraftId } = useAppData();
@@ -149,7 +150,8 @@ function SessionRow({
             {sign && <HeartSign state={sign} />}
           </span>
         </span>
-        <span className={`mt-0.5 flex items-center gap-x-1 text-xs leading-4 tabular-nums ${extra?.warn ? 'flex-wrap' : 'flex-nowrap whitespace-nowrap'}`} style={{ color: 'var(--color-ink-dim)' }}>
+        {/* Met een routeregel eronder mag "verplaatst van do 26" naar een tweede regel in plaats van af te kappen (I-163). */}
+        <span className={`mt-0.5 flex items-center gap-x-1 text-xs leading-4 tabular-nums ${extra?.warn || (extra?.tail && routeLine) ? 'flex-wrap' : 'flex-nowrap whitespace-nowrap'}`} style={{ color: 'var(--color-ink-dim)' }}>
           {/* Vandaag is status: het woord in ijs, met het streepje en de gloed van de rij. Geen pil naast de naam,
               zodat de naam niet onder de pil hoeft te breken en de rij 52 px blijft. */}
           {showToday ? <span className="font-semibold" style={{ color: 'var(--color-status)' }}>Vandaag</span> : <span>{dayLabel(date)}</span>}
@@ -417,8 +419,8 @@ export function WeekPlanner({
         pairNote={pairNotes?.get(s.id)}
         handle={eligibility?.ok ? weekDrag!.handleFor(s, eligibility.askAlways) : catchable ? weekDrag!.handleFor(s, false) : undefined}
         catchNote={catchNote}
-        restLine={template.type === 'recovery' ? restRowLine(plan.day(date)) : undefined}
-        routeLine={routeLineOf(s, template, sessionRoutes)}
+        restLine={template.type === 'recovery' ? restRowText(plan.day(date), logs, templateById) : undefined}
+        routeLine={routeLineOf(s, template, sessionRoutes, plannedSessions)}
         leave={leave}
         races={races}
         placeholder={pickedUp === s.id}

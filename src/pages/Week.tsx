@@ -51,7 +51,7 @@ import type { ScheduleProposal } from '../engine/scheduler';
 import { catchUpEligibility, caughtUpMap, caughtUpNoteFor } from '../engine/catchUp';
 import { dragHandlesShown } from '../components/weekDragShown';
 import { decideMove, dragEligibility, type DecideOptions, type MoveDecision } from '../engine/weekDrag';
-import { restDayFollowAfterMove } from '../engine/restDayFollows';
+import { restDayFollowAfterMove, withRestDayFollow } from '../engine/restDayFollows';
 import { REST_DAY_COPY } from '../data/restDayCopy';
 import { keptAsk, keptRefusal } from '../engine/moveSuggestions';
 import { SWAP_STALE } from '../storage/weekSwap';
@@ -207,11 +207,15 @@ export function WeekPage() {
     // Losgelaten op een dag met precies één training die mag bewegen: de twee ruilen (engine/weekSwap.ts).
     if (opts?.verdict?.kind === 'swap' && opts.verdict.swapWithId) return swapWith(sessionId, opts.verdict.swapWithId);
     const decision = decideMove(moveSession(sessionId, date), { ...opts, legsClose: legsCloseAt(sessionId, date), restDay: settings.restDay ?? 1 });
-    if (decision.action === 'apply') {
-      const follow = restFollow(decision.proposal);
-      await applyProposal(decision.proposal);
-      if (follow) setPendingProposal(follow);
-    } else if (decision.action === 'ask') setPendingProposal(decision.proposal);
+    if (decision.action === 'none') return decision.action;
+    // Schuift je rustdag mee, dan is het één blad met beide, en één Ongedaan maken (engine/restDayFollows.ts#withRestDayFollow).
+    const follow = restFollow(decision.proposal);
+    if (follow) {
+      setPendingProposal(withRestDayFollow(decision.proposal, follow));
+      return 'ask';
+    }
+    if (decision.action === 'apply') await applyProposal(decision.proposal);
+    else setPendingProposal(decision.proposal);
     return decision.action;
   }
 
@@ -494,8 +498,7 @@ export function WeekPage() {
         <RescheduleDialog
           proposal={pendingProposal}
           onApply={() => {
-            const follow = restFollow(pendingProposal);
-            void applyOrTell(pendingProposal).then((ok) => { if (ok && follow) setPendingProposal(follow); });
+            void applyOrTell(pendingProposal);
             setPendingProposal(null);
           }}
           onCancel={() => setPendingProposal(null)}

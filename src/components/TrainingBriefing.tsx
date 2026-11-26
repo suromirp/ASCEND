@@ -31,7 +31,8 @@ import { climbStretch, failureLine, MIN_ASCENT_TARGET_M, proposalFacts, proposal
 import { BRIEFING_MAP_HEIGHT, briefingRoutes, footerRoom, loopLines, loopTitle, otherLoopLine, otherLoopWarn, routeOutcomeLine } from '../engine/routeSheet';
 import { gpxCourseName, routeGpx } from '../engine/gpx';
 import type { RouteSendOutcome } from '../engine/routeSend';
-import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
+import { guideDayLabel } from '../data/trainingGuide';
+import { useTrainingGuide } from '../state/useTrainingGuide';
 import { getTrainingPlace, peekTrainingPlaces } from '../storage/trainingPlace';
 import { chooseTrainingPlace } from '../storage/watchWorkouts';
 import { watchManualFor } from '../engine/watchWorkout';
@@ -114,7 +115,7 @@ export function TrainingBriefing({
   // Welke laag deze Briefing opende: dan brengt Terug vanaf een pagina je weer hier (engine/briefingReturn.ts).
   origin?: BriefingOrigin;
 }) {
-  const { settings } = useAppData();
+  const { settings, plannedSessions } = useAppData();
   const readiness = useTestReadiness(template.id === TEST_TEMPLATE_ID && settings.testReadyLine !== false);
   const readyLine = readiness ? testReadyLine(readiness) : undefined;
   const navigate = useNavigate();
@@ -136,7 +137,7 @@ export function TrainingBriefing({
     };
   }, [session]);
 
-  const guide = getTrainingGuide(template.id);
+  const guide = useTrainingGuide(template.id);
   // Het plan zoals het naar je horloge gaat; de stappen op het scherm volgen de gekozen manier (`plan` hieronder).
   const workout = buildWorkoutPlan(template, date, program);
   // Het blad Je horloge: met de StairMaster gekozen de wandelworkout, met de stapnamen van de manier.
@@ -154,7 +155,7 @@ export function TrainingBriefing({
   const routeMap = homeView?.map.kind === 'route' ? homeView.map : undefined;
   // De route die al bij deze training hoort (I-160): dan staat hij klaar en wordt er niet gezocht, tot Andere route.
   const sessionRoutes = useSessionRoutes();
-  const saved = session && routeMap ? routeOfSession(session, sessionRoutes) : undefined;
+  const saved = session && routeMap ? routeOfSession(session, sessionRoutes, plannedSessions) : undefined;
   const [changing, setChanging] = useState(false);
   const [saveState, setSaveState] = useState<'busy' | 'failed' | undefined>();
   const showSaved = !!saved && !changing;
