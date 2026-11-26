@@ -31,5 +31,5 @@ Tak `claude/planning-punten-26nov` vanaf `a9556c7`. Besluit: `docs/beslissingen/
 - Test: `src/engine/strengthScheduling.test.ts`, een week met drie vrije dagen die geen trainingsdag zijn, en dezelfde week met vrijdag open.
 
 ## Niet gecontroleerd
-- Niet op een toestel bekeken. De nieuwe zin in het eerste voorstel en die van het krachtblok zijn alleen in tests en de tekstkaart gezien.
+- Niet op een toestel bekeken. De nieuwe zin in het eerste voorstel en die van het krachtblok zijn alleen in tests gezien; `kaart:vergelijk` gaf geen verschil (110 schermen gelijk), dus geen vaste stand van de kaart toont ze.
 - Geen naspelen met een back-up van de eigenaar (geen toestemming in deze opdracht); alleen nagemaakte data.
