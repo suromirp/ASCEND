@@ -175,6 +175,15 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet blijft de dag leeg en krijg je er geen vraag meer over.' },
     ],
   },
+  'rustdag-schuift': {
+    title: 'Rustdag schuift mee',
+    lead: 'Zet je een training op de dag van je rustdag, dan krijg je een voorstel om de rustdag naar de dag te zetten die vrijkwam.',
+    points: [
+      { head: 'Welke dag', text: 'de dag waar de training stond, als die vrij is en niet voorbij. Anders de vrije dag in dezelfde week die het dichtst bij ligt, nooit direct naast een test of wedstrijd.' },
+      { head: 'Niet', text: 'als je week geen vrije dag meer heeft, op een dag van je vakantie of tocht, of als je de rustdag al deed of oversloeg.' },
+      { head: 'Alleen met Akkoord', text: 'jouw verplaatsing blijft altijd staan. Na Liever niet verandert er niets, na Akkoord kun je het ongedaan maken.' },
+    ],
+  },
   weekvoorstel: {
     title: 'Voorstel bij een probleem in de week',
     lead: 'Klopt er iets niet in je week en is het niet vanzelf te herstellen, omdat jij of een eerder voorstel de training vastzette, dan krijg je een voorstel.',

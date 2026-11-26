@@ -6,7 +6,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { IllnessEpisode } from '../models/illness';
 import { addDays } from '../utils/dates';
-import { hiddenFromDay, weekPlan } from './dayPlan';
+import { hiddenFromDay, restRowLine, weekPlan } from './dayPlan';
 import { dayOrder, orderDay } from './dayOrder';
 import { doneOnOtherDay } from './weekRow';
 import { isDraftOpen } from './sessionStatus';
@@ -171,4 +171,32 @@ describe('invariant 3: een dag, een antwoord', () => {
       }
     });
   }
+});
+
+// I-150: doe je op een rustdag een training (van die dag of van een andere dag), dan zegt de rustdagrij in Week dat,
+// in plaats van alleen "bewust herstel". De training zelf blijft op zijn geplande dag (besluit 2026-11-23-een-plan-dagbeeld.md).
+describe('restRowLine', () => {
+  const TUE = '2026-11-17';
+  it('zegt bewust herstel zonder training, en de gedane training van een andere dag als je hem vandaag deed', () => {
+    const rest = row('rest', 'tpl_herstel', TUE);
+    const tempo = row('tempo', 'tpl_tempo_run', '2026-11-19');
+    const quiet = weekPlan({ weekStart: MONDAY, sessions: [rest, tempo], logs: [], templateById, today: TUE }).day(TUE);
+    expect(restRowLine(quiet)).toBe('bewust herstel');
+    const plan = weekPlan({ weekStart: MONDAY, sessions: [rest, tempo], logs: [logFor(tempo, TUE)], templateById, today: TUE });
+    expect(restRowLine(plan.day(TUE))).toBe('Tempoloop gedaan');
+    // De geplande dag van de tempoloop blijft zoals hij was: de rij staat daar, met "gedaan di 17".
+    expect(plan.day('2026-11-19').sessions.map((s) => s.id)).toEqual(['tempo']);
+  });
+
+  it('een training op de rustdag zelf, en twee trainingen', () => {
+    const rest = row('rest', 'tpl_herstel', TUE);
+    const easy = row('easy', 'tpl_easy_run', TUE, { order: 1 });
+    const upper = row('upper', 'tpl_upper_a', '2026-11-20');
+    const open = weekPlan({ weekStart: MONDAY, sessions: [rest, easy], logs: [], templateById, today: TUE }).day(TUE);
+    expect(restRowLine(open)).toBe('bewust herstel');
+    const one = weekPlan({ weekStart: MONDAY, sessions: [rest, easy], logs: [logFor(easy, TUE)], templateById, today: TUE }).day(TUE);
+    expect(restRowLine(one)).toBe('Rustige duurloop gedaan');
+    const two = weekPlan({ weekStart: MONDAY, sessions: [rest, easy, upper], logs: [logFor(easy, TUE), logFor(upper, TUE)], templateById, today: TUE }).day(TUE);
+    expect(restRowLine(two)).toBe('2 trainingen gedaan');
+  });
 });

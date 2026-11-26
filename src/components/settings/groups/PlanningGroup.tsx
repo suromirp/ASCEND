@@ -111,6 +111,7 @@ export function PlanningGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="trainingstijd" title="Trainingstijd per dag" facts={facts} info="trainingstijd" onClick={() => setInner('trainingstijd')} />
           <SummaryRow id="rustdag" title="Rustdag" facts={facts} info="rustdag" onClick={() => setInner('rustdag')} />
           <SummaryRow id="rustdag-doen" title="Op je rustdag" facts={facts} onClick={() => setInner('rustdag-doen')} />
+          <SummaryRow id="rustdag-schuift" title="Rustdag schuift mee" facts={facts} info="rustdag-schuift" onChange={(on) => void updateSettings({ restDayFollows: on })} />
         </BundleSheet>
       )}
       {sheet === 'bundel-niet-doorgegaan' && (

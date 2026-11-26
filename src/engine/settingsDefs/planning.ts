@@ -278,6 +278,15 @@ export const PLANNING: SettingDef[] = [
     choice: { key: 'rustdagDoen', def: PLANNING_CHOICES.rustdagDoen },
   },
   {
+    id: 'rustdag-schuift',
+    page: 'planning',
+    place: { in: 'bundel-dagen' },
+    title: 'Rustdag schuift mee',
+    note: 'Zet je een training op je rustdag, dan krijg je een voorstel om de rustdag naar de dag te zetten die vrijkwam.',
+    keywords: ['rustdag', 'rust', 'herstel', 'schuiven', 'meeschuiven', 'verplaatsen', 'slepen', 'vrij', 'voorstel', 'dagen en tijd'],
+    help: true,
+  },
+  {
     id: 'meerdere',
     page: 'planning',
     place: { row: true },
