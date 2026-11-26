@@ -58,13 +58,13 @@ Het bouwmoment bouwt na de Inbox de eerstvolgende open ronde van het Rooster hie
 
 Het bouwmoment bouwt na de Inbox de eerstvolgende open ronde hieronder. Een ronde heeft tot drie sporen die elkaars bestanden niet raken; ze lopen tegelijk, elk met een eigen helper in een eigen worktree, en gaan samen in één keer naar main. Nooit twee Forge-sporen tegelijk (zelfde bestanden), nooit twee planner-sporen tegelijk. Afgerond: uit dit rooster en uit de groepen hieronder, met een regel onder Pas live.
 
-2. Voorstel squat op één been en L-sit (planner) ‖ Uitleg bij oefeningen, batch 5 (Forge-data).
 3. Feestdagen als voorstel (planner) ‖ Forge herinrichting, de rest.
 4. Klein en fouten, deel 2 (Forge en Calisthenics) ‖ R10, de teksten van Forge.
 5. Vaste ijktocht (planner, Akkoord).
 6. Beenindex leert van je ochtendantwoorden (migratie, veiligheidsregels nooit soepeler).
 
 ## Pas live
+- Rooster ronde 2: voorstel squat op één been en L-sit op de kaart Calisthenics algemeen, uitleg bij oefeningen batch 5, uitleg boven het blad Ruilen (26 november, 96f7ab1)
 - [I-36] Kleding en wind, vervolg (26 november, b8a6800)
 - [I-20] J. Tikdoelen, rest (26 november, b8a6800)
 - [I-165] Na I-164 (26 november, b8a6800)
@@ -299,8 +299,7 @@ Wat Pathfinder vindt en niet meteen terug naar een bouwer gaat. Eerste lijst (co
 ## Middelgroot
 
 - Feestdagen als voorstel (akkoord 7 november, bleef liggen in ronde 3): Nager.Date, Nederland en het land van een vakantie, eens per jaar ophalen, een feestdag is een voorstel met Akkoord. Raakt de planning: engine op Fable, niet tegelijk met een andere planner-sessie.
-- Voorstel squat op één been en L-sit (akkoord eigenaar 9 november avond): bij Calisthenics algemeen één keer een voorstel met Akkoord dat ze in een training zet als ze nergens staan; de kaart zegt nu "Staat nog niet in je trainingen." Planner, Fable, niet tegelijk met een andere planner-sessie. De kaart onthoudt geen hoogste stap: zo laten.
-- Uitleg bij oefeningen: nog ongeveer 48 oefeningen zonder uitleg (grove telling: 159 in `exercises.ts`, 111 in `exerciseGuides.ts`; was 59), in batches van twintig (Scribe schrijft, Scout toetst de techniek, bron in `docs/onderzoek/`; batch 5 is nog niet gedaan). `src/data/exercises.ts`. Sonnet.
+- Uitleg bij oefeningen: nog 28 oefeningen zonder uitleg (159 in `exercises.ts`, 131 in `exerciseGuides.ts`), in batches van twintig (Scribe schrijft, Scout toetst de techniek, bron in `docs/onderzoek/`; batch 5 live 26 november, 96f7ab1, batch 6 is de volgende; Scout heeft batch 5 nog niet getoetst). `src/data/exercises.ts`. Sonnet.
 - R10: de teksten van de Forge-tab volgens de stemgids. Daarna de uitleg in Instellingen inkorten (nu gemiddeld ongeveer 66 woorden, doel ongeveer 40).
 - Heuvels en de periode: de OpenStreetMap-regel op een vakantieadres of in een periode Zonder sportschool. Een periode heeft geen eigen plek; vraagt een nieuwe opgeslagen vorm met migratie (Fable).
 - Health Connect, de rest: een ronde start alleen als je terugkomt in de app (niet na urenlang open staan); het blad Lichaamsgewicht toont heel even "Gewicht: staat uit" na weer aanzetten. (nakijken: `boot.ts` en `adviceAndWeek.ts` hebben een visibilitychange-luisteraar, maar of urenlang open staan gedekt is, en de tekst "Gewicht: staat uit", is niet vastgesteld)
