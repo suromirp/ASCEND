@@ -14,7 +14,7 @@ import { ChevronGlyph } from './vandaag/glyphs';
 export function StandSummaryCard({ tomorrow }: { tomorrow?: TomorrowEntry }) {
   const navigate = useNavigate();
   const { sessionLogs, plannedSessions, templates } = useAppData();
-  const inputs = useLegFatigueInputs();
+  const inputs = useLegFatigueInputs({ shown: true });
   const today = inputs.today;
   const legs = useMemo(() => legFatigueOn(today, inputs), [today, inputs]);
   const load = useMemo(() => loadVersusBefore(weeklyLoad({ logs: sessionLogs, plannedSessions, templates, today, minutesOf: inputs.minutesOf }, 4, 0)), [sessionLogs, plannedSessions, templates, today, inputs.minutesOf]);

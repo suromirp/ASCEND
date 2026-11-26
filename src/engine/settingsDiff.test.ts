@@ -174,6 +174,7 @@ const everything: AppSettings = {
   paceCurve: false,
   stageOwnPace: false,
   climbPace: false,
+  legIndexLearning: 'uit',
   streamsInBackup: false,
   locationOn: true,
   proposalTidyMonths: 12,
@@ -215,7 +216,7 @@ describe('adviceDifferences', () => {
 
   it('alleen wat de planning raakt is gemarkeerd', () => {
     const planIds = adviceDifferences(everything).filter((d) => d.plan).map((d) => d.id).sort();
-    expect(planIds).toEqual(['ambitie', 'beginnersstart', 'golven', 'krachttraining', 'lange-loop', 'lange-loop-benen', 'lange-zondag', 'na-hoofddoel', 'opbouw-start', 'rust-na-tocht', 'rustdag-doen', 'sport-duur', 'test-rust', 'vakantie-opzij', 'vakantie-schuiven', 'zware-dingen']);
+    expect(planIds).toEqual(['ambitie', 'beenindex-leert', 'beginnersstart', 'golven', 'krachttraining', 'lange-loop', 'lange-loop-benen', 'lange-zondag', 'na-hoofddoel', 'opbouw-start', 'rust-na-tocht', 'rustdag-doen', 'sport-duur', 'test-rust', 'vakantie-opzij', 'vakantie-schuiven', 'zware-dingen']);
   });
 
   it('elke instelling in de lijst staat in de index en heeft een plek', () => {
@@ -239,8 +240,8 @@ describe('resetPatch', () => {
   it('zet alles terug op het advies, in twee delen: wat meteen kan en wat de planning raakt', () => {
     const all = adviceDifferences(everything).map((d) => d.id);
     const { now, plan, planTitles } = resetPatch(everything, all);
-    expect(Object.keys(plan).sort()).toEqual(['afterMainGoal', 'ambition', 'beginnerBuild', 'beginnerLadder', 'beginnerStart', 'hardSameDay', 'leaveAround', 'leaveCrowding', 'longRunGrowth', 'longRunThenLegs', 'longSundaySession', 'restDayMode', 'sportDurationChange', 'strengthTraining', 'testRest', 'trekLegRest', 'waves']);
-    expect(planTitles).toHaveLength(16);
+    expect(Object.keys(plan).sort()).toEqual(['afterMainGoal', 'ambition', 'beginnerBuild', 'beginnerLadder', 'beginnerStart', 'hardSameDay', 'leaveAround', 'leaveCrowding', 'legIndexLearning', 'longRunGrowth', 'longRunThenLegs', 'longSundaySession', 'restDayMode', 'sportDurationChange', 'strengthTraining', 'testRest', 'trekLegRest', 'waves']);
+    expect(planTitles).toHaveLength(17);
     expect(Object.keys(now)).not.toContain('ambition');
     const after = apply(apply(everything, now), plan);
     expect(adviceDifferences(after)).toEqual([]);
@@ -249,7 +250,7 @@ describe('resetPatch', () => {
   it('zonder het planningsdeel blijft de planning staan', () => {
     const { now } = resetPatch(everything, adviceDifferences(everything).map((d) => d.id));
     const half = apply(everything, now);
-    expect(adviceDifferences(half).map((d) => d.id).sort()).toEqual(['ambitie', 'beginnersstart', 'golven', 'krachttraining', 'lange-loop', 'lange-loop-benen', 'lange-zondag', 'na-hoofddoel', 'opbouw-start', 'rust-na-tocht', 'rustdag-doen', 'sport-duur', 'test-rust', 'vakantie-opzij', 'vakantie-schuiven', 'zware-dingen']);
+    expect(adviceDifferences(half).map((d) => d.id).sort()).toEqual(['ambitie', 'beenindex-leert', 'beginnersstart', 'golven', 'krachttraining', 'lange-loop', 'lange-loop-benen', 'lange-zondag', 'na-hoofddoel', 'opbouw-start', 'rust-na-tocht', 'rustdag-doen', 'sport-duur', 'test-rust', 'vakantie-opzij', 'vakantie-schuiven', 'zware-dingen']);
     expect(half.ambition).toBe('stevig');
   });
 

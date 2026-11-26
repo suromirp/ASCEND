@@ -11,7 +11,7 @@ import type { Program } from '../models/program';
 import type { ExercisePrescription, SessionLog, SessionTemplate } from '../models/training';
 import { addDays, daysBetween, formatDateNL } from '../utils/dates';
 import { cleanExerciseName, matchExercise, normalizeExerciseName } from './exerciseMatch';
-import { FATIGUE_THRESHOLDS, fatigueEvents, legFatigueOn, type FatigueEvent, type LegFatigueInputs } from './legFatigue';
+import { FATIGUE_THRESHOLDS, clampFactor, fatigueEvents, legFatigueOn, type FatigueEvent, type LegFatigueInputs } from './legFatigue';
 import { logSport } from './sports';
 import { soreFromNotes, type SoreSource } from './legSoreness';
 import { checkDone, checkProposal, checkRow, isNear, logOrigin, summariseChecks, targetIndexOf, targetOfSlot, type CheckOrigin, type CheckSummary, type RepTarget, type RowCheck } from './prescriptionCheck';
@@ -78,6 +78,8 @@ export interface LegsDeps {
   events?: FatigueEvent[];
   // Spierpijn die je meldde (ochtendcheck of Hoe voelt je lijf?): ook dat maakt je benen moe.
   sore?: SoreSource;
+  // Je eigen beenindex (engine/legIndexLearning.ts). Hier altijd minstens 1: dit beslist mee, nooit soepeler dan het model.
+  factor?: number;
 }
 
 // Are the legs tired on this day, from what happened in the 48 hours before
@@ -96,7 +98,7 @@ export function legsTiredAt(date: string, before: string | undefined, deps: Legs
   // Spierpijn in de benen die dag (van een training die al gelogd is: een melding van die dag zelf telt niet,
   // want ze heeft geen tijdstip en kan van na de training zijn): de benen zijn moe, het gewicht blijft gelijk en een herhaling minder is normaal.
   if (deps.sore && soreFromNotes(deps.sore.injuries, deps.sore.checkIns, date, !before)) return { because: 'spierpijn' };
-  const inputs: LegFatigueInputs = { logs: deps.logs, plannedSessions: [], templates: deps.templates, today: date, bodyKg: deps.bodyKg, program: deps.program };
+  const inputs: LegFatigueInputs = { logs: deps.logs, plannedSessions: [], templates: deps.templates, today: date, bodyKg: deps.bodyKg, program: deps.program, factor: Math.max(1, clampFactor(deps.factor)) };
   const events = deps.events ?? fatigueEvents(inputs);
   const result = legFatigueOn(date, inputs, events);
   if (result.index > FATIGUE_THRESHOLDS.hard.fresh) return { because: 'de zware dagen ervoor' };

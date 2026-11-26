@@ -7,7 +7,7 @@ import { templateSport } from './sports';
 import { detectRecentSpike } from './progressionSpikes';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { searchWeeklyPlacement, type PlacementRequest, type WeekPlacementCandidate } from './candidatePlacement';
-import { FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueResult } from './legFatigue';
+import { FATIGUE_THRESHOLDS, clampFactor, legFatigueOn, type LegFatigueResult } from './legFatigue';
 import { patternSlotOf } from './programLayout';
 import { hasRole, isTestOrRace } from './templateRoles';
 import { resolveTestRest, TEST_REST_ADVICE, type TestRestHours } from './testRest';
@@ -160,6 +160,27 @@ export function setFreshnessContext(ctx: FreshnessContext | undefined): void {
   freshnessContext = ctx;
 }
 
+// Je eigen beenindex (engine/legIndexLearning.ts): de factor waarmee de planner rekent, altijd
+// legIndexSafeFactor, dus nooit onder 1. Gezet bij elke refresh; een voorbeeld in een voorstel geeft zijn eigen
+// waarde mee (withLegFactor), zoals de andere registers. Zonder (tests, de eerste sync) 1: het model.
+let plannerLegFactor = 1;
+export function setLegFactor(factor: number | undefined): void {
+  plannerLegFactor = Math.max(1, clampFactor(factor));
+}
+export function legFactor(): number {
+  return plannerLegFactor;
+}
+export function withLegFactor<T>(factor: number | undefined, fn: () => T): T {
+  if (factor === undefined) return fn();
+  const saved = plannerLegFactor;
+  setLegFactor(factor);
+  try {
+    return fn();
+  } finally {
+    plannerLegFactor = saved;
+  }
+}
+
 // The index on `date` from these planned sessions and the logs. Pain and
 // soreness are signals for you, not for placing sessions: left out here.
 // Planned sessions of the 6 weeks before count, as on the card: they say
@@ -169,7 +190,7 @@ export function freshnessAt(date: string, sessions: PlannedSession[], templateMa
   const planned = sessions.filter((s) => s.status !== 'skipped' && s.scheduledDate < date && daysBetween(s.scheduledDate, date) <= (ctx ? 52 : 10) && (!ctx || s.scheduledDate >= ctx.today));
   if (extra) planned.push({ id: extra.id, templateId: extra.templateId, scheduledDate: extra.date, weekStartDate: mondayOfWeek(extra.date), status: 'planned', order: 0, plannedMinutes: extra.plannedMinutes });
   const quietLogs = logs.filter((l) => l.completedDate < date && daysBetween(l.completedDate, date) <= 52).map((l) => ({ ...l, painAreas: undefined, painReports: undefined }));
-  return legFatigueOn(date, { logs: quietLogs, plannedSessions: planned, templates: [...templateMap.values()], today: '0000-01-01', bodyKg: ctx?.bodyKg, program: ctx?.program, minutesOf: ctx?.minutesOf });
+  return legFatigueOn(date, { logs: quietLogs, plannedSessions: planned, templates: [...templateMap.values()], today: '0000-01-01', bodyKg: ctx?.bodyKg, program: ctx?.program, minutesOf: ctx?.minutesOf, factor: plannerLegFactor });
 }
 
 // The planned sessions that make a test day too heavy, largest first, until

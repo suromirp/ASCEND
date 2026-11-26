@@ -5,6 +5,7 @@ import type { AppSettings } from './database';
 import { mergeIntentions } from '../engine/weeklyQuestion';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { MAX_LEG_EASE_DAYS } from '../models/legEase';
+import { MAX_LEG_ANSWERS, MAX_LEG_FACTOR_LOG } from './migrationsLegIndex';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeSportRestOffers } from '../engine/sportRestOffer';
 import { mergeFirstSheet } from '../engine/adviceFirst';
@@ -224,6 +225,19 @@ export function mergeSettingsHistory(current: AppSettings, incoming: Partial<App
     const byKey = new Map((incoming.legEaseDays ?? []).map((d) => [`${d.date}|${d.plannedSessionId}`, d]));
     for (const d of current.legEaseDays ?? []) byKey.set(`${d.date}|${d.plannedSessionId}`, d);
     merged.legEaseDays = [...byKey.values()].sort((a, b) => a.date.localeCompare(b.date) || a.at.localeCompare(b.at)).slice(-MAX_LEG_EASE_DAYS);
+  }
+  // Je eigen beenindex is historie: de vereniging, per datum (antwoorden) en per tijdstip en bron (besluiten); de rij
+  // van het toestel wint. De laatste rij in de tijd zet de factor, dus een oud Akkoord uit de back-up wint nooit van
+  // een nieuwer besluit op het toestel.
+  if (incoming.legAnswers || current.legAnswers) {
+    const byDate = new Map((incoming.legAnswers ?? []).map((a) => [a.date, a]));
+    for (const a of current.legAnswers ?? []) byDate.set(a.date, a);
+    merged.legAnswers = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-MAX_LEG_ANSWERS);
+  }
+  if (incoming.legFactorLog || current.legFactorLog) {
+    const byKey = new Map((incoming.legFactorLog ?? []).map((e) => [`${e.at}|${e.source}`, e]));
+    for (const e of current.legFactorLog ?? []) byKey.set(`${e.at}|${e.source}`, e);
+    merged.legFactorLog = [...byKey.values()].sort((a, b) => a.at.localeCompare(b.at)).slice(-MAX_LEG_FACTOR_LOG);
   }
   // Important advice that already came as a sheet: per id the furthest state, so it does not come back
   // (engine/adviceFirst.ts#mergeFirstSheet).

@@ -26,7 +26,8 @@ import { calibrationView } from '../../engine/ijktocht';
 export function useStandData() {
   const { program, plannedSessions, sessionLogs, templates, templateById, settings, planChangeLog, trainingGoals, goalMilestones, openDraftId } = useAppData();
   const keyFocus = useKeyFocus();
-  const inputs = useLegFatigueInputs();
+  // Je stand toont de woorden en de grafiek met je eigen factor (engine/legIndexLearning.ts).
+  const inputs = useLegFatigueInputs({ shown: true });
   const today = inputs.today;
 
   const curve = useMemo(() => freshnessCurve(inputs), [inputs]);

@@ -23,7 +23,7 @@ import type { Exercise, MovementPattern, MuscleGroup, Resistance } from '../mode
 import type { Program } from '../models/program';
 import type { ExercisePrescription, ExerciseSetLog, SessionLog, SessionTemplate, SetBand, SetKind, SetLog, SetTarget } from '../models/training';
 import { formatNumberNL } from '../utils/number';
-import { fatigueEvents, fatigueWord, legFatigueOn } from './legFatigue';
+import { clampFactor, fatigueEvents, fatigueWord, legFatigueOn } from './legFatigue';
 import { earlierTodayPoints, easeExerciseReason, easeSlots, EASE_RIR, EASE_RIR_EXTRA } from './legDayEase';
 import { legSorenessList, type SoreSource } from './legSoreness';
 import type { LegEaseHow } from './legEaseSettings';
@@ -248,6 +248,8 @@ export interface PlanContext {
   // Een rustiger instap waar je Akkoord op gaf (engine/reentry.ts#reentryForgeLighter): de bewaarde weken. Na meer dan
   // tien dagen zonder krachttraining begint het voorstel 5% lichter, met de reden in de regel eronder.
   reentryWeeks?: unknown;
+  // Je eigen beenindex voor "Je benen zijn nog moe" (engine/strengthHistory.ts#legsTiredAt), nooit onder 1.
+  legFactor?: number;
 }
 
 export interface PlanState {
@@ -282,7 +284,7 @@ function noteDone(state: PlanState, exercise: Exercise | undefined, rows: Workou
 
 export function planState(ctx: PlanContext): PlanState {
   const strengthLogs = ctx.logs.filter((l) => l.strengthData && l.strengthData.length > 0);
-  const deps = { logs: ctx.logs, templates: ctx.templates, program: ctx.program, bodyKg: ctx.bodyKg, ...(ctx.sore ? { sore: ctx.sore } : {}) };
+  const deps = { logs: ctx.logs, templates: ctx.templates, program: ctx.program, bodyKg: ctx.bodyKg, ...(ctx.sore ? { sore: ctx.sore } : {}), ...(ctx.legFactor !== undefined ? { factor: ctx.legFactor } : {}) };
   const histories = new Map(exerciseHistories(strengthLogs, ctx.templates, deps).map((h) => [h.key, h]));
   const crossOn = ctx.modelOn && ctx.settings.crossFatigue;
   return { histories, tiredNow: legsTiredAt(ctx.date, undefined, deps), warm: newWarmState(), done: [], ...(crossOn ? { before: [], cross: crossHistory(strengthLogs, ctx.settings.assumedCounts) } : {}) };
@@ -1205,10 +1207,12 @@ export interface LegDayLineDeps {
   sore?: SoreSource;
   // The training itself, so it does not count as "earlier".
   excludeId?: string;
+  // Je eigen beenindex, altijd legIndexSafeFactor (nooit onder 1; engine/legIndexLearning.ts).
+  factor?: number;
 }
 
 export function legDayLine(date: string, deps: LegDayLineDeps): string {
-  const inputs = { logs: deps.logs, plannedSessions: [], templates: deps.templates, today: date, bodyKg: deps.bodyKg, program: deps.program, ...(deps.sore ? { soreness: legSorenessList(deps.sore.checkIns, deps.sore.injuries) } : {}) };
+  const inputs = { logs: deps.logs, plannedSessions: [], templates: deps.templates, today: date, bodyKg: deps.bodyKg, program: deps.program, factor: Math.max(1, clampFactor(deps.factor)), ...(deps.sore ? { soreness: legSorenessList(deps.sore.checkIns, deps.sore.injuries) } : {}) };
   const earlier = earlierTodayPoints(date, { logs: deps.logs, templates: deps.templates, program: deps.program, bodyKg: deps.bodyKg, excludeId: deps.excludeId });
   if (earlier.points > 0) {
     const index = legFatigueOn(date, inputs, fatigueEvents(inputs)).index + earlier.points;

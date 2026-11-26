@@ -24,6 +24,9 @@ Hitte bij je tempo
 [knop: Je klimtempo]
 Je klimtempo
 [knop: Uitleg: Je klimtempo]
+[knop: Beenindex leert van je ochtenden]
+Beenindex leert van je ochtenden
+[knop: Uitleg: Beenindex leert van je ochtenden]
 [knop: Etappetijd op je eigen tempo]
 Etappetijd op je eigen tempo
 [knop: Uitleg: Etappetijd op je eigen tempo]

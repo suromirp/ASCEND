@@ -187,6 +187,16 @@ export const LICHAAM_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Wat je ziet', text: 'op Je stand je meters per uur omhoog en omlaag, met het rugzakgewicht als dat bij minstens driekwart van je klimmen bekend is. Je planning verandert er niet door.' },
     ],
   },
+  'beenindex-leert': {
+    title: 'Beenindex leert van je ochtenden',
+    lead: 'De beenindex is een model. Jouw benen herstellen misschien sneller of trager dan dat model.',
+    points: [
+      { head: 'Wat telt', text: 'je antwoord over je benen in de ochtendcheck van de laatste 90 dagen, naast wat de index die ochtend zei. Ochtenden met pijn, ziekte, een tocht of spierpijn alleen in je bovenlichaam tellen niet.' },
+      { head: 'Wanneer', text: 'na ongeveer twintig ochtenden met een duidelijk antwoord. Dan stelt de app hoogstens eens per vier weken een kleine stap voor, tussen 70 en 140 procent. Pas na Akkoord.' },
+      { head: 'Wat nooit verandert', text: 'de planning rekent nooit soepeler dan het model. Een lagere factor verandert alleen de woorden, zoals fris op de kaart Benen. Pijn en spierpijn tellen altijd volledig.' },
+      { head: 'Uit', text: 'de index rekent zoals het model. Je antwoorden blijven bewaard.' },
+    ],
+  },
   'etappetijd-eigen': {
     title: 'Etappetijd op je eigen tempo',
     lead: 'De looptijd op de bordjes is een norm. Met je eigen klimtempo zie je hoe lang een etappe voor jou ongeveer duurt.',

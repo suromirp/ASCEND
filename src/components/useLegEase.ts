@@ -7,6 +7,7 @@ import { resolveLegEase, resolveLegEaseHow, type LegEaseHow, type LegEaseMode } 
 import type { LegEaseChoice } from '../models/legEase';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { todayISO } from '../utils/dates';
+import { legFactorsOf } from '../engine/legIndexLearning';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
 // Een zware beendag op vermoeide benen (engine/legDayEase.ts), voor de kaart op Vandaag en het
@@ -40,6 +41,7 @@ export function useLegEase(sessionId?: string | null): LegEaseApi {
   const today = todayISO();
   const bodyKg = loadBodyKg(settings);
   const checkIns = settings.morningCheckIns;
+  const legSafe = legFactorsOf(settings).safe;
 
   const state = useMemo<LegEaseState | undefined>(() => {
     if (mode === 'uit' || sessionId === null) return undefined;
@@ -52,7 +54,7 @@ export function useLegEase(sessionId?: string | null): LegEaseApi {
       const deps: SignalDeps = {
         logs: sessionLogs, plannedSessions, templates, program, bodyKg, today,
         minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
-        injuries: injuryNotes, checkIns: checkIns ?? [],
+        injuries: injuryNotes, checkIns: checkIns ?? [], factor: legSafe,
       };
       const signals = legDaySignals(today, deps, target.session.id);
       const offer = shouldOfferEase(signals, target, mode, settings.legEaseDays, sessionLogs);
@@ -72,7 +74,7 @@ export function useLegEase(sessionId?: string | null): LegEaseApi {
       console.error('Lichter bij vermoeide benen: berekening mislukt:', err);
       return undefined;
     }
-  }, [mode, sessionId, today, sessionLogs, plannedSessions, templates, program, bodyKg, injuryNotes, checkIns, settings.legEaseDays, settings.enabledSports, settings.illnessEpisodes, goalEngineConfig, answeredAdviceIds]);
+  }, [mode, sessionId, today, sessionLogs, plannedSessions, templates, program, bodyKg, injuryNotes, checkIns, legSafe, settings.legEaseDays, settings.enabledSports, settings.illnessEpisodes, goalEngineConfig, answeredAdviceIds]);
 
   const choose = useCallback(async (choice: LegEaseChoice) => {
     if (!state) return;

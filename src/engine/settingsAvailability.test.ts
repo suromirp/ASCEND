@@ -12,7 +12,8 @@ const watch = (over: Partial<NonNullable<SettingsFacts['watch']>> = {}): NonNull
 function facts(over: Partial<SettingsFacts> = {}): SettingsFacts {
   return {
     today: '2026-10-22',
-    settings: { strengthTrackedExternally: false, introSoundEnabled: true },
+    // Een eigen beenindex (nagemaakt), zodat ook Beenindex terug naar de standaard er staat.
+    settings: { strengthTrackedExternally: false, introSoundEnabled: true, legFactorLog: [{ at: '2026-01-01T07:00:00.000Z', factor: 1.15, source: 'akkoord' }] },
     dailyTimeBudget: {},
     pairing: 'automatic',
     position: { weekInProgram: 3, totalWeeks: 20, phaseName: 'Basis' },
@@ -46,6 +47,12 @@ const withSettings = (extra: Partial<SettingsFacts['settings']>) => facts({ sett
 describe('rowAvailability', () => {
   it('staat alles aan en is alles gekoppeld, dan is er niets aan de hand', () => {
     for (const id of CONDITIONAL_ROWS) expect(rowAvailability(id, facts({ noGoal: true })), id).toEqual({ available: true });
+  });
+
+  it('Beenindex terug naar de standaard staat er alleen met een eigen factor', () => {
+    expect(rowAvailability('beenindex-standaard', withSettings({}))).toEqual({ available: false, reason: 'Zichtbaar zodra de beenindex met je eigen factor rekent', parent: 'beenindex-leert' });
+    expect(rowAvailability('beenindex-standaard', withSettings({ legFactorLog: [{ at: '2026-01-01T07:00:00.000Z', factor: 0.85, source: 'akkoord' }] }))).toEqual({ available: true });
+    expect(rowAvailability('beenindex-standaard', withSettings({ legIndexLearning: 'uit', legFactorLog: [{ at: '2026-01-01T07:00:00.000Z', factor: 0.85, source: 'akkoord' }] })).available).toBe(false);
   });
 
   it('Weekbudget staat er alleen zonder doel', () => {

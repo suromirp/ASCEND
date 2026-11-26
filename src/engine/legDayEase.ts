@@ -23,7 +23,7 @@ import { addDays, daysBetween, weekdayLongNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { r1 } from '../utils/round';
 import { cleanExerciseName } from './exerciseMatch';
-import { FATIGUE_BAND, FATIGUE_THRESHOLDS, fatigueEvents, fatigueWord, legFatigueOn, sessionImpulse, type LegFatigueInputs } from './legFatigue';
+import { FATIGUE_BAND, FATIGUE_THRESHOLDS, clampFactor, fatigueEvents, fatigueWord, legFatigueOn, sessionImpulse, type LegFatigueInputs } from './legFatigue';
 import type { LegEaseHow, LegEaseMode } from './legEaseSettings';
 import { isOpenOn, kindOf } from './injuryKind';
 import { isLegSpot } from './legSpots';
@@ -166,11 +166,13 @@ export interface SignalDeps {
   minutesOf?: LegFatigueInputs['minutesOf'];
   injuries: InjuryNote[];
   checkIns: MorningCheckIn[];
+  // Je eigen beenindex, altijd legIndexSafeFactor (nooit onder 1): Lichter beslist (engine/legIndexLearning.ts).
+  factor?: number;
 }
 
 function fatigueInputsFor(deps: SignalDeps, plannedSessions = deps.plannedSessions): LegFatigueInputs {
   return {
-    logs: deps.logs, plannedSessions, templates: deps.templates, today: deps.today, bodyKg: deps.bodyKg, program: deps.program, minutesOf: deps.minutesOf,
+    logs: deps.logs, plannedSessions, templates: deps.templates, today: deps.today, bodyKg: deps.bodyKg, program: deps.program, minutesOf: deps.minutesOf, factor: Math.max(1, clampFactor(deps.factor)),
     soreness: legSorenessList(deps.checkIns, deps.injuries),
   };
 }

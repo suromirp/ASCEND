@@ -20,6 +20,7 @@
 // "Geschatte 1RM tonen" off there is only the second and no switch
 // (docs/beslissingen/2026-10-24-1rm-uit-macrofactor.md).
 
+import { legFactorsOf } from '../engine/legIndexLearning';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, Eyebrow, InfoButton, PageHeader, PrimaryButton, SecondaryButton, Segmented } from '../components/ui';
@@ -83,18 +84,19 @@ export function ForgePage() {
     }
   }
   const macroFactorOneRm = useMemo(() => (choices.showMacroFactorOneRm ? externalOneRmByKey(settings.externalOneRm) : NO_READINGS), [choices.showMacroFactorOneRm, settings.externalOneRm]);
+  const legSafe = legFactorsOf(settings).safe;
   const model = useMemo(() => {
     const s = resolveStrengthSettings(JSON.parse(strengthKey) as typeof settings.strengthModel);
     if (!s.enabled) return undefined;
     const strengthLogs = sessionLogs.filter((l) => l.strengthData && l.strengthData.length > 0);
-    const deps = { logs: sessionLogs, templates, program, bodyKg, sore: { injuries: injuryNotes, checkIns: settings.morningCheckIns ?? [] } };
+    const deps = { logs: sessionLogs, templates, program, bodyKg, sore: { injuries: injuryNotes, checkIns: settings.morningCheckIns ?? [] }, factor: legSafe };
     const histories = exerciseHistories(strengthLogs, templates, deps);
     const tiredNow = legsTiredAt(today, undefined, deps);
     return {
       views: exerciseViews(histories, s, bodyKg, today, tiredNow),
       rows: comparisonRows(histories, s, bodyKg, templates, easedLogIds(sessionLogs, settings.legEaseDays)),
     };
-  }, [strengthKey, sessionLogs, templates, program, bodyKg, today, injuryNotes, settings.morningCheckIns, settings.legEaseDays]);
+  }, [strengthKey, sessionLogs, templates, program, bodyKg, today, injuryNotes, settings.morningCheckIns, settings.legEaseDays, legSafe]);
 
   const trainings = useMemo(() => (model ? trainingFilters(templates, model.views) : []), [model, templates]);
   // A stored filter for a training that is no longer there counts as "Alles".

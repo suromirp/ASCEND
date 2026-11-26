@@ -7,6 +7,7 @@
 // regel (`sub`): een feit of een bron, nooit uitleg. Een test bewaakt dat een regel
 // niet langer is dan SUB_MAX_LENGTH, zodat niets afkapt op 360 px.
 
+import { legFactorsOf, pct, resolveLegLearning } from './legIndexLearning';
 import { holidayCountryLabel, resolveHolidayCountry, resolveHolidayOffers } from './publicHolidays';
 import { resolveSportRestKeep } from './sportRestOffer';
 import { locationSummary } from './locationSetting';
@@ -1241,6 +1242,12 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.airQuality !== false };
     case 'klimtempo':
       return { checked: s.climbPace !== false };
+    case 'beenindex-leert': {
+      const shown = legFactorsOf(s).shown;
+      return { checked: resolveLegLearning(s.legIndexLearning) === 'aan', ...(shown !== 1 ? { sub: `Eigen factor ${pct(shown)}.` } : {}) };
+    }
+    case 'beenindex-standaard':
+      return {};
     case 'etappetijd-eigen':
       return { checked: s.stageOwnPace !== false };
     case 'tempocurve':

@@ -79,6 +79,11 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, initialEner
   const sleepFrom = suggest && !draft.sleep ? prefill.sleep?.from : undefined;
   // Kwam het slaapantwoord uit het voorstel en koos je zelf niets, dan blijft het een voorstel.
   const sleepSuggested = !draft.sleep && !!sleep ? true : draft.sleepSuggested;
+  // Of je het voorstel van de benen bevestigde of zelf koos (engine/legIndexLearning.ts). Bij een ochtend die er al
+  // is blijft wat er stond, tenzij je de benen veranderde.
+  const legsOrigin: MorningCheckIn['legsFrom'] = !legs ? undefined
+    : existing ? (legs === existing.legs ? existing.legsFrom : 'zelf')
+    : prefill.legs && legs === prefill.legs.value ? 'voorstel' : 'zelf';
 
   function save(entry: MorningCheckIn) {
     onSaved?.(entry);
@@ -144,7 +149,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, initialEner
         )}
         <div className="flex items-center justify-between gap-3">
           {painOnly ? <span /> : <NotFitLink />}
-          <PrimaryButton fullWidth={false} disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, legs, energy, sleep, soreWhere: upper ? 'upper' : undefined, sleepSuggested: sleepSuggested || undefined, date: today, allNormal: undefined })}>
+          <PrimaryButton fullWidth={false} disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, legs, legsFrom: legsOrigin, energy, sleep, soreWhere: upper ? 'upper' : undefined, sleepSuggested: sleepSuggested || undefined, date: today, allNormal: undefined })}>
             Opslaan
           </PrimaryButton>
         </div>
