@@ -8,6 +8,7 @@ Geen open vragen.
 
 ## Stuk of vast
 
+Niets.
 
 ## Loopt
 
@@ -15,6 +16,12 @@ Geen open vragen.
 
 
 ## Net live
+
+### 26 november 05:20
+- Belangrijk advies, zoals een rustiger instap na een pauze, komt bij het openen één keer als blad met Akkoord, Bekijk en Niet nu; uit te zetten in Kaarten (I-157).
+- Twee adviezen voor dezelfde dag: je ziet er één, met een regel dat het andere wacht; geen twee kaarten meer voor dezelfde training (I-155).
+- Planning: Geen tijd vandaag kiest een open dag zonder test ernaast; het eerste voorstel bij een wedstrijd zegt wat het weekplan doet; Intervallen rustiger toont alleen echte wijzigingen (I-146, I-147, I-148, I-151, I-156).
+- Routes en week: nawerk van de review (I-163), onder meer één blad bij een sleep naar je rustdag en een lus die niet veel langer wordt dan je training.
 
 ### 22 november 15:15
 - Back-up: een late poging overschrijft geen nieuwere back-up meer (I-69).
