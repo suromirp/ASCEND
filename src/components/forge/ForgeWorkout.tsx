@@ -239,7 +239,7 @@ function ForgeWorkoutInner({
   const slots = capped.slots;
 
   // De planning van de rijen, één keer: de geschiedenis per oefening uit de logs.
-  const [baseCtx] = useState<PlanContext>(() => ({ logs: sessionLogs, templates, program, bodyKg, settings: strength, date, modelOn: strength.enabled, sore: { injuries: injuryNotes, checkIns: settings.morningCheckIns ?? [] }, reentryWeeks: settings.reentryWeeks }));
+  const [baseCtx] = useState<PlanContext>(() => ({ logs: sessionLogs, templates, program, bodyKg, settings: strength, date, modelOn: strength.enabled, sore: { injuries: injuryNotes, checkIns: settings.morningCheckIns ?? [] }, reentryWeeks: settings.reentryWeeks, legFactor: legFactorsOf(settings).safe }));
   // Lichter bij vermoeide benen (engine/legDayEase.ts): heb je het voor deze training gekozen, dan zijn de
   // voorschriften van de beenoefeningen lichter. De training zelf verandert nooit; dit is alleen dit scherm.
   const legEase = useLegEase(preview ? null : (plannedSessionId ?? null));

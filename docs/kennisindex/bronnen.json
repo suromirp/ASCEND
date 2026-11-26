@@ -3440,6 +3440,14 @@
    "kern": "Met een bergdoel of bergtocht stelt ASCEND om de zes weken (instelbaar: acht of uit) een vaste ijktocht voor, alleen met Akkoord, op een vrije dag weg van test, wedstrijd en tocht; de uitkomst (klimtempo, hartslag aan het eind, benen de dag erna) staat in Je stand, Belasting.",
    "stand": "geldt"
   },
+  "docs/beslissingen/2026-11-26-beenindex-leert.md": {
+   "onderwerpen": [
+    "lichaam-en-herstel",
+    "planning"
+   ],
+   "kern": "De beenindex leert een eigen factor (0,7 tot 1,4) uit je ochtendantwoorden, alleen als voorstel met Akkoord; alles wat beslist rekent met max(1, k), alleen de woorden volgen k onder 1; uit of terug naar de standaard zet k direct op 1.",
+   "stand": "geldt"
+  },
   "docs/beslissingen/_sjabloon.md": {
    "onderwerpen": [
     "werkwijze"
