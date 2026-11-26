@@ -95,8 +95,9 @@ export function weekPlan(input: DayPlanInput): WeekPlan {
 
   const buildDay = (date: string): PlanDay => {
     const { sessions, order } = orderedOn(date);
+    // Alleen vandaag krijgt de ziekteregel (I-151): een andere dag rekent zonder de ziekte van vandaag.
     const allowed = (s: PlannedSession) => {
-      if (!illRules) return true;
+      if (!illRules || date !== today) return true;
       const t = templateById.get(s.templateId);
       return !!t && illRules.ok({ date, step: 'do', template: t });
     };
