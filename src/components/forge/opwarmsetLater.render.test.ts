@@ -18,7 +18,7 @@ const legPress = (rows: WorkoutRow[], warmFrom?: string): WorkoutExercise => ({ 
 const LINE = 'Je benen zijn warm van de Barbell Back Squat. Twijfel je over de stoel of het gewicht, doe hem dan.';
 
 function block(ex: WorkoutExercise, readOnly = false, warmNow = true): string {
-  return renderToStaticMarkup(createElement(ExerciseBlock, { ex, warmNow, first: false, readOnly, column: 'target', field: null, selected: false, folded: false, profile, showPlates: false, rirAsValue: false, swipeOn: false, act }));
+  return renderToStaticMarkup(createElement(ExerciseBlock, { ex, warmNow, first: false, readOnly, field: null, selected: false, folded: false, profile, showPlates: false, rirAsValue: false, swipeOn: false, act }));
 }
 
 describe('opwarmset later in het blok', () => {

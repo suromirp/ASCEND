@@ -256,7 +256,9 @@ export function RirSheet({ words, target, current, assumed, onPick, onClose }: {
   );
 }
 
-export function WorkoutMenuSheet({ name, readOnly, preview, paused, hasGuide, layoutPaged, onTogglePause, onMinimize, onFinish, onLayout, onGuide, onDiscard, onClose }: {
+// Kleiner maken (de terugknop) en Afronden staan in de kop van de training, niet nog eens hier
+// (docs/beslissingen/2026-11-26-forge-herinrichting-rest.md).
+export function WorkoutMenuSheet({ name, readOnly, preview, paused, hasGuide, layoutPaged, onTogglePause, onLayout, onGuide, onDiscard, onClose }: {
   name: string;
   readOnly: boolean;
   preview: boolean;
@@ -264,8 +266,6 @@ export function WorkoutMenuSheet({ name, readOnly, preview, paused, hasGuide, la
   hasGuide: boolean;
   layoutPaged: boolean;
   onTogglePause: () => void;
-  onMinimize: () => void;
-  onFinish: () => void;
   onLayout: (paged: boolean) => void;
   onGuide: () => void;
   onDiscard: () => void;
@@ -278,8 +278,6 @@ export function WorkoutMenuSheet({ name, readOnly, preview, paused, hasGuide, la
           {!readOnly && !preview && (
             <>
               <MenuRow icon="pauze" title={paused ? 'Verder' : 'Pauzeren'} sub={paused ? 'De klok loopt weer.' : 'De klok staat stil tot je verder gaat.'} onClick={() => { onTogglePause(); close(); }} />
-              <MenuRow icon="omlaag" title="Kleiner maken" sub="Het scherm sluit, de training loopt door." onClick={() => { close(); onMinimize(); }} />
-              <MenuRow icon="vinkje" title="Afronden" onClick={() => { close(); onFinish(); }} />
             </>
           )}
           <MenuRow

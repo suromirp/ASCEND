@@ -32,11 +32,9 @@ describe('tikdoelen in Forge', () => {
     expect(cls).not.toMatch(/before:/);
   });
 
-  it('de kolomkop Toon vorige keer is 16 px tekst met 14 px boven en onder: 44 hoog', () => {
-    const line = blockSource.split('\n').find((l) => l.includes("'Toon vorige keer'")) ?? '';
-    expect(line).toContain('py-[14px]');
-    expect(line).toContain('-my-[14px]');
-    expect(line).not.toMatch(/before:/);
+  it('de kolomkoppen zijn gewone tekst: geen knop, dus geen tikdoel dat te klein is', () => {
+    expect(blockSource).not.toContain("'Toon vorige keer'");
+    expect(blockSource).toContain('<span role="columnheader">Vorige keer</span>');
     // De kop staat in een rij met text-xs (regelhoogte 16 px).
     expect(blockSource).toMatch(/role="row" className="forge-grid items-end pb-1 text-xs"/);
   });

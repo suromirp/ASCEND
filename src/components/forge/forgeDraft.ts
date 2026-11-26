@@ -18,7 +18,8 @@ export interface WorkoutDraft {
   startedAt: number;
   exercises: WorkoutExercise[];
   rest?: Rest;
-  column: 'target' | 'previous';
+  // Niet meer in gebruik: de tweede kolom is altijd Vorige keer. Een concept van eerder heeft het nog; het wordt genegeerd.
+  column?: 'target' | 'previous';
   // Of de rijen met Lichter gepland zijn; een concept van voor deze keuze heeft het niet.
   eased?: boolean;
   // Het verloop van de training (engine/forgeLog.ts) en het moment dat je het voor het laatst opende.
