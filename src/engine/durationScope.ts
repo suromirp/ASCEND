@@ -30,7 +30,7 @@ export interface DurationSettings {
   beginnerLadder?: unknown;
 }
 
-export function durationScopeFor(settings: DurationSettings, logs: SessionLog[], templates: SessionTemplate[], program: Program | null | undefined, today: string): Required<Omit<DurationScope, 'hardSameDay' | 'longRunThenLegs' | 'testRest'>> {
+export function durationScopeFor(settings: DurationSettings, logs: SessionLog[], templates: SessionTemplate[], program: Program | null | undefined, today: string): Required<Omit<DurationScope, 'hardSameDay' | 'longRunThenLegs' | 'testRest' | 'legFactor'>> {
   return {
     ambition: effectiveAmbition(settings.ambition, logs, new Map(templates.map((t) => [t.id, t])), program, today).effective,
     durationAdjustments: [...recoveryDurationAdjustments(settings.illnessEpisodes), ...reentryAdjustments(settings.reentryWeeks)],

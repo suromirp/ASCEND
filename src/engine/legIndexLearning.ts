@@ -66,6 +66,12 @@ export function legIndexShownFactor(k: number): number {
   return clampFactor(k);
 }
 
+// De twee factoren uit de instellingen: `safe` voor alles wat beslist, `shown` voor de woorden.
+export function legFactorsOf(s: { legFactorLog?: LegFactorEntry[]; legIndexLearning?: unknown }): { safe: number; shown: number } {
+  const k = currentLegFactor(s.legFactorLog, resolveLegLearning(s.legIndexLearning));
+  return { safe: legIndexSafeFactor(k), shown: legIndexShownFactor(k) };
+}
+
 // --- de antwoorden ---------------------------------------------------------------------------
 // Een ochtendcheck als benenantwoord, of niets (geen benen, alleen een plek gescoord).
 export function answerOf(c: MorningCheckIn): LegAnswer | undefined {
@@ -256,6 +262,13 @@ export function learningLine(l: LegLearning): string {
 }
 
 const formatHalf = (n: number) => (Number.isInteger(n) ? String(n) : String(n).replace('.', ','));
+
+// De regel bij je eigen factor op de kaart Benen en in Je stand. Onder 1 zegt hij erbij dat de planning
+// voorzichtig blijft, want dan kan de kaart Fris zeggen terwijl de planner een test nog niet toelaat.
+export function ownFactorLine(shown: number): string {
+  const head = `Met je eigen factor van ${pct(shown)}.`;
+  return shown < 1 ? `${head} De planning rekent voorzichtig met de standaardindex.` : head;
+}
 
 // Of de woorden en de planning uiteenlopen: alleen met een factor onder 1.
 export function planningStaysCareful(k: number): boolean {

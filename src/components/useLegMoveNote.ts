@@ -5,6 +5,7 @@ import { moveLegNote } from '../engine/legDayEase';
 import { resolveLegEase } from '../engine/legEaseSettings';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { todayISO } from '../utils/dates';
+import { legFactorsOf } from '../engine/legIndexLearning';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 
 // De stille regel bij het verplaatsen van een zware beendag of harde training (engine/legDayEase.ts#moveLegNote):
@@ -17,6 +18,7 @@ export function useLegMoveNotes(moves: { sessionId?: string; toDate?: string }[]
   const plannedSessions = endState ?? storedSessions;
   const mode = resolveLegEase(settings);
   const bodyKg = loadBodyKg(settings);
+  const legSafe = legFactorsOf(settings).safe;
   const key = moves.map((m) => `${m.sessionId}:${m.toDate}`).join('|');
   return useMemo(() => {
     if (mode === 'uit') return [];
@@ -25,7 +27,7 @@ export function useLegMoveNotes(moves: { sessionId?: string; toDate?: string }[]
       const deps = {
         logs: sessionLogs, plannedSessions, templates, program, bodyKg, today: todayISO(),
         minutesOf: (s: PlannedSession, t: SessionTemplate) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
-        injuries: injuryNotes, checkIns: settings.morningCheckIns ?? [],
+        injuries: injuryNotes, checkIns: settings.morningCheckIns ?? [], factor: legSafe,
       };
       for (const m of moves) {
         if (!m.sessionId || !m.toDate) continue;
@@ -38,5 +40,5 @@ export function useLegMoveNotes(moves: { sessionId?: string; toDate?: string }[]
     return out;
     // De lijst met verplaatsingen is de inhoud van `key`.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, mode, sessionLogs, plannedSessions, templates, program, bodyKg, injuryNotes, settings.morningCheckIns]);
+  }, [key, mode, sessionLogs, plannedSessions, templates, program, bodyKg, injuryNotes, settings.morningCheckIns, legSafe]);
 }

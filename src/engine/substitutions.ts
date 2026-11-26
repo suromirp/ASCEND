@@ -187,6 +187,9 @@ export interface DurationScope {
   longRunThenLegs?: boolean;
   // Rest before a test in hours (engine/scheduler.ts#withTestRestHours), the same way: the race block reads it.
   testRest?: 48 | 72;
+  // Je eigen beenindex voor de planner (engine/scheduler.ts#withLegFactor), nooit onder 1: zo klopt het voorbeeld
+  // in het voorstel met wat de planning na Akkoord doet.
+  legFactor?: number;
 }
 
 export function withDurationScope<T>(scope: DurationScope | undefined, fn: () => T): T {

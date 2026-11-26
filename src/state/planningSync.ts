@@ -18,7 +18,8 @@ import {
 import { loadBodyKg } from '../engine/weightTrend';
 import { packWeightOf } from '../engine/gr5Profile';
 import { resolveTestRest } from '../engine/testRest';
-import { setFreshnessContext, setHardSameDayAllowed, setLongRunThenLegs, setTestRestHours } from '../engine/scheduler';
+import { setFreshnessContext, setHardSameDayAllowed, setLegFactor, setLongRunThenLegs, setTestRestHours } from '../engine/scheduler';
+import { legFactorsOf } from '../engine/legIndexLearning';
 import { leaveKey } from '../engine/leaveEdit';
 import { createSerialQueue } from '../utils/serialQueue';
 import { chainTouch, type SyncTouch } from '../engine/undoGuard';
@@ -94,6 +95,8 @@ export function setPlanningRegisters(program: Program | null, tpls: SessionTempl
   // The planner's leg index with the same inputs as the Benen card.
   const lastWeight = loadBodyKg(loadedSettings);
   setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, program, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program) });
+  // Je eigen beenindex: de planner rekent nooit onder 1 (engine/legIndexLearning.ts#legIndexSafeFactor).
+  setLegFactor(legFactorsOf(loadedSettings).safe);
   setFixedSessionMinutes(planned);
   setAmbition(scope.ambition);
   setKindAmounts(scope.kindAmounts);

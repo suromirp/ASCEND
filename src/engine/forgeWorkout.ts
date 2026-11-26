@@ -1205,10 +1205,12 @@ export interface LegDayLineDeps {
   sore?: SoreSource;
   // The training itself, so it does not count as "earlier".
   excludeId?: string;
+  // Je eigen beenindex, altijd legIndexSafeFactor (nooit onder 1; engine/legIndexLearning.ts).
+  factor?: number;
 }
 
 export function legDayLine(date: string, deps: LegDayLineDeps): string {
-  const inputs = { logs: deps.logs, plannedSessions: [], templates: deps.templates, today: date, bodyKg: deps.bodyKg, program: deps.program, ...(deps.sore ? { soreness: legSorenessList(deps.sore.checkIns, deps.sore.injuries) } : {}) };
+  const inputs = { logs: deps.logs, plannedSessions: [], templates: deps.templates, today: date, bodyKg: deps.bodyKg, program: deps.program, factor: deps.factor, ...(deps.sore ? { soreness: legSorenessList(deps.sore.checkIns, deps.sore.injuries) } : {}) };
   const earlier = earlierTodayPoints(date, { logs: deps.logs, templates: deps.templates, program: deps.program, bodyKg: deps.bodyKg, excludeId: deps.excludeId });
   if (earlier.points > 0) {
     const index = legFatigueOn(date, inputs, fatigueEvents(inputs)).index + earlier.points;

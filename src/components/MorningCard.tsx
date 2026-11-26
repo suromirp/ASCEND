@@ -111,7 +111,9 @@ export function MorningCard() {
     if (saving) return;
     if (spot) { setSheet({ legs }); return; }
     const others = (settings.morningCheckIns ?? []).filter((c) => c.date !== today);
-    const entry: MorningCheckIn = { date: today, legs, energy: tired ?? prefill.energy?.value, sleep: prefill.sleep?.value, ...(prefill.sleep ? { sleepSuggested: true } : {}) };
+    // Of je het voorstel van de benen bevestigde of zelf koos: telt voor je eigen beenindex (engine/legIndexLearning.ts).
+    const legsFrom = suggested && legs === suggested.value ? 'voorstel' as const : 'zelf' as const;
+    const entry: MorningCheckIn = { date: today, legs, legsFrom, energy: tired ?? prefill.energy?.value, sleep: prefill.sleep?.value, ...(prefill.sleep ? { sleepSuggested: true } : {}) };
     setSaving(true);
     setSaveError(false);
     rememberHeight();

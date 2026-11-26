@@ -166,11 +166,13 @@ export interface SignalDeps {
   minutesOf?: LegFatigueInputs['minutesOf'];
   injuries: InjuryNote[];
   checkIns: MorningCheckIn[];
+  // Je eigen beenindex, altijd legIndexSafeFactor (nooit onder 1): Lichter beslist (engine/legIndexLearning.ts).
+  factor?: number;
 }
 
 function fatigueInputsFor(deps: SignalDeps, plannedSessions = deps.plannedSessions): LegFatigueInputs {
   return {
-    logs: deps.logs, plannedSessions, templates: deps.templates, today: deps.today, bodyKg: deps.bodyKg, program: deps.program, minutesOf: deps.minutesOf,
+    logs: deps.logs, plannedSessions, templates: deps.templates, today: deps.today, bodyKg: deps.bodyKg, program: deps.program, minutesOf: deps.minutesOf, factor: deps.factor,
     soreness: legSorenessList(deps.checkIns, deps.injuries),
   };
 }

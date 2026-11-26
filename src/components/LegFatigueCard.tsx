@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { legFactorsOf, ownFactorLine } from '../engine/legIndexLearning';
 import { nextTestOrRace } from '../engine/testRaceUpcoming';
 import { useAppData } from '../state/AppDataContext';
 import { fatigueBand, fatigueStatus, fatigueWord, FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueInputs } from '../engine/legFatigue';
@@ -22,9 +23,13 @@ const SCALE = 20;
 const LEVEL_COLOR = ['var(--color-progress)', 'var(--color-warning)', 'var(--color-effort-4)'];
 const ZONE_EDGES = [0, FATIGUE_THRESHOLDS.test.fresh, FATIGUE_THRESHOLDS.hard.fresh, SCALE];
 
-export function useLegFatigueInputs(): LegFatigueInputs {
+// Je eigen beenindex (engine/legIndexLearning.ts): standaard de factor voor alles wat beslist, nooit onder 1.
+// `shown` alleen voor de woorden (de kaart Benen, Je stand, de grafiek, de voorinvulling van de ochtendvraag).
+export function useLegFatigueInputs(opts: { shown?: boolean } = {}): LegFatigueInputs {
   const { sessionLogs, plannedSessions, templates, program, settings, injuryNotes } = useAppData();
   const today = todayISO();
+  const factors = legFactorsOf(settings);
+  const factor = opts.shown ? factors.shown : factors.safe;
   return useMemo(() => {
     // The same weight the planner reads (state/AppDataContext.tsx): MacroFactor's trend weight when it is switched on.
     const bodyKg = loadBodyKg({ weightEntries: settings.weightEntries, weightFromMacroFactor: settings.weightFromMacroFactor, weightFromHealthConnect: settings.weightFromHealthConnect, weightForLoad: settings.weightForLoad });
@@ -33,13 +38,17 @@ export function useLegFatigueInputs(): LegFatigueInputs {
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       // Spierpijn uit de ochtendcheck en een melding op een beenplek uit Hoe voelt je lijf? tellen even zwaar.
       soreness: legSorenessList(settings.morningCheckIns, injuryNotes),
+      factor,
     };
-  }, [sessionLogs, plannedSessions, templates, program, settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, settings.weightForLoad, settings.morningCheckIns, injuryNotes, today]);
+  }, [sessionLogs, plannedSessions, templates, program, settings.weightEntries, settings.weightFromMacroFactor, settings.weightFromHealthConnect, settings.weightForLoad, settings.morningCheckIns, injuryNotes, today, factor]);
 }
 
 export function LegFatigueCard() {
-  const { plannedSessions, sessionLogs, templates } = useAppData();
-  const inputs = useLegFatigueInputs();
+  const { plannedSessions, sessionLogs, templates, settings } = useAppData();
+  // Het woord en de balk volgen je eigen factor; de regel over de test rekent zoals de planner (nooit onder 1).
+  const inputs = useLegFatigueInputs({ shown: true });
+  const safeInputs = useLegFatigueInputs();
+  const own = legFactorsOf(settings).shown;
   const today = inputs.today;
   const now = useMemo(() => legFatigueOn(today, inputs), [today, inputs]);
   // De index is je stand van vanochtend: een training van vandaag telt pas vanaf morgen. Staat er vandaag al iets
@@ -50,7 +59,7 @@ export function LegFatigueCard() {
   // The next test or race in the coming 2 weeks, as it is planned now.
   const upcoming = useMemo(() => nextTestOrRace(plannedSessions, sessionLogs, today, templates), [plannedSessions, sessionLogs, today, templates]);
   const next = upcoming?.session;
-  const nextResult = useMemo(() => (next ? legFatigueOn(next.scheduledDate, inputs) : undefined), [next, inputs]);
+  const nextResult = useMemo(() => (next ? legFatigueOn(next.scheduledDate, safeInputs) : undefined), [next, safeInputs]);
   const purpose = upcoming?.kind ?? 'test';
   const nextStatus = nextResult ? fatigueStatus(nextResult, purpose) : undefined;
   const band = nextResult ? fatigueBand(nextResult.index, purpose) : undefined;
@@ -66,6 +75,7 @@ export function LegFatigueCard() {
         <span className="font-display text-2xl leading-tight" style={{ color: 'var(--color-ink)' }}>{word}</span>
         <span className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>index {formatNumberNL(now.index, 1)}</span>
       </div>
+      {own !== 1 && <p className="-mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{ownFactorLine(own)}</p>}
 
       <div className="relative h-2" role="img" aria-label={`Beenvermoeidheid ${formatNumberNL(now.index, 1)}: ${word.toLowerCase()}`}>
         <div className="flex h-full gap-[2px] overflow-hidden rounded-full" aria-hidden>

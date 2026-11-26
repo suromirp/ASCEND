@@ -15,7 +15,8 @@ import { useTodayWatch } from './useWellness';
 export function useMorningPrefill(today: string): { prefill: MorningPrefill; afterEffort: MaxEffortMorning | undefined; reading: WellnessReading | undefined; rule: MorningRule | undefined; linked: boolean; sleepOn: boolean; lookedAt: (string | undefined)[] } {
   const { sessionLogs, templates, settings } = useAppData();
   const watch = useTodayWatch(today);
-  const inputs = useLegFatigueInputs();
+  // De voorinvulling volgt je eigen factor; flink stelt hij nooit voor (engine/morningCard.ts#suggestLegs).
+  const inputs = useLegFatigueInputs({ shown: true });
   const legIndex = useMemo(() => legFatigueOn(today, inputs), [today, inputs]);
   const enabled = askLegsAfterEffort(settings.overviews);
   const afterEffort = useMemo(() => maxEffortYesterday({ logs: sessionLogs, templates, today, enabled }), [sessionLogs, templates, today, enabled]);
