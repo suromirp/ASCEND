@@ -28,7 +28,7 @@ import type { LeavePeriod } from '../models/leave';
 import type { DurationAdjustment } from './substitutions';
 import { dayRules, mayPropose } from './dayRules';
 import { awayPeriods, isAwayDay } from './leave';
-import { isHardRun, isLegHeavyTemplate } from './scheduler';
+import { isHardRun, isLegHeavyTemplate, respectsHeavySpacing } from './scheduler';
 import { hasRole, isGymStrengthTemplate, isTestOrRace } from './templateRoles';
 import { raceWeekGuard } from './adviceShared';
 import type { RaceBlock } from './raceBlock';
@@ -262,8 +262,11 @@ export function reentryCatchUp(input: {
   }
   if (!restDay) return undefined;
   const day = restDay;
-  const legsNear = (d: string) => input.logs.some((l) => { const t = byId.get(l.templateId); return !!t && isLegHeavyTemplate(t) && Math.abs(daysBetween(l.completedDate, d)) < 2; })
-    || input.plannedSessions.some((s) => { const t = byId.get(s.templateId); return !!t && openOn(s, logged) && dateOf(s) >= today && isLegHeavyTemplate(t) && Math.abs(daysBetween(dateOf(s), d)) < 2; });
+  // De planning rond de rustdag zoals hij na de ruil van de eerste dag staat: wat nog komt en wat je deed
+  // (dezelfde keuze als engine/restDayBack.ts). De afstand tussen zware dagen toetst de scheduler zelf.
+  const around = input.plannedSessions
+    .filter((s) => s.status !== 'skipped' && !s.leave && (dateOf(s) >= today || logged.has(s.id)))
+    .map((s) => (dateOf(s) === s.scheduledDate ? s : { ...s, scheduledDate: dateOf(s) }));
   // Wat voor een vakantie of tocht open stond vervalt (engine/missedTraining.ts#pauseSince): alleen wat erna kwam.
   const awayStarts = awayPeriods(leave).filter((p) => p.kind !== 'no_gym').map((p) => p.startDate);
   const candidate = input.plannedSessions
@@ -271,12 +274,13 @@ export function reentryCatchUp(input: {
     .filter((s) => !awayStarts.some((a) => a > s.scheduledDate && a <= today))
     .filter((s) => {
       const t = byId.get(s.templateId);
-      // Licht: kracht of een rustige loop; geen test of wedstrijd, geen harde loop, geen lange duurloop of bergtocht.
-      if (!t || (t.type !== 'strength' && t.type !== 'cardio') || isTestOrRace(t) || isHardRun(t) || hasRole(t, 'hard_run') || hasRole(t, 'long')) return false;
+      // Licht: kracht of een rustige loop; geen test of wedstrijd, geen harde loop, geen lange duurloop of bergtocht,
+      // en geen zware beendag (Benen A of B, engine/scheduler.ts#isLegHeavyTemplate).
+      if (!t || (t.type !== 'strength' && t.type !== 'cardio') || isTestOrRace(t) || isHardRun(t) || hasRole(t, 'hard_run') || hasRole(t, 'long') || isLegHeavyTemplate(t)) return false;
       // Een vakantie- of tochtdag is nooit gemist, en zonder sportschool geen sportschooltraining (engine/leave.ts#isAwayFor).
       if (away(s.scheduledDate, t) || away(day, t)) return false;
-      // Geen zware benen binnen 48 uur van een zware beensessie, gelogd of gepland.
-      return !(isLegHeavyTemplate(t) && legsNear(day));
+      // De rustdag moet passen bij wat eromheen staat, met dezelfde regel als de rest van de planning.
+      return respectsHeavySpacing(day, t, around, byId, [...input.logs], s.id);
     })
     // De laatste die je miste eerst; dan de volgorde op de dag en het id.
     .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate) || a.order - b.order || a.id.localeCompare(b.id))[0];
