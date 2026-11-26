@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'reac
 import { useAppData } from '../state/AppDataContext';
 import type { Advice } from '../engine/adviceEngine';
 import {
-  FIRST_SHEET_DONE_NOTE, FIRST_SHEET_FAILED_NOTE, FIRST_SHEET_SETTLE_MS, FIRST_SHEET_SLOW_NOTE, FIRST_SHEET_TIMEOUT_MS, firstSheetAdvice, pausedToday,
+  FIRST_SHEET_DONE_NOTE, FIRST_SHEET_FAILED_NOTE, FIRST_SHEET_SETTLE_MS, FIRST_SHEET_SLOW_NOTE, FIRST_SHEET_TIMEOUT_MS, FIRST_SHEET_VIEW_FAILED_NOTE, firstSheetAdvice, pausedToday,
   rememberFirstSheetNotNow, rememberFirstSheetShown,
 } from '../engine/adviceFirst';
 import { WAITING_LINE } from '../engine/oneAnswerPerDay';
@@ -128,8 +128,14 @@ function FirstAdviceSheet({ advice, onNotNow, onDone }: { advice: Advice; onNotN
   async function view() {
     answered.current = true;
     setPhase('busy');
-    await accept(false);
-    setPhase('viewing');
+    try {
+      await withTimeout(accept(false), FIRST_SHEET_TIMEOUT_MS);
+      setPhase('viewing');
+    } catch {
+      // Nooit vast op rekenen: na de tijdsgrens of een fout een uitkomst en een weg dicht.
+      setOutcome(FIRST_SHEET_VIEW_FAILED_NOTE);
+      setPhase('done');
+    }
   }
 
   const busy = !showDone && (phase === 'busy' || phase === 'settle');
