@@ -235,22 +235,28 @@ export function legLearning(input: LegLearningInput & { mode: LegLearningMode; f
   const step = Math.max(-MAX_STEP, Math.min(MAX_STEP, diff));
   const factor = round05(clampFactor(current + step));
   if (factor === current) return out;
-  return { ...out, proposal: { factor, from: current, up: factor > current, line: proposalLine(factor, factor > current) } };
+  return { ...out, proposal: { factor, from: current, up: factor > current, line: proposalLine(factor, current) } };
 }
 
 export const pct = (k: number) => `${Math.round(k * 100)} procent`;
 
-export function proposalLine(factor: number, up: boolean): string {
-  return up
-    ? `Je benen voelen vaker zwaarder dan de index zegt. Reken met ${pct(factor)}?`
-    : `Je benen voelen vaker frisser dan de index zegt. Toon de index met ${pct(factor)}? De planning blijft voorzichtig rekenen.`;
+// De zin noemt de planning alleen zoals die echt verandert: de planning rekent met max(1, k), dus omlaag
+// vanaf een factor boven 1 verandert ze wel; alleen onder 1 blijft ze bij de standaardindex (Warden, 26 november).
+export function proposalLine(factor: number, from: number): string {
+  if (factor > from) return `Je benen voelen vaker zwaarder dan de index zegt. Reken met ${pct(factor)}?`;
+  const fresher = 'Je benen voelen vaker frisser dan de index zegt.';
+  if (factor === 1) return `${fresher} Terug naar de standaardindex?`;
+  if (factor > 1) return `${fresher} Reken met ${pct(factor)}?`;
+  return from > 1
+    ? `${fresher} Toon de index met ${pct(factor)}? De planning gaat terug naar de standaardindex.`
+    : `${fresher} Toon de index met ${pct(factor)}? De planning blijft voorzichtig rekenen.`;
 }
 
 // Wat de app zegt bij elke uitkomst, in één zin.
 export function learningLine(l: LegLearning): string {
   switch (l.status) {
     case 'uit': return 'Uit. De index rekent zoals het model.';
-    case 'te-weinig': return `Nog ongeveer ${formatHalf(l.needed)} ochtenden met een duidelijk antwoord nodig voor een eerste uitkomst.`;
+    case 'te-weinig': return `Nog ongeveer ${Math.ceil(l.needed)} ochtenden met een duidelijk antwoord nodig voor een eerste uitkomst.`;
     case 'past-slecht': return 'Je ochtenden en de beenindex lopen vaak uiteen, in beide richtingen. Een factor lost dat niet op.';
     case 'klaar': {
       const now = l.current < 1
@@ -263,7 +269,6 @@ export function learningLine(l: LegLearning): string {
   }
 }
 
-const formatHalf = (n: number) => (Number.isInteger(n) ? String(n) : String(n).replace('.', ','));
 
 // De regel bij je eigen factor op de kaart Benen en in Je stand. Onder 1 zegt hij erbij dat de planning
 // voorzichtig blijft, want dan kan de kaart Fris zeggen terwijl de planner een test nog niet toelaat.

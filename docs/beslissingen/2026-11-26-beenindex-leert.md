@@ -36,8 +36,10 @@ Niets. Het model in `engine/legFatigue.ts` blijft het model; k = 1 is precies de
 
 ## Terugdraaien
 
-Per gebruiker: Instellingen, Lichaam, Signalen, Beenindex leert van je ochtenden uit, of Beenindex terug naar de standaard; beide zetten k direct op 1 en bewaren je antwoorden. In de code: `legFactorsOf` laten teruggeven `{ safe: 1, shown: 1 }` zet de hele app terug op het model; de opgeslagen lijsten mogen blijven staan.
+Per gebruiker: Instellingen, Lichaam, Signalen, Beenindex leert van je ochtenden uit, of Beenindex terug naar de standaard; beide zetten k op 1 (lag je factor boven 1, dan eerst als voorstel langs de planning) en bewaren je antwoorden. In de code: `legFactorsOf` laten teruggeven `{ safe: 1, shown: 1 }` zet de hele app terug op het model; de opgeslagen lijsten mogen blijven staan.
 
 ## Bekend randgeval
 
 Ongedaan maken van een instellingenwijziging zet de oude instellingen terug, ook `legAnswers`. Bevatte die wijziging ook een archiefstap (een ochtendcheck die vooraan uit de 60 viel), dan kan een rij uit het archief verdwijnen terwijl de ochtendcheck al weg is. Het gevolg is één ochtend minder om van te leren, nooit een soepeler planning.
+
+Ongedaan maken van het planningsvoorstel Je eigen beenindex haalt ook de Akkoord-rij weer uit `legFactorLog`; daarmee vervalt ook de rust van 28 dagen. Dat is de enige plek waar die lijst krimpt, op jouw verzoek en terug te zetten met een nieuw Akkoord; de planning wordt er nooit soepeler door dan het model.

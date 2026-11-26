@@ -501,7 +501,8 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('etappetijd-eigen', 'Etappetijd op je eigen tempo', 'lichaam', 'stageOwnPace'),
   flag('klimtempo', 'Je klimtempo', 'lichaam', 'climbPace'),
   {
-    // Terug naar aan verandert de factor niet: Uit zette een rij met de standaard (engine/legIndexLearning.ts).
+    // Uit zet een rij met de standaard; terug naar aan kan een oude factor laten gelden (een back-up zonder
+    // uit-rij), daarom plan: true en via het voorstel (engine/legIndexLearning.ts).
     id: 'beenindex-leert', title: 'Beenindex leert van je ochtenden', page: 'lichaam', plan: true,
     differs: (s) => resolveLegLearning(s.legIndexLearning) !== 'aan',
     value: (s) => onOff(resolveLegLearning(s.legIndexLearning) === 'aan'),

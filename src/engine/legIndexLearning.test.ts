@@ -7,7 +7,7 @@ import { addDays } from '../utils/dates';
 import { legFatigueOn } from './legFatigue';
 import {
   archiveLegAnswers, calibrationPoints, currentLegFactor, fitFactor, legAnswerHistory, legIndexSafeFactor, legIndexShownFactor, legLearning,
-  learningLine, MAX_STEP, MIN_WEIGHT, type LegLearningInput, type LegLearningMode,
+  learningLine, MAX_STEP, MIN_WEIGHT, proposalLine, type LegLearningInput, type LegLearningMode,
 } from './legIndexLearning';
 import { suggestLegs } from './morningCard';
 
@@ -223,5 +223,16 @@ describe('het archief van antwoorden', () => {
     expect(legAnswerHistory(archive, checks)).toEqual([
       { date: '2026-09-01', legs: 'stijf' }, { date: '2026-10-01', legs: 'fris', from: 'voorstel' }, { date: '2026-10-05', legs: 'stijf' },
     ]);
+  });
+});
+
+describe('de zin bij een voorstel noemt de planning zoals die echt verandert', () => {
+  it('omhoog, omlaag boven 1, naar de standaard, en onder 1', () => {
+    expect(proposalLine(1.15, 1)).toBe('Je benen voelen vaker zwaarder dan de index zegt. Reken met 115 procent?');
+    expect(proposalLine(1.05, 1.15)).toBe('Je benen voelen vaker frisser dan de index zegt. Reken met 105 procent?');
+    expect(proposalLine(1, 1.15)).toBe('Je benen voelen vaker frisser dan de index zegt. Terug naar de standaardindex?');
+    expect(proposalLine(0.9, 1.05)).toContain('De planning gaat terug naar de standaardindex.');
+    expect(proposalLine(0.85, 1)).toContain('De planning blijft voorzichtig rekenen.');
+    for (const from of [1.05, 1.15, 1.3]) for (const f of [1, 1.05, 1.15]) if (f < from) expect(proposalLine(f, from)).not.toContain('blijft voorzichtig');
   });
 });

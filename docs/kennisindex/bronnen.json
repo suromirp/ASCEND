@@ -3445,7 +3445,7 @@
     "lichaam-en-herstel",
     "planning"
    ],
-   "kern": "De beenindex leert een eigen factor (0,7 tot 1,4) uit je ochtendantwoorden, alleen als voorstel met Akkoord; alles wat beslist rekent met max(1, k), alleen de woorden volgen k onder 1; uit of terug naar de standaard zet k direct op 1.",
+   "kern": "De beenindex leert een eigen factor (0,7 tot 1,4) uit je ochtendantwoorden, alleen als voorstel met Akkoord; alles wat beslist rekent met max(1, k), alleen de woorden volgen k onder 1; uit of terug naar de standaard zet k op 1, bij een factor boven 1 eerst als voorstel.",
    "stand": "geldt"
   },
   "docs/beslissingen/_sjabloon.md": {
