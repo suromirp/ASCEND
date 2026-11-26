@@ -13,6 +13,7 @@ import { LADDER_PLACE, SKILL_LADDERS, skillLadderById, type SkillLadder } from '
 import { exerciseById } from '../data/exercises';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import type { SkillGoal, SkillGoalStore, SkillStepMilestone, SkillStepProgress } from '../models/skillGoals';
+import type { AddedExercises } from './addedExercises';
 import { forgeSlotsFor } from './forgeSlots';
 import { ladderState, type LadderState } from './skillLadder';
 import { slotExerciseId, type StepSwaps } from './stepSwaps';
@@ -99,8 +100,9 @@ export function defaultTargetStep(ladder: SkillLadder, state: Pick<LadderState, 
 }
 
 // De hoogste stap per ladder waar je plan al op staat: een oefening van een ladder in een van je krachttrainingen
-// (met de stappen die je met Akkoord koos). Voor een ladder zonder logs is dat waar je begint.
-export function planStartSteps(templates: readonly SessionTemplate[], model: { program?: StoredStrengthProgram; stepSwaps?: StepSwaps } | undefined, date: string): Map<string, number> {
+// (met de stappen die je met Akkoord koos, en de oefeningen die je met Akkoord toevoegde). Voor een ladder zonder logs is
+// dat waar je begint.
+export function planStartSteps(templates: readonly SessionTemplate[], model: { program?: StoredStrengthProgram; stepSwaps?: StepSwaps; addedExercises?: AddedExercises } | undefined, date: string): Map<string, number> {
   const out = new Map<string, number>();
   for (const template of templates) {
     for (const slot of forgeSlotsFor(template, model, date)) {

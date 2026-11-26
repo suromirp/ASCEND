@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { GeneralReadiness } from '../../engine/goalReadinessFor';
 import { Card, Eyebrow, StatusPill } from '../ui';
 import { TextButton } from '../TextButton';
@@ -5,9 +6,10 @@ import { TextButton } from '../TextButton';
 // Algemeen sterk met eigen gewicht op de Ascend-tab (docs/beslissingen/2026-11-09-calisthenics-algemeen.md): per
 // ladder de stap waar je nu op traint, en één zin samen. Geen percentage en geen datum. Alles komt uit
 // engine/goalReadinessFor.ts#generalReadinessFor. IJsblauw voor een ladder die hoger staat dan bij de start (status),
-// geen mint. Verschijnt met mx-row-in: in Rustig en Uit meteen op de eindstand.
+// geen mint. Verschijnt met mx-row-in: in Rustig en Uit meteen op de eindstand. `below`: hoogstens één voorstel onder de
+// rij van zijn ladder (LadderAddNotice.tsx, docs/beslissingen/2026-11-26-calisthenics-voorstel-benen-en-romp.md).
 
-export function GeneralStrengthCard({ name, readiness, onRemove }: { name: string; readiness: GeneralReadiness; onRemove: () => void }) {
+export function GeneralStrengthCard({ name, readiness, onRemove, below }: { name: string; readiness: GeneralReadiness; onRemove: () => void; below?: { ladderId: string; node: ReactNode } }) {
   const dim = { color: 'var(--color-ink-dim)' };
   return (
     <Card className="mx-row-in flex flex-col gap-3" aria-label={`Calisthenics ${name}`}>
@@ -25,6 +27,7 @@ export function GeneralStrengthCard({ name, readiness, onRemove }: { name: strin
             </span>
             <span className="text-sm leading-snug" style={{ color: r.current === null ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>{r.work}</span>
             <span className="text-xs leading-snug" style={dim}>{r.line}</span>
+            {below?.ladderId === r.ladderId && below.node}
           </li>
         ))}
       </ul>

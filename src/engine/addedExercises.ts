@@ -8,6 +8,7 @@
 // training. Puur: geen React, geen opslag.
 
 import { exerciseById } from '../data/exercises';
+import { SKILL_FLOOR_REPS, SKILL_FLOOR_SECONDS, skillLadderById } from '../data/skillLadders';
 import type { Exercise } from '../models/exercise';
 import type { ExercisePrescription } from '../models/training';
 import { isRecord } from '../utils/guards';
@@ -37,8 +38,12 @@ export function normalizeAddedExercises(raw: unknown): AddedExercises | undefine
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
-// Het voorschrift van een toegevoegde oefening: drie sets in een bereik dat bij de beweging past.
+// Het voorschrift van een toegevoegde oefening: drie sets in een bereik dat bij de beweging past. Een ladderstap
+// begint op de onderkant van die stap, zoals bij een stapvoorstel: de sets van de toets keer 5, of keer 10 seconden
+// (docs/beslissingen/2026-11-26-calisthenics-voorstel-benen-en-romp.md).
 export function addedPrescription(exercise: Exercise): Pick<ExercisePrescription, 'sets' | 'reps'> {
+  const step = exercise.ladder ? skillLadderById(exercise.ladder.id)?.steps[exercise.ladder.step - 1] : undefined;
+  if (step) return { sets: step.test.sets, reps: exercise.measure === 'hold' ? `${SKILL_FLOOR_SECONDS}s` : `${SKILL_FLOOR_REPS}` };
   if (exercise.pattern === 'shin') return { sets: 3, reps: '15-20' };
   if (exercise.pattern === 'calf') return { sets: 3, reps: '10-15' };
   // Evenwicht: een houding telt in seconden per been (het bereik leest Forge dan niet), reiken in rondjes per been.

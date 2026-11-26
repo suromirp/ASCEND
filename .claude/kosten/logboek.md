@@ -600,3 +600,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-26 | Warden bouwmoment 26 nov 3 | reviewer helper | sonnet | 39k tok | 2 min | één Moet (twee smalle fases naast elkaar, hersteld), Mag deels hersteld, rest naar I-166 |
 | 2026-11-26 | Lookout bouwmoment 26 nov 3 | tester helper | sonnet | 124k tok | 20 min | jaaroverzicht 43,4 px op 360 (hersteld, nagemeten 45,7), blad en kleding groen, Week afbreken niet te zien |
 | 2026-11-26 | Bouwmoment 26 nov 3 naar main | coördinator | opus | n.v.t. | ca. 1u15 | I-165, I-20, I-36; I-76 bleef liggen |
+| 2026-11-26 | Sherpa Calisthenics-voorstel (squat op één been en L-sit) | bouwer helper | opus | n.v.t. | ca. 1u | voorstel met Akkoord op de kaart Calisthenics algemeen, besluit 2026-11-26-calisthenics-voorstel-benen-en-romp |
