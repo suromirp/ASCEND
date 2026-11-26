@@ -4856,6 +4856,14 @@
    ],
    "kern": "Een formulier (Hoe ging het?, Afronden in Forge) wacht hoogstens 30 s op een eerdere opslag voor dezelfde geplande training (EARLIER_SAVE_LIMIT_MS, waitForEarlierSave); daarna staat Opslaan weer aan met een zichtbare uitkomst. Na de gewone grens gaat Opslaan bij een geplande training in beide formulieren weer aan, bij een losse training in Hoe ging het? niet (I-135, I-139, I-140).",
    "stand": "geldt"
+  },
+  "docs/beslissingen/2026-11-26-calisthenics-voorstel-benen-en-romp.md": {
+   "onderwerpen": [
+    "doelen",
+    "forge"
+   ],
+   "kern": "Staat de squat op één been of de L-sit van Calisthenics algemeen nergens in je trainingen, dan stelt de kaart op Ascend één keer per ladder voor om de eerste passende stap als toegevoegde oefening in één krachttraining te zetten (addedExercises, Akkoord, Liever niet, Ongedaan maken; instelling Stap voorstellen).",
+   "stand": "geldt"
   }
  }
 }

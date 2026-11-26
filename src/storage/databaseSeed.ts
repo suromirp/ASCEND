@@ -7,6 +7,7 @@ import { layoutPhases } from '../engine/programLayout';
 import { clearForgeSessions } from '../utils/forgeSessionStore';
 import { clearMuscleDeclines } from '../utils/muscleDeclines';
 import { clearStepDeclines } from '../utils/stepDeclines';
+import { clearLadderAddDeclines } from '../utils/ladderAddDeclines';
 import { MetaRepo, putAll, ProgramsRepo, PlannedSessionsRepo, SessionLogsRepo, SessionTemplatesRepo, clearStore, replacePlannedSessions } from './databaseRepos';
 import { SCHEMA_VERSION } from './databaseSchema';
 import { patternContext, defaultPatternSelector, patternSessions, withPackTarget } from './databaseHorizon';
@@ -206,6 +207,8 @@ export async function resetToDemoData(): Promise<void> {
   clearMuscleDeclines();
   // En van Liever niet bij een stapvoorstel op een ladder.
   clearStepDeclines();
+  // En van Liever niet bij het voorstel om een ladder van Calisthenics algemeen in een training te zetten.
+  clearLadderAddDeclines();
   // Like a fresh install: only the templates, no program or planning, so the app
   // opens on the welcome and asks before it plans anything
   // (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md). Stops it halfway, the

@@ -35,6 +35,8 @@ import { SkillGoalSheet } from '../components/ascend/SkillGoalSheet';
 import { CalisthenicsChoiceSheet } from '../components/ascend/CalisthenicsChoiceSheet';
 import { GeneralStrengthCard } from '../components/ascend/GeneralStrengthCard';
 import { useSkillGoals } from '../components/ascend/useSkillGoals';
+import { useLadderAddProposal } from '../components/ascend/useLadderAddProposal';
+import { LadderAddNotice } from '../components/ascend/LadderAddNotice';
 import { buildGeneralGoal, liveGeneralGoal, liveSkillGoals, planStartSteps, takenSkillSteps } from '../engine/skillGoal';
 import { TimeoutError } from '../utils/withTimeout';
 import { skillLadderById } from '../data/skillLadders';
@@ -128,6 +130,8 @@ export function AscendPage() {
     () => (generalGoal ? generalReadinessFor(generalGoal, sessionLogs, today, ladderStarts) : undefined),
     [generalGoal, sessionLogs, today, ladderStarts],
   );
+  // Een ladder die nergens in je trainingen staat: één voorstel met Akkoord (docs/beslissingen/2026-11-26-calisthenics-voorstel-benen-en-romp.md).
+  const ladderAdd = useLadderAddProposal(generalView ? generalGoal?.general?.ladderIds : undefined, today);
   const [calisthenicsChoosing, setCalisthenicsChoosing] = useState(false);
   const [generalProposal, setGeneralProposal] = useState<SkillGoal | null>(null);
   const [skillChoosing, setSkillChoosing] = useState(false);
@@ -276,7 +280,15 @@ export function AscendPage() {
       )}
 
       {generalGoal && generalView && (
-        <GeneralStrengthCard name={generalGoal.name} readiness={generalView} onRemove={() => { clearNotes(); setSkillRemoving(generalGoal); }} />
+        <GeneralStrengthCard
+          name={generalGoal.name}
+          readiness={generalView}
+          onRemove={() => { clearNotes(); setSkillRemoving(generalGoal); }}
+          below={ladderAdd.proposal && ladderAdd.text ? {
+            ladderId: ladderAdd.proposal.ladderId,
+            node: <LadderAddNotice text={ladderAdd.text} state={ladderAdd.state} onAccept={() => void ladderAdd.accept()} onDecline={ladderAdd.decline} onUndo={() => void ladderAdd.undo()} />,
+          } : undefined}
+        />
       )}
 
       {skillViews.map(({ goal, readiness }) => (
