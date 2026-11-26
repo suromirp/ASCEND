@@ -240,5 +240,8 @@ export interface RecentPlanChange {
   // ook voor elk daarvan een terugdraairecord, zodat het Logboek en Week ze niet meer als gedaan tonen. Alleen in
   // het geheugen, nooit bewaard.
   alsoReverts?: string[];
+  // Per record uit alsoReverts de regels van die ronde: het terugdraairecord noemt alleen wat die ronde deed, niet de
+  // regels van de handeling zelf (I-155). Alleen in het geheugen, nooit bewaard.
+  alsoRevertLines?: Record<string, string[]>;
   createdAt: string;
 }

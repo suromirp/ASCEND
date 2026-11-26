@@ -92,9 +92,14 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
   let current = all;
   let beforeCheck: PlannedSession[] | undefined;
   const repairs: Repair[] = [];
+  // De vaste rijen en Hoeveel per soort gaan tot de doeldag of hun eigen weken vooruit, nooit tot `until`: dat is het
+  // venster van de weekcontrole in een voorbeeld (state/bodyAndLeave.ts#planPreviewPass). Met `until` haalde het
+  // voorbeeld de vaste rijen erna weg en stonden ze als "vervalt" in het voorstel, terwijl de opening (zonder `until`)
+  // ze laat staan (I-156).
+  const rowsUntil = ctx.goalDay ? addDays(ctx.goalDay, -1) : undefined;
   // Fixed appointments first: the race block, the periods and the week check plan around them.
   if (ctx.fixedSports !== undefined) {
-    const fixed = reconcileFixedSessions(all, ctx.fixedSports ?? undefined, { today: ctx.today, until: ctx.until ?? (ctx.goalDay ? addDays(ctx.goalDay, -1) : undefined), leave: ctx.leave, logs: ctx.logs, newId: ctx.newId });
+    const fixed = reconcileFixedSessions(all, ctx.fixedSports ?? undefined, { today: ctx.today, until: rowsUntil, leave: ctx.leave, logs: ctx.logs, newId: ctx.newId });
     if (fixed.added.length + fixed.removed.length + fixed.changed.length > 0) {
       const before = new Map(all.map((s) => [s.id, s]));
       const after = new Map(fixed.sessions.map((s) => [s.id, s]));
@@ -107,7 +112,7 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
   // Hoeveel per soort, after the fixed rows: an extra training only where the week check finds nothing new.
   if (ctx.kindAmounts !== undefined) {
     const amount = applyKindAmounts(current, ctx.kindAmounts ?? undefined, {
-      today: ctx.today, until: ctx.until ?? (ctx.goalDay ? addDays(ctx.goalDay, -1) : undefined), leave: ctx.leave, newId: ctx.newId,
+      today: ctx.today, until: rowsUntil, leave: ctx.leave, newId: ctx.newId,
       check: {
         logs: ctx.logs, templates: ctx.templates, today: ctx.today, restDay: ctx.restDay, goalDay: ctx.goalDay, raceDays: ctx.blocks.map((b) => b.raceDate),
         program: ctx.program, dailyTimeBudget: ctx.dailyTimeBudget, sameDayPairingPreference: ctx.sameDayPairingPreference, slotDays: ctx.slotDays,

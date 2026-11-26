@@ -82,6 +82,17 @@ export function restDayFollowProposal(input: RestDayFollowInput): SchedulePropos
   };
 }
 
+// Eén blad in plaats van twee (I-163): jouw verplaatsing en de rustdag die meeschuift staan samen in één voorstel,
+// met één Akkoord. Eén melding dus, en Ongedaan maken zet beide terug (ook jouw sleep). De zin van de verplaatsing
+// blijft voorop, daarna wat er met je rustdag kan. Liever niet laat alles zoals het was.
+export function withRestDayFollow(move: ScheduleProposal, follow: ScheduleProposal): ScheduleProposal {
+  return {
+    ...move,
+    changes: [...move.changes, ...follow.changes],
+    reason: [move.reason, follow.reason].filter(Boolean).join(' '),
+  };
+}
+
 // Na jouw verplaatsing (slepen of het blad, engine/weekDrag.ts#decideMove): het plan zoals het daarna staat, en het
 // voorstel voor de rustdag. Geen voorstel na overslaan, Toch doen of ruilen; een rustdag zelf verplaatsen ook niet.
 export function restDayFollowAfterMove(move: ScheduleProposal, input: Omit<RestDayFollowInput, 'movedId' | 'fromDate'>): ScheduleProposal | undefined {

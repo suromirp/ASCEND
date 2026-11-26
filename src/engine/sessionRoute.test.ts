@@ -3,6 +3,8 @@ import type { PlannedSession } from '../models/training';
 import type { RoutePoint } from '../models/route';
 import { mergeSessionRoutes, routeOfSession, routesOfSessions, sessionRouteFacts, sessionRouteFrom, sessionRouteLine, withoutSessionRoute, withSessionRoute } from './sessionRoute';
 import { applyPlanChangeItems } from './proposalEngine';
+import { footStartLine } from './routePlanner';
+import { readSessionRoute } from '../storage/migrationsSessionRoutes';
 import { catchUpRows } from './catchUp';
 import { weekDiff } from './replanWeek';
 
@@ -32,6 +34,20 @@ describe('sessionRouteFrom', () => {
   it('zegt de soort, de km en de hoogtemeters in de stille regel', () => {
     expect(sessionRouteLine(route('ps1'))).toBe('Route: Avontuurlijk, 10,2 km, 310 m');
     expect(sessionRouteFacts({ distanceM: 14000, ascentM: 300, repeats: 4 })).toBe('14,0 km, 300 hoogtemeters, 4 keer op en neer');
+  });
+});
+
+describe('de voet van de helling', () => {
+  it('een bewaarde route zegt dezelfde regel als een nieuwe lus, ook na opslaan en lezen', () => {
+    const fresh = { style: 'simple' as const, source: 'brouter' as const, points: loop(), distanceM: 10230, ascentM: 310, footStartM: 1800 };
+    const saved = sessionRouteFrom('ps1', fresh, '2026-11-25');
+    expect(saved.footStartM).toBe(1800);
+    const back = readSessionRoute(JSON.parse(JSON.stringify(saved)))!;
+    expect(footStartLine(back)).toBe(footStartLine(fresh));
+    expect(footStartLine(back)).toMatch(/^Begint bij de voet van de helling/);
+    // Zonder voet: geen regel, en een oudere route zonder veld leest gelijk.
+    expect(footStartLine(route('ps1'))).toBeUndefined();
+    expect('footStartM' in readSessionRoute(JSON.parse(JSON.stringify(route('ps1'))))!).toBe(false);
   });
 });
 
@@ -89,6 +105,28 @@ describe('routeOfSession', () => {
     expect(routeOfSession(added, chosen)?.style).toBe('simple');
     expect(withoutSessionRoute(chosen, added)).toEqual([]);
     expect(withoutSessionRoute([r], added)).toEqual([]);
+  });
+
+  it('een inhaal van een inhaal toont de route van de oorspronkelijke rij', () => {
+    const first = session('ps1', '2026-11-24');
+    const one = catchUpRows(first, '2026-11-26', { by: 'user', at: '2026-11-25T08:00:00Z' }, 'ps2');
+    const two = catchUpRows(one.added, '2026-11-28', { by: 'user', at: '2026-11-27T08:00:00Z' }, 'ps3');
+    const all = [one.skipped, one.added, two.skipped, two.added];
+    // Met de lijst volgt hij de keten; zonder lijst alleen één stap.
+    expect(routeOfSession(two.added, [r], all)).toEqual(r);
+    expect(routeOfSession(two.added, [r])).toBeUndefined();
+    // Overgeslagen blijft zonder route, en een route kiezen op de laatste vervangt die van de oorspronkelijke rij.
+    expect(routeOfSession(two.skipped, [r], all)).toBeUndefined();
+    const other = { ...route('ps3'), style: 'simple' as const };
+    const chosen = withSessionRoute([r], two.added, other, all);
+    expect(chosen.map((x) => x.plannedSessionId)).toEqual(['ps3']);
+    expect(withoutSessionRoute([r], two.added, all)).toEqual([]);
+  });
+
+  it('een lus in de gegevens houdt de keten niet vast', () => {
+    const a = { ...session('a', '2026-11-24'), catchUp: { fromId: 'b', fromDate: '2026-11-23' } };
+    const b = { ...session('b', '2026-11-25'), catchUp: { fromId: 'a', fromDate: '2026-11-24' } };
+    expect(routeOfSession(a, [], [a, b])).toBeUndefined();
   });
 
   it('de week opnieuw ingedeeld: dezelfde training op een andere dag houdt zijn id en dus zijn route', () => {

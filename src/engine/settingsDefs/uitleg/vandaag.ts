@@ -389,6 +389,15 @@ export const VANDAAG_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Balans', text: 'zegt na één loop niets. Pas over meerdere lopen is een verdeling buiten ongeveer 52 tegen 48 het bekijken waard.' },
     ],
   },
+  'advies-blad': {
+    title: 'Belangrijk advies als blad',
+    lead: 'Een groot voorstel, zoals een rustiger instap, komt bij het openen één keer als blad naar voren.',
+    points: [
+      { head: 'Wanneer', text: 'een rustiger instap na een pauze, golven zonder doel of de ladder van heel licht. Niet tijdens een training en niet als er al een ander blad openstaat.' },
+      { head: 'Niet nu', text: 'het blad komt de volgende dag terug, hoogstens drie keer. Het advies blijft op de kaart staan.' },
+      { head: 'Uit', text: 'Alleen de kaart op Vandaag.' },
+    ],
+  },
   'zweet-vragen': {
     title: 'Zweetverlies vragen',
     lead: 'Bij een loop, wandeling of tocht komt de vraag naar je gewicht voor en na, zodat je je eigen zweettempo leert kennen.',

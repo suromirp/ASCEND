@@ -198,8 +198,21 @@ describe('computeStrengthPlacementPlan', () => {
       [],
     );
     expect(proposal.changes).toEqual([]);
-    expect(proposal.consequences).toMatch(/al op elke dag een training/);
+    expect(proposal.consequences).toMatch(/geen dag voor nog een krachttraining/);
     expect(proposal.issue).not.toBe('Geen aanpassingen nodig');
+  });
+
+  // Backlog Nakijken: de zin zei "staat er al op elke dag een training", maar een week telt ook mee als er een dag
+  // vrij is waar het niet mag. De telling en de zin, met vrije dagen die geen trainingsdag zijn.
+  it('telt een week met vrije dagen die geen trainingsdag zijn, en de zin zegt dat', () => {
+    const sessions = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24'].map((d, i) => session(`filler${i}`, 'tpl_herstel', d, FORECAST_MONDAY));
+    const closed = computeStrengthPlacementPlan(strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }), sessions, templates, availability({ allowedDays: ['mon', 'tue', 'wed', 'thu'] }), ASOF, []);
+    expect(closed.changes).toEqual([]);
+    expect(closed.consequences).toBe('In 1 week is er geen dag voor nog een krachttraining: elke dag heeft al een training, is geen trainingsdag van je of ligt te dicht op een zware dag. Daar past hij alleen als je een andere training verplaatst of schrapt.');
+    // Dezelfde week met vrijdag als trainingsdag: hij komt op vrijdag en de zin valt weg.
+    const open = computeStrengthPlacementPlan(strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }), sessions, templates, availability({ allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri'] }), ASOF, []);
+    expect(open.changes.find((c) => c.action === 'add')?.newSessionDraft?.scheduledDate).toBe('2026-09-25');
+    expect(open.consequences).not.toMatch(/geen dag voor nog een krachttraining/);
   });
 
   it('never mentions the old 48-hour leg-heavy rule in the unplaceable note — load overlap is not a valid reason for it anymore', () => {
@@ -412,7 +425,7 @@ describe('computeStrengthPlacementPlan — goal-relevance-ranked swap fallback',
       overviews,
     );
     expect(proposal.changes.find((c) => c.action === 'add')).toBeUndefined();
-    expect(proposal.consequences).toMatch(/al op elke dag een training/);
+    expect(proposal.consequences).toMatch(/geen dag voor nog een krachttraining/);
   });
 
   it('never swaps out the one candidate with meaningful goal relevance when a lower-relevance candidate is available instead', () => {

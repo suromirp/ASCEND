@@ -20,7 +20,8 @@ import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, Subje
 import type { Program } from '../models/program';
 import { loggedMinutes } from '../engine/sessionStatus';
 import { availableVariants, resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
-import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
+import { guideDayLabel } from '../data/trainingGuide';
+import { useTrainingGuide } from '../state/useTrainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { ExerciseLogger } from './ExerciseLogger';
 import { TrainingBriefing } from './TrainingBriefing';
@@ -163,7 +164,7 @@ export function SessionActionSheet({
   const restMode = settings.restDayMode ?? 'rest';
   const bikeOption = isSportEnabled('cycling', settings.enabledSports) && templateSport(template) !== 'cycling'
     && (getModalities(template.id) ?? []).some((m) => isCyclingModality(m.key));
-  const guide = getTrainingGuide(template.id);
+  const guide = useTrainingGuide(template.id);
   // Vanaf het moment dat het blad begint te sluiten leest niemand zijn zin nog (state/logSave.ts#saveOnCard).
   const leavingRef = useRef(false);
   const mountedRef = useRef(true);

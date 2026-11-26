@@ -11,7 +11,7 @@ import { activeGoalDemandKeys } from '../engine/progressionDecisions';
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonPlan } from './horizonPlan';
 import { runWeeklyPrescriptionStep } from './weeklyPrescriptionStep';
 import { primePlanningRegisters } from '../state/planningSync';
-import { buildFirstPlan, defaultAnswers, WEEKDAY_NAMES, type StartAnswers } from '../engine/firstPlan';
+import { buildFirstPlan, defaultAnswers, FOLLOW_WEEKS_LINE, WEEKDAY_NAMES, type StartAnswers } from '../engine/firstPlan';
 import { previewProposal } from '../engine/proposalPreview';
 import { REST_DAY_COPY } from '../data/restDayCopy';
 import { addDays, isoWeekday, mondayOfWeek } from '../utils/dates';
@@ -184,6 +184,17 @@ describe('een wedstrijd op een dag die niet in je dagen zit', () => {
     expect(r.shown).toContain(`${RACE_DAY} tpl_race`);
     expect(r.all.filter((s) => s.scheduledDate === RACE_DAY).map((s) => s.templateId)).toEqual(['tpl_race']);
     expectSameAsWeek(r, today);
+  }, 60_000);
+
+  // I-148: wat de opening meer zet dan het voorbeeld, is het weekvoorschrift in de vervolgweken (een rustige duurloop
+  // in de week van de wedstrijd). Het ligt nooit in de eerste twee weken, en het voorstel zegt dat het zo gaat.
+  it('wat de opening meer zet dan het voorbeeld, ligt vanaf over twee weken en het voorstel noemt dat', async () => {
+    const r = await startWith({ ...defaultAnswers('race'), daysPerWeek: 3, goalDate: RACE_DAY, allowedDays: [1, 3, 5] });
+    const shown = new Set(r.shown);
+    const extra = r.all.map((s) => `${s.scheduledDate} ${s.templateId}`).filter((x) => !shown.has(x));
+    const from = addDays(mondayOfWeek(TODAY), 14);
+    expect(extra.filter((x) => x.slice(0, 10) < from)).toEqual([]);
+    expect(r.plan.notes).toContain(FOLLOW_WEEKS_LINE);
   }, 60_000);
 
   it('het voorbeeld rekent de beschikbaarheid mee (alleen doordeweeks): wat de opening verschuift, liet het voorstel al zien', async () => {

@@ -5,6 +5,7 @@ import { completionSummary, type CompletionLine } from '../engine/completionSumm
 import { useAppData } from '../state/AppDataContext';
 import { todayISO } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
+import { useInSheetRow } from '../state/sheetRow';
 import { Portal } from './Portal';
 import { useLegFatigueInputs } from './LegFatigueCard';
 import { Card, Eyebrow, PrimaryButton } from './ui';
@@ -48,6 +49,8 @@ export function CompletionMoment({ event, onDismiss }: { event: CelebrationEvent
 const delay = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties;
 
 function CompletionScreen({ event, onDismiss }: { event: CelebrationEvent; onDismiss: () => void }) {
+  // In de gedeelde rij: het blad met belangrijk advies wacht tot dit moment weg is (state/sheetRow.ts).
+  useInSheetRow('completion');
   const { closing, requestClose } = useSheetClose(onDismiss, CLOSE_MS);
   const { sessionLogs, plannedSessions, templates, trainingGoals, goalMilestones, goalMilestoneProgress } = useAppData();
   const legs = useLegFatigueInputs();

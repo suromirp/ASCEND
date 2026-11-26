@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { buildFirstPlan, defaultAnswers, firstPlanLines, kindOfExistingGoals, startDateProblem, startSteps, stepCounter, tapTooSoon, GOAL_OPTIONS, STEP_TAP_GUARD_MS } from './firstPlan';
+import { buildFirstPlan, defaultAnswers, firstPlanLines, FOLLOW_WEEKS_LINE, kindOfExistingGoals, startDateProblem, startSteps, stepCounter, tapTooSoon, GOAL_OPTIONS, STEP_TAP_GUARD_MS } from './firstPlan';
 import { adviceDays } from './weekShape';
 import { isBeginnerStart, WALK_JOG_LINE } from './beginnerStart';
 import type { SessionLog } from '../models/training';
@@ -11,6 +11,13 @@ const TODAY = '2026-11-02';
 const NOW = '2026-11-02T09:00:00.000Z';
 
 describe('buildFirstPlan', () => {
+  // I-148: het voorbeeld toont de eerste twee weken; met een doel stemt het weekvoorschrift de weken daarna af.
+  it('zegt met een doel dat het weekplan de weken vanaf over twee weken afstemt, zonder doel niet', () => {
+    expect(buildFirstPlan({ ...defaultAnswers('race'), goalDate: '2027-06-20' }, templates, TODAY, NOW).lines).toContain(FOLLOW_WEEKS_LINE);
+    expect(buildFirstPlan({ ...defaultAnswers('trek'), goalDate: '2027-07-10' }, templates, TODAY, NOW).lines).toContain(FOLLOW_WEEKS_LINE);
+    expect(buildFirstPlan(defaultAnswers('fit'), templates, TODAY, NOW).lines).not.toContain(FOLLOW_WEEKS_LINE);
+  });
+
   it('fit: no goal and no ladder, but a program that starts this week', () => {
     const plan = buildFirstPlan(defaultAnswers('fit'), templates, TODAY, NOW);
     expect(plan.goals).toEqual([]);

@@ -13,6 +13,7 @@ Gemaakt met `npm run kennisindex`. Het overzicht staat in [README.md](README.md)
 
 Nieuwste eerst. Bij een besluit staat welk later besluit het aanvult.
 
+- 2026-11-26 [Belangrijk advies als blad, één antwoord per dag](../beslissingen/2026-11-26-belangrijk-advies-als-blad.md): Een rustiger instap, golven zonder doel of de ladder komt bij het openen één keer als blad met Akkoord, Bekijk en Niet nu (hoogstens drie keer, de volgende dag); niet tijdens een training, naast een ander blad (state/sheetRow.ts), zonder programma of in een pauze. Twee adviezen voor dezelfde dag of training worden er één, het andere wacht (engine/oneAnswerPerDay.ts). Instelling Belangrijk advies als blad. Het terugdraairecord van een ronde noemt alleen haar eigen regels (I-155). schemaVersion blijft 6.
 - 2026-11-15 [Instellingen: terugzetten, zoeken, antwoorden uit de start en kracht uit](../beslissingen/2026-11-15-instellingen-terugzetten-en-kracht.md): Alles terug naar het advies gaat voor planninginstellingen altijd als voorstel met Akkoord; het zoekveld toont de waarde van de instelling zelf; een antwoord uit de start telt niet als afwijking; krachttraining kan uit op het scherm Sporten.
 - 2026-11-15 [Instellingen op één plek, in acht groepsbestanden](../beslissingen/2026-11-15-instellingen-op-een-plek.md): Elke instelling heeft één verklaring in `src/engine/settingsDefs/<groep>.ts`, één bestand per groep van Instellingen.
 - 2026-11-14 [Geen "ASCEND doet" in schermtekst](../beslissingen/2026-11-14-zonder-ascend-als-onderwerp.md): In schermtekst is ASCEND nooit het onderwerp van een zin.
@@ -77,6 +78,7 @@ Nieuwste eerst. Van deze besluiten geldt alleen nog wat achter "Geldt nog" staat
 - [audit/5 Tekst offline toegankelijkheid.md](../audit/5%20Tekst%20offline%20toegankelijkheid.md): Controle van 3 oktober 2026 van teksten, offline gedrag en toegankelijkheid op commit d8e19d3.
 - [onderhoud/2026-11-12-pathfinder-totaalplaatje-ui.md](../onderhoud/2026-11-12-pathfinder-totaalplaatje-ui.md): Inventaris van Pathfinder op 12 november 2026 voor de ontwerper, na de vraag om een rustiger UI.
 - [onderhoud/2026-11-12-pathfinder-verborgen-schermen.md](../onderhoud/2026-11-12-pathfinder-verborgen-schermen.md): Pathfinder op 12 november 2026 over verborgen pagina's en wat anders kan; opgevolgd in `docs/beslissingen/2026-11-14-verborgen-schermen.md`.
+- [onderhoud/sherpa-i157.md](../onderhoud/sherpa-i157.md): Verslag van I-157 en I-155: belangrijk advies als blad bij het openen, één antwoord per dag, de gedeelde rij van bladen, de instelling en het terugdraairecord per ronde. Bestanden, tests, keuzes en wat niet gecontroleerd is.
 - [ontwerp/uitlegblad-training.md](../ontwerp/uitlegblad-training.md): Ontwerpvoorstel van 10 november 2026 voor het onderste deel van het uitlegblad van een training.
 - [teksten/alle-teksten.md](../teksten/alle-teksten.md): Alle teksten van de app plat onder elkaar, gemaakt uit de tekstkaart met de klok op 31 oktober 2026, als stap 1 van het herschrijven.
 - [teksten/verschil-lichaam.md](../teksten/verschil-lichaam.md): Elk verschil in de tekstkaart na het herschrijven van Lichaam volgens de stemgids, met de reden.

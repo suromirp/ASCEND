@@ -144,6 +144,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
               <Eyebrow>Of kies zelf</Eyebrow>
               <SettingsList>
                 <SummaryRow id="boven-missie" title="Kaarten boven de missie" facts={facts} info="bovenMissie" onClick={() => setInner('boven-missie')} />
+                <SummaryRow id="advies-blad" title="Belangrijk advies als blad" facts={facts} info="adviesBlad" onChange={(on) => void updateSettings({ firstAdviceSheet: on })} />
                 <SummaryRow id="avond-ervoor" title="De avond ervoor" facts={facts} info="avondErvoor" onChange={(on) => void updateSettings({ eveningBefore: on })} />
                 <SummaryRow id="avond-ervoor-tijd" title="Avond begint om" facts={facts} onClick={() => setInner('avond-ervoor-tijd')} />
                 <SummaryRow id="ochtendcheck" title="Ochtendcheck" facts={facts} info="ochtendcheck" onChange={(on) => set({ morningCheckIn: on })} />

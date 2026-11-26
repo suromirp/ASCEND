@@ -7,6 +7,7 @@ import { useState } from 'react';
 import type { SessionRoute } from '../models/sessionRoute';
 import type { MapBase, MapPhoto } from '../engine/routeMap';
 import { BRIEFING_MAP_HEIGHT } from '../engine/routeSheet';
+import { footStartLine } from '../engine/routePlanner';
 import { ROUTE_STYLE_NAME, SAVED_ROUTE_TEXT, sessionRouteFacts } from '../engine/sessionRoute';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
@@ -61,6 +62,8 @@ export function SavedRouteBlock({ route, title, base, photo, onOther, onRemove }
       <div className="min-h-[44px]">
         <Eyebrow tone="var(--color-ink-dim)">{ROUTE_STYLE_NAME[route.style]}</Eyebrow>
         <p className="text-sm tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{sessionRouteFacts(route)}</p>
+        {/* Dezelfde regel als bij een nieuwe lus (engine/routePlanner.ts#footStartLine): waar de lus begint en hoe je er komt. */}
+        {footStartLine(route) && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{footStartLine(route)}</p>}
       </div>
       {asking ? (
         <div className="flex flex-col items-start">

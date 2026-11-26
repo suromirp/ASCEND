@@ -113,6 +113,8 @@ export interface RouteProposal {
   // Simpel begint op de voet van de helling, niet bij je plek (engine/routePlanner.ts#composeSimple): de afstand
   // hemelsbreed van je plek tot die voet. Je gaat er zelf heen; alleen in het geheugen.
   footStartM?: number;
+  // Hoogtemeters halen werd afgekapt omdat de lus anders meer dan 1,3 keer zo lang werd als de training (I-163).
+  ascentCapped?: boolean;
   // Een melding bij deze lus: het droge feit en wat wel kan (bijvoorbeeld geen heuvels in de buurt).
   notice?: string;
 }

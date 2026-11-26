@@ -84,6 +84,19 @@ describe('weekPlan', () => {
     expect(day.strip.map((e) => e.session.id)).toEqual(['tempo']);
   });
 
+  it('geeft alleen vandaag de ziekteregel; een andere dag rekent zonder de ziekte van vandaag (I-151)', () => {
+    const tempo = row('tempo', 'tpl_tempo_run', WEDNESDAY);
+    // Morgen valt nog in de lopende melding (dayRules ziet ziek tot en met morgen); toch rekent morgen zonder.
+    const later = row('later', 'tpl_tempo_run', addDays(WEDNESDAY, 1));
+    const earlier = row('earlier', 'tpl_tempo_run', MONDAY);
+    const fever: IllnessEpisode = { id: 'z', kind: 'below_neck', startDate: WEDNESDAY } as IllnessEpisode;
+    const plan = weekPlan({ weekStart: MONDAY, sessions: [earlier, tempo, later], logs: [], templateById, today: WEDNESDAY, illness: [fever] });
+    expect(plan.day(WEDNESDAY).primary).toBeUndefined();
+    expect(plan.day(addDays(WEDNESDAY, 1)).primary?.id).toBe('later');
+    expect(plan.day(MONDAY).primary?.id).toBe('earlier');
+    expect(plan.day(addDays(WEDNESDAY, 1)).rest).toBeUndefined();
+  });
+
   it('noemt een rustdag als er geen training open is', () => {
     const rest = row('rest', 'tpl_herstel', WEDNESDAY);
     const day = weekPlan({ weekStart: MONDAY, sessions: [rest], logs: [], templateById, today: WEDNESDAY }).day(WEDNESDAY);

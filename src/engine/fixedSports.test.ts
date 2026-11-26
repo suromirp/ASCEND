@@ -68,8 +68,11 @@ describe('de planningsronde met voetbal op dinsdag en zaterdag, vijf dagen', () 
   const fixedRows = result.sessions.filter((s) => s.fixed);
 
   it('de vaste rijen staan vooraan en blijven op hun dag', () => {
-    expect(fixedRows.map((s) => s.scheduledDate)).toEqual(['2026-11-03', '2026-11-07', '2026-11-10', '2026-11-14', '2026-11-17', '2026-11-21']);
-    expect(result.repairs.filter((r) => r.rule === 'FIXED-SPORT' && r.added)).toHaveLength(6);
+    // `until` is het venster van de weekcontrole; de vaste rijen gaan hun eigen acht weken vooruit, zoals de opening
+    // ze zet (I-156).
+    expect(fixedRows.filter((s) => s.scheduledDate <= '2026-11-22').map((s) => s.scheduledDate)).toEqual(['2026-11-03', '2026-11-07', '2026-11-10', '2026-11-14', '2026-11-17', '2026-11-21']);
+    expect(fixedRows).toHaveLength(16);
+    expect(result.repairs.filter((r) => r.rule === 'FIXED-SPORT' && r.added)).toHaveLength(16);
   });
 
   it('geen zware beenkracht van ASCEND binnen 48 uur na dinsdag of 72 uur na zaterdag', () => {

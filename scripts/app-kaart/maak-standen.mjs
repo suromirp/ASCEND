@@ -82,10 +82,13 @@ function metVakantie(state) {
   verwijderPlanning(state, (d) => d >= '2026-11-09' && d <= '2026-11-13');
 }
 
-// Geen doel, een richting: Fit blijven.
+// Geen doel, een richting: Fit blijven. Het blad met de golven (I-157) is al eens getoond, zodat de schermen van
+// deze stand de schermen zelf laten zien en niet het blad erboven.
 function zonderDoel(state) {
   winkel(state, 'trainingGoals').records = [];
-  meta(state, 'settings').value.direction = 'maintain';
+  const s = meta(state, 'settings').value;
+  s.direction = 'maintain';
+  s.firstSheet = { 'nogoal-waves': { shownOn: VANDAAG, snoozes: 0 } };
 }
 
 // Zonder doel, de richting Rustig aan, en krachttraining uit (besluit 2026-11-14-keuzes-avond.md, punt 3). Rustig aan

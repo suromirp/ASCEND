@@ -304,6 +304,12 @@ export interface AppSettings {
   // "Zweetverlies vragen": de herinnering om je te wegen en de rij bij het afronden.
   // Standaard aan.
   askSweat?: boolean;
+  // "Belangrijk advies als blad" (I-157): een groot voorstel komt bij het openen één keer als blad naar voren.
+  // Absent = aan; uit is alleen de kaart (components/FirstAdviceHost.tsx).
+  firstAdviceSheet?: boolean;
+  // Welk belangrijk advies al als blad kwam, per advies-id de dag en hoe vaak Niet nu (engine/adviceFirst.ts).
+  // Geen antwoord op het advies: adviceResponses blijft ongemoeid. storage/migrations.ts#migrateFirstSheet.
+  firstSheet?: Record<string, { shownOn: string; snoozes: number }>;
   // Water per etappe tonen op Etappes en in het blad van een etappe. Standaard aan.
   showStageWater?: boolean;
   // "Vragen bij een korte nacht": ask instead of warning when the watch saw

@@ -3,6 +3,7 @@ import { useAppData } from '../state/AppDataContext';
 import { liveUpdatePort } from '../integrations/liveUpdate';
 import { Icon } from './icons';
 import { TextLink } from './TextButton';
+import { useInSheetRow } from '../state/sheetRow';
 
 const DISMISSED_KEY = 'ascend-nieuwe-app-niet-nu';
 // Zoals ChangeNotice: een paar seconden de regel, dan een ronde knop van 44 px, na tien minuten weg.
@@ -29,6 +30,8 @@ export function LiveUpdateHost({ ready }: { ready: boolean }) {
   const port = liveUpdatePort();
   const enabled = settings.autoUpdate !== false;
   const [view, setView] = useState<View>('gone');
+  // In de gedeelde rij zolang de hele regel er staat (state/sheetRow.ts).
+  useInSheetRow('live-update', view === 'full');
 
   useEffect(() => {
     if (!ready || !port.available) return;

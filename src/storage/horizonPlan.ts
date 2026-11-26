@@ -145,8 +145,8 @@ async function settledPreview(overrides: HorizonOverrides) {
 async function withAvailability(run: HorizonRun, first: FirstPlanExtras, changedGoals: TrainingGoal[] | undefined, templates: SessionTemplate[]): Promise<HorizonRun> {
   const goals = goalsAfter(await TrainingGoalsRepo.getAll(), changedGoals);
   if (activeGoalDemandKeys(goals).length === 0) return run;
-  const config = await GoalEngineConfigRepo.get();
-  const { proposal } = computeForecastReplan({ plannedSessions: run.after, templates, availability: { ...config.availability, allowedDays: first.allowedDays }, asOf: todayISO() });
+  const [config, logs] = await Promise.all([GoalEngineConfigRepo.get(), SessionLogsRepo.getAll()]);
+  const { proposal } = computeForecastReplan({ plannedSessions: run.after, templates, availability: { ...config.availability, allowedDays: first.allowedDays }, asOf: todayISO(), logs });
   if (proposal.changes.length === 0) return run;
   const { sessions, unsupported } = applyPlanChangeItems(proposal.changes, run.after);
   return unsupported.length > 0 ? run : { ...run, after: sessions };

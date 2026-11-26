@@ -499,6 +499,16 @@ export const VANDAAG: SettingDef[] = [
     choice: { key: 'korterVandaag', def: VANDAAG_CHOICES.korterVandaag },
   },
   {
+    id: 'advies-blad',
+    page: 'vandaag',
+    place: { in: 'kaarten' },
+    title: 'Belangrijk advies als blad',
+    note: 'Een groot voorstel, zoals een rustiger instap, komt bij het openen één keer als blad naar voren.',
+    keywords: ['advies', 'blad', 'voorstel', 'openen', 'rustiger instap', 'terugkeer', 'golven', 'ladder', 'niet nu', 'melding'],
+    help: true,
+    helpKey: 'adviesBlad',
+  },
+  {
     id: 'bundel-meldingen',
     page: 'vandaag',
     place: { row: true },

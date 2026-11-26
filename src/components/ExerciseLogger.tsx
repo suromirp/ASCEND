@@ -41,7 +41,8 @@ import { WatchStatusRow } from './WatchStatusRow';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { useForgeWords } from './useForgeWords';
 import { effortWords } from '../engine/forgeWords';
-import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
+import { guideDayLabel } from '../data/trainingGuide';
+import { useTrainingGuide } from '../state/useTrainingGuide';
 import { durationNeedsCheck, entryMinutes, longDurationText } from '../engine/inputLimits';
 import { ForgeWorkout } from './forge/ForgeWorkout';
 import { Icon } from './icons';
@@ -182,7 +183,7 @@ function GeneralLogger({
     templates,
     macroFactor: macroFactorLinked,
   });
-  const guide = getTrainingGuide(template.id);
+  const guide = useTrainingGuide(template.id);
   const trainingDate = scheduledDate ?? today;
   // Je tempo (tempo en intervallen): uit je laatste testloop, onder de stappen, tenzij de kerngetallen het al noemen.
   const paceRaw = paceLine(template.id, pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces);

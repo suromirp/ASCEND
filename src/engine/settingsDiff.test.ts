@@ -29,6 +29,7 @@ const everything: AppSettings = {
   showSkillGoals: false,
   showStageWater: false,
   askSweat: false,
+  firstAdviceSheet: false,
   trekLegRest: 'strict',
   descentClock: 'uit',
   leaveCrowding: 'shift',

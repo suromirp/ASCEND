@@ -275,6 +275,10 @@ describe('de weekcontrole voegt zich bij jouw melding en jij maakt het ongedaan'
     expect(proposals.find((p) => p.id === record.id)).toEqual(record);
     expect(proposals.filter((p) => p.revertsProposalId === record.id)).toHaveLength(1);
     expect(proposals.filter((p) => p.revertsProposalId === mine.id)).toHaveLength(1);
+    // I-155: het terugdraairecord van de ronde noemt alleen wat de ronde deed; dat van jouw handeling alles.
+    expect(proposals.find((p) => p.revertsProposalId === record.id)?.consequences).toBe('Lange duurloop: korter');
+    expect(proposals.find((p) => p.revertsProposalId === mine.id)?.consequences).toBe(joined.lines.join('; '));
+    expect(joined.lines.length).toBeGreaterThan(1);
     expect(buildChangeLog(proposals, await PlannedSessionsRepo.getAll(), templates, '2026-10-01').find((e) => e.id === record.id)?.undone).toBe(true);
     expect(weekAdjustments(proposals, await PlannedSessionsRepo.getAll(), templates, '2026-10-26', '2026-10-29')).toEqual([]);
   });

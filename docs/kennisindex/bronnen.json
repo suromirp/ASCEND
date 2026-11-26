@@ -4782,6 +4782,14 @@
    "kern": "Verslag van I-160 deel B: Simpel begint op de voet van de steilste helling, de keuze Hoogtemeters halen of Afstand houden met de som, de rij Buiten plus een helling, trap of de loopband uit de gids, en Opnieuw proberen bij een ontbrekende kaart. Bewijs, keuzes en wat niet gebouwd is.",
    "stand": "achtergrond"
   },
+  "docs/beslissingen/2026-11-26-belangrijk-advies-als-blad.md": {
+   "onderwerpen": [
+    "planning",
+    "bediening-en-beweging"
+   ],
+   "kern": "Een rustiger instap, golven zonder doel of de ladder komt bij het openen één keer als blad met Akkoord, Bekijk en Niet nu (hoogstens drie keer, de volgende dag); niet tijdens een training, naast een ander blad (state/sheetRow.ts), zonder programma of in een pauze. Twee adviezen voor dezelfde dag of training worden er één, het andere wacht (engine/oneAnswerPerDay.ts). Instelling Belangrijk advies als blad. Het terugdraairecord van een ronde noemt alleen haar eigen regels (I-155). schemaVersion blijft 6.",
+   "stand": "geldt"
+  },
   "docs/visie/Plek belangrijk advies.md": {
    "onderwerpen": [
     "planning",
@@ -4790,12 +4798,56 @@
    "kern": "Pathfinder vooraf voor I-157: welke voorstellen als blad bij openen, waar en wanneer, hoe Niet nu werkt, waar de regel 'één advies per dag' komt en welke instelling.",
    "stand": "achtergrond"
   },
+  "docs/onderhoud/sherpa-i157.md": {
+   "onderwerpen": [
+    "planning",
+    "bediening-en-beweging"
+   ],
+   "kern": "Verslag van I-157 en I-155: belangrijk advies als blad bij het openen, één antwoord per dag, de gedeelde rij van bladen, de instelling en het terugdraairecord per ronde. Bestanden, tests, keuzes en wat niet gecontroleerd is.",
+   "stand": "achtergrond"
+  },
   "docs/onderhoud/sherpa-i162.md": {
    "onderwerpen": [
     "planning",
     "week"
    ],
    "kern": "Verslag van I-162 en I-150: na jouw verplaatsing naar een dag met je rustdag één voorstel met Akkoord om de rustdag naar de vrijgekomen dag te zetten (anders de dichtstbijzijnde vrije dag van dezelfde week, nooit naast een test of wedstrijd), instelling Rustdag schuift mee, en de rustdagrij die zegt welke training je die dag deed. Bewijs, keuzes en wat niet gecontroleerd is.",
+   "stand": "achtergrond"
+  },
+  "docs/beslissingen/2026-11-26-planning-losse-punten.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Zes losse punten op advies: alleen vandaag krijgt de ziekteregel in het dagbeeld, Geen tijd vandaag en de beschikbaarheid kiezen alleen een open dag zonder test ernaast, het eerste voorstel zegt dat het weekplan de weken vanaf over twee weken afstemt (invariant 2 blijft twee weken), Meer in de startweken volgt de ladder, vaste rijen en Hoeveel per soort rekenen niet tot het venster van een voorbeeld, en de zin van het krachtblok klopt.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-23-een-plan-eerste-voorstel.md"
+   ]
+  },
+  "docs/onderhoud/2026-11-26-planning-losse-punten.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Verslag van I-146, I-147, I-148, I-151, I-156 en de zin van het krachtblok: oorzaak, fix, tests en wat niet is nagegaan.",
+   "stand": "achtergrond"
+  },
+  "docs/beslissingen/2026-11-26-routes-en-week-nawerk.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "week"
+   ],
+   "kern": "Nawerk van het routepakket en de rustdag (I-163): wezen opruimen, route volgt een inhaal van een inhaal, voet van de helling in een bewaarde route, Opnieuw proberen met een nieuwe uitkomst, lus hoogstens 1,3 keer de afstand, één blad bij een sleep naar je rustdag, rustdagrij met open training, hele doelnaam in zinnen, gids volgt je doel. De rustdag mag niet naast een test of wedstrijd (ook de dag ervoor): dat blijft.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-24-route-per-training.md"
+   ]
+  },
+  "docs/onderhoud/sherpa-i163.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "week"
+   ],
+   "kern": "Verslag van I-163: per punt waar de wijziging staat en wat niet gecontroleerd is (echte kaartdata, Week op 360 px).",
    "stand": "achtergrond"
   }
  }

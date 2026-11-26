@@ -734,6 +734,20 @@ export function proposeSkip(session: PlannedSession, templates: SessionTemplate[
 //
 // Time-budget scheduling redesign (Fase 3): same dayHasRoomFor rewiring and
 // backward-compatible optional trailing params as proposeMove above.
+//
+// I-147: een latere dag moet open zijn. Eerst de eerste dag met ruimte die open is (`isOpen`, de dagen die je hebt
+// ingesteld) en zonder test of wedstrijd ernaast volgens de afstandsregels hierboven (findHeavyConflicts); dan de oude
+// keuze, de eerste latere dag met ruimte. Een voorstel dat iets op een dichte dag zet of een rij raakt die blijft
+// (`stays`), telt niet; dan de volgende dag. Lukt niets, dan de bestaande uitkomst: overslaan, zichtbaar als voorstel of
+// melding. Een rij die blijft krijgt geen voorstel. `window: 'week'` probeert na de latere dagen ook de eerdere van de
+// week (vanaf `asOf`), voor een week die nog moet komen.
+export interface NoTimeOptions {
+  isOpen?: (date: string) => boolean;
+  stays?: (session: PlannedSession) => boolean;
+  window?: 'later' | 'week';
+  asOf?: string;
+}
+
 export function proposeNoTimeToday(
   weekSessions: PlannedSession[],
   templates: SessionTemplate[],
@@ -742,26 +756,50 @@ export function proposeNoTimeToday(
   program?: Program | null,
   dailyTimeBudget?: Partial<Record<Weekday, DailyTimeBudget>>,
   sameDayPairingPreference?: TrainingStrategyProfile['sameDayPairingPreference'],
+  options: NoTimeOptions = {},
 ): ScheduleProposal[] {
   const templateById = new Map(templates.map((t) => [t.id, t]));
-  const todaysSessions = weekSessions.filter((s) => s.scheduledDate === todayDate && s.status !== 'skipped');
+  const isOpen = options.isOpen ?? (() => true);
+  const stays = options.stays ?? (() => false);
+  const stayingIds = new Set(weekSessions.filter(stays).map((s) => s.id));
+  const todaysSessions = weekSessions.filter((s) => s.scheduledDate === todayDate && s.status !== 'skipped' && !stayingIds.has(s.id));
   const proposals: ScheduleProposal[] = [];
   let working = weekSessions;
+  const monday = mondayOfWeek(todayDate);
+  const later = weekDates(monday).filter((d) => d > todayDate);
+  const earlier = options.window === 'week' ? weekDates(monday).filter((d) => d < todayDate && d >= (options.asOf ?? todayDate)).reverse() : [];
+  // asOf = tomorrow: no time today means nothing may be cascaded ONTO today either. Met eerdere dagen van een week die
+  // nog komt: vanaf asOf, en de toets hieronder houdt alles van de dichte dag af.
+  const cascadeFrom = earlier.length > 0 ? (options.asOf ?? addDays(todayDate, 1)) : addDays(todayDate, 1);
 
   for (const session of todaysSessions) {
-    const monday = mondayOfWeek(todayDate);
-    const candidates = weekDates(monday).filter((d) => d !== todayDate && d > todayDate);
     const candidateTemplate = templateById.get(session.templateId);
-    const freeDay = candidates.find(
-      (d) => !candidateTemplate || dayHasRoomFor(d, candidateTemplate, working, templateById, program, dailyTimeBudget, sameDayPairingPreference),
-    );
-    if (freeDay) {
-      // asOf = tomorrow: no time today means nothing may be cascaded ONTO
-      // today either.
-      const proposal = proposeMove(working, templates, session.id, freeDay, recentLogs, program, dailyTimeBudget, sameDayPairingPreference, addDays(todayDate, 1));
-      proposals.push(proposal);
+    const hasRoom = (d: string) => !candidateTemplate || dayHasRoomFor(d, candidateTemplate, working, templateById, program, dailyTimeBudget, sameDayPairingPreference);
+    const nearTest = (d: string) => {
+      if (!candidateTemplate) return false;
+      const moved = working.map((s) => (s.id === session.id ? { ...s, scheduledDate: d } : s));
+      return findHeavyConflicts(session.id, candidateTemplate, d, moved, templateById, recentLogs).some((c) => {
+        const t = templateById.get(c.templateId);
+        return !!t && isTestLike(t);
+      });
+    };
+    const tryDay = (d: string): ScheduleProposal | undefined => {
+      const proposal = proposeMove(working, templates, session.id, d, recentLogs, program, dailyTimeBudget, sameDayPairingPreference, cascadeFrom);
+      const fits = proposal.changes.every((c) => c.toDate !== todayDate && isOpen(c.toDate) && (c.sessionId === session.id || !stayingIds.has(c.sessionId)));
+      return fits ? proposal : undefined;
+    };
+    const first = [...later, ...earlier].filter((d) => hasRoom(d) && isOpen(d) && !nearTest(d));
+    const fallback = later.filter((d) => hasRoom(d) && !first.includes(d)).slice(0, 1);
+    let chosen: ScheduleProposal | undefined;
+    for (const d of [...first, ...fallback]) {
+      chosen = tryDay(d);
+      if (chosen) break;
+    }
+    if (chosen) {
+      const changes = chosen.changes;
+      proposals.push(chosen);
       working = working.map((s) => {
-        const change = proposal.changes.find((c) => c.sessionId === s.id);
+        const change = changes.find((c) => c.sessionId === s.id);
         return change ? { ...s, scheduledDate: change.toDate } : s;
       });
     } else {

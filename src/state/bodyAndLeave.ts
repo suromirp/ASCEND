@@ -18,6 +18,7 @@ import {
   type StretchCompletion,
 } from '../storage/database';
 import { proposeNoTimeToday, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
+import { isDateAvailable } from '../engine/adaptiveReplanner';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
 import { leaveWordsChange, withNote } from '../engine/leaveEdit';
@@ -130,7 +131,9 @@ export function useBodyAndLeave(deps: {
   const proposeNoTimeTodayAction = useCallback((): ScheduleProposal[] => {
     const today = todayISO();
     const week = sessionsForWeek(mondayOfWeek(today));
-    return proposeNoTimeToday(week, templates, today, sessionLogs, program, goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference);
+    // Een latere dag moet open zijn: een dag die je bij je dagen uitzette, kiest hij niet (I-147).
+    const isOpen = (d: string) => isDateAvailable(d, goalEngineConfig.availability);
+    return proposeNoTimeToday(week, templates, today, sessionLogs, program, goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, { isOpen });
   }, [sessionsForWeek, templates, sessionLogs, program, goalEngineConfig]);
 
   // Mirrors applyProposal's move semantics, plus the scheduler's

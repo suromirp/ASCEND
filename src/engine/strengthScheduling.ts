@@ -135,7 +135,9 @@ function buildPlan(
   // here anymore.
   const unplaceableCount = noFreeDayWeekCount;
   const unplaceableNote = noFreeDayWeekCount > 0
-    ? ` Let op: in ${noFreeDayWeekCount} ${noFreeDayWeekCount === 1 ? 'week' : 'weken'} staat er al op elke dag een training. Daar is geen plek voor een extra krachttraining zonder een andere te verplaatsen of te schrappen.`
+    // Een week telt ook mee als er een dag vrij is waar het niet mag: geen trainingsdag van je, of te dicht op een
+    // zware dag (weekReconciliation.ts toetst de beschikbaarheid, de ruimte en respectsHeavySpacing hard).
+    ? ` In ${noFreeDayWeekCount} ${noFreeDayWeekCount === 1 ? 'week' : 'weken'} is er geen dag voor nog een krachttraining: elke dag heeft al een training, is geen trainingsdag van je of ligt te dicht op een zware dag. Daar past hij alleen als je een andere training verplaatst of schrapt.`
     : '';
 
   const zoneNote = zoneLabel === 'forecast'
