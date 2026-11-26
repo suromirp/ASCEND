@@ -616,3 +616,7 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-26 | Sherpa ijktocht (Rooster ronde 5) | bouwer | opus | ongeveer 400k tok | lang, met een samenvatting | engine, instelling, rij in Je stand, 33 tests, besluit; Warden-Moet hersteld |
 | 2026-11-26 | Warden ijktocht | reviewer helper | opus | 106k tok | 6 min | één Moet (afdaling en ijktocht naast elkaar als een van beide gepland staat), hersteld; Mag naar I-170 |
 | 2026-11-26 | Lookout ijktocht | tester helper | sonnet | 75k tok | 8 min | groen op 360, 390, 412; instelling onvindbaar zonder hoofddoel (I-170) |
+| 2026-11-26 | Sportwetenschapper beenindex | onderzoek helper | opus | onbekend | middel | factor k, 0,7 tot 1,4, regels F1 tot F13 |
+| 2026-11-26 | Sherpa beenindex (Rooster ronde 6) | bouwer | opus | ongeveer 500k tok | lang, met twee samenvattingen | rekenkern, archief en migratie, factor door de app, UI, 22 veiligheidstests, besluit; Warden-Moet hersteld |
+| 2026-11-26 | Warden beenindex | reviewer helper | opus | 172k tok | 25 min | één Moet (voorstelzin omlaag boven 1), hersteld; Mag deels gedaan, rest I-171 |
+| 2026-11-26 | Lookout beenindex | tester helper | sonnet | 64k tok | 10 min | groen op 360, 390, 412; voorstelblad bij planningswijziging niet uitgelokt (I-171) |

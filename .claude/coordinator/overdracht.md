@@ -8,7 +8,7 @@
 - Keuzes erbij: herkomst 'voorstel' als het antwoord gelijk is aan de voorinvulling; woorden met de getoonde factor alleen op kaart Benen, Je stand, grafiek en voorinvulling, al het andere (planner, Forge, Lichter, lijfcheck, voorstelblad, testregel) met max(1,k); Akkoord dat de veilige factor verandert gaat via changeSetting. Randgeval voor Warden: undo via settingsBefore met oudere legAnswers kan archiefrijen terugzetten.
 - Verder gepusht: b14deb8 (UI) en 62d4153 (veiligheidstests, besluit docs/beslissingen/2026-11-26-beenindex-leert.md, bronnen.json). kaart:vergelijk: één verschil (bundel-signalen, nieuwe knop en uitleg), verklaard; basis wordt bijgewerkt met npm run kaart.
 - Keuzes erbij: engine klemt zelf op ≥ 1 (legDayEase, forgeWorkout, strengthHistory); legsTiredAt krijgt de factor; rij in Je stand toont "Een voorstel" of "Eigen factor X procent"; Uit en Standaard voegen een rij met factor 1 toe; ADVICE_SPEC beenindex-leert plan: true; learningLine onder 1 zegt dat de planning voorzichtig blijft.
-- Open: Warden loopt, Lookout start; dan Moet-punten, volle controles, squash, backlog:bij, Rooster ronde 6 eruit, mag als I-171+, kosten, terugmelding.
+- Warden één Moet (voorstelzin omlaag vanaf factor boven 1 zei dat de planning gelijk bleef), hersteld in ec14bf7; Mag 1, 2, 3 en 6 gedaan, rest in I-171. Lookout groen. Backlog: ronde 6 eruit, Rooster leeg, hoogste code I-171. Nog: kaart:vergelijk, squash, backlog:bij, terugmelding.
 
 ## Backlogsessie B, ijktocht (Rooster ronde 5, branch claude/ijktocht-26nov)
 
