@@ -114,12 +114,13 @@ describe('I-159: een lichte gemiste training op de eerste rustdag van de instap'
     // Gemist alleen Benen A. Op T+2 staat de Lange duurloop (zware benen): T+1 ligt erbinnen.
     const s = scenario(T0, [[-1, 'tpl_lower_a'], [0, 'tpl_upper_b'], [2, 'tpl_long_run'], [4, 'tpl_upper_a']]);
     expect(proposeReentry(input(s))!.catchUp).toBeUndefined();
-    // Zonder zware beensessie in de buurt mag het wel.
-    const free = scenario(T0, [[-1, 'tpl_lower_a'], [0, 'tpl_upper_b'], [4, 'tpl_upper_a']]);
+    // Een lichte training zonder zware sessie in de buurt mag wel (een zware beendag nooit: terugkeerRustdagRegel.test.ts).
+    const free = scenario(T0, [[-1, 'tpl_easy_run'], [0, 'tpl_upper_b'], [4, 'tpl_upper_a']]);
     expect(proposeReentry(input(free))!.catchUp).toMatchObject({ fromDate: free.t(-1), toDate: free.t(1) });
-    // Een zware beensessie die je vandaag al deed telt ook.
-    const legsToday = ps('tpl_hill_intervals', free.T, { id: 'heuvel-vandaag' });
-    const withLog = proposeReentry(input(free, { plannedSessions: [...free.plan, legsToday], logs: [...free.logs, done(legsToday)] }));
+    // Een zware sessie die je vandaag al deed telt ook: Boven B gedaan, dan geen Boven A morgen.
+    const upper = scenario(T0, [[-1, 'tpl_upper_a'], [4, 'tpl_easy_run']]);
+    const upperToday = ps('tpl_upper_b', upper.T, { id: 'boven-vandaag' });
+    const withLog = proposeReentry(input(upper, { plannedSessions: [...upper.plan, upperToday], logs: [...upper.logs, done(upperToday)] }));
     expect(withLog?.catchUp).toBeUndefined();
   });
 
@@ -143,10 +144,11 @@ describe('I-159: een lichte gemiste training op de eerste rustdag van de instap'
   });
 
   it('een rij die je zelf vastzette blijft staan: dan de training ervoor, of niets', () => {
-    const s = scenario(T0);
+    // Op T-2 een herstelloop: Boven A daar zou naast Boven B van vandaag te zwaar zijn (respectsHeavySpacing).
+    const s = scenario(T0, DEFAULT_ROWS.map(([k, id]): [number, string] => [k, k === -2 ? 'tpl_recovery_run' : id]));
     const lock = { by: 'user' as const, at: `${s.t(-1)}T08:00:00.000Z` };
     const one = s.plan.map((r) => (r.scheduledDate === s.t(-1) ? { ...r, lock } : r));
-    expect(proposeReentry(input(s, { plannedSessions: one }))!.catchUp).toMatchObject({ fromDate: s.t(-2), name: name('tpl_upper_a') });
+    expect(proposeReentry(input(s, { plannedSessions: one }))!.catchUp).toMatchObject({ fromDate: s.t(-2), name: name('tpl_recovery_run') });
     const both = s.plan.map((r) => (r.scheduledDate === s.t(-1) || r.scheduledDate === s.t(-2) ? { ...r, lock } : r));
     expect(proposeReentry(input(s, { plannedSessions: both }))!.catchUp).toBeUndefined();
     // Een rustdag waar je zelf een training op zette is geen rustdag.
