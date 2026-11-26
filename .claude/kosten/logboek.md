@@ -587,3 +587,7 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-26 | Bouwmoment 25 nov naar main (6e00642a) | coördinator | opus | n.v.t. | 2u40 | routepakket plus I-158, I-159, I-161, I-162, I-150, I-149, I-152, I-153 |
 | 2026-11-26 | Sherpa Planning losse punten (claude/planning-punten-26nov) | bouwer helper | opus | n.v.t. | ca. 1u | I-151, I-147, I-148, I-146, I-156, zin krachtblok |
 | 2026-11-26 | Sherpa Belangrijk advies (I-157, I-155) | bouwer helper | opus | n.v.t. | n.v.t. | blad bij openen, één antwoord per dag, terugdraairecord per ronde |
+| 2026-11-26 | Sherpa Routes en week (I-163) | bouwer helper | sonnet | 201k tok | 75 min | twaalf deelpunten nawerk routepakket en rustdag |
+| 2026-11-26 | Warden bouwmoment 26 nov | reviewer helper | opus | 136k tok | 7 min | één Moet (Bekijk zonder tijdsgrens, coördinator herstelde), Mag naar I-164 |
+| 2026-11-26 | Lookout bouwmoment 26 nov | tester helper | sonnet | 157k tok | 25 min | groen op 360, 390 en 412; route Opnieuw proberen niet bereikt |
+| 2026-11-26 | Bouwmoment 26 nov naar main | coördinator | opus | n.v.t. | ca. 3u | I-157, I-155, I-146, I-147, I-148, I-151, I-156, krachtblok, I-163 |
