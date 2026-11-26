@@ -156,7 +156,7 @@ describe('Alleen wat je gebruikte', () => {
     ]);
     expect(rx.kind).toBe('used_top');
     expect(rx.reason).toContain('klaar voor zwaarder');
-    expect(rx.reason).toContain('eerstvolgende gewicht');
+    expect(rx.reason).toContain('volgende gewicht');
   });
   it('lichter dan je lichtste gebruikte gewicht verzint het niet', () => {
     const rx = run([

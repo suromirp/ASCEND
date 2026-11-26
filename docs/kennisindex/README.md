@@ -11,7 +11,7 @@ Een nieuw document in `docs/` krijgt een regel in `bronnen.json`, en haalt het e
 oudere besluit de stand deels of vervangen. Daarna `npm run kennisindex`; de test
 `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 616 documenten: 367 gelden, 92 deels ingehaald, 3 vervangen, 3 verouderd, 151 achtergrond.
+Stand van de 617 documenten: 368 gelden, 92 deels ingehaald, 3 vervangen, 3 verouderd, 151 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; deels ingehaald geldt alleen nog voor wat achter "Geldt nog" staat, de
@@ -23,7 +23,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 - Werkbriefje: [werkbriefjes/forge.md](../werkbriefjes/forge.md)
 - [architectuur/forge.md](../architectuur/forge.md): Het lange verhaal bij Forge: Je stand en volgorde, sessie, verloop, spotter, plaatjes, het blad Oefening en spieren voor de berg.
 - [visie/Los van MacroFactor.md](../visie/Los%20van%20MacroFactor.md): Het doel van de eigenaar van 9 november 2026: Forge maakt MacroFactor Workouts overbodig, de voedingsapp blijft.
-- Alles over dit onderwerp: [forge.md](forge.md) (71 besluiten die gelden, 15 deels ingehaald, 22 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [forge.md](forge.md) (72 besluiten die gelden, 15 deels ingehaald, 22 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Koppelingen en data
 
@@ -74,7 +74,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 - [architectuur/bediening-en-beweging.md](../architectuur/bediening-en-beweging.md): Het lange verhaal bij bediening: terugknop, scrollen, hervatten en de ontwerpregels voor logo, tabbalk, lucht, instellingen en overgangen.
 - [architectuur/ontwerp-en-tokens.md](../architectuur/ontwerp-en-tokens.md): Het volledige ontwerp: Zee en berg, knoppen en tikdoelen, stem, beweging en alle tokens, woordelijk verhuisd uit CLAUDE.md.
 - [visie/stemgids-concept.md](../visie/stemgids-concept.md): De stemgids: de regels voor alle teksten van de app, goedgekeurd op 9 november 2026 en vastgelegd in `docs/beslissingen/2026-11-09-stem-van-ascend.md`.
-- Alles over dit onderwerp: [bediening-en-beweging.md](bediening-en-beweging.md) (38 besluiten die gelden, 15 deels ingehaald, 25 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
+- Alles over dit onderwerp: [bediening-en-beweging.md](bediening-en-beweging.md) (39 besluiten die gelden, 15 deels ingehaald, 25 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
 
 ## Werkwijze
 

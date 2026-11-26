@@ -67,11 +67,11 @@ describe('de regel onder de klok', () => {
   const at = (min: number) => min * 60 + 30;
 
   it('over de referentie, kern af en bijwerk en extra open', () => {
-    expect(overTimeLine({ activeSec: at(64), reference: 60, exercises: workout(3, 1, 0), priorityOf })).toBe('Je zit op 64 minuten. Wat nog komt is bijwerk en extra; stoppen kan.');
+    expect(overTimeLine({ activeSec: at(64), reference: 60, exercises: workout(3, 1, 0), priorityOf })).toBe('Je zit op 64 minuten. Wat nog komt is bijwerk en extra. Stoppen kan.');
   });
   it('noemt alleen wat nog open is', () => {
-    expect(overTimeLine({ activeSec: at(61), reference: 60, exercises: workout(3, 3, 0), priorityOf })).toBe('Je zit op 61 minuten. Wat nog komt is extra; stoppen kan.');
-    expect(overTimeLine({ activeSec: at(61), reference: 60, exercises: workout(3, 2, 2), priorityOf })).toBe('Je zit op 61 minuten. Wat nog komt is bijwerk; stoppen kan.');
+    expect(overTimeLine({ activeSec: at(61), reference: 60, exercises: workout(3, 3, 0), priorityOf })).toBe('Je zit op 61 minuten. Wat nog komt is extra. Stoppen kan.');
+    expect(overTimeLine({ activeSec: at(61), reference: 60, exercises: workout(3, 2, 2), priorityOf })).toBe('Je zit op 61 minuten. Wat nog komt is bijwerk. Stoppen kan.');
   });
   it('niet op of onder de referentie (actieve tijd: pauzes tellen niet)', () => {
     expect(overTimeLine({ activeSec: 60 * 60, reference: 60, exercises: workout(3, 0, 0), priorityOf })).toBeUndefined();

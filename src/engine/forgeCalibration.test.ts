@@ -84,12 +84,12 @@ describe('Genoeg data', () => {
     const c = calibrate({ logs: [log(3, 'bench-press', 'Bankdrukken', Array.from({ length: MIN_SETS - 1 }, () => set()))], today: TODAY });
     expect(c.prediction.verdict).toBe('te_weinig');
     expect(c.adjust.verdict).toBe('te_weinig');
-    expect(c.lines.prediction).toBe('Voorspelling: nog te weinig data');
-    expect(c.lines.adjust).toBe('Bijgestuurd: nog te weinig data');
+    expect(c.lines.prediction).toBe('Voorspelling: nog te weinig gegevens');
+    expect(c.lines.adjust).toBe('Bijgestuurd: nog te weinig gegevens');
     expect(c.lines.bias).toBeUndefined();
     expect(c.allGood).toBe(false);
     expect(c.perExercise[0].enough).toBe(false);
-    expect(exerciseLine(c.perExercise[0])).toBe('Nog te weinig data (5 van 6 sets)');
+    expect(exerciseLine(c.perExercise[0])).toBe('Nog te weinig sets (5 van 6)');
   });
 
   it('een oefening met te weinig sets telt niet mee in het geheel', () => {
@@ -134,7 +134,7 @@ describe('Sterker', () => {
   it('te weinig trainingen of te kort: nog te weinig data', () => {
     expect(calibrate({ logs: [bench(55, 80), bench(2, 95)], today: TODAY }).strength.verdict).toBe('te_weinig');
     expect(calibrate({ logs: [bench(20, 80), bench(10, 85), bench(2, 95)], today: TODAY }).strength.verdict).toBe('te_weinig');
-    expect(calibrate({ logs: [bench(20, 80), bench(10, 85), bench(2, 95)], today: TODAY }).lines.strength).toBe('Sterker: nog te weinig data');
+    expect(calibrate({ logs: [bench(20, 80), bench(10, 85), bench(2, 95)], today: TODAY }).lines.strength).toBe('Sterker: nog te weinig gegevens');
   });
 
   it('geen hoofdoefening: een isolatie-oefening telt niet', () => {

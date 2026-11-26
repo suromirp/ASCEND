@@ -335,7 +335,7 @@ export function muscleNoticeText(p: MuscleProposal): MuscleNoticeText {
   const forgeName = inForge && inForge !== name ? `In Forge heet hij ${inForge}.` : undefined;
   return {
     name,
-    ...(unknown > 0 ? { unknown: `${unknown} ${unknown === 1 ? 'set kon' : 'sets konden'} niet aan een oefening gekoppeld worden; die tellen hier niet mee.` } : {}),
+    ...(unknown > 0 ? { unknown: `${unknown} ${unknown === 1 ? 'set telt' : 'sets tellen'} hier niet mee: ${unknown === 1 ? 'hij kon' : 'ze konden'} niet aan een oefening gekoppeld worden.` } : {}),
     ...(forgeName ? { forgeName } : {}),
     where: `Erbij in ${p.templateName}`,
     how,

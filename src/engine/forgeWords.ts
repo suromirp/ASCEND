@@ -39,7 +39,7 @@ export function effortWords(text: string, mode: ForgeWords): string {
 }
 
 // "Wat je over had" in gewone woorden, "herhalingen in reserve (RIR)" in vaktaal: de melding bij sets uit een oudere import.
-const REFILL_END = '; ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan komen ze erbij.';
+const REFILL_END = '. Ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan komen ze erbij.';
 export function refillText(missing: MissingData, mode: ForgeWords): string {
   const over = mode === 'jargon' ? 'herhalingen in reserve (RIR)' : 'wat je over had';
   if (missing === 'rir') return `Deze sets staan hier nog zonder ${over}${REFILL_END}`;

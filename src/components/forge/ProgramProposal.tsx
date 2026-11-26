@@ -68,7 +68,7 @@ export function ProgramProposalSheet({
   }
 
   return (
-    <ForgeSheet title="Programma uit MacroFactor" sub={`${program.name}. Alleen de oefeningen van je krachttrainingen veranderen; je planning en je logs blijven.`} onClose={onClose}>
+    <ForgeSheet title="Programma uit MacroFactor" sub={`${program.name}. Alleen de oefeningen van je krachttrainingen veranderen. Je planning en je logs blijven.`} onClose={onClose}>
       {(close) => (
         <div className="flex flex-col gap-5">
           <section className="flex flex-col gap-3">

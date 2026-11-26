@@ -14,7 +14,7 @@
 //   set zonder eigen RIR de herhalingen. Bij een set met eigen RIR zijn de herhalingen de uitkomst, geen bijsturing.
 // - Sterker: de trend van het geschatte maximum per hoofdoefening over 6 tot 8 weken.
 //
-// Een oefening telt pas mee vanaf `MIN_SETS` sets; daaronder staat er "nog te weinig data" in plaats van een getal.
+// Een oefening telt pas mee vanaf `MIN_SETS` sets; daaronder staat er "nog te weinig sets" in plaats van een getal.
 
 import type { Exercise, MovementPattern } from '../models/exercise';
 import type { SessionLog, SetLog } from '../models/training';
@@ -238,7 +238,7 @@ function listNames(names: string[]): string {
 }
 
 export function strengthLine(readings: TrendReading[]): string {
-  if (readings.length === 0) return 'Sterker: nog te weinig data';
+  if (readings.length === 0) return 'Sterker: nog te weinig gegevens';
   const parts: string[] = [];
   const group = (t: Trend, one: string, many: string) => {
     const names = readings.filter((r) => r.trend === t).map((r) => r.name);
@@ -295,8 +295,8 @@ export function calibrate(input: CalibrationInput): Calibration {
   };
 
   const lines: CalibrationLines = {
-    prediction: prediction.verdict === 'te_weinig' ? 'Voorspelling: nog te weinig data' : `Voorspelling: ${predHit} van de ${predSets} sets raak`,
-    adjust: adjust.verdict === 'te_weinig' ? 'Bijgestuurd: nog te weinig data' : adjusted === 0 ? `Bijgestuurd: geen van de ${adjSets} sets` : `Bijgestuurd: ${adjusted} op de ${adjSets} sets`,
+    prediction: prediction.verdict === 'te_weinig' ? 'Voorspelling: nog te weinig gegevens' : `Voorspelling: ${predHit} van de ${predSets} sets raak`,
+    adjust: adjust.verdict === 'te_weinig' ? 'Bijgestuurd: nog te weinig gegevens' : adjusted === 0 ? `Bijgestuurd: geen van de ${adjSets} sets` : `Bijgestuurd: ${adjusted} op de ${adjSets} sets`,
     strength: strengthLine(readings),
     ...(prediction.verdict !== 'te_weinig' && biasLine(predMean) ? { bias: biasLine(predMean) } : {}),
   };
@@ -304,9 +304,9 @@ export function calibrate(input: CalibrationInput): Calibration {
   return { from, to, perExercise, prediction, adjust, strength, allGood: prediction.verdict === 'goed' && adjust.verdict === 'goed' && strength.verdict === 'goed', lines };
 }
 
-// Een regel per oefening voor in het blad: het droge feit eerst, of dat er nog te weinig data is.
+// Een regel per oefening voor in het blad: het droge feit eerst, of dat er nog te weinig sets zijn.
 export function exerciseLine(e: ExerciseCalibration, minSets = MIN_SETS): string {
-  if (!e.enough) return `Nog te weinig data (${e.sets} van ${minSets} sets)`;
+  if (!e.enough) return `Nog te weinig sets (${e.sets} van ${minSets})`;
   const p = e.prediction.sets >= 1 ? `${e.prediction.hit} van de ${e.prediction.sets} sets raak` : 'geen meting op het gewicht van Forge';
   const a = e.adjust.adjusted === 0 ? 'niet bijgestuurd' : `${e.adjust.adjusted} bijgestuurd`;
   return `${p}, ${a}`;

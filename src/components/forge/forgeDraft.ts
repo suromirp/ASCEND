@@ -8,6 +8,7 @@ import { makeId } from '../../utils/id';
 import type { Pause } from '../../engine/forgeSession';
 import { poundStackProposal, poundStackText } from '../../engine/poundStack';
 import { normalizeStepSwaps, type StepSwaps } from '../../engine/stepSwaps';
+import { normalizeAddedExercises, type AddedExercises } from '../../engine/addedExercises';
 import type { Rest } from './forgeWorkoutHelpers';
 
 export const DRAFT_VERSION = 1;
@@ -33,6 +34,10 @@ export interface WorkoutDraft {
   // De ladderstappen waarmee deze sessie opende (engine/stepSwaps.ts); `null` is: geen. Een Akkoord tijdens de sessie
   // geldt vanaf de volgende sessie, ook na herladen. Optioneel: een concept van voor dit veld neemt de stappen van nu.
   stepSwaps?: StepSwaps | null;
+  // De toevoegingen van Spieren voor de berg waarmee deze sessie opende (engine/addedExercises.ts); `null` is: geen.
+  // Zoals de stappen: een Akkoord tijdens de sessie geldt vanaf de volgende keer, ook na herladen. Uit deze training
+  // halen haalt hem ook hier weg. Optioneel: een concept van voor dit veld neemt de toevoegingen van nu.
+  added?: AddedExercises | null;
   // Je Akkoord op de kaart IJkset in deze training. Met Lichter aan staat de set niet in de rijen, dus de rijen alleen
   // onthouden het niet. Optioneel: een concept van voor dit veld leest het uit de rijen.
   calAccepted?: boolean;
@@ -48,6 +53,12 @@ export function calAcceptedOf(restored: Pick<WorkoutDraft, 'calAccepted' | 'exer
 export function sessionStepSwaps(restored: Pick<WorkoutDraft, 'stepSwaps'> | undefined, current: StepSwaps | undefined): StepSwaps | undefined {
   if (restored && restored.stepSwaps !== undefined) return normalizeStepSwaps(restored.stepSwaps);
   return current;
+}
+
+// De toevoegingen van een sessie: die van het concept als het ze heeft, anders die van nu.
+export function sessionAddedExercises(restored: Pick<WorkoutDraft, 'added'> | undefined, current: AddedExercises | undefined): AddedExercises | undefined {
+  if (restored && restored.added !== undefined) return normalizeAddedExercises(restored.added);
+  return normalizeAddedExercises(current);
 }
 
 // Het laatste moment van handelen in een concept: het bewaarde moment, of de laatst afgevinkte set, of het wegschrijven.

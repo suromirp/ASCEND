@@ -1034,7 +1034,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
       const lastMid = median(lastReps);
       return lastMid < (low + high) / 2
         ? `Deze keer vraagt het programma ${low} tot ${high} herhalingen, meer dan vorige keer, dus een lichter gewicht.`
-        : `Deze keer vraagt het programma ${low} tot ${high} herhalingen, minder dan vorige keer; je geschatte kracht vraagt toch een lichter gewicht.`;
+        : `Deze keer vraagt het programma ${low} tot ${high} herhalingen, minder dan vorige keer. Je geschatte kracht vraagt toch een lichter gewicht.`;
     }
     if (top.reps < low) return `Vorige keer zat je onder de ${low} tot ${high} herhalingen, dus iets lichter om in het bereik te blijven.`;
     if (top.rir !== undefined && top.rir < rir) return `Vorige keer was het zwaarder dan bedoeld (${top.rir} over, het streven is ${rir}), dus iets lichter.`;
@@ -1051,18 +1051,18 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     kind = 'two_under';
     const dropped = 1 - first.loadKg / lastLoad;
     reason = assisted
-      ? 'Twee keer achter elkaar haalde je minder dan verwacht, dus nu meer hulp om weer op dreef te komen.'
+      ? 'Twee keer achter elkaar haalde je minder dan verwacht, dus nu meer hulp.'
       : dropped > 0.07
-        ? 'Twee keer achter elkaar haalde je minder dan verwacht, dus nu een stap lichter om weer op dreef te komen.'
-        : 'Twee keer achter elkaar haalde je minder dan verwacht, dus nu 5% lichter om weer op dreef te komen.';
+        ? 'Twee keer achter elkaar haalde je minder dan verwacht, dus nu een stap lichter.'
+        : 'Twee keer achter elkaar haalde je minder dan verwacht, dus nu 5% lichter.';
   } else if (atTop) {
     kind = 'used_top';
     reason = readyHeavier
-      ? 'Je haalde de bovenkant van het bereik met genoeg over, dus je bent klaar voor zwaarder. Dit is het zwaarste gewicht dat je op dit toestel gebruikte: kies zelf het eerstvolgende gewicht op het toestel.'
+      ? 'Je haalde de bovenkant van het bereik met genoeg over, dus je bent klaar voor zwaarder. Dit is het zwaarste gewicht dat je op dit toestel gebruikte. Kies zelf het volgende gewicht.'
       : 'Dit is het zwaarste gewicht dat je op dit toestel gebruikte, dus het blijft staan en de herhalingen gaan omhoog tot de bovenkant van het bereik.';
   } else if (atBottom) {
     kind = 'used_bottom';
-    reason = 'Dit is het lichtste gewicht dat je op dit toestel gebruikte. Een lichter gewicht is hier onbekend en komt dus niet in het voorstel. Kies zelf iets lichter als dit te zwaar is.';
+    reason = 'Dit is het lichtste gewicht dat je op dit toestel gebruikte. Een lichter gewicht kent Forge hier niet. Is dit te zwaar, kies dan zelf iets lichter.';
   } else if (reentryLighter && !longBreak) {
     kind = 'pause';
     reason = first.loadKg < lastLoad - 1e-6
@@ -1073,7 +1073,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     reason = raisedText(raised, assisted);
   } else if (coarseHeavier) {
     kind = 'coarse_heavier';
-    reason = `De stap is hier te grof voor ${low} tot ${high} herhalingen; met ${formatWeight(exercise, first.externalKg, dumbbellTotal)} haal je er naar verwachting ${coarseHeavier.reps}, dat zit dichter bij je doel dan ${formatWeight(exercise, coarseHeavier.lighterKg, dumbbellTotal)}.`;
+    reason = `De stap is hier te grof voor ${low} tot ${high} herhalingen. Met ${formatWeight(exercise, first.externalKg, dumbbellTotal)} haal je er naar verwachting ${coarseHeavier.reps}, dichter bij je doel dan ${formatWeight(exercise, coarseHeavier.lighterKg, dumbbellTotal)}.`;
   } else if (widened) {
     kind = 'widened';
     const step = stepAt(candidates, idx);
@@ -1087,11 +1087,11 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   } else if (cappedUp) {
     kind = 'capped';
     reason = weekBound
-      ? 'Je geschatte kracht is gestegen, maar de rekensom neemt per week hooguit 10% meer kracht, dus het gewicht gaat rustig omhoog.'
-      : 'Je geschatte kracht is gestegen, maar de rekensom neemt per training hooguit 5% meer kracht, dus het gewicht gaat rustig omhoog.';
+      ? 'Je geschatte kracht is gestegen. Forge rekent met hooguit 10% meer kracht per week, dus het gewicht gaat rustig omhoog.'
+      : 'Je geschatte kracht is gestegen. Forge rekent met hooguit 5% meer kracht per training, dus het gewicht gaat rustig omhoog.';
   } else if (cappedDown) {
     kind = 'capped';
-    reason = 'Je geschatte kracht is gedaald, maar de rekensom neemt per training hooguit 10% minder kracht, dus het gewicht gaat rustig omlaag.';
+    reason = 'Je geschatte kracht is gedaald. Forge rekent met hooguit 10% minder kracht per training, dus het gewicht gaat rustig omlaag.';
   } else if (first.loadKg > lastLoad + 1e-6) {
     kind = 'up';
     reason = before === undefined
@@ -1126,6 +1126,6 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     lastWeightKg: last.top.weightKg,
     ...(dumbbellTotal ? { dumbbellTotal } : {}),
     ...(raised ? { raised } : {}),
-    ...(mismatch ? { notice: `Je vorige gewicht (${formatWeight(exercise, last.top.weightKg)}) past niet bij je sportschool, daarom is dit het dichtstbijzijnde gewicht dat je wel hebt (${formatWeight(exercise, candidates[lastIdx].externalKg)}). Kijk bij je stangen en dumbbells in de instellingen.` } : {}),
+    ...(mismatch ? { notice: `Je vorige gewicht (${formatWeight(exercise, last.top.weightKg)}) past niet bij je sportschool. Dit is het dichtstbijzijnde gewicht dat je wel hebt (${formatWeight(exercise, candidates[lastIdx].externalKg)}). Kijk bij je stangen en dumbbells in de instellingen.` } : {}),
   };
 }
