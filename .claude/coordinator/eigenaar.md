@@ -4,27 +4,6 @@ De coördinator houdt dit bestand bij bij elke verandering: een vraag erbij of b
 
 ## Vraag aan u
 
-### Terugkeer na een pauze: Bekijk of Akkoord op de kaart (I-124, 23 november)
-Keuzes: de kaart houdt Bekijk en Akkoord staat in het blad dat opent, zoals elk voorstel in de app (advies); of Akkoord direct op de kaart.
-Zonder antwoord: het blijft Bekijk.
-Sinds: 23 november.
-
-### Eén plan: vier keuzes (I-14, 23 november)
-Voorstel, Vandaag, Week en de weekbalk gaan uit één dagbeeld lezen; ontwerp in docs/visie/Ontwerp Eén plan.md.
-Keuzes, advies voorop: na een test of wedstrijd geen "na zwaar, ruimte" (de test heeft eigen rust); bij twee keer kracht op drie dagen volgt de tekst het plan ("1 keer kracht; met een vierde dag past het"); het eerste voorstel noemt de rustdag met wandelen; "Deze week nog een keer?" noemt één getal, dat van Week.
-Zonder antwoord: het advies.
-Sinds: 23 november.
-
-### Beginner: drie keuzes (I-18, 23 november)
-Keuzes, advies voorop: de herstelwandeling in de start duurt hoogstens zo lang als de korte sessie wandelen en dribbelen (nu 45 min); bij wandelen en dribbelen staat "Rustig, praten kan" in plaats van Zone 2; de ladder in de planning en het voorstel voor een lopende start gaan samen naar main.
-Zonder antwoord: het advies.
-Sinds: 23 november.
-
-### Losse sport: vier keuzes (I-23, 23 november)
-Keuzes, advies voorop: zwemmen, padel en voetbal altijd te kiezen, zonder rol één vraag na opslaan "Hoe telt padel?"; een voorstel na een zware sport blijft staan tot je kiest (instelbaar); geen kleding- en zweetvragen bij deze sporten tot er onderzoek is; past de weekcontrole na een sport een duur aan, dan eerst een voorstel.
-Zonder antwoord: het advies.
-Sinds: 23 november.
-
 ### Na een loop één moment: vijf keuzes (I-34, 23 november)
 Na een loop één moment in plaats van zes tot acht lagen; de Terugblik als apart blad vervalt. Keuzes, advies telkens ja: een rustige vorm van het moment na Hoe ging het?; een test die op Telt mee wacht bovenaan; één training op een dag in het Logboek opent meteen het logblad; de Kennisbank op Ascend alleen bij een tocht als doel; acht Forge-keuzes in een blad tijdens het trainen.
 Zonder antwoord: het advies.
@@ -32,6 +11,7 @@ Sinds: 23 november.
 
 ## Beslist op advies (23 november, uw opdracht van 07:42)
 
+- Terugkeer (I-124), Eén plan (I-14), Beginner (I-18) en Losse sport (I-23): gebouwd met het advies.
 - Opwarmset na een ruil (I-30): blijft zoals u op 14 november besloot, een gewone opwarmset.
 - Week van uitvoeren (I-58): een open Forge-training telt pas na Afronden; een sleuteltraining of Gemist blijft bij de geplande week.
 - Wachttijd intervals.icu (I-35): hoogstens 120 seconden per aanroep.
