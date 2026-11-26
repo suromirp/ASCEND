@@ -2,7 +2,8 @@
 
 ## Bouwmoment 26 november (Amsterdam 26 nov, nacht)
 
-- Live: main c14ca756 (I-157, I-155, I-146, I-147, I-148, I-151, I-156, krachtblok, I-163). Mag-punten in I-164. Keuzes: geen apart Cartographer-ontwerp voor I-157 (plek van Pathfinder volstond); instelling staat in het blad Kaarten omdat Vandaag aan 12 rijen zit; schemaVersion blijft 6 met migratiestap (Warden: veilig); Bekijk in het blad kreeg een tijdsgrens (Warden Moet, coördinator).
+- Live: main 3b9dda6f (backlog bij na squash c14ca756), deploy run 789 groen. eigenaar.md op claude/nacht bijgewerkt (43f37661). Werkkaart bijgewerkt (asset d21a0295, oude 03815e56 weg). Eenmalige melding trig_01AZPBdTZXF4pVHrb62NtEtV naar session_01LnDpSjkesdr3Yd8mZZV9XL om 05:31 Amsterdam. Worktree nacht weg. Open: I-164 (Mag-punten) en oudere Inbox.
+- Eerder: main c14ca756 (I-157, I-155, I-146, I-147, I-148, I-151, I-156, krachtblok, I-163). Mag-punten in I-164. Keuzes: geen apart Cartographer-ontwerp voor I-157 (plek van Pathfinder volstond); instelling staat in het blad Kaarten omdat Vandaag aan 12 rijen zit; schemaVersion blijft 6 met migratiestap (Warden: veilig); Bekijk in het blad kreeg een tijdsgrens (Warden Moet, coördinator).
 
 ## Start (bijgewerkt 23 november 07:45 Amsterdam, coördinator session_01LnDpSnEAuFAjTkBK2YLZBH)
 
