@@ -72,7 +72,7 @@ const PAD_L = 8;
 const PAD_R = 14;
 const BASE_Y = 128;
 const TOP_Y = 44;
-// Het beeld is op 360 px ongeveer 296 px breed, dus een eenheid is minstens een pixel (I-20).
+// Het beeld is op 360 px (de smalste maat van de app) ongeveer 296 px breed, dus vanaf 360 px is een eenheid minstens een pixel (I-20).
 const HIT_MIN = 44;
 
 function ClimbProfile({ phases, goalName, goalDate, onPick }: { phases: SeasonPhase[]; goalName?: string; goalDate?: string; onPick: (id: string) => void }) {
