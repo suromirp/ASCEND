@@ -46,10 +46,18 @@ Sinds: 23 november.
 
 ## Loopt
 
-- Bundel 9 (I-14, I-18, I-23, I-34): ladder, Eén plan deel 1 en Losse sport deel 1 live. Eén plan (I-14) helemaal live. Nog: beginner stap 5 tot 7, losse sport rest, na een loop één moment (I-34), kleine punten I-146 tot I-151.
+- Volgend bouwmoment (vrijdag 27 november): belangrijk advies (I-157), kleine punten I-146, I-147, I-148, I-151, I-155, I-156, de check op het krachtblok en de review-punten van I-163.
 - Graphify, eerlijke proef: zodra de lijst leeg is. De koppeling alleen op een proefbranch, drie echte taken met en zonder graaf; daarna beslist u.
 
 ## Net live
+
+### 26 november 02:30
+- Route per training (I-160): kies in de Briefing vooraf een route bij een geplande training; hij schuift mee als de training verschuift en staat stil in Week en Vandaag.
+- Routeplanner: Simpel begint aan de voet van de steilste helling. Kies Hoogtemeters halen (advies) of Afstand houden; is buiten te weinig hoogte, dan stelt hij trap of loopband erbij voor. Rijtijd naar heuvels instelbaar (advies 30 min).
+- Terugkeer na een pauze (I-159): een lichte gemiste training op je eerste rustdag, als voorstel.
+- Rustdag schuift mee (I-162, I-150): sleep je een training naar je rustdag, dan komt een voorstel om de rustdag naar de vrije dag te zetten.
+- MacroFactor (I-158): telt alleen als leidend; knop MacroFactor loskoppelen in Koppelingen.
+- Teksten (I-161, I-149, I-152, I-153): je hoofddoel in plaats van een vaste GR5; rustdagwoord volgt je instelling.
 
 ### 23 november 18:00
 - Terugkeer gaat voor inhalen (I-154): na een pauze staat de rustige terugkeer bovenaan Vandaag, zonder inhaaladvies of testpoging ernaast. Na Liever niet op de terugkeer komt het inhalen weer.
