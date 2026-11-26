@@ -3,7 +3,7 @@
 // (engine/adaptiveReplanner.ts#computeForecastReplan). Een test, wedstrijd of rij met een slot blijft staan. Zonder
 // doel met een vraag doet hij niets. Los, zodat een test hem kan draaien zoals de opening hem draait (I-14 stap 4).
 
-import { GoalEngineConfigRepo, PlanChangeProposalsRepo, PlannedSessionsRepo, SessionTemplatesRepo, TrainingGoalsRepo } from './database';
+import { GoalEngineConfigRepo, PlanChangeProposalsRepo, PlannedSessionsRepo, SessionLogsRepo, SessionTemplatesRepo, TrainingGoalsRepo } from './database';
 import { activeGoalDemandKeys } from '../engine/progressionDecisions';
 import { computeForecastReplan } from '../engine/adaptiveReplanner';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
@@ -11,16 +11,17 @@ import { todayISO } from '../utils/dates';
 
 // De zin voor de melding als er iets veranderde, anders niets.
 export async function runAvailabilityStep(asOf: string = todayISO()): Promise<{ passiveSummary: string } | undefined> {
-  const [goals, planned, tpls, engineConfig] = await Promise.all([
+  const [goals, planned, tpls, engineConfig, logs] = await Promise.all([
     TrainingGoalsRepo.getAll(),
     PlannedSessionsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
     GoalEngineConfigRepo.get(),
+    SessionLogsRepo.getAll(),
   ]);
   // Geen actief doel met een vraag: niets om de vervolgweken omheen te leggen.
   if (activeGoalDemandKeys(goals).length === 0) return undefined;
 
-  const { proposal, passiveSummary } = computeForecastReplan({ plannedSessions: planned, templates: tpls, availability: engineConfig.availability, asOf });
+  const { proposal, passiveSummary } = computeForecastReplan({ plannedSessions: planned, templates: tpls, availability: engineConfig.availability, asOf, logs });
   if (proposal.changes.length === 0) return undefined;
 
   const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
