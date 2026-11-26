@@ -570,3 +570,18 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-23 | Lookout proef 23f (forge, dayRules) | tester helper | sonnet | 92k tok | 15 min | geen moet; ijkset en horlogewandeling niet bereikbaar |
 | 2026-11-23 | Mag-ronde plus ontwerpen bundel 9 naar main (9f6c67fa) | coördinator | opus | n.v.t. | n.v.t. | Mag A en B, vier ontwerpen, I-14-tests, zuinige start; kaart alleen verklaarde verschillen |
 | 2026-11-23 | Warden beginnersladder I-18 | reviewer helper | opus | 110k tok | 23 min | akkoord, geen moet; mag naar I-143 |
+| 2026-11-25 | Pathfinder route per training | pathfinder helper | sonnet | 60k tok | 1 min | plek: Briefing blijft de ingang |
+| 2026-11-25 | Cartographer route per training | ontwerper helper | sonnet | 82k tok | 2 min | ontwerp a tot d, vier vragen met advies |
+| 2026-11-25 | Sherpa I-158 MacroFactor | ontwikkelaar helper | sonnet | 37k tok | 51 min | in één keer akkoord |
+| 2026-11-25 | Sherpa I-161 GR5-teksten | ontwikkelaar helper | sonnet | 91k tok | 38 min | akkoord; mag doelnaam afgekapt |
+| 2026-11-25 | Sherpa I-159 terugkeer rustdag | ontwikkelaar helper | opus | 37k tok | 64 min | 2 moet van Warden |
+| 2026-11-25 | Sherpa I-159 herstel | ontwikkelaar helper | opus | 66k tok | 14 min | 1 herstelronde, twee eigen tests aangepast |
+| 2026-11-25 | Sherpa route bewaren (I-160 A) | ontwikkelaar helper | opus | 37k tok | 60 min | akkoord; eigen lijst sessionRoutes |
+| 2026-11-25 | Sherpa routeplanner hoogtemeters (I-160 B) | ontwikkelaar helper | opus | 83k tok | 59 min | akkoord; coördinator zette twee instellingentests bij |
+| 2026-11-25 | Sherpa kleine woorden I-149, I-152, I-153 | ontwikkelaar helper | sonnet | 87k tok | 31 min | akkoord |
+| 2026-11-25 | Sherpa I-162 en I-150 rustdag schuift mee | ontwikkelaar helper | opus | 188k tok | 45 min | akkoord, mag naar I-163 |
+| 2026-11-25 | Warden bouwmoment deel 1 | reviewer helper | opus | 170k tok | 22 min | 2 moet I-159, rest akkoord |
+| 2026-11-25 | Warden bouwmoment deel 2 (I-162) | reviewer helper | opus | 113k tok | 28 min | akkoord, mag 4 door coördinator |
+| 2026-11-25 | Lookout bouwmoment | tester helper | sonnet | 185k tok | 30 min | groen, twee mag |
+| 2026-11-25 | Pathfinder I-157 | pathfinder helper | sonnet | 67k tok | 2 min | plek klaar, bouwen volgende keer |
+| 2026-11-26 | Bouwmoment 25 nov naar main (6e00642a) | coördinator | opus | n.v.t. | 2u40 | routepakket plus I-158, I-159, I-161, I-162, I-150, I-149, I-152, I-153 |
