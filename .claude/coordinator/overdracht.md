@@ -4,7 +4,7 @@
 
 - Ronde 2 live: main 96f7ab1f6 (squat op één been en L-sit als voorstel met Akkoord in addedExercises, uitleg batch 5). Mag-rest in I-167. Hoogste code nu I-167; volgende I-168.
 - Ronde 3 live: main 96899a354 (feestdagen als voorstel, Forge herinrichting de rest). Warden geen open Moet, Lookout groen; mag-rest in I-168. Hoogste code nu I-168.
-- Ronde 4 loopt: Sherpa Klein en fouten deel 2 op claude/rooster-klein-forge; daarna R10 (niet tegelijk). Ronde 4: Klein en fouten deel 2 en R10 teksten van Forge, na elkaar (nooit twee Forge-sporen tegelijk). Ronde 5 en 6 (ijktocht, beenindex) niet: eigen sessie.
+- Ronde 4: Klein en fouten deel 2 gebouwd op claude/rooster-klein-forge (e02a72e28: maximum van 20 trainingen eerlijk, bergspiertoevoegingen in het concept); R10 bouwt daarop (claude/rooster-r10-forge). Daarna één Warden en één Lookout, kaart, squash. Blijft liggen in deel 2: schakelaar Spieren voor de berg, pond-invoer, Reverse Lunge eigen gewicht, stopwatch, straddle-toets, onbekende ladder uit nieuwere back-up, tempostippen; terugknop na Lichter of Zwaarder is een besluit (2026-11-09-uitleg-bij-oefeningen), aan de eigenaar. Ronde 5 en 6 niet: eigen sessie.
 - Keuzes: feestdag wordt één voorstel als free_days via planLeave/applyLeave, land alleen uit de instelling, cache niet in de back-up; Forge zonder kolom Voorschrift, Kleiner maken en Afronden alleen in de kop, setnummer als knop van 44 px, geen percentage van je maximum; ladderstap begint onderaan de stap, geen migratie.
 - Eind: kostenregels, terugmelding met create_trigger naar session_01LnDpSjkesdr3Yd8mZZV9XL (run_once_at, own_followup), nooit fire_trigger.
 
