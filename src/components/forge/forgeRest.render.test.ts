@@ -78,7 +78,7 @@ describe('het blad Set zichtbaar', () => {
     expect(cssSource).toMatch(/\.forge-grid \{[^}]*grid-template-columns: 36px /);
   });
   it('in een training om mee te kijken is het nummer geen werkende knop', () => {
-    expect(block(bench([row(0, 60)]), { readOnly: true })).toMatch(/aria-label="Set 1, opent het blad Set"[^>]*disabled/);
+    expect(block(bench([row(0, 60)]), { readOnly: true })).toMatch(/disabled=""[^>]*aria-label="Set 1"/);
   });
 });
 

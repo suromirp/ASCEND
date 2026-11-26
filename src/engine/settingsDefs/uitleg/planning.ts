@@ -183,7 +183,7 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Niet', text: 'op een dag die al in een periode valt: vrije dagen, vakantie, tocht of zonder sportschool.' },
       { head: 'Vrije dag', text: 'haalt geen training weg. Past het, dan kan er een lange wandeling komen; het voorstel laat zien wat er verandert.' },
       { head: 'Liever niet', text: 'geldt voor die ene feestdag; de volgende krijg je wel. Na Akkoord kun je het ongedaan maken of de dag weghalen bij Vrije dagen en vakanties.' },
-      { head: 'Ophalen', text: 'eens per jaar van Nager.Date, in december ook het volgende jaar. Alleen het jaar en het land gaan naar buiten. Ze staan op dit toestel en niet in je back-up. Staat dit uit, dan wordt er niets opgehaald.' },
+      { head: 'Ophalen', text: 'eens per jaar van Nager.Date, in december ook het volgende jaar. Nager.Date ziet het jaar, het land en je IP-adres, net als bij het weer. Ze staan op dit toestel en niet in je back-up. Staat dit uit, dan wordt er niets opgehaald.' },
     ],
   },
   'feestdagen-land': {

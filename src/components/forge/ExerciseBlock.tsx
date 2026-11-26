@@ -348,7 +348,7 @@ export const ExerciseBlock = memo(function ExerciseBlock({
                         data-sheet-from
                         disabled={readOnly}
                         onClick={() => act.rowMenu(ex.slot, row.id)}
-                        aria-label={`Set ${label}, opent het blad Set`}
+                        aria-label={readOnly ? `Set ${label}` : `Set ${label}, opent het blad Set`}
                         className="-mx-1 flex h-11 w-11 shrink-0 items-center justify-center disabled:cursor-default"
                       >
                       <span

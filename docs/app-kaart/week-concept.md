@@ -36,6 +36,7 @@ Hoogte: minuten maal zwaarte.
 --- kaart 4 ---
 [label: Meer over deze week]
 [knop: Je week tot nu0 van 2 gedaan · 0:56 uur]
+[knop: Eerste Kerstdag · vr 25 decAls vrije dag zetten?]
 [knop: Vrije dagen en vakantiesNiets gepland]
 [knop: JaaroverzichtAlle weken tot je doel]
 [knop: Benen ANiet afgerond] (aria: Training Benen A, niet afgerond, 3 sets. Afronden, verder of verwijderen)
