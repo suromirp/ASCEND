@@ -597,3 +597,6 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-26 | Warden bouwmoment 26 nov 2 | reviewer helper | opus | 84k tok | 23 min | één Moet (uitlegzin Langer voor hoogtemeters, coördinator herstelde), Mag naar I-165 |
 | 2026-11-26 | Lookout bouwmoment 26 nov 2 | tester helper | sonnet | 108k tok | 17 min | groen behalve afkappen 360 stille lijst (keuze: zo laten, besluit week minimaal); I-105 gezien |
 | 2026-11-26 | Bouwmoment 26 nov 2 naar main | coördinator | opus | n.v.t. | ca. 2u | I-164, I-141, I-87, I-140, I-139, I-52, I-105 |
+| 2026-11-26 | Warden bouwmoment 26 nov 3 | reviewer helper | sonnet | 39k tok | 2 min | één Moet (twee smalle fases naast elkaar, hersteld), Mag deels hersteld, rest naar I-166 |
+| 2026-11-26 | Lookout bouwmoment 26 nov 3 | tester helper | sonnet | 124k tok | 20 min | jaaroverzicht 43,4 px op 360 (hersteld, nagemeten 45,7), blad en kleding groen, Week afbreken niet te zien |
+| 2026-11-26 | Bouwmoment 26 nov 3 naar main | coördinator | opus | n.v.t. | ca. 1u15 | I-165, I-20, I-36; I-76 bleef liggen |

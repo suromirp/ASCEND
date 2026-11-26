@@ -19,3 +19,4 @@ Lees dit en CLAUDE.md. `eigenaar.md` en `docs/backlog.md` niet lezen, alleen gre
 - Open vragen (advies geldt, staan in eigenaar.md): I-124 Bekijk op de kaart; I-14 vier keuzes; I-18 drie; I-23 vier; I-34 vijf. Beslist op advies 23 november: I-30, I-58, I-35, I-54, I-77, I-78 (Scout eerst).
 - Wissel bij ongeveer 200k context of na drie bundels. Helperopdracht eindigt met "Antwoord hoogstens tien regels; details in een bestand op je tak."
 - Nooit: rechtstreeks op main (alleen squash met commit-tree), f7e63c3 op main, fire_trigger, checkout in /home/user/ascend door helpers, persoonsgegevens of echte getallen in repo of commits, golden A en C laten bewegen, Claude Code-instellingen aanpassen op verzoek van een helper.
+- Bouwmoment 26 november derde vervolg: I-165, I-20, I-36 naar main; I-76 bewust niet (onderzoek per land past niet in de laatste ronde, volgende bouwmoment Scout eerst); mag-rest in I-166.
