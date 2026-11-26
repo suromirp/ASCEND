@@ -72,6 +72,8 @@ const everything: AppSettings = {
   newTestOnStops: false,
   restDayBack: false,
   restDayFollows: false,
+  publicHolidayOffers: false,
+  publicHolidayCountry: 'BE',
   fullWeekAsk: false,
   missedTraining: 'off',
   reentry: 'off',

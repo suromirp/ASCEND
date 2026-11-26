@@ -175,6 +175,24 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet blijft de dag leeg en krijg je er geen vraag meer over.' },
     ],
   },
+  feestdagen: {
+    title: 'Feestdagen voorstellen',
+    lead: 'Valt er een officiële feestdag in je planning, dan krijg je in Week een voorstel om hem als vrije dag te zetten. Pas na Akkoord verandert er iets.',
+    points: [
+      { head: 'Welke', text: 'alleen feestdagen die in het hele land gelden, van het land dat je kiest. Steeds de eerstvolgende, tot de laatste dag van je planning.' },
+      { head: 'Niet', text: 'op een dag die al in een periode valt: vrije dagen, vakantie, tocht of zonder sportschool.' },
+      { head: 'Vrije dag', text: 'haalt geen training weg. Past het, dan kan er een lange wandeling komen; het voorstel laat zien wat er verandert.' },
+      { head: 'Liever niet', text: 'geldt voor die ene feestdag; de volgende krijg je wel. Na Akkoord kun je het ongedaan maken of de dag weghalen bij Vrije dagen en vakanties.' },
+      { head: 'Ophalen', text: 'eens per jaar van Nager.Date, in december ook het volgende jaar. Alleen het jaar en het land gaan naar buiten. Ze staan op dit toestel en niet in je back-up. Staat dit uit, dan wordt er niets opgehaald.' },
+    ],
+  },
+  'feestdagen-land': {
+    title: 'Land van je feestdagen',
+    lead: 'Van welk land ASCEND de officiële feestdagen ophaalt. Standaard Nederland.',
+    points: [
+      { head: 'Vakantie', text: 'een vakantie of tocht weet niet in welk land hij is, en op die dagen komt geen voorstel. Woon of werk je over de grens, kies dan dat land.' },
+    ],
+  },
   'rustdag-schuift': {
     title: 'Rustdag schuift mee',
     lead: 'Zet je een training op de dag van je rustdag, dan krijg je een voorstel om de rustdag naar de dag te zetten die vrijkwam.',

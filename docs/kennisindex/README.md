@@ -11,7 +11,7 @@ Een nieuw document in `docs/` krijgt een regel in `bronnen.json`, en haalt het e
 oudere besluit de stand deels of vervangen. Daarna `npm run kennisindex`; de test
 `scripts/kennisindex/kennisindex.test.mjs` faalt anders.
 
-Stand van de 615 documenten: 366 gelden, 92 deels ingehaald, 3 vervangen, 3 verouderd, 151 achtergrond.
+Stand van de 616 documenten: 367 gelden, 92 deels ingehaald, 3 vervangen, 3 verouderd, 151 achtergrond.
 Niet in de index: `docs/app-kaart/` (de tekstkaart, `npm run kaart`), deze map en afbeeldingen.
 
 Zo lees je het: geldt is de regel van nu; deels ingehaald geldt alleen nog voor wat achter "Geldt nog" staat, de
@@ -30,7 +30,7 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 - Werkbriefje: [werkbriefjes/koppelingen-en-data.md](../werkbriefjes/koppelingen-en-data.md)
 - [android-sleutel.md](../android-sleutel.md): De Android-app wordt altijd met dezelfde sleutel ondertekend, anders kan een nieuwe versie niet over de oude heen; hier staat hoe de workflow dat doet.
 - [architectuur/koppelingen-en-data.md](../architectuur/koppelingen-en-data.md): Wat ASCEND van Garmin leert (intensiteit, zweet, bergschoenen) en de tekst voor Strava.
-- Alles over dit onderwerp: [koppelingen-en-data.md](koppelingen-en-data.md) (77 besluiten die gelden, 24 deels ingehaald, 23 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
+- Alles over dit onderwerp: [koppelingen-en-data.md](koppelingen-en-data.md) (78 besluiten die gelden, 24 deels ingehaald, 23 keer onderzoek, ontwerp of verslag, 2 vervangen of verouderd).
 
 ## Lopen en tests
 
@@ -48,13 +48,13 @@ een besluit op steunt; vervangen en verouderd staan onderaan elk onderwerp en le
 
 - Werkbriefje: [werkbriefjes/planning.md](../werkbriefjes/planning.md)
 - [architectuur/planning.md](../architectuur/planning.md): Het lange verhaal bij planning: hoofddoel en rollen, scheduler, wie een sessie mag aanraken, labels, eerst vragen, ziek, vrij, tochten en de rugzakladder.
-- Alles over dit onderwerp: [planning.md](planning.md) (73 besluiten die gelden, 14 deels ingehaald, 41 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [planning.md](planning.md) (74 besluiten die gelden, 14 deels ingehaald, 41 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Week
 
 - Werkbriefje: [werkbriefjes/week.md](../werkbriefjes/week.md)
 - [architectuur/week.md](../architectuur/week.md): Het lange verhaal bij de Week-tab: waarschuwingen, slepen en inhalen.
-- Alles over dit onderwerp: [week.md](week.md) (32 besluiten die gelden, 9 deels ingehaald, 9 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
+- Alles over dit onderwerp: [week.md](week.md) (33 besluiten die gelden, 9 deels ingehaald, 9 keer onderzoek, ontwerp of verslag, 0 vervangen of verouderd).
 
 ## Lichaam en herstel
 

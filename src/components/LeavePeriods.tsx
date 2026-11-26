@@ -30,6 +30,11 @@ import { SheetRow, SheetRows } from './SheetRows';
 import { leaveRowSub } from '../engine/weekList';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, Segmented, SheetGrip, Toggle } from './ui';
 import { TextButton } from './TextButton';
+import type { PublicHolidaysState } from '../state/usePublicHolidays';
+import {
+  HOLIDAY_OFFER_EMPTY, HOLIDAY_OFFER_LINE, holidayFailureLine, holidayOffer, holidayOfferTitle, holidayPeriod, holidayRow, planHorizonEnd, type HolidayOffer,
+} from '../engine/publicHolidays';
+import { readHolidayDeclines, rememberHolidayDecline } from '../utils/holidayDeclines';
 
 const STALE_TEXT = 'Je planning is intussen veranderd. Bekijk het voorstel opnieuw.';
 const LIST_TITLE = 'Vrije dagen en vakanties';
@@ -37,8 +42,11 @@ const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}
 
 // De rij in de lijst onder de dagen en het blad met de periodes erachter. `openId`: de band van een periode in de
 // weeklijst vroeg om het blad om hem bij te werken; `onOpenHandled` meldt dat het blad weer dicht is.
-export function LeavePeriodsRow({ openId, onOpenHandled }: { openId?: string | null; onOpenHandled?: () => void } = {}) {
-  const { leavePeriods, planLeave, applyLeave, planPreviewPass, saveLeaveNote, settings } = useAppData();
+// `holidays`: de opgehaalde feestdagen (state/usePublicHolidays.ts). De eerstvolgende binnen je planning, op een dag
+// zonder periode, staat als eigen rij voor deze rij en opent hetzelfde voorstel als zelf een vrije dag toevoegen
+// (docs/beslissingen/2026-11-26-feestdagen-als-voorstel.md).
+export function LeavePeriodsRow({ openId, onOpenHandled, holidays }: { openId?: string | null; onOpenHandled?: () => void; holidays?: PublicHolidaysState } = {}) {
+  const { leavePeriods, planLeave, applyLeave, planPreviewPass, saveLeaveNote, settings, plannedSessions } = useAppData();
   const [listOpen, setListOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [ownEditing, setEditing] = useState<LeavePeriod | null>(null);
@@ -54,6 +62,16 @@ export function LeavePeriodsRow({ openId, onOpenHandled }: { openId?: string | n
   const shownFrom = backfillFrom && backfillFrom < addDays(today, -14) ? backfillFrom : addDays(today, -14);
   const shown = leavePeriods.filter((p) => p.endDate >= shownFrom);
 
+  // Liever niet bij een feestdag: alleen voor die ene (utils/holidayDeclines.ts).
+  const [declined, setDeclined] = useState<string[]>(() => readHolidayDeclines());
+  const [holidayPlan, setHolidayPlan] = useState<HolidayOffer | null>(null);
+  const horizonEnd = useMemo(() => planHorizonEnd(plannedSessions), [plannedSessions]);
+  const offer = holidays
+    ? holidayOffer({ holidays: holidays.holidays, country: holidays.country, today, horizonEnd, periods: leavePeriods, declined, enabled: holidays.enabled })
+    : undefined;
+  const offerRow = offer && holidayRow(offer, today);
+  const failure = holidays ? holidayFailureLine(holidays, holidays.country) : undefined;
+
   const previewPass = useMemo(
     () => (plan ? (sessions: Parameters<typeof planPreviewPass>[0]) => planPreviewPass(sessions, plan.periodsAfter) : undefined),
     [plan, planPreviewPass],
@@ -63,7 +81,7 @@ export function LeavePeriodsRow({ openId, onOpenHandled }: { openId?: string | n
     id: `leave:${plan.period.id}`,
     trigger: 'plan_update',
     ruleId: 'LEAVE',
-    title: 'Zo ziet je planning eruit',
+    title: holidayPlan ? holidayOfferTitle(holidayPlan, today) : 'Zo ziet je planning eruit',
     effect: plan.proposal.consequences,
     why: plan.proposal.explanation,
     priority: 0,
@@ -72,6 +90,17 @@ export function LeavePeriodsRow({ openId, onOpenHandled }: { openId?: string | n
 
   return (
     <>
+      {offer && offerRow && (
+        <SheetRow
+          title={offerRow.title}
+          sub={offerRow.sub}
+          onClick={() => {
+            setHolidayPlan(offer);
+            setPlan(planLeave('add', holidayPeriod(offer, makeId('leave'))));
+          }}
+          sheetFrom
+        />
+      )}
       <SheetRow title={LIST_TITLE} sub={stale ? STALE_TEXT : leaveRowSub(leavePeriods, today)} onClick={() => setListOpen(true)} sheetFrom />
 
       {listOpen && (
@@ -79,6 +108,7 @@ export function LeavePeriodsRow({ openId, onOpenHandled }: { openId?: string | n
           {(close) => (
             <div className="flex flex-col gap-3 pb-2">
               {stale && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }} role="status">{STALE_TEXT}</p>}
+              {failure && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }} role="status">{failure}</p>}
               {shown.length > 0 && (
                 <SheetRows label={LIST_TITLE}>
                   {shown.map((p) => (
@@ -133,19 +163,21 @@ export function LeavePeriodsRow({ openId, onOpenHandled }: { openId?: string | n
       {plan && advice && (
         <ProposalSheet
           advice={advice}
-          eyebrow={`${plan.mode === 'remove' ? 'Verwijderen · ' : plan.replaces ? 'Bijwerken · ' : ''}${LEAVE_KIND_LABEL[plan.period.kind]} · ${describePeriodDates(plan.period, true)}`}
+          eyebrow={holidayPlan ? 'Feestdag' : `${plan.mode === 'remove' ? 'Verwijderen · ' : plan.replaces ? 'Bijwerken · ' : ''}${LEAVE_KIND_LABEL[plan.period.kind]} · ${describePeriodDates(plan.period, true)}`}
           previewPass={previewPass}
           leave={plan.periodsAfter}
           notes={plan.notes}
-          emptyText={plan.mode === 'remove'
+          {...(holidayPlan ? { summary: HOLIDAY_OFFER_LINE } : {})}
+          emptyText={holidayPlan ? HOLIDAY_OFFER_EMPTY : plan.mode === 'remove'
             ? 'Je planning hoeft niet te veranderen. Met Akkoord verwijder je de periode.'
             : plan.replaces
               ? 'Je planning hoeft niet te veranderen. Met Akkoord bewaar je de nieuwe datums. Voorstellen houden er daarna rekening mee.'
               : 'Je planning hoeft niet te veranderen. Met Akkoord bewaar je de periode. Voorstellen houden er daarna rekening mee.'}
           onRespond={async (response) => {
+            if (response === 'declined' && holidayPlan) setDeclined(rememberHolidayDecline(holidayPlan.id));
             setStale(response === 'accepted' && (await applyLeave(plan)) === 'stale');
           }}
-          onClose={() => setPlan(null)}
+          onClose={() => { setPlan(null); setHolidayPlan(null); }}
         />
       )}
     </>

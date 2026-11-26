@@ -33,6 +33,7 @@ export const B = {
   activities: { ok: (_s, c) => c.activities, reason: 'Zichtbaar zodra Trainingen van je horloge aan staat', parent: 'garmin-trainingen' },
   send: { ok: (_s, c) => c.sendToWatch, reason: 'Zichtbaar zodra Trainingen naar je horloge aan staat', parent: 'naar-horloge' },
   ascendHr: { ok: (s) => resolveWatchHrMode({ mode: s.watchHeartRate }) !== 'intervals', reason: 'Zichtbaar zodra de hartslag van ASCEND naar je horloge gaat', parent: 'horloge-hartslag' },
+  holidays: { ok: (s) => s.publicHolidayOffers !== false, reason: 'Zichtbaar zodra Feestdagen voorstellen aan staat', parent: 'feestdagen' },
   dragWeek: { ok: (s) => s.dragWeek !== false, reason: 'Zichtbaar zodra Trainingen slepen in Week aan staat', parent: 'slepen-week' },
   missedOn: { ok: (s) => s.missedTraining !== 'off', reason: 'Zichtbaar zodra Training die niet doorging niet op Uit staat', parent: 'niet-doorgegaan' },
   goal: { ok: (_s, c) => c.goal, reason: 'Zichtbaar zodra je een hoofddoel hebt', parent: 'doelen' },
