@@ -1,5 +1,13 @@
 # Overdracht coördinator ASCEND
 
+## Backlogsessie A, rooster 26 november (branch claude/rooster-26nov)
+
+- Ronde 2 live: main 96f7ab1f6 (squat op één been en L-sit als voorstel met Akkoord in addedExercises, uitleg batch 5). Mag-rest in I-167. Hoogste code nu I-167; volgende I-168.
+- Ronde 3 gemerged op de branch (8e335f2cc): Forge herinrichting de rest en Feestdagen als voorstel. Nog: kaart bijwerken (Kerstdag-regel in 11 Week-standen), controles, één Warden (opus) en één Lookout, squash, backlog bij, Mag naar I-168.
+- Ronde 4 daarna: Klein en fouten deel 2 en R10 teksten van Forge, na elkaar (nooit twee Forge-sporen tegelijk). Ronde 5 en 6 (ijktocht, beenindex) niet: eigen sessie.
+- Keuzes: feestdag wordt één voorstel als free_days via planLeave/applyLeave, land alleen uit de instelling, cache niet in de back-up; Forge zonder kolom Voorschrift, Kleiner maken en Afronden alleen in de kop, setnummer als knop van 44 px, geen percentage van je maximum; ladderstap begint onderaan de stap, geen migratie.
+- Eind: kostenregels, terugmelding met create_trigger naar session_01LnDpSjkesdr3Yd8mZZV9XL (run_once_at, own_followup), nooit fire_trigger.
+
 ## Bouwmoment 26 november, tweede vervolg
 
 - Gebouwd: I-164, I-141, I-87, I-140, I-139, I-52, I-105 (gezien). Blijft: I-103 (geen derde plek, voorwaarde niet gehaald), I-104 (geen stand), I-76, I-34, I-36, I-10/I-20, I-30, I-31 (groter dan een ronde). Mag naar I-165. Keuzes: afkappen "verplaatst van" in de stille Week op 360 blijft (besluit week minimaal); Geen tijd vandaag uit de state, enginefunctie blijft voor de opstartstap; I-140 zonder index of migratie.
