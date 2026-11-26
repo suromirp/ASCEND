@@ -152,3 +152,17 @@ describe('een gewone wandeling heet Wandelen, niet Herstel', () => {
     expect(logKindLabel({ type: 'recovery', templateId: 'tpl_herstel' })).toBe('Herstel');
   });
 });
+
+describe('wandelen en dribbelen heet zo, niet Hardlopen (I-52)', () => {
+  it('op de kaart van Vandaag, in het blad en in het logboek', () => {
+    const { templates } = buildDefaultProgramData();
+    for (const id of ['tpl_walk_jog', 'tpl_walk_jog_long']) {
+      const t = templates.find((x) => x.id === id)!;
+      expect(sessionKindLabel(t)).toBe('Wandelen en dribbelen');
+      expect(logKindLabel({ type: 'cardio', templateId: id })).toBe('Wandelen en dribbelen');
+    }
+    // Een gewone loop blijft Hardlopen.
+    expect(sessionKindLabel(templates.find((x) => x.id === 'tpl_easy_run')!)).toBe('Hardlopen');
+    expect(logKindLabel({ type: 'cardio', templateId: 'tpl_easy_run' })).toBe('Hardlopen');
+  });
+});

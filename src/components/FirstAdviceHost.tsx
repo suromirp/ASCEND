@@ -13,9 +13,10 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { Advice } from '../engine/adviceEngine';
+import type { FirstSheetMap } from '../engine/adviceFirst';
 import {
   FIRST_SHEET_DONE_NOTE, FIRST_SHEET_FAILED_NOTE, FIRST_SHEET_SETTLE_MS, FIRST_SHEET_SLOW_NOTE, FIRST_SHEET_TIMEOUT_MS, FIRST_SHEET_VIEW_FAILED_NOTE, firstSheetAdvice, pausedToday,
-  rememberFirstSheetNotNow, rememberFirstSheetShown,
+  forgetFirstSheetShown, rememberFirstSheetNotNow, rememberFirstSheetShown,
 } from '../engine/adviceFirst';
 import { WAITING_LINE } from '../engine/oneAnswerPerDay';
 import { needsFirstPlan } from '../engine/freshStart';
@@ -29,6 +30,8 @@ import { useOpenRequest, useSessionPill } from './forge/useForgeSession';
 import { useForgeWords } from './useForgeWords';
 import { useAdviceAccept } from './useAdviceAccept';
 import { Portal } from './Portal';
+import { adviceLead } from '../engine/adviceText';
+import { ProposalChangeList } from './ProposalSheet';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
 import { TextButton } from './TextButton';
 
@@ -42,6 +45,8 @@ export function FirstAdviceHost({ ready }: { ready: boolean }) {
   const [shown, setShown] = useState<Advice | null>(null);
   // Hoogstens één blad per keer dat je de app opent.
   const opened = useRef(false);
+  // De stand van voor het tonen: een mislukte Akkoord zet hem terug, zodat het blad bij de volgende opening terugkomt.
+  const before = useRef<FirstSheetMap | undefined>(undefined);
   const today = todayISO();
 
   useEffect(() => {
@@ -67,6 +72,7 @@ export function FirstAdviceHost({ ready }: { ready: boolean }) {
   useEffect(() => {
     if (!candidate || opened.current) return;
     opened.current = true;
+    before.current = settings.firstSheet;
     setShown(candidate);
     // Getoond is getoond: zonder Niet nu komt dit advies niet meer als blad.
     void updateSettings({ firstSheet: rememberFirstSheetShown(settings.firstSheet, candidate.id, today) });
@@ -78,6 +84,7 @@ export function FirstAdviceHost({ ready }: { ready: boolean }) {
       key={shown.id}
       advice={shown}
       onNotNow={() => void updateSettings({ firstSheet: rememberFirstSheetNotNow(settings.firstSheet, shown.id, today) })}
+      onFailed={() => void updateSettings({ firstSheet: forgetFirstSheetShown(settings.firstSheet, shown.id, before.current) })}
       onDone={() => setShown(null)}
     />
   );
@@ -87,10 +94,11 @@ export function FirstAdviceHost({ ready }: { ready: boolean }) {
 // (twee doelen die botsen). viewing: het voorstel van Bekijk staat erboven, dit blad is weg. done: de uitkomst.
 type Phase = 'ask' | 'busy' | 'settle' | 'viewing' | 'done';
 
-function FirstAdviceSheet({ advice, onNotNow, onDone }: { advice: Advice; onNotNow: () => void; onDone: () => void }) {
+function FirstAdviceSheet({ advice, onNotNow, onFailed, onDone }: { advice: Advice; onNotNow: () => void; onFailed: () => void; onDone: () => void }) {
   const { respondToAdvice } = useAppData();
   const words = useForgeWords();
-  const { horizon, accept } = useAdviceAccept(advice);
+  const { horizon, accept, changeLines } = useAdviceAccept(advice);
+  const glance = !!advice.lead && !!advice.proposal;
   const [phase, setPhase] = useState<Phase>('ask');
   const [outcome, setOutcome] = useState<string | null>(null);
   // Dicht zonder antwoord (achtergrond, terug, Niet nu) telt als Niet nu; na Bekijk of Akkoord niet meer.
@@ -121,6 +129,8 @@ function FirstAdviceSheet({ advice, onNotNow, onDone }: { advice: Advice; onNotN
     } catch (err) {
       // Te lang: de ronde loopt door; de melding onderin zegt het zodra hij klaar is (useHorizonChange, onLate).
       setOutcome(err instanceof TimeoutError ? FIRST_SHEET_SLOW_NOTE : FIRST_SHEET_FAILED_NOTE);
+      // Niet beantwoord en niets aangepast (of nog onderweg): bij de volgende opening komt het blad terug.
+      onFailed();
       setPhase('done');
     }
   }
@@ -134,6 +144,7 @@ function FirstAdviceSheet({ advice, onNotNow, onDone }: { advice: Advice; onNotN
     } catch {
       // Nooit vast op rekenen: na de tijdsgrens of een fout een uitkomst en een weg dicht.
       setOutcome(FIRST_SHEET_VIEW_FAILED_NOTE);
+      onFailed();
       setPhase('done');
     }
   }
@@ -150,7 +161,20 @@ function FirstAdviceSheet({ advice, onNotNow, onDone }: { advice: Advice; onNotN
                 <div>
                   <Eyebrow>Voorstel</Eyebrow>
                   <p id="first-advice-title" className="mt-1.5 text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{advice.title}</p>
-                  <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{effortWords(advice.effect, words)}</p>
+                  {glance ? (
+                    <>
+                      <p className="mt-2 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{adviceLead(advice)}</p>
+                      {advice.proposal && <div className="mt-3"><ProposalChangeList proposal={advice.proposal} /></div>}
+                      {advice.tip && <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{advice.tip}</p>}
+                    </>
+                  ) : (
+                    <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{effortWords(advice.effect, words)}</p>
+                  )}
+                  {!glance && changeLines.length > 0 && (
+                    <ul className="mt-3 flex flex-col gap-1.5 text-sm leading-snug" style={{ color: 'var(--color-ink)' }} aria-label="Wat er verandert">
+                      {changeLines.map((l) => <li key={l}>{l}</li>)}
+                    </ul>
+                  )}
                   {!!advice.waiting?.length && <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{WAITING_LINE}</p>}
                 </div>
                 {showDone ? (

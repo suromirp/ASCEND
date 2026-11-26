@@ -84,6 +84,14 @@ export function rememberFirstSheetShown(memory: FirstSheetMap | undefined, id: s
   return trimMemory({ ...memory, [id]: { shownOn: today, snoozes: memory?.[id]?.snoozes ?? 0 } });
 }
 
+// Akkoord of Bekijk mislukte of duurde te lang: er is niets aangepast, dus het blad komt bij de volgende opening terug.
+// `was` is de stand van voor het tonen; zonder die regel valt de regel weg.
+export function forgetFirstSheetShown(memory: FirstSheetMap | undefined, id: string, was: FirstSheetMap | undefined): FirstSheetMap {
+  const { [id]: _gone, ...rest } = memory ?? {};
+  const before = was?.[id];
+  return before ? { ...rest, [id]: before } : rest;
+}
+
 // Niet nu: een keer meer uitgesteld. De dag blijft die van het tonen, dus morgen pas weer.
 export function rememberFirstSheetNotNow(memory: FirstSheetMap | undefined, id: string, today: string): FirstSheetMap {
   const was = memory?.[id];

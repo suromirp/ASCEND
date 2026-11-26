@@ -28,7 +28,7 @@ import type { EnabledSports } from '../engine/sports';
 import { DetailsField, DoneOnRow, DurationField, FeelField, LegsField, ModalityFields, NotesField, OtherDoneField, PainField, PlaceChoice, RpeField, VariantField } from './logForm/LogFormParts';
 import { chosenPlaceLabel, placeLabel, SheetMode, showsPlace } from './logForm/formRules';
 import { failedNote, logOrAlready, reportIfGone, waitForEarlierSave } from '../state/logSave';
-import { afterEarlierSave, alreadyLogged, clearsDraft, footState, HOW_TEXT, submitLog, type CloseWay, type FootState } from './logForm/howDidItGo';
+import { afterEarlierSave, alreadyLogged, clearsDraft, footState, HOW_TEXT, saveButton, submitLog, type CloseWay, type FootState } from './logForm/howDidItGo';
 
 export function HowDidItGoSheet({
   template,
@@ -101,7 +101,30 @@ export function HowDidItGoSheet({
   // Onder 1 minuut is geen training: Opslaan uit, de zin staat onder het veld Duur (punt B).
   const blocked = blocksSave(values, template);
 
+  // Wacht zichtbaar op een eerdere poging voor deze training (loggingInFlight): dezelfde wachtzin als Forge, Opslaan
+  // uit tot ze klaar is of faalt, hoogstens EARLIER_SAVE_LIMIT_MS; dan een zichtbare uitkomst.
+  function waitForEarlier(id: string) {
+    setStill(true);
+    void waitForEarlierSave({ plannedSessionId: id }).then((after) => {
+      if (closedRef.current || goneRef.current) return;
+      setStill(false);
+      const next = afterEarlierSave(after);
+      if (next === 'already') setAlreadyNow(true);
+      else if (next === 'waited') setWaited(true);
+      else {
+        setFailedText(failedNote(HOW_TEXT.failed));
+        setFailed(true);
+      }
+    });
+  }
+
   async function save(confirmed = false) {
+    // Na de grens staat Opslaan bij een geplande training weer aan (logForm/howDidItGo.ts#saveButton): een tik wacht
+    // dan op de poging die nog loopt, zonder tweede log (I-140).
+    if (savingRef.current && slowRef.current && plannedSessionId && !still) {
+      waitForEarlier(plannedSessionId);
+      return;
+    }
     if (savingRef.current || alreadyDone || blocked) return;
     const input = form.buildInput();
     // Heel lang vraagt eerst "Klopt dit?", een keer.
@@ -130,18 +153,7 @@ export function HowDidItGoSheet({
         // Nee zonder schrijffout bij een geplande training: de eerste poging houdt hem vast, dus geen mislukt.
         // Opslaan blijft uit tot die poging klaar is of faalt, hoogstens EARLIER_SAVE_LIMIT_MS; dan een zichtbare uitkomst.
         if (writeError === undefined && plannedSessionId) {
-          setStill(true);
-          void waitForEarlierSave({ plannedSessionId }).then((after) => {
-            if (closedRef.current || goneRef.current) return;
-            setStill(false);
-            const next = afterEarlierSave(after);
-            if (next === 'already') setAlreadyNow(true);
-            else if (next === 'waited') setWaited(true);
-            else {
-              setFailedText(failedNote(HOW_TEXT.failed));
-              setFailed(true);
-            }
-          });
+          waitForEarlier(plannedSessionId);
           return;
         }
         setFailedText(failedNote(plannedSessionId ? HOW_TEXT.failed : HOW_TEXT.failedLoose));
@@ -257,6 +269,7 @@ export function SheetFoot({ state, saving, slow, failed, still = false, waited =
       </div>
     );
   }
+  const button = saveButton({ saving, slow, still, loose, blocked });
   return (
     <div>
       {(slow || failed || still || waited) && (
@@ -264,7 +277,7 @@ export function SheetFoot({ state, saving, slow, failed, still = false, waited =
       )}
       <div className="flex gap-3">
         <SecondaryButton onClick={onClose} disabled={saving && !slow} className="min-w-[112px] flex-none px-4">{slow || still || waited ? HOW_TEXT.close : HOW_TEXT.cancel}</SecondaryButton>
-        <PrimaryButton onClick={() => onSave(false)} disabled={saving || blocked || still}>{saving ? HOW_TEXT.saving : rest ? HOW_TEXT.rest : HOW_TEXT.save}</PrimaryButton>
+        <PrimaryButton onClick={() => onSave(false)} disabled={!button.on}>{button.busyLabel ? HOW_TEXT.saving : rest ? HOW_TEXT.rest : HOW_TEXT.save}</PrimaryButton>
       </div>
     </div>
   );

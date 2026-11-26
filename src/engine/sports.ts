@@ -42,8 +42,11 @@ const TYPE_KIND: Record<SessionTemplate['type'], string> = {
   adventure: 'Tocht',
 };
 
+export const WALK_JOG_KIND = 'Wandelen en dribbelen';
 export function sessionKindLabel(template: SessionTemplate): string {
   if (hasRole(template, 'plain_walk')) return 'Wandelen';
+  // Wandelen en dribbelen in de beginnersstart is geen hardlopen: de kaart op Vandaag zei "Hardlopen" (I-52).
+  if (hasRole(template, 'start_only')) return WALK_JOG_KIND;
   if (template.countedSport) return anySportDefinition(template.countedSport).label;
   if (template.customSport) return template.name;
   const sport = template.type === 'strength' || template.type === 'recovery' ? undefined : templateSport(template);
@@ -55,6 +58,7 @@ export function logKindLabel(log: Pick<SessionLog, 'type' | 'sport' | 'cardioDat
   if (countedSport) return anySportDefinition(countedSport).label;
   if (customSport) return customName(customSport);
   if (log.type === 'recovery' && log.templateId && idHasRole(log.templateId, 'plain_walk')) return 'Wandelen';
+  if (log.templateId && idHasRole(log.templateId, 'start_only')) return WALK_JOG_KIND;
   const sport = log.type === 'strength' || log.type === 'recovery' ? undefined : logSport(log);
   return sport ? SPORT_LABEL[sport] : TYPE_KIND[log.type];
 }

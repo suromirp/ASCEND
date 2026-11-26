@@ -30,7 +30,7 @@ import { resolveRouteStart } from './routeStart';
 import { resolveMapGround } from './routeMap';
 import { resolveRouteSearch } from './routeSearchSetting';
 import { resolveWalkKm } from './walkPlan';
-import { resolveDriveLimit, resolveLoopPrioritySetting } from './routeClimbPlan';
+import { resolveAscentLength, resolveDriveLimit, resolveLoopPrioritySetting } from './routeClimbPlan';
 import { matchTodayProfile, TODAY_PROFILE_SHORT } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { ADVICE_SPECS, countDifferences, fromStart } from './settingsDiff';
@@ -1052,6 +1052,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('routeVoorrang', resolveLoopPrioritySetting(s.routeLoopPriority)) };
     case 'rijtijd-heuvels':
       return { value: choiceShort('rijtijdHeuvels', resolveDriveLimit(s.routeDriveMinutes)) };
+    case 'langer-voor-hoogte':
+      return { value: choiceShort('langerVoorHoogte', resolveAscentLength(s.routeAscentLength)) };
     case 'route-grote-wegen':
       return { checked: s.routeAvoidBigRoads !== false };
     case 'route-wind':

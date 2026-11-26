@@ -29,6 +29,7 @@ import { Icon } from './icons';
 import { useWatchStatuses } from './useWatchStatus';
 import type { WatchStatusKind } from '../engine/watchStatus';
 import { weekDates, weekdayShortNL, weekdayLongNL, todayISO } from '../utils/dates';
+import { watchLooseSeparators } from '../utils/looseSeparator';
 import { Eyebrow, StatusPill } from './ui';
 import { EFFORT_COLOR } from './effortColor';
 import { HeartSign } from './influence/HeartSign';
@@ -72,6 +73,11 @@ function routeLineOf(s: PlannedSession, template: SessionTemplate, routes: reado
   return route ? sessionRouteLine(route) : undefined;
 }
 
+// Het scheidingsteken voor een deel van de tweede regel; `hideLooseSeparators` haalt het weg als het vooraan een regel staat.
+function Sep({ bare = false }: { bare?: boolean }) {
+  return <span aria-hidden="true" data-sep="">{bare ? '·' : '· '}</span>;
+}
+
 function SessionRow({
   session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign, concern, pairNote, handle, placeholder, ghost, catchNote, leave, races, routeLine, restLine,
 }: {
@@ -109,6 +115,9 @@ function SessionRow({
   restLine?: string;
 }) {
   const { settings: { restDayMode, illnessEpisodes }, openDraftId } = useAppData();
+  // Breekt de tweede regel af, dan begint de volgende regel niet met een losse "·" (I-164).
+  const subRef = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => watchLooseSeparators(subRef.current));
   const restMode = restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
   const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest, { leave, templates, illness: illnessEpisodes, races, openDraft: openDraftId, programStart: program?.startDate });
@@ -151,12 +160,12 @@ function SessionRow({
           </span>
         </span>
         {/* Met een routeregel eronder mag "verplaatst van do 26" naar een tweede regel in plaats van af te kappen (I-163). */}
-        <span className={`mt-0.5 flex items-center gap-x-1 text-xs leading-4 tabular-nums ${extra?.warn || (extra?.tail && routeLine) ? 'flex-wrap' : 'flex-nowrap whitespace-nowrap'}`} style={{ color: 'var(--color-ink-dim)' }}>
+        <span ref={subRef} className={`mt-0.5 flex items-center gap-x-1 text-xs leading-4 tabular-nums ${extra?.warn || (extra?.tail && (routeLine || ghost)) ? 'flex-wrap' : 'flex-nowrap whitespace-nowrap'}`} style={{ color: 'var(--color-ink-dim)' }}>
           {/* Vandaag is status: het woord in ijs, met het streepje en de gloed van de rij. Geen pil naast de naam,
               zodat de naam niet onder de pil hoeft te breken en de rij 52 px blijft. */}
           {showToday ? <span className="font-semibold" style={{ color: 'var(--color-status)' }}>Vandaag</span> : <span>{dayLabel(date)}</span>}
           {isRest ? (
-            <span className="truncate">· {restLine ?? REST_ROW_QUIET}</span>
+            <span className="truncate" data-part=""><Sep />{restLine ?? REST_ROW_QUIET}</span>
           ) : (
             <>
               {(zone || duration !== undefined) && <span aria-hidden="true">·</span>}
@@ -173,13 +182,13 @@ function SessionRow({
             </>
           )}
           {extra && (
-            <span className="inline-flex min-w-0 items-center gap-1">
+            <span className="inline-flex min-w-0 items-center gap-1" data-part="">
               {/* Alleen een punt uit Let op is een waarschuwing: een amber stip na de punt, de tekst gedempt. Een
                   stille tekst blijft op één regel en wordt zo nodig afgekapt; een waarschuwing mag breken. De punt
                   en de tekst staan in één span, zodat de tekst van de rij "· aangepast" leest. */}
               {extra.warn ? (
                 <>
-                  <span aria-hidden="true">·</span>
+                  <Sep bare />
                   <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-warning)' }} />
                   <span>{' '}{extra.text}</span>
                 </>
@@ -188,16 +197,16 @@ function SessionRow({
                   {/* De schermlezer leest één zin, "· gedaan di 27"; de twee zichtbare delen zijn er alleen voor het
                       afkappen en lazen samen "gedaandi 27" (I-59). */}
                   <span className="sr-only">· {extra.text}</span>
-                  <span aria-hidden="true" className="truncate">· {extra.text.slice(0, -extra.tail.length).trimEnd()}</span>
+                  <span aria-hidden="true" className="truncate"><Sep />{extra.text.slice(0, -extra.tail.length).trimEnd()}</span>
                   <span aria-hidden="true" className="shrink-0">{extra.tail}</span>
                 </>
               ) : extra.also ? (
                 // Het woord van de stand ("gemist") blijft altijd staan; is de regel te lang, dan wijkt "aangepast".
-                <span className="shrink-0">· {extra.text}</span>
+                <span className="shrink-0"><Sep />{extra.text}</span>
               ) : (
-                <span className="truncate">· {extra.text}</span>
+                <span className="truncate"><Sep />{extra.text}</span>
               )}
-              {extra.also && <span className={extra.warn ? undefined : 'min-w-0 truncate'}>· {extra.also}</span>}
+              {extra.also && <span className={extra.warn ? undefined : 'min-w-0 truncate'}><Sep />{extra.also}</span>}
             </span>
           )}
         </span>
@@ -573,7 +582,7 @@ function DropTarget({ tone, chip }: { tone: 'ok' | 'warn' | 'none'; chip?: strin
           <span
             aria-hidden="true"
             className="pointer-events-none fixed z-[70] rounded-full border px-2 text-xs leading-5"
-            style={{ top: box.top + 2, right: window.innerWidth - box.right + 8, background: 'var(--color-raised)', color: 'var(--color-ink)', borderColor: color }}
+            style={{ top: box.top - 10, right: window.innerWidth - box.right + 8, background: 'var(--color-raised)', color: 'var(--color-ink)', borderColor: color }}
           >
             {chip}
           </span>

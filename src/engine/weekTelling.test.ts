@@ -167,7 +167,7 @@ describe('de voorbeeldweek van de eigenaar (zondag 15 november 10:40)', () => {
     expect(rowExtra({ lapsed: true })?.text).toBe('vervallen');
     // Naast "aangepast" blijft het woord van de stand staan en wijkt "aangepast" (shrink-0 tegen truncate).
     expect(rowExtra({ missed: true, adjusted: true })).toEqual({ text: 'gemist', warn: false, also: 'aangepast' });
-    expect(weekPlanner).toMatch(/extra\.also \? \(\s*\/\/[^\n]*\n\s*<span className="shrink-0">· \{extra\.text\}<\/span>/);
+    expect(weekPlanner).toMatch(/extra\.also \? \(\s*\/\/[^\n]*\n\s*<span className="shrink-0"><Sep \/>\{extra\.text\}<\/span>/);
   });
 
   it('punt 5: de dag in "verplaatst van do 12" wordt nooit afgekapt', () => {

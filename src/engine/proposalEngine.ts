@@ -131,7 +131,7 @@ export interface ApplyPlanChangeResult {
 // 'keep' is a no-op by construction. 'add' creates a new row from
 // newSessionDraft (idGenerator defaults to a real id when omitted — tests
 // may inject a deterministic one). 'move'/'remove' update the matched row
-// exactly like AppDataContext#applyProposal/applyNoTimeToday already do.
+// exactly like applyProposal already does.
 export function applyPlanChangeItems(
   items: PlanChangeItem[],
   sessions: PlannedSession[],

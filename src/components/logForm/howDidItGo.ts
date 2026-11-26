@@ -32,8 +32,8 @@ export const HOW_TEXT = {
   already: FORM_SAVE_NOTE.already,
 } as const;
 
-// De grens in tijd voor Opslaan. Daarna zegt het blad dat het lang duurt; de knop blijft uit tot het
-// opslaan klaar is, zodat een tweede tik nooit een tweede log maakt.
+// De grens in tijd voor Opslaan. Daarna zegt het blad dat het lang duurt; bij een losse training blijft de knop uit
+// tot het opslaan klaar is, zodat een tweede tik nooit een tweede log maakt (saveButton).
 export const SAVE_LIMIT_MS = 10_000;
 
 // Is deze geplande training al gedaan? Dan slaat het blad niets op (een log per geplande training).
@@ -47,6 +47,15 @@ export type FootState = 'already' | 'confirm' | 'save';
 export function footState({ alreadyDone, confirmLong }: { alreadyDone: boolean; confirmLong: boolean }): FootState {
   if (alreadyDone) return 'already';
   return confirmLong ? 'confirm' : 'save';
+}
+
+// De knop Opslaan onderaan. Tijdens het opslaan staat hij uit met "Opslaan…". Na de grens in tijd gaat hij bij een
+// geplande training weer aan, zoals Afronden in Forge (I-140): een tweede tik maakt geen tweede log (één log per
+// geplande training, SessionLogsRepo.add) en wacht zichtbaar op de eerste poging (`still`, waitForEarlierSave, met
+// een grens). Een losse training heeft die sleutel niet zeker: daar blijft hij uit tot het opslaan klaar is.
+export function saveButton({ saving, slow, still, loose, blocked }: { saving: boolean; slow: boolean; still: boolean; loose: boolean; blocked: boolean }): { on: boolean; busyLabel: boolean } {
+  const afterSlow = saving && slow && !loose;
+  return { on: (!saving || afterSlow) && !blocked && !still, busyLabel: saving && !afterSlow && !still };
 }
 
 // Eén keer opslaan, met een grens in tijd. Na `limitMs` meldt `onSlow` dat het lang duurt; de uitkomst

@@ -138,7 +138,7 @@ function PaceRows({ title, rows, busy, onAkkoord, onCancel, cancelLabel = 'Annul
           <li key={r.label} className="text-sm">
             <span style={ink}>{r.label}</span>
             <span className="block text-xs" style={dim}>Nu <span className="tabular-nums">{r.from}</span></span>
-            <span className="block tabular-nums" style={{ color: 'var(--color-action)' }}>Straks {r.to}</span>
+            <span className="block font-medium tabular-nums" style={{ color: 'var(--color-ink)' }}>Straks {r.to}</span>
           </li>
         ))}
       </ul>

@@ -1,5 +1,5 @@
 // ASCEND: de tweede regel van een rustdagrij in Week, met wat er die dag echt gebeurt (I-150, I-163). Dezelfde regel
-// als `dayPlan.ts#restRowLine`, maar:
+// als vroeger in `dayPlan.ts`, maar:
 // - staat er een open training op de rustdag, dan zegt de regel dat en niet "bewust herstel";
 // - een losse training die je die dag deed (een log zonder geplande training) telt mee.
 // Puur en alleen lezen: geen log en geen geplande training wordt herschreven.

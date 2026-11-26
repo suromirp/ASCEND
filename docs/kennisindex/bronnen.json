@@ -4849,6 +4849,13 @@
    ],
    "kern": "Verslag van I-163: per punt waar de wijziging staat en wat niet gecontroleerd is (echte kaartdata, Week op 360 px).",
    "stand": "achtergrond"
+  },
+  "docs/beslissingen/2026-11-26-wachtgrens-eerdere-opslag.md": {
+   "onderwerpen": [
+    "historie-en-logs"
+   ],
+   "kern": "Een formulier (Hoe ging het?, Afronden in Forge) wacht hoogstens 30 s op een eerdere opslag voor dezelfde geplande training (EARLIER_SAVE_LIMIT_MS, waitForEarlierSave); daarna staat Opslaan weer aan met een zichtbare uitkomst. Na de gewone grens gaat Opslaan bij een geplande training in beide formulieren weer aan, bij een losse training in Hoe ging het? niet (I-135, I-139, I-140).",
+   "stand": "geldt"
   }
  }
 }

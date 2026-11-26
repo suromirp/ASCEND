@@ -71,7 +71,7 @@ export async function waitForEarlierSave(input: Pick<LogSessionInput, 'plannedSe
   }
 }
 
-// Een formulier met je eigen invulling. Na de grens blijft de knop uit, dus daar staat geen "probeer het nog eens".
+// Een formulier met je eigen invulling. Na de grens gaat de knop bij een geplande training weer aan en wacht een tik op de eerste poging (I-140); een losse training blijft uit.
 // `failedLoose`: een losse training heeft geen geplande training die een tweede log tegenhoudt, dus eerst kijken.
 export const FORM_SAVE_NOTE = {
   failed: `${FAILED} Je invulling staat er nog; probeer het opnieuw.`,

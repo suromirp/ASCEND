@@ -377,6 +377,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('wandel-afstand', 'Afstand van een wandeling', 'vandaag', 'walkPlanKm', 5, 'wandelAfstand'),
   choice('route-voorrang', 'Wat gaat voor in een lus', 'vandaag', 'routeLoopPriority', 'auto', 'routeVoorrang'),
   choice('rijtijd-heuvels', 'Rijtijd naar heuvels', 'vandaag', 'routeDriveMinutes', 30, 'rijtijdHeuvels'),
+  choice('langer-voor-hoogte', 'Langer voor hoogtemeters', 'vandaag', 'routeAscentLength', 1.3, 'langerVoorHoogte'),
   flag('route-grote-wegen', 'Grote wegen mijden', 'vandaag', 'routeAvoidBigRoads'),
   flag('route-wind', 'Wind bepaalt de richting', 'vandaag', 'routeWind'),
   flag('route-donker', 'Terug voor het donker', 'vandaag', 'routeBackBeforeDark'),

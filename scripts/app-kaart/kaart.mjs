@@ -272,6 +272,9 @@ const SCHERMEN = {
   'reis-tocht': { titel: 'Reisplanner bij een late start, tocht op hutten (stand tocht)', pad: '#/reis', stand: 'tocht' },
   'paklijst-tocht': { titel: 'Paklijst, tocht op hutten met vertrek in maart (stand tocht)', pad: '#/reis/paklijst', stand: 'tocht' },
   'ascend-tocht': { titel: 'Ascend met een tocht op hutten (stand tocht)', pad: '#/ascend', stand: 'tocht' },
+  // Het blad Belangrijk advies bij het openen (I-157, I-164): zonder doel, de golven nog niet getoond. Het blad komt na
+  // een korte rust (FIRST_SHEET_SETTLE_MS), dus de kaart wacht erop.
+  'vandaag-belangrijk-advies': { titel: 'Vandaag met het blad Belangrijk advies (stand belangrijk-advies, zonder doel)', pad: '#/', stand: 'belangrijk-advies', actie: (p) => p.waitForSelector('[aria-labelledby="first-advice-title"]', { timeout: 8000 }).then(() => p.waitForTimeout(600)) },
   ...INSTELLINGEN,
 };
 

@@ -70,6 +70,9 @@ export interface LoopOptions {
   // Zoveel minuten rijden mag de voet van de helling liggen (instelling Rijtijd naar heuvels). 0: niet
   // rijden, alleen lopen; undefined: geen grens.
   driveLimitMin?: number;
+  // Zoveel keer de afstand van de training mag een lus bij Hoogtemeters halen worden (instelling Langer voor
+  // hoogtemeters, engine/routeClimbPlan.ts#resolveAscentLength); undefined: het advies MAX_LOOP_DISTANCE_FACTOR.
+  maxLengthFactor?: number;
 }
 // Ligt de voet van de helling verder dan dit van je plek, dan begint Simpel op de voet (I-160).
 export const FOOT_START_M = 1000;
@@ -336,7 +339,7 @@ export function composeSimple(line: RoutedLine, target: RouteTarget, loop?: Loop
   const base = ascentOf(approach, threshold) + ascentOf(reversed(approach), threshold);
   const perRepeat = Math.max(climb.heightM, ascentOf(up, threshold) + ascentOf(down, threshold));
   const repeats = loop
-    ? chosenRepeats(loop.priority, target, base, perRepeat, lineLength(approach), climb.lengthM)
+    ? chosenRepeats(loop.priority, target, base, perRepeat, lineLength(approach), climb.lengthM, loop.maxLengthFactor)
     : oldRepeats(target, base, perRepeat, lineLength(approach), climb.lengthM);
   const points = [...approach];
   for (let i = 0; i < repeats; i++) points.push(...up.slice(1), ...down.slice(1));
@@ -344,8 +347,9 @@ export function composeSimple(line: RoutedLine, target: RouteTarget, loop?: Loop
   // Elke herhaling telt voor de hele helling: de dode band zou anders per keer een paar meter van de top afhalen.
   const climbFromM = lineLength(approach);
   // Bij Hoogtemeters halen kapte de afstandsgrens de herhalingen af: de lus zegt dat er minder hoogtemeters in zitten.
-  const capped = !!loop && loop.priority === 'ascent' && target.ascentM > base + repeats * perRepeat && repeats === ascentRepeatsCap(target, lineLength(approach), climb.lengthM);
-  return proposal('simple', line, points, { ...(capped ? { ascentCapped: true } : {}), ascentM: base + repeats * perRepeat, repeats, climbM: climb.heightM, climbLengthM: climb.lengthM, climbFromM, climbToM: climbFromM + climb.lengthM, repeatedShare: 1, ...(fromFoot ? { footStartM: footM } : {}) });
+  const factor = loop?.maxLengthFactor ?? MAX_LOOP_DISTANCE_FACTOR;
+  const capped = !!loop && loop.priority === 'ascent' && target.ascentM > base + repeats * perRepeat && repeats === ascentRepeatsCap(target, lineLength(approach), climb.lengthM, factor);
+  return proposal('simple', line, points, { ...(capped ? { ascentCapped: true, ascentCapFactor: factor } : {}), ascentM: base + repeats * perRepeat, repeats, climbM: climb.heightM, climbLengthM: climb.lengthM, climbFromM, climbToM: climbFromM + climb.lengthM, repeatedShare: 1, ...(fromFoot ? { footStartM: footM } : {}) });
 }
 
 // De oude som: het kleinste van wat de hoogtemeters vragen en wat in anderhalf keer de afstand past.
@@ -359,17 +363,18 @@ function oldRepeats(target: RouteTarget, base: number, perRepeat: number, approa
 // Hoogtemeters halen: naar boven afgerond, zodat de lus de hoogtemeters haalt. Afstand houden: zo vaak als het
 // dichtst bij de afstand ligt, en nooit vaker dan de hoogtemeters vragen.
 // Hoogtemeters halen mag de lus niet veel langer maken dan de training (I-163): hoogstens zoveel keer de afstand,
-// anders de beste lus binnen die grens, met een zin dat er minder hoogtemeters in zitten.
+// anders de beste lus binnen die grens, met een zin dat er minder hoogtemeters in zitten. De grens is instelbaar
+// (Langer voor hoogtemeters, I-164); dit is het advies.
 export const MAX_LOOP_DISTANCE_FACTOR = 1.3;
-export function ascentRepeatsCap(target: RouteTarget, approachM: number, climbLengthM: number): number {
-  const room = MAX_LOOP_DISTANCE_FACTOR * target.distanceKm * 1000 - 2 * approachM;
+export function ascentRepeatsCap(target: RouteTarget, approachM: number, climbLengthM: number, factor = MAX_LOOP_DISTANCE_FACTOR): number {
+  const room = factor * target.distanceKm * 1000 - 2 * approachM;
   return Math.max(1, Math.floor(room / (2 * climbLengthM)));
 }
-export const ascentCappedLine = (target: RouteTarget): string =>
-  `Minder hoogtemeters dan de ${formatNumberNL(Math.round(target.ascentM), 0)} die je vroeg: met meer herhalingen werd de lus meer dan ${formatNumberNL(MAX_LOOP_DISTANCE_FACTOR, 1)} keer zo lang als je training.`;
-export function chosenRepeats(priority: LoopPriority, target: RouteTarget, base: number, perRepeat: number, approachM: number, climbLengthM: number): number {
+export const ascentCappedLine = (target: RouteTarget, factor = MAX_LOOP_DISTANCE_FACTOR): string =>
+  `Minder hoogtemeters dan de ${formatNumberNL(Math.round(target.ascentM), 0)} die je vroeg: met meer herhalingen werd de lus meer dan ${formatNumberNL(factor, 1)} keer zo lang als je training.`;
+export function chosenRepeats(priority: LoopPriority, target: RouteTarget, base: number, perRepeat: number, approachM: number, climbLengthM: number, factor = MAX_LOOP_DISTANCE_FACTOR): number {
   const byAscent = Math.ceil(Math.max(0, target.ascentM - base) / perRepeat);
-  if (priority === 'ascent') return Math.max(1, Math.min(byAscent, MAX_REPEATS, ascentRepeatsCap(target, approachM, climbLengthM)));
+  if (priority === 'ascent') return Math.max(1, Math.min(byAscent, MAX_REPEATS, ascentRepeatsCap(target, approachM, climbLengthM, factor)));
   const byDistance = Math.round((target.distanceKm * 1000 - 2 * approachM) / (2 * climbLengthM));
   return Math.max(1, Math.min(byAscent, byDistance, MAX_REPEATS));
 }
@@ -1062,7 +1067,7 @@ export function proposalNotes(p: RouteProposal, target: RouteTarget, climbMarked
   else if (!walk && p.distanceM > d * (1 + CLOSE_ENOUGH)) notes.push(`Langer dan de ${formatNumberNL(target.distanceKm, 1)} km van ${aimWord(target)}.`);
   const over = ascentOverLine(p, target);
   if (over) notes.push(over);
-  if (p.ascentCapped) notes.push(ascentCappedLine(target));
+  if (p.ascentCapped) notes.push(ascentCappedLine(target, p.ascentCapFactor));
   if (p.notice) notes.push(p.notice);
   const spur = deadEndLine(p);
   if (spur) notes.push(spur);

@@ -1,5 +1,9 @@
 # Overdracht coördinator ASCEND
 
+## Bouwmoment 26 november, tweede vervolg
+
+- Gebouwd: I-164, I-141, I-87, I-140, I-139, I-52, I-105 (gezien). Blijft: I-103 (geen derde plek, voorwaarde niet gehaald), I-104 (geen stand), I-76, I-34, I-36, I-10/I-20, I-30, I-31 (groter dan een ronde). Mag naar I-165. Keuzes: afkappen "verplaatst van" in de stille Week op 360 blijft (besluit week minimaal); Geen tijd vandaag uit de state, enginefunctie blijft voor de opstartstap; I-140 zonder index of migratie.
+
 ## Bouwmoment 26 november (Amsterdam 26 nov, nacht)
 
 - Live: main c14ca756 (I-157, I-155, I-146, I-147, I-148, I-151, I-156, krachtblok, I-163). Mag-punten in I-164. Keuzes: geen apart Cartographer-ontwerp voor I-157 (plek van Pathfinder volstond); instelling staat in het blad Kaarten omdat Vandaag aan 12 rijen zit; schemaVersion blijft 6 met migratiestap (Warden: veilig); Bekijk in het blad kreeg een tijdsgrens (Warden Moet, coördinator).

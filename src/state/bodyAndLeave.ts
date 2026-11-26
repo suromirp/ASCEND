@@ -1,4 +1,5 @@
-// Rekken, blessures, eigen metingen, geen tijd vandaag, vrije dagen en de rustdag.
+// Rekken, blessures, eigen metingen, vrije dagen en de rustdag. Geen tijd vandaag liep hier ook; geen scherm riep
+// het nog aan (de dagkeuze zit in moveSuggestions), dus het is weg (I-164). De enginefunctie gebruikt adaptiveReplanner.
 
 import { useCallback, useMemo } from 'react';
 import type { Program } from '../models/program';
@@ -17,8 +18,6 @@ import {
   type AppSettings,
   type StretchCompletion,
 } from '../storage/database';
-import { proposeNoTimeToday, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
-import { isDateAvailable } from '../engine/adaptiveReplanner';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
 import { leaveWordsChange, withNote } from '../engine/leaveEdit';
@@ -27,7 +26,7 @@ import { applyRestDayInOrder, planRestDayChange, type RestDayPlan } from '../eng
 import { staleItems } from '../engine/proposalEngine';
 import { isSportEnabled } from '../engine/sports';
 import type { PlanChangeProposal, RecentPlanChange } from '../models/planChange';
-import { mondayOfWeek, todayISO, addDays } from '../utils/dates';
+import { todayISO, addDays } from '../utils/dates';
 import { parseKindAmounts } from '../engine/kindAmount';
 import { makeId } from '../utils/id';
 import { resolveVariantDuration } from '../engine/substitutions';
@@ -36,7 +35,7 @@ import { planEndDay } from '../engine/programLayout';
 import { raceBlocks, afterGoalWindows } from '../engine/raceBlock';
 import { mainGoal } from '../engine/mainGoal';
 import type { CommitOutcome, UndoRestore } from './appDataTypes';
-import { bumpPlanRevision, planSettled } from './planningSync';
+import { planSettled } from './planningSync';
 import type { Dispatch, SetStateAction } from 'react';
 import { mainGoalIsMountain } from '../engine/mountainMuscles';
 import { legComplaintOpen } from '../engine/legSpots';
@@ -58,10 +57,9 @@ export function useBodyAndLeave(deps: {
   refresh: (fromOtherWindow?: boolean) => Promise<void>;
   commitPlanChangeOutcome: (proposal: PlanChangeProposal, title: string, restore?: UndoRestore | undefined, afterWrites?: (() => Promise<void>) | undefined) => Promise<CommitOutcome>;
   commitPlanChange: (proposal: PlanChangeProposal, title: string, restore?: UndoRestore | undefined, afterWrites?: (() => Promise<void>) | undefined) => Promise<boolean>;
-  sessionsForWeek: (weekStartDate: string) => PlannedSession[];
   showStatusOnlyChange: (proposal: PlanChangeProposal, restore?: UndoRestore | undefined) => Promise<void>;
 }) {
-  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, setSettings, templates, stretchCompletion, setStretchCompletion, setRecentChange, refresh, commitPlanChangeOutcome, commitPlanChange, sessionsForWeek, showStatusOnlyChange } = deps;
+  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, setSettings, templates, stretchCompletion, setStretchCompletion, setRecentChange, refresh, commitPlanChangeOutcome, commitPlanChange, showStatusOnlyChange } = deps;
   // Stores the date last checked off, not a boolean — so the box reads as
   // unchecked again the moment todayISO() rolls over to a new day, with no
   // separate reset step needed.
@@ -119,49 +117,6 @@ export function useBodyAndLeave(deps: {
   const deleteCapabilityEvidence = useCallback(
     async (id: string) => {
       await CapabilityEvidenceRepo.delete(id);
-      await refresh();
-    },
-    [refresh],
-  );
-
-  // "Geen tijd vandaag" — proposeNoTimeToday returns one ScheduleProposal
-  // per session still due today (each already resolved against the others,
-  // since the engine threads a simulated week through the loop), for the UI
-  // to merge into a single confirmation and apply as one batch.
-  const proposeNoTimeTodayAction = useCallback((): ScheduleProposal[] => {
-    const today = todayISO();
-    const week = sessionsForWeek(mondayOfWeek(today));
-    // Een latere dag moet open zijn: een dag die je bij je dagen uitzette, kiest hij niet (I-147).
-    const isOpen = (d: string) => isDateAvailable(d, goalEngineConfig.availability);
-    return proposeNoTimeToday(week, templates, today, sessionLogs, program, goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, { isOpen });
-  }, [sessionsForWeek, templates, sessionLogs, program, goalEngineConfig]);
-
-  // Mirrors applyProposal's move semantics, plus the scheduler's
-  // "no free day left" fallback (a same-date no-op change) which reads as a
-  // skip rather than a move.
-  const applyNoTimeToday = useCallback(
-    async (proposals: ScheduleProposal[]) => {
-      await planSettled();
-      const lock = { by: 'user' as const, at: new Date().toISOString() };
-      const stored = await PlannedSessionsRepo.getAll();
-      for (const proposal of proposals) {
-        for (const change of proposal.changes) {
-          const session = stored.find((s) => s.id === change.sessionId);
-          if (!session) continue;
-          if (proposal.resolved && change.toDate !== change.fromDate) {
-            await PlannedSessionsRepo.put({
-              ...session,
-              scheduledDate: change.toDate,
-              status: 'moved',
-              movedFromDate: session.movedFromDate ?? change.fromDate,
-              lock,
-            });
-          } else {
-            await PlannedSessionsRepo.put({ ...skipSessionEngine(session), lock });
-          }
-        }
-      }
-      bumpPlanRevision();
       await refresh();
     },
     [refresh],
@@ -303,5 +258,5 @@ export function useBodyAndLeave(deps: {
     });
   }, [commitPlanChange, showStatusOnlyChange, setSettings]);
 
-  return { toggleStretchRoutine, addInjury, resolveInjury, deleteInjury, addManualCapabilityEvidence, deleteCapabilityEvidence, proposeNoTimeTodayAction, applyNoTimeToday, planPreviewPass, leavePeriods, planLeave, applyLeave, saveLeaveNote, planRestDay, applyRestDay };
+  return { toggleStretchRoutine, addInjury, resolveInjury, deleteInjury, addManualCapabilityEvidence, deleteCapabilityEvidence, planPreviewPass, leavePeriods, planLeave, applyLeave, saveLeaveNote, planRestDay, applyRestDay };
 }

@@ -421,6 +421,11 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     delete s.routeDriveMinutes;
     skipped.n++;
   }
+  // Langer voor hoogtemeters (I-164): 1.2, 1.3, 1.5 of 2; iets anders valt weg, dan geldt het advies.
+  if ('routeAscentLength' in s && ![1.2, 1.3, 1.5, 2].includes(s.routeAscentLength as number)) {
+    delete s.routeAscentLength;
+    skipped.n++;
+  }
   // Startpunt van je lus: Waar je nu bent, Vast punt ('exact') of Ongeveer. Iets anders valt weg, en
   // dan geldt de standaard (Waar je nu bent). Het punt zelf staat nooit in een back-up.
   if ('routeStart' in s && s.routeStart !== 'here' && s.routeStart !== 'approx' && s.routeStart !== 'exact') {

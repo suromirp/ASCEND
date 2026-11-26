@@ -216,6 +216,18 @@ export const VANDAAG_CHOICES = {
       { value: 'free', label: 'Geen grens', short: 'Geen grens' },
     ],
   }),
+  langerVoorHoogte: def({
+    group: 'Vandaag en meldingen',
+    title: 'Langer voor hoogtemeters',
+    line: 'Zoveel keer de afstand van je training mag een lus hoogstens worden om de hoogtemeters te halen.',
+    advice: 1.3 as 1.2 | 1.3 | 1.5 | 2,
+    options: [
+      { value: 1.2, label: '1,2 keer', note: 'Dicht bij je afstand, minder hoogtemeters', short: '1,2 keer' },
+      { value: 1.3, label: '1,3 keer', short: '1,3 keer' },
+      { value: 1.5, label: '1,5 keer', short: '1,5 keer' },
+      { value: 2, label: '2 keer', note: 'Meer hoogtemeters, een veel langere lus', short: '2 keer' },
+    ],
+  }),
   routeStart: def({
     group: 'Vandaag en meldingen',
     title: 'Startpunt van je lus',
@@ -749,6 +761,16 @@ export const VANDAAG: SettingDef[] = [
     note: 'Zo ver mag een helling of trap uit de gids liggen als er bij je plek te weinig hoogte is. Hemelsbreed geschat, zoals in de gids Trainingsplekken. Het advies is 30 minuten.',
     keywords: ['route', 'lus', 'rijden', 'rijtijd', 'auto', 'heuvel', 'heuvels', 'trap', 'helling', 'hoogtemeters', 'trainingsplekken'],
     choice: { key: 'rijtijdHeuvels', def: VANDAAG_CHOICES.rijtijdHeuvels },
+    showWhen: [B.route],
+  },
+  {
+    id: 'langer-voor-hoogte',
+    page: 'vandaag',
+    place: { in: 'bundel-weer' },
+    title: 'Langer voor hoogtemeters',
+    note: 'Bij Hoogtemeters halen herhaalt Simpel de helling tot je hoogtemeters gehaald zijn, maar de lus wordt hoogstens zoveel keer de afstand van je training. Stopt hij op die grens, dan zegt een regel bij de lus dat. Het advies is 1,3 keer.',
+    keywords: ['route', 'lus', 'hoogtemeters', 'afstand', 'langer', 'simpel', 'helling', 'herhalingen', 'grens'],
+    choice: { key: 'langerVoorHoogte', def: VANDAAG_CHOICES.langerVoorHoogte },
     showWhen: [B.route],
   },
   {

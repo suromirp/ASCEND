@@ -22,7 +22,7 @@ import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { loadBodyKg } from '../engine/weightTrend';
 import { resolveRouteStyle, roundStart, routeTarget, runPaceSecKm, walkKind } from '../engine/routeTarget';
 import { mapAgeLine, plansWithPriority, renotedProposal, searchLines, type LoopPriority, type PlanOutcome } from '../engine/routePlanner';
-import { driveLimitMinutes, loopChoiceRows, outdoorPlus, resolveDriveLimit, resolveLoopPriority, type LoopChoiceRow, type OutdoorPlus } from '../engine/routeClimbPlan';
+import { driveLimitMinutes, loopChoiceRows, outdoorPlus, resolveAscentLength, resolveDriveLimit, resolveLoopPriority, type LoopChoiceRow, type OutdoorPlus } from '../engine/routeClimbPlan';
 import { mapMissing, mapRetryLine, type MapRetryState } from '../engine/routeSheet';
 import { retryRouteMap } from '../storage/routeMapRetry';
 import { TRAINING_SPOTS } from '../data/trainingSpots';
@@ -376,9 +376,10 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
   // Simpel met een keuze (I-160): de zoektocht geeft beide; welke eerst staat volgt de instelling of je tik.
   const advisedPriority = resolveLoopPriority(settings.routeLoopPriority, trainingTarget);
   const driveLimit = driveLimitMinutes(resolveDriveLimit(settings.routeDriveMinutes));
+  const lengthFactor = resolveAscentLength(settings.routeAscentLength);
   const [priorityPick, setPriorityPick] = useState<LoopPriority | undefined>();
   const priority = priorityPick ?? advisedPriority;
-  const keyBase = `${attempt}|${lat}|${lon}|${exactLat}|${exactLon}|${terrainLat}|${terrainLon}|${trainingTarget.distanceKm}|${ascentM}|${advisedPriority}|${driveLimit ?? 'free'}`;
+  const keyBase = `${attempt}|${lat}|${lon}|${exactLat}|${exactLon}|${terrainLat}|${terrainLon}|${trainingTarget.distanceKm}|${ascentM}|${advisedPriority}|${driveLimit ?? 'free'}|${lengthFactor}`;
   const key = searchKey(keyBase, adjust);
   const search: RouteSearch | 'busy' = answerFor(searchState, key);
   const searchNeeded = needsSearch(searchState, key);
@@ -398,13 +399,13 @@ export function useRouteSearch({ template, walk, date, closing = false, enabled 
     };
     const terrainPoint = terrainLat !== undefined && terrainLon !== undefined ? { lat: terrainLat, lon: terrainLon } : undefined;
     // findRoutes heeft zelf een grens in tijd en gooit nooit: "Lussen zoeken" blijft nooit staan.
-    void findRoutes({ lat, lon }, target, { signal: stop.signal, onStep, terrainAt: terrainPoint, loop: { priority: advisedPriority, ...(driveLimit !== undefined ? { driveLimitMin: driveLimit } : {}) }, avoidBigRoads, ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
+    void findRoutes({ lat, lon }, target, { signal: stop.signal, onStep, terrainAt: terrainPoint, loop: { priority: advisedPriority, maxLengthFactor: lengthFactor, ...(driveLimit !== undefined ? { driveLimitMin: driveLimit } : {}) }, avoidBigRoads, ...(avoid.length > 0 ? { avoid } : {}) }, exactLat !== undefined && exactLon !== undefined ? { lat: exactLat, lon: exactLon } : undefined).then((result) => {
       if (!stop.signal.aborted) dispatch({ type: 'answer', key, answer: result, currentKey: keyNow.current });
     });
     // Sluit het paneel of begint een nieuwe zoektocht, dan gaat er voor deze geen aanroep meer de deur uit.
     return () => stop.abort();
     // De sleutel bevat het punt; de afhankelijkheden zijn dezelfde getallen.
-  }, [closing, enabled, asked, ready, searchNeeded, lat, lon, exactLat, exactLon, terrainLat, terrainLon, target, avoid, avoidBigRoads, key, advisedPriority, driveLimit]);
+  }, [closing, enabled, asked, ready, searchNeeded, lat, lon, exactLat, exactLon, terrainLat, terrainLon, target, avoid, avoidBigRoads, key, advisedPriority, driveLimit, lengthFactor]);
 
   // Start hier: het getikte punt geldt voor deze zoektocht en wordt niet bewaard; Thuis verschuift niet.
   async function startOnMap(from: { tap: RoutePoint }): Promise<StartAnswer> {

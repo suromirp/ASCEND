@@ -80,6 +80,12 @@ describe('de ladder van heel licht in de planning', () => {
       if (r.t.type === 'strength' && weekOf(r.s) <= rungs.length) expect(r.minutes, label).toBeLessThanOrEqual(rung.strength);
       if (r.t.id === 'tpl_herstel') expect(r.minutes, label).toBeLessThanOrEqual(rung.short);
     }
+    // I-52, de eerste week: de Herstelwandeling is niet langer dan de lange wandeling, kracht niet langer dan de trede.
+    const first = inStart.filter((r) => weekOf(r.s) === 1);
+    const longWalk = first.find((r) => r.t.id === 'tpl_walk_jog_long')?.minutes ?? rungs[0].long;
+    for (const r of first.filter((x) => x.t.id === 'tpl_herstel')) expect(r.minutes, id).toBeLessThanOrEqual(longWalk);
+    for (const r of first.filter((x) => x.t.type === 'strength')) expect(r.minutes, id).toBeLessThanOrEqual(rungs[0].strength);
+    expect(rungs[0].strength).toBeLessThan(75);
     // Na de start de gewone lopen, en geen wandelen en dribbelen meer.
     expect(rows.filter((r) => weekOf(r.s) > startWeeks && r.t.id.startsWith('tpl_walk_jog'))).toEqual([]);
     // Het weekbudget in de start is wat er gepland staat.

@@ -142,6 +142,32 @@ describe('routeOfSession', () => {
     expect(routesOfSessions([r, keep], [session('ps2', '2026-11-29')])).toEqual([keep]);
   });
 
+  it('opruimen kent de keten van een inhaal: is de rij van toen weg, dan blijft zijn route voor de inhaal (I-164)', () => {
+    const first = session('ps1', '2026-11-24');
+    const one = catchUpRows(first, '2026-11-26', { by: 'user', at: '2026-11-25T08:00:00Z' }, 'ps2');
+    const gone = route('weg');
+    // De rij van toen (ps1) is weg, de inhaal ps2 wijst ernaar en leest zijn route: die blijft, een echte wees niet.
+    const kept = routesOfSessions([r, gone], [one.added]);
+    expect(kept).toEqual([r]);
+    expect(routeOfSession(one.added, kept, [one.added])).toEqual(r);
+    // Een overgeslagen inhaal houdt de keten ook vast (Toch doen).
+    const skippedCatchUp: PlannedSession = { ...one.added, status: 'skipped' };
+    expect(routesOfSessions([r], [skippedCatchUp])).toEqual([r]);
+  });
+
+  it('opruimen bewaart precies wat de keten nog bereikt, ook bij een inhaal van een inhaal', () => {
+    const first = session('ps1', '2026-11-24');
+    const one = catchUpRows(first, '2026-11-26', { by: 'user', at: '2026-11-25T08:00:00Z' }, 'ps2');
+    const two = catchUpRows(one.added, '2026-11-28', { by: 'user', at: '2026-11-27T08:00:00Z' }, 'ps3');
+    // De hele keten er nog: de route van de oorspronkelijke rij blijft.
+    expect(routesOfSessions([r], [two.added, one.added])).toEqual([r]);
+    // Ook de tussenrij weg: ps3 bereikt ps1 niet meer, dus die route is een wees; die van ps2 niet.
+    expect(routesOfSessions([r, route('ps2')], [two.added]).map((x) => x.plannedSessionId)).toEqual(['ps2']);
+    // Een lus in de gegevens blijft eindig.
+    const a = { ...session('a', '2026-11-24'), catchUp: { fromId: 'b', fromDate: '2026-11-23' } };
+    expect(routesOfSessions([route('b'), route('c')], [a]).map((x) => x.plannedSessionId)).toEqual(['b']);
+  });
+
   it('de dag zelf: dezelfde route, zonder zoektocht', () => {
     const today = session('ps1', '2026-11-25');
     expect(routeOfSession(today, [r])?.points.length).toBe(r.points.length);

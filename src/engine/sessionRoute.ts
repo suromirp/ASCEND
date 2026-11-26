@@ -89,9 +89,10 @@ export function withoutSessionRoute(routes: readonly SessionRoute[], session: Pi
 }
 
 // Alleen de routes van trainingen die er nog zijn: een training die de planning weghaalde neemt zijn route mee.
-// Een overgeslagen rij is er nog (Toch doen), en de rij van toen bij een inhaal ook.
-export function routesOfSessions(routes: readonly SessionRoute[], sessions: readonly Pick<PlannedSession, 'id'>[]): SessionRoute[] {
-  const ids = new Set(sessions.map((s) => s.id));
+// Een overgeslagen rij is er nog (Toch doen). Bij een inhaal blijft de route van de rij van toen staan zolang een
+// training hem via de keten leest (`chainIds`, zoals `routeOfSession`), ook als die rij zelf weg is (I-164).
+export function routesOfSessions(routes: readonly SessionRoute[], sessions: readonly Pick<PlannedSession, 'id' | 'catchUp'>[]): SessionRoute[] {
+  const ids = new Set(sessions.flatMap((s) => chainIds(s, sessions)));
   return routes.filter((r) => ids.has(r.plannedSessionId));
 }
 

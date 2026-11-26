@@ -23,6 +23,7 @@ Schermen op een eigen stand, met de stand in de naam:
 - vaardigheid (één vaardigheid, Pull-Up, met twee stappen gehaald): `ascend-vaardigheid`.
 - aangepast (twee nagemaakte, aangenomen voorstellen in deze week: de Lange duurloop van zaterdag naar zondag en Benen A lichter): `week-aangepast` (de rij Aangepast door ASCEND onder de dagen) en `week-aangepast-blad` (het blad erachter), met een invariant: het getal op de rij is het aantal regels in het blad en het aantal dagrijen met "aangepast".
 - tocht (een meerdaagse tocht als hoofddoel op 15 maart 2027, door de migratie op hutten gezet zonder eigen keuze, met drie treden van de ladder): `reis-tocht` (de Reisplanner met de vraag over hutten en Nu regelen), `paklijst-tocht` (de Paklijst van hut naar hut) en `ascend-tocht` (de doelkop). Invariant: de Reisplanner toont geen maand die voor de klok ligt, een voorbije taak staat onder Nu regelen en zegt wanneer hij aan de beurt was (backlogpunt G).
+- belangrijk-advies (zonder doel, het blad met de golven nog niet getoond; de instelling staat tijdens de settle uit): `vandaag-belangrijk-advies`, Vandaag met het blad Belangrijk advies erboven (I-157, I-164): titel, wijzigingen als lijst en Akkoord, Bekijk, Niet nu.
 - voorstel (naast de wedstrijd een verzonnen huttentocht, het programma gestart op 28 september): `weekterugblik-voorstel`, de weergave Voorstel in de weekterugblik met het voorstel dat de engine zelf maakt.
 
 ## De standen

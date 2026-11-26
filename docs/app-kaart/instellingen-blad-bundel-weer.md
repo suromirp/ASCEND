@@ -48,6 +48,9 @@ Naar de training
 [knop: Rijtijd naar heuvels, 30 min]
 Rijtijd naar heuvels
 30 min
+[knop: Langer voor hoogtemeters, 1,3 keer]
+Langer voor hoogtemeters
+1,3 keer
 [knop: Grote wegen mijden]
 Grote wegen mijden
 [knop: Uitleg: Grote wegen mijden]

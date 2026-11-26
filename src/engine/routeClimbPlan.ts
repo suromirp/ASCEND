@@ -29,6 +29,14 @@ export const DRIVE_LIMIT_ADVICE: DriveLimitSetting = 30;
 export const resolveDriveLimit = (raw: unknown): DriveLimitSetting => (raw === 0 || raw === 15 || raw === 30 || raw === 45 || raw === 'free' ? raw : DRIVE_LIMIT_ADVICE);
 export const driveLimitMinutes = (s: DriveLimitSetting): number | undefined => (s === 'free' ? undefined : s);
 
+// Langer voor hoogtemeters: zoveel keer de afstand van de training mag een lus bij Hoogtemeters halen worden
+// (routePlanner.ts#ascentRepeatsCap). Advies 1,3 (I-163); iets anders, of geen veld in een oude back-up, geeft het advies.
+export type AscentLengthSetting = 1.2 | 1.3 | 1.5 | 2;
+// Gelijk aan routePlanner.ts#MAX_LOOP_DISTANCE_FACTOR (een test houdt ze gelijk).
+export const ASCENT_LENGTH_ADVICE: AscentLengthSetting = 1.3;
+export const ASCENT_LENGTH_VALUES: readonly AscentLengthSetting[] = [1.2, 1.3, 1.5, 2];
+export const resolveAscentLength = (raw: unknown): AscentLengthSetting => (ASCENT_LENGTH_VALUES.includes(raw as AscentLengthSetting) ? (raw as AscentLengthSetting) : ASCENT_LENGTH_ADVICE);
+
 // ---------- Hoogtemeters halen of afstand houden ----------
 
 const km = (meters: number) => `${formatNumberNL(Math.round(meters / 100) / 10, 1)} km`;

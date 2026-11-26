@@ -259,8 +259,6 @@ export interface AppData {
   deleteInjury: (id: string) => Promise<void>;
   addManualCapabilityEvidence: (input: Omit<CapabilityEvidence, 'id' | 'evidenceType' | 'source'>) => Promise<void>;
   deleteCapabilityEvidence: (id: string) => Promise<void>;
-  proposeNoTimeToday: () => ScheduleProposal[];
-  applyNoTimeToday: (proposals: ScheduleProposal[]) => Promise<void>;
   // 'saved': in een bestand geschreven; 'downloaded': aan de download van de browser gegeven
   // (niet te bevestigen); 'cancelled': afgebroken; 'failed': met de reden in gewone woorden.
   // Altijd een uitkomst die de aanroeper laat zien; gooit niet.

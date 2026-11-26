@@ -7,7 +7,7 @@ import type { SessionLog } from '../models/training';
 import { draftKey, saveDraft } from '../utils/loggerDraft';
 import { briefingEntry } from '../engine/briefing';
 import { durationNeedsCheck } from '../engine/inputLimits';
-import { alreadyLogged, clearsDraft, footState, HOW_TEXT, SAVE_LIMIT_MS, saveWithLimit, submitLog } from './logForm/howDidItGo';
+import { alreadyLogged, clearsDraft, footState, HOW_TEXT, SAVE_LIMIT_MS, saveButton, saveWithLimit, submitLog } from './logForm/howDidItGo';
 import { asksPain } from './logForm/formRules';
 import { useLogForm } from './logForm/useLogForm';
 import sheetSrc from './HowDidItGoSheet.tsx?raw';
@@ -244,7 +244,13 @@ describe('opslaan in het blad', () => {
     expect(quick).not.toHaveBeenCalled();
     const html = renderToStaticMarkup(createElement(SheetFoot, { state: 'save', saving: true, slow: true, failed: false, rest: false, minutes: 40, onClose: () => undefined, onAdjust: () => undefined, onSave: () => undefined }));
     expect(html).toContain(HOW_TEXT.slow);
-    expect(html).toContain('Opslaan…');
+    // Een geplande training: na de grens gaat Opslaan weer aan, zoals in Forge (I-140).
+    expect(html).not.toContain('Opslaan…');
+    expect(html).not.toMatch(/disabled=""[^>]*>Opslaan</);
+    // Een losse training: Opslaan blijft uit tot het opslaan klaar is.
+    const looseSlow = renderToStaticMarkup(createElement(SheetFoot, { state: 'save', saving: true, slow: true, failed: false, loose: true, rest: false, minutes: 40, onClose: () => undefined, onAdjust: () => undefined, onSave: () => undefined }));
+    expect(looseSlow).toContain('Opslaan…');
+    expect(looseSlow).toMatch(/disabled=""[^>]*>Opslaan…</);
     // Na de grens mag je weg: de knop heet Sluiten (zoals de zin), staat aan en het concept blijft staan (I-60).
     expect(html).not.toMatch(/disabled=""[^>]*>Sluiten</);
     expect(html).not.toContain('>Annuleren<');
@@ -258,9 +264,23 @@ describe('opslaan in het blad', () => {
     expect(waited).toContain(HOW_TEXT.waited);
     expect(waited).toContain('>Sluiten<');
     expect(waited).not.toMatch(/disabled=""[^>]*>Opslaan</);
-    expect(sheetSrc).toContain('void waitForEarlierSave({ plannedSessionId })');
+    expect(sheetSrc).toContain('void waitForEarlierSave({ plannedSessionId: id })');
     expect(sheetSrc).toContain('const canClose = () => !savingRef.current || slowRef.current;');
     expect(sheetSrc).toContain('if (!savingRef.current && clearsDraft(wayRef.current, form.filled())) form.clearDraft();');
+  });
+
+  it('Opslaan na de grens: bij een geplande training weer aan en een tik wacht op de eerste poging, zoals Forge (I-140)', () => {
+    const base = { saving: false, slow: false, still: false, loose: false, blocked: false };
+    expect(saveButton(base)).toEqual({ on: true, busyLabel: false });
+    expect(saveButton({ ...base, saving: true })).toEqual({ on: false, busyLabel: true });
+    expect(saveButton({ ...base, saving: true, slow: true })).toEqual({ on: true, busyLabel: false });
+    // De tweede tik: wachten op de eerdere poging, Opslaan uit zonder "Opslaan…".
+    expect(saveButton({ ...base, saving: true, slow: true, still: true })).toEqual({ on: false, busyLabel: false });
+    expect(saveButton({ ...base, still: true })).toEqual({ on: false, busyLabel: false });
+    expect(saveButton({ ...base, saving: true, slow: true, loose: true })).toEqual({ on: false, busyLabel: true });
+    expect(saveButton({ ...base, blocked: true })).toEqual({ on: false, busyLabel: false });
+    // De tik na de grens gaat naar het wachten, niet naar een tweede opslag.
+    expect(sheetSrc).toMatch(/if \(savingRef\.current && slowRef\.current && plannedSessionId && !still\) \{\s*waitForEarlier\(plannedSessionId\);\s*return;/);
   });
 
   it('sluiten: alleen Annuleren wist een ingevuld concept, elke andere weg laat het staan; leeg mag altijd weg', () => {

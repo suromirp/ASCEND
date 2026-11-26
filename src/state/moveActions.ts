@@ -133,8 +133,7 @@ export function useMoveActions(deps: {
 
   // A same-date change (toDate === fromDate) is how proposeSkipEngine
   // represents a skip — applied as a skip, never as a no-op "move" to the
-  // date the session already occupied (mirrors applyNoTimeToday's existing
-  // fallback for the same shape).
+  // date the session already occupied.
   // Every move or skip the user confirms can be undone right away: the
   // touched rows are snapshotted into recentChange, which ChangeNotice
   // shows with "Ongedaan maken" (production feedback: "stel ik heb een

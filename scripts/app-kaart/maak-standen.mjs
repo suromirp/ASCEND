@@ -1,7 +1,7 @@
 // Maakt de nagemaakte standen voor de tekstkaart (docs/app-kaart/README.md) en laat elk één planningsronde
 // draaien op de vaste klok van de kaart, zodat een start daarna niets meer bijwerkt.
 //   node scripts/app-kaart/maak-standen.mjs            maakt alle standen opnieuw
-//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, zonder-kracht, zonder-kracht-geen-blok, ziek, ziek-eerder, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel, concept, zonder-sportschool)
+//   node scripts/app-kaart/maak-standen.mjs horloge    maakt alleen die stand (kracht, horloge, vakantie, zonder-doel, zonder-kracht, zonder-kracht-geen-blok, ziek, ziek-eerder, vaardigheid, algemeen, voorstel, aangepast, volle-week, voorstel-wacht, rustweek, heuvel, herstel, concept, zonder-sportschool, belangrijk-advies)
 // Alles is nagemaakt: de basis is state-kracht.json, de rest zijn kleine wijzigingen met verzonnen getallen.
 //
 // Waarom "settle": bij de eerste start na het laden van een stand vindt de planningsronde nog iets te
@@ -286,6 +286,23 @@ function zonderSportschool(state) {
   winkel(state, 'sessionLogs').records.push({ value: { id: 'fake_kaart_gym_3', plannedSessionId: 'planned_kaart_gym_3', templateId: 'tpl_upper_a', type: 'strength', completedDate: '2026-10-27', completedAt: '2026-10-27T18:30:00Z', variant: 'full', durationMinutes: 50, source: 'manual' } });
 }
 
+// Het blad Belangrijk advies (I-157, I-164): zonder doel, de golven zijn nog niet getoond. De settle mag het blad niet
+// openen (dan staat het als getoond opgeslagen), dus de instelling staat tijdens de settle uit en gaat erna aan, met een
+// schone onthouden-lijst; `NA` doet dat op de opgeslagen stand.
+function belangrijkAdvies(state) {
+  zonderDoel(state);
+  const s = meta(state, 'settings').value;
+  delete s.firstSheet;
+  s.firstAdviceSheet = false;
+}
+const NA = {
+  'belangrijk-advies': (state) => {
+    const r = meta(state, 'settings');
+    if (r.value) { delete r.value.firstSheet; delete r.value.firstAdviceSheet; return; }
+    r.valueEncoded.o = r.valueEncoded.o.filter((x) => x.k !== 'firstSheet' && x.k !== 'firstAdviceSheet');
+  },
+};
+
 export const STANDEN = {
   kracht: () => {},
   horloge: metHorloge,
@@ -307,6 +324,7 @@ export const STANDEN = {
   tocht: metTocht,
   concept: metConcept,
   'zonder-sportschool': zonderSportschool,
+  'belangrijk-advies': belangrijkAdvies,
 };
 
 // --- één planningsronde op de vaste klok -------------------------------------------------------------
@@ -362,6 +380,7 @@ try {
     const tijdelijk = join(process.env.LOOKOUT_SHOTS, `maak-${naam}.json`);
     writeFileSync(tijdelijk, JSON.stringify(state));
     const klaar = await settle(tijdelijk);
+    NA[naam]?.(klaar);
     // De route waar de app laatst was hoort niet bij de stand: terug naar Vandaag, zoals in de basis.
     for (const l of klaar.origins[0].localStorage) if (l.name === 'ascend.lastRoute') l.value = JSON.stringify({ path: '/', at: 1793203889192 });
     writeFileSync(pad, JSON.stringify(klaar).replaceAll(`localhost:${PORT}`, 'localhost:4697'));

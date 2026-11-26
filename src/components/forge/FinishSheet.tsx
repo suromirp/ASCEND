@@ -15,7 +15,7 @@ import { Chip, PrimaryButton, SecondaryButton } from '../ui';
 import { finishDayChoices, finishDayDefault, finishDuration } from '../../engine/forgeSession';
 import { durationTooShort, entryMinutes, SHORT_DURATION_TEXT } from '../../engine/inputLimits';
 import { ForgeSheet } from './parts';
-import { forgeAfterEarlier, forgeExitLabel, forgeFinishNote, type ForgeFinishNote, type ForgeFinishNoteKind } from './forgeFinishLog';
+import { forgeExitLabel, waitThenShow, forgeFinishNote, type ForgeFinishNote, type ForgeFinishNoteKind } from './forgeFinishLog';
 import { waitForEarlierSave } from '../../state/logSave';
 
 const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'Beter', normal: 'Normaal', worse: 'Slechter' };
@@ -124,10 +124,9 @@ export function FinishSheet({
         // Busy blijft aan tegen een dubbele tik; de knop staat uit via `waiting`, zonder "Opslaan…".
         setSaving(false);
         setWaiting(true);
-        const after = await waitForEarlierSave({ plannedSessionId });
-        if (away.current) return;
+        // Busy gaat daar altijd weer uit, ook als het blad intussen wegging (I-139).
+        if (!(await waitThenShow({ busy, away, wait: () => waitForEarlierSave({ plannedSessionId }), show }))) return;
         setWaiting(false);
-        show(forgeAfterEarlier(after));
       }
     }
     busy.current = false;

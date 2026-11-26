@@ -77,3 +77,17 @@ export function forgeAfterEarlier(outcome: EarlierSaveOutcome): ForgeFinishNoteK
 export function forgeExitLabel(kind: ForgeFinishNoteKind | undefined): 'Sluiten' | 'Annuleren' {
   return kind === 'slow' || kind === 'stillRunning' || kind === 'waited' ? 'Sluiten' : 'Annuleren';
 }
+
+// Na `stillRunning`: wacht op de eerdere poging en toon de uitkomst als het blad nog in beeld is. Busy gaat altijd
+// weer uit, ook als het blad intussen wegging of het wachten toch gooit, zodat een volgende tik niet stil blijft
+// (I-139). Ja als de zin getoond is.
+export async function waitThenShow({ busy, away, wait, show }: { busy: { current: boolean }; away: { current: boolean }; wait: () => Promise<EarlierSaveOutcome>; show: (kind: ForgeFinishNoteKind) => void }): Promise<boolean> {
+  try {
+    const after = await wait();
+    if (away.current) return false;
+    show(forgeAfterEarlier(after));
+    return true;
+  } finally {
+    busy.current = false;
+  }
+}

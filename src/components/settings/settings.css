@@ -101,12 +101,12 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-dot.no { background: transparent; box-shadow: inset 0 0 0 1.5px var(--color-ink-dim); }
 .st-dot.warn { background: var(--color-warning); }
 
-/* InfoButton in een rij: klein rondje met onzichtbare rand tot 44 px */
-.st-info { position: relative; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-control-border); color: var(--color-ink-dim); display: inline-flex; align-items: center; justify-content: center; flex: none; }
-/* Het tikdoel is 44 bij 44 px rond het rondje van 20 px (de rand van 1 px telt
-   mee in de binnenkant, de uitbreiding begint bij de rand: -13 px, niet -12); het valt hooguit over
-   het eind van de titel, niet over het midden van de rij. */
-.st-info::before { content: ''; position: absolute; inset: -13px; }
+/* InfoButton in een rij: het knopvlak is zelf 44 bij 44 px (I-87, een meting ziet alleen echte vakken); het zichtbare
+   rondje van 20 px staat er middenin (::after) en de negatieve marge houdt de rij zoals hij was. Het vlak valt hooguit
+   over het eind van de titel, niet over het midden van de rij. */
+.st-info { position: relative; width: 44px; height: 44px; margin: -12px; color: var(--color-ink-dim); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.st-info::after { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-control-border); box-sizing: border-box; }
+.st-info > svg { position: relative; z-index: 1; }
 
 /* Geavanceerd */
 .st-more { position: relative; display: grid; grid-template-columns: 1fr 16px; align-items: center; width: 100%; min-height: var(--row); padding: 0 var(--s4); color: var(--color-ink-dim); text-align: left; font-size: 15px; }

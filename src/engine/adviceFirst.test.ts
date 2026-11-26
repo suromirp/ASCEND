@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Advice } from './adviceShared';
 import {
   FIRST_SHEET_MAX_SNOOZES, FIRST_SHEET_RULES, firstSheetAdvice, mayShowFirstSheet, mergeFirstSheet, readFirstSheet,
-  pausedToday, rememberFirstSheetNotNow, rememberFirstSheetShown, type FirstSheetMap, type FirstSheetState,
+  pausedToday, forgetFirstSheetShown, rememberFirstSheetNotNow, rememberFirstSheetShown, type FirstSheetMap, type FirstSheetState,
 } from './adviceFirst';
 import { oneAnswerPerDay } from './oneAnswerPerDay';
 
@@ -88,6 +88,22 @@ describe('één keer per id, Niet nu hoogstens drie keer', () => {
     const memory = rememberFirstSheetNotNow(rememberFirstSheetShown({}, reentry.id, TODAY), reentry.id, TODAY);
     expect(Object.keys(memory)).toEqual([reentry.id]);
     expect(mayShowFirstSheet(memory, reentry.id, '2026-11-27')).toBe(true);
+  });
+});
+
+describe('een mislukte Akkoord', () => {
+  it('het blad komt bij de volgende opening terug, ook dezelfde dag', () => {
+    const shown = rememberFirstSheetShown(undefined, reentry.id, TODAY);
+    expect(firstSheetAdvice([reentry], state({ memory: shown }))).toBeUndefined();
+    const back = forgetFirstSheetShown(shown, reentry.id, undefined);
+    expect(firstSheetAdvice([reentry], state({ memory: back }))?.id).toBe(reentry.id);
+  });
+
+  it('een eerdere Niet nu blijft geteld', () => {
+    const was = rememberFirstSheetNotNow(rememberFirstSheetShown({}, reentry.id, '2026-11-25'), reentry.id, '2026-11-25');
+    const shown = rememberFirstSheetShown(was, reentry.id, TODAY);
+    const back = forgetFirstSheetShown(shown, reentry.id, was);
+    expect(back[reentry.id]).toEqual({ shownOn: '2026-11-25', snoozes: 1 });
   });
 });
 

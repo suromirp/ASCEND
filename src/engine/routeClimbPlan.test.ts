@@ -5,8 +5,8 @@ import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { RouteAnswer, RouteFn, RoutePoint, RouteTarget } from '../models/route';
 import type { TrainingSpot } from '../data/trainingSpots';
 import { metersBetween, offsetPoint } from './routeGeometry';
-import { ascentCappedLine, composeSimple, footReachable, footStartLine, plansWithPriority, proposalNotes, proposeRoutes, proposeSimple, type PlanOutcome } from './routePlanner';
-import { choiceSum, loopChoiceRows, outdoorPlus, resolveDriveLimit, resolveLoopPriority, driveLimitMinutes, TREADMILL_LINE } from './routeClimbPlan';
+import { ascentCappedLine, MAX_LOOP_DISTANCE_FACTOR, composeSimple, footReachable, footStartLine, plansWithPriority, proposalNotes, proposeRoutes, proposeSimple, type PlanOutcome } from './routePlanner';
+import { ASCENT_LENGTH_ADVICE, choiceSum, loopChoiceRows, outdoorPlus, resolveAscentLength, resolveDriveLimit, resolveLoopPriority, driveLimitMinutes, TREADMILL_LINE } from './routeClimbPlan';
 import { MAP_FAILED_LINE, MAP_FETCHING_LINE, MAP_MISSING_LINE, mapMissing, mapRetryLine, pickTransition, routeSheetParts } from './routeSheet';
 
 const START: RoutePoint = { lat: 52.1, lon: 5.9 };
@@ -67,6 +67,23 @@ describe('I-160: de lange aanloop at de hoogtemeters op', () => {
     const notes = proposalNotes(p, TARGET);
     expect(notes[0]).toMatch(/^Begint bij de voet van de helling, .* minuten rijden/);
     expect(notes).toContain(ascentCappedLine(TARGET));
+  });
+
+  it('Langer voor hoogtemeters (I-164): een ruimere grens geeft meer herhalingen, de zin noemt de gekozen grens', async () => {
+    const at = async (maxLengthFactor?: number) => ok((await proposeRoutes({ start: START, target: TARGET, terrain: terrain(FAR_HILL), loop: { priority: 'ascent', driveLimitMin: 30, ...(maxLengthFactor !== undefined ? { maxLengthFactor } : {}) }, now: NOW }, farRoute())).simple)!;
+    const advice = await at(undefined);
+    const same = await at(1.3);
+    expect(same.repeats).toBe(advice.repeats);
+    const wide = await at(2);
+    expect(wide.repeats).toBeGreaterThan(advice.repeats!);
+    expect(wide.distanceM).toBeLessThanOrEqual(2 * TARGET.distanceKm * 1000);
+    expect(wide.distanceM).toBeGreaterThan(1.3 * TARGET.distanceKm * 1000);
+    const tight = await at(1.2);
+    expect(tight.distanceM).toBeLessThanOrEqual(1.2 * TARGET.distanceKm * 1000);
+    expect(tight.ascentCapped).toBe(true);
+    expect(proposalNotes(tight, TARGET)).toContain(ascentCappedLine(TARGET, 1.2));
+    expect(ascentCappedLine(TARGET, 1.2)).toMatch(/meer dan 1,2 keer zo lang/);
+    expect(ascentCappedLine(TARGET)).toMatch(/meer dan 1,3 keer zo lang/);
   });
 
   it('na: past de afstandsgrens ruim, dan haalt Hoogtemeters halen er meer uit dan Afstand houden', async () => {
@@ -229,6 +246,16 @@ describe('I-160: instellingen en beweging', () => {
     expect(resolveLoopPriority(undefined, { distanceKm: 10, ascentM: 0 })).toBe('distance');
     expect(resolveLoopPriority('distance', TARGET)).toBe('distance');
     expect(resolveLoopPriority('iets', TARGET)).toBe('ascent');
+  });
+
+  it('Langer voor hoogtemeters: advies 1,3; een oude back-up zonder het veld of een vreemde waarde geeft het advies', () => {
+    expect(resolveAscentLength(undefined)).toBe(1.3);
+    expect(ASCENT_LENGTH_ADVICE).toBe(MAX_LOOP_DISTANCE_FACTOR);
+    expect(resolveAscentLength(1.7)).toBe(1.3);
+    expect(resolveAscentLength('2')).toBe(1.3);
+    expect(resolveAscentLength(1.2)).toBe(1.2);
+    expect(resolveAscentLength(1.5)).toBe(1.5);
+    expect(resolveAscentLength(2)).toBe(2);
   });
 
   it('Rijtijd naar heuvels: advies 30 minuten, Geen grens is geen getal', () => {

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
-import { restRowLine, weekPlan } from './dayPlan';
+import { weekPlan } from './dayPlan';
 import { restRowText } from './restRow';
 
 const { templates } = buildDefaultProgramData();
@@ -21,10 +21,8 @@ describe('restRowText', () => {
   const easy = row('easy', 'tpl_easy_run', TUE, { order: 1 });
   const upper = row('upper', 'tpl_upper_a', TUE, { order: 2 });
 
-  it('zonder training: bewust herstel, zoals restRowLine', () => {
-    const day = dayOf([rest], []);
-    expect(restRowText(day, [], templateById)).toBe('bewust herstel');
-    expect(restRowText(day, [], templateById)).toBe(restRowLine(day));
+  it('zonder training: bewust herstel', () => {
+    expect(restRowText(dayOf([rest], []), [], templateById)).toBe('bewust herstel');
   });
 
   it('een open training naast de rustdag: niet bewust herstel', () => {
@@ -37,9 +35,17 @@ describe('restRowText', () => {
     expect(restRowText(day, [], templateById)).toBe('Rustige duurloop gedaan, 1 nog open');
   });
 
-  it('gedaan zoals voorheen', () => {
-    const day = dayOf([rest, easy], [logFor(easy, TUE)]);
-    expect(restRowText(day, [], templateById)).toBe(restRowLine(day));
+  it('gedaan: een training op de rustdag zelf, en twee trainingen', () => {
+    expect(restRowText(dayOf([rest, easy], [logFor(easy, TUE)]), [], templateById)).toBe('Rustige duurloop gedaan');
+    const upperFri = row('upper', 'tpl_upper_a', '2026-11-20');
+    expect(restRowText(dayOf([rest, easy, upperFri], [logFor(easy, TUE), logFor(upperFri, TUE)]), [], templateById)).toBe('2 trainingen gedaan');
+  });
+
+  it('een training van een andere dag die je op de rustdag deed: die noemt hij, en hij blijft op zijn geplande dag (I-150)', () => {
+    const tempo = row('tempo', 'tpl_tempo_run', '2026-11-19');
+    const plan = weekPlan({ weekStart: MONDAY, sessions: [rest, tempo], logs: [logFor(tempo, TUE)], templateById, today: TUE });
+    expect(restRowText(plan.day(TUE), [], templateById)).toBe('Tempoloop gedaan');
+    expect(plan.day('2026-11-19').sessions.map((s) => s.id)).toEqual(['tempo']);
   });
 
   it('een losse training die dag telt mee, een van een andere dag niet', () => {

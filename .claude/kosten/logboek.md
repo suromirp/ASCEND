@@ -591,3 +591,9 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-26 | Warden bouwmoment 26 nov | reviewer helper | opus | 136k tok | 7 min | één Moet (Bekijk zonder tijdsgrens, coördinator herstelde), Mag naar I-164 |
 | 2026-11-26 | Lookout bouwmoment 26 nov | tester helper | sonnet | 157k tok | 25 min | groen op 360, 390 en 412; route Opnieuw proberen niet bereikt |
 | 2026-11-26 | Bouwmoment 26 nov naar main | coördinator | opus | n.v.t. | ca. 3u | I-157, I-155, I-146, I-147, I-148, I-151, I-156, krachtblok, I-163 |
+| 2026-11-26 | Sherpa Planning mag (I-164 engine, I-52) | bouwer helper | opus | n.v.t. | n.v.t. | terugval naast test weg, Geen tijd vandaag uit state, restRowLine weg, Langer voor hoogtemeters, wezen met keten, etiket wandelen en dribbelen |
+| 2026-11-26 | Sherpa Historie mag (I-140, I-139) | bouwer helper | opus | 106k tok | 32 min | één readwrite-controle bij add, Opslaan na de grens, busy in FinishSheet, besluit wachtgrens |
+| 2026-11-26 | Sherpa Bediening mag (I-164 UI, I-141, I-87) | bouwer helper | sonnet | 157k tok | 57 min | blad toont wijzigingen en komt terug, kaartstand, Week 360, tikdoelen Testloop |
+| 2026-11-26 | Warden bouwmoment 26 nov 2 | reviewer helper | opus | 84k tok | 23 min | één Moet (uitlegzin Langer voor hoogtemeters, coördinator herstelde), Mag naar I-165 |
+| 2026-11-26 | Lookout bouwmoment 26 nov 2 | tester helper | sonnet | 108k tok | 17 min | groen behalve afkappen 360 stille lijst (keuze: zo laten, besluit week minimaal); I-105 gezien |
+| 2026-11-26 | Bouwmoment 26 nov 2 naar main | coördinator | opus | n.v.t. | ca. 2u | I-164, I-141, I-87, I-140, I-139, I-52, I-105 |

@@ -24,7 +24,7 @@ import { resolveRouteStart } from '../../../engine/routeStart';
 import { groundSettings, resolveMapGround } from '../../../engine/routeMap';
 import { resolveRouteSearch } from '../../../engine/routeSearchSetting';
 import { resolveWalkKm } from '../../../engine/walkPlan';
-import { resolveDriveLimit, resolveLoopPrioritySetting } from '../../../engine/routeClimbPlan';
+import { resolveAscentLength, resolveDriveLimit, resolveLoopPrioritySetting } from '../../../engine/routeClimbPlan';
 import { RouteStartFooter } from './RouteStartFooter';
 import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
@@ -196,6 +196,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="wandel-afstand" title="Afstand van een wandeling" facts={facts} onClick={() => setInner('wandel-afstand')} />
           <SummaryRow id="route-voorrang" title="Wat gaat voor in een lus" facts={facts} onClick={() => setInner('route-voorrang')} />
           <SummaryRow id="rijtijd-heuvels" title="Rijtijd naar heuvels" facts={facts} onClick={() => setInner('rijtijd-heuvels')} />
+          <SummaryRow id="langer-voor-hoogte" title="Langer voor hoogtemeters" facts={facts} onClick={() => setInner('langer-voor-hoogte')} />
           <SummaryRow id="route-grote-wegen" title="Grote wegen mijden" facts={facts} info="routeGroteWegen" onChange={(on) => void updateSettings({ routeAvoidBigRoads: on })} />
           <SummaryRow id="route-wind" title="Wind bepaalt de richting" facts={facts} info="routeWind" onChange={(on) => void updateSettings({ routeWind: on })} />
           <SummaryRow id="route-donker" title="Terug voor het donker" facts={facts} info="routeDonker" onChange={(on) => void updateSettings({ routeBackBeforeDark: on })} />
@@ -211,6 +212,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {inner === 'route-soort' && <ChoiceFromDef def={CHOICES.routeSoort} value={resolveRouteStyle(settings.routeStyle)} onPick={(v) => void updateSettings({ routeStyle: v })} onClose={closeInner} />}
       {inner === 'route-voorrang' && <ChoiceFromDef def={CHOICES.routeVoorrang} value={resolveLoopPrioritySetting(settings.routeLoopPriority)} onPick={(v) => void updateSettings({ routeLoopPriority: v })} onClose={closeInner} />}
       {inner === 'rijtijd-heuvels' && <ChoiceFromDef def={CHOICES.rijtijdHeuvels} value={resolveDriveLimit(settings.routeDriveMinutes)} onPick={(v) => void updateSettings({ routeDriveMinutes: v })} onClose={closeInner} />}
+      {inner === 'langer-voor-hoogte' && <ChoiceFromDef def={CHOICES.langerVoorHoogte} value={resolveAscentLength(settings.routeAscentLength)} onPick={(v) => void updateSettings({ routeAscentLength: v })} onClose={closeInner} />}
       {inner === 'wandel-afstand' && <ChoiceFromDef def={CHOICES.wandelAfstand} value={resolveWalkKm(settings.walkPlanKm)} onPick={(v) => void updateSettings({ walkPlanKm: v })} onClose={closeInner} />}
       {inner === 'route-zoeken' && <ChoiceFromDef def={CHOICES.routeZoeken} value={resolveRouteSearch(settings.routeSearch)} onPick={(v) => void updateSettings({ routeSearch: v })} onClose={closeInner} />}
       {inner === 'route-kaart' && <ChoiceFromDef def={CHOICES.routeKaart} value={resolveMapGround(settings)} onPick={(v) => void updateSettings(groundSettings(v, settings))} onClose={closeInner} />}

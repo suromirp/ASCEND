@@ -736,8 +736,8 @@ export function proposeSkip(session: PlannedSession, templates: SessionTemplate[
 // backward-compatible optional trailing params as proposeMove above.
 //
 // I-147: een latere dag moet open zijn. Eerst de eerste dag met ruimte die open is (`isOpen`, de dagen die je hebt
-// ingesteld) en zonder test of wedstrijd ernaast volgens de afstandsregels hierboven (findHeavyConflicts); dan de oude
-// keuze, de eerste latere dag met ruimte. Een voorstel dat iets op een dichte dag zet of een rij raakt die blijft
+// ingesteld) en zonder test of wedstrijd ernaast volgens de afstandsregels hierboven (findHeavyConflicts); een dag naast
+// een test kiest hij ook niet als terugval (I-164). Een voorstel dat iets op een dichte dag zet of een rij raakt die blijft
 // (`stays`), telt niet; dan de volgende dag. Lukt niets, dan de bestaande uitkomst: overslaan, zichtbaar als voorstel of
 // melding. Een rij die blijft krijgt geen voorstel. `window: 'week'` probeert na de latere dagen ook de eerdere van de
 // week (vanaf `asOf`), voor een week die nog moet komen.
@@ -788,10 +788,11 @@ export function proposeNoTimeToday(
       const fits = proposal.changes.every((c) => c.toDate !== todayDate && isOpen(c.toDate) && (c.sessionId === session.id || !stayingIds.has(c.sessionId)));
       return fits ? proposal : undefined;
     };
-    const first = [...later, ...earlier].filter((d) => hasRoom(d) && isOpen(d) && !nearTest(d));
-    const fallback = later.filter((d) => hasRoom(d) && !first.includes(d)).slice(0, 1);
+    // Geen terugval naar een dag naast een test (I-164): een dichte dag haalt tryDay toch al af, dus de oude terugval
+    // koos alleen nog een dag die de afstandsregels rond een test afwijzen.
+    const candidates = [...later, ...earlier].filter((d) => hasRoom(d) && isOpen(d) && !nearTest(d));
     let chosen: ScheduleProposal | undefined;
-    for (const d of [...first, ...fallback]) {
+    for (const d of candidates) {
       chosen = tryDay(d);
       if (chosen) break;
     }

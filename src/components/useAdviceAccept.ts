@@ -112,5 +112,12 @@ export function useAdviceAccept(advice: Advice) {
     return false;
   }
 
-  return { horizon, ownProposal, accept };
+  // Wat er verandert, voor het blad bij het openen: dezelfde regels als in het voorstel van Akkoord.
+  const changeLines: string[] = advice.reentry
+    ? [reentryNote(advice.reentry, advice.reentryForgeDays, advice.reentryFirstDay, advice.reentryCatchUp)]
+    : advice.beginnerLadder ? beginnerLadderLinesOn(settings, program, todayISO())
+    : advice.noGoalWaves ? noGoalWavesLines()
+    : [];
+
+  return { horizon, ownProposal, accept, changeLines };
 }

@@ -215,6 +215,10 @@ export interface AppSettings {
   // Rijtijd naar heuvels in minuten (engine/routeClimbPlan.ts#resolveDriveLimit): 0 niet rijden, 15, 30
   // (afwezig, het advies), 45 of 'free' geen grens. Optioneel en erbij, dus geen migratiestap.
   routeDriveMinutes?: 0 | 15 | 30 | 45 | 'free';
+  // Langer voor hoogtemeters (engine/routeClimbPlan.ts#resolveAscentLength): zoveel keer de afstand mag een lus
+  // bij Hoogtemeters halen worden, 1.2, 1.3 (afwezig, het advies), 1.5 of 2. Optioneel en erbij, dus geen
+  // migratiestap: een oude back-up zonder het veld krijgt het advies.
+  routeAscentLength?: 1.2 | 1.3 | 1.5 | 2;
   // Where a proposed loop starts (engine/routeStart.ts): where you are now, asked once per search
   // ('here', absent = here), your own fixed point, shown as Vast punt ('exact'), or about your place,
   // rounded to a kilometre ('approx'). The fixed point itself is never a

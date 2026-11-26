@@ -311,7 +311,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const { clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, strengthExternal, setStrengthExternal, updateSettings, showStatusOnlyChange, undoReentry } = useGoalActions({ trainingGoals, goalMilestones, settings, setSettings, setCelebration, setRecentChange, strengthProgramStrategies, setStrengthProgramStrategies, refresh });
   const { saveInfluence, saveSweat, saveSweatPre, removeInfluence, clearInfluences, planIllness, applyIllness } = useNotesAndIllness({ plannedSessions, sessionLogs, setSettings, settings, templates, commitPlanChange, showStatusOnlyChange });
   const { updateGoalEngineConfig, planHorizonChangeImpl, applyHorizonPlanImpl, planWeekLoadChange, planGoalChange, planGoalRole, planGoalPriority, setGoalOrder, planMarathonGoal, activateGoal } = useHorizonActions({ setGoalEngineConfig, setRecentChange, setStorageNotice, refresh });
-  const { toggleStretchRoutine, addInjury, resolveInjury, deleteInjury, addManualCapabilityEvidence, deleteCapabilityEvidence, proposeNoTimeTodayAction, applyNoTimeToday, planPreviewPass, leavePeriods, planLeave, applyLeave, saveLeaveNote, planRestDay, applyRestDay } = useBodyAndLeave({ program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, setSettings, templates, stretchCompletion, setStretchCompletion, setRecentChange, refresh, commitPlanChangeOutcome, commitPlanChange, sessionsForWeek, showStatusOnlyChange });
+  const { toggleStretchRoutine, addInjury, resolveInjury, deleteInjury, addManualCapabilityEvidence, deleteCapabilityEvidence, planPreviewPass, leavePeriods, planLeave, applyLeave, saveLeaveNote, planRestDay, applyRestDay } = useBodyAndLeave({ program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, injuryNotes, goalEngineConfig, settings, setSettings, templates, stretchCompletion, setStretchCompletion, setRecentChange, refresh, commitPlanChangeOutcome, commitPlanChange, showStatusOnlyChange });
   // Een training die bleef liggen (een concept in Forge): de planner ziet hem als "loopt nog", niet als gemist.
   const sessionSnap = useSyncExternalStore(subscribeSession, sessionSnapshot);
   const openDraftId = useMemo(() => openDraftIdOf(sessionSnap ? readSession() : undefined, sessionLogs), [sessionSnap, sessionLogs]);
@@ -396,8 +396,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     deleteInjury,
     addManualCapabilityEvidence,
     deleteCapabilityEvidence,
-    proposeNoTimeToday: proposeNoTimeTodayAction,
-    applyNoTimeToday,
     exportData: () =>
       runManualBackup({
         adapter: webBackupFileAdapter,

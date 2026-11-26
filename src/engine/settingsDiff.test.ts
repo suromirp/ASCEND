@@ -15,6 +15,7 @@ const everything: AppSettings = {
   reentryCatchUp: false,
   routeLoopPriority: 'distance',
   routeDriveMinutes: 45,
+  routeAscentLength: 2,
   changeApplyMode: 'always_ask',
   ambition: 'stevig',
   restDayMode: 'active',

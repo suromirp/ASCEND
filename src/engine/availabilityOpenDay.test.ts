@@ -1,6 +1,6 @@
 // I-147: de opstartstap beschikbaarheid (computeForecastReplan) en Geen tijd vandaag (proposeNoTimeToday) kiezen een
 // latere dag alleen als die open is: geen dichte dag, geen test ernaast volgens de afstandsregels. Lukt het niet, dan
-// de volgende vrije dag van de week, en lukt niets, dan zichtbaar overslaan. Wat vastligt (test, slot, log) blijft.
+// de volgende vrije dag van de week, nooit een dag naast een test, en lukt niets, dan zichtbaar overslaan. Wat vastligt (test, slot, log) blijft.
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
@@ -83,6 +83,22 @@ describe('proposeNoTimeToday: een latere dag moet open zijn (I-147)', () => {
     const [p] = proposeNoTimeToday([tempo, test], templates, '2026-09-09');
     expect(p.changes.map((c) => c.sessionId)).toEqual(['tempo']);
     expect(p.changes[0].toDate).toBe('2026-09-12');
+  });
+
+  it('alleen dagen naast een test over: geen terugval naar zo een dag, zichtbaar overslaan (I-164)', () => {
+    // Vrijdag geen tijd, zaterdag de test, zondag de dag erna: er is geen dag over die de afstandsregels laten staan.
+    const tempo = at('tempo', 'tpl_tempo_run', '2026-09-11');
+    const test = at('test', 'tpl_test_run', '2026-09-12');
+    const [p, ...rest] = proposeNoTimeToday([tempo, test], templates, '2026-09-11');
+    expect(rest).toEqual([]);
+    expect(p.resolved).toBe(false);
+    expect(p.changes).toEqual([expect.objectContaining({ sessionId: 'tempo', fromDate: '2026-09-11', toDate: '2026-09-11' })]);
+  });
+
+  it('een vastgezette rij op de dag zelf krijgt geen voorstel, ook niet naar de dag naast de test', () => {
+    const mine: PlannedSession = { ...at('mine', 'tpl_tempo_run', '2026-09-11'), lock: { by: 'user', at: '2026-09-01T10:00:00.000Z' } };
+    const test = at('test', 'tpl_test_run', '2026-09-12');
+    expect(proposeNoTimeToday([mine, test], templates, '2026-09-11', [], null, undefined, undefined, { stays: (s) => !!s.lock })).toEqual([]);
   });
 
   it('geen open dag meer: zichtbaar overslaan', () => {

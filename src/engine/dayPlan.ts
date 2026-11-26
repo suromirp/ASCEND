@@ -136,12 +136,5 @@ export function weekPlan(input: DayPlanInput): WeekPlan {
   };
 }
 
-// De tweede regel van een rustdagrij in Week (I-150). Zonder training "bewust herstel". Deed je op deze dag een
-// training, ook een van een andere dag, dan zegt hij die: "Tempoloop gedaan", of "2 trainingen gedaan". Week houdt de
-// training op zijn geplande dag; dit leest dezelfde dag van uitvoeren als de balk (`strip`).
+// De tweede regel van een rustdagrij in Week zonder training (I-150). De hele regel maakt `restRow.ts#restRowText`.
 export const REST_ROW_QUIET = 'bewust herstel';
-export function restRowLine(day: Pick<PlanDay, 'strip'>): string {
-  const done = day.strip.filter((e) => e.done);
-  if (done.length === 0) return REST_ROW_QUIET;
-  return done.length === 1 ? `${done[0].template.name} gedaan` : `${done.length} trainingen gedaan`;
-}
