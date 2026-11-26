@@ -64,5 +64,5 @@ export function spotterSlot(slot: ExercisePrescription): SpotterSlot | undefined
 
 // De regel bij de set en de uitleg erachter.
 export const SPOTTER_SIGN = '1 over, zonder spotter';
-export const SPOTTER_EXPLAIN = 'Zonder spotter of veiligheidsarmen kan een stang op je borst of schouders je klem zetten. Daarom schrijft Forge hier minstens 1 herhaling in reserve voor. Ging het toch tot 0, vul dan gewoon 0 in; dat wordt bewaard zoals je het deed.';
+export const SPOTTER_EXPLAIN = 'Zonder spotter of veiligheidsarmen kan een stang op je borst of schouders je klem zetten. Daarom schrijft Forge hier minstens 1 herhaling in reserve voor. Ging het toch tot 0, vul dan 0 in. Dat wordt bewaard zoals je het deed.';
 export const SPOTTER_HOW = 'Heeft je sportschool veiligheidsarmen of een rek met vangers, zet dat dan aan bij Je sportschool. Dan mag het 0 zijn. Je kunt dit ook uitzetten bij Zonder spotter.';

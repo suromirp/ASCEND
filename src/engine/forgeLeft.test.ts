@@ -134,7 +134,7 @@ describe('de instelling en de zinnen', () => {
   it('het droge feit eerst, en Verwijderen zegt wat er weggaat', () => {
     const l = leftSessionLines({ name: 'Bovenlichaam A', doneSets: 3, activeSec: 35 * 60, when: 'gisteren om 23:10', reason: 'nacht' });
     expect(l.fact).toBe('Bovenlichaam A: 3 sets afgevinkt, 35 min getraind. Je laatste handeling was gisteren om 23:10.');
-    expect(l.note).toBe('Hij staat als concept klaar; er gaat niets weg tot je kiest.');
+    expect(l.note).toBe('Hij staat als concept klaar. Er gaat niets weg tot je kiest.');
     expect(l.discard).toBe('3 sets en 35 min van gisteren gaan weg. Je logboek en je planning veranderen niet.');
     expect(leftSessionLines({ name: 'X', doneSets: 0, activeSec: 60, when: 'vandaag om 08:00' }).discard).toBe('Deze training van vandaag gaat weg. Je logboek en je planning veranderen niet.');
     expect(leftSessionLines({ name: 'X', doneSets: 2, activeSec: 60, when: 'di 17 nov om 22:30', reason: 'overgeslagen' }).note).toContain('overgeslagen');

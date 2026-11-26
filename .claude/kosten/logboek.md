@@ -602,3 +602,14 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-26 | Bouwmoment 26 nov 3 naar main | coördinator | opus | n.v.t. | ca. 1u15 | I-165, I-20, I-36; I-76 bleef liggen |
 | 2026-11-26 | Sherpa Calisthenics-voorstel (squat op één been en L-sit) | bouwer helper | opus | n.v.t. | ca. 1u | voorstel met Akkoord op de kaart Calisthenics algemeen, besluit 2026-11-26-calisthenics-voorstel-benen-en-romp |
 | 2026-11-26 | Sherpa Feestdagen | bouwer helper | opus | n.v.t. | ca. 2u | feestdagen als voorstel op claude/rooster-feestdagen |
+| 2026-11-26 | Sherpa uitleg batch 5 | bouwer helper | opus | n.v.t. | ca. 1u | twintig oefeningen, uitleg boven het blad Ruilen |
+| 2026-11-26 | Warden rooster ronde 2 | reviewer helper | opus | n.v.t. | n.v.t. | vier Moet in uitleg en Stap voorstellen, coördinator herstelde; Mag naar I-167 |
+| 2026-11-26 | Lookout rooster ronde 2 | tester helper | sonnet | n.v.t. | n.v.t. | groen; uitleg onder Ruilen (z-index) hersteld |
+| 2026-11-26 | Sherpa Forge herinrichting de rest | bouwer helper | opus | n.v.t. | n.v.t. | kolom Voorschrift weg, setnummer opent blad Set |
+| 2026-11-26 | Warden rooster ronde 3 | reviewer helper | opus | 74k tok | 6 min | één Moet (app-kaart mee committen), Mag deels hersteld, rest naar I-168 |
+| 2026-11-26 | Lookout rooster ronde 3 | tester helper | sonnet | 85k tok | 14 min | groen, Vorige keer alleen leeg gezien |
+| 2026-11-26 | Rooster ronde 2 en 3 naar main | coördinator | opus | n.v.t. | n.v.t. | 96f7ab1f6 en 96899a354 |
+| 2026-11-26 | Sherpa Klein en fouten deel 2 Forge | bouwer helper | opus | 144k tok | 16 min | maximum van 20 trainingen eerlijk, bergspiertoevoegingen in het concept; rest blijft met reden |
+| 2026-11-26 | Sherpa R10 teksten van Forge | bouwer helper | opus | 214k tok | 36 min | 29 schermzinnen, Forge-uitleg van 98 naar 77 woorden gemiddeld |
+| 2026-11-26 | Warden rooster ronde 4 | reviewer helper | opus | 91k tok | 7 min | één Moet (uitleg Afvinken telt als het doel), Mag hersteld, stapkaart naar I-169 |
+| 2026-11-26 | Lookout rooster ronde 4 | tester helper | sonnet | 77k tok | 14 min | groen; stapkaart bij 20 trainingen niet na te bootsen, herschreven bladen niet gezien (I-169) |

@@ -61,10 +61,10 @@ export type ForgeFinishNoteKind = 'already' | 'slow' | 'failed' | 'stillRunning'
 
 export function forgeFinishNote(kind: ForgeFinishNoteKind): ForgeFinishNote {
   if (kind === 'already') return { text: 'Deze training staat al in je logboek. Er is niets dubbel opgeslagen.', warn: false };
-  if (kind === 'slow') return { text: 'Opslaan duurt langer dan verwacht. Je sets blijven bewaard; probeer het zo nog eens.', warn: false };
+  if (kind === 'slow') return { text: 'Opslaan duurt langer dan verwacht. Je sets blijven bewaard. Probeer het zo nog eens.', warn: false };
   if (kind === 'stillRunning') return { text: STILL_WAITING_NOTE, warn: false };
   if (kind === 'waited') return { text: STILL_WAITED_NOTE, warn: false };
-  return { text: failedNote('Opslaan lukte niet. Je sets blijven bewaard; probeer het zo nog eens.'), warn: true };
+  return { text: failedNote('Opslaan lukte niet. Je sets blijven bewaard. Probeer het zo nog eens.'), warn: true };
 }
 
 // Na `stillRunning` wacht het blad op de eerdere poging (state/logSave.ts#waitForEarlierSave) en zegt dan hoe die

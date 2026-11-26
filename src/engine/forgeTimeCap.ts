@@ -65,7 +65,7 @@ export function referenceMinutes(template: SessionTemplate, setting: { strength:
   return isLegHeavyTemplate(template) ? REFERENCE_LEGS : REFERENCE_STRENGTH;
 }
 
-// "Je zit op 64 minuten. Wat nog komt is bijwerk en extra; stoppen kan." Alleen als de actieve tijd (pauzes tellen
+// "Je zit op 64 minuten. Wat nog komt is bijwerk en extra. Stoppen kan." Alleen als de actieve tijd (pauzes tellen
 // niet, forgeSession.ts#activeSeconds) over de referentie is, elke werkset van de kern is afgevinkt, en er nog een
 // open werkset van bijwerk of extra is. Het noemt alleen de rollen die nog open zijn.
 export function overTimeLine(args: {
@@ -86,7 +86,7 @@ export function overTimeLine(args: {
   }
   if (open.size === 0) return undefined;
   const what = open.size === 2 ? 'bijwerk en extra' : open.has('accessory') ? 'bijwerk' : 'extra';
-  return `Je zit op ${Math.floor(activeSec / 60)} minuten. Wat nog komt is ${what}; stoppen kan.`;
+  return `Je zit op ${Math.floor(activeSec / 60)} minuten. Wat nog komt is ${what}. Stoppen kan.`;
 }
 
 const setsOf = (list: readonly ExercisePrescription[]) => list.reduce((n, s) => n + prescribedSets(s), 0);

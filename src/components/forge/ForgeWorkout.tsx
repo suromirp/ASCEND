@@ -88,7 +88,7 @@ import { resolveDeviceNotices } from '../../engine/deviceNotices';
 import { type Rest, clock, type BlockActions } from './forgeWorkoutHelpers';
 import { ExerciseBlock } from './ExerciseBlock';
 import { OtherSessionRunning } from './OtherSessionRunning';
-import { DRAFT_VERSION, calAcceptedOf, initialForgeLog, poundLine, sessionStepSwaps, type WorkoutDraft } from './forgeDraft';
+import { DRAFT_VERSION, calAcceptedOf, initialForgeLog, poundLine, sessionAddedExercises, sessionStepSwaps, type WorkoutDraft } from './forgeDraft';
 import { useForgeDraft } from './useForgeDraft';
 import { useForgeClock } from './useForgeClock';
 import { useForgeStands } from './useForgeStands';
@@ -202,7 +202,10 @@ function ForgeWorkoutInner({
   // Terugzetten zet hem terug. Een heropend concept met de set erin telt als aangenomen.
   const [calAccepted, setCalAccepted] = useState(() => calAcceptedOf(restored));
   const [sessionSwaps] = useState(() => sessionStepSwaps(restored, settings.strengthModel?.stepSwaps));
-  const allSlots = useMemo(() => forgeSlotsFor(template, { ...settings.strengthModel, stepSwaps: sessionSwaps }, date), [template, settings.strengthModel, sessionSwaps, date]);
+  // Zo ook de toevoegingen van Spieren voor de berg (forgeDraft.ts#sessionAddedExercises): een Akkoord tijdens de sessie
+  // geldt vanaf de volgende keer; Uit deze training halen haalt hem ook hier weg.
+  const [sessionAdded, setSessionAdded] = useState(() => sessionAddedExercises(restored, settings.strengthModel?.addedExercises));
+  const allSlots = useMemo(() => forgeSlotsFor(template, { ...settings.strengthModel, stepSwaps: sessionSwaps, addedExercises: sessionAdded }, date), [template, settings.strengthModel, sessionSwaps, sessionAdded, date]);
   // Hoogstens per krachttraining (engine/forgeTimeCap.ts): met de geleerde tijd per set gaat er eerst bijwerk af
   // als de training langer zou duren dan de grens. Alleen de inhoud van deze sessie; de planning blijft zoals hij is.
   const estimate = settings.sessionDurationEstimates?.[template.id];
@@ -342,7 +345,7 @@ function ForgeWorkoutInner({
   }, [openSlot]);
 
   // Het concept en de wijzer van de sessie (useForgeDraft.ts).
-  const { dropDraft } = useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant: initialVariant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, forgeLog, seenAt, stepSwaps: sessionSwaps, calAccepted });
+  const { dropDraft } = useForgeDraft({ key, template, plannedSessionId, scheduledDate, variant: initialVariant, readOnly, startedAt, pauses, lastAction, workout, easeOn, rest, forgeLog, seenAt, stepSwaps: sessionSwaps, added: sessionAdded, calAccepted });
   // Jouw handelingen zetten het laatste moment van handelen: een set afvinken, typen, een oefening ruilen.
   const firstWorkout = useRef(workout);
   useEffect(() => {
@@ -674,6 +677,7 @@ function ForgeWorkoutInner({
   // alleen uit zolang er nog geen set is afgevinkt; afgevinkte sets gaan nooit stil weg.
   function removeAddedExercise(slot: string) {
     saveStrength(withoutAddedSlot(settings.strengthModel, template.id, slot));
+    setSessionAdded((a) => withoutAddedSlot({ addedExercises: a }, template.id, slot).addedExercises);
     setWorkout((w) => workoutWithoutAdded(w, slot));
   }
 
