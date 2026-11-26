@@ -16,6 +16,7 @@ import { PermissionWelcome } from './components/welcome/PermissionWelcome';
 import { SHOW_SPLASH } from './utils/updateFlag';
 import { ChangeNotice } from './components/ChangeNotice';
 import { DebriefSheet } from './components/DebriefSheet';
+import { FirstAdviceHost } from './components/FirstAdviceHost';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Icon, type IconName } from './components/icons';
 import { useOverlayA11y } from './components/useOverlayA11y';
@@ -403,6 +404,7 @@ function AppShell() {
       )}
       <ChangeNotice />
       <DebriefSheet />
+      <FirstAdviceHost ready={mainReady} />
       <UpdatePrompt />
       <UpdatedNotice />
       {/* De Android-app: meldingen op tijd, zelf bijwerken en de welkomstreeks. In de browser doen ze niets. */}

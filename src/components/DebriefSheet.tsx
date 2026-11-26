@@ -16,6 +16,7 @@ import { Portal } from './Portal';
 import { Card, Eyebrow, PrimaryButton, SheetGrip } from './ui';
 import { AdviceItem } from './CoachCard';
 import { useSheetClose } from '../utils/useSheetClose';
+import { useInSheetRow } from '../state/sheetRow';
 
 export function DebriefSheet() {
   const { debriefLogId, dismissDebrief, celebration, sessionLogs, templateById, advice, strengthExternal: externalStrength, settings } = useAppData();
@@ -46,6 +47,8 @@ export function DebriefSheet() {
 
 function Sheet({ name, counted, logAdvice, strengthExternal, meaning, testLogId, onClose }: { name: string; counted: string[]; logAdvice: ReturnType<typeof useAppData>['advice']; strengthExternal: boolean; meaning?: TestMeaning; testLogId?: string; onClose: () => void }) {
   const { closing, requestClose, sheetRef } = useSheetClose(onClose);
+  // In de gedeelde rij: het blad met belangrijk advies wacht tot de terugblik dicht is (state/sheetRow.ts).
+  useInSheetRow('debrief');
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>

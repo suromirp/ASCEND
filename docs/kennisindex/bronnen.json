@@ -4782,12 +4782,28 @@
    "kern": "Verslag van I-160 deel B: Simpel begint op de voet van de steilste helling, de keuze Hoogtemeters halen of Afstand houden met de som, de rij Buiten plus een helling, trap of de loopband uit de gids, en Opnieuw proberen bij een ontbrekende kaart. Bewijs, keuzes en wat niet gebouwd is.",
    "stand": "achtergrond"
   },
+  "docs/beslissingen/2026-11-26-belangrijk-advies-als-blad.md": {
+   "onderwerpen": [
+    "planning",
+    "bediening-en-beweging"
+   ],
+   "kern": "Een rustiger instap, golven zonder doel of de ladder komt bij het openen één keer als blad met Akkoord, Bekijk en Niet nu (hoogstens drie keer, de volgende dag); niet tijdens een training, naast een ander blad (state/sheetRow.ts), zonder programma of in een pauze. Twee adviezen voor dezelfde dag of training worden er één, het andere wacht (engine/oneAnswerPerDay.ts). Instelling Belangrijk advies als blad. Het terugdraairecord van een ronde noemt alleen haar eigen regels (I-155). schemaVersion blijft 6.",
+   "stand": "geldt"
+  },
   "docs/visie/Plek belangrijk advies.md": {
    "onderwerpen": [
     "planning",
     "bediening-en-beweging"
    ],
    "kern": "Pathfinder vooraf voor I-157: welke voorstellen als blad bij openen, waar en wanneer, hoe Niet nu werkt, waar de regel 'één advies per dag' komt en welke instelling.",
+   "stand": "achtergrond"
+  },
+  "docs/onderhoud/sherpa-i157.md": {
+   "onderwerpen": [
+    "planning",
+    "bediening-en-beweging"
+   ],
+   "kern": "Verslag van I-157 en I-155: belangrijk advies als blad bij het openen, één antwoord per dag, de gedeelde rij van bladen, de instelling en het terugdraairecord per ronde. Bestanden, tests, keuzes en wat niet gecontroleerd is.",
    "stand": "achtergrond"
   },
   "docs/onderhoud/sherpa-i162.md": {

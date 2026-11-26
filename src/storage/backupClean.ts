@@ -16,7 +16,7 @@ import { cleanMorningNotice } from '../engine/morningNotice';
 import { cleanWeekNoticeTime } from '../engine/deviceNotices';
 import { cleanEveningTime } from '../engine/eveningBefore';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateStartChoices, migrateSportHandling, migrateSportCounting, migrateKindAmount, migrateCustomSports, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateTestJudgments, migrateZoneAnswers, migrateStrapWorn, migrateShortTestSeries, migrateWeeklyHealthCheck, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateSportRestOffers, migrateSportRestKeep, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings } from './migrations';
+import { cleanNavigationSettings, migrateCardsAboveMission, migrateDirection, migrateWaveSettings, migrateStartChoices, migrateSportHandling, migrateSportCounting, migrateKindAmount, migrateCustomSports, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateTestJudgments, migrateZoneAnswers, migrateStrapWorn, migrateShortTestSeries, migrateFirstSheet, migrateWeeklyHealthCheck, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateSportRestOffers, migrateSportRestKeep, migrateWeightEntries, readWeekShape, migrateDataSettings, migrateAutoBackupSettings } from './migrations';
 import { normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { validCatchUp } from '../engine/catchUp';
@@ -136,6 +136,13 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
     if (series.value === undefined) delete s.shortTestSeries;
     else s.shortTestSeries = series.value;
     skipped.n += series.skipped;
+  }
+  // Welk belangrijk advies al als blad kwam (storage/migrationsSettings.ts#migrateFirstSheet).
+  if ('firstSheet' in s) {
+    const first = migrateFirstSheet(s.firstSheet);
+    if (first.value === undefined) delete s.firstSheet;
+    else s.firstSheet = first.value;
+    skipped.n += first.skipped;
   }
   // Your own weighings for sweat loss: record by record, a damaged one is dropped and
   // counted, an older file has none and leaves the weighings on the device alone
@@ -266,7 +273,7 @@ export function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettin
   // Snelknoppen tonen bestaat niet meer (docs/beslissingen/2026-11-02-forge-herinrichting.md): een oude
   // waarde wordt stil genegeerd, het is geen fout in het bestand.
   delete s.forgeQuickButtons;
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'watchPlaceWorkout', 'watchWalkBpm', 'stravaText', 'watchFieldsShown', 'routeProposal', 'routeAvoidBigRoads', 'routeWind', 'routeBackBeforeDark', 'rememberStartPlace', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'fullWeekAsk', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'watchKindCheck', 'illnessSigns', 'illnessSignsOneMorning', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'eveningBefore', 'eveningNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'testReadyLine', 'shortTest', 'shortTestWatch', 'tempoStablePieces', 'fuelOnTheGo', 'raceDay', 'reentryCatchUp', 'restDayFollows'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'watchPlaceWorkout', 'watchWalkBpm', 'stravaText', 'watchFieldsShown', 'routeProposal', 'routeAvoidBigRoads', 'routeWind', 'routeBackBeforeDark', 'rememberStartPlace', 'askShortNight', 'askSweat', 'askDoubtTest', 'newTestOnStops', 'restDayBack', 'fullWeekAsk', 'missedLink', 'weekFixProposal', 'dragWeek', 'longRunThenLegs', 'forgeSwipeDelete', 'haptics', 'locationOn', 'proposeTargetTime', 'keepStreams', 'streamsInBackup', 'morningInBackup', 'watchSilence', 'watchKindCheck', 'illnessSigns', 'illnessSignsOneMorning', 'heatPace', 'weekdayPattern', 'airQuality', 'morningRule', 'restNotice', 'weekNotice', 'eveningBefore', 'eveningNotice', 'autoUpdate', 'morningProposal', 'mountainWeather', 'weatherWarnings', 'avalancheBulletin', 'heatAcclimation', 'paceCurve', 'weightCard', 'stageOwnPace', 'climbPace', 'zonesAfterTest', 'testReadyLine', 'shortTest', 'shortTestWatch', 'tempoStablePieces', 'fuelOnTheGo', 'raceDay', 'reentryCatchUp', 'restDayFollows', 'firstAdviceSheet'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;

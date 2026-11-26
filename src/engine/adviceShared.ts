@@ -83,12 +83,23 @@ export interface Advice {
   // (adviceBusyIds), dus de vraag Niet gedaan? en Vanzelf overslaan laten ze met rust, net als achter MISSED-CATCH-UP
   // (components/useMissedTraining.ts). Niet opgeslagen.
   heldCatchUpIds?: string[];
+  // Eén antwoord per dag (engine/oneAnswerPerDay.ts): dit advies raakt dezelfde dag of training als het advies met dit
+  // id en wacht tot dat beantwoord is. Niet opgeslagen.
+  blockedBy?: string;
+  // Op het advies dat blijft: de adviezen die erop wachten. Hun trainingen blijven bezet (adviceBusyIds), maar ze
+  // staan nergens als kaart. Niet opgeslagen.
+  waiting?: Advice[];
+}
+
+// De lijst met de adviezen die op een ander wachten erbij (engine/oneAnswerPerDay.ts): die zijn er nog, alleen niet als kaart.
+export function withWaiting(advice: readonly Advice[]): Advice[] {
+  return advice.flatMap((a) => [a, ...(a.waiting ?? [])]);
 }
 
 // De trainingen die al in een advies op Vandaag staan, ook die een open instap voor het inhalen vasthoudt: die krijgen
 // geen kaart Training die niet doorging en worden niet vanzelf overgeslagen (engine/missedTraining.ts#planMissed, busy).
 export function adviceBusyIds(advice: readonly Advice[]): Set<string> {
-  const ids = advice.flatMap((a) => [
+  const ids = withWaiting(advice).flatMap((a) => [
     ...[a.proposal, ...(a.options?.map((o) => o.proposal) ?? [])].flatMap((p) => p?.changes ?? []).map((c) => c.plannedSessionId),
     ...(a.heldCatchUpIds ?? []),
   ]);
@@ -97,7 +108,7 @@ export function adviceBusyIds(advice: readonly Advice[]): Set<string> {
 
 // Wacht er een inhaaladvies (MISSED-CATCH-UP, of een dat voor de instap wijkt), dan wacht de vraag Niet gedaan?.
 export function catchUpWaiting(advice: readonly Advice[]): boolean {
-  return advice.some((a) => a.ruleId === 'MISSED-CATCH-UP' || (a.heldCatchUpIds?.length ?? 0) > 0);
+  return withWaiting(advice).some((a) => a.ruleId === 'MISSED-CATCH-UP' || (a.heldCatchUpIds?.length ?? 0) > 0);
 }
 
 export interface AdviceOption {

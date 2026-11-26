@@ -4,6 +4,7 @@ import { shouldShowWelcome, welcomeSteps, type DevicePermissions, type WelcomeSt
 import { notificationPort } from '../../integrations/notifications';
 import { useBackToClose } from '../../utils/useBackToClose';
 import { withTimeout } from '../../utils/withTimeout';
+import { useInSheetRow } from '../../state/sheetRow';
 import { ImportWizard } from '../ImportWizard';
 import { Icon, type IconName } from '../icons';
 import { Pictogram } from '../pictograms';
@@ -56,6 +57,8 @@ export function PermissionWelcome({ ready }: { ready: boolean }) {
   const [steps, setSteps] = useState<WelcomeStep[] | null>(null);
   const [index, setIndex] = useState(0);
   const [done, setDone] = useState(false);
+  // In de gedeelde rij zodra hij gaat kijken of hij komt, tot hij weg is (state/sheetRow.ts).
+  useInSheetRow('welcome', ready && !done && (steps !== null || shouldShowWelcome({ timed: port.timed, seen: seen(), forced })));
 
   useEffect(() => {
     if (!ready || done || steps || !shouldShowWelcome({ timed: port.timed, seen: seen(), forced })) return;

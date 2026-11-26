@@ -96,5 +96,6 @@ export function joinPlanCheck(
     before: [...prev.before, ...repaired.stored.filter((s) => !known.has(s.id))],
     addedIds: [...prev.addedIds, ...(repaired.addedIds ?? [])],
     alsoReverts: [...(prev.alsoReverts ?? []), recordId],
+    alsoRevertLines: { ...prev.alsoRevertLines, [recordId]: [...repaired.lines] },
   };
 }

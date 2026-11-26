@@ -5,6 +5,7 @@ import { ImportWizard } from '../ImportWizard';
 import { SkyBand } from '../SkyBand';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from '../ui';
 import { StartWizard } from './StartWizard';
+import { useInSheetRow } from '../../state/sheetRow';
 
 // Vandaag in een app zonder programma en zonder planning (een nieuwe installatie)
 // ASCEND plant pas als je hebt gezegd wat je wilt
@@ -16,6 +17,8 @@ import { StartWizard } from './StartWizard';
 // afsluiting nog laten zien).
 export function StartWelcome({ onHold }: { onHold: (hold: boolean) => void }) {
   const [open, setOpen] = useState<'questions' | 'import' | null>(null);
+  // In de gedeelde rij zolang het welkom er staat (state/sheetRow.ts).
+  useInSheetRow('start-welcome');
   const { trainingGoals, goalMilestones } = useAppData();
   // A goal that is already there decides the kind of week the advice is for.
   const [answers, setAnswers] = useState<StartAnswers>(() => defaultAnswers(trainingGoals.some((g) => g.status !== 'archived') ? kindOfExistingGoals(trainingGoals, goalMilestones) : undefined));

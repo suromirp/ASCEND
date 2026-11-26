@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react
 import { JUST_UPDATED } from '../utils/updateFlag';
 import { subscribeToUpdate, updateIsWaiting, applyUpdateNow } from '../utils/swUpdate';
 import { Icon } from './icons';
+import { useInSheetRow } from '../state/sheetRow';
 
 // The service worker is registered at page load (utils/swUpdate.ts, started
 // from main.tsx) and updates itself at a quiet moment (utils/updatePolicy.ts):
@@ -13,6 +14,8 @@ import { Icon } from './icons';
 export function UpdatePrompt() {
   const needRefresh = useSyncExternalStore(subscribeToUpdate, updateIsWaiting);
   const [updating, setUpdating] = useState(false);
+  // In de gedeelde rij zolang de vraag er staat (state/sheetRow.ts).
+  useInSheetRow('update', needRefresh);
 
   if (!needRefresh) return null;
 

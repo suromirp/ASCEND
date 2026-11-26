@@ -7,6 +7,7 @@ import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { MAX_LEG_EASE_DAYS } from '../models/legEase';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeSportRestOffers } from '../engine/sportRestOffer';
+import { mergeFirstSheet } from '../engine/adviceFirst';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { dedupeInfluencesByPlace } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
@@ -223,6 +224,11 @@ export function mergeSettingsHistory(current: AppSettings, incoming: Partial<App
     const byKey = new Map((incoming.legEaseDays ?? []).map((d) => [`${d.date}|${d.plannedSessionId}`, d]));
     for (const d of current.legEaseDays ?? []) byKey.set(`${d.date}|${d.plannedSessionId}`, d);
     merged.legEaseDays = [...byKey.values()].sort((a, b) => a.date.localeCompare(b.date) || a.at.localeCompare(b.at)).slice(-MAX_LEG_EASE_DAYS);
+  }
+  // Important advice that already came as a sheet: per id the furthest state, so it does not come back
+  // (engine/adviceFirst.ts#mergeFirstSheet).
+  if (incoming.firstSheet || current.firstSheet) {
+    merged.firstSheet = mergeFirstSheet(current.firstSheet, incoming.firstSheet);
   }
   // Verdicts on test runs: the union per log, the device's own wins.
   if (incoming.testJudgments || current.testJudgments) {

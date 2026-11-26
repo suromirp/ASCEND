@@ -12,6 +12,7 @@ import type { ExternalActivity } from '../engine/activityImport';
 import type { HealthConnectErrorKind, HealthKind, HealthRoundFound } from '../models/healthConnect';
 import type { HealthConnectState } from './healthConnect';
 import type { ShortTestSeries } from '../models/shortTest';
+import { readFirstSheet, type FirstSheetMap } from '../engine/adviceFirst';
 
 // --- terugknop en hervatten (optionele instellingen) ---------------------------
 // `settings.tabBack` en `settings.resumeMinutes` (engine/navigationSettings.ts)
@@ -161,6 +162,13 @@ function realDay(raw: unknown): string | undefined {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return undefined;
   const at = new Date(`${day}T12:00:00Z`);
   return !Number.isNaN(at.getTime()) && at.toISOString().slice(0, 10) === day ? day : undefined;
+}
+
+// Belangrijk advies als blad (I-157): per advies-id de dag van tonen en hoe vaak Niet nu. Een oudere back-up heeft het
+// niet en laat de stand op het toestel staan; een kapotte regel valt weg en telt. Geen hogere schemaVersion: het veld
+// komt er alleen bij (docs/beslissingen/2026-11-26-belangrijk-advies-als-blad.md).
+export function migrateFirstSheet(raw: unknown): { value: FirstSheetMap | undefined; skipped: number } {
+  return readFirstSheet(raw);
 }
 
 export function migrateShortTestSeries(raw: unknown, today: string = todayISO()): { value: ShortTestSeries | undefined; skipped: number } {

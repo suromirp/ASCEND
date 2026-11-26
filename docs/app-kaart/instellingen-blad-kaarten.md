@@ -16,6 +16,9 @@ Of kies zelf
 Kaarten boven de missie
 [knop: Uitleg: Kaarten boven de missie]
 Eén
+[knop: Belangrijk advies als blad]
+Belangrijk advies als blad
+[knop: Uitleg: Belangrijk advies als blad]
 [knop: De avond ervoor]
 De avond ervoor
 [knop: Uitleg: De avond ervoor]

@@ -411,7 +411,8 @@ export interface WeekNotice {
 // test waar TEST-MAKE-ROOM omheen plant (het id van dat advies is `testroom:<sessie>`).
 export function adviceSessionIds(advice: Advice[]): Set<string> {
   const ids = new Set<string>();
-  for (const a of advice) {
+  // Ook een advies dat op een ander wacht (engine/oneAnswerPerDay.ts): het staat er nog, alleen niet als kaart.
+  for (const a of advice.flatMap((x) => [x, ...(x.waiting ?? [])])) {
     if (a.id.startsWith('testroom:')) ids.add(a.id.slice('testroom:'.length));
     for (const p of [a.proposal, ...(a.options ?? []).map((o) => o.proposal)]) {
       for (const c of p?.changes ?? []) if (c.plannedSessionId) ids.add(c.plannedSessionId);
