@@ -4797,6 +4797,23 @@
    ],
    "kern": "Verslag van I-162 en I-150: na jouw verplaatsing naar een dag met je rustdag één voorstel met Akkoord om de rustdag naar de vrijgekomen dag te zetten (anders de dichtstbijzijnde vrije dag van dezelfde week, nooit naast een test of wedstrijd), instelling Rustdag schuift mee, en de rustdagrij die zegt welke training je die dag deed. Bewijs, keuzes en wat niet gecontroleerd is.",
    "stand": "achtergrond"
+  },
+  "docs/beslissingen/2026-11-26-planning-losse-punten.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Zes losse punten op advies: alleen vandaag krijgt de ziekteregel in het dagbeeld, Geen tijd vandaag en de beschikbaarheid kiezen alleen een open dag zonder test ernaast, het eerste voorstel zegt dat het weekplan de weken vanaf over twee weken afstemt (invariant 2 blijft twee weken), Meer in de startweken volgt de ladder, vaste rijen en Hoeveel per soort rekenen niet tot het venster van een voorbeeld, en de zin van het krachtblok klopt.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-23-een-plan-eerste-voorstel.md"
+   ]
+  },
+  "docs/onderhoud/2026-11-26-planning-losse-punten.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Verslag van I-146, I-147, I-148, I-151, I-156 en de zin van het krachtblok: oorzaak, fix, tests en wat niet is nagegaan.",
+   "stand": "achtergrond"
   }
  }
 }
