@@ -3210,6 +3210,18 @@
     "docs/beslissingen/2026-11-23-terugkeer-na-pauze.md"
    ]
   },
+  "docs/beslissingen/2026-11-25-terugkeer-rustdag.md": {
+   "onderwerpen": [
+    "planning",
+    "lichaam-en-herstel"
+   ],
+   "kern": "Na een pauze zonder ziekte stelt de rustiger instap in hetzelfde voorstel met Akkoord voor om een lichte gemiste training (kracht of een rustige loop, geen test, harde loop of lange duurloop, niet van een vakantiedag, niet vastgezet door jou) op de eerste rustdag van de instap te doen, met 48 uur tussen zware beensessies en de duur van de instap; na ziekte blijft de rustdag staan; instelling Gemiste training op je rustdag, standaard aan.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-23-terugkeer-eerste-dag.md",
+    "docs/beslissingen/2026-11-23-terugkeer-voor-inhalen.md"
+   ]
+  },
   "docs/beslissingen/2026-11-23-ziek-en-test-of-wedstrijd.md": {
    "onderwerpen": [
     "week",
@@ -3551,6 +3563,13 @@
    ],
    "kern": "Onderhoudsronde 16 november 2026: grootte, dubbele en dode code, top tien om op te ruimen, ochtenden en IJkset.",
    "stand": "geldt"
+  },
+  "docs/onderhoud/sherpa-i159.md": {
+   "onderwerpen": [
+    "planning"
+   ],
+   "kern": "Verslag van de bouw van I-159 (gemiste training op de eerste rustdag van de instap): eigen keuzes, bewijs per dag en de controles.",
+   "stand": "achtergrond"
   },
   "docs/onderhoud/reflectie-2026-11-01.md": {
    "onderwerpen": [

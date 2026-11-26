@@ -1104,6 +1104,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveRunInsight(s.runInsight).chestStrap };
     case 'tempo-stukken':
       return { checked: s.tempoStablePieces !== false };
+    case 'instap-rustdag':
+      return { checked: s.reentryCatchUp !== false };
     case 'eten-onderweg':
       return { checked: s.fuelOnTheGo !== false };
     case 'intensiteit':

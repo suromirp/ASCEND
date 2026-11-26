@@ -507,6 +507,8 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   // De ruil van de eerste dag in de instap (reentryFirstDay) is ook een voorstel: geen tweede ruil van dezelfde
   // rustdag ernaast nu het inhalen hem niet meer bezet (REST-SWAP, REST-PULL).
   for (const f of reentryOpen.map((a) => a.reentryFirstDay)) if (f) { usedIds.add(f.restId); usedIds.add(f.trainingId); }
+  // De gemiste training die de instap op de eerste rustdag zet (I-159) is ook bezet.
+  for (const c of reentryOpen.map((a) => a.reentryCatchUp)) if (c) usedIds.add(c.sessionId);
   // Eén inhaal per keer over beide regels: stelt MISSED-CATCH-UP al een inhaal voor, dan geen tweede via de rustdag
   // (twee voorstellen die elk kloppen, maar samen hard naast hard zetten; Warden, 11 november).
   const missedMoves = missed.some((a) => a.proposal?.changes.some((c) => c.action === 'move'));

@@ -310,6 +310,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('niet-doorgegaan', 'Training die niet doorging', 'planning', 'missedTraining', 'ask', 'nietDoorgegaan'),
   choice('niet-doorgegaan-dagen', 'Na hoeveel dagen', 'planning', 'missedTrainingDays', 2, 'nietDoorgegaanDagen'),
   flag('log-koppelen', 'Log op een andere dag koppelen', 'planning', 'missedLink'),
+  flag('instap-rustdag', 'Gemiste training op je rustdag', 'planning', 'reentryCatchUp'),
   flag('trillen', 'Trillen', 'vandaag', 'haptics'),
   flag('rust-melding', 'Einde van de rust', 'vandaag', 'restNotice'),
   flag('weekmelding', 'Weekmelding op zondag', 'vandaag', 'weekNotice'),

@@ -303,4 +303,14 @@ export const PLANNING_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Alleen met Akkoord', text: 'eerst een voorstel, pas na Akkoord verandert er iets. Na Liever niet krijg je voor dit getal geen vraag meer; een volgende test kan een nieuw voorstel geven.' },
     ],
   },
+  'instap-rustdag': {
+    title: 'Gemiste training op je rustdag',
+    lead: 'Na een vakantie of een stille periode zonder ziekte zet de rustiger instap een lichte training die je miste op je eerste rustdag in die zeven dagen.',
+    points: [
+      { head: 'Welke training', text: 'de laatste die je miste in de pauze of de dagen terug: kracht of een rustige loop, nooit een test, een harde loop of de lange duurloop. Vandaag telt nog niet als gemist.' },
+      { head: 'Grenzen', text: 'geen zware benen binnen 48 uur van een andere zware beensessie, en een training die je zelf vastzette blijft staan. Hij duurt net zo kort als de rest van de instap.' },
+      { head: 'Na ziekte', text: 'blijft de rustdag een rustdag.' },
+      { head: 'Alleen met Akkoord', text: 'het hoort bij het voorstel van de rustiger instap; Liever niet laat alles staan. Uit: de instap zet niets op je rustdag.' },
+    ],
+  },
 };

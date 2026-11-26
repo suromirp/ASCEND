@@ -61,8 +61,10 @@ export function diffHorizon(input: HorizonDiffInput): HorizonDiff {
   const counts = { moved: 0, changed: 0, added: 0, removed: 0 };
 
   for (const b of before) {
-    if (!open(b)) continue;
     const a = afterById.get(b.id);
+    // Een gemiste training die een voorstel naar vandaag of later haalt (de rustiger instap, I-159) is ook een verandering.
+    const fetched = !!a && !logged.has(b.id) && b.status !== 'skipped' && a.status !== 'skipped' && b.scheduledDate < today && a.scheduledDate >= today;
+    if (!open(b) && !fetched) continue;
     if (b.status === 'skipped') {
       if (a && a.status !== 'skipped') {
         items.push({ plannedSessionId: b.id, action: 'add', restore: true, newSessionDraft: { templateId: a.templateId, scheduledDate: a.scheduledDate, weekStartDate: mondayOfWeek(a.scheduledDate) }, toDate: a.scheduledDate, reason, generatedBy: SOURCE });

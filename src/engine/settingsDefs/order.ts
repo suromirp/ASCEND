@@ -67,7 +67,7 @@ export const ADVICE_ORDER: readonly string[] = [
   'forge-naast', 'vetpercentage', 'gewicht-kaart', 'gewicht-eigen', 'gewicht-periode', 'gewichtstrend', 'figuur',
   'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-namen', 'intensiteit', 'ochtendcheck',
   'ochtendkaart', 'benen-na-test', 'ochtend-vanaf', 'boven-missie', 'zweet-vragen', 'twijfeltest', 'nieuwe-test',
-  'rustiger-instap', 'rustdag-terug', 'week-vol', 'niet-doorgegaan', 'niet-doorgegaan-dagen', 'log-koppelen',
+  'rustiger-instap', 'rustdag-terug', 'week-vol', 'niet-doorgegaan', 'niet-doorgegaan-dagen', 'log-koppelen', 'instap-rustdag',
   'trillen', 'rust-melding', 'weekmelding', 'weekmelding-tijd', 'avond-ervoor', 'avond-ervoor-tijd', 'avond-melding',
   'auto-bijwerken', 'weekvoorstel', 'week-na-keuze', 'volgorde-stand', 'forge-oefeningen', 'forge-verloop',
   'forge-onderbreking', 'forge-concept', 'forge-grens-kracht', 'forge-grens-been', 'forge-vegen', 'slepen-week',

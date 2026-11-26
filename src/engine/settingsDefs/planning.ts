@@ -654,6 +654,15 @@ export const PLANNING: SettingDef[] = [
     keywords: ['koppelen', 'horloge', 'garmin', 'macrofactor', 'andere dag', 'gemist', 'log', 'hoort bij', 'training die niet doorging'],
   },
   {
+    id: 'instap-rustdag',
+    page: 'planning',
+    place: { in: 'bundel-niet-doorgegaan' },
+    title: 'Gemiste training op je rustdag',
+    note: 'Na een pauze zonder ziekte stelt de rustiger instap voor om een lichte training die je miste op je eerste rustdag te doen.',
+    keywords: ['training die niet doorging', 'pauze', 'vakantie', 'terug', 'instap', 'rustdag', 'gemist', 'inhalen', 'niet fit', 'na de vakantie'],
+    help: true,
+  },
+  {
     id: 'lange-loop-benen',
     page: 'planning',
     place: { row: true, advanced: true },

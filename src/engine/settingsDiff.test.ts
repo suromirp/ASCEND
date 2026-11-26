@@ -12,6 +12,7 @@ const apply = (s: AppSettings, patch: Partial<AppSettings>): AppSettings => ({ .
 const everything: AppSettings = {
   ...base,
   cardOrder: { stand: ['doel', 'lopen', 'invloed', 'kracht', 'benen', 'belasting', 'vier-regels'] },
+  reentryCatchUp: false,
   routeLoopPriority: 'distance',
   routeDriveMinutes: 45,
   changeApplyMode: 'always_ask',

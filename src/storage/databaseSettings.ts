@@ -132,6 +132,10 @@ export interface AppSettings {
   // De rustiger instappen waarop je Akkoord gaf (engine/reentry.ts#ReentryWeek). Alleen via het voorstel
   // geschreven; de duurregisters lezen ze. Optional and additive, so older settings and backups need no change.
   reentryWeeks?: ReentryWeek[];
+  // "Gemiste training op je rustdag" (engine/reentry.ts#reentryCatchUp, I-159): na een pauze zonder ziekte stelt de
+  // rustiger instap een lichte gemiste training op je eerste rustdag voor. Absent = aan. Optional and additive, so
+  // no migration step; a backup keeps only a boolean (storage/backupClean.ts).
+  reentryCatchUp?: boolean;
   // The next tocht (a trek you set up as a goal of your own, models/leave.ts
   // TrekDetails) on Vandaag. Absent = on. Optional and additive.
   showNextTrek?: boolean;
