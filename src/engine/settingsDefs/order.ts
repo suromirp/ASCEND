@@ -47,7 +47,7 @@ export const INDEX_ORDER: readonly string[] = [
   'strava-tekst', 'strava-tekst-inhoud', 'health-connect', 'health-connect-gewicht', 'backup', 'auto-backup',
   'backup-bewaren', 'backupmap', 'opslag', 'toestemmingen', 'locatie', 'auto-bijwerken', 'ruimte-app',
   'voorstellen-opruimen', 'momentopnamen', 'aangepast', 'versie', 'reeksen-bewaren', 'reeksen-backup', 'vroeg-ziek',
-  'hitte-tempo', 'weekdag-patroon', 'luchtkwaliteit', 'klimtempo', 'etappetijd-eigen', 'tempocurve', 'wennen-warmte',
+  'hitte-tempo', 'weekdag-patroon', 'luchtkwaliteit', 'klimtempo', 'beenindex-leert', 'beenindex-standaard', 'etappetijd-eigen', 'tempocurve', 'wennen-warmte',
   'bergweer', 'ochtend-voorstel', 'ochtendregel', 'horloge-stil', 'ochtend-backup', 'reeksen-ruimte', 'startniveau',
   'herbouwen', 'wissen', 'kennisbank', 'plekken', 'weer-gids', 'bronnen',
 ];
@@ -84,6 +84,6 @@ export const ADVICE_ORDER: readonly string[] = [
   'horloge-rustige-loop', 'macrofactor-gewicht', 'health-connect-gewicht', 'datavelden', 'strava-tekst',
   'strava-tekst-inhoud', 'tempo-stukken', 'eten-onderweg', 'reeksen-bewaren', 'locatie', 'vroeg-ziek', 'hitte-tempo',
   'weekdag-patroon', 'luchtkwaliteit', 'ochtendregel', 'ochtend-voorstel', 'bergweer', 'wennen-warmte', 'tempocurve',
-  'etappetijd-eigen', 'klimtempo', 'horloge-stil', 'horloge-soort', 'ochtend-backup', 'reeksen-backup',
+  'etappetijd-eigen', 'klimtempo', 'beenindex-leert', 'horloge-stil', 'horloge-soort', 'ochtend-backup', 'reeksen-backup',
   'auto-backup', 'backup-bewaren', 'voorstellen-opruimen',
 ];

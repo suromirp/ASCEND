@@ -80,7 +80,7 @@ export function answerOf(c: MorningCheckIn): LegAnswer | undefined {
   return {
     date: c.date, legs: c.legs,
     ...(c.soreWhere === 'upper' && (c.legs === 'spierpijn' || c.legs === 'flink') ? { upper: true as const } : {}),
-    ...(c.legsFrom ? { from: c.legsFrom } : {}),
+    ...(c.legsFrom === 'voorstel' || c.legsFrom === 'zelf' ? { from: c.legsFrom } : {}),
   };
 }
 
@@ -253,7 +253,9 @@ export function learningLine(l: LegLearning): string {
     case 'te-weinig': return `Nog ongeveer ${formatHalf(l.needed)} ochtenden met een duidelijk antwoord nodig voor een eerste uitkomst.`;
     case 'past-slecht': return 'Je ochtenden en de beenindex lopen vaak uiteen, in beide richtingen. Een factor lost dat niet op.';
     case 'klaar': {
-      const now = `De index rekent met ${pct(l.current)}.`;
+      const now = l.current < 1
+        ? `De index toont je benen met ${pct(l.current)}. De planning rekent voorzichtig met de standaardindex.`
+        : `De index rekent met ${pct(l.current)}.`;
       if (l.proposal) return now;
       const edge = l.atEdge ? ' Je benen wijken verder af dan de app wil bijstellen.' : '';
       return l.target === l.current ? `${now} Dat past bij je ochtenden.${edge}` : `${now}${edge}`;
@@ -279,4 +281,29 @@ export function planningStaysCareful(k: number): boolean {
 export function daysSinceDecision(log: LegFactorEntry[] | undefined, today: string): number | undefined {
   const last = [...(log ?? [])].sort((a, b) => a.at.localeCompare(b.at)).pop();
   return last ? daysBetween(localDateOf(last.at), today) : undefined;
+}
+
+// --- een besluit bewaren ---------------------------------------------------------------------
+// Een besluit is altijd een nieuwe rij achteraan; bestaande rijen blijven zoals ze zijn.
+export function addLegDecision(log: LegFactorEntry[] | undefined, source: LegFactorEntry['source'], factor: number, at: string): LegFactorEntry[] {
+  return [...(log ?? []), { at, factor: source === 'akkoord' ? clampFactor(factor) : 1, source }];
+}
+
+// Of een wijziging de factor verandert waarmee de planning rekent. Dan gaat ze als voorstel met Akkoord
+// langs de planning (components/settings/usePlanSettingChange.tsx); anders is het alleen een woord.
+export function changesPlanningFactor(
+  before: { legFactorLog?: LegFactorEntry[]; legIndexLearning?: unknown },
+  after: { legFactorLog?: LegFactorEntry[]; legIndexLearning?: unknown },
+): boolean {
+  return legFactorsOf(before).safe !== legFactorsOf(after).safe;
+}
+
+// De waarde van de rij Index en je benen in Je stand, uit het leren: een voorstel gaat voor, dan je eigen
+// factor. Niets te zeggen (uit, te weinig, standaard) is geen rij; de metingen bij het inlopen gaan voor.
+// `checks`: de waarde uit de metingen bij het inlopen (engine/standPage.ts#indexCheckValue).
+export function legLearningRowValue(l: LegLearning, checks?: string): string | undefined {
+  if (l.status === 'klaar' && l.proposal) return 'Een voorstel';
+  if (checks) return checks;
+  if (l.status !== 'uit' && l.current !== 1) return `Eigen factor ${pct(l.current)}`;
+  return undefined;
 }

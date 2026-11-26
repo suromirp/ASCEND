@@ -23,6 +23,9 @@ import { PaceCurveCard } from '../components/stand/PaceCurveCard';
 import { usePaceCurve } from '../components/stand/usePaceCurve';
 import { InfluenceCard } from '../components/influence/InfluenceCard';
 import { useStandData } from '../components/stand/useStandData';
+import { useLegLearning } from '../components/stand/useLegLearning';
+import { LegLearningBlock } from '../components/stand/LegLearningBlock';
+import { legLearningRowValue } from '../engine/legIndexLearning';
 import { StandInfoSheet, StandRow, StandRows, StandSheet } from '../components/stand/StandParts';
 import { useInfluenceEffects } from '../components/influence/useInfluenceEffects';
 import { useAppData } from '../state/AppDataContext';
@@ -65,7 +68,8 @@ type Sheet = 'beendagen' | 'index' | 'bergaf' | 'klimtempo' | 'ijktocht' | 'verd
 function Benen() {
   const d = useStandData();
   const [sheet, setSheet] = useState<Sheet>(null);
-  const checks = indexCheckValue(d.checks);
+  const learning = useLegLearning();
+  const checks = legLearningRowValue(learning, indexCheckValue(d.checks));
   return (
     <>
       <LegFatigueCard />
@@ -75,7 +79,7 @@ function Benen() {
         {checks && <StandRow label="Index en je benen" value={checks} onClick={() => setSheet('index')} sheet />}
       </StandRows>
       {sheet === 'beendagen' && <StandSheet eyebrow="Benen" title="Beendagen" onClose={() => setSheet(null)}><LegCalendar days={d.calendar} today={d.today} /></StandSheet>}
-      {sheet === 'index' && <StandSheet eyebrow="Benen" title="Index en je benen" onClose={() => setSheet(null)}><IndexCheckCard checks={d.checks} /></StandSheet>}
+      {sheet === 'index' && <StandSheet eyebrow="Benen" title="Index en je benen" onClose={() => setSheet(null)}><div className="flex flex-col gap-6"><LegLearningBlock learning={learning} /><IndexCheckCard checks={d.checks} /></div></StandSheet>}
     </>
   );
 }

@@ -17,6 +17,7 @@ vi.mock('../components/stand/WeeklyLoadChart', () => ({ WeeklyLoadChart: () => c
 vi.mock('../components/stand/IntensityMixCard', () => ({ IntensityMixCard: () => createElement('p', null, 'INTENSITEIT') }));
 // De instelling Klimtempo staat uit: geen rij.
 vi.mock('../components/stand/useClimbPace', () => ({ useClimbPace: () => undefined }));
+vi.mock('../components/stand/useLegLearning', () => ({ useLegLearning: () => ({ status: 'te-weinig', current: 1, weight: 0, needed: 20 }) }));
 vi.mock('../components/SkyBand', () => ({ SkyBand: ({ children }: { children: unknown }) => createElement('div', { 'data-sky': 'low' }, children as never) }));
 
 const { StandScreenPage } = await import('./StandScreen');

@@ -3,6 +3,7 @@
 // noemt zijn voorwaarden in `showWhen`, in volgorde; de eerste die niet klopt zegt waarom de rij er niet is en welke
 // instelling het oplost. Verhuisd uit data/settingsLayout.ts, met dezelfde teksten.
 
+import { legFactorsOf } from '../legIndexLearning';
 import type { AppSettings } from '../../storage/database';
 import { resolveOverviews } from '../overviewSettings';
 import { resolveRunInsight } from '../runInsightSettings';
@@ -44,6 +45,7 @@ export const B = {
   longSunday: { ok: (_s, c) => c.longSundayVisible, reason: 'Zichtbaar zodra je hoofddoel geen bergtocht is', parent: 'doelen' },
   pairing: { ok: (_s, c) => c.sameDayAllowed, reason: 'Zichtbaar zodra twee trainingen op een dag mag', parent: 'meerdere' },
   trainings: { ok: (_s, c) => c.strengthTrainings, reason: 'Zichtbaar zodra er krachttrainingen in je planning staan', parent: 'kracht' },
+  ownLegFactor: { ok: (s) => legFactorsOf(s).shown !== 1, reason: 'Zichtbaar zodra de beenindex met je eigen factor rekent', parent: 'beenindex-leert' },
   bodyFat: { ok: (_s, c) => c.bodyFat, reason: 'Zichtbaar zodra je weegmetingen met een vetpercentage hebt', parent: 'lichaamsgewicht' },
   morning: { ok: (s) => resolveOverviews(s.overviews).morningCheckIn, reason: 'Zichtbaar zodra de ochtendcheck aan staat', parent: 'ochtendcheck' },
   review: { ok: (s) => resolveOverviews(s.overviews).weekReview, reason: 'Zichtbaar zodra de weekterugblik aan staat', parent: 'weekterugblik' },

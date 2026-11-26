@@ -4,7 +4,8 @@
 
 - Opdracht eigenaar: geen proefversie, moet kloppen. Sportwetenschapper klaar: docs/onderzoek/Beenindex leert van je ochtenden.md (factor k op de som van de trainingen, 0,7 tot 1,4, vanaf 20 gewogen ijkpunten, krimp naar 1, stap hoogstens 0,15, één voorstel per 28 dagen; beslissers rekenen met max(1,k), alleen de woorden volgen k onder 1; regels F1 tot F13 nooit soepeler).
 - Keuzes Sherpa (in het besluit vast te leggen): backup-schema blijft 6 (optionele velden legAnswers, legFactorLog, legIndexLearning); legAnswers is archief van wat uit de 60 ochtendchecks valt; legsFrom op de ochtendcheck; geen apart record voor een getoond voorstel, rust telt vanaf akkoord of liever-niet.
-- Stand: legFatigue factor-invoer, models/legIndex.ts, engine/legIndexLearning.ts geschreven; nog bouwen: opslag, doorgeven, UI, tests, besluit, Warden en Lookout.
+- Stand: commits 0d3bb65 (rekenkern), 9c70286 (opslag, archief, migratie), a1cfba0 (factor door de app), gepusht; suite groen. Nog: UI (voorstel in blad "Index en je benen" met Akkoord en Liever niet, instelling in Lichaam > Signalen met Terug naar de standaard), legsFrom zuiveren in answerOf, veiligheidstests F1 tot F13 plus eigenschapstest, besluit 2026-11-26-beenindex-leert.md, kaart:vergelijk, Warden en Lookout, squash, backlog, kosten, terugmelding.
+- Keuzes erbij: herkomst 'voorstel' als het antwoord gelijk is aan de voorinvulling; woorden met de getoonde factor alleen op kaart Benen, Je stand, grafiek en voorinvulling, al het andere (planner, Forge, Lichter, lijfcheck, voorstelblad, testregel) met max(1,k); Akkoord dat de veilige factor verandert gaat via changeSetting. Randgeval voor Warden: undo via settingsBefore met oudere legAnswers kan archiefrijen terugzetten.
 
 ## Backlogsessie B, ijktocht (Rooster ronde 5, branch claude/ijktocht-26nov)
 

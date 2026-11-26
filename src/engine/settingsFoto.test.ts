@@ -178,6 +178,7 @@ const ALLES_ANDERS: AppSettings = {
   paceCurve: false,
   stageOwnPace: false,
   climbPace: false,
+  legIndexLearning: 'uit',
   streamsInBackup: false,
   locationOn: true,
   proposalTidyMonths: 12,

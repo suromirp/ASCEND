@@ -11,6 +11,9 @@ import { resolveIntensityCounting } from '../../../engine/intensitySettings';
 import { resolveReentry } from '../../../engine/reentry';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
+import { usePlanSettingChange } from '../usePlanSettingChange';
+import { addLegDecision, changesPlanningFactor } from '../../../engine/legIndexLearning';
+import type { AppSettings } from '../../../storage/database';
 
 // Lichaam: je gewicht (komt zoveel mogelijk vanzelf uit Health Connect of MacroFactor), je hartslag, je blessures
 // (die staan op het scherm Lichaam) en of het figuur daar een man of een vrouw is.
@@ -21,6 +24,19 @@ export function LichaamGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   // Een keuze in het blad Wat speelde er opent haar onderblad bovenop dat blad.
   const [inner, setInner] = useState<string | null>(null);
   const closeInner = () => setInner(null);
+  const plan = usePlanSettingChange();
+  // Je eigen beenindex: Uit en Standaard zetten een rij met factor 1 (bestaande rijen blijven). Verandert dat de
+  // factor waarmee de planning rekent, dan eerst het voorstel met Akkoord; aan zetten verandert de factor niet.
+  async function legLearningTo(to: 'aan' | 'uit' | 'standaard') {
+    const patch: Partial<AppSettings> = to === 'aan'
+      ? { legIndexLearning: undefined }
+      : { legFactorLog: addLegDecision(settings.legFactorLog, to, 1, new Date().toISOString()), ...(to === 'uit' ? { legIndexLearning: 'uit' as const } : {}) };
+    if (changesPlanningFactor(settings, { ...settings, ...patch })) {
+      await plan.changeSetting(to === 'uit' ? 'Beenindex leert: uit' : 'Beenindex terug naar de standaard', patch, 'De index rekent weer zoals het model.');
+    } else {
+      await updateSettings(patch);
+    }
+  }
   return (
     <>
       <SettingsSection>
@@ -64,12 +80,15 @@ export function LichaamGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       )}
       {sheet === 'bundel-signalen' && (
         <BundleSheet eyebrow="Lichaam" title="Signalen uit je gegevens" line="Wat opvalt in je ochtenden, je trainingen en het weer, als melding. Je planning verandert alleen na Akkoord." onClose={close}>
+          {plan.note && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{plan.note}</p>}
           <SummaryRow id="vroeg-ziek" title="Vroeg ziek zien" facts={facts} info="vroegZiek" onChange={(on) => void updateSettings({ illnessSigns: on })} />
           <SummaryRow id="vroeg-ziek-een" title="Eén duidelijke ochtend" facts={facts} info="vroegZiekEen" onChange={(on) => void updateSettings({ illnessSignsOneMorning: on })} />
           <SummaryRow id="ochtendregel" title="Twee van drie" facts={facts} info="ochtendregel" onChange={(on) => void updateSettings({ morningRule: on })} />
           <SummaryRow id="weekdag-patroon" title="Patronen per weekdag" facts={facts} info="weekdagPatroon" onChange={(on) => void updateSettings({ weekdayPattern: on })} />
           <SummaryRow id="hitte-tempo" title="Hitte bij je tempo" facts={facts} info="hitteTempo" onChange={(on) => void updateSettings({ heatPace: on })} />
           <SummaryRow id="klimtempo" title="Je klimtempo" facts={facts} info="klimtempo" onChange={(on) => void updateSettings({ climbPace: on })} />
+          <SummaryRow id="beenindex-leert" title="Beenindex leert van je ochtenden" facts={facts} info="beenindex-leert" onChange={(on) => void legLearningTo(on ? 'aan' : 'uit')} />
+          <SummaryRow id="beenindex-standaard" title="Beenindex terug naar de standaard" facts={facts} onClick={() => void legLearningTo('standaard')} />
           <SummaryRow id="etappetijd-eigen" title="Etappetijd op je eigen tempo" facts={facts} info="etappetijdEigen" onChange={(on) => void updateSettings({ stageOwnPace: on })} />
           <SummaryRow id="tempocurve" title="Tempocurve tussen testen" facts={facts} info="tempocurve" onChange={(on) => void updateSettings({ paceCurve: on })} />
           <SummaryRow id="wennen-warmte" title="Wennen aan warmte" facts={facts} info="wennenWarmte" onChange={(on) => void updateSettings({ heatAcclimation: on })} />
@@ -78,6 +97,7 @@ export function LichaamGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           <SummaryRow id="luchtkwaliteit" title="Luchtkwaliteit" facts={facts} info="luchtkwaliteit" onChange={(on) => void updateSettings({ airQuality: on })} />
         </BundleSheet>
       )}
+      {plan.impact}
       {inner === 'wat-oorzaak' && <OorzaakSheet onClose={closeInner} />}
       {inner === 'wat-vastgelegd' && <VastgelegdSheet onClose={closeInner} />}
     </>

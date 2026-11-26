@@ -12,6 +12,7 @@
 // frequentie, hartslagwaarden, de sportschool, de plaats van het weer) en wat buiten
 // AppSettings staat (de schakelaars van het horloge, tweemaal Garmin en MacroFactor).
 
+import { resolveLegLearning } from './legIndexLearning';
 import { resolveMapGround } from './routeMap';
 import { isDefaultOrder, resolveCardOrder } from './cardOrder';
 import type { AppSettings } from '../storage/database';
@@ -499,6 +500,13 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('tempocurve', 'Tempocurve tussen testen', 'lichaam', 'paceCurve'),
   flag('etappetijd-eigen', 'Etappetijd op je eigen tempo', 'lichaam', 'stageOwnPace'),
   flag('klimtempo', 'Je klimtempo', 'lichaam', 'climbPace'),
+  {
+    // Terug naar aan verandert de factor niet: Uit zette een rij met de standaard (engine/legIndexLearning.ts).
+    id: 'beenindex-leert', title: 'Beenindex leert van je ochtenden', page: 'lichaam', plan: true,
+    differs: (s) => resolveLegLearning(s.legIndexLearning) !== 'aan',
+    value: (s) => onOff(resolveLegLearning(s.legIndexLearning) === 'aan'),
+    reset: () => ({ legIndexLearning: undefined }),
+  },
   flag('horloge-stil', 'Melden als je horloge stilvalt', 'koppelingen', 'watchSilence'),
   flag('horloge-soort', 'Soort van een loop toetsen', 'koppelingen', 'watchKindCheck'),
   flag('ochtend-backup', 'Ochtendgetallen in back-up', 'gegevens', 'morningInBackup'),
