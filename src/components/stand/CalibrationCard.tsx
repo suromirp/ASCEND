@@ -13,7 +13,7 @@ export function CalibrationBody({ view }: { view: CalibrationView }) {
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         {previous
           ? <>Je ijktocht van {formatWeekdayDateNL(latest.date)}{pack(latest.packKg)}, tegen de vorige van {formatWeekdayDateNL(previous.date)}{pack(previous.packKg)}.</>
-          : <>Je nulmeting van {formatWeekdayDateNL(latest.date)}{pack(latest.packKg)}. De volgende ijktocht zet je hiernaast.</>}
+          : <>Je nulmeting van {formatWeekdayDateNL(latest.date)}{pack(latest.packKg)}. De volgende ijktocht vergelijk je hiermee.</>}
       </p>
       <ul className="flex flex-col gap-2.5">
         {view.lines.map((line) => (

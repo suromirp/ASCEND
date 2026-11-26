@@ -11,6 +11,7 @@ import {
   calibrationView, findCalibrationDay, readCalibration, resolveCalibrationHike, type CalibrationAdviceInput,
 } from './ijktocht';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
+import { findDescentDay, type DescentAdviceInput } from './descentClock';
 import { applyPlanChangeItems } from './proposalEngine';
 import { planPass } from './planPass';
 import { hasRole } from './templateRoles';
@@ -18,6 +19,7 @@ import { isHardRun, isLegHeavyTemplate } from './scheduler';
 import { rankCandidateTemplates } from './weeklyPrescriptionBuilder';
 import { buildSessionBrief } from './sessionBrief';
 import { SESSION_STYLE } from '../data/sessionStyle';
+import { walkKind } from './routeTarget';
 
 // Alles hier is nagemaakt. Vandaag is woensdag 11 november 2026.
 const TODAY = '2026-11-11';
@@ -58,6 +60,10 @@ describe('het sjabloon IJktocht', () => {
     expect(hasRole(t, 'calibration')).toBe(true);
     expect(isLegHeavyTemplate(t)).toBe(false);
     expect(isHardRun(t)).toBe(false);
+  });
+
+  it('loopt je vaste route: geen gezochte lus in de Briefing', () => {
+    expect(walkKind(t)).toBeUndefined();
   });
 
   it('komt nooit vanzelf in het weekvoorschrift: alleen een voorstel met Akkoord zet hem neer', () => {
@@ -250,6 +256,24 @@ describe('samen met de afdaalklok in computeAdvice', () => {
     const dDay = descent!.proposal!.changes[0].newSessionDraft!.scheduledDate;
     const cDay = calibration!.proposal!.changes[0].newSessionDraft!.scheduledDate;
     expect(Math.abs(new Date(dDay).getTime() - new Date(cDay).getTime())).toBeGreaterThan(86_400_000);
+  });
+
+  // Warden 26 november: ook als een van de twee na Akkoord al gepland staat, niet naast elkaar.
+  it('een geplande Trap af: de ijktocht komt niet op de dag ervoor of erna', () => {
+    const withStairs = [...week(), planned('stairs', 'tpl_stairs_down', '2026-11-21')];
+    expect(findCalibrationDay(input({ plannedSessions: withStairs }), '2026-11-20', '2026-11-22')).toBeUndefined();
+    expect(findCalibrationDay(input({ plannedSessions: week() }), '2026-11-22', '2026-11-22')).toBe('2026-11-22');
+  });
+
+  it('een geplande ijktocht: de afdaalklok kiest geen dag ervoor of erna', () => {
+    const dIn = (sessions: PlannedSession[]): DescentAdviceInput => ({
+      today: TODAY, logs: [], plannedSessions: sessions, templates, context: { trips: [] } as never, respondedIds: new Set(), restDay: 1, sameDayPairingPreference: 'automatic',
+    });
+    const withIjk = [...week(), planned('ijk', CALIBRATION_TEMPLATE_ID, '2026-11-21')];
+    const slot = findDescentDay(dIn(withIjk), '2026-11-19', '2026-11-25', { tripGuard: false });
+    expect(['2026-11-20', '2026-11-21', '2026-11-22']).not.toContain(slot?.day);
+    // Zonder de ijktocht kiest hij wel een dag in dat stuk: de toets meet dus iets.
+    expect(['2026-11-20', '2026-11-21', '2026-11-22']).toContain(findDescentDay(dIn(week()), '2026-11-19', '2026-11-25', { tripGuard: false })?.day);
   });
 });
 

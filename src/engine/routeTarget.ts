@@ -36,13 +36,13 @@ const carries = (t: SessionTemplate, role: TemplateRole) => hasRole(t, role) || 
 
 // Een wandeltraining die een lus krijgt: een tocht, wandeldag, rugzakwandeling of klimtraining te voet
 // ('walk'), of een herstelwandeling ('recovery', alleen na een tik). Trap af (rol descent) is een plek,
-// geen lus. Een herstel is een wandeling als hij de keuze Herstelwandeling kent, dezelfde regel als
+// geen lus; de ijktocht (rol calibration) loopt je vaste route, dus ook geen gezochte lus. Een herstel is een wandeling als hij de keuze Herstelwandeling kent, dezelfde regel als
 // engine/trainingPlace.ts#defaultPlace. De soort komt uit het sjabloon, nooit uit een tempo.
 export type WalkKind = 'walk' | 'recovery';
 export function walkKind(template: SessionTemplate | undefined): WalkKind | undefined {
   if (!template || template.type === 'strength') return undefined;
   if (template.type === 'recovery') return getModalities(template.id)?.some((m) => m.key === 'recovery_walk') ? 'recovery' : undefined;
-  if (templateSport(template) !== 'hiking' || carries(template, 'descent')) return undefined;
+  if (templateSport(template) !== 'hiking' || carries(template, 'descent') || carries(template, 'calibration')) return undefined;
   return 'walk';
 }
 

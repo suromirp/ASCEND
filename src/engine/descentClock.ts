@@ -213,6 +213,8 @@ export function findDescentDay(input: DescentAdviceInput, from: string, until: s
     const before = templatesOn(addDays(day, -1));
     const after = templatesOn(addDays(day, 1));
     if ([...before, ...after].some((t) => isHardRun(t)) || after.some((t) => isLegHeavyTemplate(t))) return false;
+    // Een geplande ijktocht ernaast (na Akkoord): de afdaling verpest de meting erna en de ijktocht maakt de benen moe ervoor.
+    if ([...before, ...after].some((t) => hasRole(t, 'calibration'))) return false;
     // De dag na een zware beendag: alleen als toevoeging achter een rustige training, nooit op een vrije dag
     // (besluit 2026-11-11-afdaalklok.md: Trap af is matig en het programma zet op die dag zelf al een loop).
     if (!addOn && before.some((t) => isLegHeavyTemplate(t))) return false;

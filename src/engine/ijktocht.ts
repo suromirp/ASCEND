@@ -133,7 +133,8 @@ export function findCalibrationDay(input: CalibrationAdviceInput, from: string, 
     if (busy(day)) return false;
     if (input.restDay && isoWeekday(day) === input.restDay) return false;
     if (rules.holds(day, 'off', 'trek', 'light') || rules.ill(day)) return false;
-    if ([...templatesOn(addDays(day, -1)), ...templatesOn(addDays(day, 1))].some(demanding)) return false;
+    // Ook een geplande Trap af of afdaling ernaast (de afdaalklok na Akkoord): niet naast elkaar, zoals bij twee voorstellen.
+    if ([...templatesOn(addDays(day, -1)), ...templatesOn(addDays(day, 1))].some((t) => demanding(t) || hasRole(t, 'descent'))) return false;
     const ahead = (n: number) => Array.from({ length: n }, (_, i) => templatesOn(addDays(day, i + 1))).flat();
     if (ahead(TEST_CLEAR_DAYS).some((t) => isTestOrRace(t)) || ahead(RACE_CLEAR_DAYS).some((t) => hasRole(t, 'race'))) return false;
     if (trips.some((t) => day <= t.date && daysBetween(day, t.date) < TRIP_CLEAR_DAYS)) return false;
@@ -151,7 +152,7 @@ export function findCalibrationDay(input: CalibrationAdviceInput, from: string, 
   return days.find((d) => weekend(d) && fits(d)) ?? days.find((d) => !weekend(d) && fits(d));
 }
 
-const WHY = 'Een vaste ijktocht is geen gevalideerde test, wel een eerlijk kompas: met dezelfde route, dezelfde rugzak en hetzelfde rustige tempo zeggen drie dingen iets over je vorm voor de berg. Je klimtempo in meter per uur, hoeveel je hartslag in het laatste deel oploopt tegen het eerste, en hoe je benen de ochtend erna zijn. Dat laatste deel zegt het meest: hoe goed je het volhoudt als je al moe bent (Maunder e.a. 2021). Bij goed getrainde lopers zakte het tempo bij dezelfde hartslag pas na het eerste uur (Vesterinen e.a. 2014). Een trappenhuis is in Nederland vaak de beste route: altijd hetzelfde en niet afhankelijk van het weer. Het voorstel kiest een vrije dag, het liefst in het weekend, zonder iets langs of zwaars de dag ervoor of erna, en niet in de twee weken voor je bergdoel of tocht. Zonder Akkoord verandert er niets.';
+const WHY = 'Een vaste ijktocht is geen gevalideerde test, wel een eerlijk kompas: met dezelfde route, dezelfde rugzak en hetzelfde rustige tempo zeggen drie dingen iets over je vorm voor de berg. Je klimtempo in meter per uur, hoeveel je hartslag in het laatste deel oploopt tegen het eerste, en hoe je benen de ochtend erna zijn. Dat laatste deel zegt het meest: hoe goed je het volhoudt als je al moe bent (Maunder e.a. 2021). Bij goed getrainde lopers zakte het tempo bij dezelfde hartslag pas na het eerste uur (Vesterinen e.a. 2014); bij 60 minuten zie je dus vooral je klimtempo en hoe vroeg je hartslag oploopt. Een trappenhuis is in Nederland vaak de beste route: altijd hetzelfde en niet afhankelijk van het weer. Het voorstel kiest een vrije dag, het liefst in het weekend, zonder iets langs of zwaars de dag ervoor of erna, en niet in de twee weken voor je bergdoel of tocht. Zonder Akkoord verandert er niets.';
 
 function addProposal(title: string, day: string, template: SessionTemplate, reason: string): PlanChangeProposal {
   const item: PlanChangeItem = {
@@ -329,14 +330,15 @@ export function calibrationView(logs: readonly SessionLog[], checkIns: readonly 
   // Hartslag in het laatste derde tegen het eerste.
   let heartWord: 'minder' | 'gelijk' | 'meer' | undefined;
   let heartText: string;
-  const riseText = (h: NonNullable<CalibrationReading['heart']>) => (Math.round(h.rise) >= 0 ? `${n0(h.rise)} slagen hoger` : `${n0(-h.rise)} slagen lager`);
+  const beats = (n: number) => `${n0(n)} ${Math.round(n) === 1 ? 'slag' : 'slagen'}`;
+  const riseText = (h: NonNullable<CalibrationReading['heart']>) => (Math.round(h.rise) === 0 ? 'even hoog als' : Math.round(h.rise) > 0 ? `${beats(h.rise)} hoger dan` : `${beats(-h.rise)} lager dan`);
   if (!latest.heart) heartText = 'Niet bekend: deze ijktocht heeft geen hartslag die de hele tocht meeliep.';
-  else if (!previous?.heart) heartText = `In het laatste deel ${riseText(latest.heart)} dan in het eerste.${previous ? ' De vorige had geen hartslag om mee te vergelijken.' : ''}`;
+  else if (!previous?.heart) heartText = `In het laatste deel ${riseText(latest.heart)} in het eerste.${previous ? ' De vorige had geen hartslag om mee te vergelijken.' : ''}`;
   else {
     const diff = latest.heart.rise - previous.heart.rise;
     heartWord = Math.abs(diff) < HEART_NOISE_BPM ? 'gelijk' : diff < 0 ? 'minder' : 'meer';
     const word = heartWord === 'gelijk' ? 'Gelijk' : heartWord === 'minder' ? 'Loopt minder op' : 'Loopt meer op';
-    heartText = `${word}: in het laatste deel ${riseText(latest.heart)} dan in het eerste, vorige keer ${riseText(previous.heart)}.`;
+    heartText = `${word}: in het laatste deel ${riseText(latest.heart)} in het eerste, vorige keer ${riseText(previous.heart).replace(/ (dan|als)$/, '')}.`;
   }
 
   // Benen de ochtend erna.
