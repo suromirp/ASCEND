@@ -69,6 +69,7 @@ const everything: AppSettings = {
   askDoubtTest: false,
   newTestOnStops: false,
   restDayBack: false,
+  restDayFollows: false,
   fullWeekAsk: false,
   missedTraining: 'off',
   reentry: 'off',

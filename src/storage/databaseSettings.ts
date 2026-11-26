@@ -361,6 +361,9 @@ export interface AppSettings {
   // dan stelt ASCEND voor hem terug te zetten, met Akkoord (engine/restDayBack.ts). Absent = on.
   // Optional and additive.
   restDayBack?: boolean;
+  // "Rustdag schuift mee": zet je een training op een dag met je rustdag, dan stelt ASCEND voor de rustdag naar de
+  // dag te zetten die vrijkwam, met Akkoord (engine/restDayFollows.ts, I-162). Absent = on. Optional and additive.
+  restDayFollows?: boolean;
   // "Vragen als je week te vol wordt": viel er in je week een dag weg en is de rest te vol, dan vraagt ASCEND
   // welke training mag vervallen, met een advies (engine/fullWeek.ts, regel WEEK-FULL). Uit: geen vraag, Week
   // zegt het in een gewone regel. Absent = on. Optional and additive.

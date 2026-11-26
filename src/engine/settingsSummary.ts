@@ -910,6 +910,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('rustigerInstap', resolveReentry(s.reentry)) };
     case 'rustdag-terug':
       return { checked: s.restDayBack !== false };
+    case 'rustdag-schuift':
+      return { checked: s.restDayFollows !== false };
     case 'week-vol':
       return { checked: s.fullWeekAsk !== false };
     case 'trillen':
