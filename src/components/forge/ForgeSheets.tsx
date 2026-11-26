@@ -10,7 +10,8 @@ import { activeSeconds, type Pause } from '../../engine/forgeSession';
 import { resolveForgeLayout } from '../../engine/forgeLayout';
 import { EXERCISE_NOTE_MAX, resolveStrengthSettings, withExerciseValue, type ResolvedStrengthSettings } from '../../engine/strengthSettings';
 import { durationForVariant, resolveVariantDuration } from '../../engine/substitutions';
-import { getTrainingGuide, guideDayLabel } from '../../data/trainingGuide';
+import { guideDayLabel } from '../../data/trainingGuide';
+import { useTrainingGuide } from '../../state/useTrainingGuide';
 import type { ExercisePrescription } from '../../models/training';
 import type { Program } from '../../models/program';
 import type { SessionTemplate, SessionVariant } from '../../models/training';
@@ -81,7 +82,7 @@ interface ForgeSheetsProps {
 export function ForgeSheets(p: ForgeSheetsProps) {
   const { sh, template, plannedSessionId, scheduledDate, date, program, initialVariant, readOnly, preview, strength, workout, effSlots, markCause, setExercise, saveStrength, onClose } = p;
   const { logSession, reportStorageError, settings, updateSettings, plannedSessions } = useAppData();
-  const guide = getTrainingGuide(template.id);
+  const guide = useTrainingGuide(template.id);
   const menuEx = workout.find((e) => e.slot === sh.menuFor);
   const swapEx = workout.find((e) => e.slot === sh.swapFor);
   const noteEx = workout.find((e) => e.slot === sh.noteFor);

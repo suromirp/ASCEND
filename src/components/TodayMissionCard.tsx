@@ -8,7 +8,8 @@ import { forgeLabels } from '../engine/forgeWords';
 import { useNavigate } from 'react-router-dom';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { availableVariants } from '../engine/substitutions';
-import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
+import { guideDayLabel } from '../data/trainingGuide';
+import { useTrainingGuide } from '../state/useTrainingGuide';
 import { todayISO } from '../utils/dates';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { WatchSheet } from './WatchSheet';
@@ -124,10 +125,10 @@ export function TodayMissionCard({
   const afterMenu = useRef<(() => void) | null>(null);
   const variants = availableVariants(template);
   const shortVariant = variants.find((v) => v === 'short');
-  const guide = getTrainingGuide(template.id);
+  const guide = useTrainingGuide(template.id);
   // Het blad Je horloge (engine/watchSheet.ts), als tweede rij in het menu (spoor 2 van het Info-blad).
   // De missiekaart zelf verandert niet.
-  const { program, sessionLogs } = useAppData();
+  const { program, sessionLogs, plannedSessions } = useAppData();
   const forgeWords = useForgeWords();
   const [showWatch, setShowWatch] = useState(false);
   // De mint knop: Briefing als je horloge deze training afvinkt (engine/briefing.ts#missionButton),
@@ -145,7 +146,7 @@ export function TodayMissionCard({
   const [showBriefing, setShowBriefing] = useState(false);
   // De route die al bij deze training hoort: alleen als de Briefing hem kan tonen (buiten, met een Briefing).
   const sessionRoutes = useSessionRoutes();
-  const savedRoute = session && (briefingButton || briefingReach) ? routeOfSession(session, sessionRoutes) : undefined;
+  const savedRoute = session && (briefingButton || briefingReach) ? routeOfSession(session, sessionRoutes, plannedSessions) : undefined;
   const routeLine = savedRoute && session && routeShownFor(template, peekTrainingPlaces()?.[session.id]) ? sessionRouteLine(savedRoute) : undefined;
   // Terug vanaf een pagina die je uit deze Briefing opende: de Briefing gaat weer open.
   useBriefingReturn('mission', () => setShowBriefing(true), (m) => m.templateId === template.id && m.date === todayISO());

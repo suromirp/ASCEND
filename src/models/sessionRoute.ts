@@ -17,6 +17,9 @@ export interface SessionRoute {
   ascentM: number;
   // Simpel met herhalingen: hoe vaak dezelfde helling.
   repeats?: number;
+  // Begint Simpel op de voet van de helling: hoe ver die van je plek ligt (m, in een rechte lijn). Dan zegt het Route-blok
+  // dezelfde regel als bij een nieuwe lus (engine/routePlanner.ts#footStartLine). Optioneel en aanvullend: oudere routes hebben het niet.
+  footStartM?: number;
   // Hoogstens ROUTE_MAX_POINTS punten (models/place.ts), alleen plek en hoogte.
   points: RoutePoint[];
   // De dag waarop hij gekozen is (JJJJ-MM-DD).

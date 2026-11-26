@@ -5,7 +5,7 @@ import type { NearbyTerrain, TerrainFeature } from '../models/nearbyTerrain';
 import type { RouteAnswer, RouteFn, RoutePoint, RouteTarget } from '../models/route';
 import type { TrainingSpot } from '../data/trainingSpots';
 import { metersBetween, offsetPoint } from './routeGeometry';
-import { composeSimple, footReachable, footStartLine, plansWithPriority, proposalNotes, proposeRoutes, proposeSimple, type PlanOutcome } from './routePlanner';
+import { ascentCappedLine, composeSimple, footReachable, footStartLine, plansWithPriority, proposalNotes, proposeRoutes, proposeSimple, type PlanOutcome } from './routePlanner';
 import { choiceSum, loopChoiceRows, outdoorPlus, resolveDriveLimit, resolveLoopPriority, driveLimitMinutes, TREADMILL_LINE } from './routeClimbPlan';
 import { MAP_FAILED_LINE, MAP_FETCHING_LINE, MAP_MISSING_LINE, mapMissing, mapRetryLine, pickTransition, routeSheetParts } from './routeSheet';
 
@@ -54,15 +54,42 @@ describe('I-160: de lange aanloop at de hoogtemeters op', () => {
     expect(p!.ascentM).toBeLessThan(150);
   });
 
-  it('na: Hoogtemeters halen haalt 300 hm, op de voet van de helling', async () => {
+  it('na: Hoogtemeters halen blijft binnen 1,3 keer de afstand en zegt dat er minder hoogtemeters in zitten', async () => {
+    // Voor I-163 gaf dit 6 keer op en neer: 19,8 km bij een training van 10 km.
     const plans = await proposeRoutes({ start: START, target: TARGET, terrain: terrain(FAR_HILL), loop: { priority: 'ascent', driveLimitMin: 30 }, now: NOW }, farRoute());
     const p = ok(plans.simple)!;
-    expect(p.ascentM).toBeGreaterThanOrEqual(300);
-    expect(p.repeats).toBe(6);
+    expect(p.distanceM).toBeLessThanOrEqual(1.3 * TARGET.distanceKm * 1000);
+    expect(p.repeats).toBe(3);
+    expect(p.ascentCapped).toBe(true);
     expect(p.footStartM).toBeGreaterThan(2000);
     // De lus begint op de voet, niet bij je plek.
     expect(metersBetween(p.points[0], START)).toBeGreaterThan(2000);
-    expect(proposalNotes(p, TARGET)[0]).toMatch(/^Begint bij de voet van de helling, .* minuten rijden/);
+    const notes = proposalNotes(p, TARGET);
+    expect(notes[0]).toMatch(/^Begint bij de voet van de helling, .* minuten rijden/);
+    expect(notes).toContain(ascentCappedLine(TARGET));
+  });
+
+  it('na: past de afstandsgrens ruim, dan haalt Hoogtemeters halen er meer uit dan Afstand houden', async () => {
+    const target: RouteTarget = { distanceKm: 14, ascentM: 300 };
+    const plans = await proposeRoutes({ start: START, target, terrain: terrain(FAR_HILL), loop: { priority: 'ascent', driveLimitMin: 30 }, now: NOW }, farRoute());
+    const a = ok(plans.simple)!;
+    const d = ok(plansWithPriority(plans, 'distance', target).simple)!;
+    expect(d.repeats).toBe(4);
+    expect(a.repeats).toBe(5);
+    expect(a.distanceM).toBeLessThanOrEqual(1.3 * 14_000);
+    expect(a.ascentCapped).toBe(true);
+    expect(d.ascentCapped).toBeUndefined();
+    const rows = loopChoiceRows(plans, target, 'ascent', 'ascent');
+    expect(rows.map((r) => r.label)).toEqual(['Hoogtemeters halen', 'Afstand houden']);
+  });
+
+  it('een helling die de hoogtemeters wel haalt binnen de grens krijgt de zin niet', async () => {
+    const steep = feature(200, 2500, 120);
+    const route = fakeRoute([{ at: steep, height: 120, climbLen: 1500 }]);
+    const plans = await proposeRoutes({ start: START, target: TARGET, terrain: terrain(steep), loop: { priority: 'ascent', driveLimitMin: 30 }, now: NOW }, route);
+    const p = ok(plans.simple)!;
+    expect(p.ascentM).toBeGreaterThanOrEqual(300);
+    expect(p.ascentCapped).toBeUndefined();
   });
 
   it('na: Afstand houden blijft bij 10 km en zegt de som; geen stille keuze', async () => {
@@ -71,11 +98,6 @@ describe('I-160: de lange aanloop at de hoogtemeters op', () => {
     expect(d.repeats).toBe(3);
     expect(Math.abs(d.distanceM - 10_000)).toBeLessThan(1000);
     expect(d.ascentM).toBeLessThan(300);
-    const rows = loopChoiceRows(plans, TARGET, 'ascent', 'ascent');
-    expect(rows.map((r) => r.label)).toEqual(['Hoogtemeters halen', 'Afstand houden']);
-    expect(rows[0]).toMatchObject({ advised: true, picked: true });
-    expect(rows[0].sum).toMatch(/^19,8 km, 320 hoogtemeters: 6 keer op en neer$/);
-    expect(rows[1].sum).toMatch(/^9,9 km, 160 hoogtemeters: 3 keer op en neer$/);
   });
 
   it('de steilste helling gaat voor, niet de dichtstbijzijnde', async () => {
@@ -119,6 +141,11 @@ describe('I-160: zonder kaart', () => {
     expect(parts[0]).toBe('mapMissing');
     for (const o of [plans.simple, plans.adventure]) if (o.ok) expect(proposalNotes(o.proposal, TARGET).join(' ')).not.toMatch(/steilste/);
     expect(mapRetryLine('idle')).toBe(MAP_MISSING_LINE);
+    // Opnieuw proberen geeft bij dezelfde fout een nieuwe zin: de tweede poging noemt zichzelf.
+    expect(mapRetryLine('failed', 1)).toBe(MAP_FAILED_LINE);
+    expect(mapRetryLine('failed', 2)).not.toBe(mapRetryLine('failed', 1));
+    expect(mapRetryLine('failed', 3)).not.toBe(mapRetryLine('failed', 2));
+    expect(mapRetryLine('failed', 2)).toContain('weer niet');
     expect(mapRetryLine('busy')).toBe(MAP_FETCHING_LINE);
     expect(mapRetryLine('failed')).toBe(MAP_FAILED_LINE);
   });

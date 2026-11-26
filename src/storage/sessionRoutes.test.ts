@@ -90,6 +90,26 @@ describe('opslag', () => {
     expect(a.id).toBe('psA');
   });
 
+  it('een wees (route van een rij die weg is) staat bij het lezen niet meer in de stand; de opslag volgt bij de volgende schrijfactie', async () => {
+    const b = session('psB', '2026-11-28');
+    const store = fakeStore([routeFor('psA'), routeFor('psB')], [b]);
+    expect((await loadSessionRoutes(store)).map((r) => r.plannedSessionId)).toEqual(['psB']);
+    // Lezen schrijft niets; de wees staat nog in de opslag tot de volgende schrijfactie.
+    expect((store.data as SessionRoute[]).map((r) => r.plannedSessionId)).toEqual(['psA', 'psB']);
+    expect(await saveSessionRoute(b, routeFor('psB'), store)).toBe(true);
+    expect((store.data as SessionRoute[]).map((r) => r.plannedSessionId)).toEqual(['psB']);
+    // Kan de lijst van trainingen niet gelezen worden, dan blijft alles staan.
+    const blind = { ...fakeStore([routeFor('psA')]), sessions: async () => { throw new Error('weg'); } };
+    expect((await loadSessionRoutes(blind)).map((r) => r.plannedSessionId)).toEqual(['psA']);
+  });
+
+  it('een log wordt door opruimen nooit aangeraakt', async () => {
+    const { SessionLogsRepo } = await import('./database');
+    const before = await SessionLogsRepo.getAll();
+    await loadSessionRoutes();
+    expect(await SessionLogsRepo.getAll()).toEqual(before);
+  });
+
   it('een kapotte route wordt niet bewaard', async () => {
     const ps = session('ps1', '2026-11-28');
     const store = fakeStore([], [ps]);

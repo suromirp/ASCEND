@@ -24,7 +24,7 @@ export interface SessionRoutesStore {
   // Alles of niets: de hele lijst in één transactie.
   put: (routes: SessionRoute[]) => Promise<void>;
   // De geplande trainingen van nu, om op te ruimen; undefined of een fout: niet opruimen.
-  sessions: () => Promise<readonly Pick<PlannedSession, 'id'>[] | undefined>;
+  sessions: () => Promise<readonly Pick<PlannedSession, 'id' | 'catchUp'>[] | undefined>;
 }
 
 const deviceStore: SessionRoutesStore = {
@@ -69,9 +69,22 @@ function serial<T>(work: () => Promise<T>): Promise<T> {
   return run;
 }
 
+// Wezen: de route van een rij die er niet meer is. Bij het lezen tonen we ze niet en laten we ze niet in de stand
+// staan; de eerstvolgende schrijfactie ruimt ze ook in de opslag op. Kan de lijst van trainingen niet gelezen
+// worden, dan blijft alles staan. Een log wordt hier nooit aangeraakt.
+async function withoutOrphans(store: SessionRoutesStore, list: SessionRoute[]): Promise<SessionRoute[]> {
+  if (list.length === 0) return list;
+  try {
+    const sessions = await store.sessions();
+    return sessions ? routesOfSessions(list, sessions) : list;
+  } catch {
+    return list;
+  }
+}
+
 export async function loadSessionRoutes(store: SessionRoutesStore = deviceStore): Promise<SessionRoute[]> {
   try {
-    const list = readSessionRouteList(await store.get());
+    const list = await withoutOrphans(store, readSessionRouteList(await store.get()));
     if (store === deviceStore) { cache = list; notify(); }
     return list;
   } catch {
@@ -79,17 +92,17 @@ export async function loadSessionRoutes(store: SessionRoutesStore = deviceStore)
   }
 }
 
-async function update(store: SessionRoutesStore, change: (routes: SessionRoute[]) => SessionRoute[]): Promise<boolean> {
+async function update(store: SessionRoutesStore, change: (routes: SessionRoute[], sessions: readonly Pick<PlannedSession, 'id' | 'catchUp'>[] | undefined) => SessionRoute[]): Promise<boolean> {
   return serial(async () => {
     try {
       const now = readSessionRouteList(await store.get());
-      let sessions: readonly Pick<PlannedSession, 'id'>[] | undefined;
+      let sessions: readonly Pick<PlannedSession, 'id' | 'catchUp'>[] | undefined;
       try {
         sessions = await store.sessions();
       } catch {
         sessions = undefined;
       }
-      const changed = change(now);
+      const changed = change(now, sessions);
       const next = sessions ? routesOfSessions(changed, sessions) : changed;
       await store.put(next);
       if (store === deviceStore) { cache = next; notify(); }
@@ -104,9 +117,9 @@ async function update(store: SessionRoutesStore, change: (routes: SessionRoute[]
 export function saveSessionRoute(session: Pick<PlannedSession, 'id' | 'catchUp'>, route: SessionRoute, store: SessionRoutesStore = deviceStore): Promise<boolean> {
   const valid = readSessionRoute({ ...route, plannedSessionId: session.id });
   if (!valid) return Promise.resolve(false);
-  return update(store, (routes) => withSessionRoute(routes, session, valid));
+  return update(store, (routes, sessions) => withSessionRoute(routes, session, valid, sessions));
 }
 
 export function removeSessionRoute(session: Pick<PlannedSession, 'id' | 'catchUp'>, store: SessionRoutesStore = deviceStore): Promise<boolean> {
-  return update(store, (routes) => withoutSessionRoute(routes, session));
+  return update(store, (routes, sessions) => withoutSessionRoute(routes, session, sessions));
 }

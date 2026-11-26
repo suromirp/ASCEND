@@ -4797,6 +4797,25 @@
    ],
    "kern": "Verslag van I-162 en I-150: na jouw verplaatsing naar een dag met je rustdag één voorstel met Akkoord om de rustdag naar de vrijgekomen dag te zetten (anders de dichtstbijzijnde vrije dag van dezelfde week, nooit naast een test of wedstrijd), instelling Rustdag schuift mee, en de rustdagrij die zegt welke training je die dag deed. Bewijs, keuzes en wat niet gecontroleerd is.",
    "stand": "achtergrond"
+  },
+  "docs/beslissingen/2026-11-26-routes-en-week-nawerk.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "week"
+   ],
+   "kern": "Nawerk van het routepakket en de rustdag (I-163): wezen opruimen, route volgt een inhaal van een inhaal, voet van de helling in een bewaarde route, Opnieuw proberen met een nieuwe uitkomst, lus hoogstens 1,3 keer de afstand, één blad bij een sleep naar je rustdag, rustdagrij met open training, hele doelnaam in zinnen, gids volgt je doel. De rustdag mag niet naast een test of wedstrijd (ook de dag ervoor): dat blijft.",
+   "stand": "geldt",
+   "vultAan": [
+    "docs/beslissingen/2026-11-24-route-per-training.md"
+   ]
+  },
+  "docs/onderhoud/sherpa-i163.md": {
+   "onderwerpen": [
+    "lopen-en-tests",
+    "week"
+   ],
+   "kern": "Verslag van I-163: per punt waar de wijziging staat en wat niet gecontroleerd is (echte kaartdata, Week op 360 px).",
+   "stand": "achtergrond"
   }
  }
 }
