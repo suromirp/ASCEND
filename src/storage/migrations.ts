@@ -40,6 +40,14 @@
 // damaged route (counted as skipped) and never throws. PlannedSession itself does not change shape.
 export { migrateSessionRoutes, readSessionRoute, readSessionRouteList } from './migrationsSessionRoutes';
 
+// Je eigen beenindex (2026-11-26, Rooster ronde 6, docs/beslissingen/2026-11-26-beenindex-leert.md) lives in three
+// optional fields of the settings: `legAnswers` (benenantwoorden die uit de 60 ochtendchecks vallen, 180 dagen),
+// `legFactorLog` (elk besluit over de factor, alleen toevoegen) and `legIndexLearning` ('aan' or 'uit'). Optional and
+// additive, so the version stays 6: a file without them imports as before and gives the standard index (factor 1).
+// MorningCheckIn.legsFrom is optional too; an older check without it reads by the rule of the old proposal.
+// migrateLegAnswers and migrateLegFactorLog drop a damaged row (counted as skipped) and never throw.
+export { migrateLegAnswers, migrateLegFactorLog, MAX_LEG_ANSWERS, MAX_LEG_FACTOR_LOG } from './migrationsLegIndex';
+
 export { CURRENT_SCHEMA_VERSION, migrateV1toV2, migrateExport } from './migrationsSchema';
 export { packProposalTexts, unpackProposalTexts } from './migrationsCompact';
 export type { PackedProposals } from './migrationsCompact';

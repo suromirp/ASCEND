@@ -11,6 +11,9 @@ import type { ExternalOneRm, WeightEntry } from '../models/metrics';
 import type { SweatEntry, SweatPre } from '../models/sweat';
 import type { MorningCheckIn, NightJudgment, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
 import type { LegEaseDay } from '../models/legEase';
+import type { LegAnswer, LegFactorEntry } from '../models/legIndex';
+import { archiveLegAnswers } from '../engine/legIndexLearning';
+import { todayISO } from '../utils/dates';
 import type { SportRestOffer } from '../engine/sportRestOffer';
 import type { TestJudgment } from '../models/testJudgment';
 import type { InfluenceEntry } from '../models/influence';
@@ -709,6 +712,15 @@ export interface AppSettings {
   // logs; de laatste 60. Optional and additive; read defensively on import
   // (storage/migrations.ts#migrateLegEaseDays) and merged per date and session.
   legEaseDays?: LegEaseDay[];
+  // Je eigen beenindex (engine/legIndexLearning.ts, docs/beslissingen/2026-11-26-beenindex-leert.md).
+  // legAnswers: de benenantwoorden die vooraan uit de 60 ochtendchecks vallen, 180 dagen, nooit herschreven; gevuld
+  // door SettingsRepo.set. legFactorLog: elk besluit over de factor, alleen toevoegen; de laatste rij die de factor
+  // zet, geldt. legIndexLearning: 'aan' (afwezig, het advies: de app stelt voor, jij beslist) of 'uit' (factor 1).
+  // Optional and additive; read defensively on import (storage/migrations.ts#migrateLegAnswers, #migrateLegFactorLog)
+  // and merged on a restore (backupMerge.ts).
+  legAnswers?: LegAnswer[];
+  legFactorLog?: LegFactorEntry[];
+  legIndexLearning?: 'aan' | 'uit';
   // Een voorstel na een zware sport (engine/sportRestOffer.ts, I-23 punt 10): alleen toevoegen, één regel per
   // aanleiding toen je hem zag en één met de uitkomst; de laatste per id geldt, ouder dan 30 dagen valt bij het lezen
   // weg. Optional and additive; read defensively on import (storage/migrations.ts#migrateSportRestOffers) and on a
@@ -777,7 +789,15 @@ export const SettingsRepo = {
     return { ...DEFAULT_SETTINGS, ...stored };
   },
   set: async (patch: Partial<AppSettings>): Promise<AppSettings> => {
-    return MetaRepo.update<AppSettings>('settings', (stored) => ({ ...DEFAULT_SETTINGS, ...stored, ...patch }));
+    return MetaRepo.update<AppSettings>('settings', (stored) => {
+      const next = { ...DEFAULT_SETTINGS, ...stored, ...patch };
+      // Wat vooraan uit de 60 ochtendchecks valt, bewaart je eigen beenindex (engine/legIndexLearning.ts#archiveLegAnswers).
+      if (patch.morningCheckIns && !patch.legAnswers) {
+        const kept = archiveLegAnswers(stored?.legAnswers, stored?.morningCheckIns, patch.morningCheckIns, todayISO());
+        if (kept !== stored?.legAnswers) next.legAnswers = kept;
+      }
+      return next;
+    });
   },
 };
 
