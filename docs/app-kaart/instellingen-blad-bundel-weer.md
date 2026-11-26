@@ -42,6 +42,12 @@ Bij het openen
 [knop: Afstand van een wandeling, 5 km]
 Afstand van een wandeling
 5 km
+[knop: Wat gaat voor in een lus, Naar de training]
+Wat gaat voor in een lus
+Naar de training
+[knop: Rijtijd naar heuvels, 30 min]
+Rijtijd naar heuvels
+30 min
 [knop: Grote wegen mijden]
 Grote wegen mijden
 [knop: Uitleg: Grote wegen mijden]
