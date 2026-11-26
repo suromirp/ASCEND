@@ -2,7 +2,7 @@
 
 ## Backlogsessie B, ijktocht (Rooster ronde 5, branch claude/ijktocht-26nov)
 
-- Sherpa bouwt; nog niet op main. Keuzes (advies, komt in docs/beslissingen/2026-11-26-ijktocht.md): instelling calibrationHike zes (advies), acht of uit; alleen met een bergdoel of bergtocht; voorstel met Akkoord, sjabloon tpl_ijktocht (60 min rustig, kort 45, zelfde route of trap, zelfde rugzak); meet klimtempo, hartslag laatste derde tegen eerste, benen de ochtend erna; uitkomst als rij IJktocht in Je stand, Belasting; geen vormwijziging. Stand: engine, instelling, Je stand-rij, 30 tests, besluit en kennisindex klaar; volledige vitest groen; golden A en C stil. Commit e9476ef op de branch, controles groen; Warden (opus) en Lookout (sonnet) lopen. Volgende: Moet-punten, squash. Eind: één Warden en één Lookout, mag-punten vanaf I-170, terugmelding naar session_01LnDpSjkesdr3Yd8mZZV9XL.
+- Live: main 62e1434 (de vaste ijktocht). Besluit docs/beslissingen/2026-11-26-ijktocht.md: calibrationHike zes (advies), acht of uit; alleen met bergdoel of bergtocht; voorstel met Akkoord, tpl_ijktocht 60 min (kort 45); uitkomst als rij IJktocht in Je stand, Belasting; geen vormwijziging. Warden één Moet (afdaling en ijktocht naast elkaar als een van beide gepland staat), Sherpa herstelde; Lookout groen. Mag-rest in I-170. Hoogste code I-170. Terugmelding naar session_01LnDpSjkesdr3Yd8mZZV9XL gezet. Rooster: alleen ronde 6 (beenindex) open.
 
 ## Backlogsessie A, rooster 26 november (branch claude/rooster-26nov)
 
