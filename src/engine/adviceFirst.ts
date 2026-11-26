@@ -142,6 +142,9 @@ export function mergeFirstSheet(current: FirstSheetMap | undefined, incoming: Fi
 export const FIRST_SHEET_TIMEOUT_MS = 15_000;
 export const FIRST_SHEET_FAILED_NOTE = 'Het lukte niet om je planning nu bij te werken. Er is niets aangepast; probeer het zo nog eens.';
 export const FIRST_SHEET_DONE_NOTE = 'Opgeslagen.';
+// Akkoord lukte: de melding met ongedaan maken staat achter het blad (I-165). Na zes seconden is ze een rond chip
+// (ChangeNotice), dus de zin belooft geen volle melding.
+export const FIRST_SHEET_APPLIED_NOTE = 'Gelukt, het staat in je planning. Onderin vind je wat er veranderde en kun je het ongedaan maken.';
 /** Bekijk liep vast of te lang: er is niets aangepast en het voorstel staat nog op Vandaag. */
 export const FIRST_SHEET_VIEW_FAILED_NOTE = 'Het voorstel openen lukte niet. Er is niets aangepast; je vindt het ook op Vandaag.';
 export const FIRST_SHEET_SLOW_NOTE = 'Dit duurt langer dan normaal. Zodra het klaar is, zie je onderin wat er veranderde, met ongedaan maken.';

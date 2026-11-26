@@ -29,7 +29,7 @@ import { Icon } from './icons';
 import { useWatchStatuses } from './useWatchStatus';
 import type { WatchStatusKind } from '../engine/watchStatus';
 import { weekDates, weekdayShortNL, weekdayLongNL, todayISO } from '../utils/dates';
-import { watchLooseSeparators } from '../utils/looseSeparator';
+import { hideLooseSeparators, watchLooseSeparators } from '../utils/looseSeparator';
 import { Eyebrow, StatusPill } from './ui';
 import { EFFORT_COLOR } from './effortColor';
 import { HeartSign } from './influence/HeartSign';
@@ -117,7 +117,9 @@ function SessionRow({
   const { settings: { restDayMode, illnessEpisodes }, openDraftId } = useAppData();
   // Breekt de tweede regel af, dan begint de volgende regel niet met een losse "·" (I-164).
   const subRef = useRef<HTMLSpanElement>(null);
-  useLayoutEffect(() => watchLooseSeparators(subRef.current));
+  // Eén waarnemer per rij voor een andere breedte; na elke render opnieuw meten, want de tekst kan veranderen (I-165).
+  useLayoutEffect(() => watchLooseSeparators(subRef.current), []);
+  useLayoutEffect(() => hideLooseSeparators(subRef.current));
   const restMode = restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
   const { status, wasMoved, log } = deriveSessionStatus(session, logs, isRest, { leave, templates, illness: illnessEpisodes, races, openDraft: openDraftId, programStart: program?.startDate });

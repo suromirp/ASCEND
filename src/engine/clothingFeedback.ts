@@ -76,6 +76,9 @@ export function feedbackSentence(raw: unknown, sport: Sport, feel: ClothingFeel)
   const how = `${degrees(now)} ${Math.abs(now) === 1 ? 'graad' : 'graden'} ${now > 0 ? 'lichter' : 'warmer'}`;
   // The garment line only after the first tap; after that it is known and the sentence stays short.
   const first = adjustFor(raw, sport) === 0 ? ' Een kledingstuk verandert pas als het weer net op een grens zit.' : '';
+  // Tegen de richting in die er al stond (I-36): nog lichter of warmer dan de standaard, maar minder dan eerst.
+  const against = warmer ? now > 0 : now < 0;
+  if (against) return `Genoteerd. Een volgende keer iets ${warmer ? 'warmer' : 'lichter'}: nog ${how} dan de standaard.`;
   return `Genoteerd. Een volgende keer ${warmer ? 'warmer' : 'lichter'}: nu ${how}.${first}${end}`;
 }
 

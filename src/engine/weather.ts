@@ -303,6 +303,12 @@ export function temperatureHead(w: SessionWeather): string {
   return breeze ? `${head}, ${breeze}` : head;
 }
 
+// De wind alleen, zoals de weerregel hem noemt: harde wind of storm met vlagen, anders vanaf LINE_WIND_KMH de wind
+// zelf. Voor de kledingzin als de weerregel uit staat (I-36), zodat je weet waarom er een windjack bij staat.
+export function windOnlyPhrase(w: SessionWeather): string | undefined {
+  return windPhrase(w) ?? (w.windKmh >= LINE_WIND_KMH ? `wind ${Math.round(w.windKmh)} km/u` : undefined);
+}
+
 // "14 graden, droog, licht tot 18:12". Heat or cold you feel differently from
 // what the thermometer says comes with the felt temperature.
 export function weatherLine(w: SessionWeather, opts: { darkInClothing?: boolean } = {}): string {

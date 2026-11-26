@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { outdoorSunSentence } from './outdoorSun';
 import type { SessionTemplate } from '../models/training';
 import type { WeatherForecast } from '../models/weather';
-import { clothingAdvice, clothingForTraining, weatherLineForTraining, clothingKind, isHeatSession, type ClothingInput } from './clothing';
+import { clothingAdvice, clothingForTraining, clothingLinesWithWind, weatherLineForTraining, clothingKind, isHeatSession, type ClothingInput } from './clothing';
 
 const base: ClothingInput = { kind: 'easy_run', minutes: 60, feelsC: 15, windKmh: 10, gustKmh: 15, precipMm: 0, dark: false };
 const advise = (over: Partial<ClothingInput>) => clothingAdvice({ ...base, ...over });
@@ -351,5 +351,16 @@ describe('zonnebrand: kledingadvies en UV-zin op de pagina Weer', () => {
     expect(advice?.lines.some((l) => /zonnebrand/i.test(l))).toBe(false);
     expect(advice?.sunscreenShown).toBeUndefined();
     expect(outdoorSunSentence({ on: true, outdoor: true, uvIndex: 5, elevationM: undefined, sunscreenSaid: !!advice?.sunscreenShown, minutes: 30, full: true })).toBe('UV 5.');
+  });
+});
+
+describe('I-36: clothingLinesWithWind', () => {
+  const advice = { lines: ['Lange broek en een shirt met lange mouwen.', 'Dun windjack aan.'], wind: 'wind 22 km/u' };
+  it('Weer uit: de eerste regel begint met de wind', () => {
+    expect(clothingLinesWithWind(advice, false)).toEqual(['Wind 22 km/u. Lange broek en een shirt met lange mouwen.', 'Dun windjack aan.']);
+  });
+  it('Weer aan of geen wind: de regels blijven zoals ze zijn', () => {
+    expect(clothingLinesWithWind(advice, true)).toBe(advice.lines);
+    expect(clothingLinesWithWind({ lines: advice.lines }, false)).toBe(advice.lines);
   });
 });

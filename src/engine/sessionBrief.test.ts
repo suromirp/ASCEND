@@ -18,6 +18,12 @@ describe('buildSessionBrief', () => {
     expect(brief.facts.map((f) => `${f.value} ${f.label}`)).toContain('Eigen tempo geen doel');
   });
 
+  it('I-165: wandelen en dribbelen heet in de kop geen Hardlopen', () => {
+    const brief = buildSessionBrief(tpl('tpl_walk_jog'), addDays(START, 2), program);
+    expect(brief.headline.startsWith('WANDELEN EN DRIBBELEN')).toBe(true);
+    expect(brief.headline).not.toMatch(/HARDLOPEN/);
+  });
+
   it('names the sport and kind of training, with the same numbers as the plan', () => {
     const saturday = addDays(START, 5);
     const brief = buildSessionBrief(tpl('tpl_hill_intervals'), saturday, program);

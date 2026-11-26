@@ -83,3 +83,10 @@ describe('een oude waarde en de zin na een tik', () => {
     expect(feedbackSentence(undefined, 'running', 'good')).toBe('Fijn, dan blijft het zo.');
   });
 });
+
+describe('I-36: een tik tegen de richting in', () => {
+  it('zegt dat het nog lichter is dan de standaard, maar minder', () => {
+    expect(feedbackSentence({ running: 1.5 }, 'running', 'too_cold')).toBe('Genoteerd. Een volgende keer iets warmer: nog 1 graad lichter dan de standaard.');
+    expect(feedbackSentence({ running: -1.5 }, 'running', 'too_warm')).toBe('Genoteerd. Een volgende keer iets lichter: nog 1 graad warmer dan de standaard.');
+  });
+});

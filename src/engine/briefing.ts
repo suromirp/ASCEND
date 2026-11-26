@@ -638,7 +638,10 @@ function weatherRow(input: BriefingInput, minutes: number): BriefingRow | undefi
   // De temperatuur zoals de weerregel hem begint: met gevoel en wind als die ertoe doen, harde wind erbij.
   if (input.weatherOn) parts.push([temperatureHead(w), windPhrase(w)].filter(Boolean).join(', '));
   if (input.clothingOn) {
-    const first = clothingForTraining({ ...base, adjustC: input.clothingAdjust })?.lines[0];
+    const advice = clothingForTraining({ ...base, adjustC: input.clothingAdjust });
+    const first = advice?.lines[0];
+    // Weer uit: de kledingzin noemt de wind, anders staat er een windjack zonder reden (I-36).
+    if (first && !input.weatherOn && advice.wind) parts.push(advice.wind);
     // Alleen de eerste zin: de rest staat op de weerpagina erachter.
     if (first) parts.push(lowerFirst(firstSentence(first)));
   }

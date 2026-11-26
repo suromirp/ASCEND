@@ -117,6 +117,8 @@ export interface RouteProposal {
   // grens (instelling Langer voor hoogtemeters, standaard 1,3, I-164). Alleen in het geheugen.
   ascentCapped?: boolean;
   ascentCapFactor?: number;
+  // Afgekapt op het hoogste aantal herhalingen (routePlanner.ts#MAX_REPEATS) en niet op de afstand (I-165).
+  ascentCapRepeats?: number;
   // Een melding bij deze lus: het droge feit en wat wel kan (bijvoorbeeld geen heuvels in de buurt).
   notice?: string;
 }
