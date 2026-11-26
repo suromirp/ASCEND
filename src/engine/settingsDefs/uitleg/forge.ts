@@ -409,7 +409,7 @@ export const FORGE_UITLEG: Record<string, SettingsHelp> = {
       { head: 'Akkoord', text: 'de oefening in je training wordt de nieuwe stap, vanaf je volgende training. Sets en herhalingen blijven.' },
       { head: 'Liever niet', text: 'dan blijft je plan zoals het is en komt dit voorstel niet terug. Een voorstel voor een andere stap wel.' },
       { head: 'Terug', text: 'Ongedaan maken op de kaart, of later in het blad van de oefening.' },
-      { head: 'Calisthenics algemeen', text: 'staat de squat op één been of de L-sit nog in geen enkele training, dan stelt Ascend één keer voor om de eerste stap in een krachttraining te zetten.' },
+      { head: 'Calisthenics algemeen', text: 'staat de squat op één been of de L-sit nog in geen enkele training, dan stelt Ascend voor om de stap waar je staat in een krachttraining te zetten. Na Liever niet komt dat voorstel niet terug.' },
     ],
   },
   'forge-ijkset': {

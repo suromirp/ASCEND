@@ -1688,7 +1688,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
     movement: 'Rol het wiel langzaam naar voren terwijl je heupen en schouders samen bewegen. Stop voordat je onderrug zakt. Trek het wiel terug met je buik, niet door op je heupen te zitten.',
     tempo: 'Drie tellen naar voren, twee tellen terug. Adem uit bij het terugkomen.',
     mistakes: [
-      { fault: 'Je onderrug zakt of je kruis wordt hol.', fix: 'Rol minder ver en houd je billen aangespannen.' },
+      { fault: 'Je onderrug zakt of je rug wordt hol.', fix: 'Rol minder ver en houd je billen aangespannen.' },
       { fault: 'Je trekt jezelf terug door je billen naar je hielen te duwen.', fix: 'Trek het wiel terug met je buik.' },
     ],
     harder: 'barbell-rollout',
@@ -1699,11 +1699,11 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Ribben omlaag, billen aan, rug blijft vlak.',
       'Zakt je onderrug door? Rol minder ver.',
     ],
-    setup: 'Kniel op een mat achter een stang met schijven die niet wegrollen. Pak hem op schouderbreedte, buig licht voorover, ribben omlaag en billen aangespannen.',
+    setup: 'Kniel op een mat achter een stang met ronde schijven van gelijke maat. Pak hem op schouderbreedte, buig licht voorover, ribben omlaag en billen aangespannen.',
     movement: 'Rol de stang langzaam naar voren met gestrekte armen terwijl heupen en schouders samen bewegen. Stop voordat je onderrug zakt. Trek de stang terug met je buik.',
     tempo: 'Drie tellen naar voren, twee tellen terug. Adem uit bij het terugkomen.',
     mistakes: [
-      { fault: 'Je onderrug zakt of je kruis wordt hol.', fix: 'Rol minder ver en houd je billen aangespannen.' },
+      { fault: 'Je onderrug zakt of je rug wordt hol.', fix: 'Rol minder ver en houd je billen aangespannen.' },
       { fault: 'De stang stuitert weg of rolt scheef.', fix: 'Rol rustig, met je handen even ver van het midden.' },
     ],
     easier: 'ab-wheel-rollout',
@@ -1799,7 +1799,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Zak recht omlaag, je romp blijft bijna rechtop.',
       'Zakken je ellebogen? Zet de stang terug in het rek.',
     ],
-    setup: 'Zet de stang in het rek op borsthoogte. Leg hem op je voorste schouders, tegen je keel, met je vingers eronder. Til je ellebogen hoog, zodat je bovenarmen bijna naar voren wijzen. Voeten op schouderbreedte, tenen licht naar buiten.',
+    setup: 'Zet de stang in het rek op borsthoogte. Zet veiligheidsarmen in het rek. Leg de stang op je voorste schouders, vlak bij je hals, vingers eronder. Til je ellebogen hoog. Voeten op schouderbreedte, tenen licht naar buiten.',
     movement: 'Adem in, span je romp aan en zak recht omlaag met je knieën naar je tenen. Houd je borst hoog en je ellebogen omhoog. Duw door je hele voet omhoog tot je rechtop staat.',
     tempo: 'Twee tellen omlaag, krachtig omhoog. Adem in bij het zakken.',
     mistakes: [
@@ -1828,7 +1828,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Je billen en onderrug blijven tegen de zitting.',
       'Komt je bekken los? Zak minder diep.',
     ],
-    setup: 'Zet je rug en hoofd tegen de leuning. Zet je voeten laag op het plateau, op heupbreedte. Duw het plateau los, haal de pin eruit en draai de hendels weg.',
+    setup: 'Zet je rug en hoofd tegen de leuning. Zet je voeten laag op het plateau, op heupbreedte. Stel het gewicht in met de pin en ontgrendel de veiligheid.',
     movement: 'Laat het plateau zakken tot je knieën ruim gebogen zijn, zolang je billen op de zitting blijven. Duw met je hele voet terug tot je net niet gestrekt bent. Zet na je laatste herhaling de hendels terug voor je ontspant.',
     tempo: 'Drie tellen omlaag, krachtig omhoog. Adem in bij het zakken.',
     mistakes: [
@@ -1930,7 +1930,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Je bovenlichaam blijft stil en rechtop.',
       'Draait je romp mee? Neem minder gewicht.',
     ],
-    setup: 'Zet het bandje om je enkel en de kabel laag. Sta zijwaarts naar het toestel, een hand tegen het frame. Sta rechtop op je standbeen, bekken recht.',
+    setup: 'Zet het bandje om je enkel en de kabel laag. Sta zijwaarts met je standbeen naar het toestel, een hand tegen het frame. Sta rechtop op je standbeen, bekken recht.',
     movement: 'Trek je been in een rechte lijn zijwaarts weg, ver genoeg zonder dat je romp meegaat. Laat het gecontroleerd terugkomen. Doe alle herhalingen aan een kant en daarna de andere.',
     tempo: 'Een tel naar buiten, twee tellen terug. Adem rustig door.',
     mistakes: [
@@ -1946,7 +1946,7 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Wordt de dip diep? Maak hem korter en sneller.',
     ],
     setup: 'Pak de stang net buiten je schouders en leg hem op je voorste schouders, ellebogen iets voor de stang. Voeten op heupbreedte, benen gestrekt, romp aangespannen.',
-    movement: 'Zak een kort stukje door je knieën met een rechte romp en strek ze krachtig. Gebruik die vaart om de stang boven je hoofd te duwen, tot je armen gestrekt zijn. Zak de stang gecontroleerd terug naar je schouders.',
+    movement: 'Zak een kort stukje door je knieën met een rechte romp en strek ze krachtig. Gebruik die vaart om de stang boven je hoofd te duwen, tot je armen gestrekt zijn. Laat de stang gecontroleerd zakken naar je schouders.',
     tempo: 'Snel omhoog, twee tellen terug naar je schouders. Adem in voor de dip.',
     mistakes: [
       { fault: 'Je maakt een diepe squat in plaats van een korte dip.', fix: 'Zak maar een handbreedte en strek meteen.' },
@@ -1959,8 +1959,8 @@ export const EXERCISE_GUIDES: Record<string, ExerciseGuide> = {
       'Je polsen blijven recht boven je ellebogen.',
       'Knikken je polsen? Pak iets breder.',
     ],
-    setup: 'Lig met je ogen onder de stang, voeten plat, schouderbladen naar elkaar. Pak de stang op schouderbreedte of net smaller en til hem uit het rek met gestrekte armen.',
-    movement: 'Zak de stang gecontroleerd naar je onderste borst met je ellebogen dicht langs je lichaam. Duw hem weer omhoog tot je armen gestrekt zijn. Houd je polsen recht en je billen op de bank.',
+    setup: 'Lig met je ogen onder de stang, voeten plat, schouderbladen naar elkaar. Stel veiligheidsarmen in als je alleen traint. Pak de stang op schouderbreedte of net smaller en til hem uit het rek.',
+    movement: 'Laat de stang gecontroleerd zakken naar je onderste borst met je ellebogen dicht langs je lichaam. Duw hem weer omhoog tot je armen gestrekt zijn. Houd je polsen recht en je billen op de bank.',
     tempo: 'Twee tellen omlaag, krachtig omhoog. Adem in bij het zakken.',
     mistakes: [
       { fault: 'Je pakt zo smal dat je polsen knikken.', fix: 'Pak op schouderbreedte.' },

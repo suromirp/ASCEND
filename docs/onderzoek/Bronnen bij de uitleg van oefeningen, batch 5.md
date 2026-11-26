@@ -1,6 +1,6 @@
 # Bronnen bij de uitleg van oefeningen, batch 5
 
-Sherpa, 26 november 2026. Twintig oefeningen in `src/data/exerciseGuides.ts` (onder "Batch 6"; de naam "batch 5" volgt de opdracht, de vijfde reeks uitleg na de proef). Opzet als batch 4: per oefening waar de tekst op rust en wat twijfel is. Alles geldt voor gezonde volwassenen; bij pijn stopt de lezer en vraagt een arts of fysiotherapeut (de vaste zorgzin onder In het kort).
+Sherpa, 26 november 2026. Twintig oefeningen in `src/data/exerciseGuides.ts` (in de test heet de lijst `BATCH6`, omdat daar al een andere lijst `BATCH5` stond; dit is de vijfde reeks uitleg na de proef). Opzet als batch 4: per oefening waar de tekst op rust en wat twijfel is. Alles geldt voor gezonde volwassenen; bij pijn stopt de lezer en vraagt een arts of fysiotherapeut (de vaste zorgzin onder In het kort).
 
 Eerlijk vooraf: ik heb bij het schrijven geen bron geopend. De teksten komen uit de oude regels (`cues`) in `src/data/exercises.ts`, uit verwante teksten van eerdere batches (`leg-press-plates`, `plank`, `side-plank`, `lateral-band-walk`, `bench-press`, `overhead-press`, `back-squat`) en uit gangbare coaching. De links hieronder zijn open pagina's waar de techniek gangbaar beschreven staat; ik heb ze niet nagelezen, dus elke regel is "te toetsen door Scout". Er is geen tekst uit een bron overgenomen en geen `source` ingevuld. Tempo's en ademregels zijn gangbare praktijk zonder eigen bron.
 
