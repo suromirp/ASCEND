@@ -23,6 +23,13 @@ describe('het stapvoorstel in Forge', () => {
     expect(src).toContain('>Ongedaan maken</TextButton>');
   });
 
+  it('Akkoord bij het maximum: geen opslag en een eerlijke regel, nooit gelukt (withStepAcceptedIfRoom)', () => {
+    expect(src).toContain('withStepAcceptedIfRoom(settings.strengthModel, shown)');
+    expect(src).not.toContain('withStepAccepted(');
+    expect(src).toMatch(/if \(!next\) \{\s*setState\('full'\);\s*return;/);
+    expect(src).toContain("state === 'full' && <p role=\"status\"");
+  });
+
   it('geen losse kleur, geen gedachtestreepje en niets kleiner dan 12 px', () => {
     for (const name of ['StepProposalNotice.tsx', 'StepUndoRow.tsx']) {
       const s = read(name);

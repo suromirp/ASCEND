@@ -4,8 +4,8 @@ import type { PlannedSession, SessionLog, SessionTemplate, SetLog } from '../mod
 import { addDays } from '../utils/dates';
 import { forgeSlotsFor } from './forgeSlots';
 import { planPass, type PlanPassContext } from './planPass';
-import { stepProposalId, stepProposals, stepProposalText, withStepAccepted, withStepUndone, type StepProposal } from './skillStepProposal';
-import { normalizeStepSwaps, withoutStepSwap, withStepSwaps, type StepSwaps } from './stepSwaps';
+import { stepProposalId, stepProposals, stepProposalText, withStepAccepted, withStepAcceptedIfRoom, withStepUndone, type StepProposal } from './skillStepProposal';
+import { MAX_STEP_SLOTS, MAX_STEP_TEMPLATES, normalizeStepSwaps, stepSwapAt, withoutStepSwap, withStepSwaps, type StepSwaps } from './stepSwaps';
 import { normalizeStrengthSettings } from './strengthSettings';
 import { lockLevel } from './weekValidator';
 
@@ -199,6 +199,27 @@ describe('Akkoord, houding en Ongedaan maken', () => {
     const next = withStepAccepted(model, p);
     expect(model).toEqual({ enabled: true, stepSwaps: undefined });
     expect(Object.keys(next.stepSwaps ?? {}).sort()).toEqual(['tpl_push', 'tpl_upper']);
+  });
+
+  it('bij het maximum van 20 trainingen landt de stap niet: geen opslag, geen gelukt (I-113, deel 2)', () => {
+    const [p] = proposals([PUSH], passedPushUp);
+    const full: StepSwaps = Object.fromEntries(Array.from({ length: MAX_STEP_TEMPLATES }, (_, i) => [`tpl_vol_${i}`, { s1: { from: 'push-up', to: 'decline-push-up' } }]));
+    expect(withStepAcceptedIfRoom<{ stepSwaps?: StepSwaps }>({ stepSwaps: full }, p)).toBeNull();
+    // Zonder controle zou de stap stil wegvallen bij het lezen.
+    expect(stepSwapAt(withStepAccepted({ stepSwaps: full }, p), 'tpl_push', 'p1')).toBeUndefined();
+    // Een plek minder: dan past hij wel, en elke andere stap blijft.
+    const room = Object.fromEntries(Object.entries(full).slice(1));
+    const next = withStepAcceptedIfRoom<{ stepSwaps?: StepSwaps }>({ stepSwaps: room }, p);
+    expect(stepSwapAt(next!, 'tpl_push', 'p1')).toMatchObject({ from: 'push-up', to: 'decline-push-up' });
+    expect(Object.keys(normalizeStepSwaps(next!.stepSwaps)!)).toHaveLength(MAX_STEP_TEMPLATES);
+  });
+
+  it('bij 6 plekken in een training landt een zevende stap niet', () => {
+    const [p] = proposals([PUSH], passedPushUp);
+    const slots = Object.fromEntries(Array.from({ length: MAX_STEP_SLOTS }, (_, i) => [`x${i}`, { from: 'push-up', to: 'decline-push-up' }]));
+    expect(withStepAcceptedIfRoom<{ stepSwaps?: StepSwaps }>({ stepSwaps: { tpl_push: slots } }, p)).toBeNull();
+    // Met ruimte is het precies wat withStepAccepted schrijft.
+    expect(withStepAcceptedIfRoom<{ stepSwaps?: StepSwaps }>({}, p)).toEqual(withStepAccepted({}, p));
   });
 
   it('een plek met een oefening-id als id krijgt geen voorstel en geen stap: Forge herkent hem aan dat id', () => {

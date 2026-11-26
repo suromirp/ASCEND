@@ -30,8 +30,8 @@ export interface StepSwap {
 export type StepSwaps = Record<string, Record<string, StepSwap>>;
 
 // Hoogstens zoveel trainingen en plekken; meer wordt bij het lezen weggelaten.
-const MAX_TEMPLATES = 20;
-const MAX_SLOTS = 6;
+export const MAX_STEP_TEMPLATES = 20;
+export const MAX_STEP_SLOTS = 6;
 
 const REPS_PATTERN = /^\d{1,3}(-\d{1,3})?s?$/;
 
@@ -51,11 +51,11 @@ export function normalizeStepSwaps(raw: unknown): StepSwaps | undefined {
   const out: StepSwaps = {};
   let n = 0;
   for (const [templateId, slots] of Object.entries(raw)) {
-    if (n >= MAX_TEMPLATES || templateId.length === 0 || templateId.length > 60 || !isRecord(slots)) continue;
+    if (n >= MAX_STEP_TEMPLATES || templateId.length === 0 || templateId.length > 60 || !isRecord(slots)) continue;
     const kept: Record<string, StepSwap> = {};
     let m = 0;
     for (const [slot, value] of Object.entries(slots)) {
-      if (m >= MAX_SLOTS || slot.length === 0 || slot.length > 60) continue;
+      if (m >= MAX_STEP_SLOTS || slot.length === 0 || slot.length > 60) continue;
       const swap = swapValue(value);
       if (!swap) continue;
       kept[slot] = swap;
@@ -113,6 +113,21 @@ export function withStepSwapsSet<M extends { stepSwaps?: StepSwaps }>(model: M |
     else delete all[c.templateId];
   }
   return { ...base, stepSwaps: Object.keys(all).length > 0 ? all : undefined };
+}
+
+// Of een nieuwe stand echt geldt: elke gevraagde plek staat er zoals gevraagd, en geen stap van een andere plek viel
+// weg. Boven het maximum aan trainingen of plekken laat `normalizeStepSwaps` een plek bij het lezen weg; dan is het
+// resultaat niet gelukt, en de aanroeper slaat niets op (anders meldt Akkoord gelukt terwijl de stap niet geldt).
+export function stepSwapsLanded(before: { stepSwaps?: StepSwaps } | undefined, next: { stepSwaps?: StepSwaps } | undefined, changes: readonly { templateId: string; slot: string; swap: StepSwap | undefined }[]): boolean {
+  const same = (a: StepSwap | undefined, b: StepSwap | undefined) => JSON.stringify(a ? swapValue(a) ?? null : null) === JSON.stringify(b ? swapValue(b) ?? null : null);
+  const asked = new Set(changes.map((c) => `${c.templateId}\u0000${c.slot}`));
+  if (!changes.every((c) => same(stepSwapAt(next, c.templateId, c.slot), c.swap))) return false;
+  for (const [t, slots] of Object.entries(normalizeStepSwaps(before?.stepSwaps) ?? {})) {
+    for (const [slot, swap] of Object.entries(slots)) {
+      if (!asked.has(`${t}\u0000${slot}`) && !same(stepSwapAt(next, t, slot), swap)) return false;
+    }
+  }
+  return true;
 }
 
 // "Terug naar ... in je plan" in het blad van een oefening: de plek volgt weer het sjabloon. Logs blijven zoals ze zijn.

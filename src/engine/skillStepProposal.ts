@@ -13,7 +13,7 @@ import { exerciseById } from '../data/exercises';
 import { SKILL_FLOOR_REPS, SKILL_FLOOR_SECONDS, SKILL_LADDERS, type SkillLadder } from '../data/skillLadders';
 import type { ExercisePrescription, SessionLog, SessionTemplate } from '../models/training';
 import { ladderState } from './skillLadder';
-import { canHoldStep, slotExerciseId, stepSwapAt, withStepSwapsSet, type StepSwap, type StepSwaps } from './stepSwaps';
+import { canHoldStep, slotExerciseId, stepSwapAt, stepSwapsLanded, withStepSwapsSet, type StepSwap, type StepSwaps } from './stepSwaps';
 import { hasRole } from './templateRoles';
 
 export interface StepTarget {
@@ -118,7 +118,19 @@ function isHold(exerciseId: string): boolean {
 // overgang tussen herhalingen en een houding komt de onderkant van de nieuwe stap (3 keer 5, of 3 keer 10 seconden).
 // Wordt de stap weer de oefening van het sjabloon, dan gaat de stap weg.
 export function withStepAccepted<M extends { stepSwaps?: StepSwaps }>(model: M | undefined, p: StepProposal): M {
-  const changes = p.targets.map((t) => {
+  return withStepSwapsSet(model, stepChanges(model, p));
+}
+
+// Wat de kaart opslaat: hetzelfde als withStepAccepted, maar null als één plek niet landt (20 trainingen of 6 plekken
+// per training, zie stepSwaps.ts). Dan slaat de kaart niets op en zegt hij dat eerlijk.
+export function withStepAcceptedIfRoom<M extends { stepSwaps?: StepSwaps }>(model: M | undefined, p: StepProposal): M | null {
+  const changes = stepChanges(model, p);
+  const next = withStepSwapsSet(model, changes);
+  return stepSwapsLanded(model, next, changes) ? next : null;
+}
+
+function stepChanges(model: { stepSwaps?: StepSwaps } | undefined, p: StepProposal): { templateId: string; slot: string; swap: StepSwap | undefined }[] {
+  return p.targets.map((t) => {
     const before = stepSwapAt(model, t.templateId, t.slot);
     const from = before?.from ?? p.fromExerciseId;
     if (from === p.toExerciseId) return { templateId: t.templateId, slot: t.slot, swap: undefined };
@@ -133,7 +145,6 @@ export function withStepAccepted<M extends { stepSwaps?: StepSwaps }>(model: M |
     }
     return { templateId: t.templateId, slot: t.slot, swap };
   });
-  return withStepSwapsSet(model, changes);
 }
 
 // Ongedaan maken: de plekken van het voorstel krijgen precies terug wat er voor Akkoord stond.
