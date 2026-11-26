@@ -809,6 +809,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.legsAfterEffort, sub: o.legsAfterEffort ? 'Open vraag, zonder voorstel' : 'Zoals elke ochtend' };
     case 'zweet-vragen':
       return { checked: s.askSweat !== false };
+    case 'advies-blad':
+      return { checked: s.firstAdviceSheet !== false };
     case 'bundel-zonder-doel': {
       const w = settingBudget(s);
       // Met krachttraining uit telt het budget geen kracht, net als de rij Weekbudget hieronder.

@@ -13,6 +13,7 @@ import { Eyebrow } from './ui';
 import { Icon } from './icons';
 import { TextButton } from './TextButton';
 import { useSessionPill } from './forge/useForgeSession';
+import { useInSheetRow } from '../state/sheetRow';
 
 const SHOW_MS = 6_000;
 const CHIP_MS = 10 * 60_000;
@@ -28,6 +29,8 @@ export function ChangeNotice() {
   const changeKey = recentChange ? `${recentChange.id}:${recentChange.lines.length}` : '';
   const [state, setState] = useState<{ key: string; view: View }>({ key: '', view: 'full' });
   const view: View = state.key === changeKey ? state.view : 'full';
+  // In de gedeelde rij zolang de hele melding er staat of open is (state/sheetRow.ts).
+  useInSheetRow('change-notice', !!recentChange && (view === 'full' || open));
 
   useEffect(() => {
     if (!recentChange) return;

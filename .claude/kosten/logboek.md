@@ -585,3 +585,4 @@ Les F3 en F4a: zet in de opdracht dat een nieuwe variant in een bestaande famili
 | 2026-11-25 | Lookout bouwmoment | tester helper | sonnet | 185k tok | 30 min | groen, twee mag |
 | 2026-11-25 | Pathfinder I-157 | pathfinder helper | sonnet | 67k tok | 2 min | plek klaar, bouwen volgende keer |
 | 2026-11-26 | Bouwmoment 25 nov naar main (6e00642a) | coördinator | opus | n.v.t. | 2u40 | routepakket plus I-158, I-159, I-161, I-162, I-150, I-149, I-152, I-153 |
+| 2026-11-26 | Sherpa Belangrijk advies (I-157, I-155) | bouwer helper | opus | n.v.t. | n.v.t. | blad bij openen, één antwoord per dag, terugdraairecord per ronde |

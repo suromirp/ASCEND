@@ -100,15 +100,19 @@ export async function undoPlanChangeNow(change: RecentPlanChange): Promise<UndoO
     const now = new Date().toISOString();
     // Append-only: a new record that reverts the change, and one for each record of the week check that joined its
     // notice (RecentPlanChange.alsoReverts); the records themselves stay as they are.
-    const reverts = [{ id: change.id, trigger: change.trigger, title: change.title }, ...(change.alsoReverts ?? []).map((id) => ({ id, trigger: 'plan_check' as const, title: 'Planning bijgewerkt' }))];
-    for (const { id: revertsProposalId, trigger, title } of reverts) {
+    // Each record of a round says only what that round did (I-155); an older notice without the lines keeps all.
+    const reverts = [
+      { id: change.id, trigger: change.trigger, title: change.title, lines: change.lines },
+      ...(change.alsoReverts ?? []).map((id) => ({ id, trigger: 'plan_check' as const, title: 'Planning bijgewerkt', lines: change.alsoRevertLines?.[id] ?? change.lines })),
+    ];
+    for (const { id: revertsProposalId, trigger, title, lines } of reverts) {
       await tx.objectStore('planChangeProposals').put({
         id: makeId('planchange'),
         trigger,
         issue: `Ongedaan gemaakt: ${title}`,
         changes: [],
         alternatives: [],
-        consequences: change.lines.join('; '),
+        consequences: lines.join('; '),
         explanation: 'Door jou ongedaan gemaakt, direct na de wijziging.',
         revertsProposalId,
         createdAt: now,

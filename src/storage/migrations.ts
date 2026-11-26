@@ -47,7 +47,7 @@ export type { AscendExport } from './migrationsSchema';
 export { migrateLeavePeriods, readWeekShape, migratePlanChangeProposal, migrateDirection, migrateWaveSettings, migrateStartChoices } from './migrationsPlanning';
 export { migrateNightJudgments, migrateLegEaseDays, migrateSweatEntries, migrateSweatPre, migrateInjuryNote, migrateWeeklyHealthCheck, migrateMornings, migrateExternalOneRm, migrateWeightEntries, dedupeInfluencesByPlace, migrateInfluences } from './migrationsBody';
 export { migrateManualMeasured, migrateLogManualMeasured, migrateLogGymProfile, migrateLogFileDuration, migrateLogLinkedLater, migrateLogForgeLog, migrateLogBestEffort, migrateTestJudgments, migrateZoneAnswers, migrateStrapWorn, migrateLogSetTimes, migrateLogSets, migrateLogSetAsked, migrateLogSetSkill, migrateLogSetRow } from './migrationsLogs';
-export { cleanNavigationSettings, migrateCardsAboveMission, migrateDataSettings, migrateAutoBackupSettings, migrateHealthConnectState, migrateShortTestSeries } from './migrationsSettings';
+export { cleanNavigationSettings, migrateCardsAboveMission, migrateDataSettings, migrateAutoBackupSettings, migrateHealthConnectState, migrateShortTestSeries, migrateFirstSheet } from './migrationsSettings';
 export { migrateSportHandling, migrateSportCounting, migrateLogCountedSport, migratePlannedFixed, migrateKindAmount, migratePlannedAmount, migrateCustomSports, migrateLogCustomSport, migrateLogRpeAssumed } from './migrationsSports';
 // Een voorstel na een zware sport (I-23 punt 10): `sportRestOffers` en `sportRestKeep` in de instellingen, optioneel en
 // additief, dus het schemanummer blijft; een oudere back-up importeert zoals eerst.

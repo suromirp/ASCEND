@@ -31,6 +31,7 @@ import { patternDays } from '../engine/planPass';
 import { markKept, resolveWeekAfterChoice } from '../engine/weekKept';
 import { adviceSessionIds, weekNotice, weekNoticeConcerns, type WeekNotice } from '../engine/weekFixProposal';
 import { declinedRules, learnFromDeclines, type StoredResponse } from '../engine/learning';
+import { oneAnswerPerDay } from '../engine/oneAnswerPerDay';
 import { planEndDay } from '../engine/programLayout';
 import { planDirection } from '../engine/direction';
 import { noGoalWavesAdvice } from '../engine/noGoalWaves';
@@ -147,8 +148,9 @@ export function useAdviceAndWeek(deps: {
     [templates, settings.enabledSports, settings.sportFrequency, settings.weekShape, settings.restDay],
   );
   const advice = useMemo(
-    // Proposals you kept turning down come last (engine/learning.ts).
-    () => learnFromDeclines([
+    // Proposals you kept turning down come last (engine/learning.ts). Two proposals for the same day or training: one
+    // stays, the other waits on it (engine/oneAnswerPerDay.ts, I-157).
+    () => oneAnswerPerDay(learnFromDeclines([
       ...(plannerAdvice && !adviceResponses[plannerAdvice.id] ? [plannerAdvice] : []),
       // Een bestaand plan zonder doel: neutrale golven pas na Akkoord (engine/noGoalWaves.ts).
       ...wavesOffer.filter((a) => !adviceResponses[a.id]),
@@ -197,7 +199,7 @@ export function useAdviceAndWeek(deps: {
         keyFocus: keyFocusOf(trainingGoals, goalMilestones, todayISO(), { direction: settings.direction }),
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
-    ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
+    ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO()))),
     [plannerAdvice, wavesOffer, ladderOffer, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.goalGrowth, settings.newTestOnStops, settings.restDay, settings.restDayBack, settings.fullWeekAsk, settings.descentClock, settings.missedLink, missedMemory, openDraftId, places, adviceResponses, adviceSlotDays, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews, settings.direction, settings.reentry, settings.reentryWeeks, settings.reentryCatchUp, settings.strengthTraining, settings.strengthModel],
   );
 

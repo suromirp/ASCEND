@@ -48,6 +48,9 @@ export interface HorizonProposeOptions {
   notesTitle?: string;
   // The heading above the lines with another length (default: the next two weeks).
   extraTitle?: string;
+  // Akkoord was already given (the sheet for important advice, components/FirstAdviceHost.tsx): work out the plan and
+  // apply it at once, with the notice and undo below. Two goals in conflict still show the proposal first.
+  direct?: boolean;
 }
 
 export function useHorizonChange(): {
@@ -92,6 +95,10 @@ export function useHorizonChange(): {
           plan = { ...resolved, notes: [...new Set([...messages, ...resolved.notes])] };
         }
         options = { ...options, alwaysAsk: true };
+      }
+      if (options.direct && !both) {
+        await apply(plan, options);
+        return;
       }
       const items = plan.proposal.changes;
       if (items.length === 0 && plan.lengths.length === 0 && !options.alwaysAsk) {

@@ -12,6 +12,7 @@ import {
 } from '../../engine/sportRestOffer';
 import { mondayOfWeek, todayISO } from '../../utils/dates';
 import { withTimeout } from '../../utils/withTimeout';
+import { adviceTouchedSessions } from '../../engine/oneAnswerPerDay';
 
 // Opslaan wacht hoogstens zo lang; daarna een zichtbare uitkomst.
 export const SPORT_REST_SAVE_MS = 8000;
@@ -76,8 +77,11 @@ export function useSportRestLapsed(): { lapsed: LapsedSportRest | undefined; und
 
 // Het voorstel op de beendag. Vandaag zag het: de eerste regel, als Week hem nog niet schreef.
 export function useSportRestToday(): { offer: TodaySportRest | undefined; answer: (choice: 'accepted' | 'declined') => Promise<void> } {
-  const { plannedSessions, sessionLogs, templates, weekNoticeFor, weekFixesFor, appendSportRest, commitPlanChange } = useAppData();
+  const { plannedSessions, sessionLogs, templates, weekNoticeFor, weekFixesFor, appendSportRest, commitPlanChange, advice } = useAppData();
   const { list, keep, today, choseOn } = useOffers();
+  // Raakt een ander advies op Vandaag deze training al (een rustiger instap, inhalen), dan wacht dit voorstel tot dat
+  // beantwoord is: één antwoord per dag (engine/oneAnswerPerDay.ts, I-155).
+  const taken = useMemo(() => adviceTouchedSessions(advice), [advice]);
   const answers = useAnswers();
   const monday = mondayOfWeek(today);
   const live = useMemo(() => {
@@ -92,12 +96,12 @@ export function useSportRestToday(): { offer: TodaySportRest | undefined; answer
   const offer = useMemo(() => {
     if (!live.some((l) => l.sessionDate === today)) return undefined;
     try {
-      return todaySportRest({ live, list, sessions: plannedSessions, logs: sessionLogs, templates, today, answers, choseOn, fixFor: (l) => weekFixesFor(monday).fixes[l.concern.key] ?? null });
+      return todaySportRest({ live, list, sessions: plannedSessions, logs: sessionLogs, templates, today, answers, choseOn, taken, fixFor: (l) => weekFixesFor(monday).fixes[l.concern.key] ?? null });
     } catch (err) {
       console.error('Het voorstel na een sport kon niet worden berekend:', err);
       return undefined;
     }
-  }, [live, list, plannedSessions, sessionLogs, templates, today, answers, choseOn, weekFixesFor, monday]);
+  }, [live, list, plannedSessions, sessionLogs, templates, today, answers, choseOn, taken, weekFixesFor, monday]);
   const firstRows = useMemo(() => (offer ? shownRows(list, live.filter((l) => l.id === offer.id), today, new Date().toISOString()) : []), [offer, list, live, today]);
   useEffect(() => {
     if (firstRows.length > 0) void traceInBackground(appendSportRest(firstRows), 'Het voorstel na een sport kon niet worden bewaard:');

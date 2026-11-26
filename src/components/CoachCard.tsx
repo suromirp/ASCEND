@@ -6,7 +6,6 @@
 
 import { useForgeWords } from './useForgeWords';
 import { effortWords } from '../engine/forgeWords';
-import { REENTRY_TITLE, REENTRY_WHY, reentryCatchUpItems, reentryFirstDayItems, reentryNote } from '../engine/reentry';
 import { ProposalChangeList, ProposalSheet } from './ProposalSheet';
 import { useState, type ReactNode } from 'react';
 import { useAppData } from '../state/AppDataContext';
@@ -17,10 +16,8 @@ import { TextButton } from './TextButton';
 import { adviceBrief, adviceLead } from '../engine/adviceText';
 import { TodaySheet } from './vandaag/TodaySheet';
 import { Icon } from './icons';
-import { useHorizonChange } from './useHorizonChange';
-import { NO_GOAL_WAVES_TITLE, noGoalWavesLines, wavesConsentPatch } from '../engine/noGoalWaves';
-import { BEGINNER_LADDER_EXPLANATION, BEGINNER_LADDER_TITLE, beginnerLadderLinesOn, ladderConsentPatch } from '../engine/beginnerLadderOffer';
-import { todayISO } from '../utils/dates';
+import { useAdviceAccept } from './useAdviceAccept';
+import { WAITING_LINE } from '../engine/oneAnswerPerDay';
 
 const KIND: Record<AdviceTrigger, { label: string; color: string; icon: ReactNode }> = {
   session_missed: {
@@ -131,15 +128,12 @@ export function CoachCard() {
 // in plaats van de alinea; de andere houden hun effect, zodat er niets verdwijnt.
 // `primary`: Akkoord is gevuld mint, omdat het de enige keuze in het blad is; anders omlijnd.
 export function AdviceItem({ advice, compact = false, primary = false }: { advice: Advice; compact?: boolean; primary?: boolean }) {
-  const { respondToAdvice, planWeekLoadChange, planHorizonChange, settings, program } = useAppData();
+  const { respondToAdvice } = useAppData();
   const words = useForgeWords();
-  // Training through a rest week and "Deze week nog een keer" change the
-  // program: first their own proposal with what changes, Akkoord in there
-  // (storage/weekLoadPlan.ts). Only then the answer to the advice is recorded.
-  const horizon = useHorizonChange();
-  const weekLoad = advice.restWeekSkip ? { kind: 'rest' as const, week: advice.restWeekSkip } : advice.repeatWeek ? { kind: 'repeat' as const, week: advice.repeatWeek } : undefined;
-  // Neutrale golven zonder doel (engine/noGoalWaves.ts): ook eerst het eigen voorstel met de hele planningsronde.
-  const ownProposal = !!weekLoad || !!advice.noGoalWaves || !!advice.reentry || !!advice.beginnerLadder;
+  // Training through a rest week, "Deze week nog een keer", a calmer return, the ladder and waves without a goal
+  // change the program: first their own proposal with what changes, Akkoord in there (components/useAdviceAccept.ts).
+  // Only then the answer to the advice is recorded.
+  const { horizon, ownProposal, accept } = useAdviceAccept(advice);
   const [open, setOpen] = useState(false);
   const [showWeek, setShowWeek] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -147,92 +141,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
   const glance = !!advice.lead && !!advice.proposal;
 
   async function respond(response: 'accepted' | 'declined') {
-    if (response === 'accepted' && weekLoad) {
-      await horizon.propose(() => planWeekLoadChange(weekLoad.kind, weekLoad.week, true), {
-        eyebrow: weekLoad.kind === 'rest' ? 'Rustweek' : 'Deze week nog een keer',
-        ask: 'always',
-        alwaysAsk: true,
-        declined: 'Je week blijft zoals hij was.',
-        onStored: () => void respondToAdvice(advice, 'accepted'),
-      });
-      return;
-    }
-    // Rustiger instap na een pauze (engine/reentry.ts): eerst het voorstel van de planningsronde met de trainingen
-    // die korter worden, Akkoord daarin bewaart de week.
-    if (response === 'accepted' && advice.reentry) {
-      const week = advice.reentry;
-      await horizon.propose(
-        () => planHorizonChange({
-          title: REENTRY_TITLE,
-          why: 'Rustiger instap na een pauze.',
-          explanation: REENTRY_WHY,
-          trigger: 'reentry_planned',
-          settings: { reentryWeeks: [...(settings.reentryWeeks ?? []).filter((w) => w.from !== week.from), week] },
-          notes: [reentryNote(week, advice.reentryForgeDays, advice.reentryFirstDay, advice.reentryCatchUp)],
-          ...(advice.reentryFirstDay || advice.reentryCatchUp
-            ? { startItems: [...(advice.reentryFirstDay ? reentryFirstDayItems(advice.reentryFirstDay) : []), ...(advice.reentryCatchUp ? reentryCatchUpItems(advice.reentryCatchUp) : [])] }
-            : {}),
-        }),
-        {
-          eyebrow: 'Rustiger instap',
-          extraTitle: 'Andere lengte, de eerste week terug',
-          ask: 'always',
-          alwaysAsk: true,
-          notesTitle: 'Wat er verandert',
-          declined: 'Je week blijft zoals hij was. Voor deze terugkomst geen vraag meer.',
-          onStored: () => void respondToAdvice(advice, 'accepted'),
-          onDeclined: () => void respondToAdvice(advice, 'declined'),
-        },
-      );
-      return;
-    }
-    // De ladder van heel licht in een lopende start (engine/beginnerLadderOffer.ts): eerst het voorstel van de
-    // planningsronde met de trainingen die korter worden, Akkoord daarin bewaart het.
-    if (response === 'accepted' && advice.beginnerLadder) {
-      await horizon.propose(
-        () => planHorizonChange({
-          title: BEGINNER_LADDER_TITLE,
-          why: 'Je start wordt lichter.',
-          explanation: BEGINNER_LADDER_EXPLANATION,
-          trigger: 'availability_changed',
-          settings: { ...ladderConsentPatch },
-          notes: beginnerLadderLinesOn(settings, program, todayISO()),
-        }),
-        {
-          eyebrow: 'Rustig beginnen',
-          extraTitle: 'Andere lengte',
-          ask: 'always',
-          alwaysAsk: true,
-          notesTitle: 'Wat er verandert',
-          declined: 'Je start blijft zoals hij is. Geen vraag meer hierover.',
-          onStored: () => void respondToAdvice(advice, 'accepted'),
-          onDeclined: () => void respondToAdvice(advice, 'declined'),
-        },
-      );
-      return;
-    }
-    if (response === 'accepted' && advice.noGoalWaves) {
-      await horizon.propose(
-        () => planHorizonChange({
-          title: NO_GOAL_WAVES_TITLE,
-          why: 'Je plant zonder doel in neutrale golven.',
-          explanation: 'Zonder doel worden je weken neutrale golven, zonder bergtocht en zonder rugzak. Eerst een voorstel, pas na Akkoord verandert er iets. Wat je al deed en wat je zelf vastzette blijft staan.',
-          trigger: 'direction_changed',
-          settings: wavesConsentPatch,
-          notes: noGoalWavesLines(),
-        }),
-        {
-          eyebrow: 'Zonder doel',
-          ask: 'always',
-          alwaysAsk: true,
-          notesTitle: 'Wat er verandert',
-          declined: 'Je plan blijft zoals het is. Geen vraag meer hierover.',
-          onStored: () => void respondToAdvice(advice, 'accepted'),
-          onDeclined: () => void respondToAdvice(advice, 'declined'),
-        },
-      );
-      return;
-    }
+    if (response === 'accepted' && await accept()) return;
     setBusy(true);
     await respondToAdvice(advice, response);
     setBusy(false);
@@ -251,6 +160,10 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
         <SecondaryButton onClick={() => void respond('accepted')} disabled={busy}>Begrepen</SecondaryButton>
       )}
     </div>
+  );
+  // Een ander advies voor dezelfde dag of training wacht op dit antwoord (engine/oneAnswerPerDay.ts).
+  const waitingLine = !!advice.waiting?.length && (
+    <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{WAITING_LINE}</p>
   );
   const whyToggle = (
     <TextButton tone="dim" size="xs" icon="omlaag" flipped={open} onClick={() => setOpen((v) => !v)} aria-expanded={open} className="mt-1 self-start">Waarom?</TextButton>
@@ -287,6 +200,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
       <div>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{effortWords(advice.effect, words)}</p>
         {actions}
+        {waitingLine}
         <div className="flex flex-col">{whyToggle}</div>
         {why}
         {weekToggle}
@@ -314,6 +228,7 @@ export function AdviceItem({ advice, compact = false, primary = false }: { advic
       {glance && advice.proposal && <div className="mt-3"><ProposalChangeList proposal={advice.proposal} /></div>}
       {glance && advice.tip && <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{advice.tip}</p>}
       {actions}
+      {waitingLine}
       <div className="flex flex-col">{whyToggle}</div>
       {why}
       {weekToggle}
